@@ -8,9 +8,16 @@ const ROICalculator = () => {
   const [inputs, setInputs] = useState({
     employees: 50,
     avgSalary: 60000,
+    avgDailyCalls: 25,
+    avgCheck: 50,
+    avgPrivateDining: 1000,
+    avgDailyCalls: 25,
+    industryMissedCallRate: 0.35,
+    industryMissedCallRatePrivateDining: 0.15,
+    missedRevenue: 5000,
     hoursPerWeek: 10,
     industry: 'general',
-    solution: 'chatbot'
+    solution: 'agent'
   });
   
   const [results, setResults] = useState(null);
@@ -22,15 +29,43 @@ const ROICalculator = () => {
     { value: 'finance', label: 'Financial Services' },
     { value: 'manufacturing', label: 'Manufacturing' },
     { value: 'retail', label: 'Retail & E-commerce' },
-    { value: 'education', label: 'Education' }
+    { value: 'education', label: 'Education' },
+    { value: 'hospitality', label: 'Hospitality' }
   ];
 
   const solutionOptions = [
-    { value: 'chatbot', label: 'Generative Chatbot' },
-    { value: 'agent', label: 'Autonomous Agent' },
-    { value: 'automation', label: 'Custom Automation' },
+    { value: 'software', label: 'Custom Software Development' },
+    { value: 'agent', label: 'Autonomous AI Agents' },
+    { value: 'automation', label: 'Custom Software Development' },
+    { value: 'marketing', label: 'Digital Marketing & Branding' },
     { value: 'all', label: 'Complete AI Suite' }
   ];
+
+  const calculateMissedRevenue = () => {
+    setIsCalculating(true);
+
+    setTimeout(() => {
+      const avgCheck = inputs?.avgCheck;
+      const avgPrivateDining = inputs?.avgPrivateDining;
+      const avgDailyCalls = inputs?.avgDailyCalls;
+      const industryMissedCallRate = 0.35;
+      const industryMissedCallRatePrivateDining = 0.15;
+      const missedRevenue = (avgCheck * (avgDailyCalls * industryMissedCallRate)) + (avgPrivateDining * (avgDailyCalls * industryMissedCallRatePrivateDining))
+      
+      setResults({
+        avgCheck,
+        avgPrivateDining,
+        avgDailyCalls,
+        industryMissedCallRate,
+        industryMissedCallRatePrivateDining,
+        missedRevenue: 
+        hoursPerYear: annualTimeSaved * inputs?.employees,
+        productivityGain: Math.round((weeklyTimeSaved / 40) * 100)
+      });
+      
+      setIsCalculating(false);
+    }, 2000);
+  };
 
   const calculateROI = () => {
     setIsCalculating(true);
@@ -40,6 +75,8 @@ const ROICalculator = () => {
       const weeklyTimeSaved = inputs?.hoursPerWeek;
       const annualTimeSaved = weeklyTimeSaved * 52;
       const annualSavings = annualTimeSaved * hourlyRate * inputs?.employees;
+
+      // calculateMissedRevenue();
       
       // Industry multipliers
       const industryMultipliers = {
@@ -48,15 +85,17 @@ const ROICalculator = () => {
         manufacturing: 1.4,
         retail: 1.1,
         education: 1.0,
+        hospitality: 1.5,
         general: 1.0
       };
       
       // Solution costs (annual)
       const solutionCosts = {
-        chatbot: 30000,
-        agent: 45000,
-        automation: 60000,
-        all: 120000
+        software: 8000,
+        agent: 5000,
+        automation: 500,
+        marketing: 1500,
+        all: 15000
       };
       
       const multiplier = industryMultipliers?.[inputs?.industry];
@@ -65,6 +104,12 @@ const ROICalculator = () => {
       const netSavings = adjustedSavings - implementationCost;
       const roiPercentage = ((netSavings / implementationCost) * 100);
       const paybackMonths = Math.ceil(implementationCost / (adjustedSavings / 12));
+      const avgCheck = inputs?.avgCheck;
+      const avgPrivateDining = inputs?.avgPrivateDining;
+      const avgDailyCalls = inputs?.avgDailyCalls;
+      const industryMissedCallRate = 0.35;
+      const industryMissedCallRatePrivateDining = 0.15;
+      const missedRevenue = (avgCheck * (avgDailyCalls * industryMissedCallRate)) + (avgPrivateDining * (avgDailyCalls * industryMissedCallRatePrivateDining))
       
       setResults({
         annualSavings: adjustedSavings,
@@ -72,6 +117,12 @@ const ROICalculator = () => {
         netSavings,
         roiPercentage,
         paybackMonths,
+        avgCheck,
+        avgPrivateDining,
+        avgDailyCalls,
+        industryMissedCallRate,
+        industryMissedCallRatePrivateDining,
+        missedRevenue,
         hoursPerYear: annualTimeSaved * inputs?.employees,
         productivityGain: Math.round((weeklyTimeSaved / 40) * 100)
       });
@@ -132,6 +183,39 @@ const ROICalculator = () => {
             min="1"
             max="40"
             description="Estimated time saved through AI automation"
+          />
+
+          <Input
+            label="Check Average"
+            type="number"
+            value={inputs?.avgCheck}
+            onChange={(e) => setInputs(prev => ({ ...prev, avgCheck: parseInt(e?.target?.value) || 0 }))}
+            placeholder="50"
+            min="5"
+            max="2000"
+            description="Estimated check average"
+          />
+
+          <Input
+            label="Average Private Dining / Catering Per Event"
+            type="number"
+            value={inputs?.avgPrivateDining}
+            onChange={(e) => setInputs(prev => ({ ...prev, avgPrivateDining: parseInt(e?.target?.value) || 0 }))}
+            placeholder="1000"
+            min="100"
+            max="100000"
+            description="Estimated average private dining per event"
+          />
+
+          <Input
+            label="Inbound Calls Per Day"
+            type="number"
+            value={inputs?.avgDailyCalls}
+            onChange={(e) => setInputs(prev => ({ ...prev, avgDailyCalls: parseInt(e?.target?.value) || 0 }))}
+            placeholder="1000"
+            min="5"
+            max="100"
+            description="Estimated average daily calls"
           />
           
           <Select
