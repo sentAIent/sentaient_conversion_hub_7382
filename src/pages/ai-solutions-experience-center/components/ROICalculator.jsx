@@ -58,9 +58,9 @@ const ROICalculator = () => {
         avgDailyCalls,
         industryMissedCallRate,
         industryMissedCallRatePrivateDining,
-        missedRevenue,
-        hoursPerYear: annualTimeSaved * inputs?.employees,
-        productivityGain: Math.round((weeklyTimeSaved / 40) * 100)
+        missedRevenue
+        // hoursPerYear: annualTimeSaved * inputs?.employees,
+        // productivityGain: Math.round((weeklyTimeSaved / 40) * 100)
       });
       
       setIsCalculating(false);
