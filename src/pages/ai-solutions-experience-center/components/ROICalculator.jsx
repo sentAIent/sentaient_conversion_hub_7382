@@ -59,8 +59,6 @@ const ROICalculator = () => {
         industryMissedCallRate,
         industryMissedCallRatePrivateDining,
         missedRevenue
-        // hoursPerYear: annualTimeSaved * inputs?.employees,
-        // productivityGain: Math.round((weeklyTimeSaved / 40) * 100)
       });
       
       setIsCalculating(false);
