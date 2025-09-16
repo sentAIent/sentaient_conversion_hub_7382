@@ -103,3 +103,5 @@ npm run build
 - Built with [Rocket.new](https://rocket.new)
 - Powered by React and Vite
 - Styled with Tailwind CSS
+
+- [![Netlify Status](https://api.netlify.com/api/v1/badges/e9b4e291-cc9c-41a3-8cc3-ddcbb2c2171f/deploy-status)](https://app.netlify.com/projects/sentaient-com-from-folder/deploys)
