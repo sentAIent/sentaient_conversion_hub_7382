@@ -50,7 +50,10 @@
     "react-router-hash-link": "^2.4.3",
     "recharts": "^2.15.2",
     "redux": "^5.0.1",
+<<<<<<< HEAD
     "scroll-to-top": "^1.1.0",
+=======
+>>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss-elevation": "^2.0.0",
@@ -86,9 +89,15 @@
     "@tailwindcss/typography": "^0.5.16",
     "@vitejs/plugin-react": "4.3.4",
     "autoprefixer": "10.4.2",
+<<<<<<< HEAD
     "postcss": "^8.5.6",
     "tailwindcss": "3.4.6",
     "vite": "^7.1.5",
+=======
+    "postcss": "8.4.8",
+    "tailwindcss": "3.4.6",
+    "vite": "5.0.0",
+>>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
     "vite-tsconfig-paths": "3.6.0"
   }
 }
