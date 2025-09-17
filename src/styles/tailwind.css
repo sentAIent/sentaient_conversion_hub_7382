@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Background Colors */
+    --color-background: #ffffff; /* white */
+    --color-foreground: #2d3748; /* gray-800 */
+    --color-card: #ffffff; /* white */
+    --color-card-foreground: #2d3748; /* gray-800 */
+    --color-popover: #ffffff; /* white */
+    --color-popover-foreground: #2d3748; /* gray-800 */
+    --color-muted: #f7fafc; /* gray-50 */
+    --color-muted-foreground: #718096; /* gray-500 */
+    
+    /* Border and Input */
+    --color-border: #e2e8f0; /* gray-200 */
+    --color-input: #ffffff; /* white */
+    --color-ring: #1a365d; /* blue-900 */
+    
+    /* Brand Colors */
+    --color-primary: #1a365d; /* blue-900 */
+    --color-primary-foreground: #ffffff; /* white */
+    --color-secondary: #2d5a87; /* blue-700 */
+    --color-secondary-foreground: #ffffff; /* white */
+    --color-accent: #00d4ff; /* cyan-400 */
+    --color-accent-foreground: #1a365d; /* blue-900 */
+    
+    /* Status Colors */
+    --color-success: #38a169; /* green-500 */
+    --color-success-foreground: #ffffff; /* white */
+    --color-warning: #d69e2e; /* yellow-600 */
+    --color-warning-foreground: #ffffff; /* white */
+    --color-error: #e53e3e; /* red-500 */
+    --color-error-foreground: #ffffff; /* white */
+    --color-destructive: #e53e3e; /* red-500 */
+    --color-destructive-foreground: #ffffff; /* white */
+    
+    /* Additional Brand Colors */
+    --color-conversion: #10b981; /* emerald-500 */
+    --color-conversion-foreground: #ffffff; /* white */
+    --color-trust: #6366f1; /* indigo-500 */
+    --color-trust-foreground: #ffffff; /* white */
+    --color-cta: #f59e0b; /* amber-500 */
+    --color-cta-foreground: #ffffff; /* white */
+    
+    /* Text Colors */
+    --color-text-primary: #1f2937; /* gray-800 */
+    --color-text-secondary: #718096; /* gray-500 */
+    
+    /* Shadow Variables */
+    --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-elevation: 0 4px 20px rgba(26, 54, 93, 0.1);
+    --shadow-deep: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* Animation Variables */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.3s ease-in-out;
+    --transition-reveal: 0.4s ease-in-out;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.2;
+  }
+
+  code, pre {
+    font-family: 'Fira Code', monospace;
+  }
+}
+
+@layer components {
+.btn-primary  {
+    @apply bg-primary text-primary-foreground transition-colors duration-300;
+  }
+.btn-secondary  {
+    @apply bg-secondary text-secondary-foreground transition-colors duration-300;
+  }
+.btn-accent  {
+    @apply bg-accent text-accent-foreground transition-colors duration-300;
+  }
+.btn-conversion  {
+    @apply bg-conversion text-conversion-foreground transition-colors duration-300;
+  }
+  
+  .card-elevated {
+    box-shadow: var(--shadow-elevation);
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5;
+  }
+  
+  .text-fluid-xl {
+    font-size: clamp(1.5rem, 4vw, 3rem);
+  }
+  
+  .text-fluid-lg {
+    font-size: clamp(1.25rem, 3vw, 2rem);
+  }
+  
+  .text-fluid-base {
+    font-size: clamp(1rem, 2.5vw, 1.125rem);
+  }
+  
+  .grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(300px, 33vw, 400px), 1fr));
+    gap: 2rem;
+  }
+  
+  .animation-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity var(--transition-reveal), transform var(--transition-reveal);
+  }
+  
+  .animation-reveal.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .glass-morphism {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}
+
+@layer utilities {
+  .transition-smooth {
+    transition: all var(--transition-smooth);
+  }
+  
+  .transition-fast {
+    transition: all var(--transition-fast);
+  }
+  
+  .shadow-brand {
+    box-shadow: var(--shadow-elevation);
+  }
+  
+  .shadow-deep {
+    box-shadow: var(--shadow-deep);
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}
