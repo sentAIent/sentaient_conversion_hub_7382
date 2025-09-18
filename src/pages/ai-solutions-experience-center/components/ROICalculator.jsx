@@ -8,11 +8,6 @@ const ROICalculator = () => {
   const [inputs, setInputs] = useState({
     employees: 50,
     avgSalary: 60000,
-<<<<<<< HEAD
-    hoursPerWeek: 10,
-    industry: 'general',
-    solution: 'chatbot'
-=======
     avgDailyCalls: 25,
     avgCheck: 50,
     avgPrivateDining: 1000,
@@ -23,7 +18,6 @@ const ROICalculator = () => {
     hoursPerWeek: 10,
     industry: 'general',
     solution: 'agent'
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
   });
   
   const [results, setResults] = useState(null);
