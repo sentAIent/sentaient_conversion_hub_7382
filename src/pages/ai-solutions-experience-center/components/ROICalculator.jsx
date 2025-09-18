@@ -29,18 +29,6 @@ const ROICalculator = () => {
     { value: 'finance', label: 'Financial Services' },
     { value: 'manufacturing', label: 'Manufacturing' },
     { value: 'retail', label: 'Retail & E-commerce' },
-<<<<<<< HEAD
-    { value: 'education', label: 'Education' }
-  ];
-
-  const solutionOptions = [
-    { value: 'chatbot', label: 'Generative Chatbot' },
-    { value: 'agent', label: 'Autonomous Agent' },
-    { value: 'automation', label: 'Custom Automation' },
-    { value: 'all', label: 'Complete AI Suite' }
-  ];
-
-=======
     { value: 'education', label: 'Education' },
     { value: 'hospitality', label: 'Hospitality' }
   ];
@@ -77,7 +65,6 @@ const ROICalculator = () => {
     }, 2000);
   };
 
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
   const calculateROI = () => {
     setIsCalculating(true);
     
@@ -85,13 +72,7 @@ const ROICalculator = () => {
       const hourlyRate = inputs?.avgSalary / (52 * 40);
       const weeklyTimeSaved = inputs?.hoursPerWeek;
       const annualTimeSaved = weeklyTimeSaved * 52;
-      const annualSavings = annualTimeSaved * hourlyRate * inputs?.employees;
-<<<<<<< HEAD
-=======
-
-      // calculateMissedRevenue();
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
-      
+      const annualSavings = annualTimeSaved * hourlyRate * inputs?.employees;      
       // Industry multipliers
       const industryMultipliers = {
         healthcare: 1.3,
@@ -99,27 +80,17 @@ const ROICalculator = () => {
         manufacturing: 1.4,
         retail: 1.1,
         education: 1.0,
-<<<<<<< HEAD
-=======
-        hospitality: 1.5,
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
         general: 1.0
       };
       
       // Solution costs (annual)
       const solutionCosts = {
-<<<<<<< HEAD
-        chatbot: 30000,
-        agent: 45000,
-        automation: 60000,
-        all: 120000
-=======
+
         software: 8000,
         agent: 5000,
         automation: 500,
         marketing: 1500,
         all: 15000
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
       };
       
       const multiplier = industryMultipliers?.[inputs?.industry];
@@ -128,15 +99,12 @@ const ROICalculator = () => {
       const netSavings = adjustedSavings - implementationCost;
       const roiPercentage = ((netSavings / implementationCost) * 100);
       const paybackMonths = Math.ceil(implementationCost / (adjustedSavings / 12));
-<<<<<<< HEAD
-=======
       const avgCheck = inputs?.avgCheck;
       const avgPrivateDining = inputs?.avgPrivateDining;
       const avgDailyCalls = inputs?.avgDailyCalls;
       const industryMissedCallRate = 0.35;
       const industryMissedCallRatePrivateDining = 0.15;
       const missedRevenue = (avgCheck * (avgDailyCalls * industryMissedCallRate)) + (avgPrivateDining * (avgDailyCalls * industryMissedCallRatePrivateDining))
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
       
       setResults({
         annualSavings: adjustedSavings,
@@ -144,15 +112,12 @@ const ROICalculator = () => {
         netSavings,
         roiPercentage,
         paybackMonths,
-<<<<<<< HEAD
-=======
         avgCheck,
         avgPrivateDining,
         avgDailyCalls,
         industryMissedCallRate,
         industryMissedCallRatePrivateDining,
         missedRevenue,
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
         hoursPerYear: annualTimeSaved * inputs?.employees,
         productivityGain: Math.round((weeklyTimeSaved / 40) * 100)
       });
@@ -214,19 +179,6 @@ const ROICalculator = () => {
             max="40"
             description="Estimated time saved through AI automation"
           />
-<<<<<<< HEAD
-=======
-
-          <Input
-            label="Check Average"
-            type="number"
-            value={inputs?.avgCheck}
-            onChange={(e) => setInputs(prev => ({ ...prev, avgCheck: parseInt(e?.target?.value) || 0 }))}
-            placeholder="50"
-            min="5"
-            max="2000"
-            description="Estimated check average"
-          />
 
           <Input
             label="Average Private Dining / Catering Per Event"
@@ -249,7 +201,6 @@ const ROICalculator = () => {
             max="100"
             description="Estimated average daily calls"
           />
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
           
           <Select
             label="Industry"
@@ -362,8 +313,4 @@ const ROICalculator = () => {
   );
 };
 
-<<<<<<< HEAD
 export default ROICalculator;
-=======
-export default ROICalculator;
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
