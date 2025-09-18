@@ -11,7 +11,6 @@ const ROICalculator = () => {
     avgDailyCalls: 25,
     avgCheck: 50,
     avgPrivateDining: 1000,
-    avgDailyCalls: 25,
     industryMissedCallRate: 0.35,
     industryMissedCallRatePrivateDining: 0.15,
     missedRevenue: 5000,
