@@ -12,8 +12,4 @@ const ScrollToTop = () => {
   return null;
 };
 
-<<<<<<< HEAD
 export default ScrollToTop;
-=======
-export default ScrollToTop;
->>>>>>> 541aa3f144aaccb049d88a23d56b68a6f7fcef61
