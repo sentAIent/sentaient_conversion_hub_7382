@@ -217,7 +217,7 @@ const KnowledgeNexusResourceLibrary = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Knowledge Nexus - Resource Library | sentAIent Conversion Hub</title>
+        <title>Knowledge Nexus - Resource Library | sentAIent</title>
         <meta name="description" content="Comprehensive AI business resource library with implementation guides, whitepapers, webinars, and interactive tools. Access expert knowledge to accelerate your AI transformation journey." />
         <meta name="keywords" content="AI resources, implementation guides, business intelligence, automation strategies, AI education" />
       </Helmet>
