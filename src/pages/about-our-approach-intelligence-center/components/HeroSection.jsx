@@ -28,11 +28,11 @@ const HeroSection = () => {
               <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                 Intelligence That
                 <span className="block text-accent">Amplifies Human</span>
-                Potential
+                Action
               </h1>
               
               <p className="text-xl text-white/90 leading-relaxed max-w-2xl">
-                We don't just implement AI—we architect intelligent ecosystems that enhance human creativity, accelerate decision-making, and unlock unprecedented business value through thoughtful integration.
+                We architect intelligent, fully-integrated ecosystems that enhance human creativity, accelerate decision-making, and unlock unprecedented business value.
               </p>
             </div>
 
