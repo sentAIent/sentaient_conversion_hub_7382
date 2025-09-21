@@ -79,7 +79,7 @@ const HeroSection = () => {
             <div className="relative w-full h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-deep">
               <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-transparent"></div>
               <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                src="https://unsplash.com/photos/closeup-photo-of-white-robot-arm-jIBMSMs4_kA"
                 alt="Team collaboration and AI strategy session"
                 className="w-full h-full object-cover"
               />
