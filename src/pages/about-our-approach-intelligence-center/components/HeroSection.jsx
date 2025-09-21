@@ -77,7 +77,7 @@ const HeroSection = () => {
           {/* Visual */}
           <div className="relative">
             <div className="relative w-full h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-deep">
-              // <div className="absolute inset-0 bg-gradient-to-br from-accent/280 to-transparent"></div>
+              /* <div className="absolute inset-0 bg-gradient-to-br from-accent/280 to-transparent"></div> */
               <img
                 src="https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2606&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 alt="Team collaboration and AI strategy session"
