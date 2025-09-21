@@ -22,7 +22,7 @@ const HeroSection = () => {
                 <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
                   <Icon name="Target" size={24} color="white" />
                 </div>
-                <span className="text-accent font-semibold text-lg">Our Approach</span>
+                <span className="text-accent font-semibold text-lg">The sentAIent Approach</span>
               </div>
               
               <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
