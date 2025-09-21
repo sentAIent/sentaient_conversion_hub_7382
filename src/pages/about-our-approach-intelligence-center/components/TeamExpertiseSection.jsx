@@ -8,7 +8,7 @@ const TeamExpertiseSection = () => {
   const teamMembers = [
     {
       id: 1,
-      name: Brian Leonard",
+      name: "Brian Leonard",
       role: "Chief AI Strategist",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
       specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading, Investment Management"],
