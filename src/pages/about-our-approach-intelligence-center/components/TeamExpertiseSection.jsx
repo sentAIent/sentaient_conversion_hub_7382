@@ -8,132 +8,60 @@ const TeamExpertiseSection = () => {
   const teamMembers = [
     {
       id: 1,
-      name: "Dr. Sarah Chen",
+      name: Brian Leonard",
       role: "Chief AI Strategist",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["Machine Learning", "Natural Language Processing", "Computer Vision"],
-      experience: "12+ years",
-      education: "PhD Computer Science, Stanford",
-      bio: `Dr. Chen leads our AI strategy development with deep expertise in enterprise-scale machine learning implementations. Her research in ethical AI frameworks has been published in 15+ peer-reviewed journals.`,
+      specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading, Investment Management"],
+      experience: "20+ years",
+      education: "B.S.B.A., Saint Louis University",
+      bio: `Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management. Brian spent 4 years at PIMCO working directly with many of firm's top client relationships. 
+      Brian served as head of investment analytics and trading for two Registered Investment Advisors, overseeing portfolio management for $2B+ in client assets.
+      In the late-2000's, Brian helped pioneer algorithmic trading within managed accounts for thousands of retirement investors, utilizing his expertise in finance, tech, and marketing to transform the firm during a pivotal time in its 20+ year history.`,
       achievements: [
-        "Led AI transformation for Fortune 500 companies",
-        "Published 25+ research papers on ethical AI",
-        "Keynote speaker at AI Ethics Summit 2023",
-        "Former Principal Scientist at Google AI"
+        "Pioneered quantitative trading for retirement investors in the early days of Target Date Funds",
+        "Contributed to 5x increase in Assets Under Management in under three years.",
+        "Facilitated client meetings with PIMCO's top executive and PM leadership",
+        "Mensan"
       ],
       publications: [
-        "Ethical Frameworks for Enterprise AI (Nature AI, 2023)",
-        "Human-Centered Machine Learning Design (ACM, 2022)"
+        "",
+        ""
       ],
       linkedin: "#",
       twitter: "#"
     },
     {
       id: 2,
-      name: "Marcus Rodriguez",
-      role: "Director of Implementation",
+      name: "Greg Francis",
+      role: "Corporate Solutions",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["Process Automation", "Chatbot Development", "System Integration"],
-      experience: "10+ years",
-      education: "MS Software Engineering, MIT",
-      bio: `Marcus transforms complex AI concepts into practical business solutions. His systematic approach to implementation has achieved 98% project success rate across diverse industries.`,
+      specializations: ["Executive Hospitality Operations", "Interpersonal Development", "Financial Statement Analysis"],
+      experience: "30+ years",
+      education: "",
+      bio: `Greg transforms complex AI concepts into tangible operational excellence. Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in advancing one of the country's most influential hospitality organizations. His diverse experience includes serving as Managing Partner at Smith & Wollensky.`,
       achievements: [
-        "Implemented 100+ successful AI projects",
-        "Developed proprietary integration framework",
-        "Certified in 8 major AI platforms",
-        "Former Lead Engineer at Microsoft AI"
+        "Sable was named one of Food & Wine Magazine's Top 5 Restaurants in the U.S.",
+        "Two establishments honored on Esquire Magazine's Best New Restaurants list.",
+        "Sommelier and Maître d' aboard an exclusive, steam-powered riverboat."
       ],
       publications: [
-        "Scalable AI Implementation Patterns (IEEE, 2023)",
-        "Enterprise Chatbot Architecture Guide (ACM, 2022)"
       ],
       linkedin: "#",
       twitter: "#"
     },
     {
       id: 3,
-      name: "Dr. Aisha Patel",
-      role: "Head of AI Ethics",
+      name: "Monica",
+      role: "Corporate Solutions",
       avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["AI Ethics", "Bias Mitigation", "Regulatory Compliance"],
-      experience: "8+ years",
-      education: "PhD Philosophy of Technology, Oxford",
-      bio: `Dr. Patel ensures all our AI implementations meet the highest ethical standards. Her work in bias detection and mitigation has become industry standard for responsible AI deployment.`,
+      specializations: ["Institutional Sales", "Strategic Vision", "Operational Efficiency"],
+      experience: "25+ years",
+      education: "International Business, Dickinson College",
+      bio: `Monica brings a deep understanding of consultant solutions and over two decades of experience in institutional sales and investment consulting.
+      Monica served as Managing Director at a few of the top global asset managers.`,
       achievements: [
-        "Developed industry-standard bias detection tools",
-        "Advisor to EU AI Ethics Committee",
-        "Author of \'Responsible AI Implementation'",
-        "Former Ethics Lead at DeepMind"
       ],
       publications: [
-        "Bias Mitigation in Enterprise AI Systems (Nature, 2023)",
-        "Ethical AI Governance Frameworks (Philosophy & Technology, 2022)"
-      ],
-      linkedin: "#",
-      twitter: "#"
-    },
-    {
-      id: 4,
-      name: "James Thompson",
-      role: "Senior Business Analyst",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["ROI Analysis", "Business Process Optimization", "Change Management"],
-      experience: "15+ years",
-      education: "MBA Strategy, Wharton",
-      bio: `James bridges the gap between technical capabilities and business value. His analytical approach has consistently delivered ROI improvements exceeding 300% for client implementations.`,
-      achievements: [
-        "Delivered $50M+ in measurable client ROI",
-        "Certified Change Management Professional",
-        "Speaker at 20+ business conferences",
-        "Former Strategy Consultant at McKinsey"
-      ],
-      publications: [
-        "AI ROI Measurement Frameworks (Harvard Business Review, 2023)",
-        "Digital Transformation Success Patterns (MIT Sloan, 2022)"
-      ],
-      linkedin: "#",
-      twitter: "#"
-    },
-    {
-      id: 5,
-      name: "Lisa Wang",
-      role: "UX/AI Design Lead",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["Human-AI Interaction", "Conversational Design", "User Experience"],
-      experience: "9+ years",
-      education: "MS Human-Computer Interaction, Carnegie Mellon",
-      bio: `Lisa designs intuitive interfaces that make AI feel natural and accessible. Her human-centered approach has improved user adoption rates by 85% across client implementations.`,
-      achievements: [
-        "Designed interfaces for 200+ AI applications",
-        "Winner of UX Design Excellence Award 2023",
-        "Created industry-standard AI design patterns",
-        "Former Senior Designer at Apple AI"
-      ],
-      publications: [
-        "Human-AI Interaction Design Principles (ACM CHI, 2023)",
-        "Conversational AI UX Best Practices (UX Magazine, 2022)"
-      ],
-      linkedin: "#",
-      twitter: "#"
-    },
-    {
-      id: 6,
-      name: "David Kim",
-      role: "Technical Architecture Lead",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["Cloud Architecture", "AI Infrastructure", "Security"],
-      experience: "11+ years",
-      education: "MS Computer Science, UC Berkeley",
-      bio: `David architects scalable, secure AI infrastructure that grows with business needs. His cloud-native approach has enabled seamless AI deployments for enterprises of all sizes.`,
-      achievements: [
-        "Architected infrastructure for 500+ AI deployments",
-        "AWS Certified Solutions Architect Professional",
-        "Security clearance for government AI projects",
-        "Former Principal Architect at Amazon Web Services"
-      ],
-      publications: [
-        "Scalable AI Infrastructure Patterns (Cloud Computing Journal, 2023)",
-        "Security Best Practices for AI Systems (IEEE Security, 2022)"
       ],
       linkedin: "#",
       twitter: "#"
