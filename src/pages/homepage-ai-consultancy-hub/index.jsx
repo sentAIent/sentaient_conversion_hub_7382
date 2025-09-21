@@ -16,7 +16,7 @@ const HomepageAIConsultancyHub = () => {
   return (
     <>
       <Helmet>
-        <title>sentAIent Conversion Hub - AI That Amplifies Human Potential</title>
+        <title>sentAIent - AI That Amplifies Human Potential</title>
         <meta 
           name="description" 
           content="Transform your business with intelligent AI automation. Experience measurable growth without disruption through our proven AI implementation methodology. Start your free assessment today." 
