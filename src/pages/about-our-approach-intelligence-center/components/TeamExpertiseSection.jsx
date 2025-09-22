@@ -46,7 +46,7 @@ const TeamExpertiseSection = () => {
       ],
       linkedin: "#",
       twitter: "#"
-    }                   {/*},*/}
+    },                   {/*},*/}
     {
       id: 3,
       name: "Monica",
