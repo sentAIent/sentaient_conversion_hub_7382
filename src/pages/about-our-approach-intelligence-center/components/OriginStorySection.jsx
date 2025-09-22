@@ -80,10 +80,10 @@ const OriginStorySection = () => {
           </p>
         </div>
 
-        {/* Timeline */}
+        {/* Timeline * /}
         <div className="mb-20">
           <div className="relative">
-            {/* Timeline Line */}
+            {/* Timeline Line * /}
             <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-border hidden lg:block"></div>
             
             <div className="space-y-12 lg:space-y-16">
@@ -94,10 +94,10 @@ const OriginStorySection = () => {
                     index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'
                   }`}
                 >
-                  {/* Timeline Node */}
+                  {/* Timeline Node  * /}
                   <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-primary rounded-full border-4 border-background shadow-lg z-10 hidden lg:block"></div>
                   
-                  {/* Content */}
+                  {/* Content * /}
                   <div className={`w-full lg:w-5/12 ${index % 2 === 0 ? 'lg:pr-12' : 'lg:pl-12'}`}>
                     <div
                       className={`bg-card border border-border rounded-2xl p-8 shadow-subtle hover:shadow-elevation transition-all duration-300 cursor-pointer ${
@@ -145,6 +145,8 @@ const OriginStorySection = () => {
             </div>
           </div>
         </div>
+        */}
+
 
         {/* Core Values */}
         <div className="bg-muted/50 rounded-3xl p-8 lg:p-12">
