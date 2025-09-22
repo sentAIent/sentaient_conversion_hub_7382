@@ -18,7 +18,7 @@ const HeroSection = () => {
           {/* Content */}
           <div className="space-y-8">
             <div className="space-y-4">
-              
+
               {/*
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
@@ -75,8 +75,9 @@ const HeroSection = () => {
                 <div className="text-sm text-white/80">Average ROI</div>
               </div>
             </div>
+            */}
+            
           </div>
-          */}
 
           {/* Visual */}
           <div className="relative">
