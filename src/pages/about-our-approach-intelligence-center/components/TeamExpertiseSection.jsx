@@ -46,7 +46,7 @@ const TeamExpertiseSection = () => {
       ],
       linkedin: "#",
       twitter: "#"
-    },
+    }                   {/*},*/}
     {
       id: 3,
       name: "Monica",
@@ -58,7 +58,6 @@ const TeamExpertiseSection = () => {
       bio: `Monica brings a deep understanding of consultant solutions and over two decades of experience in institutional sales and investment consulting.
       Monica served as Managing Director at several top global asset managers.`,
       achievements: [
-        "Serves on the leadership team of Trekking for Kids",
         "Leads projects across continents to support orphaned and vulnerable children."
       ],
       publications: [
@@ -66,6 +65,7 @@ const TeamExpertiseSection = () => {
       linkedin: "#",
       twitter: "#"
     }
+    {/* */}
   ];
 
   const certifications = [
