@@ -11,7 +11,7 @@ const TeamExpertiseSection = () => {
       name: "Brian Leonard",
       role: "Chief AI Strategist",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading, Investment Management"],
+      specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading", "Investment Management"],
       experience: "20+ years",
       education: "B.S.B.A., Saint Louis University",
       bio: `Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management. Brian spent 4 years at PIMCO working directly with many of firm's top client relationships. 
@@ -24,8 +24,6 @@ const TeamExpertiseSection = () => {
         "Mensan"
       ],
       publications: [
-        "",
-        ""
       ],
       linkedin: "#",
       twitter: "#"
@@ -58,8 +56,10 @@ const TeamExpertiseSection = () => {
       experience: "25+ years",
       education: "International Business, Dickinson College",
       bio: `Monica brings a deep understanding of consultant solutions and over two decades of experience in institutional sales and investment consulting.
-      Monica served as Managing Director at a few of the top global asset managers.`,
+      Monica served as Managing Director at several top global asset managers.`,
       achievements: [
+        "Serves on the leadership team of Trekking for Kids",
+        "Leads projects across continents to support orphaned and vulnerable children."
       ],
       publications: [
       ],
@@ -94,7 +94,7 @@ const TeamExpertiseSection = () => {
           </h2>
           
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Our diverse team combines deep technical expertise with business acumen, ensuring every AI implementation delivers measurable value while maintaining ethical standards.
+            Our diverse team combines deep technical expertise with demonstrated operational excellence, ensuring every AI implementation delivers significant ROI while maintaining standards of risk management, ethics, and data privacy.
           </p>
         </div>
 
@@ -182,7 +182,8 @@ const TeamExpertiseSection = () => {
           ))}
         </div>
 
-        {/* Team Certifications */}
+        {/* Team Certifications * /} ++ 18 LINES
+
         <div className="bg-card border border-border rounded-2xl p-8 lg:p-12">
           <div className="text-center mb-8">
             <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
@@ -208,7 +209,8 @@ const TeamExpertiseSection = () => {
               </div>
             ))}
           </div>
-        </div>
+        </div> 
+        */}
 
         {/* Member Detail Modal */}
         {selectedMember && (
@@ -275,18 +277,6 @@ const TeamExpertiseSection = () => {
                           <li key={index} className="flex items-start space-x-3">
                             <Icon name="CheckCircle" size={16} color="var(--color-conversion)" className="mt-0.5 flex-shrink-0" />
                             <span className="text-muted-foreground text-sm">{achievement}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="text-lg font-semibold text-foreground mb-3">Recent Publications</h4>
-                      <ul className="space-y-2">
-                        {selectedMember?.publications?.map((publication, index) => (
-                          <li key={index} className="flex items-start space-x-3">
-                            <Icon name="BookOpen" size={16} color="var(--color-primary)" className="mt-0.5 flex-shrink-0" />
-                            <span className="text-muted-foreground text-sm">{publication}</span>
                           </li>
                         ))}
                       </ul>
