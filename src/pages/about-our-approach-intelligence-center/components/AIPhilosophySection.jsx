@@ -8,10 +8,10 @@ const AIPhilosophySection = () => {
     {
       icon: "Heart",
       title: "Human Augmentation, Not Replacement",
-      description: "AI should amplify human capabilities, creativity, and decision-making rather than replace human judgment and empathy.",
-      details: `We believe the future belongs to human-AI collaboration, where artificial intelligence handles routine tasks while humans focus on strategic thinking, creative problem-solving, and relationship building. Our implementations are designed to enhance human potential, not diminish it.`,
+      description: "AI was created to amplify human capabilities, creativity, and decision-making not replace human judgment and authenticity.",
+      details: `The future belongs to human-AI collaboration, where artificial intelligence handles routine tasks while humans focus on critical growth drivers like strategic thinking, creative problem-solving, and relationship building. Our implementations are designed to enhance human potential.`,
       examples: [
-        "AI handles data analysis, humans make strategic decisions",
+        "AI handles data analysis and reporting, humans make strategic decisions",
         "Chatbots manage routine inquiries, humans handle complex relationships",
         "Automation streamlines processes, humans drive innovation"
       ]
@@ -19,7 +19,7 @@ const AIPhilosophySection = () => {
     {
       icon: "Shield",
       title: "Ethical AI Implementation",
-      description: "Every AI system must operate with transparency, fairness, and accountability as core design principles.",
+      description: "Every AI system is built with transparency, fairness, privacy, and accountability as core design principles.",
       details: `We implement comprehensive ethical frameworks that ensure AI systems are transparent in their decision-making, free from harmful biases, and accountable to human oversight. Our ethical AI approach builds trust and ensures sustainable long-term success.`,
       examples: [
         "Bias detection and mitigation in all AI models",
@@ -29,8 +29,8 @@ const AIPhilosophySection = () => {
     },
     {
       icon: "Target",
-      title: "Business Value First",
-      description: "Technology implementation must deliver measurable business outcomes and clear return on investment.",
+      title: "Enterprise Value First",
+      description: "Technology implementations deliver measurable business outcomes and clear return on investment.",
       details: `We prioritize practical business value over technological novelty. Every AI initiative begins with clear success metrics and ROI projections. Our approach ensures that AI investments deliver tangible benefits that justify the implementation effort and cost.`,
       examples: [
         "ROI-focused project planning and execution",

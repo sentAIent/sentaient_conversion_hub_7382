@@ -213,16 +213,20 @@ const TrustIndicatorsSection = () => {
                 <p className="text-muted-foreground text-sm mb-3">
                   {cert?.description}
                 </p>
+                
+                {/*}
                 <div className="text-xs text-muted-foreground">
                   <div>{cert?.issuer}</div>
                   <div className="font-semibold">{cert?.year}</div>
                 </div>
+                */}
+
               </div>
             ))}
           </div>
         </div>
 
-        {/* Strategic Partnerships */}
+        {/* Strategic Partnerships * /}
         <div className="mb-20">
           <div className="text-center mb-12">
             <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
@@ -257,7 +261,7 @@ const TrustIndicatorsSection = () => {
           </div>
         </div>
 
-        {/* Media Recognition */}
+        {/* Media Recognition * /}
         <div className="mb-20">
           <div className="text-center mb-12">
             <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
@@ -292,6 +296,7 @@ const TrustIndicatorsSection = () => {
             ))}
           </div>
         </div>
+        */}
 
         {/* Client Testimonials */}
         <div className="bg-card border border-border rounded-2xl p-8 lg:p-12">
@@ -337,6 +342,9 @@ const TrustIndicatorsSection = () => {
                     </div>
                   ))}
                 </div>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  *Results vary. Data based on industry case studies.
+                </p>
               </div>
             ))}
           </div>
@@ -349,7 +357,7 @@ const TrustIndicatorsSection = () => {
               Join Our Success Stories
             </h3>
             <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
-              Experience the same level of excellence and results that have earned us industry recognition and client trust.
+              Experience the same level of excellence and results that have transformed your competitors' operational efficiency and positioned them for long-term success in the age of AI.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
