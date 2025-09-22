@@ -32,7 +32,7 @@ const HeroSection = () => {
               </h1>
               
               <p className="text-xl text-white/90 leading-relaxed max-w-2xl">
-                We architect intelligent, fully-integrated ecosystems that enhance human creativity, accelerate decision-making, and unlock unprecedented business value.
+                We architect intelligent, fully-integrated ecosystems that enhance human creativity, accelerate decision-making, and unlock unprecedented enterprise value.
               </p>
             </div>
 
