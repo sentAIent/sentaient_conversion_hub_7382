@@ -46,8 +46,10 @@ const TeamExpertiseSection = () => {
       ],
       linkedin: "#",
       twitter: "#"
-    },
-    {
+    }
+    
+    {/*},
+      {
       id: 3,
       name: "Monica",
       role: "Corporate Solutions",
@@ -65,6 +67,7 @@ const TeamExpertiseSection = () => {
       linkedin: "#",
       twitter: "#"
     }
+    */}
   ];
 
   const certifications = [
