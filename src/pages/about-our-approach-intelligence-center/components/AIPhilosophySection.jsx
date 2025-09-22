@@ -29,8 +29,8 @@ const AIPhilosophySection = () => {
     },
     {
       icon: "Target",
-      title: "Enterprise Value First",
-      description: "Technology implementations deliver measurable business outcomes and clear return on investment.",
+      title: "Maximize Enterprise Value",
+      description: "Technology implementations deliver highly scalable business options with desirable return on investment.",
       details: `We prioritize practical business value over technological novelty. Every AI initiative begins with clear success metrics and ROI projections. Our approach ensures that AI investments deliver tangible benefits that justify the implementation effort and cost.`,
       examples: [
         "ROI-focused project planning and execution",
@@ -52,11 +52,11 @@ const AIPhilosophySection = () => {
     {
       icon: "Lightbulb",
       title: "Continuous Learning & Adaptation",
-      description: "AI systems and strategies must evolve continuously based on performance data and changing business needs.",
-      details: `We build adaptive AI systems that learn and improve over time. Our approach includes continuous monitoring, performance optimization, and strategic adjustments to ensure AI implementations remain effective as business conditions change.`,
+      description: "AI systems and strategies designed to evolve continuously based on performance data and changing business needs.",
+      details: `We build adaptive AI systems that learn and improve over time. Our approach includes continuous monitoring, performance optimization, and strategic adjustments to ensure AI implementations maintain maximum effectiveness as business conditions change.`,
       examples: [
-        "Continuous model performance monitoring",
-        "Regular strategy reviews and adjustments",
+        "Continual model performance optimization and upgrades",
+        "Regular strategy monitoring, analysis, and reviews",
         "Adaptive learning from user feedback and data"
       ]
     },
@@ -195,7 +195,7 @@ const AIPhilosophySection = () => {
               Our Ethical AI Framework
             </h3>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              A systematic approach to ensuring every AI implementation meets the highest ethical standards while delivering business value.
+              A systematic approach to ensuring every AI implementation meets the highest ethical standards while delivering enterprise value.
             </p>
           </div>
 
