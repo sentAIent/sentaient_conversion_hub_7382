@@ -57,7 +57,7 @@ const HeroSection = () => {
               </Button>
             </div>
 
-            {/* Stats */}
+            {/* Stats * /}
             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20">
               <div className="text-center">
                 <div className="text-3xl font-bold text-accent">150+</div>
@@ -73,7 +73,8 @@ const HeroSection = () => {
               </div>
             </div>
           </div>
-
+          */}
+          
           {/* Visual */}
           <div className="relative">
             <div className="relative w-full h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-deep">
