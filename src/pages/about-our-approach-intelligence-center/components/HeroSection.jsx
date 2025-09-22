@@ -18,13 +18,16 @@ const HeroSection = () => {
           {/* Content */}
           <div className="space-y-8">
             <div className="space-y-4">
+              
+              {/*
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
                   <Icon name="Target" size={24} color="white" />
                 </div>
                 <span className="text-accent font-semibold text-lg">The sentAIent Approach</span>
               </div>
-              
+              */}
+
               <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                 Intelligence That
                 <span className="block text-accent">Amplifies Human</span>
@@ -74,7 +77,7 @@ const HeroSection = () => {
             </div>
           </div>
           */}
-          
+
           {/* Visual */}
           <div className="relative">
             <div className="relative w-full h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-deep">
