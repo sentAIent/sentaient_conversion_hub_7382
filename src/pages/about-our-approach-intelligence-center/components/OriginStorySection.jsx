@@ -138,7 +138,7 @@ const OriginStorySection = () => {
                     </div>
                   </div>
                   
-                  {/* Spacer for opposite side */}
+                  {/* Spacer for opposite side * /}
                   <div className="hidden lg:block w-5/12"></div>
                 </div>
               ))}
