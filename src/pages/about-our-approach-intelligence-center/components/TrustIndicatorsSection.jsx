@@ -171,6 +171,7 @@ const TrustIndicatorsSection = () => {
         </div>
 
         {/* Industry Stats */}
+        {/*
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
           {industryStats?.map((stat, index) => (
             <div key={index} className="bg-card border border-border rounded-2xl p-6 text-center shadow-subtle hover:shadow-elevation transition-all duration-300">
@@ -190,7 +191,7 @@ const TrustIndicatorsSection = () => {
           ))}
         </div>
 
-        {/* Certifications */}
+        {/* Certifications * /}
         <div className="mb-20">
           <div className="text-center mb-12">
             <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
@@ -214,19 +215,19 @@ const TrustIndicatorsSection = () => {
                   {cert?.description}
                 </p>
                 
-                {/*}
                 <div className="text-xs text-muted-foreground">
                   <div>{cert?.issuer}</div>
                   <div className="font-semibold">{cert?.year}</div>
                 </div>
-                */}
 
               </div>
             ))}
           </div>
         </div>
+        */}
 
-        {/* Strategic Partnerships * /}
+        {/* Strategic Partnerships */}
+        {/*
         <div className="mb-20">
           <div className="text-center mb-12">
             <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
@@ -260,8 +261,10 @@ const TrustIndicatorsSection = () => {
             ))}
           </div>
         </div>
+        */}
 
-        {/* Media Recognition * /}
+        {/* Media Recognition */}
+        {/*
         <div className="mb-20">
           <div className="text-center mb-12">
             <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
