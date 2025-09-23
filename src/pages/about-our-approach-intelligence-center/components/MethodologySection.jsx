@@ -193,7 +193,7 @@ const MethodologySection = () => {
         <div className="text-center mb-16">
           <div className="flex items-center justify-center space-x-3 mb-6">
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Icon name="Settings" size={24} color="var(--color-primary)" />
+              <Icon name="Settings" size={24} color="var(--color-primary)"/>
             </div>
             <span className="text-primary font-semibold text-lg">Our Methodology</span>
           </div>
@@ -344,7 +344,7 @@ const MethodologySection = () => {
             </div>
           </div>
         </div>
-
+        {/* ------------------------------------------------------------------------------------------------------------------------ */}
         {/* Success Metrics */}
         <div className="mb-20">
           <div className="text-center mb-12">

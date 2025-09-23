@@ -92,12 +92,6 @@ const CompanyCultureSection = () => {
       details: ['Remote work options', 'Flexible scheduling', 'Results-focused culture', 'Global team collaboration']
     },
     {
-      aspect: 'Learning Budget',
-      description: '$5,000 annual learning budget per team member for courses and conferences',
-      icon: 'DollarSign',
-      details: ['Conference attendance', 'Online courses', 'Certification programs', 'Book allowances']
-    },
-    {
       aspect: 'Innovation Time',
       description: '20% time dedicated to personal projects and experimental research',
       icon: 'Lightbulb',
@@ -129,7 +123,7 @@ const CompanyCultureSection = () => {
           </h2>
           
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Our culture is built on collaboration, continuous learning, and ethical leadership. These values shape how we work, innovate, and serve our clients.
+            Our culture is built on collaboration, continuous learning, and ethical leadership. These values shape how we operate, innovate, and serve our clients.
           </p>
         </div>
 
