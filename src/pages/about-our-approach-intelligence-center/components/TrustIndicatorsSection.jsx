@@ -348,8 +348,8 @@ const TrustIndicatorsSection = () => {
               </div>
             ))}
           </div>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            *Results vary. Data based on industry case studies.
+          <p className="text-muted-foreground max-w-2xl mx-auto text-center">
+            * Results vary. Data based on industry case studies.
           </p>
         </div>
 
