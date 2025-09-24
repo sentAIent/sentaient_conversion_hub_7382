@@ -205,7 +205,9 @@ const ContactSection = () => {
           {/* Contact Form */}
           <div>
             <div className="bg-card border border-border rounded-lg p-8">
-              
+              <h3 className="text-2xl font-semibold text-foreground mb-6">
+                Send Us a Message
+              </h3>
               {/* Additional Information */}
               <div className="mt-6 bg-muted/50 rounded-lg p-6">
                 <h4 className="text-lg font-semibold text-foreground mb-3">
@@ -226,9 +228,6 @@ const ContactSection = () => {
                   </li>
                 </ul>
               </div>
-              <h3 className="text-2xl font-semibold text-foreground mb-6">
-                Send Us a Message
-              </h3>
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
