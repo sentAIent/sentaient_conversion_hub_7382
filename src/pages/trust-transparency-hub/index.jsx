@@ -28,11 +28,19 @@ const TrustTransparencyHub = () => {
       icon: "Clock"
     },
     {
+      metric: "100%",
+      label: "Regulatory Compliance",
+      description: "Industry compliance standards",
+      icon: "Award"
+    },
+    {/*
+    {
       metric: "6+",
       label: "Active Certifications",
       description: "Industry compliance standards",
       icon: "Award"
     },
+    */},
     {
       metric: "24/7",
       label: "Security Monitoring",
@@ -70,7 +78,7 @@ const TrustTransparencyHub = () => {
                 <span className="block text-primary">Hub</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                Building confidence through comprehensive security protocols, ethical AI practices, and complete transparency in our data handling procedures. Your trust is our foundation.
+                Building confidence through through our consultative relationships with clients that focus on comprehensive security protocols, ethical AI practices, and complete transparency in our data handling procedures. Your trust is the foundation for all future success.
               </p>
             </div>
 
@@ -109,7 +117,7 @@ const TrustTransparencyHub = () => {
                   </div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">Security First</h3>
                   <p className="text-muted-foreground text-sm">
-                    Enterprise-grade security measures protect your data and AI implementations at every level.
+                    Enterprise-grade security measures protect your data, your clients' data, and AI implementations at every level.
                   </p>
                 </div>
                 <div className="text-center">

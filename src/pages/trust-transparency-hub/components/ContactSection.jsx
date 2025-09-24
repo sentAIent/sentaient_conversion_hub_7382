@@ -37,7 +37,7 @@ const ContactSection = () => {
     {
       method: 'Security Hotline',
       description: 'For urgent security matters and incident reporting',
-      contact: '+1 (555) 123-SECURE',
+      contact: '+1 (323) 250-6923',
       availability: '24/7 Emergency Response',
       icon: 'Phone',
       color: 'text-error'
@@ -45,7 +45,7 @@ const ContactSection = () => {
     {
       method: 'Data Protection Officer',
       description: 'For privacy concerns and data protection inquiries',
-      contact: 'dpo@sentaient.com',
+      contact: 'legal@sentaient.com',
       availability: 'Response within 24 hours',
       icon: 'Mail',
       color: 'text-primary'
@@ -53,7 +53,7 @@ const ContactSection = () => {
     {
       method: 'Compliance Team',
       description: 'For certification verification and compliance questions',
-      contact: 'compliance@sentaient.com',
+      contact: 'legal@sentaient.com',
       availability: 'Business hours response',
       icon: 'Shield',
       color: 'text-success'
@@ -61,7 +61,7 @@ const ContactSection = () => {
     {
       method: 'Trust & Safety',
       description: 'For general trust and transparency inquiries',
-      contact: 'trust@sentaient.com',
+      contact: 'legal@sentaient.com',
       availability: 'Response within 48 hours',
       icon: 'Heart',
       color: 'text-accent'
@@ -184,19 +184,19 @@ const ContactSection = () => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Critical Security:</span>
-                  <span className="text-error font-medium">&lt; 15 minutes</span>
+                  <span className="text-error font-medium">&lt; 4 hours</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">High Priority:</span>
-                  <span className="text-warning font-medium">&lt; 2 hours</span>
+                  <span className="text-warning font-medium">&lt; 12 hours</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Normal Inquiry:</span>
-                  <span className="text-primary font-medium">&lt; 24 hours</span>
+                  <span className="text-primary font-medium">&lt; 18 hours</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">General Questions:</span>
-                  <span className="text-muted-foreground font-medium">&lt; 48 hours</span>
+                  <span className="text-muted-foreground font-medium">&lt; 24 hours</span>
                 </div>
               </div>
             </div>
@@ -205,6 +205,27 @@ const ContactSection = () => {
           {/* Contact Form */}
           <div>
             <div className="bg-card border border-border rounded-lg p-8">
+              
+              {/* Additional Information */}
+              <div className="mt-6 bg-muted/50 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-foreground mb-3">
+                  Before You Contact Us
+                </h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start space-x-2">
+                    <Icon name="Check" size={16} className="text-success mt-0.5 flex-shrink-0" />
+                    <span>Check our certification verification links above</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <Icon name="Check" size={16} className="text-success mt-0.5 flex-shrink-0" />
+                    <span>Review our published security documentation</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <Icon name="Check" size={16} className="text-success mt-0.5 flex-shrink-0" />
+                    <span>For emergencies, call our 24/7 security hotline</span>
+                  </li>
+                </ul>
+              </div>
               <h3 className="text-2xl font-semibold text-foreground mb-6">
                 Send Us a Message
               </h3>
@@ -304,27 +325,6 @@ const ContactSection = () => {
                   {isSubmitting ? 'Sending Message...' : 'Send Message'}
                 </Button>
               </form>
-            </div>
-
-            {/* Additional Information */}
-            <div className="mt-6 bg-muted/50 rounded-lg p-6">
-              <h4 className="text-lg font-semibold text-foreground mb-3">
-                Before You Contact Us
-              </h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start space-x-2">
-                  <Icon name="Check" size={16} className="text-success mt-0.5 flex-shrink-0" />
-                  <span>Check our certification verification links above</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <Icon name="Check" size={16} className="text-success mt-0.5 flex-shrink-0" />
-                  <span>Review our published security documentation</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <Icon name="Check" size={16} className="text-success mt-0.5 flex-shrink-0" />
-                  <span>For emergencies, call our 24/7 security hotline</span>
-                </li>
-              </ul>
             </div>
           </div>
         </div>

@@ -19,41 +19,12 @@ const AISolutionsExperienceCenter = () => {
   }, []);
 
   const solutions = [
-    {
-      id: 'chatbot',
-      title: 'Generative Chatbots',
-      subtitle: 'Intelligent Customer Conversations',
-      icon: 'MessageCircle',
-      description: 'Transform customer service with AI chatbots that understand context, provide personalized responses, and seamlessly escalate complex issues to human agents.',
-      benefits: [
-        { icon: 'Clock', title: '24/7 Availability', value: 'Always Online' },
-        { icon: 'Users', title: 'Customer Satisfaction', value: '92% Average' },
-        { icon: 'TrendingDown', title: 'Response Time', value: '< 30 seconds' }
-      ],
-      demoSteps: [
-        {
-          title: 'Customer Inquiry Processing',
-          description: 'AI analyzes incoming customer questions and determines intent',
-          content: `Customer: "I need help with my recent order #12345"\n\nAI Analysis:\n• Intent: Order Support\n• Sentiment: Neutral\n• Priority: Standard\n• Route: Customer Service Bot`
-        },
-        {
-          title: 'Intelligent Response Generation',
-          description: 'System generates contextual response using customer history',
-          content: `AI Response: "I can help you with order #12345! I see it was placed on January 28th for $89.99. The order is currently being prepared for shipment. Would you like tracking information or need to make changes?"`
-        },
-        {
-          title: 'Seamless Escalation',
-          description: 'Complex issues are smoothly transferred to human agents with context',
-          content: `Escalation Trigger: Customer requests refund\n\nAgent Handoff:\n• Customer: John Smith\n• Issue: Refund request for order #12345\n• Context: Product damaged during shipping\n• Sentiment: Frustrated but cooperative`
-        }
-      ]
-    },
-    {
-      id: 'agent',
-      title: 'Autonomous Agents',
-      subtitle: 'Self-Managing Task Automation',
+     {
+      id: 'development',
+      title: 'Software Developemnt',
+      subtitle: 'Custom web, app, and desktop applications.',
       icon: 'Bot',
-      description: 'Deploy AI agents that independently handle complex workflows, make decisions, and coordinate with other systems to complete multi-step business processes.',
+      description: 'Build full-stack, fully-integrated software applications to solve specific needs, automate business operations, and triple enterprise valuation multiples.',
       benefits: [
         { icon: 'Zap', title: 'Process Efficiency', value: '75% Faster' },
         { icon: 'Target', title: 'Accuracy Rate', value: '99.5%' },
@@ -78,11 +49,11 @@ const AISolutionsExperienceCenter = () => {
       ]
     },
     {
-      id: 'automation',
-      title: 'Custom Automation',
-      subtitle: 'Tailored Workflow Solutions',
-      icon: 'Settings',
-      description: 'Build custom automation solutions that integrate with your existing systems to streamline unique business processes and eliminate manual repetitive tasks.',
+      id: 'agent',
+      title: 'Autonomous AI Agents',
+      subtitle: 'Self-Managing Task Automation',
+      icon: 'Bot',
+      description: 'Eliminate repetitive tasks with AI agents that independently handle complex workflows, make decisions, and coordinate with other systems to complete multi-step business processes.',
       benefits: [
         { icon: 'BarChart3', title: 'Productivity Gain', value: '200% Increase' },
         { icon: 'Shield', title: 'Error Reduction', value: '95% Fewer' },
@@ -103,6 +74,35 @@ const AISolutionsExperienceCenter = () => {
           title: 'Automated Execution',
           description: 'System executes decisions across integrated platforms',
           content: `Automated Actions:\n• CRM: Updated lead priority\n• Calendar: Scheduled follow-up call\n• Email: Sent personalized sequence\n• Slack: Notified sales team\n• Dashboard: Updated metrics`
+        }
+      ]
+    },
+    {
+      id: 'chatbot',
+      title: 'AI Voice Agents & Chatbots',
+      subtitle: 'Intelligent Customer Conversations',
+      icon: 'MessageCircle',
+      description: 'Transform customer service with AI voice agents and chatbots that understand context, provide personalized responses, and seamlessly escalate complex issues to human agents.',
+      benefits: [
+        { icon: 'Clock', title: '24/7 Availability', value: 'Always Online' },
+        { icon: 'Users', title: 'Customer Satisfaction', value: '92% Average' },
+        { icon: 'TrendingDown', title: 'Response Time', value: '< 30 seconds' }
+      ],
+      demoSteps: [
+        {
+          title: 'Personalization & Qualified Lead Generation',
+          description: 'AI provides personalized service while getting the answers you need to effectively target new clients.',
+          content: `Customer: "I need help with my recent order #12345"\n\nAI Analysis:\n• Intent: Order Support\n• Sentiment: Neutral\n• Priority: Standard\n• Route: Customer Service Bot`
+        },
+        {
+          title: 'Intelligent Response Generation',
+          description: 'System generates contextual response using customer history',
+          content: `AI Response: "I can help you with order #12345! I see it was placed on January 28th for $89.99. The order is currently being prepared for shipment. Would you like tracking information or need to make changes?"`
+        },
+        {
+          title: 'Seamless Escalation',
+          description: 'Complex issues are smoothly transferred to human agents with context',
+          content: `Escalation Trigger: Customer requests refund\n\nAgent Handoff:\n• Customer: John Smith\n• Issue: Refund request for order #12345\n• Context: Product damaged during shipping\n• Sentiment: Frustrated but cooperative`
         }
       ]
     }
