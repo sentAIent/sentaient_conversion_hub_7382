@@ -209,7 +209,7 @@ const ContactSection = () => {
                 Send Us a Message
               </h3>
               {/* Additional Information */}
-              <div className="mt-6 bg-muted/50 rounded-lg p-6">
+              <div className="mt-4 mb-4 bg-muted/50 rounded-lg p-6">
                 <h4 className="text-lg font-semibold text-foreground mb-3">
                   Before You Contact Us
                 </h4>
