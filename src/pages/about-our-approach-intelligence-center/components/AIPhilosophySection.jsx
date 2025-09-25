@@ -253,7 +253,7 @@ const AIPhilosophySection = () => {
               >
                 <Icon name="Calendar" size={20} />
                 <span>Schedule Philosophy Discussion</span>
-              </button>
+              </Button>
               <button className="px-8 py-4 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors duration-300 flex items-center justify-center space-x-2">
                 <Icon name="FileText" size={20} />
                 <span>Download Ethics Framework</span>
