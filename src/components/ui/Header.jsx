@@ -76,6 +76,11 @@ const Header = () => {
           >
             <div className="relative">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-brand">
+                <img 
+                  src={'sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png'}
+                  alt="Company Logo" 
+                  className="logo"
+                />
                 <Icon name="Brain" size={24} color="white" strokeWidth={2.5} />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse-subtle"></div>
@@ -83,9 +88,6 @@ const Header = () => {
             <div className="flex flex-col">
               <span className="text-xl font-bold text-primary tracking-tight">
                 sentAIent
-              </span>
-              <span className="text-xs text-muted-foreground font-medium -mt-1">
-                Conversion Hub
               </span>
             </div>
           </Link>
