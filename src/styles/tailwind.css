@@ -80,6 +80,19 @@
   code, pre {
     font-family: 'Fira Code', monospace;
   }
+
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .logo {
+  height: 40px;
+  width: 40px;
+  transition: transform 0.3s ease;
+  }
+
 }
 
 @layer components {
