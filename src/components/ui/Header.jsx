@@ -81,7 +81,6 @@ const Header = () => {
                   alt="Company Logo" 
                   className="logo"
                 />
-                <Icon name="Brain" size={24} color="white" strokeWidth={2.5} />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse-subtle"></div>
             </div>
