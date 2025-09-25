@@ -303,14 +303,36 @@ const CompanyCultureSection = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="px-8 py-4 bg-accent text-primary font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2">
+              <Button
+                className="px-8 py-4 bg-accent text-primary font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2"
+                variant="default"
+                fullWidth
+                iconName="ArrowRight"
+                iconPosition="right"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setSelectedDeepDive(methodologyPhases?.[activePhase]);
+                  window.location.href = "https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false";
+                }}
+              >
                 <Icon name="Users" size={20} />
-                <span>View Open Positions</span>
-              </button>
-              <button className="px-8 py-4 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors duration-300 flex items-center justify-center space-x-2">
+                <span>Discuss Open Positions</span>
+              </Button>
+              <Button
+                className="w-full bg-primary hover:bg-primary/90"
+                variant="default"
+                fullWidth
+                iconName="ArrowRight"
+                iconPosition="right"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setSelectedDeepDive(methodologyPhases?.[activePhase]);
+                  window.location.href = "https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false";
+                }}
+              >
                 <Icon name="Coffee" size={20} />
                 <span>Coffee Chat with Team</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
