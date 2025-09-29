@@ -110,6 +110,7 @@ const ComplianceCertificationsSection = () => {
   return (
     <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/*
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-success/10 rounded-full mb-6">
             <Icon name="Award" size={32} className="text-success" />
@@ -205,8 +206,11 @@ const ComplianceCertificationsSection = () => {
             );
           })}
         </div>
+        */}
 
         {/* Certification Details Modal */}
+
+        {/*}
         {selectedCertification && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-card border border-border rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -283,7 +287,7 @@ const ComplianceCertificationsSection = () => {
             </div>
           </div>
         )}
-        {/*
+        
         <div className="bg-muted/50 rounded-lg p-8">
           <div className="text-center">
             <h3 className="text-xl font-semibold text-foreground mb-4">
