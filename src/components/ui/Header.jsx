@@ -37,6 +37,11 @@ const Header = () => {
       name: 'Our Approach',
       path: '/about-our-approach-intelligence-center',
       icon: 'Target'
+    },
+    {
+      name: 'Trust & Transparency',
+      path: '/trust-transparency-hub',
+      icon: 'Shield'
     }
   ];
 
@@ -76,7 +81,8 @@ const Header = () => {
           >
             <div className="relative">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-brand">
-                <Icon name="Brain" size={24} color="white" strokeWidth={2.5} />
+
+                {/* <Icon name="Brain" size={24} color="white" strokeWidth={2.5} /> */}
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse-subtle"></div>
             </div>
@@ -104,7 +110,10 @@ const Header = () => {
               </Link>
             ))}
             
+            
             {/* More Dropdown */}
+
+            {/*
             <div className="relative group">
               <button className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-300">
                 <Icon name="MoreHorizontal" size={16} />
@@ -131,6 +140,8 @@ const Header = () => {
                 </div>
               </div>
             </div>
+            */}
+
           </nav>
 
           {/* CTA Button */}

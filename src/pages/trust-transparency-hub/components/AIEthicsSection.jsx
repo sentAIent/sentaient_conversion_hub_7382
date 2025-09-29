@@ -121,6 +121,7 @@ const AIEthicsSection = () => {
           ))}
         </div>
 
+        {/*}
         <div className="bg-card border border-border rounded-lg p-8">
           <div className="flex items-start space-x-6">
             <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -161,7 +162,9 @@ const AIEthicsSection = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> 
+        */}
+
       </div>
     </section>
   );

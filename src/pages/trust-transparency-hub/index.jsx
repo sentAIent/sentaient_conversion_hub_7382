@@ -33,14 +33,6 @@ const TrustTransparencyHub = () => {
       description: "Industry compliance standards",
       icon: "Award"
     },
-    {/*
-    {
-      metric: "6+",
-      label: "Active Certifications",
-      description: "Industry compliance standards",
-      icon: "Award"
-    },
-    */},
     {
       metric: "24/7",
       label: "Security Monitoring",
@@ -52,7 +44,7 @@ const TrustTransparencyHub = () => {
   return (
     <>
       <Helmet>
-        <title>Trust & Transparency Hub - sentAIent Conversion Hub</title>
+        <title>sentAIent.com - Trust & Transparency Hub</title>
         <meta 
           name="description" 
           content="Comprehensive security protocols, AI ethics stance, compliance certifications, and transparent data handling procedures. Building trust through transparency in AI consultancy." 
@@ -75,7 +67,6 @@ const TrustTransparencyHub = () => {
               </div>
               <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-6">
                 Trust & Transparency
-                <span className="block text-primary">Hub</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
                 Building confidence through through our consultative relationships with clients that focus on comprehensive security protocols, ethical AI practices, and complete transparency in our data handling procedures. Your trust is the foundation for all future success.
@@ -161,11 +152,10 @@ const TrustTransparencyHub = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold">sentAIent</div>
-                  <div className="text-sm opacity-80">Conversion Hub</div>
                 </div>
               </div>
               <p className="text-primary-foreground/80 mb-6 max-w-2xl mx-auto">
-                Your trusted partner in AI transformation. Building the future through secure, ethical, and transparent artificial intelligence solutions.
+                Your integrated partner in AI transformation. Building the future through secure, ethical, and transparent artificial intelligence solutions.
               </p>
               <div className="flex flex-wrap justify-center gap-6 text-sm">
                 <span>Security Certified</span>
@@ -177,7 +167,7 @@ const TrustTransparencyHub = () => {
                 <span>SOC 2 Type II</span>
               </div>
               <div className="mt-8 pt-8 border-t border-primary-foreground/20 text-sm opacity-80">
-                © {new Date()?.getFullYear()} sentAIent Conversion Hub. All rights reserved. | 
+                © {new Date()?.getFullYear()} sentAIent.com. All rights reserved. | 
                 <span className="ml-1">Committed to Trust & Transparency</span>
               </div>
             </div>

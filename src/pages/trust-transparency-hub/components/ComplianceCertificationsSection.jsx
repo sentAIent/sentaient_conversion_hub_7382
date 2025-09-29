@@ -283,7 +283,7 @@ const ComplianceCertificationsSection = () => {
             </div>
           </div>
         )}
-
+        {/*
         <div className="bg-muted/50 rounded-lg p-8">
           <div className="text-center">
             <h3 className="text-xl font-semibold text-foreground mb-4">
@@ -308,6 +308,7 @@ const ComplianceCertificationsSection = () => {
             </div>
           </div>
         </div>
+        */}
       </div>
     </section>
   );
