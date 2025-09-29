@@ -515,15 +515,15 @@ const KnowledgeNexusResourceLibrary = () => {
             <div>
               <h3 className="font-semibold text-foreground mb-4">Contact</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>1-800-SENTAI-1</li>
-                <li>hello@sentaient.com</li>
-                <li>San Francisco, CA</li>
+                <li>(323) 250-6923</li>
+                <li>info@sentaient.com</li>
+                <li>Lake Tahoe, CA</li>
               </ul>
             </div>
           </div>
           
           <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date()?.getFullYear()} sentAIent Conversion Hub. All rights reserved.</p>
+            <p>&copy; {new Date()?.getFullYear()} sentAIent.com. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -84,9 +84,6 @@ const Header = () => {
               <span className="text-xl font-bold text-primary tracking-tight">
                 sentAIent
               </span>
-              <span className="text-xs text-muted-foreground font-medium -mt-1">
-                Conversion Hub
-              </span>
             </div>
           </Link>
 
