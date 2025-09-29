@@ -364,7 +364,9 @@ const TrustIndicatorsSection = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="px-8 py-4 bg-accent text-primary font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2">
+              <button className="px-8 py-4 bg-accent text-primary font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2"
+                onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
+              >
                 <Icon name="Calendar" size={20} />
                 <span>Schedule Consultation</span>
               </button>

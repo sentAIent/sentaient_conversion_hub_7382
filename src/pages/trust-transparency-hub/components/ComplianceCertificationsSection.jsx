@@ -230,7 +230,8 @@ const ComplianceCertificationsSection = () => {
                     size="sm"
                     iconName="X"
                     onClick={() => setSelectedCertification(null)}
-                  />
+                  >
+                  </Button>
                 </div>
 
                 <div className="space-y-6">

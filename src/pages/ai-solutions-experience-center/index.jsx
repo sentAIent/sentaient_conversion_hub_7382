@@ -151,6 +151,7 @@ const AISolutionsExperienceCenter = () => {
                 size="lg"
                 iconName="Calendar"
                 iconPosition="left"
+                onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
               >
                 Schedule Live Demo
               </Button>
@@ -358,6 +359,7 @@ const AISolutionsExperienceCenter = () => {
                 iconName="Calendar"
                 iconPosition="left"
                 className="bg-white text-primary hover:bg-white/90"
+                onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
               >
                 Book Strategy Session
               </Button>
