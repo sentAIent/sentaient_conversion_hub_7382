@@ -153,6 +153,7 @@ const Header = () => {
               iconName="Calendar"
               iconPosition="left"
               className="bg-conversion hover:bg-conversion/90"
+              onClick={() => window.location.href = 'https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false'}
             >
               Book Consultation
             </Button>
@@ -210,7 +211,7 @@ const Header = () => {
               >
                 ROI Calculator
               </Button>
-              <button
+              <Button
                 variant="default"
                 fullWidth
                 iconName="Calendar"
@@ -222,7 +223,7 @@ const Header = () => {
                 }}
               >
                 Book Consultation
-              </button>
+              </Button>
             </div>
           </div>
         </div>
