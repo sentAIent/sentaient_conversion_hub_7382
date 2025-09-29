@@ -74,19 +74,18 @@ const Header = () => {
             to="/homepage-ai-consultancy-hub" 
             className="flex items-center space-x-3 transition-transform duration-300 hover:scale-105"
           >
-            <div className="logo-section">
+            <div className="relative">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-brand">
-                <img 
-                  src={"src/components/ui/sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png"}
-                  alt="Company Logo" 
-                  className="logo"
-                />
+                <Icon name="Brain" size={24} color="white" strokeWidth={2.5} />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse-subtle"></div>
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-bold text-primary tracking-tight">
                 sentAIent
+              </span>
+              <span className="text-xs text-muted-foreground font-medium -mt-1">
+                Conversion Hub
               </span>
             </div>
           </Link>
@@ -211,7 +210,7 @@ const Header = () => {
               >
                 ROI Calculator
               </Button>
-              <Button
+              <button
                 variant="default"
                 fullWidth
                 iconName="Calendar"
@@ -223,7 +222,7 @@ const Header = () => {
                 }}
               >
                 Book Consultation
-              </Button>
+              </button>
             </div>
           </div>
         </div>
