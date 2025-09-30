@@ -47,16 +47,7 @@ const iTravel = () => {
               </p>
             </div>
 
-            {/* Quick Links */}
-            <div>
-              <h4 className="font-semibold text-lg mb-4">Solutions</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/ai-solutions-experience-center" className="text-white/80 hover:text-white transition-colors">AI Solutions</a></li>
-                <li><a href="/free-ai-assessment-portal" className="text-white/80 hover:text-white transition-colors">Free Assessment</a></li>
-                <li><a href="/knowledge-nexus-resource-library" className="text-white/80 hover:text-white transition-colors">Resource Library</a></li>
-                <li><a href="/trust-transparency-hub" className="text-white/80 hover:text-white transition-colors">Trust & Security</a></li>
-              </ul>
-            </div>
+            <iframe src="https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
 
             {/* Company */}
             <div>

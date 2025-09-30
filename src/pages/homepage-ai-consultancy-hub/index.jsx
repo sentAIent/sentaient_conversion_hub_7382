@@ -96,15 +96,15 @@ const HomepageAIConsultancyHub = () => {
                 <ul className="space-y-3 text-sm text-primary-foreground/80">
                   <li className="flex items-center space-x-2">
                     <span>📧</span>
-                    <span>hello@sentaient.com</span>
+                    <span>info@sentaient.com</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <span>📞</span>
-                    <span>1-800-AI-TRANSFORM</span>
+                    <span>(323) 250-6923</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <span>🏢</span>
-                    <span>San Francisco, CA</span>
+                    <span>Newport Beach, CA</span>
                   </li>
                   <li><a href="/trust-transparency-hub" className="hover:text-accent transition-colors">Trust & Security</a></li>
                 </ul>
@@ -114,7 +114,7 @@ const HomepageAIConsultancyHub = () => {
             {/* Bottom Bar */}
             <div className="border-t border-primary-foreground/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-sm text-primary-foreground/70">
-                © {new Date()?.getFullYear()} sentAIent Conversion Hub. All rights reserved.
+                © {new Date()?.getFullYear()} sentAIent. All rights reserved.
               </div>
               <div className="flex items-center space-x-6 text-sm text-primary-foreground/70">
                 <a href="/privacy" className="hover:text-accent transition-colors">Privacy Policy</a>
