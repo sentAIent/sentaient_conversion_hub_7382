@@ -2,12 +2,7 @@ import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header';
 import HeroSection from './components/HeroSection';
-import OriginStorySection from './components/OriginStorySection';
-import TeamExpertiseSection from './components/TeamExpertiseSection';
-import AIPhilosophySection from './components/AIPhilosophySection';
-import MethodologySection from './components/MethodologySection';
 import CompanyCultureSection from './components/CompanyCultureSection';
-import TrustIndicatorsSection from './components/TrustIndicatorsSection';
 
 const AboutOurApproachIntelligenceCenter = () => {
   useEffect(() => {
