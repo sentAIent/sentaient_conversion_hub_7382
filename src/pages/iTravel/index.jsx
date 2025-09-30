@@ -21,7 +21,6 @@ const iTravel = () => {
         <meta property="og:title" content="About Our Approach - Intelligence Center | sentAIent" />
         <meta property="og:description" content="Meet our expert team and discover the methodology that drives successful AI transformations with measurable business results." />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="/about-our-approach-intelligence-center" />
       </Helmet>
       <Header />
       <main className="pt-16">
@@ -45,9 +44,8 @@ const iTravel = () => {
               <p className="text-white/80 text-sm leading-relaxed">
                 Transforming businesses through intelligent AI solutions that amplify human potential and deliver measurable results.
               </p>
+              <iframe src="https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
             </div>
-
-            <iframe src="https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
 
             {/* Company */}
             <div>
