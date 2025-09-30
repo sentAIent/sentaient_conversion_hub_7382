@@ -4,6 +4,7 @@ import Header from '../../components/ui/Header';
 
 const iTravel = () => {
   useEffect(() => {
+    // Scroll to top on component mount
     window.scrollTo(0, 0);
   }, []);
 
@@ -21,6 +22,9 @@ const iTravel = () => {
         <meta property="og:type" content="website" />
       </Helmet>
       <div>
+        <p>
+          TESTING...
+        </p>
         <iframe src="https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
       </div>
     </div>
