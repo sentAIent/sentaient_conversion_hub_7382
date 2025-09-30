@@ -25,6 +25,7 @@ const iTravel = () => {
       <Header />
       <main className="pt-16">
         <HeroSection />
+        <iframe src="https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
       </main>
       {/* Footer */}
       <footer className="bg-primary text-white py-16">
@@ -44,7 +45,6 @@ const iTravel = () => {
               <p className="text-white/80 text-sm leading-relaxed">
                 Transforming businesses through intelligent AI solutions that amplify human potential and deliver measurable results.
               </p>
-              <iframe src="https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
             </div>
 
             {/* Company */}
