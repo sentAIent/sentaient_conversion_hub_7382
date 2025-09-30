@@ -87,8 +87,6 @@ const HeroSection = () => {
                 alt="Team collaboration and AI strategy session"
                 className="w-full h-full object-cover"
               />
-              
-              
             </div>
           </div>
         </div>
