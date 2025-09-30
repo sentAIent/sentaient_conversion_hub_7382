@@ -87,11 +87,6 @@ const Header = () => {
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse-subtle"></div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold text-primary tracking-tight">
-                sentAIent
-              </span>
-            </div>
           </Link>
 
           {/* Desktop Navigation */}
