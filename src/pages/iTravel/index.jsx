@@ -4,7 +4,7 @@ import Header from '../../components/ui/Header';
 import HeroSection from './components/HeroSection';
 import CompanyCultureSection from './components/CompanyCultureSection';
 
-const AboutOurApproachIntelligenceCenter = () => {
+const iTravel = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -97,4 +97,4 @@ const AboutOurApproachIntelligenceCenter = () => {
   );
 };
 
-export default AboutOurApproachIntelligenceCenter;
+export default iTravel;
