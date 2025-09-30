@@ -22,11 +22,11 @@
     --color-ring: #1a365d; /* blue-900 */
     
     /* Brand Colors */
-    --color-primary: #1a365d; /* blue-900 */
+    --color-primary: #60a9ff; /* blue-900 */
     --color-primary-foreground: #ffffff; /* white */
-    --color-secondary: #2d5a87; /* blue-700 */
+    --color-secondary: #202733; /* blue-700 */
     --color-secondary-foreground: #ffffff; /* white */
-    --color-accent: #00d4ff; /* cyan-400 */
+    --color-accent: #8cc9ff; /* cyan-400 */
     --color-accent-foreground: #1a365d; /* blue-900 */
     
     /* Status Colors */
@@ -89,7 +89,7 @@
   
   .logo {
   height: 40px;
-  width: 40px;
+  width: 120px;
   transition: transform 0.3s ease;
   }
 

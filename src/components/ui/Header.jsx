@@ -81,7 +81,7 @@ const Header = () => {
             className="flex items-center space-x-3 transition-transform duration-300 hover:scale-105"
           >
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-brand">
+              <div className="flex items-center justify-center shadow-brand">
                 <img src={logo} alt="Logo"/>
                 {/* <Icon name="Brain" size={24} color="white" strokeWidth={2.5} /> */}
               </div>
