@@ -65,13 +65,11 @@ const Header = () => {
   };
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-background/95 backdrop-blur-md shadow-elevation border-b border-border' 
-          : 'bg-background'
-      }`}
-    >
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-background/95 backdrop-blur-md shadow-elevation border-b border-border' 
+        : 'bg-background'
+    }`}>
       <div className="w-full">
         <div className="flex items-center justify-between h-16 px-6 lg:px-8">
           {/* Logo */}
