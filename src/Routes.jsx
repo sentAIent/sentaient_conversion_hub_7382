@@ -1,15 +1,15 @@
-import React from "react";
-import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
-import ScrollToTop from "./components/ScrollToTop";
-import ErrorBoundary from "./components/ErrorBoundary";
-import NotFound from "./pages/NotFound";
+import React from 'react';
+import { BrowserRouter, Routes as RouterRoutes, Route } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
+import ErrorBoundary from '/components/ErrorBoundary';
+import NotFound from './pages/NotFound';
 import KnowledgeNexusResourceLibrary from './pages/knowledge-nexus-resource-library';
 import FreeAIAssessmentPortal from './pages/free-ai-assessment-portal';
 import HomepageAIConsultancyHub from './pages/homepage-ai-consultancy-hub';
 import AISolutionsExperienceCenter from './pages/ai-solutions-experience-center';
 import TrustTransparencyHub from './pages/trust-transparency-hub';
 import AboutOurApproachIntelligenceCenter from './pages/about-our-approach-intelligence-center';
-import iTravel from './pages/iTravel/index.jsx';
+import iTravel from './pages/iTravel';
 
 const Routes = () => {
   return (
