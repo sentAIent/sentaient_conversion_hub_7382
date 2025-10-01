@@ -35,7 +35,7 @@ const ITravel = () => {
     );
   }
 
-  
+
   return (
       <Helmet>
         <title>iTravel | sentAIent.com</title>
@@ -48,9 +48,9 @@ const ITravel = () => {
         <meta property="og:description" content="Meet our expert team and discover the methodology that drives successful AI transformations with measurable business results." />
         <meta property="og:type" content="website" />
       </Helmet>
-        <div>
-          <Header />
-          <iTravel />
+      <div>
+        <Header />
+        <iTravel />
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-primary mb-4">iTravel Platform</h1>
@@ -102,7 +102,6 @@ const ITravel = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
