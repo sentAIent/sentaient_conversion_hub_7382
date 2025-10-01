@@ -87,7 +87,7 @@ const Header = () => {
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse-subtle"></div>
             </div>
-          </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1">
@@ -175,7 +175,7 @@ const Header = () => {
               className="transition-transform duration-300"
             />
           </button>
-        </div>
+        </Link>
 
         {/* Mobile Menu */}
         <div 
