@@ -87,7 +87,7 @@ const ITravel = () => {
                       // Use onLoad to hide a pre-loader if you have one
                       onError={handleIframeError}
                       className="w-full h-full"
-                      style={{ minHeight: '400px' }}
+                      style={{ minHeight: '800px' }}
                     ></iframe>
                 )}
                 
