@@ -57,9 +57,7 @@ const ITravel = () => {
       <meta property="og:type" content="website" />
     </Helmet>
     <div>
-     
-     <Header />
-
+      <Header />
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="mb-4">
           <p className="text-primary font-semibold mb-2">TESTING...</p>
