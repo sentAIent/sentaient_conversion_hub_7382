@@ -9,6 +9,7 @@ const TeamExpertiseSection = () => {
     {
       id: 1,
       name: "Brian Leonard",
+<<<<<<< HEAD
       role: "Chief AI Strategist",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
       specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading", "Investment Management"],
@@ -17,6 +18,14 @@ const TeamExpertiseSection = () => {
       bio: `Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management. Brian spent 4 years at PIMCO working directly with many of firm's top client relationships. 
       Brian served as head of investment analytics and trading for two Registered Investment Advisors, overseeing portfolio management for $2B+ in client assets.
       In the late-2000's, Brian helped pioneer algorithmic trading within managed accounts for thousands of retirement investors, utilizing his expertise in finance, tech, and marketing to transform the firm during a pivotal time in its 20+ year history.`,
+=======
+      role: "CEO, Chief AI Officer",
+      avatar: "https://drive.google.com/file/d/16PoNLR8qdsjuPi9ItsM3Z6FzpMMBDute/view?usp=drive_link",
+      specializations: ["Machine Learning", "Natural Language Processing", "Computer Vision"],
+      experience: "12+ years",
+      education: "PhD Computer Science, Stanford",
+      bio: `Dr. Chen leads our AI strategy development with deep expertise in enterprise-scale machine learning implementations. Her research in ethical AI frameworks has been published in 15+ peer-reviewed journals.`,
+>>>>>>> 8db34e8 (Update TeamExperienceSection.jsx - BL Profile Pic)
       achievements: [
         "Pioneered quantitative trading for retirement investors in the early days of Target Date Funds",
         "Contributed to 5x increase in Assets Under Management in under three years.",
