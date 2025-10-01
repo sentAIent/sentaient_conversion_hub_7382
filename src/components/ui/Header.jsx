@@ -73,7 +73,7 @@ const Header = () => {
       <div className="w-full">
         <div className="flex items-center justify-between h-16 px-6 lg:px-8">
           {/* Logo */}
-          <Link 
+          <div 
             to="/homepage-ai-consultancy-hub" 
             className="flex items-center space-x-3 transition-transform duration-300 hover:scale-105"
           >
