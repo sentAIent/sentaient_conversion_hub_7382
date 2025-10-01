@@ -57,7 +57,6 @@ const ITravel = () => {
       <meta property="og:type" content="website" />
     </Helmet>
     <div>
-      <Header />
       <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
         <iframe 
           src="https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed"
