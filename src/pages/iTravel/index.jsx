@@ -58,12 +58,10 @@ const ITravel = () => {
     </Helmet>
     <div>
       <Header />
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="mb-4">
-          <p className="text-primary font-semibold mb-2">TESTING...</p>
-          <div className="w-full h-1 bg-blue-200 rounded-full">
-            <div className="w-1/3 h-1 bg-blue-600 rounded-full animate-pulse"></div>
-          </div>
+      <div className="mb-4">
+        <p className="text-primary font-semibold mb-2">TESTING...</p>
+        <div className="w-full h-1 bg-blue-200 rounded-full">
+          <div className="w-1/3 h-1 bg-blue-600 rounded-full animate-pulse"></div>
         </div>
         
         {/* Fixed iframe implementation */}
