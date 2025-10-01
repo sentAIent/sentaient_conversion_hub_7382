@@ -88,7 +88,7 @@ const ITravel = () => {
                 <h3 className="text-xl font-semibold text-primary mb-2">Travel Planning Demo</h3>
                 <p className="text-secondary mb-4">Interactive travel planning interface</p>
                 <button 
-                  onClick={() => window.open('https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca', '_blank')}
+                  onClick={() => window.open('https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed', '_blank')}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Open in New Tab
