@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header'; 
 
 const CLAUDE_EMBED_URL = "https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed";
-const FALLBACK_URL = "https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed";
+const FALLBACK_URL = "https://claude.ai/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465";
 
 const ITravel = () => {
   // --- STATE DEFINITIONS (Moved inside the component) ---
