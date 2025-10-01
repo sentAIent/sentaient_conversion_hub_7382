@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header'; 
 
-const CLAUDE_EMBED_URL = "https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed";
-const FALLBACK_URL = "https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed";
+const CLAUDE_EMBED_URL = "https://https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed";
+const FALLBACK_URL = "https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465";
 
 const ITravel = () => {
   // --- STATE DEFINITIONS (Moved inside the component) ---
