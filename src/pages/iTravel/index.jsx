@@ -47,7 +47,10 @@ const ITravel = () => {
         <meta property="og:description" content="Meet our expert team and discover the methodology that drives successful AI transformations with measurable business results." />
         <meta property="og:type" content="website" />
       </Helmet>
-      
+      <main>
+        {/* Hero Section with AI Impact Calculator */}
+        <ITravel />
+      </main>
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary mb-4">iTravel Platform</h1>
@@ -61,11 +64,6 @@ const ITravel = () => {
               <div className="w-1/3 h-1 bg-blue-600 rounded-full animate-pulse"></div>
             </div>
           </div>
-
-          <main>
-            {/* Hero Section with AI Impact Calculator */}
-            <ITravel />
-          </main>
           
           {/* Fixed iframe implementation */}
           <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
