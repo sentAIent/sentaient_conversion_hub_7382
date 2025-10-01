@@ -8,6 +8,7 @@ const [iframeFailed, setIframeFailed] = useState(false);
 const handleIframeError = () => {
     console.error('Failed to load iframe content');
     setIframeFailed(true); // Set state on failure
+};
 
 // Fixed version of your iTravel component
 const ITravel = () => {
