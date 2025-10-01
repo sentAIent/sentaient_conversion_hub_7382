@@ -51,7 +51,6 @@ const ITravel = () => {
           <Header />
 
           <main>
-            {/* Hero Section with AI Impact Calculator */}
             <ITravel />
           </main>
         </div>
