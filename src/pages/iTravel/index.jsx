@@ -102,4 +102,4 @@ const ITravel = () => {
   );
 };
 
-export default iTravel;
+export default ITravel;
