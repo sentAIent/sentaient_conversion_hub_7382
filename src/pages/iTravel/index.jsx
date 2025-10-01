@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
+import Header from '../../components/ui/Header';
 
 // Fixed version of your iTravel component
 const ITravel = () => {
