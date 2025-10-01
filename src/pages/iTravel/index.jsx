@@ -48,7 +48,7 @@ const ITravel = () => {
         <meta property="og:type" content="website" />
       </Helmet>
       <div className="min-h-screen bg-background">
-        <Header />
+        {*/ Header /*}
 
         <main>
           {/* Hero Section with AI Impact Calculator */}
