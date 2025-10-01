@@ -65,35 +65,33 @@ const ITravel = () => {
 
       <div className="max-w-7xl mx-auto px-4 pb-8">
         <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="mb-4">
-              <p className="text-primary font-semibold mb-2">TESTING...</p>
-              <div className="w-full h-full bg-blue-200 rounded-full">
-                <div className="w-1/3 h-1 bg-blue-600 rounded-full animate-pulse"></div>
-              </div>
+          <div className="mb-4">
+            <p className="text-primary font-semibold mb-2">TESTING...</p>
+            <div className="w-full h-full bg-blue-200 rounded-full">
+              <div className="w-1/3 h-1 bg-blue-600 rounded-full animate-pulse"></div>
             </div>
-            
-            <div className="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                                
-                {!iframeFailed && (
-                    <iframe 
-                    src={CLAUDE_EMBED_URL}
-                    title="Claude Artifact" 
-                    width="100%" 
-                    height="100%" 
-                    frameborder="0" 
-                    allow="clipboard-write" 
-                    allowfullscreen
-                    onError={handleIframeError}
-                    className="w-full h-full"
-                    style={{ minHeight: '800px' }}
-                    >
-                )}
-                
-
-            </div>
+          </div>
+          
+          <div className="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                              
+            {!iframeFailed && (
+                <iframe 
+                src={CLAUDE_EMBED_URL}
+                title="Claude Artifact" 
+                width="100%" 
+                height="100%" 
+                frameborder="0" 
+                allow="clipboard-write" 
+                allowfullscreen
+                onError={handleIframeError}
+                className="w-full h-full"
+                style={{ minHeight: '800px' }}
+                ></iframe>
+            )}
+          </div>
         </div>
-      </div>
-    </>
+      <>
+
   );
 };
 
