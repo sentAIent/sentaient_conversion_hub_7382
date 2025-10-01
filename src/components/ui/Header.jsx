@@ -80,13 +80,9 @@ const Header = () => {
             className="flex items-center space-x-3 transition-transform duration-300 hover:scale-105"
           >
             <div className="relative">
-<<<<<<< HEAD
               <div className="flex items-center justify-center shadow-brand">
-                <img src={logo} alt="Logo"/>
-=======
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-brand">
-
->>>>>>> parent of 472022a (add logo <img>)
+                <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-brand">
+                  <img src={logo} alt="Logo"/>
                 {/* <Icon name="Brain" size={24} color="white" strokeWidth={2.5} /> */}
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse-subtle"></div>
