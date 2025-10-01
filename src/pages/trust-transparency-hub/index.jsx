@@ -36,7 +36,7 @@ const TrustTransparencyHub = () => {
     {
       metric: "24/7",
       label: "Security Monitoring",
-      description: "Continuous threat detection", 
+      description: "Continuous threat detection",
       icon: "Shield"
     }
   ];
@@ -137,9 +137,7 @@ const TrustTransparencyHub = () => {
         {/* Main Content Sections */}
         <SecurityProtocolsSection />
         <AIEthicsSection />
-        {/*}
         <ComplianceCertificationsSection />
-        */}
         <TransparencyFrameworkSection />
         <DataHandlingSection />
         <ContactSection />
