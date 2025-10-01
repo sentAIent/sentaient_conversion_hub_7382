@@ -9,7 +9,7 @@ import HomepageAIConsultancyHub from './pages/homepage-ai-consultancy-hub';
 import AISolutionsExperienceCenter from './pages/ai-solutions-experience-center';
 import TrustTransparencyHub from './pages/trust-transparency-hub';
 import AboutOurApproachIntelligenceCenter from './pages/about-our-approach-intelligence-center';
-import ITravel from './pages/itravel/ITravel.jsx';
+import ITravel from './pages/components/itravel/ITravel.jsx';
 
 const Routes = () => {
   return (
@@ -25,7 +25,7 @@ const Routes = () => {
         <Route path="/ai-solutions-experience-center" element={<AISolutionsExperienceCenter />} />
         <Route path="/trust-transparency-hub" element={<TrustTransparencyHub />} />
         <Route path="/about-our-approach-intelligence-center" element={<AboutOurApproachIntelligenceCenter />} />
-        <Route path="/iTravel" element={<iTravel />} />
+        <Route path="/itravel" element={<ITravel />} />
         <Route path="*" element={<NotFound />} />
       </RouterRoutes>
       </ErrorBoundary>
