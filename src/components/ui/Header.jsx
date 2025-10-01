@@ -80,7 +80,7 @@ const Header = () => {
           >
             <div className="relative">
               <div className="flex items-center justify-center shadow-brand">
-                <div className="w-20 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-brand">
+                <div className="w-25 h-10 flex items-center justify-center shadow-brand">
                   <img src={logo} alt="Logo"/>
                 {/* <Icon name="Brain" size={24} color="white" strokeWidth={2.5} /> */}
               </div>
