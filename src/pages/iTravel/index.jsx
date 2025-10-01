@@ -90,8 +90,8 @@ const ITravel = () => {
             )}
           </div>
         </div>
-      <>
-
+      </div>
+    </>
   );
 };
 
