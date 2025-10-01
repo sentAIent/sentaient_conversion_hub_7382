@@ -61,6 +61,11 @@ const ITravel = () => {
               <div className="w-1/3 h-1 bg-blue-600 rounded-full animate-pulse"></div>
             </div>
           </div>
+
+          <main>
+            {/* Hero Section with AI Impact Calculator */}
+            <ITravel />
+          </main>
           
           {/* Fixed iframe implementation */}
           <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
