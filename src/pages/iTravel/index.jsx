@@ -47,6 +47,7 @@ const ITravel = () => {
         <meta property="og:description" content="Meet our expert team and discover the methodology that drives successful AI transformations with measurable business results." />
         <meta property="og:type" content="website" />
       </Helmet>
+      <Header />
       <main>
         {/* Hero Section with AI Impact Calculator */}
         <ITravel />
