@@ -2,6 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Header from '../components/ui/Header';
 
+// Add state to the component
+const [iframeFailed, setIframeFailed] = useState(false);
+
+const handleIframeError = () => {
+    console.error('Failed to load iframe content');
+    setIframeFailed(true); // Set state on failure
+
 // Fixed version of your iTravel component
 const ITravel = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +40,7 @@ const ITravel = () => {
         </div>
       </div>
     );
-  }
+  };
 
 
   return (
