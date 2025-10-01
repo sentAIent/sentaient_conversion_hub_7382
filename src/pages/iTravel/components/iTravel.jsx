@@ -123,7 +123,6 @@ const HeroSection = () => {
 
             <iframe src="https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
             
-            <elevenlabs-convai agent-id="agent_4401k66g6ykrfyyscxycfz72rqjh"></elevenlabs-convai><script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
             
             {/* Primary CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
