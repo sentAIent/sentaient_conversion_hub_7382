@@ -173,7 +173,7 @@ const Header = () => {
               className="transition-transform duration-300"
             />
           </button>
-        </Link>
+        </div>
 
         {/* Mobile Menu */}
         <div 
@@ -230,6 +230,7 @@ const Header = () => {
           </div>
         </div>
       </div>
+    </div>
     </header>
   );
 };
