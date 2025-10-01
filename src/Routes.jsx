@@ -9,7 +9,7 @@ import HomepageAIConsultancyHub from './pages/homepage-ai-consultancy-hub';
 import AISolutionsExperienceCenter from './pages/ai-solutions-experience-center';
 import TrustTransparencyHub from './pages/trust-transparency-hub';
 import AboutOurApproachIntelligenceCenter from './pages/about-our-approach-intelligence-center';
-import iTravel from './pages/iTravel';
+import iTravel from './pages/iTravel/iTravel';
 
 const Routes = () => {
   return (

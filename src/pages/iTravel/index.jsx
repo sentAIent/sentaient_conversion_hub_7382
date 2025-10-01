@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 
 // Fixed version of your iTravel component
-const iTravel = () => {
+const ITravel = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -170,4 +170,4 @@ const iTravelSimple = () => {
   );
 };
 
-export { iTravel, iTravelSimple };
+export ITravel;
