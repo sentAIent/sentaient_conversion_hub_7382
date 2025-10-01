@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import Header from '../../components/ui/Header';
+import Header from '../components/ui/Header';
 
 // Fixed version of your iTravel component
 const ITravel = () => {
@@ -48,7 +48,7 @@ const ITravel = () => {
         <meta property="og:type" content="website" />
       </Helmet>
       <div className="min-h-screen bg-background">
-        {*/ Header /*}
+        <Header />
 
         <main>
           {/* Hero Section with AI Impact Calculator */}
