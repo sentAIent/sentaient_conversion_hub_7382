@@ -121,6 +121,8 @@ const HeroSection = () => {
               </p>
             </div>
 
+            <iframe src="https://claude.site/public/artifacts/4089f5b9-3819-4593-bbce-b47e97176dca/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
+            
             {/* Primary CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <Link to="/free-ai-assessment-portal">
