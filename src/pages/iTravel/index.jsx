@@ -72,7 +72,7 @@ const ITravel = () => {
               </div>
             </div>
             
-            <div className="relative w-full h-[600px]] bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+            <div className="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                 
                 {/* Iframe is only rendered if it hasn't failed */}
                 {!iframeFailed && (
