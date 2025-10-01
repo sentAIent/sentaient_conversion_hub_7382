@@ -73,9 +73,7 @@ const ITravel = () => {
             </div>
             
             <div className="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                
-                <iframe src="https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed" title="Claude Artifact" width="100%" height="600" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
-                
+                                
                 {!iframeFailed && (
                     <iframe 
                       src={CLAUDE_EMBED_URL}
