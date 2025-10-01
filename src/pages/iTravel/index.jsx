@@ -50,7 +50,6 @@ const ITravel = () => {
       </Helmet>
       <div>
         <Header />
-        <iTravel />
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-primary mb-4">iTravel Platform</h1>
