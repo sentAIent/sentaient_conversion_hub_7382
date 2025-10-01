@@ -138,3 +138,5 @@ export default {
     require('tailwindcss-animate'),
   ],
 }
+
+export default config
