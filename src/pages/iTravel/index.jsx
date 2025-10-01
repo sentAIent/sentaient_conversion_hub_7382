@@ -37,6 +37,7 @@ const ITravel = () => {
 
 
   return (
+    <>
       <Helmet>
         <title>iTravel | sentAIent.com</title>
         <meta 
@@ -101,6 +102,7 @@ const ITravel = () => {
           </div>
         </div>
       </div>
+    <>
   );
 };
 
