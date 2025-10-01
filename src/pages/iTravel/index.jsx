@@ -58,12 +58,6 @@ const ITravel = () => {
       </Helmet>
       <div>
         <Header />
-        <div>
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-primary mb-4">iTravel Platform</h1>
-            <p className="text-lg text-secondary">Testing the travel planning interface...</p>
-          </div>
-        </div>
       </div>
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="mb-4">
