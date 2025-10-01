@@ -170,4 +170,4 @@ const iTravelSimple = () => {
   );
 };
 
-export ITravel;
+export default ITravel;
