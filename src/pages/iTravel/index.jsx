@@ -3,14 +3,13 @@ import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header'; 
 
 const CLAUDE_EMBED_URL = "https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed";
-const FALLBACK_URL = "https://claude.site/public/artifacts/7f2751f7-8472-427b-8693-e32da78b2465/embed";
 
 const ITravel = () => {
-  // --- STATE DEFINITIONS (Moved inside the component) ---
+  // --- STATE DEFINITIONS ---
   const [isLoading, setIsLoading] = useState(true);
   const [iframeFailed, setIframeFailed] = useState(false); // State to control fallback visibility
 
-  // --- HANDLERS (Defined inside the component) ---
+  // --- HANDLERS ---
   const handleIframeError = () => {
     console.error('Failed to load iframe content. This may be due to a server-side CSP issue.');
     setIframeFailed(true); // Set state to true to show the fallback UI
@@ -20,6 +19,7 @@ const ITravel = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     
+    // Simulate a brief loading time
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
@@ -41,7 +41,7 @@ const ITravel = () => {
 
   // --- MAIN RENDER ---
   return (
-    <> {/* FIX #3: Added single root Fragment wrapper */}
+    <>
       <Helmet>
         <title>iTravel | sentAIent.com</title>
         <meta 
@@ -54,7 +54,7 @@ const ITravel = () => {
         <meta property="og:type" content="website" />
       </Helmet>
       
-      <Header /> {/* Header should not be inside a wrapping div unless necessary */}
+      <Header />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
@@ -71,17 +71,18 @@ const ITravel = () => {
               <div className="w-1/3 h-1 bg-blue-600 rounded-full animate-pulse"></div>
             </div>
           </div>
-          <div className="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                              
+          
+          {/* Iframe for Claude Artifact */}
+          <div className="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200 mb-8">
             {!iframeFailed && (
                 <iframe 
                 src={CLAUDE_EMBED_URL}
                 title="Claude Artifact" 
                 width="100%" 
                 height="100%" 
-                frameborder="0" 
+                frameBorder="0" // Use camelCase for React props
                 allow="clipboard-write" 
-                allowfullscreen
+                allowFullScreen
                 onError={handleIframeError}
                 className="w-full h-full"
                 style={{ minHeight: '800px' }}
@@ -89,12 +90,20 @@ const ITravel = () => {
             )}
           </div>
 
-          <div className="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-            <p>
+          {/* ElevenLabs/Convai Voice Agent Container (Fixed) */}
+          {/* NOTE: Removed 'overflow-hidden' to ensure the floating widget is visible */}
+          <div className="relative w-full h-full bg-gray-100 rounded-lg border border-gray-200 p-4">
+            <p className="text-primary font-semibold mb-2">
               AI Voice Agent & Chatbot
             </p>
-            <elevenlabs-convai agent-id="agent_4401k66g6ykrfyyscxycfz72rqjh"></elevenlabs-convai><script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+            {/* The custom component itself - the script must be in public/index.html */}
+            <elevenlabs-convai agent-id="agent_4401k66g6ykrfyyscxycfz72rqjh"></elevenlabs-convai>
+            {/* IMPORTANT: The <script> tag for the Convai widget 
+              (https://unpkg.com/@elevenlabs/convai-widget-embed) 
+              MUST be placed in your public/index.html file, NOT here.
+            */}
           </div>
+
         </div>
       </div>
     </>
