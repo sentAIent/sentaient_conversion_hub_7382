@@ -92,6 +92,7 @@ const ITravel = () => {
           <div className="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
             <p>
               AI Voice Agent & Chatbot
+            </p>
             <elevenlabs-convai agent-id="agent_4401k66g6ykrfyyscxycfz72rqjh"></elevenlabs-convai><script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
           </div>
         </div>
