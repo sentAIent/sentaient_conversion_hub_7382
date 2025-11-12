@@ -13,7 +13,7 @@ const HeroSection = () => {
           Action
         </h1>
         
-        <p className="text-xl text-white/90 leading-relaxed max-w-2xl">
+        <p className="hero-content">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32">
