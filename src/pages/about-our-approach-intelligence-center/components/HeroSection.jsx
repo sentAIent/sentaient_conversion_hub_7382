@@ -23,7 +23,7 @@ const HeroSection = () => {
             size="2xl"
             iconName="Users"
             iconPosition="center"
-            className="bg-accent hover:bg-accent/90 text-primary lg:text-2xl font-bold">
+            className="bg-accent hover:bg-accent/90 text-primary lg:text-1xl font-bold">
             Meet Our Team
           </Button>
         </div>
