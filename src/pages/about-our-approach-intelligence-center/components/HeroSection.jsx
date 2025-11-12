@@ -13,7 +13,7 @@ const HeroSection = () => {
           Action
         </h1>
         
-        <p className="mt-3 text-white text-2xl">
+        <p className="mt-3 text-white text-3xl">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
           accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
