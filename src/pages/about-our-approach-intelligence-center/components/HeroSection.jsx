@@ -25,7 +25,7 @@ const HeroSection = () => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex">
               <Button
                 variant="default"
                 size="lg"
@@ -34,15 +34,6 @@ const HeroSection = () => {
                 className="bg-accent hover:bg-accent/90 text-primary font-semibold"
               >
                 Meet Our Team
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                iconName="BookOpen"
-                iconPosition="left"
-                className="border-white/30 text-white hover:bg-white/10"
-              >
-                Our Methodology
               </Button>
             </div>
 
