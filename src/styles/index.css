@@ -27,26 +27,26 @@ body {
 
 .hero-content {
   text-align: center;
-  color: var[--primary]; /* Example: white text for a dark background image */
+  color: white; /* Example: white text for a dark background image */
   z-index: 2; /* Ensure content is above any potential overlays */
-  margin-top: 5vh;
-  margin-bottom: 5vh;
+  margin-top: 20vh;
+  margin-bottom: 20vh;
   width: 50%;
 }
 
 .hero-content h1 {
-  font-size: 3em;
-  margin-bottom: 20px;
+  font-size: 5em;
+  margin-bottom: 40px;
 }
 
 .hero-content p {
   font-size: 1.2em;
-  margin-bottom: 30px;
+  margin-bottom: 60px;
 }
 
 .hero-content button {
   padding: 20px 30px;
-  background-color: #007bff; /* Example button style */
+  background-color: #66a9ff; /* Example button style */
   color: white;
   border: none;
   border-radius: 5px;
