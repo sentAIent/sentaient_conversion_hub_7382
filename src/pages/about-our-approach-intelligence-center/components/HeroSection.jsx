@@ -13,11 +13,11 @@ const HeroSection = () => {
           Action
         </h1>
         
-        <p className="">
+        <p className="mt-3">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
           accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
-        <div className="">
+        <div className="mt-4">
           <Button
             vriant="default"
             size="lg"
