@@ -32,6 +32,7 @@ body {
   z-index: 2; /* Ensure content is above any potential overlays */
   margin-top: 5vh;
   margin-bottom: 5vh;
+  width: 40%;
 }
 
 .hero-content h1 {
@@ -45,7 +46,7 @@ body {
 }
 
 .hero-content button {
-  padding: 10px 20px;
+  padding: 20px 30px;
   background-color: #007bff; /* Example button style */
   color: white;
   border: none;
