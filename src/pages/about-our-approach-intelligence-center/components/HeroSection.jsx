@@ -17,19 +17,17 @@ const HeroSection = () => {
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
           accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
-        <div className="hero-content">
-          <div className="items-center">
-            <div className="flex">
-              <Button
-                vriant="default"
-                size="lg"
-                iconName="Users"
-                iconPosition="left"
-                className="bg-accent hover:bg-accent/90 text-primary font-semibold"
-              >
-                Meet Our Team
-              </Button>
-            </div>
+        <div className="flex">
+          <Button
+            vriant="default"
+            size="lg"
+            iconName="Users"
+            iconPosition="left"
+            className="bg-accent hover:bg-accent/90 text-primary font-semibold"
+          >
+            Meet Our Team
+          </Button>
+        </div>
 
             {/* Stats * /}
             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20">
@@ -47,9 +45,6 @@ const HeroSection = () => {
               </div>
             </div>
             */}
-            
-          </div>
-        </div>
       </div>
     </section>
   );
