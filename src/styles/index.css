@@ -31,7 +31,8 @@ body {
   z-index: 2; /* Ensure content is above any potential overlays */
   margin-top: 20vh;
   margin-bottom: 20vh;
-  width: 40%;
+  width: 50%;
+  padding: 20px;
 }
 
 .hero-content h1 {
