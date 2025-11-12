@@ -13,21 +13,15 @@ const HeroSection = () => {
           Action
         </h1>
         
-        <p className="hero-content">
+        <p className="">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
           accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
         <div className="hero-content">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Content */}
-            <div className="space-y-8">
-              <div className="space-y-4">
-              </div>
-            </div>
-
+          <div className="items-center">
             <div className="flex">
               <Button
-                variant="default"
+                vriant="default"
                 size="lg"
                 iconName="Users"
                 iconPosition="left"
