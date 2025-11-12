@@ -17,7 +17,7 @@ body {
       background-position: center; /* Centers the image */
       background-repeat: no-repeat; /* Prevents image repetition */
       height: 100vh; /* Makes the hero section take full viewport height */
-      width: 140vw; /* Makes the hero section take full viewport width */
+      width: 100vw; /* Makes the hero section take full viewport width */
       display: flex; /* Use flexbox for content alignment */
       justify-content: center; /* Center content horizontally */
       align-items: center; /* Center content vertically */
@@ -31,7 +31,7 @@ body {
   z-index: 2; /* Ensure content is above any potential overlays */
   margin-top: 20vh;
   margin-bottom: 20vh;
-  width: 50%;
+  width: 40%;
 }
 
 .hero-content h1 {
