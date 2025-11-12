@@ -29,8 +29,8 @@ body {
   text-align: center;
   color: white; /* Example: white text for a dark background image */
   z-index: 2; /* Ensure content is above any potential overlays */
-  margin-top: 40vh;
-  margin-bottom: 40vh;
+  margin-top: 15vh;
+  margin-bottom: 15vh;
   width: 50%;
   padding: 20px;
 }
