@@ -4,7 +4,15 @@ import Button from '../../../components/ui/Button';
 
 const HeroSection = () => {
   return (
-    <section className="relative bg-gradient-to-br from-primary via-secondary to-primary/90 text-white overflow-hidden">
+    // <section className="relative bg-gradient-to-br from-primary via-secondary to-primary/90 text-white overflow-hidden">
+    <section className="relative w-full h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-deep">
+      <div className="relative w-full h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-deep">
+        <img
+          src="https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2606&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+          alt="Team collaboration and AI strategy session"
+          className="w-full h-full object-cover"
+        />
+      </div>
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-32 h-32 border border-white/20 rounded-full"></div>

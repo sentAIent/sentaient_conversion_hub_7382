@@ -6,3 +6,7 @@ package-lock.json
 .vscode/
 .idea/
 vite.config.*s.*
+
+
+.cursor/rules/kluster-code-verify.mdc
+.kluster
