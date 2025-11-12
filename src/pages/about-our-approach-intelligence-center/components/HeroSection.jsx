@@ -10,7 +10,8 @@ const HeroSection = () => {
         <h1 className="text-3xl lg:text-4xl font-bold leading-tight">
           Intelligence That
           <span className="block text-accent">Amplifies</span>
-          Human Achievement
+          <span>Human</span>
+          Achievement
         </h1>
         
         <p className="mt-3 text-white lg:text-2xl font-bold">

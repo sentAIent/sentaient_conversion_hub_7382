@@ -11,7 +11,7 @@ const TeamExpertiseSection = () => {
       name: "Brian Leonard",
       role: "Chief AI Strategist",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading", "Investment Management"],
+      specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading", "Investment Management", "Asset Allocation"],
       experience: "20+ years",
       education: "B.S.B.A., Saint Louis University",
       bio: `Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management. Brian spent 4 years at PIMCO working directly with many of firm's top client relationships. 
@@ -134,7 +134,7 @@ const TeamExpertiseSection = () => {
                 <div>
                   <h4 className="text-sm font-semibold text-foreground mb-2">Specializations</h4>
                   <div className="flex flex-wrap gap-2">
-                    {member?.specializations?.slice(0, 2)?.map((spec, index) => (
+                    {member?.specializations?.slice(0, 4)?.map((spec, index) => (
                       <span
                         key={index}
                         className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full"
