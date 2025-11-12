@@ -22,8 +22,8 @@ body {
       justify-content: center; /* Center content horizontally */
       align-items: center; /* Center content vertically */
       position: relative; /* Essential for positioning overlay or text */
-      margin-top: 70px;
-      margin-bottom: 14px;
+      margin-top: 30vh;
+      margin-bottom: 10vh;
     }
 
 .hero-content {
