@@ -66,6 +66,19 @@
     @apply border-border;
   }
 
+  .hero-section {
+    background-image: url('path/to/your/hero-image.jpg'); /* Replace with your image path */
+    background-size: cover; /* Ensures the image covers the entire element */
+    background-position: center; /* Centers the image */
+    background-repeat: no-repeat; /* Prevents image repetition */
+    height: 100vh; /* Makes the hero section take full viewport height */
+    width: 100vw; /* Makes the hero section take full viewport width */
+    display: flex; /* Use flexbox for content alignment */
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+    position: relative; /* Essential for positioning overlay or text */
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
