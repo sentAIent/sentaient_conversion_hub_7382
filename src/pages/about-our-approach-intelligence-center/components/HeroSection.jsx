@@ -16,20 +16,11 @@ const HeroSection = () => {
         <p className="hero-content">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32">
+        <div className="hero-content">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Content */}
             <div className="space-y-8">
               <div className="space-y-4">
-
-                {/*
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-                    <Icon name="Target" size={24} color="white" />
-                  </div>
-                  <span className="text-accent font-semibold text-lg">The sentAIent Approach</span>
-                </div>
-                */}
               </div>
             </div>
 
