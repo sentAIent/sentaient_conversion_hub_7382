@@ -9,22 +9,21 @@ const HeroSection = () => {
       <div className="hero-content">
         <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
           Intelligence That
-          <span className="block text-accent">Amplifies Human</span>
-          Action
+          <span className="block text-accent">Amplifies</span>
+          Human Achievement
         </h1>
         
-        <p className="mt-3 text-white text:lg">
+        <p className="mt-3 text-white lg:text-2xl font-bold">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
           accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
-        <div className="mt-4">
+        <div className="mt-6">
           <Button
             vriant="default"
             size="2xl"
             iconName="Users"
             iconPosition="center"
-            className="bg-accent hover:bg-accent/90 text-primary font-semibold"
-          >
+            className="bg-accent hover:bg-accent/90 text-primary lg:text-2xl font-bold">
             Meet Our Team
           </Button>
         </div>
