@@ -17,12 +17,12 @@ const HeroSection = () => {
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
           accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
-        <div className="flex">
+        <div className="">
           <Button
             vriant="default"
             size="lg"
             iconName="Users"
-            iconPosition="left"
+            iconPosition="center"
             className="bg-accent hover:bg-accent/90 text-primary font-semibold"
           >
             Meet Our Team
