@@ -14,7 +14,8 @@ const HeroSection = () => {
         </h1>
         
         <p className="hero-content">
-          We architect intelligent, fully-integrated ecosystems that enhance human creativity, accelerate decision-making, and unlock unprecedented enterprise value.
+          We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
+          accelerate decision-making, and unlock unprecedented enterprise value.
         </p>
         <div className="hero-content">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
