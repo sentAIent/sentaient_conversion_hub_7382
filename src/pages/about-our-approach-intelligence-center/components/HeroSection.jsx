@@ -12,7 +12,15 @@ const HeroSection = () => {
           alt="Team collaboration and AI strategy session"
           className="w-full h-full object-cover"
         />
-
+        <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
+          Intelligence That
+          <span className="block text-accent">Amplifies Human</span>
+          Action
+        </h1>
+        
+        <p className="text-xl text-white/90 leading-relaxed max-w-2xl">
+          We architect intelligent, fully-integrated ecosystems that enhance human creativity, accelerate decision-making, and unlock unprecedented enterprise value.
+        </p>
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Content */}
