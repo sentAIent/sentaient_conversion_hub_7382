@@ -35,7 +35,7 @@ const TeamExpertiseSection = () => {
       id: 2,
       name: "Greg Francis",
       role: "Corporate Solutions",
-      avatar: "https://drive.google.com/file/d/1qUmHPwW9JMYGsIX5PEgJ1orILzlPZEXm/view?usp=drive_link",
+      avatar: "https://drive.google.com/file/d/1qUmHPwW9JMYGsIX5PEgJ1orILzlPZEXm/view",
       specializations: ["Executive Hospitality Operations", "Interpersonal Development", "Financial Statement Analysis"],
       experience: "30+ years",
       education: "",
