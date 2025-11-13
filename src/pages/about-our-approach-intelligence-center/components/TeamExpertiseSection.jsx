@@ -10,19 +10,22 @@ const TeamExpertiseSection = () => {
       id: 1,
       name: "Brian Leonard",
       role: "Chief AI Strategist",
-      avatar: "https://drive.google.com/file/d/1G8VefEozPZprMpwY1l66My-5-uN5QyrC/view?usp=sharing",
+      avatar: "https://drive.google.com/file/d/1G8VefEozPZprMpwY1l66My-5-uN5QyrC/view",
       specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading", "Investment Management", "Asset Allocation"],
       experience: "20+ years",
       education: "B.S.B.A., Saint Louis University",
-      bio: `Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management. Brian spent 4 years at PIMCO working directly with many of firm's top client relationships. 
-      Brian served as head of investment analytics and trading for two Registered Investment Advisors, overseeing portfolio management for $2B+ in client assets.
-      In the late-2000's, Brian helped pioneer algorithmic trading within managed accounts for thousands of retirement investors, utilizing his expertise in finance, tech, and marketing to transform the firm during a pivotal time in its 20+ year history.`,
+      bio: `Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian 
+      built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management. Brian 
+      spent 4 years at PIMCO working directly with many of firm's top client relationships. Brian served as head of investment analytics and trading for two 
+      Registered Investment Advisors, overseeing portfolio management for $2B+ in client assets. In the late-2000's, Brian helped pioneer algorithmic trading 
+      within managed accounts for thousands of retirement investors, utilizing his expertise in finance, tech, and marketing to transform the firm during a pivotal time in its 20+ year history.`,
       achievements: [
         "Pioneered quantitative trading for retirement investors in the early days of Target Date Funds",
         "Contributed to 5x increase in Assets Under Management in under three years.",
         "Facilitated client meetings with PIMCO's top executive and PM leadership",
-        "Mensan"
+        "Mensan",
       ],
+      shortBio: "Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to",
       publications: [
       ],
       linkedin: "#",
