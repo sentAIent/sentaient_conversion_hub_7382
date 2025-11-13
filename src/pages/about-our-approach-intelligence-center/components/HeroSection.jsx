@@ -16,7 +16,7 @@ const HeroSection = () => {
         
         <p className="mt-3 text-white lg:text-2xl font-bold">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
-          accelerate decision-making, and unlock unprecedented enterprise value.
+          accelerate decision-making, and unlock hidden enterprise value.
         </p>
         <div className="mt-6">
           <Button
