@@ -9,7 +9,7 @@ const HeroSection = () => {
       <div className="hero-content">
         <h1 className="text-3xl lg:text-4xl font-bold leading-tight">
           Intelligence That
-          <span className="block text-accent">Amplifies</span>
+          <span className="block text-accent mt-1 mb-1">Amplifies</span>
           <span className="text-3xl lg:text-4xl font-bold leading-tight">Human</span>
           Achievement
         </h1>
