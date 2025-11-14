@@ -11,7 +11,7 @@ const TeamExpertiseSection = () => {
       name: "Brian Leonard",
       role: "CEO, Chief AI Strategist",
       avatar: "https://github.com/sentAIent/sentaient_conversion_hub_7382/blob/main/public/assets/images/BLeonard_Profile_Photo.png",
-      specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading", "Investment Management", "Asset Allocation"],
+      specializations: ["Software Development", "Agentic AI", "Quantitative Trading", "Risk Management", "Investment Management", "Asset Allocation", "Process Automation"],
       experience: "20+ years",
       sector: "Asset Mgmt & Quant Trading",
       education: "B.S.B.A., Saint Louis University",
@@ -22,9 +22,9 @@ const TeamExpertiseSection = () => {
       within managed accounts for thousands of retirement investors, utilizing his expertise in finance, tech, and marketing to transform the firm during a pivotal time in its 20+ year history.`,
       achievements: [
         "Pioneered quantitative trading for retirement investors in the early days of Target Date Funds",
-        "Contributed to 5x increase in Assets Under Management in under three years.",
-        "Facilitated client meetings with PIMCO's top executive and PM leadership",
-        "Mensan",
+        "Developed quant trading platform to analyze market conditions algorithmically and place trades autonomously",
+        "Grew Assets Under Management 5x in under three years.",
+        "Member of Mensa",
       ],
       publications: [
       ],
@@ -52,8 +52,8 @@ const TeamExpertiseSection = () => {
       linkedin: "#",
       twitter: "#",
       shortBio: "Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. At sentAIent, he specializes in transforming complex AI concepts into tangible operational excellence. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in..."
-    },
-    {/*}
+    }
+    /*},
     {
       id: 3,
       name: "Monica",
@@ -72,7 +72,7 @@ const TeamExpertiseSection = () => {
       linkedin: "#",
       twitter: "#"
     }
-    */}
+  }*/
   ];
 
   const certifications = [
