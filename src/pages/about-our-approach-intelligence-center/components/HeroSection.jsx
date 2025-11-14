@@ -7,9 +7,9 @@ const HeroSection = () => {
     // <section className="relative bg-gradient-to-br from-primary via-secondary to-primary/90 text-white overflow-hidden">
     <section className="hero-section">
       <div className="hero-content">
-        <h1 className="block text-3xl lg:text-4xl font-bold mb-8 mt-8">
+        <h1 className="block text-3xl lg:text-4xl font-bold">
           Intelligence That
-          <span className="block text-accent mt-4">Amplifies</span>
+          <span className="block text-accent mt-8">Amplifies</span>
           <span className="block text-white">Human</span>
           <span className="block text-white">Achievement</span>
         </h1>
