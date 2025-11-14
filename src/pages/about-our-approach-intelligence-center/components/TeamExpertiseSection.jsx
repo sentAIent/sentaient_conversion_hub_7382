@@ -25,11 +25,11 @@ const TeamExpertiseSection = () => {
         "Facilitated client meetings with PIMCO's top executive and PM leadership",
         "Mensan",
       ],
-      shortBio: "Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to",
       publications: [
       ],
       linkedin: "#",
-      twitter: "#"
+      twitter: "#",
+      shortBio: "Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management..."
     },
     {
       id: 2,
@@ -39,7 +39,7 @@ const TeamExpertiseSection = () => {
       specializations: ["Executive Hospitality Operations", "Interpersonal Development", "Financial Statement Analysis"],
       experience: "30+ years",
       education: "",
-      bio: `Greg transforms complex AI concepts into tangible operational excellence. Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in advancing one of the country's most influential hospitality organizations. His diverse experience includes serving as Managing Partner at Smith & Wollensky.`,
+      bio: `Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. At sentAIent, he specializes in transforming complex AI concepts into tangible operational excellence. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in advancing one of the country's most influential hospitality organizations. His diverse experience includes serving as Managing Partner at Smith & Wollensky.`,
       achievements: [
         "Sable was named one of Food & Wine Magazine's Top 5 Restaurants in the U.S.",
         "Two establishments honored on Esquire Magazine's Best New Restaurants list.",
@@ -48,7 +48,8 @@ const TeamExpertiseSection = () => {
       publications: [
       ],
       linkedin: "#",
-      twitter: "#"
+      twitter: "#",
+      shortBio: "Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. At sentAIent, he specializes in transforming complex AI concepts into tangible operational excellence. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in..."
     },
     {/*}
     {
