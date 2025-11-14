@@ -7,14 +7,14 @@ const HeroSection = () => {
     // <section className="relative bg-gradient-to-br from-primary via-secondary to-primary/90 text-white overflow-hidden">
     <section className="hero-section">
       <div className="hero-content">
-        <h1 className="block text-3xl lg:text-4xl font-bold mb-4 mt-4">
+        <h1 className="block text-3xl lg:text-4xl font-bold mb-8 mt-8">
           Intelligence That
           <span className="block text-accent mt-4">Amplifies</span>
           <span className="block text-white">Human</span>
           <span className="block text-white">Achievement</span>
         </h1>
         
-        <p className="mt-3 text-white lg:text-2xl font-bold mb-3">
+        <p className="mt-3 text-white lg:text-2xl font-bold mb-6">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
           accelerate decision-making, and unlock hidden enterprise value.
         </p>
