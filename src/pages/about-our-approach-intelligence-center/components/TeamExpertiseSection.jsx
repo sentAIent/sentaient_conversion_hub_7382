@@ -9,7 +9,7 @@ const TeamExpertiseSection = () => {
     {
       id: 1,
       name: "Brian Leonard",
-      role: "Chief AI Strategist",
+      role: "CEO, Chief AI Strategist",
       avatar: "https://github.com/sentAIent/sentaient_conversion_hub_7382/blob/main/public/assets/images/BLeonard_Profile_Photo.png",
       specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading", "Investment Management", "Asset Allocation"],
       experience: "20+ years",
@@ -132,16 +132,14 @@ const TeamExpertiseSection = () => {
                   {member?.role}
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {member?.experience}
-                  •
-                  {member?.sector}
+                  {member?.experience} • {member?.sector}
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-semibold text-primary mb-2">Bio</h4>
-                  <p className="text-sm font-semibold text-foreground mb-2">
+                  <p className="text-sm font-semibold text-foreground mb-4">
                     {member?.shortBio}
                   </p>
                 </div>
