@@ -13,6 +13,7 @@ const TeamExpertiseSection = () => {
       avatar: "https://github.com/sentAIent/sentaient_conversion_hub_7382/blob/main/public/assets/images/BLeonard_Profile_Photo.png",
       specializations: ["Software Development", "Autonomous AI Agents", "Quantitative Trading", "Investment Management", "Asset Allocation"],
       experience: "20+ years",
+      sector: "Asset Mgmt & Quant Trading",
       education: "B.S.B.A., Saint Louis University",
       bio: `Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian 
       built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management. Brian 
@@ -38,6 +39,7 @@ const TeamExpertiseSection = () => {
       avatar: "https://github.com/sentAIent/sentaient_conversion_hub_7382/blob/main/public/assets/images/Greg%20Francis%20Bio%20Pic.png",
       specializations: ["Executive Hospitality Operations", "Interpersonal Development", "Financial Statement Analysis"],
       experience: "30+ years",
+      sector: "Hospitality",
       education: "",
       bio: `Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. At sentAIent, he specializes in transforming complex AI concepts into tangible operational excellence. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in advancing one of the country's most influential hospitality organizations. His diverse experience includes serving as Managing Partner at Smith & Wollensky.`,
       achievements: [
@@ -123,20 +125,22 @@ const TeamExpertiseSection = () => {
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-bold text-foreground mb-1">
+                <h3 className="text-xl font-bold text-primary mb-1">
                   {member?.name}
                 </h3>
-                <p className="text-primary font-semibold mb-2">
+                <p className="text-foreground font-semibold mb-2">
                   {member?.role}
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {member?.experience} • {member?.education?.split(',')?.[0]}
+                  {member?.experience}
+                  •
+                  {member?.sector}
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-2">Bio</h4>
+                  <h4 className="text-sm font-semibold text-primary mb-2">Bio</h4>
                   <p className="text-sm font-semibold text-foreground mb-2">
                     {member?.shortBio}
                   </p>
@@ -145,12 +149,12 @@ const TeamExpertiseSection = () => {
 
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-2">Specializations</h4>
+                  <h4 className="text-sm font-semibold text-primary mb-2">Specializations</h4>
                   <div className="flex flex-wrap gap-2">
                     {member?.specializations?.slice(0, 4)?.map((spec, index) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full"
+                        className="px-3 py-1 bg-primary/10 text-foreground text-xs font-medium rounded-full"
                       >
                         {spec}
                       </span>
