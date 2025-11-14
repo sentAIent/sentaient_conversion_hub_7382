@@ -9,12 +9,12 @@ const HeroSection = () => {
       <div className="hero-content">
         <h1 className="text-3xl lg:text-4xl font-bold leading-tight">
           Intelligence That
-          <span className="block text-accent mt-3 mb-1">Amplifies</span>
-          <span className="block text-white mb-3">Human</span>
+          <span className="block text-accent mt-1 mb-1">Amplifies</span>
+          <span className="block text-white">Human</span>
           Achievement
         </h1>
         
-        <p className="mt-3 text-white lg:text-2xl font-bold">
+        <p className="mt-3 text-white lg:text-2xl font-bold mt-3">
           We architect intelligent, fully-integrated ecosystems that enhance human creativity, 
           accelerate decision-making, and unlock hidden enterprise value.
         </p>
