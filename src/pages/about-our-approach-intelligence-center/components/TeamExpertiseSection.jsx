@@ -136,6 +136,15 @@ const TeamExpertiseSection = () => {
 
               <div className="space-y-4">
                 <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-2">Bio</h4>
+                  <p className="text-sm font-semibold text-foreground mb-2">
+                    {member?.shortBio}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
                   <h4 className="text-sm font-semibold text-foreground mb-2">Specializations</h4>
                   <div className="flex flex-wrap gap-2">
                     {member?.specializations?.slice(0, 4)?.map((spec, index) => (
