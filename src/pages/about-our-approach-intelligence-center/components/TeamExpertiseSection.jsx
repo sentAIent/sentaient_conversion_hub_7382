@@ -36,7 +36,7 @@ const TeamExpertiseSection = () => {
       id: 2,
       name: "Greg Francis",
       role: "Corporate Solutions",
-      avatar: "https://github.com/sentAIent/sentaient_conversion_hub_7382/blob/main/public/assets/images/Greg%20Francis%20Bio%20Pic.png",
+      avatar: "/assets/images/Greg Francis Bio Pic.png",
       specializations: ["Executive Hospitality Operations", "Interpersonal Development", "Financial Statement Analysis"],
       experience: "30+ years",
       sector: "Hospitality",
