@@ -9,8 +9,8 @@ const TeamExpertiseSection = () => {
     {
       id: 1,
       name: "Brian Leonard",
-      role: "CEO, Chief AI Strategist",
-      avatar: "https://github.com/sentAIent/sentaient_conversion_hub_7382/blob/main/public/assets/images/BLeonard_Profile_Photo.png",
+      avatar: "/assets/images/BLeonard_Profile_Photo.png",
+      {/*avatar: "https://github.com/sentAIent/sentaient_conversion_hub_7382/blob/main/public/assets/images/BLeonard_Profile_Photo.png",*/}
       specializations: ["Software Development", "Agentic AI", "Quantitative Trading", "Risk Management", "Investment Management", "Asset Allocation", "Process Automation"],
       experience: "20+ years",
       sector: "Asset Mgmt & Quant Trading",
