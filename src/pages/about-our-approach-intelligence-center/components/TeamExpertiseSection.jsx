@@ -52,24 +52,6 @@ const TeamExpertiseSection = () => {
       linkedin: "#",
       twitter: "#",
       shortBio: "Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. At sentAIent, he specializes in transforming complex AI concepts into tangible operational excellence. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in..."
-    },
-    {
-      id: 3,
-      name: "Monica",
-      role: "Corporate Solutions",
-      avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      specializations: ["Institutional Sales", "Strategic Vision", "Operational Efficiency"],
-      experience: "25+ years",
-      education: "International Business, Dickinson College",
-      bio: `Monica brings a deep understanding of consultant solutions and over two decades of experience in institutional sales and investment consulting.
-      Monica served as Managing Director at several top global asset managers.`,
-      achievements: [
-        "Leads projects across continents to support orphaned and vulnerable children."
-      ],
-      publications: [
-      ],
-      linkedin: "#",
-      twitter: "#"
     }
     /*},
     {
@@ -124,7 +106,7 @@ const TeamExpertiseSection = () => {
         </div>
 
         {/* Team Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 mb-16">
           {teamMembers?.map((member) => (
             <div
               key={member?.id}
