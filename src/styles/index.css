@@ -15,7 +15,7 @@ body {
 /* background-image: url('https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2606&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Replace with your image path */
 
 .hero-section {
-      background-image: "/assets/images/Touch-of-God_Human-AI-robot_1800x900.png";
+      background-image: url("/assets/images/Touch-of-God_Human-AI-robot_1800x900.png");
       background-size: cover; /* Ensures the image covers the entire element */
       background-position: center; /* Centers the image */
       background-repeat: no-repeat; /* Prevents image repetition */
