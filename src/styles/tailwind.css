@@ -8,11 +8,11 @@
   :root {
     /* Background Colors */
     --color-background: #ffffff; /* white */
-    --color-foreground: #2d3748; /* gray-800 */
+    --color-foreground: #202733; /* gray-800 */
     --color-card: #ffffff; /* white */
-    --color-card-foreground: #2d3748; /* gray-800 */
+    --color-card-foreground: #202733; /* gray-800 */
     --color-popover: #ffffff; /* white */
-    --color-popover-foreground: #2d3748; /* gray-800 */
+    --color-popover-foreground: #202733; /* gray-800 */
     --color-muted: #f7fafc; /* gray-50 */
     --color-muted-foreground: #718096; /* gray-500 */
     
