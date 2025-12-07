@@ -12,4 +12,12 @@ export default defineConfig({
       components: path.resolve(__dirname, 'src/components'),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        interstellar: path.resolve(__dirname, 'interstellar/index.html'),
+      },
+    },
+  },
 });
