@@ -4,14 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INTERSTELLAR | Pre-Placement Cartographer</title>
-    <meta property="og:title" content="INTERSTELLAR | Pre-Placement Cartographer">
-    <meta property="og:description" content="Interactive star mapping and constellation design tool.">
-    <meta property="og:image" content="/interstellar-thumb.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="/interstellar-thumb.png">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&family=Montserrat:wght@600;800&family=Orbitron:wght@500;700;900&display=swap"
+    <title>Aether Map | Pre-Placement Cartographer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
         rel="stylesheet">
     <style>
         :root {
@@ -21,8 +15,7 @@
             --accent: #00f3ff;
             --accent-glow: rgba(0, 243, 255, 0.4);
             --text-main: #e0faff;
-            --text-dim: #94b0c0;
-            /* Brightened from #5c7a8a */
+            --text-dim: #5c7a8a;
         }
 
         body {
@@ -35,7 +28,6 @@
             -webkit-user-select: none;
         }
 
-        /* --- Background Layer --- */
         canvas {
             display: block;
             position: absolute;
@@ -45,8 +37,6 @@
             touch-action: none;
             /* Prevents scrolling on mobile while drawing */
         }
-
-        /* --- Intro Overlay Removed (Moved to Canvas) --- */
 
         /* --- HUD UI --- */
         .hud {
@@ -58,11 +48,8 @@
             height: 100%;
             box-sizing: border-box;
             display: flex;
-            flex-direction: row;
-            /* Horizontal layout */
+            flex-direction: column;
             justify-content: space-between;
-            align-items: flex-start;
-            /* Align items to top */
         }
 
         .hud-panel {
@@ -85,17 +72,11 @@
 
         h1 {
             margin: 0;
-            font-family: 'Orbitron', sans-serif;
-            /* Tesla-like square font */
-            font-weight: 900;
-            font-size: 24px;
-            text-transform: uppercase;
-            color: var(--text-main);
-            /* White/Bright instead of accent for Tesla look? Or keep accent? Keeping accent for now but font change is key */
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
             color: var(--accent);
             text-shadow: 0 0 15px var(--accent-glow);
-            letter-spacing: 4px;
-            /* Wide spacing characteristic of Tesla */
+            letter-spacing: 2px;
         }
 
         p.subtitle {
@@ -107,10 +88,10 @@
 
         /* Top Right Color Controls (Active Star Color) */
         #colorControls {
-            /* Positioned by flexbox now */
+            position: absolute;
+            top: 20px;
+            right: 20px;
             align-self: flex-start;
-            margin: 20px 20px 0 0;
-            /* Add margin to match others */
             padding: 15px;
             max-width: 280px;
             display: flex;
@@ -213,71 +194,10 @@
             box-shadow: 0 0 15px #ff0077;
         }
 
-        /* Toggle Switch */
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 12px;
-            color: var(--text-dim);
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 34px;
-            height: 20px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.1);
-            transition: .4s;
-            border-radius: 34px;
-            border: 1px solid var(--glass-border);
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 14px;
-            width: 14px;
-            left: 2px;
-            bottom: 2px;
-            background-color: var(--text-dim);
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background-color: rgba(0, 243, 255, 0.2);
-            border-color: var(--accent);
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(14px);
-            background-color: var(--accent);
-        }
-
-        /* Top Center Tools */
+        /* Bottom Center Tools */
         .toolbar {
-            align-self: flex-start;
-            margin-top: 20px;
-            /* Align with other panels */
+            align-self: center;
+            margin-bottom: 20px;
             display: flex;
             gap: 12px;
             padding: 10px;
@@ -332,31 +252,6 @@
             color: var(--bg-deep);
         }
 
-        .btn.active:hover {
-            background: var(--accent);
-            color: var(--bg-deep);
-        }
-
-        /* Danger Button (Implode) */
-        .btn-danger {
-            width: auto;
-            /* Allow text */
-            padding: 0 15px;
-            gap: 8px;
-            border-color: rgba(255, 0, 85, 0.5);
-            color: #ff0055;
-        }
-
-        .btn-danger:hover {
-            background: rgba(255, 0, 85, 0.1);
-            border-color: #ff0055;
-            color: #ff0055;
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
-        }
-
-        .btn-danger svg {
-            fill: currentColor;
-        }
 
         /* Tooltip */
         .btn::after {
@@ -519,18 +414,55 @@
 
 <body>
 
-    <canvas id="canvas"></canvas>
-
     <div id="toast" class="toast">Action Successful</div>
 
     <div class="hud">
         <div class="hud-panel info-panel">
-            <h1>INTERSTELLAR</h1>
+            <h1>Interstellar Spacetime</h1>
             <p class="subtitle">
                 Click empty space to create stars (Draw Mode).<br>
-                Stars use the active color/mode selected below.<br>
+                Stars use the active color or random rainbow mode.<br>
                 Select tool allows for cluster drag and panning.
             </p>
+        </div>
+
+        <div id="colorControls" class="hud-panel">
+            <h2>New Star Color</h2>
+
+            <div class="btn-group">
+                <!-- Color input sets the fixed color mode -->
+                <div class="color-input-container">
+                    <input type="color" id="colorInput" value="#00f3ff" onchange="app.setFixedColor(this.value)">
+                    <div id="fixedModeIndicator" class="color-mode-indicator active"></div>
+                </div>
+
+                <button class="btn-small" id="rainbowBtn" onclick="app.setRainbowMode()">
+                    <span style="font-size: 16px;">🌈</span> Rainbow Mode
+                </button>
+            </div>
+            <p style="font-size: 10px; margin-top: 15px; color: var(--text-dim);">
+                <span id="currentColorModeText">Color Mode: Fixed (#00f3ff)</span>
+            </p>
+        </div>
+
+        <div id="bgControls" class="hud-panel"
+            style="top: 20px; left: 50%; transform: translateX(-50%); position: absolute; padding: 15px; max-width: 280px;">
+            <h2 style="font-size: 16px; margin: 0 0 10px 0; color: var(--accent); text-transform: uppercase;">Background
+                Style</h2>
+            <select id="bgStyleSelect" onchange="app.setBgStyle(this.value)"
+                style="width: 100%; padding: 8px; background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 8px; margin-bottom: 8px;">
+                <option value="deep-space">Deep Space</option>
+                <option value="nebula">Nebula</option>
+                <option value="alien">Alien</option>
+                <option value="cyber">Cyber Matrix</option>
+            </select>
+
+            <div id="matrixThemeDisplay"
+                style="font-size: 11px; color: var(--accent); margin-bottom: 8px; min-height: 15px;"></div>
+
+            <button class="btn-small" onclick="app.generateBackground()" style="width: 100%;">
+                Regenerate Background
+            </button>
         </div>
 
         <div class="hud-panel toolbar">
@@ -554,60 +486,17 @@
                         d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
                 </svg>
             </button>
-            <button class="btn btn-danger" onclick="app.requestClear()" data-tooltip="Implode Universe">
+            <button class="btn" onclick="app.requestClear()" data-tooltip="Clear Universe">
                 <svg viewBox="0 0 24 24">
                     <path
                         d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z" />
                 </svg>
-                <span style="font-weight: 700; font-size: 12px; letter-spacing: 1px;">IMPLODE</span>
             </button>
             <button class="btn" onclick="app.downloadSVG()" data-tooltip="Export SVG">
                 <svg viewBox="0 0 24 24">
                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
                 </svg>
             </button>
-            <div style="width: 12px; border-left: 1px solid rgba(255,255,255,0.1);"></div>
-            <button class="btn" onclick="app.saveUniverse()" data-tooltip="Save Project">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" />
-                </svg>
-            </button>
-            <button class="btn" onclick="document.getElementById('loadInput').click()" data-tooltip="Load Project">
-                <svg viewBox="0 0 24 24">
-                    <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z" />
-                </svg>
-            </button>
-            <input type="file" id="loadInput" style="display:none" onchange="app.loadUniverse(this)">
-        </div>
-
-        <div id="colorControls" class="hud-panel">
-            <h2>New Star Color</h2>
-
-            <div class="btn-group">
-                <div class="color-input-container">
-                    <input type="color" id="colorInput" value="#00f3ff" oninput="app.setFixedColor(this.value)">
-                </div>
-                <button id="fixedModeBtn" class="btn-small"
-                    onclick="app.setFixedColor(document.getElementById('colorInput').value)">
-                    Fixed
-                    <div id="fixedModeIndicator" class="color-mode-indicator active"></div>
-                </button>
-                <button id="rainbowBtn" class="btn-small" onclick="app.setRainbowMode()">
-                    Rainbow
-                </button>
-            </div>
-
-            <div class="toggle-container">
-                <span>Deep Space BG</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="bgToggle" checked onchange="app.toggleBackground(this.checked)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <p style="font-size: 10px; margin-top: 15px; color: var(--text-dim);">
-                <span id="currentColorModeText">Color Mode: Fixed (#00f3ff)</span>
-            </p>
         </div>
     </div>
 
@@ -638,131 +527,7 @@
 
     <script>
         /**
-         * Spatial Partitioning for O(N) queries
-         */
-        class SpatialGrid {
-            constructor(cellSize) {
-                this.cellSize = cellSize;
-                this.cells = new Map();
-            }
-
-            clear() {
-                this.cells.clear();
-            }
-
-            getKey(x, y) {
-                const cx = Math.floor(x / this.cellSize);
-                const cy = Math.floor(y / this.cellSize);
-                return `${cx},${cy}`;
-            }
-
-            add(item) {
-                const key = this.getKey(item.x, item.y);
-                if (!this.cells.has(key)) this.cells.set(key, []);
-                this.cells.get(key).push(item);
-            }
-
-            // Get items in the same cell and 8 neighbors
-            getNearby(x, y) {
-                const cx = Math.floor(x / this.cellSize);
-                const cy = Math.floor(y / this.cellSize);
-                const results = [];
-
-                for (let dx = -1; dx <= 1; dx++) {
-                    for (let dy = -1; dy <= 1; dy++) {
-                        const key = `${cx + dx},${cy + dy}`;
-                        if (this.cells.has(key)) {
-                            const cellItems = this.cells.get(key);
-                            for (let i = 0; i < cellItems.length; i++) {
-                                results.push(cellItems[i]);
-                            }
-                        }
-                    }
-                }
-                return results;
-            }
-        }
-
-        /**
-         * Command Pattern for Granular Undo
-         */
-        class CommandManager {
-            constructor(engine) {
-                this.engine = engine;
-                this.stack = [];
-            }
-
-            execute(command) {
-                command.execute(this.engine);
-                this.stack.push(command);
-                this.engine.showToast(command.successMessage || "Action Executed");
-            }
-
-            undo() {
-                if (this.stack.length === 0) {
-                    this.engine.showToast("Nothing to undo");
-                    return;
-                }
-                const command = this.stack.pop();
-                command.undo(this.engine);
-                this.engine.showToast("Undone: " + (command.name || "Action"));
-                this.engine.draw();
-            }
-        }
-
-        class AddStarCommand {
-            constructor(star) {
-                this.star = star;
-                this.name = "Create Star";
-                this.successMessage = "Star Created";
-            }
-            execute(engine) {
-                engine.stars.push(this.star);
-            }
-            undo(engine) {
-                const idx = engine.stars.findIndex(s => s.id === this.star.id);
-                if (idx !== -1) engine.stars.splice(idx, 1);
-            }
-        }
-
-        class MoveStarsCommand {
-            constructor(stars, dx, dy) {
-                this.ids = stars.map(s => s.id);
-                this.dx = dx;
-                this.dy = dy;
-                this.name = "Move Stars";
-                this.successMessage = "";
-            }
-            execute(engine) {
-                // Already moved by pointer, this is just for recording the delta
-                // If we were strictly following pattern, we'd move them here, but for drag we record after
-            }
-            undo(engine) {
-                engine.stars.forEach(s => {
-                    if (this.ids.includes(s.id)) {
-                        s.x -= this.dx;
-                        s.y -= this.dy;
-                    }
-                });
-            }
-        }
-
-        class ClearUniverseCommand {
-            constructor(stars) {
-                this.savedStars = [...stars]; // Shallow copy of array, refs are fine if we don't mutate props
-                this.name = "Implode Universe";
-                this.successMessage = "Universe Imploded";
-            }
-            execute(engine) {
-                engine.stars = [];
-            }
-            undo(engine) {
-                engine.stars = [...this.savedStars];
-            }
-        }
-
-        /**
-         * Aether Map Engine v6.0 - Optimized & Granular Undo
+         * Aether Map Engine v5.0 - Pre-Placement Color Model
          */
         class AetherEngine {
             constructor() {
@@ -775,55 +540,31 @@
                     starBaseRad: 3.5,
                     minGroupSize: 3,
                     bgColor: '#020205',
-                    showBackground: true,
                 };
 
                 // State
                 this.stars = [];
                 this.camera = { x: 0, y: 0, zoom: 1, targetZoom: 1 };
-
+                this.history = [];
                 this.mode = 'draw'; // 'draw' or 'select'
 
-                // Background Entities
-                this.galaxies = [];
-                this.blackHoles = [];
-                this.shootingStars = [];
-                this.backgroundStars = [];
-                this.nebulae = [];
+                // NEW COLOR STATE
+                this.activeColor = '#00f3ff';
+                this.colorMode = 'fixed'; // 'fixed' or 'rainbow'
+                this.bgStyle = 'deep-space'; // Default background style
 
                 // Interaction State
                 this.pointer = { x: 0, y: 0, startX: 0, startY: 0, isDown: false, dragging: false, lastWorldX: 0, lastWorldY: 0 };
                 this.hoveredStar = null;
                 this.draggedStar = null;
                 this.draggedClusterId = null; // Used only for dragging entire clusters
-                this.dragStartStars = []; // Store initial positions for undo
-                this.selection = new Set();
-                this.lastPoint = null;
-
-                // Color State
-                this.activeColor = '#00f3ff'; // Default cyan
-                this.colorMode = 'fixed'; // 'fixed', 'rainbow'
-
-                // Intro State
-                this.introActive = true;
-                this.introStartTime = Date.now();
-                this.introDuration = 6000; // 6 seconds
-
-                // Spatial Grid
-                this.grid = new SpatialGrid(this.config.maxConnectDist);
-
-                // Command Manager (Undo System)
-                this.commands = new CommandManager(this); // Pass 'this' to CommandManager
-
-                // Setup
-                this.canvas = document.getElementById('canvas'); // Changed from 'starCanvas' to 'canvas'
-                this.ctx = this.canvas.getContext('2d', { alpha: false }); // Added alpha: false for performance
-                this.resize();
 
                 // Generators
                 this.initNameGenerators();
 
-                // Listeners
+                // Performance
+                this.backgroundStars = [];
+
                 this.init();
             }
 
@@ -845,7 +586,7 @@
 
                 // Keyboard
                 window.addEventListener('keydown', e => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') this.commands.undo(); // Changed from this.undo()
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') this.undo();
                 });
 
                 // Initial mode setup
@@ -864,59 +605,29 @@
             resize() {
                 this.canvas.width = window.innerWidth;
                 this.canvas.height = window.innerHeight;
-                this.generateDeepSpace();
+                // This line now calls the function defined immediately below for guaranteed availability
+                this.backgroundStars = this.generateStaticBackground();
+                this.generateBackground(); // Ensure dynamic background is also regenerated
                 this.draw();
             }
 
-            generateDeepSpace() {
-                // 1. Background Stars (Faint, static)
-                this.backgroundStars = [];
-                const count = 400;
+            /**
+             * FIX: Added the missing function to generate static background stars.
+             * This method is now positioned explicitly before other methods that rely on it
+             * (like resize) to ensure availability in sensitive execution environments.
+             */
+            generateStaticBackground() {
+                const bgStars = [];
+                const count = 300; // number of background stars
                 for (let i = 0; i < count; i++) {
-                    this.backgroundStars.push({
+                    bgStars.push({
                         x: Math.random() * this.canvas.width,
                         y: Math.random() * this.canvas.height,
-                        r: Math.random() * 0.8 + 0.1,
-                        alpha: Math.random() * 0.3 + 0.05 // Fainter
+                        size: Math.random() * 0.5 + 0.1,
+                        alpha: Math.random() * 0.5 + 0.2
                     });
                 }
-
-                // 2. Galaxies (Spiral clusters)
-                this.galaxies = [];
-                const galaxyCount = 3;
-                for (let i = 0; i < galaxyCount; i++) {
-                    this.galaxies.push({
-                        x: Math.random() * this.canvas.width,
-                        y: Math.random() * this.canvas.height,
-                        color: ['#ff0055', '#5500ff', '#00aaff'][Math.floor(Math.random() * 3)],
-                        angle: Math.random() * Math.PI * 2,
-                        size: 50 + Math.random() * 100
-                    });
-                }
-
-                // 3. Black Holes
-                this.blackHoles = [];
-                const bhCount = 1; // Rare
-                for (let i = 0; i < bhCount; i++) {
-                    this.blackHoles.push({
-                        x: Math.random() * this.canvas.width,
-                        y: Math.random() * this.canvas.height,
-                        size: 20 + Math.random() * 20
-                    });
-                }
-
-                // 4. Nebulae (Large colorful clouds)
-                this.nebulae = [];
-                const nebulaCount = 5;
-                for (let i = 0; i < nebulaCount; i++) {
-                    this.nebulae.push({
-                        x: Math.random() * this.canvas.width,
-                        y: Math.random() * this.canvas.height,
-                        size: 300 + Math.random() * 400,
-                        color: ['#4400cc', '#0033aa', '#cc0066', '#330033'][Math.floor(Math.random() * 4)],
-                        alpha: 0.05 + Math.random() * 0.15 // Fainter
-                    });
-                }
+                return bgStars;
             }
 
             setMode(newMode) {
@@ -950,6 +661,19 @@
                 this.colorMode = 'rainbow';
                 this.updateColorModeUI();
                 this.showToast("Active color set to Rainbow Mode 🌈");
+            }
+
+            setBgStyle(style) {
+                this.bgStyle = style;
+                this.generateBackground();
+
+                // Update UI visibility
+                const themeDisplay = document.getElementById('matrixThemeDisplay');
+                if (style === 'cyber') {
+                    themeDisplay.style.display = 'block';
+                } else {
+                    themeDisplay.style.display = 'none';
+                }
             }
 
             updateColorModeUI() {
@@ -1002,16 +726,14 @@
                         this.draggedClusterId = String(starHit.clusterId);
                         this.pointer.lastWorldX = world.x;
                         this.pointer.lastWorldY = world.y;
-
-                        // Capture stars for Undo
-                        this.dragStartStars = this.stars.filter(s => String(s.clusterId) === this.draggedClusterId);
+                        this.saveState();
                         return;
                     }
 
                     // If not in select mode, allow single star drag
                     if (this.mode === 'draw') {
                         this.draggedStar = starHit;
-                        this.dragStartStars = [starHit];
+                        this.saveState();
                     }
                 }
             }
@@ -1082,26 +804,8 @@
                 if (!this.pointer.dragging && !clickedStar) {
                     // Empty Space Clicked - Create Star (ONLY in draw mode)
                     if (this.mode === 'draw') {
+                        this.saveState();
                         this.createStar(world.x, world.y);
-                    }
-                } else if (this.pointer.dragging && this.dragStartStars.length > 0) {
-                    // Drag finished - Record Command
-                    // Calculate delta based on the first star in the group vs its start pos
-                    // (Simpler: just calculate delta from pointer start to end, but we have world coords)
-
-                    // We need the total delta applied.
-                    // Let's assume the drag was valid.
-                    // We can compare current pos of first star with its snapshot pos.
-
-                    const currentS = this.stars.find(s => s.id === this.dragStartStars[0].id);
-                    if (currentS) {
-                        const snapshotS = this.dragStartStars[0];
-                        const dx = currentS.x - snapshotS.x;
-                        const dy = currentS.y - snapshotS.y;
-
-                        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-                            this.commands.execute(new MoveStarsCommand(this.dragStartStars, dx, dy));
-                        }
                     }
                 }
 
@@ -1110,7 +814,6 @@
                 this.pointer.dragging = false;
                 this.draggedStar = null;
                 this.draggedClusterId = null;
-                this.dragStartStars = [];
             }
 
             onWheel(e) {
@@ -1128,22 +831,18 @@
             /* --- Star Creation --- */
 
             createStar(x, y) {
-                if (this.introActive) this.introActive = false;
-
                 let starColor = this.activeColor;
                 if (this.colorMode === 'rainbow') {
                     starColor = this.getRainbowHex();
                 }
 
-                const newStar = {
+                this.stars.push({
                     x, y,
                     id: Math.floor(Date.now() + Math.random() * 1000).toString(),
                     phase: Math.random() * Math.PI * 2,
                     color: starColor,
                     clusterId: null, // Will be calculated in refreshClusterAssignments()
-                };
-
-                this.commands.execute(new AddStarCommand(newStar));
+                });
                 this.draw();
             }
 
@@ -1196,10 +895,36 @@
 
             /* --- Core Logic (State Management) --- */
 
-            // saveState removed - using Command Pattern
+            saveState() {
+                // Save a deep copy of the stars array before an action that changes it
+                const newState = JSON.stringify(this.stars.map(s => ({
+                    x: s.x,
+                    y: s.y,
+                    id: String(s.id),
+                    phase: s.phase,
+                    color: s.color,
+                })));
+                if (this.history.length > 25) this.history.shift();
+                this.history.push(newState);
+            }
 
             undo() {
-                this.commands.undo();
+                if (this.history.length === 0) {
+                    this.showToast("Nothing to undo");
+                    return;
+                }
+                // Load the previous state
+                this.history.pop();
+                const prevState = this.history.pop();
+                if (prevState) {
+                    this.stars = JSON.parse(prevState);
+                    this.history.push(prevState); // Put it back so the next undo works from this state
+                } else {
+                    this.stars = []; // If history is now empty
+                }
+
+                this.draw();
+                this.showToast("Undone");
             }
 
             requestClear() {
@@ -1211,10 +936,12 @@
             }
 
             confirmClear() {
-                this.commands.execute(new ClearUniverseCommand(this.stars));
+                this.saveState();
+                this.stars = [];
                 this.camera = { x: 0, y: 0, zoom: 1 };
                 this.closeModal();
                 this.draw();
+                this.showToast("Universe Imploded");
             }
 
             resetView() {
@@ -1245,6 +972,321 @@
                 return `The ${pre} ${root} ${suf}`;
             }
 
+            setBgStyle(style) {
+                this.bgStyle = style;
+                this.generateBackground();
+
+                // Update UI visibility
+                const themeDisplay = document.getElementById('matrixThemeDisplay');
+                if (style === 'cyber') {
+                    themeDisplay.style.display = 'block';
+                } else {
+                    themeDisplay.style.display = 'none';
+                }
+            }
+
+            // ... (updateColorModeUI omitted)
+
+            generateBackground() {
+                // this.bgStyle = 'deep-space'; // REMOVED: Do not reset style on regeneration
+                if (!this.bgStyle) this.bgStyle = 'deep-space'; // Default only if undefined
+                this.showBackground = true;
+                this.staticStars = [];
+                this.galaxies = [];
+                this.blackHoles = [];
+                this.shootingStars = [];
+                this.backgroundStars = [];
+                this.nebulae = [];
+                this.spacecraft = []; // Alien ships
+                this.matrixStreams = []; // Cyber Matrix
+
+                // State for duplicate prevention
+                try {
+                    // DEBUG: CLEAR HISTORY ONCE
+                    // localStorage.removeItem('matrixThemeHistory');
+                    const savedHistory = localStorage.getItem('matrixThemeHistory');
+                    this.themeHistory = savedHistory ? JSON.parse(savedHistory) : [];
+                    this.lastMatrixFamily = localStorage.getItem('matrixLastFamily') || '';
+                } catch (e) {
+                    this.themeHistory = [];
+                    this.lastMatrixFamily = '';
+                }
+
+                // Track last 5 themes
+                this.generateStaticStars();
+
+                switch (this.bgStyle) {
+                    case 'nebula':
+                        this.generateNebulaStyle();
+                        break;
+                    case 'alien':
+                        this.generateAlienStyle();
+                        break;
+                    case 'cyber':
+                        this.generateCyberStyle();
+                        break;
+                    case 'deep-space':
+                    default:
+                        this.generateDeepSpaceStyle();
+                        break;
+                }
+            }
+
+            generateStaticStars() {
+                const count = 150;
+                let colors = ['#ffffff'];
+
+                if (this.bgStyle === 'alien') colors = ['#00ff00', '#aa00ff'];
+                if (this.bgStyle === 'cyber') colors = ['#00f3ff'];
+                if (this.bgStyle === 'nebula') colors = ['#ffffff', '#ffeebb', '#ccffff'];
+
+                for (let i = 0; i < count; i++) {
+                    this.staticStars.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 1.5 + 0.5,
+                        alpha: Math.random() * 0.5 + 0.1,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+
+            generateDeepSpaceStyle() {
+                const range = this.worldSize;
+                const half = range / 2;
+
+                // 1. Background Stars (Faint, static)
+                const count = 2000;
+                for (let i = 0; i < count; i++) {
+                    this.backgroundStars.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        r: Math.random() * 0.8 + 0.1,
+                        alpha: Math.random() * 0.3 + 0.05
+                    });
+                }
+
+                // 2. Galaxies
+                const galaxyCount = 10;
+                for (let i = 0; i < galaxyCount; i++) {
+                    this.galaxies.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        color: ['#ff0055', '#5500ff', '#00aaff'][Math.floor(Math.random() * 3)],
+                        angle: Math.random() * Math.PI * 2,
+                        size: 100 + Math.random() * 300
+                    });
+                }
+
+                // 3. Black Holes
+                this.blackHoles.push({
+                    x: (Math.random() * range) - half,
+                    y: (Math.random() * range) - half,
+                    size: 50 + Math.random() * 100
+                });
+
+                // 4. Nebulae
+                const nebulaCount = 20;
+                for (let i = 0; i < nebulaCount; i++) {
+                    this.nebulae.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        size: 1000 + Math.random() * 2000,
+                        color: ['#4400cc', '#0033aa', '#cc0066', '#330033'][Math.floor(Math.random() * 4)],
+                        alpha: 0.05 + Math.random() * 0.15
+                    });
+                }
+            }
+
+            generateNebulaStyle() {
+                const range = this.worldSize;
+                const half = range / 2;
+
+                // Dense Nebulae
+                const nebulaCount = 40;
+                for (let i = 0; i < nebulaCount; i++) {
+                    this.nebulae.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        size: 1000 + Math.random() * 2000,
+                        color: ['#ff0055', '#ffaa00', '#00ffaa', '#0055ff'][Math.floor(Math.random() * 4)],
+                        alpha: 0.1 + Math.random() * 0.2
+                    });
+                }
+                // Fewer stars
+                for (let i = 0; i < 1000; i++) {
+                    this.backgroundStars.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        r: Math.random() * 1.5 + 0.5,
+                        alpha: Math.random() * 0.5 + 0.2
+                    });
+                }
+            }
+
+            generateAlienStyle() {
+                const range = this.worldSize;
+                const half = range / 2;
+
+                // Green/Purple Theme (Randomized Mix)
+                const theme = Math.random();
+                let color1, color2;
+                if (theme < 0.33) { color1 = '#00ff00'; color2 = '#ccff00'; } // Lime/Green
+                else if (theme < 0.66) { color1 = '#aa00ff'; color2 = '#ff00aa'; } // Purple/Pink
+                else { color1 = '#00ffff'; color2 = '#0000ff'; } // Cyan/Blue
+
+                for (let i = 0; i < 1500; i++) {
+                    this.backgroundStars.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        r: Math.random() * 0.8 + 0.2,
+                        alpha: Math.random() * 0.4 + 0.1,
+                        color: Math.random() > 0.5 ? color1 : color2
+                    });
+                }
+
+                // Alien Spacecraft
+                const craftCount = 20;
+                for (let i = 0; i < craftCount; i++) {
+                    const craftColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    this.spacecraft.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        size: 20 + Math.random() * 40,
+                        type: Math.floor(Math.random() * 3),
+                        color: craftColor
+                    });
+                }
+            }
+
+            generateCyberStyle() {
+                // Matrix Rain Setup (Screen Space)
+                this.matrixStreams = [];
+                const fontSize = 14;
+                const columns = Math.ceil(this.canvas.width / fontSize);
+
+                // Base Themes
+                // Top 20 Curated Cyber Colors + Rainbow Surge
+                const themes = [
+                    { name: 'System Yellow', color: '#FFFF00', family: 'yellow' },
+                    { name: 'Neon Pink', color: '#FF1493', family: 'pink' },
+                    { name: 'Chrome Static', color: '#C0C0C0', family: 'mono' }, // Silver
+                    { name: 'Royal Data', color: '#4169E1', family: 'blue' }, // Royal Blue
+                    { name: 'Navy Blue', color: '#000080', family: 'blue' },
+                    { name: 'White Noise', color: '#FFFFFF', family: 'mono' },
+                    { name: 'Golden Key', color: '#FFD700', family: 'yellow' }, // Gold
+                    { name: 'Firewall Orange', color: '#FF4500', family: 'pink' },
+                    { name: 'Cyan Future', color: '#00FFFF', family: 'blue' },
+                    { name: 'Lime Access', color: '#32CD32', family: 'green' },
+                    { name: 'Purple Haze', color: '#800080', family: 'purple' },
+                    { name: 'Crimson Error', color: '#DC143C', family: 'pink' },
+                    { name: 'Teal Glitch', color: '#008080', family: 'green' },
+                    { name: 'Magenta Core', color: '#FF00FF', family: 'pink' },
+                    { name: 'Violet Mainframe', color: '#EE82EE', family: 'purple' },
+                    { name: 'Emerald Link', color: '#50C878', family: 'green' },
+                    { name: 'Sapphire Stream', color: '#0F52BA', family: 'blue' },
+                    { name: 'Ruby Firewall', color: '#E0115F', family: 'pink' },
+                    { name: 'Amber Alert', color: '#FFBF00', family: 'yellow' },
+                    { name: 'Ice Blue', color: '#A5F2F3', family: 'blue' },
+                    { name: 'sentAIent Blue', color: '#60A9FF', family: 'blue' },
+                    { name: 'Rainbow Surge', color: 'rainbow', family: 'rainbow' }
+                ];
+
+                // History Buffer Logic (Last 5 themes) + Family Check
+                // Filter out ANY theme that is in the history buffer OR matches the last family
+                const lastFamily = this.lastMatrixFamily || '';
+
+                let availableThemes = themes.filter(t => !this.themeHistory.includes(t.name));
+
+                // Try to filter by family too, but ensure we don't empty the pool
+                const familyFiltered = availableThemes.filter(t => t.family !== lastFamily);
+                if (familyFiltered.length > 0) {
+                    availableThemes = familyFiltered;
+                }
+
+                // Fallback: If we ran out of themes (unlikely), just avoid the very last one
+                let pool = availableThemes;
+                if (pool.length === 0) {
+                    const lastTheme = this.themeHistory[this.themeHistory.length - 1];
+                    pool = themes.filter(t => t.name !== lastTheme);
+                }
+
+                const themeIndex = Math.floor(Math.random() * pool.length);
+                const theme = pool[themeIndex];
+
+                // Update History
+                this.themeHistory.push(theme.name);
+                if (this.themeHistory.length > 5) {
+                    this.themeHistory.shift(); // Keep only last 5
+                }
+                this.lastMatrixFamily = theme.family; // Track family
+
+                // Persist to LocalStorage
+                try {
+                    localStorage.setItem('matrixThemeHistory', JSON.stringify(this.themeHistory));
+                    localStorage.setItem('matrixLastFamily', this.lastMatrixFamily);
+                } catch (e) {
+                    console.warn('LocalStorage failed', e);
+                }
+
+                console.log(`[Matrix] Selected: ${theme.name} (${theme.family}), History: ${JSON.stringify(this.themeHistory)}, Pool Size: ${pool.length}`);
+
+                this.matrixTheme = theme;
+
+                // Discrete Speed Levels: Crawl, Slow, Normal, Fast, Hyper, Ludicrous
+                const speedLevels = [
+                    { name: 'Crawl', value: 0.2 },
+                    { name: 'Slow', value: 0.5 },
+                    { name: 'Normal', value: 1.0 },
+                    { name: 'Fast', value: 2.0 },
+                    { name: 'Hyper', value: 4.0 },
+                    { name: 'Ludicrous', value: 8.0 }
+                ];
+                const selectedSpeed = speedLevels[Math.floor(Math.random() * speedLevels.length)];
+                this.matrixSpeedMultiplier = selectedSpeed.value;
+
+                this.showToast(`Cyber Theme: ${theme.name} (Speed: ${selectedSpeed.name}) [v14]`);
+
+                // Update UI Display
+                const displayEl = document.getElementById('matrixThemeDisplay');
+                if (displayEl) {
+                    displayEl.innerText = `Theme: ${theme.name} | Family: ${theme.family.charAt(0).toUpperCase() + theme.family.slice(1)}`;
+                }
+
+                for (let i = 0; i < columns; i++) {
+                    const depth = Math.random(); // 0 to 1
+                    const size = Math.floor(10 + depth * 14); // 10px to 24px
+                    // Apply speed multiplier with per-stream variance
+                    const speed = (2 + depth * 8 + Math.random() * 2) * this.matrixSpeedMultiplier;
+
+                    // Massive Trails: 600 to 1500 characters (3x longer)
+                    const len = 600 + Math.floor(Math.random() * 9000);
+                    const chars = [];
+                    for (let j = 0; j < len; j++) {
+                        chars.push(String.fromCharCode(0x30A0 + Math.random() * 96));
+                    }
+
+                    // Handle Rainbow Theme
+                    let streamColor = theme.color;
+                    if (theme.name === 'Rainbow Surge') {
+                        // Calculate hue based on column index (i) to cycle through the spectrum
+                        const hue = (i * 360 / columns) % 360;
+                        streamColor = `hsl(${hue}, 100%, 50%)`; // Full saturation, mid lightness
+                    }
+
+                    this.matrixStreams.push({
+                        x: i * fontSize, // Fixed columns
+                        speed: speed,
+                        chars: chars,
+                        color: streamColor,
+                        size: size,
+                        opacity: 0.3 + depth * 0.7 // Closer = brighter
+                    });
+                }
+            }
+
             /* --- Rendering --- */
 
             animate(time) {
@@ -1259,23 +1301,59 @@
                 ctx.fillStyle = this.config.bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Static Background Stars
-                const paraX = this.camera.x * 0.1;
-                const paraY = this.camera.y * 0.1;
+                // Static Background Stars (Screen Space)
+                if (this.config.showBackground) {
+                    const paraX = this.camera.x * 0.05;
+                    const paraY = this.camera.y * 0.05;
 
-                ctx.fillStyle = "#ffffff";
-                this.backgroundStars.forEach(s => {
-                    let sx = (s.x + paraX) % canvas.width;
-                    let sy = (s.y + paraY) % canvas.height;
-                    if (sx < 0) sx += canvas.width;
-                    if (sy < 0) sy += canvas.height;
+                    this.staticStars.forEach(s => {
+                        let sx = (s.x + paraX) % canvas.width;
+                        let sy = (s.y + paraY) % canvas.height;
+                        if (sx < 0) sx += canvas.width;
+                        if (sy < 0) sy += canvas.height;
 
-                    ctx.globalAlpha = s.alpha;
-                    ctx.beginPath();
-                    ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-                ctx.globalAlpha = 1.0;
+                        ctx.fillStyle = s.color;
+                        ctx.globalAlpha = s.alpha;
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.globalAlpha = 1.0;
+
+                    // Cyber Matrix Rain (Screen Space)
+                    if (this.bgStyle === 'cyber' && this.matrixStreams) {
+                        ctx.textAlign = 'center';
+                        this.matrixStreams.forEach(stream => {
+                            // Update
+                            stream.y += stream.speed;
+                            if (stream.y - (stream.chars.length * stream.size) > canvas.height) {
+                                stream.y = -stream.size; // Reset to top
+                            }
+
+                            // Draw
+                            ctx.font = `${stream.size}px monospace`;
+
+                            stream.chars.forEach((char, i) => {
+                                const charY = stream.y - (i * stream.size);
+                                if (charY < -stream.size || charY > canvas.height + stream.size) return;
+
+                                // Improved visibility: Fade out only near the end of the tail
+                                // Using Math.pow to keep alpha higher for longer
+                                const relativePos = 1 - (i / stream.chars.length);
+                                const alpha = Math.pow(relativePos, 0.5) * stream.opacity;
+
+                                ctx.globalAlpha = alpha;
+                                // FORCE UNIFORM COLOR: Head character matches stream color
+                                ctx.fillStyle = stream.color;
+                                ctx.shadowBlur = 0;
+
+                                ctx.fillText(char, stream.x, charY);
+                            });
+                        });
+                        ctx.shadowBlur = 0;
+                        ctx.globalAlpha = 1.0;
+                    }
+                }
 
                 // World Transform
                 ctx.translate(canvas.width / 2 + this.camera.x, canvas.height / 2 + this.camera.y);
@@ -1380,61 +1458,6 @@
                 const statEl = document.getElementById('stats');
                 const constellationCount = clusters.filter(c => c.length >= this.config.minGroupSize).length;
                 if (statEl) statEl.innerText = `Mode: ${this.mode.charAt(0).toUpperCase() + this.mode.slice(1)} | Stars: ${this.stars.length} | Constellations: ${constellationCount} | Zoom: ${this.camera.zoom.toFixed(2)}x`;
-
-                this.drawIntro();
-            }
-
-            drawIntro() {
-                if (!this.introActive) return;
-
-                const now = Date.now();
-                const elapsed = now - this.introStartTime;
-                const progress = Math.min(elapsed / this.introDuration, 1);
-
-                if (progress >= 1) {
-                    this.introActive = false;
-                    return;
-                }
-
-                // Animation: Zoom Out (Scale 2.5 -> 0)
-                // Opacity: 0 -> 1 (at 15%) -> 1 (at 85%) -> 0 (at 100%)
-
-                let scale = 2.5 - (2.5 * progress); // Linear zoom out to 0
-                let opacity = 0;
-
-                if (progress < 0.15) {
-                    opacity = progress / 0.15;
-                } else if (progress < 0.85) {
-                    opacity = 1;
-                } else {
-                    opacity = 1 - ((progress - 0.85) / 0.15);
-                }
-
-                const ctx = this.ctx;
-                ctx.save();
-                ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform for full screen overlay
-
-                // Dim background slightly
-                ctx.fillStyle = `rgba(0, 0, 0, ${opacity > 0 ? 0.8 : 0})`;
-                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-                ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
-                ctx.scale(scale, scale);
-
-                ctx.font = '900 60px "Orbitron", sans-serif';
-                ctx.fillStyle = `rgba(0, 243, 255, ${opacity})`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.shadowColor = `rgba(0, 243, 255, ${opacity * 0.5})`;
-                ctx.shadowBlur = 20;
-                ctx.fillText("UNLEASH YOUR CREATIVITY IN 4D", 0, 0);
-
-                ctx.restore();
-            }
-
-            toggleBackground(enabled) {
-                this.config.showBackground = enabled;
-                this.draw();
             }
 
             drawDeepSpace() {
@@ -1443,9 +1466,9 @@
                 const ctx = this.ctx;
                 const time = performance.now() * 0.0005;
 
-                // 1. Static Stars (Parallax could be added here if we tracked camera better, but static is fine for depth)
-                ctx.fillStyle = "white";
+                // 1. Background Stars
                 this.backgroundStars.forEach(s => {
+                    ctx.fillStyle = s.color || "white";
                     ctx.globalAlpha = s.alpha;
                     ctx.beginPath();
                     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
@@ -1454,7 +1477,7 @@
                 ctx.globalAlpha = 1;
 
                 // 1.5 Nebulae
-                ctx.globalCompositeOperation = 'screen'; // Blend nicely
+                ctx.globalCompositeOperation = 'screen';
                 this.nebulae.forEach(n => {
                     const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.size);
                     grad.addColorStop(0, n.color);
@@ -1466,7 +1489,7 @@
                     ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
                     ctx.fill();
                 });
-                ctx.globalCompositeOperation = 'source-over'; // Reset
+                ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = 1;
 
                 // 2. Galaxies
@@ -1475,7 +1498,6 @@
                     ctx.translate(g.x, g.y);
                     ctx.rotate(g.angle + time * 0.1);
 
-                    // Simple spiral effect
                     const spiralGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
                     spiralGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
                     spiralGradient.addColorStop(0.2, g.color);
@@ -1483,23 +1505,12 @@
 
                     ctx.fillStyle = spiralGradient;
                     ctx.beginPath();
-                    ctx.arc(0, 0, g.size, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Add some spiral arms (particles)
-                    ctx.fillStyle = g.color;
-                    for (let j = 0; j < 4; j++) {
-                        ctx.rotate(Math.PI / 2);
-                        for (let k = 0; k < 10; k++) {
-                            const dist = (k / 10) * g.size;
-                            const size = (1 - k / 10) * 3;
-                            ctx.globalAlpha = 0.5;
-                            ctx.beginPath();
-                            ctx.arc(dist, Math.sin(dist * 0.1 - time) * 10, size, 0, Math.PI * 2);
-                            ctx.fill();
-                        }
+                    // Draw spiral arms
+                    for (let i = 0; i < 3; i++) {
+                        ctx.rotate(Math.PI * 2 / 3);
+                        ctx.ellipse(g.size / 2, 0, g.size, g.size / 4, 0, 0, Math.PI * 2);
                     }
-
+                    ctx.fill();
                     ctx.restore();
                 });
 
@@ -1508,61 +1519,64 @@
                     ctx.save();
                     ctx.translate(bh.x, bh.y);
 
-                    // Accretion Disk
-                    const diskGrad = ctx.createRadialGradient(0, 0, bh.size * 0.5, 0, 0, bh.size * 2);
-                    diskGrad.addColorStop(0, 'black');
-                    diskGrad.addColorStop(0.4, 'rgba(255, 100, 50, 0.8)'); // Orange/Red glow
-                    diskGrad.addColorStop(1, 'transparent');
-
-                    ctx.fillStyle = diskGrad;
+                    // Accretion disk
                     ctx.beginPath();
-                    ctx.arc(0, 0, bh.size * 2, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.strokeStyle = 'orange';
+                    ctx.lineWidth = 2;
+                    ctx.arc(0, 0, bh.size * 1.5, 0, Math.PI * 2);
+                    ctx.stroke();
 
                     // Event Horizon
-                    ctx.fillStyle = 'black';
                     ctx.beginPath();
-                    ctx.arc(0, 0, bh.size * 0.8, 0, Math.PI * 2);
+                    ctx.fillStyle = 'black';
+                    ctx.arc(0, 0, bh.size, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+
+                    // Glow
+                    ctx.shadowColor = 'purple';
+                    ctx.shadowBlur = 20;
                     ctx.stroke();
+                    ctx.shadowBlur = 0;
 
                     ctx.restore();
                 });
 
-                // 4. Shooting Stars
-                // Spawn logic
-                if (Math.random() < 0.02) { // 2% chance per frame
-                    this.shootingStars.push({
-                        x: Math.random() * this.canvas.width,
-                        y: Math.random() * this.canvas.height,
-                        vx: (Math.random() - 0.5) * 10,
-                        vy: (Math.random() - 0.5) * 10,
-                        life: 1.0
+                // 4. Spacecraft (Alien)
+                if (this.bgStyle === 'alien') {
+                    this.spacecraft.forEach(s => {
+                        ctx.save();
+                        ctx.translate(s.x, s.y);
+                        const angle = Math.atan2(s.vy, s.vx);
+                        ctx.rotate(angle);
+
+                        ctx.fillStyle = s.color || '#00ff00';
+                        ctx.shadowColor = s.color || '#00ff00';
+
+                        if (s.type === 0) { // Saucer
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, s.size, s.size / 3, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                            ctx.arc(0, -s.size / 4, s.size / 4, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else if (s.type === 1) { // Dart
+                            ctx.beginPath();
+                            ctx.moveTo(s.size, 0);
+                            ctx.lineTo(-s.size, s.size / 2);
+                            ctx.lineTo(-s.size / 2, 0);
+                            ctx.lineTo(-s.size, -s.size / 2);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else { // Orb
+                            ctx.shadowBlur = 10;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, s.size / 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        ctx.restore();
                     });
                 }
-
-                // Update & Draw Shooting Stars
-                for (let i = this.shootingStars.length - 1; i >= 0; i--) {
-                    const s = this.shootingStars[i];
-                    s.x += s.vx;
-                    s.y += s.vy;
-                    s.life -= 0.02;
-
-                    if (s.life <= 0) {
-                        this.shootingStars.splice(i, 1);
-                        continue;
-                    }
-
-                    ctx.strokeStyle = `rgba(255, 255, 255, ${s.life})`;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(s.x, s.y);
-                    ctx.lineTo(s.x - s.vx * 3, s.y - s.vy * 3); // Trail
-                    ctx.stroke();
-                }
-
-                ctx.globalAlpha = 1;
             }
 
             drawStarShape(ctx, x, y, r) {
@@ -1585,30 +1599,21 @@
                 const adj = {};
                 this.stars.forEach(s => adj[s.id] = []);
 
-                // 1. Populate Grid
-                this.grid.clear();
-                this.stars.forEach(s => this.grid.add(s));
-
-                // 2. Query Grid for Connections
-                // We only need to check each pair once. 
-                // To avoid duplicates (A-B and B-A), we can check id string comparison or just add both and filter later?
-                // Optimization: For each star, get neighbors. Only connect if neighbor.id > star.id (canonical order)
-
-                this.stars.forEach(s1 => {
-                    const neighbors = this.grid.getNearby(s1.x, s1.y);
-                    neighbors.forEach(s2 => {
-                        if (s1.id >= s2.id) return; // Unique pairs only
-
+                for (let i = 0; i < this.stars.length; i++) {
+                    for (let j = i + 1; j < this.stars.length; j++) {
+                        const s1 = this.stars[i];
+                        const s2 = this.stars[j];
                         const dist = Math.hypot(s1.x - s2.x, s1.y - s2.y);
+
                         if (dist < this.config.maxConnectDist) {
                             lines.push({ s1, s2, dist });
                             adj[s1.id].push(s2.id);
                             adj[s2.id].push(s1.id);
                         }
-                    });
-                });
+                    }
+                }
 
-                // BFS for clusters (unchanged logic, just runs on the adjacency list built above)
+                // BFS for clusters
                 const clusters = [];
                 const visited = new Set();
                 this.stars.forEach(star => {
@@ -1641,71 +1646,6 @@
                 setTimeout(() => t.classList.remove('visible'), 2000);
             }
 
-            /* --- Utility Methods --- */
-
-            saveUniverse() {
-                if (this.stars.length === 0) {
-                    this.showToast("Nothing to save!");
-                    return;
-                }
-                const data = JSON.stringify(this.stars);
-                const blob = new Blob([data], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `interstellar_universe_${Date.now()}.json`;
-                link.click();
-                this.showToast("Project Saved");
-            }
-
-            loadUniverse(input) {
-                const file = input.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        let stars;
-                        const content = e.target.result;
-
-                        if (file.name.endsWith('.svg') || file.type === 'image/svg+xml') {
-                            // Extract JSON from <desc id="aether-state">
-                            const match = content.match(/<desc id="aether-state">([\s\S]*?)<\/desc>/);
-                            if (match && match[1]) {
-                                try {
-                                    // Try Base64 decode first (new format)
-                                    stars = JSON.parse(atob(match[1]));
-                                } catch (e) {
-                                    // Fallback for plain text (if any exist from previous step)
-                                    stars = JSON.parse(match[1]);
-                                }
-                            } else {
-                                throw new Error("Legacy SVG: No save data found. Please export a new SVG.");
-                            }
-                        } else {
-                            // Assume JSON
-                            stars = JSON.parse(content);
-                        }
-
-                        if (Array.isArray(stars)) {
-                            this.stars = stars;
-                            this.commands.stack = []; // Clear undo history on load
-                            this.refreshClusterAssignments();
-                            this.draw();
-                            this.showToast("Project Loaded");
-                        } else {
-                            throw new Error("Invalid format");
-                        }
-                    } catch (err) {
-                        const msg = err.message.includes("Legacy") ? err.message : "Error: Invalid Project File";
-                        this.showToast(msg);
-                        console.error(err);
-                    }
-                };
-                reader.readAsText(file);
-                input.value = ''; // Reset input
-            }
-
             downloadSVG() {
                 if (this.stars.length === 0) {
                     this.showToast("Universe is empty!");
@@ -1729,12 +1669,7 @@
 
                 const { lines, clusters } = this.calculateGeometry();
 
-                // Serialize state for embedding (Base64 encoded to be safe in XML)
-                const stateJson = JSON.stringify(this.stars);
-                const stateB64 = btoa(stateJson);
-
                 let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbX} ${vbY} ${w} ${h}" style="background:#020205">
-            <desc id="aether-state">${stateB64}</desc>
             <rect x="${vbX}" y="${vbY}" width="${w}" height="${h}" fill="#020205"/>`;
 
                 // Lines
@@ -1780,13 +1715,8 @@
             }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM ready, initializing app...");
-            const app = new AetherEngine();
-            window.app = app;
-        });
+        const app = new AetherEngine();
     </script>
 </body>
 
 </html>
-```
