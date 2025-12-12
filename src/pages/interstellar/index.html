@@ -484,15 +484,61 @@
 
                 <label
                     style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <span>Stream Length:</span>
+                    <span>Code Length:</span>
                     <span id="cyberLengthValue" style="color: var(--accent);">1.0x</span>
                 </label>
                 <input type="range" id="cyberLengthSlider" min="0.2" max="3" step="0.1" value="1"
                     style="width: 100%; margin-top: 4px; accent-color: var(--accent);">
+
+                <label
+                    style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <span>Code Color:</span>
+                </label>
+                <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                    <input type="color" id="matrixColorPicker" value="#00ff00"
+                        style="width: 40px; height: 28px; border: none; background: transparent; cursor: pointer;">
+                    <input type="text" id="matrixColorHex" value="#00ff00" maxlength="7"
+                        style="flex: 1; padding: 4px 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 4px; color: var(--accent); font-family: monospace; font-size: 12px;">
+                </div>
             </div>
 
             <button class="btn-small" onclick="app.generateBackground()" style="width: 100%;">
                 Regenerate Background
+            </button>
+        </div>
+
+        <!-- 3D Rotation Controls -->
+        <div id="rotationControls" class="hud-panel"
+            style="position: absolute; top: 330px; right: 20px; padding: 15px; max-width: 200px;">
+            <h2 style="font-size: 14px; margin: 0 0 10px 0; color: var(--accent); text-transform: uppercase;">3D
+                Rotation</h2>
+
+            <label
+                style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center;">
+                <span>X Axis:</span>
+                <span id="rotXValue" style="color: var(--accent);">0°</span>
+            </label>
+            <input type="range" id="rotXSlider" min="-180" max="180" step="1" value="0"
+                style="width: 100%; margin-top: 4px; accent-color: var(--accent);">
+
+            <label
+                style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <span>Y Axis:</span>
+                <span id="rotYValue" style="color: var(--accent);">0°</span>
+            </label>
+            <input type="range" id="rotYSlider" min="-180" max="180" step="1" value="0"
+                style="width: 100%; margin-top: 4px; accent-color: var(--accent);">
+
+            <label
+                style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <span>Z Axis:</span>
+                <span id="rotZValue" style="color: var(--accent);">0°</span>
+            </label>
+            <input type="range" id="rotZSlider" min="-180" max="180" step="1" value="0"
+                style="width: 100%; margin-top: 4px; accent-color: var(--accent);">
+
+            <button class="btn-small" onclick="app.resetRotation()" style="width: 100%; margin-top: 10px;">
+                Reset Rotation
             </button>
         </div>
 
@@ -603,6 +649,12 @@
                 this.activeStyles = new Set(['deep-space']); // Support multiple styles
                 this.matrixSpeedMultiplier = 1.0; // User-adjustable cyber speed
                 this.matrixLengthMultiplier = 1.0; // User-adjustable cyber stream length
+                this.matrixColor = '#00ff00'; // User-adjustable matrix stream color
+
+                // 3D Rotation State (degrees)
+                this.rotationX = 0;
+                this.rotationY = 0;
+                this.rotationZ = 0;
 
                 // Interaction State
                 this.pointer = { x: 0, y: 0, startX: 0, startY: 0, isDown: false, dragging: false, lastWorldX: 0, lastWorldY: 0 };
@@ -659,6 +711,49 @@
                     cyberLengthSlider.addEventListener('input', (e) => {
                         this.matrixLengthMultiplier = parseFloat(e.target.value);
                         document.getElementById('cyberLengthValue').textContent = this.matrixLengthMultiplier.toFixed(1) + 'x';
+                    });
+                }
+
+                // Matrix color picker
+                const matrixColorPicker = document.getElementById('matrixColorPicker');
+                const matrixColorHex = document.getElementById('matrixColorHex');
+                if (matrixColorPicker) {
+                    matrixColorPicker.addEventListener('input', (e) => {
+                        this.matrixColor = e.target.value;
+                        if (matrixColorHex) matrixColorHex.value = e.target.value;
+                    });
+                }
+                if (matrixColorHex) {
+                    matrixColorHex.addEventListener('input', (e) => {
+                        let val = e.target.value;
+                        if (val.match(/^#[0-9A-Fa-f]{6}$/)) {
+                            this.matrixColor = val;
+                            if (matrixColorPicker) matrixColorPicker.value = val;
+                        }
+                    });
+                }
+
+                // 3D Rotation sliders
+                const rotXSlider = document.getElementById('rotXSlider');
+                const rotYSlider = document.getElementById('rotYSlider');
+                const rotZSlider = document.getElementById('rotZSlider');
+
+                if (rotXSlider) {
+                    rotXSlider.addEventListener('input', (e) => {
+                        this.rotationX = parseFloat(e.target.value);
+                        document.getElementById('rotXValue').textContent = this.rotationX + '°';
+                    });
+                }
+                if (rotYSlider) {
+                    rotYSlider.addEventListener('input', (e) => {
+                        this.rotationY = parseFloat(e.target.value);
+                        document.getElementById('rotYValue').textContent = this.rotationY + '°';
+                    });
+                }
+                if (rotZSlider) {
+                    rotZSlider.addEventListener('input', (e) => {
+                        this.rotationZ = parseFloat(e.target.value);
+                        document.getElementById('rotZValue').textContent = this.rotationZ + '°';
                     });
                 }
 
@@ -1566,23 +1661,30 @@
                 // Draw deep space specific elements (galaxies, black holes, planets)
                 if (this.activeStyles.has('deep-space')) this.drawDeepSpaceSpecific();
 
-                // 1. Draw Grid Lines (Glow Pass + Core Pass)
+                // 1. Draw Grid Lines (Glow Pass + Core Pass) with 3D rotation
                 if (lines.length > 0) {
                     ctx.lineCap = 'round';
                     ctx.shadowBlur = 10;
 
+                    // Rotation center (center of viewport in world coords)
+                    const rotCenterX = this.camera.x + this.canvas.width / 2 / this.camera.zoom;
+                    const rotCenterY = this.camera.y + this.canvas.height / 2 / this.camera.zoom;
+
                     lines.forEach(l => {
                         const alpha = Math.max(0, 1 - (l.dist / this.config.maxConnectDist));
-                        // Line color based on s1's star color
                         const starColor = this.getStarColor(l.s1);
                         const [r, g, b] = this.hexToRgb(starColor);
+
+                        // Apply 3D rotation
+                        const p1 = this.rotate3D(l.s1.x, l.s1.y, rotCenterX, rotCenterY);
+                        const p2 = this.rotate3D(l.s2.x, l.s2.y, rotCenterX, rotCenterY);
 
                         ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
                         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.3})`;
                         ctx.lineWidth = 3 / this.camera.zoom;
                         ctx.beginPath();
-                        ctx.moveTo(l.s1.x, l.s1.y);
-                        ctx.lineTo(l.s2.x, l.s2.y);
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
                         ctx.stroke();
                     });
                     ctx.shadowBlur = 0;
@@ -1591,12 +1693,16 @@
                         const alpha = Math.max(0, 1 - (l.dist / this.config.maxConnectDist));
                         const starColor = this.getStarColor(l.s1);
 
+                        // Apply 3D rotation
+                        const p1 = this.rotate3D(l.s1.x, l.s1.y, rotCenterX, rotCenterY);
+                        const p2 = this.rotate3D(l.s2.x, l.s2.y, rotCenterX, rotCenterY);
+
                         ctx.strokeStyle = starColor;
                         ctx.globalAlpha = alpha * 0.8;
                         ctx.lineWidth = 1 / this.camera.zoom;
                         ctx.beginPath();
-                        ctx.moveTo(l.s1.x, l.s1.y);
-                        ctx.lineTo(l.s2.x, l.s2.y);
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
                         ctx.stroke();
                     });
                     ctx.globalAlpha = 1.0;
@@ -1627,32 +1733,41 @@
                     ctx.shadowBlur = 0;
                 });
 
-                // 7. Draw Stars
+                // 7. Draw Stars with 3D rotation
                 const timeNow = performance.now();
+                const rotCenterX = this.camera.x + this.canvas.width / 2 / this.camera.zoom;
+                const rotCenterY = this.camera.y + this.canvas.height / 2 / this.camera.zoom;
+
                 this.stars.forEach(s => {
                     const isHover = (s === this.hoveredStar);
 
+                    // Apply 3D rotation
+                    const rotated = this.rotate3D(s.x, s.y, rotCenterX, rotCenterY);
+                    const rx = rotated.x;
+                    const ry = rotated.y;
+                    const rScale = rotated.scale;
+
                     const twinkle = Math.sin(timeNow * 0.003 + s.phase) * 0.2 + 0.8;
                     const scale = isHover ? 1.5 : 1.0;
-                    const radius = this.config.starBaseRad * twinkle * scale / this.camera.zoom;
+                    const radius = this.config.starBaseRad * twinkle * scale * rScale / this.camera.zoom;
                     const starColor = this.getStarColor(s);
                     const [r, g, b] = this.hexToRgb(starColor);
 
                     // Draw Glow
                     const glowRad = radius * 6;
-                    const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, glowRad);
+                    const grad = ctx.createRadialGradient(rx, ry, 0, rx, ry, glowRad);
                     grad.addColorStop(0, `rgba(255, 255, 255, ${isHover ? 0.9 : 0.6})`);
                     grad.addColorStop(0.2, `rgba(${r}, ${g}, ${b}, 0.3)`);
                     grad.addColorStop(1, "rgba(0,0,0,0)");
 
                     ctx.fillStyle = grad;
                     ctx.beginPath();
-                    ctx.arc(s.x, s.y, glowRad, 0, Math.PI * 2);
+                    ctx.arc(rx, ry, glowRad, 0, Math.PI * 2);
                     ctx.fill();
 
                     // Draw Core (Star Shape)
                     ctx.fillStyle = starColor;
-                    this.drawStarShape(ctx, s.x, s.y, radius);
+                    this.drawStarShape(ctx, rx, ry, radius);
                 });
 
                 // Update HUD
@@ -2160,6 +2275,63 @@
                 ctx.lineTo(x - pr, y - pr);
                 ctx.closePath();
                 ctx.fill();
+            }
+
+            // 3D Rotation: Rotate a point around the center of the canvas
+            rotate3D(x, y, centerX, centerY) {
+                // Convert degrees to radians
+                const radX = this.rotationX * Math.PI / 180;
+                const radY = this.rotationY * Math.PI / 180;
+                const radZ = this.rotationZ * Math.PI / 180;
+
+                // Translate to origin (center of view)
+                let px = x - centerX;
+                let py = y - centerY;
+                let pz = 0; // Stars are on a 2D plane, z=0
+
+                // Rotation around X axis
+                let y1 = py * Math.cos(radX) - pz * Math.sin(radX);
+                let z1 = py * Math.sin(radX) + pz * Math.cos(radX);
+                py = y1;
+                pz = z1;
+
+                // Rotation around Y axis
+                let x1 = px * Math.cos(radY) + pz * Math.sin(radY);
+                z1 = -px * Math.sin(radY) + pz * Math.cos(radY);
+                px = x1;
+                pz = z1;
+
+                // Rotation around Z axis
+                x1 = px * Math.cos(radZ) - py * Math.sin(radZ);
+                y1 = px * Math.sin(radZ) + py * Math.cos(radZ);
+                px = x1;
+                py = y1;
+
+                // Simple perspective projection (optional depth effect)
+                const fov = 800;
+                const scale = fov / (fov + pz);
+
+                // Translate back
+                return {
+                    x: px * scale + centerX,
+                    y: py * scale + centerY,
+                    scale: scale
+                };
+            }
+
+            // Reset rotation sliders and values
+            resetRotation() {
+                this.rotationX = 0;
+                this.rotationY = 0;
+                this.rotationZ = 0;
+
+                const xSlider = document.getElementById('rotXSlider');
+                const ySlider = document.getElementById('rotYSlider');
+                const zSlider = document.getElementById('rotZSlider');
+
+                if (xSlider) { xSlider.value = 0; document.getElementById('rotXValue').textContent = '0°'; }
+                if (ySlider) { ySlider.value = 0; document.getElementById('rotYValue').textContent = '0°'; }
+                if (zSlider) { zSlider.value = 0; document.getElementById('rotZValue').textContent = '0°'; }
             }
 
             calculateGeometry() {

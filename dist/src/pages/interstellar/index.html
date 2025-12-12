@@ -86,11 +86,11 @@
             line-height: 1.5;
         }
 
-        /* Top Right Color Controls (Active Star Color) */
+        /* Left Side Color Controls (below info panel) */
         #colorControls {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 190px;
+            left: 20px;
             align-self: flex-start;
             padding: 15px;
             max-width: 280px;
@@ -193,10 +193,19 @@
             box-shadow: 0 0 15px #ff0077;
         }
 
-        /* Bottom Center Tools */
+        /* Active Background Toggle Styling */
+        .bg-toggle.active {
+            background: var(--accent);
+            color: var(--bg-deep);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* Bottom Left Tools */
         .toolbar {
-            align-self: center;
+            align-self: flex-start;
             margin-bottom: 20px;
+            margin-left: 20px;
             display: flex;
             gap: 12px;
             padding: 10px;
@@ -275,10 +284,10 @@
             opacity: 1;
         }
 
-        /* Zoom Controls (Right) */
+        /* Zoom Controls (Left) */
         .zoom-controls {
             position: absolute;
-            right: 20px;
+            left: 20px;
             bottom: 100px;
             display: flex;
             flex-direction: column;
@@ -445,19 +454,41 @@
         </div>
 
         <div id="bgControls" class="hud-panel"
-            style="top: 20px; left: 50%; transform: translateX(-50%); position: absolute; padding: 15px; max-width: 280px;">
+            style="top: 330px; left: 20px; position: absolute; padding: 15px; max-width: 280px;">
             <h2 style="font-size: 16px; margin: 0 0 10px 0; color: var(--accent); text-transform: uppercase;">Background
                 Style</h2>
-            <select id="bgStyleSelect" onchange="app.setBgStyle(this.value)"
-                style="width: 100%; padding: 8px; background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 8px; margin-bottom: 8px;">
-                <option value="deep-space">Deep Space</option>
-                <option value="nebula">Nebula</option>
-                <option value="alien">Alien</option>
-                <option value="cyber">Cyber Matrix</option>
-            </select>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                <button class="btn-small bg-toggle active" data-style="deep-space"
+                    onclick="app.toggleBgStyle('deep-space')">Deep Space</button>
+                <button class="btn-small bg-toggle" data-style="nebula"
+                    onclick="app.toggleBgStyle('nebula')">Nebula</button>
+                <button class="btn-small bg-toggle" data-style="alien"
+                    onclick="app.toggleBgStyle('alien')">Alien</button>
+                <button class="btn-small bg-toggle" data-style="cyber"
+                    onclick="app.toggleBgStyle('cyber')">Cyber</button>
+            </div>
 
             <div id="matrixThemeDisplay"
                 style="font-size: 11px; color: var(--accent); margin-bottom: 8px; min-height: 15px;"></div>
+
+            <!-- Cyber Speed Control (visible when Cyber is active) -->
+            <div id="cyberSpeedControl" style="display: none; margin-bottom: 10px;">
+                <label
+                    style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center;">
+                    <span>Matrix Speed:</span>
+                    <span id="cyberSpeedValue" style="color: var(--accent);">1.0x</span>
+                </label>
+                <input type="range" id="cyberSpeedSlider" min="0.1" max="8" step="0.1" value="1"
+                    style="width: 100%; margin-top: 4px; accent-color: var(--accent);">
+
+                <label
+                    style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <span>Stream Length:</span>
+                    <span id="cyberLengthValue" style="color: var(--accent);">1.0x</span>
+                </label>
+                <input type="range" id="cyberLengthSlider" min="0.2" max="3" step="0.1" value="1"
+                    style="width: 100%; margin-top: 4px; accent-color: var(--accent);">
+            </div>
 
             <button class="btn-small" onclick="app.generateBackground()" style="width: 100%;">
                 Regenerate Background
@@ -496,8 +527,22 @@
                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
                 </svg>
             </button>
+            <button class="btn" onclick="app.triggerLoadSVG()" data-tooltip="Load SVG">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
+                </svg>
+            </button>
+            <button class="btn" id="exportVideoBtn" onclick="app.exportVideo()" data-tooltip="Export Video (5s)">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+                </svg>
+            </button>
         </div>
     </div>
+
+    <!-- Hidden file input for loading SVG -->
+    <input type="file" id="svgFileInput" accept=".svg" style="display: none;" onchange="app.loadSVG(event)">
 
     <div class="zoom-controls">
         <button class="zoom-btn" onclick="app.adjustZoom(0.1)">+</button>
@@ -539,7 +584,11 @@
                     starBaseRad: 3.5,
                     minGroupSize: 3,
                     bgColor: '#020205',
+                    showBackground: true,
                 };
+
+                // World size for background generation
+                this.worldSize = 8000;
 
                 // State
                 this.stars = [];
@@ -550,7 +599,9 @@
                 // NEW COLOR STATE
                 this.activeColor = '#00f3ff';
                 this.colorMode = 'fixed'; // 'fixed' or 'rainbow'
-                this.bgStyle = 'deep-space'; // Default background style
+                this.activeStyles = new Set(['deep-space']); // Support multiple styles
+                this.matrixSpeedMultiplier = 1.0; // User-adjustable cyber speed
+                this.matrixLengthMultiplier = 1.0; // User-adjustable cyber stream length
 
                 // Interaction State
                 this.pointer = { x: 0, y: 0, startX: 0, startY: 0, isDown: false, dragging: false, lastWorldX: 0, lastWorldY: 0 };
@@ -575,7 +626,6 @@
 
             init() {
                 window.addEventListener('resize', () => this.resize());
-                this.resize();
 
                 // Pointer Events
                 this.canvas.addEventListener('pointerdown', e => this.onPointerDown(e));
@@ -592,6 +642,27 @@
                 this.setMode('draw');
                 // Initial color state setup
                 this.updateColorModeUI();
+
+                // Cyber speed slider
+                const cyberSlider = document.getElementById('cyberSpeedSlider');
+                if (cyberSlider) {
+                    cyberSlider.addEventListener('input', (e) => {
+                        this.matrixSpeedMultiplier = parseFloat(e.target.value);
+                        document.getElementById('cyberSpeedValue').textContent = this.matrixSpeedMultiplier.toFixed(1) + 'x';
+                    });
+                }
+
+                // Cyber length slider
+                const cyberLengthSlider = document.getElementById('cyberLengthSlider');
+                if (cyberLengthSlider) {
+                    cyberLengthSlider.addEventListener('input', (e) => {
+                        this.matrixLengthMultiplier = parseFloat(e.target.value);
+                        document.getElementById('cyberLengthValue').textContent = this.matrixLengthMultiplier.toFixed(1) + 'x';
+                    });
+                }
+
+                // Trigger initial background generation
+                this.resize();
 
                 this.animate = this.animate.bind(this);
                 requestAnimationFrame(this.animate);
@@ -662,16 +733,38 @@
                 this.showToast("Active color set to Rainbow Mode 🌈");
             }
 
-            setBgStyle(style) {
-                this.bgStyle = style;
-                this.generateBackground();
+            toggleBgStyle(style) {
+                if (this.activeStyles.has(style)) {
+                    // Allow deselecting all styles for minimal black background
+                    this.activeStyles.delete(style);
+                } else {
+                    this.activeStyles.add(style);
+                }
 
-                // Update UI visibility
+                this.updateBgUI();
+                this.generateBackground();
+            }
+
+            updateBgUI() {
+                // Update Buttons
+                document.querySelectorAll('.bg-toggle').forEach(btn => {
+                    const style = btn.getAttribute('data-style');
+                    if (this.activeStyles.has(style)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update theme display and speed control visibility
                 const themeDisplay = document.getElementById('matrixThemeDisplay');
-                if (style === 'cyber') {
+                const speedControl = document.getElementById('cyberSpeedControl');
+                if (this.activeStyles.has('cyber')) {
                     themeDisplay.style.display = 'block';
+                    speedControl.style.display = 'block';
                 } else {
                     themeDisplay.style.display = 'none';
+                    speedControl.style.display = 'none';
                 }
             }
 
@@ -705,6 +798,8 @@
             }
 
             onPointerDown(e) {
+                // Only track canvas interactions
+                this.pointer.onCanvas = (e.target === this.canvas);
                 this.pointer.isDown = true;
                 this.pointer.startX = e.clientX;
                 this.pointer.startY = e.clientY;
@@ -796,21 +891,25 @@
             }
 
             onPointerUp(e) {
-                const world = this.getWorldPos(e);
-                const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
-                const clickedStar = this.stars.find(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
+                // Only process star creation if pointer started on canvas
+                if (this.pointer.onCanvas) {
+                    const world = this.getWorldPos(e);
+                    const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
+                    const clickedStar = this.stars.find(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
 
-                if (!this.pointer.dragging && !clickedStar) {
-                    // Empty Space Clicked - Create Star (ONLY in draw mode)
-                    if (this.mode === 'draw') {
-                        this.saveState();
-                        this.createStar(world.x, world.y);
+                    if (!this.pointer.dragging && !clickedStar) {
+                        // Empty Space Clicked - Create Star (ONLY in draw mode)
+                        if (this.mode === 'draw') {
+                            this.saveState(); // Save BEFORE action
+                            this.createStar(world.x, world.y);
+                        }
                     }
                 }
 
                 // Reset interaction state
                 this.pointer.isDown = false;
                 this.pointer.dragging = false;
+                this.pointer.onCanvas = false;
                 this.draggedStar = null;
                 this.draggedClusterId = null;
             }
@@ -905,25 +1004,26 @@
                 })));
                 if (this.history.length > 25) this.history.shift();
                 this.history.push(newState);
+                console.log('[UNDO] saveState called, history length:', this.history.length);
             }
 
             undo() {
+                console.log('[UNDO] undo() called, history length:', this.history.length);
                 if (this.history.length === 0) {
                     this.showToast("Nothing to undo");
                     return;
                 }
-                // Load the previous state
-                this.history.pop();
+                // Pop the last saved state and restore it
                 const prevState = this.history.pop();
                 if (prevState) {
                     this.stars = JSON.parse(prevState);
-                    this.history.push(prevState); // Put it back so the next undo works from this state
+                    console.log('[UNDO] Restored state with', this.stars.length, 'stars');
                 } else {
-                    this.stars = []; // If history is now empty
+                    this.stars = [];
                 }
 
                 this.draw();
-                this.showToast("Undone");
+                this.showToast(`Undone (${this.history.length} remaining)`);
             }
 
             requestClear() {
@@ -971,24 +1071,13 @@
                 return `The ${pre} ${root} ${suf}`;
             }
 
-            setBgStyle(style) {
-                this.bgStyle = style;
-                this.generateBackground();
-
-                // Update UI visibility
-                const themeDisplay = document.getElementById('matrixThemeDisplay');
-                if (style === 'cyber') {
-                    themeDisplay.style.display = 'block';
-                } else {
-                    themeDisplay.style.display = 'none';
-                }
-            }
+            // Duplicate setBgStyle removed
 
             // ... (updateColorModeUI omitted)
 
             generateBackground() {
-                // this.bgStyle = 'deep-space'; // REMOVED: Do not reset style on regeneration
-                if (!this.bgStyle) this.bgStyle = 'deep-space'; // Default only if undefined
+                // Allow empty activeStyles for minimal black background with just faint stars
+
                 this.showBackground = true;
                 this.staticStars = [];
                 this.galaxies = [];
@@ -996,13 +1085,11 @@
                 this.shootingStars = [];
                 this.backgroundStars = [];
                 this.nebulae = [];
-                this.spacecraft = []; // Alien ships
-                this.matrixStreams = []; // Cyber Matrix
+                this.spacecraft = [];
+                this.matrixStreams = [];
 
-                // State for duplicate prevention
+                // State handling for Cyber theme history
                 try {
-                    // DEBUG: CLEAR HISTORY ONCE
-                    // localStorage.removeItem('matrixThemeHistory');
                     const savedHistory = localStorage.getItem('matrixThemeHistory');
                     this.themeHistory = savedHistory ? JSON.parse(savedHistory) : [];
                     this.lastMatrixFamily = localStorage.getItem('matrixLastFamily') || '';
@@ -1011,33 +1098,29 @@
                     this.lastMatrixFamily = '';
                 }
 
-                // Track last 5 themes
+                // 1. Static Stars (Mixed Palette)
                 this.generateStaticStars();
 
-                switch (this.bgStyle) {
-                    case 'nebula':
-                        this.generateNebulaStyle();
-                        break;
-                    case 'alien':
-                        this.generateAlienStyle();
-                        break;
-                    case 'cyber':
-                        this.generateCyberStyle();
-                        break;
-                    case 'deep-space':
-                    default:
-                        this.generateDeepSpaceStyle();
-                        break;
-                }
+                // 2. Compose Layers based on active styles
+                // Order matters for layering (Deep Space -> Nebula -> Alien -> Cyber)
+                if (this.activeStyles.has('deep-space')) this.generateDeepSpaceStyle();
+                if (this.activeStyles.has('nebula')) this.generateNebulaStyle();
+                if (this.activeStyles.has('alien')) this.generateAlienStyle();
+                if (this.activeStyles.has('cyber')) this.generateCyberStyle();
             }
 
             generateStaticStars() {
                 const count = 150;
-                let colors = ['#ffffff'];
+                let activeColors = [];
 
-                if (this.bgStyle === 'alien') colors = ['#00ff00', '#aa00ff'];
-                if (this.bgStyle === 'cyber') colors = ['#00f3ff'];
-                if (this.bgStyle === 'nebula') colors = ['#ffffff', '#ffeebb', '#ccffff'];
+                // Aggregate colors from active styles
+                if (this.activeStyles.has('deep-space')) activeColors.push('#ffffff');
+                if (this.activeStyles.has('nebula')) activeColors.push('#ffffff', '#ffeebb', '#ccffff');
+                if (this.activeStyles.has('alien')) activeColors.push('#00ff00', '#aa00ff');
+                if (this.activeStyles.has('cyber')) activeColors.push('#00f3ff');
+
+                // Fallback
+                if (activeColors.length === 0) activeColors = ['#ffffff'];
 
                 for (let i = 0; i < count; i++) {
                     this.staticStars.push({
@@ -1045,7 +1128,7 @@
                         y: Math.random() * this.canvas.height,
                         size: Math.random() * 1.5 + 0.5,
                         alpha: Math.random() * 0.5 + 0.1,
-                        color: colors[Math.floor(Math.random() * colors.length)]
+                        color: activeColors[Math.floor(Math.random() * activeColors.length)]
                     });
                 }
             }
@@ -1095,6 +1178,41 @@
                         alpha: 0.05 + Math.random() * 0.15
                     });
                 }
+
+                // 5. Detailed Planets
+                this.planets = [];
+                const planetTypes = [
+                    { name: 'gas-giant', colors: ['#E8C273', '#C17B3A', '#8B5A2B'], hasAtmosphere: true },
+                    { name: 'ice-giant', colors: ['#87CEEB', '#4682B4', '#5F9EA0'], hasAtmosphere: true },
+                    { name: 'terrestrial', colors: ['#228B22', '#8B4513', '#2E8B57'], hasAtmosphere: true },
+                    { name: 'desert', colors: ['#EDC9AF', '#D2691E', '#CD853F'], hasAtmosphere: false },
+                    { name: 'volcanic', colors: ['#8B0000', '#FF4500', '#DC143C'], hasAtmosphere: true },
+                    { name: 'ocean', colors: ['#0077BE', '#005A87', '#003F5C'], hasAtmosphere: true }
+                ];
+                const planetCount = 8;
+                for (let i = 0; i < planetCount; i++) {
+                    const type = planetTypes[Math.floor(Math.random() * planetTypes.length)];
+                    const hasRings = Math.random() > 0.6; // 40% chance of rings
+                    const radius = 40 + Math.random() * 120;
+                    this.planets.push({
+                        x: (Math.random() * range * 0.8) - half * 0.8,
+                        y: (Math.random() * range * 0.8) - half * 0.8,
+                        radius: radius,
+                        type: type.name,
+                        baseColor: type.colors[0],
+                        secondaryColor: type.colors[1],
+                        tertiaryColor: type.colors[2],
+                        hasAtmosphere: type.hasAtmosphere,
+                        atmosphereColor: type.name === 'ice-giant' ? '#ADD8E6' : (type.name === 'volcanic' ? '#FF6347' : '#87CEEB'),
+                        hasRings: hasRings,
+                        ringColor: hasRings ? `hsl(${Math.random() * 60 + 20}, 40%, 60%)` : null,
+                        ringInnerRadius: radius * 1.3,
+                        ringOuterRadius: radius * 2.2,
+                        textureSeed: Math.random() * 1000,
+                        rotation: Math.random() * Math.PI * 2,
+                        axialTilt: (Math.random() - 0.5) * 0.6 // -0.3 to 0.3 radians
+                    });
+                }
             }
 
             generateNebulaStyle() {
@@ -1130,9 +1248,9 @@
                 // Green/Purple Theme (Randomized Mix)
                 const theme = Math.random();
                 let color1, color2;
-                if (theme < 0.33) { color1 = '#00ff00'; color2 = '#ccff00'; } // Lime/Green
-                else if (theme < 0.66) { color1 = '#aa00ff'; color2 = '#ff00aa'; } // Purple/Pink
-                else { color1 = '#00ffff'; color2 = '#0000ff'; } // Cyan/Blue
+                if (theme < 0.33) { color1 = '#00ff00'; color2 = '#ccff00'; }
+                else if (theme < 0.66) { color1 = '#aa00ff'; color2 = '#ff00aa'; }
+                else { color1 = '#00ffff'; color2 = '#0000ff'; }
 
                 for (let i = 0; i < 1500; i++) {
                     this.backgroundStars.push({
@@ -1144,18 +1262,64 @@
                     });
                 }
 
-                // Alien Spacecraft
+                // Epic Alien Spacecraft Fleet
                 const craftCount = 20;
+                const shipClasses = [
+                    { name: 'saucer', baseSize: 50, complexity: 'high', weight: 3 },      // Classic flying saucer
+                    { name: 'cruiser', baseSize: 70, complexity: 'high', weight: 2 },
+                    { name: 'fighter', baseSize: 25, complexity: 'medium', weight: 3 },
+                    { name: 'mothership', baseSize: 200, complexity: 'high', weight: 1 },
+                    { name: 'probe', baseSize: 12, complexity: 'low', weight: 2 },
+                    { name: 'destroyer', baseSize: 90, complexity: 'high', weight: 2 },
+                    { name: 'interceptor', baseSize: 35, complexity: 'medium', weight: 2 }
+                ];
+
+                // Build weighted selection pool
+                const pool = [];
+                shipClasses.forEach(sc => {
+                    for (let w = 0; w < sc.weight; w++) pool.push(sc);
+                });
+
                 for (let i = 0; i < craftCount; i++) {
-                    const craftColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    const shipClass = pool[Math.floor(Math.random() * pool.length)];
+                    const hue = Math.random() * 360;
+                    const size = shipClass.baseSize * (0.7 + Math.random() * 0.6);
+                    const isSaucer = shipClass.name === 'saucer';
+
                     this.spacecraft.push({
                         x: (Math.random() * range) - half,
                         y: (Math.random() * range) - half,
-                        vx: (Math.random() - 0.5) * 4,
-                        vy: (Math.random() - 0.5) * 4,
-                        size: 20 + Math.random() * 40,
-                        type: Math.floor(Math.random() * 3),
-                        color: craftColor
+                        vx: (Math.random() - 0.5) * (isSaucer ? 2 : 3),
+                        vy: (Math.random() - 0.5) * (isSaucer ? 2 : 3),
+                        size: size,
+                        shipClass: shipClass.name,
+                        complexity: shipClass.complexity,
+                        // Primary hull - metallic chrome for saucers, colored for others
+                        hullColor: isSaucer ? `hsl(${hue}, 10%, 50%)` : `hsl(${hue}, 30%, 40%)`,
+                        hullHighlight: isSaucer ? `hsl(${hue}, 5%, 85%)` : `hsl(${hue}, 20%, 70%)`,
+                        hullShadow: isSaucer ? `hsl(${hue}, 15%, 25%)` : `hsl(${hue}, 40%, 20%)`,
+                        // Engine colors - bright neon
+                        engineColor: `hsl(${(hue + 180) % 360}, 100%, 60%)`,
+                        engineGlow: `hsl(${(hue + 180) % 360}, 100%, 85%)`,
+                        // Accent running lights
+                        lightColor: `hsl(${Math.random() * 60 + 300}, 100%, 55%)`, // Purple-pink range
+                        lightColor2: `hsl(${Math.random() * 60}, 100%, 50%)`,       // Red-yellow range
+                        lightPhase: Math.random() * Math.PI * 2,
+                        // Detail parameters
+                        detailSeed: Math.random() * 1000,
+                        wingAngle: 0.3 + Math.random() * 0.4,
+                        engineCount: shipClass.name === 'mothership' ? 6 : (shipClass.name === 'destroyer' ? 4 : (shipClass.name === 'cruiser' ? 3 : 2)),
+                        // Saucer-specific
+                        domeColor: `hsl(${Math.random() * 180 + 160}, 80%, 70%)`, // Cyan-green dome
+                        beamActive: Math.random() > 0.7, // 30% have active tractor beam
+                        beamColor: `hsl(${Math.random() * 60 + 80}, 100%, 70%)`,  // Green-yellow beam
+                        ringCount: isSaucer ? Math.floor(Math.random() * 3) + 2 : 0, // 2-4 light rings
+                        rotationSpeed: (Math.random() - 0.5) * 0.02, // Spinning saucer lights
+                        rotation: Math.random() * Math.PI * 2,
+                        // Shield effect for some ships
+                        hasShield: Math.random() > 0.8,
+                        shieldColor: `hsl(${Math.random() * 60 + 180}, 70%, 60%)`,
+                        shieldPhase: Math.random() * Math.PI * 2
                     });
                 }
             }
@@ -1254,6 +1418,12 @@
                     displayEl.innerText = `Theme: ${theme.name} | Family: ${theme.family.charAt(0).toUpperCase() + theme.family.slice(1)}`;
                 }
 
+                // Sync speed slider with current value
+                const slider = document.getElementById('cyberSpeedSlider');
+                const sliderValue = document.getElementById('cyberSpeedValue');
+                if (slider) slider.value = this.matrixSpeedMultiplier;
+                if (sliderValue) sliderValue.textContent = this.matrixSpeedMultiplier.toFixed(1) + 'x';
+
                 for (let i = 0; i < columns; i++) {
                     const depth = Math.random(); // 0 to 1
                     const size = Math.floor(10 + depth * 14); // 10px to 24px
@@ -1277,7 +1447,8 @@
 
                     this.matrixStreams.push({
                         x: i * fontSize, // Fixed columns
-                        speed: speed,
+                        y: Math.random() * this.canvas.height, // Starting Y position
+                        baseSpeed: (2 + depth * 8 + Math.random() * 2), // Store base speed
                         chars: chars,
                         color: streamColor,
                         size: size,
@@ -1289,6 +1460,21 @@
             /* --- Rendering --- */
 
             animate(time) {
+                // Update spacecraft positions
+                if (this.spacecraft && this.spacecraft.length > 0) {
+                    const range = this.worldSize;
+                    const half = range / 2;
+                    this.spacecraft.forEach(s => {
+                        s.x += s.vx;
+                        s.y += s.vy;
+                        // Wrap around world bounds
+                        if (s.x > half) s.x = -half;
+                        if (s.x < -half) s.x = half;
+                        if (s.y > half) s.y = -half;
+                        if (s.y < -half) s.y = half;
+                    });
+                }
+
                 this.draw(time);
                 requestAnimationFrame(this.animate);
             }
@@ -1320,34 +1506,45 @@
                     ctx.globalAlpha = 1.0;
 
                     // Cyber Matrix Rain (Screen Space)
-                    if (this.bgStyle === 'cyber' && this.matrixStreams) {
+                    // Only draw if cyber style is active
+                    if (this.activeStyles.has('cyber') && this.matrixStreams) {
                         ctx.textAlign = 'center';
+                        const speedMult = this.matrixSpeedMultiplier || 1.0;
+                        const lengthMult = this.matrixLengthMultiplier || 1.0;
+
+                        // Base visible length: 20 chars at 1x, slider scales from ~4 to ~60 chars
+                        const baseVisibleLength = 20;
+
                         this.matrixStreams.forEach(stream => {
-                            // Update
-                            stream.y += stream.speed;
-                            if (stream.y - (stream.chars.length * stream.size) > canvas.height) {
+                            // Update with real-time speed multiplier
+                            stream.y += stream.baseSpeed * speedMult;
+
+                            // Calculate visible length based on slider (independent of array size)
+                            const visibleLength = Math.max(3, Math.floor(baseVisibleLength * lengthMult));
+
+                            if (stream.y - (visibleLength * stream.size) > canvas.height) {
                                 stream.y = -stream.size; // Reset to top
                             }
 
                             // Draw
                             ctx.font = `${stream.size}px monospace`;
 
-                            stream.chars.forEach((char, i) => {
+                            // Only draw visible characters based on length multiplier
+                            for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
+                                const char = stream.chars[i];
                                 const charY = stream.y - (i * stream.size);
-                                if (charY < -stream.size || charY > canvas.height + stream.size) return;
+                                if (charY < -stream.size || charY > canvas.height + stream.size) continue;
 
                                 // Improved visibility: Fade out only near the end of the tail
-                                // Using Math.pow to keep alpha higher for longer
-                                const relativePos = 1 - (i / stream.chars.length);
+                                const relativePos = 1 - (i / visibleLength);
                                 const alpha = Math.pow(relativePos, 0.5) * stream.opacity;
 
                                 ctx.globalAlpha = alpha;
-                                // FORCE UNIFORM COLOR: Head character matches stream color
                                 ctx.fillStyle = stream.color;
                                 ctx.shadowBlur = 0;
 
                                 ctx.fillText(char, stream.x, charY);
-                            });
+                            }
                         });
                         ctx.shadowBlur = 0;
                         ctx.globalAlpha = 1.0;
@@ -1361,8 +1558,12 @@
                 // Calculations & Cluster ID Assignment
                 const { lines, clusters } = this.refreshClusterAssignments();
 
-                // 0. Draw Deep Space Background
-                this.drawDeepSpace();
+                // 0. Draw Background Layers
+                // Always draw background stars and nebulae if they exist
+                this.drawBackgroundElements();
+
+                // Draw deep space specific elements (galaxies, black holes, planets)
+                if (this.activeStyles.has('deep-space')) this.drawDeepSpaceSpecific();
 
                 // 1. Draw Grid Lines (Glow Pass + Core Pass)
                 if (lines.length > 0) {
@@ -1459,123 +1660,490 @@
                 if (statEl) statEl.innerText = `Mode: ${this.mode.charAt(0).toUpperCase() + this.mode.slice(1)} | Stars: ${this.stars.length} | Constellations: ${constellationCount} | Zoom: ${this.camera.zoom.toFixed(2)}x`;
             }
 
-            drawDeepSpace() {
+            drawBackgroundElements() {
+                if (!this.config.showBackground) return;
+
+                const ctx = this.ctx;
+
+                // 1. Background Stars (from all active styles)
+                if (this.backgroundStars && this.backgroundStars.length > 0) {
+                    this.backgroundStars.forEach(s => {
+                        ctx.fillStyle = s.color || "white";
+                        ctx.globalAlpha = s.alpha;
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.globalAlpha = 1;
+                }
+
+                // 2. Nebulae (from nebula + deep-space styles)
+                if (this.nebulae && this.nebulae.length > 0) {
+                    ctx.globalCompositeOperation = 'screen';
+                    this.nebulae.forEach(n => {
+                        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.size);
+                        grad.addColorStop(0, n.color);
+                        grad.addColorStop(1, 'transparent');
+
+                        ctx.globalAlpha = n.alpha;
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.globalAlpha = 1;
+                }
+
+                // 3. Spacecraft (from alien style) - ENHANCED RENDERING
+                if (this.activeStyles.has('alien') && this.spacecraft && this.spacecraft.length > 0) {
+                    const time = performance.now() * 0.001;
+                    this.spacecraft.forEach(s => {
+                        ctx.save();
+                        ctx.translate(s.x, s.y);
+
+                        // Update rotation for saucers
+                        if (s.rotationSpeed) s.rotation += s.rotationSpeed;
+
+                        const size = s.size;
+                        const zoom = this.camera.zoom;
+                        const angle = Math.atan2(s.vy, s.vx);
+
+                        // Shield effect (drawn first, behind ship)
+                        if (s.hasShield) {
+                            const shieldPulse = Math.sin(time * 2 + s.shieldPhase) * 0.3 + 0.4;
+                            ctx.globalAlpha = shieldPulse * 0.4;
+                            const shieldGrad = ctx.createRadialGradient(0, 0, size * 0.5, 0, 0, size * 1.5);
+                            shieldGrad.addColorStop(0, 'transparent');
+                            shieldGrad.addColorStop(0.7, s.shieldColor || 'rgba(100,200,255,0.3)');
+                            shieldGrad.addColorStop(1, 'transparent');
+                            ctx.fillStyle = shieldGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size * 1.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Tractor beam (for saucers)
+                        if (s.beamActive && s.shipClass === 'saucer') {
+                            const beamPulse = Math.sin(time * 5) * 0.2 + 0.6;
+                            ctx.globalAlpha = beamPulse * 0.5;
+                            const beamGrad = ctx.createLinearGradient(0, size * 0.2, 0, size * 3);
+                            beamGrad.addColorStop(0, s.beamColor || '#88ff88');
+                            beamGrad.addColorStop(1, 'transparent');
+                            ctx.fillStyle = beamGrad;
+                            ctx.beginPath();
+                            ctx.moveTo(-size * 0.3, size * 0.2);
+                            ctx.lineTo(-size * 0.8, size * 3);
+                            ctx.lineTo(size * 0.8, size * 3);
+                            ctx.lineTo(size * 0.3, size * 0.2);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Rotate for directional ships (not saucers)
+                        if (s.shipClass !== 'saucer') {
+                            ctx.rotate(angle);
+                        }
+
+                        // Engine trails (for non-saucers)
+                        if (s.shipClass !== 'saucer' && s.shipClass !== 'probe') {
+                            ctx.globalAlpha = 0.7;
+                            const trailLength = size * 2;
+                            const engineSpacing = size * 0.25;
+                            const engineCount = s.engineCount || 2;
+
+                            for (let i = 0; i < engineCount; i++) {
+                                const offsetY = (i - (engineCount - 1) / 2) * engineSpacing;
+                                const flicker = 0.7 + Math.sin(time * 15 + s.detailSeed + i) * 0.3;
+                                const trailGrad = ctx.createLinearGradient(-size * 0.7, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
+                                trailGrad.addColorStop(0, s.engineGlow || '#ffffff');
+                                trailGrad.addColorStop(0.15, s.engineColor || '#00aaff');
+                                trailGrad.addColorStop(1, 'transparent');
+
+                                ctx.fillStyle = trailGrad;
+                                ctx.beginPath();
+                                ctx.moveTo(-size * 0.65, offsetY - 4);
+                                ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
+                                ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.65, offsetY + 4);
+                                ctx.closePath();
+                                ctx.fill();
+                            }
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Hull gradient
+                        const hullGrad = ctx.createLinearGradient(0, -size * 0.5, 0, size * 0.5);
+                        hullGrad.addColorStop(0, s.hullHighlight || '#ccc');
+                        hullGrad.addColorStop(0.3, s.hullColor || '#888');
+                        hullGrad.addColorStop(1, s.hullShadow || '#333');
+                        ctx.fillStyle = hullGrad;
+                        ctx.strokeStyle = s.hullHighlight || '#ddd';
+                        ctx.lineWidth = 1.5 / zoom;
+
+                        // === FLYING SAUCER ===
+                        if (s.shipClass === 'saucer') {
+                            // Main disc body
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, size, size * 0.25, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+
+                            // Upper dome (glass cockpit)
+                            const domeGrad = ctx.createRadialGradient(-size * 0.1, -size * 0.15, 0, 0, -size * 0.05, size * 0.4);
+                            domeGrad.addColorStop(0, '#ffffff');
+                            domeGrad.addColorStop(0.3, s.domeColor || '#88ffff');
+                            domeGrad.addColorStop(0.7, s.domeColor || '#44aaaa');
+                            domeGrad.addColorStop(1, 'rgba(0,50,50,0.8)');
+                            ctx.fillStyle = domeGrad;
+                            ctx.beginPath();
+                            ctx.ellipse(0, -size * 0.08, size * 0.35, size * 0.25, 0, Math.PI, 0);
+                            ctx.fill();
+
+                            // Rotating underside lights
+                            const ringCount = s.ringCount || 3;
+                            for (let ring = 0; ring < ringCount; ring++) {
+                                const ringRadius = size * (0.5 + ring * 0.15);
+                                const lightCount = 8 + ring * 4;
+                                for (let i = 0; i < lightCount; i++) {
+                                    const lightAngle = (i / lightCount) * Math.PI * 2 + s.rotation + ring * 0.5;
+                                    const lx = Math.cos(lightAngle) * ringRadius;
+                                    const ly = Math.sin(lightAngle) * ringRadius * 0.25 + size * 0.1;
+                                    const pulse = Math.sin(time * 4 + i + ring) * 0.4 + 0.6;
+
+                                    ctx.globalAlpha = pulse;
+                                    ctx.fillStyle = i % 2 === 0 ? (s.lightColor || '#ff00ff') : (s.lightColor2 || '#ffff00');
+                                    ctx.beginPath();
+                                    ctx.arc(lx, ly, 3 / zoom, 0, Math.PI * 2);
+                                    ctx.fill();
+                                }
+                            }
+                            ctx.globalAlpha = 1;
+
+                            // Center glow
+                            const centerGlow = ctx.createRadialGradient(0, size * 0.1, 0, 0, size * 0.1, size * 0.3);
+                            centerGlow.addColorStop(0, s.engineGlow || '#ffffff');
+                            centerGlow.addColorStop(0.5, s.engineColor || '#00ffff');
+                            centerGlow.addColorStop(1, 'transparent');
+                            ctx.fillStyle = centerGlow;
+                            ctx.beginPath();
+                            ctx.arc(0, size * 0.1, size * 0.3, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            // === CRUISER / DESTROYER ===
+                        } else if (s.shipClass === 'cruiser' || s.shipClass === 'destroyer') {
+                            const isDestroyer = s.shipClass === 'destroyer';
+                            ctx.beginPath();
+                            ctx.moveTo(size * 1.1, 0);
+                            ctx.lineTo(size * 0.3, -size * 0.3);
+                            ctx.lineTo(-size * 0.4, -size * 0.35);
+                            ctx.lineTo(-size * 0.9, -size * 0.2);
+                            ctx.lineTo(-size * 0.9, size * 0.2);
+                            ctx.lineTo(-size * 0.4, size * 0.35);
+                            ctx.lineTo(size * 0.3, size * 0.3);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+
+                            // Wings
+                            ctx.beginPath();
+                            ctx.moveTo(-size * 0.1, -size * 0.3);
+                            ctx.lineTo(-size * (isDestroyer ? 0.5 : 0.4), -size * 0.9);
+                            ctx.lineTo(-size * (isDestroyer ? 0.7 : 0.6), -size * 0.9);
+                            ctx.lineTo(-size * 0.5, -size * 0.35);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.moveTo(-size * 0.1, size * 0.3);
+                            ctx.lineTo(-size * (isDestroyer ? 0.5 : 0.4), size * 0.9);
+                            ctx.lineTo(-size * (isDestroyer ? 0.7 : 0.6), size * 0.9);
+                            ctx.lineTo(-size * 0.5, size * 0.35);
+                            ctx.closePath();
+                            ctx.fill();
+
+                            // Cockpit window
+                            ctx.fillStyle = 'rgba(100,200,255,0.7)';
+                            ctx.beginPath();
+                            ctx.ellipse(size * 0.5, 0, size * 0.15, size * 0.08, 0, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            // === FIGHTER / INTERCEPTOR ===
+                        } else if (s.shipClass === 'fighter' || s.shipClass === 'interceptor') {
+                            const isInterceptor = s.shipClass === 'interceptor';
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.9, 0);
+                            ctx.lineTo(size * 0.1, -size * (isInterceptor ? 0.5 : 0.4));
+                            ctx.lineTo(-size * 0.7, -size * 0.2);
+                            ctx.lineTo(-size * 0.7, size * 0.2);
+                            ctx.lineTo(size * 0.1, size * (isInterceptor ? 0.5 : 0.4));
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+
+                            // === MOTHERSHIP ===
+                        } else if (s.shipClass === 'mothership') {
+                            // Main hull
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, size * 1.2, size * 0.5, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+
+                            // Command bridge
+                            ctx.beginPath();
+                            ctx.ellipse(size * 0.4, -size * 0.15, size * 0.4, size * 0.25, 0, Math.PI, 0);
+                            ctx.fill();
+
+                            // Hangar bays
+                            ctx.fillStyle = 'rgba(255,200,100,0.6)';
+                            for (let i = -2; i <= 2; i++) {
+                                ctx.beginPath();
+                                ctx.rect(i * size * 0.3 - size * 0.08, size * 0.3, size * 0.16, size * 0.1);
+                                ctx.fill();
+                            }
+
+                            // Running lights
+                            for (let i = 0; i < 12; i++) {
+                                const lAngle = (i / 12) * Math.PI * 2;
+                                const lx = Math.cos(lAngle) * size * 1.1;
+                                const ly = Math.sin(lAngle) * size * 0.45;
+                                const pulse = Math.sin(time * 2 + i * 0.5) * 0.3 + 0.7;
+                                ctx.globalAlpha = pulse;
+                                ctx.fillStyle = i % 3 === 0 ? '#ff0000' : (i % 3 === 1 ? '#00ff00' : '#ffffff');
+                                ctx.beginPath();
+                                ctx.arc(lx, ly, 4 / zoom, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
+                            ctx.globalAlpha = 1;
+
+                            // === PROBE ===
+                        } else {
+                            // Spherical probe with antenna
+                            const probeGrad = ctx.createRadialGradient(-size * 0.15, -size * 0.15, 0, 0, 0, size * 0.5);
+                            probeGrad.addColorStop(0, '#ffffff');
+                            probeGrad.addColorStop(0.5, s.hullColor || '#888');
+                            probeGrad.addColorStop(1, s.hullShadow || '#222');
+                            ctx.fillStyle = probeGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size * 0.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+
+                            // Antenna
+                            ctx.strokeStyle = '#aaa';
+                            ctx.lineWidth = 2 / zoom;
+                            ctx.beginPath();
+                            ctx.moveTo(0, -size * 0.5);
+                            ctx.lineTo(0, -size * 1.2);
+                            ctx.stroke();
+
+                            // Blinking tip
+                            const tipPulse = Math.sin(time * 8 + s.lightPhase) > 0 ? 1 : 0.2;
+                            ctx.globalAlpha = tipPulse;
+                            ctx.fillStyle = '#ff0000';
+                            ctx.beginPath();
+                            ctx.arc(0, -size * 1.2, 3 / zoom, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Navigation lights (for non-probes, non-saucers)
+                        if (s.shipClass !== 'probe' && s.shipClass !== 'saucer') {
+                            const lightPulse = Math.sin(time * 3 + (s.lightPhase || 0)) * 0.5 + 0.5;
+                            ctx.fillStyle = s.lightColor || '#ff00ff';
+                            ctx.globalAlpha = lightPulse;
+                            ctx.beginPath();
+                            ctx.arc(size * 0.85, 0, 3 / zoom, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            // Wing tip lights
+                            ctx.fillStyle = '#00ff00';
+                            ctx.beginPath();
+                            ctx.arc(-size * 0.5, -size * 0.6, 2 / zoom, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.fillStyle = '#ff0000';
+                            ctx.beginPath();
+                            ctx.arc(-size * 0.5, size * 0.6, 2 / zoom, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+
+                        ctx.restore();
+                    });
+                }
+            }
+
+            drawDeepSpaceSpecific() {
                 if (!this.config.showBackground) return;
 
                 const ctx = this.ctx;
                 const time = performance.now() * 0.0005;
 
-                // 1. Background Stars
-                this.backgroundStars.forEach(s => {
-                    ctx.fillStyle = s.color || "white";
-                    ctx.globalAlpha = s.alpha;
-                    ctx.beginPath();
-                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-                ctx.globalAlpha = 1;
-
-                // 1.5 Nebulae
-                ctx.globalCompositeOperation = 'screen';
-                this.nebulae.forEach(n => {
-                    const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.size);
-                    grad.addColorStop(0, n.color);
-                    grad.addColorStop(1, 'transparent');
-
-                    ctx.globalAlpha = n.alpha;
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.globalAlpha = 1;
-
-                // 2. Galaxies
-                this.galaxies.forEach(g => {
-                    ctx.save();
-                    ctx.translate(g.x, g.y);
-                    ctx.rotate(g.angle + time * 0.1);
-
-                    const spiralGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
-                    spiralGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
-                    spiralGradient.addColorStop(0.2, g.color);
-                    spiralGradient.addColorStop(1, 'transparent');
-
-                    ctx.fillStyle = spiralGradient;
-                    ctx.beginPath();
-                    // Draw spiral arms
-                    for (let i = 0; i < 3; i++) {
-                        ctx.rotate(Math.PI * 2 / 3);
-                        ctx.ellipse(g.size / 2, 0, g.size, g.size / 4, 0, 0, Math.PI * 2);
-                    }
-                    ctx.fill();
-                    ctx.restore();
-                });
-
-                // 3. Black Holes
-                this.blackHoles.forEach(bh => {
-                    ctx.save();
-                    ctx.translate(bh.x, bh.y);
-
-                    // Accretion disk
-                    ctx.beginPath();
-                    ctx.strokeStyle = 'orange';
-                    ctx.lineWidth = 2;
-                    ctx.arc(0, 0, bh.size * 1.5, 0, Math.PI * 2);
-                    ctx.stroke();
-
-                    // Event Horizon
-                    ctx.beginPath();
-                    ctx.fillStyle = 'black';
-                    ctx.arc(0, 0, bh.size, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Glow
-                    ctx.shadowColor = 'purple';
-                    ctx.shadowBlur = 20;
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-
-                    ctx.restore();
-                });
-
-                // 4. Spacecraft (Alien)
-                if (this.bgStyle === 'alien') {
-                    this.spacecraft.forEach(s => {
+                // 1. Galaxies
+                if (this.galaxies && this.galaxies.length > 0) {
+                    this.galaxies.forEach(g => {
                         ctx.save();
-                        ctx.translate(s.x, s.y);
-                        const angle = Math.atan2(s.vy, s.vx);
-                        ctx.rotate(angle);
+                        ctx.translate(g.x, g.y);
+                        ctx.rotate(g.angle + time * 0.1);
 
-                        ctx.fillStyle = s.color || '#00ff00';
-                        ctx.shadowColor = s.color || '#00ff00';
+                        const spiralGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+                        spiralGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
+                        spiralGradient.addColorStop(0.2, g.color);
+                        spiralGradient.addColorStop(1, 'transparent');
 
-                        if (s.type === 0) { // Saucer
-                            ctx.beginPath();
-                            ctx.ellipse(0, 0, s.size, s.size / 3, 0, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.beginPath();
-                            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                            ctx.arc(0, -s.size / 4, s.size / 4, 0, Math.PI * 2);
-                            ctx.fill();
-                        } else if (s.type === 1) { // Dart
-                            ctx.beginPath();
-                            ctx.moveTo(s.size, 0);
-                            ctx.lineTo(-s.size, s.size / 2);
-                            ctx.lineTo(-s.size / 2, 0);
-                            ctx.lineTo(-s.size, -s.size / 2);
-                            ctx.closePath();
-                            ctx.fill();
-                        } else { // Orb
-                            ctx.shadowBlur = 10;
-                            ctx.beginPath();
-                            ctx.arc(0, 0, s.size / 2, 0, Math.PI * 2);
-                            ctx.fill();
+                        ctx.fillStyle = spiralGradient;
+                        ctx.beginPath();
+                        for (let i = 0; i < 3; i++) {
+                            ctx.rotate(Math.PI * 2 / 3);
+                            ctx.ellipse(0, 0, g.size, g.size / 4, 0, 0, Math.PI * 2); // Corrected ellipse center
                         }
+                        ctx.fill();
                         ctx.restore();
                     });
                 }
+
+                // 2. Black Holes
+                if (this.blackHoles && this.blackHoles.length > 0) {
+                    this.blackHoles.forEach(bh => {
+                        ctx.save();
+                        ctx.translate(bh.x, bh.y);
+
+                        // Accretion disk
+                        ctx.beginPath();
+                        ctx.strokeStyle = 'orange';
+                        ctx.lineWidth = 2;
+                        ctx.arc(0, 0, bh.size * 1.5, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Event Horizon
+                        ctx.beginPath();
+                        ctx.fillStyle = 'black';
+                        ctx.arc(0, 0, bh.size, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Glow
+                        ctx.shadowColor = 'purple';
+                        ctx.shadowBlur = 20;
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+
+                        ctx.restore();
+                    });
+                }
+
+                // 3. Planets (with zoom-based detail)
+                if (this.planets && this.planets.length > 0) {
+                    const zoom = this.camera.zoom;
+                    this.planets.forEach(p => {
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate(p.axialTilt);
+
+                        const screenRadius = p.radius * zoom;
+                        const detailLevel = Math.min(3, Math.floor(screenRadius / 30)); // 0-3 detail levels
+
+                        // Draw rings behind (if at angle)
+                        if (p.hasRings && p.axialTilt < 0) {
+                            this.drawPlanetRings(ctx, p, screenRadius);
+                        }
+
+                        // Atmospheric glow (outer)
+                        if (p.hasAtmosphere) {
+                            const atmosGrad = ctx.createRadialGradient(0, 0, p.radius * 0.95, 0, 0, p.radius * 1.15);
+                            atmosGrad.addColorStop(0, 'transparent');
+                            atmosGrad.addColorStop(0.5, p.atmosphereColor + '40');
+                            atmosGrad.addColorStop(1, 'transparent');
+                            ctx.fillStyle = atmosGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, p.radius * 1.15, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+
+                        // Planet body with 3D gradient
+                        const bodyGrad = ctx.createRadialGradient(
+                            -p.radius * 0.3, -p.radius * 0.3, 0,
+                            0, 0, p.radius
+                        );
+                        bodyGrad.addColorStop(0, p.secondaryColor);
+                        bodyGrad.addColorStop(0.4, p.baseColor);
+                        bodyGrad.addColorStop(0.8, p.tertiaryColor);
+                        bodyGrad.addColorStop(1, '#000000');
+
+                        ctx.fillStyle = bodyGrad;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Surface texture (procedural bands/patterns based on zoom)
+                        if (detailLevel >= 1) {
+                            ctx.globalAlpha = 0.3;
+                            ctx.strokeStyle = p.tertiaryColor;
+                            ctx.lineWidth = 2 / zoom;
+
+                            // Draw bands for gas giants
+                            if (p.type === 'gas-giant' || p.type === 'ice-giant') {
+                                for (let i = -4; i <= 4; i++) {
+                                    const bandY = p.radius * (i * 0.15);
+                                    const bandWidth = Math.sqrt(p.radius * p.radius - bandY * bandY);
+                                    if (bandWidth > 0) {
+                                        ctx.beginPath();
+                                        ctx.ellipse(0, bandY, bandWidth, 3, 0, 0, Math.PI * 2);
+                                        ctx.stroke();
+                                    }
+                                }
+                            }
+
+                            // Draw continents for terrestrial/ocean
+                            if ((p.type === 'terrestrial' || p.type === 'ocean') && detailLevel >= 2) {
+                                ctx.fillStyle = p.type === 'ocean' ? p.baseColor : p.secondaryColor;
+                                const seed = p.textureSeed;
+                                for (let j = 0; j < 5; j++) {
+                                    const cx = Math.cos(seed + j * 1.2) * p.radius * 0.5;
+                                    const cy = Math.sin(seed * 0.7 + j) * p.radius * 0.4;
+                                    const cr = p.radius * (0.15 + Math.sin(seed + j) * 0.1);
+                                    ctx.beginPath();
+                                    ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+                                    ctx.fill();
+                                }
+                            }
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Shadow side
+                        const shadowGrad = ctx.createLinearGradient(-p.radius, 0, p.radius, 0);
+                        shadowGrad.addColorStop(0, 'transparent');
+                        shadowGrad.addColorStop(0.6, 'transparent');
+                        shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+                        ctx.fillStyle = shadowGrad;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Draw rings in front (if at angle)
+                        if (p.hasRings && p.axialTilt >= 0) {
+                            this.drawPlanetRings(ctx, p, screenRadius);
+                        }
+
+                        ctx.restore();
+                    });
+                }
+            }
+
+            // Helper method for drawing planet rings
+            drawPlanetRings(ctx, planet, screenRadius) {
+                const p = planet;
+                ctx.strokeStyle = p.ringColor;
+                ctx.lineWidth = (p.ringOuterRadius - p.ringInnerRadius) * 0.3;
+                ctx.globalAlpha = 0.6;
+
+                // Multiple ring bands
+                for (let i = 0; i < 3; i++) {
+                    const ringR = p.ringInnerRadius + (p.ringOuterRadius - p.ringInnerRadius) * (i / 3 + 0.15);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, ringR, ringR * 0.2, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
             }
 
             drawStarShape(ctx, x, y, r) {
@@ -1704,13 +2272,169 @@
 
                 svg += `</svg>`;
 
-                const blob = new Blob([svg], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
+                // FileSaver-style download for Chrome compatibility
+                const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+                const filename = `AetherMap-${Date.now()}.svg`;
+
+                // Try using msSaveBlob for IE/Edge compatibility
+                if (typeof window.navigator.msSaveBlob !== 'undefined') {
+                    window.navigator.msSaveBlob(blob, filename);
+                    this.showToast("Map Exported");
+                    return;
+                }
+
+                const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `AetherMap-${Date.now()}.svg`;
-                link.click();
+                link.download = filename;
+
+                // Dispatch a real click event instead of calling click()
+                const event = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+                link.dispatchEvent(event);
+
+                // Clean up after a delay
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+
                 this.showToast("Map Exported");
+            }
+
+            // Trigger the hidden file input for loading SVG
+            triggerLoadSVG() {
+                document.getElementById('svgFileInput').click();
+            }
+
+            // Load and parse an SVG file to restore stars
+            loadSVG(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const svgContent = e.target.result;
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(svgContent, 'image/svg+xml');
+
+                        // Find all path elements (stars)
+                        const pathElements = doc.querySelectorAll('path[fill][opacity]');
+
+                        if (pathElements.length === 0) {
+                            this.showToast("No stars found in SVG");
+                            return;
+                        }
+
+                        // Clear current stars and history
+                        this.stars = [];
+                        this.history = [];
+
+                        // Parse each path to extract star data
+                        pathElements.forEach((path, index) => {
+                            const d = path.getAttribute('d');
+                            const fill = path.getAttribute('fill');
+
+                            // Parse path: M{x} {y-r} L...
+                            const match = d.match(/M([-\d.]+)\s+([-\d.]+)/);
+                            if (match) {
+                                const topX = parseFloat(match[1]);
+                                const topY = parseFloat(match[2]);
+                                const r = this.config.starBaseRad * 1.5;
+                                const y = topY + r;
+
+                                this.stars.push({
+                                    id: Date.now() + index,
+                                    x: topX,
+                                    y: y,
+                                    color: fill,
+                                    phase: Math.random() * Math.PI * 2,
+                                    clusterId: null
+                                });
+                            }
+                        });
+
+                        event.target.value = '';
+                        this.showToast(`Loaded ${this.stars.length} stars`);
+                        this.draw();
+                    } catch (err) {
+                        console.error('Error parsing SVG:', err);
+                        this.showToast("Error loading SVG file");
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // Export canvas animation as video
+            exportVideo() {
+                if (this._isRecording) {
+                    this.showToast("Already recording...");
+                    return;
+                }
+
+                this._isRecording = true;
+                const btn = document.getElementById('exportVideoBtn');
+                if (btn) btn.classList.add('active');
+
+                this.showToast("Recording 5 seconds...");
+
+                const stream = this.canvas.captureStream(30);
+                const chunks = [];
+
+                const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+                    ? 'video/webm;codecs=vp9'
+                    : 'video/webm';
+
+                const recorder = new MediaRecorder(stream, { mimeType });
+
+                recorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) chunks.push(e.data);
+                };
+
+                recorder.onstop = () => {
+                    this._isRecording = false;
+                    if (btn) btn.classList.remove('active');
+
+                    const blob = new Blob(chunks, { type: mimeType });
+                    const filename = `Interstellar-${Date.now()}.webm`;
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+
+                    // Dispatch a real click event for Chrome compatibility
+                    const event = new MouseEvent('click', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    link.dispatchEvent(event);
+
+                    // Clean up after a delay
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(url);
+                    }, 1000);
+
+                    this.showToast("Video exported!");
+                };
+
+                recorder.onerror = (e) => {
+                    this._isRecording = false;
+                    if (btn) btn.classList.remove('active');
+                    console.error('Recording error:', e);
+                    this.showToast("Recording failed");
+                };
+
+                recorder.start();
+
+                setTimeout(() => {
+                    if (recorder.state === 'recording') {
+                        recorder.stop();
+                    }
+                }, 5000);
             }
         }
 
