@@ -1371,6 +1371,11 @@
             }
 
             getConstellationName(group) {
+                // Priority: Check if any star already has a assigned name (e.g. from a Template or previous session)
+                // We assume a real name is a string that isn't just a number/ID.
+                const existing = group.find(s => s.clusterId && isNaN(parseFloat(s.clusterId)));
+                if (existing) return existing.clusterId;
+
                 const sortedIds = group.map(s => String(s.id)).sort((a, b) => a.localeCompare(b));
                 let seed = 0;
                 sortedIds.forEach((id, i) => {
