@@ -832,6 +832,21 @@
                 const isRainbow = document.getElementById('templateRainbowMode')?.checked;
                 const templateColor = document.getElementById('templateColorPicker')?.value || '#00ffff';
 
+                // Generate Creative Name
+                const baseName = key.charAt(0).toUpperCase() + key.slice(1);
+                let creativeName = baseName;
+
+                // Ensure name generators are initialized
+                if (!this.prefixes) this.initNameGenerators();
+
+                if (Math.random() > 0.5) {
+                    const prefix = this.prefixes[Math.floor(Math.random() * this.prefixes.length)];
+                    creativeName = `${prefix} ${baseName}`;
+                } else {
+                    const suffix = this.suffixes[Math.floor(Math.random() * this.suffixes.length)];
+                    creativeName = `${baseName} ${suffix}`;
+                }
+
                 // Create stars with 3D Depth
                 const newStars = points.map((p, i) => {
                     let zDepth = 0;
@@ -854,7 +869,7 @@
                         z: zDepth,
                         color: isRainbow ? this.getRainbowHex() : templateColor,
                         phase: Math.random() * Math.PI * 2,
-                        clusterId: key.charAt(0).toUpperCase() + key.slice(1)
+                        clusterId: creativeName
                     };
                 });
 
