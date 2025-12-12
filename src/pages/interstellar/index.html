@@ -1626,6 +1626,9 @@
             }
 
             generateCyberStyle() {
+                // Reset custom color flag so new generation allows random themes again
+                this.matrixColorCustomized = false;
+
                 // Matrix Rain Setup (Screen Space)
                 this.matrixStreams = [];
                 const fontSize = 14;
