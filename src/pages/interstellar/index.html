@@ -780,36 +780,53 @@
                 this.init();
             }
 
-            async initTemplates() {
-                try {
-                    // Use dynamic imports which Vite handles better for local assets than fetch
-                    const [zodiac, animals, mythology] = await Promise.all([
-                        import('./templates/zodiac.json').then(m => m.default),
-                        import('./templates/animals.json').then(m => m.default),
-                        import('./templates/mythology.json').then(m => m.default)
-                    ]);
+            initTemplates() {
+                // Hardcoded 3D Templates to ensure reliable loading (Avoiding module/import issues)
+                this.templates = {
+                    zodiac: {
+                        aries: [[0, 0, 0], [20, 10, 5], [35, 5, 10], [40, 15, 15]],
+                        taurus: [[0, 0, 0], [20, -10, 5], [40, 0, 10], [20, -10, 5], [10, 20, 15], [30, 20, 15]],
+                        gemini: [[0, 0, 0], [0, 40, 0], [20, 40, 0], [20, 0, 0], [0, 40, 0], [20, 40, 0], [10, 20, 5]],
+                        cancer: [[0, 0, 0], [10, 10, 10], [20, 0, 0], [10, -10, -10], [0, 0, 0], [10, 20, 10]],
+                        leo: [[0, 0, 0], [10, 10, 5], [30, 10, 10], [40, 0, 10], [40, -20, 5], [20, -30, 0], [0, -20, 0], [-10, -10, 0]],
+                        virgo: [[0, 0, 0], [15, 10, 5], [30, 0, 10], [25, -20, 5], [10, -25, 0], [-10, -10, -5], [0, 10, 0]],
+                        libra: [[0, 0, 0], [30, 0, 0], [15, 15, 10], [15, -15, -10]],
+                        scorpio: [[0, 0, 0], [10, 5, 5], [20, 0, 10], [30, -10, 15], [30, -30, 20], [20, -40, 25], [10, -35, 30]],
+                        sagittarius: [[0, 0, 0], [10, 10, 5], [20, 0, 10], [30, 10, 15], [30, -10, 15], [20, -20, 10], [40, 0, 20], [15, 5, 25]],
+                        capricorn: [[0, 0, 0], [20, 10, 5], [40, 0, 10], [30, -15, 5], [10, -15, 0]],
+                        aquarius: [[0, 0, 0], [10, 10, 5], [20, 0, 10], [30, 10, 15], [40, 0, 20], [50, 10, 25]],
+                        pisces: [[0, 0, 0], [10, 10, 5], [20, 0, 10], [20, -20, 15], [10, -30, 10], [0, -20, 5], [10, -5, 20]]
+                    },
+                    animals: {
+                        bear: [[0, 0, 0], [20, 0, 0], [20, 15, 0], [0, 15, 0], [20, 15, 0], [40, 25, 10], [50, 20, 15], [60, 25, 20], [0, 0, 0], [-5, -15, -10], [20, 0, 0], [25, -15, -10], [0, 15, 0], [-10, 25, 10]],
+                        wolf: [[-20, -10, 0], [0, -10, 0], [20, 0, 0], [20, 0, 0], [30, 10, 0], [25, 20, 0], [15, 15, 0], [-20, -10, 0], [-25, -25, -5], [0, -10, 0], [-5, -25, -5], [20, 0, 0], [25, -15, -5]],
+                        dragon: [[0, 50, 60], [5, 45, 50], [10, 40, 40], [5, 35, 30], [0, 30, 20], [-5, 35, 10], [-10, 40, 0], [-5, 45, -10], [0, 50, -20], [10, 55, -30], [20, 50, -40], [25, 40, -50], [20, 30, -60], [10, 25, -70], [0, 30, -80], [-10, 40, -85], [-15, 50, -90], [-10, 60, -95], [0, 65, -100]],
+                        dolphin: [[0, 0, 10], [10, 10, 20], [20, 0, 30], [30, -10, 30], [40, -5, 20], [0, 0, 10], [-10, -5, 0], [-5, -10, 0], [-10, -5, 0], [-15, 0, 0]],
+                        eagle: [[0, 0, 20], [-20, 10, 0], [-40, 20, -20], [20, 10, 0], [40, 20, -20], [0, -20, 10], [0, -30, 0]]
+                    },
+                    mythology: {
+                        orion: [[-10, 50, 0], [10, 50, 0], [-5, 30, 0], [0, 30, 0], [5, 30, 0], [-15, 5, 20], [15, 5, 20], [0, 28, 0], [0, 25, 5], [0, 22, 10], [20, 30, -10], [30, 40, -15], [35, 50, -10], [30, 60, 0], [-20, 40, 10], [-30, 45, 20]],
+                        pegasus: [[20, 20, 0], [-20, 20, 0], [-20, -20, 0], [20, -20, 0], [20, 20, 0], [40, 30, 20], [50, 40, 30], [-20, 20, 0], [-40, 30, 20], [-50, 40, 30], [20, -20, 0], [10, -35, -10], [-20, -20, 0], [-10, -35, -10]],
+                        phoenix: [[0, 0, 0], [5, 10, 10], [15, 20, 20], [25, 30, 30], [35, 25, 40], [-5, 10, 10], [-15, 20, 20], [-25, 30, 30], [-35, 25, 40], [0, -10, -10], [0, -25, -20], [-10, -35, -30], [10, -35, -30]],
+                        hydra: [[-60, 0, 0], [-50, 5, 10], [-40, 0, 20], [-30, -5, 30], [-20, 0, 40], [-10, 5, 50], [0, 0, 60], [10, -5, 50], [20, 0, 40], [30, 5, 30], [40, 0, 20], [50, -5, 10], [55, 0, 0], [55, 2, -5], [52, 5, -5], [50, 3, 0]],
+                        centaur: [[0, 0, 0], [20, 0, 0], [20, 30, 0], [0, 30, 0], [20, 30, 0], [30, 45, 10], [35, 50, 10], [25, 45, 10], [30, 45, 10], [40, 40, 20], [50, 45, 30], [0, 0, 0], [-5, -15, -10], [20, 0, 0], [25, -15, -10], [0, 30, 0], [-5, 15, -10], [20, 30, 0], [25, 15, -10]]
+                    }
+                };
 
-                    this.templates = { zodiac, animals, mythology };
+                // Render Buttons
+                const createBtn = (category, key, containerId) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-small';
+                    btn.style.margin = '2px';
+                    btn.style.textTransform = 'capitalize';
+                    btn.innerText = key;
+                    btn.onclick = () => this.loadTemplate(category, key);
+                    document.getElementById(containerId).appendChild(btn);
+                };
 
-                    // Render Buttons
-                    const createBtn = (category, key, containerId) => {
-                        const btn = document.createElement('button');
-                        btn.className = 'btn-small';
-                        btn.style.margin = '2px';
-                        btn.style.textTransform = 'capitalize';
-                        btn.innerText = key;
-                        btn.onclick = () => this.loadTemplate(category, key);
-                        document.getElementById(containerId).appendChild(btn);
-                    };
-
-                    if (this.templates.zodiac) Object.keys(this.templates.zodiac).forEach(k => createBtn('zodiac', k, 'zodiacTemplates'));
-                    if (this.templates.animals) Object.keys(this.templates.animals).forEach(k => createBtn('animals', k, 'animalTemplates'));
-                    if (this.templates.mythology) Object.keys(this.templates.mythology).forEach(k => createBtn('mythology', k, 'mythTemplates'));
-
-                } catch (e) {
-                    console.error('Failed to load templates:', e);
-                    this.showToast('Error loading templates');
-                }
+                Object.keys(this.templates.zodiac).forEach(k => createBtn('zodiac', k, 'zodiacTemplates'));
+                Object.keys(this.templates.animals).forEach(k => createBtn('animals', k, 'animalTemplates'));
+                Object.keys(this.templates.mythology).forEach(k => createBtn('mythology', k, 'mythTemplates'));
             }
 
             loadTemplate(category, key) {
