@@ -782,10 +782,11 @@
 
             async initTemplates() {
                 try {
+                    // Use dynamic imports which Vite handles better for local assets than fetch
                     const [zodiac, animals, mythology] = await Promise.all([
-                        fetch('./templates/zodiac.json').then(r => r.json()),
-                        fetch('./templates/animals.json').then(r => r.json()),
-                        fetch('./templates/mythology.json').then(r => r.json())
+                        import('./templates/zodiac.json').then(m => m.default),
+                        import('./templates/animals.json').then(m => m.default),
+                        import('./templates/mythology.json').then(m => m.default)
                     ]);
 
                     this.templates = { zodiac, animals, mythology };
