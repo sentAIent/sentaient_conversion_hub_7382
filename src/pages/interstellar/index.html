@@ -850,7 +850,7 @@
                         z: zDepth,
                         color: isRainbow ? this.getRainbowHex() : templateColor,
                         phase: Math.random() * Math.PI * 2,
-                        clusterId: 'Template'
+                        clusterId: key.charAt(0).toUpperCase() + key.slice(1)
                     };
                 });
 
