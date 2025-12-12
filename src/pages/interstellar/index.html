@@ -418,6 +418,51 @@
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
+
+        /* Responsive Controls */
+        @media (max-width: 768px) {
+            .hud-panel.info-panel {
+                top: 10px;
+                left: 10px;
+                max-width: 180px;
+            }
+
+            .hud-panel.toolbar {
+                width: 95%;
+                padding: 4px;
+                gap: 4px;
+                flex-wrap: wrap;
+                justify-content: center;
+                bottom: 10px;
+            }
+
+            #rotationControls {
+                top: auto;
+                bottom: 80px;
+                right: 10px;
+                max-width: 180px;
+            }
+
+            #bgControls {
+                display: none;
+                /* Hide background controls on mobile if needed, or collapse */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hud-panel h1 {
+                font-size: 16px;
+            }
+
+            .btn {
+                padding: 6px;
+            }
+
+            .btn svg {
+                width: 18px;
+                height: 18px;
+            }
+        }
     </style>
 </head>
 
@@ -579,12 +624,60 @@
                     <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
                 </svg>
             </button>
-            <button class="btn" id="exportVideoBtn" onclick="app.exportVideo()" data-tooltip="Export Video (5s)">
+            <div style="display: flex; align-items: center; margin-right: 5px;">
+                <select id="videoDuration"
+                    style="background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); color: var(--accent); border-radius: 4px; padding: 2px; font-size: 11px; height: 32px; width: 45px; cursor: pointer;">
+                    <option value="5000">5s</option>
+                    <option value="10000">10s</option>
+                </select>
+            </div>
+            <button class="btn" id="exportVideoBtn" onclick="app.exportVideo()" data-tooltip="Export Video">
                 <svg viewBox="0 0 24 24">
                     <path
                         d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
                 </svg>
             </button>
+            <div style="width: 12px; border-left: 1px solid rgba(255,255,255,0.1);"></div>
+            <button class="btn"
+                onclick="document.getElementById('templatePanel').style.display = document.getElementById('templatePanel').style.display === 'none' ? 'block' : 'none'"
+                data-tooltip="Templates">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5v-4h9v4zm5 0h-4v-4h4v4zm0-5H5V5h14v7z" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Template Selection Panel -->
+        <div id="templatePanel" class="hud-panel"
+            style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); width: 400px; max-height: 400px; display: none; overflow-y: auto; z-index: 100;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="font-size: 14px; margin: 0; color: var(--accent); text-transform: uppercase;">
+                    Constellation Templates</h2>
+                <button class="btn-small" onclick="document.getElementById('templatePanel').style.display='none'"
+                    style="min-width: 24px; padding: 2px 6px;">✕</button>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <h3
+                    style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                    Zodiac Signs</h3>
+                <div id="zodiacTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <h3
+                    style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                    Animals</h3>
+                <div id="animalTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+            </div>
+
+            <div>
+                <h3
+                    style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                    Mythology</h3>
+                <div id="mythTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+            </div>
         </div>
     </div>
 
@@ -609,7 +702,8 @@
                 easily.</p>
             <div class="modal-actions">
                 <button class="btn-secondary" onclick="app.closeModal()">Cancel</button>
-                <button class="btn-primary" onclick="app.confirmClear()">Implode</button>
+                <button class="btn-primary" onclick="app.confirmClear()"
+                    style="background-color: #ff3333; border-color: #cc0000; color: white;">Implode</button>
             </div>
         </div>
     </div>
@@ -664,11 +758,93 @@
 
                 // Generators
                 this.initNameGenerators();
+                this.initTemplates();
 
                 // Performance
                 this.backgroundStars = [];
 
                 this.init();
+            }
+
+            initTemplates() {
+                // Templates Data
+                this.templates = {
+                    zodiac: {
+                        aries: [[0, 0], [20, 10], [40, 5], [50, 15]],
+                        taurus: [[0, 0], [20, -10], [40, 0], [30, 20], [10, 20], [-10, 10]],
+                        gemini: [[0, 0], [0, 40], [20, 40], [20, 0], [10, 20]],
+                        cancer: [[0, 0], [10, 10], [20, 0], [10, -10], [0, 0], [10, 20]],
+                        leo: [[0, 0], [10, 10], [30, 10], [40, 0], [40, -20], [20, -30], [0, -20], [-10, -10]],
+                        virgo: [[0, 0], [20, 10], [40, 0], [30, -20], [10, -30], [-10, -10], [0, 10]],
+                        libra: [[0, 0], [20, 0], [10, 10], [10, -10]],
+                        scorpio: [[0, 0], [10, 5], [20, 0], [30, -10], [30, -30], [20, -40], [10, -35]],
+                        sagittarius: [[0, 0], [10, 10], [20, 0], [30, 10], [30, -10], [20, -20], [40, 0]],
+                        capricorn: [[0, 0], [20, 10], [40, 0], [30, -10], [10, -10]],
+                        aquarius: [[0, 0], [10, 10], [20, 0], [30, 10], [40, 0], [50, 10]],
+                        pisces: [[0, 0], [10, 10], [20, 0], [20, -20], [10, -30], [0, -20]]
+                    },
+                    animals: {
+                        bear: [[0, 0], [20, 0], [30, 10], [40, 0], [40, -20], [20, -20], [0, -10]],
+                        wolf: [[0, 0], [10, 20], [30, 20], [40, 0], [30, -20], [10, -20], [-10, 0]],
+                        dragon: [[0, 0], [10, 10], [30, 10], [50, 0], [60, -20], [50, -40], [30, -30], [10, -20]],
+                        dolphin: [[0, 0], [20, 10], [40, 0], [50, -20], [30, -20], [10, -10]],
+                        eagle: [[0, 0], [-20, 10], [0, 20], [20, 10], [0, -20]]
+                    },
+                    mythology: {
+                        orion: [[0, 0], [10, 10], [-10, 10], [0, 20], [0, 30], [10, 40], [-10, 40]],
+                        pegasus: [[0, 0], [30, 0], [30, 30], [0, 30], [-20, 40], [-20, -10]],
+                        phoenix: [[0, 0], [0, 20], [-20, 10], [20, 10], [0, -20], [-10, -30], [10, -30]],
+                        hydra: [[0, 0], [10, 0], [20, 10], [30, 0], [40, 10], [50, 0], [60, 10], [70, 0]],
+                        centaur: [[0, 0], [0, 30], [20, 30], [20, 0], [40, 0], [40, 40]]
+                    }
+                };
+
+                // Render Buttons
+                const createBtn = (category, key, containerId) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-small';
+                    btn.style.margin = '2px';
+                    btn.style.textTransform = 'capitalize';
+                    btn.innerText = key;
+                    btn.onclick = () => this.loadTemplate(category, key);
+                    document.getElementById(containerId).appendChild(btn);
+                };
+
+                Object.keys(this.templates.zodiac).forEach(k => createBtn('zodiac', k, 'zodiacTemplates'));
+                Object.keys(this.templates.animals).forEach(k => createBtn('animals', k, 'animalTemplates'));
+                Object.keys(this.templates.mythology).forEach(k => createBtn('mythology', k, 'mythTemplates'));
+            }
+
+            loadTemplate(category, key) {
+                const points = this.templates[category][key];
+                if (!points) return;
+
+                // Clear existing
+                this.stars = [];
+                this.history = [];
+                this.requestClear(true); // Helper to clear lines too if needed (though stars=[] usually enough if redrawn)
+
+                // Calculate center of viewport
+                const cx = this.camera.x + this.canvas.width / 2 / this.camera.zoom;
+                const cy = this.camera.y + this.canvas.height / 2 / this.camera.zoom;
+                const scale = 3; // Scale up the normalized coordinates
+
+                // Create stars
+                const newStars = points.map((p, i) => ({
+                    id: Date.now() + i,
+                    x: cx + p[0] * scale,
+                    y: cy + p[1] * scale,
+                    color: this.activeColor,
+                    phase: Math.random() * Math.PI * 2,
+                    clusterId: 'Template'
+                }));
+
+                this.stars = newStars;
+
+                // Close panel
+                document.getElementById('templatePanel').style.display = 'none';
+                this.showToast(`Loaded ${key} template`);
+                this.draw();
             }
 
             initNameGenerators() {
@@ -1666,9 +1842,10 @@
                     ctx.lineCap = 'round';
                     ctx.shadowBlur = 10;
 
-                    // Rotation center (center of viewport in world coords)
-                    const rotCenterX = this.camera.x + this.canvas.width / 2 / this.camera.zoom;
-                    const rotCenterY = this.camera.y + this.canvas.height / 2 / this.camera.zoom;
+                    // Rotation center (constellation center)
+                    const center = this.getConstellationCenter();
+                    const rotCenterX = center.x;
+                    const rotCenterY = center.y;
 
                     lines.forEach(l => {
                         const alpha = Math.max(0, 1 - (l.dist / this.config.maxConnectDist));
@@ -1735,8 +1912,10 @@
 
                 // 7. Draw Stars with 3D rotation
                 const timeNow = performance.now();
-                const rotCenterX = this.camera.x + this.canvas.width / 2 / this.camera.zoom;
-                const rotCenterY = this.camera.y + this.canvas.height / 2 / this.camera.zoom;
+                // Use constellation center for rotation
+                const center = this.getConstellationCenter();
+                const rotCenterX = center.x;
+                const rotCenterY = center.y;
 
                 this.stars.forEach(s => {
                     const isHover = (s === this.hoveredStar);
@@ -2277,7 +2456,23 @@
                 ctx.fill();
             }
 
-            // 3D Rotation: Rotate a point around the center of the canvas
+            // Get the center point of all stars (constellation center)
+            getConstellationCenter() {
+                if (this.stars.length === 0) {
+                    return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+                }
+                let sumX = 0, sumY = 0;
+                this.stars.forEach(s => {
+                    sumX += s.x;
+                    sumY += s.y;
+                });
+                return {
+                    x: sumX / this.stars.length,
+                    y: sumY / this.stars.length
+                };
+            }
+
+            // 3D Rotation: Rotate a point around a given center
             rotate3D(x, y, centerX, centerY) {
                 // Convert degrees to radians
                 const radX = this.rotationX * Math.PI / 180;
@@ -2548,11 +2743,16 @@
                     return;
                 }
 
+                // Get selected duration
+                const durationSelect = document.getElementById('videoDuration');
+                const duration = durationSelect ? parseInt(durationSelect.value) : 5000;
+                const durationSec = duration / 1000;
+
                 this._isRecording = true;
                 const btn = document.getElementById('exportVideoBtn');
                 if (btn) btn.classList.add('active');
 
-                this.showToast("Recording 5 seconds...");
+                this.showToast(`Recording ${durationSec} seconds...`);
 
                 const stream = this.canvas.captureStream(30);
                 const chunks = [];
@@ -2607,7 +2807,7 @@
                     if (recorder.state === 'recording') {
                         recorder.stop();
                     }
-                }, 5000);
+                }, duration);
             }
         }
 
