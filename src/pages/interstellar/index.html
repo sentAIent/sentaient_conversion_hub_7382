@@ -659,13 +659,18 @@
             </div>
 
             <div
-                style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+                style="margin-bottom: 10px; display: flex; align-items: center; gap: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
                 <label
                     style="font-size: 12px; color: var(--text); display: flex; align-items: center; cursor: pointer;">
                     <input type="checkbox" id="templateRainbowMode"
                         style="margin-right: 5px; accent-color: var(--accent);">
-                    Apply Rainbow Colors
+                    Rainbow Mode
                 </label>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 12px; color: var(--text);">Color:</span>
+                    <input type="color" id="templateColorPicker" value="#00ffff"
+                        style="border: none; width: 24px; height: 24px; cursor: pointer; background: none;">
+                </div>
             </div>
             <div style="margin-bottom: 10px;">
                 <h3
@@ -775,53 +780,35 @@
                 this.init();
             }
 
-            initTemplates() {
-                // Templates Data
-                this.templates = {
-                    zodiac: {
-                        aries: [[0, 0], [20, 10], [40, 5], [50, 15]],
-                        taurus: [[0, 0], [20, -10], [40, 0], [30, 20], [10, 20], [-10, 10]],
-                        gemini: [[0, 0], [0, 40], [20, 40], [20, 0], [10, 20]],
-                        cancer: [[0, 0], [10, 10], [20, 0], [10, -10], [0, 0], [10, 20]],
-                        leo: [[0, 0], [10, 10], [30, 10], [40, 0], [40, -20], [20, -30], [0, -20], [-10, -10]],
-                        virgo: [[0, 0], [20, 10], [40, 0], [30, -20], [10, -30], [-10, -10], [0, 10]],
-                        libra: [[0, 0], [20, 0], [10, 10], [10, -10]],
-                        scorpio: [[0, 0], [10, 5], [20, 0], [30, -10], [30, -30], [20, -40], [10, -35]],
-                        sagittarius: [[0, 0], [10, 10], [20, 0], [30, 10], [30, -10], [20, -20], [40, 0]],
-                        capricorn: [[0, 0], [20, 10], [40, 0], [30, -10], [10, -10]],
-                        aquarius: [[0, 0], [10, 10], [20, 0], [30, 10], [40, 0], [50, 10]],
-                        pisces: [[0, 0], [10, 10], [20, 0], [20, -20], [10, -30], [0, -20]]
-                    },
-                    animals: {
-                        bear: [[0, 0, 0], [20, 0, 10], [30, 10, 5], [40, 0, 0], [40, -20, 0], [20, -20, 10], [0, -10, 5]],
-                        wolf: [[0, 0, 20], [10, 20, 10], [30, 20, -10], [40, 0, 0], [30, -20, -10], [10, -20, 10], [-10, 0, 20]],
-                        dragon: [[0, 0, 50], [10, 10, 30], [30, 10, 0], [50, 0, -20], [60, -20, -40], [50, -40, -20], [30, -30, 0], [10, -20, 30]], // Spiral depth
-                        dolphin: [[0, 0, 0], [20, 10, 10], [40, 0, 20], [50, -20, 10], [30, -20, 0], [10, -10, -10]],
-                        eagle: [[0, 0, 20], [-20, 10, -10], [0, 20, 0], [20, 10, -10], [0, -20, 10]] // Wings back
-                    },
-                    mythology: {
-                        orion: [[0, 0, 0], [10, 10, 10], [-10, 10, 10], [0, 20, 0], [0, 30, -5], [10, 40, 10], [-10, 40, 10]], // Belt flat, shoulders/feet fwd
-                        pegasus: [[0, 0, 0], [30, 0, 10], [30, 30, 20], [0, 30, 10], [-20, 40, 30], [-20, -10, -10]],
-                        phoenix: [[0, 0, 20], [0, 20, 0], [-20, 10, -10], [20, 10, -10], [0, -20, 10], [-10, -30, 20], [10, -30, 20]], // Wings back
-                        hydra: [[0, 0, 40], [10, 0, 30], [20, 10, 20], [30, 0, 10], [40, 10, 0], [50, 0, -10], [60, 10, -20], [70, 0, -30]], // Winding away
-                        centaur: [[0, 0, 0], [0, 30, 10], [20, 30, 10], [20, 0, 0], [40, 0, -10], [40, 40, -10]]
-                    }
-                };
+            async initTemplates() {
+                try {
+                    const [zodiac, animals, mythology] = await Promise.all([
+                        fetch('./templates/zodiac.json').then(r => r.json()),
+                        fetch('./templates/animals.json').then(r => r.json()),
+                        fetch('./templates/mythology.json').then(r => r.json())
+                    ]);
 
-                // Render Buttons
-                const createBtn = (category, key, containerId) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn-small';
-                    btn.style.margin = '2px';
-                    btn.style.textTransform = 'capitalize';
-                    btn.innerText = key;
-                    btn.onclick = () => this.loadTemplate(category, key);
-                    document.getElementById(containerId).appendChild(btn);
-                };
+                    this.templates = { zodiac, animals, mythology };
 
-                Object.keys(this.templates.zodiac).forEach(k => createBtn('zodiac', k, 'zodiacTemplates'));
-                Object.keys(this.templates.animals).forEach(k => createBtn('animals', k, 'animalTemplates'));
-                Object.keys(this.templates.mythology).forEach(k => createBtn('mythology', k, 'mythTemplates'));
+                    // Render Buttons
+                    const createBtn = (category, key, containerId) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-small';
+                        btn.style.margin = '2px';
+                        btn.style.textTransform = 'capitalize';
+                        btn.innerText = key;
+                        btn.onclick = () => this.loadTemplate(category, key);
+                        document.getElementById(containerId).appendChild(btn);
+                    };
+
+                    if (this.templates.zodiac) Object.keys(this.templates.zodiac).forEach(k => createBtn('zodiac', k, 'zodiacTemplates'));
+                    if (this.templates.animals) Object.keys(this.templates.animals).forEach(k => createBtn('animals', k, 'animalTemplates'));
+                    if (this.templates.mythology) Object.keys(this.templates.mythology).forEach(k => createBtn('mythology', k, 'mythTemplates'));
+
+                } catch (e) {
+                    console.error('Failed to load templates:', e);
+                    this.showToast('Error loading templates');
+                }
             }
 
             loadTemplate(category, key) {
@@ -837,8 +824,9 @@
                 const cy = this.camera.y + this.canvas.height / 2 / this.camera.zoom;
                 const scale = 3; // Scale up the normalized coordinates
 
-                // Check Rainbow Mode
+                // Check Rainbow Mode and Color Picker
                 const isRainbow = document.getElementById('templateRainbowMode')?.checked;
+                const templateColor = document.getElementById('templateColorPicker')?.value || '#00ffff';
 
                 // Create stars with 3D Depth
                 const newStars = points.map((p, i) => {
@@ -860,7 +848,7 @@
                         x: cx + p[0] * scale,
                         y: cy + p[1] * scale,
                         z: zDepth,
-                        color: isRainbow ? this.getRainbowHex() : this.activeColor,
+                        color: isRainbow ? this.getRainbowHex() : templateColor,
                         phase: Math.random() * Math.PI * 2,
                         clusterId: 'Template'
                     };
