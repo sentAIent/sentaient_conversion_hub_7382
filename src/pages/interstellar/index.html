@@ -511,33 +511,33 @@
                 <button class="btn-small bg-toggle" data-style="alien"
                     onclick="app.toggleBgStyle('alien')">Alien</button>
                 <button class="btn-small bg-toggle" data-style="cyber"
-                    onclick="app.toggleBgStyle('cyber')">Cyber</button>
+                    onclick="app.toggleBgStyle('cyber')">Matrix</button>
             </div>
 
             <div id="matrixThemeDisplay"
                 style="font-size: 11px; color: var(--accent); margin-bottom: 8px; min-height: 15px;"></div>
 
-            <!-- Cyber Speed Control (visible when Cyber is active) -->
-            <div id="cyberSpeedControl" style="display: none; margin-bottom: 10px;">
+            <!-- Matrix Speed Control (visible when Matrix is active) -->
+            <div id="matrixSpeedControl" style="display: none; margin-bottom: 10px;">
                 <label
                     style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center;">
                     <span>Matrix Speed:</span>
-                    <span id="cyberSpeedValue" style="color: var(--accent);">1.0x</span>
+                    <span id="matrixSpeedValue" style="color: var(--accent);">1.0x</span>
                 </label>
-                <input type="range" id="cyberSpeedSlider" min="0.1" max="8" step="0.1" value="1"
+                <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1"
                     style="width: 100%; margin-top: 4px; accent-color: var(--accent);">
 
                 <label
                     style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                     <span>Code Length:</span>
-                    <span id="cyberLengthValue" style="color: var(--accent);">1.0x</span>
+                    <span id="matrixLengthValue" style="color: var(--accent);">1.0x</span>
                 </label>
-                <input type="range" id="cyberLengthSlider" min="0.2" max="3" step="0.1" value="1"
+                <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1"
                     style="width: 100%; margin-top: 4px; accent-color: var(--accent);">
 
                 <label
                     style="font-size: 11px; color: var(--text); display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <span>Code Color:</span>
+                    <span>Matrix Color:</span>
                 </label>
                 <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
                     <input type="color" id="matrixColorPicker" value="#00ff00"
@@ -872,20 +872,23 @@
                 this.updateColorModeUI();
 
                 // Cyber speed slider
-                const cyberSlider = document.getElementById('cyberSpeedSlider');
-                if (cyberSlider) {
-                    cyberSlider.addEventListener('input', (e) => {
+                this.matrixColorCustomized = false;
+
+                // Matrix (previously Cyber) speed slider
+                const matrixSpeedSlider = document.getElementById('matrixSpeedSlider');
+                if (matrixSpeedSlider) {
+                    matrixSpeedSlider.addEventListener('input', (e) => {
                         this.matrixSpeedMultiplier = parseFloat(e.target.value);
-                        document.getElementById('cyberSpeedValue').textContent = this.matrixSpeedMultiplier.toFixed(1) + 'x';
+                        document.getElementById('matrixSpeedValue').textContent = this.matrixSpeedMultiplier.toFixed(1) + 'x';
                     });
                 }
 
-                // Cyber length slider
-                const cyberLengthSlider = document.getElementById('cyberLengthSlider');
-                if (cyberLengthSlider) {
-                    cyberLengthSlider.addEventListener('input', (e) => {
+                // Matrix length slider
+                const matrixLengthSlider = document.getElementById('matrixLengthSlider');
+                if (matrixLengthSlider) {
+                    matrixLengthSlider.addEventListener('input', (e) => {
                         this.matrixLengthMultiplier = parseFloat(e.target.value);
-                        document.getElementById('cyberLengthValue').textContent = this.matrixLengthMultiplier.toFixed(1) + 'x';
+                        document.getElementById('matrixLengthValue').textContent = this.matrixLengthMultiplier.toFixed(1) + 'x';
                     });
                 }
 
@@ -895,6 +898,7 @@
                 if (matrixColorPicker) {
                     matrixColorPicker.addEventListener('input', (e) => {
                         this.matrixColor = e.target.value;
+                        this.matrixColorCustomized = true;
                         if (matrixColorHex) matrixColorHex.value = e.target.value;
                         if (this.matrixStreams) this.matrixStreams.forEach(s => s.color = this.matrixColor);
                     });
@@ -904,6 +908,7 @@
                         let val = e.target.value;
                         if (val.match(/^#[0-9A-Fa-f]{6}$/)) {
                             this.matrixColor = val;
+                            this.matrixColorCustomized = true;
                             if (matrixColorPicker) matrixColorPicker.value = val;
                             if (this.matrixStreams) this.matrixStreams.forEach(s => s.color = this.matrixColor);
                         }
@@ -1031,7 +1036,7 @@
 
                 // Update theme display and speed control visibility
                 const themeDisplay = document.getElementById('matrixThemeDisplay');
-                const speedControl = document.getElementById('cyberSpeedControl');
+                const speedControl = document.getElementById('matrixSpeedControl');
                 if (this.activeStyles.has('cyber')) {
                     themeDisplay.style.display = 'block';
                     speedControl.style.display = 'block';
@@ -1174,7 +1179,12 @@
                         // Empty Space Clicked - Create Star (ONLY in draw mode)
                         if (this.mode === 'draw') {
                             this.saveState(); // Save BEFORE action
-                            this.createStar(world.x, world.y);
+
+                            // Determine 3D position
+                            const center = this.getConstellationCenter();
+                            const pos3D = this.inverseRotate3D(world.x, world.y, center.x, center.y);
+
+                            this.createStar(pos3D.x, pos3D.y, pos3D.z);
                         }
                     }
                 }
@@ -1201,7 +1211,7 @@
 
             /* --- Star Creation --- */
 
-            createStar(x, y) {
+            createStar(x, y, z = 0) {
                 let starColor = this.activeColor;
                 if (this.colorMode === 'rainbow') {
                     starColor = this.getRainbowHex();
@@ -1209,6 +1219,7 @@
 
                 this.stars.push({
                     x, y,
+                    z: z, // Store Z coordinate
                     id: Math.floor(Date.now() + Math.random() * 1000).toString(),
                     phase: Math.random() * Math.PI * 2,
                     color: starColor,
@@ -1692,8 +1703,8 @@
                 }
 
                 // Sync speed slider with current value
-                const slider = document.getElementById('cyberSpeedSlider');
-                const sliderValue = document.getElementById('cyberSpeedValue');
+                const slider = document.getElementById('matrixSpeedSlider');
+                const sliderValue = document.getElementById('matrixSpeedValue');
                 if (slider) slider.value = this.matrixSpeedMultiplier;
                 if (sliderValue) sliderValue.textContent = this.matrixSpeedMultiplier.toFixed(1) + 'x';
 
@@ -1712,7 +1723,9 @@
 
                     // Handle Rainbow Theme
                     let streamColor = theme.color;
-                    if (theme.name === 'Rainbow Surge') {
+                    if (this.matrixColorCustomized) {
+                        streamColor = this.matrixColor;
+                    } else if (theme.name === 'Rainbow Surge') {
                         // Calculate hue based on column index (i) to cycle through the spectrum
                         const hue = (i * 360 / columns) % 360;
                         streamColor = `hsl(${hue}, 100%, 50%)`; // Full saturation, mid lightness
@@ -1847,6 +1860,7 @@
                     const center = this.getConstellationCenter();
                     const rotCenterX = center.x;
                     const rotCenterY = center.y;
+                    const rotCenterZ = center.z;
 
                     lines.forEach(l => {
                         const alpha = Math.max(0, 1 - (l.dist / this.config.maxConnectDist));
@@ -1854,8 +1868,10 @@
                         const [r, g, b] = this.hexToRgb(starColor);
 
                         // Apply 3D rotation
-                        const p1 = this.rotate3D(l.s1.x, l.s1.y, rotCenterX, rotCenterY);
-                        const p2 = this.rotate3D(l.s2.x, l.s2.y, rotCenterX, rotCenterY);
+                        const s1z = l.s1.z || 0;
+                        const s2z = l.s2.z || 0;
+                        const p1 = this.rotate3D(l.s1.x, l.s1.y, s1z, rotCenterX, rotCenterY);
+                        const p2 = this.rotate3D(l.s2.x, l.s2.y, s2z, rotCenterX, rotCenterY);
 
                         ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
                         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.3})`;
@@ -1872,8 +1888,10 @@
                         const starColor = this.getStarColor(l.s1);
 
                         // Apply 3D rotation
-                        const p1 = this.rotate3D(l.s1.x, l.s1.y, rotCenterX, rotCenterY);
-                        const p2 = this.rotate3D(l.s2.x, l.s2.y, rotCenterX, rotCenterY);
+                        const s1z = l.s1.z || 0;
+                        const s2z = l.s2.z || 0;
+                        const p1 = this.rotate3D(l.s1.x, l.s1.y, s1z, rotCenterX, rotCenterY);
+                        const p2 = this.rotate3D(l.s2.x, l.s2.y, s2z, rotCenterX, rotCenterY);
 
                         ctx.strokeStyle = starColor;
                         ctx.globalAlpha = alpha * 0.8;
@@ -1917,12 +1935,21 @@
                 const center = this.getConstellationCenter();
                 const rotCenterX = center.x;
                 const rotCenterY = center.y;
+                // Note: we just pass centerX/Y as pivot, Z pivot is implicitly handled by rotate3D logic relative to 0? 
+                // Wait, rotate3D logic (let pz = z) rotates AROUND (centerX, centerY, 0).
+                // If the constellation center has Z != 0, we should translate Z too?
+                // rotate3D implementation: let px = x - centerX; let py = y - centerY; let pz = z; 
+                // So it assumes pivot Z is 0. If center.z is not 0, we should subtract it.
+                // But let's stick to previous logical structure where we just updated rotate3D signature.
+                // Ideally: let pz = z - (center.z || 0);
+                // Let's rely on the definition where we pass Z.
 
                 this.stars.forEach(s => {
                     const isHover = (s === this.hoveredStar);
 
                     // Apply 3D rotation
-                    const rotated = this.rotate3D(s.x, s.y, rotCenterX, rotCenterY);
+                    const sz = s.z || 0;
+                    const rotated = this.rotate3D(s.x, s.y, sz, rotCenterX, rotCenterY);
                     const rx = rotated.x;
                     const ry = rotated.y;
                     const rScale = rotated.scale;
@@ -2460,21 +2487,23 @@
             // Get the center point of all stars (constellation center)
             getConstellationCenter() {
                 if (this.stars.length === 0) {
-                    return { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+                    return { x: this.canvas.width / 2, y: this.canvas.height / 2, z: 0 };
                 }
-                let sumX = 0, sumY = 0;
+                let sumX = 0, sumY = 0, sumZ = 0;
                 this.stars.forEach(s => {
                     sumX += s.x;
                     sumY += s.y;
+                    sumZ += (s.z || 0);
                 });
                 return {
                     x: sumX / this.stars.length,
-                    y: sumY / this.stars.length
+                    y: sumY / this.stars.length,
+                    z: sumZ / this.stars.length
                 };
             }
 
             // 3D Rotation: Rotate a point around a given center
-            rotate3D(x, y, centerX, centerY) {
+            rotate3D(x, y, z, centerX, centerY) {
                 // Convert degrees to radians
                 const radX = this.rotationX * Math.PI / 180;
                 const radY = this.rotationY * Math.PI / 180;
@@ -2483,7 +2512,7 @@
                 // Translate to origin (center of view)
                 let px = x - centerX;
                 let py = y - centerY;
-                let pz = 0; // Stars are on a 2D plane, z=0
+                let pz = z;
 
                 // Rotation around X axis
                 let y1 = py * Math.cos(radX) - pz * Math.sin(radX);
@@ -2512,6 +2541,47 @@
                     x: px * scale + centerX,
                     y: py * scale + centerY,
                     scale: scale
+                };
+            }
+
+            // Inverse 3D Rotation: Project screen point back to 3D world (at Z=0 plane relative to rotation)
+            inverseRotate3D(x, y, centerX, centerY) {
+                // Negate angles for inverse rotation
+                const radX = -this.rotationX * Math.PI / 180;
+                const radY = -this.rotationY * Math.PI / 180;
+                const radZ = -this.rotationZ * Math.PI / 180;
+
+                // Translate to origin
+                let px = x - centerX;
+                let py = y - centerY;
+                let pz = 0; // Assume we are clicking on the plane passing through center
+
+                // Inverse Order: X^-1( Y^-1( Z^-1( P ) ) )
+                // Note: Forward was RotZ(RotY(RotX(P))). Inverse is RotXinv(RotYinv(RotZinv(P))).
+
+                // 1. Inverse Z Rotation
+                let x1 = px * Math.cos(radZ) - py * Math.sin(radZ);
+                let y1 = px * Math.sin(radZ) + py * Math.cos(radZ);
+                px = x1;
+                py = y1;
+
+                // 2. Inverse Y Rotation
+                x1 = px * Math.cos(radY) + pz * Math.sin(radY);
+                let z1 = -px * Math.sin(radY) + pz * Math.cos(radY);
+                px = x1;
+                pz = z1;
+
+                // 3. Inverse X Rotation
+                y1 = py * Math.cos(radX) - pz * Math.sin(radX);
+                z1 = py * Math.sin(radX) + pz * Math.cos(radX);
+                py = y1;
+                pz = z1;
+
+                // Translate back
+                return {
+                    x: px + centerX,
+                    y: py + centerY,
+                    z: pz
                 };
             }
 
