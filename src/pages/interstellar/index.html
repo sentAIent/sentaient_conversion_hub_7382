@@ -658,6 +658,15 @@
                     style="min-width: 24px; padding: 2px 6px;">✕</button>
             </div>
 
+            <div
+                style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+                <label
+                    style="font-size: 12px; color: var(--text); display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="templateRainbowMode"
+                        style="margin-right: 5px; accent-color: var(--accent);">
+                    Apply Rainbow Colors
+                </label>
+            </div>
             <div style="margin-bottom: 10px;">
                 <h3
                     style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
@@ -828,15 +837,23 @@
                 const cy = this.camera.y + this.canvas.height / 2 / this.camera.zoom;
                 const scale = 3; // Scale up the normalized coordinates
 
-                // Create stars
-                const newStars = points.map((p, i) => ({
-                    id: Date.now() + i,
-                    x: cx + p[0] * scale,
-                    y: cy + p[1] * scale,
-                    color: this.activeColor,
-                    phase: Math.random() * Math.PI * 2,
-                    clusterId: 'Template'
-                }));
+                // Check Rainbow Mode
+                const isRainbow = document.getElementById('templateRainbowMode')?.checked;
+
+                // Create stars with 3D Depth
+                const newStars = points.map((p, i) => {
+                    const zDepth = (Math.random() - 0.5) * scale * 25; // Random Z depth for 3D effect
+
+                    return {
+                        id: Date.now() + i,
+                        x: cx + p[0] * scale,
+                        y: cy + p[1] * scale,
+                        z: zDepth,
+                        color: isRainbow ? this.getRainbowHex() : this.activeColor,
+                        phase: Math.random() * Math.PI * 2,
+                        clusterId: 'Template'
+                    };
+                });
 
                 this.stars = newStars;
 
