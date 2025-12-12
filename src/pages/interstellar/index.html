@@ -819,16 +819,17 @@
                 const points = this.templates[category][key];
                 if (!points) return;
 
-                // Clear existing
-                this.stars = [];
-                this.history = [];
+                this.saveState(); // Save before clearing
 
-                // Calculate center of viewport
-                const cx = this.camera.x + this.canvas.width / 2 / this.camera.zoom;
-                const cy = this.camera.y + this.canvas.height / 2 / this.camera.zoom;
-                const scale = 3; // Scale up the normalized coordinates
+                // Reset Camera to ensure visibility (User request: "put in middle of screen")
+                this.camera = { x: 0, y: 0, zoom: 1 };
 
-                // Check Rainbow Mode and Color Picker
+                // Center Position (World Origin aligns with screen center given camera 0,0)
+                const cx = 0;
+                const cy = 0;
+                const scale = 3;
+
+                // Check Rainbow Mode
                 const isRainbow = document.getElementById('templateRainbowMode')?.checked;
                 const templateColor = document.getElementById('templateColorPicker')?.value || '#00ffff';
 
@@ -836,16 +837,18 @@
                 const baseName = key.charAt(0).toUpperCase() + key.slice(1);
                 let creativeName = baseName;
 
-                // Ensure name generators are initialized
-                if (!this.prefixes) this.initNameGenerators();
-
-                if (Math.random() > 0.5) {
-                    const prefix = this.prefixes[Math.floor(Math.random() * this.prefixes.length)];
-                    creativeName = `${prefix} ${baseName}`;
-                } else {
-                    const suffix = this.suffixes[Math.floor(Math.random() * this.suffixes.length)];
-                    creativeName = `${baseName} ${suffix}`;
-                }
+                try {
+                    if (!this.prefixes) this.initNameGenerators();
+                    if (this.prefixes && this.prefixes.length > 0) {
+                        if (Math.random() > 0.5) {
+                            const prefix = this.prefixes[Math.floor(Math.random() * this.prefixes.length)];
+                            creativeName = `${prefix} ${baseName}`;
+                        } else {
+                            const suffix = this.suffixes[Math.floor(Math.random() * this.suffixes.length)];
+                            creativeName = `${baseName} ${suffix}`;
+                        }
+                    }
+                } catch (e) { console.warn("Name gen failed", e); }
 
                 // Create stars with 3D Depth
                 const newStars = points.map((p, i) => {
