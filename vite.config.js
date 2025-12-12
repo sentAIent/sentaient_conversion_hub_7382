@@ -16,7 +16,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),
-        interstellar: path.resolve(__dirname, 'interstellar/index.html'),
+        interstellar: path.resolve(__dirname, 'src/pages/interstellar/index.html'),
       },
     },
   },
