@@ -822,7 +822,6 @@
                 // Clear existing
                 this.stars = [];
                 this.history = [];
-                this.requestClear(true); // Helper to clear lines too if needed (though stars=[] usually enough if redrawn)
 
                 // Calculate center of viewport
                 const cx = this.camera.x + this.canvas.width / 2 / this.camera.zoom;
@@ -897,6 +896,7 @@
                     matrixColorPicker.addEventListener('input', (e) => {
                         this.matrixColor = e.target.value;
                         if (matrixColorHex) matrixColorHex.value = e.target.value;
+                        if (this.matrixStreams) this.matrixStreams.forEach(s => s.color = this.matrixColor);
                     });
                 }
                 if (matrixColorHex) {
@@ -905,6 +905,7 @@
                         if (val.match(/^#[0-9A-Fa-f]{6}$/)) {
                             this.matrixColor = val;
                             if (matrixColorPicker) matrixColorPicker.value = val;
+                            if (this.matrixStreams) this.matrixStreams.forEach(s => s.color = this.matrixColor);
                         }
                     });
                 }
