@@ -1118,6 +1118,8 @@
                 this.pointer.startY = e.clientY;
                 this.pointer.camStartX = this.camera.x;
                 this.pointer.camStartY = this.camera.y;
+                this.pointer.rotStartX = this.rotationX;
+                this.pointer.rotStartY = this.rotationY;
 
                 const world = this.getWorldPos(e);
                 const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
@@ -1197,9 +1199,23 @@
                     this.draggedStar.x = world.x;
                     this.draggedStar.y = world.y;
                 } else if (this.pointer.dragging) {
-                    // Pan View
-                    this.camera.x = this.pointer.camStartX + dx;
-                    this.camera.y = this.pointer.camStartY + dy;
+                    if (e.shiftKey) {
+                        // Pan View (Shift + Drag)
+                        this.camera.x = this.pointer.camStartX + dx;
+                        this.camera.y = this.pointer.camStartY + dy;
+                    } else {
+                        // Rotate View (Default Drag)
+                        this.rotationY = this.pointer.rotStartY + dx * 0.5;
+                        this.rotationX = this.pointer.rotStartX + dy * 0.5;
+                        this.draw();
+                        // Update UI sliders if they exist
+                        if (document.getElementById('rotXValue')) {
+                            document.getElementById('rotX').value = this.rotationX % 360;
+                            document.getElementById('rotY').value = this.rotationY % 360;
+                            document.getElementById('rotXValue').textContent = Math.round(this.rotationX % 360) + '°';
+                            document.getElementById('rotYValue').textContent = Math.round(this.rotationY % 360) + '°';
+                        }
+                    }
                 }
             }
 
@@ -1285,8 +1301,17 @@
 
                 // 2. Apply assignments back to the main stars array
                 this.stars.forEach(s => {
-                    // If a star is part of a large cluster, use the mapped string name. Otherwise, use its unique string ID (s.id).
-                    s.clusterId = assignmentMap.get(s.id) || s.id;
+                    // If a star is part of a large cluster, use the mapped string name. 
+                    // Otherwise, preserve its existing name IF it's a real string (e.g. from template), else fallback to ID.
+                    const assigned = assignmentMap.get(s.id);
+                    if (assigned) {
+                        s.clusterId = assigned;
+                    } else if (s.clusterId && isNaN(parseFloat(s.clusterId))) {
+                        // Keep existing custom name if it's not just a number
+                        // This preserves "Wolf Major" even if connectivity logic doesn't group it yet
+                    } else {
+                        s.clusterId = s.id;
+                    }
                 });
 
                 return { lines, clusters };
