@@ -1020,12 +1020,14 @@
                 requestAnimationFrame(this.animate);
             }
 
-            /**
-             * Resizes the canvas to fill its container and redraws.
-             */
             resize() {
                 this.canvas.width = window.innerWidth;
                 this.canvas.height = window.innerHeight;
+
+                // Regenerate screen-space background (static stars) to ensure coverage
+                this.staticStars = [];
+                this.generateStaticStars();
+
                 this.draw();
             }
 
