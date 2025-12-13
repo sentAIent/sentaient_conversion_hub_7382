@@ -821,13 +821,27 @@
 
                 this.saveState(); // Save before clearing
 
+                // Center Calculation: Find centroid of the template points
+                let totalX = 0, totalY = 0, totalZ = 0;
+                points.forEach(p => {
+                    totalX += p[0];
+                    totalY += p[1];
+                    totalZ += (p[2] || 0);
+                });
+                const count = points.length;
+                const centroidX = totalX / count;
+                const centroidY = totalY / count;
+                const centroidZ = totalZ / count;
+
                 // Reset Camera to ensure visibility (User request: "put in middle of screen")
                 this.camera = { x: 0, y: 0, zoom: 1 };
 
-                // Center Position (World Origin aligns with screen center given camera 0,0)
+                // Center Position
                 const cx = 0;
                 const cy = 0;
                 const scale = 3;
+
+                // Offset calculation happens inside mapping (p[0] - centroidX)
 
                 // Check Rainbow Mode
                 const isRainbow = document.getElementById('templateRainbowMode')?.checked;
@@ -853,22 +867,25 @@
                 // Create stars with 3D Depth
                 const newStars = points.map((p, i) => {
                     let zDepth = 0;
+                    let xPos = p[0] - centroidX;
+                    let yPos = p[1] - centroidY;
+                    let pZ = (p[2] || 0) - centroidZ;
 
                     if (p.length >= 3) {
                         // Explicit Z from template data
-                        zDepth = p[2] * scale;
+                        zDepth = pZ * scale;
                     } else {
                         // Implicit 3D: Map 2D constellations onto a gentle celestial curve
-                        // Calculate distance from center of constellation (0,0 in definition)
-                        const dist = Math.sqrt(p[0] * p[0] + p[1] * p[1]);
-                        // Curve edges away from viewer (negative Z) to simulate looking into a dome
+                        // Calculate distance from center (which is now 0,0 locally)
+                        const dist = Math.sqrt(xPos * xPos + yPos * yPos);
+                        // Curve edges away
                         zDepth = -(dist * dist) * 0.05 * scale;
                     }
 
                     return {
                         id: Date.now() + i,
-                        x: cx + p[0] * scale,
-                        y: cy + p[1] * scale,
+                        x: cx + xPos * scale,
+                        y: cy + yPos * scale,
                         z: zDepth,
                         color: isRainbow ? this.getRainbowHex() : templateColor,
                         phase: Math.random() * Math.PI * 2,
