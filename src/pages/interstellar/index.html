@@ -1013,20 +1013,19 @@
                 // Trigger initial background generation
                 this.resize();
 
+                // Add Resize Listener
+                window.addEventListener('resize', () => this.resize());
+
                 this.animate = this.animate.bind(this);
                 requestAnimationFrame(this.animate);
             }
 
             /**
-             * Resizes the canvas to fill its container and redraws the background.
-             * The call to generateStaticBackground is here, so we must ensure the definition comes first.
+             * Resizes the canvas to fill its container and redraws.
              */
             resize() {
                 this.canvas.width = window.innerWidth;
                 this.canvas.height = window.innerHeight;
-                // This line now calls the function defined immediately below for guaranteed availability
-                this.backgroundStars = this.generateStaticBackground();
-                this.generateBackground(); // Ensure dynamic background is also regenerated
                 this.draw();
             }
 
