@@ -2222,169 +2222,227 @@
                         ctx.strokeStyle = s.hullHighlight || '#ddd';
                         ctx.lineWidth = 1.5 / zoom;
 
-                        // === FLYING SAUCER ===
+
+                        // === SAUCER ===
                         if (s.shipClass === 'saucer') {
-                            // Main disc body
                             ctx.beginPath();
                             ctx.ellipse(0, 0, size, size * 0.25, 0, 0, Math.PI * 2);
                             ctx.fill();
                             ctx.stroke();
-
-                            // Upper dome (glass cockpit)
                             const domeGrad = ctx.createRadialGradient(-size * 0.1, -size * 0.15, 0, 0, -size * 0.05, size * 0.4);
                             domeGrad.addColorStop(0, '#ffffff');
                             domeGrad.addColorStop(0.3, s.domeColor || '#88ffff');
-                            domeGrad.addColorStop(0.7, s.domeColor || '#44aaaa');
                             domeGrad.addColorStop(1, 'rgba(0,50,50,0.8)');
                             ctx.fillStyle = domeGrad;
                             ctx.beginPath();
                             ctx.ellipse(0, -size * 0.08, size * 0.35, size * 0.25, 0, Math.PI, 0);
                             ctx.fill();
 
-                            // Rotating underside lights
-                            const ringCount = s.ringCount || 3;
-                            for (let ring = 0; ring < ringCount; ring++) {
-                                const ringRadius = size * (0.5 + ring * 0.15);
-                                const lightCount = 8 + ring * 4;
-                                for (let i = 0; i < lightCount; i++) {
-                                    const lightAngle = (i / lightCount) * Math.PI * 2 + s.rotation + ring * 0.5;
-                                    const lx = Math.cos(lightAngle) * ringRadius;
-                                    const ly = Math.sin(lightAngle) * ringRadius * 0.25 + size * 0.1;
-                                    const pulse = Math.sin(time * 4 + i + ring) * 0.4 + 0.6;
-
-                                    ctx.globalAlpha = pulse;
-                                    ctx.fillStyle = i % 2 === 0 ? (s.lightColor || '#ff00ff') : (s.lightColor2 || '#ffff00');
-                                    ctx.beginPath();
-                                    ctx.arc(lx, ly, 3 / zoom, 0, Math.PI * 2);
-                                    ctx.fill();
-                                }
+                            // === STAR DREADNOUGHT ===
+                        } else if (s.shipClass === 'star-dreadnought') {
+                            ctx.beginPath();
+                            ctx.moveTo(size * 1.2, 0);
+                            for (let i = 0; i < 6; i++) {
+                                const angle = (i / 6) * Math.PI * 2;
+                                ctx.lineTo(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.8);
                             }
-                            ctx.globalAlpha = 1;
-
-                            // Center glow
-                            const centerGlow = ctx.createRadialGradient(0, size * 0.1, 0, 0, size * 0.1, size * 0.3);
-                            centerGlow.addColorStop(0, s.engineGlow || '#ffffff');
-                            centerGlow.addColorStop(0.5, s.engineColor || '#00ffff');
-                            centerGlow.addColorStop(1, 'transparent');
-                            ctx.fillStyle = centerGlow;
-                            ctx.beginPath();
-                            ctx.arc(0, size * 0.1, size * 0.3, 0, Math.PI * 2);
-                            ctx.fill();
-
-                            // === CRUISER / DESTROYER ===
-                        } else if (s.shipClass === 'cruiser' || s.shipClass === 'destroyer') {
-                            const isDestroyer = s.shipClass === 'destroyer';
-                            ctx.beginPath();
-                            ctx.moveTo(size * 1.1, 0);
-                            ctx.lineTo(size * 0.3, -size * 0.3);
-                            ctx.lineTo(-size * 0.4, -size * 0.35);
-                            ctx.lineTo(-size * 0.9, -size * 0.2);
-                            ctx.lineTo(-size * 0.9, size * 0.2);
-                            ctx.lineTo(-size * 0.4, size * 0.35);
-                            ctx.lineTo(size * 0.3, size * 0.3);
                             ctx.closePath();
                             ctx.fill();
                             ctx.stroke();
 
-                            // Wings
-                            ctx.beginPath();
-                            ctx.moveTo(-size * 0.1, -size * 0.3);
-                            ctx.lineTo(-size * (isDestroyer ? 0.5 : 0.4), -size * 0.9);
-                            ctx.lineTo(-size * (isDestroyer ? 0.7 : 0.6), -size * 0.9);
-                            ctx.lineTo(-size * 0.5, -size * 0.35);
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.beginPath();
-                            ctx.moveTo(-size * 0.1, size * 0.3);
-                            ctx.lineTo(-size * (isDestroyer ? 0.5 : 0.4), size * 0.9);
-                            ctx.lineTo(-size * (isDestroyer ? 0.7 : 0.6), size * 0.9);
-                            ctx.lineTo(-size * 0.5, size * 0.35);
-                            ctx.closePath();
-                            ctx.fill();
+                            // === QUANTUM SCOUT ===
+                        } else if (s.shipClass === 'quantum-scout') {
+                            for (let i = 0; i < 3; i++) {
+                                ctx.save();
+                                ctx.rotate(time * (2 + i) + i);
+                                ctx.strokeStyle = '#00aaff';
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.ellipse(0, 0, size * (0.6 + i * 0.3), size * 0.2, 0, 0, Math.PI * 2);
+                                ctx.stroke();
+                                ctx.restore();
+                            }
 
-                            // Cockpit window
-                            ctx.fillStyle = 'rgba(100,200,255,0.7)';
-                            ctx.beginPath();
-                            ctx.ellipse(size * 0.5, 0, size * 0.15, size * 0.08, 0, 0, Math.PI * 2);
-                            ctx.fill();
-
-                            // === FIGHTER / INTERCEPTOR ===
-                        } else if (s.shipClass === 'fighter' || s.shipClass === 'interceptor') {
-                            const isInterceptor = s.shipClass === 'interceptor';
+                            // === VOID FIGHTER ===
+                        } else if (s.shipClass === 'void-fighter') {
                             ctx.beginPath();
                             ctx.moveTo(size * 0.9, 0);
-                            ctx.lineTo(size * 0.1, -size * (isInterceptor ? 0.5 : 0.4));
-                            ctx.lineTo(-size * 0.7, -size * 0.2);
-                            ctx.lineTo(-size * 0.7, size * 0.2);
-                            ctx.lineTo(size * 0.1, size * (isInterceptor ? 0.5 : 0.4));
+                            ctx.lineTo(size * 0.2, -size * 0.5);
+                            ctx.lineTo(-size * 0.6, -size * 0.3);
+                            ctx.lineTo(-size * 0.6, size * 0.3);
+                            ctx.lineTo(size * 0.2, size * 0.5);
                             ctx.closePath();
                             ctx.fill();
                             ctx.stroke();
 
-                            // === MOTHERSHIP ===
-                        } else if (s.shipClass === 'mothership') {
-                            // Main hull
+                            // === NEBULA CRUISER ===
+                        } else if (s.shipClass === 'nebula-cruiser') {
                             ctx.beginPath();
-                            ctx.ellipse(0, 0, size * 1.2, size * 0.5, 0, 0, Math.PI * 2);
+                            ctx.ellipse(size * 0.4, 0, size * 0.6, size * 0.2, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.ellipse(size * 0.9, 0, size * 0.15, size * 0.4, 0, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            // === BIO-CORVETTE ===
+                        } else if (s.shipClass === 'bio-corvette') {
+                            const bioGrad = ctx.createLinearGradient(-size, 0, size, 0);
+                            bioGrad.addColorStop(0, '#4a0066');
+                            bioGrad.addColorStop(0.5, '#9900cc');
+                            bioGrad.addColorStop(1, '#660099');
+                            ctx.fillStyle = bioGrad;
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.8, 0);
+                            ctx.bezierCurveTo(size * 0.6, -size * 0.4, size * 0.2, -size * 0.5, -size * 0.3, -size * 0.3);
+                            ctx.bezierCurveTo(-size * 0.7, 0, -size * 0.3, size * 0.3, size * 0.2, size * 0.5);
+                            ctx.bezierCurveTo(size * 0.6, size * 0.4, size * 0.8, 0, size * 0.8, 0);
+                            ctx.fill();
+
+                            // === WARP STRIDER (X-Wing Style) ===
+                        } else if (s.shipClass === 'warp-strider') {
+                            const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
+                            hullGrad.addColorStop(0, '#606060');
+                            hullGrad.addColorStop(0.5, '#a0a0a0');
+                            hullGrad.addColorStop(1, '#505050');
+                            ctx.fillStyle = hullGrad;
+                            // Fuselage
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.8, 0);
+                            ctx.lineTo(size * 0.3, -size * 0.15);
+                            ctx.lineTo(-size * 0.6, -size * 0.15);
+                            ctx.lineTo(-size * 0.8, 0);
+                            ctx.lineTo(-size * 0.6, size * 0.15);
+                            ctx.lineTo(size * 0.3, size * 0.15);
+                            ctx.closePath();
+                            ctx.fill();
+                            // Wings (simplified X)
+                            ctx.fillStyle = '#707070';
+                            ctx.fillRect(-size * 0.7, -size * 0.5, size * 0.4, size * 0.08);
+                            ctx.fillRect(-size * 0.7, size * 0.42, size * 0.4, size * 0.08);
+
+                            // === PRISM DESTROYER ===
+                        } else if (s.shipClass === 'prism-destroyer') {
+                            const hullGrad = ctx.createLinearGradient(-size, -size, size, size);
+                            hullGrad.addColorStop(0, '#c0c0c0');
+                            hullGrad.addColorStop(0.5, '#e8e8e8');
+                            hullGrad.addColorStop(1, '#707070');
+                            ctx.fillStyle = hullGrad;
+                            ctx.beginPath();
+                            ctx.moveTo(size, 0);
+                            ctx.lineTo(size * 0.3, -size * 0.6);
+                            ctx.lineTo(-size * 0.5, -size * 0.5);
+                            ctx.lineTo(-size * 0.8, 0);
+                            ctx.lineTo(-size * 0.5, size * 0.5);
+                            ctx.lineTo(size * 0.3, size * 0.6);
+                            ctx.closePath();
                             ctx.fill();
                             ctx.stroke();
 
-                            // Command bridge
+                            // === STELLAR BARGE ===
+                        } else if (s.shipClass === 'stellar-barge') {
+                            const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
+                            hullGrad.addColorStop(0, '#4a3820');
+                            hullGrad.addColorStop(0.5, '#8B6F47');
+                            hullGrad.addColorStop(1, '#3a2810');
+                            ctx.fillStyle = hullGrad;
+                            ctx.fillRect(-size * 0.7, -size * 0.35, size * 1.3, size * 0.7);
+                            ctx.fillStyle = '#5a4830';
                             ctx.beginPath();
-                            ctx.ellipse(size * 0.4, -size * 0.15, size * 0.4, size * 0.25, 0, Math.PI, 0);
+                            ctx.moveTo(size * 0.7, -size * 0.25);
+                            ctx.lineTo(size, 0);
+                            ctx.lineTo(size * 0.7, size * 0.25);
+                            ctx.closePath();
                             ctx.fill();
 
-                            // Hangar bays
-                            ctx.fillStyle = 'rgba(255,200,100,0.6)';
-                            for (let i = -2; i <= 2; i++) {
+                            // === CYBER SENTRY ===
+                        } else if (s.shipClass === 'cyber-sentry') {
+                            const eyeGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.4);
+                            eyeGrad.addColorStop(0, '#ff0000');
+                            eyeGrad.addColorStop(0.5, '#880000');
+                            eyeGrad.addColorStop(1, '#220000');
+                            ctx.fillStyle = eyeGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
+                            ctx.fill();
+                            for (let i = 0; i < 8; i++) {
+                                const angle = (i / 8) * Math.PI * 2 + time;
+                                ctx.strokeStyle = '#ff0000';
+                                ctx.lineWidth = 2;
                                 ctx.beginPath();
-                                ctx.rect(i * size * 0.3 - size * 0.08, size * 0.3, size * 0.16, size * 0.1);
-                                ctx.fill();
+                                ctx.moveTo(Math.cos(angle) * size * 0.4, Math.sin(angle) * size * 0.4);
+                                ctx.lineTo(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.8);
+                                ctx.stroke();
                             }
 
-                            // Running lights
-                            for (let i = 0; i < 12; i++) {
-                                const lAngle = (i / 12) * Math.PI * 2;
-                                const lx = Math.cos(lAngle) * size * 1.1;
-                                const ly = Math.sin(lAngle) * size * 0.45;
-                                const pulse = Math.sin(time * 2 + i * 0.5) * 0.3 + 0.7;
-                                ctx.globalAlpha = pulse;
-                                ctx.fillStyle = i % 3 === 0 ? '#ff0000' : (i % 3 === 1 ? '#00ff00' : '#ffffff');
-                                ctx.beginPath();
-                                ctx.arc(lx, ly, 4 / zoom, 0, Math.PI * 2);
-                                ctx.fill();
-                            }
-                            ctx.globalAlpha = 1;
+                            // === AETHER WING ===
+                        } else if (s.shipClass === 'aether-wing') {
+                            const grad = ctx.createLinearGradient(-size, 0, size, 0);
+                            grad.addColorStop(0, 'rgba(0,100,255,0)');
+                            grad.addColorStop(0.5, 'rgba(100,200,255,0.6)');
+                            grad.addColorStop(1, 'rgba(0,100,255,0)');
+                            ctx.fillStyle = grad;
+                            ctx.beginPath();
+                            ctx.moveTo(-size * 0.8, -size * 0.6);
+                            ctx.lineTo(size * 0.8, 0);
+                            ctx.lineTo(-size * 0.8, size * 0.6);
+                            ctx.closePath();
+                            ctx.fill();
 
-                            // === PROBE ===
+                            // === DEATH SPHERE ===
+                        } else if (s.shipClass === 'death-sphere') {
+                            const sphereGrad = ctx.createRadialGradient(-size * 0.2, -size * 0.2, 0, 0, 0, size);
+                            sphereGrad.addColorStop(0, '#505050');
+                            sphereGrad.addColorStop(0.5, '#303030');
+                            sphereGrad.addColorStop(1, '#101010');
+                            ctx.fillStyle = sphereGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+                            // Superlaser
+                            const laserGrad = ctx.createRadialGradient(size * 0.4, -size * 0.4, 0, size * 0.4, -size * 0.4, size * 0.12);
+                            laserGrad.addColorStop(0, '#00ff00');
+                            laserGrad.addColorStop(0.5, '#00aa00');
+                            laserGrad.addColorStop(1, 'rgba(0,170,0,0)');
+                            ctx.fillStyle = laserGrad;
+                            ctx.beginPath();
+                            ctx.arc(size * 0.4, -size * 0.4, size * 0.1, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            // === TIE FIGHTER ===
+                        } else if (s.shipClass === 'tie-fighter') {
+                            const cockpitGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.3);
+                            cockpitGrad.addColorStop(0, '#606060');
+                            cockpitGrad.addColorStop(0.7, '#303030');
+                            cockpitGrad.addColorStop(1, '#101010');
+                            ctx.fillStyle = cockpitGrad;
+                            ctx.beginPath();
+                            for (let i = 0; i < 6; i++) {
+                                const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+                                const x = Math.cos(angle) * size * 0.25;
+                                const y = Math.sin(angle) * size * 0.25;
+                                if (i === 0) ctx.moveTo(x, y);
+                                else ctx.lineTo(x, y);
+                            }
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                            // Solar panels
+                            const panelGrad = ctx.createLinearGradient(-size, -size, size, size);
+                            panelGrad.addColorStop(0, '#404040');
+                            panelGrad.addColorStop(0.5, '#505050');
+                            panelGrad.addColorStop(1, '#303030');
+                            ctx.fillStyle = panelGrad;
+                            ctx.fillRect(-size * 1.2, -size * 0.8, size * 0.8, size * 1.6);
+                            ctx.strokeRect(-size * 1.2, -size * 0.8, size * 0.8, size * 1.6);
+                            ctx.fillRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
+                            ctx.strokeRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
                         } else {
-                            // Spherical probe with antenna
-                            const probeGrad = ctx.createRadialGradient(-size * 0.15, -size * 0.15, 0, 0, 0, size * 0.5);
-                            probeGrad.addColorStop(0, '#ffffff');
-                            probeGrad.addColorStop(0.5, s.hullColor || '#888');
-                            probeGrad.addColorStop(1, s.hullShadow || '#222');
-                            ctx.fillStyle = probeGrad;
+                            // Default fallback
                             ctx.beginPath();
                             ctx.arc(0, 0, size * 0.5, 0, Math.PI * 2);
                             ctx.fill();
                             ctx.stroke();
-
-                            // Antenna
-                            ctx.strokeStyle = '#aaa';
-                            ctx.lineWidth = 2 / zoom;
-                            ctx.beginPath();
-                            ctx.moveTo(0, -size * 0.5);
-                            ctx.lineTo(0, -size * 1.2);
-                            ctx.stroke();
-
-                            // Blinking tip
-                            const tipPulse = Math.sin(time * 8 + s.lightPhase) > 0 ? 1 : 0.2;
-                            ctx.globalAlpha = tipPulse;
-                            ctx.fillStyle = '#ff0000';
-                            ctx.beginPath();
-                            ctx.arc(0, -size * 1.2, 3 / zoom, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.globalAlpha = 1;
                         }
 
                         // Navigation lights (for non-probes, non-saucers)
