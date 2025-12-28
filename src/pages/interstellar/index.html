@@ -1211,6 +1211,7 @@
                 window.addEventListener('pointermove', e => this.onPointerMove(e));
                 window.addEventListener('pointerup', e => this.onPointerUp(e));
                 this.canvas.addEventListener('wheel', e => this.onWheel(e), { passive: false });
+                this.canvas.addEventListener('contextmenu', e => this.onRightClick(e)); // Right-click deletion
 
                 // Keyboard
                 window.addEventListener('keydown', e => {
@@ -2006,10 +2007,10 @@
                 e.preventDefault(); // Prevent context menu
                 const world = this.getWorldPos(e);
                 const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
-                
+
                 // Check if clicking on a star
                 const clickedStarIndex = this.stars.findIndex(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
-                
+
                 if (clickedStarIndex !== -1) {
                     // Delete the star
                     this.saveState(); // Save for undo
@@ -2018,26 +2019,26 @@
                     this.draw();
                     return;
                 }
-                
+
                 // Check if clicking on a connection line
                 const lineHitDist = 5 / this.camera.zoom; // 5 pixel tolerance
                 for (let i = 0; i < this.stars.length; i++) {
                     const s1 = this.stars[i];
                     for (let j = i + 1; j < this.stars.length; j++) {
                         const s2 = this.stars[j];
-                        
+
                         // Only check connected stars
                         if (Math.hypot(s1.x - s2.x, s1.y - s2.y) > this.config.maxConnectDist) continue;
-                        
+
                         // Point-to-line distance formula
                         const lineLen = Math.hypot(s2.x - s1.x, s2.y - s1.y);
                         if (lineLen === 0) continue;
-                        
+
                         const t = Math.max(0, Math.min(1, ((world.x - s1.x) * (s2.x - s1.x) + (world.y - s1.y) * (s2.y - s1.y)) / (lineLen * lineLen)));
                         const projX = s1.x + t * (s2.x - s1.x);
                         const projY = s1.y + t * (s2.y - s1.y);
                         const dist = Math.hypot(world.x - projX, world.y - projY);
-                        
+
                         if (dist < lineHitDist) {
                             // Delete both stars that make up this connection
                             this.saveState(); // Save for undo
