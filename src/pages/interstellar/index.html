@@ -3879,11 +3879,36 @@
                             ctx.fill();
                             ctx.stroke();
                         } else if (s.shipClass === 'nebula-cruiser') {
+                            // Concorde-style supersonic jet
+                            const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
+                            hullGrad.addColorStop(0, '#606080');
+                            hullGrad.addColorStop(0.5, '#8080a0');
+                            hullGrad.addColorStop(1, '#505070');
+                            ctx.fillStyle = hullGrad;
+                            // Sleek fuselage with pointed nose
                             ctx.beginPath();
-                            ctx.ellipse(size * 0.4, 0, size * 0.6, size * 0.2, 0, 0, Math.PI * 2);
+                            ctx.moveTo(size * 1.2, 0);
+                            ctx.lineTo(size * 0.7, -size * 0.08);
+                            ctx.lineTo(-size * 0.5, -size * 0.12);
+                            ctx.lineTo(-size * 0.8, 0);
+                            ctx.lineTo(-size * 0.5, size * 0.12);
+                            ctx.lineTo(size * 0.7, size * 0.08);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                            // Delta wings
+                            ctx.fillStyle = '#7070a0';
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.2, 0);
+                            ctx.lineTo(-size * 0.3, -size * 0.6);
+                            ctx.lineTo(-size * 0.6, -size * 0.4);
+                            ctx.closePath();
                             ctx.fill();
                             ctx.beginPath();
-                            ctx.ellipse(size * 0.9, 0, size * 0.15, size * 0.4, 0, 0, Math.PI * 2);
+                            ctx.moveTo(size * 0.2, 0);
+                            ctx.lineTo(-size * 0.3, size * 0.6);
+                            ctx.lineTo(-size * 0.6, size * 0.4);
+                            ctx.closePath();
                             ctx.fill();
                         } else if (s.shipClass === 'bio-corvette') {
                             const bioGrad = ctx.createLinearGradient(-size, 0, size, 0);
