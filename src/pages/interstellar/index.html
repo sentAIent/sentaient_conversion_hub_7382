@@ -745,6 +745,194 @@
             letter-spacing: 0.5px;
             margin-right: 4px;
         }
+
+        /* ========== FLIGHT MODE HUD ========== */
+        .flight-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .flight-hud.hidden {
+            display: none;
+        }
+
+        .hud-controls,
+        .hud-speed,
+        .hud-inventory,
+        .hud-leaderboard {
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.9) 0%, rgba(0, 30, 50, 0.85) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .hud-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            min-width: 220px;
+        }
+
+        .hud-speed {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .hud-inventory {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            min-width: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .hud-leaderboard {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            min-width: 250px;
+        }
+
+        .hud-controls h3,
+        .hud-inventory h3,
+        .hud-leaderboard h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            letter-spacing: 2px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            font-size: 13px;
+            color: #e0faff;
+        }
+
+        .control-row kbd {
+            display: inline-block;
+            padding: 4px 8px;
+            background: linear-gradient(180deg, #1a2a3a 0%, #0f1f2f 100%);
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            border-radius: 4px;
+            font-size: 12px;
+            min-width: 24px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .speed-label {
+            font-size: 12px;
+            color: #5c7a8a;
+            letter-spacing: 2px;
+        }
+
+        .speed-value {
+            font-size: 42px;
+            font-weight: bold;
+            color: #00f3ff;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.8);
+            margin: 8px 0;
+        }
+
+        .speed-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 50, 80, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0 8px 0;
+        }
+
+        .speed-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00f3ff 0%, #00a8ff 50%, #0080ff 100%);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            transition: width 0.1s;
+            width: 0%;
+        }
+
+        .speed-max {
+            font-size: 10px;
+            color: #5c7a8a;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: rgba(0, 50, 80, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .inventory-item .name {
+            color: #e0faff;
+            font-weight: bold;
+        }
+
+        .inventory-item .count {
+            color: #00f3ff;
+            font-size: 14px;
+        }
+
+        .total-value {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 243, 255, 0.3);
+            text-align: right;
+            font-size: 16px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0, 50, 80, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .leaderboard-entry.rank-1 {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, rgba(0, 50, 80, 0.3) 100%);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+
+        .leaderboard-entry .wealth {
+            color: #ffd700;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -906,6 +1094,7 @@
                             d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5v-4h9v4zm5 0h-4v-4h4v4zm0-5H5V5h14v7z" />
                     </svg>
                 </button>
+                <button class="btn" onclick="app.toggleFlightMode()" data-tooltip="Flight Mode">🚀</button>
             </div>
         </div>
         <div class="bottom-bar-right">
@@ -987,6 +1176,46 @@
 
     <canvas id="canvas"></canvas>
 
+    <!-- Flight Mode HUD Overlay -->
+    <div id="flightHUD" class="flight-hud hidden">
+        <!-- Controls Panel (Top Left) -->
+        <div class="hud-controls">
+            <h3>🚀 FLIGHT CONTROLS</h3>
+            <div class="control-row"><kbd>W</kbd><kbd>↑</kbd> Forward</div>
+            <div class="control-row"><kbd>S</kbd><kbd>↓</kbd> Reverse</div>
+            <div class="control-row"><kbd>A</kbd><kbd>←</kbd> Rotate Left</div>
+            <div class="control-row"><kbd>D</kbd><kbd>→</kbd> Rotate Right</div>
+            <div class="control-row"><kbd>Q</kbd> Move Up</div>
+            <div class="control-row"><kbd>E</kbd> Move Down</div>
+            <div class="control-row"><kbd>Shift</kbd><kbd>Space</kbd> BOOST (2x)</div>
+        </div>
+
+        <!-- Speed Indicator (Top Right) -->
+        <div class="hud-speed">
+            <div class="speed-label">VELOCITY</div>
+            <div class="speed-value" id="speedValue">0</div>
+            <div class="speed-bar">
+                <div class="speed-fill" id="speedFill"></div>
+            </div>
+            <div class="speed-max">MAX: 50</div>
+        </div>
+
+        <!-- Inventory Panel (Bottom Left) -->
+        <div class="hud-inventory">
+            <h3>💎 MINERALS COLLECTED</h3>
+            <div id="inventoryList" class="inventory-grid"></div>
+            <div class="total-value">
+                <strong>Total Value:</strong> <span id="totalValue">$0</span>
+            </div>
+        </div>
+
+        <!-- Leaderboard (Bottom Right) -->
+        <div class="hud-leaderboard">
+            <h3>🏆 TOP COLLECTORS</h3>
+            <div id="leaderboardList" class="leaderboard-list"></div>
+        </div>
+    </div>
+
     <!-- Main Application Logic (Module) -->
     <script type="module">
         /**
@@ -1034,6 +1263,45 @@
                 this.warpStartTime = 0; // When warp mode started
                 this.shootingStarsActive = []; // Active shooting stars in normal mode
                 this.lastShootingStarTime = 0; // Last time a shooting star was spawned
+
+                // Flight game state
+                this.flightMode = false;
+                this.keysPressed = {};
+                this.playerShip = {
+                    type: 'default',
+                    x: 0, y: 0, z: 0,
+                    vx: 0, vy: 0, vz: 0,
+                    rotation: 0,
+                    speed: 0,
+                    maxSpeed: 50,  // Increased for Roblox-style fast flight
+                    acceleration: 0.5,
+                    rotationSpeed: 0.08,
+                    size: 45
+                };
+                this.speedLines = [];  // Visual speed indicators
+
+                // Mineral system
+                this.minerals = [];
+                this.mineralTypes = {
+                    // Common (70% spawn rate)
+                    iron: { name: 'Iron', value: 10, color: '#8B8680', rarity: 'common', size: 15 },
+                    copper: { name: 'Copper', value: 25, color: '#B87333', rarity: 'common', size: 15 },
+                    coal: { name: 'Coal', value: 15, color: '#36454F', rarity: 'common', size: 12 },
+                    // Uncommon (20% spawn rate)
+                    silver: { name: 'Silver', value: 150, color: '#C0C0C0', rarity: 'uncommon', size: 18 },
+                    gold: { name: 'Gold', value: 400, color: '#FFD700', rarity: 'uncommon', size: 20 },
+                    platinum: { name: 'Platinum', value: 500, color: '#E5E4E2', rarity: 'uncommon', size: 20 },
+                    // Rare (8% spawn rate)
+                    diamond: { name: 'Diamond', value: 2500, color: '#B9F2FF', rarity: 'rare', size: 25 },
+                    emerald: { name: 'Emerald', value: 3000, color: '#50C878', rarity: 'rare', size: 25 },
+                    ruby: { name: 'Ruby', value: 2800, color: '#E0115F', rarity: 'rare', size: 25 },
+                    sapphire: { name: 'Sapphire', value: 3200, color: '#0F52BA', rarity: 'rare', size: 25 },
+                    // Legendary (2% spawn rate)
+                    neodymium: { name: 'Neodymium', value: 25000, color: '#FF6EC7', rarity: 'legendary', size: 30 },
+                    lanthanum: { name: 'Lanthanum', value: 30000, color: '#9D00FF', rarity: 'legendary', size: 32 }
+                };
+                this.playerInventory = this.loadInventory();
+                this.collectionNotifications = [];
 
                 // Initialize Matrix theme history (must exist before toggleBgStyle/generateCyberStyle is called)
                 try {
@@ -1215,9 +1483,27 @@
 
                 // Keyboard
                 window.addEventListener('keydown', e => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') this.undo();
+                    // Undo shortcut
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                        e.preventDefault();
+                        this.undo();
+                        return;
+                    }
+
+                    // Flight mode controls
+                    if (this.flightMode) {
+                        const key = e.key.toLowerCase();
+                        this.keysPressed[key] = true;
+                        e.preventDefault();
+                    }
                 });
 
+                window.addEventListener('keyup', e => {
+                    if (this.flightMode) {
+                        const key = e.key.toLowerCase();
+                        this.keysPressed[key] = false;
+                    }
+                });
                 // Initial mode setup
                 this.setMode('draw');
                 // Initial color state setup
@@ -1459,7 +1745,291 @@
 
             toggleTemplatePanel() {
                 const panel = document.getElementById('templatePanel');
-                if (panel) panel.classList.toggle('hidden');
+                if (panel.style.display === 'block') {
+                    panel.style.display = 'none';
+                } else {
+                    panel.style.display = 'block';
+                }
+            }
+
+            toggleFlightMode() {
+                this.flightMode = !this.flightMode;
+
+                // Toggle HUD overlay
+                const hud = document.getElementById('flightHUD');
+                if (hud) {
+                    if (this.flightMode) {
+                        hud.classList.remove('hidden');
+                        this.updateLeaderboard();
+                    } else {
+                        hud.classList.add('hidden');
+                    }
+                }
+
+                // Ensure a background is active
+                if (this.flightMode && this.activeStyles.size === 0) {
+                    this.toggleBgStyle('deep-space');
+                }
+
+                this.showToast(this.flightMode ? 'Flight Mode: ON - Use WASD/QE/Shift' : 'Flight Mode: OFF');
+                this.draw();
+            }
+
+            updateFlightHUD() {
+                if (!this.flightMode) return;
+
+                // Update speed
+                const speedEl = document.getElementById('speedValue');
+                const speedFillEl = document.getElementById('speedFill');
+                if (speedEl && speedFillEl) {
+                    const speed = Math.round(this.playerShip.speed);
+                    speedEl.textContent = speed;
+                    speedFillEl.style.width = (speed / this.playerShip.maxSpeed * 100) + '%';
+                }
+
+                // Update inventory
+                const inventoryEl = document.getElementById('inventoryList');
+                const totalValueEl = document.getElementById('totalValue');
+                if (inventoryEl) {
+                    let totalValue = 0;
+                    let html = '';
+                    for (const [type, count] of Object.entries(this.playerInventory)) {
+                        if (count > 0) {
+                            const mineralInfo = this.mineralTypes[type];
+                            if (mineralInfo) {
+                                const value = mineralInfo.value * count;
+                                totalValue += value;
+                                html += `<div class="inventory-item"><span class="name">${mineralInfo.name}</span><span class="count">×${count}</span></div>`;
+                            }
+                        }
+                    }
+                    inventoryEl.innerHTML = html || '<div style="color: #5c7a8a; font-size: 12px;">No minerals collected yet</div>';
+                    if (totalValueEl) totalValueEl.textContent = '$' + totalValue.toLocaleString();
+                }
+            }
+
+            updateLeaderboard() {
+                const leaderboardEl = document.getElementById('leaderboardList');
+                if (!leaderboardEl) return;
+
+                // Mock leaderboard data
+                const mockPlayers = [
+                    { name: 'StarCommander', wealth: 485230 },
+                    { name: 'NebulaHunter', wealth: 372140 },
+                    { name: 'AstroMiner', wealth: 298650 },
+                    { name: 'CosmicVoyager', wealth: 156780 },
+                    { name: 'You', wealth: this.calculateTotalWealth() }
+                ];
+
+                mockPlayers.sort((a, b) => b.wealth - a.wealth);
+                let html = '';
+                mockPlayers.slice(0, 5).forEach((player, i) => {
+                    html += `<div class="leaderboard-entry rank-${i + 1}"><span class="player-name">#${i + 1} ${player.name}</span><span class="wealth">$${player.wealth.toLocaleString()}</span></div>`;
+                });
+                leaderboardEl.innerHTML = html;
+            }
+
+            calculateTotalWealth() {
+                let total = 0;
+                for (const [type, count] of Object.entries(this.playerInventory)) {
+                    const mineralInfo = this.mineralTypes[type];
+                    if (mineralInfo) total += mineralInfo.value * count;
+                }
+                return total;
+            }
+
+            updatePlayerShip() {
+                const ship = this.playerShip;
+                const keys = this.keysPressed;
+
+                // Rotation
+                if (keys['a'] || keys['arrowleft']) ship.rotation -= ship.rotationSpeed;
+                if (keys['d'] || keys['arrowright']) ship.rotation += ship.rotationSpeed;
+
+                // Acceleration (forward/backward)
+                const cos = Math.cos(ship.rotation);
+                const sin = Math.sin(ship.rotation);
+
+                if (keys['w'] || keys['arrowup']) {
+                    ship.vx += cos * ship.acceleration;
+                    ship.vy += sin * ship.acceleration;
+                }
+                if (keys['s'] || keys['arrowdown']) {
+                    ship.vx -= cos * ship.acceleration * 0.5;
+                    ship.vy -= sin * ship.acceleration * 0.5;
+                }
+
+                // 3D movement (Q/E for up/down)
+                if (keys['q']) ship.vz += ship.acceleration;  // Move up
+                if (keys['e']) ship.vz -= ship.acceleration;  // Move down
+
+                // Boost (Shift or Space for 2x speed)
+                const boost = (keys['shift'] || keys[' ']) ? 2.0 : 1.0;
+
+                // Apply velocity with boost
+                ship.x += ship.vx * boost;
+                ship.y += ship.vy * boost;
+                ship.z += ship.vz * boost;
+
+                // Calculate speed (3D)
+                ship.speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy + ship.vz * ship.vz);
+
+                // Cap speed
+                if (ship.speed > ship.maxSpeed) {
+                    const ratio = ship.maxSpeed / ship.speed;
+                    ship.vx *= ratio;
+                    ship.vy *= ratio;
+                    ship.vz *= ratio;
+                    ship.speed = ship.maxSpeed;
+                }
+
+                // Reduced friction for drifty space feel
+                const friction = 0.995;
+                ship.vx *= friction;
+                ship.vy *= friction;
+                ship.vz *= friction;
+
+                // Generate speed lines for visual feedback (Roblox-style)
+                if (ship.speed > 5) {
+                    const lineCount = Math.floor(ship.speed / 2);
+                    for (let i = 0; i < lineCount; i++) {
+                        this.speedLines.push({
+                            x: ship.x + (Math.random() - 0.5) * 300,
+                            y: ship.y + (Math.random() - 0.5) * 300,
+                            z: ship.z + (Math.random() - 0.5) * 300,
+                            vx: -ship.vx * 0.5,
+                            vy: -ship.vy * 0.5,
+                            life: 1.0
+                        });
+                    }
+                }
+
+                // Update and clean up speed lines
+                this.speedLines.forEach(line => {
+                    line.x += line.vx;
+                    line.y += line.vy;
+                    line.life -= 0.05;
+                });
+                this.speedLines = this.speedLines.filter(line => line.life > 0);
+
+                // Camera follows ship smoothly (keeps ship centered)
+                const smoothing = 0.1;
+                this.camera.x += (-ship.x - this.camera.x) * smoothing;
+                this.camera.y += (-ship.y - this.camera.y) * smoothing;
+            }
+
+            // Inventory Management
+            loadInventory() {
+                try {
+                    const saved = localStorage.getItem('playerInventory');
+                    return saved ? JSON.parse(saved) : {};
+                } catch (e) {
+                    console.error('Failed to load inventory:', e);
+                    return {};
+                }
+            }
+
+            saveInventory() {
+                try {
+                    localStorage.setItem('playerInventory', JSON.stringify(this.playerInventory));
+                } catch (e) {
+                    console.error('Failed to save inventory:', e);
+                }
+            }
+
+            // Spawn minerals around the player
+            spawnMinerals() {
+                const ship = this.playerShip;
+                const spawnRadius = 500;  // Spawn within this radius from player
+                const maxMinerals = 50;   // Max minerals in world at once
+
+                // Remove far minerals to manage performance
+                this.minerals = this.minerals.filter(m => {
+                    const dx = m.x - ship.x;
+                    const dy = m.y - ship.y;
+                    const dz = m.z - ship.z;
+                    return Math.sqrt(dx * dx + dy * dy + dz * dz) < spawnRadius * 3;
+                });
+
+                // Spawn new minerals if needed
+                while (this.minerals.length < maxMinerals) {
+                    // Random rarity based on spawn rates
+                    const rand = Math.random();
+                    let mineralKey;
+                    if (rand < 0.70) { // 70% common
+                        mineralKey = ['iron', 'copper', 'coal'][Math.floor(Math.random() * 3)];
+                    } else if (rand < 0.90) { // 20% uncommon
+                        mineralKey = ['silver', 'gold', 'platinum'][Math.floor(Math.random() * 3)];
+                    } else if (rand < 0.98) { // 8% rare
+                        mineralKey = ['diamond', 'emerald', 'ruby', 'sapphire'][Math.floor(Math.random() * 4)];
+                    } else { // 2% legendary
+                        mineralKey = ['neodymium', 'lanthanum'][Math.floor(Math.random() * 2)];
+                    }
+
+                    const type = this.mineralTypes[mineralKey];
+
+                    // Random position around player
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = spawnRadius * (0.5 + Math.random() * 0.5);
+                    const zOffset = (Math.random() - 0.5) * spawnRadius;
+
+                    this.minerals.push({
+                        id: Date.now() + Math.random(),
+                        type: mineralKey,
+                        ...type,
+                        x: ship.x + Math.cos(angle) * distance,
+                        y: ship.y + Math.sin(angle) * distance,
+                        z: ship.z + zOffset,
+                        phase: Math.random() * Math.PI * 2  // For glow animation
+                    });
+                }
+            }
+
+            // Check for mineral collection
+            collectMineral(mineral) {
+                const ship = this.playerShip;
+                const dx = mineral.x - ship.x;
+                const dy = mineral.y - ship.y;
+                const dz = mineral.z - ship.z;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                const collectionRadius = ship.size + mineral.size;
+
+                if (distance < collectionRadius) {
+                    // Add to inventory
+                    if (!this.playerInventory[mineral.type]) {
+                        this.playerInventory[mineral.type] = 0;
+                    }
+                    this.playerInventory[mineral.type]++;
+                    this.saveInventory();
+
+                    // Show notification
+                    this.collectionNotifications.push({
+                        text: `+${mineral.name} ($${mineral.value})`,
+                        color: mineral.color,
+                        time: Date.now()
+                    });
+
+                    // Remove mineral
+                    const index = this.minerals.indexOf(mineral);
+                    if (index > -1) this.minerals.splice(index, 1);
+                }
+            }
+
+            // Update minerals (check collection, spawn new ones)
+            updateMinerals() {
+                if (!this.flightMode) return;
+
+                // Check for collections
+                for (const mineral of [...this.minerals]) {
+                    this.collectMineral(mineral);
+                }
+
+                // Spawn new minerals
+                this.spawnMinerals();
+
+                // Update notifications (fade out after 2 seconds)
+                const now = Date.now();
+                this.collectionNotifications = this.collectionNotifications.filter(n => now - n.time < 2000);
             }
 
             toggleMatrixRainbow() {
@@ -2919,6 +3489,13 @@
             /* --- Rendering --- */
 
             animate(time) {
+                // Update flight game physics
+                if (this.flightMode) {
+                    this.updatePlayerShip();
+                    this.updateMinerals();
+                    this.updateFlightHUD();
+                }
+
                 // Update spacecraft positions
                 if (this.spacecraft && this.spacecraft.length > 0) {
                     const range = this.worldSize;
@@ -3702,6 +4279,136 @@
                 const statEl = document.getElementById('stats');
                 const constellationCount = clusters.filter(c => c.length >= this.config.minGroupSize).length;
                 if (statEl) statEl.innerText = `Mode: ${this.mode.charAt(0).toUpperCase() + this.mode.slice(1)} | Stars: ${this.stars.length} | Constellations: ${constellationCount} | Zoom: ${this.camera.zoom.toFixed(2)}x`;
+
+                // Draw player ship if in flight mode
+                if (this.flightMode && this.playerShip) {
+                    this.renderSpeedLines(ctx);
+                    this.renderMinerals(ctx, time);
+                    this.renderPlayerShip(ctx, time);
+                    this.renderCollectionNotifications(ctx);
+                }
+            }
+
+            renderSpeedLines(ctx) {
+                this.speedLines.forEach(line => {
+                    ctx.save();
+                    ctx.translate(line.x, line.y);
+
+                    ctx.globalAlpha = line.life * 0.5;
+                    ctx.strokeStyle = '#88ccff';
+                    ctx.lineWidth = 2 / this.camera.zoom;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-line.vx * 3, -line.vy * 3);
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 1;
+                    ctx.restore();
+                });
+            }
+
+            renderPlayerShip(ctx, time) {
+                const ship = this.playerShip;
+                if (!ship) return;
+
+                ctx.save();
+                // Context is already in world space (transformed in draw())
+                // Use ship's world coordinates directly - NO manual screen conversion
+                ctx.translate(ship.x, ship.y);
+                ctx.rotate(ship.rotation);
+
+                // Triangle ship - size adjusted for zoom to maintain constant screen size
+                const size = 40 / this.camera.zoom;
+
+                // Cyan triangle body
+                ctx.fillStyle = '#00ffff';
+                ctx.strokeStyle = '#0088ff';
+                ctx.lineWidth = 3 / this.camera.zoom;
+                ctx.beginPath();
+                ctx.moveTo(size, 0);  // Nose points right
+                ctx.lineTo(-size * 0.6, -size * 0.6);  // Bottom left
+                ctx.lineTo(-size * 0.6, size * 0.6);  // Bottom right
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Orange engine glow at back
+                ctx.fillStyle = '#ff6600';
+                ctx.beginPath();
+                ctx.arc(-size * 0.6, 0, size * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            renderMinerals(ctx, time) {
+                this.minerals.forEach(mineral => {
+                    ctx.save();
+                    // Use world coordinates (ctx already transformed)
+                    ctx.translate(mineral.x, mineral.y);
+
+                    // Pulsing glow animation
+                    const pulse = Math.sin(time * 0.003 + mineral.phase) * 0.3 + 0.7;
+                    const size = mineral.size * pulse / this.camera.zoom;
+
+                    // Glow effect
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 2);
+                    gradient.addColorStop(0, mineral.color);
+                    gradient.addColorStop(0.5, mineral.color + '88');
+                    gradient.addColorStop(1, mineral.color + '00');
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size * 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Core
+                    ctx.fillStyle = mineral.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Bright center
+                    ctx.fillStyle = '#ffffff';
+                    ctx.globalAlpha = 0.5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+
+                    ctx.restore();
+                });
+            }
+
+            renderCollectionNotifications(ctx) {
+                const canvas = this.canvas;
+                const now = Date.now();
+
+                this.collectionNotifications.forEach(notification => {
+                    const age = now - notification.time;
+                    const opacity = Math.max(0, 1 - age / 2000);
+                    const yOffset = age * 0.05;
+
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+                    ctx.globalAlpha = opacity;
+                    ctx.font = 'bold 20px Arial';
+                    ctx.fillStyle = notification.color;
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.textAlign = 'center';
+
+                    const x = canvas.width / 2;
+                    const y = canvas.height / 2 - 100 - yOffset;
+
+                    ctx.strokeText(notification.text, x, y);
+                    ctx.fillText(notification.text, x, y);
+                    ctx.globalAlpha = 1;
+
+                    ctx.restore();
+                });
             }
 
             drawBackgroundElements() {
