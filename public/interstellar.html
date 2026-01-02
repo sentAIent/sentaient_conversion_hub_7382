@@ -990,6 +990,8 @@
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
             overflow: hidden;
+            pointer-events: auto;
+            /* Enable clicks even though parent is pointer-events: none */
         }
 
         .hud-window .hud-header {
@@ -4612,9 +4614,13 @@
                     }
                 }
 
-                // World Transform
-                ctx.translate(canvas.width / 2 + this.camera.x, canvas.height / 2 + this.camera.y);
+                // World Transform - order matters for zoom-independent centering:
+                // 1. Move origin to screen center
+                // 2. Apply zoom scale
+                // 3. Apply camera offset (ship position becomes screen center)
+                ctx.translate(canvas.width / 2, canvas.height / 2);
                 ctx.scale(this.camera.zoom, this.camera.zoom);
+                ctx.translate(this.camera.x, this.camera.y);
 
                 // Calculations & Cluster ID Assignment
                 const { lines, clusters } = this.refreshClusterAssignments();
