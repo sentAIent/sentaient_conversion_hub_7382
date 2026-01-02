@@ -979,7 +979,185 @@
             font-size: 0.9em;
             color: #aaa;
         }
+
+        /* Collapsible HUD Windows */
+        .hud-window {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.9) 0%, rgba(0, 30, 50, 0.85) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .hud-window .hud-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: linear-gradient(90deg, rgba(0, 80, 120, 0.4) 0%, rgba(0, 40, 60, 0.3) 100%);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .hud-window .hud-header:hover {
+            background: linear-gradient(90deg, rgba(0, 100, 150, 0.5) 0%, rgba(0, 60, 90, 0.4) 100%);
+        }
+
+        .hud-window .hud-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            letter-spacing: 1px;
+        }
+
+        .hud-window .hud-toggle {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 80, 120, 0.5);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            border-radius: 4px;
+            color: #00f3ff;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .hud-window .hud-toggle:hover {
+            background: rgba(0, 120, 180, 0.6);
+            transform: scale(1.1);
+        }
+
+        .hud-window .hud-content {
+            padding: 12px 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .hud-window.collapsed .hud-content {
+            max-height: 0;
+            padding: 0 14px;
+            opacity: 0;
+        }
+
+        .hud-window.collapsed {
+            width: auto !important;
+            min-width: 50px !important;
+        }
+
+        .hud-window.collapsed .hud-header h3 {
+            display: none;
+        }
+
+        .hud-window.collapsed .hud-header {
+            padding: 8px 10px;
+            border-bottom: none;
+        }
+
+        /* Individual window positions */
+        .hud-controls-window {
+            top: 20px;
+            left: 20px;
+            min-width: 220px;
+        }
+
+        .hud-speed-window {
+            top: 20px;
+            right: 20px;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .hud-inventory-window {
+            bottom: 20px;
+            left: 20px;
+            min-width: 300px;
+        }
+
+        .hud-leaderboard-window {
+            bottom: 20px;
+            right: 20px;
+            min-width: 250px;
+        }
+
+        .hud-map-window {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 220px;
+        }
+
+        .hud-map-window.collapsed {
+            transform: translateX(-50%);
+        }
+
+        /* Universe Minimap */
+        .minimap-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .minimap-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            background: radial-gradient(ellipse at center, rgba(0, 30, 60, 0.8) 0%, rgba(0, 10, 20, 0.95) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .minimap-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 10px;
+            color: #5c7a8a;
+        }
+
+        .minimap-zoom {
+            color: #00f3ff;
+        }
+
+        /* Zoom indicator (below speed) */
+        .hud-zoom-indicator {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .hud-zoom-indicator .zoom-btns {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .hud-zoom-indicator .zoom-btn {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 80, 120, 0.5);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            border-radius: 4px;
+            color: #00f3ff;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hud-zoom-indicator .zoom-btn:hover {
+            background: rgba(0, 120, 180, 0.6);
+            transform: scale(1.1);
+        }
     </style>
+
 </head>
 
 <body>
@@ -1227,42 +1405,97 @@
     <!-- Flight Mode HUD Overlay -->
     <div id="flightHUD" class="flight-hud hidden">
         <!-- Controls Panel (Top Left) -->
-        <div class="hud-controls">
-            <h3>🚀 FLIGHT CONTROLS</h3>
-            <div class="control-row"><kbd>W</kbd><kbd>↑</kbd> Forward</div>
-            <div class="control-row"><kbd>S</kbd><kbd>↓</kbd> Reverse</div>
-            <div class="control-row"><kbd>A</kbd><kbd>←</kbd> Rotate Left</div>
-            <div class="control-row"><kbd>D</kbd><kbd>→</kbd> Rotate Right</div>
-            <div class="control-row"><kbd>Q</kbd> Move Up</div>
-            <div class="control-row"><kbd>E</kbd> Move Down</div>
-            <div class="control-row"><kbd>Shift</kbd><kbd>Space</kbd> BOOST (2x)</div>
+        <div id="hudControls" class="hud-window hud-controls-window">
+            <div class="hud-header" onclick="app.toggleHudWindow('hudControls')">
+                <h3>🎮 FLIGHT CONTROLS</h3>
+                <span class="hud-toggle">▼</span>
+            </div>
+            <div class="hud-content">
+                <div class="control-row"><kbd>W</kbd><kbd>↑</kbd> Forward</div>
+                <div class="control-row"><kbd>S</kbd><kbd>↓</kbd> Reverse</div>
+                <div class="control-row"><kbd>A</kbd><kbd>←</kbd> Rotate Left</div>
+                <div class="control-row"><kbd>D</kbd><kbd>→</kbd> Rotate Right</div>
+                <div class="control-row"><kbd>Q</kbd> Move Up</div>
+                <div class="control-row"><kbd>E</kbd> Move Down</div>
+                <div class="control-row"><kbd>Shift</kbd><kbd>Space</kbd> BOOST</div>
+                <div class="control-row"><kbd>+</kbd><kbd>-</kbd> Zoom</div>
+            </div>
         </div>
 
-        <!-- Speed Indicator (Top Right) -->
-        <div class="hud-speed">
-            <div class="speed-label">VELOCITY</div>
-            <div class="speed-value" id="speedValue">0</div>
-            <div class="speed-bar">
-                <div class="speed-fill" id="speedFill"></div>
+        <!-- Speed + Zoom Indicator (Top Right) -->
+        <div id="hudSpeed" class="hud-window hud-speed-window">
+            <div class="hud-header" onclick="app.toggleHudWindow('hudSpeed')">
+                <h3>⚡ VELOCITY</h3>
+                <span class="hud-toggle">▼</span>
             </div>
-            <div class="speed-max">MAX: 50</div>
+            <div class="hud-content">
+                <div class="speed-value" id="speedValue">0</div>
+                <div class="speed-bar">
+                    <div class="speed-fill" id="speedFill"></div>
+                </div>
+                <div class="speed-max">MAX: 50</div>
+                <div class="hud-zoom-indicator">
+                    <div>ZOOM: <span id="zoomValue">1.00</span>x</div>
+                    <div class="zoom-btns">
+                        <button class="zoom-btn" onclick="app.flightZoom(-0.2); event.stopPropagation();">−</button>
+                        <button class="zoom-btn" onclick="app.flightZoom(0); event.stopPropagation();">⟲</button>
+                        <button class="zoom-btn" onclick="app.flightZoom(0.2); event.stopPropagation();">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Universe Map (Top Center) -->
+        <div id="hudMap" class="hud-window hud-map-window">
+            <div class="hud-header" onclick="app.toggleHudWindow('hudMap')">
+                <h3>🗺️ UNIVERSE MAP</h3>
+                <span class="hud-toggle">▼</span>
+            </div>
+            <div class="hud-content">
+                <div class="minimap-container">
+                    <canvas id="minimapCanvas" class="minimap-canvas" width="200" height="200"></canvas>
+                </div>
+                <div class="minimap-info">
+                    <span>X: <span id="mapPosX">0</span></span>
+                    <span>Y: <span id="mapPosY">0</span></span>
+                    <span class="minimap-zoom">Scale: <span id="mapScale">1</span>km</span>
+                </div>
+            </div>
         </div>
 
         <!-- Inventory Panel (Bottom Left) -->
-        <div class="hud-inventory">
-            <h3>💎 MINERALS COLLECTED</h3>
-            <div id="inventoryList" class="inventory-grid"></div>
-            <div class="total-value">
-                <strong>Total Value:</strong> <span id="totalValue">$0</span>
+        <div id="hudInventory" class="hud-window hud-inventory-window">
+            <div class="hud-header" onclick="app.toggleHudWindow('hudInventory')">
+                <h3>💎 MINERALS</h3>
+                <span class="hud-toggle">▼</span>
+            </div>
+            <div class="hud-content">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <button id="invModeQty" class="zoom-btn" style="flex:1; width:auto; font-size:11px;"
+                        onclick="app.setInventoryMode('qty'); event.stopPropagation();">Qty</button>
+                    <button id="invModeValue" class="zoom-btn"
+                        style="flex:1; width:auto; font-size:11px; margin-left:6px;"
+                        onclick="app.setInventoryMode('value'); event.stopPropagation();">$Value</button>
+                </div>
+                <div id="inventoryList" class="inventory-grid"></div>
+                <div class="total-value">
+                    <strong>Total:</strong> <span id="totalValue">$0</span>
+                </div>
             </div>
         </div>
 
         <!-- Leaderboard (Bottom Right) -->
-        <div class="hud-leaderboard">
-            <h3>🏆 TOP COLLECTORS</h3>
-            <div id="leaderboardList" class="leaderboard-list"></div>
+        <div id="hudLeaderboard" class="hud-window hud-leaderboard-window">
+            <div class="hud-header" onclick="app.toggleHudWindow('hudLeaderboard')">
+                <h3>🏆 TOP COLLECTORS</h3>
+                <span class="hud-toggle">▼</span>
+            </div>
+            <div class="hud-content">
+                <div id="leaderboardList" class="leaderboard-list"></div>
+            </div>
         </div>
     </div>
+
 
     <!-- Spacecraft Selection Modal -->
     <div id="shipModal" class="modal-overlay">
@@ -1367,6 +1600,8 @@
                     size: 45
                 };
                 this.speedLines = [];  // Visual speed indicators
+                this.inventoryDisplayMode = 'qty';  // 'qty' or 'value'
+                this.hudWindowStates = {};  // Track collapsed state of HUD windows
 
                 // Mineral system
                 this.minerals = [];
@@ -1582,6 +1817,14 @@
                     if (this.flightMode) {
                         const key = e.key.toLowerCase();
                         this.keysPressed[key] = true;
+
+                        // Zoom controls with + and -
+                        if (e.key === '+' || e.key === '=') {
+                            this.flightZoom(0.15);
+                        } else if (e.key === '-' || e.key === '_') {
+                            this.flightZoom(-0.15);
+                        }
+
                         e.preventDefault();
                     }
                 });
@@ -1897,11 +2140,23 @@
                     speedFillEl.style.width = (speed / this.playerShip.maxSpeed * 100) + '%';
                 }
 
-                // Update inventory
+                // Update zoom display
+                const zoomEl = document.getElementById('zoomValue');
+                if (zoomEl) zoomEl.textContent = this.camera.zoom.toFixed(2);
+
+                // Update inventory with mode toggle support
                 const inventoryEl = document.getElementById('inventoryList');
                 const totalValueEl = document.getElementById('totalValue');
+                const qtyBtn = document.getElementById('invModeQty');
+                const valueBtn = document.getElementById('invModeValue');
+
+                // Update toggle button states
+                if (qtyBtn) qtyBtn.style.background = this.inventoryDisplayMode === 'qty' ? 'rgba(0, 180, 220, 0.6)' : '';
+                if (valueBtn) valueBtn.style.background = this.inventoryDisplayMode === 'value' ? 'rgba(0, 180, 220, 0.6)' : '';
+
                 if (inventoryEl) {
                     let totalValue = 0;
+                    let totalQty = 0;
                     let html = '';
                     for (const [type, count] of Object.entries(this.playerInventory)) {
                         if (count > 0) {
@@ -1909,32 +2164,50 @@
                             if (mineralInfo) {
                                 const value = mineralInfo.value * count;
                                 totalValue += value;
-                                html += `<div class="inventory-item"><div class="gem-icon" style="background:${mineralInfo.color}; box-shadow: 0 0 8px ${mineralInfo.color}"></div><span class="name">${mineralInfo.name}</span><span class="count">×${count}</span></div>`;
+                                totalQty += count;
+                                // Show quantity or value based on mode
+                                const displayValue = this.inventoryDisplayMode === 'qty'
+                                    ? `×${count}`
+                                    : `$${value.toLocaleString()}`;
+                                html += `<div class="inventory-item"><div class="gem-icon" style="background:${mineralInfo.color}; box-shadow: 0 0 8px ${mineralInfo.color}"></div><span class="name">${mineralInfo.name}</span><span class="count">${displayValue}</span></div>`;
                             }
                         }
                     }
                     inventoryEl.innerHTML = html || '<div style="color: #5c7a8a; font-size: 12px;">No minerals collected yet</div>';
-                    if (totalValueEl) totalValueEl.textContent = '$' + totalValue.toLocaleString();
+                    if (totalValueEl) {
+                        totalValueEl.textContent = this.inventoryDisplayMode === 'qty'
+                            ? `${totalQty} items ($${totalValue.toLocaleString()})`
+                            : `$${totalValue.toLocaleString()}`;
+                    }
                 }
+
+                // Update minimap
+                this.updateMinimap();
+
+                // Update leaderboard in real-time
+                this.updateLeaderboard();
             }
 
             updateLeaderboard() {
                 const leaderboardEl = document.getElementById('leaderboardList');
                 if (!leaderboardEl) return;
 
-                // Mock leaderboard data
+                const yourWealth = this.calculateTotalWealth();
+
+                // Mock leaderboard with your real-time wealth
                 const mockPlayers = [
                     { name: 'StarCommander', wealth: 485230 },
                     { name: 'NebulaHunter', wealth: 372140 },
                     { name: 'AstroMiner', wealth: 298650 },
                     { name: 'CosmicVoyager', wealth: 156780 },
-                    { name: 'You', wealth: this.calculateTotalWealth() }
+                    { name: 'You', wealth: yourWealth, isYou: true }
                 ];
 
                 mockPlayers.sort((a, b) => b.wealth - a.wealth);
                 let html = '';
                 mockPlayers.slice(0, 5).forEach((player, i) => {
-                    html += `<div class="leaderboard-entry rank-${i + 1}"><span class="player-name">#${i + 1} ${player.name}</span><span class="wealth">$${player.wealth.toLocaleString()}</span></div>`;
+                    const youClass = player.isYou ? ' style="color: #00f3ff; font-weight: bold;"' : '';
+                    html += `<div class="leaderboard-entry rank-${i + 1}"><span class="player-name"${youClass}>#${i + 1} ${player.name}</span><span class="wealth">$${player.wealth.toLocaleString()}</span></div>`;
                 });
                 leaderboardEl.innerHTML = html;
             }
@@ -1946,6 +2219,110 @@
                     if (mineralInfo) total += mineralInfo.value * count;
                 }
                 return total;
+            }
+
+            // Toggle HUD window collapse/expand
+            toggleHudWindow(windowId) {
+                const window = document.getElementById(windowId);
+                if (!window) return;
+
+                const isCollapsed = window.classList.toggle('collapsed');
+                const toggle = window.querySelector('.hud-toggle');
+                if (toggle) toggle.textContent = isCollapsed ? '▶' : '▼';
+
+                this.hudWindowStates[windowId] = isCollapsed;
+            }
+
+            // Set inventory display mode (qty or value)
+            setInventoryMode(mode) {
+                this.inventoryDisplayMode = mode;
+                this.updateFlightHUD();
+            }
+
+            // Handle flight mode zoom
+            flightZoom(delta) {
+                if (delta === 0) {
+                    // Reset to default zoom
+                    this.camera.zoom = 0.5;
+                } else {
+                    // Adjust zoom with limits (0.15 to 3.0 for flight mode)
+                    this.camera.zoom = Math.max(0.15, Math.min(3.0, this.camera.zoom + delta));
+                }
+                const zoomEl = document.getElementById('zoomValue');
+                if (zoomEl) zoomEl.textContent = this.camera.zoom.toFixed(2);
+            }
+
+            // Update minimap with ship position and nearby minerals
+            updateMinimap() {
+                const canvas = document.getElementById('minimapCanvas');
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const scale = 2000; // World units covered by minimap
+
+                // Clear
+                ctx.fillStyle = 'rgba(0, 10, 20, 0.95)';
+                ctx.fillRect(0, 0, w, h);
+
+                // Draw grid
+                ctx.strokeStyle = 'rgba(0, 80, 120, 0.3)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 4; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i * w / 4, 0);
+                    ctx.lineTo(i * w / 4, h);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, i * h / 4);
+                    ctx.lineTo(w, i * h / 4);
+                    ctx.stroke();
+                }
+
+                const ship = this.playerShip;
+                const cx = w / 2;
+                const cy = h / 2;
+
+                // Draw minerals
+                this.minerals.forEach(mineral => {
+                    const dx = (mineral.x - ship.x) / scale * w;
+                    const dy = (mineral.y - ship.y) / scale * h;
+                    if (Math.abs(dx) < w / 2 && Math.abs(dy) < h / 2) {
+                        ctx.fillStyle = mineral.color || '#fff';
+                        ctx.beginPath();
+                        ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+
+                // Draw ship (center, pointing direction)
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(ship.rotation);
+                ctx.fillStyle = '#00f3ff';
+                ctx.beginPath();
+                ctx.moveTo(8, 0);
+                ctx.lineTo(-5, -5);
+                ctx.lineTo(-3, 0);
+                ctx.lineTo(-5, 5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // Draw range circle
+                ctx.strokeStyle = 'rgba(0, 243, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(cx, cy, w * 0.4, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Update position display
+                const posX = document.getElementById('mapPosX');
+                const posY = document.getElementById('mapPosY');
+                const mapScale = document.getElementById('mapScale');
+                if (posX) posX.textContent = Math.round(ship.x);
+                if (posY) posY.textContent = Math.round(ship.y);
+                if (mapScale) mapScale.textContent = (scale / 1000).toFixed(1);
             }
 
             updatePlayerShip() {
@@ -2735,13 +3112,21 @@
             onWheel(e) {
                 e.preventDefault();
                 const zoomSpeed = 0.0015;
-                const newZoom = Math.max(0.1, Math.min(6, this.camera.zoom - e.deltaY * zoomSpeed));
 
-                const worldPos = this.getWorldPos(e);
-                this.camera.zoom = newZoom;
-
-                this.camera.x = e.clientX - this.canvas.width / 2 - worldPos.x * this.camera.zoom;
-                this.camera.y = e.clientY - this.canvas.height / 2 - worldPos.y * this.camera.zoom;
+                // Different zoom limits for flight mode vs design mode
+                if (this.flightMode) {
+                    const newZoom = Math.max(0.15, Math.min(3.0, this.camera.zoom - e.deltaY * zoomSpeed));
+                    this.camera.zoom = newZoom;
+                    // Update zoom display
+                    const zoomEl = document.getElementById('zoomValue');
+                    if (zoomEl) zoomEl.textContent = this.camera.zoom.toFixed(2);
+                } else {
+                    const newZoom = Math.max(0.1, Math.min(6, this.camera.zoom - e.deltaY * zoomSpeed));
+                    const worldPos = this.getWorldPos(e);
+                    this.camera.zoom = newZoom;
+                    this.camera.x = e.clientX - this.canvas.width / 2 - worldPos.x * this.camera.zoom;
+                    this.camera.y = e.clientY - this.canvas.height / 2 - worldPos.y * this.camera.zoom;
+                }
             }
 
             /* --- Star Creation --- */
