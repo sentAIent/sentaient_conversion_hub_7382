@@ -4544,34 +4544,32 @@
                         break;
 
                     case 'constellation':
-                        // User's custom constellation - draws their current stars
-                        if (this.stars && this.stars.length > 0) {
-                            // Scale down the constellation to fit ship size
-                            const bounds = this.getStarBounds();
+                        // User's custom constellation - draws their snapshot from selection
+                        if (this.constellationShipStars && this.constellationShipStars.length > 0) {
+                            // Use pre-calculated snapshot positions
+                            const bounds = this.constellationShipBounds;
                             const scale = size * 2 / Math.max(bounds.width, bounds.height, 100);
-                            const centerX = bounds.minX + bounds.width / 2;
-                            const centerY = bounds.minY + bounds.height / 2;
 
                             // Draw constellation lines
                             ctx.strokeStyle = '#aaddff';
                             ctx.lineWidth = 1.5 / this.camera.zoom;
-                            if (this.connections) {
-                                for (const conn of this.connections) {
-                                    const s1 = this.stars[conn[0]];
-                                    const s2 = this.stars[conn[1]];
+                            if (this.constellationShipConnections) {
+                                for (const conn of this.constellationShipConnections) {
+                                    const s1 = this.constellationShipStars[conn[0]];
+                                    const s2 = this.constellationShipStars[conn[1]];
                                     if (s1 && s2) {
                                         ctx.beginPath();
-                                        ctx.moveTo((s1.x - centerX) * scale, (s1.y - centerY) * scale);
-                                        ctx.lineTo((s2.x - centerX) * scale, (s2.y - centerY) * scale);
+                                        ctx.moveTo(s1.x * scale, s1.y * scale);
+                                        ctx.lineTo(s2.x * scale, s2.y * scale);
                                         ctx.stroke();
                                     }
                                 }
                             }
 
                             // Draw stars
-                            for (const star of this.stars) {
-                                const x = (star.x - centerX) * scale;
-                                const y = (star.y - centerY) * scale;
+                            for (const star of this.constellationShipStars) {
+                                const x = star.x * scale;
+                                const y = star.y * scale;
                                 const r = Math.max(2, star.brightness * 3) / this.camera.zoom;
                                 ctx.fillStyle = star.color || '#ffffff';
                                 ctx.beginPath();
@@ -5646,6 +5644,23 @@
                     this.playerShip.type = shipType;
                     this.playerShip.maxSpeed = ship.maxSpeed;
                     this.playerShip.acceleration = ship.acceleration;
+
+                    // For constellation ship, store a snapshot of current stars
+                    if (shipType === 'constellation' && this.stars && this.stars.length > 0) {
+                        const bounds = this.getStarBounds();
+                        const centerX = bounds.minX + bounds.width / 2;
+                        const centerY = bounds.minY + bounds.height / 2;
+                        // Pre-calculate normalized positions centered at origin
+                        this.constellationShipStars = this.stars.map(star => ({
+                            x: star.x - centerX,
+                            y: star.y - centerY,
+                            brightness: star.brightness,
+                            color: star.color
+                        }));
+                        this.constellationShipConnections = this.connections ? [...this.connections] : [];
+                        this.constellationShipBounds = bounds;
+                    }
+
                     this.showToast(`Selected ${ship.name}`);
                 }
                 this.hideShipModal();
