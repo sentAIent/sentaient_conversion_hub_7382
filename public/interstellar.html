@@ -1958,9 +1958,11 @@
             </div>
             <div class="map-legend">
                 <div class="legend-item"><span class="legend-dot" style="background:#00f3ff;"></span>You</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#ffcc00;"></span>Stars</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#ff44ff;"></span>Aliens</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#00ff88;"></span>Gems</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#8B8680;"></span>Industrial</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#FFD700;"></span>Precious</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#50C878;"></span>Crystal</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#4AFF00;"></span>Nuclear</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#9D00FF;"></span>Exotic</div>
             </div>
         </div>
     </div>
@@ -3047,7 +3049,7 @@
                 }
             }
 
-            // Update the universe map (renders full universe view)
+            // Update the universe map (renders full universe view with galaxy zones)
             updateMap() {
                 const canvas = document.getElementById('mapCanvas');
                 if (!canvas) return;
@@ -3057,21 +3059,83 @@
                 const h = canvas.height;
                 const isMaximized = document.getElementById('floatingMap')?.classList.contains('maximized');
 
-                // Scale based on maximize state
-                const worldSize = 20000;
+                // Scale based on maximize state - show more of universe when maximized
+                const worldSize = isMaximized ? 18000 : 10000;
                 const scale = w / worldSize;
+                const centerX = w / 2;
+                const centerY = h / 2;
 
-                // Clear with space background gradient
-                const gradient = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
-                gradient.addColorStop(0, 'rgba(0, 25, 45, 1)');
-                gradient.addColorStop(0.5, 'rgba(0, 15, 30, 1)');
-                gradient.addColorStop(1, 'rgba(0, 8, 18, 1)');
+                // Clear with deep space gradient
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, w * 0.7);
+                gradient.addColorStop(0, 'rgba(0, 20, 40, 1)');
+                gradient.addColorStop(0.5, 'rgba(0, 12, 28, 1)');
+                gradient.addColorStop(1, 'rgba(0, 5, 15, 1)');
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, w, h);
 
-                // Draw subtle grid (more lines when maximized)
-                const gridDivisions = isMaximized ? 20 : 8;
-                ctx.strokeStyle = 'rgba(0, 100, 150, 0.15)';
+                // Map world coords to canvas coords (centered on origin, not player)
+                const toScreen = (x, y) => ({
+                    sx: centerX + x * scale,
+                    sy: centerY + y * scale
+                });
+
+                const ship = this.playerShip;
+
+                // ===== DRAW GALAXY ZONE RINGS =====
+                if (this.galaxyZones) {
+                    const zones = [
+                        { key: 'industrial', label: 'Industrial', labelAngle: -0.4 },
+                        { key: 'precious', label: 'Precious', labelAngle: 0.3 },
+                        { key: 'crystal', label: 'Crystal', labelAngle: 0.8 },
+                        { key: 'nuclear', label: 'Nuclear', labelAngle: 1.5 },
+                        { key: 'exotic', label: 'Exotic', labelAngle: 2.2 }
+                    ];
+
+                    zones.forEach(({ key, label, labelAngle }) => {
+                        const zone = this.galaxyZones[key];
+                        if (!zone) return;
+
+                        const innerRadius = zone.distanceRange.min * scale;
+                        const outerRadius = zone.distanceRange.max * scale;
+
+                        // Draw zone ring fill (very subtle)
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
+                        ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2, true);
+                        ctx.fillStyle = zone.glowColor || 'rgba(100, 100, 100, 0.1)';
+                        ctx.fill();
+
+                        // Draw zone boundary ring
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
+                        ctx.strokeStyle = zone.color;
+                        ctx.lineWidth = isMaximized ? 2 : 1;
+                        ctx.globalAlpha = 0.4;
+                        ctx.stroke();
+                        ctx.globalAlpha = 1;
+
+                        // Draw zone label (only when maximized for clarity)
+                        if (isMaximized) {
+                            const labelRadius = (innerRadius + outerRadius) / 2;
+                            const labelX = centerX + Math.cos(labelAngle) * labelRadius;
+                            const labelY = centerY + Math.sin(labelAngle) * labelRadius;
+
+                            ctx.save();
+                            ctx.translate(labelX, labelY);
+                            ctx.font = 'bold 10px "Courier New", monospace';
+                            ctx.fillStyle = zone.color;
+                            ctx.globalAlpha = 0.7;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(label.toUpperCase(), 0, 0);
+                            ctx.restore();
+                        }
+                    });
+                }
+
+                // Draw subtle grid
+                const gridDivisions = isMaximized ? 16 : 6;
+                ctx.strokeStyle = 'rgba(0, 100, 150, 0.1)';
                 ctx.lineWidth = 0.5;
                 for (let i = 1; i < gridDivisions; i++) {
                     const pos = (w / gridDivisions) * i;
@@ -3085,43 +3149,64 @@
                     ctx.stroke();
                 }
 
-                // Map world coords to canvas coords
-                const toScreen = (x, y) => ({
-                    sx: (x + worldSize / 2) * scale,
-                    sy: (y + worldSize / 2) * scale
-                });
+                // Draw origin marker (center of universe)
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, isMaximized ? 8 : 4, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, isMaximized ? 4 : 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
 
-                const ship = this.playerShip;
-
-                // Draw background stars (when maximized, show more detail)
+                // Draw background stars (when maximized)
                 if (isMaximized) {
-                    this.stars?.forEach(star => {
+                    this.stars?.slice(0, 100).forEach(star => {
                         const { sx, sy } = toScreen(star.x, star.y);
                         if (sx >= 0 && sx <= w && sy >= 0 && sy <= h) {
                             ctx.beginPath();
-                            const size = Math.max(1, star.size * 0.3);
+                            const size = Math.max(1, (star.size || 2) * 0.3);
                             ctx.arc(sx, sy, size, 0, Math.PI * 2);
                             ctx.fillStyle = star.color || '#ffcc00';
-                            ctx.globalAlpha = 0.6;
+                            ctx.globalAlpha = 0.5;
                             ctx.fill();
                             ctx.globalAlpha = 1;
                         }
                     });
                 }
 
-                // Draw minerals as small colored dots
-                const mineralSize = isMaximized ? 4 : 2;
+                // ===== DRAW MINERALS WITH ZONE-BASED STYLING =====
+                const mineralSize = isMaximized ? 5 : 3;
                 this.minerals?.forEach(mineral => {
                     const { sx, sy } = toScreen(mineral.x, mineral.y);
                     if (sx >= 0 && sx <= w && sy >= 0 && sy <= h) {
                         const mineralInfo = this.mineralTypes?.[mineral.type];
                         const color = mineralInfo?.color || '#00ff88';
+                        const rarity = mineralInfo?.rarity || 'common';
+
+                        // Size scales with rarity
+                        let size = mineralSize;
+                        if (rarity === 'rare') size *= 1.3;
+                        if (rarity === 'epic') size *= 1.5;
+                        if (rarity === 'legendary') size *= 1.8;
+                        if (rarity === 'mythic') size *= 2.2;
+
+                        // Draw glow for rare+ minerals
+                        if (rarity !== 'common' && rarity !== 'uncommon') {
+                            ctx.beginPath();
+                            ctx.arc(sx, sy, size * 2, 0, Math.PI * 2);
+                            ctx.fillStyle = color;
+                            ctx.globalAlpha = 0.2;
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+
                         ctx.beginPath();
-                        ctx.arc(sx, sy, mineralSize, 0, Math.PI * 2);
+                        ctx.arc(sx, sy, size, 0, Math.PI * 2);
                         ctx.fillStyle = color;
                         if (isMaximized) {
                             ctx.shadowColor = color;
-                            ctx.shadowBlur = 6;
+                            ctx.shadowBlur = rarity === 'mythic' ? 12 : 6;
                         }
                         ctx.fill();
                         ctx.shadowBlur = 0;
@@ -3145,20 +3230,20 @@
                     }
                 });
 
-                // Draw player ship (with direction arrow when maximized)
+                // ===== DRAW PLAYER SHIP =====
                 const { sx: shipX, sy: shipY } = toScreen(ship.x, ship.y);
                 ctx.save();
                 ctx.translate(shipX, shipY);
 
                 // Draw ship glow
                 ctx.beginPath();
-                ctx.arc(0, 0, isMaximized ? 12 : 6, 0, Math.PI * 2);
+                ctx.arc(0, 0, isMaximized ? 14 : 8, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(0, 243, 255, 0.3)';
                 ctx.fill();
 
                 // Draw ship icon (triangle pointing in heading direction)
                 ctx.rotate(ship.rotation);
-                const shipSize = isMaximized ? 10 : 5;
+                const shipSize = isMaximized ? 12 : 6;
                 ctx.beginPath();
                 ctx.moveTo(0, -shipSize);
                 ctx.lineTo(-shipSize * 0.6, shipSize * 0.5);
@@ -3166,17 +3251,41 @@
                 ctx.closePath();
                 ctx.fillStyle = '#00f3ff';
                 ctx.shadowColor = '#00f3ff';
-                ctx.shadowBlur = isMaximized ? 12 : 6;
+                ctx.shadowBlur = isMaximized ? 14 : 8;
                 ctx.fill();
                 ctx.shadowBlur = 0;
                 ctx.restore();
 
-                // Draw coordinate labels when maximized
+                // ===== UI OVERLAYS (maximized only) =====
                 if (isMaximized) {
-                    ctx.font = '11px "Courier New", monospace';
-                    ctx.fillStyle = 'rgba(0, 243, 255, 0.6)';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`Position: (${Math.round(ship.x)}, ${Math.round(ship.y)})`, w / 2, h - 15);
+                    // Player position and current zone
+                    const playerDist = Math.sqrt(ship.x * ship.x + ship.y * ship.y);
+                    const currentZone = this.getZoneAtDistance ? this.getZoneAtDistance(playerDist) : 'unknown';
+                    const zoneInfo = this.galaxyZones?.[currentZone];
+                    const zoneName = zoneInfo?.name || currentZone;
+                    const zoneColor = zoneInfo?.color || '#fff';
+
+                    ctx.font = 'bold 12px "Courier New", monospace';
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#00f3ff';
+                    ctx.fillText(`Position: (${Math.round(ship.x)}, ${Math.round(ship.y)})`, 15, h - 35);
+                    ctx.fillStyle = zoneColor;
+                    ctx.fillText(`Zone: ${zoneName}`, 15, h - 18);
+
+                    // Distance from origin
+                    ctx.textAlign = 'right';
+                    ctx.fillStyle = 'rgba(200, 230, 255, 0.8)';
+                    ctx.fillText(`Distance: ${Math.round(playerDist)}px`, w - 15, h - 18);
+
+                    // Zone legend in corner
+                    ctx.font = '9px "Courier New", monospace';
+                    let legendY = 20;
+                    ctx.textAlign = 'right';
+                    Object.entries(this.galaxyZones || {}).forEach(([key, zone]) => {
+                        ctx.fillStyle = zone.color;
+                        ctx.fillText(`● ${zone.name}`, w - 15, legendY);
+                        legendY += 14;
+                    });
                 }
             }
 
