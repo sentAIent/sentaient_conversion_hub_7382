@@ -1401,6 +1401,198 @@
             width: 200px;
         }
 
+        /* Upgrade Window */
+        .upgrade-window {
+            right: 15px;
+            top: 100px;
+            width: 280px;
+        }
+
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 5px;
+        }
+
+        .upgrade-card {
+            background: rgba(0, 30, 50, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .upgrade-card:hover {
+            border-color: rgba(0, 243, 255, 0.5);
+            background: rgba(0, 50, 80, 0.8);
+        }
+
+        .upgrade-card.maxed {
+            border-color: rgba(255, 215, 0, 0.4);
+            background: rgba(40, 40, 0, 0.4);
+        }
+
+        .upgrade-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .upgrade-name {
+            font-size: 10px;
+            color: #00f3ff;
+            margin-bottom: 4px;
+        }
+
+        .upgrade-level {
+            font-size: 12px;
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .upgrade-bar {
+            height: 4px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .upgrade-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00f3ff, #00ff88);
+            transition: width 0.3s;
+        }
+
+        .upgrade-cost {
+            font-size: 9px;
+            color: rgba(200, 200, 200, 0.8);
+            margin-bottom: 4px;
+        }
+
+        .upgrade-btn {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            background: rgba(0, 80, 50, 0.5);
+            border-radius: 4px;
+            color: #00ff88;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upgrade-btn:hover:not(:disabled) {
+            background: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        .upgrade-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Wallet Window */
+        .wallet-window {
+            right: 230px;
+            bottom: 130px;
+            width: 260px;
+        }
+
+        .wallet-summary {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: rgba(0, 40, 60, 0.4);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .wallet-total,
+        .wallet-credits {
+            text-align: center;
+        }
+
+        .wallet-label {
+            font-size: 9px;
+            color: rgba(200, 200, 200, 0.6);
+            display: block;
+        }
+
+        .wallet-value {
+            font-size: 14px;
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .wallet-gems {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .wallet-gem-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 8px;
+            margin-bottom: 4px;
+            background: rgba(0, 30, 50, 0.5);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .wallet-gem-row:hover {
+            background: rgba(0, 50, 80, 0.5);
+        }
+
+        .gem-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .gem-emoji {
+            font-size: 14px;
+        }
+
+        .gem-name {
+            color: #fff;
+        }
+
+        .gem-count {
+            color: #00f3ff;
+            font-weight: bold;
+        }
+
+        .gem-value {
+            color: #00ff88;
+        }
+
+        .wallet-actions {
+            padding: 8px;
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .wallet-btn {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            background: rgba(80, 60, 0, 0.5);
+            border-radius: 4px;
+            color: #ffd700;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .wallet-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+        }
+
+
         /* Window header */
         .window-header {
             display: flex;
@@ -1984,6 +2176,49 @@
     </div>
 
 
+    <!-- Floating Upgrade Window -->
+    <div id="upgradeWindow" class="floating-window upgrade-window hidden">
+        <div class="window-header" onclick="app.toggleFloatingWindow('upgradeWindow')">
+            <h4>🔧 Upgrades</h4>
+            <div class="window-controls">
+                <span class="window-toggle">▼</span>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="upgradeGrid" class="upgrade-grid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Wallet Window -->
+    <div id="walletWindow" class="floating-window wallet-window hidden">
+        <div class="window-header" onclick="app.toggleFloatingWindow('walletWindow')">
+            <h4>💰 Wallet</h4>
+            <div class="window-controls">
+                <span class="window-toggle">▼</span>
+            </div>
+        </div>
+        <div class="window-content">
+            <div class="wallet-summary">
+                <div class="wallet-total">
+                    <span class="wallet-label">Total Value:</span>
+                    <span id="walletTotal" class="wallet-value">$0</span>
+                </div>
+                <div class="wallet-credits">
+                    <span class="wallet-label">Credits:</span>
+                    <span id="walletCredits" class="wallet-value">0</span>
+                </div>
+            </div>
+            <div id="walletGems" class="wallet-gems">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="wallet-actions">
+                <button class="wallet-btn sell-btn" onclick="app.sellAllGems()">💵 Sell All Gems</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Spacecraft Selection Modal -->
     <div id="shipModal" class="modal-overlay">
         <div class="modal">
@@ -2117,12 +2352,22 @@
                     uranium: { name: 'Uranium', value: 8000, color: '#4AFF00', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Nuclear reactors' },
                     plutonium: { name: 'Plutonium', value: 12000, color: '#00FF7F', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Advanced power' },
                     helium3: { name: 'Helium-3', value: 15000, color: '#87CEEB', rarity: 'epic', size: 26, zone: 'nuclear', use: 'Fusion reactors' },
+                    thorium: { name: 'Thorium', value: 18000, color: '#32CD32', rarity: 'epic', size: 29, zone: 'nuclear', use: 'Weapons power', upgradeType: 'weapons' },
+                    osmium: { name: 'Osmium', value: 10000, color: '#4682B4', rarity: 'epic', size: 27, zone: 'nuclear', use: 'Armor plating', upgradeType: 'armor' },
+                    deuterium: { name: 'Deuterium', value: 20000, color: '#00CED1', rarity: 'epic', size: 26, zone: 'nuclear', use: 'Warp efficiency', upgradeType: 'warp' },
 
                     // ============ EXOTIC ZONE (3% spawn rate - edge of space) ============
                     neodymium: { name: 'Neodymium', value: 25000, color: '#FF6EC7', rarity: 'legendary', size: 30, zone: 'exotic', use: 'Magnet tech' },
                     lanthanum: { name: 'Lanthanum', value: 30000, color: '#9D00FF', rarity: 'legendary', size: 32, zone: 'exotic', use: 'Hybrid engines' },
                     darkmatter: { name: 'Dark Matter', value: 100000, color: '#1a0033', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Warp drives' },
-                    antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' }
+                    antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' },
+                    aether: { name: 'Aether', value: 75000, color: '#E6E6FA', rarity: 'mythic', size: 38, zone: 'exotic', use: 'Universal catalyst', upgradeType: 'all' },
+
+                    // ============ UPGRADE GEMS (distributed across zones) ============
+                    rhodium: { name: 'Rhodium', value: 4500, color: '#E8E8E8', rarity: 'uncommon', size: 20, zone: 'precious', use: 'Cargo capacity', upgradeType: 'cargo' },
+                    krypton: { name: 'Krypton', value: 2000, color: '#ADD8E6', rarity: 'uncommon', size: 18, zone: 'precious', use: 'Radar range', upgradeType: 'radar' },
+                    iridium: { name: 'Iridium', value: 5000, color: '#E0FFFF', rarity: 'rare', size: 24, zone: 'crystal', use: 'Speed boost', upgradeType: 'speed' },
+                    xenon: { name: 'Xenon', value: 6000, color: '#7B68EE', rarity: 'rare', size: 23, zone: 'crystal', use: 'Shield capacity', upgradeType: 'shields' }
                 };
 
                 // Galaxy zone configuration - determines element distribution
@@ -2140,7 +2385,7 @@
                         name: 'Precious Nebula',
                         color: '#FFD700',
                         glowColor: 'rgba(255, 215, 0, 0.3)',
-                        elements: ['silver', 'gold', 'platinum', 'palladium'],
+                        elements: ['silver', 'gold', 'platinum', 'palladium', 'rhodium', 'krypton'],
                         concentrationBonus: 2.5,
                         defenseLevel: 2,
                         distanceRange: { min: 800, max: 2000 }
@@ -2149,7 +2394,7 @@
                         name: 'Crystal Fields',
                         color: '#50C878',
                         glowColor: 'rgba(80, 200, 120, 0.3)',
-                        elements: ['quartz', 'diamond', 'emerald', 'ruby', 'sapphire'],
+                        elements: ['quartz', 'diamond', 'emerald', 'ruby', 'sapphire', 'iridium', 'xenon'],
                         concentrationBonus: 2.0,
                         defenseLevel: 3,
                         distanceRange: { min: 2000, max: 4000 }
@@ -2158,7 +2403,7 @@
                         name: 'Radiation Belt',
                         color: '#4AFF00',
                         glowColor: 'rgba(74, 255, 0, 0.4)',
-                        elements: ['uranium', 'plutonium', 'helium3'],
+                        elements: ['uranium', 'plutonium', 'helium3', 'thorium', 'osmium', 'deuterium'],
                         concentrationBonus: 1.5,
                         defenseLevel: 4,
                         distanceRange: { min: 3500, max: 5000 }
@@ -2167,7 +2412,7 @@
                         name: 'Dark Frontier',
                         color: '#9D00FF',
                         glowColor: 'rgba(157, 0, 255, 0.4)',
-                        elements: ['neodymium', 'lanthanum', 'darkmatter', 'antimatter'],
+                        elements: ['neodymium', 'lanthanum', 'darkmatter', 'antimatter', 'aether'],
                         concentrationBonus: 1.0,
                         defenseLevel: 5,
                         distanceRange: { min: 5000, max: 8000 }
@@ -2185,6 +2430,69 @@
                 this.projectiles = [];   // Active projectiles
                 this.playerInventory = this.loadInventory();
                 this.collectionNotifications = [];
+
+                // ============ UPGRADE SYSTEM ============
+                this.shipUpgrades = this.loadUpgrades();
+                this.credits = this.loadCredits();
+
+                // Upgrade definitions with costs and effects
+                this.upgradeDefinitions = {
+                    speed: {
+                        name: 'Speed Boost',
+                        icon: '🚀',
+                        max: 10,
+                        effect: '+5% max speed per level',
+                        gem: 'iridium',
+                        baseCost: 3,
+                        costMultiplier: 1.5
+                    },
+                    armor: {
+                        name: 'Hull Armor',
+                        icon: '🛡️',
+                        max: 10,
+                        effect: '+10% damage resistance',
+                        gem: 'osmium',
+                        baseCost: 2,
+                        costMultiplier: 1.6
+                    },
+                    weapons: {
+                        name: 'Weapons Array',
+                        icon: '⚔️',
+                        max: 10,
+                        effect: '+15% damage output',
+                        gem: 'thorium',
+                        baseCost: 2,
+                        costMultiplier: 1.7
+                    },
+                    shields: {
+                        name: 'Shield Generator',
+                        icon: '🔮',
+                        max: 10,
+                        effect: '+100 shield capacity',
+                        gem: 'xenon',
+                        baseCost: 3,
+                        costMultiplier: 1.5
+                    },
+                    cargo: {
+                        name: 'Cargo Bay',
+                        icon: '📦',
+                        max: 5,
+                        effect: '+20% cargo capacity',
+                        gem: 'rhodium',
+                        baseCost: 5,
+                        costMultiplier: 2.0
+                    },
+                    radar: {
+                        name: 'Radar Range',
+                        icon: '📡',
+                        max: 5,
+                        effect: '+500px radar range',
+                        gem: 'krypton',
+                        baseCost: 4,
+                        costMultiplier: 1.8
+                    }
+                };
+
 
                 // Initialize Matrix theme history (must exist before toggleBgStyle/generateCyberStyle is called)
                 try {
@@ -2779,21 +3087,29 @@
                     gold: '🥇', Gold: '🥇',
                     platinum: '💿', Platinum: '💿',
                     palladium: '🪙', Palladium: '🪙',
+                    rhodium: '🔘', Rhodium: '🔘',
+                    krypton: '🫧', Krypton: '🫧',
                     // Crystal
                     quartz: '🔮', Quartz: '🔮',
                     diamond: '💎', Diamond: '💎',
                     emerald: '💚', Emerald: '💚',
                     ruby: '❤️', Ruby: '❤️',
                     sapphire: '💙', Sapphire: '💙',
+                    iridium: '🌟', Iridium: '🌟',
+                    xenon: '🟣', Xenon: '🟣',
                     // Nuclear
                     uranium: '☢️', Uranium: '☢️',
                     plutonium: '⚛️', Plutonium: '⚛️',
                     helium3: '💨', 'Helium-3': '💨',
+                    thorium: '⚡', Thorium: '⚡',
+                    osmium: '🛡️', Osmium: '🛡️',
+                    deuterium: '🌀', Deuterium: '🌀',
                     // Exotic
                     neodymium: '💖', Neodymium: '💖',
                     lanthanum: '💜', Lanthanum: '💜',
                     darkmatter: '🌑', 'Dark Matter': '🌑',
-                    antimatter: '✨', Antimatter: '✨'
+                    antimatter: '✨', Antimatter: '✨',
+                    aether: '🌈', Aether: '🌈'
                 };
 
                 let html = '';
@@ -3293,20 +3609,141 @@
             showFloatingWindows(show) {
                 const mapWindow = document.getElementById('floatingMap');
                 const leaderboard = document.getElementById('floatingLeaderboard');
+                const upgradeWin = document.getElementById('upgradeWindow');
+                const walletWin = document.getElementById('walletWindow');
 
                 if (show) {
                     mapWindow?.classList.remove('hidden');
                     leaderboard?.classList.remove('hidden');
+                    upgradeWin?.classList.remove('hidden');
+                    walletWin?.classList.remove('hidden');
                     this.updateMap();
                     this.updateFloatingLeaderboard();
+                    this.updateUpgradeWindow();
+                    this.updateWalletWindow();
                 } else {
                     mapWindow?.classList.add('hidden');
                     leaderboard?.classList.add('hidden');
+                    upgradeWin?.classList.add('hidden');
+                    walletWin?.classList.add('hidden');
                     // Also close maximized map
                     mapWindow?.classList.remove('maximized');
                     document.getElementById('mapOverlay')?.classList.remove('visible');
                 }
             }
+
+            // Update the upgrade window with current levels and costs
+            updateUpgradeWindow() {
+                const grid = document.getElementById('upgradeGrid');
+                if (!grid) return;
+
+                let html = '';
+                for (const [type, def] of Object.entries(this.upgradeDefinitions)) {
+                    const level = this.shipUpgrades[type] || 0;
+                    const isMaxed = level >= def.max;
+                    const cost = this.getUpgradeCost(type);
+                    const canAfford = this.canAffordUpgrade(type);
+                    const gemInfo = this.mineralTypes[def.gem];
+                    const progress = (level / def.max) * 100;
+
+                    html += `
+                        <div class="upgrade-card ${isMaxed ? 'maxed' : ''}">
+                            <div class="upgrade-icon">${def.icon}</div>
+                            <div class="upgrade-name">${def.name}</div>
+                            <div class="upgrade-level">Lv.${level}/${def.max}</div>
+                            <div class="upgrade-bar">
+                                <div class="upgrade-bar-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="upgrade-cost">${isMaxed ? 'MAXED' : `${cost} ${gemInfo?.name || def.gem}`}</div>
+                            <button class="upgrade-btn" 
+                                ${isMaxed || !canAfford ? 'disabled' : ''}
+                                onclick="app.purchaseUpgrade('${type}')">
+                                ${isMaxed ? '✓ MAX' : 'Upgrade'}
+                            </button>
+                        </div>
+                    `;
+                }
+                grid.innerHTML = html;
+            }
+
+            // Update the wallet window with gem inventory
+            updateWalletWindow() {
+                const gemsEl = document.getElementById('walletGems');
+                const totalEl = document.getElementById('walletTotal');
+                const creditsEl = document.getElementById('walletCredits');
+                if (!gemsEl) return;
+
+                const mineralEmojis = {
+                    iron: '⚙️', copper: '🟠', coal: '⬛', titanium: '🔩', silicon: '🔲',
+                    silver: '⚪', gold: '🥇', platinum: '💿', palladium: '🪙', rhodium: '🔘', krypton: '🫧',
+                    quartz: '🔮', diamond: '💎', emerald: '💚', ruby: '❤️', sapphire: '💙', iridium: '🌟', xenon: '🟣',
+                    uranium: '☢️', plutonium: '⚛️', helium3: '💨', thorium: '⚡', osmium: '🛡️', deuterium: '🌀',
+                    neodymium: '💖', lanthanum: '💜', darkmatter: '🌑', antimatter: '✨', aether: '🌈'
+                };
+
+                let html = '';
+                let totalValue = 0;
+
+                for (const [type, count] of Object.entries(this.playerInventory)) {
+                    if (count > 0) {
+                        const mineralInfo = this.mineralTypes[type];
+                        if (!mineralInfo) continue;
+                        const value = mineralInfo.value * count;
+                        totalValue += value;
+                        const emoji = mineralEmojis[type] || '💠';
+
+                        html += `
+                            <div class="wallet-gem-row">
+                                <div class="gem-info">
+                                    <span class="gem-emoji">${emoji}</span>
+                                    <span class="gem-name">${mineralInfo.name}</span>
+                                </div>
+                                <span class="gem-count">×${count}</span>
+                                <span class="gem-value">$${value.toLocaleString()}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (!html) {
+                    html = '<div style="text-align:center; color:rgba(200,200,200,0.5); padding:20px;">No gems yet</div>';
+                }
+
+                gemsEl.innerHTML = html;
+                if (totalEl) totalEl.textContent = '$' + totalValue.toLocaleString();
+                if (creditsEl) creditsEl.textContent = this.credits.toLocaleString();
+            }
+
+            // Sell all gems for credits
+            sellAllGems() {
+                let totalValue = 0;
+                for (const [type, count] of Object.entries(this.playerInventory)) {
+                    if (count > 0) {
+                        const mineralInfo = this.mineralTypes[type];
+                        if (mineralInfo) {
+                            totalValue += mineralInfo.value * count;
+                        }
+                    }
+                }
+
+                if (totalValue === 0) {
+                    this.showNotification('No gems to sell!', '#ff6600');
+                    return;
+                }
+
+                // Clear inventory and add credits
+                this.playerInventory = {};
+                this.credits += totalValue;
+
+                this.saveInventory();
+                this.saveCredits();
+
+                this.showNotification(`Sold gems for $${totalValue.toLocaleString()}!`, '#ffd700');
+                this.updateWalletWindow();
+                this.updateUpgradeWindow();
+                this.updateGemsDisplay();
+            }
+
 
             // Update the floating leaderboard with real-time simulation
             updateFloatingLeaderboard() {
@@ -3455,6 +3892,116 @@
                     console.error('Failed to save inventory:', e);
                 }
             }
+
+            // ============ UPGRADE PERSISTENCE ============
+            loadUpgrades() {
+                try {
+                    const saved = localStorage.getItem('shipUpgrades');
+                    return saved ? JSON.parse(saved) : {
+                        speed: 0, armor: 0, weapons: 0, shields: 0, cargo: 0, radar: 0
+                    };
+                } catch (e) {
+                    return { speed: 0, armor: 0, weapons: 0, shields: 0, cargo: 0, radar: 0 };
+                }
+            }
+
+            saveUpgrades() {
+                try {
+                    localStorage.setItem('shipUpgrades', JSON.stringify(this.shipUpgrades));
+                } catch (e) {
+                    console.error('Failed to save upgrades:', e);
+                }
+            }
+
+            loadCredits() {
+                try {
+                    const saved = localStorage.getItem('playerCredits');
+                    return saved ? parseInt(saved) : 0;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            saveCredits() {
+                try {
+                    localStorage.setItem('playerCredits', this.credits.toString());
+                } catch (e) {
+                    console.error('Failed to save credits:', e);
+                }
+            }
+
+            // ============ UPGRADE LOGIC ============
+            getUpgradeCost(upgradeType) {
+                const def = this.upgradeDefinitions[upgradeType];
+                if (!def) return Infinity;
+                const currentLevel = this.shipUpgrades[upgradeType] || 0;
+                if (currentLevel >= def.max) return Infinity;
+                return Math.ceil(def.baseCost * Math.pow(def.costMultiplier, currentLevel));
+            }
+
+            canAffordUpgrade(upgradeType) {
+                const def = this.upgradeDefinitions[upgradeType];
+                if (!def) return false;
+                const cost = this.getUpgradeCost(upgradeType);
+                const gemCount = this.playerInventory[def.gem] || 0;
+                return gemCount >= cost;
+            }
+
+            purchaseUpgrade(upgradeType) {
+                const def = this.upgradeDefinitions[upgradeType];
+                if (!def) return false;
+
+                const currentLevel = this.shipUpgrades[upgradeType] || 0;
+                if (currentLevel >= def.max) {
+                    this.showNotification('Max level reached!', '#ff6600');
+                    return false;
+                }
+
+                const cost = this.getUpgradeCost(upgradeType);
+                const gemCount = this.playerInventory[def.gem] || 0;
+
+                if (gemCount < cost) {
+                    this.showNotification(`Need ${cost} ${def.gem}!`, '#ff4444');
+                    return false;
+                }
+
+                // Deduct gems and upgrade
+                this.playerInventory[def.gem] -= cost;
+                this.shipUpgrades[upgradeType] = currentLevel + 1;
+
+                // Save and apply
+                this.saveInventory();
+                this.saveUpgrades();
+                this.applyUpgrades();
+
+                this.showNotification(`${def.name} upgraded to Lv.${currentLevel + 1}!`, '#00ff88');
+                this.updateUpgradeWindow();
+                this.updateWalletWindow();
+                return true;
+            }
+
+            applyUpgrades() {
+                if (!this.playerShip) return;
+
+                // Base stats (from ship type)
+                const baseSpeed = 50;
+
+                // Apply speed upgrade (+5% per level)
+                const speedBonus = 1 + (this.shipUpgrades.speed * 0.05);
+                this.playerShip.maxSpeed = Math.round(baseSpeed * speedBonus);
+
+                // Radar upgrade handled in updateRadar
+                // Cargo, armor, weapons, shields handled in combat/collection systems
+            }
+
+            showNotification(text, color) {
+                this.collectionNotifications.push({
+                    text: text,
+                    color: color || '#00f3ff',
+                    time: Date.now()
+                });
+            }
+
 
             // Spawn minerals around the player - Galaxy Zone-aware distribution
             spawnMinerals() {
