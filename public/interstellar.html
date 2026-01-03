@@ -1051,46 +1051,58 @@
 
         .hud-window.collapsed {
             width: auto !important;
-            min-width: 50px !important;
+            min-width: auto !important;
         }
 
+        /* Show label when collapsed - compact version */
         .hud-window.collapsed .hud-header h3 {
-            display: none;
+            font-size: 11px;
+            white-space: nowrap;
         }
 
         .hud-window.collapsed .hud-header {
-            padding: 8px 10px;
+            padding: 6px 10px;
             border-bottom: none;
         }
 
-        /* Individual window positions */
+        /* Individual window positions - using % and safe margins to prevent overlap */
         .hud-controls-window {
-            top: 20px;
-            left: 20px;
+            top: 15px;
+            left: 15px;
             min-width: 220px;
+            max-width: 260px;
         }
 
         .hud-speed-window {
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             min-width: 180px;
+            max-width: 220px;
             text-align: center;
         }
 
         .hud-inventory-window {
-            bottom: 20px;
-            left: 20px;
-            min-width: 300px;
+            bottom: 80px;
+            /* Above bottom bar */
+            left: 15px;
+            min-width: 280px;
+            max-width: 320px;
+            max-height: calc(50vh - 100px);
+            /* Prevent overlap with controls */
         }
 
         .hud-leaderboard-window {
-            bottom: 20px;
-            right: 20px;
-            min-width: 250px;
+            bottom: 80px;
+            /* Above bottom bar */
+            right: 15px;
+            min-width: 230px;
+            max-width: 280px;
+            max-height: calc(50vh - 100px);
+            /* Prevent overlap with speed */
         }
 
         .hud-map-window {
-            top: 20px;
+            top: 15px;
             left: 50%;
             transform: translateX(-50%);
             min-width: 220px;
@@ -1157,6 +1169,78 @@
         .hud-zoom-indicator .zoom-btn:hover {
             background: rgba(0, 120, 180, 0.6);
             transform: scale(1.1);
+        }
+
+        /* Responsive HUD for smaller screens */
+        @media (max-height: 700px) {
+            .hud-controls-window {
+                max-height: calc(40vh - 50px);
+                overflow-y: auto;
+            }
+
+            .hud-inventory-window,
+            .hud-leaderboard-window {
+                max-height: calc(35vh - 80px);
+            }
+
+            .hud-map-window {
+                top: auto;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (max-width: 900px) {
+
+            /* On narrow screens, stack left/right windows vertically */
+            .hud-controls-window {
+                min-width: 180px;
+                max-width: 200px;
+            }
+
+            .hud-speed-window {
+                min-width: 150px;
+                max-width: 180px;
+            }
+
+            .hud-inventory-window {
+                min-width: 240px;
+                max-width: 280px;
+            }
+
+            .hud-leaderboard-window {
+                min-width: 200px;
+                max-width: 240px;
+            }
+
+            .hud-map-window {
+                min-width: 180px;
+            }
+
+            .minimap-container {
+                width: 160px;
+                height: 160px;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            /* Very narrow - hide less important windows by default */
+            .hud-map-window {
+                display: none;
+            }
+
+            .hud-controls-window,
+            .hud-speed-window {
+                font-size: 11px;
+            }
+
+            .hud-inventory-window,
+            .hud-leaderboard-window {
+                min-width: 180px;
+                max-width: 200px;
+            }
         }
     </style>
 
