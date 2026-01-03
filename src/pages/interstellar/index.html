@@ -979,6 +979,448 @@
             font-size: 0.9em;
             color: #aaa;
         }
+
+        /* ===== COCKPIT BAR (Above Bottom Bar) ===== */
+        .flight-cockpit {
+            position: fixed;
+            bottom: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            z-index: 90;
+            pointer-events: auto;
+            max-width: 95vw;
+        }
+
+        .cockpit-section {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            min-width: 100px;
+        }
+
+        .cockpit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 6px;
+        }
+
+        .cockpit-header h4 {
+            margin: 0;
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cockpit-toggle {
+            font-size: 8px;
+            color: var(--accent);
+            transition: transform 0.2s;
+        }
+
+        .cockpit-section.collapsed .cockpit-content {
+            display: none;
+        }
+
+        .cockpit-section.collapsed .cockpit-toggle {
+            transform: rotate(-90deg);
+        }
+
+        /* Controls Section */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .controls-grid kbd {
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: center;
+            color: var(--accent);
+        }
+
+        /* Radar Section */
+        .radar-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .radar-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 30, 20, 0.9) 0%, rgba(0, 10, 5, 0.95) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .radar-sweep {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(0, 255, 100, 0.8) 0%, transparent 100%);
+            transform-origin: left center;
+            animation: radarSweep 3s linear infinite;
+        }
+
+        @keyframes radarSweep {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .radar-coords {
+            font-size: 9px;
+            color: rgba(0, 243, 255, 0.7);
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        /* Velocity Section */
+        .velocity-display {
+            text-align: center;
+        }
+
+        .speed-gauge {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+        }
+
+        .speed-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .speed-unit {
+            font-size: 8px;
+            color: rgba(0, 243, 255, 0.6);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .cockpit-zoom-controls {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 6px;
+            align-items: center;
+        }
+
+        .cockpit-zoom-controls .zoom-btn {
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .cockpit-zoom-controls .zoom-value {
+            font-size: 10px;
+            color: rgba(0, 243, 255, 0.8);
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* Gems Section - Expands horizontally to the right */
+        .gems-section {
+            min-width: 120px;
+            max-width: none;
+            flex-shrink: 0;
+        }
+
+        .gems-grid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 6px;
+            max-width: 300px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 4px;
+        }
+
+        .gems-grid::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .gems-grid::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .gems-grid::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .gem-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .gem-emoji {
+            font-size: 14px;
+        }
+
+        .gem-count {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .gems-total {
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+            font-size: 10px;
+            color: #ffd700;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* ===== FLOATING WINDOWS (Map & Leaders) ===== */
+        .floating-window {
+            position: fixed;
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(12px);
+            z-index: 85;
+            pointer-events: auto;
+            overflow: hidden;
+        }
+
+        .floating-window.hidden {
+            display: none;
+        }
+
+        .window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            cursor: move;
+        }
+
+        .window-header h4 {
+            margin: 0;
+            font-size: 11px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .window-btn {
+            width: 18px;
+            height: 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 3px;
+            color: var(--accent);
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .window-btn:hover {
+            background: rgba(0, 243, 255, 0.2);
+        }
+
+        .window-content {
+            padding: 10px;
+        }
+
+        /* Map Window - Bottom Left */
+        .map-window {
+            left: 20px;
+            bottom: 130px;
+            width: 200px;
+            height: 180px;
+        }
+
+        .map-window.collapsed {
+            height: auto;
+        }
+
+        .map-window.collapsed .window-content {
+            display: none;
+        }
+
+        .map-canvas {
+            width: 100%;
+            height: 120px;
+            background: radial-gradient(circle at center, rgba(0, 20, 40, 0.9) 0%, rgba(0, 5, 15, 0.95) 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .map-legend {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .legend-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        /* Leaders Window - Bottom Right */
+        .leaders-window {
+            right: 20px;
+            bottom: 130px;
+            width: 180px;
+        }
+
+        .leaders-window.collapsed .window-content {
+            display: none;
+        }
+
+        .leaders-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .leaders-list::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .leaders-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 10px;
+        }
+
+        .leader-row:last-child {
+            border-bottom: none;
+        }
+
+        .leader-rank {
+            width: 20px;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .leader-name {
+            flex: 1;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .leader-wealth {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .flight-cockpit {
+                padding: 6px 8px;
+                gap: 6px;
+            }
+
+            .cockpit-section {
+                padding: 6px 8px;
+                min-width: 80px;
+            }
+
+            .radar-container {
+                width: 60px;
+                height: 60px;
+            }
+
+            .gems-section {
+                max-width: 200px;
+            }
+
+            .gems-grid {
+                max-width: 180px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .flight-cockpit {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .controls-section {
+                display: none;
+            }
+
+            .map-window,
+            .leaders-window {
+                width: 150px;
+                bottom: 110px;
+            }
+        }
     </style>
 </head>
 
@@ -1226,41 +1668,112 @@
 
     <!-- Flight Mode HUD Overlay -->
     <div id="flightHUD" class="flight-hud hidden">
-        <!-- Controls Panel (Top Left) -->
-        <div class="hud-controls">
-            <h3>🚀 FLIGHT CONTROLS</h3>
-            <div class="control-row"><kbd>W</kbd><kbd>↑</kbd> Forward</div>
-            <div class="control-row"><kbd>S</kbd><kbd>↓</kbd> Reverse</div>
-            <div class="control-row"><kbd>A</kbd><kbd>←</kbd> Rotate Left</div>
-            <div class="control-row"><kbd>D</kbd><kbd>→</kbd> Rotate Right</div>
-            <div class="control-row"><kbd>Q</kbd> Move Up</div>
-            <div class="control-row"><kbd>E</kbd> Move Down</div>
-            <div class="control-row"><kbd>Shift</kbd><kbd>Space</kbd> BOOST (2x)</div>
-        </div>
-
-        <!-- Speed Indicator (Top Right) -->
-        <div class="hud-speed">
-            <div class="speed-label">VELOCITY</div>
-            <div class="speed-value" id="speedValue">0</div>
-            <div class="speed-bar">
-                <div class="speed-fill" id="speedFill"></div>
+        <!-- Cockpit Bar (Above Bottom Bar) -->
+        <div class="flight-cockpit">
+            <!-- 1. CONTROLS Section -->
+            <div id="sectionControls" class="cockpit-section controls-section">
+                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionControls')">
+                    <h4>🎮 Controls</h4>
+                    <span class="cockpit-toggle">▼</span>
+                </div>
+                <div class="cockpit-content">
+                    <div class="controls-grid">
+                        <kbd>W</kbd><kbd>S</kbd><kbd>A</kbd><kbd>D</kbd>
+                        <kbd>Q</kbd><kbd>E</kbd><kbd>⇧</kbd><kbd>±</kbd>
+                    </div>
+                </div>
             </div>
-            <div class="speed-max">MAX: 50</div>
-        </div>
 
-        <!-- Inventory Panel (Bottom Left) -->
-        <div class="hud-inventory">
-            <h3>💎 MINERALS COLLECTED</h3>
-            <div id="inventoryList" class="inventory-grid"></div>
-            <div class="total-value">
-                <strong>Total Value:</strong> <span id="totalValue">$0</span>
+            <!-- 2. RADAR Section -->
+            <div id="sectionRadar" class="cockpit-section">
+                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionRadar')">
+                    <h4>📡 Radar</h4>
+                    <span class="cockpit-toggle">▼</span>
+                </div>
+                <div class="cockpit-content">
+                    <div class="radar-container">
+                        <canvas id="radarCanvas" class="radar-canvas" width="80" height="80"></canvas>
+                        <div class="radar-sweep"></div>
+                    </div>
+                    <div class="radar-coords" id="radarCoords">X: 0 Y: 0</div>
+                </div>
+            </div>
+
+            <!-- 3. VELOCITY Section -->
+            <div id="sectionVelocity" class="cockpit-section">
+                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionVelocity')">
+                    <h4>⚡ Velocity</h4>
+                    <span class="cockpit-toggle">▼</span>
+                </div>
+                <div class="cockpit-content">
+                    <div class="velocity-display">
+                        <div class="speed-gauge">
+                            <canvas id="speedGaugeCanvas" width="60" height="60"></canvas>
+                            <div id="speedNumber" class="speed-number">0</div>
+                        </div>
+                        <div class="speed-unit">km/s</div>
+                        <div class="cockpit-zoom-controls">
+                            <button class="zoom-btn" onclick="app.flightZoom(-0.2); event.stopPropagation();">−</button>
+                            <span id="zoomDisplay" class="zoom-value">1.0x</span>
+                            <button class="zoom-btn" onclick="app.flightZoom(0.2); event.stopPropagation();">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. GEMS Section -->
+            <div id="sectionGems" class="cockpit-section gems-section">
+                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionGems')">
+                    <h4>💎 Gems</h4>
+                    <span class="cockpit-toggle">▼</span>
+                </div>
+                <div class="cockpit-content">
+                    <div id="gemsGrid" class="gems-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="gems-total">Total: <span id="gemsTotal">$0</span></div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Leaderboard (Bottom Right) -->
-        <div class="hud-leaderboard">
-            <h3>🏆 TOP COLLECTORS</h3>
-            <div id="leaderboardList" class="leaderboard-list"></div>
+    <!-- Floating Map Window (Bottom Left, above cockpit) -->
+    <div id="floatingMap" class="floating-window map-window hidden">
+        <div class="window-header">
+            <h4>🗺️ Universe Map</h4>
+            <div class="window-controls">
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingMap')" title="Collapse">−</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <canvas id="mapCanvas" class="map-canvas" width="180" height="120"></canvas>
+            <div class="map-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#0f0"></div>You
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ff0"></div>Stars
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#f0f"></div>Gems
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Leaders Window (Bottom Right, above cockpit) -->
+    <div id="floatingLeaders" class="floating-window leaders-window hidden">
+        <div class="window-header">
+            <h4>🏆 Leaders</h4>
+            <div class="window-controls">
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingLeaders')"
+                    title="Collapse">−</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="floatingLeadersList" class="leaders-list">
+                <!-- Populated by JS -->
+            </div>
         </div>
     </div>
 
@@ -1367,23 +1880,96 @@
                 // Mineral system
                 this.minerals = [];
                 this.mineralTypes = {
-                    // Common (70% spawn rate)
-                    iron: { name: 'Iron', value: 10, color: '#8B8680', rarity: 'common', size: 15 },
-                    copper: { name: 'Copper', value: 25, color: '#B87333', rarity: 'common', size: 15 },
-                    coal: { name: 'Coal', value: 15, color: '#36454F', rarity: 'common', size: 12 },
-                    // Uncommon (20% spawn rate)
-                    silver: { name: 'Silver', value: 150, color: '#C0C0C0', rarity: 'uncommon', size: 18 },
-                    gold: { name: 'Gold', value: 400, color: '#FFD700', rarity: 'uncommon', size: 20 },
-                    platinum: { name: 'Platinum', value: 500, color: '#E5E4E2', rarity: 'uncommon', size: 20 },
-                    // Rare (8% spawn rate)
-                    diamond: { name: 'Diamond', value: 2500, color: '#B9F2FF', rarity: 'rare', size: 25 },
-                    emerald: { name: 'Emerald', value: 3000, color: '#50C878', rarity: 'rare', size: 25 },
-                    ruby: { name: 'Ruby', value: 2800, color: '#E0115F', rarity: 'rare', size: 25 },
-                    sapphire: { name: 'Sapphire', value: 3200, color: '#0F52BA', rarity: 'rare', size: 25 },
-                    // Legendary (2% spawn rate)
-                    neodymium: { name: 'Neodymium', value: 25000, color: '#FF6EC7', rarity: 'legendary', size: 30 },
-                    lanthanum: { name: 'Lanthanum', value: 30000, color: '#9D00FF', rarity: 'legendary', size: 32 }
+                    // ============ INDUSTRIAL ZONE (50% spawn rate in industrial galaxies) ============
+                    iron: { name: 'Iron', value: 10, color: '#8B8680', rarity: 'common', size: 15, zone: 'industrial', use: 'Basic construction' },
+                    copper: { name: 'Copper', value: 25, color: '#B87333', rarity: 'common', size: 15, zone: 'industrial', use: 'Wiring, conductors' },
+                    coal: { name: 'Coal', value: 15, color: '#36454F', rarity: 'common', size: 12, zone: 'industrial', use: 'Fuel source' },
+                    titanium: { name: 'Titanium', value: 80, color: '#878681', rarity: 'common', size: 16, zone: 'industrial', use: 'Armor plating' },
+                    silicon: { name: 'Silicon', value: 45, color: '#A0A0A0', rarity: 'common', size: 14, zone: 'industrial', use: 'Electronics, circuits' },
+
+                    // ============ PRECIOUS ZONE (25% spawn rate in precious galaxies) ============
+                    silver: { name: 'Silver', value: 150, color: '#C0C0C0', rarity: 'uncommon', size: 18, zone: 'precious', use: 'Currency, conductors' },
+                    gold: { name: 'Gold', value: 400, color: '#FFD700', rarity: 'uncommon', size: 20, zone: 'precious', use: 'Electronics, currency' },
+                    platinum: { name: 'Platinum', value: 500, color: '#E5E4E2', rarity: 'uncommon', size: 20, zone: 'precious', use: 'Catalysts, jewelry' },
+                    palladium: { name: 'Palladium', value: 600, color: '#CED0DD', rarity: 'uncommon', size: 19, zone: 'precious', use: 'Fuel cells, catalysts' },
+
+                    // ============ CRYSTAL ZONE (15% spawn rate in crystal galaxies) ============
+                    quartz: { name: 'Quartz', value: 800, color: '#F5F5F5', rarity: 'rare', size: 22, zone: 'crystal', use: 'Optics, sensors' },
+                    diamond: { name: 'Diamond', value: 2500, color: '#B9F2FF', rarity: 'rare', size: 25, zone: 'crystal', use: 'Cutting tools, lasers' },
+                    emerald: { name: 'Emerald', value: 3000, color: '#50C878', rarity: 'rare', size: 25, zone: 'crystal', use: 'Energy focusing' },
+                    ruby: { name: 'Ruby', value: 2800, color: '#E0115F', rarity: 'rare', size: 25, zone: 'crystal', use: 'Laser amplification' },
+                    sapphire: { name: 'Sapphire', value: 3200, color: '#0F52BA', rarity: 'rare', size: 25, zone: 'crystal', use: 'Shield technology' },
+
+                    // ============ NUCLEAR ZONE (7% spawn rate near black holes) ============
+                    uranium: { name: 'Uranium', value: 8000, color: '#4AFF00', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Nuclear reactors' },
+                    plutonium: { name: 'Plutonium', value: 12000, color: '#00FF7F', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Advanced power' },
+                    helium3: { name: 'Helium-3', value: 15000, color: '#87CEEB', rarity: 'epic', size: 26, zone: 'nuclear', use: 'Fusion reactors' },
+
+                    // ============ EXOTIC ZONE (3% spawn rate - edge of space) ============
+                    neodymium: { name: 'Neodymium', value: 25000, color: '#FF6EC7', rarity: 'legendary', size: 30, zone: 'exotic', use: 'Magnet tech' },
+                    lanthanum: { name: 'Lanthanum', value: 30000, color: '#9D00FF', rarity: 'legendary', size: 32, zone: 'exotic', use: 'Hybrid engines' },
+                    darkmatter: { name: 'Dark Matter', value: 100000, color: '#1a0033', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Warp drives' },
+                    antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' }
                 };
+
+                // Galaxy zone configuration - determines element distribution
+                this.galaxyZones = {
+                    industrial: {
+                        name: 'Industrial Sector',
+                        color: '#8B8680',
+                        glowColor: 'rgba(139, 134, 128, 0.3)',
+                        elements: ['iron', 'copper', 'coal', 'titanium', 'silicon'],
+                        concentrationBonus: 3.0,
+                        defenseLevel: 1,
+                        distanceRange: { min: 100, max: 800 }
+                    },
+                    precious: {
+                        name: 'Precious Nebula',
+                        color: '#FFD700',
+                        glowColor: 'rgba(255, 215, 0, 0.3)',
+                        elements: ['silver', 'gold', 'platinum', 'palladium'],
+                        concentrationBonus: 2.5,
+                        defenseLevel: 2,
+                        distanceRange: { min: 800, max: 2000 }
+                    },
+                    crystal: {
+                        name: 'Crystal Fields',
+                        color: '#50C878',
+                        glowColor: 'rgba(80, 200, 120, 0.3)',
+                        elements: ['quartz', 'diamond', 'emerald', 'ruby', 'sapphire'],
+                        concentrationBonus: 2.0,
+                        defenseLevel: 3,
+                        distanceRange: { min: 2000, max: 4000 }
+                    },
+                    nuclear: {
+                        name: 'Radiation Belt',
+                        color: '#4AFF00',
+                        glowColor: 'rgba(74, 255, 0, 0.4)',
+                        elements: ['uranium', 'plutonium', 'helium3'],
+                        concentrationBonus: 1.5,
+                        defenseLevel: 4,
+                        distanceRange: { min: 3500, max: 5000 }
+                    },
+                    exotic: {
+                        name: 'Dark Frontier',
+                        color: '#9D00FF',
+                        glowColor: 'rgba(157, 0, 255, 0.4)',
+                        elements: ['neodymium', 'lanthanum', 'darkmatter', 'antimatter'],
+                        concentrationBonus: 1.0,
+                        defenseLevel: 5,
+                        distanceRange: { min: 5000, max: 8000 }
+                    }
+                };
+
+                // Resource deposits - persistent locations with finite resources
+                this.resourceDeposits = [];
+
+                // Defense entities
+                this.sentinels = [];     // AI patrol drones
+                this.forcefields = [];   // Energy barriers
+                this.turrets = [];       // Stationary guns
+                this.guardians = [];     // Boss-level protectors
+                this.projectiles = [];   // Active projectiles
                 this.playerInventory = this.loadInventory();
                 this.collectionNotifications = [];
 
@@ -1841,13 +2427,18 @@
 
                 // Toggle HUD overlay
                 const hud = document.getElementById('flightHUD');
-                if (hud) {
-                    if (this.flightMode) {
-                        hud.classList.remove('hidden');
-                        this.updateLeaderboard();
-                    } else {
-                        hud.classList.add('hidden');
-                    }
+                const floatingMap = document.getElementById('floatingMap');
+                const floatingLeaders = document.getElementById('floatingLeaders');
+
+                if (this.flightMode) {
+                    if (hud) hud.classList.remove('hidden');
+                    if (floatingMap) floatingMap.classList.remove('hidden');
+                    if (floatingLeaders) floatingLeaders.classList.remove('hidden');
+                    this.updateFloatingLeaderboard();
+                } else {
+                    if (hud) hud.classList.add('hidden');
+                    if (floatingMap) floatingMap.classList.add('hidden');
+                    if (floatingLeaders) floatingLeaders.classList.add('hidden');
                 }
 
                 // Ensure a background is active
@@ -1863,58 +2454,220 @@
                 this.draw();
             }
 
+            // Toggle cockpit section collapse
+            toggleCockpitSection(sectionId) {
+                const section = document.getElementById(sectionId);
+                if (section) section.classList.toggle('collapsed');
+            }
+
+            // Toggle floating window collapse
+            toggleFloatingWindow(windowId) {
+                const win = document.getElementById(windowId);
+                if (win) win.classList.toggle('collapsed');
+            }
+
+            // Gem emoji mapping
+            getGemEmoji(type) {
+                const emojis = {
+                    // Industrial
+                    iron: '⚙️',
+                    copper: '🟠',
+                    coal: '⬛',
+                    titanium: '🔩',
+                    silicon: '🔲',
+                    // Precious
+                    silver: '⚪',
+                    gold: '🥇',
+                    platinum: '💿',
+                    palladium: '🪙',
+                    // Crystal
+                    quartz: '🔮',
+                    diamond: '💎',
+                    emerald: '💚',
+                    ruby: '❤️',
+                    sapphire: '💙',
+                    // Nuclear
+                    uranium: '☢️',
+                    plutonium: '⚛️',
+                    helium3: '💨',
+                    // Exotic
+                    neodymium: '💖',
+                    lanthanum: '💜',
+                    darkmatter: '🌑',
+                    antimatter: '✨'
+                };
+                return emojis[type] || '💠';
+            }
+
             updateFlightHUD() {
                 if (!this.flightMode) return;
 
-                // Update speed
-                const speedEl = document.getElementById('speedValue');
-                const speedFillEl = document.getElementById('speedFill');
-                if (speedEl && speedFillEl) {
-                    const speed = Math.round(this.playerShip.speed);
-                    speedEl.textContent = speed;
-                    speedFillEl.style.width = (speed / this.playerShip.maxSpeed * 100) + '%';
+                // Update speed number
+                const speedNumEl = document.getElementById('speedNumber');
+                const zoomEl = document.getElementById('zoomDisplay');
+                if (speedNumEl) {
+                    speedNumEl.textContent = Math.round(this.playerShip.speed);
+                }
+                if (zoomEl) {
+                    zoomEl.textContent = this.camera.zoom.toFixed(1) + 'x';
                 }
 
-                // Update inventory
-                const inventoryEl = document.getElementById('inventoryList');
-                const totalValueEl = document.getElementById('totalValue');
-                if (inventoryEl) {
-                    let totalValue = 0;
+                // Update radar coordinates
+                const coordsEl = document.getElementById('radarCoords');
+                if (coordsEl) {
+                    coordsEl.textContent = `X: ${Math.round(this.playerShip.x)} Y: ${Math.round(this.playerShip.y)}`;
+                }
+
+                // Update gems grid with proper emojis
+                const gemsGrid = document.getElementById('gemsGrid');
+                const gemsTotalEl = document.getElementById('gemsTotal');
+                if (gemsGrid) {
                     let html = '';
+                    let totalValue = 0;
                     for (const [type, count] of Object.entries(this.playerInventory)) {
                         if (count > 0) {
                             const mineralInfo = this.mineralTypes[type];
                             if (mineralInfo) {
                                 const value = mineralInfo.value * count;
                                 totalValue += value;
-                                html += `<div class="inventory-item"><div class="gem-icon" style="background:${mineralInfo.color}; box-shadow: 0 0 8px ${mineralInfo.color}"></div><span class="name">${mineralInfo.name}</span><span class="count">×${count}</span></div>`;
+                                html += `<div class="gem-item"><span class="gem-emoji">${this.getGemEmoji(type)}</span><span class="gem-count">${count}</span></div>`;
                             }
                         }
                     }
-                    inventoryEl.innerHTML = html || '<div style="color: #5c7a8a; font-size: 12px;">No minerals collected yet</div>';
-                    if (totalValueEl) totalValueEl.textContent = '$' + totalValue.toLocaleString();
+                    gemsGrid.innerHTML = html || '<div style="color:#5c7a8a;font-size:9px;">No gems yet</div>';
+                    if (gemsTotalEl) gemsTotalEl.textContent = '$' + totalValue.toLocaleString();
                 }
+
+                // Update radar
+                this.updateRadar();
+
+                // Update map
+                this.updateMap();
             }
 
-            updateLeaderboard() {
-                const leaderboardEl = document.getElementById('leaderboardList');
-                if (!leaderboardEl) return;
+            updateRadar() {
+                const canvas = document.getElementById('radarCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width, h = canvas.height;
+                const cx = w / 2, cy = h / 2;
 
-                // Mock leaderboard data
+                // Clear
+                ctx.clearRect(0, 0, w, h);
+
+                // Draw grid lines
+                ctx.strokeStyle = 'rgba(0,255,100,0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
+                ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+                ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+                ctx.arc(cx, cy, 35, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Draw player (center)
+                ctx.fillStyle = '#0f0';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw nearby minerals as dots
+                const radarRange = 2000;
+                this.minerals.forEach(m => {
+                    const dx = m.x - this.playerShip.x;
+                    const dy = m.y - this.playerShip.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < radarRange) {
+                        const rx = cx + (dx / radarRange) * 35;
+                        const ry = cy + (dy / radarRange) * 35;
+                        ctx.fillStyle = m.color || '#f0f';
+                        ctx.beginPath();
+                        ctx.arc(rx, ry, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            updateMap() {
+                const canvas = document.getElementById('mapCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width, h = canvas.height;
+
+                // Clear with space background
+                ctx.fillStyle = 'rgba(0,5,15,0.95)';
+                ctx.fillRect(0, 0, w, h);
+
+                const mapRange = 10000;
+                const cx = w / 2, cy = h / 2;
+
+                // Draw stars as tiny dots
+                this.staticStars.slice(0, 50).forEach(s => {
+                    const dx = s.x - this.playerShip.x;
+                    const dy = s.y - this.playerShip.y;
+                    if (Math.abs(dx) < mapRange && Math.abs(dy) < mapRange) {
+                        const mx = cx + (dx / mapRange) * (w / 2);
+                        const my = cy + (dy / mapRange) * (h / 2);
+                        ctx.fillStyle = 'rgba(255,255,200,0.5)';
+                        ctx.fillRect(mx, my, 1, 1);
+                    }
+                });
+
+                // Draw minerals
+                this.minerals.forEach(m => {
+                    const dx = m.x - this.playerShip.x;
+                    const dy = m.y - this.playerShip.y;
+                    if (Math.abs(dx) < mapRange && Math.abs(dy) < mapRange) {
+                        const mx = cx + (dx / mapRange) * (w / 2);
+                        const my = cy + (dy / mapRange) * (h / 2);
+                        ctx.fillStyle = m.color || '#f0f';
+                        ctx.beginPath();
+                        ctx.arc(mx, my, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+
+                // Draw player
+                ctx.fillStyle = '#0f0';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,255,0,0.5)';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            updateFloatingLeaderboard() {
+                const listEl = document.getElementById('floatingLeadersList');
+                if (!listEl) return;
+
+                // Mock leaderboard with fluctuating wealth
                 const mockPlayers = [
-                    { name: 'StarCommander', wealth: 485230 },
-                    { name: 'NebulaHunter', wealth: 372140 },
-                    { name: 'AstroMiner', wealth: 298650 },
-                    { name: 'CosmicVoyager', wealth: 156780 },
+                    { name: 'StarPilot99', wealth: 125000 + Math.floor(Math.random() * 10000) },
+                    { name: 'NebulaHunter', wealth: 98000 + Math.floor(Math.random() * 8000) },
+                    { name: 'AstroMiner', wealth: 76000 + Math.floor(Math.random() * 5000) },
                     { name: 'You', wealth: this.calculateTotalWealth() }
                 ];
 
                 mockPlayers.sort((a, b) => b.wealth - a.wealth);
+
                 let html = '';
-                mockPlayers.slice(0, 5).forEach((player, i) => {
-                    html += `<div class="leaderboard-entry rank-${i + 1}"><span class="player-name">#${i + 1} ${player.name}</span><span class="wealth">$${player.wealth.toLocaleString()}</span></div>`;
+                mockPlayers.forEach((player, i) => {
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                    const isYou = player.name === 'You';
+                    html += `<div class="leader-row${isYou ? ' you' : ''}">
+                        <span class="leader-rank">${medal || (i + 1)}</span>
+                        <span class="leader-name">${player.name}</span>
+                        <span class="leader-wealth">$${player.wealth.toLocaleString()}</span>
+                    </div>`;
                 });
-                leaderboardEl.innerHTML = html;
+                listEl.innerHTML = html;
+            }
+
+            updateLeaderboard() {
+                // Legacy method - now using updateFloatingLeaderboard
+                this.updateFloatingLeaderboard();
             }
 
             calculateTotalWealth() {
@@ -2024,11 +2777,14 @@
                 }
             }
 
-            // Spawn minerals around the player
+            // Spawn minerals around the player - Galaxy Zone-aware distribution
             spawnMinerals() {
                 const ship = this.playerShip;
-                const spawnRadius = 500;  // Spawn within this radius from player
-                const maxMinerals = 50;   // Max minerals in world at once
+                const spawnRadius = 600;  // Spawn within this radius from player
+                const maxMinerals = 80;   // Increased for richer gameplay
+
+                // Calculate player's distance from origin to determine zone
+                const playerDistFromOrigin = Math.sqrt(ship.x * ship.x + ship.y * ship.y);
 
                 // Remove far minerals to manage performance
                 this.minerals = this.minerals.filter(m => {
@@ -2040,36 +2796,116 @@
 
                 // Spawn new minerals if needed
                 while (this.minerals.length < maxMinerals) {
-                    // Random rarity based on spawn rates
-                    const rand = Math.random();
-                    let mineralKey;
-                    if (rand < 0.70) { // 70% common
-                        mineralKey = ['iron', 'copper', 'coal'][Math.floor(Math.random() * 3)];
-                    } else if (rand < 0.90) { // 20% uncommon
-                        mineralKey = ['silver', 'gold', 'platinum'][Math.floor(Math.random() * 3)];
-                    } else if (rand < 0.98) { // 8% rare
-                        mineralKey = ['diamond', 'emerald', 'ruby', 'sapphire'][Math.floor(Math.random() * 4)];
-                    } else { // 2% legendary
-                        mineralKey = ['neodymium', 'lanthanum'][Math.floor(Math.random() * 2)];
-                    }
+                    // Determine which zone the player is currently in
+                    const currentZone = this.getZoneAtDistance(playerDistFromOrigin);
 
+                    // Get element to spawn based on zone and probability
+                    const mineralKey = this.selectElementForZone(currentZone, playerDistFromOrigin);
                     const type = this.mineralTypes[mineralKey];
+                    if (!type) continue;
 
-                    // Random position around player
+                    // Random position around player with zone-based spread
                     const angle = Math.random() * Math.PI * 2;
-                    const distance = spawnRadius * (0.5 + Math.random() * 0.5);
-                    const zOffset = (Math.random() - 0.5) * spawnRadius;
+                    const distance = spawnRadius * (0.3 + Math.random() * 0.7);
+                    const zOffset = (Math.random() - 0.5) * spawnRadius * 0.5;
+
+                    // Calculate spawn position
+                    const spawnX = ship.x + Math.cos(angle) * distance;
+                    const spawnY = ship.y + Math.sin(angle) * distance;
+                    const spawnZ = ship.z + zOffset;
 
                     this.minerals.push({
                         id: Date.now() + Math.random(),
                         type: mineralKey,
                         ...type,
-                        x: ship.x + Math.cos(angle) * distance,
-                        y: ship.y + Math.sin(angle) * distance,
-                        z: ship.z + zOffset,
-                        phase: Math.random() * Math.PI * 2  // For glow animation
+                        x: spawnX,
+                        y: spawnY,
+                        z: spawnZ,
+                        phase: Math.random() * Math.PI * 2,  // For glow animation
+                        defended: type.rarity === 'epic' || type.rarity === 'legendary' || type.rarity === 'mythic'
                     });
                 }
+            }
+
+            // Get the zone type at a given distance from origin
+            getZoneAtDistance(distance) {
+                for (const [zoneKey, zone] of Object.entries(this.galaxyZones)) {
+                    if (distance >= zone.distanceRange.min && distance < zone.distanceRange.max) {
+                        return zoneKey;
+                    }
+                }
+                // Beyond all zones = exotic
+                if (distance >= 5000) return 'exotic';
+                // Default to industrial for very close
+                return 'industrial';
+            }
+
+            // Select an element to spawn based on current zone and probability
+            selectElementForZone(currentZone, distance) {
+                const zones = this.galaxyZones;
+                const allElements = Object.keys(this.mineralTypes);
+
+                // Build probability weights
+                const weights = [];
+                let totalWeight = 0;
+
+                for (const elementKey of allElements) {
+                    const element = this.mineralTypes[elementKey];
+                    let weight = 1;
+
+                    // Base weight by rarity
+                    switch (element.rarity) {
+                        case 'common': weight = 50; break;
+                        case 'uncommon': weight = 25; break;
+                        case 'rare': weight = 12; break;
+                        case 'epic': weight = 5; break;
+                        case 'legendary': weight = 2; break;
+                        case 'mythic': weight = 0.5; break;
+                    }
+
+                    // Zone affinity bonus - elements in their home zone spawn more
+                    if (zones[element.zone] && zones[element.zone].elements.includes(elementKey)) {
+                        if (element.zone === currentZone) {
+                            weight *= zones[element.zone].concentrationBonus;
+                        }
+                    }
+
+                    // Distance gating - rare/epic/legendary/mythic only spawn in appropriate zones
+                    if (element.rarity === 'mythic' && distance < 5000) {
+                        weight = 0; // Mythic only in exotic zone
+                    }
+                    if (element.rarity === 'legendary' && distance < 4000) {
+                        weight *= 0.1; // Legendary very rare outside exotic
+                    }
+                    if (element.rarity === 'epic' && distance < 3000) {
+                        weight *= 0.2; // Epic rare outside nuclear zone
+                    }
+
+                    // Out-of-zone penalty
+                    if (element.zone !== currentZone) {
+                        const elementZone = zones[element.zone];
+                        if (elementZone) {
+                            if (distance < elementZone.distanceRange.min) {
+                                weight *= 0.1; // Too close for this element
+                            }
+                        }
+                    }
+
+                    weights.push({ key: elementKey, weight });
+                    totalWeight += weight;
+                }
+
+                // Weighted random selection
+                let random = Math.random() * totalWeight;
+                for (const { key, weight } of weights) {
+                    random -= weight;
+                    if (random <= 0) {
+                        return key;
+                    }
+                }
+
+                // Fallback to iron
+                return 'iron';
             }
 
             // Check for mineral collection
