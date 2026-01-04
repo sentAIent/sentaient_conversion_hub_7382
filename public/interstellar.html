@@ -3740,6 +3740,76 @@
                         ctx.fillText(`● ${zone.name}`, w - 15, legendY);
                         legendY += 14;
                     });
+
+                    // Nearby gems breakdown (top-left when maximized)
+                    const visibleMinerals = this.minerals?.filter(m => {
+                        const { sx, sy } = toScreen(m.x, m.y);
+                        return sx >= 0 && sx <= w && sy >= 0 && sy <= h;
+                    }) || [];
+
+                    if (visibleMinerals.length > 0) {
+                        const gemCounts = {};
+                        visibleMinerals.forEach(m => {
+                            const info = this.mineralTypes?.[m.type];
+                            if (info) {
+                                if (!gemCounts[m.type]) {
+                                    gemCounts[m.type] = { count: 0, color: info.color, name: info.name, value: info.value };
+                                }
+                                gemCounts[m.type].count++;
+                            }
+                        });
+
+                        ctx.font = '10px "Courier New", monospace';
+                        ctx.textAlign = 'left';
+                        ctx.fillStyle = 'rgba(0, 40, 60, 0.85)';
+                        ctx.fillRect(10, 80, 140, 15 + Object.keys(gemCounts).length * 14);
+
+                        ctx.fillStyle = '#00f3ff';
+                        ctx.fillText(`Visible Gems: ${visibleMinerals.length}`, 15, 93);
+
+                        let gemY = 107;
+                        Object.entries(gemCounts)
+                            .sort((a, b) => b[1].value - a[1].value)
+                            .slice(0, 8)
+                            .forEach(([type, data]) => {
+                                ctx.fillStyle = data.color;
+                                ctx.fillText(`● ${data.name}: ${data.count}`, 15, gemY);
+                                gemY += 14;
+                            });
+                    }
+                }
+
+                // Minimized map: Show compact gem summary
+                if (!isMaximized) {
+                    const nearbyMinerals = this.minerals?.filter(m => {
+                        const dx = m.x - ship.x;
+                        const dy = m.y - ship.y;
+                        return Math.sqrt(dx * dx + dy * dy) < worldSize / 2;
+                    }) || [];
+
+                    if (nearbyMinerals.length > 0) {
+                        // Count by rarity
+                        const counts = { common: 0, uncommon: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 };
+                        nearbyMinerals.forEach(m => {
+                            const info = this.mineralTypes?.[m.type];
+                            if (info?.rarity) counts[info.rarity]++;
+                        });
+
+                        // Show compact summary at bottom
+                        ctx.font = '8px "Courier New", monospace';
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = 'rgba(0, 30, 50, 0.9)';
+                        ctx.fillRect(0, h - 18, w, 18);
+
+                        let summary = `Gems: ${nearbyMinerals.length}`;
+                        if (counts.mythic) summary += ` 💎${counts.mythic}`;
+                        if (counts.legendary) summary += ` ⭐${counts.legendary}`;
+                        if (counts.epic) summary += ` 🔷${counts.epic}`;
+                        if (counts.rare) summary += ` 🔹${counts.rare}`;
+
+                        ctx.fillStyle = '#00f3ff';
+                        ctx.fillText(summary, w / 2, h - 6);
+                    }
                 }
             }
 
