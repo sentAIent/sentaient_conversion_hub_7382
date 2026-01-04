@@ -2330,10 +2330,17 @@
                     vx: 0, vy: 0, vz: 0,
                     rotation: 0,
                     speed: 0,
-                    maxSpeed: 50,  // Increased for Roblox-style fast flight
+                    maxSpeed: 50,  // Base speed, modified by upgrades
                     acceleration: 0.5,
                     rotationSpeed: 0.08,
-                    size: 45
+                    size: 45,
+                    // Upgrade-derived stats
+                    shieldMax: 0,
+                    shieldCurrent: 0,
+                    damageReduction: 0,  // 0-1 (0% to 100%)
+                    weaponDamage: 1.0,   // Multiplier
+                    cargoBonus: 1.0,     // Multiplier for gem value
+                    radarRange: 3000     // Radar detection range
                 };
                 this.speedLines = [];  // Visual speed indicators
                 this.inventoryDisplayMode = 'qty';  // 'qty' or 'value'
@@ -3203,7 +3210,7 @@
                 const cx = w / 2;
                 const cy = h / 2;
                 const radius = Math.min(w, h) / 2 - 2;
-                const scale = 3000; // World units covered by radar
+                const scale = this.playerShip?.radarRange || 3000; // Uses upgrade-modified range
 
                 // Clear with transparent background (CSS handles the styling)
                 ctx.clearRect(0, 0, w, h);
@@ -3587,21 +3594,28 @@
                     });
                 }
 
-                // Draw subtle grid
-                const gridDivisions = isMaximized ? 16 : 6;
-                ctx.strokeStyle = 'rgba(0, 100, 150, 0.1)';
-                ctx.lineWidth = 0.5;
-                for (let i = 1; i < gridDivisions; i++) {
-                    const pos = (w / gridDivisions) * i;
-                    ctx.beginPath();
-                    ctx.moveTo(pos, 0);
-                    ctx.lineTo(pos, h);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(0, pos);
-                    ctx.lineTo(w, pos);
-                    ctx.stroke();
-                }
+                // ===== DISTANCE RINGS (every 1000px) =====
+                const distanceIntervals = [1000, 2000, 3000, 4000, 5000, 6000];
+                ctx.font = '8px "Courier New", monospace';
+                ctx.textAlign = 'center';
+                distanceIntervals.forEach(dist => {
+                    const ringRadius = dist * scale;
+                    if (ringRadius > 0 && ringRadius < w * 0.7) {
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(100, 200, 255, 0.15)';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([4, 4]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        // Distance label
+                        if (isMaximized || dist <= 3000) {
+                            ctx.fillStyle = 'rgba(100, 200, 255, 0.4)';
+                            ctx.fillText(`${dist / 1000}k`, centerX + ringRadius - 15, centerY - 5);
+                        }
+                    }
+                });
 
                 // Draw origin marker (center of universe)
                 ctx.beginPath();
@@ -3612,6 +3626,52 @@
                 ctx.arc(centerX, centerY, isMaximized ? 4 : 2, 0, Math.PI * 2);
                 ctx.fillStyle = '#fff';
                 ctx.fill();
+
+                // ===== NAVIGATION ARROW (point toward valuable zone) =====
+                const playerDist = Math.sqrt(ship.x * ship.x + ship.y * ship.y);
+                let targetZoneDist = 0;
+                let targetZoneName = '';
+                let targetColor = '#00f3ff';
+
+                // Suggest next zone based on current position
+                if (playerDist < 800) {
+                    targetZoneDist = 1400; targetZoneName = 'Precious'; targetColor = '#ffd700';
+                } else if (playerDist < 2000) {
+                    targetZoneDist = 3000; targetZoneName = 'Crystal'; targetColor = '#00ffff';
+                } else if (playerDist < 4000) {
+                    targetZoneDist = 4500; targetZoneName = 'Nuclear'; targetColor = '#ff6600';
+                } else if (playerDist < 5000) {
+                    targetZoneDist = 5500; targetZoneName = 'Exotic'; targetColor = '#ff00ff';
+                }
+
+                // Draw arrow from player toward target zone
+                if (targetZoneDist > 0 && isMaximized) {
+                    const { sx: playerSX, sy: playerSY } = toScreen(ship.x, ship.y);
+                    const angle = Math.atan2(-ship.y, -ship.x); // Toward center then beyond
+                    const arrowDist = 40;
+                    const arrowX = playerSX + Math.cos(angle + Math.PI) * arrowDist;
+                    const arrowY = playerSY + Math.sin(angle + Math.PI) * arrowDist;
+
+                    ctx.save();
+                    ctx.translate(arrowX, arrowY);
+                    ctx.rotate(angle + Math.PI);
+                    ctx.beginPath();
+                    ctx.moveTo(10, 0);
+                    ctx.lineTo(-5, -6);
+                    ctx.lineTo(-5, 6);
+                    ctx.closePath();
+                    ctx.fillStyle = targetColor;
+                    ctx.globalAlpha = 0.7;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                    ctx.restore();
+
+                    // Label
+                    ctx.font = '9px "Courier New", monospace';
+                    ctx.fillStyle = targetColor;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`→ ${targetZoneName}`, arrowX + 15, arrowY + 3);
+                }
 
                 // Draw background stars (when maximized)
                 if (isMaximized) {
@@ -3918,7 +3978,13 @@
                 }
 
                 gemsEl.innerHTML = html;
-                if (totalEl) totalEl.textContent = '$' + totalValue.toLocaleString();
+
+                // Apply cargo bonus to total value display
+                const cargoBonus = this.playerShip?.cargoBonus || 1.0;
+                const boostedTotal = Math.round(totalValue * cargoBonus);
+                const bonusPercent = cargoBonus > 1 ? ` (+${Math.round((cargoBonus - 1) * 100)}%)` : '';
+
+                if (totalEl) totalEl.textContent = '$' + boostedTotal.toLocaleString() + bonusPercent;
                 if (creditsEl) creditsEl.textContent = this.credits.toLocaleString();
             }
 
@@ -4191,15 +4257,51 @@
             applyUpgrades() {
                 if (!this.playerShip) return;
 
-                // Base stats (from ship type)
-                const baseSpeed = 50;
+                // Ship type base stats lookup
+                const shipTypes = {
+                    default: { maxSpeed: 50, acceleration: 0.5 },
+                    interceptor: { maxSpeed: 50, acceleration: 0.5 },
+                    saucer: { maxSpeed: 70, acceleration: 0.7 },
+                    deathstar: { maxSpeed: 20, acceleration: 0.2 },
+                    tiefighter: { maxSpeed: 90, acceleration: 0.9 },
+                    constellation: { maxSpeed: 60, acceleration: 0.6 },
+                    draco: { maxSpeed: 80, acceleration: 0.4 },
+                    phoenix: { maxSpeed: 55, acceleration: 0.8 }
+                };
 
-                // Apply speed upgrade (+5% per level)
-                const speedBonus = 1 + (this.shipUpgrades.speed * 0.05);
-                this.playerShip.maxSpeed = Math.round(baseSpeed * speedBonus);
+                const shipType = this.playerShip.type || 'default';
+                const baseStats = shipTypes[shipType] || shipTypes.default;
 
-                // Radar upgrade handled in updateRadar
-                // Cargo, armor, weapons, shields handled in combat/collection systems
+                // ========== SPEED UPGRADE (+5% per level, max +50%) ==========
+                const speedLevel = this.shipUpgrades.speed || 0;
+                const speedBonus = 1 + (speedLevel * 0.05);
+                this.playerShip.maxSpeed = Math.round(baseStats.maxSpeed * speedBonus);
+
+                // ========== ARMOR UPGRADE (-8% damage per level, max 80%) ==========
+                const armorLevel = this.shipUpgrades.armor || 0;
+                this.playerShip.damageReduction = Math.min(0.8, armorLevel * 0.08);
+
+                // ========== WEAPONS UPGRADE (+15% damage per level, max +150%) ==========
+                const weaponsLevel = this.shipUpgrades.weapons || 0;
+                this.playerShip.weaponDamage = 1 + (weaponsLevel * 0.15);
+
+                // ========== SHIELDS UPGRADE (+100 HP per level, max 1000) ==========
+                const shieldsLevel = this.shipUpgrades.shields || 0;
+                const newShieldMax = shieldsLevel * 100;
+                // If max increased, give player the new capacity (don't reset current)
+                if (newShieldMax > this.playerShip.shieldMax) {
+                    this.playerShip.shieldCurrent += (newShieldMax - this.playerShip.shieldMax);
+                }
+                this.playerShip.shieldMax = newShieldMax;
+                this.playerShip.shieldCurrent = Math.min(this.playerShip.shieldCurrent, this.playerShip.shieldMax);
+
+                // ========== CARGO UPGRADE (+20% gem value per level, max +100%) ==========
+                const cargoLevel = this.shipUpgrades.cargo || 0;
+                this.playerShip.cargoBonus = 1 + (cargoLevel * 0.20);
+
+                // ========== RADAR UPGRADE (+500px range per level, max +2500) ==========
+                const radarLevel = this.shipUpgrades.radar || 0;
+                this.playerShip.radarRange = 3000 + (radarLevel * 500);
             }
 
             showNotification(text, color) {
@@ -4364,9 +4466,14 @@
                     this.updateWalletWindow();
                     this.updateUpgradeWindow();
 
-                    // Show notification
+                    // Apply cargo bonus to displayed value
+                    const cargoBonus = ship.cargoBonus || 1.0;
+                    const boostedValue = Math.round(mineral.value * cargoBonus);
+                    const bonusText = cargoBonus > 1 ? ` +${Math.round((cargoBonus - 1) * 100)}%` : '';
+
+                    // Show notification with bonus-adjusted value
                     this.collectionNotifications.push({
-                        text: `+${mineral.name} ($${mineral.value})`,
+                        text: `+${mineral.name} ($${boostedValue}${bonusText})`,
                         color: mineral.color,
                         time: Date.now()
                     });
