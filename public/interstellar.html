@@ -1380,8 +1380,18 @@
                 0 0 20px rgba(0, 243, 255, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
             pointer-events: auto;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: box-shadow 0.2s, border-color 0.2s;
             overflow: hidden;
+            user-select: none;
+        }
+
+        .floating-window.dragging {
+            transition: none;
+            box-shadow:
+                0 12px 48px rgba(0, 0, 0, 0.6),
+                0 0 30px rgba(0, 243, 255, 0.3);
+            border-color: rgba(0, 243, 255, 0.6);
+            z-index: 200;
         }
 
         .floating-window.hidden {
@@ -1603,8 +1613,12 @@
                     rgba(0, 60, 90, 0.5) 0%,
                     rgba(0, 30, 50, 0.3) 100%);
             border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-            cursor: pointer;
+            cursor: grab;
             user-select: none;
+        }
+
+        .floating-window.dragging .window-header {
+            cursor: grabbing;
         }
 
         .window-header:hover {
@@ -2793,6 +2807,9 @@
 
                 this.animate = this.animate.bind(this);
                 requestAnimationFrame(this.animate);
+
+                // Initialize draggable windows
+                this.initDraggableWindows();
             }
 
             resize() {
@@ -3333,9 +3350,130 @@
             toggleFloatingWindow(windowId) {
                 const win = document.getElementById(windowId);
                 if (!win) return;
+                // Only toggle if not in dragging mode
+                if (this.isDraggingWindow) return;
                 const isCollapsed = win.classList.toggle('collapsed');
                 const toggle = win.querySelector('.window-toggle');
                 if (toggle) toggle.textContent = isCollapsed ? '▶' : '▼';
+            }
+
+            // Initialize draggable windows
+            initDraggableWindows() {
+                const windows = document.querySelectorAll('.floating-window');
+                windows.forEach(win => {
+                    const header = win.querySelector('.window-header');
+                    if (!header) return;
+
+                    let startX, startY, startLeft, startTop;
+                    let hasDragged = false;
+
+                    const onMouseDown = (e) => {
+                        // Ignore if clicking on buttons
+                        if (e.target.closest('.window-btn, button')) return;
+
+                        e.preventDefault();
+                        hasDragged = false;
+                        this.isDraggingWindow = false;
+
+                        startX = e.clientX;
+                        startY = e.clientY;
+
+                        // Get current position
+                        const rect = win.getBoundingClientRect();
+                        startLeft = rect.left;
+                        startTop = rect.top;
+
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                    };
+
+                    const onMouseMove = (e) => {
+                        const dx = e.clientX - startX;
+                        const dy = e.clientY - startY;
+
+                        // Threshold to distinguish click from drag
+                        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                            hasDragged = true;
+                            this.isDraggingWindow = true;
+                            win.classList.add('dragging');
+
+                            // Calculate new position
+                            let newLeft = startLeft + dx;
+                            let newTop = startTop + dy;
+
+                            // Constrain to viewport
+                            const winWidth = win.offsetWidth;
+                            const winHeight = win.offsetHeight;
+                            newLeft = Math.max(0, Math.min(window.innerWidth - winWidth, newLeft));
+                            newTop = Math.max(0, Math.min(window.innerHeight - winHeight, newTop));
+
+                            // Apply position using inline styles (overrides CSS positioning)
+                            win.style.left = newLeft + 'px';
+                            win.style.top = newTop + 'px';
+                            win.style.right = 'auto';
+                            win.style.bottom = 'auto';
+                        }
+                    };
+
+                    const onMouseUp = () => {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+
+                        win.classList.remove('dragging');
+
+                        if (hasDragged) {
+                            // Save position
+                            this.saveWindowPosition(win.id, {
+                                left: parseInt(win.style.left),
+                                top: parseInt(win.style.top)
+                            });
+                        }
+
+                        // Reset drag state after a short delay to allow click handlers to check
+                        setTimeout(() => {
+                            this.isDraggingWindow = false;
+                        }, 50);
+                    };
+
+                    // Remove existing onclick to prevent interference
+                    header.removeAttribute('onclick');
+                    header.addEventListener('mousedown', onMouseDown);
+
+                    // Add click handler for collapse/expand (only fires if not dragged)
+                    header.addEventListener('click', (e) => {
+                        if (!hasDragged && !e.target.closest('.window-btn, button')) {
+                            this.toggleFloatingWindow(win.id);
+                        }
+                    });
+                });
+
+                // Restore saved positions
+                this.restoreWindowPositions();
+            }
+
+            // Save window position to localStorage
+            saveWindowPosition(windowId, pos) {
+                try {
+                    const positions = JSON.parse(localStorage.getItem('windowPositions') || '{}');
+                    positions[windowId] = pos;
+                    localStorage.setItem('windowPositions', JSON.stringify(positions));
+                } catch (e) { }
+            }
+
+            // Restore window positions from localStorage
+            restoreWindowPositions() {
+                try {
+                    const positions = JSON.parse(localStorage.getItem('windowPositions') || '{}');
+                    for (const [id, pos] of Object.entries(positions)) {
+                        const win = document.getElementById(id);
+                        if (win && pos.left != null && pos.top != null) {
+                            win.style.left = pos.left + 'px';
+                            win.style.top = pos.top + 'px';
+                            win.style.right = 'auto';
+                            win.style.bottom = 'auto';
+                        }
+                    }
+                } catch (e) { }
             }
 
             // Toggle map maximize state
@@ -4150,6 +4288,11 @@
                     }
                     this.playerInventory[mineral.type]++;
                     this.saveInventory();
+
+                    // Real-time UI updates
+                    this.updateGemsDisplay();
+                    this.updateWalletWindow();
+                    this.updateUpgradeWindow();
 
                     // Show notification
                     this.collectionNotifications.push({
