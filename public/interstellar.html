@@ -746,6 +746,194 @@
             margin-right: 4px;
         }
 
+        /* ========== FLIGHT MODE HUD ========== */
+        .flight-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .flight-hud.hidden {
+            display: none;
+        }
+
+        .hud-controls,
+        .hud-speed,
+        .hud-inventory,
+        .hud-leaderboard {
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.9) 0%, rgba(0, 30, 50, 0.85) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .hud-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            min-width: 220px;
+        }
+
+        .hud-speed {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .hud-inventory {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            min-width: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .hud-leaderboard {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            min-width: 250px;
+        }
+
+        .hud-controls h3,
+        .hud-inventory h3,
+        .hud-leaderboard h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            letter-spacing: 2px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            font-size: 13px;
+            color: #e0faff;
+        }
+
+        .control-row kbd {
+            display: inline-block;
+            padding: 4px 8px;
+            background: linear-gradient(180deg, #1a2a3a 0%, #0f1f2f 100%);
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            border-radius: 4px;
+            font-size: 12px;
+            min-width: 24px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .speed-label {
+            font-size: 12px;
+            color: #5c7a8a;
+            letter-spacing: 2px;
+        }
+
+        .speed-value {
+            font-size: 42px;
+            font-weight: bold;
+            color: #00f3ff;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.8);
+            margin: 8px 0;
+        }
+
+        .speed-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 50, 80, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0 8px 0;
+        }
+
+        .speed-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00f3ff 0%, #00a8ff 50%, #0080ff 100%);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            transition: width 0.1s;
+            width: 0%;
+        }
+
+        .speed-max {
+            font-size: 10px;
+            color: #5c7a8a;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: rgba(0, 50, 80, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .inventory-item .name {
+            color: #e0faff;
+            font-weight: bold;
+        }
+
+        .inventory-item .count {
+            color: #00f3ff;
+            font-size: 14px;
+        }
+
+        .total-value {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 243, 255, 0.3);
+            text-align: right;
+            font-size: 16px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0, 50, 80, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .leaderboard-entry.rank-1 {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, rgba(0, 50, 80, 0.3) 100%);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+
+        .leaderboard-entry .wealth {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
         /* Gem Icons */
         .gem-icon {
             width: 16px;
@@ -792,214 +980,152 @@
             color: #aaa;
         }
 
-        /* ========== FLIGHT MODE COCKPIT CONTROL PANEL ========== */
-        .flight-hud {
-            position: fixed;
-            bottom: 55px;
-            /* Above the bottom bar */
-            left: 0;
-            right: 0;
-            z-index: 150;
-            pointer-events: none;
-        }
-
-        .flight-hud.hidden {
-            display: none;
-        }
-
-        /* Main Cockpit Container */
+        /* ===== COCKPIT BAR (Above Bottom Bar) ===== */
+        /* ===== COCKPIT BAR (Removed Container - Now separate floating items) ===== */
         .flight-cockpit {
-            position: relative;
-            height: 160px;
-            background: linear-gradient(180deg,
-                    rgba(0, 20, 40, 0.92) 0%,
-                    rgba(0, 8, 20, 0.98) 100%);
-            border-top: 2px solid rgba(0, 243, 255, 0.6);
-            box-shadow:
-                0 -5px 40px rgba(0, 243, 255, 0.15),
-                inset 0 2px 30px rgba(0, 100, 150, 0.1);
-            display: flex;
-            justify-content: center;
-            align-items: stretch;
-            gap: 8px;
-            padding: 10px 15px 12px;
-            pointer-events: auto;
-            backdrop-filter: blur(15px);
+            /* Now just a transparent layer for initial positioning if needed, or removed entirely */
+            pointer-events: none;
+            /* Let children receive events */
         }
 
-        /* Glow line at top */
-        .flight-cockpit::before {
-            content: '';
-            position: absolute;
-            top: -1px;
-            left: 10%;
-            right: 10%;
-            height: 1px;
-            background: linear-gradient(90deg,
-                    transparent,
-                    rgba(0, 243, 255, 0.8),
-                    transparent);
-        }
-
-        /* Individual Cockpit Sections */
         .cockpit-section {
-            flex: 1;
-            max-width: 240px;
-            min-width: 120px;
-            background: linear-gradient(180deg,
-                    rgba(0, 40, 60, 0.5) 0%,
-                    rgba(0, 20, 35, 0.6) 100%);
-            border: 1px solid rgba(0, 200, 255, 0.25);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .cockpit-section::after {
-            content: '';
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 10px;
+            padding: 0;
+            /* Content padding moved to content div */
+            min-width: 100px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg,
-                    transparent,
-                    rgba(0, 243, 255, 0.4),
-                    transparent);
+            /* Make them floating */
+            bottom: 60px;
+            /* Initial position */
         }
 
-        .cockpit-section:hover {
-            border-color: rgba(0, 243, 255, 0.5);
-            background: linear-gradient(180deg,
-                    rgba(0, 50, 80, 0.6) 0%,
-                    rgba(0, 25, 45, 0.7) 100%);
+        /* Initial Positions for Sections - Organized Layout */
+        #sectionControls {
+            left: 20px;
+            bottom: 60px;
         }
 
-        /* Section Header */
+        #sectionRadar {
+            left: 180px;
+            bottom: 60px;
+        }
+
+        #sectionVelocity {
+            left: 340px;
+            bottom: 60px;
+        }
+
+        #sectionGems {
+            left: 500px;
+            bottom: 60px;
+        }
+
         .cockpit-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            /* Changed to move for dragging */
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
             padding: 6px 10px;
-            background: linear-gradient(90deg,
-                    rgba(0, 80, 120, 0.3) 0%,
-                    rgba(0, 40, 60, 0.2) 100%);
-            border-bottom: 1px solid rgba(0, 200, 255, 0.2);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .cockpit-content {
+            padding: 8px 12px;
+        }
+
+        .cockpit-section {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            min-width: 100px;
+        }
+
+        .cockpit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             cursor: pointer;
-            user-select: none;
+            margin-bottom: 6px;
         }
 
         .cockpit-header h4 {
             margin: 0;
             font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 1px;
+            color: var(--accent);
             text-transform: uppercase;
-            color: #00f3ff;
-            text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+            letter-spacing: 1px;
         }
 
         .cockpit-toggle {
             font-size: 8px;
-            color: rgba(0, 243, 255, 0.6);
-            transition: transform 0.3s;
+            color: var(--accent);
+            transition: transform 0.2s;
+        }
+
+        .cockpit-section.collapsed .cockpit-content {
+            display: none;
+        }
+
+        .cockpit-section.collapsed {
+            min-height: 0;
+            padding-bottom: 2px;
         }
 
         .cockpit-section.collapsed .cockpit-toggle {
             transform: rotate(-90deg);
         }
 
-        /* Section Content */
-        .cockpit-content {
-            flex: 1;
-            padding: 8px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .cockpit-section.collapsed .cockpit-content {
-            max-height: 0;
-            padding: 0 8px;
-            opacity: 0;
-        }
-
-        .cockpit-section.collapsed {
-            max-width: 100px;
-        }
-
-        /* ===== CONTROLS SECTION ===== */
+        /* Controls Section */
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 3px;
-            font-size: 9px;
-        }
-
-        .control-key {
-            display: flex;
-            align-items: center;
+            grid-template-columns: repeat(4, 1fr);
             gap: 4px;
-            padding: 2px 4px;
-            background: rgba(0, 50, 80, 0.3);
-            border-radius: 3px;
         }
 
-        .control-key kbd {
-            background: rgba(0, 100, 150, 0.5);
-            border: 1px solid rgba(0, 200, 255, 0.3);
-            border-radius: 2px;
-            padding: 1px 4px;
-            font-size: 8px;
-            color: #00f3ff;
-            font-family: monospace;
+        .controls-grid kbd {
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: center;
+            color: var(--accent);
         }
 
-        .control-key span {
-            color: rgba(200, 230, 255, 0.8);
-            font-size: 8px;
-        }
-
-        /* ===== RADAR SECTION ===== */
+        /* Radar Section */
         .radar-container {
             position: relative;
-            width: 110px;
-            height: 110px;
-            margin: 0 auto;
-            border-radius: 50%;
-            background: radial-gradient(ellipse at center,
-                    rgba(0, 40, 60, 0.9) 0%,
-                    rgba(0, 15, 25, 0.95) 70%,
-                    rgba(0, 8, 15, 1) 100%);
-            border: 2px solid rgba(0, 200, 255, 0.4);
-            box-shadow:
-                0 0 20px rgba(0, 243, 255, 0.2),
-                inset 0 0 30px rgba(0, 100, 150, 0.2);
-            overflow: hidden;
+            width: 80px;
+            height: 80px;
         }
 
         .radar-canvas {
             width: 100%;
             height: 100%;
             border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 30, 20, 0.9) 0%, rgba(0, 10, 5, 0.95) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.5);
         }
 
-        /* Radar scan line animation */
         .radar-sweep {
             position: absolute;
             top: 50%;
             left: 50%;
             width: 50%;
             height: 2px;
-            background: linear-gradient(90deg,
-                    rgba(0, 243, 255, 0.8),
-                    transparent);
+            background: linear-gradient(90deg, rgba(0, 255, 100, 0.8) 0%, transparent 100%);
             transform-origin: left center;
             animation: radarSweep 3s linear infinite;
-            pointer-events: none;
         }
 
         @keyframes radarSweep {
@@ -1012,199 +1138,76 @@
             }
         }
 
-        /* Radar center glow */
-        .radar-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 8px;
-            height: 8px;
-            transform: translate(-50%, -50%);
-            background: #00f3ff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #00f3ff, 0 0 20px rgba(0, 243, 255, 0.5);
-        }
-
         .radar-coords {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 4px;
             font-size: 9px;
             color: rgba(0, 243, 255, 0.7);
-            font-family: 'Courier New', monospace;
+            text-align: center;
+            margin-top: 4px;
         }
 
-        /* ===== MINERALS SECTION ===== */
-        .minerals-section {
-            min-width: 200px;
-            max-width: 280px;
-        }
-
-        .minerals-toggle {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 6px;
-        }
-
-        .minerals-toggle button {
-            flex: 1;
-            padding: 3px 6px;
-            font-size: 9px;
-            background: rgba(0, 60, 90, 0.4);
-            border: 1px solid rgba(0, 200, 255, 0.3);
-            border-radius: 3px;
-            color: rgba(200, 230, 255, 0.7);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .minerals-toggle button.active {
-            background: rgba(0, 150, 200, 0.5);
-            border-color: rgba(0, 243, 255, 0.6);
-            color: #00f3ff;
-        }
-
-        .minerals-list {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-
-        .mineral-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 3px 6px;
-            background: rgba(0, 40, 60, 0.3);
-            border-radius: 3px;
-            font-size: 10px;
-        }
-
-        .mineral-name {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: rgba(200, 230, 255, 0.9);
-        }
-
-        .mineral-icon {
-            width: 14px;
-            height: 14px;
-        }
-
-        .mineral-value {
-            color: #00ff88;
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-            min-width: 70px;
-            text-align: right;
-        }
-
-        .minerals-total {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid rgba(0, 200, 255, 0.2);
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #ffcc00;
-            font-weight: 600;
-        }
-
-        /* ===== VELOCITY SECTION ===== */
+        /* Velocity Section */
         .velocity-display {
             text-align: center;
         }
 
         .speed-gauge {
             position: relative;
-            margin-bottom: 8px;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
         }
 
         .speed-number {
-            font-size: 28px;
-            font-weight: 700;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: bold;
             color: #00f3ff;
-            text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
-            font-family: 'Courier New', monospace;
-            line-height: 1;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
         }
 
         .speed-unit {
-            font-size: 9px;
-            color: rgba(0, 243, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .speed-bar-container {
-            height: 6px;
-            background: rgba(0, 30, 50, 0.8);
-            border-radius: 3px;
-            overflow: hidden;
-            border: 1px solid rgba(0, 150, 200, 0.3);
-        }
-
-        .speed-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00f3ff, #00ff88);
-            border-radius: 3px;
-            transition: width 0.1s ease;
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
-        }
-
-        .zoom-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .zoom-label {
-            font-size: 9px;
+            font-size: 8px;
             color: rgba(0, 243, 255, 0.6);
+            text-align: center;
+            margin-top: 2px;
         }
 
-        .zoom-value {
-            font-size: 12px;
-            color: #00f3ff;
-            font-family: 'Courier New', monospace;
-            min-width: 40px;
-        }
-
-        .zoom-btn {
-            width: 24px;
-            height: 24px;
-            background: rgba(0, 60, 90, 0.5);
-            border: 1px solid rgba(0, 200, 255, 0.3);
-            border-radius: 4px;
-            color: #00f3ff;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
+        .cockpit-zoom-controls {
             display: flex;
-            align-items: center;
+            gap: 4px;
             justify-content: center;
+            margin-top: 6px;
+            align-items: center;
         }
 
-        .zoom-btn:hover {
-            background: rgba(0, 100, 150, 0.6);
-            transform: scale(1.1);
+        .cockpit-zoom-controls .zoom-btn {
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            color: var(--accent);
+            cursor: pointer;
         }
 
-        /* ===== GEMS SECTION ===== */
+        .cockpit-zoom-controls .zoom-value {
+            font-size: 10px;
+            color: rgba(0, 243, 255, 0.8);
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* Gems Section - Expands horizontally to the right */
         .gems-section {
-            flex: 0.8;
-        }
-
-        .gems-display {
+            min-width: 140px;
+            max-width: none;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            gap: 8px;
         }
 
         .gems-grid {
@@ -1242,582 +1245,278 @@
             flex-shrink: 0;
         }
 
-        .gem-icon {
-            font-size: 16px;
+        .gem-emoji {
+            font-size: 14px;
         }
 
         .gem-count {
-            font-size: 10px;
-            color: #00f3ff;
-            font-family: 'Courier New', monospace;
-        }
-
-        .gems-total {
-            text-align: center;
-            font-size: 11px;
-            color: rgba(0, 243, 255, 0.7);
-            padding-top: 4px;
-            border-top: 1px solid rgba(0, 243, 255, 0.2);
-        }
-
-        .gems-total span {
-            color: #00ff88;
+            color: #fff;
             font-weight: bold;
         }
 
-        /* ===== LEADERBOARD SECTION ===== */
-        .leaderboard-list {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .leader-row {
+        .gems-total {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 11px;
+            font-weight: bold;
+            color: #ffd700;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 3px 6px;
-            background: rgba(0, 40, 60, 0.3);
-            border-radius: 3px;
-            font-size: 10px;
         }
 
-        .leader-row.is-you {
-            background: linear-gradient(90deg,
-                    rgba(0, 150, 200, 0.4) 0%,
-                    rgba(0, 80, 120, 0.3) 100%);
-            border: 1px solid rgba(0, 243, 255, 0.4);
-        }
-
-        .leader-rank {
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 80, 120, 0.5);
-            border-radius: 50%;
-            font-size: 9px;
-            font-weight: 700;
-            color: #ffcc00;
-        }
-
-        .leader-name {
-            flex: 1;
-            margin-left: 8px;
-            color: rgba(200, 230, 255, 0.9);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .leader-score {
-            color: #00ff88;
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-        }
-
-        /* ===== RESPONSIVE COCKPIT ===== */
-        @media (max-width: 1200px) {
-            .flight-cockpit {
-                gap: 6px;
-                padding: 8px 10px;
-            }
-
-            .cockpit-section {
-                min-width: 100px;
-            }
-        }
-
-        @media (max-width: 900px) {
-            .flight-cockpit {
-                height: 140px;
-            }
-
-            .cockpit-section {
-                max-width: 180px;
-            }
-
-            .radar-container {
-                width: 90px;
-                height: 90px;
-            }
-
-            .controls-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 700px) {
-            .flight-cockpit {
-                height: 120px;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .cockpit-section {
-                max-width: 150px;
-            }
-
-            /* Hide controls on mobile, keep radar and velocity */
-            .cockpit-section.controls-section {
-                display: none;
-            }
-        }
-
-        /* ========== FLOATING WINDOWS ========== */
+        /* ===== FLOATING WINDOWS (Map & Leaders) ===== */
         .floating-window {
             position: fixed;
-            z-index: 180;
-            background: linear-gradient(180deg,
-                    rgba(0, 25, 45, 0.94) 0%,
-                    rgba(0, 12, 25, 0.98) 100%);
-            border: 1px solid rgba(0, 243, 255, 0.35);
-            border-radius: 12px;
-            backdrop-filter: blur(20px);
-            box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                0 0 20px rgba(0, 243, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(12px);
+            z-index: 85;
             pointer-events: auto;
-            transition: box-shadow 0.2s, border-color 0.2s;
             overflow: hidden;
-            user-select: none;
-        }
-
-        .floating-window.dragging {
-            transition: none;
-            box-shadow:
-                0 12px 48px rgba(0, 0, 0, 0.6),
-                0 0 30px rgba(0, 243, 255, 0.3);
-            border-color: rgba(0, 243, 255, 0.6);
-            z-index: 200;
         }
 
         .floating-window.hidden {
             display: none;
         }
 
-        /* Window positioning */
-        .map-window {
-            left: 15px;
-            bottom: 130px;
-            width: 240px;
-        }
-
-        .leaderboard-window {
-            right: 15px;
-            bottom: 130px;
-            width: 200px;
-        }
-
-        /* Upgrade Window */
-        .upgrade-window {
-            right: 15px;
-            top: 100px;
-            width: 280px;
-        }
-
-        .upgrade-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            padding: 5px;
-        }
-
-        .upgrade-card {
-            background: rgba(0, 30, 50, 0.8);
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            border-radius: 6px;
-            padding: 8px;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .upgrade-card:hover {
-            border-color: rgba(0, 243, 255, 0.5);
-            background: rgba(0, 50, 80, 0.8);
-        }
-
-        .upgrade-card.maxed {
-            border-color: rgba(255, 215, 0, 0.4);
-            background: rgba(40, 40, 0, 0.4);
-        }
-
-        .upgrade-icon {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
-
-        .upgrade-name {
-            font-size: 10px;
-            color: #00f3ff;
-            margin-bottom: 4px;
-        }
-
-        .upgrade-level {
-            font-size: 12px;
-            color: #ffd700;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .upgrade-bar {
-            height: 4px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 2px;
-            overflow: hidden;
-            margin-bottom: 6px;
-        }
-
-        .upgrade-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00f3ff, #00ff88);
-            transition: width 0.3s;
-        }
-
-        .upgrade-cost {
-            font-size: 9px;
-            color: rgba(200, 200, 200, 0.8);
-            margin-bottom: 4px;
-        }
-
-        .upgrade-btn {
-            width: 100%;
-            padding: 4px 8px;
-            border: 1px solid rgba(0, 255, 136, 0.4);
-            background: rgba(0, 80, 50, 0.5);
-            border-radius: 4px;
-            color: #00ff88;
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .upgrade-btn:hover:not(:disabled) {
-            background: rgba(0, 255, 136, 0.3);
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-        }
-
-        .upgrade-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* Wallet Window */
-        .wallet-window {
-            right: 230px;
-            bottom: 130px;
-            width: 260px;
-        }
-
-        .wallet-summary {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px;
-            background: rgba(0, 40, 60, 0.4);
-            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-        }
-
-        .wallet-total,
-        .wallet-credits {
-            text-align: center;
-        }
-
-        .wallet-label {
-            font-size: 9px;
-            color: rgba(200, 200, 200, 0.6);
-            display: block;
-        }
-
-        .wallet-value {
-            font-size: 14px;
-            color: #00ff88;
-            font-weight: bold;
-        }
-
-        .wallet-gems {
-            max-height: 200px;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
-        .wallet-gem-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 4px 8px;
-            margin-bottom: 4px;
-            background: rgba(0, 30, 50, 0.5);
-            border-radius: 4px;
-            font-size: 11px;
-        }
-
-        .wallet-gem-row:hover {
-            background: rgba(0, 50, 80, 0.5);
-        }
-
-        .gem-info {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .gem-emoji {
-            font-size: 14px;
-        }
-
-        .gem-name {
-            color: #fff;
-        }
-
-        .gem-count {
-            color: #00f3ff;
-            font-weight: bold;
-        }
-
-        .gem-value {
-            color: #00ff88;
-        }
-
-        .wallet-actions {
-            padding: 8px;
-            border-top: 1px solid rgba(0, 243, 255, 0.2);
-        }
-
-        .wallet-btn {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid rgba(255, 215, 0, 0.4);
-            background: rgba(80, 60, 0, 0.5);
-            border-radius: 4px;
-            color: #ffd700;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .wallet-btn:hover {
-            background: rgba(255, 215, 0, 0.3);
-            box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
-        }
-
-
-        /* Window header */
         .window-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 10px 12px;
-            background: linear-gradient(90deg,
-                    rgba(0, 60, 90, 0.5) 0%,
-                    rgba(0, 30, 50, 0.3) 100%);
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
             border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-            cursor: grab;
-            user-select: none;
-        }
-
-        .floating-window.dragging .window-header {
-            cursor: grabbing;
-        }
-
-        .window-header:hover {
-            background: linear-gradient(90deg,
-                    rgba(0, 80, 120, 0.5) 0%,
-                    rgba(0, 40, 60, 0.3) 100%);
+            cursor: move;
         }
 
         .window-header h4 {
             margin: 0;
-            font-size: 12px;
-            color: #00f3ff;
-            text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+            font-size: 11px;
+            color: var(--accent);
+            text-transform: uppercase;
             letter-spacing: 1px;
-            font-weight: 600;
         }
 
         .window-controls {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            gap: 4px;
         }
 
         .window-btn {
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(0, 243, 255, 0.3);
-            background: rgba(0, 50, 80, 0.4);
-            border-radius: 4px;
-            color: #00f3ff;
-            font-size: 12px;
+            border-radius: 3px;
+            color: var(--accent);
+            font-size: 10px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
         }
 
         .window-btn:hover {
             background: rgba(0, 243, 255, 0.2);
-            border-color: #00f3ff;
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
         }
 
-        .window-toggle {
-            color: rgba(0, 243, 255, 0.7);
-            font-size: 10px;
-            transition: transform 0.2s;
-        }
-
-        /* Collapsed state */
-        .floating-window.collapsed .window-content {
-            display: none;
-        }
-
-        .floating-window.collapsed .window-toggle {
-            transform: rotate(-90deg);
-        }
-
-        /* Window content */
         .window-content {
-            padding: 12px;
+            padding: 10px;
         }
 
-        /* ===== MAP WINDOW SPECIFIC ===== */
-        .map-canvas-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 8px;
-            overflow: hidden;
-            background: radial-gradient(ellipse at center,
-                    rgba(0, 20, 40, 1) 0%,
-                    rgba(0, 8, 20, 1) 100%);
-            border: 1px solid rgba(0, 150, 200, 0.3);
-            margin-bottom: 8px;
+        /* Map Window - Bottom Left */
+        .map-window {
+            left: 20px;
+            bottom: 200px;
+            /* Moved up to avoid cockpit */
+            width: 200px;
+            height: 180px;
+        }
+
+        .map-window.collapsed {
+            height: auto;
+        }
+
+        .map-window.collapsed .window-content {
+            display: none;
         }
 
         .map-canvas {
             width: 100%;
-            height: 100%;
+            height: 120px;
+            background: radial-gradient(circle at center, rgba(0, 20, 40, 0.9) 0%, rgba(0, 5, 15, 0.95) 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
         }
 
         .map-legend {
             display: flex;
-            flex-wrap: wrap;
             gap: 8px;
-            font-size: 9px;
-            color: rgba(200, 230, 255, 0.7);
+            margin-top: 6px;
+            flex-wrap: wrap;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .legend-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
         }
 
-        /* Map maximized state */
-        .map-window.maximized {
-            left: 50% !important;
-            top: 50% !important;
-            bottom: auto !important;
-            transform: translate(-50%, -50%);
-            width: 85vw !important;
-            height: 80vh !important;
-            z-index: 500;
+        /* Leaders Window - Bottom Right */
+        .leaders-window {
+            right: 20px;
+            bottom: 200px;
+            /* Moved up to avoid cockpit */
+            width: 180px;
         }
 
-        .map-window.maximized .window-content {
-            height: calc(100% - 42px);
-            padding: 15px;
-        }
-
-        .map-window.maximized .map-canvas-container {
-            height: calc(100% - 40px);
-            aspect-ratio: auto;
-        }
-
-        .map-window.maximized .map-legend {
-            padding-top: 10px;
-            font-size: 11px;
-            gap: 15px;
-        }
-
-        /* Map overlay for maximized */
-        .map-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 499;
+        .leaders-window.collapsed .window-content {
             display: none;
         }
 
-        .map-overlay.visible {
-            display: block;
+        .leaders-list {
+            max-height: 150px;
+            overflow-y: auto;
         }
 
-        /* ===== FLOATING LEADERBOARD SPECIFIC ===== */
-        .floating-window .leaderboard-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .leaders-list::-webkit-scrollbar {
+            width: 3px;
         }
 
-        .floating-window .leader-row {
+        .leaders-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .leader-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 8px;
-            background: rgba(0, 40, 60, 0.4);
-            border-radius: 6px;
-            font-size: 11px;
-            transition: background 0.2s;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 10px;
         }
 
-        .floating-window .leader-row:hover {
-            background: rgba(0, 60, 90, 0.5);
+        .leader-row:last-child {
+            border-bottom: none;
         }
 
-        .floating-window .leader-row.is-you {
-            background: linear-gradient(90deg,
-                    rgba(0, 150, 200, 0.4) 0%,
-                    rgba(0, 80, 120, 0.3) 100%);
-            border: 1px solid rgba(0, 243, 255, 0.4);
+        .leader-rank {
+            width: 20px;
+            color: var(--accent);
+            font-weight: bold;
         }
 
-        /* Responsive floating windows */
+        .leader-name {
+            flex: 1;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .leader-wealth {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .flight-cockpit {
+                padding: 6px 8px;
+                gap: 6px;
+            }
+
+            .cockpit-section {
+                padding: 6px 8px;
+                min-width: 80px;
+            }
+
+            .radar-container {
+                width: 60px;
+                height: 60px;
+            }
+
+            .gems-section {
+                max-width: 200px;
+            }
+
+            .gems-grid {
+                max-width: 180px;
+            }
+        }
+
         @media (max-width: 600px) {
-            .map-window {
-                left: 10px;
-                width: 180px;
+            .flight-cockpit {
+                flex-wrap: wrap;
+                justify-content: center;
             }
 
-            .leaderboard-window {
-                right: 10px;
-                width: 160px;
+            .controls-section {
+                display: none;
+            }
+
+            .map-window,
+            .leaders-window {
+                width: 150px;
+                bottom: 110px;
             }
         }
 
-        /* ===== AI CHAT SIDEBAR OVERRIDE ===== */
-        /* Repositions browser extension AI chat opener to top-right corner */
-        [id*="sidebar-opener"],
-        [id*="aiinhbfoop"] {
-            top: 55px !important;
-            bottom: auto !important;
-            right: 15px !important;
+        /* Fullscreen Map Styles */
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 2000;
+            /* Ensure this is higher than everything else */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fullscreen-modal.hidden {
+            display: none;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 2001;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+        }
+
+        #fullscreenMapCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #fullscreenMapCanvas:active {
+            cursor: grabbing;
         }
     </style>
-
-
 </head>
 
 <body>
@@ -1874,22 +1573,36 @@
     <!-- === MATRIX CONTROLS POPUP === -->
     <div id="matrixPanel" class="popup-panel hidden">
         <h3>Matrix</h3>
-        <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
-        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+        <p>Speed</p>
+        <input type="range" id="matrixSpeedSlider" min="1" max="50" value="15" title="Stream Speed">
+        <p>Color</p>
+        <input type="color" id="matrixColorPicker" value="#00ff00" title="Matrix Color">
+        <button id="matrixRainbowBtn" class="btn-small">Rainbow Mode</button>
+    </div>
 
-        <label style="font-size:10px;margin-top:6px;display:block">Length: <span
-                id="matrixLengthValue">1.0x</span></label>
-        <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
-
-        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
-        <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
-
-        <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
-            <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
-                style="width:24px;height:24px">
-            <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
-                style="font-size:10px;padding:6px">🌈</button>
+    <!-- === FULLSCREEN MAP MODAL === -->
+    <div id="expandedMapModal" class="fullscreen-modal hidden">
+        <div class="map-controls">
+            <button class="btn-small" onclick="app.closeExpandedMap()">CLOSE MAP</button>
+            <span id="mapZoomLevel">Zoom: 1.0x</span>
         </div>
+        <canvas id="fullscreenMapCanvas"></canvas>
+    </div>
+    <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
+    <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+
+    <label style="font-size:10px;margin-top:6px;display:block">Length: <span id="matrixLengthValue">1.0x</span></label>
+    <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
+
+    <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
+    <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
+
+    <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
+        <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
+            style="width:24px;height:24px">
+        <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
+            style="font-size:10px;padding:6px">🌈</button>
+    </div>
     </div>
 
 
@@ -1905,6 +1618,30 @@
         <button class="btn-small" onclick="app.resetRotation()"
             style="width:100%; margin-top:8px;font-size:10px;padding:6px">Reset</button>
     </div>
+
+    <!-- === UPGRADE STATION POPUP === -->
+    <div id="upgradePanel" class="popup-panel hidden"
+        style="width: 220px; max-height: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; z-index: 200;">
+        <h3
+            style="text-align: center; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--accent); padding-bottom: 8px;">
+            Interstellar Dock</h3>
+
+        <div
+            style="margin-bottom: 15px; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+            <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">AVAILABLE CREDITS</div>
+            <div style="font-size: 24px; color: #ffd700; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"
+                id="dockCredits">$0</div>
+        </div>
+
+        <div id="upgradeList"
+            style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 300px; padding-right: 4px;">
+            <!-- Generated via JS -->
+        </div>
+
+        <button class="btn-small" onclick="document.getElementById('upgradePanel').classList.add('hidden')"
+            style="width: 100%; margin-top: 15px; padding: 10px; font-weight: bold;">CLOSE DOCK</button>
+    </div>
+
 
     <!-- === BOTTOM BAR === -->
     <div class="bottom-bar">
@@ -2062,173 +1799,117 @@
 
     <canvas id="canvas"></canvas>
 
-    <!-- Flight Mode Cockpit Control Panel -->
+    <!-- Flight Mode HUD Overlay -->
     <div id="flightHUD" class="flight-hud hidden">
-        <div class="flight-cockpit">
-            <!-- 1. CONTROLS Section -->
-            <div id="sectionControls" class="cockpit-section controls-section">
-                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionControls')">
-                    <h4>🎮 Controls</h4>
-                    <span class="cockpit-toggle">▼</span>
-                </div>
-                <div class="cockpit-content">
-                    <div class="controls-grid">
-                        <div class="control-key"><kbd>W</kbd><span>Forward</span></div>
-                        <div class="control-key"><kbd>S</kbd><span>Reverse</span></div>
-                        <div class="control-key"><kbd>A</kbd><span>Left</span></div>
-                        <div class="control-key"><kbd>D</kbd><span>Right</span></div>
-                        <div class="control-key"><kbd>Q</kbd><span>Up</span></div>
-                        <div class="control-key"><kbd>E</kbd><span>Down</span></div>
-                        <div class="control-key"><kbd>⇧</kbd><span>Boost</span></div>
-                        <div class="control-key"><kbd>±</kbd><span>Zoom</span></div>
-                    </div>
+        <!-- Cockpit Bar (Above Bottom Bar) -->
+        <!-- Cockpit Separate Floating Windows -->
+
+        <!-- 1. CONTROLS Section -->
+        <div id="sectionControls" class="cockpit-section controls-section">
+            <div class="cockpit-header">
+                <h4>🎮 Controls</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')"
+                    title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div class="controls-grid">
+                    <kbd>W</kbd><kbd>S</kbd><kbd>A</kbd><kbd>D</kbd>
+                    <kbd>Q</kbd><kbd>E</kbd><kbd>⇧</kbd><kbd>U</kbd>
                 </div>
             </div>
+        </div>
 
-            <!-- 2. RADAR Section -->
-            <div id="sectionRadar" class="cockpit-section radar-section">
-                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionRadar')">
-                    <h4>📡 Radar</h4>
-                    <span class="cockpit-toggle">▼</span>
-                </div>
-                <div class="cockpit-content">
-                    <div class="radar-container">
-                        <canvas id="radarCanvas" class="radar-canvas" width="110" height="110"></canvas>
-                        <div class="radar-sweep"></div>
-                        <div class="radar-center"></div>
-                    </div>
-                    <div class="radar-coords">
-                        <span>X: <span id="radarPosX">0</span></span>
-                        <span>Y: <span id="radarPosY">0</span></span>
-                    </div>
-                </div>
+        <!-- 2. RADAR Section -->
+        <div id="sectionRadar" class="cockpit-section">
+            <div class="cockpit-header">
+                <h4>📡 Radar</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')"
+                    title="Collapse">−</button>
             </div>
-
-            <!-- 3. VELOCITY Section -->
-            <div id="sectionVelocity" class="cockpit-section velocity-section">
-                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionVelocity')">
-                    <h4>⚡ Velocity</h4>
-                    <span class="cockpit-toggle">▼</span>
+            <div class="cockpit-content">
+                <div class="radar-container">
+                    <canvas id="radarCanvas" class="radar-canvas" width="80" height="80"></canvas>
+                    <div class="radar-sweep"></div>
                 </div>
-                <div class="cockpit-content">
-                    <div class="velocity-display">
-                        <div class="speed-gauge">
-                            <div id="speedNumber" class="speed-number">0</div>
-                            <div class="speed-unit">km/s</div>
-                        </div>
-                        <div class="speed-bar-container">
-                            <div id="speedBarFill" class="speed-bar-fill" style="width: 0%"></div>
-                        </div>
-                        <div class="zoom-controls">
-                            <button class="zoom-btn" onclick="app.flightZoom(-0.2); event.stopPropagation();">−</button>
-                            <span id="zoomDisplay" class="zoom-value">1.0x</span>
-                            <button class="zoom-btn" onclick="app.flightZoom(0.2); event.stopPropagation();">+</button>
-                        </div>
-                    </div>
-                </div>
+                <div class="radar-coords" id="radarCoords">X: 0 Y: 0</div>
             </div>
+        </div>
 
-            <!-- 4. GEMS/INVENTORY Section -->
-            <div id="sectionGems" class="cockpit-section gems-section">
-                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionGems')">
-                    <h4>💎 Gems</h4>
-                    <span class="cockpit-toggle">▼</span>
-                </div>
-                <div class="cockpit-content">
-                    <div class="gems-display">
-                        <div id="gemsGrid" class="gems-grid">
-                            <!-- Populated by JS -->
-                        </div>
-                        <div class="gems-total">
-                            Total: <span id="gemsTotal">$0</span>
-                        </div>
+        <!-- 3. VELOCITY Section -->
+        <div id="sectionVelocity" class="cockpit-section">
+            <div class="cockpit-header">
+                <h4>⚡ Velocity</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionVelocity')"
+                    title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div class="velocity-display">
+                    <div class="speed-gauge">
+                        <canvas id="speedGaugeCanvas" width="60" height="60"></canvas>
+                        <div id="speedNumber" class="speed-number">0</div>
+                    </div>
+                    <div class="speed-unit">km/s</div>
+                    <div class="cockpit-zoom-controls">
+                        <button class="zoom-btn" onclick="app.flightZoom(-0.2); event.stopPropagation();">−</button>
+                        <span id="zoomDisplay" class="zoom-value">1.0x</span>
+                        <button class="zoom-btn" onclick="app.flightZoom(0.2); event.stopPropagation();">+</button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- 4. GEMS Section -->
+        <div id="sectionGems" class="cockpit-section gems-section">
+            <div class="cockpit-header">
+                <h4>💎 Gems</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')" title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div id="gemsGrid" class="gems-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="gems-total">Total: <span id="gemsTotal">$0</span></div>
+            </div>
+        </div>
     </div>
 
-    <!-- Floating Map Window (bottom-left) -->
+    <!-- Floating Map Window (Bottom Left, above cockpit) -->
     <div id="floatingMap" class="floating-window map-window hidden">
-        <div class="window-header" onclick="app.toggleFloatingWindow('floatingMap')">
+        <div class="window-header">
             <h4>🗺️ Universe Map</h4>
             <div class="window-controls">
-                <button class="window-btn maximize-btn" onclick="app.toggleMapMaximize(); event.stopPropagation();"
-                    title="Maximize">⤢</button>
-                <span class="window-toggle">▼</span>
+                <button class="window-btn" onclick="app.openExpandedMap()" title="Expand Map">⛶</button>
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingMap')" title="Collapse">−</button>
             </div>
         </div>
         <div class="window-content">
-            <div class="map-canvas-container">
-                <canvas id="mapCanvas" class="map-canvas" width="220" height="220"></canvas>
-            </div>
+            <canvas id="mapCanvas" class="map-canvas" width="180" height="120"></canvas>
             <div class="map-legend">
-                <div class="legend-item"><span class="legend-dot" style="background:#00f3ff;"></span>You</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#8B8680;"></span>Industrial</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#FFD700;"></span>Precious</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#50C878;"></span>Crystal</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#4AFF00;"></span>Nuclear</div>
-                <div class="legend-item"><span class="legend-dot" style="background:#9D00FF;"></span>Exotic</div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#0f0"></div>You
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ff0"></div>Stars
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#f0f"></div>Gems
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Map Maximize Overlay -->
-    <div id="mapOverlay" class="map-overlay" onclick="app.toggleMapMaximize()"></div>
-
-    <!-- Floating Leaderboard Window (bottom-right) -->
-    <div id="floatingLeaderboard" class="floating-window leaderboard-window hidden">
-        <div class="window-header" onclick="app.toggleFloatingWindow('floatingLeaderboard')">
+    <!-- Floating Leaders Window (Bottom Right, above cockpit) -->
+    <div id="floatingLeaders" class="floating-window leaders-window hidden">
+        <div class="window-header">
             <h4>🏆 Leaders</h4>
             <div class="window-controls">
-                <span class="window-toggle">▼</span>
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingLeaders')"
+                    title="Collapse">−</button>
             </div>
         </div>
         <div class="window-content">
-            <div id="floatingLeadersList" class="leaderboard-list"></div>
-        </div>
-    </div>
-
-
-    <!-- Floating Upgrade Window -->
-    <div id="upgradeWindow" class="floating-window upgrade-window hidden">
-        <div class="window-header" onclick="app.toggleFloatingWindow('upgradeWindow')">
-            <h4>🔧 Upgrades</h4>
-            <div class="window-controls">
-                <span class="window-toggle">▼</span>
-            </div>
-        </div>
-        <div class="window-content">
-            <div id="upgradeGrid" class="upgrade-grid">
-                <!-- Populated by JavaScript -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Floating Wallet Window -->
-    <div id="walletWindow" class="floating-window wallet-window hidden">
-        <div class="window-header" onclick="app.toggleFloatingWindow('walletWindow')">
-            <h4>💰 Wallet</h4>
-            <div class="window-controls">
-                <span class="window-toggle">▼</span>
-            </div>
-        </div>
-        <div class="window-content">
-            <div class="wallet-summary">
-                <div class="wallet-total">
-                    <span class="wallet-label">Total Value:</span>
-                    <span id="walletTotal" class="wallet-value">$0</span>
-                </div>
-                <div class="wallet-credits">
-                    <span class="wallet-label">Credits:</span>
-                    <span id="walletCredits" class="wallet-value">0</span>
-                </div>
-            </div>
-            <div id="walletGems" class="wallet-gems">
-                <!-- Populated by JavaScript -->
-            </div>
-            <div class="wallet-actions">
-                <button class="wallet-btn sell-btn" onclick="app.sellAllGems()">💵 Sell All Gems</button>
+            <div id="floatingLeadersList" class="leaders-list">
+                <!-- Populated by JS -->
             </div>
         </div>
     </div>
@@ -2246,17 +1927,13 @@
                     <h3>🛸 Saucer</h3>
                     <p>High speed, drift capability. Speed: 70, Accel: 0.7</p>
                 </div>
-                <div class="ship-option" onclick="app.selectShip('deathstar')">
-                    <h3>☠️ Death Star</h3>
-                    <p>Imperial battle station. Speed: 20, Accel: 0.2</p>
+                <div class="ship-option" onclick="app.selectShip('hauler')">
+                    <h3>📦 Hauler</h3>
+                    <p>Heavy, stable platform. Speed: 30, Accel: 0.3</p>
                 </div>
-                <div class="ship-option" onclick="app.selectShip('tiefighter')">
-                    <h3>👾 TIE Fighter</h3>
-                    <p>Imperial starfighter. Speed: 90, Accel: 0.9</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('constellation')">
-                    <h3>✨ Constellation</h3>
-                    <p>Your custom constellation design. Speed: 60, Accel: 0.6</p>
+                <div class="ship-option" onclick="app.selectShip('orion')">
+                    <h3>⭐ Orion</h3>
+                    <p>Constellation class. Speed: 60, Accel: 0.6</p>
                 </div>
                 <div class="ship-option" onclick="app.selectShip('draco')">
                     <h3>🐉 Draco</h3>
@@ -2324,27 +2001,27 @@
                 // Flight game state
                 this.flightMode = false;
                 this.keysPressed = {};
+                this.credits = this.loadCredits();
+                const savedUpgrades = this.loadUpgrades();
+
                 this.playerShip = {
                     type: 'default',
                     x: 0, y: 0, z: 0,
                     vx: 0, vy: 0, vz: 0,
                     rotation: 0,
                     speed: 0,
-                    maxSpeed: 50,  // Base speed, modified by upgrades
-                    acceleration: 0.5,
+                    maxSpeed: 50 * (1 + (savedUpgrades.speed || 0) * 0.2),
+                    acceleration: 0.5 * (1 + (savedUpgrades.speed || 0) * 0.1),
                     rotationSpeed: 0.08,
                     size: 45,
-                    // Upgrade-derived stats
-                    shieldMax: 0,
-                    shieldCurrent: 0,
-                    damageReduction: 0,  // 0-1 (0% to 100%)
-                    weaponDamage: 1.0,   // Multiplier
-                    cargoBonus: 1.0,     // Multiplier for gem value
-                    radarRange: 3000     // Radar detection range
+                    hullHealth: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
+                    maxHull: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
+                    shield: 50 * (1 + (savedUpgrades.shield || 0) * 0.2),
+                    maxShield: 50 * (1 + (savedUpgrades.shield || 0) * 0.2),
+                    radarRange: 2000 * (1 + (savedUpgrades.radar || 0) * 0.3),
+                    upgrades: savedUpgrades
                 };
                 this.speedLines = [];  // Visual speed indicators
-                this.inventoryDisplayMode = 'qty';  // 'qty' or 'value'
-                this.hudWindowStates = {};  // Track collapsed state of HUD windows
 
                 // Mineral system
                 this.minerals = [];
@@ -2373,22 +2050,12 @@
                     uranium: { name: 'Uranium', value: 8000, color: '#4AFF00', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Nuclear reactors' },
                     plutonium: { name: 'Plutonium', value: 12000, color: '#00FF7F', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Advanced power' },
                     helium3: { name: 'Helium-3', value: 15000, color: '#87CEEB', rarity: 'epic', size: 26, zone: 'nuclear', use: 'Fusion reactors' },
-                    thorium: { name: 'Thorium', value: 18000, color: '#32CD32', rarity: 'epic', size: 29, zone: 'nuclear', use: 'Weapons power', upgradeType: 'weapons' },
-                    osmium: { name: 'Osmium', value: 10000, color: '#4682B4', rarity: 'epic', size: 27, zone: 'nuclear', use: 'Armor plating', upgradeType: 'armor' },
-                    deuterium: { name: 'Deuterium', value: 20000, color: '#00CED1', rarity: 'epic', size: 26, zone: 'nuclear', use: 'Warp efficiency', upgradeType: 'warp' },
 
                     // ============ EXOTIC ZONE (3% spawn rate - edge of space) ============
                     neodymium: { name: 'Neodymium', value: 25000, color: '#FF6EC7', rarity: 'legendary', size: 30, zone: 'exotic', use: 'Magnet tech' },
                     lanthanum: { name: 'Lanthanum', value: 30000, color: '#9D00FF', rarity: 'legendary', size: 32, zone: 'exotic', use: 'Hybrid engines' },
                     darkmatter: { name: 'Dark Matter', value: 100000, color: '#1a0033', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Warp drives' },
-                    antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' },
-                    aether: { name: 'Aether', value: 75000, color: '#E6E6FA', rarity: 'mythic', size: 38, zone: 'exotic', use: 'Universal catalyst', upgradeType: 'all' },
-
-                    // ============ UPGRADE GEMS (distributed across zones) ============
-                    rhodium: { name: 'Rhodium', value: 4500, color: '#E8E8E8', rarity: 'uncommon', size: 20, zone: 'precious', use: 'Cargo capacity', upgradeType: 'cargo' },
-                    krypton: { name: 'Krypton', value: 2000, color: '#ADD8E6', rarity: 'uncommon', size: 18, zone: 'precious', use: 'Radar range', upgradeType: 'radar' },
-                    iridium: { name: 'Iridium', value: 5000, color: '#E0FFFF', rarity: 'rare', size: 24, zone: 'crystal', use: 'Speed boost', upgradeType: 'speed' },
-                    xenon: { name: 'Xenon', value: 6000, color: '#7B68EE', rarity: 'rare', size: 23, zone: 'crystal', use: 'Shield capacity', upgradeType: 'shields' }
+                    antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' }
                 };
 
                 // Galaxy zone configuration - determines element distribution
@@ -2406,7 +2073,7 @@
                         name: 'Precious Nebula',
                         color: '#FFD700',
                         glowColor: 'rgba(255, 215, 0, 0.3)',
-                        elements: ['silver', 'gold', 'platinum', 'palladium', 'rhodium', 'krypton'],
+                        elements: ['silver', 'gold', 'platinum', 'palladium'],
                         concentrationBonus: 2.5,
                         defenseLevel: 2,
                         distanceRange: { min: 800, max: 2000 }
@@ -2415,7 +2082,7 @@
                         name: 'Crystal Fields',
                         color: '#50C878',
                         glowColor: 'rgba(80, 200, 120, 0.3)',
-                        elements: ['quartz', 'diamond', 'emerald', 'ruby', 'sapphire', 'iridium', 'xenon'],
+                        elements: ['quartz', 'diamond', 'emerald', 'ruby', 'sapphire'],
                         concentrationBonus: 2.0,
                         defenseLevel: 3,
                         distanceRange: { min: 2000, max: 4000 }
@@ -2424,7 +2091,7 @@
                         name: 'Radiation Belt',
                         color: '#4AFF00',
                         glowColor: 'rgba(74, 255, 0, 0.4)',
-                        elements: ['uranium', 'plutonium', 'helium3', 'thorium', 'osmium', 'deuterium'],
+                        elements: ['uranium', 'plutonium', 'helium3'],
                         concentrationBonus: 1.5,
                         defenseLevel: 4,
                         distanceRange: { min: 3500, max: 5000 }
@@ -2433,7 +2100,7 @@
                         name: 'Dark Frontier',
                         color: '#9D00FF',
                         glowColor: 'rgba(157, 0, 255, 0.4)',
-                        elements: ['neodymium', 'lanthanum', 'darkmatter', 'antimatter', 'aether'],
+                        elements: ['neodymium', 'lanthanum', 'darkmatter', 'antimatter'],
                         concentrationBonus: 1.0,
                         defenseLevel: 5,
                         distanceRange: { min: 5000, max: 8000 }
@@ -2451,69 +2118,6 @@
                 this.projectiles = [];   // Active projectiles
                 this.playerInventory = this.loadInventory();
                 this.collectionNotifications = [];
-
-                // ============ UPGRADE SYSTEM ============
-                this.shipUpgrades = this.loadUpgrades();
-                this.credits = this.loadCredits();
-
-                // Upgrade definitions with costs and effects
-                this.upgradeDefinitions = {
-                    speed: {
-                        name: 'Speed Boost',
-                        icon: '🚀',
-                        max: 10,
-                        effect: '+5% max speed per level',
-                        gem: 'iridium',
-                        baseCost: 3,
-                        costMultiplier: 1.5
-                    },
-                    armor: {
-                        name: 'Hull Armor',
-                        icon: '🛡️',
-                        max: 10,
-                        effect: '+10% damage resistance',
-                        gem: 'osmium',
-                        baseCost: 2,
-                        costMultiplier: 1.6
-                    },
-                    weapons: {
-                        name: 'Weapons Array',
-                        icon: '⚔️',
-                        max: 10,
-                        effect: '+15% damage output',
-                        gem: 'thorium',
-                        baseCost: 2,
-                        costMultiplier: 1.7
-                    },
-                    shields: {
-                        name: 'Shield Generator',
-                        icon: '🔮',
-                        max: 10,
-                        effect: '+100 shield capacity',
-                        gem: 'xenon',
-                        baseCost: 3,
-                        costMultiplier: 1.5
-                    },
-                    cargo: {
-                        name: 'Cargo Bay',
-                        icon: '📦',
-                        max: 5,
-                        effect: '+20% cargo capacity',
-                        gem: 'rhodium',
-                        baseCost: 5,
-                        costMultiplier: 2.0
-                    },
-                    radar: {
-                        name: 'Radar Range',
-                        icon: '📡',
-                        max: 5,
-                        effect: '+500px radar range',
-                        gem: 'krypton',
-                        baseCost: 4,
-                        costMultiplier: 1.8
-                    }
-                };
-
 
                 // Initialize Matrix theme history (must exist before toggleBgStyle/generateCyberStyle is called)
                 try {
@@ -2549,7 +2153,10 @@
 
                 // Generators
                 this.initNameGenerators();
+                // Generators
+                this.initNameGenerators();
                 this.initTemplates();
+                this.generateResourceDeposits();
 
                 // Performance
                 this.backgroundStars = [];
@@ -2705,15 +2312,11 @@
                     // Flight mode controls
                     if (this.flightMode) {
                         const key = e.key.toLowerCase();
-                        this.keysPressed[key] = true;
-
-                        // Zoom controls with + and -
-                        if (e.key === '+' || e.key === '=') {
-                            this.flightZoom(0.15);
-                        } else if (e.key === '-' || e.key === '_') {
-                            this.flightZoom(-0.15);
+                        if (key === 'u') {
+                            this.toggleUpgradePanel();
+                        } else {
+                            this.keysPressed[key] = true;
                         }
-
                         e.preventDefault();
                     }
                 });
@@ -2731,6 +2334,15 @@
 
                 // Cyber speed slider
                 this.matrixColorCustomized = false;
+
+                // UI Events
+                this.initDraggableWindows();
+
+                // UI Events
+                this.initDraggableWindows();
+
+                // UI Events
+                this.initDraggableWindows();
 
                 // Matrix (previously Cyber) speed slider
                 const matrixSpeedSlider = document.getElementById('matrixSpeedSlider');
@@ -2814,9 +2426,6 @@
 
                 this.animate = this.animate.bind(this);
                 requestAnimationFrame(this.animate);
-
-                // Initialize draggable windows
-                this.initDraggableWindows();
             }
 
             resize() {
@@ -2847,6 +2456,63 @@
                     });
                 }
                 return bgStars;
+            }
+
+            initDraggableWindows() {
+                // Reusable drag function
+                const makeDraggable = (elementId) => {
+                    const element = document.getElementById(elementId);
+                    if (!element) return;
+
+                    // Find the header - it could be .window-header or .cockpit-header
+                    const header = element.querySelector('.window-header, .cockpit-header');
+                    if (!header) return;
+
+                    let isDragging = false;
+                    let startX, startY, initialX, initialY;
+
+                    header.style.cursor = 'grab';
+
+                    header.addEventListener('mousedown', (e) => {
+                        isDragging = true;
+                        header.style.cursor = 'grabbing';
+                        element.style.zIndex = '1000'; // Bring to front
+
+                        startX = e.clientX;
+                        startY = e.clientY;
+
+                        const rect = element.getBoundingClientRect();
+                        initialX = rect.left;
+                        initialY = rect.top;
+
+                        e.preventDefault();
+                    });
+
+                    window.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+
+                        const dx = e.clientX - startX;
+                        const dy = e.clientY - startY;
+
+                        element.style.left = (initialX + dx) + 'px';
+                        element.style.top = (initialY + dy) + 'px';
+                        element.style.bottom = 'auto'; // Remove bottom positioning
+                        element.style.right = 'auto'; // Remove right positioning
+                    });
+
+                    window.addEventListener('mouseup', () => {
+                        isDragging = false;
+                        header.style.cursor = 'grab';
+                    });
+                };
+
+                // Make all windows draggable
+                makeDraggable('floatingMap');
+                makeDraggable('floatingLeaders');
+                makeDraggable('sectionControls');
+                makeDraggable('sectionRadar');
+                makeDraggable('sectionVelocity');
+                makeDraggable('sectionGems');
             }
 
             setMode(newMode) {
@@ -2980,17 +2646,19 @@
 
                 // Toggle HUD overlay
                 const hud = document.getElementById('flightHUD');
-                if (hud) {
-                    if (this.flightMode) {
-                        hud.classList.remove('hidden');
-                        this.updateLeaderboard();
-                    } else {
-                        hud.classList.add('hidden');
-                    }
-                }
+                const floatingMap = document.getElementById('floatingMap');
+                const floatingLeaders = document.getElementById('floatingLeaders');
 
-                // Toggle floating windows (Map & Leaderboard)
-                this.showFloatingWindows(this.flightMode);
+                if (this.flightMode) {
+                    if (hud) hud.classList.remove('hidden');
+                    if (floatingMap) floatingMap.classList.remove('hidden');
+                    if (floatingLeaders) floatingLeaders.classList.remove('hidden');
+                    this.updateFloatingLeaderboard();
+                } else {
+                    if (hud) hud.classList.add('hidden');
+                    if (floatingMap) floatingMap.classList.add('hidden');
+                    if (floatingLeaders) floatingLeaders.classList.add('hidden');
+                }
 
                 // Ensure a background is active
                 if (this.flightMode && this.activeStyles.size === 0) {
@@ -3005,82 +2673,630 @@
                 this.draw();
             }
 
+            // Toggle cockpit section collapse
+            toggleCockpitSection(sectionId) {
+                const section = document.getElementById(sectionId);
+                if (section) section.classList.toggle('collapsed');
+            }
 
-            getStarBounds() {
-                if (!this.stars || this.stars.length === 0) {
-                    return { minX: 0, minY: 0, maxX: 100, maxY: 100, width: 100, height: 100 };
-                }
-                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                for (const star of this.stars) {
-                    minX = Math.min(minX, star.x);
-                    minY = Math.min(minY, star.y);
-                    maxX = Math.max(maxX, star.x);
-                    maxY = Math.max(maxY, star.y);
-                }
-                return {
-                    minX, minY, maxX, maxY,
-                    width: Math.max(maxX - minX, 50),
-                    height: Math.max(maxY - minY, 50)
+            // Toggle floating window collapse
+            toggleFloatingWindow(windowId) {
+                const win = document.getElementById(windowId);
+                if (win) win.classList.toggle('collapsed');
+            }
+
+            // Gem emoji mapping
+            getGemEmoji(type) {
+                const emojis = {
+                    // Industrial
+                    iron: '⚙️',
+                    copper: '🟠',
+                    coal: '⬛',
+                    titanium: '🔩',
+                    silicon: '🔲',
+                    // Precious
+                    silver: '⚪',
+                    gold: '🥇',
+                    platinum: '💿',
+                    palladium: '🪙',
+                    // Crystal
+                    quartz: '🔮',
+                    diamond: '💎',
+                    emerald: '💚',
+                    ruby: '❤️',
+                    sapphire: '💙',
+                    // Nuclear
+                    uranium: '☢️',
+                    plutonium: '⚛️',
+                    helium3: '💨',
+                    // Exotic
+                    neodymium: '💖',
+                    lanthanum: '💜',
+                    darkmatter: '🌑',
+                    antimatter: '✨'
                 };
+                // No longer used, replaced by CSS icons
+                return '';
+            }
+
+            styleGem(type) {
+                const info = this.mineralTypes[type];
+                if (!info) return '';
+                // Create a glowing orb effect matching in-game rendering
+                return `background: radial-gradient(circle at 30% 30%, #fff 10%, ${info.color} 60%);
+                        box-shadow: 0 0 4px ${info.color};
+                        border-radius: 50%;
+                        width: 12px; 
+                        height: 12px;
+                        display: inline-block;`;
             }
 
             updateFlightHUD() {
                 if (!this.flightMode) return;
 
-                // Update speed display
-                const speedNumberEl = document.getElementById('speedNumber');
-                const speedBarFillEl = document.getElementById('speedBarFill');
-                if (speedNumberEl && speedBarFillEl) {
-                    const speed = Math.round(this.playerShip.speed);
-                    speedNumberEl.textContent = speed;
-                    speedBarFillEl.style.width = (speed / this.playerShip.maxSpeed * 100) + '%';
+
+                // Update speed number
+                const speedNumEl = document.getElementById('speedNumber');
+                const zoomEl = document.getElementById('zoomDisplay');
+                if (speedNumEl) {
+                    speedNumEl.textContent = Math.round(this.playerShip.speed);
+                }
+                if (zoomEl) {
+                    zoomEl.textContent = this.camera.zoom.toFixed(1) + 'x';
                 }
 
-                // Update zoom display
-                const zoomEl = document.getElementById('zoomDisplay');
-                if (zoomEl) zoomEl.textContent = this.camera.zoom.toFixed(1) + 'x';
+                // Update radar coordinates
+                const coordsEl = document.getElementById('radarCoords');
+                if (coordsEl) {
+                    coordsEl.textContent = `X: ${Math.round(this.playerShip.x)} Y: ${Math.round(this.playerShip.y)}`;
+                }
+
+                // Update gems grid with proper emojis
+                const gemsGrid = document.getElementById('gemsGrid');
+                const gemsTotalEl = document.getElementById('gemsTotal');
+                const creditsEl = document.getElementById('creditsDisplay');
+
+                // Update credits display wherever it is
+                if (creditsEl) creditsEl.textContent = '$' + this.credits.toLocaleString();
+
+                if (gemsGrid) {
+                    let totalValue = 0;
+                    let html = '';
+
+                    // Helper for gem emoji
+                    const getGemEmoji = (type) => {
+                        const map = {
+                            iron: '🪨', copper: '🧱', titanium: '⚙️', gold: '👑',
+                            platinum: '💍', uranium: '☢️', plutonium: '🔋',
+                            lithium: '🔋', cobalt: '🟦'
+                        };
+                        return map[type] || '💎';
+                    };
+
+                    const inventory = Object.entries(this.playerInventory || {});
+
+                    if (inventory.length === 0) {
+                        html = '<div style="color:#5c7a8a;font-size:9px;padding:4px;">No gems yet</div>';
+                    } else {
+                        inventory.forEach(([type, count]) => {
+                            if (count <= 0) return;
+                            const info = this.mineralTypes[type];
+                            if (!info) return;
+
+                            totalValue += count * info.value;
+
+                            html += `
+                                <div class="gem-item" style="border:1px solid ${info.color}44; background: rgba(0,0,0,0.6);">
+                                    <div style="${this.styleGem(type)}"></div>
+                                    <span style="color:${info.color}">${info.name}</span>
+                                    <span class="gem-count">${count}</span>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    gemsGrid.innerHTML = html;
+
+                    // Updated Total Display with Sell Button
+                    if (gemsTotalEl) {
+                        gemsTotalEl.innerHTML = `
+                            <span>$${totalValue.toLocaleString()}</span>
+                            <button id="btnSellAll" class="btn-small" style="padding:2px 6px; font-size:9px; background:rgba(0,255,100,0.2); border-color:#0f0; color:#cfc;">SELL ALL</button>
+                         `;
+                        // Attach listener safely
+                        const btn = document.getElementById('btnSellAll');
+                        if (btn) btn.onclick = () => this.sellAllGems();
+                    }
+                }
 
                 // Update radar
                 this.updateRadar();
 
-                // Update floating map window
+                // Update map
                 this.updateMap();
-
-                // Update gems display in cockpit
-                this.updateGemsDisplay();
-
-                // Update leaderboards (both cockpit and floating)
-                this.updateLeaderboard();
-                this.updateFloatingLeaderboard();
             }
 
+            updateRadar() {
+                const canvas = document.getElementById('radarCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width, h = canvas.height;
+                const cx = w / 2, cy = h / 2;
 
-            updateLeaderboard() {
-                const leaderboardEl = document.getElementById('leadersList');
-                if (!leaderboardEl) return;
+                // Clear
+                ctx.clearRect(0, 0, w, h);
 
-                const yourWealth = this.calculateTotalWealth();
+                // Draw grid lines
+                ctx.strokeStyle = 'rgba(0,255,100,0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
+                ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+                ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+                ctx.arc(cx, cy, 35, 0, Math.PI * 2);
+                ctx.stroke();
 
-                // Mock leaderboard with your real-time wealth
+                // Draw player (center)
+                ctx.fillStyle = '#0f0';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw nearby minerals as dots
+                const radarRange = 2000;
+                this.minerals.forEach(m => {
+                    const dx = m.x - this.playerShip.x;
+                    const dy = m.y - this.playerShip.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < radarRange) {
+                        const rx = cx + (dx / radarRange) * 35;
+                        const ry = cy + (dy / radarRange) * 35;
+                        ctx.fillStyle = m.color || '#f0f';
+                        ctx.beginPath();
+                        ctx.arc(rx, ry, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            generateResourceDeposits() {
+                const zones = ['industrial', 'precious', 'crystal', 'nuclear', 'exotic'];
+                this.resourceDeposits = [];
+
+                zones.forEach(zone => {
+                    const info = this.galaxyZones[zone];
+                    if (!info) return;
+                    const count = zone === 'exotic' ? 2 : 5;
+
+                    for (let i = 0; i < count; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = info.distanceRange.min + Math.random() * (info.distanceRange.max - info.distanceRange.min);
+
+                        this.resourceDeposits.push({
+                            x: Math.cos(angle) * dist,
+                            y: Math.sin(angle) * dist,
+                            z: (Math.random() - 0.5) * 500,
+                            zone: zone,
+                            radius: 400,
+                            richness: 2.0
+                        });
+                    }
+                });
+            }
+
+            updateMap() {
+                const canvas = document.getElementById('mapCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width, h = canvas.height;
+                const cx = w / 2, cy = h / 2;
+
+                const mapRadius = 8500; // Slightly larger than max zone
+                const scale = (Math.min(w, h) / 2) / mapRadius;
+
+                // Clear
+                ctx.fillStyle = 'rgba(0,5,20,0.95)';
+                ctx.fillRect(0, 0, w, h);
+
+                // Draw Zones
+                Object.values(this.galaxyZones).forEach(zone => {
+                    const r = zone.distanceRange.min * scale;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.strokeStyle = zone.color;
+                    ctx.globalAlpha = 0.3;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+
+                // Draw Deposits
+                this.resourceDeposits.forEach(dep => {
+                    const dx = dep.x * scale;
+                    const dy = dep.y * scale;
+                    if (this.galaxyZones[dep.zone]) {
+                        ctx.fillStyle = this.galaxyZones[dep.zone].color;
+                        ctx.globalAlpha = 0.6;
+                        ctx.beginPath();
+                        ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+                ctx.globalAlpha = 1;
+
+                // Draw Player
+                const px = cx + this.playerShip.x * scale;
+                const py = cy + this.playerShip.y * scale;
+
+                // Player direction arrow
+                const angle = this.playerShip.rotation + Math.PI / 2;
+                ctx.save();
+                ctx.translate(px, py);
+                ctx.rotate(this.playerShip.rotation + Math.PI / 2);
+                ctx.fillStyle = '#0f0';
+                ctx.beginPath();
+                ctx.moveTo(0, -5);
+                ctx.lineTo(4, 4);
+                ctx.lineTo(0, 2);
+                ctx.lineTo(-4, 4);
+                ctx.fill();
+                ctx.restore();
+
+                // Radar ping effect for player
+                ctx.strokeStyle = `rgba(0, 255, 0, ${0.5 + Math.sin(Date.now() * 0.005) * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(px, py, 8, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            /* --- EXPANDED MAP --- */
+            openExpandedMap() {
+                const modal = document.getElementById('expandedMapModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    this.expandedMapOpen = true;
+                    this.expandedMapZoom = this.expandedMapZoom || 1.0;
+                    this.expandedMapOffset = this.expandedMapOffset || { x: 0, y: 0 };
+
+                    // Center on player initially
+                    this.expandedMapOffset.x = -this.playerShip.x;
+                    this.expandedMapOffset.y = -this.playerShip.y;
+
+                    this.animateExpandedMap();
+
+                    // Add wheel listener for zoom
+                    if (!this.mapWheelListener) {
+                        this.mapWheelListener = (e) => {
+                            e.preventDefault();
+                            const zoomSpeed = 0.1;
+                            const newZoom = Math.max(0.2, Math.min(10.0, this.expandedMapZoom - Math.sign(e.deltaY) * zoomSpeed));
+                            this.expandedMapZoom = newZoom;
+                            document.getElementById('mapZoomLevel').textContent = `Zoom: ${this.expandedMapZoom.toFixed(1)}x`;
+                        };
+                        const canvas = document.getElementById('fullscreenMapCanvas');
+                        canvas.addEventListener('wheel', this.mapWheelListener);
+
+                        // Dragging Logic
+                        this.isDraggingMap = false;
+                        this.lastMapMouse = { x: 0, y: 0 };
+
+                        canvas.addEventListener('mousedown', (e) => {
+                            this.isDraggingMap = true;
+                            this.lastMapMouse = { x: e.clientX, y: e.clientY };
+                            canvas.style.cursor = 'grabbing';
+                        });
+
+                        window.addEventListener('mousemove', (e) => {
+                            if (!this.isDraggingMap) return;
+                            const dx = e.clientX - this.lastMapMouse.x;
+                            const dy = e.clientY - this.lastMapMouse.y;
+                            this.lastMapMouse = { x: e.clientX, y: e.clientY };
+
+                            // Adjust offset (pan)
+                            this.expandedMapOffset.x += dx / this.expandedMapZoom;
+                            this.expandedMapOffset.y += dy / this.expandedMapZoom;
+                        });
+
+                        window.addEventListener('mouseup', () => {
+                            this.isDraggingMap = false;
+                            canvas.style.cursor = 'grab';
+                        });
+                    }
+                }
+            }
+
+            closeExpandedMap() {
+                const modal = document.getElementById('expandedMapModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    this.expandedMapOpen = false;
+                }
+            }
+
+            animateExpandedMap() {
+                if (!this.expandedMapOpen) return;
+
+                const canvas = document.getElementById('fullscreenMapCanvas');
+                if (!canvas) {
+                    console.error('[Map Debug] Canvas not found');
+                    return;
+                }
+
+                console.log('[Map Debug] Rendering expanded map, zoom:', this.expandedMapZoom);
+
+                // Resize if needed (handle dynamic window resizing)
+                if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const cx = w / 2;
+                const cy = h / 2;
+                const zoom = this.expandedMapZoom;
+                const time = Date.now() * 0.001;
+
+                // --- 1. DEEP SPACE BACKGROUND ---
+                // Clear with a deep, rich gradient based on player position (subtle shift)
+                const bgGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h));
+                bgGradient.addColorStop(0, '#000810');
+                bgGradient.addColorStop(0.6, '#000508');
+                bgGradient.addColorStop(1, '#000000');
+                ctx.fillStyle = bgGradient;
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(zoom, zoom);
+                ctx.translate(this.expandedMapOffset.x, this.expandedMapOffset.y);
+
+                // --- 2. PARALLAX STARFIELD (Background Layers) ---
+                // We generate pseudo-random stars based on world coordinates to create an infinite field
+                // Layer 1: Distant, slow moving
+                this.renderMapStars(ctx, 0.5, 0.5, 5000, 15000, '#445566');
+                // Layer 2: Mid-distance
+                this.renderMapStars(ctx, 0.3, 0.8, 3000, 10000, '#6688aa');
+
+                // --- 3. ZONE ATMOSPHERICS ---
+                // Draw large, soft radial glows for each zone to give "territory" feel
+                Object.values(this.galaxyZones).forEach(zone => {
+                    const dist = zone.distanceRange.min;
+                    // Skip if way off screen
+                    // Simple cull: check distance from center of screen in world space to zone center (0,0)
+                    // But zones are concentric rings, so we just draw them.
+
+                    ctx.beginPath();
+                    ctx.arc(0, 0, dist, 0, Math.PI * 2);
+                    ctx.fillStyle = zone.glowColor || zone.color;
+                    ctx.globalAlpha = 0.03; // Very subtle atmosphere
+                    ctx.lineWidth = 100; // Wide soft edge
+                    ctx.fill();
+
+                    // Zone Boundary Ring
+                    ctx.beginPath();
+                    ctx.arc(0, 0, dist, 0, Math.PI * 2);
+                    ctx.strokeStyle = zone.color;
+                    ctx.lineWidth = 2 / zoom; // Keep thin regardless of zoom
+                    ctx.globalAlpha = 0.2;
+                    ctx.setLineDash([20, 40]); // Dashed border
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Zone Label (Floating in space)
+                    // Place label at the top of the ring
+                    ctx.fillStyle = zone.color;
+                    ctx.font = `bold ${64}px Orbitron`;
+                    ctx.textAlign = 'center';
+                    ctx.globalAlpha = 0.4;
+                    ctx.fillText(zone.name.toUpperCase(), 0, -dist + 200);
+                });
+
+                // --- 4. HOLO-GRID ---
+                // A perspective grid. Since this is 2D top-down, we draw a rectangular grid that pans.
+                ctx.strokeStyle = 'rgba(0, 243, 255, 0.08)';
+                ctx.lineWidth = 1 / zoom;
+                const gridSize = 1000;
+
+                // Calculate visible range to optimize rendering
+                // Visible world center: -this.expandedMapOffset.x, -this.expandedMapOffset.y
+                const worldCx = -this.expandedMapOffset.x;
+                const worldCy = -this.expandedMapOffset.y;
+                const visibleW = w / zoom;
+                const visibleH = h / zoom;
+
+                const startX = Math.floor((worldCx - visibleW) / gridSize) * gridSize;
+                const endX = Math.floor((worldCx + visibleW) / gridSize) * gridSize;
+                const startY = Math.floor((worldCy - visibleH) / gridSize) * gridSize;
+                const endY = Math.floor((worldCy + visibleH) / gridSize) * gridSize;
+
+                ctx.beginPath();
+                for (let x = startX; x <= endX; x += gridSize) {
+                    ctx.moveTo(x, startY);
+                    ctx.lineTo(x, endY);
+                }
+                for (let y = startY; y <= endY; y += gridSize) {
+                    ctx.moveTo(startX, y);
+                    ctx.lineTo(endX, y);
+                }
+                ctx.stroke();
+
+
+                // --- 5. ORBITAL MECHANICS & PLANETS (Cosmetic) ---
+                // Procedural planets based on zone
+                // We'll use a deterministic random based on index/position
+                // (Simplified for now: drawing a few fixed 'planets' per zone would be better but random serves 'world' feel)
+
+                // --- 6. RESOURCE DEPOSITS (Advanced Icons) ---
+                this.resourceDeposits.forEach(dep => {
+                    // Pulsing effect
+                    const pulse = 1 + Math.sin(time * 3 + dep.x * 0.01) * 0.2;
+
+                    // Deposit Glow
+                    const zoneColor = this.galaxyZones[dep.zone] ? this.galaxyZones[dep.zone].color : '#fff';
+                    const glowColor = this.galaxyZones[dep.zone] ? (this.galaxyZones[dep.zone].glowColor || zoneColor) : '#fff';
+
+                    // Draw outer glow
+                    const grad = ctx.createRadialGradient(dep.x, dep.y, 5 * pulse, dep.x, dep.y, 30 * pulse);
+                    grad.addColorStop(0, glowColor);
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = grad;
+                    ctx.globalAlpha = 0.4;
+                    ctx.beginPath();
+                    ctx.arc(dep.x, dep.y, 40 * pulse, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw core icon (Diamond shape)
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = zoneColor;
+                    const size = 12;
+                    ctx.beginPath();
+                    ctx.moveTo(dep.x, dep.y - size);
+                    ctx.lineTo(dep.x + size, dep.y);
+                    ctx.lineTo(dep.x, dep.y + size);
+                    ctx.lineTo(dep.x - size, dep.y);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Label
+                    if (zoom > 0.8) {
+                        ctx.fillStyle = '#fff';
+                        ctx.font = '14px "Segoe UI", sans-serif'; // Cleaner font
+                        ctx.textAlign = 'center';
+                        ctx.fillText(dep.name, dep.x, dep.y + 40);
+
+                        ctx.font = '10px "Segoe UI", sans-serif';
+                        ctx.fillStyle = '#aaa';
+                        ctx.fillText(`Richness: ${(dep.richness * 100).toFixed(0)}%`, dep.x, dep.y + 55);
+                    }
+                });
+
+                // --- 7. PLAYER SHIP (Detailed HUD Marker) ---
+                const shipX = this.playerShip.x;
+                const shipY = this.playerShip.y;
+
+                ctx.translate(shipX, shipY);
+
+                // View Cone (Field of View)
+                const fovRadius = 400;
+                ctx.rotate(this.playerShip.rotation + Math.PI / 2); // Align with ship heading
+
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, fovRadius, -Math.PI / 6, Math.PI / 6); // 60 degree cone
+                ctx.fillStyle = 'rgba(0, 255, 100, 0.1)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0, 255, 100, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Ship Icon (Triangle)
+                ctx.beginPath();
+                ctx.moveTo(0, -20);
+                ctx.lineTo(14, 14);
+                ctx.lineTo(0, 8);
+                ctx.lineTo(-14, 14);
+                ctx.closePath();
+                ctx.fillStyle = '#0f0';
+                ctx.shadowColor = '#0f0';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset
+
+                ctx.restore();
+
+                // --- 8. UI OVERLAYS (Screen Space) ---
+                // Coordinates Overlay (Fixed to screen corners)
+                ctx.font = '14px Consolas, monospace';
+                ctx.fillStyle = 'rgba(0, 243, 255, 0.8)';
+                ctx.textAlign = 'left';
+                ctx.fillText(`SECTOR: [${Math.floor(shipX / 5000)}, ${Math.floor(shipY / 5000)}]`, 20, h - 60);
+                ctx.fillText(`COORDS: X ${Math.round(shipX)}  Y ${Math.round(shipY)}`, 20, h - 40);
+
+                // Scale Bar
+                const scaleWidth = 200; // pixels
+                const scaleDistance = scaleWidth / zoom;
+                ctx.beginPath();
+                ctx.moveTo(w - 220, h - 40);
+                ctx.lineTo(w - 20, h - 40);
+                ctx.moveTo(w - 220, h - 45);
+                ctx.lineTo(w - 220, h - 35);
+                ctx.moveTo(w - 20, h - 45);
+                ctx.lineTo(w - 20, h - 35);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(`${Math.round(scaleDistance)}km`, w - 120, h - 50);
+
+                requestAnimationFrame(() => this.animateExpandedMap());
+            }
+
+            // Helper for infinite starfield in map
+            renderMapStars(ctx, opacity, parallax, spacing, modX, color) {
+                const worldCx = -this.expandedMapOffset.x * parallax;
+                const worldCy = -this.expandedMapOffset.y * parallax;
+                const w = ctx.canvas.width / this.expandedMapZoom;
+                const h = ctx.canvas.height / this.expandedMapZoom;
+
+                // Simple deterministic "hash" for visuals without storing millions of stars
+                // We assume stars are on a grid with jitter
+                const startX = Math.floor((worldCx - w) / spacing);
+                const endX = Math.floor((worldCx + w) / spacing);
+                const startY = Math.floor((worldCy - h) / spacing);
+                const endY = Math.floor((worldCy + h) / spacing);
+
+                ctx.fillStyle = color;
+
+                for (let x = startX; x <= endX; x++) {
+                    for (let y = startY; y <= endY; y++) {
+                        // Deterministic random
+                        const seed = x * 34234 + y * 23123;
+                        const rx = Math.sin(seed) * spacing;
+                        const ry = Math.cos(seed * 0.5) * spacing;
+                        const size = (Math.sin(seed * 1.5) + 1.5);
+
+                        ctx.globalAlpha = opacity * (0.5 + Math.sin(seed * 0.1) * 0.5);
+                        ctx.beginPath();
+                        ctx.arc(x * spacing + rx, y * spacing + ry, size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                ctx.globalAlpha = 1.0;
+            }
+
+            updateFloatingLeaderboard() {
+                const listEl = document.getElementById('floatingLeadersList');
+                if (!listEl) return;
+
+                // Mock leaderboard with fluctuating wealth
                 const mockPlayers = [
-                    { name: 'StarCommander', wealth: 485230 },
-                    { name: 'NebulaHunter', wealth: 372140 },
-                    { name: 'AstroMiner', wealth: 298650 },
-                    { name: 'CosmicVoyager', wealth: 156780 },
-                    { name: 'You', wealth: yourWealth, isYou: true }
+                    { name: 'StarPilot99', wealth: 125000 + Math.floor(Math.random() * 10000) },
+                    { name: 'NebulaHunter', wealth: 98000 + Math.floor(Math.random() * 8000) },
+                    { name: 'AstroMiner', wealth: 76000 + Math.floor(Math.random() * 5000) },
+                    { name: 'You', wealth: this.calculateTotalWealth() }
                 ];
 
                 mockPlayers.sort((a, b) => b.wealth - a.wealth);
+
                 let html = '';
-                mockPlayers.slice(0, 5).forEach((player, i) => {
-                    const youClass = player.isYou ? ' is-you' : '';
-                    html += `<div class="leader-row${youClass}">
-                        <span class="leader-rank">${i + 1}</span>
+                mockPlayers.forEach((player, i) => {
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                    const isYou = player.name === 'You';
+                    html += `<div class="leader-row${isYou ? ' you' : ''}">
+                        <span class="leader-rank">${medal || (i + 1)}</span>
                         <span class="leader-name">${player.name}</span>
-                        <span class="leader-score">$${player.wealth.toLocaleString()}</span>
+                        <span class="leader-wealth">$${player.wealth.toLocaleString()}</span>
                     </div>`;
                 });
-                leaderboardEl.innerHTML = html;
+                listEl.innerHTML = html;
+            }
+
+            updateLeaderboard() {
+                // Legacy method - now using updateFloatingLeaderboard
+                this.updateFloatingLeaderboard();
             }
 
             calculateTotalWealth() {
@@ -3091,983 +3307,6 @@
                 }
                 return total;
             }
-
-            // Update gems display in cockpit bar
-            updateGemsDisplay() {
-                const gemsGrid = document.getElementById('gemsGrid');
-                const gemsTotal = document.getElementById('gemsTotal');
-                if (!gemsGrid) return;
-
-                // Mineral emoji mapping - matches actual mineralTypes
-                const mineralEmojis = {
-                    // Industrial
-                    iron: '⚙️', Iron: '⚙️',
-                    copper: '🟠', Copper: '🟠',
-                    coal: '⬛', Coal: '⬛',
-                    titanium: '🔩', Titanium: '🔩',
-                    silicon: '🔲', Silicon: '🔲',
-                    // Precious
-                    silver: '⚪', Silver: '⚪',
-                    gold: '🥇', Gold: '🥇',
-                    platinum: '💿', Platinum: '💿',
-                    palladium: '🪙', Palladium: '🪙',
-                    rhodium: '🔘', Rhodium: '🔘',
-                    krypton: '🫧', Krypton: '🫧',
-                    // Crystal
-                    quartz: '🔮', Quartz: '🔮',
-                    diamond: '💎', Diamond: '💎',
-                    emerald: '💚', Emerald: '💚',
-                    ruby: '❤️', Ruby: '❤️',
-                    sapphire: '💙', Sapphire: '💙',
-                    iridium: '🌟', Iridium: '🌟',
-                    xenon: '🟣', Xenon: '🟣',
-                    // Nuclear
-                    uranium: '☢️', Uranium: '☢️',
-                    plutonium: '⚛️', Plutonium: '⚛️',
-                    helium3: '💨', 'Helium-3': '💨',
-                    thorium: '⚡', Thorium: '⚡',
-                    osmium: '🛡️', Osmium: '🛡️',
-                    deuterium: '🌀', Deuterium: '🌀',
-                    // Exotic
-                    neodymium: '💖', Neodymium: '💖',
-                    lanthanum: '💜', Lanthanum: '💜',
-                    darkmatter: '🌑', 'Dark Matter': '🌑',
-                    antimatter: '✨', Antimatter: '✨',
-                    aether: '🌈', Aether: '🌈'
-                };
-
-                let html = '';
-                let totalValue = 0;
-
-                for (const [type, count] of Object.entries(this.playerInventory)) {
-                    if (count > 0) {
-                        const mineralInfo = this.mineralTypes[type] || this.mineralTypes[type.toLowerCase()];
-                        const emoji = mineralEmojis[type] || '💠';
-                        const value = mineralInfo ? mineralInfo.value * count : 0;
-                        totalValue += value;
-                        html += `<div class="gem-item">
-                            <span class="gem-icon">${emoji}</span>
-                            <span class="gem-count">${count}</span>
-                        </div>`;
-                    }
-                }
-
-                if (html === '') {
-                    html = '<span style="font-size: 10px; color: rgba(200,200,200,0.5);">No gems yet</span>';
-                }
-
-                gemsGrid.innerHTML = html;
-                if (gemsTotal) {
-                    gemsTotal.innerHTML = `Total: <span>$${totalValue.toLocaleString()}</span>`;
-                }
-            }
-
-            // Toggle HUD window collapse/expand (legacy)
-            toggleHudWindow(windowId) {
-                const window = document.getElementById(windowId);
-                if (!window) return;
-                const isCollapsed = window.classList.toggle('collapsed');
-                const toggle = window.querySelector('.hud-toggle');
-                if (toggle) toggle.textContent = isCollapsed ? '▶' : '▼';
-                this.hudWindowStates[windowId] = isCollapsed;
-            }
-
-            // Toggle cockpit section collapse/expand
-            toggleCockpitSection(sectionId) {
-                const section = document.getElementById(sectionId);
-                if (!section) return;
-                const isCollapsed = section.classList.toggle('collapsed');
-                const toggle = section.querySelector('.cockpit-toggle');
-                if (toggle) toggle.textContent = isCollapsed ? '▶' : '▼';
-                this.hudWindowStates[sectionId] = isCollapsed;
-            }
-
-            // Set inventory display mode (qty or value)
-            setInventoryMode(mode) {
-                this.inventoryDisplayMode = mode;
-                this.updateFlightHUD();
-            }
-
-            // Handle flight mode zoom
-            flightZoom(delta) {
-                if (delta === 0) {
-                    this.camera.zoom = 0.5;
-                } else {
-                    this.camera.zoom = Math.max(0.15, Math.min(3.0, this.camera.zoom + delta));
-                }
-                const zoomEl = document.getElementById('zoomDisplay');
-                if (zoomEl) zoomEl.textContent = this.camera.zoom.toFixed(1) + 'x';
-            }
-
-            // Update radar with ship position and nearby minerals (circular display)
-            updateRadar() {
-                const canvas = document.getElementById('radarCanvas');
-                if (!canvas) return;
-
-                const ctx = canvas.getContext('2d');
-                const w = canvas.width;
-                const h = canvas.height;
-                const cx = w / 2;
-                const cy = h / 2;
-                const radius = Math.min(w, h) / 2 - 2;
-                const scale = this.playerShip?.radarRange || 3000; // Uses upgrade-modified range
-
-                // Clear with transparent background (CSS handles the styling)
-                ctx.clearRect(0, 0, w, h);
-
-                // Draw range rings
-                ctx.strokeStyle = 'rgba(0, 150, 200, 0.2)';
-                ctx.lineWidth = 1;
-                for (let r = 1; r <= 3; r++) {
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, (radius / 3) * r, 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-
-                // Draw crosshairs
-                ctx.strokeStyle = 'rgba(0, 150, 200, 0.15)';
-                ctx.beginPath();
-                ctx.moveTo(cx, 0);
-                ctx.lineTo(cx, h);
-                ctx.moveTo(0, cy);
-                ctx.lineTo(w, cy);
-                ctx.stroke();
-
-                const ship = this.playerShip;
-
-                // Draw minerals as blips
-                this.minerals.forEach(mineral => {
-                    const dx = (mineral.x - ship.x) / scale * radius;
-                    const dy = (mineral.y - ship.y) / scale * radius;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-
-                    if (dist < radius) {
-                        const mineralInfo = this.mineralTypes[mineral.type];
-                        const color = mineralInfo ? mineralInfo.color : '#00ff88';
-
-                        ctx.beginPath();
-                        ctx.fillStyle = color;
-                        ctx.shadowColor = color;
-                        ctx.shadowBlur = 6;
-                        ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.shadowBlur = 0;
-                    }
-                });
-
-                // Draw ship direction indicator (triangle pointing in heading direction)
-                ctx.save();
-                ctx.translate(cx, cy);
-                ctx.rotate(ship.rotation);
-                ctx.beginPath();
-                ctx.moveTo(0, -8);  // Point forward
-                ctx.lineTo(-5, 6);
-                ctx.lineTo(5, 6);
-                ctx.closePath();
-                ctx.fillStyle = '#00f3ff';
-                ctx.shadowColor = '#00f3ff';
-                ctx.shadowBlur = 8;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                ctx.restore();
-
-                // Update coordinates display
-                const xEl = document.getElementById('radarPosX');
-                const yEl = document.getElementById('radarPosY');
-                if (xEl) xEl.textContent = Math.round(ship.x);
-                if (yEl) yEl.textContent = Math.round(ship.y);
-            }
-
-            // Update minimap with ship position and nearby minerals
-            updateMinimap() {
-                const canvas = document.getElementById('minimapCanvas');
-                if (!canvas) return;
-
-                const ctx = canvas.getContext('2d');
-                const w = canvas.width;
-                const h = canvas.height;
-                const scale = 2000; // World units covered by minimap
-
-                // Clear
-                ctx.fillStyle = 'rgba(0, 10, 20, 0.95)';
-                ctx.fillRect(0, 0, w, h);
-
-                // Draw grid
-                ctx.strokeStyle = 'rgba(0, 80, 120, 0.3)';
-                ctx.lineWidth = 1;
-                for (let i = 0; i <= 4; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(i * w / 4, 0);
-                    ctx.lineTo(i * w / 4, h);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(0, i * h / 4);
-                    ctx.lineTo(w, i * h / 4);
-                    ctx.stroke();
-                }
-
-                const ship = this.playerShip;
-                const cx = w / 2;
-                const cy = h / 2;
-
-                // Draw minerals
-                this.minerals.forEach(mineral => {
-                    const dx = (mineral.x - ship.x) / scale * w;
-                    const dy = (mineral.y - ship.y) / scale * h;
-                    if (Math.abs(dx) < w / 2 && Math.abs(dy) < h / 2) {
-                        ctx.fillStyle = mineral.color || '#fff';
-                        ctx.beginPath();
-                        ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                });
-
-                // Draw ship (center, pointing direction)
-                ctx.save();
-                ctx.translate(cx, cy);
-                ctx.rotate(ship.rotation);
-                ctx.fillStyle = '#00f3ff';
-                ctx.beginPath();
-                ctx.moveTo(8, 0);
-                ctx.lineTo(-5, -5);
-                ctx.lineTo(-3, 0);
-                ctx.lineTo(-5, 5);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
-
-                // Draw range circle
-                ctx.strokeStyle = 'rgba(0, 243, 255, 0.3)';
-                ctx.beginPath();
-                ctx.arc(cx, cy, w * 0.4, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // Update position display
-                const posX = document.getElementById('mapPosX');
-                const posY = document.getElementById('mapPosY');
-                const mapScale = document.getElementById('mapScale');
-                if (posX) posX.textContent = Math.round(ship.x);
-                if (posY) posY.textContent = Math.round(ship.y);
-                if (mapScale) mapScale.textContent = (scale / 1000).toFixed(1);
-            }
-
-            // ===== FLOATING WINDOW METHODS =====
-
-            // Toggle floating window collapse/expand
-            toggleFloatingWindow(windowId) {
-                const win = document.getElementById(windowId);
-                if (!win) return;
-                // Only toggle if not in dragging mode
-                if (this.isDraggingWindow) return;
-                const isCollapsed = win.classList.toggle('collapsed');
-                const toggle = win.querySelector('.window-toggle');
-                if (toggle) toggle.textContent = isCollapsed ? '▶' : '▼';
-            }
-
-            // Initialize draggable windows
-            initDraggableWindows() {
-                const windows = document.querySelectorAll('.floating-window');
-                windows.forEach(win => {
-                    const header = win.querySelector('.window-header');
-                    if (!header) return;
-
-                    let startX, startY, startLeft, startTop;
-                    let hasDragged = false;
-
-                    const onMouseDown = (e) => {
-                        // Ignore if clicking on buttons
-                        if (e.target.closest('.window-btn, button')) return;
-
-                        e.preventDefault();
-                        hasDragged = false;
-                        this.isDraggingWindow = false;
-
-                        startX = e.clientX;
-                        startY = e.clientY;
-
-                        // Get current position
-                        const rect = win.getBoundingClientRect();
-                        startLeft = rect.left;
-                        startTop = rect.top;
-
-                        document.addEventListener('mousemove', onMouseMove);
-                        document.addEventListener('mouseup', onMouseUp);
-                    };
-
-                    const onMouseMove = (e) => {
-                        const dx = e.clientX - startX;
-                        const dy = e.clientY - startY;
-
-                        // Threshold to distinguish click from drag
-                        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                            hasDragged = true;
-                            this.isDraggingWindow = true;
-                            win.classList.add('dragging');
-
-                            // Calculate new position
-                            let newLeft = startLeft + dx;
-                            let newTop = startTop + dy;
-
-                            // Constrain to viewport
-                            const winWidth = win.offsetWidth;
-                            const winHeight = win.offsetHeight;
-                            newLeft = Math.max(0, Math.min(window.innerWidth - winWidth, newLeft));
-                            newTop = Math.max(0, Math.min(window.innerHeight - winHeight, newTop));
-
-                            // Apply position using inline styles (overrides CSS positioning)
-                            win.style.left = newLeft + 'px';
-                            win.style.top = newTop + 'px';
-                            win.style.right = 'auto';
-                            win.style.bottom = 'auto';
-                        }
-                    };
-
-                    const onMouseUp = () => {
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-
-                        win.classList.remove('dragging');
-
-                        if (hasDragged) {
-                            // Save position
-                            this.saveWindowPosition(win.id, {
-                                left: parseInt(win.style.left),
-                                top: parseInt(win.style.top)
-                            });
-                        }
-
-                        // Reset drag state after a short delay to allow click handlers to check
-                        setTimeout(() => {
-                            this.isDraggingWindow = false;
-                        }, 50);
-                    };
-
-                    // Remove existing onclick to prevent interference
-                    header.removeAttribute('onclick');
-                    header.addEventListener('mousedown', onMouseDown);
-
-                    // Add click handler for collapse/expand (only fires if not dragged)
-                    header.addEventListener('click', (e) => {
-                        if (!hasDragged && !e.target.closest('.window-btn, button')) {
-                            this.toggleFloatingWindow(win.id);
-                        }
-                    });
-                });
-
-                // Restore saved positions
-                this.restoreWindowPositions();
-            }
-
-            // Save window position to localStorage
-            saveWindowPosition(windowId, pos) {
-                try {
-                    const positions = JSON.parse(localStorage.getItem('windowPositions') || '{}');
-                    positions[windowId] = pos;
-                    localStorage.setItem('windowPositions', JSON.stringify(positions));
-                } catch (e) { }
-            }
-
-            // Restore window positions from localStorage
-            restoreWindowPositions() {
-                try {
-                    const positions = JSON.parse(localStorage.getItem('windowPositions') || '{}');
-                    for (const [id, pos] of Object.entries(positions)) {
-                        const win = document.getElementById(id);
-                        if (win && pos.left != null && pos.top != null) {
-                            win.style.left = pos.left + 'px';
-                            win.style.top = pos.top + 'px';
-                            win.style.right = 'auto';
-                            win.style.bottom = 'auto';
-                        }
-                    }
-                } catch (e) { }
-            }
-
-            // Toggle map maximize state
-            toggleMapMaximize() {
-                const mapWindow = document.getElementById('floatingMap');
-                const overlay = document.getElementById('mapOverlay');
-                if (!mapWindow) return;
-
-                const isMaximized = mapWindow.classList.toggle('maximized');
-                if (overlay) overlay.classList.toggle('visible', isMaximized);
-
-                // Update maximize button icon - show down arrow when maximized for minimize
-                const maxBtn = mapWindow.querySelector('.maximize-btn');
-                if (maxBtn) maxBtn.textContent = isMaximized ? '▼' : '⤢';
-
-                // Resize canvas for higher resolution when maximized
-                const canvas = document.getElementById('mapCanvas');
-                if (canvas) {
-                    if (isMaximized) {
-                        canvas.width = 800;
-                        canvas.height = 800;
-                    } else {
-                        canvas.width = 220;
-                        canvas.height = 220;
-                    }
-                    this.updateMap();
-                }
-            }
-
-            // Update the universe map (renders full universe view with galaxy zones)
-            updateMap() {
-                const canvas = document.getElementById('mapCanvas');
-                if (!canvas) return;
-
-                const ctx = canvas.getContext('2d');
-                const w = canvas.width;
-                const h = canvas.height;
-                const isMaximized = document.getElementById('floatingMap')?.classList.contains('maximized');
-
-                // Scale based on maximize state - show more of universe when maximized
-                const worldSize = isMaximized ? 18000 : 10000;
-                const scale = w / worldSize;
-                const centerX = w / 2;
-                const centerY = h / 2;
-
-                // Clear with deep space gradient
-                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, w * 0.7);
-                gradient.addColorStop(0, 'rgba(0, 20, 40, 1)');
-                gradient.addColorStop(0.5, 'rgba(0, 12, 28, 1)');
-                gradient.addColorStop(1, 'rgba(0, 5, 15, 1)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, w, h);
-
-                // Map world coords to canvas coords (centered on origin, not player)
-                const toScreen = (x, y) => ({
-                    sx: centerX + x * scale,
-                    sy: centerY + y * scale
-                });
-
-                const ship = this.playerShip;
-
-                // ===== DRAW GALAXY ZONE RINGS =====
-                if (this.galaxyZones) {
-                    const zones = [
-                        { key: 'industrial', label: 'Industrial', labelAngle: -0.4 },
-                        { key: 'precious', label: 'Precious', labelAngle: 0.3 },
-                        { key: 'crystal', label: 'Crystal', labelAngle: 0.8 },
-                        { key: 'nuclear', label: 'Nuclear', labelAngle: 1.5 },
-                        { key: 'exotic', label: 'Exotic', labelAngle: 2.2 }
-                    ];
-
-                    zones.forEach(({ key, label, labelAngle }) => {
-                        const zone = this.galaxyZones[key];
-                        if (!zone) return;
-
-                        const innerRadius = zone.distanceRange.min * scale;
-                        const outerRadius = zone.distanceRange.max * scale;
-
-                        // Draw zone ring fill (very subtle)
-                        ctx.beginPath();
-                        ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
-                        ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2, true);
-                        ctx.fillStyle = zone.glowColor || 'rgba(100, 100, 100, 0.1)';
-                        ctx.fill();
-
-                        // Draw zone boundary ring
-                        ctx.beginPath();
-                        ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
-                        ctx.strokeStyle = zone.color;
-                        ctx.lineWidth = isMaximized ? 2 : 1;
-                        ctx.globalAlpha = 0.4;
-                        ctx.stroke();
-                        ctx.globalAlpha = 1;
-
-                        // Draw zone label (only when maximized for clarity)
-                        if (isMaximized) {
-                            const labelRadius = (innerRadius + outerRadius) / 2;
-                            const labelX = centerX + Math.cos(labelAngle) * labelRadius;
-                            const labelY = centerY + Math.sin(labelAngle) * labelRadius;
-
-                            ctx.save();
-                            ctx.translate(labelX, labelY);
-                            ctx.font = 'bold 10px "Courier New", monospace';
-                            ctx.fillStyle = zone.color;
-                            ctx.globalAlpha = 0.7;
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillText(label.toUpperCase(), 0, 0);
-                            ctx.restore();
-                        }
-                    });
-                }
-
-                // ===== DISTANCE RINGS (every 1000px) =====
-                const distanceIntervals = [1000, 2000, 3000, 4000, 5000, 6000];
-                ctx.font = '8px "Courier New", monospace';
-                ctx.textAlign = 'center';
-                distanceIntervals.forEach(dist => {
-                    const ringRadius = dist * scale;
-                    if (ringRadius > 0 && ringRadius < w * 0.7) {
-                        ctx.beginPath();
-                        ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
-                        ctx.strokeStyle = 'rgba(100, 200, 255, 0.15)';
-                        ctx.lineWidth = 1;
-                        ctx.setLineDash([4, 4]);
-                        ctx.stroke();
-                        ctx.setLineDash([]);
-
-                        // Distance label
-                        if (isMaximized || dist <= 3000) {
-                            ctx.fillStyle = 'rgba(100, 200, 255, 0.4)';
-                            ctx.fillText(`${dist / 1000}k`, centerX + ringRadius - 15, centerY - 5);
-                        }
-                    }
-                });
-
-                // Draw origin marker (center of universe)
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, isMaximized ? 8 : 4, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, isMaximized ? 4 : 2, 0, Math.PI * 2);
-                ctx.fillStyle = '#fff';
-                ctx.fill();
-
-                // ===== NAVIGATION ARROW (point toward valuable zone) =====
-                const playerDist = Math.sqrt(ship.x * ship.x + ship.y * ship.y);
-                let targetZoneDist = 0;
-                let targetZoneName = '';
-                let targetColor = '#00f3ff';
-
-                // Suggest next zone based on current position
-                if (playerDist < 800) {
-                    targetZoneDist = 1400; targetZoneName = 'Precious'; targetColor = '#ffd700';
-                } else if (playerDist < 2000) {
-                    targetZoneDist = 3000; targetZoneName = 'Crystal'; targetColor = '#00ffff';
-                } else if (playerDist < 4000) {
-                    targetZoneDist = 4500; targetZoneName = 'Nuclear'; targetColor = '#ff6600';
-                } else if (playerDist < 5000) {
-                    targetZoneDist = 5500; targetZoneName = 'Exotic'; targetColor = '#ff00ff';
-                }
-
-                // Draw arrow from player toward target zone
-                if (targetZoneDist > 0 && isMaximized) {
-                    const { sx: playerSX, sy: playerSY } = toScreen(ship.x, ship.y);
-                    const angle = Math.atan2(-ship.y, -ship.x); // Toward center then beyond
-                    const arrowDist = 40;
-                    const arrowX = playerSX + Math.cos(angle + Math.PI) * arrowDist;
-                    const arrowY = playerSY + Math.sin(angle + Math.PI) * arrowDist;
-
-                    ctx.save();
-                    ctx.translate(arrowX, arrowY);
-                    ctx.rotate(angle + Math.PI);
-                    ctx.beginPath();
-                    ctx.moveTo(10, 0);
-                    ctx.lineTo(-5, -6);
-                    ctx.lineTo(-5, 6);
-                    ctx.closePath();
-                    ctx.fillStyle = targetColor;
-                    ctx.globalAlpha = 0.7;
-                    ctx.fill();
-                    ctx.globalAlpha = 1;
-                    ctx.restore();
-
-                    // Label
-                    ctx.font = '9px "Courier New", monospace';
-                    ctx.fillStyle = targetColor;
-                    ctx.textAlign = 'left';
-                    ctx.fillText(`→ ${targetZoneName}`, arrowX + 15, arrowY + 3);
-                }
-
-                // Draw background stars (when maximized)
-                if (isMaximized) {
-                    this.stars?.slice(0, 100).forEach(star => {
-                        const { sx, sy } = toScreen(star.x, star.y);
-                        if (sx >= 0 && sx <= w && sy >= 0 && sy <= h) {
-                            ctx.beginPath();
-                            const size = Math.max(1, (star.size || 2) * 0.3);
-                            ctx.arc(sx, sy, size, 0, Math.PI * 2);
-                            ctx.fillStyle = star.color || '#ffcc00';
-                            ctx.globalAlpha = 0.5;
-                            ctx.fill();
-                            ctx.globalAlpha = 1;
-                        }
-                    });
-                }
-
-                // ===== DRAW MINERALS WITH ZONE-BASED STYLING =====
-                const mineralSize = isMaximized ? 5 : 3;
-                this.minerals?.forEach(mineral => {
-                    const { sx, sy } = toScreen(mineral.x, mineral.y);
-                    if (sx >= 0 && sx <= w && sy >= 0 && sy <= h) {
-                        const mineralInfo = this.mineralTypes?.[mineral.type];
-                        const color = mineralInfo?.color || '#00ff88';
-                        const rarity = mineralInfo?.rarity || 'common';
-
-                        // Size scales with rarity
-                        let size = mineralSize;
-                        if (rarity === 'rare') size *= 1.3;
-                        if (rarity === 'epic') size *= 1.5;
-                        if (rarity === 'legendary') size *= 1.8;
-                        if (rarity === 'mythic') size *= 2.2;
-
-                        // Draw glow for rare+ minerals
-                        if (rarity !== 'common' && rarity !== 'uncommon') {
-                            ctx.beginPath();
-                            ctx.arc(sx, sy, size * 2, 0, Math.PI * 2);
-                            ctx.fillStyle = color;
-                            ctx.globalAlpha = 0.2;
-                            ctx.fill();
-                            ctx.globalAlpha = 1;
-                        }
-
-                        ctx.beginPath();
-                        ctx.arc(sx, sy, size, 0, Math.PI * 2);
-                        ctx.fillStyle = color;
-                        if (isMaximized) {
-                            ctx.shadowColor = color;
-                            ctx.shadowBlur = rarity === 'mythic' ? 12 : 6;
-                        }
-                        ctx.fill();
-                        ctx.shadowBlur = 0;
-                    }
-                });
-
-                // Draw alien spacecraft
-                const alienSize = isMaximized ? 6 : 3;
-                this.alienShips?.forEach(alien => {
-                    const { sx, sy } = toScreen(alien.x, alien.y);
-                    if (sx >= 0 && sx <= w && sy >= 0 && sy <= h) {
-                        ctx.beginPath();
-                        ctx.arc(sx, sy, alienSize, 0, Math.PI * 2);
-                        ctx.fillStyle = '#ff44ff';
-                        if (isMaximized) {
-                            ctx.shadowColor = '#ff44ff';
-                            ctx.shadowBlur = 8;
-                        }
-                        ctx.fill();
-                        ctx.shadowBlur = 0;
-                    }
-                });
-
-                // ===== DRAW PLAYER SHIP =====
-                const { sx: shipX, sy: shipY } = toScreen(ship.x, ship.y);
-                ctx.save();
-                ctx.translate(shipX, shipY);
-
-                // Draw ship glow
-                ctx.beginPath();
-                ctx.arc(0, 0, isMaximized ? 14 : 8, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(0, 243, 255, 0.3)';
-                ctx.fill();
-
-                // Draw ship icon (triangle pointing in heading direction)
-                ctx.rotate(ship.rotation);
-                const shipSize = isMaximized ? 12 : 6;
-                ctx.beginPath();
-                ctx.moveTo(0, -shipSize);
-                ctx.lineTo(-shipSize * 0.6, shipSize * 0.5);
-                ctx.lineTo(shipSize * 0.6, shipSize * 0.5);
-                ctx.closePath();
-                ctx.fillStyle = '#00f3ff';
-                ctx.shadowColor = '#00f3ff';
-                ctx.shadowBlur = isMaximized ? 14 : 8;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                ctx.restore();
-
-                // ===== UI OVERLAYS (maximized only) =====
-                if (isMaximized) {
-                    // Player position and current zone
-                    const playerDist = Math.sqrt(ship.x * ship.x + ship.y * ship.y);
-                    const currentZone = this.getZoneAtDistance ? this.getZoneAtDistance(playerDist) : 'unknown';
-                    const zoneInfo = this.galaxyZones?.[currentZone];
-                    const zoneName = zoneInfo?.name || currentZone;
-                    const zoneColor = zoneInfo?.color || '#fff';
-
-                    ctx.font = 'bold 12px "Courier New", monospace';
-                    ctx.textAlign = 'left';
-                    ctx.fillStyle = '#00f3ff';
-                    ctx.fillText(`Position: (${Math.round(ship.x)}, ${Math.round(ship.y)})`, 15, h - 35);
-                    ctx.fillStyle = zoneColor;
-                    ctx.fillText(`Zone: ${zoneName}`, 15, h - 18);
-
-                    // Distance from origin
-                    ctx.textAlign = 'right';
-                    ctx.fillStyle = 'rgba(200, 230, 255, 0.8)';
-                    ctx.fillText(`Distance: ${Math.round(playerDist)}px`, w - 15, h - 18);
-
-                    // Zone legend in corner
-                    ctx.font = '9px "Courier New", monospace';
-                    let legendY = 20;
-                    ctx.textAlign = 'right';
-                    Object.entries(this.galaxyZones || {}).forEach(([key, zone]) => {
-                        ctx.fillStyle = zone.color;
-                        ctx.fillText(`● ${zone.name}`, w - 15, legendY);
-                        legendY += 14;
-                    });
-
-                    // Nearby gems breakdown (top-left when maximized)
-                    const visibleMinerals = this.minerals?.filter(m => {
-                        const { sx, sy } = toScreen(m.x, m.y);
-                        return sx >= 0 && sx <= w && sy >= 0 && sy <= h;
-                    }) || [];
-
-                    if (visibleMinerals.length > 0) {
-                        const gemCounts = {};
-                        visibleMinerals.forEach(m => {
-                            const info = this.mineralTypes?.[m.type];
-                            if (info) {
-                                if (!gemCounts[m.type]) {
-                                    gemCounts[m.type] = { count: 0, color: info.color, name: info.name, value: info.value };
-                                }
-                                gemCounts[m.type].count++;
-                            }
-                        });
-
-                        ctx.font = '10px "Courier New", monospace';
-                        ctx.textAlign = 'left';
-                        ctx.fillStyle = 'rgba(0, 40, 60, 0.85)';
-                        ctx.fillRect(10, 80, 140, 15 + Object.keys(gemCounts).length * 14);
-
-                        ctx.fillStyle = '#00f3ff';
-                        ctx.fillText(`Visible Gems: ${visibleMinerals.length}`, 15, 93);
-
-                        let gemY = 107;
-                        Object.entries(gemCounts)
-                            .sort((a, b) => b[1].value - a[1].value)
-                            .slice(0, 8)
-                            .forEach(([type, data]) => {
-                                ctx.fillStyle = data.color;
-                                ctx.fillText(`● ${data.name}: ${data.count}`, 15, gemY);
-                                gemY += 14;
-                            });
-                    }
-                }
-
-                // Minimized map: Show compact gem summary
-                if (!isMaximized) {
-                    const nearbyMinerals = this.minerals?.filter(m => {
-                        const dx = m.x - ship.x;
-                        const dy = m.y - ship.y;
-                        return Math.sqrt(dx * dx + dy * dy) < worldSize / 2;
-                    }) || [];
-
-                    if (nearbyMinerals.length > 0) {
-                        // Count by rarity
-                        const counts = { common: 0, uncommon: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 };
-                        nearbyMinerals.forEach(m => {
-                            const info = this.mineralTypes?.[m.type];
-                            if (info?.rarity) counts[info.rarity]++;
-                        });
-
-                        // Show compact summary at bottom
-                        ctx.font = '8px "Courier New", monospace';
-                        ctx.textAlign = 'center';
-                        ctx.fillStyle = 'rgba(0, 30, 50, 0.9)';
-                        ctx.fillRect(0, h - 18, w, 18);
-
-                        let summary = `Gems: ${nearbyMinerals.length}`;
-                        if (counts.mythic) summary += ` 💎${counts.mythic}`;
-                        if (counts.legendary) summary += ` ⭐${counts.legendary}`;
-                        if (counts.epic) summary += ` 🔷${counts.epic}`;
-                        if (counts.rare) summary += ` 🔹${counts.rare}`;
-
-                        ctx.fillStyle = '#00f3ff';
-                        ctx.fillText(summary, w / 2, h - 6);
-                    }
-                }
-            }
-
-            // Show/hide floating windows when entering/exiting flight mode
-            showFloatingWindows(show) {
-                const mapWindow = document.getElementById('floatingMap');
-                const leaderboard = document.getElementById('floatingLeaderboard');
-                const upgradeWin = document.getElementById('upgradeWindow');
-                const walletWin = document.getElementById('walletWindow');
-
-                if (show) {
-                    mapWindow?.classList.remove('hidden');
-                    leaderboard?.classList.remove('hidden');
-                    upgradeWin?.classList.remove('hidden');
-                    walletWin?.classList.remove('hidden');
-                    this.updateMap();
-                    this.updateFloatingLeaderboard();
-                    this.updateUpgradeWindow();
-                    this.updateWalletWindow();
-                } else {
-                    mapWindow?.classList.add('hidden');
-                    leaderboard?.classList.add('hidden');
-                    upgradeWin?.classList.add('hidden');
-                    walletWin?.classList.add('hidden');
-                    // Also close maximized map
-                    mapWindow?.classList.remove('maximized');
-                    document.getElementById('mapOverlay')?.classList.remove('visible');
-                }
-            }
-
-            // Update the upgrade window with current levels and costs
-            updateUpgradeWindow() {
-                const grid = document.getElementById('upgradeGrid');
-                if (!grid) return;
-
-                let html = '';
-                for (const [type, def] of Object.entries(this.upgradeDefinitions)) {
-                    const level = this.shipUpgrades[type] || 0;
-                    const isMaxed = level >= def.max;
-                    const cost = this.getUpgradeCost(type);
-                    const canAfford = this.canAffordUpgrade(type);
-                    const gemInfo = this.mineralTypes[def.gem];
-                    const progress = (level / def.max) * 100;
-
-                    html += `
-                        <div class="upgrade-card ${isMaxed ? 'maxed' : ''}">
-                            <div class="upgrade-icon">${def.icon}</div>
-                            <div class="upgrade-name">${def.name}</div>
-                            <div class="upgrade-level">Lv.${level}/${def.max}</div>
-                            <div class="upgrade-bar">
-                                <div class="upgrade-bar-fill" style="width: ${progress}%"></div>
-                            </div>
-                            <div class="upgrade-cost">${isMaxed ? 'MAXED' : `${cost} ${gemInfo?.name || def.gem}`}</div>
-                            <button class="upgrade-btn" 
-                                ${isMaxed || !canAfford ? 'disabled' : ''}
-                                onclick="app.purchaseUpgrade('${type}')">
-                                ${isMaxed ? '✓ MAX' : 'Upgrade'}
-                            </button>
-                        </div>
-                    `;
-                }
-                grid.innerHTML = html;
-            }
-
-            // Update the wallet window with gem inventory
-            updateWalletWindow() {
-                const gemsEl = document.getElementById('walletGems');
-                const totalEl = document.getElementById('walletTotal');
-                const creditsEl = document.getElementById('walletCredits');
-                if (!gemsEl) return;
-
-                const mineralEmojis = {
-                    iron: '⚙️', copper: '🟠', coal: '⬛', titanium: '🔩', silicon: '🔲',
-                    silver: '⚪', gold: '🥇', platinum: '💿', palladium: '🪙', rhodium: '🔘', krypton: '🫧',
-                    quartz: '🔮', diamond: '💎', emerald: '💚', ruby: '❤️', sapphire: '💙', iridium: '🌟', xenon: '🟣',
-                    uranium: '☢️', plutonium: '⚛️', helium3: '💨', thorium: '⚡', osmium: '🛡️', deuterium: '🌀',
-                    neodymium: '💖', lanthanum: '💜', darkmatter: '🌑', antimatter: '✨', aether: '🌈'
-                };
-
-                let html = '';
-                let totalValue = 0;
-
-                for (const [type, count] of Object.entries(this.playerInventory)) {
-                    if (count > 0) {
-                        const mineralInfo = this.mineralTypes[type];
-                        if (!mineralInfo) continue;
-                        const value = mineralInfo.value * count;
-                        totalValue += value;
-                        const emoji = mineralEmojis[type] || '💠';
-
-                        html += `
-                            <div class="wallet-gem-row">
-                                <div class="gem-info">
-                                    <span class="gem-emoji">${emoji}</span>
-                                    <span class="gem-name">${mineralInfo.name}</span>
-                                </div>
-                                <span class="gem-count">×${count}</span>
-                                <span class="gem-value">$${value.toLocaleString()}</span>
-                            </div>
-                        `;
-                    }
-                }
-
-                if (!html) {
-                    html = '<div style="text-align:center; color:rgba(200,200,200,0.5); padding:20px;">No gems yet</div>';
-                }
-
-                gemsEl.innerHTML = html;
-
-                // Apply cargo bonus to total value display
-                const cargoBonus = this.playerShip?.cargoBonus || 1.0;
-                const boostedTotal = Math.round(totalValue * cargoBonus);
-                const bonusPercent = cargoBonus > 1 ? ` (+${Math.round((cargoBonus - 1) * 100)}%)` : '';
-
-                if (totalEl) totalEl.textContent = '$' + boostedTotal.toLocaleString() + bonusPercent;
-                if (creditsEl) creditsEl.textContent = this.credits.toLocaleString();
-            }
-
-            // Sell all gems for credits
-            sellAllGems() {
-                let totalValue = 0;
-                for (const [type, count] of Object.entries(this.playerInventory)) {
-                    if (count > 0) {
-                        const mineralInfo = this.mineralTypes[type];
-                        if (mineralInfo) {
-                            totalValue += mineralInfo.value * count;
-                        }
-                    }
-                }
-
-                if (totalValue === 0) {
-                    this.showNotification('No gems to sell!', '#ff6600');
-                    return;
-                }
-
-                // Clear inventory and add credits
-                this.playerInventory = {};
-                this.credits += totalValue;
-
-                this.saveInventory();
-                this.saveCredits();
-
-                this.showNotification(`Sold gems for $${totalValue.toLocaleString()}!`, '#ffd700');
-                this.updateWalletWindow();
-                this.updateUpgradeWindow();
-                this.updateGemsDisplay();
-            }
-
-
-            // Update the floating leaderboard with real-time simulation
-            updateFloatingLeaderboard() {
-                const leaderboardEl = document.getElementById('floatingLeadersList');
-                if (!leaderboardEl) return;
-
-                const now = Date.now();
-
-                // Initialize competitor tracking if not exists
-                if (!this.leaderboardCompetitors) {
-                    this.leaderboardCompetitors = [
-                        { name: 'StarPilot99', baseWealth: 125000, variance: 8000, speed: 0.0003 },
-                        { name: 'NebulaDragon', baseWealth: 89000, variance: 12000, speed: 0.0005 },
-                        { name: 'CosmicHunter', baseWealth: 67000, variance: 15000, speed: 0.0004 },
-                        { name: 'SpaceAce42', baseWealth: 45000, variance: 10000, speed: 0.0006 },
-                        { name: 'VoidWalker', baseWealth: 35000, variance: 8000, speed: 0.0007 }
-                    ];
-                }
-
-                // Calculate player's real wealth
-                const playerWealth = this.playerShip?.minerals?.reduce((sum, m) =>
-                    sum + (this.mineralTypes?.[m.type]?.value || 0), 0) || 0;
-
-                // Build dynamic leaderboard with time-varying competitor wealth
-                const players = this.leaderboardCompetitors.map(comp => ({
-                    name: comp.name,
-                    wealth: Math.round(comp.baseWealth + Math.sin(now * comp.speed) * comp.variance),
-                    isYou: false
-                }));
-
-                // Add player
-                players.push({ name: 'You', wealth: playerWealth, isYou: true });
-
-                // Sort by wealth descending
-                players.sort((a, b) => b.wealth - a.wealth);
-
-                // Render top 5
-                let html = '';
-                players.slice(0, 5).forEach((player, i) => {
-                    const youClass = player.isYou ? ' is-you' : '';
-                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
-                    html += `<div class="leader-row${youClass}">
-                        <span class="leader-rank">${medal || (i + 1)}</span>
-                        <span class="leader-name">${player.name}</span>
-                        <span class="leader-score">$${player.wealth.toLocaleString()}</span>
-                    </div>`;
-                });
-                leaderboardEl.innerHTML = html;
-            }
-
 
             updatePlayerShip() {
                 const ship = this.playerShip;
@@ -4143,9 +3382,10 @@
                 });
                 this.speedLines = this.speedLines.filter(line => line.life > 0);
 
-                // Camera follows ship directly (keeps ship PERFECTLY centered)
-                this.camera.x = -ship.x;
-                this.camera.y = -ship.y;
+                // Camera follows ship directly (keeps ship perfectly centered)
+                // Use zoom level to maintain center regardless of zoom
+                this.camera.x = -ship.x * this.camera.zoom;
+                this.camera.y = -ship.y * this.camera.zoom;
             }
 
             // Inventory Management
@@ -4167,157 +3407,108 @@
                 }
             }
 
-            // ============ UPGRADE PERSISTENCE ============
+            loadCredits() {
+                return parseInt(localStorage.getItem('playerCredits')) || 0;
+            }
+
+            saveCredits() {
+                localStorage.setItem('playerCredits', this.credits);
+            }
+
             loadUpgrades() {
                 try {
-                    const saved = localStorage.getItem('shipUpgrades');
-                    return saved ? JSON.parse(saved) : {
-                        speed: 0, armor: 0, weapons: 0, shields: 0, cargo: 0, radar: 0
-                    };
+                    return JSON.parse(localStorage.getItem('playerUpgrades')) || { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0 };
                 } catch (e) {
-                    return { speed: 0, armor: 0, weapons: 0, shields: 0, cargo: 0, radar: 0 };
+                    return { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0 };
                 }
             }
 
             saveUpgrades() {
-                try {
-                    localStorage.setItem('shipUpgrades', JSON.stringify(this.shipUpgrades));
-                } catch (e) {
-                    console.error('Failed to save upgrades:', e);
+                localStorage.setItem('playerUpgrades', JSON.stringify(this.playerShip.upgrades));
+            }
+
+            sellAllGems() {
+                let totalValue = 0;
+                let count = 0;
+                for (const [type, qty] of Object.entries(this.playerInventory)) {
+                    if (qty > 0) {
+                        const val = this.mineralTypes[type].value;
+                        totalValue += val * qty;
+                        count += qty;
+                        this.playerInventory[type] = 0;
+                    }
+                }
+
+                if (totalValue > 0) {
+                    this.credits += totalValue;
+                    this.saveCredits();
+                    this.saveInventory();
+                    this.showToast(`Sold ${count} gems for $${totalValue.toLocaleString()}`);
+                    // Play sound effect if available
+                } else {
+                    this.showToast('No gems to sell');
                 }
             }
 
-            loadCredits() {
-                try {
-                    const saved = localStorage.getItem('playerCredits');
-                    return saved ? parseInt(saved) : 0;
-                } catch (e) {
-                    return 0;
-                }
-            }
+            upgradeShip(type) {
+                const upgradeCosts = [1000, 2500, 5000, 10000, 25000]; // Function of level maybe?
+                const currentLevel = this.playerShip.upgrades[type] || 0;
 
-            saveCredits() {
-                try {
-                    localStorage.setItem('playerCredits', this.credits.toString());
-                } catch (e) {
-                    console.error('Failed to save credits:', e);
-                }
-            }
-
-            // ============ UPGRADE LOGIC ============
-            getUpgradeCost(upgradeType) {
-                const def = this.upgradeDefinitions[upgradeType];
-                if (!def) return Infinity;
-                const currentLevel = this.shipUpgrades[upgradeType] || 0;
-                if (currentLevel >= def.max) return Infinity;
-                return Math.ceil(def.baseCost * Math.pow(def.costMultiplier, currentLevel));
-            }
-
-            canAffordUpgrade(upgradeType) {
-                const def = this.upgradeDefinitions[upgradeType];
-                if (!def) return false;
-                const cost = this.getUpgradeCost(upgradeType);
-                const gemCount = this.playerInventory[def.gem] || 0;
-                return gemCount >= cost;
-            }
-
-            purchaseUpgrade(upgradeType) {
-                const def = this.upgradeDefinitions[upgradeType];
-                if (!def) return false;
-
-                const currentLevel = this.shipUpgrades[upgradeType] || 0;
-                if (currentLevel >= def.max) {
-                    this.showNotification('Max level reached!', '#ff6600');
-                    return false;
+                if (currentLevel >= 5) {
+                    this.showToast('Max level reached!');
+                    return;
                 }
 
-                const cost = this.getUpgradeCost(upgradeType);
-                const gemCount = this.playerInventory[def.gem] || 0;
+                const cost = upgradeCosts[currentLevel];
+                if (this.credits >= cost) {
+                    this.credits -= cost;
+                    this.playerShip.upgrades[type]++;
+                    this.saveCredits();
+                    this.saveUpgrades();
 
-                if (gemCount < cost) {
-                    this.showNotification(`Need ${cost} ${def.gem}!`, '#ff4444');
-                    return false;
+                    // Apply effects immediately
+                    const lvl = this.playerShip.upgrades[type];
+                    if (type === 'speed') {
+                        this.playerShip.maxSpeed = 50 * (1 + lvl * 0.2);
+                        this.playerShip.acceleration = 0.5 * (1 + lvl * 0.1);
+                    } else if (type === 'armor') {
+                        this.playerShip.maxHull = 100 * (1 + lvl * 0.2);
+                        this.playerShip.hullHealth = this.playerShip.maxHull; // Repair on upgrade
+                    } else if (type === 'shield') {
+                        this.playerShip.maxShield = 50 * (1 + lvl * 0.2);
+                        this.playerShip.shield = this.playerShip.maxShield;
+                    } else if (type === 'radar') {
+                        this.playerShip.radarRange = 2000 * (1 + lvl * 0.3);
+                    }
+
+                    this.showToast(`${type.toUpperCase()} Upgraded to Level ${lvl + 1}!`);
+                    this.updateUpgradeUI(); // Assuming we'll create this method
+                } else {
+                    this.showToast(`Not enough credits! Need $${cost.toLocaleString()}`);
                 }
-
-                // Deduct gems and upgrade
-                this.playerInventory[def.gem] -= cost;
-                this.shipUpgrades[upgradeType] = currentLevel + 1;
-
-                // Save and apply
-                this.saveInventory();
-                this.saveUpgrades();
-                this.applyUpgrades();
-
-                this.showNotification(`${def.name} upgraded to Lv.${currentLevel + 1}!`, '#00ff88');
-                this.updateUpgradeWindow();
-                this.updateWalletWindow();
-                return true;
             }
-
-            applyUpgrades() {
-                if (!this.playerShip) return;
-
-                // Ship type base stats lookup
-                const shipTypes = {
-                    default: { maxSpeed: 50, acceleration: 0.5 },
-                    interceptor: { maxSpeed: 50, acceleration: 0.5 },
-                    saucer: { maxSpeed: 70, acceleration: 0.7 },
-                    deathstar: { maxSpeed: 20, acceleration: 0.2 },
-                    tiefighter: { maxSpeed: 90, acceleration: 0.9 },
-                    constellation: { maxSpeed: 60, acceleration: 0.6 },
-                    draco: { maxSpeed: 80, acceleration: 0.4 },
-                    phoenix: { maxSpeed: 55, acceleration: 0.8 }
-                };
-
-                const shipType = this.playerShip.type || 'default';
-                const baseStats = shipTypes[shipType] || shipTypes.default;
-
-                // ========== SPEED UPGRADE (+5% per level, max +50%) ==========
-                const speedLevel = this.shipUpgrades.speed || 0;
-                const speedBonus = 1 + (speedLevel * 0.05);
-                this.playerShip.maxSpeed = Math.round(baseStats.maxSpeed * speedBonus);
-
-                // ========== ARMOR UPGRADE (-8% damage per level, max 80%) ==========
-                const armorLevel = this.shipUpgrades.armor || 0;
-                this.playerShip.damageReduction = Math.min(0.8, armorLevel * 0.08);
-
-                // ========== WEAPONS UPGRADE (+15% damage per level, max +150%) ==========
-                const weaponsLevel = this.shipUpgrades.weapons || 0;
-                this.playerShip.weaponDamage = 1 + (weaponsLevel * 0.15);
-
-                // ========== SHIELDS UPGRADE (+100 HP per level, max 1000) ==========
-                const shieldsLevel = this.shipUpgrades.shields || 0;
-                const newShieldMax = shieldsLevel * 100;
-                // If max increased, give player the new capacity (don't reset current)
-                if (newShieldMax > this.playerShip.shieldMax) {
-                    this.playerShip.shieldCurrent += (newShieldMax - this.playerShip.shieldMax);
-                }
-                this.playerShip.shieldMax = newShieldMax;
-                this.playerShip.shieldCurrent = Math.min(this.playerShip.shieldCurrent, this.playerShip.shieldMax);
-
-                // ========== CARGO UPGRADE (+20% gem value per level, max +100%) ==========
-                const cargoLevel = this.shipUpgrades.cargo || 0;
-                this.playerShip.cargoBonus = 1 + (cargoLevel * 0.20);
-
-                // ========== RADAR UPGRADE (+500px range per level, max +2500) ==========
-                const radarLevel = this.shipUpgrades.radar || 0;
-                this.playerShip.radarRange = 3000 + (radarLevel * 500);
-            }
-
-            showNotification(text, color) {
-                this.collectionNotifications.push({
-                    text: text,
-                    color: color || '#00f3ff',
-                    time: Date.now()
-                });
-            }
-
 
             // Spawn minerals around the player - Galaxy Zone-aware distribution
             spawnMinerals() {
                 const ship = this.playerShip;
-                const spawnRadius = 600;  // Spawn within this radius from player
-                const maxMinerals = 80;   // Increased for richer gameplay
+                const spawnRadius = 600;
+                let maxMinerals = 80;
+
+                // Check hotspot proximity
+                let hotspotBonus = 1.0;
+                let activeHotspot = null;
+
+                for (const dep of this.resourceDeposits) {
+                    const dx = ship.x - dep.x;
+                    const dy = ship.y - dep.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < dep.radius) {
+                        hotspotBonus = dep.richness;
+                        maxMinerals = 120;
+                        activeHotspot = dep;
+                        break; // Only one hotspot at a time
+                    }
+                }
 
                 // Calculate player's distance from origin to determine zone
                 const playerDistFromOrigin = Math.sqrt(ship.x * ship.x + ship.y * ship.y);
@@ -4336,7 +3527,7 @@
                     const currentZone = this.getZoneAtDistance(playerDistFromOrigin);
 
                     // Get element to spawn based on zone and probability
-                    const mineralKey = this.selectElementForZone(currentZone, playerDistFromOrigin);
+                    const mineralKey = this.selectElementForZone(currentZone, playerDistFromOrigin, hotspotBonus);
                     const type = this.mineralTypes[mineralKey];
                     if (!type) continue;
 
@@ -4377,7 +3568,7 @@
             }
 
             // Select an element to spawn based on current zone and probability
-            selectElementForZone(currentZone, distance) {
+            selectElementForZone(currentZone, distance, bonusMultiplier = 1) {
                 const zones = this.galaxyZones;
                 const allElements = Object.keys(this.mineralTypes);
 
@@ -4402,7 +3593,7 @@
                     // Zone affinity bonus - elements in their home zone spawn more
                     if (zones[element.zone] && zones[element.zone].elements.includes(elementKey)) {
                         if (element.zone === currentZone) {
-                            weight *= zones[element.zone].concentrationBonus;
+                            weight *= (zones[element.zone].concentrationBonus * bonusMultiplier);
                         }
                     }
 
@@ -4461,19 +3652,9 @@
                     this.playerInventory[mineral.type]++;
                     this.saveInventory();
 
-                    // Real-time UI updates
-                    this.updateGemsDisplay();
-                    this.updateWalletWindow();
-                    this.updateUpgradeWindow();
-
-                    // Apply cargo bonus to displayed value
-                    const cargoBonus = ship.cargoBonus || 1.0;
-                    const boostedValue = Math.round(mineral.value * cargoBonus);
-                    const bonusText = cargoBonus > 1 ? ` +${Math.round((cargoBonus - 1) * 100)}%` : '';
-
-                    // Show notification with bonus-adjusted value
+                    // Show notification
                     this.collectionNotifications.push({
-                        text: `+${mineral.name} ($${boostedValue}${bonusText})`,
+                        text: `+${mineral.name} ($${mineral.value})`,
                         color: mineral.color,
                         time: Date.now()
                     });
@@ -4543,6 +3724,62 @@
                     this.bgDriftMode = false;
                     this.showToast('Drift mode error - please try again');
                 }
+            }
+
+            toggleUpgradePanel() {
+                const panel = document.getElementById('upgradePanel');
+                if (panel) {
+                    panel.classList.toggle('hidden');
+                    if (!panel.classList.contains('hidden')) {
+                        this.updateUpgradeUI();
+                    }
+                }
+            }
+
+            updateUpgradeUI() {
+                const list = document.getElementById('upgradeList');
+                const credits = document.getElementById('dockCredits');
+                if (!list || !credits) return;
+
+                credits.textContent = '$' + this.credits.toLocaleString();
+
+                const upgrades = [
+                    { id: 'speed', name: 'Engine Overclock', desc: 'Increases max speed & acceleration' },
+                    { id: 'armor', name: 'Nanocarbon Hull', desc: 'Increases hull integrity' },
+                    { id: 'weapons', name: 'Photon Cannons', desc: 'Increases damage output (Coming Soon)' },
+                    { id: 'shield', name: 'Energy Shield', desc: 'Increases shield capacity' },
+                    { id: 'cargo', name: 'Quantum Hold', desc: 'Increases gem capacity (Coming Soon)' },
+                    { id: 'radar', name: 'Deep Scan Radar', desc: 'Increases detection range' }
+                ];
+
+                const costs = [1000, 2500, 5000, 10000, 25000];
+
+                let html = '';
+                upgrades.forEach(u => {
+                    const level = this.playerShip.upgrades[u.id] || 0;
+                    const cost = costs[level];
+                    const isMax = level >= 5;
+                    const canAfford = this.credits >= cost;
+
+                    let bars = '';
+                    for (let i = 0; i < 5; i++) {
+                        bars += `<div style="flex:1; height:4px; background:${i < level ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; margin:0 1px;"></div>`;
+                    }
+
+                    html += `
+                        <div style="background:rgba(255,255,255,0.05); border:1px solid ${canAfford ? 'rgba(0,243,255,0.3)' : 'rgba(255,50,50,0.3)'}; padding:8px; border-radius:6px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <span style="font-weight:bold; color:#e0faff; font-size:11px;">${u.name}</span>
+                                <span style="font-size:10px; color:${isMax ? '#00f3ff' : '#ffd700'}">${isMax ? 'MAX' : '$' + cost.toLocaleString()}</span>
+                            </div>
+                            <div style="font-size:9px; color:#8ba; margin-bottom:6px;">${u.desc}</div>
+                            <div style="display:flex; margin-bottom:6px;">${bars}</div>
+                            ${!isMax ? `<button class="btn-small" onclick="app.upgradeShip('${u.id}')" style="width:100%; font-size:10px; padding:4px; ${canAfford ? 'cursor:pointer' : 'opacity:0.5; cursor:not-allowed;'}">UPGRADE</button>` : ''}
+                        </div>
+                    `;
+                });
+
+                list.innerHTML = html;
             }
 
             // Toggle warp speed mode
@@ -5095,21 +4332,13 @@
             onWheel(e) {
                 e.preventDefault();
                 const zoomSpeed = 0.0015;
+                const newZoom = Math.max(0.1, Math.min(6, this.camera.zoom - e.deltaY * zoomSpeed));
 
-                // Different zoom limits for flight mode vs design mode
-                if (this.flightMode) {
-                    const newZoom = Math.max(0.15, Math.min(3.0, this.camera.zoom - e.deltaY * zoomSpeed));
-                    this.camera.zoom = newZoom;
-                    // Update zoom display
-                    const zoomEl = document.getElementById('zoomValue');
-                    if (zoomEl) zoomEl.textContent = this.camera.zoom.toFixed(2);
-                } else {
-                    const newZoom = Math.max(0.1, Math.min(6, this.camera.zoom - e.deltaY * zoomSpeed));
-                    const worldPos = this.getWorldPos(e);
-                    this.camera.zoom = newZoom;
-                    this.camera.x = e.clientX - this.canvas.width / 2 - worldPos.x * this.camera.zoom;
-                    this.camera.y = e.clientY - this.canvas.height / 2 - worldPos.y * this.camera.zoom;
-                }
+                const worldPos = this.getWorldPos(e);
+                this.camera.zoom = newZoom;
+
+                this.camera.x = e.clientX - this.canvas.width / 2 - worldPos.x * this.camera.zoom;
+                this.camera.y = e.clientY - this.canvas.height / 2 - worldPos.y * this.camera.zoom;
             }
 
             /* --- Star Creation --- */
@@ -5245,6 +4474,12 @@
 
             adjustZoom(delta) {
                 this.camera.zoom = Math.max(0.1, Math.min(6, this.camera.zoom + delta));
+                // Re-center camera on ship in flight mode to prevent drift
+                // Re-center camera on ship in flight mode to prevent drift
+                if (this.flightMode && this.playerShip) {
+                    this.camera.x = -this.playerShip.x * this.camera.zoom;
+                    this.camera.y = -this.playerShip.y * this.camera.zoom;
+                }
             }
 
             getConstellationName(group) {
@@ -6595,13 +5830,9 @@
                     }
                 }
 
-                // World Transform - order matters for zoom-independent centering:
-                // 1. Move origin to screen center
-                // 2. Apply zoom scale
-                // 3. Apply camera offset (ship position becomes screen center)
-                ctx.translate(canvas.width / 2, canvas.height / 2);
+                // World Transform
+                ctx.translate(canvas.width / 2 + this.camera.x, canvas.height / 2 + this.camera.y);
                 ctx.scale(this.camera.zoom, this.camera.zoom);
-                ctx.translate(this.camera.x, this.camera.y);
 
                 // Calculations & Cluster ID Assignment
                 const { lines, clusters } = this.refreshClusterAssignments();
@@ -6826,153 +6057,57 @@
                         }
                         break;
 
-                    case 'deathstar':
-                        // Death Star - iconic round battle station
-                        ctx.fillStyle = '#555555';
+                    case 'hauler':
+                        // Heavy cargo ship - rectangular with containers
+                        ctx.fillStyle = '#666666';
                         ctx.strokeStyle = '#888888';
                         ctx.lineWidth = 2 / this.camera.zoom;
-                        // Main sphere
+                        ctx.fillRect(-size * 0.8, -size * 0.5, size * 1.6, size);
+                        ctx.strokeRect(-size * 0.8, -size * 0.5, size * 1.6, size);
+                        // Cargo containers
+                        ctx.fillStyle = '#884400';
+                        ctx.fillRect(-size * 0.5, -size * 0.35, size * 0.4, size * 0.7);
+                        ctx.fillRect(0, -size * 0.35, size * 0.4, size * 0.7);
+                        // Cockpit
+                        ctx.fillStyle = '#00aaff';
                         ctx.beginPath();
-                        ctx.arc(0, 0, size, 0, Math.PI * 2);
+                        ctx.moveTo(size * 0.8, 0);
+                        ctx.lineTo(size * 0.5, -size * 0.3);
+                        ctx.lineTo(size * 0.5, size * 0.3);
+                        ctx.closePath();
                         ctx.fill();
-                        ctx.stroke();
-                        // Equator trench
-                        ctx.strokeStyle = '#333333';
-                        ctx.lineWidth = 3 / this.camera.zoom;
-                        ctx.beginPath();
-                        ctx.moveTo(-size, 0);
-                        ctx.lineTo(size, 0);
-                        ctx.stroke();
-                        // Superlaser dish (top-left)
-                        ctx.fillStyle = '#333333';
-                        ctx.beginPath();
-                        ctx.arc(-size * 0.3, -size * 0.5, size * 0.4, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Superlaser inner
-                        ctx.fillStyle = '#00ff00';
-                        ctx.beginPath();
-                        ctx.arc(-size * 0.3, -size * 0.5, size * 0.15, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Surface details
-                        ctx.strokeStyle = '#444444';
-                        ctx.lineWidth = 1 / this.camera.zoom;
-                        for (let i = 1; i < 4; i++) {
-                            ctx.beginPath();
-                            ctx.arc(0, 0, size * i * 0.25, 0, Math.PI * 2);
-                            ctx.stroke();
-                        }
+                        // Engines
+                        ctx.fillStyle = '#ff4400';
+                        ctx.fillRect(-size * 0.9, -size * 0.4, size * 0.15, size * 0.25);
+                        ctx.fillRect(-size * 0.9, size * 0.15, size * 0.15, size * 0.25);
                         break;
 
-                    case 'tiefighter':
-                        // TIE Fighter - hexagonal wing panels
-                        ctx.fillStyle = '#333333';
-                        ctx.strokeStyle = '#666666';
+                    case 'orion':
+                        // Orion constellation ship - star points
+                        ctx.fillStyle = '#ffffff';
+                        ctx.strokeStyle = '#aaddff';
                         ctx.lineWidth = 2 / this.camera.zoom;
-                        // Left wing (hexagonal panel)
+                        // Main star shape
                         ctx.beginPath();
-                        for (let i = 0; i < 6; i++) {
-                            const angle = (i * Math.PI * 2 / 6) - Math.PI / 2;
-                            const x = -size * 0.8 + Math.cos(angle) * size * 0.6;
-                            const y = Math.sin(angle) * size;
-                            if (i === 0) ctx.moveTo(x, y);
-                            else ctx.lineTo(x, y);
+                        for (let i = 0; i < 5; i++) {
+                            const outerAngle = (i * Math.PI * 2 / 5) - Math.PI / 2;
+                            const innerAngle = outerAngle + Math.PI / 5;
+                            const outerX = Math.cos(outerAngle) * size;
+                            const outerY = Math.sin(outerAngle) * size;
+                            const innerX = Math.cos(innerAngle) * size * 0.4;
+                            const innerY = Math.sin(innerAngle) * size * 0.4;
+                            if (i === 0) ctx.moveTo(outerX, outerY);
+                            else ctx.lineTo(outerX, outerY);
+                            ctx.lineTo(innerX, innerY);
                         }
                         ctx.closePath();
                         ctx.fill();
                         ctx.stroke();
-                        // Right wing (hexagonal panel)
+                        // Glowing core
+                        ctx.fillStyle = '#00ccff';
                         ctx.beginPath();
-                        for (let i = 0; i < 6; i++) {
-                            const angle = (i * Math.PI * 2 / 6) - Math.PI / 2;
-                            const x = size * 0.8 + Math.cos(angle) * size * 0.6;
-                            const y = Math.sin(angle) * size;
-                            if (i === 0) ctx.moveTo(x, y);
-                            else ctx.lineTo(x, y);
-                        }
-                        ctx.closePath();
+                        ctx.arc(0, 0, size * 0.25, 0, Math.PI * 2);
                         ctx.fill();
-                        ctx.stroke();
-                        // Cockpit ball
-                        ctx.fillStyle = '#444444';
-                        ctx.beginPath();
-                        ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.strokeStyle = '#0088ff';
-                        ctx.stroke();
-                        // Cockpit window
-                        ctx.fillStyle = '#0066cc';
-                        ctx.beginPath();
-                        ctx.arc(size * 0.1, 0, size * 0.12, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Wing struts
-                        ctx.strokeStyle = '#666666';
-                        ctx.lineWidth = 4 / this.camera.zoom;
-                        ctx.beginPath();
-                        ctx.moveTo(-size * 0.35, 0);
-                        ctx.lineTo(-size * 0.8, 0);
-                        ctx.moveTo(size * 0.35, 0);
-                        ctx.lineTo(size * 0.8, 0);
-                        ctx.stroke();
-                        break;
-
-                    case 'constellation':
-                        // User's custom constellation - draws their snapshot from selection
-                        if (this.constellationShipStars && this.constellationShipStars.length > 0) {
-                            // Use pre-calculated snapshot positions
-                            const bounds = this.constellationShipBounds;
-                            const scale = size * 2 / Math.max(bounds.width, bounds.height, 100);
-
-                            // Draw constellation lines
-                            ctx.strokeStyle = '#aaddff';
-                            ctx.lineWidth = 1.5 / this.camera.zoom;
-                            if (this.constellationShipConnections) {
-                                for (const conn of this.constellationShipConnections) {
-                                    const s1 = this.constellationShipStars[conn[0]];
-                                    const s2 = this.constellationShipStars[conn[1]];
-                                    if (s1 && s2) {
-                                        ctx.beginPath();
-                                        ctx.moveTo(s1.x * scale, s1.y * scale);
-                                        ctx.lineTo(s2.x * scale, s2.y * scale);
-                                        ctx.stroke();
-                                    }
-                                }
-                            }
-
-                            // Draw stars
-                            for (const star of this.constellationShipStars) {
-                                const x = star.x * scale;
-                                const y = star.y * scale;
-                                const r = Math.max(2, star.brightness * 3) / this.camera.zoom;
-                                ctx.fillStyle = star.color || '#ffffff';
-                                ctx.beginPath();
-                                ctx.arc(x, y, r, 0, Math.PI * 2);
-                                ctx.fill();
-                            }
-                        } else {
-                            // Fallback: generic star pattern
-                            ctx.fillStyle = '#ffffff';
-                            ctx.strokeStyle = '#aaddff';
-                            ctx.lineWidth = 2 / this.camera.zoom;
-                            for (let i = 0; i < 5; i++) {
-                                const angle = (i * Math.PI * 2 / 5) - Math.PI / 2;
-                                const x = Math.cos(angle) * size * 0.8;
-                                const y = Math.sin(angle) * size * 0.8;
-                                ctx.beginPath();
-                                ctx.arc(x, y, size * 0.1, 0, Math.PI * 2);
-                                ctx.fill();
-                            }
-                            // Connect them
-                            ctx.beginPath();
-                            for (let i = 0; i < 5; i++) {
-                                const angle = (i * Math.PI * 2 / 5) - Math.PI / 2;
-                                const x = Math.cos(angle) * size * 0.8;
-                                const y = Math.sin(angle) * size * 0.8;
-                                if (i === 0) ctx.moveTo(x, y);
-                                else ctx.lineTo(x, y);
-                            }
-                            ctx.closePath();
-                            ctx.stroke();
-                        }
                         break;
 
                     case 'draco':
@@ -7080,11 +6215,6 @@
 
             renderMinerals(ctx, time) {
                 this.minerals.forEach(mineral => {
-                    // Guard against non-finite values that crash createRadialGradient
-                    if (!isFinite(mineral.x) || !isFinite(mineral.y) || !mineral.size || mineral.size <= 0) {
-                        return;
-                    }
-
                     ctx.save();
                     // Use world coordinates (ctx already transformed)
                     ctx.translate(mineral.x, mineral.y);
@@ -7092,12 +6222,6 @@
                     // Pulsing glow animation
                     const pulse = Math.sin(time * 0.003 + mineral.phase) * 0.3 + 0.7;
                     const size = mineral.size * pulse / this.camera.zoom;
-
-                    // Guard against non-finite calculated size
-                    if (!isFinite(size) || size <= 0) {
-                        ctx.restore();
-                        return;
-                    }
 
                     // Glow effect
                     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 2);
@@ -8016,9 +7140,8 @@
                 const ships = {
                     interceptor: { name: 'Interceptor', maxSpeed: 50, acceleration: 0.5 },
                     saucer: { name: 'Saucer', maxSpeed: 70, acceleration: 0.7 },
-                    deathstar: { name: 'Death Star', maxSpeed: 20, acceleration: 0.2 },
-                    tiefighter: { name: 'TIE Fighter', maxSpeed: 90, acceleration: 0.9 },
-                    constellation: { name: 'Constellation', maxSpeed: 60, acceleration: 0.6 },
+                    hauler: { name: 'Hauler', maxSpeed: 30, acceleration: 0.3 },
+                    orion: { name: 'Orion', maxSpeed: 60, acceleration: 0.6 },
                     draco: { name: 'Draco', maxSpeed: 80, acceleration: 0.4 },
                     phoenix: { name: 'Phoenix', maxSpeed: 55, acceleration: 0.8 }
                 };
@@ -8027,23 +7150,6 @@
                     this.playerShip.type = shipType;
                     this.playerShip.maxSpeed = ship.maxSpeed;
                     this.playerShip.acceleration = ship.acceleration;
-
-                    // For constellation ship, store a snapshot of current stars
-                    if (shipType === 'constellation' && this.stars && this.stars.length > 0) {
-                        const bounds = this.getStarBounds();
-                        const centerX = bounds.minX + bounds.width / 2;
-                        const centerY = bounds.minY + bounds.height / 2;
-                        // Pre-calculate normalized positions centered at origin
-                        this.constellationShipStars = this.stars.map(star => ({
-                            x: star.x - centerX,
-                            y: star.y - centerY,
-                            brightness: star.brightness,
-                            color: star.color
-                        }));
-                        this.constellationShipConnections = this.connections ? [...this.connections] : [];
-                        this.constellationShipBounds = bounds;
-                    }
-
                     this.showToast(`Selected ${ship.name}`);
                 }
                 this.hideShipModal();

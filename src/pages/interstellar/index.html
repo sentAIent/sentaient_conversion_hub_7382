@@ -981,22 +981,64 @@
         }
 
         /* ===== COCKPIT BAR (Above Bottom Bar) ===== */
+        /* ===== COCKPIT BAR (Removed Container - Now separate floating items) ===== */
         .flight-cockpit {
-            position: fixed;
-            bottom: 55px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
-            padding: 8px 12px;
+            /* Now just a transparent layer for initial positioning if needed, or removed entirely */
+            pointer-events: none;
+            /* Let children receive events */
+        }
+
+        .cockpit-section {
             background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
             border: 1px solid rgba(0, 243, 255, 0.3);
-            border-radius: 12px;
-            box-shadow: 0 0 25px rgba(0, 243, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 0;
+            /* Content padding moved to content div */
+            min-width: 100px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
             backdrop-filter: blur(12px);
-            z-index: 90;
             pointer-events: auto;
-            max-width: 95vw;
+            position: absolute;
+            /* Make them floating */
+            bottom: 60px;
+            /* Initial position */
+        }
+
+        /* Initial Positions for Sections - Organized Layout */
+        #sectionControls {
+            left: 20px;
+            bottom: 60px;
+        }
+
+        #sectionRadar {
+            left: 180px;
+            bottom: 60px;
+        }
+
+        #sectionVelocity {
+            left: 340px;
+            bottom: 60px;
+        }
+
+        #sectionGems {
+            left: 500px;
+            bottom: 60px;
+        }
+
+        .cockpit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            /* Changed to move for dragging */
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            padding: 6px 10px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .cockpit-content {
+            padding: 8px 12px;
         }
 
         .cockpit-section {
@@ -1031,6 +1073,11 @@
 
         .cockpit-section.collapsed .cockpit-content {
             display: none;
+        }
+
+        .cockpit-section.collapsed {
+            min-height: 0;
+            padding-bottom: 2px;
         }
 
         .cockpit-section.collapsed .cockpit-toggle {
@@ -1156,9 +1203,11 @@
 
         /* Gems Section - Expands horizontally to the right */
         .gems-section {
-            min-width: 120px;
+            min-width: 140px;
             max-width: none;
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .gems-grid {
@@ -1206,13 +1255,15 @@
         }
 
         .gems-total {
-            margin-top: 4px;
-            padding-top: 4px;
-            border-top: 1px solid rgba(0, 243, 255, 0.2);
-            font-size: 10px;
-            color: #ffd700;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 11px;
             font-weight: bold;
-            text-align: center;
+            color: #ffd700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         /* ===== FLOATING WINDOWS (Map & Leaders) ===== */
@@ -1280,7 +1331,8 @@
         /* Map Window - Bottom Left */
         .map-window {
             left: 20px;
-            bottom: 130px;
+            bottom: 200px;
+            /* Moved up to avoid cockpit */
             width: 200px;
             height: 180px;
         }
@@ -1325,7 +1377,8 @@
         /* Leaders Window - Bottom Right */
         .leaders-window {
             right: 20px;
-            bottom: 130px;
+            bottom: 200px;
+            /* Moved up to avoid cockpit */
             width: 180px;
         }
 
@@ -1421,6 +1474,48 @@
                 bottom: 110px;
             }
         }
+
+        /* Fullscreen Map Styles */
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 2000;
+            /* Ensure this is higher than everything else */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fullscreen-modal.hidden {
+            display: none;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 2001;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+        }
+
+        #fullscreenMapCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #fullscreenMapCanvas:active {
+            cursor: grabbing;
+        }
     </style>
 </head>
 
@@ -1478,22 +1573,36 @@
     <!-- === MATRIX CONTROLS POPUP === -->
     <div id="matrixPanel" class="popup-panel hidden">
         <h3>Matrix</h3>
-        <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
-        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+        <p>Speed</p>
+        <input type="range" id="matrixSpeedSlider" min="1" max="50" value="15" title="Stream Speed">
+        <p>Color</p>
+        <input type="color" id="matrixColorPicker" value="#00ff00" title="Matrix Color">
+        <button id="matrixRainbowBtn" class="btn-small">Rainbow Mode</button>
+    </div>
 
-        <label style="font-size:10px;margin-top:6px;display:block">Length: <span
-                id="matrixLengthValue">1.0x</span></label>
-        <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
-
-        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
-        <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
-
-        <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
-            <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
-                style="width:24px;height:24px">
-            <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
-                style="font-size:10px;padding:6px">🌈</button>
+    <!-- === FULLSCREEN MAP MODAL === -->
+    <div id="expandedMapModal" class="fullscreen-modal hidden">
+        <div class="map-controls">
+            <button class="btn-small" onclick="app.closeExpandedMap()">CLOSE MAP</button>
+            <span id="mapZoomLevel">Zoom: 1.0x</span>
         </div>
+        <canvas id="fullscreenMapCanvas"></canvas>
+    </div>
+    <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
+    <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+
+    <label style="font-size:10px;margin-top:6px;display:block">Length: <span id="matrixLengthValue">1.0x</span></label>
+    <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
+
+    <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
+    <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
+
+    <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
+        <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
+            style="width:24px;height:24px">
+        <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
+            style="font-size:10px;padding:6px">🌈</button>
+    </div>
     </div>
 
 
@@ -1509,6 +1618,30 @@
         <button class="btn-small" onclick="app.resetRotation()"
             style="width:100%; margin-top:8px;font-size:10px;padding:6px">Reset</button>
     </div>
+
+    <!-- === UPGRADE STATION POPUP === -->
+    <div id="upgradePanel" class="popup-panel hidden"
+        style="width: 220px; max-height: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; z-index: 200;">
+        <h3
+            style="text-align: center; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--accent); padding-bottom: 8px;">
+            Interstellar Dock</h3>
+
+        <div
+            style="margin-bottom: 15px; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+            <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">AVAILABLE CREDITS</div>
+            <div style="font-size: 24px; color: #ffd700; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"
+                id="dockCredits">$0</div>
+        </div>
+
+        <div id="upgradeList"
+            style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 300px; padding-right: 4px;">
+            <!-- Generated via JS -->
+        </div>
+
+        <button class="btn-small" onclick="document.getElementById('upgradePanel').classList.add('hidden')"
+            style="width: 100%; margin-top: 15px; padding: 10px; font-weight: bold;">CLOSE DOCK</button>
+    </div>
+
 
     <!-- === BOTTOM BAR === -->
     <div class="bottom-bar">
@@ -1669,70 +1802,73 @@
     <!-- Flight Mode HUD Overlay -->
     <div id="flightHUD" class="flight-hud hidden">
         <!-- Cockpit Bar (Above Bottom Bar) -->
-        <div class="flight-cockpit">
-            <!-- 1. CONTROLS Section -->
-            <div id="sectionControls" class="cockpit-section controls-section">
-                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionControls')">
-                    <h4>🎮 Controls</h4>
-                    <span class="cockpit-toggle">▼</span>
+        <!-- Cockpit Separate Floating Windows -->
+
+        <!-- 1. CONTROLS Section -->
+        <div id="sectionControls" class="cockpit-section controls-section">
+            <div class="cockpit-header">
+                <h4>🎮 Controls</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')"
+                    title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div class="controls-grid">
+                    <kbd>W</kbd><kbd>S</kbd><kbd>A</kbd><kbd>D</kbd>
+                    <kbd>Q</kbd><kbd>E</kbd><kbd>⇧</kbd><kbd>U</kbd>
                 </div>
-                <div class="cockpit-content">
-                    <div class="controls-grid">
-                        <kbd>W</kbd><kbd>S</kbd><kbd>A</kbd><kbd>D</kbd>
-                        <kbd>Q</kbd><kbd>E</kbd><kbd>⇧</kbd><kbd>±</kbd>
+            </div>
+        </div>
+
+        <!-- 2. RADAR Section -->
+        <div id="sectionRadar" class="cockpit-section">
+            <div class="cockpit-header">
+                <h4>📡 Radar</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')"
+                    title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div class="radar-container">
+                    <canvas id="radarCanvas" class="radar-canvas" width="80" height="80"></canvas>
+                    <div class="radar-sweep"></div>
+                </div>
+                <div class="radar-coords" id="radarCoords">X: 0 Y: 0</div>
+            </div>
+        </div>
+
+        <!-- 3. VELOCITY Section -->
+        <div id="sectionVelocity" class="cockpit-section">
+            <div class="cockpit-header">
+                <h4>⚡ Velocity</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionVelocity')"
+                    title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div class="velocity-display">
+                    <div class="speed-gauge">
+                        <canvas id="speedGaugeCanvas" width="60" height="60"></canvas>
+                        <div id="speedNumber" class="speed-number">0</div>
+                    </div>
+                    <div class="speed-unit">km/s</div>
+                    <div class="cockpit-zoom-controls">
+                        <button class="zoom-btn" onclick="app.flightZoom(-0.2); event.stopPropagation();">−</button>
+                        <span id="zoomDisplay" class="zoom-value">1.0x</span>
+                        <button class="zoom-btn" onclick="app.flightZoom(0.2); event.stopPropagation();">+</button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- 2. RADAR Section -->
-            <div id="sectionRadar" class="cockpit-section">
-                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionRadar')">
-                    <h4>📡 Radar</h4>
-                    <span class="cockpit-toggle">▼</span>
-                </div>
-                <div class="cockpit-content">
-                    <div class="radar-container">
-                        <canvas id="radarCanvas" class="radar-canvas" width="80" height="80"></canvas>
-                        <div class="radar-sweep"></div>
-                    </div>
-                    <div class="radar-coords" id="radarCoords">X: 0 Y: 0</div>
-                </div>
+        <!-- 4. GEMS Section -->
+        <div id="sectionGems" class="cockpit-section gems-section">
+            <div class="cockpit-header">
+                <h4>💎 Gems</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')" title="Collapse">−</button>
             </div>
-
-            <!-- 3. VELOCITY Section -->
-            <div id="sectionVelocity" class="cockpit-section">
-                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionVelocity')">
-                    <h4>⚡ Velocity</h4>
-                    <span class="cockpit-toggle">▼</span>
+            <div class="cockpit-content">
+                <div id="gemsGrid" class="gems-grid">
+                    <!-- Populated by JS -->
                 </div>
-                <div class="cockpit-content">
-                    <div class="velocity-display">
-                        <div class="speed-gauge">
-                            <canvas id="speedGaugeCanvas" width="60" height="60"></canvas>
-                            <div id="speedNumber" class="speed-number">0</div>
-                        </div>
-                        <div class="speed-unit">km/s</div>
-                        <div class="cockpit-zoom-controls">
-                            <button class="zoom-btn" onclick="app.flightZoom(-0.2); event.stopPropagation();">−</button>
-                            <span id="zoomDisplay" class="zoom-value">1.0x</span>
-                            <button class="zoom-btn" onclick="app.flightZoom(0.2); event.stopPropagation();">+</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. GEMS Section -->
-            <div id="sectionGems" class="cockpit-section gems-section">
-                <div class="cockpit-header" onclick="app.toggleCockpitSection('sectionGems')">
-                    <h4>💎 Gems</h4>
-                    <span class="cockpit-toggle">▼</span>
-                </div>
-                <div class="cockpit-content">
-                    <div id="gemsGrid" class="gems-grid">
-                        <!-- Populated by JS -->
-                    </div>
-                    <div class="gems-total">Total: <span id="gemsTotal">$0</span></div>
-                </div>
+                <div class="gems-total">Total: <span id="gemsTotal">$0</span></div>
             </div>
         </div>
     </div>
@@ -1742,6 +1878,7 @@
         <div class="window-header">
             <h4>🗺️ Universe Map</h4>
             <div class="window-controls">
+                <button class="window-btn" onclick="app.openExpandedMap()" title="Expand Map">⛶</button>
                 <button class="window-btn" onclick="app.toggleFloatingWindow('floatingMap')" title="Collapse">−</button>
             </div>
         </div>
@@ -1864,16 +2001,25 @@
                 // Flight game state
                 this.flightMode = false;
                 this.keysPressed = {};
+                this.credits = this.loadCredits();
+                const savedUpgrades = this.loadUpgrades();
+
                 this.playerShip = {
                     type: 'default',
                     x: 0, y: 0, z: 0,
                     vx: 0, vy: 0, vz: 0,
                     rotation: 0,
                     speed: 0,
-                    maxSpeed: 50,  // Increased for Roblox-style fast flight
-                    acceleration: 0.5,
+                    maxSpeed: 50 * (1 + (savedUpgrades.speed || 0) * 0.2),
+                    acceleration: 0.5 * (1 + (savedUpgrades.speed || 0) * 0.1),
                     rotationSpeed: 0.08,
-                    size: 45
+                    size: 45,
+                    hullHealth: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
+                    maxHull: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
+                    shield: 50 * (1 + (savedUpgrades.shield || 0) * 0.2),
+                    maxShield: 50 * (1 + (savedUpgrades.shield || 0) * 0.2),
+                    radarRange: 2000 * (1 + (savedUpgrades.radar || 0) * 0.3),
+                    upgrades: savedUpgrades
                 };
                 this.speedLines = [];  // Visual speed indicators
 
@@ -2007,7 +2153,10 @@
 
                 // Generators
                 this.initNameGenerators();
+                // Generators
+                this.initNameGenerators();
                 this.initTemplates();
+                this.generateResourceDeposits();
 
                 // Performance
                 this.backgroundStars = [];
@@ -2163,7 +2312,11 @@
                     // Flight mode controls
                     if (this.flightMode) {
                         const key = e.key.toLowerCase();
-                        this.keysPressed[key] = true;
+                        if (key === 'u') {
+                            this.toggleUpgradePanel();
+                        } else {
+                            this.keysPressed[key] = true;
+                        }
                         e.preventDefault();
                     }
                 });
@@ -2181,6 +2334,15 @@
 
                 // Cyber speed slider
                 this.matrixColorCustomized = false;
+
+                // UI Events
+                this.initDraggableWindows();
+
+                // UI Events
+                this.initDraggableWindows();
+
+                // UI Events
+                this.initDraggableWindows();
 
                 // Matrix (previously Cyber) speed slider
                 const matrixSpeedSlider = document.getElementById('matrixSpeedSlider');
@@ -2294,6 +2456,63 @@
                     });
                 }
                 return bgStars;
+            }
+
+            initDraggableWindows() {
+                // Reusable drag function
+                const makeDraggable = (elementId) => {
+                    const element = document.getElementById(elementId);
+                    if (!element) return;
+
+                    // Find the header - it could be .window-header or .cockpit-header
+                    const header = element.querySelector('.window-header, .cockpit-header');
+                    if (!header) return;
+
+                    let isDragging = false;
+                    let startX, startY, initialX, initialY;
+
+                    header.style.cursor = 'grab';
+
+                    header.addEventListener('mousedown', (e) => {
+                        isDragging = true;
+                        header.style.cursor = 'grabbing';
+                        element.style.zIndex = '1000'; // Bring to front
+
+                        startX = e.clientX;
+                        startY = e.clientY;
+
+                        const rect = element.getBoundingClientRect();
+                        initialX = rect.left;
+                        initialY = rect.top;
+
+                        e.preventDefault();
+                    });
+
+                    window.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+
+                        const dx = e.clientX - startX;
+                        const dy = e.clientY - startY;
+
+                        element.style.left = (initialX + dx) + 'px';
+                        element.style.top = (initialY + dy) + 'px';
+                        element.style.bottom = 'auto'; // Remove bottom positioning
+                        element.style.right = 'auto'; // Remove right positioning
+                    });
+
+                    window.addEventListener('mouseup', () => {
+                        isDragging = false;
+                        header.style.cursor = 'grab';
+                    });
+                };
+
+                // Make all windows draggable
+                makeDraggable('floatingMap');
+                makeDraggable('floatingLeaders');
+                makeDraggable('sectionControls');
+                makeDraggable('sectionRadar');
+                makeDraggable('sectionVelocity');
+                makeDraggable('sectionGems');
             }
 
             setMode(newMode) {
@@ -2496,11 +2715,25 @@
                     darkmatter: '🌑',
                     antimatter: '✨'
                 };
-                return emojis[type] || '💠';
+                // No longer used, replaced by CSS icons
+                return '';
+            }
+
+            styleGem(type) {
+                const info = this.mineralTypes[type];
+                if (!info) return '';
+                // Create a glowing orb effect matching in-game rendering
+                return `background: radial-gradient(circle at 30% 30%, #fff 10%, ${info.color} 60%);
+                        box-shadow: 0 0 4px ${info.color};
+                        border-radius: 50%;
+                        width: 12px; 
+                        height: 12px;
+                        display: inline-block;`;
             }
 
             updateFlightHUD() {
                 if (!this.flightMode) return;
+
 
                 // Update speed number
                 const speedNumEl = document.getElementById('speedNumber');
@@ -2521,21 +2754,59 @@
                 // Update gems grid with proper emojis
                 const gemsGrid = document.getElementById('gemsGrid');
                 const gemsTotalEl = document.getElementById('gemsTotal');
+                const creditsEl = document.getElementById('creditsDisplay');
+
+                // Update credits display wherever it is
+                if (creditsEl) creditsEl.textContent = '$' + this.credits.toLocaleString();
+
                 if (gemsGrid) {
-                    let html = '';
                     let totalValue = 0;
-                    for (const [type, count] of Object.entries(this.playerInventory)) {
-                        if (count > 0) {
-                            const mineralInfo = this.mineralTypes[type];
-                            if (mineralInfo) {
-                                const value = mineralInfo.value * count;
-                                totalValue += value;
-                                html += `<div class="gem-item"><span class="gem-emoji">${this.getGemEmoji(type)}</span><span class="gem-count">${count}</span></div>`;
-                            }
-                        }
+                    let html = '';
+
+                    // Helper for gem emoji
+                    const getGemEmoji = (type) => {
+                        const map = {
+                            iron: '🪨', copper: '🧱', titanium: '⚙️', gold: '👑',
+                            platinum: '💍', uranium: '☢️', plutonium: '🔋',
+                            lithium: '🔋', cobalt: '🟦'
+                        };
+                        return map[type] || '💎';
+                    };
+
+                    const inventory = Object.entries(this.playerInventory || {});
+
+                    if (inventory.length === 0) {
+                        html = '<div style="color:#5c7a8a;font-size:9px;padding:4px;">No gems yet</div>';
+                    } else {
+                        inventory.forEach(([type, count]) => {
+                            if (count <= 0) return;
+                            const info = this.mineralTypes[type];
+                            if (!info) return;
+
+                            totalValue += count * info.value;
+
+                            html += `
+                                <div class="gem-item" style="border:1px solid ${info.color}44; background: rgba(0,0,0,0.6);">
+                                    <div style="${this.styleGem(type)}"></div>
+                                    <span style="color:${info.color}">${info.name}</span>
+                                    <span class="gem-count">${count}</span>
+                                </div>
+                            `;
+                        });
                     }
-                    gemsGrid.innerHTML = html || '<div style="color:#5c7a8a;font-size:9px;">No gems yet</div>';
-                    if (gemsTotalEl) gemsTotalEl.textContent = '$' + totalValue.toLocaleString();
+
+                    gemsGrid.innerHTML = html;
+
+                    // Updated Total Display with Sell Button
+                    if (gemsTotalEl) {
+                        gemsTotalEl.innerHTML = `
+                            <span>$${totalValue.toLocaleString()}</span>
+                            <button id="btnSellAll" class="btn-small" style="padding:2px 6px; font-size:9px; background:rgba(0,255,100,0.2); border-color:#0f0; color:#cfc;">SELL ALL</button>
+                         `;
+                        // Attach listener safely
+                        const btn = document.getElementById('btnSellAll');
+                        if (btn) btn.onclick = () => this.sellAllGems();
+                    }
                 }
 
                 // Update radar
@@ -2588,54 +2859,412 @@
                 });
             }
 
+            generateResourceDeposits() {
+                const zones = ['industrial', 'precious', 'crystal', 'nuclear', 'exotic'];
+                this.resourceDeposits = [];
+
+                zones.forEach(zone => {
+                    const info = this.galaxyZones[zone];
+                    if (!info) return;
+                    const count = zone === 'exotic' ? 2 : 5;
+
+                    for (let i = 0; i < count; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = info.distanceRange.min + Math.random() * (info.distanceRange.max - info.distanceRange.min);
+
+                        this.resourceDeposits.push({
+                            x: Math.cos(angle) * dist,
+                            y: Math.sin(angle) * dist,
+                            z: (Math.random() - 0.5) * 500,
+                            zone: zone,
+                            radius: 400,
+                            richness: 2.0
+                        });
+                    }
+                });
+            }
+
             updateMap() {
                 const canvas = document.getElementById('mapCanvas');
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
                 const w = canvas.width, h = canvas.height;
-
-                // Clear with space background
-                ctx.fillStyle = 'rgba(0,5,15,0.95)';
-                ctx.fillRect(0, 0, w, h);
-
-                const mapRange = 10000;
                 const cx = w / 2, cy = h / 2;
 
-                // Draw stars as tiny dots
-                this.staticStars.slice(0, 50).forEach(s => {
-                    const dx = s.x - this.playerShip.x;
-                    const dy = s.y - this.playerShip.y;
-                    if (Math.abs(dx) < mapRange && Math.abs(dy) < mapRange) {
-                        const mx = cx + (dx / mapRange) * (w / 2);
-                        const my = cy + (dy / mapRange) * (h / 2);
-                        ctx.fillStyle = 'rgba(255,255,200,0.5)';
-                        ctx.fillRect(mx, my, 1, 1);
-                    }
+                const mapRadius = 8500; // Slightly larger than max zone
+                const scale = (Math.min(w, h) / 2) / mapRadius;
+
+                // Clear
+                ctx.fillStyle = 'rgba(0,5,20,0.95)';
+                ctx.fillRect(0, 0, w, h);
+
+                // Draw Zones
+                Object.values(this.galaxyZones).forEach(zone => {
+                    const r = zone.distanceRange.min * scale;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.strokeStyle = zone.color;
+                    ctx.globalAlpha = 0.3;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
                 });
 
-                // Draw minerals
-                this.minerals.forEach(m => {
-                    const dx = m.x - this.playerShip.x;
-                    const dy = m.y - this.playerShip.y;
-                    if (Math.abs(dx) < mapRange && Math.abs(dy) < mapRange) {
-                        const mx = cx + (dx / mapRange) * (w / 2);
-                        const my = cy + (dy / mapRange) * (h / 2);
-                        ctx.fillStyle = m.color || '#f0f';
+                // Draw Deposits
+                this.resourceDeposits.forEach(dep => {
+                    const dx = dep.x * scale;
+                    const dy = dep.y * scale;
+                    if (this.galaxyZones[dep.zone]) {
+                        ctx.fillStyle = this.galaxyZones[dep.zone].color;
+                        ctx.globalAlpha = 0.6;
                         ctx.beginPath();
-                        ctx.arc(mx, my, 2, 0, Math.PI * 2);
+                        ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 });
+                ctx.globalAlpha = 1;
 
-                // Draw player
+                // Draw Player
+                const px = cx + this.playerShip.x * scale;
+                const py = cy + this.playerShip.y * scale;
+
+                // Player direction arrow
+                const angle = this.playerShip.rotation + Math.PI / 2;
+                ctx.save();
+                ctx.translate(px, py);
+                ctx.rotate(this.playerShip.rotation + Math.PI / 2);
                 ctx.fillStyle = '#0f0';
                 ctx.beginPath();
-                ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+                ctx.moveTo(0, -5);
+                ctx.lineTo(4, 4);
+                ctx.lineTo(0, 2);
+                ctx.lineTo(-4, 4);
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(0,255,0,0.5)';
+                ctx.restore();
+
+                // Radar ping effect for player
+                ctx.strokeStyle = `rgba(0, 255, 0, ${0.5 + Math.sin(Date.now() * 0.005) * 0.3})`;
                 ctx.beginPath();
-                ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+                ctx.arc(px, py, 8, 0, Math.PI * 2);
                 ctx.stroke();
+            }
+
+            /* --- EXPANDED MAP --- */
+            openExpandedMap() {
+                const modal = document.getElementById('expandedMapModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    this.expandedMapOpen = true;
+                    this.expandedMapZoom = this.expandedMapZoom || 1.0;
+                    this.expandedMapOffset = this.expandedMapOffset || { x: 0, y: 0 };
+
+                    // Center on player initially
+                    this.expandedMapOffset.x = -this.playerShip.x;
+                    this.expandedMapOffset.y = -this.playerShip.y;
+
+                    this.animateExpandedMap();
+
+                    // Add wheel listener for zoom
+                    if (!this.mapWheelListener) {
+                        this.mapWheelListener = (e) => {
+                            e.preventDefault();
+                            const zoomSpeed = 0.1;
+                            const newZoom = Math.max(0.2, Math.min(10.0, this.expandedMapZoom - Math.sign(e.deltaY) * zoomSpeed));
+                            this.expandedMapZoom = newZoom;
+                            document.getElementById('mapZoomLevel').textContent = `Zoom: ${this.expandedMapZoom.toFixed(1)}x`;
+                        };
+                        const canvas = document.getElementById('fullscreenMapCanvas');
+                        canvas.addEventListener('wheel', this.mapWheelListener);
+
+                        // Dragging Logic
+                        this.isDraggingMap = false;
+                        this.lastMapMouse = { x: 0, y: 0 };
+
+                        canvas.addEventListener('mousedown', (e) => {
+                            this.isDraggingMap = true;
+                            this.lastMapMouse = { x: e.clientX, y: e.clientY };
+                            canvas.style.cursor = 'grabbing';
+                        });
+
+                        window.addEventListener('mousemove', (e) => {
+                            if (!this.isDraggingMap) return;
+                            const dx = e.clientX - this.lastMapMouse.x;
+                            const dy = e.clientY - this.lastMapMouse.y;
+                            this.lastMapMouse = { x: e.clientX, y: e.clientY };
+
+                            // Adjust offset (pan)
+                            this.expandedMapOffset.x += dx / this.expandedMapZoom;
+                            this.expandedMapOffset.y += dy / this.expandedMapZoom;
+                        });
+
+                        window.addEventListener('mouseup', () => {
+                            this.isDraggingMap = false;
+                            canvas.style.cursor = 'grab';
+                        });
+                    }
+                }
+            }
+
+            closeExpandedMap() {
+                const modal = document.getElementById('expandedMapModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    this.expandedMapOpen = false;
+                }
+            }
+
+            animateExpandedMap() {
+                if (!this.expandedMapOpen) return;
+
+                const canvas = document.getElementById('fullscreenMapCanvas');
+                if (!canvas) {
+                    console.error('[Map Debug] Canvas not found');
+                    return;
+                }
+
+                console.log('[Map Debug] Rendering expanded map, zoom:', this.expandedMapZoom);
+
+                // Resize if needed (handle dynamic window resizing)
+                if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+                const cx = w / 2;
+                const cy = h / 2;
+                const zoom = this.expandedMapZoom;
+                const time = Date.now() * 0.001;
+
+                // --- 1. DEEP SPACE BACKGROUND ---
+                // Clear with a deep, rich gradient based on player position (subtle shift)
+                const bgGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h));
+                bgGradient.addColorStop(0, '#000810');
+                bgGradient.addColorStop(0.6, '#000508');
+                bgGradient.addColorStop(1, '#000000');
+                ctx.fillStyle = bgGradient;
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(zoom, zoom);
+                ctx.translate(this.expandedMapOffset.x, this.expandedMapOffset.y);
+
+                // --- 2. PARALLAX STARFIELD (Background Layers) ---
+                // We generate pseudo-random stars based on world coordinates to create an infinite field
+                // Layer 1: Distant, slow moving
+                this.renderMapStars(ctx, 0.5, 0.5, 5000, 15000, '#445566');
+                // Layer 2: Mid-distance
+                this.renderMapStars(ctx, 0.3, 0.8, 3000, 10000, '#6688aa');
+
+                // --- 3. ZONE ATMOSPHERICS ---
+                // Draw large, soft radial glows for each zone to give "territory" feel
+                Object.values(this.galaxyZones).forEach(zone => {
+                    const dist = zone.distanceRange.min;
+                    // Skip if way off screen
+                    // Simple cull: check distance from center of screen in world space to zone center (0,0)
+                    // But zones are concentric rings, so we just draw them.
+
+                    ctx.beginPath();
+                    ctx.arc(0, 0, dist, 0, Math.PI * 2);
+                    ctx.fillStyle = zone.glowColor || zone.color;
+                    ctx.globalAlpha = 0.03; // Very subtle atmosphere
+                    ctx.lineWidth = 100; // Wide soft edge
+                    ctx.fill();
+
+                    // Zone Boundary Ring
+                    ctx.beginPath();
+                    ctx.arc(0, 0, dist, 0, Math.PI * 2);
+                    ctx.strokeStyle = zone.color;
+                    ctx.lineWidth = 2 / zoom; // Keep thin regardless of zoom
+                    ctx.globalAlpha = 0.2;
+                    ctx.setLineDash([20, 40]); // Dashed border
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Zone Label (Floating in space)
+                    // Place label at the top of the ring
+                    ctx.fillStyle = zone.color;
+                    ctx.font = `bold ${64}px Orbitron`;
+                    ctx.textAlign = 'center';
+                    ctx.globalAlpha = 0.4;
+                    ctx.fillText(zone.name.toUpperCase(), 0, -dist + 200);
+                });
+
+                // --- 4. HOLO-GRID ---
+                // A perspective grid. Since this is 2D top-down, we draw a rectangular grid that pans.
+                ctx.strokeStyle = 'rgba(0, 243, 255, 0.08)';
+                ctx.lineWidth = 1 / zoom;
+                const gridSize = 1000;
+
+                // Calculate visible range to optimize rendering
+                // Visible world center: -this.expandedMapOffset.x, -this.expandedMapOffset.y
+                const worldCx = -this.expandedMapOffset.x;
+                const worldCy = -this.expandedMapOffset.y;
+                const visibleW = w / zoom;
+                const visibleH = h / zoom;
+
+                const startX = Math.floor((worldCx - visibleW) / gridSize) * gridSize;
+                const endX = Math.floor((worldCx + visibleW) / gridSize) * gridSize;
+                const startY = Math.floor((worldCy - visibleH) / gridSize) * gridSize;
+                const endY = Math.floor((worldCy + visibleH) / gridSize) * gridSize;
+
+                ctx.beginPath();
+                for (let x = startX; x <= endX; x += gridSize) {
+                    ctx.moveTo(x, startY);
+                    ctx.lineTo(x, endY);
+                }
+                for (let y = startY; y <= endY; y += gridSize) {
+                    ctx.moveTo(startX, y);
+                    ctx.lineTo(endX, y);
+                }
+                ctx.stroke();
+
+
+                // --- 5. ORBITAL MECHANICS & PLANETS (Cosmetic) ---
+                // Procedural planets based on zone
+                // We'll use a deterministic random based on index/position
+                // (Simplified for now: drawing a few fixed 'planets' per zone would be better but random serves 'world' feel)
+
+                // --- 6. RESOURCE DEPOSITS (Advanced Icons) ---
+                this.resourceDeposits.forEach(dep => {
+                    // Pulsing effect
+                    const pulse = 1 + Math.sin(time * 3 + dep.x * 0.01) * 0.2;
+
+                    // Deposit Glow
+                    const zoneColor = this.galaxyZones[dep.zone] ? this.galaxyZones[dep.zone].color : '#fff';
+                    const glowColor = this.galaxyZones[dep.zone] ? (this.galaxyZones[dep.zone].glowColor || zoneColor) : '#fff';
+
+                    // Draw outer glow
+                    const grad = ctx.createRadialGradient(dep.x, dep.y, 5 * pulse, dep.x, dep.y, 30 * pulse);
+                    grad.addColorStop(0, glowColor);
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = grad;
+                    ctx.globalAlpha = 0.4;
+                    ctx.beginPath();
+                    ctx.arc(dep.x, dep.y, 40 * pulse, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw core icon (Diamond shape)
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = zoneColor;
+                    const size = 12;
+                    ctx.beginPath();
+                    ctx.moveTo(dep.x, dep.y - size);
+                    ctx.lineTo(dep.x + size, dep.y);
+                    ctx.lineTo(dep.x, dep.y + size);
+                    ctx.lineTo(dep.x - size, dep.y);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Label
+                    if (zoom > 0.8) {
+                        ctx.fillStyle = '#fff';
+                        ctx.font = '14px "Segoe UI", sans-serif'; // Cleaner font
+                        ctx.textAlign = 'center';
+                        ctx.fillText(dep.name, dep.x, dep.y + 40);
+
+                        ctx.font = '10px "Segoe UI", sans-serif';
+                        ctx.fillStyle = '#aaa';
+                        ctx.fillText(`Richness: ${(dep.richness * 100).toFixed(0)}%`, dep.x, dep.y + 55);
+                    }
+                });
+
+                // --- 7. PLAYER SHIP (Detailed HUD Marker) ---
+                const shipX = this.playerShip.x;
+                const shipY = this.playerShip.y;
+
+                ctx.translate(shipX, shipY);
+
+                // View Cone (Field of View)
+                const fovRadius = 400;
+                ctx.rotate(this.playerShip.rotation + Math.PI / 2); // Align with ship heading
+
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, fovRadius, -Math.PI / 6, Math.PI / 6); // 60 degree cone
+                ctx.fillStyle = 'rgba(0, 255, 100, 0.1)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0, 255, 100, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Ship Icon (Triangle)
+                ctx.beginPath();
+                ctx.moveTo(0, -20);
+                ctx.lineTo(14, 14);
+                ctx.lineTo(0, 8);
+                ctx.lineTo(-14, 14);
+                ctx.closePath();
+                ctx.fillStyle = '#0f0';
+                ctx.shadowColor = '#0f0';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset
+
+                ctx.restore();
+
+                // --- 8. UI OVERLAYS (Screen Space) ---
+                // Coordinates Overlay (Fixed to screen corners)
+                ctx.font = '14px Consolas, monospace';
+                ctx.fillStyle = 'rgba(0, 243, 255, 0.8)';
+                ctx.textAlign = 'left';
+                ctx.fillText(`SECTOR: [${Math.floor(shipX / 5000)}, ${Math.floor(shipY / 5000)}]`, 20, h - 60);
+                ctx.fillText(`COORDS: X ${Math.round(shipX)}  Y ${Math.round(shipY)}`, 20, h - 40);
+
+                // Scale Bar
+                const scaleWidth = 200; // pixels
+                const scaleDistance = scaleWidth / zoom;
+                ctx.beginPath();
+                ctx.moveTo(w - 220, h - 40);
+                ctx.lineTo(w - 20, h - 40);
+                ctx.moveTo(w - 220, h - 45);
+                ctx.lineTo(w - 220, h - 35);
+                ctx.moveTo(w - 20, h - 45);
+                ctx.lineTo(w - 20, h - 35);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(`${Math.round(scaleDistance)}km`, w - 120, h - 50);
+
+                requestAnimationFrame(() => this.animateExpandedMap());
+            }
+
+            // Helper for infinite starfield in map
+            renderMapStars(ctx, opacity, parallax, spacing, modX, color) {
+                const worldCx = -this.expandedMapOffset.x * parallax;
+                const worldCy = -this.expandedMapOffset.y * parallax;
+                const w = ctx.canvas.width / this.expandedMapZoom;
+                const h = ctx.canvas.height / this.expandedMapZoom;
+
+                // Simple deterministic "hash" for visuals without storing millions of stars
+                // We assume stars are on a grid with jitter
+                const startX = Math.floor((worldCx - w) / spacing);
+                const endX = Math.floor((worldCx + w) / spacing);
+                const startY = Math.floor((worldCy - h) / spacing);
+                const endY = Math.floor((worldCy + h) / spacing);
+
+                ctx.fillStyle = color;
+
+                for (let x = startX; x <= endX; x++) {
+                    for (let y = startY; y <= endY; y++) {
+                        // Deterministic random
+                        const seed = x * 34234 + y * 23123;
+                        const rx = Math.sin(seed) * spacing;
+                        const ry = Math.cos(seed * 0.5) * spacing;
+                        const size = (Math.sin(seed * 1.5) + 1.5);
+
+                        ctx.globalAlpha = opacity * (0.5 + Math.sin(seed * 0.1) * 0.5);
+                        ctx.beginPath();
+                        ctx.arc(x * spacing + rx, y * spacing + ry, size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                ctx.globalAlpha = 1.0;
             }
 
             updateFloatingLeaderboard() {
@@ -2754,8 +3383,9 @@
                 this.speedLines = this.speedLines.filter(line => line.life > 0);
 
                 // Camera follows ship directly (keeps ship perfectly centered)
-                this.camera.x = -ship.x;
-                this.camera.y = -ship.y;
+                // Use zoom level to maintain center regardless of zoom
+                this.camera.x = -ship.x * this.camera.zoom;
+                this.camera.y = -ship.y * this.camera.zoom;
             }
 
             // Inventory Management
@@ -2777,11 +3407,108 @@
                 }
             }
 
+            loadCredits() {
+                return parseInt(localStorage.getItem('playerCredits')) || 0;
+            }
+
+            saveCredits() {
+                localStorage.setItem('playerCredits', this.credits);
+            }
+
+            loadUpgrades() {
+                try {
+                    return JSON.parse(localStorage.getItem('playerUpgrades')) || { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0 };
+                } catch (e) {
+                    return { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0 };
+                }
+            }
+
+            saveUpgrades() {
+                localStorage.setItem('playerUpgrades', JSON.stringify(this.playerShip.upgrades));
+            }
+
+            sellAllGems() {
+                let totalValue = 0;
+                let count = 0;
+                for (const [type, qty] of Object.entries(this.playerInventory)) {
+                    if (qty > 0) {
+                        const val = this.mineralTypes[type].value;
+                        totalValue += val * qty;
+                        count += qty;
+                        this.playerInventory[type] = 0;
+                    }
+                }
+
+                if (totalValue > 0) {
+                    this.credits += totalValue;
+                    this.saveCredits();
+                    this.saveInventory();
+                    this.showToast(`Sold ${count} gems for $${totalValue.toLocaleString()}`);
+                    // Play sound effect if available
+                } else {
+                    this.showToast('No gems to sell');
+                }
+            }
+
+            upgradeShip(type) {
+                const upgradeCosts = [1000, 2500, 5000, 10000, 25000]; // Function of level maybe?
+                const currentLevel = this.playerShip.upgrades[type] || 0;
+
+                if (currentLevel >= 5) {
+                    this.showToast('Max level reached!');
+                    return;
+                }
+
+                const cost = upgradeCosts[currentLevel];
+                if (this.credits >= cost) {
+                    this.credits -= cost;
+                    this.playerShip.upgrades[type]++;
+                    this.saveCredits();
+                    this.saveUpgrades();
+
+                    // Apply effects immediately
+                    const lvl = this.playerShip.upgrades[type];
+                    if (type === 'speed') {
+                        this.playerShip.maxSpeed = 50 * (1 + lvl * 0.2);
+                        this.playerShip.acceleration = 0.5 * (1 + lvl * 0.1);
+                    } else if (type === 'armor') {
+                        this.playerShip.maxHull = 100 * (1 + lvl * 0.2);
+                        this.playerShip.hullHealth = this.playerShip.maxHull; // Repair on upgrade
+                    } else if (type === 'shield') {
+                        this.playerShip.maxShield = 50 * (1 + lvl * 0.2);
+                        this.playerShip.shield = this.playerShip.maxShield;
+                    } else if (type === 'radar') {
+                        this.playerShip.radarRange = 2000 * (1 + lvl * 0.3);
+                    }
+
+                    this.showToast(`${type.toUpperCase()} Upgraded to Level ${lvl + 1}!`);
+                    this.updateUpgradeUI(); // Assuming we'll create this method
+                } else {
+                    this.showToast(`Not enough credits! Need $${cost.toLocaleString()}`);
+                }
+            }
+
             // Spawn minerals around the player - Galaxy Zone-aware distribution
             spawnMinerals() {
                 const ship = this.playerShip;
-                const spawnRadius = 600;  // Spawn within this radius from player
-                const maxMinerals = 80;   // Increased for richer gameplay
+                const spawnRadius = 600;
+                let maxMinerals = 80;
+
+                // Check hotspot proximity
+                let hotspotBonus = 1.0;
+                let activeHotspot = null;
+
+                for (const dep of this.resourceDeposits) {
+                    const dx = ship.x - dep.x;
+                    const dy = ship.y - dep.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < dep.radius) {
+                        hotspotBonus = dep.richness;
+                        maxMinerals = 120;
+                        activeHotspot = dep;
+                        break; // Only one hotspot at a time
+                    }
+                }
 
                 // Calculate player's distance from origin to determine zone
                 const playerDistFromOrigin = Math.sqrt(ship.x * ship.x + ship.y * ship.y);
@@ -2800,7 +3527,7 @@
                     const currentZone = this.getZoneAtDistance(playerDistFromOrigin);
 
                     // Get element to spawn based on zone and probability
-                    const mineralKey = this.selectElementForZone(currentZone, playerDistFromOrigin);
+                    const mineralKey = this.selectElementForZone(currentZone, playerDistFromOrigin, hotspotBonus);
                     const type = this.mineralTypes[mineralKey];
                     if (!type) continue;
 
@@ -2841,7 +3568,7 @@
             }
 
             // Select an element to spawn based on current zone and probability
-            selectElementForZone(currentZone, distance) {
+            selectElementForZone(currentZone, distance, bonusMultiplier = 1) {
                 const zones = this.galaxyZones;
                 const allElements = Object.keys(this.mineralTypes);
 
@@ -2866,7 +3593,7 @@
                     // Zone affinity bonus - elements in their home zone spawn more
                     if (zones[element.zone] && zones[element.zone].elements.includes(elementKey)) {
                         if (element.zone === currentZone) {
-                            weight *= zones[element.zone].concentrationBonus;
+                            weight *= (zones[element.zone].concentrationBonus * bonusMultiplier);
                         }
                     }
 
@@ -2997,6 +3724,62 @@
                     this.bgDriftMode = false;
                     this.showToast('Drift mode error - please try again');
                 }
+            }
+
+            toggleUpgradePanel() {
+                const panel = document.getElementById('upgradePanel');
+                if (panel) {
+                    panel.classList.toggle('hidden');
+                    if (!panel.classList.contains('hidden')) {
+                        this.updateUpgradeUI();
+                    }
+                }
+            }
+
+            updateUpgradeUI() {
+                const list = document.getElementById('upgradeList');
+                const credits = document.getElementById('dockCredits');
+                if (!list || !credits) return;
+
+                credits.textContent = '$' + this.credits.toLocaleString();
+
+                const upgrades = [
+                    { id: 'speed', name: 'Engine Overclock', desc: 'Increases max speed & acceleration' },
+                    { id: 'armor', name: 'Nanocarbon Hull', desc: 'Increases hull integrity' },
+                    { id: 'weapons', name: 'Photon Cannons', desc: 'Increases damage output (Coming Soon)' },
+                    { id: 'shield', name: 'Energy Shield', desc: 'Increases shield capacity' },
+                    { id: 'cargo', name: 'Quantum Hold', desc: 'Increases gem capacity (Coming Soon)' },
+                    { id: 'radar', name: 'Deep Scan Radar', desc: 'Increases detection range' }
+                ];
+
+                const costs = [1000, 2500, 5000, 10000, 25000];
+
+                let html = '';
+                upgrades.forEach(u => {
+                    const level = this.playerShip.upgrades[u.id] || 0;
+                    const cost = costs[level];
+                    const isMax = level >= 5;
+                    const canAfford = this.credits >= cost;
+
+                    let bars = '';
+                    for (let i = 0; i < 5; i++) {
+                        bars += `<div style="flex:1; height:4px; background:${i < level ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; margin:0 1px;"></div>`;
+                    }
+
+                    html += `
+                        <div style="background:rgba(255,255,255,0.05); border:1px solid ${canAfford ? 'rgba(0,243,255,0.3)' : 'rgba(255,50,50,0.3)'}; padding:8px; border-radius:6px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <span style="font-weight:bold; color:#e0faff; font-size:11px;">${u.name}</span>
+                                <span style="font-size:10px; color:${isMax ? '#00f3ff' : '#ffd700'}">${isMax ? 'MAX' : '$' + cost.toLocaleString()}</span>
+                            </div>
+                            <div style="font-size:9px; color:#8ba; margin-bottom:6px;">${u.desc}</div>
+                            <div style="display:flex; margin-bottom:6px;">${bars}</div>
+                            ${!isMax ? `<button class="btn-small" onclick="app.upgradeShip('${u.id}')" style="width:100%; font-size:10px; padding:4px; ${canAfford ? 'cursor:pointer' : 'opacity:0.5; cursor:not-allowed;'}">UPGRADE</button>` : ''}
+                        </div>
+                    `;
+                });
+
+                list.innerHTML = html;
             }
 
             // Toggle warp speed mode
@@ -3692,9 +4475,10 @@
             adjustZoom(delta) {
                 this.camera.zoom = Math.max(0.1, Math.min(6, this.camera.zoom + delta));
                 // Re-center camera on ship in flight mode to prevent drift
+                // Re-center camera on ship in flight mode to prevent drift
                 if (this.flightMode && this.playerShip) {
-                    this.camera.x = -this.playerShip.x;
-                    this.camera.y = -this.playerShip.y;
+                    this.camera.x = -this.playerShip.x * this.camera.zoom;
+                    this.camera.y = -this.playerShip.y * this.camera.zoom;
                 }
             }
 
