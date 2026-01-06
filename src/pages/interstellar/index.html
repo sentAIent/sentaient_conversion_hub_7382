@@ -1212,11 +1212,16 @@
 
         .gems-grid {
             display: flex;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
+            /* Allow wrapping to multiple rows */
             gap: 6px;
-            max-width: 300px;
+            max-width: 600px;
+            /* Increased from 300px to show more gems */
+            max-height: 120px;
+            /* Limit height */
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: auto;
+            /* Allow vertical scroll if needed */
             padding-bottom: 4px;
         }
 
@@ -2797,15 +2802,9 @@
 
                     gemsGrid.innerHTML = html;
 
-                    // Updated Total Display with Sell Button
+                    // Updated Total Display (no button)
                     if (gemsTotalEl) {
-                        gemsTotalEl.innerHTML = `
-                            <span>$${totalValue.toLocaleString()}</span>
-                            <button id="btnSellAll" class="btn-small" style="padding:2px 6px; font-size:9px; background:rgba(0,255,100,0.2); border-color:#0f0; color:#cfc;">SELL ALL</button>
-                         `;
-                        // Attach listener safely
-                        const btn = document.getElementById('btnSellAll');
-                        if (btn) btn.onclick = () => this.sellAllGems();
+                        gemsTotalEl.textContent = `$${totalValue.toLocaleString()}`;
                     }
                 }
 
@@ -2860,28 +2859,85 @@
             }
 
             generateResourceDeposits() {
-                const zones = ['industrial', 'precious', 'crystal', 'nuclear', 'exotic'];
                 this.resourceDeposits = [];
 
-                zones.forEach(zone => {
-                    const info = this.galaxyZones[zone];
-                    if (!info) return;
-                    const count = zone === 'exotic' ? 2 : 5;
+                // TIER 1: Nearby clusters (30s-1min travel at base speed ~50 units/s)
+                // Distance: 1500-3000 units
+                // Value: Low-Medium (Common/Uncommon dominant)
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.3;
+                    const dist = 1500 + Math.random() * 1500;
+                    this.resourceDeposits.push({
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        z: (Math.random() - 0.5) * 300,
+                        zone: 'industrial',
+                        radius: 600,
+                        richness: 1.5,
+                        tier: 1,
+                        value: 'low',
+                        name: `Common Field ${i + 1}`
+                    });
+                }
 
-                    for (let i = 0; i < count; i++) {
-                        const angle = Math.random() * Math.PI * 2;
-                        const dist = info.distanceRange.min + Math.random() * (info.distanceRange.max - info.distanceRange.min);
+                // TIER 2: Medium-distance clusters (1-2min travel)
+                // Distance: 3000-6000 units
+                // Value: Medium (Rare/Epic mix)
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.4;
+                    const dist = 3000 + Math.random() * 3000;
+                    const zone = Math.random() < 0.5 ? 'precious' : 'crystal';
+                    this.resourceDeposits.push({
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        z: (Math.random() - 0.5) * 400,
+                        zone: zone,
+                        radius: 700,
+                        richness: 2.5,
+                        tier: 2,
+                        value: 'medium',
+                        name: `Rich Cluster ${i + 1}`
+                    });
+                }
 
-                        this.resourceDeposits.push({
-                            x: Math.cos(angle) * dist,
-                            y: Math.sin(angle) * dist,
-                            z: (Math.random() - 0.5) * 500,
-                            zone: zone,
-                            radius: 400,
-                            richness: 2.0
-                        });
-                    }
-                });
+                // TIER 3: Far clusters (2-3min travel)
+                // Distance: 6000-9000 units
+                // Value: High (Epic/Legendary)
+                for (let i = 0; i < 4; i++) {
+                    const angle = (i / 4) * Math.PI * 2 + Math.random() * 0.5;
+                    const dist = 6000 + Math.random() * 3000;
+                    const zone = Math.random() < 0.5 ? 'nuclear' : 'exotic';
+                    this.resourceDeposits.push({
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        z: (Math.random() - 0.5) * 600,
+                        zone: zone,
+                        radius: 800,
+                        richness: 4.0, // 4x rarity boost!
+                        tier: 3,
+                        value: 'high',
+                        name: `Legendary Cache ${i + 1}`
+                    });
+                }
+
+                // TIER 4: Ultra-rare mythic clusters (3+ min travel)
+                // Distance: 9000-12000 units
+                // Value: Extreme (Legendary/Mythic guaranteed)
+                for (let i = 0; i < 2; i++) {
+                    const angle = i * Math.PI + Math.random() * 0.6;
+                    const dist = 9000 + Math.random() * 3000;
+                    this.resourceDeposits.push({
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        z: (Math.random() - 0.5) * 800,
+                        zone: 'exotic',
+                        radius: 1000,
+                        richness: 6.0, // 6x rarity - mythic heaven!
+                        tier: 4,
+                        value: 'extreme',
+                        name: `Mythic Treasure ${i + 1}`
+                    });
+                }
             }
 
             updateMap() {
@@ -2898,34 +2954,76 @@
                 ctx.fillStyle = 'rgba(0,5,20,0.95)';
                 ctx.fillRect(0, 0, w, h);
 
-                // Draw Zones
+                // Offset to center on player
+                const offsetX = -this.playerShip.x;
+                const offsetY = -this.playerShip.y;
+
+                // Draw Zones (centered at origin)
                 Object.values(this.galaxyZones).forEach(zone => {
                     const r = zone.distanceRange.min * scale;
                     ctx.beginPath();
-                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.arc(cx + offsetX * scale, cy + offsetY * scale, r, 0, Math.PI * 2);
                     ctx.strokeStyle = zone.color;
                     ctx.globalAlpha = 0.3;
                     ctx.lineWidth = 1;
                     ctx.stroke();
                 });
 
-                // Draw Deposits
+                // Draw Deposits with TIER VISUALIZATION
                 this.resourceDeposits.forEach(dep => {
-                    const dx = dep.x * scale;
-                    const dy = dep.y * scale;
-                    if (this.galaxyZones[dep.zone]) {
-                        ctx.fillStyle = this.galaxyZones[dep.zone].color;
-                        ctx.globalAlpha = 0.6;
-                        ctx.beginPath();
-                        ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
-                        ctx.fill();
+                    const dx = (dep.x + offsetX) * scale;
+                    const dy = (dep.y + offsetY) * scale;
+
+                    // Tier-based colors
+                    let color, glowColor, label;
+                    switch (dep.tier) {
+                        case 1: color = '#4488ff'; glowColor = '#6699ff'; label = 'C'; break; // Common - Blue
+                        case 2: color = '#ff66ff'; glowColor = '#ff88ff'; label = 'R'; break; // Rich - Magenta
+                        case 3: color = '#ffaa00'; glowColor = '#ffcc44'; label = 'L'; break; // Legendary - Gold
+                        case 4: color = '#ff00ff'; glowColor = '#ff44ff'; label = 'M'; break; // Mythic - Bright Magenta
+                        default: color = '#00f'; glowColor = '#44f'; label = '?'; break;
                     }
+
+                    // Pulsing glow
+                    const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.3;
+                    const glowSize = (3 + dep.tier) * pulse;
+
+                    // Outer glow
+                    ctx.fillStyle = glowColor;
+                    ctx.globalAlpha = 0.4;
+                    ctx.beginPath();
+                    ctx.arc(cx + dx, cy + dy, glowSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+
+                    // Core icon
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(cx + dx, cy + dy, 3 + dep.tier * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Tier label
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 8px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(label, cx + dx, cy + dy + glowSize + 8);
+                });
+
+                // Draw Minerals (gems)
+                this.minerals.forEach(mineral => {
+                    const dx = (mineral.x + offsetX) * scale;
+                    const dy = (mineral.y + offsetY) * scale;
+                    ctx.fillStyle = mineral.color;
+                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath();
+                    ctx.arc(cx + dx, cy + dy, 2, 0, Math.PI * 2);
+                    ctx.fill();
                 });
                 ctx.globalAlpha = 1;
 
-                // Draw Player
-                const px = cx + this.playerShip.x * scale;
-                const py = cy + this.playerShip.y * scale;
+                // Draw Player (now always at center)
+                const px = cx;
+                const py = cy;
 
                 // Player direction arrow
                 const angle = this.playerShip.rotation + Math.PI / 2;
@@ -2950,7 +3048,10 @@
 
             /* --- EXPANDED MAP --- */
             openExpandedMap() {
+                console.log('[Expand Map] Button clicked!');
                 const modal = document.getElementById('expandedMapModal');
+                console.log('[Expand Map] Modal element:', modal);
+
                 if (modal) {
                     modal.classList.remove('hidden');
                     this.expandedMapOpen = true;
@@ -2961,6 +3062,7 @@
                     this.expandedMapOffset.x = -this.playerShip.x;
                     this.expandedMapOffset.y = -this.playerShip.y;
 
+                    console.log('[Expand Map] Starting animation, zoom:', this.expandedMapZoom);
                     this.animateExpandedMap();
 
                     // Add wheel listener for zoom
@@ -3428,6 +3530,7 @@
             }
 
             sellAllGems() {
+                console.log('[Sell All] Button clicked!');
                 let totalValue = 0;
                 let count = 0;
                 for (const [type, qty] of Object.entries(this.playerInventory)) {
@@ -3444,9 +3547,11 @@
                     this.saveCredits();
                     this.saveInventory();
                     this.showToast(`Sold ${count} gems for $${totalValue.toLocaleString()}`);
+                    console.log('[Sell All] Success:', count, 'gems for $', totalValue);
                     // Play sound effect if available
                 } else {
                     this.showToast('No gems to sell');
+                    console.log('[Sell All] No gems in inventory');
                 }
             }
 
@@ -3488,32 +3593,34 @@
                 }
             }
 
-            // Spawn minerals around the player - Galaxy Zone-aware distribution
+            // Spawn minerals around the player - ADDICTIVE GAMEPLAY DESIGN
             spawnMinerals() {
                 const ship = this.playerShip;
-                const spawnRadius = 600;
-                let maxMinerals = 80;
+                const spawnRadius = 1500; // Medium range - always gems visible
+                let targetDensity = 200; // Base: Always 200 gems nearby
 
-                // Check hotspot proximity
+                // Check hotspot proximity for MASSIVE density boost
                 let hotspotBonus = 1.0;
                 let activeHotspot = null;
+                let inHotspot = false;
 
                 for (const dep of this.resourceDeposits) {
                     const dx = ship.x - dep.x;
                     const dy = ship.y - dep.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < dep.radius) {
-                        hotspotBonus = dep.richness;
-                        maxMinerals = 120;
+                        hotspotBonus = 3.0; // 3x rarity multiplier
+                        targetDensity = 500; // Massive gem field
                         activeHotspot = dep;
-                        break; // Only one hotspot at a time
+                        inHotspot = true;
+                        break;
                     }
                 }
 
-                // Calculate player's distance from origin to determine zone
+                // Calculate player's zone
                 const playerDistFromOrigin = Math.sqrt(ship.x * ship.x + ship.y * ship.y);
 
-                // Remove far minerals to manage performance
+                // Remove only VERY far minerals for performance
                 this.minerals = this.minerals.filter(m => {
                     const dx = m.x - ship.x;
                     const dy = m.y - ship.y;
@@ -3521,24 +3628,32 @@
                     return Math.sqrt(dx * dx + dy * dy + dz * dz) < spawnRadius * 3;
                 });
 
-                // Spawn new minerals if needed
-                while (this.minerals.length < maxMinerals) {
-                    // Determine which zone the player is currently in
+                // INSTANT RESPAWN: Always maintain target density
+                while (this.minerals.length < targetDensity) {
                     const currentZone = this.getZoneAtDistance(playerDistFromOrigin);
-
-                    // Get element to spawn based on zone and probability
                     const mineralKey = this.selectElementForZone(currentZone, playerDistFromOrigin, hotspotBonus);
                     const type = this.mineralTypes[mineralKey];
                     if (!type) continue;
 
-                    // Random position around player with zone-based spread
+                    // Dense, even distribution around player
                     const angle = Math.random() * Math.PI * 2;
-                    const distance = spawnRadius * (0.3 + Math.random() * 0.7);
-                    const zOffset = (Math.random() - 0.5) * spawnRadius * 0.5;
+                    const distance = spawnRadius * Math.sqrt(Math.random()); // Uniform distribution
+                    const zOffset = (Math.random() - 0.5) * 400;
 
-                    // Calculate spawn position
-                    const spawnX = ship.x + Math.cos(angle) * distance;
-                    const spawnY = ship.y + Math.sin(angle) * distance;
+                    // Hotspot clustering: bias toward hotspot center
+                    let spawnX, spawnY;
+                    if (inHotspot && Math.random() < 0.6) {
+                        // 60% of gems cluster around hotspot center
+                        const hotAngle = Math.random() * Math.PI * 2;
+                        const hotDist = activeHotspot.radius * Math.sqrt(Math.random()) * 0.7;
+                        spawnX = activeHotspot.x + Math.cos(hotAngle) * hotDist;
+                        spawnY = activeHotspot.y + Math.sin(hotAngle) * hotDist;
+                    } else {
+                        // Normal spawn around player
+                        spawnX = ship.x + Math.cos(angle) * distance;
+                        spawnY = ship.y + Math.sin(angle) * distance;
+                    }
+
                     const spawnZ = ship.z + zOffset;
 
                     this.minerals.push({
@@ -3548,7 +3663,7 @@
                         x: spawnX,
                         y: spawnY,
                         z: spawnZ,
-                        phase: Math.random() * Math.PI * 2,  // For glow animation
+                        phase: Math.random() * Math.PI * 2,
                         defended: type.rarity === 'epic' || type.rarity === 'legendary' || type.rarity === 'mythic'
                     });
                 }
@@ -3568,11 +3683,12 @@
             }
 
             // Select an element to spawn based on current zone and probability
+            // ADDICTIVE DESIGN: Clear risk/reward progression
             selectElementForZone(currentZone, distance, bonusMultiplier = 1) {
                 const zones = this.galaxyZones;
                 const allElements = Object.keys(this.mineralTypes);
 
-                // Build probability weights
+                // Build probability weights with ZONE-BASED PROGRESSION
                 const weights = [];
                 let totalWeight = 0;
 
@@ -3580,41 +3696,61 @@
                     const element = this.mineralTypes[elementKey];
                     let weight = 1;
 
-                    // Base weight by rarity
-                    switch (element.rarity) {
-                        case 'common': weight = 50; break;
-                        case 'uncommon': weight = 25; break;
-                        case 'rare': weight = 12; break;
-                        case 'epic': weight = 5; break;
-                        case 'legendary': weight = 2; break;
-                        case 'mythic': weight = 0.5; break;
+                    // ADDICTIVE RARITY DISTRIBUTION BY ZONE
+                    // Inner Core (0-1500): Safe, abundant commons
+                    if (distance < 1500) {
+                        switch (element.rarity) {
+                            case 'common': weight = 70; break;      // 70%
+                            case 'uncommon': weight = 25; break;    // 25%
+                            case 'rare': weight = 5; break;         // 5%
+                            default: weight = 0; break;             // No epic+
+                        }
                     }
-
-                    // Zone affinity bonus - elements in their home zone spawn more
-                    if (zones[element.zone] && zones[element.zone].elements.includes(elementKey)) {
-                        if (element.zone === currentZone) {
-                            weight *= (zones[element.zone].concentrationBonus * bonusMultiplier);
+                    // Radiation Belt (1500-3000): Medium risk, good rewards
+                    else if (distance < 3000) {
+                        switch (element.rarity) {
+                            case 'common': weight = 40; break;      // 40%
+                            case 'uncommon': weight = 40; break;    // 40%
+                            case 'rare': weight = 15; break;        // 15%
+                            case 'epic': weight = 5; break;         // 5%
+                            default: weight = 0; break;
+                        }
+                    }
+                    // Outer Expanse (3000-5000): High risk, great rewards
+                    else if (distance < 5000) {
+                        switch (element.rarity) {
+                            case 'common': weight = 0; break;       // No commons
+                            case 'uncommon': weight = 25; break;    // 25%
+                            case 'rare': weight = 35; break;        // 35%
+                            case 'epic': weight = 30; break;        // 30%
+                            case 'legendary': weight = 10; break;   // 10%
+                            default: weight = 0; break;
+                        }
+                    }
+                    // Deep Void (5000+): Extreme risk, legendary rewards
+                    else {
+                        switch (element.rarity) {
+                            case 'common': weight = 0; break;
+                            case 'uncommon': weight = 0; break;
+                            case 'rare': weight = 20; break;        // 20%
+                            case 'epic': weight = 40; break;        // 40%
+                            case 'legendary': weight = 30; break;   // 30%
+                            case 'mythic': weight = 10; break;      // 10%
                         }
                     }
 
-                    // Distance gating - rare/epic/legendary/mythic only spawn in appropriate zones
-                    if (element.rarity === 'mythic' && distance < 5000) {
-                        weight = 0; // Mythic only in exotic zone
-                    }
-                    if (element.rarity === 'legendary' && distance < 4000) {
-                        weight *= 0.1; // Legendary very rare outside exotic
-                    }
-                    if (element.rarity === 'epic' && distance < 3000) {
-                        weight *= 0.2; // Epic rare outside nuclear zone
+                    // Hotspot bonus multiplier
+                    if (bonusMultiplier > 1) {
+                        // Increase rarity in hotspots
+                        if (element.rarity !== 'common') {
+                            weight *= bonusMultiplier;
+                        }
                     }
 
-                    // Out-of-zone penalty
-                    if (element.zone !== currentZone) {
-                        const elementZone = zones[element.zone];
-                        if (elementZone) {
-                            if (distance < elementZone.distanceRange.min) {
-                                weight *= 0.1; // Too close for this element
-                            }
+                    // Zone affinity: elements spawn more in their home zone
+                    if (zones[element.zone] && zones[element.zone].elements.includes(elementKey)) {
+                        if (element.zone === currentZone) {
+                            weight *= 1.5; // 50% bonus in home zone
                         }
                     }
 
