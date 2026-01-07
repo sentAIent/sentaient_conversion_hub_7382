@@ -1241,11 +1241,12 @@
         .gem-item {
             display: flex;
             align-items: center;
-            gap: 4px;
-            padding: 4px 6px;
+            gap: 6px;
+            padding: 6px 8px;
             background: rgba(0, 0, 0, 0.4);
             border-radius: 4px;
-            font-size: 10px;
+            font-size: 14px;
+            /* Increased from 10px */
             white-space: nowrap;
             flex-shrink: 0;
         }
@@ -1257,13 +1258,16 @@
         .gem-count {
             color: #fff;
             font-weight: bold;
+            font-size: 13px;
+            /* Larger count */
         }
 
         .gems-total {
-            margin-top: 6px;
-            padding-top: 6px;
+            margin-top: 8px;
+            padding-top: 8px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 11px;
+            font-size: 14px;
+            /* Increased from 11px */
             font-weight: bold;
             color: #ffd700;
             display: flex;
@@ -1578,12 +1582,24 @@
     <!-- === MATRIX CONTROLS POPUP === -->
     <div id="matrixPanel" class="popup-panel hidden">
         <h3>Matrix</h3>
-        <p>Speed</p>
-        <input type="range" id="matrixSpeedSlider" min="1" max="50" value="15" title="Stream Speed">
-        <p>Color</p>
-        <input type="color" id="matrixColorPicker" value="#00ff00" title="Matrix Color">
-        <button id="matrixRainbowBtn" class="btn-small">Rainbow Mode</button>
+        <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
+        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+
+        <label style="font-size:10px;margin-top:6px;display:block">Length: <span
+                id="matrixLengthValue">1.0x</span></label>
+        <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
+
+        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
+        <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
+
+        <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
+            <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
+                style="width:24px;height:24px">
+            <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
+                style="font-size:10px;padding:6px">🌈</button>
+        </div>
     </div>
+
 
     <!-- === FULLSCREEN MAP MODAL === -->
     <div id="expandedMapModal" class="fullscreen-modal hidden">
@@ -1593,23 +1609,6 @@
         </div>
         <canvas id="fullscreenMapCanvas"></canvas>
     </div>
-    <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
-    <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
-
-    <label style="font-size:10px;margin-top:6px;display:block">Length: <span id="matrixLengthValue">1.0x</span></label>
-    <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
-
-    <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
-    <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
-
-    <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
-        <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
-            style="width:24px;height:24px">
-        <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
-            style="font-size:10px;padding:6px">🌈</button>
-    </div>
-    </div>
-
 
     <!-- === ROTATION CONTROLS POPUP === -->
     <div id="rotationPanel" class="popup-panel hidden">
@@ -1819,7 +1818,8 @@
             <div class="cockpit-content">
                 <div class="controls-grid">
                     <kbd>W</kbd><kbd>S</kbd><kbd>A</kbd><kbd>D</kbd>
-                    <kbd>Q</kbd><kbd>E</kbd><kbd>⇧</kbd><kbd>U</kbd>
+                    <kbd>Q</kbd><kbd>E</kbd><kbd>R</kbd><kbd>F</kbd>
+                    <kbd>Z</kbd><kbd>X</kbd><kbd>⇧</kbd><kbd>U</kbd>
                 </div>
             </div>
         </div>
@@ -1864,16 +1864,39 @@
         </div>
 
         <!-- 4. GEMS Section -->
-        <div id="sectionGems" class="cockpit-section gems-section">
+        <div id="sectionGems" class="cockpit-section gems-section"
+            style="min-width: 200px; max-width: 600px; resize: horizontal; overflow: auto;">
             <div class="cockpit-header">
                 <h4>💎 Gems</h4>
-                <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')" title="Collapse">−</button>
+                <div style="display:flex; gap:4px;">
+                    <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
+                        title="Toggle Values">$</button>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')"
+                        title="Collapse">−</button>
+                </div>
+            </div>
+            <div class="cockpit-section-content">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <label style="font-size: 11px; color: var(--text-dim);">Ship Color:</label>
+                    <input type="color" id="shipColorPicker" value="#00f3ff"
+                        style="width: 50px; height: 24px; cursor: pointer; border-radius: 3px; border: 1px solid var(--glass-border);"
+                        title="Change Spacecraft Color">
+                    <button class="btn-small" onclick="app.resetShipColor()" style="font-size: 10px;">Reset</button>
+                </div>
+                <div class="flight-controls"
+                    style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 8px;">
+                    <button class="btn-small" style="font-size: 10px;" onclick="app.toggleAutopilot()">
+                        <span id="autopilotStatus">🛫 Autopilot OFF</span></button>
+                </div>
             </div>
             <div class="cockpit-content">
                 <div id="gemsGrid" class="gems-grid">
                     <!-- Populated by JS -->
                 </div>
                 <div class="gems-total">Total: <span id="gemsTotal">$0</span></div>
+            </div>
+            <div class="resize-handle"
+                style="position:absolute; right:0; bottom:0; width:12px; height:12px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.3) 50%);">
             </div>
         </div>
     </div>
@@ -1948,6 +1971,10 @@
                     <h3>🔥 Phoenix</h3>
                     <p>Reborn in fire. Speed: 55, Accel: 0.8</p>
                 </div>
+                <div class="ship-option" onclick="app.selectShip('harvester')">
+                    <h3>💎 Starfighter</h3>
+                    <p>Advanced combat vessel. Speed: 80, Accel: 0.8</p>
+                </div>
             </div>
             <div class="modal-actions">
                 <button class="btn-secondary" onclick="app.hideShipModal()">Close</button>
@@ -1976,6 +2003,12 @@
 
                 // World size for background generation (covers full canvas at min zoom 0.1x)
                 this.worldSize = 12000;
+
+                // Procedural Universe Generation System
+                this.sectorSize = 10000; // Each sector is 10k x 10k units
+                this.loadedSectors = new Map(); // Map of "x,y" -> sector data
+                this.currentSector = { x: 0, y: 0 }; // Player's current sector
+                this.generationBoundary = 3000; // Generate new sectors when within this distance of edge
 
                 // State
                 this.stars = [];
@@ -2014,11 +2047,14 @@
                     x: 0, y: 0, z: 0,
                     vx: 0, vy: 0, vz: 0,
                     rotation: 0,
+                    pitch: 0, // 3D pitch rotation (up/down)
+                    roll: 0,  // 3D roll rotation (barrel roll)
                     speed: 0,
                     maxSpeed: 50 * (1 + (savedUpgrades.speed || 0) * 0.2),
                     acceleration: 0.5 * (1 + (savedUpgrades.speed || 0) * 0.1),
                     rotationSpeed: 0.08,
                     size: 45,
+                    color: localStorage.getItem('shipColor') || '#00f3ff', // Customizable color
                     hullHealth: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
                     maxHull: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
                     shield: 50 * (1 + (savedUpgrades.shield || 0) * 0.2),
@@ -2027,6 +2063,7 @@
                     upgrades: savedUpgrades
                 };
                 this.speedLines = [];  // Visual speed indicators
+                this.showGemValues = false; // Toggle for showing gem values
 
                 // Mineral system
                 this.minerals = [];
@@ -2298,11 +2335,14 @@
             init() {
                 window.addEventListener('resize', () => this.resize());
 
-                // Pointer Events
+                // Pointer Events (CORRECT - these functions exist!)
                 this.canvas.addEventListener('pointerdown', e => this.onPointerDown(e));
                 window.addEventListener('pointermove', e => this.onPointerMove(e));
                 window.addEventListener('pointerup', e => this.onPointerUp(e));
-                this.canvas.addEventListener('wheel', e => this.onWheel(e), { passive: false });
+                this.canvas.addEventListener('wheel', e => {
+                    console.log('[Zoom Event] Wheel event fired');
+                    this.onWheel(e);
+                }, { passive: false });
                 this.canvas.addEventListener('contextmenu', e => this.onRightClick(e)); // Right-click deletion
 
                 // Keyboard
@@ -2349,6 +2389,18 @@
                 // UI Events
                 this.initDraggableWindows();
 
+                // Make all panels resizable with 2D support
+                this.makeResizable('floatingMap');
+                this.makeResizable('floatingLeaders');
+                this.makeResizable('sectionControls');
+                this.makeResizable('sectionRadar');
+                this.makeResizable('sectionVelocity');
+                this.initGemsSectionResize(); // Special handling for gems
+
+                document.querySelectorAll('.popup-panel').forEach(panel => {
+                    if (panel.id) this.makeResizable(panel.id);
+                });
+
                 // Matrix (previously Cyber) speed slider
                 const matrixSpeedSlider = document.getElementById('matrixSpeedSlider');
                 if (matrixSpeedSlider) {
@@ -2371,12 +2423,21 @@
                 const matrixAngleSlider = document.getElementById('matrixAngleSlider');
                 if (matrixAngleSlider) {
                     matrixAngleSlider.addEventListener('input', (e) => {
-                        this.matrixAngle = parseInt(e.target.value);
+                        this.matrixAngle = parseFloat(e.target.value);
                         document.getElementById('matrixAngleValue').textContent = this.matrixAngle + '°';
                     });
                 }
 
-                // Matrix color picker
+                // Ship color picker
+                const shipColorPicker = document.getElementById('shipColorPicker');
+                if (shipColorPicker) {
+                    shipColorPicker.value = this.playerShip.color;
+                    shipColorPicker.addEventListener('input', (e) => {
+                        this.setShipColor(e.target.value);
+                    });
+                }
+
+                // Initialize Camera picker
                 const matrixColorPicker = document.getElementById('matrixColorPicker');
                 const matrixColorHex = document.getElementById('matrixColorHex');
                 if (matrixColorPicker) {
@@ -2553,7 +2614,123 @@
                 this.showToast("Active color set to Rainbow Mode 🌈");
             }
 
+            // ===== PROCEDURAL UNIVERSE GENERATION =====
+
+            seededRandom(seed) {
+                const x = Math.sin(seed) * 10000;
+                return x - Math.floor(x);
+            }
+
+            getSectorCoords(worldX, worldY) {
+                return {
+                    x: Math.floor(worldX / this.sectorSize),
+                    y: Math.floor(worldY / this.sectorSize)
+                };
+            }
+
+            getSectorSeed(sectorX, sectorY) {
+                return sectorX * 73856093 ^ sectorY * 19349663;
+            }
+
+            checkAndGenerateSectors() {
+                if (!this.flightMode) return;
+
+                const sector = this.getSectorCoords(this.playerShip.x, this.playerShip.y);
+                this.currentSector = sector;
+
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const sx = sector.x + dx;
+                        const sy = sector.y + dy;
+                        const key = `${sx},${sy}`;
+                        if (!this.loadedSectors.has(key)) {
+                            this.generateSector(sx, sy);
+                        }
+                    }
+                }
+
+                for (const [key] of this.loadedSectors.entries()) {
+                    const [sx, sy] = key.split(',').map(Number);
+                    const dist = Math.max(Math.abs(sx - sector.x), Math.abs(sy - sector.y));
+                    if (dist > 2) {
+                        const sectorData = this.loadedSectors.get(key);
+                        if (sectorData) {
+                            this.minerals = this.minerals.filter(m => !sectorData.minerals.includes(m));
+                            this.resourceDeposits = this.resourceDeposits.filter(d => !sectorData.deposits.includes(d));
+                        }
+                        this.loadedSectors.delete(key);
+                    }
+                }
+            }
+
+            generateSector(sectorX, sectorY) {
+                const key = `${sectorX},${sectorY}`;
+                if (this.loadedSectors.has(key)) return;
+
+                console.log(`[Universe] Generating sector (${sectorX}, ${sectorY})`);
+
+                const seed = this.getSectorSeed(sectorX, sectorY);
+                const sectorData = { x: sectorX, y: sectorY, minerals: [], deposits: [] };
+
+                const minX = sectorX * this.sectorSize;
+                const maxX = (sectorX + 1) * this.sectorSize;
+                const minY = sectorY * this.sectorSize;
+                const maxY = (sectorY + 1) * this.sectorSize;
+
+                const mineralCount = Math.floor(100 + this.seededRandom(seed + 1) * 200);
+                for (let i = 0; i < mineralCount; i++) {
+                    const s = seed + i * 1000;
+                    const x = minX + this.seededRandom(s) * this.sectorSize;
+                    const y = minY + this.seededRandom(s + 1) * this.sectorSize;
+                    const dist = Math.hypot(x, y);
+
+                    let type = 'iron';
+                    const r = this.seededRandom(s + 2);
+                    if (dist < 1000) type = ['iron', 'copper', 'coal', 'titanium', 'silicon'][Math.floor(r * 5)];
+                    else if (dist < 3000) type = ['silver', 'gold', 'platinum', 'palladium'][Math.floor(r * 4)];
+                    else if (dist < 6000) type = ['quartz', 'diamond', 'emerald', 'ruby', 'sapphire'][Math.floor(r * 5)];
+                    else if (dist < 10000) type = ['uranium', 'plutonium', 'helium3'][Math.floor(r * 3)];
+                    else type = ['neodymium', 'lanthanum', 'darkmatter', 'antimatter'][Math.floor(r * 4)];
+
+                    const info = this.mineralTypes[type];
+                    if (!info) continue;
+
+                    const mineral = { x, y, type, color: info.color, size: info.size, value: info.value };
+                    this.minerals.push(mineral);
+                    sectorData.minerals.push(mineral);
+                }
+
+                const depositCount = Math.floor(3 + this.seededRandom(seed + 500000) * 5);
+                for (let i = 0; i < depositCount; i++) {
+                    const s = seed + 500000 + i * 2000;
+                    const x = minX + this.seededRandom(s) * this.sectorSize;
+                    const y = minY + this.seededRandom(s + 1) * this.sectorSize;
+                    const dist = Math.hypot(x, y);
+
+                    let zone = 'industrial';
+                    if (dist >= 8000) zone = 'exotic';
+                    else if (dist >= 5000) zone = 'nuclear';
+                    else if (dist >= 2500) zone = 'crystal';
+                    else if (dist >= 1000) zone = 'precious';
+
+                    const richness = 0.3 + this.seededRandom(s + 2) * 0.7;
+                    const deposit = {
+                        x, y, zone,
+                        name: `${this.galaxyZones[zone]?.name || zone} Deposit`,
+                        richness,
+                        tier: Math.floor(richness * 3) + 1
+                    };
+
+                    this.resourceDeposits.push(deposit);
+                    sectorData.deposits.push(deposit);
+                }
+
+                this.loadedSectors.set(key, sectorData);
+                console.log(`[Universe] Sector (${sectorX}, ${sectorY}): ${mineralCount} minerals, ${depositCount} deposits`);
+            }
+
             toggleBgStyle(style) {
+                console.log(`[BG Toggle] ${style}, currently active:`, this.activeStyles.has(style));
                 if (this.activeStyles.has(style)) {
                     // Deselecting - just remove from active, don't regenerate others
                     this.activeStyles.delete(style);
@@ -2684,10 +2861,124 @@
                 if (section) section.classList.toggle('collapsed');
             }
 
+            toggleGemValues() {
+                this.showGemValues = !this.showGemValues;
+                this.updateFlightHUD(); // Refresh display
+                const btn = document.getElementById('btnToggleGemValues');
+                if (btn) {
+                    btn.style.background = this.showGemValues ? 'rgba(255,215,0,0.3)' : '';
+                }
+            }
+
+            initGemsSectionResize() {
+                const gemsSection = document.getElementById('sectionGems');
+                const resizeHandle = gemsSection?.querySelector('.resize-handle');
+                if (!gemsSection || !resizeHandle) return;
+
+                let isResizing = false;
+                let startX, startY, startWidth, startHeight;
+
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startWidth = gemsSection.offsetWidth;
+                    startHeight = gemsSection.offsetHeight;
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
+
+                    // Support both horizontal AND vertical resizing
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+
+                    const newWidth = Math.max(200, Math.min(800, startWidth + deltaX));
+                    const newHeight = Math.max(150, Math.min(600, startHeight + deltaY));
+
+                    gemsSection.style.width = newWidth + 'px';
+                    gemsSection.style.height = newHeight + 'px';
+                });
+
+                window.addEventListener('mouseup', () => {
+                    isResizing = false;
+                });
+            }
+
+            // Universal resize system for ALL panels
+            makeResizable(elementId) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+
+                // Add resize handle if it doesn't exist
+                let resizeHandle = element.querySelector('.resize-handle');
+                if (!resizeHandle) {
+                    resizeHandle = document.createElement('div');
+                    resizeHandle.className = 'resize-handle';
+                    resizeHandle.style.cssText = 'position:absolute; right:0; bottom:0; width:16px; height:16px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.5) 50%); z-index:10;';
+                    element.appendChild(resizeHandle);
+                }
+
+                let isResizing = false;
+                let startX, startY, startWidth, startHeight;
+
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startWidth = element.offsetWidth;
+                    startHeight = element.offsetHeight;
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
+
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+
+                    const newWidth = Math.max(200, Math.min(1200, startWidth + deltaX));
+                    const newHeight = Math.max(150, Math.min(800, startHeight + deltaY));
+
+                    element.style.width = newWidth + 'px';
+                    element.style.height = newHeight + 'px';
+                });
+
+                window.addEventListener('mouseup', () => {
+                    isResizing = false;
+                });
+            }
+
             // Toggle floating window collapse
             toggleFloatingWindow(windowId) {
                 const win = document.getElementById(windowId);
                 if (win) win.classList.toggle('collapsed');
+            }
+
+            // Spacecraft color customization
+            setShipColor(color) {
+                this.playerShip.color = color;
+                localStorage.setItem('shipColor', color);
+            }
+
+            resetShipColor() {
+                const defaultColor = '#00f3ff';
+                this.playerShip.color = defaultColor;
+                localStorage.setItem('shipColor', defaultColor);
+                document.getElementById('shipColorPicker').value = defaultColor;
+                this.showToast('Ship color reset to default');
+            }
+
+            // Helper to adjust color brightness
+            adjustColor(hex, amount) {
+                const num = parseInt(hex.replace('#', ''), 16);
+                const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+                const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
+                const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
+                return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
             }
 
             // Gem emoji mapping
@@ -2790,11 +3081,15 @@
 
                             totalValue += count * info.value;
 
+                            const itemValue = count * info.value;
+                            const valueDisplay = this.showGemValues ? `<span style="color:${info.color}; font-weight:bold; margin-left:6px;">$${Math.round(itemValue).toLocaleString()}</span>` : '';
+
                             html += `
                                 <div class="gem-item" style="border:1px solid ${info.color}44; background: rgba(0,0,0,0.6);">
                                     <div style="${this.styleGem(type)}"></div>
                                     <span style="color:${info.color}">${info.name}</span>
-                                    <span class="gem-count">${count}</span>
+                                    <span class="gem-count">×${count}</span>
+                                    ${valueDisplay}
                                 </div>
                             `;
                         });
@@ -2813,6 +3108,9 @@
 
                 // Update map
                 this.updateMap();
+
+                // Initialize resize handle for gems section
+                this.initGemsResize();
             }
 
             updateRadar() {
@@ -2861,18 +3159,18 @@
             generateResourceDeposits() {
                 this.resourceDeposits = [];
 
-                // TIER 1: Nearby clusters (30s-1min travel at base speed ~50 units/s)
-                // Distance: 1500-3000 units
-                // Value: Low-Medium (Common/Uncommon dominant)
-                for (let i = 0; i < 8; i++) {
-                    const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.3;
-                    const dist = 1500 + Math.random() * 1500;
+                // TIER 1: Starting ring (30s-1min travel)
+                // Distance: 2000-4000 units (expanded outward)
+                // 12 clusters evenly distributed
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.2;
+                    const dist = 2000 + Math.random() * 2000;
                     this.resourceDeposits.push({
                         x: Math.cos(angle) * dist,
                         y: Math.sin(angle) * dist,
-                        z: (Math.random() - 0.5) * 300,
+                        z: (Math.random() - 0.5) * 400,
                         zone: 'industrial',
-                        radius: 600,
+                        radius: 700,
                         richness: 1.5,
                         tier: 1,
                         value: 'low',
@@ -2880,64 +3178,104 @@
                     });
                 }
 
-                // TIER 2: Medium-distance clusters (1-2min travel)
-                // Distance: 3000-6000 units
-                // Value: Medium (Rare/Epic mix)
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.4;
-                    const dist = 3000 + Math.random() * 3000;
+                // TIER 2: Inner belt (1-2min travel)
+                // Distance: 5000-8000 units (wider spread)
+                // 10 clusters
+                for (let i = 0; i < 10; i++) {
+                    const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.3;
+                    const dist = 5000 + Math.random() * 3000;
                     const zone = Math.random() < 0.5 ? 'precious' : 'crystal';
-                    this.resourceDeposits.push({
-                        x: Math.cos(angle) * dist,
-                        y: Math.sin(angle) * dist,
-                        z: (Math.random() - 0.5) * 400,
-                        zone: zone,
-                        radius: 700,
-                        richness: 2.5,
-                        tier: 2,
-                        value: 'medium',
-                        name: `Rich Cluster ${i + 1}`
-                    });
-                }
-
-                // TIER 3: Far clusters (2-3min travel)
-                // Distance: 6000-9000 units
-                // Value: High (Epic/Legendary)
-                for (let i = 0; i < 4; i++) {
-                    const angle = (i / 4) * Math.PI * 2 + Math.random() * 0.5;
-                    const dist = 6000 + Math.random() * 3000;
-                    const zone = Math.random() < 0.5 ? 'nuclear' : 'exotic';
                     this.resourceDeposits.push({
                         x: Math.cos(angle) * dist,
                         y: Math.sin(angle) * dist,
                         z: (Math.random() - 0.5) * 600,
                         zone: zone,
                         radius: 800,
-                        richness: 4.0, // 4x rarity boost!
-                        tier: 3,
-                        value: 'high',
-                        name: `Legendary Cache ${i + 1}`
+                        richness: 2.0,
+                        tier: 2,
+                        value: 'medium',
+                        name: `Rich Cluster ${i + 1}`
                     });
                 }
 
-                // TIER 4: Ultra-rare mythic clusters (3+ min travel)
-                // Distance: 9000-12000 units
-                // Value: Extreme (Legendary/Mythic guaranteed)
-                for (let i = 0; i < 2; i++) {
-                    const angle = i * Math.PI + Math.random() * 0.6;
-                    const dist = 9000 + Math.random() * 3000;
+                // TIER 3: Mid expanse (2-4min travel)
+                // Distance: 10000-15000 units
+                // 8 clusters
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.4;
+                    const dist = 10000 + Math.random() * 5000;
+                    const zone = Math.random() < 0.5 ? 'nuclear' : 'crystal';
                     this.resourceDeposits.push({
                         x: Math.cos(angle) * dist,
                         y: Math.sin(angle) * dist,
                         z: (Math.random() - 0.5) * 800,
-                        zone: 'exotic',
+                        zone: zone,
+                        radius: 900,
+                        richness: 3.0,
+                        tier: 3,
+                        value: 'high',
+                        name: `Epic Cache ${i + 1}`
+                    });
+                }
+
+                // TIER 4: Outer frontier (4-6min travel)
+                // Distance: 18000-25000 units  
+                // 6 clusters - Epic/Legendary
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.5;
+                    const dist = 18000 + Math.random() * 7000;
+                    this.resourceDeposits.push({
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        z: (Math.random() - 0.5) * 1000,
+                        zone: 'nuclear',
                         radius: 1000,
-                        richness: 6.0, // 6x rarity - mythic heaven!
+                        richness: 4.5,
                         tier: 4,
-                        value: 'extreme',
+                        value: 'legendary',
+                        name: `Legendary Cache ${i + 1}`
+                    });
+                }
+
+                // TIER 5: Deep void (6-10min travel)
+                // Distance: 28000-38000 units
+                // 4 clusters - Legendary/Mythic
+                for (let i = 0; i < 4; i++) {
+                    const angle = (i / 4) * Math.PI * 2 + Math.random() * 0.6;
+                    const dist = 28000 + Math.random() * 10000;
+                    this.resourceDeposits.push({
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        z: (Math.random() - 0.5) * 1500,
+                        zone: 'exotic',
+                        radius: 1200,
+                        richness: 6.0,
+                        tier: 5,
+                        value: 'mythic',
                         name: `Mythic Treasure ${i + 1}`
                     });
                 }
+
+                // TIER 6: Distant galaxies (10-15min travel)
+                // Distance: 42000-50000 units
+                // 3 ultra-rare clusters - Pure mythic
+                for (let i = 0; i < 3; i++) {
+                    const angle = (i / 3) * Math.PI * 2 + Math.random() * 0.8;
+                    const dist = 42000 + Math.random() * 8000;
+                    this.resourceDeposits.push({
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        z: (Math.random() - 0.5) * 2000,
+                        zone: 'exotic',
+                        radius: 1500,
+                        richness: 8.0, // 8x rarity - INSANE!
+                        tier: 6,
+                        value: 'ultra-mythic',
+                        name: `Galaxy Core ${i + 1}`
+                    });
+                }
+
+                console.log(`[Universe] Generated ${this.resourceDeposits.length} gem clusters across 50,000 units`);
             }
 
             updateMap() {
@@ -2947,7 +3285,7 @@
                 const w = canvas.width, h = canvas.height;
                 const cx = w / 2, cy = h / 2;
 
-                const mapRadius = 8500; // Slightly larger than max zone
+                const mapRadius = 50000; // Increased to show entire universe
                 const scale = (Math.min(w, h) / 2) / mapRadius;
 
                 // Clear
@@ -2969,55 +3307,74 @@
                     ctx.stroke();
                 });
 
-                // Draw Deposits with TIER VISUALIZATION
+                // Draw Minerals (gems) FIRST - smaller, background layer
+                this.minerals.forEach(mineral => {
+                    const dx = (mineral.x + offsetX) * scale;
+                    const dy = (mineral.y + offsetY) * scale;
+
+                    // Glow effect
+                    ctx.fillStyle = mineral.color;
+                    ctx.globalAlpha = 0.3;
+                    ctx.beginPath();
+                    ctx.arc(cx + dx, cy + dy, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Solid dot
+                    ctx.globalAlpha = 0.9;
+                    ctx.beginPath();
+                    ctx.arc(cx + dx, cy + dy, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+
+                // Draw Deposits LAST - larger, foreground layer (CLUSTERS)
                 this.resourceDeposits.forEach(dep => {
                     const dx = (dep.x + offsetX) * scale;
                     const dy = (dep.y + offsetY) * scale;
 
-                    // Tier-based colors
-                    let color, glowColor, label;
+                    // Tier-based colors with CLEAR labels
+                    let color, glowColor, label, labelText;
                     switch (dep.tier) {
-                        case 1: color = '#4488ff'; glowColor = '#6699ff'; label = 'C'; break; // Common - Blue
-                        case 2: color = '#ff66ff'; glowColor = '#ff88ff'; label = 'R'; break; // Rich - Magenta
-                        case 3: color = '#ffaa00'; glowColor = '#ffcc44'; label = 'L'; break; // Legendary - Gold
-                        case 4: color = '#ff00ff'; glowColor = '#ff44ff'; label = 'M'; break; // Mythic - Bright Magenta
-                        default: color = '#00f'; glowColor = '#44f'; label = '?'; break;
+                        case 1: color = '#4488ff'; glowColor = '#6699ff'; label = 'C'; labelText = 'Common'; break;
+                        case 2: color = '#ff66ff'; glowColor = '#ff88ff'; label = 'R'; labelText = 'Rich'; break;
+                        case 3: color = '#ffaa00'; glowColor = '#ffcc44'; label = 'E'; labelText = 'Epic'; break;
+                        case 4: color = '#ff4400'; glowColor = '#ff6644'; label = 'L'; labelText = 'Legendary'; break;
+                        case 5: color = '#ff00ff'; glowColor = '#ff44ff'; label = 'M'; labelText = 'Mythic'; break;
+                        case 6: color = '#00ffff'; glowColor = '#44ffff'; label = 'G'; labelText = 'Galaxy'; break;
+                        default: color = '#00f'; glowColor = '#44f'; label = '?'; labelText = 'Unknown'; break;
                     }
 
-                    // Pulsing glow
+                    // LARGER pulsing glow for better visibility
                     const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.3;
-                    const glowSize = (3 + dep.tier) * pulse;
+                    const glowSize = (5 + dep.tier * 1.5) * pulse; // Increased size
 
-                    // Outer glow
+                    // Outer glow - brighter
                     ctx.fillStyle = glowColor;
-                    ctx.globalAlpha = 0.4;
+                    ctx.globalAlpha = 0.6; // More visible glow
                     ctx.beginPath();
                     ctx.arc(cx + dx, cy + dy, glowSize, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.globalAlpha = 1;
 
-                    // Core icon
+                    // Core icon - LARGER
                     ctx.fillStyle = color;
                     ctx.beginPath();
-                    ctx.arc(cx + dx, cy + dy, 3 + dep.tier * 0.5, 0, Math.PI * 2);
+                    ctx.arc(cx + dx, cy + dy, 4 + dep.tier * 0.8, 0, Math.PI * 2); // Bigger core
                     ctx.fill();
 
-                    // Tier label
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 8px monospace';
+                    // White outline for contrast
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    // Tier label with background for readability
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(cx + dx - 6, cy + dy + glowSize + 2, 12, 10);
+
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 9px monospace';
                     ctx.textAlign = 'center';
-                    ctx.fillText(label, cx + dx, cy + dy + glowSize + 8);
-                });
-
-                // Draw Minerals (gems)
-                this.minerals.forEach(mineral => {
-                    const dx = (mineral.x + offsetX) * scale;
-                    const dy = (mineral.y + offsetY) * scale;
-                    ctx.fillStyle = mineral.color;
-                    ctx.globalAlpha = 0.8;
-                    ctx.beginPath();
-                    ctx.arc(cx + dx, cy + dy, 2, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.fillText(label, cx + dx, cy + dy + glowSize + 10);
                 });
                 ctx.globalAlpha = 1;
 
@@ -3273,6 +3630,35 @@
                     }
                 });
 
+                // --- 6.5. MINERALS/GEMS (Navigation Aid) ---
+                // Show minerals on the map with proper color coding
+                this.minerals.forEach(mineral => {
+                    const mineralInfo = this.mineralTypes[mineral.type];
+                    if (!mineralInfo) return;
+
+                    // Glow effect for visibility
+                    ctx.globalAlpha = 0.4;
+                    ctx.fillStyle = mineralInfo.color;
+                    ctx.beginPath();
+                    ctx.arc(mineral.x, mineral.y, 8 / zoom, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Solid marker
+                    ctx.globalAlpha = 1.0;
+                    ctx.beginPath();
+                    ctx.arc(mineral.x, mineral.y, 4 / zoom, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Show gem type label at higher zoom
+                    if (zoom > 1.5) {
+                        ctx.fillStyle = '#fff';
+                        ctx.font = `${10 / zoom}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.fillText(mineralInfo.name, mineral.x, mineral.y - 10 / zoom);
+                    }
+                });
+                ctx.globalAlpha = 1.0;
+
                 // --- 7. PLAYER SHIP (Detailed HUD Marker) ---
                 const shipX = this.playerShip.x;
                 const shipY = this.playerShip.y;
@@ -3414,9 +3800,17 @@
                 const ship = this.playerShip;
                 const keys = this.keysPressed;
 
-                // Rotation
+                // Rotation (Yaw - left/right)
                 if (keys['a'] || keys['arrowleft']) ship.rotation -= ship.rotationSpeed;
                 if (keys['d'] || keys['arrowright']) ship.rotation += ship.rotationSpeed;
+
+                // 3D Pitch rotation (R/F keys - up/down)
+                if (keys['r']) ship.pitch = Math.min(Math.PI / 3, ship.pitch + 0.02); // Pitch up (max 60 degrees)
+                if (keys['f']) ship.pitch = Math.max(-Math.PI / 3, ship.pitch - 0.02); // Pitch down
+
+                // 3D Roll rotation (Z/C keys)
+                if (keys['z']) ship.roll = Math.min(Math.PI / 2, ship.roll + 0.03); // Roll left (max 90 degrees)
+                if (keys['c']) ship.roll = Math.max(-Math.PI / 2, ship.roll - 0.03); // Roll right
 
                 // Acceleration (forward/backward)
                 const cos = Math.cos(ship.rotation);
@@ -3488,6 +3882,9 @@
                 // Use zoom level to maintain center regardless of zoom
                 this.camera.x = -ship.x * this.camera.zoom;
                 this.camera.y = -ship.y * this.camera.zoom;
+
+                // Check and generate new sectors as player explores
+                this.checkAndGenerateSectors();
             }
 
             // Inventory Management
@@ -4467,14 +4864,25 @@
 
             onWheel(e) {
                 e.preventDefault();
-                const zoomSpeed = 0.0015;
-                const newZoom = Math.max(0.1, Math.min(6, this.camera.zoom - e.deltaY * zoomSpeed));
+                console.log('[Zoom] Mouse wheel detected, deltaY:', e.deltaY);
 
-                const worldPos = this.getWorldPos(e);
+                const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+                const newZoom = Math.max(0.1, Math.min(5, this.camera.zoom * zoomFactor));
+
+                console.log('[Zoom] Old zoom:', this.camera.zoom, 'New zoom:', newZoom);
+
+                // Adjust camera position to zoom toward mouse
+                const mouseX = e.clientX - this.canvas.offsetLeft;
+                const mouseY = e.clientY - this.canvas.offsetTop;
+
+                const worldX = (mouseX - this.camera.x) / this.camera.zoom;
+                const worldY = (mouseY - this.camera.y) / this.camera.zoom;
+
                 this.camera.zoom = newZoom;
+                this.camera.x = mouseX - worldX * this.camera.zoom;
+                this.camera.y = mouseY - worldY * this.camera.zoom;
 
-                this.camera.x = e.clientX - this.canvas.width / 2 - worldPos.x * this.camera.zoom;
-                this.camera.y = e.clientY - this.canvas.height / 2 - worldPos.y * this.camera.zoom;
+                console.log('[Zoom] Camera position:', this.camera.x, this.camera.y);
             }
 
             /* --- Star Creation --- */
@@ -5324,14 +5732,16 @@
 
                     this.matrixStreams.push({
                         x: i * fontSize, // Fixed columns
-                        y: Math.random() * this.canvas.height, // Starting Y position
-                        baseSpeed: (2 + depth * 8 + Math.random() * 2), // Store base speed
+                        y: Math.random() * this.canvas.height, // Start FULLY VISIBLE across entire screen
+                        size: fontSize,
+                        baseSpeed: (2 + depth * 8 + Math.random() * 2) * (Math.random() * 0.5 + 0.75), // Vary speed
                         chars: chars,
                         color: streamColor,
-                        size: size,
-                        opacity: 0.3 + depth * 0.7 // Closer = brighter
+                        opacity: 0.9
                     });
                 }
+
+                console.log(`[Matrix] Generated ${this.matrixStreams.length} streams, columns: ${columns}, theme: ${theme.name}`);
             }
 
             /* --- Rendering --- */
@@ -5929,7 +6339,8 @@
                             }
 
                             // Draw
-                            ctx.font = `${stream.size}px monospace`;
+                            ctx.font = `${stream.size}px monospace, 'Courier New', monospace`;
+                            ctx.textBaseline = 'middle';
 
                             // Only draw visible characters based on length multiplier
                             for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
@@ -5950,7 +6361,8 @@
                                 } else {
                                     ctx.fillStyle = stream.color;
                                 }
-                                ctx.shadowBlur = 0;
+                                ctx.shadowBlur = 4;
+                                ctx.shadowColor = stream.color;
 
                                 ctx.fillText(char, stream.x, charY);
                             }
@@ -6130,10 +6542,13 @@
 
                 // Draw player ship if in flight mode
                 if (this.flightMode && this.playerShip) {
+                    console.log('[Spacecraft Debug] Rendering player ship at', this.playerShip.x, this.playerShip.y);
                     this.renderSpeedLines(ctx);
                     this.renderMinerals(ctx, time);
                     this.renderPlayerShip(ctx, time);
                     this.renderCollectionNotifications(ctx);
+                } else {
+                    console.log('[Spacecraft Debug] NOT rendering - flightMode:', this.flightMode, 'playerShip:', !!this.playerShip);
                 }
             }
 
@@ -6162,7 +6577,17 @@
 
                 ctx.save();
                 ctx.translate(ship.x, ship.y);
+
+                // Base rotation (yaw - turning left/right)
                 ctx.rotate(ship.rotation);
+
+                // 3D roll rotation (barrel roll) - rotate around the forward axis
+                const roll = ship.roll || 0;
+                ctx.rotate(roll);
+
+                // 3D pitch rotation (up/down tilt) - simulated visually
+                const pitch = ship.pitch || 0;
+                const pitchScale = Math.cos(pitch); // Squash vertically when pitched
 
                 const size = 40 / this.camera.zoom;
                 const shipType = ship.type || 'interceptor';
@@ -6195,6 +6620,7 @@
 
                     case 'hauler':
                         // Heavy cargo ship - rectangular with containers
+                        ctx.rotate(roll); // Apply roll rotation
                         ctx.fillStyle = '#666666';
                         ctx.strokeStyle = '#888888';
                         ctx.lineWidth = 2 / this.camera.zoom;
@@ -6220,6 +6646,7 @@
 
                     case 'orion':
                         // Orion constellation ship - star points
+                        ctx.rotate(roll); // Apply roll rotation
                         ctx.fillStyle = '#ffffff';
                         ctx.strokeStyle = '#aaddff';
                         ctx.lineWidth = 2 / this.camera.zoom;
@@ -6248,6 +6675,7 @@
 
                     case 'draco':
                         // Dragon constellation - serpentine shape
+                        ctx.rotate(roll); // Apply roll rotation
                         ctx.fillStyle = '#22aa44';
                         ctx.strokeStyle = '#00ff66';
                         ctx.lineWidth = 3 / this.camera.zoom;
@@ -6284,6 +6712,7 @@
 
                     case 'phoenix':
                         // Phoenix - fiery bird shape
+                        ctx.rotate(roll); // Apply roll rotation
                         ctx.fillStyle = '#ff4400';
                         ctx.strokeStyle = '#ffaa00';
                         ctx.lineWidth = 2 / this.camera.zoom;
@@ -6324,9 +6753,80 @@
                         ctx.fill();
                         break;
 
+                    case 'harvester':
+                        // STELLAR HARVESTER - Tie-fighter inspired design
+                        // Rotate 90 degrees to face forward, then apply roll for barrel roll effect
+                        ctx.rotate(Math.PI / 2 + roll);
+                        ctx.scale(1, pitchScale || 1); // Apply pitch scaling
+                        // Left hexagonal panel
+                        ctx.fillStyle = '#00ddff';
+                        ctx.strokeStyle = '#0088ff';
+                        ctx.lineWidth = 2 / this.camera.zoom;
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (Math.PI / 3) * i;
+                            const x = -size * 1.2 + Math.cos(angle) * size * 0.4;
+                            const y = Math.sin(angle) * size * 0.6;
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Right hexagonal panel
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (Math.PI / 3) * i;
+                            const x = size * 1.2 + Math.cos(angle) * size * 0.4;
+                            const y = Math.sin(angle) * size * 0.6;
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Central cockpit pod
+                        ctx.fillStyle = '#888888';
+                        ctx.strokeStyle = '#00ffff';
+                        ctx.lineWidth = 2 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, size * 0.3, size * 0.25, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Cockpit window
+                        ctx.fillStyle = '#00ffff';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, size * 0.12, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Connecting struts
+                        ctx.strokeStyle = '#666666';
+                        ctx.lineWidth = 3 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.moveTo(-size * 0.3, 0);
+                        ctx.lineTo(-size * 0.8, 0);
+                        ctx.moveTo(size * 0.3, 0);
+                        ctx.lineTo(size * 0.8, 0);
+                        ctx.stroke();
+
+                        // Engine glow on panels
+                        const pulseGlow = 0.3 + Math.sin(time * 0.005) * 0.2;
+                        ctx.fillStyle = `rgba(0, 255, 100, ${pulseGlow})`;
+                        ctx.beginPath();
+                        ctx.arc(-size * 1.2, 0, size * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(size * 1.2, 0, size * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+
                     case 'interceptor':
                     default:
-                        // Default interceptor - sleek triangle
+                        // STELLAR HARVESTER - Advanced gem collection vessel
+                        ctx.rotate(roll); // Apply roll rotation
                         ctx.fillStyle = '#00ffff';
                         ctx.strokeStyle = '#0088ff';
                         ctx.lineWidth = 3 / this.camera.zoom;
@@ -6355,9 +6855,18 @@
                     // Use world coordinates (ctx already transformed)
                     ctx.translate(mineral.x, mineral.y);
 
+                    // Safeguard against invalid zoom
+                    const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+
                     // Pulsing glow animation
                     const pulse = Math.sin(time * 0.003 + mineral.phase) * 0.3 + 0.7;
-                    const size = mineral.size * pulse / this.camera.zoom;
+                    const size = mineral.size * pulse / safeZoom;
+
+                    // Ensure size is valid
+                    if (!isFinite(size) || size <= 0) {
+                        ctx.restore();
+                        return;
+                    }
 
                     // Glow effect
                     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 2);
@@ -7279,7 +7788,8 @@
                     hauler: { name: 'Hauler', maxSpeed: 30, acceleration: 0.3 },
                     orion: { name: 'Orion', maxSpeed: 60, acceleration: 0.6 },
                     draco: { name: 'Draco', maxSpeed: 80, acceleration: 0.4 },
-                    phoenix: { name: 'Phoenix', maxSpeed: 55, acceleration: 0.8 }
+                    phoenix: { name: 'Phoenix', maxSpeed: 55, acceleration: 0.8 },
+                    harvester: { name: 'Starfighter', maxSpeed: 80, acceleration: 0.8 }
                 };
                 const ship = ships[shipType];
                 if (ship && this.playerShip) {
