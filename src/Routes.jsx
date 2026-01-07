@@ -13,7 +13,7 @@ import ITravel from './pages/iTravel';
 import Interstellar from './pages/Interstellar';
 
 
-const Routes = () => {
+const ProjectRoutes = () => {
   return (
     <BrowserRouter>
       <ErrorBoundary>
@@ -36,4 +36,4 @@ const Routes = () => {
   );
 };
 
-export default Routes;
+export default ProjectRoutes;
