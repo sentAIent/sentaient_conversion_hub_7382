@@ -3283,12 +3283,12 @@
                 const info = this.mineralTypes[type];
                 if (!info) return '';
                 // Create a glowing orb effect matching in-game rendering
-                return `background: radial - gradient(circle at 30 % 30 %, #fff 10 %, ${info.color} 60 %);
-                box - shadow: 0 0 4px ${info.color};
-                border - radius: 50 %;
+                return `background: radial-gradient(circle at 30% 30%, #fff 10%, ${info.color} 60%);
+                box-shadow: 0 0 4px ${info.color};
+                border-radius: 50%;
                 width: 12px;
                 height: 12px;
-                display: inline - block; `;
+                display: inline-block;`;
             }
 
             updateFlightHUD() {
@@ -8540,6 +8540,7 @@
                     }, duration);
                 }
             }
+        }
 
         window.app = new AetherEngine();
     </script>
