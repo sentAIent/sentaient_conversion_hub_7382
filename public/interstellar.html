@@ -982,48 +982,83 @@
 
         /* ===== COCKPIT BAR (Above Bottom Bar) ===== */
         /* ===== COCKPIT BAR (Removed Container - Now separate floating items) ===== */
-        .flight-cockpit {
-            /* Now just a transparent layer for initial positioning if needed, or removed entirely */
+        /* --- FLIGHT HUD (Command Center) --- */
+        .flight-hud {
+            position: fixed;
+            top: 60px;
+            /* Below top bar */
+            left: 0;
+            width: 100%;
+            height: calc(100% - 140px);
+            /* Above bottom bar */
             pointer-events: none;
-            /* Let children receive events */
+            /* Let clicks pass through to canvas */
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            /* Left Panel, Space, Right Panel */
+            grid-template-rows: 1fr auto;
+            /* Content, Bottom Gems */
+            grid-template-areas:
+                "left center right"
+                "bottom bottom bottom";
+            gap: 20px;
+            padding: 20px;
+            z-index: 20;
+        }
+
+        .hud-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: auto;
+            /* Re-enable clicks for UI */
+        }
+
+        .hud-left {
+            grid-area: left;
+        }
+
+        .hud-center {
+            grid-area: center;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .hud-right {
+            grid-area: right;
+        }
+
+        .hud-bottom {
+            grid-area: bottom;
+            display: flex;
+            justify-content: center;
+            pointer-events: auto;
+            max-height: 200px;
         }
 
         .cockpit-section {
-            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            background: rgba(16, 24, 32, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(0, 243, 255, 0.3);
-            border-radius: 10px;
-            padding: 0;
-            /* Content padding moved to content div */
-            min-width: 100px;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-            backdrop-filter: blur(12px);
-            pointer-events: auto;
-            position: absolute;
-            /* Make them floating */
-            bottom: 60px;
-            /* Initial position */
+            border-radius: 8px;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            /* Reset absolute positioning */
+            position: static;
+            min-width: 0;
+            margin: 0;
         }
 
-        /* Initial Positions for Sections - Organized Layout */
-        #sectionControls {
-            left: 20px;
-            bottom: 60px;
-        }
 
-        #sectionRadar {
-            left: 180px;
-            bottom: 60px;
-        }
 
-        #sectionVelocity {
-            left: 340px;
-            bottom: 60px;
-        }
-
-        #sectionGems {
-            left: 500px;
-            bottom: 60px;
-        }
+        /* Initial Positions Removed - Using Grid Layout */
 
         .cockpit-header {
             display: flex;
