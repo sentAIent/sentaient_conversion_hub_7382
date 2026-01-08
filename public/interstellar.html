@@ -6880,1495 +6880,1635 @@
                 if (statEl) statEl.innerText = `Mode: ${this.mode.charAt(0).toUpperCase() + this.mode.slice(1)} | Stars: ${this.stars.length} | Constellations: ${constellationCount} | Zoom: ${this.camera.zoom.toFixed(2)} x`;
 
                 // Draw player ship if in flight mode
+                // Draw player ship if in flight mode
                 if (this.flightMode && this.playerShip) {
-                    if (this.flightMode && this.playerShip) {
-                        // console.log('[Spacecraft Debug] Rendering player ship at', this.playerShip.x, this.playerShip.y);
-                        this.renderSpeedLines(ctx);
-                        this.renderMinerals(ctx, time);
-                        this.renderPlayerShip(ctx, time);
-                        this.renderCollectionNotifications(ctx);
-                    } else {
-                        // console.log('[Spacecraft Debug] NOT rendering - flightMode:', this.flightMode, 'playerShip:', !!this.playerShip);
-                    }
+                    // console.log('[Spacecraft Debug] Rendering player ship at', this.playerShip.x, this.playerShip.y);
+                    this.renderSpeedLines(ctx);
+                    this.renderMinerals(ctx, time);
+                    this.renderPlayerShip(ctx, time);
+                    this.renderCollectionNotifications(ctx);
+                } else {
+                    // console.log('[Spacecraft Debug] NOT rendering - flightMode:', this.flightMode, 'playerShip:', !!this.playerShip);
                 }
+            }
 
-                renderSpeedLines(ctx) {
-                    this.speedLines.forEach(line => {
-                        ctx.save();
-                        ctx.translate(line.x, line.y);
+            renderSpeedLines(ctx) {
+                this.speedLines.forEach(line => {
+                    ctx.save();
+                    ctx.translate(line.x, line.y);
 
-                        ctx.globalAlpha = line.life * 0.5;
-                        ctx.strokeStyle = '#88ccff';
+                    ctx.globalAlpha = line.life * 0.5;
+                    ctx.strokeStyle = '#88ccff';
+                    ctx.lineWidth = 2 / this.camera.zoom;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-line.vx * 3, -line.vy * 3);
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 1;
+                    ctx.restore();
+                });
+            }
+
+            renderPlayerShip(ctx, time) {
+                const ship = this.playerShip;
+                if (!ship) return;
+
+                ctx.save();
+                ctx.translate(ship.x, ship.y);
+
+                // Base rotation (yaw - turning left/right)
+                ctx.rotate(ship.rotation);
+
+                // 3D roll rotation (barrel roll) - rotate around the forward axis
+                const roll = ship.roll || 0;
+                ctx.rotate(roll);
+
+                // 3D pitch rotation (up/down tilt) - simulated visually
+                const pitch = ship.pitch || 0;
+                const pitchScale = Math.cos(pitch); // Squash vertically when pitched
+
+                const size = 40 / this.camera.zoom;
+                const shipType = ship.type || 'interceptor';
+
+                // Draw ship based on type
+                switch (shipType) {
+                    case 'saucer':
+                        // Classic flying saucer
+                        // Base
+                        const shipColor = ship.color || '#ffcc00'; // Default color if not specified
+                        ctx.strokeStyle = this.adjustColor(shipColor, -30);
                         ctx.lineWidth = 2 / this.camera.zoom;
+                        ctx.fillStyle = shipColor;
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, size, size * 0.4, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        // Dome
+                        ctx.fillStyle = this.adjustColor(shipColor, 50); // Lighter for dome
+                        ctx.beginPath();
+                        ctx.ellipse(0, -size * 0.15, size * 0.5, size * 0.35, 0, Math.PI, 0);
+                        ctx.fill();
+                        // Lights around edge
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (i / 6) * Math.PI * 2 + time * 0.005;
+                            ctx.fillStyle = i % 2 === 0 ? '#ff0000' : '#00ff00';
+                            ctx.beginPath();
+                            ctx.arc(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.3, size * 0.08, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
 
+                    case 'hauler':
+                        // Heavy cargo ship - rectangular with containers
+                        ctx.rotate(roll); // Apply roll rotation
+                        ctx.fillStyle = this.adjustColor(shipColor, -50); // Darker body
+                        ctx.strokeStyle = shipColor;
+                        ctx.lineWidth = 2 / this.camera.zoom;
+                        ctx.fillRect(-size * 0.8, -size * 0.5, size * 1.6, size);
+                        ctx.strokeRect(-size * 0.8, -size * 0.5, size * 1.6, size);
+                        // Cargo containers
+                        ctx.fillStyle = '#884400';
+                        ctx.fillRect(-size * 0.5, -size * 0.35, size * 0.4, size * 0.7);
+                        ctx.fillRect(0, -size * 0.35, size * 0.4, size * 0.7);
+                        // Cockpit
+                        ctx.fillStyle = this.adjustColor(shipColor, 30);
+                        ctx.beginPath();
+                        ctx.moveTo(size * 0.8, 0);
+                        ctx.lineTo(size * 0.5, -size * 0.3);
+                        ctx.lineTo(size * 0.5, size * 0.3);
+                        ctx.closePath();
+                        ctx.fill();
+                        // Engines
+                        ctx.fillStyle = '#ff4400';
+                        ctx.fillRect(-size * 0.9, -size * 0.4, size * 0.15, size * 0.25);
+                        ctx.fillRect(-size * 0.9, size * 0.15, size * 0.15, size * 0.25);
+                        break;
+
+                    case 'orion':
+                        // Check for Custom Constellation Structure
+                        if (this.playerShip.customStructure && this.playerShip.customStructure.stars) {
+                            const struct = this.playerShip.customStructure;
+                            const stars = struct.stars;
+                            const lines = struct.lines;
+
+                            // 3D Rotation Transform
+                            // Apply Roll (Z-axis) - was missing!
+                            ctx.rotate(roll);
+
+                            // Pitch is handled by projecting Y/Z
+                            const pitch = this.playerShip.pitch || 0;
+                            const cosX = Math.cos(pitch);
+                            const sinX = Math.sin(pitch);
+
+                            // Project Points
+                            const projected = stars.map(s => {
+                                // Rotate around X (Pitch)
+                                let y = s.y * cosX - s.z * sinX;
+                                let z = s.y * sinX + s.z * cosX;
+                                let x = s.x;
+
+                                // Simple perspective projection
+                                const fov = 300;
+                                const scale = fov / (fov + z); // Perspective scale
+
+                                return {
+                                    x: x * scale,
+                                    y: y * scale,
+                                    visible: z < 200 // Clip behind
+                                };
+                            });
+
+                            // Draw Lines
+                            ctx.beginPath();
+                            ctx.strokeStyle = this.adjustColor(shipColor, 20);
+                            ctx.lineWidth = 2 / this.camera.zoom;
+                            if (lines) {
+                                lines.forEach(l => {
+                                    const p1 = projected[l.fromIndex];
+                                    const p2 = projected[l.toIndex];
+                                    if (p1 && p2 && p1.visible && p2.visible) {
+                                        ctx.moveTo(p1.x, p1.y);
+                                        ctx.lineTo(p2.x, p2.y);
+                                    }
+                                });
+                            }
+                            ctx.stroke();
+
+                            // Draw Stars
+                            projected.forEach((p, i) => {
+                                if (!p.visible) return;
+                                ctx.fillStyle = stars[i].color || shipColor;
+                                ctx.beginPath();
+                                ctx.arc(p.x, p.y, Math.max(1, size * 0.15), 0, Math.PI * 2);
+                                ctx.fill();
+                            });
+
+                            // Removed Core Glow to avoid confusion with "star"
+
+                        } else {
+                            // Default Fallback (Star Shape)
+                            ctx.rotate(roll);
+                            ctx.fillStyle = shipColor;
+                            ctx.strokeStyle = '#aaddff';
+                            ctx.lineWidth = 2 / this.camera.zoom;
+                            // Main star shape
+                            ctx.beginPath();
+                            for (let i = 0; i < 5; i++) {
+                                const outerAngle = (i * Math.PI * 2 / 5) - Math.PI / 2;
+                                const innerAngle = outerAngle + Math.PI / 5;
+                                const outerX = Math.cos(outerAngle) * size;
+                                const outerY = Math.sin(outerAngle) * size;
+                                const innerX = Math.cos(innerAngle) * size * 0.4;
+                                const innerY = Math.sin(innerAngle) * size * 0.4;
+                                if (i === 0) ctx.moveTo(outerX, outerY);
+                                else ctx.lineTo(outerX, outerY);
+                                ctx.lineTo(innerX, innerY);
+                            }
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                            // Glowing core
+                            ctx.fillStyle = '#00ccff';
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size * 0.25, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+
+                    case 'draco':
+                        // Dragon constellation - serpentine shape
+                        ctx.rotate(roll); // Apply roll rotation
+                        ctx.fillStyle = '#22aa44';
+                        ctx.strokeStyle = '#00ff66';
+                        ctx.lineWidth = 3 / this.camera.zoom;
+                        // Dragon head
+                        ctx.beginPath();
+                        ctx.moveTo(size, 0);
+                        ctx.lineTo(size * 0.7, -size * 0.4);
+                        ctx.lineTo(size * 0.5, -size * 0.2);
+                        ctx.lineTo(0, -size * 0.5);
+                        ctx.lineTo(-size * 0.5, -size * 0.3);
+                        ctx.lineTo(-size, 0);
+                        ctx.lineTo(-size * 0.5, size * 0.3);
+                        ctx.lineTo(0, size * 0.5);
+                        ctx.lineTo(size * 0.5, size * 0.2);
+                        ctx.lineTo(size * 0.7, size * 0.4);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        // Dragon eye
+                        ctx.fillStyle = '#ff0000';
+                        ctx.beginPath();
+                        ctx.arc(size * 0.6, -size * 0.1, size * 0.1, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Fire breath
+                        ctx.fillStyle = `rgba(255, ${100 + Math.sin(time * 0.01) * 50}, 0, 0.7)`;
+                        ctx.beginPath();
+                        ctx.moveTo(size, 0);
+                        ctx.lineTo(size * 1.5, -size * 0.2);
+                        ctx.lineTo(size * 1.3, 0);
+                        // Dragon-like jagged ship
+                        ctx.rotate(roll); // Apply roll rotation
+                        ctx.fillStyle = this.adjustColor(shipColor, -60);
+                        ctx.strokeStyle = shipColor;
+                        ctx.lineWidth = 2 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.moveTo(size, 0);
+                        ctx.lineTo(-size * 0.5, size * 0.5);
+                        ctx.lineTo(-size * 0.2, 0);
+                        ctx.lineTo(-size * 0.5, -size * 0.5);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        // Wings
                         ctx.beginPath();
                         ctx.moveTo(0, 0);
-                        ctx.lineTo(-line.vx * 3, -line.vy * 3);
+                        ctx.lineTo(-size * 0.5, size);
+                        ctx.lineTo(size * 0.2, 0);
+                        ctx.lineTo(-size * 0.5, -size);
+                        ctx.closePath();
+                        ctx.fillStyle = this.adjustColor(shipColor, -20);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'phoenix':
+                        // Bird-like ship
+                        ctx.rotate(roll); // Apply roll rotation
+                        ctx.fillStyle = shipColor;
+                        ctx.strokeStyle = this.adjustColor(shipColor, 60);
+                        ctx.lineWidth = 2 / this.camera.zoom;
+                        // Body
+                        ctx.beginPath();
+                        ctx.moveTo(size * 0.8, 0);
+                        ctx.lineTo(-size * 0.6, 0);
+                        ctx.stroke();
+                        // Wings
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.quadraticCurveTo(size * 0.5, size * 0.5, -size * 0.2, size * 0.8);
+                        ctx.moveTo(0, 0);
+                        ctx.quadraticCurveTo(size * 0.5, -size * 0.5, -size * 0.2, -size * 0.8);
+                        ctx.stroke();
+                        break;
+
+                    case 'harvester':
+                        // STELLAR HARVESTER - Tie-fighter inspired design
+                        // Rotate 90 degrees to face forward, then apply roll for barrel roll effect
+                        ctx.rotate(Math.PI / 2 + roll);
+                        ctx.scale(1, pitchScale || 1); // Apply pitch scaling
+                        // Left hexagonal panel
+                        ctx.fillStyle = '#00ddff';
+                        ctx.strokeStyle = '#0088ff';
+                        ctx.lineWidth = 2 / this.camera.zoom;
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (Math.PI / 3) * i;
+                            const x = -size * 1.2 + Math.cos(angle) * size * 0.4;
+                            const y = Math.sin(angle) * size * 0.6;
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
                         ctx.stroke();
 
-                        ctx.globalAlpha = 1;
+                        // Right hexagonal panel
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (Math.PI / 3) * i;
+                            const x = size * 1.2 + Math.cos(angle) * size * 0.4;
+                            const y = Math.sin(angle) * size * 0.6;
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Central cockpit pod
+                        ctx.fillStyle = '#888888';
+                        ctx.strokeStyle = '#00ffff';
+                        ctx.lineWidth = 2 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, size * 0.3, size * 0.25, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Cockpit window
+                        ctx.fillStyle = '#00ffff';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, size * 0.12, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Connecting struts
+                        ctx.strokeStyle = '#666666';
+                        ctx.lineWidth = 3 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.moveTo(-size * 0.3, 0);
+                        ctx.lineTo(-size * 0.8, 0);
+                        ctx.moveTo(size * 0.3, 0);
+                        ctx.lineTo(size * 0.8, 0);
+                        ctx.stroke();
+
+                        // Engine glow on panels
+                        const pulseGlow = 0.3 + Math.sin(time * 0.005) * 0.2;
+                        ctx.fillStyle = `rgba(0, 255, 100, ${pulseGlow})`;
+                        ctx.beginPath();
+                        ctx.arc(-size * 1.2, 0, size * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(size * 1.2, 0, size * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+
+                    case 'interceptor':
+                    default:
+                        // STELLAR HARVESTER - Advanced gem collection vessel
+                        ctx.rotate(roll); // Apply roll rotation
+                        ctx.fillStyle = '#00ffff';
+                        ctx.strokeStyle = '#0088ff';
+                        ctx.lineWidth = 3 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.moveTo(size, 0);
+                        ctx.lineTo(-size * 0.6, -size * 0.6);
+                        ctx.lineTo(-size * 0.4, 0);
+                        ctx.lineTo(-size * 0.6, size * 0.6);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        // Engine glow
+                        ctx.fillStyle = '#ff6600';
+                        ctx.beginPath();
+                        ctx.arc(-size * 0.5, 0, size * 0.2, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                }
+
+                ctx.restore();
+            }
+
+            renderMinerals(ctx, time) {
+                this.minerals.forEach(mineral => {
+                    ctx.save();
+                    // Use world coordinates (ctx already transformed)
+                    ctx.translate(mineral.x, mineral.y);
+
+                    // Safeguard against invalid zoom
+                    const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+
+                    // Pulsing glow animation
+                    const pulse = Math.sin(time * 0.003 + mineral.phase) * 0.3 + 0.7;
+                    const size = mineral.size * pulse / safeZoom;
+
+                    // Ensure size is valid
+                    if (!isFinite(size) || size <= 0) {
+                        ctx.restore();
+                        return;
+                    }
+
+                    // Glow effect
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 2);
+                    gradient.addColorStop(0, mineral.color);
+                    gradient.addColorStop(0.5, mineral.color + '88');
+                    gradient.addColorStop(1, mineral.color + '00');
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size * 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Core
+                    ctx.fillStyle = mineral.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Bright center
+                    ctx.fillStyle = '#ffffff';
+                    ctx.globalAlpha = 0.5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+
+                    ctx.restore();
+                });
+            }
+
+            renderCollectionNotifications(ctx) {
+                const canvas = this.canvas;
+                const now = Date.now();
+
+                this.collectionNotifications.forEach(notification => {
+                    const age = now - notification.time;
+                    const opacity = Math.max(0, 1 - age / 2000);
+                    const yOffset = age * 0.05;
+
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+                    ctx.globalAlpha = opacity;
+                    ctx.font = 'bold 20px Arial';
+                    ctx.fillStyle = notification.color;
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.textAlign = 'center';
+
+                    const x = canvas.width / 2;
+                    const y = canvas.height / 2 - 100 - yOffset;
+
+                    ctx.strokeText(notification.text, x, y);
+                    ctx.fillText(notification.text, x, y);
+                    ctx.globalAlpha = 1;
+
+                    ctx.restore();
+                });
+            }
+
+            drawBackgroundElements() {
+                if (!this.config.showBackground) return;
+
+                const ctx = this.ctx;
+
+                // 1. Background Stars (from all active styles)
+                if (this.backgroundStars && this.backgroundStars.length > 0) {
+                    this.backgroundStars.forEach(s => {
+                        ctx.fillStyle = s.color || "white";
+                        ctx.globalAlpha = s.alpha;
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.globalAlpha = 1;
+                }
+
+                // 2. Nebulae (from nebula + deep-space styles)
+                if (this.nebulae && this.nebulae.length > 0) {
+                    ctx.globalCompositeOperation = 'screen';
+                    this.nebulae.forEach(n => {
+                        if (n.flownOut) return; // Skip if flown out during warp
+
+                        // During disengage: use scale and alpha from flyObject
+                        let scale = 1.0;
+                        let alpha = 1.0;
+                        if (this.warpDisengaging && n.warpScale !== undefined) {
+                            scale = n.warpScale || 0.01;
+                            alpha = n.warpAlpha || 0;
+                        }
+
+                        const scaledSize = Math.max(0.1, n.size * scale);
+                        const scaledAlpha = n.alpha * alpha;
+
+                        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, scaledSize);
+                        grad.addColorStop(0, n.color);
+                        grad.addColorStop(1, 'transparent');
+
+                        ctx.globalAlpha = scaledAlpha;
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.arc(n.x, n.y, scaledSize, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.globalAlpha = 1;
+                }
+
+                // 2.5 Moving Cosmic Stars (shooting stars with tails)
+                if (this.activeStyles.has('deep-space') && this.shootingStars && this.shootingStars.length > 0) {
+                    this.shootingStars.forEach(s => {
+                        ctx.save();
+
+                        // Draw tail (gradient line in opposite direction of movement)
+                        const tailX = s.x - s.vx * s.tailLength;
+                        const tailY = s.y - s.vy * s.tailLength;
+
+                        const tailGrad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
+                        tailGrad.addColorStop(0, 'transparent');
+                        tailGrad.addColorStop(0.7, s.color + '40');
+                        tailGrad.addColorStop(1, s.color);
+
+                        ctx.strokeStyle = tailGrad;
+                        ctx.lineWidth = s.size * 0.8;
+                        ctx.lineCap = 'round';
+                        ctx.globalAlpha = s.alpha;
+
+                        ctx.beginPath();
+                        ctx.moveTo(tailX, tailY);
+                        ctx.lineTo(s.x, s.y);
+                        ctx.stroke();
+
+                        // Draw star head (bright point)
+                        ctx.fillStyle = s.color;
+                        ctx.globalAlpha = s.alpha + 0.3;
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        ctx.restore();
+                    });
+                    ctx.globalAlpha = 1;
+                }
+
+                // 3. Spacecraft (from alien style) - ENHANCED RENDERING
+                if (this.activeStyles.has('alien') && this.spacecraft && this.spacecraft.length > 0) {
+                    const time = performance.now() * 0.001;
+                    this.spacecraft.forEach(s => {
+                        if (s.flownOut) return; // Skip if flown out during warp
+                        ctx.save();
+
+                        // Position comes from flyObject during disengage
+                        ctx.translate(s.x, s.y);
+
+                        // During disengage: use scale and alpha from flyObject
+                        if (this.warpDisengaging && s.warpScale !== undefined) {
+                            ctx.scale(s.warpScale, s.warpScale);
+                            ctx.globalAlpha = s.warpAlpha || 0;
+                        }
+
+                        // Update rotation for saucers
+                        if (s.rotationSpeed) s.rotation += s.rotationSpeed;
+
+                        const size = s.size;
+                        const zoom = this.camera.zoom;
+                        const angle = Math.atan2(s.vy, s.vx);
+
+                        // Shield effect (drawn first, behind ship)
+                        if (s.hasShield) {
+                            const shieldPulse = Math.sin(time * 2 + s.shieldPhase) * 0.3 + 0.4;
+                            ctx.globalAlpha = shieldPulse * 0.4;
+                            const shieldGrad = ctx.createRadialGradient(0, 0, size * 0.5, 0, 0, size * 1.5);
+                            shieldGrad.addColorStop(0, 'transparent');
+                            shieldGrad.addColorStop(0.7, s.shieldColor || 'rgba(100,200,255,0.3)');
+                            shieldGrad.addColorStop(1, 'transparent');
+                            ctx.fillStyle = shieldGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size * 1.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Tractor beam (for saucers)
+                        if (s.beamActive && s.shipClass === 'saucer') {
+                            const beamPulse = Math.sin(time * 5) * 0.2 + 0.6;
+                            ctx.globalAlpha = beamPulse * 0.5;
+                            const beamGrad = ctx.createLinearGradient(0, size * 0.2, 0, size * 3);
+                            beamGrad.addColorStop(0, s.beamColor || '#88ff88');
+                            beamGrad.addColorStop(1, 'transparent');
+                            ctx.fillStyle = beamGrad;
+                            ctx.beginPath();
+                            ctx.moveTo(-size * 0.3, size * 0.2);
+                            ctx.lineTo(-size * 0.8, size * 3);
+                            ctx.lineTo(size * 0.8, size * 3);
+                            ctx.lineTo(size * 0.3, size * 0.2);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Rotate for directional ships (not saucers)
+                        if (s.shipClass !== 'saucer') {
+                            ctx.rotate(angle);
+                        }
+
+                        // Engine trails (for non-saucers)
+                        if (s.shipClass !== 'saucer' && s.shipClass !== 'probe') {
+                            ctx.globalAlpha = 0.7;
+                            const trailLength = size * 2;
+                            const engineSpacing = size * 0.25;
+                            const engineCount = s.engineCount || 2;
+
+                            for (let i = 0; i < engineCount; i++) {
+                                const offsetY = (i - (engineCount - 1) / 2) * engineSpacing;
+                                const flicker = 0.7 + Math.sin(time * 15 + s.detailSeed + i) * 0.3;
+                                const trailGrad = ctx.createLinearGradient(-size * 0.7, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
+                                trailGrad.addColorStop(0, s.engineGlow || '#ffffff');
+                                trailGrad.addColorStop(0.15, s.engineColor || '#00aaff');
+                                trailGrad.addColorStop(1, 'transparent');
+
+                                ctx.fillStyle = trailGrad;
+                                ctx.beginPath();
+                                ctx.moveTo(-size * 0.65, offsetY - 4);
+                                ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
+                                ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.65, offsetY + 4);
+                                ctx.closePath();
+                                ctx.fill();
+                            }
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Hull gradient
+                        const hullGrad = ctx.createLinearGradient(0, -size * 0.5, 0, size * 0.5);
+                        hullGrad.addColorStop(0, s.hullHighlight || '#ccc');
+                        hullGrad.addColorStop(0.3, s.hullColor || '#888');
+                        hullGrad.addColorStop(1, s.hullShadow || '#333');
+                        ctx.fillStyle = hullGrad;
+                        ctx.strokeStyle = s.hullHighlight || '#ddd';
+                        ctx.lineWidth = 1.5 / zoom;
+
+                        // === SHIP RENDERING: 13 Star Wars-Quality Spacecraft ===
+                        if (s.shipClass === 'saucer') {
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, size, size * 0.25, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+                            const domeGrad = ctx.createRadialGradient(-size * 0.1, -size * 0.15, 0, 0, -size * 0.05, size * 0.4);
+                            domeGrad.addColorStop(0, '#ffffff');
+                            domeGrad.addColorStop(0.3, s.domeColor || '#88ffff');
+                            domeGrad.addColorStop(1, 'rgba(0,50,50,0.8)');
+                            ctx.fillStyle = domeGrad;
+                            ctx.beginPath();
+                            ctx.ellipse(0, -size * 0.08, size * 0.35, size * 0.25, 0, Math.PI, 0);
+                            ctx.fill();
+                        } else if (s.shipClass === 'star-dreadnought') {
+                            ctx.beginPath();
+                            ctx.moveTo(size * 1.2, 0);
+                            for (let i = 0; i < 6; i++) {
+                                const angle = (i / 6) * Math.PI * 2;
+                                ctx.lineTo(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.8);
+                            }
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                        } else if (s.shipClass === 'quantum-scout') {
+                            for (let i = 0; i < 3; i++) {
+                                ctx.save();
+                                ctx.rotate(time * (2 + i) + i);
+                                ctx.strokeStyle = '#00aaff';
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.ellipse(0, 0, size * (0.6 + i * 0.3), size * 0.2, 0, 0, Math.PI * 2);
+                                ctx.stroke();
+                                ctx.restore();
+                            }
+                        } else if (s.shipClass === 'void-fighter') {
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.9, 0);
+                            ctx.lineTo(size * 0.2, -size * 0.5);
+                            ctx.lineTo(-size * 0.6, -size * 0.3);
+                            ctx.lineTo(-size * 0.6, size * 0.3);
+                            ctx.lineTo(size * 0.2, size * 0.5);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                        } else if (s.shipClass === 'nebula-cruiser') {
+                            // Concorde-style supersonic jet
+                            const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
+                            hullGrad.addColorStop(0, '#606080');
+                            hullGrad.addColorStop(0.5, '#8080a0');
+                            hullGrad.addColorStop(1, '#505070');
+                            ctx.fillStyle = hullGrad;
+                            // Sleek fuselage with pointed nose
+                            ctx.beginPath();
+                            ctx.moveTo(size * 1.2, 0);
+                            ctx.lineTo(size * 0.7, -size * 0.08);
+                            ctx.lineTo(-size * 0.5, -size * 0.12);
+                            ctx.lineTo(-size * 0.8, 0);
+                            ctx.lineTo(-size * 0.5, size * 0.12);
+                            ctx.lineTo(size * 0.7, size * 0.08);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                            // Delta wings
+                            ctx.fillStyle = '#7070a0';
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.2, 0);
+                            ctx.lineTo(-size * 0.3, -size * 0.6);
+                            ctx.lineTo(-size * 0.6, -size * 0.4);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.2, 0);
+                            ctx.lineTo(-size * 0.3, size * 0.6);
+                            ctx.lineTo(-size * 0.6, size * 0.4);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else if (s.shipClass === 'bio-corvette') {
+                            const bioGrad = ctx.createLinearGradient(-size, 0, size, 0);
+                            bioGrad.addColorStop(0, '#4a0066');
+                            bioGrad.addColorStop(0.5, '#9900cc');
+                            bioGrad.addColorStop(1, '#660099');
+                            ctx.fillStyle = bioGrad;
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.8, 0);
+                            ctx.bezierCurveTo(size * 0.6, -size * 0.4, size * 0.2, -size * 0.5, -size * 0.3, -size * 0.3);
+                            ctx.bezierCurveTo(-size * 0.7, 0, -size * 0.3, size * 0.3, size * 0.2, size * 0.5);
+                            ctx.bezierCurveTo(size * 0.6, size * 0.4, size * 0.8, 0, size * 0.8, 0);
+                            ctx.fill();
+                        } else if (s.shipClass === 'warp-strider') {
+                            const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
+                            hullGrad.addColorStop(0, '#606060');
+                            hullGrad.addColorStop(0.5, '#a0a0a0');
+                            hullGrad.addColorStop(1, '#505050');
+                            ctx.fillStyle = hullGrad;
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.8, 0);
+                            ctx.lineTo(size * 0.3, -size * 0.15);
+                            ctx.lineTo(-size * 0.6, -size * 0.15);
+                            ctx.lineTo(-size * 0.8, 0);
+                            ctx.lineTo(-size * 0.6, size * 0.15);
+                            ctx.lineTo(size * 0.3, size * 0.15);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.fillStyle = '#707070';
+                            ctx.fillRect(-size * 0.7, -size * 0.5, size * 0.4, size * 0.08);
+                            ctx.fillRect(-size * 0.7, size * 0.42, size * 0.4, size * 0.08);
+                        } else if (s.shipClass === 'prism-destroyer') {
+                            const hullGrad = ctx.createLinearGradient(-size, -size, size, size);
+                            hullGrad.addColorStop(0, '#c0c0c0');
+                            hullGrad.addColorStop(0.5, '#e8e8e8');
+                            hullGrad.addColorStop(1, '#707070');
+                            ctx.fillStyle = hullGrad;
+                            ctx.beginPath();
+                            ctx.moveTo(size, 0);
+                            ctx.lineTo(size * 0.3, -size * 0.6);
+                            ctx.lineTo(-size * 0.5, -size * 0.5);
+                            ctx.lineTo(-size * 0.8, 0);
+                            ctx.lineTo(-size * 0.5, size * 0.5);
+                            ctx.lineTo(size * 0.3, size * 0.6);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                        } else if (s.shipClass === 'stellar-barge') {
+                            const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
+                            hullGrad.addColorStop(0, '#4a3820');
+                            hullGrad.addColorStop(0.5, '#8B6F47');
+                            hullGrad.addColorStop(1, '#3a2810');
+                            ctx.fillStyle = hullGrad;
+                            ctx.fillRect(-size * 0.7, -size * 0.35, size * 1.3, size * 0.7);
+                            ctx.fillStyle = '#5a4830';
+                            ctx.beginPath();
+                            ctx.moveTo(size * 0.7, -size * 0.25);
+                            ctx.lineTo(size, 0);
+                            ctx.lineTo(size * 0.7, size * 0.25);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else if (s.shipClass === 'cyber-sentry') {
+                            const eyeGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.4);
+                            eyeGrad.addColorStop(0, '#ff0000');
+                            eyeGrad.addColorStop(0.5, '#880000');
+                            eyeGrad.addColorStop(1, '#220000');
+                            ctx.fillStyle = eyeGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
+                            ctx.fill();
+                            for (let i = 0; i < 8; i++) {
+                                const angle = (i / 8) * Math.PI * 2 + time;
+                                ctx.strokeStyle = '#ff0000';
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.moveTo(Math.cos(angle) * size * 0.4, Math.sin(angle) * size * 0.4);
+                                ctx.lineTo(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.8);
+                                ctx.stroke();
+                            }
+                        } else if (s.shipClass === 'aether-wing') {
+                            const grad = ctx.createLinearGradient(-size, 0, size, 0);
+                            grad.addColorStop(0, 'rgba(0,100,255,0)');
+                            grad.addColorStop(0.5, 'rgba(100,200,255,0.6)');
+                            grad.addColorStop(1, 'rgba(0,100,255,0)');
+                            ctx.fillStyle = grad;
+                            ctx.beginPath();
+                            ctx.moveTo(-size * 0.8, -size * 0.6);
+                            ctx.lineTo(size * 0.8, 0);
+                            ctx.lineTo(-size * 0.8, size * 0.6);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else if (s.shipClass === 'death-sphere') {
+                            const sphereGrad = ctx.createRadialGradient(-size * 0.2, -size * 0.2, 0, 0, 0, size);
+                            sphereGrad.addColorStop(0, '#505050');
+                            sphereGrad.addColorStop(0.5, '#303030');
+                            sphereGrad.addColorStop(1, '#101010');
+                            ctx.fillStyle = sphereGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+                            const laserGrad = ctx.createRadialGradient(size * 0.4, -size * 0.4, 0, size * 0.4, -size * 0.4, size * 0.12);
+                            laserGrad.addColorStop(0, '#00ff00');
+                            laserGrad.addColorStop(0.5, '#00aa00');
+                            laserGrad.addColorStop(1, 'rgba(0,170,0,0)');
+                            ctx.fillStyle = laserGrad;
+                            ctx.beginPath();
+                            ctx.arc(size * 0.4, -size * 0.4, size * 0.1, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else if (s.shipClass === 'tie-fighter') {
+                            const cockpitGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.3);
+                            cockpitGrad.addColorStop(0, '#606060');
+                            cockpitGrad.addColorStop(0.7, '#303030');
+                            cockpitGrad.addColorStop(1, '#101010');
+                            ctx.fillStyle = cockpitGrad;
+                            ctx.beginPath();
+                            for (let i = 0; i < 6; i++) {
+                                const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+                                const x = Math.cos(angle) * size * 0.25;
+                                const y = Math.sin(angle) * size * 0.25;
+                                if (i === 0) ctx.moveTo(x, y);
+                                else ctx.lineTo(x, y);
+                            }
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                            const panelGrad = ctx.createLinearGradient(-size, -size, size, size);
+                            panelGrad.addColorStop(0, '#404040');
+                            panelGrad.addColorStop(0.5, '#505050');
+                            panelGrad.addColorStop(1, '#303030');
+                            ctx.fillStyle = panelGrad;
+                            ctx.fillRect(-size * 1.2, -size * 0.8, size * 0.8, size * 1.6);
+                            ctx.strokeRect(-size * 1.2, -size * 0.8, size * 0.8, size * 1.6);
+                            ctx.fillRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
+                            ctx.strokeRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
+                        } else {
+                            // Default fallback for any unrecognized ships
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size * 0.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+                        }
+
+                        // Navigation lights (for non-probes, non-saucers)
+                        if (s.shipClass !== 'probe' && s.shipClass !== 'saucer') {
+                            const lightPulse = Math.sin(time * 3 + (s.lightPhase || 0)) * 0.5 + 0.5;
+                            ctx.fillStyle = s.lightColor || '#ff00ff';
+                            ctx.globalAlpha = lightPulse;
+                            ctx.beginPath();
+                            ctx.arc(size * 0.85, 0, 3 / zoom, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            // Wing tip lights
+                            ctx.fillStyle = '#00ff00';
+                            ctx.beginPath();
+                            ctx.arc(-size * 0.5, -size * 0.6, 2 / zoom, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.fillStyle = '#ff0000';
+                            ctx.beginPath();
+                            ctx.arc(-size * 0.5, size * 0.6, 2 / zoom, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.globalAlpha = 1;
+                        }
+
+                        ctx.restore();
+                    });
+                }
+            }
+
+            drawDeepSpaceSpecific() {
+                if (!this.config.showBackground) return;
+
+                const ctx = this.ctx;
+                const time = performance.now() * 0.0005;
+
+                // 1. Galaxies
+                if (this.galaxies && this.galaxies.length > 0) {
+                    this.galaxies.forEach(g => {
+                        if (g.flownOut) return; // Skip if flown out during warp
+                        ctx.save();
+                        // Position comes from flyObject during disengage
+                        ctx.translate(g.x, g.y);
+
+                        // During disengage: use scale and alpha from flyObject
+                        if (this.warpDisengaging && g.warpScale !== undefined) {
+                            ctx.scale(g.warpScale, g.warpScale);
+                            ctx.globalAlpha = g.warpAlpha || 0;
+                        }
+
+                        ctx.rotate(g.angle + time * 0.1);
+
+                        const spiralGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+                        spiralGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
+                        spiralGradient.addColorStop(0.2, g.color);
+                        spiralGradient.addColorStop(1, 'transparent');
+
+                        ctx.fillStyle = spiralGradient;
+                        ctx.beginPath();
+                        for (let i = 0; i < 3; i++) {
+                            ctx.rotate(Math.PI * 2 / 3);
+                            ctx.ellipse(0, 0, g.size, g.size / 4, 0, 0, Math.PI * 2); // Corrected ellipse center
+                        }
+                        ctx.fill();
                         ctx.restore();
                     });
                 }
 
-                renderPlayerShip(ctx, time) {
-                    const ship = this.playerShip;
-                    if (!ship) return;
+                // 2. Black Holes
+                if (this.blackHoles && this.blackHoles.length > 0) {
+                    this.blackHoles.forEach(bh => {
+                        if (bh.flownOut) return; // Skip if flown out during warp
+                        ctx.save();
 
-                    ctx.save();
-                    ctx.translate(ship.x, ship.y);
+                        // Position comes from flyObject during disengage
+                        ctx.translate(bh.x, bh.y);
 
-                    // Base rotation (yaw - turning left/right)
-                    ctx.rotate(ship.rotation);
+                        // During disengage: use scale and alpha from flyObject
+                        if (this.warpDisengaging && bh.warpScale !== undefined) {
+                            ctx.scale(bh.warpScale, bh.warpScale);
+                            ctx.globalAlpha = bh.warpAlpha || 0;
+                        }
 
-                    // 3D roll rotation (barrel roll) - rotate around the forward axis
-                    const roll = ship.roll || 0;
-                    ctx.rotate(roll);
+                        // Accretion disk
+                        ctx.beginPath();
+                        ctx.strokeStyle = 'orange';
+                        ctx.lineWidth = 2;
+                        ctx.arc(0, 0, bh.size * 1.5, 0, Math.PI * 2);
+                        ctx.stroke();
 
-                    // 3D pitch rotation (up/down tilt) - simulated visually
-                    const pitch = ship.pitch || 0;
-                    const pitchScale = Math.cos(pitch); // Squash vertically when pitched
+                        // Event Horizon
+                        ctx.beginPath();
+                        ctx.fillStyle = 'black';
+                        ctx.arc(0, 0, bh.size, 0, Math.PI * 2);
+                        ctx.fill();
 
-                    const size = 40 / this.camera.zoom;
-                    const shipType = ship.type || 'interceptor';
+                        // Glow
+                        ctx.shadowColor = 'purple';
+                        ctx.shadowBlur = 20;
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
 
-                    // Draw ship based on type
-                    switch (shipType) {
-                        case 'saucer':
-                            // Classic flying saucer
-                            // Base
-                            const shipColor = ship.color || '#ffcc00'; // Default color if not specified
-                            ctx.strokeStyle = this.adjustColor(shipColor, -30);
-                            ctx.lineWidth = 2 / this.camera.zoom;
-                            ctx.fillStyle = shipColor;
-                            ctx.beginPath();
-                            ctx.ellipse(0, 0, size, size * 0.4, 0, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.stroke();
-                            // Dome
-                            ctx.fillStyle = this.adjustColor(shipColor, 50); // Lighter for dome
-                            ctx.beginPath();
-                            ctx.ellipse(0, -size * 0.15, size * 0.5, size * 0.35, 0, Math.PI, 0);
-                            ctx.fill();
-                            // Lights around edge
-                            for (let i = 0; i < 6; i++) {
-                                const angle = (i / 6) * Math.PI * 2 + time * 0.005;
-                                ctx.fillStyle = i % 2 === 0 ? '#ff0000' : '#00ff00';
-                                ctx.beginPath();
-                                ctx.arc(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.3, size * 0.08, 0, Math.PI * 2);
-                                ctx.fill();
-                            }
-                            break;
-
-                        case 'hauler':
-                            // Heavy cargo ship - rectangular with containers
-                            ctx.rotate(roll); // Apply roll rotation
-                            ctx.fillStyle = this.adjustColor(shipColor, -50); // Darker body
-                            ctx.strokeStyle = shipColor;
-                            ctx.lineWidth = 2 / this.camera.zoom;
-                            ctx.fillRect(-size * 0.8, -size * 0.5, size * 1.6, size);
-                            ctx.strokeRect(-size * 0.8, -size * 0.5, size * 1.6, size);
-                            // Cargo containers
-                            ctx.fillStyle = '#884400';
-                            ctx.fillRect(-size * 0.5, -size * 0.35, size * 0.4, size * 0.7);
-                            ctx.fillRect(0, -size * 0.35, size * 0.4, size * 0.7);
-                            // Cockpit
-                            ctx.fillStyle = this.adjustColor(shipColor, 30);
-                            ctx.beginPath();
-                            ctx.moveTo(size * 0.8, 0);
-                            ctx.lineTo(size * 0.5, -size * 0.3);
-                            ctx.lineTo(size * 0.5, size * 0.3);
-                            ctx.closePath();
-                            ctx.fill();
-                            // Engines
-                            ctx.fillStyle = '#ff4400';
-                            ctx.fillRect(-size * 0.9, -size * 0.4, size * 0.15, size * 0.25);
-                            ctx.fillRect(-size * 0.9, size * 0.15, size * 0.15, size * 0.25);
-                            break;
-
-                        case 'orion':
-                            // Check for Custom Constellation Structure
-                            if (this.playerShip.customStructure && this.playerShip.customStructure.stars) {
-                                const struct = this.playerShip.customStructure;
-                                const stars = struct.stars;
-                                const lines = struct.lines;
-
-                                // 3D Rotation Transform
-                                // Apply Roll (Z-axis) - was missing!
-                                ctx.rotate(roll);
-
-                                // Pitch is handled by projecting Y/Z
-                                const pitch = this.playerShip.pitch || 0;
-                                const cosX = Math.cos(pitch);
-                                const sinX = Math.sin(pitch);
-
-                                // Project Points
-                                const projected = stars.map(s => {
-                                    // Rotate around X (Pitch)
-                                    let y = s.y * cosX - s.z * sinX;
-                                    let z = s.y * sinX + s.z * cosX;
-                                    let x = s.x;
-
-                                    // Simple perspective projection
-                                    const fov = 300;
-                                    const scale = fov / (fov + z); // Perspective scale
-
-                                    return {
-                                        x: x * scale,
-                                        y: y * scale,
-                                        visible: z < 200 // Clip behind
-                                    };
-                                });
-
-                                // Draw Lines
-                                ctx.beginPath();
-                                ctx.strokeStyle = this.adjustColor(shipColor, 20);
-                                ctx.lineWidth = 2 / this.camera.zoom;
-                                if (lines) {
-                                    lines.forEach(l => {
-                                        const p1 = projected[l.fromIndex];
-                                        const p2 = projected[l.toIndex];
-                                        if (p1 && p2 && p1.visible && p2.visible) {
-                                            ctx.moveTo(p1.x, p1.y);
-                                            ctx.lineTo(p2.x, p2.y);
-                                        }
-                                    });
-                                }
-                                ctx.stroke();
-
-                                // Draw Stars
-                                projected.forEach((p, i) => {
-                                    if (!p.visible) return;
-                                    ctx.fillStyle = stars[i].color || shipColor;
-                                    ctx.beginPath();
-                                    ctx.arc(p.x, p.y, Math.max(1, size * 0.15), 0, Math.PI * 2);
-                                    ctx.fill();
-                                });
-
-                                // Removed Core Glow to avoid confusion with "star"
-
-                            } else {
-                                // Default Fallback (Star Shape)
-                                ctx.rotate(roll);
-                                ctx.fillStyle = shipColor;
-                                ctx.strokeStyle = '#aaddff';
-                                ctx.lineWidth = 2 / this.camera.zoom;
-                                // Main star shape
-                                ctx.beginPath();
-                                for (let i = 0; i < 5; i++) {
-                                    const outerAngle = (i * Math.PI * 2 / 5) - Math.PI / 2;
-                                    const innerAngle = outerAngle + Math.PI / 5;
-                                    const outerX = Math.cos(outerAngle) * size;
-                                    const outerY = Math.sin(outerAngle) * size;
-                                    const innerX = Math.cos(innerAngle) * size * 0.4;
-                                    const innerY = Math.sin(innerAngle) * size * 0.4;
-                                    if (i === 0) ctx.moveTo(outerX, outerY);
-                                    else ctx.lineTo(outerX, outerY);
-                                    ctx.lineTo(innerX, innerY);
-                                }
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.stroke();
-                                // Glowing core
-                                ctx.fillStyle = '#00ccff';
-                                ctx.beginPath();
-                                ctx.arc(0, 0, size * 0.25, 0, Math.PI * 2);
-                                ctx.fill();
-                            }
-                            break;
-
-                        case 'draco':
-                            // Dragon constellation - serpentine shape
-                            ctx.rotate(roll); // Apply roll rotation
-                            ctx.fillStyle = '#22aa44';
-                            ctx.strokeStyle = '#00ff66';
-                            ctx.lineWidth = 3 / this.camera.zoom;
-                            // Dragon head
-                            ctx.beginPath();
-                            ctx.moveTo(size, 0);
-                            ctx.lineTo(size * 0.7, -size * 0.4);
-                            ctx.lineTo(size * 0.5, -size * 0.2);
-                            ctx.lineTo(0, -size * 0.5);
-                            ctx.lineTo(-size * 0.5, -size * 0.3);
-                            ctx.lineTo(-size, 0);
-                            ctx.lineTo(-size * 0.5, size * 0.3);
-                            ctx.lineTo(0, size * 0.5);
-                            ctx.lineTo(size * 0.5, size * 0.2);
-                            ctx.lineTo(size * 0.7, size * 0.4);
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-                            // Dragon eye
-                            ctx.fillStyle = '#ff0000';
-                            ctx.beginPath();
-                            ctx.arc(size * 0.6, -size * 0.1, size * 0.1, 0, Math.PI * 2);
-                            ctx.fill();
-                            // Fire breath
-                            ctx.fillStyle = `rgba(255, ${100 + Math.sin(time * 0.01) * 50}, 0, 0.7)`;
-                            ctx.beginPath();
-                            ctx.moveTo(size, 0);
-                            ctx.lineTo(size * 1.5, -size * 0.2);
-                            ctx.lineTo(size * 1.3, 0);
-                            // Dragon-like jagged ship
-                            ctx.rotate(roll); // Apply roll rotation
-                            ctx.fillStyle = this.adjustColor(shipColor, -60);
-                            ctx.strokeStyle = shipColor;
-                            ctx.lineWidth = 2 / this.camera.zoom;
-                            ctx.beginPath();
-                            ctx.moveTo(size, 0);
-                            ctx.lineTo(-size * 0.5, size * 0.5);
-                            ctx.lineTo(-size * 0.2, 0);
-                            ctx.lineTo(-size * 0.5, -size * 0.5);
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-                            // Wings
-                            ctx.beginPath();
-                            ctx.moveTo(0, 0);
-                            ctx.lineTo(-size * 0.5, size);
-                            ctx.lineTo(size * 0.2, 0);
-                            ctx.lineTo(-size * 0.5, -size);
-                            ctx.closePath();
-                            ctx.fillStyle = this.adjustColor(shipColor, -20);
-                            ctx.fill();
-                            ctx.stroke();
-                            break;
-
-                        case 'phoenix':
-                            // Bird-like ship
-                            ctx.rotate(roll); // Apply roll rotation
-                            ctx.fillStyle = shipColor;
-                            ctx.strokeStyle = this.adjustColor(shipColor, 60);
-                            ctx.lineWidth = 2 / this.camera.zoom;
-                            // Body
-                            ctx.beginPath();
-                            ctx.moveTo(size * 0.8, 0);
-                            ctx.lineTo(-size * 0.6, 0);
-                            ctx.stroke();
-                            // Wings
-                            ctx.beginPath();
-                            ctx.moveTo(0, 0);
-                            ctx.quadraticCurveTo(size * 0.5, size * 0.5, -size * 0.2, size * 0.8);
-                            ctx.moveTo(0, 0);
-                            ctx.quadraticCurveTo(size * 0.5, -size * 0.5, -size * 0.2, -size * 0.8);
-                            ctx.stroke();
-                            break;
-
-                        case 'harvester':
-                            // STELLAR HARVESTER - Tie-fighter inspired design
-                            // Rotate 90 degrees to face forward, then apply roll for barrel roll effect
-                            ctx.rotate(Math.PI / 2 + roll);
-                            ctx.scale(1, pitchScale || 1); // Apply pitch scaling
-                            // Left hexagonal panel
-                            ctx.fillStyle = '#00ddff';
-                            ctx.strokeStyle = '#0088ff';
-                            ctx.lineWidth = 2 / this.camera.zoom;
-                            ctx.beginPath();
-                            for (let i = 0; i < 6; i++) {
-                                const angle = (Math.PI / 3) * i;
-                                const x = -size * 1.2 + Math.cos(angle) * size * 0.4;
-                                const y = Math.sin(angle) * size * 0.6;
-                                if (i === 0) ctx.moveTo(x, y);
-                                else ctx.lineTo(x, y);
-                            }
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-
-                            // Right hexagonal panel
-                            ctx.beginPath();
-                            for (let i = 0; i < 6; i++) {
-                                const angle = (Math.PI / 3) * i;
-                                const x = size * 1.2 + Math.cos(angle) * size * 0.4;
-                                const y = Math.sin(angle) * size * 0.6;
-                                if (i === 0) ctx.moveTo(x, y);
-                                else ctx.lineTo(x, y);
-                            }
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-
-                            // Central cockpit pod
-                            ctx.fillStyle = '#888888';
-                            ctx.strokeStyle = '#00ffff';
-                            ctx.lineWidth = 2 / this.camera.zoom;
-                            ctx.beginPath();
-                            ctx.ellipse(0, 0, size * 0.3, size * 0.25, 0, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.stroke();
-
-                            // Cockpit window
-                            ctx.fillStyle = '#00ffff';
-                            ctx.beginPath();
-                            ctx.arc(0, 0, size * 0.12, 0, Math.PI * 2);
-                            ctx.fill();
-
-                            // Connecting struts
-                            ctx.strokeStyle = '#666666';
-                            ctx.lineWidth = 3 / this.camera.zoom;
-                            ctx.beginPath();
-                            ctx.moveTo(-size * 0.3, 0);
-                            ctx.lineTo(-size * 0.8, 0);
-                            ctx.moveTo(size * 0.3, 0);
-                            ctx.lineTo(size * 0.8, 0);
-                            ctx.stroke();
-
-                            // Engine glow on panels
-                            const pulseGlow = 0.3 + Math.sin(time * 0.005) * 0.2;
-                            ctx.fillStyle = `rgba(0, 255, 100, ${pulseGlow})`;
-                            ctx.beginPath();
-                            ctx.arc(-size * 1.2, 0, size * 0.15, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.beginPath();
-                            ctx.arc(size * 1.2, 0, size * 0.15, 0, Math.PI * 2);
-                            ctx.fill();
-                            break;
-
-                        case 'interceptor':
-                        default:
-                            // STELLAR HARVESTER - Advanced gem collection vessel
-                            ctx.rotate(roll); // Apply roll rotation
-                            ctx.fillStyle = '#00ffff';
-                            ctx.strokeStyle = '#0088ff';
-                            ctx.lineWidth = 3 / this.camera.zoom;
-                            ctx.beginPath();
-                            ctx.moveTo(size, 0);
-                            ctx.lineTo(-size * 0.6, -size * 0.6);
-                            ctx.lineTo(-size * 0.4, 0);
-                            ctx.lineTo(-size * 0.6, size * 0.6);
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-                            // Engine glow
-                            ctx.fillStyle = '#ff6600';
-                            ctx.beginPath();
-                            ctx.arc(-size * 0.5, 0, size * 0.2, 0, Math.PI * 2);
-                            ctx.fill();
-                            break;
-                    }
-
-                    ctx.restore();
+                        ctx.restore();
+                    });
                 }
 
-                renderMinerals(ctx, time) {
-                    this.minerals.forEach(mineral => {
+                // 3. Planets (with zoom-based detail and proper Saturn-style rings)
+                if (this.planets && this.planets.length > 0) {
+                    const zoom = this.camera.zoom;
+                    this.planets.forEach(p => {
+                        if (p.flownOut) return; // Skip if flown out during warp
                         ctx.save();
-                        // Use world coordinates (ctx already transformed)
-                        ctx.translate(mineral.x, mineral.y);
 
-                        // Safeguard against invalid zoom
-                        const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+                        // Position comes from flyObject during disengage
+                        ctx.translate(p.x, p.y);
 
-                        // Pulsing glow animation
-                        const pulse = Math.sin(time * 0.003 + mineral.phase) * 0.3 + 0.7;
-                        const size = mineral.size * pulse / safeZoom;
+                        // During disengage: use scale and alpha from flyObject
+                        if (this.warpDisengaging && p.warpScale !== undefined) {
+                            ctx.scale(p.warpScale, p.warpScale);
+                            ctx.globalAlpha = p.warpAlpha || 0;
+                        }
 
-                        // Ensure size is valid
-                        if (!isFinite(size) || size <= 0) {
-                            ctx.restore();
+                        ctx.rotate(p.axialTilt);
+
+                        const screenRadius = p.radius * zoom;
+                        const detailLevel = Math.min(3, Math.floor(screenRadius / 30)); // 0-3 detail levels
+
+                        // === SATURN-STYLE RINGS: Draw back half first ===
+                        if (p.hasRings) {
+                            this.drawPlanetRingsHalf(ctx, p, 'back');
+                        }
+
+                        // Atmospheric glow (outer)
+                        if (p.hasAtmosphere) {
+                            const atmosGrad = ctx.createRadialGradient(0, 0, p.radius * 0.95, 0, 0, p.radius * 1.15);
+                            atmosGrad.addColorStop(0, 'transparent');
+                            atmosGrad.addColorStop(0.5, p.atmosphereColor + '40');
+                            atmosGrad.addColorStop(1, 'transparent');
+                            ctx.fillStyle = atmosGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, p.radius * 1.15, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+
+                        // Planet body with 3D gradient
+                        const bodyGrad = ctx.createRadialGradient(
+                            -p.radius * 0.3, -p.radius * 0.3, 0,
+                            0, 0, p.radius
+                        );
+                        bodyGrad.addColorStop(0, p.secondaryColor);
+                        bodyGrad.addColorStop(0.4, p.baseColor);
+                        bodyGrad.addColorStop(0.8, p.tertiaryColor);
+                        bodyGrad.addColorStop(1, '#000000');
+
+                        ctx.fillStyle = bodyGrad;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Surface texture (procedural bands/patterns based on zoom)
+                        if (detailLevel >= 1) {
+                            ctx.globalAlpha = 0.3;
+                            ctx.strokeStyle = p.tertiaryColor;
+                            ctx.lineWidth = 2 / zoom;
+
+                            // Draw bands for gas giants
+                            if (p.type === 'gas-giant' || p.type === 'ice-giant') {
+                                for (let i = -4; i <= 4; i++) {
+                                    const bandY = p.radius * (i * 0.15);
+                                    const bandWidth = Math.sqrt(p.radius * p.radius - bandY * bandY);
+                                    if (bandWidth > 0) {
+                                        ctx.beginPath();
+                                        ctx.ellipse(0, bandY, bandWidth, 3, 0, 0, Math.PI * 2);
+                                        ctx.stroke();
+                                    }
+                                }
+                            }
+
+                            // Draw continents for terrestrial/ocean
+                            if ((p.type === 'terrestrial' || p.type === 'ocean') && detailLevel >= 2) {
+                                ctx.fillStyle = p.type === 'ocean' ? p.baseColor : p.secondaryColor;
+                                const seed = p.textureSeed;
+                                for (let j = 0; j < 5; j++) {
+                                    const cx = Math.cos(seed + j * 1.2) * p.radius * 0.5;
+                                    const cy = Math.sin(seed * 0.7 + j) * p.radius * 0.4;
+                                    const cr = p.radius * (0.15 + Math.sin(seed + j) * 0.1);
+                                    ctx.beginPath();
+                                    ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+                                    ctx.fill();
+                                }
+                            }
+                            ctx.globalAlpha = 1;
+                        }
+
+                        // Shadow side
+                        const shadowGrad = ctx.createLinearGradient(-p.radius, 0, p.radius, 0);
+                        shadowGrad.addColorStop(0, 'transparent');
+                        shadowGrad.addColorStop(0.6, 'transparent');
+                        shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
+                        ctx.fillStyle = shadowGrad;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // === SATURN-STYLE RINGS: Draw front half on top ===
+                        if (p.hasRings) {
+                            this.drawPlanetRingsHalf(ctx, p, 'front');
+                        }
+
+                        ctx.restore();
+                    });
+                }
+            }
+
+            // Helper method for drawing Saturn-style planet rings (half at a time)
+            drawPlanetRingsHalf(ctx, planet, half) {
+                const p = planet;
+                ctx.save();
+
+                // Create clipping region for front or back half
+                ctx.beginPath();
+                if (half === 'back') {
+                    // Back half: top portion of ellipse (behind planet)
+                    ctx.rect(-p.ringOuterRadius * 1.5, -p.ringOuterRadius, p.ringOuterRadius * 3, p.ringOuterRadius);
+                } else {
+                    // Front half: bottom portion of ellipse (in front of planet)
+                    ctx.rect(-p.ringOuterRadius * 1.5, 0, p.ringOuterRadius * 3, p.ringOuterRadius);
+                }
+                ctx.clip();
+
+                // Draw the ring bands
+                ctx.globalAlpha = half === 'back' ? 0.4 : 0.7; // Back rings dimmer
+
+                // Multiple ring bands with gradient colors
+                for (let i = 0; i < 5; i++) {
+                    const ringR = p.ringInnerRadius + (p.ringOuterRadius - p.ringInnerRadius) * (i / 5 + 0.1);
+                    const ringThickness = (p.ringOuterRadius - p.ringInnerRadius) * 0.12;
+
+                    // Slight color variation per band
+                    const hueShift = i * 5;
+                    ctx.strokeStyle = p.ringColor;
+                    ctx.lineWidth = ringThickness;
+
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, ringR, ringR * 0.25, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+
+            drawStarShape(ctx, x, y, r) {
+                ctx.beginPath();
+                const pr = r * 0.5;
+                ctx.moveTo(x, y - r);
+                ctx.lineTo(x + pr, y - pr);
+                ctx.lineTo(x + r, y);
+                ctx.lineTo(x + pr, y + pr);
+                ctx.lineTo(x, y + r);
+                ctx.lineTo(x - pr, y + pr);
+                ctx.lineTo(x - r, y);
+                ctx.lineTo(x - pr, y - pr);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Get the center point of all stars (constellation center)
+            getConstellationCenter() {
+                if (this.stars.length === 0) {
+                    return { x: this.canvas.width / 2, y: this.canvas.height / 2, z: 0 };
+                }
+                let sumX = 0, sumY = 0, sumZ = 0;
+                this.stars.forEach(s => {
+                    sumX += s.x;
+                    sumY += s.y;
+                    sumZ += (s.z || 0);
+                });
+                return {
+                    x: sumX / this.stars.length,
+                    y: sumY / this.stars.length,
+                    z: sumZ / this.stars.length
+                };
+            }
+
+            // 3D Rotation: Rotate a point around a given center
+            rotate3D(x, y, z, centerX, centerY) {
+                // Convert degrees to radians
+                const radX = this.rotationX * Math.PI / 180;
+                const radY = this.rotationY * Math.PI / 180;
+                const radZ = this.rotationZ * Math.PI / 180;
+
+                // Translate to origin (center of view)
+                let px = x - centerX;
+                let py = y - centerY;
+                let pz = z;
+
+                // Rotation around X axis
+                let y1 = py * Math.cos(radX) - pz * Math.sin(radX);
+                let z1 = py * Math.sin(radX) + pz * Math.cos(radX);
+                py = y1;
+                pz = z1;
+
+                // Rotation around Y axis
+                let x1 = px * Math.cos(radY) + pz * Math.sin(radY);
+                z1 = -px * Math.sin(radY) + pz * Math.cos(radY);
+                px = x1;
+                pz = z1;
+
+                // Rotation around Z axis
+                x1 = px * Math.cos(radZ) - py * Math.sin(radZ);
+                y1 = px * Math.sin(radZ) + py * Math.cos(radZ);
+                px = x1;
+                py = y1;
+
+                // Simple perspective projection (optional depth effect)
+                const fov = 800;
+                const scale = fov / (fov + pz);
+
+                // Translate back
+                return {
+                    x: px * scale + centerX,
+                    y: py * scale + centerY,
+                    scale: scale
+                };
+            }
+
+            // Inverse 3D Rotation: Project screen point back to 3D world (at Z=0 plane relative to rotation)
+            inverseRotate3D(x, y, centerX, centerY) {
+                // Negate angles for inverse rotation
+                const radX = -this.rotationX * Math.PI / 180;
+                const radY = -this.rotationY * Math.PI / 180;
+                const radZ = -this.rotationZ * Math.PI / 180;
+
+                // Translate to origin
+                let px = x - centerX;
+                let py = y - centerY;
+                let pz = 0; // Assume we are clicking on the plane passing through center
+
+                // Inverse Order: X^-1( Y^-1( Z^-1( P ) ) )
+                // Note: Forward was RotZ(RotY(RotX(P))). Inverse is RotXinv(RotYinv(RotZinv(P))).
+
+                // 1. Inverse Z Rotation
+                let x1 = px * Math.cos(radZ) - py * Math.sin(radZ);
+                let y1 = px * Math.sin(radZ) + py * Math.cos(radZ);
+                px = x1;
+                py = y1;
+
+                // 2. Inverse Y Rotation
+                x1 = px * Math.cos(radY) + pz * Math.sin(radY);
+                let z1 = -px * Math.sin(radY) + pz * Math.cos(radY);
+                px = x1;
+                pz = z1;
+
+                // 3. Inverse X Rotation
+                y1 = py * Math.cos(radX) - pz * Math.sin(radX);
+                z1 = py * Math.sin(radX) + pz * Math.cos(radX);
+                py = y1;
+                pz = z1;
+
+                // Translate back
+                return {
+                    x: px + centerX,
+                    y: py + centerY,
+                    z: pz
+                };
+            }
+
+            // Reset rotation sliders and values
+            resetRotation() {
+                this.rotationX = 0;
+                this.rotationY = 0;
+                this.rotationZ = 0;
+
+                const xSlider = document.getElementById('rotXSlider');
+                const ySlider = document.getElementById('rotYSlider');
+                const zSlider = document.getElementById('rotZSlider');
+
+                if (xSlider) { xSlider.value = 0; document.getElementById('rotXValue').textContent = '0°'; }
+                if (ySlider) { ySlider.value = 0; document.getElementById('rotYValue').textContent = '0°'; }
+                if (zSlider) { zSlider.value = 0; document.getElementById('rotZValue').textContent = '0°'; }
+            }
+
+            calculateGeometry() {
+                const lines = [];
+                const adj = {};
+                // Performance fix: use Map for O(1) star lookups
+                const starMap = new Map();
+                this.stars.forEach(s => {
+                    adj[s.id] = [];
+                    starMap.set(s.id, s);
+                });
+
+                for (let i = 0; i < this.stars.length; i++) {
+                    for (let j = i + 1; j < this.stars.length; j++) {
+                        const s1 = this.stars[i];
+                        const s2 = this.stars[j];
+                        const dist = Math.hypot(s1.x - s2.x, s1.y - s2.y);
+
+                        if (dist < this.config.maxConnectDist) {
+                            lines.push({ s1, s2, dist });
+                            adj[s1.id].push(s2.id);
+                            adj[s2.id].push(s1.id);
+                        }
+                    }
+                }
+
+                // BFS for clusters
+                const clusters = [];
+                const visited = new Set();
+                this.stars.forEach(star => {
+                    if (!visited.has(star.id)) {
+                        const cluster = [];
+                        const queue = [star.id];
+                        visited.add(star.id);
+                        while (queue.length) {
+                            const id = queue.shift();
+                            const s = starMap.get(id); // O(1) lookup
+                            if (s) cluster.push(s);
+                            adj[id].forEach(nid => {
+                                if (!visited.has(nid)) {
+                                    visited.add(nid);
+                                    queue.push(nid);
+                                }
+                            });
+                        }
+                        if (cluster.length > 0) clusters.push(cluster);
+                    }
+                });
+
+                return { lines, clusters };
+            }
+
+            showToast(msg) {
+                console.log('[Toast]', msg);
+                // Create a toast element if needed
+                let toast = document.getElementById('toast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'toast';
+                    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:10px 20px;border-radius:8px;z-index:9999;transition:opacity 0.3s';
+                    document.body.appendChild(toast);
+                }
+                toast.textContent = msg;
+                toast.style.opacity = '1';
+                clearTimeout(this._toastTimeout);
+                this._toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+            }
+
+            // Ship Selection Methods
+            showShipModal() {
+                const modal = document.getElementById('shipModal');
+                if (modal) modal.classList.add('active');
+            }
+
+            hideShipModal() {
+                const modal = document.getElementById('shipModal');
+                if (modal) modal.classList.remove('active');
+            }
+
+            captureConstellation() {
+                if (this.stars.length < 3) {
+                    this.showToast("Draw at least 3 stars first!");
+                    return;
+                }
+
+                // 1. Calculate Centroid
+                let sumX = 0, sumY = 0, sumZ = 0;
+                this.stars.forEach(s => {
+                    sumX += s.x;
+                    sumY += s.y;
+                    sumZ += (s.z || 0);
+                });
+                const centerX = sumX / this.stars.length;
+                const centerY = sumY / this.stars.length;
+                const centerZ = sumZ / this.stars.length;
+
+                // 2. Normalize Stars (Center at 0,0,0) and Scale down
+                const scale = 0.5; // Scale down for ship size
+                const validStars = this.stars.map(s => ({
+                    x: (s.x - centerX) * scale,
+                    y: (s.y - centerY) * scale,
+                    z: ((s.z || 0) - centerZ) * scale,
+                    color: s.color
+                }));
+
+                // 3. Capture Connections (Lines)
+                // We need to map original IDs to indices or new IDs
+                const starIdToIndex = {};
+                this.stars.forEach((s, i) => starIdToIndex[s.id] = i);
+
+                const validLines = [];
+                const lines = this.calculateGeometry().lines; // Get current lines
+                lines.forEach(l => {
+                    const idx1 = starIdToIndex[l.from];
+                    const idx2 = starIdToIndex[l.to];
+                    if (idx1 !== undefined && idx2 !== undefined) {
+                        validLines.push({ fromIndex: idx1, toIndex: idx2 });
+                    }
+                });
+
+                // 4. Save to PlayerShip
+                this.playerShip.customStructure = {
+                    stars: validStars,
+                    lines: validLines
+                };
+
+                // Save to LocalStorage
+                localStorage.setItem('customShipStructure', JSON.stringify(this.playerShip.customStructure));
+
+                // Auto-select "Orion" type (which we'll use for custom)
+                this.playerShip.type = 'orion';
+                localStorage.setItem('playerShipType', 'orion');
+
+                this.showToast("Constellation SAVED as Spacecraft!");
+            }
+
+            selectShip(shipType) {
+                const ships = {
+                    interceptor: { name: 'Interceptor', maxSpeed: 90, acceleration: 0.8 },
+                    saucer: { name: 'Saucer', maxSpeed: 110, acceleration: 1.0 },
+                    hauler: { name: 'Hauler', maxSpeed: 60, acceleration: 0.5 },
+                    orion: { name: 'Orion', maxSpeed: 100, acceleration: 0.9 },
+                    draco: { name: 'Draco', maxSpeed: 130, acceleration: 0.7 },
+                    phoenix: { name: 'Phoenix', maxSpeed: 95, acceleration: 1.2 },
+                    harvester: { name: 'Starfighter', maxSpeed: 140, acceleration: 1.3 }
+                };
+                const ship = ships[shipType];
+                if (ship && this.playerShip) {
+                    this.playerShip.type = shipType;
+                    this.playerShip.maxSpeed = ship.maxSpeed;
+                    this.playerShip.acceleration = ship.acceleration;
+                    this.showToast(`Selected ${ship.name} `);
+                }
+                this.hideShipModal();
+            }
+
+            toggleAutopilot() {
+                this.autopilot = !this.autopilot;
+                const btn = document.querySelector('button[onclick="app.toggleAutopilot()"]');
+                if (btn) {
+                    btn.classList.toggle('active', this.autopilot);
+                    btn.style.color = this.autopilot ? '#00f3ff' : '#5c7a8a';
+                }
+                this.showToast(this.autopilot ? "Autopilot ENGAGED" : "Autopilot DISENGAGED");
+            }
+
+            // Legacy support for gems resize if needed
+            initGemsResize() {
+                if (this.initGemsSectionResize) {
+                    this.initGemsSectionResize();
+                }
+            }
+
+            flightZoom(amount) {
+                // Simple zoom for flight mode buttons
+                const newZoom = Math.max(0.1, Math.min(6.0, this.camera.zoom + amount));
+                this.camera.zoom = newZoom;
+
+                // Update display if it exists
+                const zoomDisplay = document.getElementById('zoomDisplay');
+                if (zoomDisplay) {
+                    zoomDisplay.textContent = this.camera.zoom.toFixed(1) + 'x';
+                }
+
+                // If in expanded map mode, also update that
+                if (this.expandedMapMode) {
+                    this.expandedMapZoom = Math.max(0.2, Math.min(10.0, this.expandedMapZoom + amount));
+                }
+            }
+
+            downloadSVG() {
+                if (this.stars.length === 0) {
+                    this.showToast("Universe is empty!");
+                    return;
+                }
+
+                // Ensure cluster IDs are assigned for naming in SVG
+                this.refreshClusterAssignments();
+
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                this.stars.forEach(s => {
+                    minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
+                    maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
+                });
+
+                const pad = 100;
+                const w = (maxX - minX) + pad * 2;
+                const h = (maxY - minY) + pad * 2;
+                const vbX = minX - pad;
+                const vbY = minY - pad;
+
+                const { lines, clusters } = this.calculateGeometry();
+
+                let svg = `< svg xmlns = "http://www.w3.org/2000/svg" viewBox = "${vbX} ${vbY} ${w} ${h}" style = "background:#020205" >
+            <rect x="${vbX}" y="${vbY}" width="${w}" height="${h}" fill="#020205" />`;
+
+                // Lines
+                lines.forEach(l => {
+                    const op = (1 - (l.dist / this.config.maxConnectDist)).toFixed(2);
+                    const [r, g, b] = this.hexToRgb(this.getStarColor(l.s1));
+                    svg += `< line x1 = "${l.s1.x}" y1 = "${l.s1.y}" x2 = "${l.s2.x}" y2 = "${l.s2.y}" stroke = "rgb(${r}, ${g}, ${b})" stroke - width="1.5" stroke - linecap="round" opacity = "${op * 0.8}" /> `;
+                });
+
+                // Labels
+                clusters.forEach(c => {
+                    const name = String(c[0].clusterId);
+                    if (c.length < this.config.minGroupSize || name === String(c[0].id)) return;
+
+                    let cx = 0, cy = 0; c.forEach(s => { cx += s.x; cy += s.y }); cx /= c.length; cy /= c.length;
+                    const color = this.getStarColor(c[0]);
+                    svg += `< text x = "${cx}" y = "${cy + 30}" font - family="sans-serif" font - size="14" fill = "${color}" text - anchor="middle" font - weight="600" > ${name}</text > `;
+                });
+
+                // Stars
+                this.stars.forEach(s => {
+                    const color = this.getStarColor(s);
+                    const r = this.config.starBaseRad * 1.5;
+
+                    // Star Shape
+                    const pr = r * 0.5;
+                    const pathData = `M${s.x} ${s.y - r} L${s.x + pr} ${s.y - pr} L${s.x + r} ${s.y} L${s.x + pr} ${s.y + pr} L${s.x} ${s.y + r} L${s.x - pr} ${s.y + pr} L${s.x - r} ${s.y} L${s.x - pr} ${s.y - pr} Z`;
+                    svg += `< path d = "${pathData}" fill = "${color}" opacity = "0.8" /> `;
+
+                    // Core dot
+                    svg += `< circle cx = "${s.x}" cy = "${s.y}" r = "1.5" fill = "white" /> `;
+                });
+
+                svg += `</svg > `;
+
+                // FileSaver-style download for Chrome compatibility
+                const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+                const filename = `AetherMap - ${Date.now()}.svg`;
+
+                // Try using msSaveBlob for IE/Edge compatibility
+                if (typeof window.navigator.msSaveBlob !== 'undefined') {
+                    window.navigator.msSaveBlob(blob, filename);
+                    this.showToast("Map Exported");
+                    return;
+                }
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+
+                // Dispatch a real click event instead of calling click()
+                const event = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+                link.dispatchEvent(event);
+
+                // Clean up after a delay
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+
+                this.showToast("Map Exported");
+            }
+
+            // Download canvas as PNG image
+            downloadPNG() {
+                const filename = `Interstellar - ${Date.now()}.png`;
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = this.canvas.toDataURL('image/png');
+
+                // Dispatch a real click event for Chrome compatibility
+                const event = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+                link.dispatchEvent(event);
+
+                this.showToast("Image saved as " + filename);
+            }
+
+            // Trigger the hidden file input for loading SVG
+            triggerLoadSVG() {
+                document.getElementById('svgFileInput').click();
+            }
+
+            // Load and parse an SVG file to restore stars
+            loadSVG(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const svgContent = e.target.result;
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(svgContent, 'image/svg+xml');
+
+                        // Find all path elements (stars)
+                        const pathElements = doc.querySelectorAll('path[fill][opacity]');
+
+                        if (pathElements.length === 0) {
+                            this.showToast("No stars found in SVG");
                             return;
                         }
 
-                        // Glow effect
-                        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 2);
-                        gradient.addColorStop(0, mineral.color);
-                        gradient.addColorStop(0.5, mineral.color + '88');
-                        gradient.addColorStop(1, mineral.color + '00');
-
-                        ctx.fillStyle = gradient;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, size * 2, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // Core
-                        ctx.fillStyle = mineral.color;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, size, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // Bright center
-                        ctx.fillStyle = '#ffffff';
-                        ctx.globalAlpha = 0.5;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.globalAlpha = 1;
-
-                        ctx.restore();
-                    });
-                }
-
-                renderCollectionNotifications(ctx) {
-                    const canvas = this.canvas;
-                    const now = Date.now();
-
-                    this.collectionNotifications.forEach(notification => {
-                        const age = now - notification.time;
-                        const opacity = Math.max(0, 1 - age / 2000);
-                        const yOffset = age * 0.05;
-
-                        ctx.save();
-                        ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-                        ctx.globalAlpha = opacity;
-                        ctx.font = 'bold 20px Arial';
-                        ctx.fillStyle = notification.color;
-                        ctx.strokeStyle = '#000';
-                        ctx.lineWidth = 3;
-                        ctx.textAlign = 'center';
-
-                        const x = canvas.width / 2;
-                        const y = canvas.height / 2 - 100 - yOffset;
-
-                        ctx.strokeText(notification.text, x, y);
-                        ctx.fillText(notification.text, x, y);
-                        ctx.globalAlpha = 1;
-
-                        ctx.restore();
-                    });
-                }
-
-                drawBackgroundElements() {
-                    if (!this.config.showBackground) return;
-
-                    const ctx = this.ctx;
-
-                    // 1. Background Stars (from all active styles)
-                    if (this.backgroundStars && this.backgroundStars.length > 0) {
-                        this.backgroundStars.forEach(s => {
-                            ctx.fillStyle = s.color || "white";
-                            ctx.globalAlpha = s.alpha;
-                            ctx.beginPath();
-                            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                            ctx.fill();
-                        });
-                        ctx.globalAlpha = 1;
-                    }
-
-                    // 2. Nebulae (from nebula + deep-space styles)
-                    if (this.nebulae && this.nebulae.length > 0) {
-                        ctx.globalCompositeOperation = 'screen';
-                        this.nebulae.forEach(n => {
-                            if (n.flownOut) return; // Skip if flown out during warp
-
-                            // During disengage: use scale and alpha from flyObject
-                            let scale = 1.0;
-                            let alpha = 1.0;
-                            if (this.warpDisengaging && n.warpScale !== undefined) {
-                                scale = n.warpScale || 0.01;
-                                alpha = n.warpAlpha || 0;
-                            }
-
-                            const scaledSize = Math.max(0.1, n.size * scale);
-                            const scaledAlpha = n.alpha * alpha;
-
-                            const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, scaledSize);
-                            grad.addColorStop(0, n.color);
-                            grad.addColorStop(1, 'transparent');
-
-                            ctx.globalAlpha = scaledAlpha;
-                            ctx.fillStyle = grad;
-                            ctx.beginPath();
-                            ctx.arc(n.x, n.y, scaledSize, 0, Math.PI * 2);
-                            ctx.fill();
-                        });
-                        ctx.globalCompositeOperation = 'source-over';
-                        ctx.globalAlpha = 1;
-                    }
-
-                    // 2.5 Moving Cosmic Stars (shooting stars with tails)
-                    if (this.activeStyles.has('deep-space') && this.shootingStars && this.shootingStars.length > 0) {
-                        this.shootingStars.forEach(s => {
-                            ctx.save();
-
-                            // Draw tail (gradient line in opposite direction of movement)
-                            const tailX = s.x - s.vx * s.tailLength;
-                            const tailY = s.y - s.vy * s.tailLength;
-
-                            const tailGrad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
-                            tailGrad.addColorStop(0, 'transparent');
-                            tailGrad.addColorStop(0.7, s.color + '40');
-                            tailGrad.addColorStop(1, s.color);
-
-                            ctx.strokeStyle = tailGrad;
-                            ctx.lineWidth = s.size * 0.8;
-                            ctx.lineCap = 'round';
-                            ctx.globalAlpha = s.alpha;
-
-                            ctx.beginPath();
-                            ctx.moveTo(tailX, tailY);
-                            ctx.lineTo(s.x, s.y);
-                            ctx.stroke();
-
-                            // Draw star head (bright point)
-                            ctx.fillStyle = s.color;
-                            ctx.globalAlpha = s.alpha + 0.3;
-                            ctx.beginPath();
-                            ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                            ctx.fill();
-
-                            ctx.restore();
-                        });
-                        ctx.globalAlpha = 1;
-                    }
-
-                    // 3. Spacecraft (from alien style) - ENHANCED RENDERING
-                    if (this.activeStyles.has('alien') && this.spacecraft && this.spacecraft.length > 0) {
-                        const time = performance.now() * 0.001;
-                        this.spacecraft.forEach(s => {
-                            if (s.flownOut) return; // Skip if flown out during warp
-                            ctx.save();
-
-                            // Position comes from flyObject during disengage
-                            ctx.translate(s.x, s.y);
-
-                            // During disengage: use scale and alpha from flyObject
-                            if (this.warpDisengaging && s.warpScale !== undefined) {
-                                ctx.scale(s.warpScale, s.warpScale);
-                                ctx.globalAlpha = s.warpAlpha || 0;
-                            }
-
-                            // Update rotation for saucers
-                            if (s.rotationSpeed) s.rotation += s.rotationSpeed;
-
-                            const size = s.size;
-                            const zoom = this.camera.zoom;
-                            const angle = Math.atan2(s.vy, s.vx);
-
-                            // Shield effect (drawn first, behind ship)
-                            if (s.hasShield) {
-                                const shieldPulse = Math.sin(time * 2 + s.shieldPhase) * 0.3 + 0.4;
-                                ctx.globalAlpha = shieldPulse * 0.4;
-                                const shieldGrad = ctx.createRadialGradient(0, 0, size * 0.5, 0, 0, size * 1.5);
-                                shieldGrad.addColorStop(0, 'transparent');
-                                shieldGrad.addColorStop(0.7, s.shieldColor || 'rgba(100,200,255,0.3)');
-                                shieldGrad.addColorStop(1, 'transparent');
-                                ctx.fillStyle = shieldGrad;
-                                ctx.beginPath();
-                                ctx.arc(0, 0, size * 1.5, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.globalAlpha = 1;
-                            }
-
-                            // Tractor beam (for saucers)
-                            if (s.beamActive && s.shipClass === 'saucer') {
-                                const beamPulse = Math.sin(time * 5) * 0.2 + 0.6;
-                                ctx.globalAlpha = beamPulse * 0.5;
-                                const beamGrad = ctx.createLinearGradient(0, size * 0.2, 0, size * 3);
-                                beamGrad.addColorStop(0, s.beamColor || '#88ff88');
-                                beamGrad.addColorStop(1, 'transparent');
-                                ctx.fillStyle = beamGrad;
-                                ctx.beginPath();
-                                ctx.moveTo(-size * 0.3, size * 0.2);
-                                ctx.lineTo(-size * 0.8, size * 3);
-                                ctx.lineTo(size * 0.8, size * 3);
-                                ctx.lineTo(size * 0.3, size * 0.2);
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.globalAlpha = 1;
-                            }
-
-                            // Rotate for directional ships (not saucers)
-                            if (s.shipClass !== 'saucer') {
-                                ctx.rotate(angle);
-                            }
-
-                            // Engine trails (for non-saucers)
-                            if (s.shipClass !== 'saucer' && s.shipClass !== 'probe') {
-                                ctx.globalAlpha = 0.7;
-                                const trailLength = size * 2;
-                                const engineSpacing = size * 0.25;
-                                const engineCount = s.engineCount || 2;
-
-                                for (let i = 0; i < engineCount; i++) {
-                                    const offsetY = (i - (engineCount - 1) / 2) * engineSpacing;
-                                    const flicker = 0.7 + Math.sin(time * 15 + s.detailSeed + i) * 0.3;
-                                    const trailGrad = ctx.createLinearGradient(-size * 0.7, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
-                                    trailGrad.addColorStop(0, s.engineGlow || '#ffffff');
-                                    trailGrad.addColorStop(0.15, s.engineColor || '#00aaff');
-                                    trailGrad.addColorStop(1, 'transparent');
-
-                                    ctx.fillStyle = trailGrad;
-                                    ctx.beginPath();
-                                    ctx.moveTo(-size * 0.65, offsetY - 4);
-                                    ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
-                                    ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.65, offsetY + 4);
-                                    ctx.closePath();
-                                    ctx.fill();
-                                }
-                                ctx.globalAlpha = 1;
-                            }
-
-                            // Hull gradient
-                            const hullGrad = ctx.createLinearGradient(0, -size * 0.5, 0, size * 0.5);
-                            hullGrad.addColorStop(0, s.hullHighlight || '#ccc');
-                            hullGrad.addColorStop(0.3, s.hullColor || '#888');
-                            hullGrad.addColorStop(1, s.hullShadow || '#333');
-                            ctx.fillStyle = hullGrad;
-                            ctx.strokeStyle = s.hullHighlight || '#ddd';
-                            ctx.lineWidth = 1.5 / zoom;
-
-                            // === SHIP RENDERING: 13 Star Wars-Quality Spacecraft ===
-                            if (s.shipClass === 'saucer') {
-                                ctx.beginPath();
-                                ctx.ellipse(0, 0, size, size * 0.25, 0, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.stroke();
-                                const domeGrad = ctx.createRadialGradient(-size * 0.1, -size * 0.15, 0, 0, -size * 0.05, size * 0.4);
-                                domeGrad.addColorStop(0, '#ffffff');
-                                domeGrad.addColorStop(0.3, s.domeColor || '#88ffff');
-                                domeGrad.addColorStop(1, 'rgba(0,50,50,0.8)');
-                                ctx.fillStyle = domeGrad;
-                                ctx.beginPath();
-                                ctx.ellipse(0, -size * 0.08, size * 0.35, size * 0.25, 0, Math.PI, 0);
-                                ctx.fill();
-                            } else if (s.shipClass === 'star-dreadnought') {
-                                ctx.beginPath();
-                                ctx.moveTo(size * 1.2, 0);
-                                for (let i = 0; i < 6; i++) {
-                                    const angle = (i / 6) * Math.PI * 2;
-                                    ctx.lineTo(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.8);
-                                }
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.stroke();
-                            } else if (s.shipClass === 'quantum-scout') {
-                                for (let i = 0; i < 3; i++) {
-                                    ctx.save();
-                                    ctx.rotate(time * (2 + i) + i);
-                                    ctx.strokeStyle = '#00aaff';
-                                    ctx.lineWidth = 2;
-                                    ctx.beginPath();
-                                    ctx.ellipse(0, 0, size * (0.6 + i * 0.3), size * 0.2, 0, 0, Math.PI * 2);
-                                    ctx.stroke();
-                                    ctx.restore();
-                                }
-                            } else if (s.shipClass === 'void-fighter') {
-                                ctx.beginPath();
-                                ctx.moveTo(size * 0.9, 0);
-                                ctx.lineTo(size * 0.2, -size * 0.5);
-                                ctx.lineTo(-size * 0.6, -size * 0.3);
-                                ctx.lineTo(-size * 0.6, size * 0.3);
-                                ctx.lineTo(size * 0.2, size * 0.5);
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.stroke();
-                            } else if (s.shipClass === 'nebula-cruiser') {
-                                // Concorde-style supersonic jet
-                                const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                                hullGrad.addColorStop(0, '#606080');
-                                hullGrad.addColorStop(0.5, '#8080a0');
-                                hullGrad.addColorStop(1, '#505070');
-                                ctx.fillStyle = hullGrad;
-                                // Sleek fuselage with pointed nose
-                                ctx.beginPath();
-                                ctx.moveTo(size * 1.2, 0);
-                                ctx.lineTo(size * 0.7, -size * 0.08);
-                                ctx.lineTo(-size * 0.5, -size * 0.12);
-                                ctx.lineTo(-size * 0.8, 0);
-                                ctx.lineTo(-size * 0.5, size * 0.12);
-                                ctx.lineTo(size * 0.7, size * 0.08);
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.stroke();
-                                // Delta wings
-                                ctx.fillStyle = '#7070a0';
-                                ctx.beginPath();
-                                ctx.moveTo(size * 0.2, 0);
-                                ctx.lineTo(-size * 0.3, -size * 0.6);
-                                ctx.lineTo(-size * 0.6, -size * 0.4);
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.beginPath();
-                                ctx.moveTo(size * 0.2, 0);
-                                ctx.lineTo(-size * 0.3, size * 0.6);
-                                ctx.lineTo(-size * 0.6, size * 0.4);
-                                ctx.closePath();
-                                ctx.fill();
-                            } else if (s.shipClass === 'bio-corvette') {
-                                const bioGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                                bioGrad.addColorStop(0, '#4a0066');
-                                bioGrad.addColorStop(0.5, '#9900cc');
-                                bioGrad.addColorStop(1, '#660099');
-                                ctx.fillStyle = bioGrad;
-                                ctx.beginPath();
-                                ctx.moveTo(size * 0.8, 0);
-                                ctx.bezierCurveTo(size * 0.6, -size * 0.4, size * 0.2, -size * 0.5, -size * 0.3, -size * 0.3);
-                                ctx.bezierCurveTo(-size * 0.7, 0, -size * 0.3, size * 0.3, size * 0.2, size * 0.5);
-                                ctx.bezierCurveTo(size * 0.6, size * 0.4, size * 0.8, 0, size * 0.8, 0);
-                                ctx.fill();
-                            } else if (s.shipClass === 'warp-strider') {
-                                const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                                hullGrad.addColorStop(0, '#606060');
-                                hullGrad.addColorStop(0.5, '#a0a0a0');
-                                hullGrad.addColorStop(1, '#505050');
-                                ctx.fillStyle = hullGrad;
-                                ctx.beginPath();
-                                ctx.moveTo(size * 0.8, 0);
-                                ctx.lineTo(size * 0.3, -size * 0.15);
-                                ctx.lineTo(-size * 0.6, -size * 0.15);
-                                ctx.lineTo(-size * 0.8, 0);
-                                ctx.lineTo(-size * 0.6, size * 0.15);
-                                ctx.lineTo(size * 0.3, size * 0.15);
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.fillStyle = '#707070';
-                                ctx.fillRect(-size * 0.7, -size * 0.5, size * 0.4, size * 0.08);
-                                ctx.fillRect(-size * 0.7, size * 0.42, size * 0.4, size * 0.08);
-                            } else if (s.shipClass === 'prism-destroyer') {
-                                const hullGrad = ctx.createLinearGradient(-size, -size, size, size);
-                                hullGrad.addColorStop(0, '#c0c0c0');
-                                hullGrad.addColorStop(0.5, '#e8e8e8');
-                                hullGrad.addColorStop(1, '#707070');
-                                ctx.fillStyle = hullGrad;
-                                ctx.beginPath();
-                                ctx.moveTo(size, 0);
-                                ctx.lineTo(size * 0.3, -size * 0.6);
-                                ctx.lineTo(-size * 0.5, -size * 0.5);
-                                ctx.lineTo(-size * 0.8, 0);
-                                ctx.lineTo(-size * 0.5, size * 0.5);
-                                ctx.lineTo(size * 0.3, size * 0.6);
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.stroke();
-                            } else if (s.shipClass === 'stellar-barge') {
-                                const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                                hullGrad.addColorStop(0, '#4a3820');
-                                hullGrad.addColorStop(0.5, '#8B6F47');
-                                hullGrad.addColorStop(1, '#3a2810');
-                                ctx.fillStyle = hullGrad;
-                                ctx.fillRect(-size * 0.7, -size * 0.35, size * 1.3, size * 0.7);
-                                ctx.fillStyle = '#5a4830';
-                                ctx.beginPath();
-                                ctx.moveTo(size * 0.7, -size * 0.25);
-                                ctx.lineTo(size, 0);
-                                ctx.lineTo(size * 0.7, size * 0.25);
-                                ctx.closePath();
-                                ctx.fill();
-                            } else if (s.shipClass === 'cyber-sentry') {
-                                const eyeGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.4);
-                                eyeGrad.addColorStop(0, '#ff0000');
-                                eyeGrad.addColorStop(0.5, '#880000');
-                                eyeGrad.addColorStop(1, '#220000');
-                                ctx.fillStyle = eyeGrad;
-                                ctx.beginPath();
-                                ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
-                                ctx.fill();
-                                for (let i = 0; i < 8; i++) {
-                                    const angle = (i / 8) * Math.PI * 2 + time;
-                                    ctx.strokeStyle = '#ff0000';
-                                    ctx.lineWidth = 2;
-                                    ctx.beginPath();
-                                    ctx.moveTo(Math.cos(angle) * size * 0.4, Math.sin(angle) * size * 0.4);
-                                    ctx.lineTo(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.8);
-                                    ctx.stroke();
-                                }
-                            } else if (s.shipClass === 'aether-wing') {
-                                const grad = ctx.createLinearGradient(-size, 0, size, 0);
-                                grad.addColorStop(0, 'rgba(0,100,255,0)');
-                                grad.addColorStop(0.5, 'rgba(100,200,255,0.6)');
-                                grad.addColorStop(1, 'rgba(0,100,255,0)');
-                                ctx.fillStyle = grad;
-                                ctx.beginPath();
-                                ctx.moveTo(-size * 0.8, -size * 0.6);
-                                ctx.lineTo(size * 0.8, 0);
-                                ctx.lineTo(-size * 0.8, size * 0.6);
-                                ctx.closePath();
-                                ctx.fill();
-                            } else if (s.shipClass === 'death-sphere') {
-                                const sphereGrad = ctx.createRadialGradient(-size * 0.2, -size * 0.2, 0, 0, 0, size);
-                                sphereGrad.addColorStop(0, '#505050');
-                                sphereGrad.addColorStop(0.5, '#303030');
-                                sphereGrad.addColorStop(1, '#101010');
-                                ctx.fillStyle = sphereGrad;
-                                ctx.beginPath();
-                                ctx.arc(0, 0, size, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.stroke();
-                                const laserGrad = ctx.createRadialGradient(size * 0.4, -size * 0.4, 0, size * 0.4, -size * 0.4, size * 0.12);
-                                laserGrad.addColorStop(0, '#00ff00');
-                                laserGrad.addColorStop(0.5, '#00aa00');
-                                laserGrad.addColorStop(1, 'rgba(0,170,0,0)');
-                                ctx.fillStyle = laserGrad;
-                                ctx.beginPath();
-                                ctx.arc(size * 0.4, -size * 0.4, size * 0.1, 0, Math.PI * 2);
-                                ctx.fill();
-                            } else if (s.shipClass === 'tie-fighter') {
-                                const cockpitGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.3);
-                                cockpitGrad.addColorStop(0, '#606060');
-                                cockpitGrad.addColorStop(0.7, '#303030');
-                                cockpitGrad.addColorStop(1, '#101010');
-                                ctx.fillStyle = cockpitGrad;
-                                ctx.beginPath();
-                                for (let i = 0; i < 6; i++) {
-                                    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-                                    const x = Math.cos(angle) * size * 0.25;
-                                    const y = Math.sin(angle) * size * 0.25;
-                                    if (i === 0) ctx.moveTo(x, y);
-                                    else ctx.lineTo(x, y);
-                                }
-                                ctx.closePath();
-                                ctx.fill();
-                                ctx.stroke();
-                                const panelGrad = ctx.createLinearGradient(-size, -size, size, size);
-                                panelGrad.addColorStop(0, '#404040');
-                                panelGrad.addColorStop(0.5, '#505050');
-                                panelGrad.addColorStop(1, '#303030');
-                                ctx.fillStyle = panelGrad;
-                                ctx.fillRect(-size * 1.2, -size * 0.8, size * 0.8, size * 1.6);
-                                ctx.strokeRect(-size * 1.2, -size * 0.8, size * 0.8, size * 1.6);
-                                ctx.fillRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
-                                ctx.strokeRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
-                            } else {
-                                // Default fallback for any unrecognized ships
-                                ctx.beginPath();
-                                ctx.arc(0, 0, size * 0.5, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.stroke();
-                            }
-
-                            // Navigation lights (for non-probes, non-saucers)
-                            if (s.shipClass !== 'probe' && s.shipClass !== 'saucer') {
-                                const lightPulse = Math.sin(time * 3 + (s.lightPhase || 0)) * 0.5 + 0.5;
-                                ctx.fillStyle = s.lightColor || '#ff00ff';
-                                ctx.globalAlpha = lightPulse;
-                                ctx.beginPath();
-                                ctx.arc(size * 0.85, 0, 3 / zoom, 0, Math.PI * 2);
-                                ctx.fill();
-
-                                // Wing tip lights
-                                ctx.fillStyle = '#00ff00';
-                                ctx.beginPath();
-                                ctx.arc(-size * 0.5, -size * 0.6, 2 / zoom, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.fillStyle = '#ff0000';
-                                ctx.beginPath();
-                                ctx.arc(-size * 0.5, size * 0.6, 2 / zoom, 0, Math.PI * 2);
-                                ctx.fill();
-                                ctx.globalAlpha = 1;
-                            }
-
-                            ctx.restore();
-                        });
-                    }
-                }
-
-                drawDeepSpaceSpecific() {
-                    if (!this.config.showBackground) return;
-
-                    const ctx = this.ctx;
-                    const time = performance.now() * 0.0005;
-
-                    // 1. Galaxies
-                    if (this.galaxies && this.galaxies.length > 0) {
-                        this.galaxies.forEach(g => {
-                            if (g.flownOut) return; // Skip if flown out during warp
-                            ctx.save();
-                            // Position comes from flyObject during disengage
-                            ctx.translate(g.x, g.y);
-
-                            // During disengage: use scale and alpha from flyObject
-                            if (this.warpDisengaging && g.warpScale !== undefined) {
-                                ctx.scale(g.warpScale, g.warpScale);
-                                ctx.globalAlpha = g.warpAlpha || 0;
-                            }
-
-                            ctx.rotate(g.angle + time * 0.1);
-
-                            const spiralGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
-                            spiralGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
-                            spiralGradient.addColorStop(0.2, g.color);
-                            spiralGradient.addColorStop(1, 'transparent');
-
-                            ctx.fillStyle = spiralGradient;
-                            ctx.beginPath();
-                            for (let i = 0; i < 3; i++) {
-                                ctx.rotate(Math.PI * 2 / 3);
-                                ctx.ellipse(0, 0, g.size, g.size / 4, 0, 0, Math.PI * 2); // Corrected ellipse center
-                            }
-                            ctx.fill();
-                            ctx.restore();
-                        });
-                    }
-
-                    // 2. Black Holes
-                    if (this.blackHoles && this.blackHoles.length > 0) {
-                        this.blackHoles.forEach(bh => {
-                            if (bh.flownOut) return; // Skip if flown out during warp
-                            ctx.save();
-
-                            // Position comes from flyObject during disengage
-                            ctx.translate(bh.x, bh.y);
-
-                            // During disengage: use scale and alpha from flyObject
-                            if (this.warpDisengaging && bh.warpScale !== undefined) {
-                                ctx.scale(bh.warpScale, bh.warpScale);
-                                ctx.globalAlpha = bh.warpAlpha || 0;
-                            }
-
-                            // Accretion disk
-                            ctx.beginPath();
-                            ctx.strokeStyle = 'orange';
-                            ctx.lineWidth = 2;
-                            ctx.arc(0, 0, bh.size * 1.5, 0, Math.PI * 2);
-                            ctx.stroke();
-
-                            // Event Horizon
-                            ctx.beginPath();
-                            ctx.fillStyle = 'black';
-                            ctx.arc(0, 0, bh.size, 0, Math.PI * 2);
-                            ctx.fill();
-
-                            // Glow
-                            ctx.shadowColor = 'purple';
-                            ctx.shadowBlur = 20;
-                            ctx.stroke();
-                            ctx.shadowBlur = 0;
-
-                            ctx.restore();
-                        });
-                    }
-
-                    // 3. Planets (with zoom-based detail and proper Saturn-style rings)
-                    if (this.planets && this.planets.length > 0) {
-                        const zoom = this.camera.zoom;
-                        this.planets.forEach(p => {
-                            if (p.flownOut) return; // Skip if flown out during warp
-                            ctx.save();
-
-                            // Position comes from flyObject during disengage
-                            ctx.translate(p.x, p.y);
-
-                            // During disengage: use scale and alpha from flyObject
-                            if (this.warpDisengaging && p.warpScale !== undefined) {
-                                ctx.scale(p.warpScale, p.warpScale);
-                                ctx.globalAlpha = p.warpAlpha || 0;
-                            }
-
-                            ctx.rotate(p.axialTilt);
-
-                            const screenRadius = p.radius * zoom;
-                            const detailLevel = Math.min(3, Math.floor(screenRadius / 30)); // 0-3 detail levels
-
-                            // === SATURN-STYLE RINGS: Draw back half first ===
-                            if (p.hasRings) {
-                                this.drawPlanetRingsHalf(ctx, p, 'back');
-                            }
-
-                            // Atmospheric glow (outer)
-                            if (p.hasAtmosphere) {
-                                const atmosGrad = ctx.createRadialGradient(0, 0, p.radius * 0.95, 0, 0, p.radius * 1.15);
-                                atmosGrad.addColorStop(0, 'transparent');
-                                atmosGrad.addColorStop(0.5, p.atmosphereColor + '40');
-                                atmosGrad.addColorStop(1, 'transparent');
-                                ctx.fillStyle = atmosGrad;
-                                ctx.beginPath();
-                                ctx.arc(0, 0, p.radius * 1.15, 0, Math.PI * 2);
-                                ctx.fill();
-                            }
-
-                            // Planet body with 3D gradient
-                            const bodyGrad = ctx.createRadialGradient(
-                                -p.radius * 0.3, -p.radius * 0.3, 0,
-                                0, 0, p.radius
-                            );
-                            bodyGrad.addColorStop(0, p.secondaryColor);
-                            bodyGrad.addColorStop(0.4, p.baseColor);
-                            bodyGrad.addColorStop(0.8, p.tertiaryColor);
-                            bodyGrad.addColorStop(1, '#000000');
-
-                            ctx.fillStyle = bodyGrad;
-                            ctx.beginPath();
-                            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-                            ctx.fill();
-
-                            // Surface texture (procedural bands/patterns based on zoom)
-                            if (detailLevel >= 1) {
-                                ctx.globalAlpha = 0.3;
-                                ctx.strokeStyle = p.tertiaryColor;
-                                ctx.lineWidth = 2 / zoom;
-
-                                // Draw bands for gas giants
-                                if (p.type === 'gas-giant' || p.type === 'ice-giant') {
-                                    for (let i = -4; i <= 4; i++) {
-                                        const bandY = p.radius * (i * 0.15);
-                                        const bandWidth = Math.sqrt(p.radius * p.radius - bandY * bandY);
-                                        if (bandWidth > 0) {
-                                            ctx.beginPath();
-                                            ctx.ellipse(0, bandY, bandWidth, 3, 0, 0, Math.PI * 2);
-                                            ctx.stroke();
-                                        }
-                                    }
-                                }
-
-                                // Draw continents for terrestrial/ocean
-                                if ((p.type === 'terrestrial' || p.type === 'ocean') && detailLevel >= 2) {
-                                    ctx.fillStyle = p.type === 'ocean' ? p.baseColor : p.secondaryColor;
-                                    const seed = p.textureSeed;
-                                    for (let j = 0; j < 5; j++) {
-                                        const cx = Math.cos(seed + j * 1.2) * p.radius * 0.5;
-                                        const cy = Math.sin(seed * 0.7 + j) * p.radius * 0.4;
-                                        const cr = p.radius * (0.15 + Math.sin(seed + j) * 0.1);
-                                        ctx.beginPath();
-                                        ctx.arc(cx, cy, cr, 0, Math.PI * 2);
-                                        ctx.fill();
-                                    }
-                                }
-                                ctx.globalAlpha = 1;
-                            }
-
-                            // Shadow side
-                            const shadowGrad = ctx.createLinearGradient(-p.radius, 0, p.radius, 0);
-                            shadowGrad.addColorStop(0, 'transparent');
-                            shadowGrad.addColorStop(0.6, 'transparent');
-                            shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
-                            ctx.fillStyle = shadowGrad;
-                            ctx.beginPath();
-                            ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-                            ctx.fill();
-
-                            // === SATURN-STYLE RINGS: Draw front half on top ===
-                            if (p.hasRings) {
-                                this.drawPlanetRingsHalf(ctx, p, 'front');
-                            }
-
-                            ctx.restore();
-                        });
-                    }
-                }
-
-                // Helper method for drawing Saturn-style planet rings (half at a time)
-                drawPlanetRingsHalf(ctx, planet, half) {
-                    const p = planet;
-                    ctx.save();
-
-                    // Create clipping region for front or back half
-                    ctx.beginPath();
-                    if (half === 'back') {
-                        // Back half: top portion of ellipse (behind planet)
-                        ctx.rect(-p.ringOuterRadius * 1.5, -p.ringOuterRadius, p.ringOuterRadius * 3, p.ringOuterRadius);
-                    } else {
-                        // Front half: bottom portion of ellipse (in front of planet)
-                        ctx.rect(-p.ringOuterRadius * 1.5, 0, p.ringOuterRadius * 3, p.ringOuterRadius);
-                    }
-                    ctx.clip();
-
-                    // Draw the ring bands
-                    ctx.globalAlpha = half === 'back' ? 0.4 : 0.7; // Back rings dimmer
-
-                    // Multiple ring bands with gradient colors
-                    for (let i = 0; i < 5; i++) {
-                        const ringR = p.ringInnerRadius + (p.ringOuterRadius - p.ringInnerRadius) * (i / 5 + 0.1);
-                        const ringThickness = (p.ringOuterRadius - p.ringInnerRadius) * 0.12;
-
-                        // Slight color variation per band
-                        const hueShift = i * 5;
-                        ctx.strokeStyle = p.ringColor;
-                        ctx.lineWidth = ringThickness;
-
-                        ctx.beginPath();
-                        ctx.ellipse(0, 0, ringR, ringR * 0.25, 0, 0, Math.PI * 2);
-                        ctx.stroke();
-                    }
-
-                    ctx.restore();
-                }
-
-                drawStarShape(ctx, x, y, r) {
-                    ctx.beginPath();
-                    const pr = r * 0.5;
-                    ctx.moveTo(x, y - r);
-                    ctx.lineTo(x + pr, y - pr);
-                    ctx.lineTo(x + r, y);
-                    ctx.lineTo(x + pr, y + pr);
-                    ctx.lineTo(x, y + r);
-                    ctx.lineTo(x - pr, y + pr);
-                    ctx.lineTo(x - r, y);
-                    ctx.lineTo(x - pr, y - pr);
-                    ctx.closePath();
-                    ctx.fill();
-                }
-
-                // Get the center point of all stars (constellation center)
-                getConstellationCenter() {
-                    if (this.stars.length === 0) {
-                        return { x: this.canvas.width / 2, y: this.canvas.height / 2, z: 0 };
-                    }
-                    let sumX = 0, sumY = 0, sumZ = 0;
-                    this.stars.forEach(s => {
-                        sumX += s.x;
-                        sumY += s.y;
-                        sumZ += (s.z || 0);
-                    });
-                    return {
-                        x: sumX / this.stars.length,
-                        y: sumY / this.stars.length,
-                        z: sumZ / this.stars.length
-                    };
-                }
-
-                // 3D Rotation: Rotate a point around a given center
-                rotate3D(x, y, z, centerX, centerY) {
-                    // Convert degrees to radians
-                    const radX = this.rotationX * Math.PI / 180;
-                    const radY = this.rotationY * Math.PI / 180;
-                    const radZ = this.rotationZ * Math.PI / 180;
-
-                    // Translate to origin (center of view)
-                    let px = x - centerX;
-                    let py = y - centerY;
-                    let pz = z;
-
-                    // Rotation around X axis
-                    let y1 = py * Math.cos(radX) - pz * Math.sin(radX);
-                    let z1 = py * Math.sin(radX) + pz * Math.cos(radX);
-                    py = y1;
-                    pz = z1;
-
-                    // Rotation around Y axis
-                    let x1 = px * Math.cos(radY) + pz * Math.sin(radY);
-                    z1 = -px * Math.sin(radY) + pz * Math.cos(radY);
-                    px = x1;
-                    pz = z1;
-
-                    // Rotation around Z axis
-                    x1 = px * Math.cos(radZ) - py * Math.sin(radZ);
-                    y1 = px * Math.sin(radZ) + py * Math.cos(radZ);
-                    px = x1;
-                    py = y1;
-
-                    // Simple perspective projection (optional depth effect)
-                    const fov = 800;
-                    const scale = fov / (fov + pz);
-
-                    // Translate back
-                    return {
-                        x: px * scale + centerX,
-                        y: py * scale + centerY,
-                        scale: scale
-                    };
-                }
-
-                // Inverse 3D Rotation: Project screen point back to 3D world (at Z=0 plane relative to rotation)
-                inverseRotate3D(x, y, centerX, centerY) {
-                    // Negate angles for inverse rotation
-                    const radX = -this.rotationX * Math.PI / 180;
-                    const radY = -this.rotationY * Math.PI / 180;
-                    const radZ = -this.rotationZ * Math.PI / 180;
-
-                    // Translate to origin
-                    let px = x - centerX;
-                    let py = y - centerY;
-                    let pz = 0; // Assume we are clicking on the plane passing through center
-
-                    // Inverse Order: X^-1( Y^-1( Z^-1( P ) ) )
-                    // Note: Forward was RotZ(RotY(RotX(P))). Inverse is RotXinv(RotYinv(RotZinv(P))).
-
-                    // 1. Inverse Z Rotation
-                    let x1 = px * Math.cos(radZ) - py * Math.sin(radZ);
-                    let y1 = px * Math.sin(radZ) + py * Math.cos(radZ);
-                    px = x1;
-                    py = y1;
-
-                    // 2. Inverse Y Rotation
-                    x1 = px * Math.cos(radY) + pz * Math.sin(radY);
-                    let z1 = -px * Math.sin(radY) + pz * Math.cos(radY);
-                    px = x1;
-                    pz = z1;
-
-                    // 3. Inverse X Rotation
-                    y1 = py * Math.cos(radX) - pz * Math.sin(radX);
-                    z1 = py * Math.sin(radX) + pz * Math.cos(radX);
-                    py = y1;
-                    pz = z1;
-
-                    // Translate back
-                    return {
-                        x: px + centerX,
-                        y: py + centerY,
-                        z: pz
-                    };
-                }
-
-                // Reset rotation sliders and values
-                resetRotation() {
-                    this.rotationX = 0;
-                    this.rotationY = 0;
-                    this.rotationZ = 0;
-
-                    const xSlider = document.getElementById('rotXSlider');
-                    const ySlider = document.getElementById('rotYSlider');
-                    const zSlider = document.getElementById('rotZSlider');
-
-                    if (xSlider) { xSlider.value = 0; document.getElementById('rotXValue').textContent = '0°'; }
-                    if (ySlider) { ySlider.value = 0; document.getElementById('rotYValue').textContent = '0°'; }
-                    if (zSlider) { zSlider.value = 0; document.getElementById('rotZValue').textContent = '0°'; }
-                }
-
-                calculateGeometry() {
-                    const lines = [];
-                    const adj = {};
-                    // Performance fix: use Map for O(1) star lookups
-                    const starMap = new Map();
-                    this.stars.forEach(s => {
-                        adj[s.id] = [];
-                        starMap.set(s.id, s);
-                    });
-
-                    for (let i = 0; i < this.stars.length; i++) {
-                        for (let j = i + 1; j < this.stars.length; j++) {
-                            const s1 = this.stars[i];
-                            const s2 = this.stars[j];
-                            const dist = Math.hypot(s1.x - s2.x, s1.y - s2.y);
-
-                            if (dist < this.config.maxConnectDist) {
-                                lines.push({ s1, s2, dist });
-                                adj[s1.id].push(s2.id);
-                                adj[s2.id].push(s1.id);
-                            }
-                        }
-                    }
-
-                    // BFS for clusters
-                    const clusters = [];
-                    const visited = new Set();
-                    this.stars.forEach(star => {
-                        if (!visited.has(star.id)) {
-                            const cluster = [];
-                            const queue = [star.id];
-                            visited.add(star.id);
-                            while (queue.length) {
-                                const id = queue.shift();
-                                const s = starMap.get(id); // O(1) lookup
-                                if (s) cluster.push(s);
-                                adj[id].forEach(nid => {
-                                    if (!visited.has(nid)) {
-                                        visited.add(nid);
-                                        queue.push(nid);
-                                    }
+                        // Clear current stars and history
+                        this.stars = [];
+                        this.history = [];
+
+                        // Parse each path to extract star data
+                        pathElements.forEach((path, index) => {
+                            const d = path.getAttribute('d');
+                            const fill = path.getAttribute('fill');
+
+                            // Parse path: M{x} {y-r} L...
+                            const match = d.match(/M([-\d.]+)\s+([-\d.]+)/);
+                            if (match) {
+                                const topX = parseFloat(match[1]);
+                                const topY = parseFloat(match[2]);
+                                const r = this.config.starBaseRad * 1.5;
+                                const y = topY + r;
+
+                                this.stars.push({
+                                    id: Date.now() + index,
+                                    x: topX,
+                                    y: y,
+                                    color: fill,
+                                    phase: Math.random() * Math.PI * 2,
+                                    clusterId: null
                                 });
                             }
-                            if (cluster.length > 0) clusters.push(cluster);
-                        }
-                    });
+                        });
 
-                    return { lines, clusters };
+                        event.target.value = '';
+                        this.showToast(`Loaded ${this.stars.length} stars`);
+                        this.draw();
+                    } catch (err) {
+                        console.error('Error parsing SVG:', err);
+                        this.showToast("Error loading SVG file");
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // Export canvas animation as video
+            exportVideo() {
+                if (this._isRecording) {
+                    this.showToast("Already recording...");
+                    return;
                 }
 
-                showToast(msg) {
-                    console.log('[Toast]', msg);
-                    // Create a toast element if needed
-                    let toast = document.getElementById('toast');
-                    if (!toast) {
-                        toast = document.createElement('div');
-                        toast.id = 'toast';
-                        toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:10px 20px;border-radius:8px;z-index:9999;transition:opacity 0.3s';
-                        document.body.appendChild(toast);
-                    }
-                    toast.textContent = msg;
-                    toast.style.opacity = '1';
-                    clearTimeout(this._toastTimeout);
-                    this._toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
-                }
+                // Get selected duration
+                const durationSelect = document.getElementById('videoDuration');
+                const duration = durationSelect ? parseInt(durationSelect.value) : 5000;
+                const durationSec = duration / 1000;
 
-                // Ship Selection Methods
-                showShipModal() {
-                    const modal = document.getElementById('shipModal');
-                    if (modal) modal.classList.add('active');
-                }
+                this._isRecording = true;
+                const btn = document.getElementById('exportVideoBtn');
+                if (btn) btn.classList.add('active');
 
-                hideShipModal() {
-                    const modal = document.getElementById('shipModal');
-                    if (modal) modal.classList.remove('active');
-                }
+                this.showToast(`Recording ${durationSec} seconds...`);
 
-                captureConstellation() {
-                    if (this.stars.length < 3) {
-                        this.showToast("Draw at least 3 stars first!");
-                        return;
-                    }
+                const stream = this.canvas.captureStream(30);
+                const chunks = [];
 
-                    // 1. Calculate Centroid
-                    let sumX = 0, sumY = 0, sumZ = 0;
-                    this.stars.forEach(s => {
-                        sumX += s.x;
-                        sumY += s.y;
-                        sumZ += (s.z || 0);
-                    });
-                    const centerX = sumX / this.stars.length;
-                    const centerY = sumY / this.stars.length;
-                    const centerZ = sumZ / this.stars.length;
+                const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+                    ? 'video/webm;codecs=vp9'
+                    : 'video/webm';
 
-                    // 2. Normalize Stars (Center at 0,0,0) and Scale down
-                    const scale = 0.5; // Scale down for ship size
-                    const validStars = this.stars.map(s => ({
-                        x: (s.x - centerX) * scale,
-                        y: (s.y - centerY) * scale,
-                        z: ((s.z || 0) - centerZ) * scale,
-                        color: s.color
-                    }));
+                const recorder = new MediaRecorder(stream, { mimeType });
 
-                    // 3. Capture Connections (Lines)
-                    // We need to map original IDs to indices or new IDs
-                    const starIdToIndex = {};
-                    this.stars.forEach((s, i) => starIdToIndex[s.id] = i);
+                recorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) chunks.push(e.data);
+                };
 
-                    const validLines = [];
-                    const lines = this.calculateGeometry().lines; // Get current lines
-                    lines.forEach(l => {
-                        const idx1 = starIdToIndex[l.from];
-                        const idx2 = starIdToIndex[l.to];
-                        if (idx1 !== undefined && idx2 !== undefined) {
-                            validLines.push({ fromIndex: idx1, toIndex: idx2 });
-                        }
-                    });
+                recorder.onstop = () => {
+                    this._isRecording = false;
+                    if (btn) btn.classList.remove('active');
 
-                    // 4. Save to PlayerShip
-                    this.playerShip.customStructure = {
-                        stars: validStars,
-                        lines: validLines
-                    };
-
-                    // Save to LocalStorage
-                    localStorage.setItem('customShipStructure', JSON.stringify(this.playerShip.customStructure));
-
-                    // Auto-select "Orion" type (which we'll use for custom)
-                    this.playerShip.type = 'orion';
-                    localStorage.setItem('playerShipType', 'orion');
-
-                    this.showToast("Constellation SAVED as Spacecraft!");
-                }
-
-                selectShip(shipType) {
-                    const ships = {
-                        interceptor: { name: 'Interceptor', maxSpeed: 90, acceleration: 0.8 },
-                        saucer: { name: 'Saucer', maxSpeed: 110, acceleration: 1.0 },
-                        hauler: { name: 'Hauler', maxSpeed: 60, acceleration: 0.5 },
-                        orion: { name: 'Orion', maxSpeed: 100, acceleration: 0.9 },
-                        draco: { name: 'Draco', maxSpeed: 130, acceleration: 0.7 },
-                        phoenix: { name: 'Phoenix', maxSpeed: 95, acceleration: 1.2 },
-                        harvester: { name: 'Starfighter', maxSpeed: 140, acceleration: 1.3 }
-                    };
-                    const ship = ships[shipType];
-                    if (ship && this.playerShip) {
-                        this.playerShip.type = shipType;
-                        this.playerShip.maxSpeed = ship.maxSpeed;
-                        this.playerShip.acceleration = ship.acceleration;
-                        this.showToast(`Selected ${ship.name} `);
-                    }
-                    this.hideShipModal();
-                }
-
-                toggleAutopilot() {
-                    this.autopilot = !this.autopilot;
-                    const btn = document.querySelector('button[onclick="app.toggleAutopilot()"]');
-                    if (btn) {
-                        btn.classList.toggle('active', this.autopilot);
-                        btn.style.color = this.autopilot ? '#00f3ff' : '#5c7a8a';
-                    }
-                    this.showToast(this.autopilot ? "Autopilot ENGAGED" : "Autopilot DISENGAGED");
-                }
-
-                // Legacy support for gems resize if needed
-                initGemsResize() {
-                    if (this.initGemsSectionResize) {
-                        this.initGemsSectionResize();
-                    }
-                }
-
-                flightZoom(amount) {
-                    // Simple zoom for flight mode buttons
-                    const newZoom = Math.max(0.1, Math.min(6.0, this.camera.zoom + amount));
-                    this.camera.zoom = newZoom;
-
-                    // Update display if it exists
-                    const zoomDisplay = document.getElementById('zoomDisplay');
-                    if (zoomDisplay) {
-                        zoomDisplay.textContent = this.camera.zoom.toFixed(1) + 'x';
-                    }
-
-                    // If in expanded map mode, also update that
-                    if (this.expandedMapMode) {
-                        this.expandedMapZoom = Math.max(0.2, Math.min(10.0, this.expandedMapZoom + amount));
-                    }
-                }
-
-                downloadSVG() {
-                    if (this.stars.length === 0) {
-                        this.showToast("Universe is empty!");
-                        return;
-                    }
-
-                    // Ensure cluster IDs are assigned for naming in SVG
-                    this.refreshClusterAssignments();
-
-                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                    this.stars.forEach(s => {
-                        minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
-                        maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
-                    });
-
-                    const pad = 100;
-                    const w = (maxX - minX) + pad * 2;
-                    const h = (maxY - minY) + pad * 2;
-                    const vbX = minX - pad;
-                    const vbY = minY - pad;
-
-                    const { lines, clusters } = this.calculateGeometry();
-
-                    let svg = `< svg xmlns = "http://www.w3.org/2000/svg" viewBox = "${vbX} ${vbY} ${w} ${h}" style = "background:#020205" >
-            <rect x="${vbX}" y="${vbY}" width="${w}" height="${h}" fill="#020205" />`;
-
-                    // Lines
-                    lines.forEach(l => {
-                        const op = (1 - (l.dist / this.config.maxConnectDist)).toFixed(2);
-                        const [r, g, b] = this.hexToRgb(this.getStarColor(l.s1));
-                        svg += `< line x1 = "${l.s1.x}" y1 = "${l.s1.y}" x2 = "${l.s2.x}" y2 = "${l.s2.y}" stroke = "rgb(${r}, ${g}, ${b})" stroke - width="1.5" stroke - linecap="round" opacity = "${op * 0.8}" /> `;
-                    });
-
-                    // Labels
-                    clusters.forEach(c => {
-                        const name = String(c[0].clusterId);
-                        if (c.length < this.config.minGroupSize || name === String(c[0].id)) return;
-
-                        let cx = 0, cy = 0; c.forEach(s => { cx += s.x; cy += s.y }); cx /= c.length; cy /= c.length;
-                        const color = this.getStarColor(c[0]);
-                        svg += `< text x = "${cx}" y = "${cy + 30}" font - family="sans-serif" font - size="14" fill = "${color}" text - anchor="middle" font - weight="600" > ${name}</text > `;
-                    });
-
-                    // Stars
-                    this.stars.forEach(s => {
-                        const color = this.getStarColor(s);
-                        const r = this.config.starBaseRad * 1.5;
-
-                        // Star Shape
-                        const pr = r * 0.5;
-                        const pathData = `M${s.x} ${s.y - r} L${s.x + pr} ${s.y - pr} L${s.x + r} ${s.y} L${s.x + pr} ${s.y + pr} L${s.x} ${s.y + r} L${s.x - pr} ${s.y + pr} L${s.x - r} ${s.y} L${s.x - pr} ${s.y - pr} Z`;
-                        svg += `< path d = "${pathData}" fill = "${color}" opacity = "0.8" /> `;
-
-                        // Core dot
-                        svg += `< circle cx = "${s.x}" cy = "${s.y}" r = "1.5" fill = "white" /> `;
-                    });
-
-                    svg += `</svg > `;
-
-                    // FileSaver-style download for Chrome compatibility
-                    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-                    const filename = `AetherMap - ${Date.now()}.svg`;
-
-                    // Try using msSaveBlob for IE/Edge compatibility
-                    if (typeof window.navigator.msSaveBlob !== 'undefined') {
-                        window.navigator.msSaveBlob(blob, filename);
-                        this.showToast("Map Exported");
-                        return;
-                    }
-
+                    const blob = new Blob(chunks, { type: mimeType });
+                    const filename = `Interstellar - ${Date.now()}.webm`;
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
                     link.download = filename;
 
-                    // Dispatch a real click event instead of calling click()
+                    // Dispatch a real click event for Chrome compatibility
                     const event = new MouseEvent('click', {
                         view: window,
                         bubbles: true,
@@ -8381,165 +8521,25 @@
                         window.URL.revokeObjectURL(url);
                     }, 1000);
 
-                    this.showToast("Map Exported");
-                }
+                    this.showToast("Video exported!");
+                };
 
-                // Download canvas as PNG image
-                downloadPNG() {
-                    const filename = `Interstellar - ${Date.now()}.png`;
-                    const link = document.createElement('a');
-                    link.download = filename;
-                    link.href = this.canvas.toDataURL('image/png');
+                recorder.onerror = (e) => {
+                    this._isRecording = false;
+                    if (btn) btn.classList.remove('active');
+                    console.error('Recording error:', e);
+                    this.showToast("Recording failed");
+                };
 
-                    // Dispatch a real click event for Chrome compatibility
-                    const event = new MouseEvent('click', {
-                        view: window,
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    link.dispatchEvent(event);
+                recorder.start();
 
-                    this.showToast("Image saved as " + filename);
-                }
-
-                // Trigger the hidden file input for loading SVG
-                triggerLoadSVG() {
-                    document.getElementById('svgFileInput').click();
-                }
-
-                // Load and parse an SVG file to restore stars
-                loadSVG(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const svgContent = e.target.result;
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(svgContent, 'image/svg+xml');
-
-                            // Find all path elements (stars)
-                            const pathElements = doc.querySelectorAll('path[fill][opacity]');
-
-                            if (pathElements.length === 0) {
-                                this.showToast("No stars found in SVG");
-                                return;
-                            }
-
-                            // Clear current stars and history
-                            this.stars = [];
-                            this.history = [];
-
-                            // Parse each path to extract star data
-                            pathElements.forEach((path, index) => {
-                                const d = path.getAttribute('d');
-                                const fill = path.getAttribute('fill');
-
-                                // Parse path: M{x} {y-r} L...
-                                const match = d.match(/M([-\d.]+)\s+([-\d.]+)/);
-                                if (match) {
-                                    const topX = parseFloat(match[1]);
-                                    const topY = parseFloat(match[2]);
-                                    const r = this.config.starBaseRad * 1.5;
-                                    const y = topY + r;
-
-                                    this.stars.push({
-                                        id: Date.now() + index,
-                                        x: topX,
-                                        y: y,
-                                        color: fill,
-                                        phase: Math.random() * Math.PI * 2,
-                                        clusterId: null
-                                    });
-                                }
-                            });
-
-                            event.target.value = '';
-                            this.showToast(`Loaded ${this.stars.length} stars`);
-                            this.draw();
-                        } catch (err) {
-                            console.error('Error parsing SVG:', err);
-                            this.showToast("Error loading SVG file");
-                        }
-                    };
-                    reader.readAsText(file);
-                }
-
-                // Export canvas animation as video
-                exportVideo() {
-                    if (this._isRecording) {
-                        this.showToast("Already recording...");
-                        return;
+                setTimeout(() => {
+                    if (recorder.state === 'recording') {
+                        recorder.stop();
                     }
-
-                    // Get selected duration
-                    const durationSelect = document.getElementById('videoDuration');
-                    const duration = durationSelect ? parseInt(durationSelect.value) : 5000;
-                    const durationSec = duration / 1000;
-
-                    this._isRecording = true;
-                    const btn = document.getElementById('exportVideoBtn');
-                    if (btn) btn.classList.add('active');
-
-                    this.showToast(`Recording ${durationSec} seconds...`);
-
-                    const stream = this.canvas.captureStream(30);
-                    const chunks = [];
-
-                    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-                        ? 'video/webm;codecs=vp9'
-                        : 'video/webm';
-
-                    const recorder = new MediaRecorder(stream, { mimeType });
-
-                    recorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) chunks.push(e.data);
-                    };
-
-                    recorder.onstop = () => {
-                        this._isRecording = false;
-                        if (btn) btn.classList.remove('active');
-
-                        const blob = new Blob(chunks, { type: mimeType });
-                        const filename = `Interstellar - ${Date.now()}.webm`;
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-
-                        // Dispatch a real click event for Chrome compatibility
-                        const event = new MouseEvent('click', {
-                            view: window,
-                            bubbles: true,
-                            cancelable: true
-                        });
-                        link.dispatchEvent(event);
-
-                        // Clean up after a delay
-                        setTimeout(() => {
-                            window.URL.revokeObjectURL(url);
-                        }, 1000);
-
-                        this.showToast("Video exported!");
-                    };
-
-                    recorder.onerror = (e) => {
-                        this._isRecording = false;
-                        if (btn) btn.classList.remove('active');
-                        console.error('Recording error:', e);
-                        this.showToast("Recording failed");
-                    };
-
-                    recorder.start();
-
-                    setTimeout(() => {
-                        if (recorder.state === 'recording') {
-                            recorder.stop();
-                        }
-                    }, duration);
-                }
+                }, duration);
             }
+        }
         }
 
         window.app = new AetherEngine();
