@@ -17,6 +17,7 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'index.html'),
         interstellar: path.resolve(__dirname, 'src/pages/interstellar/index.html'),
+        mindwave: path.resolve(__dirname, 'public/mindwave.html'),
       },
     },
   },

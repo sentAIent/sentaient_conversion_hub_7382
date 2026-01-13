@@ -945,6 +945,150 @@
             vertical-align: middle;
         }
 
+        /* RESTORED: Gems Grid Layout */
+        .gems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+            padding: 5px;
+        }
+
+        .gem-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            /* Slightly visible item bg */
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 11px;
+            color: #ddd;
+        }
+
+        .gem-count {
+            margin-left: auto;
+            /* Push count to right */
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* RESTORED: Leaderboard Internal Layout */
+        .leaders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 5px;
+        }
+
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            font-size: 11px;
+            /* Slightly larger text */
+        }
+
+        .leader-row:last-child {
+            border-bottom: none;
+        }
+
+        .leader-rank {
+            width: 24px;
+            font-weight: 800;
+            color: var(--accent);
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.5);
+        }
+
+        .leader-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 8px;
+        }
+
+        .leader-wealth {
+            color: #ffd700;
+            font-weight: bold;
+            font-family: monospace;
+            /* Better for numbers */
+        }
+
+        /* Floating Windows (Map & Leaders) */
+        .floating-window {
+            position: fixed;
+            z-index: 50;
+            background: rgba(10, 20, 30, 0.9);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .floating-window.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+        }
+
+        .map-window {
+            bottom: 15px;
+            left: 15px;
+            width: 200px;
+            height: 150px;
+        }
+
+        .leaders-window {
+            bottom: 100px;
+            /* Above mobile toggle */
+            right: 15px;
+            width: 220px;
+            max-height: 250px;
+        }
+
+        .window-header {
+            background: rgba(0, 243, 255, 0.15);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            cursor: grab;
+        }
+
+        .window-content {
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Specific Button Styles */
+        .btn-sell-all {
+            background: linear-gradient(90deg, #ff3333, #aa0000);
+            border: 1px solid #ff5555;
+            color: white;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .btn-sell-all:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 50, 50, 0.5);
+        }
+
         /* Ship Selection Modal */
         .ship-list {
             display: flex;
@@ -982,48 +1126,83 @@
 
         /* ===== COCKPIT BAR (Above Bottom Bar) ===== */
         /* ===== COCKPIT BAR (Removed Container - Now separate floating items) ===== */
-        .flight-cockpit {
-            /* Now just a transparent layer for initial positioning if needed, or removed entirely */
+        /* --- FLIGHT HUD (Command Center) --- */
+        .flight-hud {
+            position: fixed;
+            top: 60px;
+            /* Below top bar */
+            left: 0;
+            width: 100%;
+            height: calc(100% - 140px);
+            /* Above bottom bar */
             pointer-events: none;
-            /* Let children receive events */
+            /* Let clicks pass through to canvas */
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            /* Left Panel, Space, Right Panel */
+            grid-template-rows: 1fr auto;
+            /* Content, Bottom Gems */
+            grid-template-areas:
+                "left center right"
+                "bottom bottom bottom";
+            gap: 20px;
+            padding: 20px;
+            z-index: 20;
+        }
+
+        .hud-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: auto;
+            /* Re-enable clicks for UI */
+        }
+
+        .hud-left {
+            grid-area: left;
+        }
+
+        .hud-center {
+            grid-area: center;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .hud-right {
+            grid-area: right;
+        }
+
+        .hud-bottom {
+            grid-area: bottom;
+            display: flex;
+            justify-content: center;
+            pointer-events: auto;
+            max-height: 200px;
         }
 
         .cockpit-section {
-            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            background: rgba(16, 24, 32, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(0, 243, 255, 0.3);
-            border-radius: 10px;
-            padding: 0;
-            /* Content padding moved to content div */
-            min-width: 100px;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-            backdrop-filter: blur(12px);
-            pointer-events: auto;
-            position: absolute;
-            /* Make them floating */
-            bottom: 60px;
-            /* Initial position */
+            border-radius: 8px;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            /* Reset absolute positioning */
+            position: static;
+            min-width: 0;
+            margin: 0;
         }
 
-        /* Initial Positions for Sections - Organized Layout */
-        #sectionControls {
-            left: 20px;
-            bottom: 60px;
-        }
 
-        #sectionRadar {
-            left: 180px;
-            bottom: 60px;
-        }
 
-        #sectionVelocity {
-            left: 340px;
-            bottom: 60px;
-        }
-
-        #sectionGems {
-            left: 500px;
-            bottom: 60px;
-        }
+        /* Initial Positions Removed - Using Grid Layout */
 
         .cockpit-header {
             display: flex;
@@ -1201,245 +1380,7 @@
             text-align: center;
         }
 
-        /* Gems Section - Expands horizontally to the right */
-        .gems-section {
-            min-width: 140px;
-            max-width: none;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .gems-grid {
-            display: flex;
-            flex-wrap: wrap;
-            /* Allow wrapping to multiple rows */
-            gap: 6px;
-            max-width: 600px;
-            /* Increased from 300px to show more gems */
-            max-height: 120px;
-            /* Limit height */
-            overflow-x: auto;
-            overflow-y: auto;
-            /* Allow vertical scroll if needed */
-            padding-bottom: 4px;
-        }
-
-        .gems-grid::-webkit-scrollbar {
-            height: 3px;
-        }
-
-        .gems-grid::-webkit-scrollbar-thumb {
-            background: rgba(0, 243, 255, 0.3);
-            border-radius: 2px;
-        }
-
-        .gems-grid::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        .gem-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 8px;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 4px;
-            font-size: 14px;
-            /* Increased from 10px */
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .gem-emoji {
-            font-size: 14px;
-        }
-
-        .gem-count {
-            color: #fff;
-            font-weight: bold;
-            font-size: 13px;
-            /* Larger count */
-        }
-
-        .gems-total {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 14px;
-            /* Increased from 11px */
-            font-weight: bold;
-            color: #ffd700;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* ===== FLOATING WINDOWS (Map & Leaders) ===== */
-        .floating-window {
-            position: fixed;
-            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-            backdrop-filter: blur(12px);
-            z-index: 85;
-            pointer-events: auto;
-            overflow: hidden;
-        }
-
-        .floating-window.hidden {
-            display: none;
-        }
-
-        .window-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-            cursor: move;
-        }
-
-        .window-header h4 {
-            margin: 0;
-            font-size: 11px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .window-controls {
-            display: flex;
-            gap: 4px;
-        }
-
-        .window-btn {
-            width: 18px;
-            height: 18px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            border-radius: 3px;
-            color: var(--accent);
-            font-size: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .window-btn:hover {
-            background: rgba(0, 243, 255, 0.2);
-        }
-
-        .window-content {
-            padding: 10px;
-        }
-
-        /* Map Window - Bottom Left */
-        .map-window {
-            left: 20px;
-            bottom: 200px;
-            /* Moved up to avoid cockpit */
-            width: 200px;
-            height: 180px;
-        }
-
-        .map-window.collapsed {
-            height: auto;
-        }
-
-        .map-window.collapsed .window-content {
-            display: none;
-        }
-
-        .map-canvas {
-            width: 100%;
-            height: 120px;
-            background: radial-gradient(circle at center, rgba(0, 20, 40, 0.9) 0%, rgba(0, 5, 15, 0.95) 100%);
-            border-radius: 6px;
-            border: 1px solid rgba(0, 243, 255, 0.2);
-        }
-
-        .map-legend {
-            display: flex;
-            gap: 8px;
-            margin-top: 6px;
-            flex-wrap: wrap;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 8px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .legend-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-        }
-
-        /* Leaders Window - Bottom Right */
-        .leaders-window {
-            right: 20px;
-            bottom: 200px;
-            /* Moved up to avoid cockpit */
-            width: 180px;
-        }
-
-        .leaders-window.collapsed .window-content {
-            display: none;
-        }
-
-        .leaders-list {
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .leaders-list::-webkit-scrollbar {
-            width: 3px;
-        }
-
-        .leaders-list::-webkit-scrollbar-thumb {
-            background: rgba(0, 243, 255, 0.3);
-            border-radius: 2px;
-        }
-
-        .leader-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 10px;
-        }
-
-        .leader-row:last-child {
-            border-bottom: none;
-        }
-
-        .leader-rank {
-            width: 20px;
-            color: var(--accent);
-            font-weight: bold;
-        }
-
-        .leader-name {
-            flex: 1;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .leader-wealth {
-            color: #ffd700;
-            font-weight: bold;
-        }
+        /* REPLACED BY RESTORED SECTION ABOVE */
 
         /* Responsive adjustments */
         @media (max-width: 900px) {
@@ -1804,99 +1745,120 @@
     <canvas id="canvas"></canvas>
 
     <!-- Flight Mode HUD Overlay -->
+    <!-- Flight Mode HUD Overlay (Command Center Layout) -->
     <div id="flightHUD" class="flight-hud hidden">
-        <!-- Cockpit Bar (Above Bottom Bar) -->
-        <!-- Cockpit Separate Floating Windows -->
 
-        <!-- 1. CONTROLS Section -->
-        <div id="sectionControls" class="cockpit-section controls-section">
-            <div class="cockpit-header">
-                <h4>🎮 Controls</h4>
-                <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')"
-                    title="Collapse">−</button>
-            </div>
-            <div class="cockpit-content">
-                <div class="controls-grid">
-                    <kbd>W</kbd><kbd>S</kbd><kbd>A</kbd><kbd>D</kbd>
-                    <kbd>Q</kbd><kbd>E</kbd><kbd>R</kbd><kbd>F</kbd>
-                    <kbd>Z</kbd><kbd>X</kbd><kbd>⇧</kbd><kbd>U</kbd>
+        <!-- LEFT COLUMN: Radar & Ship Status -->
+        <div class="hud-column hud-left">
+            <!-- RADAR -->
+            <div id="sectionRadar" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>📡 Radar System</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')">−</button>
                 </div>
-            </div>
-        </div>
-
-        <!-- 2. RADAR Section -->
-        <div id="sectionRadar" class="cockpit-section">
-            <div class="cockpit-header">
-                <h4>📡 Radar</h4>
-                <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')"
-                    title="Collapse">−</button>
-            </div>
-            <div class="cockpit-content">
-                <div class="radar-container">
-                    <canvas id="radarCanvas" class="radar-canvas" width="80" height="80"></canvas>
-                    <div class="radar-sweep"></div>
-                </div>
-                <div class="radar-coords" id="radarCoords">X: 0 Y: 0</div>
-            </div>
-        </div>
-
-        <!-- 3. VELOCITY Section -->
-        <div id="sectionVelocity" class="cockpit-section">
-            <div class="cockpit-header">
-                <h4>⚡ Velocity</h4>
-                <button class="window-btn" onclick="app.toggleCockpitSection('sectionVelocity')"
-                    title="Collapse">−</button>
-            </div>
-            <div class="cockpit-content">
-                <div class="velocity-display">
-                    <div class="speed-gauge">
-                        <canvas id="speedGaugeCanvas" width="60" height="60"></canvas>
-                        <div id="speedNumber" class="speed-number">0</div>
+                <div class="cockpit-content" style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="radar-container" style="margin-bottom:10px;">
+                        <canvas id="radarCanvas" class="radar-canvas" width="120" height="120"></canvas>
+                        <div class="radar-sweep"></div>
                     </div>
-                    <div class="speed-unit">km/s</div>
-                    <div class="cockpit-zoom-controls">
-                        <button class="zoom-btn" onclick="app.flightZoom(-0.2); event.stopPropagation();">−</button>
-                        <span id="zoomDisplay" class="zoom-value">1.0x</span>
-                        <button class="zoom-btn" onclick="app.flightZoom(0.2); event.stopPropagation();">+</button>
+                    <div class="radar-coords" id="radarCoords" style="font-family:monospace; color:#0ff;">X: 0 Y: 0
+                    </div>
+                </div>
+            </div>
+
+            <!-- VELOCITY -->
+            <div id="sectionVelocity" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>⚡ Engines</h4>
+                </div>
+                <div class="cockpit-content">
+                    <div class="velocity-display" style="display:flex; align-items:center; gap:15px;">
+                        <div class="speed-gauge" style="position:relative;">
+                            <canvas id="speedGaugeCanvas" width="70" height="70"></canvas>
+                            <div id="speedNumber" class="speed-number"
+                                style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold;">
+                                0</div>
+                        </div>
+                        <div style="flex:1;">
+                            <div class="speed-unit" style="color:var(--text-dim); font-size:11px;">VELOCITY (km/s)</div>
+                            <div class="cockpit-zoom-controls" style="margin-top:10px; display:flex; gap:5px;">
+                                <button class="zoom-btn" onclick="app.flightZoom(-0.2)">−</button>
+                                <span id="zoomDisplay" class="zoom-value"
+                                    style="background:rgba(0,0,0,0.5); padding:2px 6px; border-radius:4px;">1.0x</span>
+                                <button class="zoom-btn" onclick="app.flightZoom(0.2)">+</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 4. GEMS Section -->
-        <div id="sectionGems" class="cockpit-section gems-section"
-            style="min-width: 200px; max-width: 600px; resize: horizontal; overflow: auto;">
-            <div class="cockpit-header">
-                <h4>💎 Gems</h4>
-                <div style="display:flex; gap:4px;">
-                    <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
-                        title="Toggle Values">$</button>
-                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')"
-                        title="Collapse">−</button>
+        <!-- CENTER COLUMN (Spacer) -->
+        <div class="hud-column hud-center">
+            <!-- Can put reticle or warnings here later -->
+        </div>
+
+        <!-- RIGHT COLUMN: Controls & Ship Config -->
+        <div class="hud-column hud-right">
+            <!-- CONTROLS -->
+            <div id="sectionControls" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>🎮 Flight Control</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')">−</button>
+                </div>
+                <div class="cockpit-content">
+                    <div class="controls-grid"
+                        style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:15px;">
+                        <kbd title="Forward">W</kbd><kbd title="Backward">S</kbd><kbd title="Roll Left">A</kbd><kbd
+                            title="Roll Right">D</kbd>
+                        <kbd title="Up">Q</kbd><kbd title="Down">E</kbd><kbd title="Pitch Up">R</kbd><kbd
+                            title="Pitch Down">F</kbd>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(0,243,255,0.2); padding-top: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label style="font-size: 12px; color: #aaa;">Paint:</label>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <input type="color" id="shipColorPicker" value="#00f3ff"
+                                    style="width: 30px; height: 30px; border:none; background:none; cursor:pointer;">
+                                <button class="btn-small" onclick="app.resetShipColor()">↺</button>
+                            </div>
+                        </div>
+
+                        <button class="btn-small" style="width:100%; padding:8px;" onclick="app.toggleAutopilot()">
+                            <span id="autopilotStatus">✈️ Engage Autopilot</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="cockpit-section-content">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <label style="font-size: 11px; color: var(--text-dim);">Ship Color:</label>
-                    <input type="color" id="shipColorPicker" value="#00f3ff"
-                        style="width: 50px; height: 24px; cursor: pointer; border-radius: 3px; border: 1px solid var(--glass-border);"
-                        title="Change Spacecraft Color">
-                    <button class="btn-small" onclick="app.resetShipColor()" style="font-size: 10px;">Reset</button>
+        </div>
+
+        <!-- BOTTOM ROW: Inventory / Gems -->
+        <div class="hud-bottom">
+            <div id="sectionGems" class="cockpit-section gems-section" style="width: 100%; max-width: 800px;">
+                <div class="cockpit-header">
+                    <h4>💎 Cargo Hold</h4>
+                    <div style="display:flex; gap:10px;">
+                        <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
+                            title="Toggle Values">💲</button>
+                        <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')">−</button>
+                    </div>
                 </div>
-                <div class="flight-controls"
-                    style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 8px;">
-                    <button class="btn-small" style="font-size: 10px;" onclick="app.toggleAutopilot()">
-                        <span id="autopilotStatus">🛫 Autopilot OFF</span></button>
+                <div class="cockpit-content">
+                    <div id="gemsGrid" class="gems-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="wallet-display"
+                        style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
+                        <div class="gems-total" style="font-size:12px;">Est. Value: <span id="gemsTotal">$0</span></div>
+                        <span>Credits: <span id="walletValue">0</span> ₵</span>
+                        <button class="btn-sell-all" onclick="app.sellAllGems()">Sell All</button>
+                    </div>
                 </div>
-            </div>
-            <div class="cockpit-content">
-                <div id="gemsGrid" class="gems-grid">
-                    <!-- Populated by JS -->
+                <div class="resize-handle"
+                    style="position:absolute; right:0; bottom:0; width:12px; height:12px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.3) 50%);">
                 </div>
-                <div class="gems-total">Total: <span id="gemsTotal">$0</span></div>
-            </div>
-            <div class="resize-handle"
-                style="position:absolute; right:0; bottom:0; width:12px; height:12px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.3) 50%);">
             </div>
         </div>
     </div>
@@ -1983,6 +1945,69 @@
     </div>
 
     <!-- Main Application Logic (Module) -->
+    <!-- Mobile Joystick -->
+    <div id="joystick-container"
+        style="display: none; position: fixed; bottom: 30px; left: 30px; width: 120px; height: 120px; z-index: 1000;">
+        <div id="joystick-base"
+            style="width: 100%; height: 100%; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 50%; position: relative; touch-action: none;">
+            <div id="joystick-stick"
+                style="width: 50px; height: 50px; background: rgba(0, 255, 255, 0.5); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #00ffff;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Toggle Button (Visible only on small screens or by default) -->
+    <!-- Mobile Toggle Button (Visible always now via CSS) -->
+    <button id="mobile-toggle" onclick="app.toggleMobileControls()"
+        style="position: fixed; bottom: 85px; right: 30px; z-index: 1000; background: rgba(0,0,0,0.6); color: #0ff; border: 1px solid #0ff; padding: 12px; border-radius: 50%; font-size: 24px; cursor: pointer;">
+        🎮
+    </button>
+
+    <!-- Style for Mobile Visibility & UI Polish -->
+    <style>
+        /* Force Mobile Toggle Visible Always */
+        #mobile-toggle {
+            display: block !important;
+            opacity: 0.6;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        #mobile-toggle:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Glassmorphism Common Style */
+        .glass-panel {
+            background: rgba(10, 20, 30, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            color: #fff;
+            padding: 15px;
+        }
+
+        /* Scrollbar Polish */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 243, 255, 0.6);
+        }
+    </style>
+
     <script type="module">
         /**
          * Aether Map Engine v5.0 - Pre-Placement Color Model
@@ -2280,10 +2305,10 @@
                     if (this.prefixes && this.prefixes.length > 0) {
                         if (Math.random() > 0.5) {
                             const prefix = this.prefixes[Math.floor(Math.random() * this.prefixes.length)];
-                            creativeName = `${prefix} ${baseName}`;
+                            creativeName = `${prefix} ${baseName} `;
                         } else {
                             const suffix = this.suffixes[Math.floor(Math.random() * this.suffixes.length)];
-                            creativeName = `${baseName} ${suffix}`;
+                            creativeName = `${baseName} ${suffix} `;
                         }
                     }
                 } catch (e) { console.warn("Name gen failed", e); }
@@ -2483,6 +2508,9 @@
                     });
                 }
 
+                // Init Mobile Controls
+                this.initJoystick();
+
                 // Trigger initial background generation
                 this.resize();
 
@@ -2491,6 +2519,79 @@
 
                 this.animate = this.animate.bind(this);
                 requestAnimationFrame(this.animate);
+            }
+
+            // Mobile Controls
+            toggleMobileControls() {
+                const joy = document.getElementById('joystick-container');
+                if (joy) {
+                    joy.style.display = joy.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+
+            initJoystick() {
+                const base = document.getElementById('joystick-base');
+                const stick = document.getElementById('joystick-stick');
+                const container = document.getElementById('joystick-container');
+
+                // Show joystick on init if likely mobile
+                // We default to hidden in CSS, but check here
+                if (window.innerWidth <= 768 && container) {
+                    container.style.display = 'block';
+                    this.joystickActive = true;
+                }
+
+                if (!base || !stick) return;
+
+                let startX = 0, startY = 0;
+                let moveX = 0, moveY = 0;
+                const maxDist = 35; // Max movement radius
+
+                const handleStart = (e) => {
+                    e.preventDefault();
+                    const touch = e.touches ? e.touches[0] : e;
+                    startX = touch.clientX;
+                    startY = touch.clientY;
+                    this.joystickActive = true;
+                };
+
+                const handleMove = (e) => {
+                    if (!this.joystickActive) return;
+                    e.preventDefault();
+                    const touch = e.touches ? e.touches[0] : e;
+
+                    let dx = touch.clientX - startX;
+                    let dy = touch.clientY - startY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist > maxDist) {
+                        dx = (dx / dist) * maxDist;
+                        dy = (dy / dist) * maxDist;
+                    }
+
+                    stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+                    // Normalize -1 to 1
+                    this.joyInputX = dx / maxDist;
+                    this.joyInputY = dy / maxDist;
+                };
+
+                const handleEnd = (e) => {
+                    e.preventDefault();
+                    this.joystickActive = false;
+                    this.joyInputX = 0;
+                    this.joyInputY = 0;
+                    stick.style.transform = `translate(-50%, -50%)`;
+                };
+
+                base.addEventListener('touchstart', handleStart, { passive: false });
+                base.addEventListener('touchmove', handleMove, { passive: false });
+                base.addEventListener('touchend', handleEnd, { passive: false });
+
+                // Also mouse for testing
+                base.addEventListener('mousedown', handleStart);
+                window.addEventListener('mousemove', handleMove);
+                window.addEventListener('mouseup', handleEnd);
             }
 
             resize() {
@@ -2604,7 +2705,7 @@
                 this.activeColor = hexColor;
                 this.colorMode = 'fixed';
                 this.updateColorModeUI();
-                this.showToast(`Active color set to ${hexColor}`);
+                this.showToast(`Active color set to ${hexColor} `);
             }
 
             setRainbowMode() {
@@ -2641,7 +2742,7 @@
                     for (let dy = -1; dy <= 1; dy++) {
                         const sx = sector.x + dx;
                         const sy = sector.y + dy;
-                        const key = `${sx},${sy}`;
+                        const key = `${sx},${sy} `;
                         if (!this.loadedSectors.has(key)) {
                             this.generateSector(sx, sy);
                         }
@@ -2663,10 +2764,10 @@
             }
 
             generateSector(sectorX, sectorY) {
-                const key = `${sectorX},${sectorY}`;
+                const key = `${sectorX},${sectorY} `;
                 if (this.loadedSectors.has(key)) return;
 
-                console.log(`[Universe] Generating sector (${sectorX}, ${sectorY})`);
+                console.log(`[Universe] Generating sector(${sectorX}, ${sectorY})`);
 
                 const seed = this.getSectorSeed(sectorX, sectorY);
                 const sectorData = { x: sectorX, y: sectorY, minerals: [], deposits: [] };
@@ -2725,11 +2826,11 @@
                 }
 
                 this.loadedSectors.set(key, sectorData);
-                console.log(`[Universe] Sector (${sectorX}, ${sectorY}): ${mineralCount} minerals, ${depositCount} deposits`);
+                console.log(`[Universe] Sector(${sectorX}, ${sectorY}): ${mineralCount} minerals, ${depositCount} deposits`);
             }
 
             toggleBgStyle(style) {
-                console.log(`[BG Toggle] ${style}, currently active:`, this.activeStyles.has(style));
+                console.log(`[BG Toggle] ${style}, currently active: `, this.activeStyles.has(style));
                 if (this.activeStyles.has(style)) {
                     // Deselecting - just remove from active, don't regenerate others
                     this.activeStyles.delete(style);
@@ -2960,13 +3061,13 @@
             // Spacecraft color customization
             setShipColor(color) {
                 this.playerShip.color = color;
-                localStorage.setItem('shipColor', color);
+                localStorage.setItem('playerShipColor', color); // Fixed Key
             }
 
             resetShipColor() {
                 const defaultColor = '#00f3ff';
                 this.playerShip.color = defaultColor;
-                localStorage.setItem('shipColor', defaultColor);
+                localStorage.setItem('playerShipColor', defaultColor); // Fixed Key
                 document.getElementById('shipColorPicker').value = defaultColor;
                 this.showToast('Ship color reset to default');
             }
@@ -2977,7 +3078,7 @@
                 const r = Math.min(255, Math.max(0, (num >> 16) + amount));
                 const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
                 const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
-                return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
+                return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')} `;
             }
 
             // Gem emoji mapping
@@ -3019,11 +3120,11 @@
                 if (!info) return '';
                 // Create a glowing orb effect matching in-game rendering
                 return `background: radial-gradient(circle at 30% 30%, #fff 10%, ${info.color} 60%);
-                        box-shadow: 0 0 4px ${info.color};
-                        border-radius: 50%;
-                        width: 12px; 
-                        height: 12px;
-                        display: inline-block;`;
+                box-shadow: 0 0 4px ${info.color};
+                border-radius: 50%;
+                width: 12px;
+                height: 12px;
+                display: inline-block;`;
             }
 
             updateFlightHUD() {
@@ -3043,64 +3144,12 @@
                 // Update radar coordinates
                 const coordsEl = document.getElementById('radarCoords');
                 if (coordsEl) {
-                    coordsEl.textContent = `X: ${Math.round(this.playerShip.x)} Y: ${Math.round(this.playerShip.y)}`;
+                    coordsEl.textContent = `X: ${Math.round(this.playerShip.x)} Y: ${Math.round(this.playerShip.y)} `;
                 }
 
                 // Update gems grid with proper emojis
-                const gemsGrid = document.getElementById('gemsGrid');
-                const gemsTotalEl = document.getElementById('gemsTotal');
-                const creditsEl = document.getElementById('creditsDisplay');
-
-                // Update credits display wherever it is
-                if (creditsEl) creditsEl.textContent = '$' + this.credits.toLocaleString();
-
-                if (gemsGrid) {
-                    let totalValue = 0;
-                    let html = '';
-
-                    // Helper for gem emoji
-                    const getGemEmoji = (type) => {
-                        const map = {
-                            iron: '🪨', copper: '🧱', titanium: '⚙️', gold: '👑',
-                            platinum: '💍', uranium: '☢️', plutonium: '🔋',
-                            lithium: '🔋', cobalt: '🟦'
-                        };
-                        return map[type] || '💎';
-                    };
-
-                    const inventory = Object.entries(this.playerInventory || {});
-
-                    if (inventory.length === 0) {
-                        html = '<div style="color:#5c7a8a;font-size:9px;padding:4px;">No gems yet</div>';
-                    } else {
-                        inventory.forEach(([type, count]) => {
-                            if (count <= 0) return;
-                            const info = this.mineralTypes[type];
-                            if (!info) return;
-
-                            totalValue += count * info.value;
-
-                            const itemValue = count * info.value;
-                            const valueDisplay = this.showGemValues ? `<span style="color:${info.color}; font-weight:bold; margin-left:6px;">$${Math.round(itemValue).toLocaleString()}</span>` : '';
-
-                            html += `
-                                <div class="gem-item" style="border:1px solid ${info.color}44; background: rgba(0,0,0,0.6);">
-                                    <div style="${this.styleGem(type)}"></div>
-                                    <span style="color:${info.color}">${info.name}</span>
-                                    <span class="gem-count">×${count}</span>
-                                    ${valueDisplay}
-                                </div>
-                            `;
-                        });
-                    }
-
-                    gemsGrid.innerHTML = html;
-
-                    // Updated Total Display (no button)
-                    if (gemsTotalEl) {
-                        gemsTotalEl.textContent = `$${totalValue.toLocaleString()}`;
-                    }
-                }
+                this.updateWalletUI();
+                this.updateInventoryUI();
 
                 // Update radar
                 this.updateRadar();
@@ -3173,7 +3222,7 @@
                         richness: 1.5,
                         tier: 1,
                         value: 'low',
-                        name: `Common Field ${i + 1}`
+                        name: `Common Field ${i + 1} `
                     });
                 }
 
@@ -3193,7 +3242,7 @@
                         richness: 2.0,
                         tier: 2,
                         value: 'medium',
-                        name: `Rich Cluster ${i + 1}`
+                        name: `Rich Cluster ${i + 1} `
                     });
                 }
 
@@ -3213,7 +3262,7 @@
                         richness: 3.0,
                         tier: 3,
                         value: 'high',
-                        name: `Epic Cache ${i + 1}`
+                        name: `Epic Cache ${i + 1} `
                     });
                 }
 
@@ -3232,7 +3281,7 @@
                         richness: 4.5,
                         tier: 4,
                         value: 'legendary',
-                        name: `Legendary Cache ${i + 1}`
+                        name: `Legendary Cache ${i + 1} `
                     });
                 }
 
@@ -3251,7 +3300,7 @@
                         richness: 6.0,
                         tier: 5,
                         value: 'mythic',
-                        name: `Mythic Treasure ${i + 1}`
+                        name: `Mythic Treasure ${i + 1} `
                     });
                 }
 
@@ -3270,7 +3319,7 @@
                         richness: 8.0, // 8x rarity - INSANE!
                         tier: 6,
                         value: 'ultra-mythic',
-                        name: `Galaxy Core ${i + 1}`
+                        name: `Galaxy Core ${i + 1} `
                     });
                 }
 
@@ -3295,33 +3344,33 @@
                 const offsetX = -this.playerShip.x;
                 const offsetY = -this.playerShip.y;
 
-                // Draw Zones (centered at origin)
+                // Draw Zones (centered at origin) - REDUCED OPACITY
                 Object.values(this.galaxyZones).forEach(zone => {
                     const r = zone.distanceRange.min * scale;
                     ctx.beginPath();
                     ctx.arc(cx + offsetX * scale, cy + offsetY * scale, r, 0, Math.PI * 2);
                     ctx.strokeStyle = zone.color;
-                    ctx.globalAlpha = 0.3;
+                    ctx.globalAlpha = 0.08; // Much more subtle
                     ctx.lineWidth = 1;
                     ctx.stroke();
                 });
 
-                // Draw Minerals (gems) FIRST - smaller, background layer
+                // Draw Minerals (gems) - FILTERED
+                // Only draw minerals if zoomed in or if they are high value to reduce noise
                 this.minerals.forEach(mineral => {
                     const dx = (mineral.x + offsetX) * scale;
                     const dy = (mineral.y + offsetY) * scale;
 
-                    // Glow effect
-                    ctx.fillStyle = mineral.color;
-                    ctx.globalAlpha = 0.3;
-                    ctx.beginPath();
-                    ctx.arc(cx + dx, cy + dy, 4, 0, Math.PI * 2);
-                    ctx.fill();
+                    // Skip if off screen
+                    if (Math.abs(dx) > w / 2 || Math.abs(dy) > h / 2) return;
 
-                    // Solid dot
-                    ctx.globalAlpha = 0.9;
+                    // Skip low value minerals on zoomed out map
+                    if (scale < 0.0005 && ['quartz', 'iron'].includes(mineral.type)) return;
+
+                    ctx.fillStyle = mineral.color;
+                    ctx.globalAlpha = 0.5;
                     ctx.beginPath();
-                    ctx.arc(cx + dx, cy + dy, 2.5, 0, Math.PI * 2);
+                    ctx.arc(cx + dx, cy + dy, 2, 0, Math.PI * 2); // Smaller dots
                     ctx.fill();
                 });
                 ctx.globalAlpha = 1;
@@ -3331,7 +3380,9 @@
                     const dx = (dep.x + offsetX) * scale;
                     const dy = (dep.y + offsetY) * scale;
 
-                    // Tier-based colors with CLEAR labels
+                    if (Math.abs(dx) > w / 2 || Math.abs(dy) > h / 2) return;
+
+                    // Tier-based colors
                     let color, glowColor, label, labelText;
                     switch (dep.tier) {
                         case 1: color = '#4488ff'; glowColor = '#6699ff'; label = 'C'; labelText = 'Common'; break;
@@ -3343,62 +3394,69 @@
                         default: color = '#00f'; glowColor = '#44f'; label = '?'; labelText = 'Unknown'; break;
                     }
 
-                    // LARGER pulsing glow for better visibility
-                    const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.3;
-                    const glowSize = (5 + dep.tier * 1.5) * pulse; // Increased size
+                    // Pulsing glow - Subtle now
+                    const pulse = 1 + Math.sin(Date.now() * 0.002) * 0.2;
 
-                    // Outer glow - brighter
+                    // Outer glow
                     ctx.fillStyle = glowColor;
-                    ctx.globalAlpha = 0.6; // More visible glow
+                    ctx.globalAlpha = 0.3;
                     ctx.beginPath();
-                    ctx.arc(cx + dx, cy + dy, glowSize, 0, Math.PI * 2);
+                    ctx.arc(cx + dx, cy + dy, (4 + dep.tier) * pulse, 0, Math.PI * 2);
                     ctx.fill();
+
+                    // Solid Core Icon (Diamond)
                     ctx.globalAlpha = 1;
-
-                    // Core icon - LARGER
                     ctx.fillStyle = color;
+                    const size = 3 + dep.tier; // Scaled by importance
                     ctx.beginPath();
-                    ctx.arc(cx + dx, cy + dy, 4 + dep.tier * 0.8, 0, Math.PI * 2); // Bigger core
+                    ctx.moveTo(cx + dx, cy + dy - size);
+                    ctx.lineTo(cx + dx + size, cy + dy);
+                    ctx.lineTo(cx + dx, cy + dy + size);
+                    ctx.lineTo(cx + dx - size, cy + dy);
+                    ctx.closePath();
                     ctx.fill();
 
-                    // White outline for contrast
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
-
-                    // Tier label with background for readability
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    ctx.fillRect(cx + dx - 6, cy + dy + glowSize + 2, 12, 10);
-
-                    ctx.fillStyle = color;
-                    ctx.font = 'bold 9px monospace';
+                    // Label - Only show text if nearby or high tier
+                    // Simplified logic: show full text only on hover-ish distance or high tier
+                    // For now, just show single Letter code unless really important
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px monospace';
                     ctx.textAlign = 'center';
-                    ctx.fillText(label, cx + dx, cy + dy + glowSize + 10);
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(label, cx + dx, cy + dy);
                 });
                 ctx.globalAlpha = 1;
 
-                // Draw Player (now always at center)
+                // Draw Player (now always at center) - PROMINENT
                 const px = cx;
                 const py = cy;
 
-                // Player direction arrow
-                const angle = this.playerShip.rotation + Math.PI / 2;
+                // Strong Glow for visibility over everything
                 ctx.save();
                 ctx.translate(px, py);
-                ctx.rotate(this.playerShip.rotation + Math.PI / 2);
-                ctx.fillStyle = '#0f0';
+
+                // Pulsing outer ring
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 15;
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(0, -5);
-                ctx.lineTo(4, 4);
-                ctx.lineTo(0, 2);
-                ctx.lineTo(-4, 4);
+                ctx.arc(0, 0, 10 + Math.sin(Date.now() * 0.005) * 2, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Player Arrow
+                ctx.rotate(this.playerShip.rotation + Math.PI / 2);
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'white';
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                // Larger size (approx 3x previous size)
+                ctx.moveTo(0, -12);
+                ctx.lineTo(8, 8);
+                ctx.lineTo(0, 4);
+                ctx.lineTo(-8, 8);
                 ctx.fill();
                 ctx.restore();
-
-                // Radar ping effect for player
-                ctx.strokeStyle = `rgba(0, 255, 0, ${0.5 + Math.sin(Date.now() * 0.005) * 0.3})`;
-                ctx.beginPath();
-                ctx.arc(px, py, 8, 0, Math.PI * 2);
                 ctx.stroke();
             }
 
@@ -3428,7 +3486,7 @@
                             const zoomSpeed = 0.1;
                             const newZoom = Math.max(0.2, Math.min(10.0, this.expandedMapZoom - Math.sign(e.deltaY) * zoomSpeed));
                             this.expandedMapZoom = newZoom;
-                            document.getElementById('mapZoomLevel').textContent = `Zoom: ${this.expandedMapZoom.toFixed(1)}x`;
+                            document.getElementById('mapZoomLevel').textContent = `Zoom: ${this.expandedMapZoom.toFixed(1)} x`;
                         };
                         const canvas = document.getElementById('fullscreenMapCanvas');
                         canvas.addEventListener('wheel', this.mapWheelListener);
@@ -3625,7 +3683,7 @@
 
                         ctx.font = '10px "Segoe UI", sans-serif';
                         ctx.fillStyle = '#aaa';
-                        ctx.fillText(`Richness: ${(dep.richness * 100).toFixed(0)}%`, dep.x, dep.y + 55);
+                        ctx.fillText(`Richness: ${(dep.richness * 100).toFixed(0)}% `, dep.x, dep.y + 55);
                     }
                 });
 
@@ -3698,7 +3756,7 @@
                 ctx.fillStyle = 'rgba(0, 243, 255, 0.8)';
                 ctx.textAlign = 'left';
                 ctx.fillText(`SECTOR: [${Math.floor(shipX / 5000)}, ${Math.floor(shipY / 5000)}]`, 20, h - 60);
-                ctx.fillText(`COORDS: X ${Math.round(shipX)}  Y ${Math.round(shipY)}`, 20, h - 40);
+                ctx.fillText(`COORDS: X ${Math.round(shipX)}  Y ${Math.round(shipY)} `, 20, h - 40);
 
                 // Scale Bar
                 const scaleWidth = 200; // pixels
@@ -3716,7 +3774,7 @@
 
                 ctx.textAlign = 'center';
                 ctx.fillStyle = '#fff';
-                ctx.fillText(`${Math.round(scaleDistance)}km`, w - 120, h - 50);
+                ctx.fillText(`${Math.round(scaleDistance)} km`, w - 120, h - 50);
 
                 requestAnimationFrame(() => this.animateExpandedMap());
             }
@@ -3772,11 +3830,11 @@
                 mockPlayers.forEach((player, i) => {
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
                     const isYou = player.name === 'You';
-                    html += `<div class="leader-row${isYou ? ' you' : ''}">
+                    html += `< div class="leader-row${isYou ? ' you' : ''}" >
                         <span class="leader-rank">${medal || (i + 1)}</span>
                         <span class="leader-name">${player.name}</span>
                         <span class="leader-wealth">$${player.wealth.toLocaleString()}</span>
-                    </div>`;
+                    </div > `;
                 });
                 listEl.innerHTML = html;
             }
@@ -3803,13 +3861,36 @@
                 if (keys['a'] || keys['arrowleft']) ship.rotation -= ship.rotationSpeed;
                 if (keys['d'] || keys['arrowright']) ship.rotation += ship.rotationSpeed;
 
+                // Joystick Yaw
+                if (this.joyInputX) {
+                    ship.rotation += this.joyInputX * ship.rotationSpeed;
+                }
+
+                // Mouse Steering (Right-Click Drag)
+                // We use global mouse tracking for this
+                if (this.mouseRightDown && this.mouseLastX !== undefined) {
+                    const deltaX = this.mouseX - this.mouseLastX;
+                    const deltaY = this.mouseY - this.mouseLastY;
+
+                    // Yaw (Left/Right)
+                    ship.rotation += deltaX * 0.005;
+
+                    // Pitch (Up/Down)
+                    ship.pitch += deltaY * 0.005;
+                    ship.pitch = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, ship.pitch)); // Clamp pitch
+
+                    // Update last pos to avoid continuous spin
+                    this.mouseLastX = this.mouseX;
+                    this.mouseLastY = this.mouseY;
+                }
+
                 // 3D Pitch rotation (R/F keys - up/down)
                 if (keys['r']) ship.pitch = Math.min(Math.PI / 3, ship.pitch + 0.02); // Pitch up (max 60 degrees)
                 if (keys['f']) ship.pitch = Math.max(-Math.PI / 3, ship.pitch - 0.02); // Pitch down
 
                 // 3D Roll rotation (Z/C keys)
                 if (keys['z']) ship.roll = Math.min(Math.PI / 2, ship.roll + 0.03); // Roll left (max 90 degrees)
-                if (keys['c']) ship.roll = Math.max(-Math.PI / 2, ship.roll - 0.03); // Roll right
+                if (keys['x']) ship.roll = Math.max(-Math.PI / 2, ship.roll - 0.03); // Roll right
 
                 // Acceleration (forward/backward)
                 const cos = Math.cos(ship.rotation);
@@ -3822,6 +3903,17 @@
                 if (keys['s'] || keys['arrowdown']) {
                     ship.vx -= cos * ship.acceleration * 0.5;
                     ship.vy -= sin * ship.acceleration * 0.5;
+                }
+
+                // Joystick Thrust (Y axis is inverted usually: Up is negative Y)
+                // But here joyInputY is positive down. So Up (-1) means Forward.
+                if (this.joyInputY && Math.abs(this.joyInputY) > 0.1) {
+                    // -joyInputY because forward is 'Thrust', backward is 'Brake'
+                    // Actually spaceship moves in direction of rotation.
+                    // So Up stick -> Thrust Forward
+                    const thrust = -this.joyInputY * ship.acceleration;
+                    ship.vx += cos * thrust;
+                    ship.vy += sin * thrust;
                 }
 
                 // 3D movement (Q/E for up/down)
@@ -3848,8 +3940,8 @@
                     ship.speed = ship.maxSpeed;
                 }
 
-                // Reduced friction for drifty space feel
-                const friction = 0.995;
+                // Reduced friction for drifty space feel (Higher = more drift, less slow down)
+                const friction = 0.998;
                 ship.vx *= friction;
                 ship.vy *= friction;
                 ship.vz *= friction;
@@ -3944,10 +4036,66 @@
                     this.saveInventory();
                     this.showToast(`Sold ${count} gems for $${totalValue.toLocaleString()}`);
                     console.log('[Sell All] Success:', count, 'gems for $', totalValue);
-                    // Play sound effect if available
+
+                    // Update UI immediately
+                    this.updateWalletUI();
+                    this.updateInventoryUI();
                 } else {
                     this.showToast('No gems to sell');
                     console.log('[Sell All] No gems in inventory');
+                }
+            }
+
+            updateWalletUI() {
+                const creditsEl = document.getElementById('walletValue');
+                if (creditsEl) {
+                    creditsEl.textContent = this.credits.toLocaleString();
+                }
+                const creditsDisplay = document.getElementById('creditsDisplay'); // Legacy support
+                if (creditsDisplay) {
+                    creditsDisplay.textContent = '$' + this.credits.toLocaleString();
+                }
+            }
+
+            updateInventoryUI() {
+                const gemsGrid = document.getElementById('gemsGrid');
+                const gemsTotalEl = document.getElementById('gemsTotal');
+
+                if (!gemsGrid) return;
+
+                let totalValue = 0;
+                let html = '';
+
+                const inventory = Object.entries(this.playerInventory || {});
+
+                if (inventory.length === 0) {
+                    html = '<div style="color:#5c7a8a;font-size:9px;padding:4px;">No gems yet</div>';
+                } else {
+                    inventory.forEach(([type, count]) => {
+                        if (count <= 0) return;
+                        const info = this.mineralTypes[type];
+                        if (!info) return;
+
+                        totalValue += count * info.value;
+
+                        const itemValue = count * info.value;
+                        const valueDisplay = this.showGemValues ? `<span style="color:${info.color}; font-weight:bold; margin-left:6px;">$${Math.round(itemValue).toLocaleString()}</span>` : '';
+
+                        html += `
+                            <div class="gem-item" style="border:1px solid ${info.color}44; background: rgba(0,0,0,0.6);">
+                                <div style="${this.styleGem(type)}"></div>
+                                <span style="color:${info.color}">${info.name}</span>
+                                <span class="gem-count">×${count}</span>
+                                ${valueDisplay}
+                            </div>
+                        `;
+                    });
+                }
+
+                gemsGrid.innerHTML = html;
+
+                if (gemsTotalEl) {
+                    gemsTotalEl.textContent = `$${totalValue.toLocaleString()}`;
                 }
             }
 
@@ -3982,10 +4130,10 @@
                         this.playerShip.radarRange = 2000 * (1 + lvl * 0.3);
                     }
 
-                    this.showToast(`${type.toUpperCase()} Upgraded to Level ${lvl + 1}!`);
+                    this.showToast(`${type.toUpperCase()} Upgraded to Level ${lvl + 1} !`);
                     this.updateUpgradeUI(); // Assuming we'll create this method
                 } else {
-                    this.showToast(`Not enough credits! Need $${cost.toLocaleString()}`);
+                    this.showToast(`Not enough credits! Need $${cost.toLocaleString()} `);
                 }
             }
 
@@ -4186,7 +4334,7 @@
 
                     // Show notification
                     this.collectionNotifications.push({
-                        text: `+${mineral.name} ($${mineral.value})`,
+                        text: `+ ${mineral.name} ($${mineral.value})`,
                         color: mineral.color,
                         time: Date.now()
                     });
@@ -4295,11 +4443,11 @@
 
                     let bars = '';
                     for (let i = 0; i < 5; i++) {
-                        bars += `<div style="flex:1; height:4px; background:${i < level ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; margin:0 1px;"></div>`;
+                        bars += `< div style = "flex:1; height:4px; background:${i < level ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; margin:0 1px;" ></div > `;
                     }
 
                     html += `
-                        <div style="background:rgba(255,255,255,0.05); border:1px solid ${canAfford ? 'rgba(0,243,255,0.3)' : 'rgba(255,50,50,0.3)'}; padding:8px; border-radius:6px;">
+                    < div style = "background:rgba(255,255,255,0.05); border:1px solid ${canAfford ? 'rgba(0,243,255,0.3)' : 'rgba(255,50,50,0.3)'}; padding:8px; border-radius:6px;" >
                             <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                                 <span style="font-weight:bold; color:#e0faff; font-size:11px;">${u.name}</span>
                                 <span style="font-size:10px; color:${isMax ? '#00f3ff' : '#ffd700'}">${isMax ? 'MAX' : '$' + cost.toLocaleString()}</span>
@@ -4307,7 +4455,7 @@
                             <div style="font-size:9px; color:#8ba; margin-bottom:6px;">${u.desc}</div>
                             <div style="display:flex; margin-bottom:6px;">${bars}</div>
                             ${!isMax ? `<button class="btn-small" onclick="app.upgradeShip('${u.id}')" style="width:100%; font-size:10px; padding:4px; ${canAfford ? 'cursor:pointer' : 'opacity:0.5; cursor:not-allowed;'}">UPGRADE</button>` : ''}
-                        </div>
+                        </div >
                     `;
                 });
 
@@ -4592,7 +4740,7 @@
                         fixedIndicator.style.background = this.activeColor;
                     }
                     if (rainbowBtn) rainbowBtn.classList.remove('active');
-                    if (colorText) colorText.innerText = `Color Mode: Fixed (${this.activeColor})`;
+                    if (colorText) colorText.innerText = `Color Mode: Fixed(${this.activeColor})`;
                 } else {
                     if (fixedIndicator) fixedIndicator.classList.remove('active');
                     if (rainbowBtn) rainbowBtn.classList.add('active');
@@ -4864,12 +5012,18 @@
             onWheel(e) {
                 e.preventDefault();
 
-                // Simple zoom without panning - less sensitive
-                const zoomSpeed = 0.001;
-                const delta = -e.deltaY * zoomSpeed;
-                const newZoom = Math.max(0.1, Math.min(6, this.camera.zoom + delta));
+                // Multiplicative/Exponential zoom for smoothness
+                const zoomFactor = 1.05;
+                if (e.deltaY < 0) {
+                    // Zoom IN
+                    this.camera.zoom *= zoomFactor;
+                } else {
+                    // Zoom OUT
+                    this.camera.zoom /= zoomFactor;
+                }
 
-                this.camera.zoom = newZoom;
+                // Clamp zoom
+                this.camera.zoom = Math.max(0.1, Math.min(6, this.camera.zoom));
             }
 
             /* --- Star Creation --- */
@@ -4979,7 +5133,7 @@
                 }
 
                 this.draw();
-                this.showToast(`Undone (${this.history.length} remaining)`);
+                this.showToast(`Undone(${this.history.length} remaining)`);
             }
 
             requestClear() {
@@ -5033,9 +5187,9 @@
                 const suf = this.suffixes[(seed * 7) % this.suffixes.length];
 
                 const type = seed % 3;
-                if (type === 0) return `${pre} ${root}`;
-                if (type === 1) return `${root} ${suf}`;
-                return `The ${pre} ${root} ${suf}`;
+                if (type === 0) return `${pre} ${root} `;
+                if (type === 1) return `${root} ${suf} `;
+                return `The ${pre} ${root} ${suf} `;
             }
 
             // Duplicate setBgStyle removed
@@ -5054,6 +5208,40 @@
                     this.nebulae = [];
                     this.spacecraft = [];
                     this.matrixStreams = [];
+
+                    // Load ship settings
+                    // Load ship settings
+                    const savedColor = localStorage.getItem('playerShipColor'); // Consistent Key
+                    if (savedColor) this.playerShip.color = savedColor;
+
+                    // FORCE UPDATE STATS (to fix "too slow" issue for existing saves)
+                    // We re-apply base stats from the current type definitions
+                    const type = this.playerShip.type || 'interceptor';
+                    const baseStats = {
+                        interceptor: { maxSpeed: 90, acceleration: 0.8 },
+                        saucer: { maxSpeed: 110, acceleration: 1.0 },
+                        hauler: { maxSpeed: 60, acceleration: 0.5 },
+                        orion: { maxSpeed: 100, acceleration: 0.9 },
+                        draco: { maxSpeed: 130, acceleration: 0.7 },
+                        phoenix: { maxSpeed: 95, acceleration: 1.2 },
+                        harvester: { maxSpeed: 140, acceleration: 1.3 } // Starfighter
+                    }[type];
+
+                    if (baseStats) {
+                        this.playerShip.maxSpeed = baseStats.maxSpeed;
+                        this.playerShip.acceleration = baseStats.acceleration;
+                    }
+
+                    const savedStruct = localStorage.getItem('customShipStructure');
+                    if (savedStruct) {
+                        try {
+                            this.playerShip.customStructure = JSON.parse(savedStruct);
+                        } catch (e) { console.error("Failed to load ship struct", e); }
+                    }
+
+                    // Load saved type
+                    const savedType = localStorage.getItem('playerShipType');
+                    if (savedType) this.playerShip.type = savedType;
 
                     // State handling for Cyber theme history
                     try {
@@ -5207,7 +5395,7 @@
                 const a = s * Math.min(l, 1 - l);
                 const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
                 const toHex = x => Math.round(x * 255).toString(16).padStart(2, '0');
-                return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+                return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))} `;
             }
 
             generateDeepSpaceStyle() {
@@ -5332,7 +5520,7 @@
                     g = Math.min(255, Math.max(0, g + (Math.random() - 0.5) * amount * 2));
                     b = Math.min(255, Math.max(0, b + (Math.random() - 0.5) * amount * 2));
 
-                    return `#${(r | 0).toString(16).padStart(2, '0')}${(g | 0).toString(16).padStart(2, '0')}${(b | 0).toString(16).padStart(2, '0')}`;
+                    return `#${(r | 0).toString(16).padStart(2, '0')}${(g | 0).toString(16).padStart(2, '0')}${(b | 0).toString(16).padStart(2, '0')} `;
                 };
 
                 // Helper to check if a new planet overlaps with existing ones
@@ -5400,7 +5588,7 @@
                             hasAtmosphere: type.hasAtmosphere,
                             atmosphereColor: type.name === 'ice-giant' ? '#ADD8E6' : (type.name === 'volcanic' ? '#FF6347' : '#87CEEB'),
                             hasRings: hasRings,
-                            ringColor: hasRings ? `hsl(${Math.random() * 360}, ${40 + Math.random() * 40}%, ${50 + Math.random() * 30}%)` : null, // Full HSL/RGB variety
+                            ringColor: hasRings ? `hsl(${Math.random() * 360}, ${40 + Math.random() * 40} %, ${50 + Math.random() * 30} %)` : null, // Full HSL/RGB variety
                             ringInnerRadius: radius * 1.3,
                             ringOuterRadius: radius * 2.2,
                             textureSeed: Math.random() * 1000,
@@ -5566,25 +5754,25 @@
                             size: size,
                             shipClass: shipClass.name,
                             complexity: shipClass.complexity,
-                            hullColor: isSaucer ? `hsl(${hue}, 10%, 50%)` : `hsl(${hue}, 30%, 40%)`,
-                            hullHighlight: isSaucer ? `hsl(${hue}, 5%, 85%)` : `hsl(${hue}, 20%, 70%)`,
-                            hullShadow: isSaucer ? `hsl(${hue}, 15%, 25%)` : `hsl(${hue}, 40%, 20%)`,
-                            engineColor: `hsl(${(hue + 180) % 360}, 100%, 60%)`,
-                            engineGlow: `hsl(${(hue + 180) % 360}, 100%, 85%)`,
-                            lightColor: `hsl(${Math.random() * 60 + 300}, 100%, 55%)`,
-                            lightColor2: `hsl(${Math.random() * 60}, 100%, 50%)`,
+                            hullColor: isSaucer ? `hsl(${hue}, 10 %, 50 %)` : `hsl(${hue}, 30 %, 40 %)`,
+                            hullHighlight: isSaucer ? `hsl(${hue}, 5 %, 85 %)` : `hsl(${hue}, 20 %, 70 %)`,
+                            hullShadow: isSaucer ? `hsl(${hue}, 15 %, 25 %)` : `hsl(${hue}, 40 %, 20 %)`,
+                            engineColor: `hsl(${(hue + 180) % 360}, 100%, 60 %)`,
+                            engineGlow: `hsl(${(hue + 180) % 360}, 100 %, 85 %)`,
+                            lightColor: `hsl(${Math.random() * 60 + 300}, 100 %, 55 %)`,
+                            lightColor2: `hsl(${Math.random() * 60}, 100 %, 50 %)`,
                             lightPhase: Math.random() * Math.PI * 2,
                             detailSeed: Math.random() * 1000,
                             wingAngle: 0.3 + Math.random() * 0.4,
                             engineCount: shipClass.name === 'mothership' ? 6 : (shipClass.name === 'destroyer' ? 4 : (shipClass.name === 'cruiser' ? 3 : 2)),
-                            domeColor: `hsl(${Math.random() * 180 + 160}, 80%, 70%)`,
+                            domeColor: `hsl(${Math.random() * 180 + 160}, 80 %, 70 %)`,
                             beamActive: Math.random() > 0.7,
-                            beamColor: `hsl(${Math.random() * 60 + 80}, 100%, 70%)`,
+                            beamColor: `hsl(${Math.random() * 60 + 80}, 100 %, 70 %)`,
                             ringCount: isSaucer ? Math.floor(Math.random() * 3) + 2 : 0,
                             rotationSpeed: (Math.random() - 0.5) * 0.02,
                             rotation: Math.random() * Math.PI * 2,
                             hasShield: Math.random() > 0.8,
-                            shieldColor: `hsl(${Math.random() * 60 + 180}, 70%, 60%)`,
+                            shieldColor: `hsl(${Math.random() * 60 + 180}, 70 %, 60 %)`,
                             shieldPhase: Math.random() * Math.PI * 2
                         });
                     }
@@ -5664,7 +5852,7 @@
                     console.warn('LocalStorage failed', e);
                 }
 
-                console.log(`[Matrix] Selected: ${theme.name} (${theme.family}), History: ${JSON.stringify(this.themeHistory)}, Pool Size: ${pool.length}`);
+                console.log(`[Matrix] Selected: ${theme.name} (${theme.family}), History: ${JSON.stringify(this.themeHistory)}, Pool Size: ${pool.length} `);
 
                 this.matrixTheme = theme;
 
@@ -5685,7 +5873,7 @@
                 // Update UI Display
                 const displayEl = document.getElementById('matrixThemeDisplay');
                 if (displayEl) {
-                    displayEl.innerText = `Theme: ${theme.name} | Family: ${theme.family.charAt(0).toUpperCase() + theme.family.slice(1)}`;
+                    displayEl.innerText = `Theme: ${theme.name} | Family: ${theme.family.charAt(0).toUpperCase() + theme.family.slice(1)} `;
                 }
 
                 // Sync speed slider with current value
@@ -5714,7 +5902,7 @@
                     } else if (theme.name === 'Rainbow Surge') {
                         // Calculate hue based on column index (i) to cycle through the spectrum
                         const hue = (i * 360 / columns) % 360;
-                        streamColor = `hsl(${hue}, 100%, 50%)`; // Full saturation, mid lightness
+                        streamColor = `hsl(${hue}, 100 %, 50 %)`; // Full saturation, mid lightness
                     }
 
                     this.matrixStreams.push({
@@ -5728,7 +5916,7 @@
                     });
                 }
 
-                console.log(`[Matrix] Generated ${this.matrixStreams.length} streams, columns: ${columns}, theme: ${theme.name}`);
+                console.log(`[Matrix] Generated ${this.matrixStreams.length} streams, columns: ${columns}, theme: ${theme.name} `);
             }
 
             /* --- Rendering --- */
@@ -6344,7 +6532,7 @@
                                 // Rainbow mode: cycle through HSL colors
                                 if (this.matrixRainbowMode) {
                                     const hue = (rainbowHueOffset + streamIndex * 15 + i * 5) % 360;
-                                    ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+                                    ctx.fillStyle = `hsl(${hue}, 100 %, 60 %)`;
                                 } else {
                                     ctx.fillStyle = stream.color;
                                 }
@@ -6525,17 +6713,18 @@
                 // Update HUD
                 const statEl = document.getElementById('stats');
                 const constellationCount = clusters.filter(c => c.length >= this.config.minGroupSize).length;
-                if (statEl) statEl.innerText = `Mode: ${this.mode.charAt(0).toUpperCase() + this.mode.slice(1)} | Stars: ${this.stars.length} | Constellations: ${constellationCount} | Zoom: ${this.camera.zoom.toFixed(2)}x`;
+                if (statEl) statEl.innerText = `Mode: ${this.mode.charAt(0).toUpperCase() + this.mode.slice(1)} | Stars: ${this.stars.length} | Constellations: ${constellationCount} | Zoom: ${this.camera.zoom.toFixed(2)} x`;
 
                 // Draw player ship if in flight mode
+                // Draw player ship if in flight mode
                 if (this.flightMode && this.playerShip) {
-                    console.log('[Spacecraft Debug] Rendering player ship at', this.playerShip.x, this.playerShip.y);
+                    // console.log('[Spacecraft Debug] Rendering player ship at', this.playerShip.x, this.playerShip.y);
                     this.renderSpeedLines(ctx);
                     this.renderMinerals(ctx, time);
                     this.renderPlayerShip(ctx, time);
                     this.renderCollectionNotifications(ctx);
                 } else {
-                    console.log('[Spacecraft Debug] NOT rendering - flightMode:', this.flightMode, 'playerShip:', !!this.playerShip);
+                    // console.log('[Spacecraft Debug] NOT rendering - flightMode:', this.flightMode, 'playerShip:', !!this.playerShip);
                 }
             }
 
@@ -6582,16 +6771,18 @@
                 // Draw ship based on type
                 switch (shipType) {
                     case 'saucer':
-                        // Flying saucer - ellipse with dome
-                        ctx.fillStyle = '#ffcc00';
-                        ctx.strokeStyle = '#ff9900';
+                        // Classic flying saucer
+                        // Base
+                        const shipColor = ship.color || '#ffcc00'; // Default color if not specified
+                        ctx.strokeStyle = this.adjustColor(shipColor, -30);
                         ctx.lineWidth = 2 / this.camera.zoom;
+                        ctx.fillStyle = shipColor;
                         ctx.beginPath();
                         ctx.ellipse(0, 0, size, size * 0.4, 0, 0, Math.PI * 2);
                         ctx.fill();
                         ctx.stroke();
                         // Dome
-                        ctx.fillStyle = '#66ffff';
+                        ctx.fillStyle = this.adjustColor(shipColor, 50); // Lighter for dome
                         ctx.beginPath();
                         ctx.ellipse(0, -size * 0.15, size * 0.5, size * 0.35, 0, Math.PI, 0);
                         ctx.fill();
@@ -6608,8 +6799,8 @@
                     case 'hauler':
                         // Heavy cargo ship - rectangular with containers
                         ctx.rotate(roll); // Apply roll rotation
-                        ctx.fillStyle = '#666666';
-                        ctx.strokeStyle = '#888888';
+                        ctx.fillStyle = this.adjustColor(shipColor, -50); // Darker body
+                        ctx.strokeStyle = shipColor;
                         ctx.lineWidth = 2 / this.camera.zoom;
                         ctx.fillRect(-size * 0.8, -size * 0.5, size * 1.6, size);
                         ctx.strokeRect(-size * 0.8, -size * 0.5, size * 1.6, size);
@@ -6618,7 +6809,7 @@
                         ctx.fillRect(-size * 0.5, -size * 0.35, size * 0.4, size * 0.7);
                         ctx.fillRect(0, -size * 0.35, size * 0.4, size * 0.7);
                         // Cockpit
-                        ctx.fillStyle = '#00aaff';
+                        ctx.fillStyle = this.adjustColor(shipColor, 30);
                         ctx.beginPath();
                         ctx.moveTo(size * 0.8, 0);
                         ctx.lineTo(size * 0.5, -size * 0.3);
@@ -6632,32 +6823,94 @@
                         break;
 
                     case 'orion':
-                        // Orion constellation ship - star points
-                        ctx.rotate(roll); // Apply roll rotation
-                        ctx.fillStyle = '#ffffff';
-                        ctx.strokeStyle = '#aaddff';
-                        ctx.lineWidth = 2 / this.camera.zoom;
-                        // Main star shape
-                        ctx.beginPath();
-                        for (let i = 0; i < 5; i++) {
-                            const outerAngle = (i * Math.PI * 2 / 5) - Math.PI / 2;
-                            const innerAngle = outerAngle + Math.PI / 5;
-                            const outerX = Math.cos(outerAngle) * size;
-                            const outerY = Math.sin(outerAngle) * size;
-                            const innerX = Math.cos(innerAngle) * size * 0.4;
-                            const innerY = Math.sin(innerAngle) * size * 0.4;
-                            if (i === 0) ctx.moveTo(outerX, outerY);
-                            else ctx.lineTo(outerX, outerY);
-                            ctx.lineTo(innerX, innerY);
+                        // Check for Custom Constellation Structure
+                        if (this.playerShip.customStructure && this.playerShip.customStructure.stars) {
+                            const struct = this.playerShip.customStructure;
+                            const stars = struct.stars;
+                            const lines = struct.lines;
+
+                            // 3D Rotation Transform
+                            // Apply Roll (Z-axis) - was missing!
+                            ctx.rotate(roll);
+
+                            // Pitch is handled by projecting Y/Z
+                            const pitch = this.playerShip.pitch || 0;
+                            const cosX = Math.cos(pitch);
+                            const sinX = Math.sin(pitch);
+
+                            // Project Points
+                            const projected = stars.map(s => {
+                                // Rotate around X (Pitch)
+                                let y = s.y * cosX - s.z * sinX;
+                                let z = s.y * sinX + s.z * cosX;
+                                let x = s.x;
+
+                                // Simple perspective projection
+                                const fov = 300;
+                                const scale = fov / (fov + z); // Perspective scale
+
+                                return {
+                                    x: x * scale,
+                                    y: y * scale,
+                                    visible: z < 200 // Clip behind
+                                };
+                            });
+
+                            // Draw Lines
+                            ctx.beginPath();
+                            ctx.strokeStyle = this.adjustColor(shipColor, 20);
+                            ctx.lineWidth = 2 / this.camera.zoom;
+                            if (lines) {
+                                lines.forEach(l => {
+                                    const p1 = projected[l.fromIndex];
+                                    const p2 = projected[l.toIndex];
+                                    if (p1 && p2 && p1.visible && p2.visible) {
+                                        ctx.moveTo(p1.x, p1.y);
+                                        ctx.lineTo(p2.x, p2.y);
+                                    }
+                                });
+                            }
+                            ctx.stroke();
+
+                            // Draw Stars
+                            projected.forEach((p, i) => {
+                                if (!p.visible) return;
+                                ctx.fillStyle = stars[i].color || shipColor;
+                                ctx.beginPath();
+                                ctx.arc(p.x, p.y, Math.max(1, size * 0.15), 0, Math.PI * 2);
+                                ctx.fill();
+                            });
+
+                            // Removed Core Glow to avoid confusion with "star"
+
+                        } else {
+                            // Default Fallback (Star Shape)
+                            ctx.rotate(roll);
+                            ctx.fillStyle = shipColor;
+                            ctx.strokeStyle = '#aaddff';
+                            ctx.lineWidth = 2 / this.camera.zoom;
+                            // Main star shape
+                            ctx.beginPath();
+                            for (let i = 0; i < 5; i++) {
+                                const outerAngle = (i * Math.PI * 2 / 5) - Math.PI / 2;
+                                const innerAngle = outerAngle + Math.PI / 5;
+                                const outerX = Math.cos(outerAngle) * size;
+                                const outerY = Math.sin(outerAngle) * size;
+                                const innerX = Math.cos(innerAngle) * size * 0.4;
+                                const innerY = Math.sin(innerAngle) * size * 0.4;
+                                if (i === 0) ctx.moveTo(outerX, outerY);
+                                else ctx.lineTo(outerX, outerY);
+                                ctx.lineTo(innerX, innerY);
+                            }
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                            // Glowing core
+                            ctx.fillStyle = '#00ccff';
+                            ctx.beginPath();
+                            ctx.arc(0, 0, size * 0.25, 0, Math.PI * 2);
+                            ctx.fill();
                         }
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-                        // Glowing core
-                        ctx.fillStyle = '#00ccff';
-                        ctx.beginPath();
-                        ctx.arc(0, 0, size * 0.25, 0, Math.PI * 2);
-                        ctx.fill();
                         break;
 
                     case 'draco':
@@ -6692,52 +6945,49 @@
                         ctx.moveTo(size, 0);
                         ctx.lineTo(size * 1.5, -size * 0.2);
                         ctx.lineTo(size * 1.3, 0);
-                        ctx.lineTo(size * 1.5, size * 0.2);
-                        ctx.closePath();
-                        ctx.fill();
-                        break;
-
-                    case 'phoenix':
-                        // Phoenix - fiery bird shape
+                        // Dragon-like jagged ship
                         ctx.rotate(roll); // Apply roll rotation
-                        ctx.fillStyle = '#ff4400';
-                        ctx.strokeStyle = '#ffaa00';
+                        ctx.fillStyle = this.adjustColor(shipColor, -60);
+                        ctx.strokeStyle = shipColor;
                         ctx.lineWidth = 2 / this.camera.zoom;
-                        // Body
                         ctx.beginPath();
                         ctx.moveTo(size, 0);
-                        ctx.bezierCurveTo(size * 0.5, -size * 0.3, -size * 0.3, -size * 0.4, -size * 0.5, 0);
-                        ctx.bezierCurveTo(-size * 0.3, size * 0.4, size * 0.5, size * 0.3, size, 0);
+                        ctx.lineTo(-size * 0.5, size * 0.5);
+                        ctx.lineTo(-size * 0.2, 0);
+                        ctx.lineTo(-size * 0.5, -size * 0.5);
+                        ctx.closePath();
                         ctx.fill();
                         ctx.stroke();
                         // Wings
-                        ctx.fillStyle = '#ff6600';
                         ctx.beginPath();
-                        ctx.moveTo(0, -size * 0.2);
-                        ctx.lineTo(-size * 0.3, -size * 0.9);
-                        ctx.lineTo(-size * 0.5, -size * 0.6);
-                        ctx.lineTo(-size * 0.7, -size * 0.8);
-                        ctx.lineTo(-size * 0.6, -size * 0.3);
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(-size * 0.5, size);
+                        ctx.lineTo(size * 0.2, 0);
+                        ctx.lineTo(-size * 0.5, -size);
                         ctx.closePath();
+                        ctx.fillStyle = this.adjustColor(shipColor, -20);
                         ctx.fill();
+                        ctx.stroke();
+                        break;
+
+                    case 'phoenix':
+                        // Bird-like ship
+                        ctx.rotate(roll); // Apply roll rotation
+                        ctx.fillStyle = shipColor;
+                        ctx.strokeStyle = this.adjustColor(shipColor, 60);
+                        ctx.lineWidth = 2 / this.camera.zoom;
+                        // Body
                         ctx.beginPath();
-                        ctx.moveTo(0, size * 0.2);
-                        ctx.lineTo(-size * 0.3, size * 0.9);
-                        ctx.lineTo(-size * 0.5, size * 0.6);
-                        ctx.lineTo(-size * 0.7, size * 0.8);
-                        ctx.lineTo(-size * 0.6, size * 0.3);
-                        ctx.closePath();
-                        ctx.fill();
-                        // Tail flames
-                        const flicker = Math.sin(time * 0.02) * 0.2;
-                        ctx.fillStyle = `rgba(255, ${150 + flicker * 100}, 0, 0.8)`;
+                        ctx.moveTo(size * 0.8, 0);
+                        ctx.lineTo(-size * 0.6, 0);
+                        ctx.stroke();
+                        // Wings
                         ctx.beginPath();
-                        ctx.moveTo(-size * 0.5, 0);
-                        ctx.lineTo(-size * (1.2 + flicker), -size * 0.15);
-                        ctx.lineTo(-size * (1 + flicker), 0);
-                        ctx.lineTo(-size * (1.2 + flicker), size * 0.15);
-                        ctx.closePath();
-                        ctx.fill();
+                        ctx.moveTo(0, 0);
+                        ctx.quadraticCurveTo(size * 0.5, size * 0.5, -size * 0.2, size * 0.8);
+                        ctx.moveTo(0, 0);
+                        ctx.quadraticCurveTo(size * 0.5, -size * 0.5, -size * 0.2, -size * 0.8);
+                        ctx.stroke();
                         break;
 
                     case 'harvester':
@@ -7768,22 +8018,79 @@
                 if (modal) modal.classList.remove('active');
             }
 
+            captureConstellation() {
+                if (this.stars.length < 3) {
+                    this.showToast("Draw at least 3 stars first!");
+                    return;
+                }
+
+                // 1. Calculate Centroid
+                let sumX = 0, sumY = 0, sumZ = 0;
+                this.stars.forEach(s => {
+                    sumX += s.x;
+                    sumY += s.y;
+                    sumZ += (s.z || 0);
+                });
+                const centerX = sumX / this.stars.length;
+                const centerY = sumY / this.stars.length;
+                const centerZ = sumZ / this.stars.length;
+
+                // 2. Normalize Stars (Center at 0,0,0) and Scale down
+                const scale = 0.5; // Scale down for ship size
+                const validStars = this.stars.map(s => ({
+                    x: (s.x - centerX) * scale,
+                    y: (s.y - centerY) * scale,
+                    z: ((s.z || 0) - centerZ) * scale,
+                    color: s.color
+                }));
+
+                // 3. Capture Connections (Lines)
+                // We need to map original IDs to indices or new IDs
+                const starIdToIndex = {};
+                this.stars.forEach((s, i) => starIdToIndex[s.id] = i);
+
+                const validLines = [];
+                const lines = this.calculateGeometry().lines; // Get current lines
+                lines.forEach(l => {
+                    const idx1 = starIdToIndex[l.from];
+                    const idx2 = starIdToIndex[l.to];
+                    if (idx1 !== undefined && idx2 !== undefined) {
+                        validLines.push({ fromIndex: idx1, toIndex: idx2 });
+                    }
+                });
+
+                // 4. Save to PlayerShip
+                this.playerShip.customStructure = {
+                    stars: validStars,
+                    lines: validLines
+                };
+
+                // Save to LocalStorage
+                localStorage.setItem('customShipStructure', JSON.stringify(this.playerShip.customStructure));
+
+                // Auto-select "Orion" type (which we'll use for custom)
+                this.playerShip.type = 'orion';
+                localStorage.setItem('playerShipType', 'orion');
+
+                this.showToast("Constellation SAVED as Spacecraft!");
+            }
+
             selectShip(shipType) {
                 const ships = {
-                    interceptor: { name: 'Interceptor', maxSpeed: 50, acceleration: 0.5 },
-                    saucer: { name: 'Saucer', maxSpeed: 70, acceleration: 0.7 },
-                    hauler: { name: 'Hauler', maxSpeed: 30, acceleration: 0.3 },
-                    orion: { name: 'Orion', maxSpeed: 60, acceleration: 0.6 },
-                    draco: { name: 'Draco', maxSpeed: 80, acceleration: 0.4 },
-                    phoenix: { name: 'Phoenix', maxSpeed: 55, acceleration: 0.8 },
-                    harvester: { name: 'Starfighter', maxSpeed: 80, acceleration: 0.8 }
+                    interceptor: { name: 'Interceptor', maxSpeed: 90, acceleration: 0.8 },
+                    saucer: { name: 'Saucer', maxSpeed: 110, acceleration: 1.0 },
+                    hauler: { name: 'Hauler', maxSpeed: 60, acceleration: 0.5 },
+                    orion: { name: 'Orion', maxSpeed: 100, acceleration: 0.9 },
+                    draco: { name: 'Draco', maxSpeed: 130, acceleration: 0.7 },
+                    phoenix: { name: 'Phoenix', maxSpeed: 95, acceleration: 1.2 },
+                    harvester: { name: 'Starfighter', maxSpeed: 140, acceleration: 1.3 }
                 };
                 const ship = ships[shipType];
                 if (ship && this.playerShip) {
                     this.playerShip.type = shipType;
                     this.playerShip.maxSpeed = ship.maxSpeed;
                     this.playerShip.acceleration = ship.acceleration;
-                    this.showToast(`Selected ${ship.name}`);
+                    this.showToast(`Selected ${ship.name} `);
                 }
                 this.hideShipModal();
             }
@@ -7845,14 +8152,14 @@
 
                 const { lines, clusters } = this.calculateGeometry();
 
-                let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbX} ${vbY} ${w} ${h}" style="background:#020205">
-            <rect x="${vbX}" y="${vbY}" width="${w}" height="${h}" fill="#020205"/>`;
+                let svg = `< svg xmlns = "http://www.w3.org/2000/svg" viewBox = "${vbX} ${vbY} ${w} ${h}" style = "background:#020205" >
+            <rect x="${vbX}" y="${vbY}" width="${w}" height="${h}" fill="#020205" />`;
 
                 // Lines
                 lines.forEach(l => {
                     const op = (1 - (l.dist / this.config.maxConnectDist)).toFixed(2);
                     const [r, g, b] = this.hexToRgb(this.getStarColor(l.s1));
-                    svg += `<line x1="${l.s1.x}" y1="${l.s1.y}" x2="${l.s2.x}" y2="${l.s2.y}" stroke="rgb(${r}, ${g}, ${b})" stroke-width="1.5" stroke-linecap="round" opacity="${op * 0.8}"/>`;
+                    svg += `< line x1 = "${l.s1.x}" y1 = "${l.s1.y}" x2 = "${l.s2.x}" y2 = "${l.s2.y}" stroke = "rgb(${r}, ${g}, ${b})" stroke - width="1.5" stroke - linecap="round" opacity = "${op * 0.8}" /> `;
                 });
 
                 // Labels
@@ -7862,7 +8169,7 @@
 
                     let cx = 0, cy = 0; c.forEach(s => { cx += s.x; cy += s.y }); cx /= c.length; cy /= c.length;
                     const color = this.getStarColor(c[0]);
-                    svg += `<text x="${cx}" y="${cy + 30}" font-family="sans-serif" font-size="14" fill="${color}" text-anchor="middle" font-weight="600">${name}</text>`;
+                    svg += `< text x = "${cx}" y = "${cy + 30}" font - family="sans-serif" font - size="14" fill = "${color}" text - anchor="middle" font - weight="600" > ${name}</text > `;
                 });
 
                 // Stars
@@ -7873,17 +8180,17 @@
                     // Star Shape
                     const pr = r * 0.5;
                     const pathData = `M${s.x} ${s.y - r} L${s.x + pr} ${s.y - pr} L${s.x + r} ${s.y} L${s.x + pr} ${s.y + pr} L${s.x} ${s.y + r} L${s.x - pr} ${s.y + pr} L${s.x - r} ${s.y} L${s.x - pr} ${s.y - pr} Z`;
-                    svg += `<path d="${pathData}" fill="${color}" opacity="0.8"/>`;
+                    svg += `< path d = "${pathData}" fill = "${color}" opacity = "0.8" /> `;
 
                     // Core dot
-                    svg += `<circle cx="${s.x}" cy="${s.y}" r="1.5" fill="white" />`;
+                    svg += `< circle cx = "${s.x}" cy = "${s.y}" r = "1.5" fill = "white" /> `;
                 });
 
-                svg += `</svg>`;
+                svg += `</svg > `;
 
                 // FileSaver-style download for Chrome compatibility
                 const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-                const filename = `AetherMap-${Date.now()}.svg`;
+                const filename = `AetherMap - ${Date.now()}.svg`;
 
                 // Try using msSaveBlob for IE/Edge compatibility
                 if (typeof window.navigator.msSaveBlob !== 'undefined') {
@@ -7915,7 +8222,7 @@
 
             // Download canvas as PNG image
             downloadPNG() {
-                const filename = `Interstellar-${Date.now()}.png`;
+                const filename = `Interstellar - ${Date.now()}.png`;
                 const link = document.createElement('a');
                 link.download = filename;
                 link.href = this.canvas.toDataURL('image/png');
@@ -8031,7 +8338,7 @@
                     if (btn) btn.classList.remove('active');
 
                     const blob = new Blob(chunks, { type: mimeType });
-                    const filename = `Interstellar-${Date.now()}.webm`;
+                    const filename = `Interstellar - ${Date.now()}.webm`;
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
@@ -8069,6 +8376,7 @@
                 }, duration);
             }
         }
+
 
         window.app = new AetherEngine();
     </script>

@@ -11,6 +11,7 @@ import TrustTransparencyHub from './pages/trust-transparency-hub';
 import AboutOurApproachIntelligenceCenter from './pages/about-our-approach-intelligence-center';
 import ITravel from './pages/iTravel';
 import Interstellar from './pages/Interstellar';
+import MindWave from './pages/MindWave';
 
 
 const ProjectRoutes = () => {
@@ -29,6 +30,7 @@ const ProjectRoutes = () => {
           <Route path="/about-our-approach-intelligence-center" element={<AboutOurApproachIntelligenceCenter />} />
           <Route path="/itravel" element={<ITravel />} />
           <Route path="/interstellar" element={<Interstellar />} />
+          <Route path="/mindwave" element={<MindWave />} />
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>
       </ErrorBoundary>
