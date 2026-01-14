@@ -1275,39 +1275,78 @@
             align-items: center;
         }
 
-        /* ===== FLOATING WINDOWS (Map & Leaders) ===== */
+        /* ===== FLOATING WINDOWS (Map & Leaders) - Glassmorphism ===== */
         .floating-window {
             position: fixed;
-            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            background: linear-gradient(135deg, rgba(10, 20, 35, 0.92) 0%, rgba(5, 15, 30, 0.95) 100%);
             border: 1px solid rgba(0, 243, 255, 0.3);
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 20px rgba(0, 243, 255, 0.15);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             z-index: 85;
             pointer-events: auto;
-            overflow: hidden;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            min-width: 180px;
+            min-height: 100px;
+            transition: all 0.3s ease;
+        }
+
+        .floating-window:hover {
+            border-color: rgba(0, 243, 255, 0.5);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 0 30px rgba(0, 243, 255, 0.25);
         }
 
         .floating-window.hidden {
             display: none;
         }
 
+        .floating-window.collapsed {
+            height: auto !important;
+            min-height: unset !important;
+        }
+
+        .floating-window.collapsed .window-content {
+            display: none !important;
+        }
+
+        .floating-window.collapsed .resize-handle {
+            display: none !important;
+        }
+
+        /* Window Header - Glassmorphism */
         .window-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            background: linear-gradient(180deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 243, 255, 0.05) 100%);
             border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-            cursor: move;
+            cursor: grab;
+            flex-shrink: 0;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .window-header:active {
+            cursor: grabbing;
         }
 
         .window-header h4 {
             margin: 0;
             font-size: 11px;
-            color: var(--accent);
+            color: #00f3ff;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
         }
 
         .window-controls {
@@ -1316,47 +1355,59 @@
         }
 
         .window-btn {
-            width: 18px;
-            height: 18px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            border-radius: 3px;
-            color: var(--accent);
-            font-size: 10px;
+            width: 24px;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 4px;
+            color: #00f3ff;
+            font-size: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s ease;
         }
 
         .window-btn:hover {
             background: rgba(0, 243, 255, 0.2);
+            border-color: rgba(0, 243, 255, 0.5);
         }
 
         .window-content {
             padding: 10px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Resize Handle */
+        .floating-window .resize-handle {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 16px;
+            height: 16px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 243, 255, 0.5) 50%);
+            border-radius: 0 0 12px 0;
+            z-index: 10;
+        }
+
+        .floating-window .resize-handle:hover {
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 243, 255, 0.8) 50%);
         }
 
         /* Map Window - Bottom Left */
         .map-window {
-            left: 20px;
-            bottom: 200px;
-            /* Moved up to avoid cockpit */
-            width: 200px;
-            height: 180px;
-        }
-
-        .map-window.collapsed {
-            height: auto;
-        }
-
-        .map-window.collapsed .window-content {
-            display: none;
+            left: 15px;
+            bottom: 120px;
+            width: 220px;
+            height: 200px;
         }
 
         .map-canvas {
             width: 100%;
-            height: 120px;
+            height: 100px;
             background: radial-gradient(circle at center, rgba(0, 20, 40, 0.9) 0%, rgba(0, 5, 15, 0.95) 100%);
             border-radius: 6px;
             border: 1px solid rgba(0, 243, 255, 0.2);
@@ -1364,44 +1415,51 @@
 
         .map-legend {
             display: flex;
-            gap: 8px;
-            margin-top: 6px;
             flex-wrap: wrap;
+            gap: 8px 12px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(0, 243, 255, 0.15);
+            font-size: 10px;
+            color: #e0faff;
+            margin-top: 6px;
+            border-radius: 6px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 3px;
-            font-size: 8px;
-            color: rgba(255, 255, 255, 0.7);
+            gap: 4px;
+            white-space: nowrap;
         }
 
         .legend-dot {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 4px currentColor;
         }
 
         /* Leaders Window - Bottom Right */
         .leaders-window {
-            right: 20px;
-            bottom: 200px;
-            /* Moved up to avoid cockpit */
-            width: 180px;
+            right: 15px;
+            bottom: 120px;
+            width: 220px;
+            height: 260px;
         }
 
-        .leaders-window.collapsed .window-content {
-            display: none;
-        }
-
+        /* Leaderboard Styling */
         .leaders-list {
-            max-height: 150px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 180px;
             overflow-y: auto;
         }
 
         .leaders-list::-webkit-scrollbar {
-            width: 3px;
+            width: 4px;
         }
 
         .leaders-list::-webkit-scrollbar-thumb {
@@ -1411,34 +1469,53 @@
 
         .leader-row {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 10px;
+            gap: 8px;
+            padding: 8px 10px;
+            background: linear-gradient(135deg, rgba(0, 50, 80, 0.4) 0%, rgba(0, 30, 60, 0.3) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.15);
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
 
-        .leader-row:last-child {
-            border-bottom: none;
+        .leader-row:hover {
+            background: linear-gradient(135deg, rgba(0, 70, 100, 0.5) 0%, rgba(0, 50, 80, 0.4) 100%);
+            border-color: rgba(0, 243, 255, 0.3);
+        }
+
+        .leader-row.you {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.2) 0%, rgba(0, 150, 200, 0.15) 100%);
+            border-color: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.15);
         }
 
         .leader-rank {
-            width: 20px;
-            color: var(--accent);
-            font-weight: bold;
+            font-size: 14px;
+            min-width: 24px;
+            text-align: center;
         }
 
         .leader-name {
             flex: 1;
-            color: #fff;
+            font-size: 11px;
+            color: #e0faff;
+            font-weight: 500;
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
+        .leader-row.you .leader-name {
+            color: #00f3ff;
+            font-weight: 600;
+        }
+
         .leader-wealth {
-            color: #ffd700;
-            font-weight: bold;
+            font-size: 11px;
+            color: #4f8;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
         }
 
         /* Responsive adjustments */
@@ -1909,6 +1986,7 @@
                 </div>
             </div>
         </div>
+        <div class="resize-handle"></div>
     </div>
 
     <!-- Floating Leaders Window (Bottom Right, above cockpit) -->
@@ -1925,6 +2003,7 @@
                 <!-- Populated by JS -->
             </div>
         </div>
+        <div class="resize-handle"></div>
     </div>
 
     <!-- Spacecraft Selection Modal -->

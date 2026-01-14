@@ -29,7 +29,7 @@
             -webkit-user-select: none;
         }
 
-        canvas {
+        #canvas {
             display: block;
             position: absolute;
             top: 0;
@@ -37,6 +37,18 @@
             z-index: 1;
             touch-action: none;
             /* Prevents scrolling on mobile while drawing */
+        }
+
+        /* Map canvas should be relative within its container */
+        .map-canvas {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            display: block;
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 10, 20, 0.8);
+            border-radius: 4px;
         }
 
         /* --- HUD UI --- */
@@ -365,7 +377,67 @@
             border-radius: 12px;
             text-align: center;
             box-shadow: 0 0 50px rgba(0, 243, 255, 0.15);
-            max-width: 300px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ship-list {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+            margin: 10px 0;
+        }
+
+        /* Scrollbar styling for ship list */
+        .ship-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ship-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .ship-list::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        .ship-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 243, 255, 0.8);
+        }
+
+        .ship-option {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .ship-option:hover {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .ship-option h3 {
+            margin: 0 0 5px 0;
+            color: var(--accent);
+            font-size: 16px;
+        }
+
+        .ship-option p {
+            margin: 0;
+            color: #888;
+            font-size: 12px;
         }
 
         .modal h2 {
@@ -622,6 +694,92 @@
             background: rgba(0, 243, 255, 0.15);
             border-color: var(--accent);
             box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* === WINDOW TASKBAR - Minimized windows dock === */
+        .window-taskbar {
+            display: flex;
+            gap: 4px;
+            padding: 0 8px;
+            align-items: center;
+            margin-left: 10px;
+        }
+
+        .taskbar-item {
+            background: rgba(0, 243, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .taskbar-item:hover {
+            background: rgba(0, 243, 255, 0.25);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Layout preset buttons */
+        .layout-presets {
+            display: flex;
+            gap: 4px;
+            margin-left: 10px;
+            padding-left: 10px;
+            border-left: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .layout-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(100, 220, 255, 0.15);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 10px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .layout-btn:hover {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .layout-btn.active {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Keyboard tooltip popup */
+        .kbd-tooltip {
+            position: absolute;
+            background: rgba(0, 20, 30, 0.95);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 11px;
+            color: #fff;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .kbd-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* === REGENERATE BUTTON - Make it stand out === */
@@ -1019,19 +1177,33 @@
             /* Better for numbers */
         }
 
-        /* Floating Windows (Map & Leaders) */
+        /* Floating Windows (Map & Leaders) - Glassmorphism */
         .floating-window {
             position: fixed;
             z-index: 50;
-            background: rgba(10, 20, 30, 0.9);
-            border: 1px solid rgba(0, 243, 255, 0.4);
-            border-radius: 8px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, rgba(10, 20, 35, 0.92) 0%, rgba(5, 15, 30, 0.95) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 20px rgba(0, 243, 255, 0.15);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: visible;
             transition: all 0.3s ease;
+            min-width: 180px;
+            min-height: 100px;
+        }
+
+        .floating-window:hover {
+            border-color: rgba(0, 243, 255, 0.5);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 0 30px rgba(0, 243, 255, 0.25);
         }
 
         .floating-window.hidden {
@@ -1040,35 +1212,209 @@
             transform: translateY(20px);
         }
 
+        /* Minimized/Collapsed State - Only show header */
+        .floating-window.collapsed {
+            height: auto !important;
+            min-height: unset !important;
+            max-height: none !important;
+        }
+
+        .floating-window.collapsed .window-content {
+            display: none !important;
+        }
+
+        .floating-window.collapsed .resize-handle {
+            display: none !important;
+        }
+
         .map-window {
-            bottom: 15px;
+            bottom: 120px;
             left: 15px;
-            width: 200px;
-            height: 150px;
+            width: 220px;
+            height: 200px;
         }
 
         .leaders-window {
-            bottom: 100px;
-            /* Above mobile toggle */
-            right: 15px;
+            top: 15px;
+            left: 15px;
             width: 220px;
-            max-height: 250px;
+            height: 260px;
         }
 
+        /* Leaderboard Styling */
+        .leaders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .leader-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: linear-gradient(135deg, rgba(0, 50, 80, 0.4) 0%, rgba(0, 30, 60, 0.3) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.15);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .leader-row:hover {
+            background: linear-gradient(135deg, rgba(0, 70, 100, 0.5) 0%, rgba(0, 50, 80, 0.4) 100%);
+            border-color: rgba(0, 243, 255, 0.3);
+        }
+
+        .leader-row.you {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.2) 0%, rgba(0, 150, 200, 0.15) 100%);
+            border-color: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.15);
+        }
+
+        .leader-rank {
+            font-size: 14px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .leader-name {
+            flex: 1;
+            font-size: 11px;
+            color: #e0faff;
+            font-weight: 500;
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+        }
+
+        .leader-row.you .leader-name {
+            color: #00f3ff;
+            font-weight: 600;
+        }
+
+        .leader-wealth {
+            font-size: 11px;
+            color: #4f8;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Window Header - Glassmorphism */
         .window-header {
-            background: rgba(0, 243, 255, 0.15);
-            padding: 8px 12px;
+            background: linear-gradient(180deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 243, 255, 0.05) 100%);
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid rgba(0, 243, 255, 0.2);
             cursor: grab;
+            flex-shrink: 0;
+        }
+
+        .window-header:active {
+            cursor: grabbing;
+        }
+
+        .window-header h4 {
+            margin: 0;
+            font-size: 11px;
+            color: #00f3ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .window-btn {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            color: #00f3ff;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .window-btn:hover {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: rgba(0, 243, 255, 0.5);
         }
 
         .window-content {
             padding: 10px;
             overflow-y: auto;
             flex: 1;
+        }
+
+        /* Resize Handle - 8-direction support */
+        .floating-window .resize-handle {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 16px;
+            height: 16px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 243, 255, 0.5) 50%);
+            border-radius: 0 0 8px 0;
+            z-index: 10;
+        }
+
+        .floating-window .resize-handle:hover {
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 243, 255, 0.8) 50%);
+        }
+
+        /* Map Canvas Styling */
+        .map-canvas {
+            width: 100%;
+            height: 100px;
+            background: radial-gradient(circle at center, rgba(0, 20, 40, 0.9) 0%, rgba(0, 5, 15, 0.95) 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            display: block;
+        }
+
+        /* Map Legend - Visible text with proper styling */
+        .map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid rgba(0, 243, 255, 0.15);
+            font-size: 10px;
+            color: #e0faff;
+            margin-top: 6px;
+            border-radius: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 4px currentColor;
+        }
+
+        .legend-diamond {
+            width: 8px;
+            height: 8px;
+            transform: rotate(45deg);
+            flex-shrink: 0;
+            box-shadow: 0 0 4px currentColor;
         }
 
         /* Specific Button Styles */
@@ -1126,127 +1472,108 @@
 
         /* ===== COCKPIT BAR (Above Bottom Bar) ===== */
         /* ===== COCKPIT BAR (Removed Container - Now separate floating items) ===== */
-        /* --- FLIGHT HUD (Command Center) --- */
+        /* === FLIGHT HUD - Simple container for floating windows === */
         .flight-hud {
             position: fixed;
-            top: 60px;
-            /* Below top bar */
+            top: 0;
             left: 0;
             width: 100%;
-            height: calc(100% - 140px);
-            /* Above bottom bar */
+            height: 100%;
             pointer-events: none;
-            /* Let clicks pass through to canvas */
-            display: grid;
-            grid-template-columns: 320px 1fr 320px;
-            /* Left Panel, Space, Right Panel */
-            grid-template-rows: 1fr auto;
-            /* Content, Bottom Gems */
-            grid-template-areas:
-                "left center right"
-                "bottom bottom bottom";
-            gap: 20px;
-            padding: 20px;
             z-index: 20;
         }
 
-        .hud-column {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        /* Floating HUD Window - base class for all flight mode windows */
+        .hud-window {
+            position: fixed;
             pointer-events: auto;
-            /* Re-enable clicks for UI */
+            z-index: 25;
         }
 
-        .hud-left {
-            grid-area: left;
-        }
-
-        .hud-center {
-            grid-area: center;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-        }
-
-        .hud-right {
-            grid-area: right;
-        }
-
+        /* Legacy column classes - now just containers */
+        .hud-column,
         .hud-bottom {
-            grid-area: bottom;
-            display: flex;
-            justify-content: center;
-            pointer-events: auto;
-            max-height: 200px;
+            display: contents;
+            /* Pass through - windows position themselves */
         }
 
+        /* Glassmorphism Cockpit Sections - Floating Windows */
         .cockpit-section {
-            background: rgba(16, 24, 32, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            border-radius: 8px;
+            position: fixed;
+            background: linear-gradient(135deg, rgba(16, 24, 40, 0.92) 0%, rgba(8, 16, 32, 0.95) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 243, 255, 0.25);
+            border-radius: 12px;
             color: #fff;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-            transition: all 0.3s ease;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 20px rgba(0, 243, 255, 0.1);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            width: 100%;
-            /* Reset absolute positioning */
-            position: static;
-            min-width: 0;
-            margin: 0;
+            pointer-events: auto;
+            z-index: 25;
+            min-width: 150px;
+            min-height: 100px;
         }
 
+        /* Resize handle */
+        .cockpit-section::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 16px;
+            height: 16px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 243, 255, 0.4) 50%);
+            border-radius: 0 0 12px 0;
+        }
 
+        .cockpit-section:hover {
+            border-color: rgba(0, 243, 255, 0.5);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 0 30px rgba(0, 243, 255, 0.2);
+        }
 
-        /* Initial Positions Removed - Using Grid Layout */
-
+        /* Cockpit Header with Glassmorphism */
         .cockpit-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            cursor: move;
-            /* Changed to move for dragging */
-            background: rgba(0, 0, 0, 0.3);
+            cursor: grab;
+            background: linear-gradient(180deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 243, 255, 0.05) 100%);
             border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-            padding: 6px 10px;
-            border-radius: 10px 10px 0 0;
+            padding: 10px 14px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .cockpit-header:active {
+            cursor: grabbing;
         }
 
         .cockpit-content {
-            padding: 8px 12px;
-        }
-
-        .cockpit-section {
-            background: rgba(0, 20, 40, 0.6);
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            border-radius: 8px;
-            padding: 8px 12px;
-            min-width: 100px;
-        }
-
-        .cockpit-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            margin-bottom: 6px;
+            padding: 12px 14px;
+            flex: 1;
         }
 
         .cockpit-header h4 {
             margin: 0;
-            font-size: 10px;
-            color: var(--accent);
+            font-size: 11px;
+            color: #00f3ff;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
         }
 
         .cockpit-toggle {
-            font-size: 8px;
-            color: var(--accent);
+            font-size: 10px;
+            color: #00f3ff;
             transition: transform 0.2s;
         }
 
@@ -1256,7 +1583,7 @@
 
         .cockpit-section.collapsed {
             min-height: 0;
-            padding-bottom: 2px;
+            padding-bottom: 0;
         }
 
         .cockpit-section.collapsed .cockpit-toggle {
@@ -1278,6 +1605,15 @@
             font-size: 10px;
             text-align: center;
             color: var(--accent);
+            cursor: help;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .controls-grid kbd:hover {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--accent);
+            transform: scale(1.1);
         }
 
         /* Radar Section */
@@ -1663,6 +1999,20 @@
                 <button class="btn" onclick="app.toggleFlightMode()" data-tooltip="Flight Mode">🚀</button>
                 <button class="btn" id="selectShipBtn" onclick="app.showShipModal()" data-tooltip="Select Ship"
                     style="display:none">🛸</button>
+
+                <!-- Window Taskbar - minimized windows appear here -->
+                <div id="windowTaskbar" class="window-taskbar" style="display:none"></div>
+
+                <!-- Layout Presets -->
+                <div id="layoutPresets" class="layout-presets" style="display:none">
+                    <button class="layout-btn" onclick="app.saveLayout()" title="Save Current Layout">💾 Save</button>
+                    <button class="layout-btn" id="layout1Btn" onclick="app.loadLayout(1)"
+                        title="Load Layout 1">1</button>
+                    <button class="layout-btn" id="layout2Btn" onclick="app.loadLayout(2)"
+                        title="Load Layout 2">2</button>
+                    <button class="layout-btn" id="layout3Btn" onclick="app.loadLayout(3)"
+                        title="Load Layout 3">3</button>
+                </div>
             </div>
         </div>
         <div class="bottom-bar-right">
@@ -1748,49 +2098,9 @@
     <!-- Flight Mode HUD Overlay (Command Center Layout) -->
     <div id="flightHUD" class="flight-hud hidden">
 
-        <!-- LEFT COLUMN: Radar & Ship Status -->
+        <!-- LEFT COLUMN: Now empty, Leaders floats separately -->
         <div class="hud-column hud-left">
-            <!-- RADAR -->
-            <div id="sectionRadar" class="cockpit-section">
-                <div class="cockpit-header">
-                    <h4>📡 Radar System</h4>
-                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')">−</button>
-                </div>
-                <div class="cockpit-content" style="display:flex; flex-direction:column; align-items:center;">
-                    <div class="radar-container" style="margin-bottom:10px;">
-                        <canvas id="radarCanvas" class="radar-canvas" width="120" height="120"></canvas>
-                        <div class="radar-sweep"></div>
-                    </div>
-                    <div class="radar-coords" id="radarCoords" style="font-family:monospace; color:#0ff;">X: 0 Y: 0
-                    </div>
-                </div>
-            </div>
-
-            <!-- VELOCITY -->
-            <div id="sectionVelocity" class="cockpit-section">
-                <div class="cockpit-header">
-                    <h4>⚡ Engines</h4>
-                </div>
-                <div class="cockpit-content">
-                    <div class="velocity-display" style="display:flex; align-items:center; gap:15px;">
-                        <div class="speed-gauge" style="position:relative;">
-                            <canvas id="speedGaugeCanvas" width="70" height="70"></canvas>
-                            <div id="speedNumber" class="speed-number"
-                                style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold;">
-                                0</div>
-                        </div>
-                        <div style="flex:1;">
-                            <div class="speed-unit" style="color:var(--text-dim); font-size:11px;">VELOCITY (km/s)</div>
-                            <div class="cockpit-zoom-controls" style="margin-top:10px; display:flex; gap:5px;">
-                                <button class="zoom-btn" onclick="app.flightZoom(-0.2)">−</button>
-                                <span id="zoomDisplay" class="zoom-value"
-                                    style="background:rgba(0,0,0,0.5); padding:2px 6px; border-radius:4px;">1.0x</span>
-                                <button class="zoom-btn" onclick="app.flightZoom(0.2)">+</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Leaders window floats in top-left independently -->
         </div>
 
         <!-- CENTER COLUMN (Spacer) -->
@@ -1800,8 +2110,8 @@
 
         <!-- RIGHT COLUMN: Controls & Ship Config -->
         <div class="hud-column hud-right">
-            <!-- CONTROLS -->
-            <div id="sectionControls" class="cockpit-section">
+            <!-- CONTROLS - Top Right -->
+            <div id="sectionControls" class="cockpit-section" style="top:70px; right:15px; width:220px;">
                 <div class="cockpit-header">
                     <h4>🎮 Flight Control</h4>
                     <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')">−</button>
@@ -1809,10 +2119,14 @@
                 <div class="cockpit-content">
                     <div class="controls-grid"
                         style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:15px;">
-                        <kbd title="Forward">W</kbd><kbd title="Backward">S</kbd><kbd title="Roll Left">A</kbd><kbd
-                            title="Roll Right">D</kbd>
-                        <kbd title="Up">Q</kbd><kbd title="Down">E</kbd><kbd title="Pitch Up">R</kbd><kbd
-                            title="Pitch Down">F</kbd>
+                        <kbd title="W - Thrust Forward: Accelerate in the direction you're facing">W</kbd>
+                        <kbd title="S - Thrust Backward: Decelerate or reverse thrust">S</kbd>
+                        <kbd title="A - Roll Left: Rotate spacecraft counter-clockwise">A</kbd>
+                        <kbd title="D - Roll Right: Rotate spacecraft clockwise">D</kbd>
+                        <kbd title="Q - Strafe Up: Move upward without changing direction">Q</kbd>
+                        <kbd title="E - Strafe Down: Move downward without changing direction">E</kbd>
+                        <kbd title="R - Pitch Up: Tilt nose upward (3D rotation)">R</kbd>
+                        <kbd title="F - Pitch Down: Tilt nose downward (3D rotation)">F</kbd>
                     </div>
 
                     <div style="border-top: 1px solid rgba(0,243,255,0.2); padding-top: 10px;">
@@ -1829,31 +2143,143 @@
                         <button class="btn-small" style="width:100%; padding:8px;" onclick="app.toggleAutopilot()">
                             <span id="autopilotStatus">✈️ Engage Autopilot</span>
                         </button>
+
+                        <!-- 3D Rotation Controls -->
+                        <div style="border-top: 1px solid rgba(0,243,255,0.2); margin-top: 10px; padding-top: 10px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label style="font-size: 12px; color: #aaa;">🔄 3D Rotation</label>
+                                <button class="btn-small" onclick="app.resetShipRotation()"
+                                    title="Reset Rotation">↺</button>
+                            </div>
+
+                            <!-- Yaw (Z-axis) - Spin left/right -->
+                            <div style="margin-bottom: 6px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                    <span>Yaw (Z)</span>
+                                    <span id="yawValue">0°</span>
+                                </div>
+                                <input type="range" id="yawSlider" min="-180" max="180" value="0"
+                                    style="width: 100%; cursor: pointer;"
+                                    oninput="app.setShipRotation('yaw', this.value)">
+                            </div>
+
+                            <!-- Pitch (X-axis) - Tilt up/down -->
+                            <div style="margin-bottom: 6px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                    <span>Pitch (X)</span>
+                                    <span id="pitchValue">0°</span>
+                                </div>
+                                <input type="range" id="pitchSlider" min="-90" max="90" value="0"
+                                    style="width: 100%; cursor: pointer;"
+                                    oninput="app.setShipRotation('pitch', this.value)">
+                            </div>
+
+                            <!-- Roll (Y-axis) - Barrel roll -->
+                            <div style="margin-bottom: 6px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                    <span>Roll (Y)</span>
+                                    <span id="rollValue">0°</span>
+                                </div>
+                                <input type="range" id="rollSlider" min="-180" max="180" value="0"
+                                    style="width: 100%; cursor: pointer;"
+                                    oninput="app.setShipRotation('roll', this.value)">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- BOTTOM ROW: Inventory / Gems -->
+        <!-- BOTTOM ROW: Radar, Engines, Map, Gems - horizontal layout -->
         <div class="hud-bottom">
-            <div id="sectionGems" class="cockpit-section gems-section" style="width: 100%; max-width: 800px;">
+            <!-- RADAR - Bottom Left-Center (Pos 2) -->
+            <div id="sectionRadar" class="cockpit-section" style="bottom:80px; left:210px; width:170px; height:200px;">
                 <div class="cockpit-header">
-                    <h4>💎 Cargo Hold</h4>
-                    <div style="display:flex; gap:10px;">
-                        <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
-                            title="Toggle Values">💲</button>
-                        <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')">−</button>
+                    <h4>📡 Radar</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')">−</button>
+                </div>
+                <div class="cockpit-content" style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="radar-container" style="margin-bottom:10px;">
+                        <canvas id="radarCanvas" class="radar-canvas" width="120" height="120"></canvas>
+                        <div class="radar-sweep"></div>
+                    </div>
+                    <div class="radar-coords" id="radarCoords" style="font-family:monospace; color:#0ff;">X: 0 Y: 0
                     </div>
                 </div>
+            </div>
+
+            <!-- ENGINES - Bottom Center (Pos 3) -->
+            <div id="sectionVelocity" class="cockpit-section"
+                style="bottom:80px; left:395px; width:180px; height:200px;">
+                <div class="cockpit-header">
+                    <h4>⚡ Engines</h4>
+                </div>
                 <div class="cockpit-content">
-                    <div id="gemsGrid" class="gems-grid">
-                        <!-- Populated by JS -->
+                    <div class="velocity-display"
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:5px;">
+                        <div class="speed-unit" style="color:var(--text-dim); font-size:11px; margin-bottom:5px;">
+                            VELOCITY</div>
+                        <div class="speed-gauge" style="position:relative;">
+                            <canvas id="speedGaugeCanvas" width="80" height="80"></canvas>
+                            <div id="speedNumber" class="speed-number"
+                                style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold; font-size:18px;">
+                                0</div>
+                        </div>
+                        <div class="cockpit-zoom-controls"
+                            style="margin-top:5px; display:flex; align-items:center; gap:8px;">
+                            <button class="zoom-btn" onclick="app.flightZoom(-0.2)"
+                                style="width:24px; height:24px; line-height:22px;">−</button>
+                            <span id="zoomDisplay" class="zoom-value"
+                                style="background:rgba(0,0,0,0.5); padding:2px 8px; border-radius:4px; font-size:12px;">1.0x</span>
+                            <button class="zoom-btn" onclick="app.flightZoom(0.2)"
+                                style="width:24px; height:24px; line-height:22px;">+</button>
+                        </div>
                     </div>
-                    <div class="wallet-display"
-                        style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
-                        <div class="gems-total" style="font-size:12px;">Est. Value: <span id="gemsTotal">$0</span></div>
-                        <span>Credits: <span id="walletValue">0</span> ₵</span>
-                        <button class="btn-sell-all" onclick="app.sellAllGems()">Sell All</button>
+                </div>
+            </div>
+
+            <!-- MAP - Bottom Far Left (Pos 1) -->
+            <div id="sectionMap" class="cockpit-section" style="bottom:80px; left:15px; width:180px; height:200px;">
+                <div class="cockpit-header">
+                    <h4>🗺️ Map</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionMap')">−</button>
+                </div>
+                <div class="cockpit-content" style="display:flex; flex-direction:column; align-items:center;">
+                    <canvas id="inlineMapCanvas" class="map-canvas" width="150" height="100"></canvas>
+                    <div style="font-size:9px; color:#888; margin-top:4px;">Click for full map</div>
+                </div>
+            </div>
+
+            <!-- GEMS - Bottom Right (Pos 4 - Constrained) -->
+            <div id="sectionGems" class="cockpit-section gems-section"
+                style="bottom:80px; left:590px; right:245px; width:auto; height:200px;">
+                <div class="cockpit-header" style="justify-content:space-between; padding-right:8px;">
+                    <h4>💎 Precious Elements</h4>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="gems-total" style="font-size:11px; color:#aaa;">Est: <span id="gemsTotal"
+                                style="color:#0ff;">$0</span></div>
+                        <div style="font-size:11px; color:#aaa;">Credits: <span id="walletValue"
+                                style="color:#0f0;">0</span>
+                        </div>
+                        <button class="btn-sell-all" onclick="app.sellAllGems()"
+                            style="font-size:10px; padding:2px 6px; background:rgba(0,255,0,0.15); border:1px solid rgba(0,255,0,0.3); border-radius:4px; color:#cfc; cursor:pointer;">Sell
+                            All</button>
+                        <div style="width:1px; height:14px; background:rgba(255,255,255,0.1); margin:0 4px;"></div>
+                        <div style="display:flex; gap:4px;">
+                            <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
+                                title="Toggle Values">💲</button>
+                            <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')">−</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="cockpit-content" style="padding:5px;">
+                    <div id="gemsGrid" class="gems-grid"
+                        style="grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
                 <div class="resize-handle"
@@ -1886,6 +2312,7 @@
                 </div>
             </div>
         </div>
+        <div class="resize-handle"></div>
     </div>
 
     <!-- Floating Leaders Window (Bottom Right, above cockpit) -->
@@ -1902,6 +2329,7 @@
                 <!-- Populated by JS -->
             </div>
         </div>
+        <div class="resize-handle"></div>
     </div>
 
     <!-- Spacecraft Selection Modal -->
@@ -1918,8 +2346,8 @@
                     <p>High speed, drift capability. Speed: 70, Accel: 0.7</p>
                 </div>
                 <div class="ship-option" onclick="app.selectShip('hauler')">
-                    <h3>📦 Hauler</h3>
-                    <p>Heavy, stable platform. Speed: 30, Accel: 0.3</p>
+                    <h3>💀 Mauler</h3>
+                    <p>Death Star class. Gravitational pull. Speed: 40, Accel: 0.4</p>
                 </div>
                 <div class="ship-option" onclick="app.selectShip('orion')">
                     <h3>⭐ Orion</h3>
@@ -2079,7 +2507,7 @@
                     acceleration: 0.5 * (1 + (savedUpgrades.speed || 0) * 0.1),
                     rotationSpeed: 0.08,
                     size: 45,
-                    color: localStorage.getItem('shipColor') || '#00f3ff', // Customizable color
+                    color: localStorage.getItem('playerShipColor') || '#00f3ff', // Customizable color
                     hullHealth: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
                     maxHull: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
                     shield: 50 * (1 + (savedUpgrades.shield || 0) * 0.2),
@@ -2419,6 +2847,8 @@
                 this.makeResizable('sectionControls');
                 this.makeResizable('sectionRadar');
                 this.makeResizable('sectionVelocity');
+                this.makeResizable('sectionMap');
+                this.makeResizable('sectionGems');
                 this.initGemsSectionResize(); // Special handling for gems
 
                 document.querySelectorAll('.popup-panel').forEach(panel => {
@@ -2644,6 +3074,16 @@
                         header.style.cursor = 'grabbing';
                         element.style.zIndex = '1000'; // Bring to front
 
+                        // Ensure element is position:fixed for proper dragging
+                        if (getComputedStyle(element).position !== 'fixed') {
+                            const rect = element.getBoundingClientRect();
+                            element.style.width = rect.width + 'px'; // Preserve width
+                            element.style.height = rect.height + 'px'; // Preserve height
+                            element.style.position = 'fixed';
+                            element.style.left = rect.left + 'px';
+                            element.style.top = rect.top + 'px';
+                        }
+
                         startX = e.clientX;
                         startY = e.clientY;
 
@@ -2660,8 +3100,21 @@
                         const dx = e.clientX - startX;
                         const dy = e.clientY - startY;
 
-                        element.style.left = (initialX + dx) + 'px';
-                        element.style.top = (initialY + dy) + 'px';
+                        // Calculate new position
+                        let newX = initialX + dx;
+                        let newY = initialY + dy;
+
+                        // Bounds checking - keep at least 50px visible
+                        const minVisible = 50;
+                        const elemWidth = element.offsetWidth;
+                        const elemHeight = element.offsetHeight;
+
+                        // Keep within viewport bounds
+                        newX = Math.max(-elemWidth + minVisible, Math.min(window.innerWidth - minVisible, newX));
+                        newY = Math.max(0, Math.min(window.innerHeight - minVisible, newY));
+
+                        element.style.left = newX + 'px';
+                        element.style.top = newY + 'px';
                         element.style.bottom = 'auto'; // Remove bottom positioning
                         element.style.right = 'auto'; // Remove right positioning
                     });
@@ -2678,6 +3131,7 @@
                 makeDraggable('sectionControls');
                 makeDraggable('sectionRadar');
                 makeDraggable('sectionVelocity');
+                makeDraggable('sectionMap');
                 makeDraggable('sectionGems');
             }
 
@@ -2738,8 +3192,10 @@
                 const sector = this.getSectorCoords(this.playerShip.x, this.playerShip.y);
                 this.currentSector = sector;
 
-                for (let dx = -1; dx <= 1; dx++) {
-                    for (let dy = -1; dy <= 1; dy++) {
+                // Load 7x7 grid of sectors around player (increased from 3x3)
+                const loadRadius = 3;
+                for (let dx = -loadRadius; dx <= loadRadius; dx++) {
+                    for (let dy = -loadRadius; dy <= loadRadius; dy++) {
                         const sx = sector.x + dx;
                         const sy = sector.y + dy;
                         const key = `${sx},${sy} `;
@@ -2749,10 +3205,12 @@
                     }
                 }
 
+                // Cleanup sectors that are too far away (increased from 2 to 5)
+                const cleanupRadius = 5;
                 for (const [key] of this.loadedSectors.entries()) {
                     const [sx, sy] = key.split(',').map(Number);
                     const dist = Math.max(Math.abs(sx - sector.x), Math.abs(sy - sector.y));
-                    if (dist > 2) {
+                    if (dist > cleanupRadius) {
                         const sectorData = this.loadedSectors.get(key);
                         if (sectorData) {
                             this.minerals = this.minerals.filter(m => !sectorData.minerals.includes(m));
@@ -2928,17 +3386,15 @@
 
                 // Toggle HUD overlay
                 const hud = document.getElementById('flightHUD');
-                const floatingMap = document.getElementById('floatingMap');
                 const floatingLeaders = document.getElementById('floatingLeaders');
 
                 if (this.flightMode) {
                     if (hud) hud.classList.remove('hidden');
-                    if (floatingMap) floatingMap.classList.remove('hidden');
+                    // floatingMap is removed - we use inline sectionMap now
                     if (floatingLeaders) floatingLeaders.classList.remove('hidden');
                     this.updateFloatingLeaderboard();
                 } else {
                     if (hud) hud.classList.add('hidden');
-                    if (floatingMap) floatingMap.classList.add('hidden');
                     if (floatingLeaders) floatingLeaders.classList.add('hidden');
                 }
 
@@ -2949,16 +3405,175 @@
 
                 this.showToast(this.flightMode ? 'Flight Mode: ON - Use WASD/QE/Shift' : 'Flight Mode: OFF');
 
-                // Toggle ship button visibility
+                // Toggle ship button and layout presets visibility
                 const shipBtn = document.getElementById('selectShipBtn');
+                const layoutPresets = document.getElementById('layoutPresets');
                 if (shipBtn) shipBtn.style.display = this.flightMode ? 'inline-flex' : 'none';
+                if (layoutPresets) layoutPresets.style.display = this.flightMode ? 'flex' : 'none';
                 this.draw();
             }
 
-            // Toggle cockpit section collapse
+            // Toggle cockpit section - now minimizes to taskbar
             toggleCockpitSection(sectionId) {
                 const section = document.getElementById(sectionId);
-                if (section) section.classList.toggle('collapsed');
+                if (!section) return;
+
+                if (section.classList.contains('minimized-to-taskbar')) {
+                    // Restore from taskbar
+                    this.restoreFromTaskbar(sectionId);
+                } else {
+                    // Minimize to taskbar
+                    this.minimizeToTaskbar(sectionId);
+                }
+            }
+
+            // Window names for taskbar display
+            getWindowName(id) {
+                const names = {
+                    'sectionRadar': '📡 Radar',
+                    'sectionControls': '🎮 Controls',
+                    'sectionGems': '💎 Gems',
+                    'sectionVelocity': '🚀 Engines',
+                    'floatingMap': '🗺️ Map',
+                    'floatingLeaders': '🏆 Leaders'
+                };
+                return names[id] || id;
+            }
+
+            // Minimize window to taskbar
+            minimizeToTaskbar(windowId) {
+                const win = document.getElementById(windowId);
+                if (!win) return;
+
+                // Save current position before hiding
+                if (!this.savedWindowPositions) this.savedWindowPositions = {};
+                this.savedWindowPositions[windowId] = {
+                    left: win.style.left,
+                    top: win.style.top,
+                    width: win.style.width,
+                    height: win.style.height,
+                    display: win.style.display
+                };
+
+                // Hide window
+                win.classList.add('minimized-to-taskbar');
+                win.style.display = 'none';
+
+                // Add to taskbar
+                const taskbar = document.getElementById('windowTaskbar');
+                if (taskbar) {
+                    const item = document.createElement('div');
+                    item.className = 'taskbar-item';
+                    item.id = 'taskbar-' + windowId;
+                    item.textContent = this.getWindowName(windowId);
+                    item.onclick = () => this.restoreFromTaskbar(windowId);
+                    taskbar.appendChild(item);
+                    taskbar.style.display = 'flex';
+                }
+            }
+
+            // Restore window from taskbar
+            restoreFromTaskbar(windowId) {
+                const win = document.getElementById(windowId);
+                if (!win) return;
+
+                // Restore position
+                if (this.savedWindowPositions && this.savedWindowPositions[windowId]) {
+                    const pos = this.savedWindowPositions[windowId];
+                    if (pos.left) win.style.left = pos.left;
+                    if (pos.top) win.style.top = pos.top;
+                    if (pos.width) win.style.width = pos.width;
+                    if (pos.height) win.style.height = pos.height;
+                }
+
+                // Show window
+                win.classList.remove('minimized-to-taskbar');
+                win.style.display = 'block';
+
+                // Remove from taskbar
+                const taskbarItem = document.getElementById('taskbar-' + windowId);
+                if (taskbarItem) taskbarItem.remove();
+
+                // Hide taskbar if empty
+                const taskbar = document.getElementById('windowTaskbar');
+                if (taskbar && taskbar.children.length === 0) {
+                    taskbar.style.display = 'none';
+                }
+            }
+
+            // Save current layout to a slot
+            saveLayout() {
+                const slot = prompt('Save to layout slot (1, 2, or 3):', '1');
+                if (!slot || !['1', '2', '3'].includes(slot)) return;
+
+                const windows = ['sectionRadar', 'sectionControls', 'sectionGems', 'sectionVelocity', 'floatingMap', 'floatingLeaders', 'sectionMap'];
+                const layout = {};
+
+                windows.forEach(id => {
+                    const win = document.getElementById(id);
+                    if (win) {
+                        layout[id] = {
+                            left: win.style.left || win.offsetLeft + 'px',
+                            top: win.style.top || win.offsetTop + 'px',
+                            width: win.style.width,
+                            height: win.style.height,
+                            minimized: win.classList.contains('minimized-to-taskbar'),
+                            visible: win.style.display !== 'none' && !win.classList.contains('hidden')
+                        };
+                    }
+                });
+
+                localStorage.setItem('windowLayout' + slot, JSON.stringify(layout));
+                document.getElementById('layout' + slot + 'Btn')?.classList.add('active');
+                this.showToast('Layout ' + slot + ' saved!');
+            }
+
+            // Load layout from a slot
+            loadLayout(slot) {
+                const layoutStr = localStorage.getItem('windowLayout' + slot);
+                if (!layoutStr) {
+                    this.showToast('No layout saved in slot ' + slot);
+                    return;
+                }
+
+                try {
+                    const layout = JSON.parse(layoutStr);
+
+                    Object.entries(layout).forEach(([id, pos]) => {
+                        const win = document.getElementById(id);
+                        if (!win) return;
+
+                        // Restore from taskbar first if minimized
+                        if (win.classList.contains('minimized-to-taskbar')) {
+                            this.restoreFromTaskbar(id);
+                        }
+
+                        // Apply position
+                        if (pos.left) win.style.left = pos.left;
+                        if (pos.top) win.style.top = pos.top;
+                        if (pos.width) win.style.width = pos.width;
+                        if (pos.height) win.style.height = pos.height;
+
+                        // Handle minimized state
+                        if (pos.minimized) {
+                            this.minimizeToTaskbar(id);
+                        } else if (!pos.visible) {
+                            win.style.display = 'none';
+                        } else {
+                            win.style.display = 'block';
+                            win.classList.remove('hidden');
+                        }
+                    });
+
+                    // Update active button
+                    ['1', '2', '3'].forEach(s => {
+                        document.getElementById('layout' + s + 'Btn')?.classList.toggle('active', s === String(slot));
+                    });
+
+                    this.showToast('Layout ' + slot + ' loaded!');
+                } catch (e) {
+                    console.error('Error loading layout:', e);
+                }
             }
 
             toggleGemValues() {
@@ -3040,8 +3655,8 @@
                     const deltaX = e.clientX - startX;
                     const deltaY = e.clientY - startY;
 
-                    const newWidth = Math.max(200, Math.min(1200, startWidth + deltaX));
-                    const newHeight = Math.max(150, Math.min(800, startHeight + deltaY));
+                    const newWidth = Math.max(150, Math.min(1200, startWidth + deltaX));
+                    const newHeight = Math.max(100, Math.min(800, startHeight + deltaY));
 
                     element.style.width = newWidth + 'px';
                     element.style.height = newHeight + 'px';
@@ -3070,6 +3685,49 @@
                 localStorage.setItem('playerShipColor', defaultColor); // Fixed Key
                 document.getElementById('shipColorPicker').value = defaultColor;
                 this.showToast('Ship color reset to default');
+            }
+
+            // 3D Rotation controls
+            setShipRotation(axis, value) {
+                const degrees = parseInt(value);
+                const radians = degrees * Math.PI / 180;
+
+                if (axis === 'yaw') {
+                    this.playerShip.rotation = radians;
+                    document.getElementById('yawValue').textContent = degrees + '°';
+                } else if (axis === 'pitch') {
+                    this.playerShip.pitch = radians;
+                    document.getElementById('pitchValue').textContent = degrees + '°';
+                } else if (axis === 'roll') {
+                    this.playerShip.roll = radians;
+                    document.getElementById('rollValue').textContent = degrees + '°';
+                }
+
+                // Save rotation to localStorage
+                localStorage.setItem('shipRotation', JSON.stringify({
+                    yaw: this.playerShip.rotation,
+                    pitch: this.playerShip.pitch,
+                    roll: this.playerShip.roll
+                }));
+            }
+
+            resetShipRotation() {
+                this.playerShip.rotation = 0;
+                this.playerShip.pitch = 0;
+                this.playerShip.roll = 0;
+
+                // Reset sliders
+                document.getElementById('yawSlider').value = 0;
+                document.getElementById('pitchSlider').value = 0;
+                document.getElementById('rollSlider').value = 0;
+
+                // Reset labels
+                document.getElementById('yawValue').textContent = '0°';
+                document.getElementById('pitchValue').textContent = '0°';
+                document.getElementById('rollValue').textContent = '0°';
+
+                localStorage.removeItem('shipRotation');
+                this.showToast('Ship rotation reset');
             }
 
             // Helper to adjust color brightness
@@ -3327,137 +3985,143 @@
             }
 
             updateMap() {
-                const canvas = document.getElementById('mapCanvas');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const w = canvas.width, h = canvas.height;
-                const cx = w / 2, cy = h / 2;
+                // Render to both floating map and inline map
+                const canvases = [
+                    document.getElementById('mapCanvas'),
+                    document.getElementById('inlineMapCanvas')
+                ].filter(c => c);
 
-                const mapRadius = 50000; // Increased to show entire universe
-                const scale = (Math.min(w, h) / 2) / mapRadius;
+                canvases.forEach(canvas => {
+                    const ctx = canvas.getContext('2d');
+                    const w = canvas.width, h = canvas.height;
+                    const cx = w / 2, cy = h / 2;
 
-                // Clear
-                ctx.fillStyle = 'rgba(0,5,20,0.95)';
-                ctx.fillRect(0, 0, w, h);
+                    const mapRadius = 50000; // Increased to show entire universe
+                    const scale = (Math.min(w, h) / 2) / mapRadius;
 
-                // Offset to center on player
-                const offsetX = -this.playerShip.x;
-                const offsetY = -this.playerShip.y;
+                    // Clear
+                    ctx.fillStyle = 'rgba(0,5,20,0.95)';
+                    ctx.fillRect(0, 0, w, h);
 
-                // Draw Zones (centered at origin) - REDUCED OPACITY
-                Object.values(this.galaxyZones).forEach(zone => {
-                    const r = zone.distanceRange.min * scale;
-                    ctx.beginPath();
-                    ctx.arc(cx + offsetX * scale, cy + offsetY * scale, r, 0, Math.PI * 2);
-                    ctx.strokeStyle = zone.color;
-                    ctx.globalAlpha = 0.08; // Much more subtle
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                });
+                    // Offset to center on player
+                    const offsetX = -this.playerShip.x;
+                    const offsetY = -this.playerShip.y;
 
-                // Draw Minerals (gems) - FILTERED
-                // Only draw minerals if zoomed in or if they are high value to reduce noise
-                this.minerals.forEach(mineral => {
-                    const dx = (mineral.x + offsetX) * scale;
-                    const dy = (mineral.y + offsetY) * scale;
+                    // Draw Zones (centered at origin) - REDUCED OPACITY
+                    Object.values(this.galaxyZones).forEach(zone => {
+                        const r = zone.distanceRange.min * scale;
+                        ctx.beginPath();
+                        ctx.arc(cx + offsetX * scale, cy + offsetY * scale, r, 0, Math.PI * 2);
+                        ctx.strokeStyle = zone.color;
+                        ctx.globalAlpha = 0.08; // Much more subtle
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    });
 
-                    // Skip if off screen
-                    if (Math.abs(dx) > w / 2 || Math.abs(dy) > h / 2) return;
+                    // Draw Minerals (gems) - FILTERED
+                    // Only draw minerals if zoomed in or if they are high value to reduce noise
+                    this.minerals.forEach(mineral => {
+                        const dx = (mineral.x + offsetX) * scale;
+                        const dy = (mineral.y + offsetY) * scale;
 
-                    // Skip low value minerals on zoomed out map
-                    if (scale < 0.0005 && ['quartz', 'iron'].includes(mineral.type)) return;
+                        // Skip if off screen
+                        if (Math.abs(dx) > w / 2 || Math.abs(dy) > h / 2) return;
 
-                    ctx.fillStyle = mineral.color;
-                    ctx.globalAlpha = 0.5;
-                    ctx.beginPath();
-                    ctx.arc(cx + dx, cy + dy, 2, 0, Math.PI * 2); // Smaller dots
-                    ctx.fill();
-                });
-                ctx.globalAlpha = 1;
+                        // Skip low value minerals on zoomed out map
+                        if (scale < 0.0005 && ['quartz', 'iron'].includes(mineral.type)) return;
 
-                // Draw Deposits LAST - larger, foreground layer (CLUSTERS)
-                this.resourceDeposits.forEach(dep => {
-                    const dx = (dep.x + offsetX) * scale;
-                    const dy = (dep.y + offsetY) * scale;
-
-                    if (Math.abs(dx) > w / 2 || Math.abs(dy) > h / 2) return;
-
-                    // Tier-based colors
-                    let color, glowColor, label, labelText;
-                    switch (dep.tier) {
-                        case 1: color = '#4488ff'; glowColor = '#6699ff'; label = 'C'; labelText = 'Common'; break;
-                        case 2: color = '#ff66ff'; glowColor = '#ff88ff'; label = 'R'; labelText = 'Rich'; break;
-                        case 3: color = '#ffaa00'; glowColor = '#ffcc44'; label = 'E'; labelText = 'Epic'; break;
-                        case 4: color = '#ff4400'; glowColor = '#ff6644'; label = 'L'; labelText = 'Legendary'; break;
-                        case 5: color = '#ff00ff'; glowColor = '#ff44ff'; label = 'M'; labelText = 'Mythic'; break;
-                        case 6: color = '#00ffff'; glowColor = '#44ffff'; label = 'G'; labelText = 'Galaxy'; break;
-                        default: color = '#00f'; glowColor = '#44f'; label = '?'; labelText = 'Unknown'; break;
-                    }
-
-                    // Pulsing glow - Subtle now
-                    const pulse = 1 + Math.sin(Date.now() * 0.002) * 0.2;
-
-                    // Outer glow
-                    ctx.fillStyle = glowColor;
-                    ctx.globalAlpha = 0.3;
-                    ctx.beginPath();
-                    ctx.arc(cx + dx, cy + dy, (4 + dep.tier) * pulse, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Solid Core Icon (Diamond)
+                        ctx.fillStyle = mineral.color;
+                        ctx.globalAlpha = 0.5;
+                        ctx.beginPath();
+                        ctx.arc(cx + dx, cy + dy, 2, 0, Math.PI * 2); // Smaller dots
+                        ctx.fill();
+                    });
                     ctx.globalAlpha = 1;
-                    ctx.fillStyle = color;
-                    const size = 3 + dep.tier; // Scaled by importance
+
+                    // Draw Deposits LAST - larger, foreground layer (CLUSTERS)
+                    this.resourceDeposits.forEach(dep => {
+                        const dx = (dep.x + offsetX) * scale;
+                        const dy = (dep.y + offsetY) * scale;
+
+                        if (Math.abs(dx) > w / 2 || Math.abs(dy) > h / 2) return;
+
+                        // Tier-based colors
+                        let color, glowColor, label, labelText;
+                        switch (dep.tier) {
+                            case 1: color = '#4488ff'; glowColor = '#6699ff'; label = 'C'; labelText = 'Common'; break;
+                            case 2: color = '#ff66ff'; glowColor = '#ff88ff'; label = 'R'; labelText = 'Rich'; break;
+                            case 3: color = '#ffaa00'; glowColor = '#ffcc44'; label = 'E'; labelText = 'Epic'; break;
+                            case 4: color = '#ff4400'; glowColor = '#ff6644'; label = 'L'; labelText = 'Legendary'; break;
+                            case 5: color = '#ff00ff'; glowColor = '#ff44ff'; label = 'M'; labelText = 'Mythic'; break;
+                            case 6: color = '#00ffff'; glowColor = '#44ffff'; label = 'G'; labelText = 'Galaxy'; break;
+                            default: color = '#00f'; glowColor = '#44f'; label = '?'; labelText = 'Unknown'; break;
+                        }
+
+                        // Pulsing glow - Subtle now
+                        const pulse = 1 + Math.sin(Date.now() * 0.002) * 0.2;
+
+                        // Outer glow
+                        ctx.fillStyle = glowColor;
+                        ctx.globalAlpha = 0.3;
+                        ctx.beginPath();
+                        ctx.arc(cx + dx, cy + dy, (4 + dep.tier) * pulse, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Solid Core Icon (Diamond)
+                        ctx.globalAlpha = 1;
+                        ctx.fillStyle = color;
+                        const size = 3 + dep.tier; // Scaled by importance
+                        ctx.beginPath();
+                        ctx.moveTo(cx + dx, cy + dy - size);
+                        ctx.lineTo(cx + dx + size, cy + dy);
+                        ctx.lineTo(cx + dx, cy + dy + size);
+                        ctx.lineTo(cx + dx - size, cy + dy);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Label - Only show text if nearby or high tier
+                        // Simplified logic: show full text only on hover-ish distance or high tier
+                        // For now, just show single Letter code unless really important
+                        ctx.fillStyle = '#fff';
+                        ctx.font = '10px monospace';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(label, cx + dx, cy + dy);
+                    });
+                    ctx.globalAlpha = 1;
+
+                    // Draw Player (now always at center) - PROMINENT
+                    const px = cx;
+                    const py = cy;
+
+                    // Strong Glow for visibility over everything
+                    ctx.save();
+                    ctx.translate(px, py);
+
+                    // Pulsing outer ring
+                    ctx.shadowColor = '#00ffff';
+                    ctx.shadowBlur = 15;
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.moveTo(cx + dx, cy + dy - size);
-                    ctx.lineTo(cx + dx + size, cy + dy);
-                    ctx.lineTo(cx + dx, cy + dy + size);
-                    ctx.lineTo(cx + dx - size, cy + dy);
-                    ctx.closePath();
-                    ctx.fill();
+                    ctx.arc(0, 0, 10 + Math.sin(Date.now() * 0.005) * 2, 0, Math.PI * 2);
+                    ctx.stroke();
 
-                    // Label - Only show text if nearby or high tier
-                    // Simplified logic: show full text only on hover-ish distance or high tier
-                    // For now, just show single Letter code unless really important
+                    // Player Arrow
+                    ctx.rotate(this.playerShip.rotation + Math.PI / 2);
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = 'white';
                     ctx.fillStyle = '#fff';
-                    ctx.font = '10px monospace';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(label, cx + dx, cy + dy);
-                });
-                ctx.globalAlpha = 1;
-
-                // Draw Player (now always at center) - PROMINENT
-                const px = cx;
-                const py = cy;
-
-                // Strong Glow for visibility over everything
-                ctx.save();
-                ctx.translate(px, py);
-
-                // Pulsing outer ring
-                ctx.shadowColor = '#00ffff';
-                ctx.shadowBlur = 15;
-                ctx.strokeStyle = '#00ffff';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(0, 0, 10 + Math.sin(Date.now() * 0.005) * 2, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // Player Arrow
-                ctx.rotate(this.playerShip.rotation + Math.PI / 2);
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = 'white';
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                // Larger size (approx 3x previous size)
-                ctx.moveTo(0, -12);
-                ctx.lineTo(8, 8);
-                ctx.lineTo(0, 4);
-                ctx.lineTo(-8, 8);
-                ctx.fill();
-                ctx.restore();
-                ctx.stroke();
+                    ctx.beginPath();
+                    // Larger size (approx 3x previous size)
+                    ctx.moveTo(0, -12);
+                    ctx.lineTo(8, 8);
+                    ctx.lineTo(0, 4);
+                    ctx.lineTo(-8, 8);
+                    ctx.fill();
+                    ctx.restore();
+                    ctx.stroke();
+                }); // End canvases.forEach
             }
 
             /* --- EXPANDED MAP --- */
@@ -3830,11 +4494,11 @@
                 mockPlayers.forEach((player, i) => {
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
                     const isYou = player.name === 'You';
-                    html += `< div class="leader-row${isYou ? ' you' : ''}" >
+                    html += `<div class="leader-row${isYou ? ' you' : ''}">
                         <span class="leader-rank">${medal || (i + 1)}</span>
                         <span class="leader-name">${player.name}</span>
                         <span class="leader-wealth">$${player.wealth.toLocaleString()}</span>
-                    </div > `;
+                    </div>`;
                 });
                 listEl.innerHTML = html;
             }
@@ -4348,6 +5012,36 @@
             // Update minerals (check collection, spawn new ones)
             updateMinerals() {
                 if (!this.flightMode) return;
+
+                // MAULER TRACTOR BEAM - Gravitational pull for GEMS ONLY (not background debris)
+                // Only affects this.minerals array which contains collectible gems
+                if (this.playerShip.type === 'hauler') {
+                    const tractorRadius = 200; // Attraction radius (increased)
+                    const maxPullVelocity = 15; // Maximum pull speed
+
+                    for (const mineral of this.minerals) {
+                        const dx = this.playerShip.x - mineral.x;
+                        const dy = this.playerShip.y - mineral.y;
+                        const dist = Math.hypot(dx, dy);
+
+                        if (dist < tractorRadius && dist > 5) {
+                            // Calculate pull velocity - stronger when closer
+                            const pullIntensity = 1 - (dist / tractorRadius);
+                            const pullVelocity = maxPullVelocity * pullIntensity;
+
+                            // Normalize direction and apply velocity
+                            const dirX = dx / dist;
+                            const dirY = dy / dist;
+                            mineral.x += dirX * pullVelocity;
+                            mineral.y += dirY * pullVelocity;
+
+                            // Add slight spiral effect for visual flair
+                            const spiralAngle = Math.atan2(dy, dx) + 0.15;
+                            mineral.x += Math.cos(spiralAngle) * pullVelocity * 0.1;
+                            mineral.y += Math.sin(spiralAngle) * pullVelocity * 0.1;
+                        }
+                    }
+                }
 
                 // Check for collections
                 for (const mineral of [...this.minerals]) {
@@ -5212,7 +5906,36 @@
                     // Load ship settings
                     // Load ship settings
                     const savedColor = localStorage.getItem('playerShipColor'); // Consistent Key
-                    if (savedColor) this.playerShip.color = savedColor;
+                    if (savedColor) {
+                        this.playerShip.color = savedColor;
+                        // Also update the color picker UI to match
+                        const shipColorPicker = document.getElementById('shipColorPicker');
+                        if (shipColorPicker) shipColorPicker.value = savedColor;
+                    }
+
+                    // Load saved 3D rotation
+                    const savedRotation = localStorage.getItem('shipRotation');
+                    if (savedRotation) {
+                        try {
+                            const rot = JSON.parse(savedRotation);
+                            this.playerShip.rotation = rot.yaw || 0;
+                            this.playerShip.pitch = rot.pitch || 0;
+                            this.playerShip.roll = rot.roll || 0;
+
+                            // Sync sliders
+                            const yawDeg = Math.round(this.playerShip.rotation * 180 / Math.PI);
+                            const pitchDeg = Math.round(this.playerShip.pitch * 180 / Math.PI);
+                            const rollDeg = Math.round(this.playerShip.roll * 180 / Math.PI);
+
+                            const yawSlider = document.getElementById('yawSlider');
+                            const pitchSlider = document.getElementById('pitchSlider');
+                            const rollSlider = document.getElementById('rollSlider');
+
+                            if (yawSlider) { yawSlider.value = yawDeg; document.getElementById('yawValue').textContent = yawDeg + '°'; }
+                            if (pitchSlider) { pitchSlider.value = pitchDeg; document.getElementById('pitchValue').textContent = pitchDeg + '°'; }
+                            if (rollSlider) { rollSlider.value = rollDeg; document.getElementById('rollValue').textContent = rollDeg + '°'; }
+                        } catch (e) { console.warn('Could not load saved rotation:', e); }
+                    }
 
                     // FORCE UPDATE STATS (to fix "too slow" issue for existing saves)
                     // We re-apply base stats from the current type definitions
@@ -5754,25 +6477,25 @@
                             size: size,
                             shipClass: shipClass.name,
                             complexity: shipClass.complexity,
-                            hullColor: isSaucer ? `hsl(${hue}, 10 %, 50 %)` : `hsl(${hue}, 30 %, 40 %)`,
-                            hullHighlight: isSaucer ? `hsl(${hue}, 5 %, 85 %)` : `hsl(${hue}, 20 %, 70 %)`,
-                            hullShadow: isSaucer ? `hsl(${hue}, 15 %, 25 %)` : `hsl(${hue}, 40 %, 20 %)`,
-                            engineColor: `hsl(${(hue + 180) % 360}, 100%, 60 %)`,
-                            engineGlow: `hsl(${(hue + 180) % 360}, 100 %, 85 %)`,
-                            lightColor: `hsl(${Math.random() * 60 + 300}, 100 %, 55 %)`,
-                            lightColor2: `hsl(${Math.random() * 60}, 100 %, 50 %)`,
+                            hullColor: isSaucer ? `hsl(${hue}, 10%, 50%)` : `hsl(${hue}, 30%, 40%)`,
+                            hullHighlight: isSaucer ? `hsl(${hue}, 5%, 85%)` : `hsl(${hue}, 20%, 70%)`,
+                            hullShadow: isSaucer ? `hsl(${hue}, 15%, 25%)` : `hsl(${hue}, 40%, 20%)`,
+                            engineColor: `hsl(${(hue + 180) % 360}, 100%, 60%)`,
+                            engineGlow: `hsl(${(hue + 180) % 360}, 100%, 85%)`,
+                            lightColor: `hsl(${Math.random() * 60 + 300}, 100%, 55%)`,
+                            lightColor2: `hsl(${Math.random() * 60}, 100%, 50%)`,
                             lightPhase: Math.random() * Math.PI * 2,
                             detailSeed: Math.random() * 1000,
                             wingAngle: 0.3 + Math.random() * 0.4,
                             engineCount: shipClass.name === 'mothership' ? 6 : (shipClass.name === 'destroyer' ? 4 : (shipClass.name === 'cruiser' ? 3 : 2)),
-                            domeColor: `hsl(${Math.random() * 180 + 160}, 80 %, 70 %)`,
+                            domeColor: `hsl(${Math.random() * 180 + 160}, 80%, 70%)`,
                             beamActive: Math.random() > 0.7,
-                            beamColor: `hsl(${Math.random() * 60 + 80}, 100 %, 70 %)`,
+                            beamColor: `hsl(${Math.random() * 60 + 80}, 100%, 70%)`,
                             ringCount: isSaucer ? Math.floor(Math.random() * 3) + 2 : 0,
                             rotationSpeed: (Math.random() - 0.5) * 0.02,
                             rotation: Math.random() * Math.PI * 2,
                             hasShield: Math.random() > 0.8,
-                            shieldColor: `hsl(${Math.random() * 60 + 180}, 70 %, 60 %)`,
+                            shieldColor: `hsl(${Math.random() * 60 + 180}, 70%, 60%)`,
                             shieldPhase: Math.random() * Math.PI * 2
                         });
                     }
@@ -6768,12 +7491,14 @@
                 const size = 40 / this.camera.zoom;
                 const shipType = ship.type || 'interceptor';
 
+                // Ship color - available to all ship types
+                const shipColor = ship.color || '#00f3ff'; // Default cyan if not specified
+
                 // Draw ship based on type
                 switch (shipType) {
                     case 'saucer':
                         // Classic flying saucer
                         // Base
-                        const shipColor = ship.color || '#ffcc00'; // Default color if not specified
                         ctx.strokeStyle = this.adjustColor(shipColor, -30);
                         ctx.lineWidth = 2 / this.camera.zoom;
                         ctx.fillStyle = shipColor;
@@ -6797,29 +7522,104 @@
                         break;
 
                     case 'hauler':
-                        // Heavy cargo ship - rectangular with containers
-                        ctx.rotate(roll); // Apply roll rotation
-                        ctx.fillStyle = this.adjustColor(shipColor, -50); // Darker body
-                        ctx.strokeStyle = shipColor;
+                        // MAULER - Death Star inspired battle station
+                        ctx.rotate(roll);
+                        ctx.scale(1, pitchScale || 1);
+
+                        const maulerSize = size * 1.4;
+
+                        // Main sphere body with gradient
+                        const sphereGrad = ctx.createRadialGradient(
+                            -maulerSize * 0.3, -maulerSize * 0.3, 0,
+                            0, 0, maulerSize
+                        );
+                        sphereGrad.addColorStop(0, this.adjustColor(shipColor, 40));
+                        sphereGrad.addColorStop(0.5, shipColor);
+                        sphereGrad.addColorStop(0.8, this.adjustColor(shipColor, -40));
+                        sphereGrad.addColorStop(1, this.adjustColor(shipColor, -80));
+
+                        ctx.fillStyle = sphereGrad;
+                        ctx.strokeStyle = this.adjustColor(shipColor, -60);
                         ctx.lineWidth = 2 / this.camera.zoom;
-                        ctx.fillRect(-size * 0.8, -size * 0.5, size * 1.6, size);
-                        ctx.strokeRect(-size * 0.8, -size * 0.5, size * 1.6, size);
-                        // Cargo containers
-                        ctx.fillStyle = '#884400';
-                        ctx.fillRect(-size * 0.5, -size * 0.35, size * 0.4, size * 0.7);
-                        ctx.fillRect(0, -size * 0.35, size * 0.4, size * 0.7);
-                        // Cockpit
-                        ctx.fillStyle = this.adjustColor(shipColor, 30);
                         ctx.beginPath();
-                        ctx.moveTo(size * 0.8, 0);
-                        ctx.lineTo(size * 0.5, -size * 0.3);
-                        ctx.lineTo(size * 0.5, size * 0.3);
-                        ctx.closePath();
+                        ctx.arc(0, 0, maulerSize, 0, Math.PI * 2);
                         ctx.fill();
-                        // Engines
-                        ctx.fillStyle = '#ff4400';
-                        ctx.fillRect(-size * 0.9, -size * 0.4, size * 0.15, size * 0.25);
-                        ctx.fillRect(-size * 0.9, size * 0.15, size * 0.15, size * 0.25);
+                        ctx.stroke();
+
+                        // Superlaser dish (concave depression) - top right
+                        const dishX = maulerSize * 0.4;
+                        const dishY = -maulerSize * 0.3;
+                        const dishRadius = maulerSize * 0.35;
+
+                        // Dish shadow/depth
+                        const dishGrad = ctx.createRadialGradient(
+                            dishX, dishY, 0,
+                            dishX, dishY, dishRadius
+                        );
+                        dishGrad.addColorStop(0, this.adjustColor(shipColor, -100));
+                        dishGrad.addColorStop(0.6, this.adjustColor(shipColor, -60));
+                        dishGrad.addColorStop(1, this.adjustColor(shipColor, -30));
+                        ctx.fillStyle = dishGrad;
+                        ctx.beginPath();
+                        ctx.arc(dishX, dishY, dishRadius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Dish ring detail
+                        ctx.strokeStyle = this.adjustColor(shipColor, -40);
+                        ctx.lineWidth = 1.5 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.arc(dishX, dishY, dishRadius * 0.7, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.arc(dishX, dishY, dishRadius * 0.4, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Superlaser core - pulsing green/red energy
+                        const laserPulse = 0.5 + Math.sin(time * 0.006) * 0.5;
+                        ctx.fillStyle = `rgba(0, 255, 100, ${laserPulse})`;
+                        ctx.shadowColor = '#00ff00';
+                        ctx.shadowBlur = 15;
+                        ctx.beginPath();
+                        ctx.arc(dishX, dishY, dishRadius * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+
+                        // Equatorial trench
+                        ctx.strokeStyle = this.adjustColor(shipColor, -50);
+                        ctx.lineWidth = 3 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, maulerSize, maulerSize * 0.15, 0, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Surface details - random panels
+                        ctx.strokeStyle = this.adjustColor(shipColor, -30);
+                        ctx.lineWidth = 1 / this.camera.zoom;
+                        for (let i = 0; i < 8; i++) {
+                            const panelAngle = (i / 8) * Math.PI * 2;
+                            const px = Math.cos(panelAngle) * maulerSize * 0.7;
+                            const py = Math.sin(panelAngle) * maulerSize * 0.7;
+                            ctx.beginPath();
+                            ctx.rect(px - maulerSize * 0.08, py - maulerSize * 0.05, maulerSize * 0.16, maulerSize * 0.1);
+                            ctx.stroke();
+                        }
+
+                        // Docking bays - small rectangles
+                        ctx.fillStyle = this.adjustColor(shipColor, -70);
+                        ctx.fillRect(-maulerSize * 0.6, maulerSize * 0.3, maulerSize * 0.2, maulerSize * 0.08);
+                        ctx.fillRect(maulerSize * 0.4, maulerSize * 0.3, maulerSize * 0.2, maulerSize * 0.08);
+
+                        // Tractor beam effect - visual indicator for gem attraction
+                        if (this.playerShip.type === 'hauler') {
+                            const tractorPulse = 0.2 + Math.sin(time * 0.004) * 0.15;
+                            const tractorGrad = ctx.createRadialGradient(0, 0, maulerSize, 0, 0, maulerSize * 2.5);
+                            tractorGrad.addColorStop(0, `rgba(100, 200, 255, ${tractorPulse})`);
+                            tractorGrad.addColorStop(0.5, `rgba(50, 150, 255, ${tractorPulse * 0.5})`);
+                            tractorGrad.addColorStop(1, 'transparent');
+                            ctx.fillStyle = tractorGrad;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, maulerSize * 2.5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
                         break;
 
                     case 'orion':
@@ -6971,33 +7771,105 @@
                         break;
 
                     case 'phoenix':
-                        // Bird-like ship
-                        ctx.rotate(roll); // Apply roll rotation
+                        // PHOENIX - Majestic fiery bird spacecraft
+                        ctx.rotate(roll);
+                        ctx.scale(1, pitchScale || 1);
+
+                        // Flame trail effect behind ship
+                        const flamePulse = 0.5 + Math.sin(time * 0.008) * 0.3;
+                        const flameGrad = ctx.createLinearGradient(-size * 1.5, 0, -size * 0.5, 0);
+                        flameGrad.addColorStop(0, 'transparent');
+                        flameGrad.addColorStop(0.3, `rgba(255, 100, 0, ${flamePulse * 0.3})`);
+                        flameGrad.addColorStop(0.7, `rgba(255, 200, 0, ${flamePulse * 0.6})`);
+                        flameGrad.addColorStop(1, this.adjustColor(shipColor, 40));
+                        ctx.fillStyle = flameGrad;
+                        ctx.beginPath();
+                        ctx.moveTo(-size * 0.5, 0);
+                        ctx.quadraticCurveTo(-size * 1.2, size * 0.2, -size * 1.6, size * 0.1);
+                        ctx.quadraticCurveTo(-size * 1.3, 0, -size * 1.6, -size * 0.1);
+                        ctx.quadraticCurveTo(-size * 1.2, -size * 0.2, -size * 0.5, 0);
+                        ctx.fill();
+
+                        // Main body - sleek elongated fuselage
                         ctx.fillStyle = shipColor;
-                        ctx.strokeStyle = this.adjustColor(shipColor, 60);
+                        ctx.strokeStyle = this.adjustColor(shipColor, 40);
                         ctx.lineWidth = 2 / this.camera.zoom;
-                        // Body
                         ctx.beginPath();
-                        ctx.moveTo(size * 0.8, 0);
-                        ctx.lineTo(-size * 0.6, 0);
+                        ctx.moveTo(size * 0.9, 0);
+                        ctx.quadraticCurveTo(size * 0.7, -size * 0.15, size * 0.3, -size * 0.12);
+                        ctx.lineTo(-size * 0.4, -size * 0.1);
+                        ctx.quadraticCurveTo(-size * 0.6, 0, -size * 0.4, size * 0.1);
+                        ctx.lineTo(size * 0.3, size * 0.12);
+                        ctx.quadraticCurveTo(size * 0.7, size * 0.15, size * 0.9, 0);
+                        ctx.closePath();
+                        ctx.fill();
                         ctx.stroke();
-                        // Wings
+
+                        // Upper wing - swept back feather design
+                        ctx.fillStyle = this.adjustColor(shipColor, -20);
                         ctx.beginPath();
-                        ctx.moveTo(0, 0);
-                        ctx.quadraticCurveTo(size * 0.5, size * 0.5, -size * 0.2, size * 0.8);
-                        ctx.moveTo(0, 0);
-                        ctx.quadraticCurveTo(size * 0.5, -size * 0.5, -size * 0.2, -size * 0.8);
+                        ctx.moveTo(size * 0.1, -size * 0.1);
+                        ctx.quadraticCurveTo(size * 0.3, -size * 0.5, -size * 0.1, -size * 0.85);
+                        ctx.lineTo(-size * 0.3, -size * 0.7);
+                        ctx.quadraticCurveTo(-size * 0.1, -size * 0.4, -size * 0.3, -size * 0.15);
+                        ctx.closePath();
+                        ctx.fill();
                         ctx.stroke();
+
+                        // Lower wing - swept back feather design
+                        ctx.beginPath();
+                        ctx.moveTo(size * 0.1, size * 0.1);
+                        ctx.quadraticCurveTo(size * 0.3, size * 0.5, -size * 0.1, size * 0.85);
+                        ctx.lineTo(-size * 0.3, size * 0.7);
+                        ctx.quadraticCurveTo(-size * 0.1, size * 0.4, -size * 0.3, size * 0.15);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Wing tips - feather accents
+                        ctx.fillStyle = this.adjustColor(shipColor, 60);
+                        ctx.beginPath();
+                        ctx.moveTo(-size * 0.1, -size * 0.85);
+                        ctx.lineTo(-size * 0.25, -size * 0.95);
+                        ctx.lineTo(-size * 0.35, -size * 0.75);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.moveTo(-size * 0.1, size * 0.85);
+                        ctx.lineTo(-size * 0.25, size * 0.95);
+                        ctx.lineTo(-size * 0.35, size * 0.75);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Cockpit dome
+                        const cockpitGrad = ctx.createRadialGradient(size * 0.35, 0, 0, size * 0.35, 0, size * 0.15);
+                        cockpitGrad.addColorStop(0, '#ffffff');
+                        cockpitGrad.addColorStop(0.4, this.adjustColor(shipColor, 80));
+                        cockpitGrad.addColorStop(1, this.adjustColor(shipColor, 30));
+                        ctx.fillStyle = cockpitGrad;
+                        ctx.beginPath();
+                        ctx.ellipse(size * 0.35, 0, size * 0.12, size * 0.08, 0, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Engine glow
+                        ctx.fillStyle = '#ff6600';
+                        ctx.shadowColor = '#ff3300';
+                        ctx.shadowBlur = 10;
+                        ctx.beginPath();
+                        ctx.ellipse(-size * 0.45, 0, size * 0.08, size * 0.05, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
                         break;
 
                     case 'harvester':
-                        // STELLAR HARVESTER - Tie-fighter inspired design
+                        // STARFIGHTER - Tie-fighter inspired design
                         // Rotate 90 degrees to face forward, then apply roll for barrel roll effect
                         ctx.rotate(Math.PI / 2 + roll);
                         ctx.scale(1, pitchScale || 1); // Apply pitch scaling
-                        // Left hexagonal panel
-                        ctx.fillStyle = '#00ddff';
-                        ctx.strokeStyle = '#0088ff';
+
+                        // Left hexagonal panel - uses shipColor
+                        ctx.fillStyle = shipColor;
+                        ctx.strokeStyle = this.adjustColor(shipColor, -40);
                         ctx.lineWidth = 2 / this.camera.zoom;
                         ctx.beginPath();
                         for (let i = 0; i < 6; i++) {
@@ -7024,23 +7896,23 @@
                         ctx.fill();
                         ctx.stroke();
 
-                        // Central cockpit pod
-                        ctx.fillStyle = '#888888';
-                        ctx.strokeStyle = '#00ffff';
+                        // Central cockpit pod - darker version of ship color
+                        ctx.fillStyle = this.adjustColor(shipColor, -60);
+                        ctx.strokeStyle = shipColor;
                         ctx.lineWidth = 2 / this.camera.zoom;
                         ctx.beginPath();
                         ctx.ellipse(0, 0, size * 0.3, size * 0.25, 0, 0, Math.PI * 2);
                         ctx.fill();
                         ctx.stroke();
 
-                        // Cockpit window
-                        ctx.fillStyle = '#00ffff';
+                        // Cockpit window - lighter ship color
+                        ctx.fillStyle = this.adjustColor(shipColor, 60);
                         ctx.beginPath();
                         ctx.arc(0, 0, size * 0.12, 0, Math.PI * 2);
                         ctx.fill();
 
                         // Connecting struts
-                        ctx.strokeStyle = '#666666';
+                        ctx.strokeStyle = this.adjustColor(shipColor, -80);
                         ctx.lineWidth = 3 / this.camera.zoom;
                         ctx.beginPath();
                         ctx.moveTo(-size * 0.3, 0);
@@ -7049,9 +7921,9 @@
                         ctx.lineTo(size * 0.8, 0);
                         ctx.stroke();
 
-                        // Engine glow on panels
-                        const pulseGlow = 0.3 + Math.sin(time * 0.005) * 0.2;
-                        ctx.fillStyle = `rgba(0, 255, 100, ${pulseGlow})`;
+                        // Engine glow on panels - pulsing effect
+                        const harvesterPulse = 0.3 + Math.sin(time * 0.005) * 0.2;
+                        ctx.fillStyle = `rgba(255, 150, 50, ${harvesterPulse})`;
                         ctx.beginPath();
                         ctx.arc(-size * 1.2, 0, size * 0.15, 0, Math.PI * 2);
                         ctx.fill();
@@ -7064,8 +7936,8 @@
                     default:
                         // STELLAR HARVESTER - Advanced gem collection vessel
                         ctx.rotate(roll); // Apply roll rotation
-                        ctx.fillStyle = '#00ffff';
-                        ctx.strokeStyle = '#0088ff';
+                        ctx.fillStyle = shipColor;
+                        ctx.strokeStyle = this.adjustColor(shipColor, -40);
                         ctx.lineWidth = 3 / this.camera.zoom;
                         ctx.beginPath();
                         ctx.moveTo(size, 0);
@@ -7105,6 +7977,60 @@
                         return;
                     }
 
+                    // MAULER GRAVITATIONAL EFFECT - Show distortion on gems being pulled
+                    let isBeingPulled = false;
+                    let pullDirection = { x: 0, y: 0 };
+                    let pullIntensity = 0;
+
+                    if (this.playerShip.type === 'hauler') {
+                        const dx = this.playerShip.x - mineral.x;
+                        const dy = this.playerShip.y - mineral.y;
+                        const dist = Math.hypot(dx, dy);
+                        const tractorRadius = 200;
+
+                        if (dist < tractorRadius && dist > 5) {
+                            isBeingPulled = true;
+                            pullIntensity = 1 - (dist / tractorRadius);
+                            pullDirection = { x: dx / dist, y: dy / dist };
+                        }
+                    }
+
+                    // Draw gravitational trail if being pulled
+                    if (isBeingPulled) {
+                        ctx.save();
+
+                        // Stretched trail toward ship (like spaghettification)
+                        const trailLength = size * 4 * pullIntensity;
+                        const trailGrad = ctx.createLinearGradient(
+                            0, 0,
+                            pullDirection.x * trailLength,
+                            pullDirection.y * trailLength
+                        );
+                        trailGrad.addColorStop(0, mineral.color);
+                        trailGrad.addColorStop(0.5, mineral.color + 'aa');
+                        trailGrad.addColorStop(1, 'transparent');
+
+                        ctx.strokeStyle = trailGrad;
+                        ctx.lineWidth = size * (1 + pullIntensity);
+                        ctx.lineCap = 'round';
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(pullDirection.x * trailLength, pullDirection.y * trailLength);
+                        ctx.stroke();
+
+                        // Tractor beam line to ship
+                        ctx.strokeStyle = `rgba(100, 200, 255, ${pullIntensity * 0.4})`;
+                        ctx.lineWidth = 1 / safeZoom;
+                        ctx.setLineDash([5 / safeZoom, 10 / safeZoom]);
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(this.playerShip.x - mineral.x, this.playerShip.y - mineral.y);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        ctx.restore();
+                    }
+
                     // Glow effect
                     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 2);
                     gradient.addColorStop(0, mineral.color);
@@ -7116,10 +8042,19 @@
                     ctx.arc(0, 0, size * 2, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Core
+                    // Core - distorted if being pulled
                     ctx.fillStyle = mineral.color;
                     ctx.beginPath();
-                    ctx.arc(0, 0, size, 0, Math.PI * 2);
+                    if (isBeingPulled) {
+                        // Stretched ellipse toward ship
+                        const stretch = 1 + pullIntensity * 0.5;
+                        const angle = Math.atan2(pullDirection.y, pullDirection.x);
+                        ctx.rotate(angle);
+                        ctx.ellipse(0, 0, size * stretch, size / stretch, 0, 0, Math.PI * 2);
+                        ctx.rotate(-angle);
+                    } else {
+                        ctx.arc(0, 0, size, 0, Math.PI * 2);
+                    }
                     ctx.fill();
 
                     // Bright center
@@ -8079,7 +9014,7 @@
                 const ships = {
                     interceptor: { name: 'Interceptor', maxSpeed: 90, acceleration: 0.8 },
                     saucer: { name: 'Saucer', maxSpeed: 110, acceleration: 1.0 },
-                    hauler: { name: 'Hauler', maxSpeed: 60, acceleration: 0.5 },
+                    hauler: { name: 'Mauler', maxSpeed: 70, acceleration: 0.6 },
                     orion: { name: 'Orion', maxSpeed: 100, acceleration: 0.9 },
                     draco: { name: 'Draco', maxSpeed: 130, acceleration: 0.7 },
                     phoenix: { name: 'Phoenix', maxSpeed: 95, acceleration: 1.2 },
@@ -8090,7 +9025,17 @@
                     this.playerShip.type = shipType;
                     this.playerShip.maxSpeed = ship.maxSpeed;
                     this.playerShip.acceleration = ship.acceleration;
-                    this.showToast(`Selected ${ship.name} `);
+
+                    // Save ship type to localStorage for persistence
+                    localStorage.setItem('playerShipType', shipType);
+
+                    // Force camera to recenter on ship to prevent disappearing off screen
+                    if (this.flightMode && this.camera) {
+                        this.camera.x = -this.playerShip.x * this.camera.zoom;
+                        this.camera.y = -this.playerShip.y * this.camera.zoom;
+                    }
+
+                    this.showToast(`Selected ${ship.name}`);
                 }
                 this.hideShipModal();
             }
