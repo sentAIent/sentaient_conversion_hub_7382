@@ -7,7 +7,7 @@
     <title>Aether Map | Pre-Placement Cartographer</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
         rel="stylesheet">
-<link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./styles.css">
 </head>
 
 <body>
@@ -461,7 +461,7 @@
 
             <!-- GEMS - Bottom Right (Pos 4 - Constrained) -->
             <div id="sectionGems" class="cockpit-section gems-section"
-                style="bottom:80px; left:590px; right:245px; width:auto; height:200px;">
+                style="bottom:80px; left:590px; right:20px; width:auto; height:200px;">
                 <div class="cockpit-header" style="justify-content:space-between; padding-right:8px;">
                     <h4>💎 Precious Elements</h4>
                     <div style="display:flex; align-items:center; gap:12px;">
@@ -474,7 +474,8 @@
                         <div style="width:1px; height:14px; background:rgba(255,255,255,0.1); margin:0 4px;"></div>
                         <div style="display:flex; gap:4px;">
                             <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
-                                title="Toggle Values">💲</button>
+                                title="Toggle Values"
+                                style="color: #00ff00; text-shadow: 0 0 10px #00ff00; font-weight: bold;">$</button>
                             <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')">−</button>
                         </div>
                     </div>
@@ -595,7 +596,7 @@
     </button>
 
     <!-- Style for Mobile Visibility & UI Polish -->
-<script type="module" src="./script.js"></script>
+    <script type="module" src="./script.js"></script>
 </body>
 
 </html>
