@@ -1096,7 +1096,7 @@
         /* RESTORED: Gems Grid Layout */
         .gems-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: 8px;
             padding: 5px;
         }
