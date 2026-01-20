@@ -8,9 +8,11 @@ import { initShareFeature, copyShareLink } from './services/share.js';
 import { recordVisit } from './services/analytics.js';
 import { setupSwipeGestures } from './ui/layout.js';
 import { initResizablePanels } from './ui/resize-panels.js';
-import './ui/pricing.js';  // Pricing modal
+import './ui/pricing-3tier.js';  // 3-Tier Pricing modal (Free/Yogi/Buddha)
 import { handlePaymentSuccess } from './services/stripe-simple.js';  // Payment handler
 import { initPaywall } from './utils/paywall.js';  // Paywall system
+import { initAnalytics, trackSignup, trackLogin, trackBeginCheckout, trackPurchase, trackFeatureUse, trackSessionStart, trackSessionEnd, trackPaywallShown, trackUpgradeClick, setUserProperties } from './utils/analytics.js';  // Analytics
+import { showFeedbackSurvey, checkSurveyTrigger, TRIGGER_CONDITIONS } from './utils/feedback-survey.js';  // Feedback system
 
 
 // Content Modules - Loaded dynamically after UI is ready
@@ -28,9 +30,25 @@ document.addEventListener('DOMContentLoaded', () => {
         initFirebase();
         initAuthUI();
         initPaywall();  // Initialize paywall system
+        initAnalytics();  // Initialize Google Analytics
     } catch (e) {
-        console.warn("[Main] Firebase/Auth Init Failed:", e);
+        console.warn("[Main] Firebase/Auth/Analytics Init Failed:", e);
     }
+
+    // Expose analytics tracking functions globally for easy access
+    window.trackSignup = trackSignup;
+    window.trackLogin = trackLogin;
+    window.trackBeginCheckout = trackBeginCheckout;
+    window.trackPurchase = trackPurchase;
+    window.trackFeatureUse = trackFeatureUse;
+    window.trackSessionStart = trackSessionStart;
+    window.trackSessionEnd = trackSessionEnd;
+    window.trackPaywallShown = trackPaywallShown;
+    window.trackUpgradeClick = trackUpgradeClick;
+    window.setUserProperties = setUserProperties;
+
+    // Expose feedback survey globally
+    window.showFeedbackSurvey = showFeedbackSurvey;
 
     // Core UI Setup - Critical path
     setupUI();
@@ -65,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle payment return (if redirected from Stripe)
     handlePaymentSuccess();
+
+    // Check if survey should be triggered
+    setTimeout(() => checkSurveyTrigger(), 15000); // Check after 15 seconds
 
     // Expose share function globally for UI buttons
     window.shareCurrentPreset = async () => {

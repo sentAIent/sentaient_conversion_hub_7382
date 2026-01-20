@@ -5,16 +5,108 @@ import { state, els } from '../state.js';
 
 // Built-in sleep stories with recommended soundscapes
 export const SLEEP_STORIES = [
+    // ========== CHILDREN'S STORIES ==========
+    {
+        id: 'story-sleepy-cloud-ship',
+        title: 'The Sleepy Cloud Ship',
+        description: 'Float on a magical cloud through the starry night sky',
+        duration: '10 min',
+        narrator: 'Studio',
+        audioUrl: null, // Can be set via upload
+        thumbnail: null,
+        recommendedFreq: { base: 200, beat: 3 }, // Delta for deep sleep
+        recommendedSoundscape: 'wind',
+        category: 'kids',
+        age: '4-8',
+        bpm: 55,
+        premium: false
+    },
+    {
+        id: 'story-friendly-dragon',
+        title: "The Friendly Dragon's Lullaby",
+        description: 'Fly with Ember the gentle dragon to a magical sleepy forest',
+        duration: '12 min',
+        narrator: 'Studio',
+        audioUrl: null,
+        thumbnail: null,
+        recommendedFreq: { base: 220, beat: 4 }, // Theta
+        recommendedSoundscape: 'bells',
+        category: 'kids',
+        age: '5-10',
+        bpm: 60,
+        premium: false
+    },
+    {
+        id: 'story-starlight-express',
+        title: 'The Starlight Express Train',
+        description: 'Ride the cozy nighttime train to Dreamland Station',
+        duration: '15 min',
+        narrator: 'Studio',
+        audioUrl: null,
+        thumbnail: null,
+        recommendedFreq: { base: 180, beat: 3 }, // Delta
+        recommendedSoundscape: 'wind',
+        category: 'kids',
+        age: '6-12',
+        bpm: 58,
+        premium: true
+    },
+
+    // ========== ADULT STORIES ==========
+    {
+        id: 'story-ancient-forest-path',
+        title: 'The Ancient Forest Path',
+        description: 'A mindful walking meditation through timeless woods',
+        duration: '15 min',
+        narrator: 'Studio',
+        audioUrl: null,
+        thumbnail: null,
+        recommendedFreq: { base: 200, beat: 6 }, // Theta
+        recommendedSoundscape: 'strings',
+        category: 'adults',
+        bpm: 60,
+        premium: false
+    },
+    {
+        id: 'story-ocean-consciousness',
+        title: 'Ocean of Consciousness',
+        description: 'Float in infinite awareness on a calm, vast sea',
+        duration: '20 min',
+        narrator: 'Studio',
+        audioUrl: null,
+        thumbnail: null,
+        recommendedFreq: { base: 180, beat: 4 }, // Theta
+        recommendedSoundscape: 'ocean',
+        category: 'adults',
+        bpm: 55,
+        premium: true
+    },
+    {
+        id: 'story-mountain-temple',
+        title: 'Mountain Temple at Twilight',
+        description: 'Find peace in an ancient meditation hall above the clouds',
+        duration: '18 min',
+        narrator: 'Studio',
+        audioUrl: null,
+        thumbnail: null,
+        recommendedFreq: { base: 200, beat: 7 }, // Theta
+        recommendedSoundscape: 'bells',
+        category: 'adults',
+        bpm: 58,
+        premium: true
+    },
+
+    // ========== ORIGINAL DEMO STORIES (kept for backwards compatibility) ==========
     {
         id: 'story-peaceful-night',
         title: 'Peaceful Night',
         description: 'A gentle journey through a moonlit garden',
         duration: '10 min',
         narrator: 'Demo',
-        audioUrl: null, // Can be set via upload
+        audioUrl: null,
         thumbnail: null,
-        recommendedFreq: { base: 200, beat: 2 }, // Delta for deep sleep
-        recommendedSoundscape: 'ocean', // Matches story theme
+        recommendedFreq: { base: 200, beat: 2 },
+        recommendedSoundscape: 'ocean',
         category: 'nature',
         bpm: 60,
         premium: false
@@ -27,7 +119,7 @@ export const SLEEP_STORIES = [
         narrator: 'Demo',
         audioUrl: null,
         thumbnail: null,
-        recommendedFreq: { base: 180, beat: 3 }, // Delta
+        recommendedFreq: { base: 180, beat: 3 },
         recommendedSoundscape: 'ocean',
         category: 'nature',
         bpm: 55,
@@ -41,7 +133,7 @@ export const SLEEP_STORIES = [
         narrator: 'Demo',
         audioUrl: null,
         thumbnail: null,
-        recommendedFreq: { base: 220, beat: 4 }, // Theta
+        recommendedFreq: { base: 220, beat: 4 },
         recommendedSoundscape: 'rain',
         category: 'fantasy',
         bpm: 65,
@@ -55,7 +147,7 @@ export const SLEEP_STORIES = [
         narrator: 'Demo',
         audioUrl: null,
         thumbnail: null,
-        recommendedFreq: { base: 200, beat: 6 }, // Theta
+        recommendedFreq: { base: 200, beat: 6 },
         recommendedSoundscape: 'strings',
         category: 'space',
         bpm: 70,
