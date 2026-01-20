@@ -18,7 +18,22 @@ const FREE_TIER = {
  * Check if user can access a feature
  */
 export async function canAccessFeature(featureType, featureId) {
-    const auth = getAuth();
+    // ✅ FIX: Check if Firebase is initialized first to prevent race condition
+    let auth;
+    try {
+        const firebaseModule = await import('../services/firebase.js');
+        auth = firebaseModule.auth;
+
+        // If auth not initialized yet, wait a bit
+        if (!auth) {
+            console.warn('[Paywall] Firebase not initialized yet, allowing access temporarily');
+            return { allowed: true }; // Fail open during initialization
+        }
+    } catch (e) {
+        console.warn('[Paywall] Could not load Firebase, allowing access:', e);
+        return { allowed: true }; // Fail open if Firebase has issues
+    }
+
     if (!auth.currentUser) {
         // Not logged in - show auth modal
         return { allowed: false, reason: 'not_logged_in' };
@@ -61,7 +76,12 @@ export async function canAccessFeature(featureType, featureId) {
 /**
  * Show upgrade modal when hitting paywall
  */
-export function showUpgradePrompt(reason) {
+export function showUpgradePrompt(reason, onContinue = null) {
+    // Track paywall shown
+    if (window.trackPaywallShown) {
+        window.trackPaywallShown(reason, reason);
+    }
+
     const messages = {
         'premium_preset': {
             title: '🎵 Unlock All Presets',
@@ -93,9 +113,10 @@ export function showUpgradePrompt(reason) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'upgradePromptModal';
-        modal.className = 'fixed inset-0 z-[300] flex items-center justify-center p-4 hidden';
+        modal.className = 'fixed inset-0 flex items-center justify-center p-4 hidden';
         modal.style.background = 'rgba(0, 0, 0, 0.9)';
         modal.style.backdropFilter = 'blur(20px)';
+        modal.style.zIndex = '1000'; // ✅ FIX: Use inline style to ensure proper z-index above footer
 
         modal.innerHTML = `
       <div style="max-width: 500px; width: 100%; background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 48px 32px; text-align: center;">
@@ -115,39 +136,6 @@ export function showUpgradePrompt(reason) {
     `;
 
         document.body.appendChild(modal);
-
-        // Event listeners - will use dataset to determine action
-        modal.querySelector('#upgradeBtn').addEventListener('click', () => {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
-
-            const currentReason = modal.dataset.currentReason;
-            if (currentReason === 'not_logged_in') {
-                if (window.openAuthModal) {
-                    window.openAuthModal();
-                } else {
-                    alert('Please sign in to continue');
-                }
-            } else {
-                if (window.showPricingModal) {
-                    window.showPricingModal();
-                } else {
-                    alert('Premium feature - please upgrade');
-                }
-            }
-        });
-
-        modal.querySelector('#closeUpgradeBtn').addEventListener('click', () => {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.add('hidden');
-                document.body.style.overflow = '';
-            }
-        });
     }
 
     // Store current reason for button handler
@@ -164,8 +152,71 @@ export function showUpgradePrompt(reason) {
     description.textContent = message.description;
     btn.textContent = message.cta;
 
+    // ✅ SIMPLIFIED FIX: Use onclick properties (naturally overrides previous handlers)
+    const upgradeBtn = modal.querySelector('#upgradeBtn');
+    const closeBtn = modal.querySelector('#closeUpgradeBtn');
+
+    upgradeBtn.onclick = (e) => {
+        console.log('[Paywall] Upgrade button clicked, reason:', modal.dataset.currentReason);
+        e.stopPropagation();
+        try {
+            modal.classList.remove('flex'); // ✅ FIX: Remove flex before adding hidden
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+
+            const currentReason = modal.dataset.currentReason;
+            if (currentReason === 'not_logged_in') {
+                console.log('[Paywall] Opening auth modal...');
+                if (window.openAuthModal) {
+                    window.openAuthModal();
+                } else {
+                    console.error('[Paywall] window.openAuthModal not found!');
+                    alert('Please sign in to continue');
+                }
+            } else {
+                console.log('[Paywall] Opening pricing modal...');
+                if (window.showPricingModal) {
+                    window.showPricingModal();
+                } else {
+                    console.error('[Paywall] window.showPricingModal not found!');
+                    alert('Premium feature - please upgrade');
+                }
+            }
+        } catch (error) {
+            console.error('[Paywall] Error in upgrade button handler:', error);
+        }
+    };
+
+    closeBtn.onclick = (e) => {
+        console.log('[Paywall] Later button clicked');
+        e.stopPropagation();
+        try {
+            modal.classList.remove('flex'); // ✅ FIX: Remove flex before adding hidden
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        } catch (error) {
+            console.error('[Paywall] Error closing upgrade modal:', error);
+        }
+    };
+
+    // Background click to close
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            console.log('[Paywall] Background clicked, closing modal');
+            e.stopPropagation();
+            try {
+                modal.classList.remove('flex'); // ✅ FIX: Remove flex before adding hidden
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            } catch (error) {
+                console.error('[Paywall] Error closing modal on background click:', error);
+            }
+        }
+    };
+
     // Show modal
     modal.classList.remove('hidden');
+    modal.classList.add('flex'); // ✅ FIX: Add flex when showing
     document.body.style.overflow = 'hidden';
 }
 

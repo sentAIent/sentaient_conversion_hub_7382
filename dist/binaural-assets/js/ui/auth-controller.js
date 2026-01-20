@@ -105,7 +105,13 @@ export function initAuthUI() {
     };
 
     // 4. Close Button
-    document.getElementById('closeAuthBtn').onclick = closeAuthModal;
+    const closeAuthBtn = document.getElementById('closeAuthBtn');
+    if (closeAuthBtn) {
+        closeAuthBtn.onclick = (e) => {
+            e.stopPropagation();
+            closeAuthModal();
+        };
+    }
 
     // 5. Auth State Observer Actions
     registerAuthCallback((user) => {
@@ -125,8 +131,9 @@ export function initAuthUI() {
     // Setup profile modal handlers
     setupProfileHandlers();
 
-    // Expose auth trigger globally for inline onclick handlers
+    // Expose auth trigger globally for inline onclick handlers and paywall
     window.openAuthTrigger = openAuthModal;
+    window.openAuthModal = openAuthModal; // ✅ FIX: Also expose with this name for paywall.js
 }
 
 function updateProfileUI(user) {
@@ -158,6 +165,48 @@ function updateProfileUI(user) {
             }
         }
 
+        // ✅ REVENUE FEATURE: Show upgrade/manage buttons based on tier
+        let upgradeBtn = document.getElementById('profileUpgradeBtn');
+        if (!upgradeBtn) {
+            // Create upgrade button if it doesn't exist
+            upgradeBtn = document.createElement('button');
+            upgradeBtn.id = 'profileUpgradeBtn';
+            upgradeBtn.className = 'w-full py-3 px-4 rounded-xl font-bold text-sm transition-all';
+
+            // Insert after tier badge
+            const profileHeader = tierEl?.parentElement;
+            if (profileHeader) {
+                profileHeader.appendChild(upgradeBtn);
+            }
+        }
+
+        if (isPremium) {
+            // Premium user - show "Manage Subscription" button
+            upgradeBtn.textContent = '⚙️ Manage Subscription';
+            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all';
+            upgradeBtn.onclick = () => {
+                // Open Stripe Customer Portal
+                if (window.showPricingModal) {
+                    window.showPricingModal();
+                }
+            };
+        } else {
+            // Free user - show prominent "Upgrade to Pro" button
+            upgradeBtn.textContent = '⚡ Upgrade to Pro';
+            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg';
+            upgradeBtn.onclick = () => {
+                // Close profile modal and show pricing
+                const profileModal = document.getElementById('profileModal');
+                if (profileModal) {
+                    profileModal.classList.add('hidden');
+                    profileModal.classList.remove('active');
+                }
+                if (window.showPricingModal) {
+                    window.showPricingModal();
+                }
+            };
+        }
+
         if (logoutBtn) logoutBtn.classList.remove('hidden');
     } else {
         // Guest
@@ -170,6 +219,10 @@ function updateProfileUI(user) {
         }
         if (nameInput) nameInput.value = '';
         if (logoutBtn) logoutBtn.classList.add('hidden');
+
+        // Hide upgrade button for guests
+        const upgradeBtn = document.getElementById('profileUpgradeBtn');
+        if (upgradeBtn) upgradeBtn.style.display = 'none';
     }
 
     // Populate stats from analytics
@@ -255,6 +308,8 @@ export function setupProfileHandlers() {
                 const { updateProfile } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
                 if (auth.currentUser) {
                     await updateProfile(auth.currentUser, { displayName: newName });
+                    // ✅ FIX Issue #8: Reload user to get fresh data
+                    await auth.currentUser.reload();
                     updateProfileUI(auth.currentUser);
                     showToast('Profile updated!', 'success');
                 }
@@ -267,6 +322,28 @@ export function setupProfileHandlers() {
 }
 
 export function openAuthModal() {
+    // ✅ PROFESSIONAL FIX: If user is already logged in, show account management instead
+    if (state.currentUser) {
+        console.log('[Auth] User already logged in, showing account management');
+
+        // Show profile/account modal instead
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal) {
+            profileModal.classList.remove('hidden');
+            profileModal.classList.add('active');
+
+            // Update profile UI with current user data
+            updateProfileUI(state.currentUser);
+
+            // Populate stats
+            populateProfileStats();
+        } else {
+            // Fallback if profile modal doesn't exist
+            showToast("Account menu coming soon. Use the profile button to sign out.", "info");
+        }
+        return;
+    }
+
     const m = document.getElementById('authModal');
     m.classList.remove('hidden');
     m.classList.add('active');
@@ -285,16 +362,29 @@ export function openAuthModal() {
 }
 
 function closeAuthModal() {
-    const m = document.getElementById('authModal');
-    m.classList.add('hidden');
-    m.classList.remove('active');
+    try {
+        const m = document.getElementById('authModal');
+        if (!m) {
+            console.error('[Auth] Auth modal element not found');
+            return;
+        }
+
+        m.classList.add('hidden');
+        m.classList.remove('active');
+    } catch (error) {
+        console.error('[Auth] Error closing auth modal:', error);
+    }
 }
 
 // --- LIBRARY LOGIC ---
 
 export function renderLibraryList(mixes) {
     const list = document.getElementById('libraryList');
-    if (!list) return;
+    // ✅ FIX Issue #6: Add null check for timing issues
+    if (!list) {
+        console.warn('[Library] libraryList element not found, deferring render');
+        return;
+    }
 
     if (mixes.length === 0) {
         list.innerHTML = `
