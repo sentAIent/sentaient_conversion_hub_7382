@@ -246,6 +246,16 @@ a:active,
 }
 
 /* red-600 */
+[data-theme-type="light"] .text-blue-400 {
+    color: #2563eb !important;
+}
+
+/* blue-600 */
+[data-theme-type="light"] .text-yellow-400 {
+    color: #ca8a04 !important;
+}
+
+/* yellow-600 */
 
 /* Light Mode: Atmosphere Safety Net */
 /* Light Mode: Atmosphere & Mixer Safety Net */
