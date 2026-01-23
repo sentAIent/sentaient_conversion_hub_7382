@@ -143,29 +143,29 @@ function showLimitReachedModal() {
             
             <div style="font-size: 64px; margin-bottom: 24px;">⏰</div>
             
-            <h2 style="font-size: 32px; font-weight: 700; color: white; margin-bottom: 16px;">
+            <h2 style="font-size: 32px; font-weight: 700; color: var(--accent); margin-bottom: 16px;">
                 Free Session Complete
             </h2>
             
-            <p style="font-size: 16px; color: rgba(255, 255, 255, 0.7); margin-bottom: 32px; line-height: 1.6;">
+            <p style="font-size: 16px; color: var(--text-muted); margin-bottom: 32px; line-height: 1.6;">
                 You've reached the ${FREE_SESSION_LIMIT_MINUTES}-minute limit for free sessions. 
                 Upgrade to Premium for unlimited meditation time.
             </p>
             
             <div style="display: flex; gap: 12px; flex-direction: column;">
-                <button id="upgradeLimitBtn" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #60a9ff 0%, #4c94ff 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                <button id="upgradeLimitBtn" style="width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 12px; color: var(--bg-main); font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
                     ✨ Upgrade to Premium
                 </button>
-                <button id="closeLimitBtn" style="width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer;">
+                <button id="closeLimitBtn" style="width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: var(--text-muted); font-size: 16px; font-weight: 600; cursor: pointer;">
                     Continue Later
                 </button>
             </div>
             
             <div style="margin-top: 24px; padding: 16px; background: rgba(96, 169, 255, 0.1); border-radius: 12px; border: 1px solid rgba(96, 169, 255, 0.2);">
-                <div style="font-size: 14px; color: #60a9ff; font-weight: 600; margin-bottom: 4px;">
+                <div style="font-size: 14px; color: var(--accent); font-weight: 600; margin-bottom: 4px;">
                     Premium Benefits:
                 </div>
-                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6);">
+                <div style="font-size: 13px; color: var(--text-muted);">
                     ✓ Unlimited session time • ✓ All premium presets • ✓ All journey lessons
                 </div>
             </div>
@@ -210,7 +210,7 @@ function createToast(message, type = 'info', duration = 3000) {
     const toast = document.createElement('div');
 
     const colors = {
-        info: 'rgba(96, 169, 255, 0.95)',
+        info: 'var(--accent)',
         warning: 'rgba(255, 193, 7, 0.95)',
         error: 'rgba(239, 68, 68, 0.95)',
         success: 'rgba(16, 185, 129, 0.95)'

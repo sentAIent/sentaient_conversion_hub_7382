@@ -14,28 +14,32 @@ const GA_MEASUREMENT_ID = ENV.VITE_GA_MEASUREMENT_ID || null;
  * Call this once in your main.js
  */
 export function initAnalytics() {
-    if (!GA_MEASUREMENT_ID) {
-        console.warn('[Analytics] No GA_MEASUREMENT_ID found - analytics disabled');
-        return;
+    try {
+        if (!GA_MEASUREMENT_ID) {
+            console.warn('[Analytics] No GA_MEASUREMENT_ID found - analytics disabled');
+            return;
+        }
+
+        // Load Google Analytics script
+        const script1 = document.createElement('script');
+        script1.async = true;
+        script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+        document.head.appendChild(script1);
+
+        // Initialize gtag
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { window.dataLayer.push(arguments); }
+        window.gtag = gtag;
+
+        gtag('js', new Date());
+        gtag('config', GA_MEASUREMENT_ID, {
+            send_page_view: true
+        });
+
+        console.log('[Analytics] Google Analytics initialized');
+    } catch (error) {
+        console.warn('[Analytics] Initialization failed:', error);
     }
-
-    // Load Google Analytics script
-    const script1 = document.createElement('script');
-    script1.async = true;
-    script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-    document.head.appendChild(script1);
-
-    // Initialize gtag
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { window.dataLayer.push(arguments); }
-    window.gtag = gtag;
-
-    gtag('js', new Date());
-    gtag('config', GA_MEASUREMENT_ID, {
-        send_page_view: true
-    });
-
-    console.log('[Analytics] Google Analytics initialized');
 }
 
 /**
@@ -171,10 +175,14 @@ export function trackUpgradeClick(source, plan) {
 export function setUserProperties(userId, isPremium = false) {
     if (!window.gtag) return;
 
-    window.gtag('set', {
-        'user_id': userId,
-        'user_properties': {
-            'premium_status': isPremium ? 'premium' : 'free'
-        }
-    });
+    try {
+        window.gtag('set', {
+            'user_id': userId,
+            'user_properties': {
+                'premium_status': isPremium ? 'premium' : 'free'
+            }
+        });
+    } catch (error) {
+        console.warn('[Analytics] setUserProperties failed:', error);
+    }
 }

@@ -37,12 +37,24 @@ const CURSOR_SHAPES = {
     lotus: {
         name: 'Lotus',
         icon: '🪷',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.8"/>
-            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(45 16 16)"/>
-            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(-45 16 16)"/>
-            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(90 16 16)"/>
-            <circle cx="16" cy="16" r="3" fill="${color}"/>
+        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 128 128">
+            <!-- Central Petal -->
+            <path d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" 
+                  stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Left Side Petal -->
+            <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" 
+                  stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Right Side Petal -->
+            <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" 
+                  stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Outer Left -->
+            <path d="M44 72 C30 76 20 64 20 52 C20 40 36 30 36 30" 
+                  stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Outer Right -->
+            <path d="M84 72 C98 76 108 64 108 52 C108 40 92 30 92 30" 
+                  stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Base -->
+            <path d="M48 96 L64 108 L80 96" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`
     },
     heart: {
@@ -52,11 +64,17 @@ const CURSOR_SHAPES = {
             <path d="M14 24l-1.5-1.3C7.4 18.1 4 15.1 4 11.5 4 8.4 6.4 6 9.5 6c1.7 0 3.4.8 4.5 2.1 1.1-1.3 2.8-2.1 4.5-2.1 3.1 0 5.5 2.4 5.5 5.5 0 3.6-3.4 6.6-8.5 11.2L14 24z" fill="${color}"/>
         </svg>`
     },
-    dot: {
-        name: 'Dot',
-        icon: '●',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="5" fill="${color}"/>
+    mindwave: {
+        name: 'MindWave',
+        icon: 'mw',
+        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+            <g stroke="${color}" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4 C16 4 21 10 21 15 C21 18 19 20 16 20 C13 20 11 18 11 15 C11 10 16 4 16 4 Z"/>
+                <path d="M16 20 C14 20 9 18 9 14 C9 11 12 8 12 8"/>
+                <path d="M16 20 C18 20 23 18 23 14 C23 11 20 8 20 8"/>
+                <path d="M10 15 C7 16 5 13 5 10 C5 8 9 6 9 6"/>
+                <path d="M22 15 C25 16 27 13 27 10 C27 8 23 6 23 6"/>
+            </g>
         </svg>`
     },
     ring: {
@@ -90,10 +108,17 @@ let customColor = null; // null = use theme accent
  * Initialize Custom Cursor with hover effects
  */
 export function initCursor() {
-    // Load saved shape
+    // Detect current theme on page load
+    state.currentTheme = localStorage.getItem('mindwave_theme') || 'default';
+
+    // Load saved shape or default to MindWave
     const savedShape = localStorage.getItem('mindwave_cursor_shape');
     if (savedShape && CURSOR_SHAPES[savedShape]) {
         currentShape = savedShape;
+    } else {
+        // Force default to MindWave if nothing saved
+        currentShape = 'mindwave';
+        localStorage.setItem('mindwave_cursor_shape', 'mindwave');
     }
 
     // Load saved custom color
@@ -111,51 +136,22 @@ export function initCursor() {
     // Listen for theme changes (only update if no custom color)
     window.addEventListener('themeChanged', (e) => {
         console.log('[Cursor] Theme changed, updating cursor');
-        if (!customColor) {
-            updateCursorStyle(e.detail.theme.accent);
-        }
+        // Store current theme name for adaptive coloring
+        state.currentTheme = e.detail.name;
+        // Update cursor with new theme
+        updateCursorStyle();
     });
 
     console.log('[Cursor] Initialized with shape:', currentShape, 'color:', customColor || 'theme accent');
 }
 
 /**
- * Adds hover effects - quick flash on clickable elements
+ * Adds hover effects - DISABLED to prevent glitchy cursor behavior
  */
 function addCursorHoverEffects() {
-    const clickableSelector = 'a, button, [role="button"], input, select, textarea, .cursor-pointer, [onclick]';
-
-    let flashTimeout = null;
-    let lastHoveredElement = null;
-
-    document.addEventListener('mouseover', (e) => {
-        const clickable = e.target.closest(clickableSelector);
-        if (clickable && clickable !== lastHoveredElement) {
-            lastHoveredElement = clickable;
-
-            // Clear any existing flash
-            if (flashTimeout) {
-                clearTimeout(flashTimeout);
-            }
-
-            // Flash: scale down + brighten
-            const baseColor = getEffectiveCursorColor();
-            const brightColor = brightenColor(baseColor, 25);
-            updateCursorStyle(brightColor, 0.7);
-
-            // Return to normal after 400ms
-            flashTimeout = setTimeout(() => {
-                updateCursorStyle(null, 1.0);
-                flashTimeout = null;
-            }, 400);
-        }
-    });
-
-    document.addEventListener('mouseout', (e) => {
-        if (e.target.closest(clickableSelector)) {
-            lastHoveredElement = null;
-        }
-    });
+    // Hover effects disabled - they were causing cursor flickering/glitchiness
+    // by constantly updating the cursor style on mouseover events.
+    return;
 }
 
 /**
@@ -181,9 +177,21 @@ function brightenColor(hex, percent) {
 
 /**
  * Returns the effective cursor color
+ * For light themes (cloud, dawn, paper, ash), use dark blue instead of accent
  */
 function getEffectiveCursorColor() {
     if (customColor) return customColor;
+
+    // Check if current theme is a light theme
+    const currentTheme = state.currentTheme || 'default';
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
+    const isLightTheme = lightThemes.includes(currentTheme);
+
+    if (isLightTheme && currentShape === 'lotus') {
+        // Use dark blue for lotus cursor on light backgrounds
+        return '#1e3a8a';
+    }
+
     const computedStyle = getComputedStyle(document.documentElement);
     return computedStyle.getPropertyValue('--accent').trim() || '#60a9ff';
 }
@@ -192,8 +200,6 @@ function getEffectiveCursorColor() {
  * Updates the cursor CSS with optional scaling and color
  */
 function updateCursorStyle(colorOverride = null, scale = 1.0) {
-    const color = colorOverride || getEffectiveCursorColor();
-
     let styleTag = document.getElementById('dynamic-cursor-styles');
     if (!styleTag) {
         styleTag = document.createElement('style');
@@ -202,15 +208,31 @@ function updateCursorStyle(colorOverride = null, scale = 1.0) {
     }
 
     if (currentShape === 'default') {
-        styleTag.textContent = ''; // Use browser default
+        styleTag.textContent = '';
         return;
     }
 
-    // Get base SVG and scale it
-    const baseSvg = CURSOR_SHAPES[currentShape].create(color);
-    const scaledSvg = scaleSvgCursor(baseSvg, scale);
-    const hotspot = Math.round(12 * scale); // Keep hotspot centered
-    const dataUri = `url("data:image/svg+xml,${encodeURIComponent(scaledSvg)}") ${hotspot} ${hotspot}, auto`;
+    // Use static cursor file for mindwave to prevent glitchiness
+    if (currentShape === 'mindwave') {
+        styleTag.textContent = `
+            body, a, button, [role="button"], input, select, textarea, .cursor-pointer {
+                cursor: url('/mindwave-logo.png') 8 8, auto !important;
+            }
+        `;
+        return;
+    }
+
+    // For other cursors, generate simple SVG without any dynamic updates
+    const color = colorOverride || getEffectiveCursorColor();
+    const shapeConfig = CURSOR_SHAPES[currentShape];
+    const svg = shapeConfig.create(color);
+
+    if (!svg) {
+        styleTag.textContent = '';
+        return;
+    }
+
+    const dataUri = `url("data:image/svg+xml,${encodeURIComponent(svg)}") 16 16, auto`;
 
     styleTag.textContent = `
         body, a, button, [role="button"], input, select, textarea, .cursor-pointer {
@@ -353,6 +375,12 @@ export function createCursorUIInThemeModal() {
             plus: '<span style="color:#22c55e;">✚</span>',
             lotus: '🪷',
             heart: '❤️',
+            mindwave: `<svg viewBox="0 0 128 128" width="24" height="24" style="margin:0 auto;filter: drop-shadow(0 0 5px currentColor);">
+                <path d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" stroke="currentColor" stroke-width="8" fill="none"/>
+                <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" stroke="currentColor" stroke-width="8" fill="none"/>
+                <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" stroke="currentColor" stroke-width="8" fill="none"/>
+                <path d="M48 96 L64 108 L80 96" stroke="currentColor" stroke-width="8" fill="none"/>
+            </svg>`,
             dot: '🔵',
             ring: '⭕',
             target: '🎯',
@@ -401,7 +429,10 @@ export function createCursorUIInThemeModal() {
     }
 }
 
+
+
 // Export for global access
 window.setCursorShape = setCursorShape;
 window.setCursorColor = setCursorColor;
 window.resetCursorColor = resetCursorColor;
+window.toggleLotusCursor = undefined; // Removed feature

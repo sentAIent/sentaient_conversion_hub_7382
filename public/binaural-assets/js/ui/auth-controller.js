@@ -14,6 +14,21 @@ import { showToast, applyMixState } from '../utils/helpers.js';
 
 let isLoginMode = true;
 
+// Expose globally for Paywall and other utils (Critical: prevent init race conditions)
+if (typeof window !== 'undefined') {
+    // We'll assign this temporarily here, but since OpenAuthModal is defined below,
+    // we should rely on function hoisting or move assignment to end.
+    // Actually, export functions are not hoisted like declarations in basic script.
+    // Use a safer approach: assign at the end of file?
+    // OR: just define it on window inside the function definition later?
+}
+
+// Better: exposed at top level but need to ensure function is defined. 
+// Since it's a module, function declarations are hoisted to top of scope? 
+// Yes, inside the module scope.
+window.openAuthModal = openAuthModal;
+window.openAuthTrigger = openAuthModal;
+
 export function initAuthUI() {
     // Get elements
     const toggleBtn = document.getElementById('toggleAuthModeBtn');
@@ -25,84 +40,100 @@ export function initAuthUI() {
     const resetBtn = document.getElementById('resetPasswordBtn');
     const nameFieldDiv = document.getElementById('authNameField'); // Already in HTML
 
-    toggleBtn.onclick = () => {
-        isLoginMode = !isLoginMode;
-        const firstNameInput = document.getElementById('authFirstName');
-        const lastNameInput = document.getElementById('authLastName');
 
-        if (isLoginMode) {
-            authTitle.textContent = "Welcome Back";
-            if (authSubtitle) authSubtitle.textContent = "Sign in to continue your journey";
-            authSubmitBtn.textContent = "Sign In";
-            toggleBtn.innerHTML = 'Don\'t have an account? <span style="color: rgb(96, 169, 255); font-weight: 600;">Sign Up</span>';
-            if (resetBtn) resetBtn.style.display = '';
-            if (nameFieldDiv) nameFieldDiv.style.display = 'none';
-            // Remove required from name fields when in Sign In mode
-            if (firstNameInput) firstNameInput.removeAttribute('required');
-            if (lastNameInput) lastNameInput.removeAttribute('required');
-        } else {
-            authTitle.textContent = "Create Account";
-            if (authSubtitle) authSubtitle.textContent = "Start your meditation journey today";
-            authSubmitBtn.textContent = "Sign Up";
-            toggleBtn.innerHTML = 'Already have an account? <span style="color: rgb(96, 169, 255); font-weight: 600;">Sign In</span>';
-            if (resetBtn) resetBtn.style.display = 'none';
-            if (nameFieldDiv) nameFieldDiv.style.display = 'flex';
-            // Add required to name fields when in Sign Up mode
-            if (firstNameInput) firstNameInput.setAttribute('required', '');
-            if (lastNameInput) lastNameInput.setAttribute('required', '');
-        }
-        if (authError) authError.classList.add('hidden');
-    };
+
+    if (toggleBtn) {
+        toggleBtn.onclick = () => {
+            isLoginMode = !isLoginMode;
+            const firstNameInput = document.getElementById('authFirstName');
+            const lastNameInput = document.getElementById('authLastName');
+
+            if (isLoginMode) {
+                if (authTitle) authTitle.textContent = "Welcome Back";
+                if (authSubtitle) authSubtitle.textContent = "Sign in to continue your journey";
+                if (authSubmitBtn) authSubmitBtn.textContent = "Sign In";
+                toggleBtn.innerHTML = 'Don\'t have an account? <span style="color: rgb(96, 169, 255); font-weight: 600;">Sign Up</span>';
+                if (resetBtn) resetBtn.style.display = '';
+                if (nameFieldDiv) nameFieldDiv.style.display = 'none';
+                if (firstNameInput) firstNameInput.removeAttribute('required');
+                if (lastNameInput) lastNameInput.removeAttribute('required');
+            } else {
+                if (authTitle) authTitle.textContent = "Create Account";
+                if (authSubtitle) authSubtitle.textContent = "Start your meditation journey today";
+                if (authSubmitBtn) authSubmitBtn.textContent = "Sign Up";
+                toggleBtn.innerHTML = 'Already have an account? <span style="color: rgb(96, 169, 255); font-weight: 600;">Sign In</span>';
+                if (resetBtn) resetBtn.style.display = 'none';
+                if (nameFieldDiv) nameFieldDiv.style.display = 'flex';
+                if (firstNameInput) firstNameInput.setAttribute('required', '');
+                if (lastNameInput) lastNameInput.setAttribute('required', '');
+            }
+            if (authError) authError.classList.add('hidden');
+        };
+    }
 
     // 2. Form Submit
-    authForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('authEmail').value;
-        const password = document.getElementById('authPassword').value;
-        const firstName = document.getElementById('authFirstName')?.value || '';
-        const lastName = document.getElementById('authLastName')?.value || '';
-        const name = firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName;
+    if (authForm) {
+        authForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const firstName = document.getElementById('authFirstName')?.value || '';
+            const lastName = document.getElementById('authLastName')?.value || '';
+            const name = firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName;
 
-        authSubmitBtn.disabled = true;
-        authSubmitBtn.textContent = "Processing...";
-        authError.classList.add('hidden');
-
-        try {
-            if (isLoginMode) {
-                await loginUser(email, password);
-                showToast("Welcome back!", "success");
-                closeAuthModal();
-            } else {
-                await registerUser(email, password, name);
-                showToast("Account created!", "success");
-                closeAuthModal();
+            if (authSubmitBtn) {
+                authSubmitBtn.disabled = true;
+                authSubmitBtn.textContent = "Processing...";
             }
-        } catch (err) {
-            console.error(err);
-            authError.textContent = err.message.replace("Firebase:", "").replace("auth/", "");
-            authError.classList.remove('hidden');
-        } finally {
-            authSubmitBtn.disabled = false;
-            authSubmitBtn.textContent = isLoginMode ? "Sign In" : "Sign Up";
-        }
-    };
+            if (authError) authError.classList.add('hidden');
+
+            try {
+                if (isLoginMode) {
+                    await loginUser(email, password);
+                    showToast("Welcome back!", "success");
+                    closeAuthModal();
+                } else {
+                    await registerUser(email, password, name);
+                    showToast("Account created!", "success");
+                    closeAuthModal();
+                }
+            } catch (err) {
+                console.error(err);
+                if (authError) {
+                    authError.textContent = err.message.replace("Firebase:", "").replace("auth/", "");
+                    authError.classList.remove('hidden');
+                }
+            } finally {
+                if (authSubmitBtn) {
+                    authSubmitBtn.disabled = false;
+                    authSubmitBtn.textContent = isLoginMode ? "Sign In" : "Sign Up";
+                }
+            }
+        };
+    }
 
     // 3. Reset Password
-    resetBtn.onclick = async () => {
-        const email = document.getElementById('authEmail').value;
-        if (!email) {
-            authError.textContent = "Please enter your email first.";
-            authError.classList.remove('hidden');
-            return;
-        }
-        try {
-            await resetPassword(email);
-            showToast("Password reset email sent!", "info");
-        } catch (err) {
-            authError.textContent = err.message;
-            authError.classList.remove('hidden');
-        }
-    };
+    if (resetBtn) {
+        resetBtn.onclick = async () => {
+            const email = document.getElementById('authEmail')?.value;
+            if (!email) {
+                if (authError) {
+                    authError.textContent = "Please enter your email first.";
+                    authError.classList.remove('hidden');
+                }
+                return;
+            }
+            try {
+                await resetPassword(email);
+                showToast("Password reset email sent!", "info");
+            } catch (err) {
+                if (authError) {
+                    authError.textContent = err.message;
+                    authError.classList.remove('hidden');
+                }
+            }
+        };
+    }
 
     // 4. Close Button
     const closeAuthBtn = document.getElementById('closeAuthBtn');
@@ -131,9 +162,7 @@ export function initAuthUI() {
     // Setup profile modal handlers
     setupProfileHandlers();
 
-    // Expose auth trigger globally for inline onclick handlers and paywall
-    window.openAuthTrigger = openAuthModal;
-    window.openAuthModal = openAuthModal; // ✅ FIX: Also expose with this name for paywall.js
+    // Global listeners exposed at top now
 }
 
 function updateProfileUI(user) {

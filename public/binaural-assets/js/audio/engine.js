@@ -1206,12 +1206,18 @@ function playOneShot(type, dest, tone) {
     else if (type === 'orch_perc') { const r = Math.random(); if (r < 0.33) { const osc = state.audioCtx.createOscillator(), gain = state.audioCtx.createGain(); osc.frequency.setValueAtTime(80 * pitchMult, t); osc.frequency.exponentialRampToValueAtTime(10, t + 0.5); gain.gain.setValueAtTime(0.7, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6); osc.connect(gain); gain.connect(dest); osc.start(t); osc.stop(t + 0.7); } else if (r < 0.66) { const noise = state.audioCtx.createBufferSource(); noise.buffer = createPinkNoiseBuffer(); const filter = state.audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 2000 * pitchMult; const gain = state.audioCtx.createGain(); gain.gain.setValueAtTime(0.4, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); noise.connect(filter); filter.connect(gain); gain.connect(dest); noise.start(t); noise.stop(t + 0.3); } else { const noise = state.audioCtx.createBufferSource(); noise.buffer = createPinkNoiseBuffer(); const filter = state.audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 5000 * pitchMult; const gain = state.audioCtx.createGain(); gain.gain.setValueAtTime(0.05, t); gain.gain.linearRampToValueAtTime(0.15, t + 0.2); gain.gain.exponentialRampToValueAtTime(0.001, t + 3.5); noise.connect(filter); filter.connect(gain); gain.connect(dest); noise.start(t); noise.stop(t + 4.0); } }
 }
 
+
 export function stopSingleSoundscape(id, immediate = false) {
+    console.log(`[Audio] stopSingleSoundscape called for ${id}, immediate=${immediate}`);
     const sc = state.activeSoundscapes[id];
-    if (!sc) return;
+    if (!sc) {
+        console.warn(`[Audio] No active soundscape found for ${id}`);
+        return;
+    }
 
     // Helper to safely stop nodes
     const cleanupNodes = () => {
+        console.log(`[Audio] Cleaning up nodes for ${id}`);
         if (sc.cleanup) sc.cleanup();
         if (sc.nodes) {
             sc.nodes.forEach(n => {

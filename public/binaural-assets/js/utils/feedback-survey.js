@@ -52,17 +52,17 @@ function createSurveyModal(triggerType) {
     modal.style.animation = 'fadeIn 0.3s ease-out';
 
     modal.innerHTML = `
-        <div style="max-width: 600px; width: 100%; background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 2px solid rgba(96, 169, 255, 0.2); border-radius: 24px; padding: 40px; position: relative; max-height: 90vh; overflow-y: auto;">
+        <div style="max-width: 600px; width: 100%; background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 2px solid rgba(96, 169, 255, 0.2); border-radius: 24px; padding: 40px; padding-bottom: 140px; position: relative; max-height: 90vh; overflow-y: auto;">
             
             <!-- Close Button -->
-            <button id="closeSurveyBtn" style="position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+            <button id="closeSurveyBtn" style="position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
                 ×
             </button>
 
             <!-- Header -->
             <div style="text-align: center; margin-bottom: 32px;">
                 <div style="font-size: 48px; margin-bottom: 16px;">💫</div>
-                <h2 style="font-size: 28px; font-weight: 700; color: white; margin-bottom: 8px;">
+                <h2 style="font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 8px;">
                     Help Us Improve MindWave
                 </h2>
                 <p style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">
@@ -75,12 +75,12 @@ function createSurveyModal(triggerType) {
                 
                 <!-- Question 1: NPS Score -->
                 <div class="survey-question">
-                    <label style="display: block; color: white; font-weight: 600; margin-bottom: 12px; font-size: 15px;">
+                    <label style="display: block; color: var(--text-main); font-weight: 600; margin-bottom: 12px; font-size: 15px;">
                         How likely are you to recommend MindWave to a friend? *
                     </label>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
                         ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score => `
-                            <button type="button" class="nps-btn" data-score="${score}" style="width: 44px; height: 44px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                            <button type="button" class="nps-btn" data-score="${score}" style="width: 44px; height: 44px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-weight: 600; cursor: pointer; transition: all 0.2s;">
                                 ${score}
                             </button>
                         `).join('')}
@@ -94,10 +94,10 @@ function createSurveyModal(triggerType) {
 
                 <!-- Question 2: Experience -->
                 <div class="survey-question">
-                    <label style="display: block; color: white; font-weight: 600; margin-bottom: 12px; font-size: 15px;">
+                    <label style="display: block; color: var(--text-main); font-weight: 600; margin-bottom: 12px; font-size: 15px;">
                         How would you describe your experience with MindWave? *
                     </label>
-                    <select name="experience" required style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 14px;">
+                    <select name="experience" required style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: var(--text-main); font-size: 14px;">
                         <option value="">Select...</option>
                         <option value="life_changing">Life-changing 🌟</option>
                         <option value="very_helpful">Very helpful 😊</option>
@@ -109,10 +109,10 @@ function createSurveyModal(triggerType) {
 
                 <!-- Question 3: Most Valuable Feature -->
                 <div class="survey-question">
-                    <label style="display: block; color: white; font-weight: 600; margin-bottom: 12px; font-size: 15px;">
+                    <label style="display: block; color: var(--text-main); font-weight: 600; margin-bottom: 12px; font-size: 15px;">
                         What feature creates the most value for you? *
                     </label>
-                    <select name="best_feature" required style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 14px;">
+                    <select name="best_feature" required style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: var(--text-main); font-size: 14px;">
                         <option value="">Select...</option>
                         <option value="binaural_beats">🎵 Binaural Beats Technology</option>
                         <option value="visualizer">✨ Visual Meditations</option>
@@ -127,7 +127,7 @@ function createSurveyModal(triggerType) {
 
                 <!-- Question 4: Use Case -->
                 <div class="survey-question">
-                    <label style="display: block; color: white; font-weight: 600; margin-bottom: 12px; font-size: 15px;">
+                    <label style="display: block; color: var(--text-main); font-weight: 600; margin-bottom: 12px; font-size: 15px;">
                         What do you primarily use MindWave for? *
                     </label>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -150,7 +150,7 @@ function createSurveyModal(triggerType) {
 
                 <!-- Question 5: Emotional Impact -->
                 <div class="survey-question">
-                    <label style="display: block; color: white; font-weight: 600; margin-bottom: 12px; font-size: 15px;">
+                    <label style="display: block; color: var(--text-main); font-weight: 600; margin-bottom: 12px; font-size: 15px;">
                         How does MindWave make you feel? (Select all that apply)
                     </label>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
@@ -168,18 +168,18 @@ function createSurveyModal(triggerType) {
 
                 <!-- Question 6: Improvement Suggestions -->
                 <div class="survey-question">
-                    <label style="display: block; color: white; font-weight: 600; margin-bottom: 12px; font-size: 15px;">
+                    <label style="display: block; color: var(--text-main); font-weight: 600; margin-bottom: 12px; font-size: 15px;">
                         What would make MindWave even better?
                     </label>
-                    <textarea name="improvements" rows="3" placeholder="Share your ideas..." style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 14px; resize: vertical; font-family: inherit;"></textarea>
+                    <textarea name="improvements" rows="3" placeholder="Share your ideas..." style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: var(--text-main); font-size: 14px; resize: vertical; font-family: inherit;"></textarea>
                 </div>
 
                 <!-- Question 7: Comparison (for context) -->
                 <div class="survey-question">
-                    <label style="display: block; color: white; font-weight: 600; margin-bottom: 12px; font-size: 15px;">
+                    <label style="display: block; color: var(--text-main); font-weight: 600; margin-bottom: 12px; font-size: 15px;">
                         Have you tried other meditation/wellness apps?
                     </label>
-                    <select name="competitors_used" style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 14px;">
+                    <select name="competitors_used" style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: var(--text-main); font-size: 14px;">
                         <option value="">Select...</option>
                         <option value="none">No, MindWave is my first</option>
                         <option value="calm">Calm</option>
@@ -192,7 +192,7 @@ function createSurveyModal(triggerType) {
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" id="submitSurveyBtn" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #60a9ff 0%, #4c94ff 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 8px;">
+                <button type="submit" id="submitSurveyBtn" style="width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 12px; color: var(--bg-main); font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 8px;">
                     ✨ Submit Feedback
                 </button>
 
@@ -208,10 +208,17 @@ function createSurveyModal(triggerType) {
                 to { opacity: 1; }
             }
 
-            .nps-btn:hover, .nps-btn.selected {
-                background: linear-gradient(135deg, #60a9ff 0%, #4c94ff 100%);
-                border-color: #60a9ff;
+            .nps-btn.selected {
+                background: var(--accent) !important;
+                border-color: var(--accent) !important;
+                color: var(--bg-main) !important;
                 transform: translateY(-2px);
+                box-shadow: 0 4px 12px var(--accent-glow);
+            }
+            .nps-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: var(--accent);
+                color: var(--accent);
             }
 
             .use-case-option:hover,
@@ -309,7 +316,13 @@ function setupSurveyHandlers(modal, triggerType) {
                 timestamp: new Date().toISOString()
             };
 
-            await submitFeedback(feedbackData);
+            // Add timeout race to prevent hanging
+            const submitPromise = submitFeedback(feedbackData);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timed out')), 10000)
+            );
+
+            await Promise.race([submitPromise, timeoutPromise]);
 
             // Store that survey was completed
             localStorage.setItem('mindwave_last_survey', Date.now().toString());

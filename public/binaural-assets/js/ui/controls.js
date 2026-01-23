@@ -702,7 +702,16 @@ export function setupUI() {
 }
 
 // --- PLAY BUTTON HANDLER ---
+let lastPlayClickTime = 0;
+
 async function handlePlayClick() {
+    // Debounce: Prevent double-triggers (e.g. ghost clicks)
+    const now = Date.now();
+    if (now - lastPlayClickTime < 300) {
+        console.log('[Controls] Play click debounced');
+        return;
+    }
+    lastPlayClickTime = now;
     // Check disclaimer first
     if (!state.disclaimerAccepted) {
         showDisclaimerModal();
@@ -721,13 +730,14 @@ async function handlePlayClick() {
 
     if (isAudioPlaying() || isClassicalPlaying()) {
         // STOPPING
-        console.log('[Controls] Play Click -> Stopping...');
+        console.log('[Controls] Play Click -> STOPPING... (isPlaying:', isAudioPlaying(), ')');
 
         // 1. Mark as stopping so UI knows we are "paused" even if audio is fading
         state.isStopping = true;
 
         // 2. Pause visuals when stopping audio
         pauseVisuals();
+        console.log('[Controls] Visuals paused.');
 
         // 3. Force UI update immediately to show Play icon (Pause state)
         syncAllButtons();
@@ -737,10 +747,13 @@ async function handlePlayClick() {
         if (isClassicalPlaying()) stopClassical();
         endSessionTracking(false);
 
+        console.log('[Controls] Calling fadeOut(1.5)...');
         fadeOut(1.5, () => {
+            console.log('[Controls] fadeOut complete callback -> calling stopAudio()');
             stopAudio();
             state.isStopping = false; // Reset flag when actually stopped
             syncAllButtons(); // Sync after audio fully stopped
+            console.log('[Controls] Stop sequence finished.');
         });
 
         hideTimerUI();
@@ -1522,11 +1535,17 @@ export function setTheme(themeName) {
     // CRITICAL: Set data-theme on body for CSS selectors to work
     document.body.dataset.theme = themeName;
 
+    // NEW: Set theme type (light/dark) for consistent styling
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
+    const themeType = lightThemes.includes(themeName) ? 'light' : 'dark';
+    document.body.dataset.themeType = themeType;
+
     // Dispatch event for components that need to react (e.g. Cursor)
     window.dispatchEvent(new CustomEvent('themeChanged', {
         detail: {
             theme: t,
-            name: themeName
+            name: themeName,
+            type: themeType
         }
     }));
 
@@ -1544,9 +1563,19 @@ export function setTheme(themeName) {
 
     // DIRECT INLINE STYLE ENFORCEMENT for light themes
     // This bypasses any CSS specificity issues
-    const isLightTheme = themeName === 'cloud' || themeName === 'dawn';
+    const isLightTheme = themeType === 'light';
     const leftPanel = document.getElementById('leftPanel');
     const rightPanel = document.getElementById('rightPanel');
+
+    // Theme-Aware Logo Switching
+    const logoImg = document.querySelector('#leftPanel img');
+    if (logoImg) {
+        // Use the new light logo for bright themes, standard logo for dark themes
+        const newSrc = isLightTheme ? '/mindwave-logo-light.png' : '/mindwave-logo.png';
+        if (logoImg.getAttribute('src') !== newSrc) {
+            logoImg.src = newSrc;
+        }
+    }
 
     if (isLightTheme) {
         const bgColor = t.panel;
@@ -1560,6 +1589,36 @@ export function setTheme(themeName) {
                 child.style.color = t.text;
             });
         });
+
+        // FIX THEME MODAL TEXT VISIBILITY
+        const themeModal = document.getElementById('themeModal');
+        if (themeModal) {
+            // Modal header and all text elements
+            themeModal.querySelectorAll('h2, h3, .text-lg, .text-xs, .text-sm, div').forEach(el => {
+                // Skip if element has specific color styling that should be preserved
+                if (!el.style.color || el.style.color.includes('var(--accent)')) {
+                    el.style.color = t.text;
+                }
+            });
+            // Modal background
+            const modalCard = document.getElementById('themeModalCard');
+            if (modalCard) {
+                modalCard.style.backgroundColor = t.panel;
+            }
+        }
+
+        // FIX TOP CONTROL BAR VISIBILITY
+        const topBar = document.getElementById('topControlBar');
+        if (topBar) {
+            topBar.style.backgroundColor = t.panel;
+            topBar.style.borderColor = t.border;
+            // Fix all text in top bar
+            topBar.querySelectorAll('button, span, div').forEach(el => {
+                if (!el.classList.contains('toggle-active') && !el.style.color) {
+                    el.style.color = t.text;
+                }
+            });
+        }
     } else {
         // Clear inline styles for dark themes
         if (leftPanel) leftPanel.style.backgroundColor = '';
@@ -1570,6 +1629,28 @@ export function setTheme(themeName) {
                 child.style.color = '';
             });
         });
+
+        // Clear theme modal styles
+        const themeModal = document.getElementById('themeModal');
+        if (themeModal) {
+            themeModal.querySelectorAll('h2, h3, .text-lg, .text-xs, .text-sm, div').forEach(el => {
+                el.style.color = '';
+            });
+            const modalCard = document.getElementById('themeModalCard');
+            if (modalCard) {
+                modalCard.style.backgroundColor = '';
+            }
+        }
+
+        // Clear top bar styles
+        const topBar = document.getElementById('topControlBar');
+        if (topBar) {
+            topBar.style.backgroundColor = '';
+            topBar.style.borderColor = '';
+            topBar.querySelectorAll('button, span, div').forEach(el => {
+                el.style.color = '';
+            });
+        }
     }
 }
 
@@ -1579,7 +1660,7 @@ export function setTheme(themeName) {
  */
 function enforceLightThemeStyles() {
     const themeName = localStorage.getItem('mindwave_theme') || 'default';
-    const isLightTheme = themeName === 'cloud' || themeName === 'dawn';
+    const isLightTheme = document.body.dataset.themeType === 'light';
 
     if (!isLightTheme) return;
 
@@ -1622,10 +1703,10 @@ export function initMixer() {
         const settings = state.soundscapeSettings[s.id];
         const item = document.createElement('div');
         item.className = "soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1";
-        item.innerHTML = `<label class="text-[10px] font-semibold truncate mb-1 block" style="color: var(--accent);" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] text-[var(--text-muted)] font-normal">${s.bpm} BPM</span>` : ''}</label>
-<div class="flex items-center gap-2"><span class="text-[8px] w-6" style="color: var(--text-muted);">VOL</span><input type="range" min="0" max="0.5" step="0.01" value="${settings.vol}" class="flex-1 h-1" data-id="${s.id}" data-type="vol"><span class="text-[9px] font-mono w-8 text-right tabular-nums" style="color: var(--accent);" data-val="vol">${Math.round(settings.vol * 200)}%</span></div>
-<div class="flex items-center gap-2"><span class="text-[8px] w-6" style="color: var(--text-muted);">TONE</span><input type="range" min="0" max="1" step="0.01" value="${settings.tone}" class="flex-1 tone-slider h-1" data-id="${s.id}" data-type="tone"><span class="text-[9px] font-mono w-8 text-right tabular-nums" style="color: var(--accent);" data-val="tone">${Math.round(settings.tone * 100)}%</span></div>
-<div class="flex items-center gap-2"><span class="text-[8px] w-6" style="color: var(--text-muted);">SPD</span><input type="range" min="0" max="1" step="0.01" value="${settings.speed}" class="flex-1 speed-slider h-1" data-id="${s.id}" data-type="speed"><span class="text-[9px] font-mono w-8 text-right tabular-nums" style="color: var(--accent);" data-val="speed">${Math.round(settings.speed * 100)}%</span></div>`;
+        item.innerHTML = `<label class="text-[10px] font-semibold truncate mb-1 block atmos-label" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] atmos-sublabel font-normal">${s.bpm} BPM</span>` : ''}</label>
+<div class="flex items-center gap-2"><span class="text-[8px] w-6 atmos-sublabel">VOL</span><input type="range" min="0" max="0.5" step="0.01" value="${settings.vol}" class="flex-1 h-1" data-id="${s.id}" data-type="vol"><span class="text-[9px] font-mono w-8 text-right tabular-nums atmos-val" data-val="vol">${Math.round(settings.vol * 200)}%</span></div>
+<div class="flex items-center gap-2"><span class="text-[8px] w-6 atmos-sublabel">TONE</span><input type="range" min="0" max="1" step="0.01" value="${settings.tone}" class="flex-1 tone-slider h-1" data-id="${s.id}" data-type="tone"><span class="text-[9px] font-mono w-8 text-right tabular-nums atmos-val" data-val="tone">${Math.round(settings.tone * 100)}%</span></div>
+<div class="flex items-center gap-2"><span class="text-[8px] w-6 atmos-sublabel">SPD</span><input type="range" min="0" max="1" step="0.01" value="${settings.speed}" class="flex-1 speed-slider h-1" data-id="${s.id}" data-type="speed"><span class="text-[9px] font-mono w-8 text-right tabular-nums atmos-val" data-val="speed">${Math.round(settings.speed * 100)}%</span></div>`;
 
         // Vol slider with value update
         const volInput = item.querySelector('input[data-type="vol"]');
@@ -2319,8 +2400,8 @@ export function initThemeModal() {
                 <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
             </div>
             <div class="p-3 theme-card-content">
-                <div class="theme-card-title text-sm font-bold capitalize mb-1">${displayName}</div>
-                <div class="theme-card-desc text-[10px]">
+                <div class="theme-card-title text-sm font-bold capitalize mb-1" style="color: var(--text-main);">${displayName}</div>
+                <div class="theme-card-desc text-[10px]" style="color: var(--text-muted);">
                     ${getThemeDesc(key)}
                 </div>
             </div>
@@ -2356,16 +2437,32 @@ export function initThemeModal() {
 
 function getThemeDesc(key) {
     switch (key) {
+        // Original Dark Themes
         case 'default': return "Clean Slate";
         case 'midnight': return "Deep Blue Focus";
         case 'ember': return "Warm Intensity";
         case 'abyss': return "Total Darkness";
-        case 'cloud': return "Light & Airy";
-        case 'dawn': return "Soft Morning";
         case 'cyberpunk': return "Neon & High-Contrast";
         case 'nebula': return "Cosmic Depth";
         case 'quantum': return "Matrix Grid";
         case 'sunset': return "Synthwave Glow";
+
+        // Premium Dark Themes
+        case 'aurora': return "Glacial Cyan";
+        case 'forest': return "Natural Green";
+        case 'royal': return "Purple Elegance";
+        case 'ocean': return "Deep Sea Blue";
+        case 'rose': return "Pink Blush";
+        case 'gold': return "Amber Warmth";
+        case 'obsidian': return "Pure Monochrome";
+        case 'arctic': return "Ice Blue";
+
+        // Light Themes
+        case 'cloud': return "Light & Airy";
+        case 'dawn': return "Soft Rose";
+        case 'paper': return "Clean Minimalism";
+        case 'ash': return "Subtle Gray";
+
         default: return "Custom Theme";
     }
 }
@@ -2623,8 +2720,31 @@ function updateCategoryTabs() {
                 tab.classList.add('bg-red-500/20', 'text-red-400', 'border', 'border-red-500/30');
             }
         } else {
-            // Inactive state
-            tab.className = 'dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-white/5 text-[var(--text-muted)] border border-white/10 whitespace-nowrap hover:bg-white/10';
+            // Inactive state - with specific colors for hover/border if needed, or generic
+            // Update: Keep generic but colored text/border for specific categories if inactive?
+            // Actually, user wants them distinctive. Let's keep them colored but dimmer/transparent background when inactive, 
+            // OR just generic "inactive" style?
+            // The HTML we wrote had specific colors. The JS overwrote it with generic. 
+            // Let's restore the specific colors but maybe lower opacity or use the colored border only?
+            // For now, let's match the HTML structure we added:
+
+            let inactiveClass = 'dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap hover:bg-white/10 ';
+
+            if (cat === 'ambient') {
+                inactiveClass += 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
+            } else if (cat === 'pulse') {
+                inactiveClass += 'bg-pink-500/20 text-pink-400 border border-pink-500/30';
+            } else if (cat === 'texture') {
+                inactiveClass += 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30';
+            } else if (cat === 'healing') {
+                inactiveClass += 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            } else if (cat === 'drops') {
+                inactiveClass += 'bg-orange-500/20 text-orange-400 border border-orange-500/30';
+            } else {
+                inactiveClass += 'bg-white/5 text-[var(--text-muted)] border border-white/10';
+            }
+
+            tab.className = inactiveClass;
         }
     });
 }

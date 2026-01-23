@@ -29,14 +29,14 @@ export async function showPricingModal() {
     }
 
     modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    // document.body.style.overflow = 'hidden';
 }
 
 export function hidePricingModal() {
     const modal = document.getElementById('pricingModal');
     if (modal) {
         modal.classList.add('hidden');
-        document.body.style.overflow = '';
+        // document.body.style.overflow = '';
     }
 }
 
@@ -56,27 +56,27 @@ function createPricingModal(currentTier) {
     const buddhaMonthlySavings = Math.round((1 - (buddhaAnnual / 12) / buddhaMonthly) * 100);
 
     modal.innerHTML = `
-        <div style="max-width: 1200px; width: 100%; background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 48px 32px; position: relative; max-height: 90vh; overflow-y: auto;">
+        <div style="max-width: 1200px; width: 100%; background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 48px 32px; padding-bottom: 140px; position: relative; max-height: 90vh; overflow-y: auto;">
             
             <!-- Close Button -->
-            <button onclick="document.getElementById('pricingModal').classList.add('hidden'); document.body.style.overflow = '';" style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+            <button onclick="document.getElementById('pricingModal').classList.add('hidden'); document.body.style.overflow = '';" style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
                 ×
             </button>
 
             <!-- Header -->
             <div style="text-align: center; margin-bottom: 48px;">
-                <h2 style="font-size: 42px; font-weight: 700; color: white; margin-bottom: 12px;">Choose Your Path</h2>
-                <p style="font-size: 18px; color: rgba(255, 255, 255, 0.6);">From beginner to enlightened mastery</p>
+                <h2 style="font-size: 42px; font-weight: 700; color: var(--accent); margin-bottom: 12px;">Choose Your Path</h2>
+                <p style="font-size: 18px; color: var(--text-muted);">From beginner to enlightened mastery</p>
             </div>
 
             <!-- Billing Toggle -->
             <div style="display: flex; justify-content: center; margin-bottom: 32px;">
                 <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 4px; display: inline-flex; gap: 4px;">
-                    <button id="monthlyToggle" class="billing-toggle active" data-period="monthly" style="padding: 12px 24px; border-radius: 10px; background: linear-gradient(135deg, #60a9ff 0%, #4c94ff 100%); border: none; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    <button id="monthlyToggle" class="billing-toggle active" data-period="monthly" style="padding: 12px 24px; border-radius: 10px; background: var(--accent); border: none; color: var(--bg-main); font-weight: 600; cursor: pointer; transition: all 0.3s;">
                         Monthly
                     </button>
-                    <button id="annualToggle" class="billing-toggle" data-period="annual" style="padding: 12px 24px; border-radius: 10px; background: transparent; border: none; color: rgba(255, 255, 255, 0.6); font-weight: 600; cursor: pointer; transition: all 0.3s;">
-                        Annual <span style="color: #60a9ff; font-size: 12px; margin-left: 8px;">Save up to ${buddhaMonthlySavings}%</span>
+                    <button id="annualToggle" class="billing-toggle" data-period="annual" style="padding: 12px 24px; border-radius: 10px; background: transparent; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                        Annual <span style="color: var(--accent); font-size: 12px; margin-left: 8px;">Save up to ${buddhaMonthlySavings}%</span>
                     </button>
                 </div>
             </div>
@@ -88,14 +88,14 @@ function createPricingModal(currentTier) {
                 <div class="pricing-tier" data-tier="free" style="background: rgba(255, 255, 255, 0.03); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 32px; transition: all 0.3s;">
                     <div style="text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 24px; margin-bottom: 24px;">
                         <div style="font-size: 32px; margin-bottom: 12px;">🌱</div>
-                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">Seeker</h3>
-                        <p style="font-size: 14px; color: rgba(255, 255, 255, 0.5); margin-bottom: 24px;">Start your journey</p>
-                        <div style="font-size: 48px; font-weight: 700; color: white;">Free</div>
-                        <div style="font-size: 14px; color: rgba(255, 255, 255, 0.4); margin-top: 8px;">Forever</div>
+                        <h3 style="font-size: 24px; font-weight: 600; color: var(--accent); margin-bottom: 8px;">Seeker</h3>
+                        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">Start your journey</p>
+                        <div style="font-size: 48px; font-weight: 700; color: var(--text-main);">Free</div>
+                        <div style="font-size: 14px; color: var(--text-muted); margin-top: 8px;">Forever</div>
                     </div>
                     <ul style="list-style: none; padding: 0; margin-bottom: 24px;">
-                        <li style="padding: 10px 0; color: rgba(255, 255, 255, 0.7); display: flex; align-items: start; gap: 12px;">
-                            <span style="color: #60a9ff; flex-shrink: 0;">✓</span>
+                        <li style="padding: 10px 0; color: var(--text-muted); display: flex; align-items: start; gap: 12px;">
+                            <span style="color: var(--accent); flex-shrink: 0;">✓</span>
                             <span>3 basic presets</span>
                         </li>
                         <li style="padding: 10px 0; color: rgba(255, 255, 255, 0.7); display: flex; align-items: start; gap: 12px;">
@@ -172,7 +172,7 @@ function createPricingModal(currentTier) {
                             <span>No ads</span>
                         </li>
                     </ul>
-                    <button class="checkout-btn" data-tier="yogi" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #60a9ff 0%, #4c94ff 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                    <button class="checkout-btn" data-tier="yogi" style="width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 12px; color: var(--bg-main); font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
                         ${currentTier === 'yogi' ? 'Current Plan' : 'Start Your Practice'}
                     </button>
                 </div>
@@ -232,7 +232,7 @@ function createPricingModal(currentTier) {
                             <span>Community access</span>
                         </li>
                     </ul>
-                    <button class="checkout-btn" data-tier="buddha" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #60a9ff 0%, #4c94ff 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                    <button class="checkout-btn" data-tier="buddha" style="width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 12px; color: var(--bg-main); font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
                         ${currentTier === 'buddha' ? 'Current Plan' : 'Achieve Mastery'}
                     </button>
                 </div>

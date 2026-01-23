@@ -63,12 +63,12 @@
     <title>MindWave - Binaural Beats Studio</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
     <link rel="stylesheet" href="binaural-assets/css/tailwind-compiled.css">
-    <link rel="stylesheet" href="binaural-assets/css/style.css?v=20">
+    <link rel="stylesheet" href="binaural-assets/css/style.css?v=25">
     <!-- Preload critical resources -->
     <link rel="preload" href="binaural-assets/js/main.js" as="script" crossorigin>
     <script src="binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="binaural-assets/js/main.js?v=34"></script>
+    <script type="module" src="binaural-assets/js/main.js?v=42"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -148,7 +148,11 @@
     <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
 </head>
 
-<body class="h-screen w-screen overflow-hidden relative">
+<body
+    class="w-full relative min-h-screen bg-slate-900 text-slate-200 antialiased selection:bg-cyan-500 selection:text-white">
+    <!-- UNIFIED COMMAND CENTER (Moved to root for z-index) -->
+
+
     <!-- Loading Screen -->
     <div id="loadingScreen">
         <div class="loading-spinner"></div>
@@ -160,9 +164,11 @@
 
 
     <!-- IMMERSIVE OVERLAY CONTAINER -->
-    <div id="appOverlay" class="fixed inset-0 z-10 flex flex-col pointer-events-none">
+    <!-- FIX: relative positioning allows natural scrolling -->
+    <div id="appOverlay" class="relative w-full min-h-screen z-10 flex flex-col pointer-events-none">
 
-        <!-- UNIFIED COMMAND CENTER -->
+
+
         <header class="fixed top-0 left-0 right-0 z-[100] p-2 pointer-events-none flex justify-center">
 
 
@@ -276,7 +282,8 @@
         </main>
 
         <!-- FOOTER -->
-        <footer class="p-6 pointer-events-auto flex justify-center items-end gap-8 pb-8">
+        <footer
+            class="fixed bottom-0 left-0 right-0 z-[100] p-6 pointer-events-auto flex justify-center items-end gap-8 pb-8">
 
             <!-- LEFT: Visual Controls & Toggle -->
             <div class="flex flex-col gap-4 items-center">
@@ -324,9 +331,14 @@
                         🌸 ZEN
                     </button>
                     <button id="oceanBtn" onclick="setVisualMode('ocean')"
-                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap col-span-2"
+                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
                         title="Ocean Waves Mode">
                         🌊 OCEAN
+                    </button>
+                    <button id="matrixBtn" onclick="setVisualMode('matrix')"
+                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
+                        title="Matrix Code Mode">
+                        💻 MATRIX
                     </button>
                 </div>
 
@@ -542,14 +554,14 @@
     <!-- LEFT SIDEBAR: PRESETS -->
     <aside id="leftPanel"
         class="fixed top-0 left-0 h-full w-64 glass-card border-r border-white/10 transform -translate-x-full transition-transform duration-500 z-40 flex flex-col pointer-events-auto backdrop-blur-2xl bg-[var(--bg-panel)]">
-        <div class="p-4 border-b border-white/10 flex justify-between items-center bg-[var(--bg-panel)]">
-            <div class="flex items-center gap-2">
-                <div id="sidebarStatusIndicator"
-                    class="h-2 w-2 rounded-full bg-slate-600 shadow-[0_0_10px_currentColor]"></div>
-                <h2 class="text-sm font-bold tracking-[0.15em] text-[var(--accent)]">MINDWAVE</h2>
-            </div>
-            <button id="closeLeftBtn" class="opacity-50 hover:opacity-100"><svg width="20" height="20"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div
+            class="relative w-full p-6 border-b border-white/10 flex flex-col justify-center items-center bg-[var(--bg-panel)] shrink-0 min-h-[140px] gap-4">
+            <a href="#" onclick="window.location.reload()" class="hover:opacity-80 transition-opacity block">
+                <img src="/mindwave-logo.png" alt="MindWave Logo"
+                    class="h-20 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.3)] rounded-xl relative z-10">
+            </a>
+            <button id="closeLeftBtn" class="absolute top-4 right-4 opacity-50 hover:opacity-100 z-20"><svg width="20"
+                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg></button>
@@ -969,19 +981,19 @@
                                 🎧 Ambient
                             </button>
                             <button data-category="pulse"
-                                class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-white/5 text-[var(--accent)] border border-white/10 whitespace-nowrap hover:bg-white/10">
+                                class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-pink-500/20 text-pink-400 border border-pink-500/30 whitespace-nowrap hover:bg-white/10">
                                 💓 Pulse
                             </button>
                             <button data-category="texture"
-                                class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-white/5 text-[var(--accent)] border border-white/10 whitespace-nowrap hover:bg-white/10">
+                                class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 whitespace-nowrap hover:bg-white/10">
                                 🌌 Texture
                             </button>
                             <button data-category="healing"
-                                class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-white/5 text-[var(--accent)] border border-white/10 whitespace-nowrap hover:bg-white/10">
+                                class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap hover:bg-white/10">
                                 🧘 Healing
                             </button>
                             <button data-category="drops"
-                                class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-white/5 text-[var(--accent)] border border-white/10 whitespace-nowrap hover:bg-white/10">
+                                class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-orange-500/20 text-orange-400 border border-orange-500/30 whitespace-nowrap hover:bg-white/10">
                                 💥 Drops
                             </button>
                         </div>
@@ -2206,9 +2218,9 @@
 
                         <!-- Submit Button -->
                         <button type="submit" id="authSubmitBtn"
-                            style="width: 100%; padding: 16px; margin-top: 8px; background: linear-gradient(135deg, rgb(96, 169, 255) 0%, rgb(96, 169, 255) 100%); border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);"
-                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(168, 85, 247, 0.4)'"
-                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(168, 85, 247, 0.3)'">
+                            style="width: 100%; padding: 16px; margin-top: 8px; background: linear-gradient(135deg, rgb(96, 169, 255) 0%, rgb(96, 169, 255) 100%); border: none; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(96, 169, 255, 0.3);"
+                            onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(96, 169, 255, 0.4)'"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(96, 169, 255, 0.3)'">
                             Sign In
                         </button>
                     </form>
@@ -2263,6 +2275,20 @@
         }
     </style>
 
+    <!-- Failsafe: Ensure app unlocks even if JS errors occur -->
+    <script>
+        setTimeout(() => {
+            const loading = document.getElementById('loadingScreen');
+            if (loading) {
+                console.warn('[Failsafe] Force removing loading screen');
+                loading.classList.add('fade-out');
+                loading.style.pointerEvents = 'none';
+                setTimeout(() => loading.remove(), 500);
+            }
+            document.body.classList.remove('overflow-hidden');
+            document.body.style.overflow = '';
+        }, 3000);
+    </script>
 </body>
 
 
