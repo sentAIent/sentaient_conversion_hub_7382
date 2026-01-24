@@ -2085,49 +2085,42 @@ body[data-theme="dawn"] .cursor-option div {
    ========================================== */
 
 /* DJ Pad buttons - dark text */
-body[data-theme="cloud"] .dj-pad,
-body[data-theme="dawn"] .dj-pad {
+body[data-theme-type="light"] .dj-pad {
     color: var(--text-main) !important;
     border-color: var(--accent) !important;
     background: rgba(255, 255, 255, 0.5) !important;
 }
 
-body[data-theme="cloud"] .dj-pad span,
-body[data-theme="dawn"] .dj-pad span {
+body[data-theme-type="light"] .dj-pad span {
     color: var(--text-main) !important;
     text-shadow: none !important;
 }
 
-body[data-theme="cloud"] .dj-pad:hover,
-body[data-theme="dawn"] .dj-pad:hover {
+body[data-theme-type="light"] .dj-pad:hover {
     background: rgba(255, 255, 255, 0.7) !important;
     border-color: var(--accent) !important;
 }
 
 /* DJ Category tabs */
-body[data-theme="cloud"] .dj-cat-tab,
-body[data-theme="dawn"] .dj-cat-tab {
+body[data-theme-type="light"] .dj-cat-tab {
     color: var(--text-main) !important;
     border-color: var(--accent) !important;
     background: rgba(255, 255, 255, 0.5) !important;
 }
 
-body[data-theme="cloud"] .dj-cat-tab:hover,
-body[data-theme="dawn"] .dj-cat-tab:hover {
+body[data-theme-type="light"] .dj-cat-tab:hover {
     background: rgba(255, 255, 255, 0.7) !important;
 }
 
 /* DJ Mode toggle buttons */
-body[data-theme="cloud"] .dj-mode-btn,
-body[data-theme="dawn"] .dj-mode-btn {
+body[data-theme-type="light"] .dj-mode-btn {
     color: var(--text-main) !important;
     border-color: var(--accent) !important;
     background: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* DJ Stop All button */
-body[data-theme="cloud"] #djStopAll,
-body[data-theme="dawn"] #djStopAll {
+body[data-theme-type="light"] #djStopAll {
     color: #dc2626 !important;
     border-color: #dc2626 !important;
     background: rgba(220, 38, 38, 0.1) !important;
@@ -2156,24 +2149,20 @@ body[data-theme="dawn"] #djStopAll {
 }
 
 /* Light themes - dark text */
-body[data-theme="cloud"] .dj-pad-icon,
-body[data-theme="dawn"] .dj-pad-icon {
+body[data-theme-type="light"] .dj-pad-icon {
     color: var(--text-main) !important;
     text-shadow: none !important;
 }
 
-body[data-theme="cloud"] .dj-pad-label,
-body[data-theme="dawn"] .dj-pad-label {
+body[data-theme-type="light"] .dj-pad-label {
     color: var(--text-main) !important;
 }
 
-body[data-theme="cloud"] .dj-pad-label.dj-pad-active,
-body[data-theme="dawn"] .dj-pad-label.dj-pad-active {
+body[data-theme-type="light"] .dj-pad-label.dj-pad-active {
     color: var(--accent) !important;
 }
 
-body[data-theme="cloud"] .dj-pad-loop,
-body[data-theme="dawn"] .dj-pad-loop {
+body[data-theme-type="light"] .dj-pad-loop {
     color: var(--text-muted) !important;
 }
 
@@ -2191,13 +2180,11 @@ body[data-theme="dawn"] .dj-pad-loop {
 }
 
 /* Light themes - dark text for readability */
-body[data-theme="cloud"] .theme-card-title,
-body[data-theme="dawn"] .theme-card-title {
+body[data-theme-type="light"] .theme-card-title {
     color: var(--text-main) !important;
 }
 
-body[data-theme="cloud"] .theme-card-desc,
-body[data-theme="dawn"] .theme-card-desc {
+body[data-theme-type="light"] .theme-card-desc {
     color: var(--text-muted) !important;
 }
 
@@ -2207,10 +2194,8 @@ body[data-theme="dawn"] .theme-card-desc {
    ========================================== */
 
 /* Fix all text-white/XX classes in light themes */
-body[data-theme="cloud"] [class*="text-white"],
-body[data-theme="dawn"] [class*="text-white"],
-body[data-theme="cloud"] [class*="text-slate-"],
-body[data-theme="dawn"] [class*="text-slate-"] {
+body[data-theme-type="light"] [class*="text-white"],
+body[data-theme-type="light"] [class*="text-slate-"] {
     color: var(--text-main) !important;
 }
 

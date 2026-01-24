@@ -766,7 +766,10 @@ export class Visualizer3D {
             this.oceanFoam.material.color.set(hex);
         }
         if (this.matrixRain && this.matrixRain.material) {
-            this.matrixRain.material.color.set(hex);
+            // ShaderMaterial uses uniforms, not .color property
+            if (this.matrixRain.material.uniforms && this.matrixRain.material.uniforms.uColor) {
+                this.matrixRain.material.uniforms.uColor.value.set(hex);
+            }
         }
 
         // Render a single frame to show the color change even when paused

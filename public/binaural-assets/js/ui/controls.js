@@ -10,7 +10,13 @@ import { startSessionTracking, endSessionTracking, getStats, getWeeklyData } fro
 import { setStoryVolume, storyState } from '../content/stories.js';
 import { setCustomAudioVolume } from '../content/audio-library.js';
 import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '../content/classical.js';
-import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, DJ_SOUNDS } from '../audio/dj-synth.js';
+import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '../audio/dj-synth.js';
+
+// ... (existing code)
+
+// Use MultiReplace for multiple chunks? No, I'll use multi_replace tool.
+// This block is just for thought process.
+
 import { createCursorUIInThemeModal } from './cursor.js';
 
 
@@ -1319,6 +1325,52 @@ function updateSweepStatusUI(active, activePresetKey = null) {
             btn.classList.remove('journey-active');
         }
     });
+
+    // Apply Theme Styles
+    updateJourneyStyles();
+}
+
+function updateJourneyStyles() {
+    // Check for Light Mode
+    const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
+
+    const btns = document.querySelectorAll('.sweep-btn');
+    btns.forEach(btn => {
+        const isActive = btn.classList.contains('journey-active');
+
+        if (isActive) {
+            // Active State: Let CSS handle it (usually filled)
+            // Or ensure specific override if needed, but existing classes likely suffice.
+            // Reset inline styles just in case
+            btn.style.backgroundColor = '';
+            btn.style.borderColor = '';
+            btn.style.color = '';
+        } else {
+            // Inactive State
+            if (isLight) {
+                // LIGHT MODE: Outline Style
+                btn.style.setProperty('background-color', 'transparent', 'important');
+                btn.style.setProperty('border-color', 'var(--accent)', 'important');
+                btn.style.setProperty('color', 'var(--accent)', 'important');
+                // Optional: Reduce opacity of border/text for a more subtle look?
+                // The user liked DJ Studio which was solid accent color. Let's stick to that.
+                // Or maybe lighter border? DJ Studio used category color for border.
+                // Here we use accent.
+                btn.style.borderWidth = '1px';
+            } else {
+                // DARK MODE: Generic Glass (Reset to default look if previously overridden)
+                // The HTML classes are `bg-white/5 border-white/10`.
+                // We can't easily "reset" to class values if we overrode with inline styles,
+                // so we must explicitly set them to matching values or remove the inline styles.
+                // Removing inline styles reverts to CSS classes.
+                btn.style.backgroundColor = '';
+                btn.style.borderColor = '';
+                btn.style.color = '';
+            }
+        }
+    });
 }
 
 // --- HYPER-GAMMA UNLOCK ---
@@ -1619,6 +1671,10 @@ export function setTheme(themeName) {
                 }
             });
         }
+
+        // Force update of Journeys UI
+        if (typeof updateJourneyStyles === 'function') updateJourneyStyles();
+
     } else {
         // Clear inline styles for dark themes
         if (leftPanel) leftPanel.style.backgroundColor = '';
@@ -2696,76 +2752,167 @@ function setupDJPads() {
     console.log('[DJ Pads] Setup complete');
 }
 
+// Helper to get consistent category colors
+function getCategoryColor(cat) {
+    if (cat === 'pulse') {
+        return {
+            name: 'red',
+            text: 'text-red-400',
+            bg: 'bg-red-500/20',
+            border: 'border-red-500/30',
+            from: 'from-red-500',
+            to: 'to-rose-600',
+            glow: 'shadow-red-500/30'
+        };
+    } else if (cat === 'drops') {
+        return {
+            name: 'blue',
+            text: 'text-blue-400',
+            bg: 'bg-blue-500/20',
+            border: 'border-blue-500/30',
+            from: 'from-blue-500',
+            to: 'to-indigo-600',
+            glow: 'shadow-blue-500/30'
+        };
+    } else if (cat === 'texture') {
+        return {
+            name: 'yellow',
+            text: 'text-yellow-400',
+            bg: 'bg-yellow-500/20',
+            border: 'border-yellow-500/30',
+            from: 'from-yellow-500',
+            to: 'to-amber-500',
+            glow: 'shadow-yellow-500/30'
+        };
+    } else if (cat === 'healing') {
+        return {
+            name: 'emerald',
+            text: 'text-emerald-400',
+            bg: 'bg-emerald-500/20',
+            border: 'border-emerald-500/30',
+            from: 'from-emerald-500',
+            to: 'to-green-600',
+            glow: 'shadow-emerald-500/30'
+        };
+    } else if (cat === 'ambient') {
+        return {
+            name: 'purple',
+            text: 'text-purple-400',
+            bg: 'bg-purple-500/20',
+            border: 'border-purple-500/30',
+            from: 'from-purple-500',
+            to: 'to-violet-600',
+            glow: 'shadow-purple-500/30'
+        };
+    } else if (cat === 'bass') {
+        return {
+            name: 'indigo',
+            text: 'text-indigo-400',
+            bg: 'bg-indigo-500/20',
+            border: 'border-indigo-500/30',
+            from: 'from-indigo-500',
+            to: 'to-blue-600',
+            glow: 'shadow-indigo-500/30'
+        };
+    }
+    // Default
+    return {
+        name: 'gray',
+        text: 'text-[var(--text-muted)]',
+        bg: 'bg-white/5',
+        border: 'border-white/10',
+        from: 'from-gray-500',
+        to: 'to-gray-600',
+        glow: 'shadow-gray-500/30'
+    };
+}
+
 function updateCategoryTabs() {
     const tabs = document.querySelectorAll('.dj-cat-tab');
+
+    // Check for Light Mode
+    const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
+
     tabs.forEach(tab => {
         const cat = tab.dataset.category;
-        const catData = DJ_SOUNDS[cat];
+        const colors = getCategoryColor(cat);
 
         if (cat === djCurrentCategory) {
-            // Active state with category color
-            const colorClass = catData?.color || 'from-purple-500 to-violet-600';
-            tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap`;
-
-            // Apply category-specific colors based on DJ_SOUNDS categories
-            if (cat === 'ambient') {
-                tab.classList.add('bg-purple-500/20', 'text-purple-400', 'border', 'border-purple-500/30');
-            } else if (cat === 'pulse') {
-                tab.classList.add('bg-red-500/20', 'text-red-400', 'border', 'border-red-500/30');
-            } else if (cat === 'texture') {
-                tab.classList.add('bg-yellow-500/20', 'text-yellow-400', 'border', 'border-yellow-500/30');
-            } else if (cat === 'healing') {
-                tab.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
-            } else if (cat === 'drops') {
-                tab.classList.add('bg-blue-500/20', 'text-blue-400', 'border', 'border-blue-500/30');
+            // Active state
+            if (isLight) {
+                // Light Mode Active: Accent Tint BG + Category Text/Border
+                // Use color-mix for valid opacity with hex variable
+                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap border shadow-sm ${colors.text}`;
+                tab.style.borderColor = 'currentColor';
+                tab.style.backgroundColor = 'color-mix(in srgb, var(--accent), transparent 80%)';
+            } else {
+                // Dark Mode Active: Legacy
+                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap ${colors.bg} ${colors.text} border ${colors.border}`;
+                tab.style.borderColor = '';
+                tab.style.backgroundColor = '';
             }
         } else {
-            // Inactive state - with specific colors for hover/border if needed, or generic
-            // Update: Keep generic but colored text/border for specific categories if inactive?
-            // Actually, user wants them distinctive. Let's keep them colored but dimmer/transparent background when inactive, 
-            // OR just generic "inactive" style?
-            // The HTML we wrote had specific colors. The JS overwrote it with generic. 
-            // Let's restore the specific colors but maybe lower opacity or use the colored border only?
-            // For now, let's match the HTML structure we added:
-
-            let inactiveClass = 'dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap hover:bg-white/10 ';
-
-            if (cat === 'ambient') {
-                inactiveClass += 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
-            } else if (cat === 'pulse') {
-                inactiveClass += 'bg-red-500/20 text-red-400 border border-red-500/30';
-            } else if (cat === 'texture') {
-                inactiveClass += 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
-            } else if (cat === 'healing') {
-                inactiveClass += 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-            } else if (cat === 'drops') {
-                inactiveClass += 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+            // Inactive state
+            tab.style.backgroundColor = ''; // Reset
+            if (isLight) {
+                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap bg-transparent hover:bg-black/5 text-[var(--text-muted)] border border-transparent hover:border-black/5`;
+                tab.style.borderColor = '';
             } else {
-                inactiveClass += 'bg-white/5 text-[var(--text-muted)] border border-white/10';
+                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap hover:bg-white/10 ${colors.text} border border-white/10 hover:border-white/20`;
+                tab.style.borderColor = '';
             }
-
-            tab.className = inactiveClass;
         }
     });
+
+    // Also update Show All/Stop All buttons
+    updateShowAllButton();
+    updateStopAllButton();
 }
 
 function updateModeButtons() {
     const modeOneShot = document.getElementById('djModeOneShot');
     const modeLoop = document.getElementById('djModeLoop');
 
+    // Check for Light Mode
+    const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
+
     if (modeOneShot) {
         if (djMode === 'oneshot') {
-            modeOneShot.className = 'dj-mode-btn px-2 py-1 rounded text-[9px] font-bold bg-pink-500/20 text-pink-400 border border-pink-500/30';
+            if (isLight) {
+                // Light Mode Active: Accent Tint BG
+                modeOneShot.className = 'dj-mode-btn px-2 py-1 rounded text-[9px] font-bold text-[var(--accent)] border border-[var(--accent)] shadow-sm';
+                modeOneShot.style.backgroundColor = 'color-mix(in srgb, var(--accent), transparent 80%)';
+            } else {
+                // Dark Mode Active: Pink (Legacy)
+                modeOneShot.className = 'dj-mode-btn px-2 py-1 rounded text-[9px] font-bold bg-pink-500/20 text-pink-400 border border-pink-500/30';
+                modeOneShot.style.backgroundColor = '';
+            }
         } else {
+            // Inactive
             modeOneShot.className = 'dj-mode-btn px-2 py-1 rounded text-[9px] font-bold bg-white/5 text-[var(--text-muted)] border border-white/10 hover:bg-white/10';
+            modeOneShot.style.backgroundColor = '';
         }
     }
 
     if (modeLoop) {
         if (djMode === 'loop') {
-            modeLoop.className = 'dj-mode-btn px-2 py-1 rounded text-[9px] font-bold bg-pink-500/20 text-pink-400 border border-pink-500/30';
+            if (isLight) {
+                // Light Mode Active: Accent Tint BG
+                modeLoop.className = 'dj-mode-btn px-2 py-1 rounded text-[9px] font-bold text-[var(--accent)] border border-[var(--accent)] shadow-sm';
+                modeLoop.style.backgroundColor = 'color-mix(in srgb, var(--accent), transparent 80%)';
+            } else {
+                // Dark Mode Active: Pink (Legacy)
+                modeLoop.className = 'dj-mode-btn px-2 py-1 rounded text-[9px] font-bold bg-pink-500/20 text-pink-400 border border-pink-500/30';
+                modeLoop.style.backgroundColor = '';
+            }
         } else {
+            // Inactive
             modeLoop.className = 'dj-mode-btn px-2 py-1 rounded text-[9px] font-bold bg-white/5 text-[var(--text-muted)] border border-white/10 hover:bg-white/10';
+            modeLoop.style.backgroundColor = '';
         }
     }
 }
@@ -2780,52 +2927,67 @@ function renderDJPads(category) {
         return;
     }
 
-    // Get gradient colors based on category
-    let gradientFrom = 'from-purple-500';
-    let gradientTo = 'to-violet-600';
-    let borderColor = 'border-purple-500/30';
-    let textColor = 'text-purple-400';
-    let glowColor = 'shadow-purple-500/30';
-
-    if (category === 'ambient') {
-        gradientFrom = 'from-purple-500'; gradientTo = 'to-violet-600';
-        borderColor = 'border-purple-500/30'; textColor = 'text-purple-400'; glowColor = 'shadow-purple-500/30';
-    } else if (category === 'pulse') {
-        gradientFrom = 'from-red-500'; gradientTo = 'to-rose-600';
-        borderColor = 'border-red-500/30'; textColor = 'text-red-400'; glowColor = 'shadow-red-500/30';
-    } else if (category === 'texture') {
-        gradientFrom = 'from-yellow-500'; gradientTo = 'to-amber-500';
-        borderColor = 'border-yellow-500/30'; textColor = 'text-yellow-400'; glowColor = 'shadow-yellow-500/30';
-    } else if (category === 'healing') {
-        gradientFrom = 'from-emerald-500'; gradientTo = 'to-green-600';
-        borderColor = 'border-emerald-500/30'; textColor = 'text-emerald-400'; glowColor = 'shadow-emerald-500/30';
-    } else if (category === 'drops') {
-        gradientFrom = 'from-blue-500'; gradientTo = 'to-indigo-600';
-        borderColor = 'border-blue-500/30'; textColor = 'text-blue-400'; glowColor = 'shadow-blue-500/30';
-    } else if (category === 'bass') {
-        gradientFrom = 'from-indigo-500'; gradientTo = 'to-blue-600';
-        borderColor = 'border-indigo-500/30'; textColor = 'text-indigo-400'; glowColor = 'shadow-indigo-500/30';
-    }
+    // Get gradient colors based on category using helper
+    const colors = getCategoryColor(category);
+    let gradientFrom = colors.from;
+    let gradientTo = colors.to;
+    let borderColor = colors.border;
+    let textColor = colors.text;
+    let glowColor = colors.glow;
 
     grid.innerHTML = '';
+
+    // Check for Light Mode
+    const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
 
     Object.entries(catData.sounds).forEach(([id, sound]) => {
         const isActive = isLoopActive(id);
         const canLoop = sound.canLoop;
 
+        let inactiveClasses = `bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20`;
+        let inactiveStyle = '';
+
+        if (!isActive && isLight) {
+            // Light Mode Outline Style: Transparent BG, Colored Border, Colored Text
+            // We use inline styles for the specific category color on border/text
+            inactiveClasses = `bg-transparent hover:bg-[var(--accent)]/5`;
+            // Note: Border width is handled by 'border' class in template below
+        }
+
         const pad = document.createElement('button');
         pad.className = `dj-pad group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 active:scale-95
             ${isActive
                 ? `bg-gradient-to-br ${gradientFrom}/30 ${gradientTo}/20 ${borderColor} shadow-lg ${glowColor}`
-                : `bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20`}`;
+                : inactiveClasses}`;
+
         pad.dataset.soundId = id;
         pad.dataset.canLoop = canLoop;
+
+        // Force inline colors for Light Mode Inactive
+        if (!isActive && isLight) {
+            pad.style.borderColor = textColor.replace('text-', 'var(--color-').replace('-400', '-500'); // Approximate or use standard var if possible? 
+            // Better: use the hex colors from getCategoryColor logic/map if we had access, 
+            // OR just use the computed color of the text class.
+            // Simpler: Use the text class for the element, and set border-color: currentColor
+            pad.style.borderColor = 'currentColor';
+            pad.style.color = 'currentColor';
+            // Wait, we need to SET the color first. 
+            // The class `textColor` (e.g. text-blue-400) is NOT applied to the pad container, it's inside on the icon/label?
+            // Actually, usually `text-blue-400` is applied to inner, but we want the Whole Pad to have this text color so border matches.
+            pad.classList.add(textColor);
+        }
 
         // Add loop indicator if looping
         const loopIndicator = isActive ? `<div class="absolute top-1 right-1 w-2 h-2 rounded-full bg-gradient-to-r ${gradientFrom} ${gradientTo} animate-pulse"></div>` : '';
 
-        // Use CSS classes instead of inline styles for theme-aware text colors
+        // Active class for label
         const activeClass = isActive ? 'dj-pad-active' : '';
+
+        // Inner content
+        // If Light Mode Inactive, we already set text color on parent, so no need for explicit color classes on children unless we want to override?
+        // But `sound.icon` might not inherit? Icons are text usually.
 
         pad.innerHTML = `
             ${loopIndicator}
@@ -2934,58 +3096,61 @@ renderAllDJPads = function () {
         const catData = DJ_SOUNDS[category];
         if (!catData) return;
 
+        // Category-specific styling using helper
+        const colors = getCategoryColor(category);
+        const headerColor = colors.text;
 
-        // Add category header
+        const icon = catData.sounds[Object.keys(catData.sounds)[0]]?.icon || '';
         const header = document.createElement('div');
         header.className = 'text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2';
-        // Use inline styles for spacing and grid layout since Tailwind classes may not be compiled
         header.style.gridColumn = '1 / -1'; // Span all columns (equivalent to col-span-3)
         header.style.marginTop = category === categories[0] ? '0' : '24px'; // 24px spacing between categories
         header.style.marginBottom = '8px';
 
-        // Category-specific styling
-        let headerColor = 'text-purple-400';
-        if (category === 'pulse') headerColor = 'text-red-400';
-        else if (category === 'texture') headerColor = 'text-yellow-400';
-        else if (category === 'healing') headerColor = 'text-emerald-400';
-        else if (category === 'drops') headerColor = 'text-blue-400';
-
-        const icon = catData.sounds[Object.keys(catData.sounds)[0]]?.icon || '';
         header.innerHTML = `<span class="${headerColor}">${icon} ${category.toUpperCase()}</span>`;
         header.innerHTML += '<div class="flex-1 h-px bg-white/10"></div>';
         grid.appendChild(header);
 
         // Get gradient colors based on category
-        let gradientFrom, gradientTo, borderColor, glowColor;
-        if (category === 'ambient') {
-            gradientFrom = 'from-purple-500'; gradientTo = 'to-violet-600';
-            borderColor = 'border-purple-500/30'; glowColor = 'shadow-purple-500/30';
-        } else if (category === 'pulse') {
-            gradientFrom = 'from-red-500'; gradientTo = 'to-rose-600';
-            borderColor = 'border-red-500/30'; glowColor = 'shadow-red-500/30';
-        } else if (category === 'texture') {
-            gradientFrom = 'from-yellow-500'; gradientTo = 'to-amber-500';
-            borderColor = 'border-yellow-500/30'; glowColor = 'shadow-yellow-500/30';
-        } else if (category === 'healing') {
-            gradientFrom = 'from-emerald-500'; gradientTo = 'to-green-600';
-            borderColor = 'border-emerald-500/30'; glowColor = 'shadow-emerald-500/30';
-        } else if (category === 'drops') {
-            gradientFrom = 'from-blue-500'; gradientTo = 'to-indigo-600';
-            borderColor = 'border-blue-500/30'; glowColor = 'shadow-blue-500/30';
-        }
+        let gradientFrom = colors.from;
+        let gradientTo = colors.to;
+        let borderColor = colors.border;
+        let glowColor = colors.glow;
+
+        // Check for Light Mode
+        const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+        const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+        const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
 
         // Add all pads for this category
         Object.entries(catData.sounds).forEach(([id, sound]) => {
             const isActive = isLoopActive(id);
             const canLoop = sound.canLoop;
 
+            let inactiveClasses = `bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20`;
+
+            if (!isActive && isLight) {
+                // Light Mode Outline Style: Transparent BG, Colored Border, Colored Text
+                inactiveClasses = `bg-transparent hover:bg-[var(--accent)]/5`;
+            }
+
             const pad = document.createElement('button');
             pad.className = `dj-pad group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 active:scale-95
                 ${isActive
                     ? `bg-gradient-to-br ${gradientFrom}/30 ${gradientTo}/20 ${borderColor} shadow-lg ${glowColor}`
-                    : `bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20`}`;
+                    : inactiveClasses}`;
+
             pad.dataset.soundId = id;
             pad.dataset.canLoop = canLoop;
+
+            // Force inline colors for Light Mode Inactive
+            if (!isActive && isLight) {
+                // Approximate valid text color class usage or fallback
+                // We use currentColor approach which is safest
+                pad.style.borderColor = 'currentColor';
+                pad.style.color = 'currentColor';
+                pad.classList.add(headerColor); // headerColor is e.g. 'text-blue-400'
+            }
 
             const loopIndicator = isActive ? `<div class="absolute top-1 right-1 w-2 h-2 rounded-full bg-gradient-to-r ${gradientFrom} ${gradientTo} animate-pulse"></div>` : '';
             const activeClass = isActive ? 'dj-pad-active' : '';
@@ -3019,10 +3184,51 @@ updateShowAllButton = function () {
     if (!btn) return;
 
     if (djShowAllCategories) {
-        btn.className = 'px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-cyan-500/40 text-cyan-300 border border-cyan-500/50 whitespace-nowrap hover:bg-cyan-500/50 transition-all flex items-center gap-1 shrink-0';
+        btn.className = 'px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-[var(--accent)]/40 text-[var(--accent)] border border-[var(--accent)]/50 whitespace-nowrap hover:bg-[var(--accent)]/50 transition-all flex items-center gap-1 shrink-0';
         btn.title = 'Show Single Category';
     } else {
-        btn.className = 'px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 whitespace-nowrap hover:bg-cyan-500/30 transition-all flex items-center gap-1 shrink-0';
+        // Inactive: lighter accent border/text
+        btn.className = 'px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 whitespace-nowrap hover:bg-[var(--accent)]/30 transition-all flex items-center gap-1 shrink-0';
         btn.title = 'Show All Categories';
+    }
+}
+
+// NEW: Update Stop All button state (Light Mode Aware)
+function updateStopAllButton() {
+    const stopAllBtn = document.getElementById('djStopAll');
+    if (!stopAllBtn) return;
+
+    // Check loop count
+    const hasLoops = getActiveLoopCount() > 0;
+
+    // Check for Light Mode
+    const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
+
+    if (hasLoops) {
+        stopAllBtn.classList.add('dj-playing'); // For animation/display logic
+
+        if (isLight) {
+            // Light Mode Active: Red Tint Style
+            stopAllBtn.className = 'px-2 py-1 rounded text-[9px] font-bold bg-red-500/20 text-red-500 border border-red-500/50 shadow-sm dj-playing order-last ml-auto';
+        } else {
+            // Dark Mode Active: Red Glow
+            stopAllBtn.className = 'px-2 py-1 rounded text-[9px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 dj-playing order-last ml-auto';
+        }
+    } else {
+        stopAllBtn.classList.remove('dj-playing');
+
+        if (isLight) {
+            // Light Mode Inactive: Hidden or Neutral
+            // Usually Stop All is hidden when no loops?
+            // CSS handles .dj-playing visibility? 
+            // If JS controls class completely, we need to ensure opacity/visibility.
+            // Usually defined in style.css: #djStopAll { opacity: 0; pointer-events: none; } .dj-playing { opacity: 1; }
+            // Only reset class name to base state
+            stopAllBtn.className = 'px-2 py-1 rounded text-[9px] font-bold bg-transparent text-[var(--text-muted)] border border-transparent order-last ml-auto opacity-0 pointer-events-none transition-opacity duration-300';
+        } else {
+            stopAllBtn.className = 'px-2 py-1 rounded text-[9px] font-bold bg-white/5 text-[var(--text-muted)] border border-white/10 opacity-0 pointer-events-none transition-opacity duration-300 order-last ml-auto';
+        }
     }
 }
