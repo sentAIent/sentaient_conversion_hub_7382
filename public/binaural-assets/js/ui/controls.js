@@ -2115,8 +2115,11 @@ async function confirmSave() {
 
 export async function applyPreset(type, btnElement, autoStart = true, skipPaywall = false) {
     // Check paywall for presets (skip if called from combo preset)
-    if (!skipPaywall) {
-        const presetOrder = ['alpha', 'theta', 'beta', 'delta', 'gamma', 'focus', 'sleep', 'meditation', 'creativity', 'relax'];
+    // EXEMPT BASIC BRAINWAVES from paywall
+    const freePresets = ['alpha', 'theta', 'beta', 'delta', 'gamma'];
+
+    if (!skipPaywall && !freePresets.includes(type)) {
+        const presetOrder = ['focus', 'sleep', 'meditation', 'creativity', 'relax'];
         const presetIndex = presetOrder.indexOf(type);
 
         if (presetIndex >= 0 && window.canAccessFeature) {
