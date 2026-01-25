@@ -435,10 +435,10 @@ export class Visualizer3D {
             opacity: 0.4,
             side: THREE.DoubleSide
         });
-        // this.oceanWave = new THREE.Mesh(waveGeo, waveMat);
-        // this.oceanWave.rotation.x = -Math.PI / 3;
-        // this.oceanWave.position.y = -2;
-        // this.oceanGroup.add(this.oceanWave);
+        this.oceanWave = new THREE.Mesh(waveGeo, waveMat);
+        this.oceanWave.rotation.x = -Math.PI / 3;
+        this.oceanWave.position.y = -2;
+        this.oceanGroup.add(this.oceanWave);
 
         // Foam particles
         const foamCount = 300;

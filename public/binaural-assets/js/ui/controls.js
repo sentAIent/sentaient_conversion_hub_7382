@@ -115,6 +115,11 @@ export function setupUI() {
     els.sphereBtn = document.getElementById('sphereBtn');
     els.flowBtn = document.getElementById('flowBtn');
     els.lavaBtn = document.getElementById('lavaBtn');
+    els.fireplaceBtn = document.getElementById('fireplaceBtn');
+    els.rainBtn = document.getElementById('rainBtn');
+    els.zenBtn = document.getElementById('zenBtn');
+    els.oceanBtn = document.getElementById('oceanBtn');
+    els.matrixBtn = document.getElementById('matrixBtn');
 
     // Session Timer Elements
     els.sessionDuration = document.getElementById('sessionDuration');
@@ -499,6 +504,12 @@ export function setupUI() {
     if (els.sphereBtn) els.sphereBtn.addEventListener('click', () => setVisualMode('sphere'));
     if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles'));
     if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava'));
+    if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace'));
+    if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest'));
+    if (els.zenBtn) els.zenBtn.addEventListener('click', () => setVisualMode('zengarden'));
+    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean'));
+    if (els.matrixBtn) els.matrixBtn.addEventListener('click', () => setVisualMode('matrix'));
+
     if (els.visualSpeedSlider) {
 
         els.visualSpeedSlider.addEventListener('input', (e) => {
@@ -677,6 +688,9 @@ export function setupUI() {
     window.startSweepPreset = startSweepPresetUI; // NEW
     window.stopSweep = stopSweepUI; // NEW
     window.handleHyperGammaClick = handleHyperGammaClick; // NEW
+
+    // Ensure visual mode UI is synced on load
+    setVisualMode(state.visualMode || 'particles');
 
     // NUCLEAR OPTION: Hijack beatSlider value setter to catch the 5.5Hz culprit
     try {
@@ -1552,7 +1566,12 @@ export function setVisualMode(mode) {
     const buttons = [
         { el: els.sphereBtn, mode: 'sphere' },
         { el: els.flowBtn, mode: 'particles' },
-        { el: els.lavaBtn, mode: 'lava' }
+        { el: els.lavaBtn, mode: 'lava' },
+        { el: els.fireplaceBtn, mode: 'fireplace' },
+        { el: els.rainBtn, mode: 'rainforest' },
+        { el: els.zenBtn, mode: 'zengarden' },
+        { el: els.oceanBtn, mode: 'ocean' },
+        { el: els.matrixBtn, mode: 'matrix' }
     ];
 
     buttons.forEach(({ el, mode: btnMode }) => {
@@ -1560,10 +1579,12 @@ export function setVisualMode(mode) {
         if (mode === btnMode) {
             // Active style - theme-aware
             el.classList.add('toggle-active');
+            el.classList.add('active'); // Added for visual-active.css support
             el.classList.remove('toggle-inactive');
         } else {
             // Inactive style - theme-aware
             el.classList.remove('toggle-active');
+            el.classList.remove('active'); // Added to clear highlight
             el.classList.add('toggle-inactive');
         }
     });

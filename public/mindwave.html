@@ -64,6 +64,7 @@
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
     <link rel="stylesheet" href="binaural-assets/css/tailwind-compiled.css">
     <link rel="stylesheet" href="binaural-assets/css/style.css?v=25">
+    <link rel="stylesheet" href="binaural-assets/css/visual-active.css?v=1">
     <!-- Preload critical resources -->
     <link rel="preload" href="binaural-assets/js/main.js" as="script" crossorigin>
     <script src="binaural-assets/config.js" defer
@@ -297,50 +298,7 @@
                     </svg>
                 </button>
                 <!-- Visual Mode Grid Toggle - 2 Rows -->
-                <div class="p-1 grid grid-cols-4 gap-0.5 bg-black/40 rounded-xl border border-white/10 z-10">
-                    <!-- Row 1 -->
-                    <button id="sphereBtn" onclick="setVisualMode('sphere')"
-                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
-                        title="Sphere Mode">
-                        ⚫ SPHERE
-                    </button>
-                    <button id="flowBtn" onclick="setVisualMode('particles')"
-                        class="visual-btn toggle-active px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
-                        title="Flow Mode">
-                        🌀 FLOW
-                    </button>
-                    <button id="lavaBtn" onclick="setVisualMode('lava')"
-                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
-                        title="Lava Lamp Mode">
-                        🌋 LAVA
-                    </button>
-                    <button id="fireplaceBtn" onclick="setVisualMode('fireplace')"
-                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
-                        title="Fireplace Mode">
-                        🔥 FIRE
-                    </button>
-                    <!-- Row 2 -->
-                    <button id="rainBtn" onclick="setVisualMode('rainforest')"
-                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
-                        title="Rainforest Mode">
-                        🌧️ RAIN
-                    </button>
-                    <button id="zenBtn" onclick="setVisualMode('zengarden')"
-                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
-                        title="Zen Garden Mode">
-                        🌸 ZEN
-                    </button>
-                    <button id="oceanBtn" onclick="setVisualMode('ocean')"
-                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
-                        title="Ocean Waves Mode">
-                        🌊 OCEAN
-                    </button>
-                    <button id="matrixBtn" onclick="setVisualMode('matrix')"
-                        class="visual-btn toggle-inactive px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap"
-                        title="Matrix Code Mode">
-                        💻 MATRIX
-                    </button>
-                </div>
+                <!-- Visual Grid Moved to Center Dock -->
 
 
                 <!-- Speed Slider for Visuals -->
@@ -509,6 +467,122 @@
                         <option value="90">90 min</option>
                         <option value="120">2 hours</option>
                     </select>
+                </div>
+
+                <!-- NEW HORIZONTAL VISUAL DOCK -->
+                <div
+                    class="flex flex-wrap justify-center items-center gap-2 mt-2 px-4 py-3 bg-[#0a0a12]/90 backdrop-blur-2xl rounded-2xl border border-white/5 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container">
+
+                    <style>
+                        /* FORCE TOOLTIP STYLES */
+                        .visual-btn .custom-tooltip {
+                            position: absolute;
+                            top: -40px;
+                            /* Force it way above locally */
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background-color: #0f172a;
+                            border: 1px solid rgba(255, 255, 255, 0.2);
+                            color: #ffffff;
+                            /* Bright white text */
+                            padding: 4px 8px;
+                            border-radius: 6px;
+                            font-size: 10px;
+                            font-weight: bold;
+                            letter-spacing: 0.05em;
+                            opacity: 0;
+                            pointer-events: none;
+                            transition: opacity 0.2s ease;
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                            white-space: nowrap;
+                            z-index: 9999;
+                            display: block;
+                            /* Ensure it's not hidden */
+                        }
+
+                        /* ACTIVE STATE FIX: Ensure pointer events work so hover can trigger */
+                        .visual-btn.active,
+                        .visual-btn.toggle-active {
+                            pointer-events: auto !important;
+                        }
+
+                        /* Fallback CSS hover */
+                        .visual-btn:hover .custom-tooltip,
+                        .visual-btn.active:hover .custom-tooltip,
+                        .visual-btn.toggle-active:hover .custom-tooltip,
+                        .visual-btn:active .custom-tooltip {
+                            opacity: 1;
+                            visibility: visible;
+                        }
+                    </style>
+                    <script>
+                        // JS Enforced Tooltips
+                        document.addEventListener('DOMContentLoaded', () => {
+                            const btns = document.querySelectorAll('.visual-btn');
+                            btns.forEach(btn => {
+                                const tooltip = btn.querySelector('.custom-tooltip');
+                                if (!tooltip) return;
+
+                                btn.addEventListener('mouseenter', () => {
+                                    tooltip.style.opacity = '1';
+                                    tooltip.style.visibility = 'visible';
+                                });
+                                btn.addEventListener('mouseleave', () => {
+                                    tooltip.style.opacity = '0';
+                                    tooltip.style.visibility = 'hidden';
+                                });
+                            });
+                        });
+                    </script>
+
+                    <button id="sphereBtn"
+                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
+                        title="Sphere">
+                        <span>🔮</span>
+                        <span class="custom-tooltip">SPHERE</span>
+                    </button>
+                    <button id="flowBtn"
+                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
+                        title="Flow">
+                        <span>🌀</span>
+                        <span class="custom-tooltip">FLOW</span>
+                    </button>
+                    <button id="lavaBtn"
+                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
+                        title="Lava">
+                        <span>🌋</span>
+                        <span class="custom-tooltip">LAVA</span>
+                    </button>
+                    <button id="fireplaceBtn"
+                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
+                        title="Fire">
+                        <span>🔥</span>
+                        <span class="custom-tooltip">FIRE</span>
+                    </button>
+                    <button id="rainBtn"
+                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
+                        title="Rainforest">
+                        <span>🌿</span>
+                        <span class="custom-tooltip">RAIN</span>
+                    </button>
+                    <button id="zenBtn"
+                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
+                        title="Zen">
+                        <span>🌸</span>
+                        <span class="custom-tooltip">ZEN</span>
+                    </button>
+                    <button id="oceanBtn"
+                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
+                        title="Ocean">
+                        <span>🌊</span>
+                        <span class="custom-tooltip">OCEAN</span>
+                    </button>
+                    <button id="matrixBtn"
+                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
+                        title="Matrix">
+                        <span>💻</span>
+                        <span class="custom-tooltip">MATRIX</span>
+                    </button>
                 </div>
 
                 <!-- Session Pause Button (hidden by default) -->
