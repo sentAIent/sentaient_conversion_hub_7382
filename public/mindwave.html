@@ -475,16 +475,21 @@
 
                     <style>
                         /* FORCE TOOLTIP STYLES */
-                        .visual-btn .custom-tooltip {
+                        /* GENERALIZED TOOLTIP STYLES */
+                        .has-tooltip {
+                            position: relative;
+                            /* Ensure parent is relative */
+                        }
+
+                        .custom-tooltip {
                             position: absolute;
-                            top: -40px;
-                            /* Force it way above locally */
+                            bottom: 100%;
+                            /* Default to top */
                             left: 50%;
-                            transform: translateX(-50%);
+                            transform: translateX(-50%) translateY(-8px);
                             background-color: #0f172a;
                             border: 1px solid rgba(255, 255, 255, 0.2);
                             color: #ffffff;
-                            /* Bright white text */
                             padding: 4px 8px;
                             border-radius: 6px;
                             font-size: 10px;
@@ -492,27 +497,26 @@
                             letter-spacing: 0.05em;
                             opacity: 0;
                             pointer-events: none;
-                            transition: opacity 0.2s ease;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                            transition: all 0.2s ease;
+                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
                             white-space: nowrap;
                             z-index: 9999;
-                            display: block;
-                            /* Ensure it's not hidden */
+                            visibility: hidden;
                         }
 
-                        /* ACTIVE STATE FIX: Ensure pointer events work so hover can trigger */
-                        .visual-btn.active,
-                        .visual-btn.toggle-active {
-                            pointer-events: auto !important;
-                        }
-
-                        /* Fallback CSS hover */
-                        .visual-btn:hover .custom-tooltip,
-                        .visual-btn.active:hover .custom-tooltip,
-                        .visual-btn.toggle-active:hover .custom-tooltip,
-                        .visual-btn:active .custom-tooltip {
+                        /* Force visibility on hover */
+                        .has-tooltip:hover .custom-tooltip,
+                        .visual-btn:hover .custom-tooltip {
                             opacity: 1;
                             visibility: visible;
+                            transform: translateX(-50%) translateY(-4px);
+                        }
+
+                        /* Specific override for visual grid buttons to maintain existing look */
+                        .visual-btn .custom-tooltip {
+                            top: -40px;
+                            bottom: auto;
+                            transform: translateX(-50%);
                         }
                     </style>
                     <script>
@@ -651,49 +655,63 @@
                     <span
                         class="px-2 text-[10px] font-bold text-[#2dd4bf] tracking-widest bg-[#0f172a]/0 whitespace-nowrap">BRAIN
                         WAVES</span>
+                    <button class="mr-2 text-white/30 hover:text-[var(--accent)] transition-colors has-tooltip relative"
+                        aria-label="Info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <span class="custom-tooltip w-48 text-center"
+                            style="transform: translateX(-50%) translateY(10px); bottom: auto; top: 100%;">
+                            Specific frequencies to guide brain states (Sleep, Focus, etc).
+                        </span>
+                    </button>
                     <div class="h-px w-full bg-white/10"></div>
                 </div>
                 <!-- 2-Column Grid for Brain Waves -->
                 <div class="grid grid-cols-2 gap-1.5 w-full">
-                    <button onclick="applyPreset('delta', this)"
+                    <button title="Deep restorative sleep (0.5-4Hz)" onclick="applyPreset('delta', this)"
                         class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Delta</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Sleep</span>
                     </button>
-                    <button onclick="applyPreset('theta', this)"
+                    <button title="Deep meditation and dreaming (4-8Hz)" onclick="applyPreset('theta', this)"
                         class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Theta</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Meditation</span>
                     </button>
-                    <button onclick="applyPreset('alpha', this)"
+                    <button title="Relaxed focus and creativity (8-14Hz)" onclick="applyPreset('alpha', this)"
                         class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Alpha</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Relaxation</span>
                     </button>
                     <!-- Mu Waves (8-13Hz, between Alpha and Beta) -->
-                    <button onclick="applyPreset('mu', this)"
+                    <button title="Sensorimotor rhythm for body syncing (9-11Hz)" onclick="applyPreset('mu', this)"
                         class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Mu</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Body Sync</span>
                     </button>
-                    <button onclick="applyPreset('beta', this)"
+                    <button title="Active focus and alertness (14-30Hz)" onclick="applyPreset('beta', this)"
                         class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Beta</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Focus</span>
                     </button>
-                    <button onclick="applyPreset('gamma', this)"
+                    <button title="Peak awareness and cognition (30-100Hz)" onclick="applyPreset('gamma', this)"
                         class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Gamma</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Awareness</span>
                     </button>
                     <!-- Hyper-Gamma (Locked by default) - Full width spanning both columns -->
-                    <button id="hyperGammaBtn" onclick="handleHyperGammaClick(this)"
+                    <button id="hyperGammaBtn" title="Advanced high-frequency states (40-100Hz)"
+                        onclick="handleHyperGammaClick(this)"
                         class="preset-btn col-span-2 flex flex-col items-center justify-center rounded-xl bg-white/5 border border-amber-500/30 hover:bg-white/10 hover:border-amber-500/50 transition-all group relative py-3">
                         <span id="hyperGammaLock" class="absolute top-1 right-1 text-[10px]">🔒</span>
                         <span
@@ -708,76 +726,89 @@
             <div class="py-2 flex items-center justify-center shrink-0">
                 <div class="h-px w-full bg-white/10"></div>
                 <span class="px-2 text-[10px] font-bold text-[#2dd4bf] tracking-widest bg-[#0f172a]/0">HEALING</span>
+                <button class="mr-2 text-white/30 hover:text-[var(--accent)] transition-colors has-tooltip relative"
+                    aria-label="Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span class="custom-tooltip w-48 text-center"
+                        style="transform: translateX(-50%) translateY(10px); bottom: auto; top: 100%;">
+                        Solfeggio tones believed to promote balance and wellness.
+                    </span>
+                </button>
                 <div class="h-px w-full bg-white/10"></div>
             </div>
 
             <!-- Healing Group - 2 Column Grid -->
             <div class="grid grid-cols-2 gap-1.5 shrink-0">
 
-                <button onclick="applyPreset('heal-174', this)"
+                <button title="Pain relief and security" onclick="applyPreset('heal-174', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">174
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Pain Relief</span>
                 </button>
-                <button onclick="applyPreset('heal-285', this)"
+                <button title="Tissue regeneration" onclick="applyPreset('heal-285', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">285
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Tissue</span>
                 </button>
-                <button onclick="applyPreset('heal-396', this)"
+                <button title="Liberation from fear" onclick="applyPreset('heal-396', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">396
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Liberation</span>
                 </button>
-                <button onclick="applyPreset('heal-417', this)"
+                <button title="Facilitating change" onclick="applyPreset('heal-417', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">417
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Change</span>
                 </button>
-                <button onclick="applyPreset('heal-432', this)"
+                <button title="Nature's balance" onclick="applyPreset('heal-432', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">432
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Nature</span>
                 </button>
-                <button onclick="applyPreset('heal-528', this)"
+                <button title="DNA repair and miracles" onclick="applyPreset('heal-528', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">528
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Repair</span>
                 </button>
-                <button onclick="applyPreset('heal-639', this)"
+                <button title="Connecting relationships" onclick="applyPreset('heal-639', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">639
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Connection</span>
                 </button>
-                <button onclick="applyPreset('heal-741', this)"
+                <button title="Awakening intuition" onclick="applyPreset('heal-741', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">741
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Intuition</span>
                 </button>
-                <button onclick="applyPreset('heal-852', this)"
+                <button title="Returning to spiritual order" onclick="applyPreset('heal-852', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">852
                         Hz</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Spirit</span>
                 </button>
-                <button onclick="applyPreset('heal-963', this)"
+                <button title="Divine consciousness" onclick="applyPreset('heal-963', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">963
@@ -789,12 +820,25 @@
             <div class="py-2 flex items-center justify-center shrink-0">
                 <div class="h-px w-full bg-white/10"></div>
                 <span class="px-2 text-[10px] font-bold text-[#2dd4bf] tracking-widest bg-[#0f172a]/0">AMBIENCE</span>
+                <button class="mr-2 text-white/30 hover:text-[var(--accent)] transition-colors has-tooltip relative"
+                    aria-label="Info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span class="custom-tooltip w-48 text-center"
+                        style="transform: translateX(-50%) translateY(10px); bottom: auto; top: 100%;">
+                        Immersive soundscapes mixed with binaural beats.
+                    </span>
+                </button>
                 <div class="h-px w-full bg-white/10"></div>
             </div>
 
             <!-- Ambience Combos - 2 Column Grid -->
             <div class="grid grid-cols-2 gap-1.5 shrink-0">
-                <button onclick="applyComboPreset('lofi-rain', this)"
+                <button title="Cozy rain with chill beats" onclick="applyComboPreset('lofi-rain', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">🌧️</span>
                     <span
@@ -802,63 +846,63 @@
                         Rain</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Chill + Rain</span>
                 </button>
-                <button onclick="applyComboPreset('night-ambient', this)"
+                <button title="Peaceful night atmosphere" onclick="applyComboPreset('night-ambient', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">🌙</span>
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Night</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Peaceful Sleep</span>
                 </button>
-                <button onclick="applyComboPreset('epic-focus', this)"
+                <button title="Dramatic focus music" onclick="applyComboPreset('epic-focus', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">⚔️</span>
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Epic</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Focus Mode</span>
                 </button>
-                <button onclick="applyComboPreset('ocean-drift', this)"
+                <button title="Calming waves" onclick="applyComboPreset('ocean-drift', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">🌊</span>
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Ocean</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Wave Drift</span>
                 </button>
-                <button onclick="applyComboPreset('storm-focus', this)"
+                <button title="Intense thunderstorm" onclick="applyComboPreset('storm-focus', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">⛈️</span>
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Storm</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Intense Work</span>
                 </button>
-                <button onclick="applyComboPreset('temple-zen', this)"
+                <button title="Spiritual bells and chants" onclick="applyComboPreset('temple-zen', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">🔔</span>
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Temple</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Spiritual Zen</span>
                 </button>
-                <button onclick="applyComboPreset('cozy-fireplace', this)"
+                <button title="Crackling fire warmth" onclick="applyComboPreset('cozy-fireplace', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">🔥</span>
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Fireplace</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Cozy Warmth</span>
                 </button>
-                <button onclick="applyComboPreset('forest-retreat', this)"
+                <button title="Birds and nature sounds" onclick="applyComboPreset('forest-retreat', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">🌲</span>
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Forest</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Nature Immersion</span>
                 </button>
-                <button onclick="applyComboPreset('cosmic-journey', this)"
+                <button title="Space drone ambience" onclick="applyComboPreset('cosmic-journey', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">🌌</span>
                     <span
                         class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Cosmic</span>
                     <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Exploration</span>
                 </button>
-                <button onclick="applyComboPreset('morning-clarity', this)"
+                <button title="Gentle sunrise vibes" onclick="applyComboPreset('morning-clarity', this)"
                     class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-2">
                     <span class="text-sm">☀️</span>
                     <span
