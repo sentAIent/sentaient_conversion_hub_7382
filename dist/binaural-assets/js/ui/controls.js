@@ -693,8 +693,10 @@ export function setupUI() {
     window.handleHyperGammaClick = handleHyperGammaClick; // NEW
 
     // Ensure visual mode UI is synced on load
-    // Ensure visual mode UI is synced on load (Force ON)
-    setVisualMode(state.visualMode || 'particles', true);
+    // Ensure visual mode UI is synced on load (Force ON defaults)
+    setVisualMode('particles', true);
+    setVisualMode('matrix', true);
+    setVisualMode('ocean', true);
 
     // NUCLEAR OPTION: Hijack beatSlider value setter to catch the 5.5Hz culprit
     try {
