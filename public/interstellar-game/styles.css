@@ -1,0 +1,1888 @@
+        :root {
+            --bg-deep: #020205;
+            --glass: rgba(16, 20, 30, 0.85);
+            --glass-border: rgba(100, 220, 255, 0.2);
+            --accent: #00f3ff;
+            --accent-glow: rgba(0, 243, 255, 0.4);
+            --text-main: #e0faff;
+            --text-dim: #5c7a8a;
+            --bar-height: 52px;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-deep);
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-main);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            touch-action: none;
+            /* Prevents scrolling on mobile while drawing */
+        }
+
+        /* Map canvas should be relative within its container */
+        .map-canvas {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            display: block;
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 10, 20, 0.8);
+            border-radius: 4px;
+        }
+
+        /* --- HUD UI --- */
+        .hud {
+            position: absolute;
+            z-index: 10;
+            padding: 16px;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-panel {
+            pointer-events: auto;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Top Left Info */
+        .info-panel {
+            align-self: flex-start;
+            padding: 20px 24px;
+            max-width: 320px;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            color: var(--accent);
+            text-shadow: 0 0 15px var(--accent-glow);
+            letter-spacing: 2px;
+        }
+
+        p.subtitle {
+            margin: 8px 0 0;
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* Left Side Color Controls (below info panel) */
+        #colorControls {
+            position: absolute;
+            top: 190px;
+            left: 20px;
+            align-self: flex-start;
+            padding: 15px;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #colorControls h2 {
+            font-size: 16px;
+            margin: 0 0 10px 0;
+            color: var(--accent);
+            text-shadow: none;
+            text-transform: uppercase;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .color-input-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        #colorInput {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--glass-border);
+            padding: 0;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        /* Customize the color swatch appearance within the native input */
+        #colorInput::-webkit-color-swatch {
+            border: 2px solid white;
+            border-radius: 6px;
+        }
+
+        #colorInput::-moz-color-swatch {
+            border: 2px solid white;
+            border-radius: 6px;
+        }
+
+        /* General Small Button Styling */
+        .btn-small {
+            flex-grow: 1;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-small:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Active Color Mode Indicator */
+        .color-mode-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg-deep);
+            box-shadow: 0 0 10px var(--accent);
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .color-mode-indicator.active {
+            opacity: 1;
+        }
+
+        #rainbowBtn.active {
+            background: #ff0077;
+            border-color: #ff0077;
+            color: #fff;
+            box-shadow: 0 0 15px #ff0077;
+        }
+
+        /* Active Background Toggle Styling */
+        .bg-toggle.active {
+            background: var(--accent);
+            color: var(--bg-deep);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* Active Button Small Styling (for Warp, Drift, Colors buttons) */
+        .btn-small.active {
+            background: var(--accent);
+            color: var(--bg-deep);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Bottom Left Tools */
+        .toolbar {
+            align-self: flex-start;
+            margin-bottom: 20px;
+            margin-left: 20px;
+            display: flex;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 16px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+            color: var(--text-main);
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+        }
+
+        .btn:hover {
+            background: rgba(0, 243, 255, 0.1);
+            border-color: var(--accent-glow);
+            transform: translateY(-2px);
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Active button style for selection mode */
+        .btn.active {
+            background: var(--accent);
+            color: var(--bg-deep);
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent);
+            transform: none;
+        }
+
+        .btn.active:hover {
+            background: var(--accent);
+            color: var(--bg-deep);
+        }
+
+
+        /* Tooltip */
+        .btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            border: 1px solid #333;
+        }
+
+        .btn:hover::after {
+            opacity: 1;
+        }
+
+        /* Zoom Controls (Left) */
+        .zoom-controls {
+            position: absolute;
+            left: 20px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        /* Stats */
+        .stats {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 11px;
+            font-family: monospace;
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+
+        /* Modal & Toast (unchanged) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: #0f1219;
+            border: 1px solid var(--accent);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.15);
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ship-list {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+            margin: 10px 0;
+        }
+
+        /* Scrollbar styling for ship list */
+        .ship-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ship-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .ship-list::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        .ship-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 243, 255, 0.8);
+        }
+
+        .ship-option {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .ship-option:hover {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .ship-option h3 {
+            margin: 0 0 5px 0;
+            color: var(--accent);
+            font-size: 16px;
+        }
+
+        .ship-option p {
+            margin: 0;
+            color: #888;
+            font-size: 12px;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: #fff;
+            font-family: 'Cinzel', serif;
+        }
+
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            border-color: #666;
+            color: #fff;
+        }
+
+        .toast {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(0, 243, 255, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* HUD Panels */
+        #bgControls {
+            position: absolute;
+            top: 330px;
+            left: 20px;
+            padding: 15px;
+            max-width: 280px;
+        }
+
+        #rotationControls {
+            position: absolute;
+            top: 330px;
+            right: 20px;
+            padding: 15px;
+            max-width: 200px;
+        }
+
+        /* Responsive Controls */
+        @media (max-width: 768px) {
+            .hud-panel.info-panel {
+                top: 10px;
+                left: 10px;
+                max-width: 180px;
+            }
+
+            .hud-panel.toolbar {
+                width: 95%;
+                padding: 4px;
+                gap: 4px;
+                flex-wrap: wrap;
+                justify-content: center;
+                bottom: 10px;
+            }
+
+            #rotationControls {
+                top: auto;
+                bottom: 80px;
+                right: 10px;
+                max-width: 150px;
+                /* Smaller width for mobile */
+            }
+
+            #bgControls {
+                display: none;
+                /* Hide non-essential controls on small screens */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hud-panel h1 {
+                font-size: 16px;
+            }
+
+            .btn {
+                padding: 6px;
+            }
+
+            .btn svg {
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        /* === TOP BAR - Enhanced Glassmorphism === */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--bar-height);
+            background: rgba(10, 15, 25, 0.65);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border-bottom: 1px solid rgba(100, 220, 255, 0.12);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .top-bar h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            color: var(--accent);
+            text-shadow: 0 0 15px var(--accent-glow);
+            letter-spacing: 1.5px;
+            white-space: nowrap;
+        }
+
+        .top-bar-center {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        /* Visual group - Frosted Glass Pods */
+        .bar-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .bar-group+.bar-group {
+            margin-left: 4px;
+        }
+
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* === BOTTOM BAR - Enhanced Glassmorphism === */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--bar-height);
+            background: rgba(10, 15, 25, 0.65);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border-top: 1px solid rgba(100, 220, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .bottom-bar-left,
+        .bottom-bar-center,
+        .bottom-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bottom-bar-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Bottom bar tool buttons - Glassmorphic */
+        .bottom-bar .btn {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(100, 220, 255, 0.15);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        .bottom-bar .btn:hover {
+            background: rgba(0, 243, 255, 0.12);
+            border-color: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 20px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        /* Zoom buttons - Glassmorphic Circles */
+        .bottom-bar .zoom-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 15px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(100, 220, 255, 0.18);
+            border-radius: 50%;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        .bottom-bar .zoom-btn:hover {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* === WINDOW TASKBAR - Minimized windows dock === */
+        .window-taskbar {
+            display: flex;
+            gap: 4px;
+            padding: 0 8px;
+            align-items: center;
+            margin-left: 10px;
+        }
+
+        .taskbar-item {
+            background: rgba(0, 243, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .taskbar-item:hover {
+            background: rgba(0, 243, 255, 0.25);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Layout preset buttons */
+        .layout-presets {
+            display: flex;
+            gap: 4px;
+            margin-left: 10px;
+            padding-left: 10px;
+            border-left: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .layout-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(100, 220, 255, 0.15);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 10px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .layout-btn:hover {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .layout-btn.active {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Keyboard tooltip popup */
+        .kbd-tooltip {
+            position: absolute;
+            background: rgba(0, 20, 30, 0.95);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 11px;
+            color: #fff;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .kbd-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .kbd-tooltip .tooltip-key {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .kbd-tooltip .tooltip-cmd {
+            color: #fff;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .kbd-tooltip .tooltip-desc {
+            display: block;
+            color: #aaa;
+            font-size: 10px;
+            margin-top: 3px;
+        }
+
+        /* Control Reference Items (Expanded Modal) */
+        .control-ref-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        .control-ref-item kbd {
+            min-width: 36px;
+            padding: 6px 10px;
+            background: linear-gradient(180deg, #1a2a3a 0%, #0f1f2f 100%);
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .control-ref-item span {
+            font-size: 12px;
+            line-height: 1.4;
+            color: #ddd;
+        }
+
+        .control-ref-item strong {
+            color: #fff;
+        }
+
+        /* === REGENERATE BUTTON - Make it stand out === */
+        .btn-regen {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 180, 220, 0.1) 100%) !important;
+            border: 1px solid rgba(0, 243, 255, 0.4) !important;
+            color: var(--accent) !important;
+            font-size: 15px;
+            min-width: 32px;
+            transition: all 0.25s ease;
+        }
+
+        .btn-regen:hover {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.3) 0%, rgba(0, 180, 220, 0.2) 100%) !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px rgba(0, 243, 255, 0.1) !important;
+            transform: rotate(90deg);
+        }
+
+        /* === IMPROVED DIVIDER === */
+        .divider {
+            width: 1px;
+            height: 28px;
+            background: linear-gradient(180deg, transparent 0%, rgba(100, 220, 255, 0.3) 50%, transparent 100%);
+            margin: 0 4px;
+        }
+
+        /* === POPUP PANELS === */
+        .popup-panel {
+            position: fixed;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px 0 0 10px;
+            padding: 10px;
+            z-index: 150;
+            width: 110px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: calc(100vh - var(--bar-height) - 80px);
+        }
+
+        .popup-panel.hidden {
+            display: none;
+        }
+
+        .popup-panel h3 {
+            margin: 0 0 8px 0;
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            position: sticky;
+            top: -10px;
+            background: var(--glass);
+            padding: 5px 0;
+            z-index: 1;
+        }
+
+        #matrixPanel {
+            top: calc(var(--bar-height) + 8px);
+            right: 0;
+            max-height: calc(50vh - var(--bar-height) - 20px);
+        }
+
+        #rotationPanel {
+            bottom: calc(var(--bar-height) + 8px);
+            right: 0;
+            top: auto;
+            max-height: calc(50vh - var(--bar-height) - 20px);
+        }
+
+        .color-picker-mini {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        /* Star color pickers - just the color boxes, no border */
+        .color-picker-mini.star-color {
+            border: none;
+            border-radius: 2px;
+            width: 20px;
+            height: 20px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .color-picker-mini.star-color::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker-mini.star-color::-webkit-color-swatch {
+            border: none;
+            border-radius: 2px;
+        }
+
+        .color-picker-mini.star-color::-moz-color-swatch {
+            border: none;
+            border-radius: 2px;
+        }
+
+        /* Star colors group - no background/border, just the label and boxes */
+        .star-colors-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 8px;
+        }
+
+        .star-colors-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+        }
+
+        /* ========== FLIGHT MODE HUD ========== */
+        .flight-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .flight-hud.hidden {
+            display: none;
+        }
+
+        .hud-controls,
+        .hud-speed,
+        .hud-inventory,
+        .hud-leaderboard {
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.9) 0%, rgba(0, 30, 50, 0.85) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .hud-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            min-width: 220px;
+        }
+
+        .hud-speed {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .hud-inventory {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            min-width: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .hud-leaderboard {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            min-width: 250px;
+        }
+
+        .hud-controls h3,
+        .hud-inventory h3,
+        .hud-leaderboard h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            letter-spacing: 2px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            font-size: 13px;
+            color: #e0faff;
+        }
+
+        .control-row kbd {
+            display: inline-block;
+            padding: 4px 8px;
+            background: linear-gradient(180deg, #1a2a3a 0%, #0f1f2f 100%);
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            border-radius: 4px;
+            font-size: 12px;
+            min-width: 24px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .speed-label {
+            font-size: 12px;
+            color: #5c7a8a;
+            letter-spacing: 2px;
+        }
+
+        .speed-value {
+            font-size: 42px;
+            font-weight: bold;
+            color: #00f3ff;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.8);
+            margin: 8px 0;
+        }
+
+        .speed-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 50, 80, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0 8px 0;
+        }
+
+        .speed-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00f3ff 0%, #00a8ff 50%, #0080ff 100%);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            transition: width 0.1s;
+            width: 0%;
+        }
+
+        .speed-max {
+            font-size: 10px;
+            color: #5c7a8a;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: rgba(0, 50, 80, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .inventory-item .name {
+            color: #e0faff;
+            font-weight: bold;
+        }
+
+        .inventory-item .count {
+            color: #00f3ff;
+            font-size: 14px;
+        }
+
+        .total-value {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 243, 255, 0.3);
+            text-align: right;
+            font-size: 16px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0, 50, 80, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .leaderboard-entry.rank-1 {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, rgba(0, 50, 80, 0.3) 100%);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+
+        .leaderboard-entry .wealth {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Gem Icons */
+        .gem-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            vertical-align: middle;
+        }
+
+        /* RESTORED: Gems Grid Layout */
+        .gems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 8px;
+            padding: 5px;
+        }
+
+        .gem-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            /* Slightly visible item bg */
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 11px;
+            color: #ddd;
+        }
+
+        .gem-count {
+            margin-left: auto;
+            /* Push count to right */
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* RESTORED: Leaderboard Internal Layout */
+        .leaders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 5px;
+        }
+
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            font-size: 11px;
+            /* Slightly larger text */
+        }
+
+        .leader-row:last-child {
+            border-bottom: none;
+        }
+
+        .leader-rank {
+            width: 24px;
+            font-weight: 800;
+            color: var(--accent);
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.5);
+        }
+
+        .leader-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 8px;
+        }
+
+        .leader-wealth {
+            color: #ffd700;
+            font-weight: bold;
+            font-family: monospace;
+            /* Better for numbers */
+        }
+
+        /* Floating Windows (Map & Leaders) - Glassmorphism */
+        .floating-window {
+            position: fixed;
+            z-index: 50;
+            background: linear-gradient(135deg, rgba(10, 20, 35, 0.92) 0%, rgba(5, 15, 30, 0.95) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 20px rgba(0, 243, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            min-height: 100px;
+        }
+
+        .floating-window:hover {
+            border-color: rgba(0, 243, 255, 0.5);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 0 30px rgba(0, 243, 255, 0.25);
+        }
+
+        .floating-window.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+        }
+
+        /* Minimized/Collapsed State - Only show header */
+        .floating-window.collapsed {
+            height: auto !important;
+            min-height: unset !important;
+            max-height: none !important;
+        }
+
+        .floating-window.collapsed .window-content {
+            display: none !important;
+        }
+
+        .floating-window.collapsed .resize-handle {
+            display: none !important;
+        }
+
+        .map-window {
+            bottom: 120px;
+            left: 15px;
+            width: 220px;
+            height: 200px;
+        }
+
+        .leaders-window {
+            top: 15px;
+            left: 15px;
+            width: 220px;
+            height: 260px;
+        }
+
+        /* Leaderboard Styling */
+        .leaders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .leader-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: linear-gradient(135deg, rgba(0, 50, 80, 0.4) 0%, rgba(0, 30, 60, 0.3) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.15);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .leader-row:hover {
+            background: linear-gradient(135deg, rgba(0, 70, 100, 0.5) 0%, rgba(0, 50, 80, 0.4) 100%);
+            border-color: rgba(0, 243, 255, 0.3);
+        }
+
+        .leader-row.you {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.2) 0%, rgba(0, 150, 200, 0.15) 100%);
+            border-color: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.15);
+        }
+
+        .leader-rank {
+            font-size: 14px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .leader-name {
+            flex: 1;
+            font-size: 11px;
+            color: #e0faff;
+            font-weight: 500;
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+        }
+
+        .leader-row.you .leader-name {
+            color: #00f3ff;
+            font-weight: 600;
+        }
+
+        .leader-wealth {
+            font-size: 11px;
+            color: #4f8;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Window Header - Glassmorphism */
+        .window-header {
+            background: linear-gradient(180deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 243, 255, 0.05) 100%);
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            cursor: grab;
+            flex-shrink: 0;
+        }
+
+        .window-header:active {
+            cursor: grabbing;
+        }
+
+        .window-header h4 {
+            margin: 0;
+            font-size: 11px;
+            color: #00f3ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .window-btn {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            color: #00f3ff;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .window-btn:hover {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: rgba(0, 243, 255, 0.5);
+        }
+
+        .window-content {
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Resize Handle - 8-direction support */
+        .floating-window .resize-handle {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 16px;
+            height: 16px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 243, 255, 0.5) 50%);
+            border-radius: 0 0 8px 0;
+            z-index: 10;
+        }
+
+        .floating-window .resize-handle:hover {
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 243, 255, 0.8) 50%);
+        }
+
+        /* Map Canvas Styling */
+        .map-canvas {
+            width: 100%;
+            height: 100px;
+            background: radial-gradient(circle at center, rgba(0, 20, 40, 0.9) 0%, rgba(0, 5, 15, 0.95) 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            display: block;
+        }
+
+        /* Map Legend - Visible text with proper styling */
+        .map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid rgba(0, 243, 255, 0.15);
+            font-size: 10px;
+            color: #e0faff;
+            margin-top: 6px;
+            border-radius: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 4px currentColor;
+        }
+
+        .legend-diamond {
+            width: 8px;
+            height: 8px;
+            transform: rotate(45deg);
+            flex-shrink: 0;
+            box-shadow: 0 0 4px currentColor;
+        }
+
+        /* Specific Button Styles */
+        .btn-sell-all {
+            background: linear-gradient(90deg, #ff3333, #aa0000);
+            border: 1px solid #ff5555;
+            color: white;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .btn-sell-all:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 50, 50, 0.5);
+        }
+
+        /* Ship Selection Modal */
+        .ship-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .ship-option {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            text-align: left;
+        }
+
+        .ship-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .ship-option h3 {
+            margin: 0 0 5px 0;
+            color: var(--accent);
+        }
+
+        .ship-option p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        /* ===== COCKPIT BAR (Above Bottom Bar) ===== */
+        /* ===== COCKPIT BAR (Removed Container - Now separate floating items) ===== */
+        /* === FLIGHT HUD - Simple container for floating windows === */
+        .flight-hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Floating HUD Window - base class for all flight mode windows */
+        .hud-window {
+            position: fixed;
+            pointer-events: auto;
+            z-index: 25;
+        }
+
+        /* Legacy column classes - now just containers */
+        .hud-column,
+        .hud-bottom {
+            display: contents;
+            /* Pass through - windows position themselves */
+        }
+
+        /* Glassmorphism Cockpit Sections - Floating Windows */
+        .cockpit-section {
+            position: fixed;
+            background: linear-gradient(135deg, rgba(16, 24, 40, 0.92) 0%, rgba(8, 16, 32, 0.95) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 243, 255, 0.25);
+            border-radius: 12px;
+            color: #fff;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 20px rgba(0, 243, 255, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+            z-index: 25;
+            min-width: 150px;
+            min-height: 100px;
+        }
+
+        /* Resize handle */
+        .cockpit-section::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 16px;
+            height: 16px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 243, 255, 0.4) 50%);
+            border-radius: 0 0 12px 0;
+        }
+
+        .cockpit-section:hover {
+            border-color: rgba(0, 243, 255, 0.5);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 0 30px rgba(0, 243, 255, 0.2);
+        }
+
+        /* Cockpit Header with Glassmorphism */
+        .cockpit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            background: linear-gradient(180deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 243, 255, 0.05) 100%);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            padding: 10px 14px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .cockpit-header:active {
+            cursor: grabbing;
+        }
+
+        .cockpit-content {
+            padding: 12px 14px;
+            flex: 1;
+        }
+
+        .cockpit-header h4 {
+            margin: 0;
+            font-size: 11px;
+            color: #00f3ff;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .cockpit-toggle {
+            font-size: 10px;
+            color: #00f3ff;
+            transition: transform 0.2s;
+        }
+
+        .cockpit-section.collapsed .cockpit-content {
+            display: none;
+        }
+
+        .cockpit-section.collapsed {
+            min-height: 0;
+            padding-bottom: 0;
+        }
+
+        .cockpit-section.collapsed .cockpit-toggle {
+            transform: rotate(-90deg);
+        }
+
+        /* Controls Section */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .controls-grid kbd {
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: center;
+            color: var(--accent);
+            cursor: help;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .controls-grid kbd:hover {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* Radar Section */
+        .radar-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .radar-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 30, 20, 0.9) 0%, rgba(0, 10, 5, 0.95) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .radar-sweep {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(0, 255, 100, 0.8) 0%, transparent 100%);
+            transform-origin: left center;
+            animation: radarSweep 3s linear infinite;
+        }
+
+        @keyframes radarSweep {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .radar-coords {
+            font-size: 9px;
+            color: rgba(0, 243, 255, 0.7);
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        /* Velocity Section */
+        .velocity-display {
+            text-align: center;
+        }
+
+        .speed-gauge {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+        }
+
+        .speed-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .speed-unit {
+            font-size: 8px;
+            color: rgba(0, 243, 255, 0.6);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .cockpit-zoom-controls {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 6px;
+            align-items: center;
+        }
+
+        .cockpit-zoom-controls .zoom-btn {
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .cockpit-zoom-controls .zoom-value {
+            font-size: 10px;
+            color: rgba(0, 243, 255, 0.8);
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* REPLACED BY RESTORED SECTION ABOVE */
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .flight-cockpit {
+                padding: 6px 8px;
+                gap: 6px;
+            }
+
+            .cockpit-section {
+                padding: 6px 8px;
+                min-width: 80px;
+            }
+
+            .radar-container {
+                width: 60px;
+                height: 60px;
+            }
+
+            .gems-section {
+                max-width: 200px;
+            }
+
+            .gems-grid {
+                max-width: 180px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .flight-cockpit {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .controls-section {
+                display: none;
+            }
+
+            .map-window,
+            .leaders-window {
+                width: 150px;
+                bottom: 110px;
+            }
+        }
+
+        /* Fullscreen Map Styles */
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 2000;
+            /* Ensure this is higher than everything else */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fullscreen-modal.hidden {
+            display: none;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 2001;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+        }
+
+        #fullscreenMapCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #fullscreenMapCanvas:active {
+            cursor: grabbing;
+        }
+        /* Force Mobile Toggle Visible Always */
+        #mobile-toggle {
+            display: block !important;
+            opacity: 0.6;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        #mobile-toggle:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Glassmorphism Common Style */
+        .glass-panel {
+            background: rgba(10, 20, 30, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            color: #fff;
+            padding: 15px;
+        }
+
+        /* Scrollbar Polish */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 243, 255, 0.6);
+        }
