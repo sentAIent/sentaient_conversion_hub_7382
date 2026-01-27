@@ -5,7 +5,7 @@ export class Visualizer3D {
     constructor(canvas) {
         this.canvas = canvas;
         this.canvas = canvas;
-        this.activeModes = new Set(['particles', 'matrix', 'ocean']); // Default to Flow + Matrix + Ocean
+        this.activeModes = new Set(['particles', 'matrix']); // Default to Flow + Matrix
         this.mode = 'particles'; // Legacy support for getters if any
         try {
             this.scene = new THREE.Scene();

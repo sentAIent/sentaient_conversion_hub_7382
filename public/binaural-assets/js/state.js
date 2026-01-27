@@ -174,6 +174,7 @@ export const state = {
     mediaRecorder: null, recordedChunks: [], destStreamNode: null,
     activeSoundscapes: {},
     soundscapeSettings: {},
+    matrixPanelOpen: true, // Default open when Matrix active
     currentSessions: [],
     currentModalBlob: null,
     currentModalIsVideo: false,

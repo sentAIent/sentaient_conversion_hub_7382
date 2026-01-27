@@ -508,7 +508,33 @@ export function setupUI() {
     if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest'));
     if (els.zenBtn) els.zenBtn.addEventListener('click', () => setVisualMode('zengarden'));
     if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean'));
-    if (els.matrixBtn) els.matrixBtn.addEventListener('click', () => setVisualMode('matrix'));
+    if (els.matrixBtn) els.matrixBtn.addEventListener('click', (e) => {
+        // Prevent triggering if clicking the mini-toggle
+        if (e.target.closest('#matrixSettingsToggle')) return;
+        setVisualMode('matrix');
+    });
+
+    // Matrix Mini-Toggle Logic
+    const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
+    if (matrixSettingsToggle) {
+        matrixSettingsToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Don't trigger matrix toggle
+            state.matrixPanelOpen = !state.matrixPanelOpen; // Toggle state
+
+            // Update panel visibility immediately if Matrix is active
+            const matrixPanel = document.getElementById('matrixSettingsPanel');
+            const viz = getVisualizer();
+            if (matrixPanel && viz && viz.activeModes.has('matrix')) {
+                if (state.matrixPanelOpen) {
+                    matrixPanel.classList.remove('hidden');
+                    matrixPanel.classList.add('flex', 'flex-col');
+                } else {
+                    matrixPanel.classList.add('hidden');
+                    matrixPanel.classList.remove('flex', 'flex-col');
+                }
+            }
+        });
+    }
 
     if (els.visualSpeedSlider) {
 
@@ -694,9 +720,10 @@ export function setupUI() {
 
     // Ensure visual mode UI is synced on load
     // Ensure visual mode UI is synced on load (Force ON defaults)
+    // Ensure visual mode UI is synced on load (Force ON defaults)
     setVisualMode('particles', true);
     setVisualMode('matrix', true);
-    setVisualMode('ocean', true);
+    setVisualMode('ocean', false); // Explicitly ensure OFF
 
     // NUCLEAR OPTION: Hijack beatSlider value setter to catch the 5.5Hz culprit
     try {
@@ -1710,7 +1737,10 @@ export function setVisualMode(mode, forceState = null) {
     // Toggle Matrix Settings Panel
     const matrixPanel = document.getElementById('matrixSettingsPanel');
     if (matrixPanel) {
-        if (activeModes.has('matrix')) {
+        // Initialize state if undefined
+        if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
+
+        if (activeModes.has('matrix') && state.matrixPanelOpen) {
             matrixPanel.classList.remove('hidden');
             matrixPanel.classList.add('flex', 'flex-col');
         } else {
