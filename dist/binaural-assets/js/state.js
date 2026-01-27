@@ -18,10 +18,13 @@ export const THEMES = {
     gold: { bg: '#151008', panel: '#251a0a', border: '#3a280f', text: '#fff8e8', muted: '#d4b880', accent: '#fbbf24', glow: 'rgba(251, 191, 36, 0.5)', volumeAccent: '#2496fb', volumeGlow: 'rgba(36, 150, 251, 0.4)' },
     obsidian: { bg: '#080808', panel: '#121212', border: '#1c1c1c', text: '#f5f5f5', muted: '#888888', accent: '#ffffff', glow: 'rgba(255, 255, 255, 0.3)', volumeAccent: '#ff6b6b', volumeGlow: 'rgba(255, 107, 107, 0.4)' },
     arctic: { bg: '#081520', panel: '#102030', border: '#183045', text: '#e8f4ff', muted: '#a0c8e8', accent: '#7dd3fc', glow: 'rgba(125, 211, 252, 0.5)', volumeAccent: '#fca07d', volumeGlow: 'rgba(252, 160, 125, 0.4)' },
+    sentaient: { bg: '#202733', panel: '#2a3445', border: '#3a475c', text: '#60a9ff', muted: '#8bb6e8', accent: '#60a9ff', glow: 'rgba(96, 169, 255, 0.4)', volumeAccent: '#60a9ff', volumeGlow: 'rgba(96, 169, 255, 0.3)' },
 
     // Soft Light Themes (with tinted backgrounds)
     cloud: { bg: '#e8f4fc', panel: '#d4ebf7', border: '#a8d4f0', text: '#0f172a', muted: '#3b6d8c', accent: '#0284c7', glow: 'rgba(2, 132, 199, 0.4)', volumeAccent: '#dc2626', volumeGlow: 'rgba(220, 38, 38, 0.4)', glassBg: 'rgba(212, 235, 247, 0.95)', glassBorder: 'rgba(100, 160, 200, 0.3)' },
-    dawn: { bg: '#fef5eb', panel: '#fde8d4', border: '#f5c9a0', text: '#1c1917', muted: '#785a3a', accent: '#dc2626', glow: 'rgba(220, 38, 38, 0.4)', volumeAccent: '#16a34a', volumeGlow: 'rgba(22, 163, 74, 0.4)', glassBg: 'rgba(253, 232, 212, 0.95)', glassBorder: 'rgba(180, 140, 100, 0.3)' }
+    dawn: { bg: '#fef2f2', panel: '#fecdd3', border: '#fda4af', text: '#dc2626', muted: '#991b1b', accent: '#dc2626', glow: 'rgba(220, 38, 38, 0.4)', volumeAccent: '#16a34a', volumeGlow: 'rgba(22, 163, 74, 0.4)', glassBg: 'rgba(254, 205, 211, 0.95)', glassBorder: 'rgba(252, 165, 165, 0.3)' },
+    paper: { bg: '#ffffff', panel: '#f8f9fa', border: '#dee2e6', text: '#000000', muted: '#495057', accent: '#6c757d', glow: 'rgba(108, 117, 125, 0.4)', volumeAccent: '#dc2626', volumeGlow: 'rgba(220, 38, 38, 0.4)', glassBg: 'rgba(248, 249, 250, 0.95)', glassBorder: 'rgba(222, 226, 230, 0.3)' },
+    ash: { bg: '#ffffff', panel: '#f1f3f5', border: '#ced4da', text: '#6c757d', muted: '#adb5bd', accent: '#000000', glow: 'rgba(0, 0, 0, 0.3)', volumeAccent: '#dc2626', volumeGlow: 'rgba(220, 38, 38, 0.4)', glassBg: 'rgba(241, 243, 245, 0.95)', glassBorder: 'rgba(206, 212, 218, 0.3)' }
 };
 
 export const SOUNDSCAPES = [
@@ -167,7 +170,7 @@ export const state = {
     beatsGain: null, masterAtmosGain: null, masterGain: null, masterPanner: null,
     masterCompressor: null, analyserLeft: null, analyserRight: null,
     isPlaying: false, isRecording: false, isStopping: false, isAudioStopping: false, videoEnabled: false,
-    animationId: null, visualMode: 'sphere',
+    animationId: null, visualMode: 'particles',
     mediaRecorder: null, recordedChunks: [], destStreamNode: null,
     activeSoundscapes: {},
     soundscapeSettings: {},

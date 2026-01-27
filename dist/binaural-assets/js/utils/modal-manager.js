@@ -3,7 +3,7 @@
  * Prevents multiple modals from overlapping and manages z-index
  */
 
-const modal Stack = [];
+const modalStack = [];
 let currentModal = null;
 
 /**
@@ -29,7 +29,7 @@ export function openModal(modalId) {
     modalStack.push(modalId);
 
     // Prevent body scroll
-    document.body.style.overflow = 'hidden';
+    // document.body.style.overflow = 'hidden'; // FIX: Removed to allow scrolling
 
     console.log(`[ModalManager] Opened modal: ${modalId}`);
     return true;
@@ -60,7 +60,7 @@ export function closeModal(modalId, restoreBodyScroll = true) {
 
     // Restore body scroll if no modals open
     if (restoreBodyScroll && modalStack.length === 0) {
-        document.body.style.overflow = '';
+        // document.body.style.overflow = '';
     }
 
     console.log(`[ModalManager] Closed modal: ${modalId}`);
@@ -73,7 +73,7 @@ export function closeAllModals() {
     [...modalStack].forEach(modalId => {
         closeModal(modalId, false);
     });
-    document.body.style.overflow = '';
+    // document.body.style.overflow = '';
     modalStack.length = 0;
     currentModal = null;
     console.log('[ModalManager] All modals closed');

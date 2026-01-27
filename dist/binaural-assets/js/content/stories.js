@@ -177,6 +177,15 @@ export function initStoryPlayer() {
         console.warn('[Stories] Failed to load custom audio mappings:', e);
     }
     console.log('[Stories] Story player initialized');
+
+    // Subscribe to theme changes to re-render UI
+    if (!window._storyThemeListenerAttached) {
+        window.addEventListener('themeChanged', () => {
+            const container = document.getElementById('storyContainer');
+            if (container) renderStoryCards(container);
+        });
+        window._storyThemeListenerAttached = true;
+    }
 }
 
 // Play a story layered with frequencies and soundscapes
@@ -544,12 +553,29 @@ function showToast(message, type = 'info') {
 export function renderStoryCards(container) {
     if (!container) return;
 
+    // Check for Light Mode
+    const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
+
     container.innerHTML = SLEEP_STORIES.map(story => {
         const hasAudio = hasCustomAudio(story.id);
         const isPlaying = storyState.currentStory?.id === story.id && storyState.isPlaying;
 
+        // Determine styling base on theme and state
+        let cardClasses = `bg-white/5 border border-white/10 hover:bg-white/10 hover:border-purple-500/50`;
+        let cardStyle = '';
+
+        if (!isPlaying && isLight) {
+            // Light Mode Outline Style
+            // Using inline styles for precise accent color matching as fallback or primary
+            cardClasses = `bg-transparent border transition-all hover:bg-[var(--accent)]/5`;
+            cardStyle = `border-color: var(--accent); color: var(--accent);`;
+        }
+
         return `
-        <div class="story-card group relative flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-purple-500/50 transition-all ${story.premium ? 'premium-content' : ''} ${isPlaying ? 'playing border-purple-500 bg-purple-500/10' : ''}"
+        <div class="story-card group relative flex flex-col items-center justify-center p-3 rounded-xl transition-all ${story.premium ? 'premium-content' : ''} ${isPlaying ? 'playing border-purple-500 bg-purple-500/10' : cardClasses}"
+            style="${isPlaying ? '' : cardStyle}"
             data-story-id="${story.id}">
             
             <!-- Premium badge -->

@@ -21,6 +21,21 @@ import { showFeedbackSurvey, checkSurveyTrigger, TRIGGER_CONDITIONS } from './ut
 // import { initJourney, renderJourneyUI } from './content/journey.js';
 // import { initClassical } from './content/classical.js';
 
+// Expose feedback survey globally (Critical: Must be before DOMContentLoaded)
+window.showFeedbackSurvey = showFeedbackSurvey;
+
+// Expose analytics tracking functions globally
+window.trackSignup = trackSignup;
+window.trackLogin = trackLogin;
+window.trackBeginCheckout = trackBeginCheckout;
+window.trackPurchase = trackPurchase;
+window.trackFeatureUse = trackFeatureUse;
+window.trackSessionStart = trackSessionStart;
+window.trackSessionEnd = trackSessionEnd;
+window.trackPaywallShown = trackPaywallShown;
+window.trackUpgradeClick = trackUpgradeClick;
+window.setUserProperties = setUserProperties;
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     console.log("[Main] DOMLoaded - Initializing UI...");
@@ -35,20 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("[Main] Firebase/Auth/Analytics Init Failed:", e);
     }
 
-    // Expose analytics tracking functions globally for easy access
-    window.trackSignup = trackSignup;
-    window.trackLogin = trackLogin;
-    window.trackBeginCheckout = trackBeginCheckout;
-    window.trackPurchase = trackPurchase;
-    window.trackFeatureUse = trackFeatureUse;
-    window.trackSessionStart = trackSessionStart;
-    window.trackSessionEnd = trackSessionEnd;
-    window.trackPaywallShown = trackPaywallShown;
-    window.trackUpgradeClick = trackUpgradeClick;
-    window.setUserProperties = setUserProperties;
-
     // Expose feedback survey globally
-    window.showFeedbackSurvey = showFeedbackSurvey;
+    // window.showFeedbackSurvey = showFeedbackSurvey; // Moved to top
 
     // Core UI Setup - Critical path
     setupUI();

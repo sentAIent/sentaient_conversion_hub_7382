@@ -31,7 +31,8 @@
     color: var(--bg-main);
 }
 
-/* Cursor for inputs is handled by dynamic-cursor-styles in JS */
+
+/* Custom MindWave Cursor - uses MW logo (51x51) */
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -40,7 +41,44 @@ body {
     transition: background-color 0.5s, color 0.5s;
     overscroll-behavior: none;
     touch-action: manipulation;
+    cursor: url('/mindwave-logo.png') 8 8, auto;
 }
+
+/* Interactive elements - pointer cursor with MW logo */
+a,
+button,
+[role='button'],
+.preset-btn,
+.mode-btn,
+.visual-btn,
+.glass-pill,
+.theme-card,
+.combo-preset-btn,
+.sweep-btn,
+.dj-pad,
+[onclick],
+.cursor-pointer {
+    cursor: url('/mindwave-logo.png') 8 8, auto !important;
+}
+
+/* Text input elements - standard text cursor */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='search'],
+textarea {
+    cursor: text !important;
+}
+
+/* Range sliders - inherit cursor */
+input[type='range'] {
+    cursor: url('/mindwave-logo.png') 8 8, auto !important;
+}
+
+input[type='range']::-webkit-slider-thumb {
+    cursor: url('/mindwave-logo.png') 8 8, auto !important;
+}
+
 
 /* Enhanced Glassmorphic Cards with stronger blur and glow */
 .glass-card {
@@ -161,6 +199,244 @@ a:active,
     min-width: 44px;
 }
 
+/* ==========================================
+   LIGHT THEME TEXT VISIBILITY FIXES
+   Overrides hardcoded Tailwind classes
+   ========================================== */
+
+/* Force dark text for hardcoded white text classes on light themes */
+[data-theme-type="light"] .text-white,
+[data-theme-type="light"] .text-white\/30,
+[data-theme-type="light"] .text-white\/70,
+[data-theme-type="light"] .text-white\/80,
+[data-theme-type="light"] .text-white\/90,
+[data-theme-type="light"] .text-slate-200,
+[data-theme-type="light"] .text-slate-300,
+[data-theme-type="light"] .text-slate-400 {
+    color: var(--text-main) !important;
+}
+
+/* Light Mode: DJ Studio Visibility Fixes (Darker shades for contrast) */
+[data-theme-type="light"] .text-pink-400 {
+    color: #db2777 !important;
+}
+
+/* pink-600 */
+[data-theme-type="light"] .text-cyan-400 {
+    color: #0891b2 !important;
+}
+
+/* cyan-600 */
+[data-theme-type="light"] .text-emerald-400 {
+    color: #059669 !important;
+}
+
+/* emerald-600 */
+[data-theme-type="light"] .text-orange-400 {
+    color: #ea580c !important;
+}
+
+/* orange-600 */
+[data-theme-type="light"] .text-purple-400 {
+    color: #9333ea !important;
+}
+
+/* purple-600 */
+[data-theme-type="light"] .text-red-400 {
+    color: #dc2626 !important;
+}
+
+/* red-600 */
+[data-theme-type="light"] .text-blue-400 {
+    color: #2563eb !important;
+}
+
+/* blue-600 */
+[data-theme-type="light"] .text-yellow-400 {
+    color: #ca8a04 !important;
+}
+
+/* yellow-600 */
+
+/* Light Mode: Atmosphere Safety Net */
+/* Light Mode: Atmosphere & Mixer Safety Net */
+[data-theme-type="light"] [data-section="atmosphere"] .text-white,
+[data-theme-type="light"] [data-section="atmosphere"] .text-white\/70,
+[data-theme-type="light"] [data-section="journeys"] .text-white,
+[data-theme-type="light"] [data-section="journeys"] .text-white\/70,
+[data-theme-type="light"] [data-section="djpads"] .text-white,
+[data-theme-type="light"] [data-section="djpads"] .text-white\/70,
+[data-theme-type="light"] [data-section="stories"] .text-white,
+[data-theme-type="light"] [data-section="stories"] .text-white\/70,
+[data-theme-type="light"] [data-section="uploads"] .text-white,
+[data-theme-type="light"] [data-section="uploads"] .text-white\/70,
+[data-theme-type="light"] [data-section="classical"] .text-white,
+[data-theme-type="light"] [data-section="classical"] .text-white\/70 {
+    color: var(--accent) !important;
+}
+
+/* Ensure hover states also use proper dark text */
+[data-theme-type="light"] .hover\:text-white:hover {
+    color: var(--text-main) !important;
+}
+
+/* Fix text-slate classes for light backgrounds */
+[data-theme-type="light"] .text-slate-200,
+[data-theme-type="light"] .text-slate-300,
+[data-theme-type="light"] .text-slate-400 {
+    color: var(--text-main) !important;
+}
+
+/* Ensure proper icon visibility on light themes */
+[data-theme-type="light"] svg:not([class*="text-"]):not([fill]):not([stroke]) {
+    color: var(--text-main);
+}
+
+[data-theme-type="light"] .group-hover\:text-white {
+    color: var(--accent);
+}
+
+[data-theme-type="light"] .group:hover .group-hover\:text-white {
+    color: var(--text-main) !important;
+}
+
+/* Custom utility to bypass enforcement rules and match theme muted color */
+.text-theme-muted {
+    color: var(--text-muted) !important;
+    opacity: 0.5;
+    transition: all 0.2s ease-in-out;
+}
+
+.text-theme-muted:hover {
+    color: var(--accent) !important;
+    opacity: 1;
+}
+
+/* sentAIent Theme: Force Headers to Orange, everything else follows base theme (Blue) */
+body[data-theme="sentaient"] .mixer-section h3,
+body[data-theme="sentaient"] [data-section="atmosphere"] h3,
+body[data-theme="sentaient"] [data-section="journeys"] h3,
+body[data-theme="sentaient"] #rightPanel h3,
+body[data-theme="sentaient"] #leftPanel .section-label {
+    color: #fc9c36 !important;
+}
+
+/* 
+   DJ Studio Category Color Fix (v3)
+   Ensure category identity colors persist even when theme-level overrides exist.
+   Scoping to the container covers both tabs and dynamically generated group headers.
+*/
+[data-section="djpads"] .text-yellow-400,
+[data-section="djpads"] .text-yellow-500,
+[data-section="djpads"] .text-amber-500 {
+    color: #facc15 !important;
+}
+
+[data-section="djpads"] .bg-yellow-500\/20 {
+    background-color: rgba(234, 179, 8, 0.2) !important;
+}
+
+[data-section="djpads"] .border-yellow-500\/30 {
+    border-color: rgba(234, 179, 8, 0.3) !important;
+}
+
+[data-section="djpads"] .text-blue-400 {
+    color: rgb(96, 165, 250) !important;
+}
+
+[data-section="djpads"] .bg-blue-500\/20 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+[data-section="djpads"] .border-blue-500\/30 {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-section="djpads"] .text-purple-400 {
+    color: rgb(192, 132, 252) !important;
+}
+
+[data-section="djpads"] .text-red-400 {
+    color: rgb(248, 113, 113) !important;
+}
+
+[data-section="djpads"] .text-emerald-400 {
+    color: rgb(52, 211, 153) !important;
+}
+
+/* Force Atmosphere descriptions and percentage values to Blue as requested */
+body[data-theme="sentaient"] #soundscapeContainer .text-white,
+body[data-theme="sentaient"] #soundscapeContainer .text-white\/70,
+body[data-theme="sentaient"] #soundscapeContainer .atmos-sublabel,
+body[data-theme="sentaient"] #soundscapeContainer .text-\[var\(--accent\)\] {
+    color: #60a9ff !important;
+}
+
+/* Ensure active button text is consistent and has high contrast in sentAIent theme */
+body[data-theme="sentaient"] .toggle-active,
+body[data-theme="sentaient"] .active-mode,
+body[data-theme="sentaient"] .glass-pill.active {
+    color: #202733 !important;
+}
+
+/* Force blue text for inactive toggle buttons in sentAIent theme */
+body[data-theme="sentaient"] .toggle-inactive,
+body[data-theme="sentaient"] .glass-pill:not(.active) {
+    color: #60a9ff !important;
+}
+
+/* Fix visual mode button text */
+[data-theme-type="light"] .visual-btn {
+    color: var(--text-main) !important;
+}
+
+/* Active visual buttons keep white text for contrast */
+[data-theme-type="light"] .visual-btn[style*="background"] {
+    color: #ffffff !important;
+}
+
+/* RIGHT MENU VISIBILITY FIXES (Button Outlines) */
+[data-theme-type="light"] .soundscape-item,
+[data-theme-type="light"] .section-header,
+[data-theme-type="light"] #journeyContainer button,
+[data-theme-type="light"] .preset-btn,
+[data-theme-type="light"] .glass-card {
+    border: 1px solid var(--border) !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Hover specific for interactive elements */
+[data-theme-type="light"] .soundscape-item:hover,
+[data-theme-type="light"] .section-header:hover,
+[data-theme-type="light"] #journeyContainer button:not(:disabled):hover,
+[data-theme-type="light"] .preset-btn:hover {
+    border-color: var(--accent) !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Active/Selected states */
+[data-theme-type="light"] .journey-active,
+[data-theme-type="light"] #journeyContainer button.ring-2,
+[data-theme-type="light"] .preset-btn.active {
+    border-color: var(--accent) !important;
+    background: var(--accent) !important;
+    color: #ffffff !important;
+}
+
+/* Ensure text inside journey/preset buttons matches theme contrast unless active */
+[data-theme-type="light"] #journeyContainer button:not(.ring-2),
+[data-theme-type="light"] .preset-btn:not(.active) {
+    color: var(--text-main) !important;
+}
+
+/* Enhance slider visibility in light mode */
+[data-theme-type="light"] input[type=range] {
+    background-color: var(--border) !important;
+}
+
+
+
 /* Legacy panel (for modals) */
 .panel {
     background-color: var(--bg-panel);
@@ -184,6 +460,98 @@ a:active,
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
 }
+
+/* HEADER ICONS - Force Accent Color (Global) */
+#tutorialBtn,
+#feedbackBtn,
+#profileBtn,
+#themeBtn {
+    color: var(--accent) !important;
+    opacity: 1;
+}
+
+/* VISIBILITY FIXES (User Feedback) */
+
+/* 1. Force Numbers/Values to Accent Color (vs Gray/White) */
+.tabular-nums,
+span[id$="Value"],
+span[id$="Val"] {
+    color: var(--accent) !important;
+    font-weight: 600;
+    opacity: 1;
+}
+
+/* 2. Theme Menu Description Contrast */
+.theme-card p,
+.theme-card .text-xs {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Ensure Theme Title is bright */
+.theme-card h3 {
+    color: #fff !important;
+}
+
+/* 3. Control Labels (VOL, TONE, SPD) - Crisp White */
+/* Better: Target specific label contexts */
+.mixer-section .text-\[var\(--text-muted\)\] {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* ATMOSPHERE VISIBILITY CLASSES (Mode-Aware -> Universal Accent) */
+.atmos-label {
+    color: var(--accent) !important;
+    font-weight: 600;
+}
+
+.atmos-val {
+    color: var(--accent) !important;
+    font-weight: 700;
+    opacity: 1;
+}
+
+.atmos-sublabel {
+    color: var(--accent) !important;
+    /* Universal Accent Color */
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* MIXER HEADERS - Force Accent Color */
+.mixer-section h3,
+[data-section="atmosphere"] h3,
+[data-section="journeys"] h3 {
+    color: var(--accent) !important;
+}
+
+/* MIXER SECTIONS UNIVERSAL ENFORCEMENT (User Request: "Everything match theme") */
+/* Targets: Section Header Icon, Labels, Item Names, Muted Text */
+[data-section="atmosphere"] .text-\[var\(--text-muted\)\],
+[data-section="atmosphere"] svg,
+[data-section="atmosphere"] label,
+[data-section="journeys"] .text-\[var\(--text-muted\)\],
+[data-section="journeys"] svg,
+[data-section="journeys"] label,
+[data-section="djpads"] .text-\[var\(--text-muted\)\],
+[data-section="djpads"] svg,
+[data-section="djpads"] label,
+[data-section="stories"] .text-\[var\(--text-muted\)\],
+[data-section="stories"] svg,
+[data-section="stories"] label,
+[data-section="uploads"] .text-\[var\(--text-muted\)\],
+[data-section="uploads"] svg,
+[data-section="uploads"] label,
+[data-section="classical"] .text-\[var\(--text-muted\)\],
+[data-section="classical"] svg,
+[data-section="classical"] label {
+    color: var(--accent) !important;
+}
+
+/* Top Bar Labels (PITCH, BEAT, VOL) */
+header .text-\[var\(--text-muted\)\] {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
 
 /* Range Sliders */
 input[type=range] {
@@ -1012,6 +1380,32 @@ button,
     border-color: rgb(168 85 247 / 0.4);
 }
 
+/* Yellow colors for Texture category */
+.bg-yellow-500\/20 {
+    background-color: rgba(234, 179, 8, 0.2);
+}
+
+.text-yellow-400 {
+    color: rgb(250, 204, 21);
+}
+
+.border-yellow-500\/30 {
+    border-color: rgba(234, 179, 8, 0.3);
+}
+
+/* Blue colors for Drops category */
+.bg-blue-500\/20 {
+    background-color: rgba(59, 130, 246, 0.2);
+}
+
+.text-blue-400 {
+    color: rgb(96, 165, 250);
+}
+
+.border-blue-500\/30 {
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
 /* Pink gradient support */
 .from-purple-500 {
     --tw-gradient-from: #a855f7;
@@ -1803,49 +2197,42 @@ body[data-theme="dawn"] .cursor-option div {
    ========================================== */
 
 /* DJ Pad buttons - dark text */
-body[data-theme="cloud"] .dj-pad,
-body[data-theme="dawn"] .dj-pad {
+body[data-theme-type="light"] .dj-pad {
     color: var(--text-main) !important;
     border-color: var(--accent) !important;
     background: rgba(255, 255, 255, 0.5) !important;
 }
 
-body[data-theme="cloud"] .dj-pad span,
-body[data-theme="dawn"] .dj-pad span {
+body[data-theme-type="light"] .dj-pad span {
     color: var(--text-main) !important;
     text-shadow: none !important;
 }
 
-body[data-theme="cloud"] .dj-pad:hover,
-body[data-theme="dawn"] .dj-pad:hover {
+body[data-theme-type="light"] .dj-pad:hover {
     background: rgba(255, 255, 255, 0.7) !important;
     border-color: var(--accent) !important;
 }
 
 /* DJ Category tabs */
-body[data-theme="cloud"] .dj-cat-tab,
-body[data-theme="dawn"] .dj-cat-tab {
+body[data-theme-type="light"] .dj-cat-tab {
     color: var(--text-main) !important;
     border-color: var(--accent) !important;
     background: rgba(255, 255, 255, 0.5) !important;
 }
 
-body[data-theme="cloud"] .dj-cat-tab:hover,
-body[data-theme="dawn"] .dj-cat-tab:hover {
+body[data-theme-type="light"] .dj-cat-tab:hover {
     background: rgba(255, 255, 255, 0.7) !important;
 }
 
 /* DJ Mode toggle buttons */
-body[data-theme="cloud"] .dj-mode-btn,
-body[data-theme="dawn"] .dj-mode-btn {
+body[data-theme-type="light"] .dj-mode-btn {
     color: var(--text-main) !important;
     border-color: var(--accent) !important;
     background: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* DJ Stop All button */
-body[data-theme="cloud"] #djStopAll,
-body[data-theme="dawn"] #djStopAll {
+body[data-theme-type="light"] #djStopAll {
     color: #dc2626 !important;
     border-color: #dc2626 !important;
     background: rgba(220, 38, 38, 0.1) !important;
@@ -1874,24 +2261,20 @@ body[data-theme="dawn"] #djStopAll {
 }
 
 /* Light themes - dark text */
-body[data-theme="cloud"] .dj-pad-icon,
-body[data-theme="dawn"] .dj-pad-icon {
+body[data-theme-type="light"] .dj-pad-icon {
     color: var(--text-main) !important;
     text-shadow: none !important;
 }
 
-body[data-theme="cloud"] .dj-pad-label,
-body[data-theme="dawn"] .dj-pad-label {
+body[data-theme-type="light"] .dj-pad-label {
     color: var(--text-main) !important;
 }
 
-body[data-theme="cloud"] .dj-pad-label.dj-pad-active,
-body[data-theme="dawn"] .dj-pad-label.dj-pad-active {
+body[data-theme-type="light"] .dj-pad-label.dj-pad-active {
     color: var(--accent) !important;
 }
 
-body[data-theme="cloud"] .dj-pad-loop,
-body[data-theme="dawn"] .dj-pad-loop {
+body[data-theme-type="light"] .dj-pad-loop {
     color: var(--text-muted) !important;
 }
 
@@ -1909,13 +2292,11 @@ body[data-theme="dawn"] .dj-pad-loop {
 }
 
 /* Light themes - dark text for readability */
-body[data-theme="cloud"] .theme-card-title,
-body[data-theme="dawn"] .theme-card-title {
+body[data-theme-type="light"] .theme-card-title {
     color: var(--text-main) !important;
 }
 
-body[data-theme="cloud"] .theme-card-desc,
-body[data-theme="dawn"] .theme-card-desc {
+body[data-theme-type="light"] .theme-card-desc {
     color: var(--text-muted) !important;
 }
 
@@ -1925,10 +2306,8 @@ body[data-theme="dawn"] .theme-card-desc {
    ========================================== */
 
 /* Fix all text-white/XX classes in light themes */
-body[data-theme="cloud"] [class*="text-white"],
-body[data-theme="dawn"] [class*="text-white"],
-body[data-theme="cloud"] [class*="text-slate-"],
-body[data-theme="dawn"] [class*="text-slate-"] {
+body[data-theme-type="light"] [class*="text-white"],
+body[data-theme-type="light"] [class*="text-slate-"] {
     color: var(--text-main) !important;
 }
 
@@ -2021,7 +2400,8 @@ body[data-theme="dawn"] [class*="border-white"] {
 /* Footer area fixes */
 body[data-theme="cloud"] footer,
 body[data-theme="dawn"] footer {
-    background: rgba(255, 255, 255, 0.8) !important;
+    /* Background removed for transparency */
+    background: transparent !important;
 }
 
 body[data-theme="cloud"] footer span,

@@ -121,14 +121,14 @@ export function showUpgradePrompt(reason, onContinue = null) {
         modal.innerHTML = `
       <div style="max-width: 500px; width: 100%; background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 48px 32px; text-align: center;">
         <div style="font-size: 64px; margin-bottom: 24px;" id="upgradeIcon">🔒</div>
-        <h2 id="upgradeTitle" style="font-size: 32px; font-weight: 700; color: white; margin-bottom: 16px;">Premium Feature</h2>
-        <p id="upgradeDescription" style="font-size: 16px; color: rgba(255, 255, 255, 0.7); margin-bottom: 32px; line-height: 1.6;">Upgrade to unlock this feature.</p>
+        <h2 id="upgradeTitle" style="font-size: 32px; font-weight: 700; color: var(--accent); margin-bottom: 16px;">Premium Feature</h2>
+        <p id="upgradeDescription" style="font-size: 16px; color: var(--text-muted); margin-bottom: 32px; line-height: 1.6;">Upgrade to unlock this feature.</p>
         
         <div style="display: flex; gap: 12px;">
-          <button id="upgradeBtn" style="flex: 1; padding: 16px; background: linear-gradient(135deg, #60a9ff 0%, #60a9ff 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+          <button id="upgradeBtn" style="flex: 1; padding: 16px; background: var(--accent); border: none; border-radius: 12px; color: var(--bg-main); font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
             Upgrade Now
           </button>
-          <button id="closeUpgradeBtn" style="flex: 0.5; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer;">
+          <button id="closeUpgradeBtn" style="flex: 0.5; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: var(--text-muted); font-size: 16px; font-weight: 600; cursor: pointer;">
             Later
           </button>
         </div>
@@ -162,7 +162,7 @@ export function showUpgradePrompt(reason, onContinue = null) {
         try {
             modal.classList.remove('flex'); // ✅ FIX: Remove flex before adding hidden
             modal.classList.add('hidden');
-            document.body.style.overflow = '';
+            // document.body.style.overflow = '';
 
             const currentReason = modal.dataset.currentReason;
             if (currentReason === 'not_logged_in') {
@@ -193,7 +193,7 @@ export function showUpgradePrompt(reason, onContinue = null) {
         try {
             modal.classList.remove('flex'); // ✅ FIX: Remove flex before adding hidden
             modal.classList.add('hidden');
-            document.body.style.overflow = '';
+            // document.body.style.overflow = '';
         } catch (error) {
             console.error('[Paywall] Error closing upgrade modal:', error);
         }
@@ -207,7 +207,7 @@ export function showUpgradePrompt(reason, onContinue = null) {
             try {
                 modal.classList.remove('flex'); // ✅ FIX: Remove flex before adding hidden
                 modal.classList.add('hidden');
-                document.body.style.overflow = '';
+                // document.body.style.overflow = '';
             } catch (error) {
                 console.error('[Paywall] Error closing modal on background click:', error);
             }
@@ -217,7 +217,7 @@ export function showUpgradePrompt(reason, onContinue = null) {
     // Show modal
     modal.classList.remove('hidden');
     modal.classList.add('flex'); // ✅ FIX: Add flex when showing
-    document.body.style.overflow = 'hidden';
+    // document.body.style.overflow = 'hidden'; // FIX: Removed to prevent lock
 }
 
 /**
@@ -232,8 +232,8 @@ export function addPremiumBadge(element) {
     position: absolute;
     top: 12px;
     right: 12px;
-    background: linear-gradient(135deg, #60a9ff 0%, #60a9ff 100%);
-    color: white;
+    background: var(--accent);
+    color: var(--bg-main);
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 11px;

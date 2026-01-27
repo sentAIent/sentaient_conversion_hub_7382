@@ -35,7 +35,7 @@ export async function showPricingModal() {
     }
 
     modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    // document.body.style.overflow = 'hidden';
 }
 
 
@@ -43,7 +43,7 @@ export function hidePricingModal() {
     const modal = document.getElementById('pricingModal');
     if (modal) {
         modal.classList.add('hidden');
-        document.body.style.overflow = '';
+        // document.body.style.overflow = '';
     }
 }
 

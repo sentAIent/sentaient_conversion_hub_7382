@@ -139,9 +139,15 @@ export function generateQRCode(url) {
 
 // Initialize share feature - check for shared preset on load
 export function initShareFeature() {
-    const sharedPreset = parseSharedPreset();
-    if (sharedPreset) {
-        // Apply after a short delay to let UI initialize
-        setTimeout(() => applySharedPreset(sharedPreset), 500);
+    try {
+        const sharedPreset = parseSharedPreset();
+        if (sharedPreset) {
+            // Apply after a short delay to let UI initialize
+            setTimeout(() => applySharedPreset(sharedPreset), 500);
+        }
+    } catch (error) {
+        console.warn('[Share] Initialization error:', error);
+        // Silent catch to prevent TypeError from showing to user
     }
 }
+
