@@ -52,6 +52,9 @@ export class Visualizer3D {
             this.lastTime = performance.now() * 0.001;
             this.simTime = 0; // Accumulated simulation time
 
+            // Apply initial visibility based on activeModes defaults
+            this.updateVisibility();
+
             this.initialized = true;
         } catch (e) {
             console.error("Three.js Init Failed:", e);
