@@ -159,8 +159,8 @@ export const DJ_SOUNDS = {
     // ── Atmospheric Sweeps ────────────────────────────────────────────────────
     texture: {
         label: 'Texture',
-        icon: '🌊',
-        color: 'from-yellow-500 to-amber-500',
+        icon: '✨',
+        color: 'from-amber-400 to-amber-600',
         sounds: {
             sweepup: { label: 'Rise', icon: '⬆️', canLoop: true },
             sweepdown: { label: 'Fall', icon: '⬇️', canLoop: true },

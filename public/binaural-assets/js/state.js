@@ -18,6 +18,7 @@ export const THEMES = {
     gold: { bg: '#151008', panel: '#251a0a', border: '#3a280f', text: '#fff8e8', muted: '#d4b880', accent: '#fbbf24', glow: 'rgba(251, 191, 36, 0.5)', volumeAccent: '#2496fb', volumeGlow: 'rgba(36, 150, 251, 0.4)' },
     obsidian: { bg: '#080808', panel: '#121212', border: '#1c1c1c', text: '#f5f5f5', muted: '#888888', accent: '#ffffff', glow: 'rgba(255, 255, 255, 0.3)', volumeAccent: '#ff6b6b', volumeGlow: 'rgba(255, 107, 107, 0.4)' },
     arctic: { bg: '#081520', panel: '#102030', border: '#183045', text: '#e8f4ff', muted: '#a0c8e8', accent: '#7dd3fc', glow: 'rgba(125, 211, 252, 0.5)', volumeAccent: '#fca07d', volumeGlow: 'rgba(252, 160, 125, 0.4)' },
+    sentaient: { bg: '#202733', panel: '#2a3445', border: '#3a475c', text: '#60a9ff', muted: '#8bb6e8', accent: '#60a9ff', glow: 'rgba(96, 169, 255, 0.4)', volumeAccent: '#60a9ff', volumeGlow: 'rgba(96, 169, 255, 0.3)' },
 
     // Soft Light Themes (with tinted backgrounds)
     cloud: { bg: '#e8f4fc', panel: '#d4ebf7', border: '#a8d4f0', text: '#0f172a', muted: '#3b6d8c', accent: '#0284c7', glow: 'rgba(2, 132, 199, 0.4)', volumeAccent: '#dc2626', volumeGlow: 'rgba(220, 38, 38, 0.4)', glassBg: 'rgba(212, 235, 247, 0.95)', glassBorder: 'rgba(100, 160, 200, 0.3)' },

@@ -206,6 +206,7 @@ a:active,
 
 /* Force dark text for hardcoded white text classes on light themes */
 [data-theme-type="light"] .text-white,
+[data-theme-type="light"] .text-white\/30,
 [data-theme-type="light"] .text-white\/70,
 [data-theme-type="light"] .text-white\/80,
 [data-theme-type="light"] .text-white\/90,
@@ -297,6 +298,91 @@ a:active,
 
 [data-theme-type="light"] .group:hover .group-hover\:text-white {
     color: var(--text-main) !important;
+}
+
+/* Custom utility to bypass enforcement rules and match theme muted color */
+.text-theme-muted {
+    color: var(--text-muted) !important;
+    opacity: 0.5;
+    transition: all 0.2s ease-in-out;
+}
+
+.text-theme-muted:hover {
+    color: var(--accent) !important;
+    opacity: 1;
+}
+
+/* sentAIent Theme: Force Headers to Orange, everything else follows base theme (Blue) */
+body[data-theme="sentaient"] .mixer-section h3,
+body[data-theme="sentaient"] [data-section="atmosphere"] h3,
+body[data-theme="sentaient"] [data-section="journeys"] h3,
+body[data-theme="sentaient"] #rightPanel h3,
+body[data-theme="sentaient"] #leftPanel .section-label {
+    color: #fc9c36 !important;
+}
+
+/* 
+   DJ Studio Category Color Fix (v3)
+   Ensure category identity colors persist even when theme-level overrides exist.
+   Scoping to the container covers both tabs and dynamically generated group headers.
+*/
+[data-section="djpads"] .text-yellow-400,
+[data-section="djpads"] .text-yellow-500,
+[data-section="djpads"] .text-amber-500 {
+    color: #facc15 !important;
+}
+
+[data-section="djpads"] .bg-yellow-500\/20 {
+    background-color: rgba(234, 179, 8, 0.2) !important;
+}
+
+[data-section="djpads"] .border-yellow-500\/30 {
+    border-color: rgba(234, 179, 8, 0.3) !important;
+}
+
+[data-section="djpads"] .text-blue-400 {
+    color: rgb(96, 165, 250) !important;
+}
+
+[data-section="djpads"] .bg-blue-500\/20 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+[data-section="djpads"] .border-blue-500\/30 {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-section="djpads"] .text-purple-400 {
+    color: rgb(192, 132, 252) !important;
+}
+
+[data-section="djpads"] .text-red-400 {
+    color: rgb(248, 113, 113) !important;
+}
+
+[data-section="djpads"] .text-emerald-400 {
+    color: rgb(52, 211, 153) !important;
+}
+
+/* Force Atmosphere descriptions and percentage values to Blue as requested */
+body[data-theme="sentaient"] #soundscapeContainer .text-white,
+body[data-theme="sentaient"] #soundscapeContainer .text-white\/70,
+body[data-theme="sentaient"] #soundscapeContainer .atmos-sublabel,
+body[data-theme="sentaient"] #soundscapeContainer .text-\[var\(--accent\)\] {
+    color: #60a9ff !important;
+}
+
+/* Ensure active button text is consistent and has high contrast in sentAIent theme */
+body[data-theme="sentaient"] .toggle-active,
+body[data-theme="sentaient"] .active-mode,
+body[data-theme="sentaient"] .glass-pill.active {
+    color: #202733 !important;
+}
+
+/* Force blue text for inactive toggle buttons in sentAIent theme */
+body[data-theme="sentaient"] .toggle-inactive,
+body[data-theme="sentaient"] .glass-pill:not(.active) {
+    color: #60a9ff !important;
 }
 
 /* Fix visual mode button text */
@@ -1292,6 +1378,32 @@ button,
 
 .border-purple-500\/40 {
     border-color: rgb(168 85 247 / 0.4);
+}
+
+/* Yellow colors for Texture category */
+.bg-yellow-500\/20 {
+    background-color: rgba(234, 179, 8, 0.2);
+}
+
+.text-yellow-400 {
+    color: rgb(250, 204, 21);
+}
+
+.border-yellow-500\/30 {
+    border-color: rgba(234, 179, 8, 0.3);
+}
+
+/* Blue colors for Drops category */
+.bg-blue-500\/20 {
+    background-color: rgba(59, 130, 246, 0.2);
+}
+
+.text-blue-400 {
+    color: rgb(96, 165, 250);
+}
+
+.border-blue-500\/30 {
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 /* Pink gradient support */

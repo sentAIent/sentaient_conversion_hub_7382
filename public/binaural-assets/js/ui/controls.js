@@ -519,6 +519,9 @@ export function setupUI() {
         });
     }
 
+    // Matrix Controls
+    setupMatrixControls();
+
     // Mobile Bottom Navigation Handlers
     if (els.mobilePresetsBtn) {
         els.mobilePresetsBtn.addEventListener('click', () => {
@@ -719,6 +722,104 @@ export function setupUI() {
     } catch (e) {
         console.error("Failed to install protection:", e);
     }
+
+}
+
+function setupMatrixControls() {
+    const viz = getVisualizer();
+
+    // Elements
+    const colorPicker = document.getElementById('matrixColorPicker');
+    const speedSlider = document.getElementById('matrixSpeedSlider');
+    const lengthSlider = document.getElementById('matrixLengthSlider');
+    const angleSlider = document.getElementById('matrixAngleSlider');
+    const rainbowToggle = document.getElementById('matrixRainbowToggle');
+    const resetBtn = document.getElementById('matrixResetBtn');
+    const closeBtn = document.getElementById('matrixCloseBtn');
+
+    // Value Displays
+    const speedVal = document.getElementById('matrixSpeedVal');
+    const lengthVal = document.getElementById('matrixLengthVal');
+    const angleVal = document.getElementById('matrixAngleVal');
+
+    if (!colorPicker) return; // Exit if elements don't exist
+
+    // Color
+    colorPicker.addEventListener('input', (e) => {
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixColor) {
+            viz.setMatrixColor(e.target.value);
+            // If user picks a color, disable rainbow
+            if (rainbowToggle.checked) {
+                rainbowToggle.checked = false;
+                viz.setMatrixRainbow(false);
+            }
+        }
+    });
+
+    // Speed
+    speedSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (speedVal) speedVal.textContent = val.toFixed(1) + 'x';
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixSpeed) viz.setMatrixSpeed(val);
+    });
+
+    // Length
+    lengthSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (lengthVal) lengthVal.textContent = val.toFixed(1) + 'x';
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixLength) viz.setMatrixLength(val);
+    });
+
+    // Angle
+    angleSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        if (angleVal) angleVal.textContent = val + '°';
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixAngle) viz.setMatrixAngle(val);
+    });
+
+    // Rainbow
+    rainbowToggle.addEventListener('change', (e) => {
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(e.target.checked);
+    });
+
+    // Reset
+    resetBtn.addEventListener('click', () => {
+        // Defaults
+        colorPicker.value = '#00FF41';
+        speedSlider.value = 1.0;
+        lengthSlider.value = 1.0;
+        angleSlider.value = 0;
+        rainbowToggle.checked = false;
+
+        // Update Displays
+        if (speedVal) speedVal.textContent = '1.0x';
+        if (lengthVal) lengthVal.textContent = '1.0x';
+        if (angleVal) angleVal.textContent = '0°';
+
+        // Update Viz
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixColor) {
+            viz.setMatrixColor('#00FF41');
+            viz.setMatrixSpeed(1.0);
+            viz.setMatrixLength(1.0);
+            viz.setMatrixAngle(0);
+            viz.setMatrixRainbow(false);
+        }
+    });
+
+    // Close
+    closeBtn.addEventListener('click', () => {
+        const panel = document.getElementById('matrixSettingsPanel');
+        if (panel) {
+            panel.classList.add('hidden');
+            panel.classList.remove('flex', 'flex-col');
+        }
+    });
 }
 
 // --- PLAY BUTTON HANDLER ---
@@ -1552,14 +1653,17 @@ export function resetImmersiveTimer() {
 }
 
 export function setVisualMode(mode) {
-    state.visualMode = mode;
+    // state.visualMode = mode; // Single mode legacy. We'll rely on viz state.
     const viz = getVisualizer();
+    let activeModes = new Set();
+
     if (viz) {
-        viz.setMode(mode);
+        viz.toggleMode(mode);
         // Render a single frame so the mode is visible even when paused
         if (isVisualsPaused()) {
             viz.renderSingleFrame();
         }
+        activeModes = viz.activeModes;
     }
 
     // Update button states with theme-aware styling
@@ -1576,7 +1680,9 @@ export function setVisualMode(mode) {
 
     buttons.forEach(({ el, mode: btnMode }) => {
         if (!el) return;
-        if (mode === btnMode) {
+        const isActive = activeModes.has(btnMode);
+
+        if (isActive) {
             // Active style - theme-aware
             el.classList.add('toggle-active');
             el.classList.add('active'); // Added for visual-active.css support
@@ -1588,6 +1694,18 @@ export function setVisualMode(mode) {
             el.classList.add('toggle-inactive');
         }
     });
+
+    // Toggle Matrix Settings Panel
+    const matrixPanel = document.getElementById('matrixSettingsPanel');
+    if (matrixPanel) {
+        if (activeModes.has('matrix')) {
+            matrixPanel.classList.remove('hidden');
+            matrixPanel.classList.add('flex', 'flex-col');
+        } else {
+            matrixPanel.classList.add('hidden');
+            matrixPanel.classList.remove('flex', 'flex-col');
+        }
+    }
 }
 
 
@@ -2207,9 +2325,9 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         // We combine Solfeggio Base with Theta Beat for deep healing state
         // using Theta (5.5Hz) beat for relaxation, except 963Hz (Gamma/40Hz)
         case 'heal-174': base = 174; beat = 5.5; color = '#2dd4bf'; break; // Teal
-        case 'heal-285': base = 285; beat = 5.5; color = '#2dd4bf'; break; // Teal
+        case 'heal-285': base = 285; beat = 5.5; color = '#38bdf8'; break; // Sky Blue [NEW]
         case 'heal-396': base = 396; beat = 5.5; color = '#f43f5e'; break; // Rose
-        case 'heal-417': base = 417; beat = 5.5; color = '#f43f5e'; break; // Rose
+        case 'heal-417': base = 417; beat = 5.5; color = '#fb923c'; break; // Orange [NEW]
         case 'heal-432': base = 432; beat = 5.5; color = '#10b981'; break; // Emerald
         case 'heal-528': base = 528; beat = 5.5; color = '#06b6d4'; break; // Cyan
         case 'heal-639': base = 639; beat = 5.5; color = '#3b82f6'; break; // Blue
@@ -2536,6 +2654,7 @@ function getThemeDesc(key) {
         case 'gold': return "Amber Warmth";
         case 'obsidian': return "Pure Monochrome";
         case 'arctic': return "Ice Blue";
+        case 'sentaient': return "Deep Space Blue & Orange";
 
         // Light Themes
         case 'cloud': return "Light & Airy";
@@ -2800,13 +2919,13 @@ function getCategoryColor(cat) {
         };
     } else if (cat === 'texture') {
         return {
-            name: 'yellow',
-            text: 'text-yellow-400',
-            bg: 'bg-yellow-500/20',
-            border: 'border-yellow-500/30',
-            from: 'from-yellow-500',
-            to: 'to-amber-500',
-            glow: 'shadow-yellow-500/30'
+            name: 'gold',
+            text: 'text-amber-500',
+            bg: 'bg-amber-500/20',
+            border: 'border-amber-500/30',
+            from: 'from-amber-400',
+            to: 'to-amber-600',
+            glow: 'shadow-amber-500/30'
         };
     } else if (cat === 'healing') {
         return {
