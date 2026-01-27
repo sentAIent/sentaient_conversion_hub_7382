@@ -79,6 +79,11 @@ class AetherEngine {
         this.speedLines = [];  // Visual speed indicators
         this.showGemValues = false; // Toggle for showing gem values
 
+        // Hazard system - Space Mines and Black Holes
+        this.spaceMines = [];      // Nuclear mine objects
+        this.hazardBlackHoles = [];      // Hazard black hole objects (separate from background blackHoles)
+        this.hazardEffect = null;  // Active effect: {type: 'supernova'|'blackhole', startTime, data}
+
         // Mineral system
         this.minerals = [];
         this.mineralTypes = {
@@ -969,10 +974,12 @@ class AetherEngine {
 
         this.showToast(this.flightMode ? 'Flight Mode: ON - Use WASD/QE/Shift' : 'Flight Mode: OFF');
 
-        // Toggle ship button and layout presets visibility
+        // Toggle ship button, dock button, and layout presets visibility
         const shipBtn = document.getElementById('selectShipBtn');
+        const dockBtn = document.getElementById('dockBtn');
         const layoutPresets = document.getElementById('layoutPresets');
         if (shipBtn) shipBtn.style.display = this.flightMode ? 'inline-flex' : 'none';
+        if (dockBtn) dockBtn.style.display = this.flightMode ? 'inline-flex' : 'none';
         if (layoutPresets) layoutPresets.style.display = this.flightMode ? 'flex' : 'none';
         this.draw();
     }
@@ -1190,9 +1197,51 @@ class AetherEngine {
     toggleGemValues() {
         this.showGemValues = !this.showGemValues;
         this.updateFlightHUD(); // Refresh display
+
         const btn = document.getElementById('btnToggleGemValues');
+        const gemsSection = document.getElementById('sectionGems');
+        const gemsGrid = document.getElementById('gemsGrid');
+
         if (btn) {
             btn.style.background = this.showGemValues ? 'rgba(255,215,0,0.3)' : '';
+        }
+
+        // Auto-expand and shift left when showing values, restore when hiding
+        if (gemsSection) {
+            if (this.showGemValues) {
+                // Store original values if not already stored
+                if (!this._originalGemsHeight) {
+                    this._originalGemsHeight = gemsSection.offsetHeight;
+                }
+                if (!this._originalGemsLeft) {
+                    this._originalGemsLeft = gemsSection.style.left || '590px';
+                }
+
+                // Expand height to show all values
+                const expandedHeight = Math.max(320, this._originalGemsHeight + 120);
+                gemsSection.style.height = expandedHeight + 'px';
+
+                // Shift window left to accommodate wider content with $ values
+                gemsSection.style.left = '300px';
+
+                // Widen grid columns to fit value text
+                if (gemsGrid) {
+                    gemsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(160px, 1fr))';
+                }
+            } else {
+                // Restore original height
+                if (this._originalGemsHeight) {
+                    gemsSection.style.height = this._originalGemsHeight + 'px';
+                }
+                // Restore original left position
+                if (this._originalGemsLeft) {
+                    gemsSection.style.left = this._originalGemsLeft;
+                }
+                // Restore original grid column width
+                if (gemsGrid) {
+                    gemsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(110px, 1fr))';
+                }
+            }
         }
     }
 
@@ -2666,6 +2715,402 @@ class AetherEngine {
         // Update notifications (fade out after 2 seconds)
         const now = Date.now();
         this.collectionNotifications = this.collectionNotifications.filter(n => now - n.time < 2000);
+
+        // Update hazards (mines and black holes)
+        this.updateHazards();
+    }
+
+    // =====================================================
+    // HAZARD SYSTEM - Space Mines & Black Holes
+    // =====================================================
+
+    // Spawn hazards around the player
+    spawnHazards() {
+        if (!this.flightMode || this.hazardEffect) return;
+
+        const ship = this.playerShip;
+        const spawnRadius = 3000;
+        const minSpawnDist = 800;
+
+        // Target density: fewer hazards than minerals for balance
+        const targetMines = 3;
+        const targetBlackHoles = 1;
+
+        // Remove distant hazards
+        this.spaceMines = this.spaceMines.filter(m => {
+            const dist = Math.hypot(m.x - ship.x, m.y - ship.y);
+            return dist < spawnRadius * 2;
+        });
+        this.hazardBlackHoles = this.hazardBlackHoles.filter(bh => {
+            const dist = Math.hypot(bh.x - ship.x, bh.y - ship.y);
+            return dist < spawnRadius * 2;
+        });
+
+        // Spawn new mines
+        while (this.spaceMines.length < targetMines) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = minSpawnDist + Math.random() * (spawnRadius - minSpawnDist);
+            this.spaceMines.push({
+                x: ship.x + Math.cos(angle) * dist,
+                y: ship.y + Math.sin(angle) * dist,
+                size: 25 + Math.random() * 15,
+                pulsePhase: Math.random() * Math.PI * 2,
+                color: '#ff4400',
+                glowColor: 'rgba(255, 100, 0, 0.8)'
+            });
+        }
+
+        // Spawn new black holes (rarer)
+        while (this.hazardBlackHoles.length < targetBlackHoles) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = minSpawnDist * 1.5 + Math.random() * (spawnRadius - minSpawnDist);
+            this.hazardBlackHoles.push({
+                x: ship.x + Math.cos(angle) * dist,
+                y: ship.y + Math.sin(angle) * dist,
+                size: 60 + Math.random() * 40,
+                rotationPhase: Math.random() * Math.PI * 2,
+                particleRings: this.generateBlackHoleRings()
+            });
+        }
+    }
+
+    // Generate accretion disk particles for black hole
+    generateBlackHoleRings() {
+        const rings = [];
+        for (let i = 0; i < 60; i++) {
+            rings.push({
+                angle: Math.random() * Math.PI * 2,
+                radius: 0.8 + Math.random() * 0.7,
+                speed: 0.02 + Math.random() * 0.03,
+                brightness: 0.3 + Math.random() * 0.7,
+                hue: 180 + Math.random() * 60 // Cyan to purple
+            });
+        }
+        return rings;
+    }
+
+    // Update hazards - check collisions and spawn new ones
+    updateHazards() {
+        if (!this.flightMode) return;
+
+        // If an effect is active, update it and skip collision checks
+        if (this.hazardEffect) {
+            this.updateHazardEffect();
+            return;
+        }
+
+        const ship = this.playerShip;
+        const collisionRadius = 30;
+
+        // Check mine collisions
+        for (const mine of this.spaceMines) {
+            const dist = Math.hypot(mine.x - ship.x, mine.y - ship.y);
+            if (dist < mine.size + collisionRadius) {
+                this.triggerSupernovaEffect(mine);
+                this.spaceMines = this.spaceMines.filter(m => m !== mine);
+                return;
+            }
+        }
+
+        // Check black hole collisions
+        for (const bh of this.hazardBlackHoles) {
+            const dist = Math.hypot(bh.x - ship.x, bh.y - ship.y);
+            if (dist < bh.size * 0.5 + collisionRadius) {
+                this.triggerBlackHoleEffect(bh);
+                this.hazardBlackHoles = this.hazardBlackHoles.filter(b => b !== bh);
+                return;
+            }
+        }
+
+        // Spawn new hazards
+        this.spawnHazards();
+    }
+
+    // Trigger supernova explosion effect (15-20 seconds)
+    triggerSupernovaEffect(mine) {
+        const duration = 17000; // 17 seconds
+        this.hazardEffect = {
+            type: 'supernova',
+            startTime: Date.now(),
+            duration: duration,
+            x: mine.x,
+            y: mine.y,
+            particles: this.generateSupernovaParticles(500),
+            shockwaveRadius: 0,
+            flashIntensity: 1.0,
+            prevShipSpeed: Math.hypot(this.playerShip.vx || 0, this.playerShip.vy || 0)
+        };
+
+        // Stop ship movement during effect
+        this.playerShip.vx = 0;
+        this.playerShip.vy = 0;
+
+        console.log('[Hazard] Supernova triggered!');
+    }
+
+    // Generate 3D explosion particles with multiple layers
+    generateSupernovaParticles(count) {
+        const particles = [];
+
+        // Core explosion particles (innermost, hottest)
+        for (let i = 0; i < count * 0.3; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const elevation = (Math.random() - 0.5) * Math.PI; // 3D spread
+            const speed = 3 + Math.random() * 6;
+            particles.push({
+                x: 0, y: 0, z: 0,
+                vx: Math.cos(angle) * Math.cos(elevation) * speed,
+                vy: Math.sin(angle) * Math.cos(elevation) * speed,
+                vz: Math.sin(elevation) * speed,
+                size: 8 + Math.random() * 20,
+                life: 1.0,
+                decay: 0.002 + Math.random() * 0.003,
+                hue: 40 + Math.random() * 20, // White-yellow core
+                saturation: 50 + Math.random() * 50,
+                type: 'core'
+            });
+        }
+
+        // Plasma tendrils (elongated, fast-moving)
+        for (let i = 0; i < count * 0.2; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const elevation = (Math.random() - 0.5) * Math.PI * 0.6;
+            const speed = 8 + Math.random() * 12;
+            particles.push({
+                x: 0, y: 0, z: 0,
+                vx: Math.cos(angle) * Math.cos(elevation) * speed,
+                vy: Math.sin(angle) * Math.cos(elevation) * speed,
+                vz: Math.sin(elevation) * speed * 0.5,
+                size: 4 + Math.random() * 8,
+                length: 20 + Math.random() * 40, // Trail length
+                life: 1.0,
+                decay: 0.004 + Math.random() * 0.004,
+                hue: 15 + Math.random() * 30, // Orange-red plasma
+                saturation: 100,
+                type: 'plasma'
+            });
+        }
+
+        // Nebula fragments (slow-moving, large, gaseous)
+        for (let i = 0; i < count * 0.25; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const elevation = (Math.random() - 0.5) * Math.PI;
+            const speed = 1 + Math.random() * 3;
+            particles.push({
+                x: 0, y: 0, z: (Math.random() - 0.5) * 200,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                vz: Math.sin(elevation) * speed * 0.3,
+                size: 30 + Math.random() * 60,
+                life: 1.0,
+                decay: 0.001 + Math.random() * 0.002,
+                hue: 200 + Math.random() * 80, // Blue to purple nebula
+                saturation: 60 + Math.random() * 40,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.02,
+                type: 'nebula'
+            });
+        }
+
+        // Debris chunks (solid, tumbling)
+        for (let i = 0; i < count * 0.15; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const elevation = (Math.random() - 0.5) * Math.PI;
+            const speed = 2 + Math.random() * 7;
+            particles.push({
+                x: 0, y: 0, z: (Math.random() - 0.5) * 100,
+                vx: Math.cos(angle) * Math.cos(elevation) * speed,
+                vy: Math.sin(angle) * Math.cos(elevation) * speed,
+                vz: Math.sin(elevation) * speed,
+                size: 5 + Math.random() * 15,
+                life: 1.0,
+                decay: 0.002 + Math.random() * 0.003,
+                hue: 20 + Math.random() * 30,
+                saturation: 80,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.1,
+                type: 'debris'
+            });
+        }
+
+        // Ember sparks (tiny, fast-fading)
+        for (let i = 0; i < count * 0.1; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 5 + Math.random() * 15;
+            particles.push({
+                x: 0, y: 0, z: (Math.random() - 0.5) * 50,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                vz: (Math.random() - 0.5) * speed * 0.5,
+                size: 2 + Math.random() * 4,
+                life: 1.0,
+                decay: 0.01 + Math.random() * 0.02,
+                hue: 45 + Math.random() * 15, // Bright yellow-white
+                saturation: 100,
+                type: 'ember'
+            });
+        }
+
+        return particles;
+    }
+
+    // Trigger black hole teleportation effect (15-20 seconds)
+    triggerBlackHoleEffect(blackhole) {
+        const duration = 18000; // 18 seconds
+
+        // Calculate teleport destination (random distant location)
+        const teleportDist = 5000 + Math.random() * 10000;
+        const teleportAngle = Math.random() * Math.PI * 2;
+
+        this.hazardEffect = {
+            type: 'blackhole',
+            startTime: Date.now(),
+            duration: duration,
+            x: blackhole.x,
+            y: blackhole.y,
+            destX: this.playerShip.x + Math.cos(teleportAngle) * teleportDist,
+            destY: this.playerShip.y + Math.sin(teleportAngle) * teleportDist,
+            tunnelParticles: this.generateTunnelParticles(150),
+            distortionStrength: 0,
+            tunnelDepth: 0,
+            phase: 'pull' // pull, tunnel, collapse, emerge
+        };
+
+        // Stop ship movement during effect
+        this.playerShip.vx = 0;
+        this.playerShip.vy = 0;
+
+        console.log('[Hazard] Black hole entered!');
+    }
+
+    // Generate wormhole tunnel particles
+    generateTunnelParticles(count) {
+        const particles = [];
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                angle: Math.random() * Math.PI * 2,
+                z: Math.random() * 1000,
+                speed: 5 + Math.random() * 15,
+                radius: 50 + Math.random() * 200,
+                hue: 200 + Math.random() * 80, // Cyan to purple
+                brightness: 0.5 + Math.random() * 0.5
+            });
+        }
+        return particles;
+    }
+
+    // Update active hazard effect
+    updateHazardEffect() {
+        if (!this.hazardEffect) return;
+
+        const elapsed = Date.now() - this.hazardEffect.startTime;
+        const progress = Math.min(1, elapsed / this.hazardEffect.duration);
+
+        if (progress >= 1) {
+            // Effect complete
+            if (this.hazardEffect.type === 'blackhole') {
+                // Teleport player to destination
+                this.playerShip.x = this.hazardEffect.destX;
+                this.playerShip.y = this.hazardEffect.destY;
+                console.log('[Hazard] Teleported to:', this.hazardEffect.destX, this.hazardEffect.destY);
+            }
+            this.hazardEffect = null;
+            return;
+        }
+
+        // Update effect-specific logic
+        if (this.hazardEffect.type === 'supernova') {
+            this.updateSupernovaEffect(progress);
+        } else if (this.hazardEffect.type === 'blackhole') {
+            this.updateBlackHoleEffectState(progress);
+        }
+    }
+
+    // Update supernova effect state
+    updateSupernovaEffect(progress) {
+        const effect = this.hazardEffect;
+
+        // Phase transitions with more dramatic timing
+        if (progress < 0.08) {
+            // Initial flash phase (0-8%) - BLINDING
+            effect.flashIntensity = 1.0;
+            effect.coreScale = progress / 0.08; // Core expands
+        } else if (progress < 0.15) {
+            // Flash fade phase (8-15%)
+            effect.flashIntensity = 1 - ((progress - 0.08) / 0.07) * 0.6;
+            effect.coreScale = 1.0;
+        } else if (progress < 0.45) {
+            // Expansion phase (15-45%) - main explosion
+            effect.flashIntensity = 0.4 * (1 - (progress - 0.15) / 0.3);
+            effect.shockwaveRadius = ((progress - 0.15) / 0.3) * 2500;
+            effect.coreScale = 1.0 - ((progress - 0.15) / 0.3) * 0.3;
+        } else if (progress < 0.75) {
+            // Nebula phase (45-75%) - debris and gas clouds
+            effect.flashIntensity = 0;
+            effect.shockwaveRadius = 2500;
+            effect.coreScale = 0.7 - ((progress - 0.45) / 0.3) * 0.7;
+        } else {
+            // Fade phase (75-100%) - everything disperses
+            effect.shockwaveRadius = 2500 * (1 - (progress - 0.75) / 0.25);
+            effect.coreScale = 0;
+        }
+
+        // Update 3D particles with physics
+        for (const p of effect.particles) {
+            // Position update with 3D movement
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.z !== undefined) p.z += (p.vz || 0);
+
+            // Different drag for different particle types
+            const drag = p.type === 'nebula' ? 0.995 :
+                p.type === 'plasma' ? 0.97 :
+                    p.type === 'ember' ? 0.96 : 0.98;
+            p.vx *= drag;
+            p.vy *= drag;
+            if (p.vz !== undefined) p.vz *= drag;
+
+            // Update rotation for debris and nebula
+            if (p.rotation !== undefined) {
+                p.rotation += p.rotationSpeed || 0;
+            }
+
+            // Life decay
+            p.life -= p.decay;
+        }
+
+        effect.particles = effect.particles.filter(p => p.life > 0);
+    }
+
+    // Update black hole effect state
+    updateBlackHoleEffectState(progress) {
+        const effect = this.hazardEffect;
+
+        // Phase transitions
+        if (progress < 0.15) {
+            effect.phase = 'pull';
+            effect.distortionStrength = (progress / 0.15) * 1.0;
+        } else if (progress < 0.55) {
+            effect.phase = 'tunnel';
+            effect.tunnelDepth = ((progress - 0.15) / 0.4);
+            effect.distortionStrength = 1.0;
+        } else if (progress < 0.85) {
+            effect.phase = 'collapse';
+            effect.distortionStrength = 1.0 - ((progress - 0.55) / 0.3) * 0.5;
+        } else {
+            effect.phase = 'emerge';
+            effect.distortionStrength = 0.5 * (1 - (progress - 0.85) / 0.15);
+        }
+
+        // Update tunnel particles (spiral motion)
+        for (const p of effect.tunnelParticles) {
+            p.z -= p.speed;
+            p.angle += 0.02 + (1000 - p.z) * 0.00005;
+            if (p.z < -500) {
+                p.z = 1000;
+                p.angle = Math.random() * Math.PI * 2;
+            }
+        }
     }
 
     toggleMatrixRainbow() {
@@ -2749,20 +3194,20 @@ class AetherEngine {
 
             let bars = '';
             for (let i = 0; i < 5; i++) {
-                bars += `< div style = "flex:1; height:4px; background:${i < level ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; margin:0 1px;" ></div > `;
+                bars += `<div style="flex:1; height:4px; background:${i < level ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; margin:0 1px;"></div>`;
             }
 
             html += `
-                    < div style = "background:rgba(255,255,255,0.05); border:1px solid ${canAfford ? 'rgba(0,243,255,0.3)' : 'rgba(255,50,50,0.3)'}; padding:8px; border-radius:6px;" >
-                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                <span style="font-weight:bold; color:#e0faff; font-size:11px;">${u.name}</span>
-                                <span style="font-size:10px; color:${isMax ? '#00f3ff' : '#ffd700'}">${isMax ? 'MAX' : '$' + cost.toLocaleString()}</span>
-                            </div>
-                            <div style="font-size:9px; color:#8ba; margin-bottom:6px;">${u.desc}</div>
-                            <div style="display:flex; margin-bottom:6px;">${bars}</div>
-                            ${!isMax ? `<button class="btn-small" onclick="app.upgradeShip('${u.id}')" style="width:100%; font-size:10px; padding:4px; ${canAfford ? 'cursor:pointer' : 'opacity:0.5; cursor:not-allowed;'}">UPGRADE</button>` : ''}
-                        </div >
-                    `;
+                <div style="background:rgba(255,255,255,0.05); border:1px solid ${canAfford ? 'rgba(0,243,255,0.3)' : 'rgba(255,50,50,0.3)'}; padding:8px; border-radius:6px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-weight:bold; color:#e0faff; font-size:11px;">${u.name}</span>
+                        <span style="font-size:10px; color:${isMax ? '#00f3ff' : '#ffd700'}">${isMax ? 'MAX' : '$' + cost.toLocaleString()}</span>
+                    </div>
+                    <div style="font-size:9px; color:#8ba; margin-bottom:6px;">${u.desc}</div>
+                    <div style="display:flex; margin-bottom:6px;">${bars}</div>
+                    ${!isMax ? `<button class="btn-small" onclick="app.upgradeShip('${u.id}')" style="width:100%; font-size:10px; padding:4px; ${canAfford ? 'cursor:pointer' : 'opacity:0.5; cursor:not-allowed;'}">UPGRADE</button>` : ''}
+                </div>
+            `;
         });
 
         list.innerHTML = html;
@@ -5056,8 +5501,10 @@ class AetherEngine {
             // console.log('[Spacecraft Debug] Rendering player ship at', this.playerShip.x, this.playerShip.y);
             this.renderSpeedLines(ctx);
             this.renderMinerals(ctx, time);
+            this.renderHazards(ctx, time);  // Space mines and black holes
             this.renderPlayerShip(ctx, time);
             this.renderCollectionNotifications(ctx);
+            this.renderHazardEffect(ctx, time);  // Full-screen overlay for supernova/blackhole
         } else {
             // console.log('[Spacecraft Debug] NOT rendering - flightMode:', this.flightMode, 'playerShip:', !!this.playerShip);
         }
@@ -5679,6 +6126,409 @@ class AetherEngine {
 
             ctx.restore();
         });
+    }
+
+    // =====================================================
+    // HAZARD RENDERING - Visual effects for mines & holes
+    // =====================================================
+
+    renderHazards(ctx, time) {
+        // Render space mines
+        this.spaceMines.forEach(mine => {
+            ctx.save();
+            ctx.translate(mine.x, mine.y);
+
+            const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+            const pulse = Math.sin(time * 0.005 + mine.pulsePhase) * 0.3 + 0.7;
+            const size = mine.size * pulse / safeZoom;
+
+            // Danger glow (pulsing red-orange)
+            const dangerPulse = Math.sin(time * 0.008) * 0.5 + 0.5;
+            const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 4);
+            glowGrad.addColorStop(0, `rgba(255, 100, 0, ${0.8 * dangerPulse})`);
+            glowGrad.addColorStop(0.3, `rgba(255, 50, 0, ${0.5 * dangerPulse})`);
+            glowGrad.addColorStop(0.6, `rgba(255, 0, 0, ${0.2 * dangerPulse})`);
+            glowGrad.addColorStop(1, 'transparent');
+
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Core mine (spiky nuclear look)
+            ctx.fillStyle = '#ff2200';
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2 + time * 0.001;
+                const spikeLen = size * (1 + Math.sin(time * 0.01 + i) * 0.3);
+                const x = Math.cos(angle) * spikeLen;
+                const y = Math.sin(angle) * spikeLen;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // Inner glow core
+            const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+            coreGrad.addColorStop(0, '#ffff00');
+            coreGrad.addColorStop(0.5, '#ff8800');
+            coreGrad.addColorStop(1, '#ff2200');
+            ctx.fillStyle = coreGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Warning symbol (radiation)
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2 / safeZoom;
+            ctx.beginPath();
+            for (let i = 0; i < 3; i++) {
+                const angle = (i / 3) * Math.PI * 2 - Math.PI / 2;
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(angle) * size * 0.4, Math.sin(angle) * size * 0.4);
+            }
+            ctx.stroke();
+
+            ctx.restore();
+        });
+
+        // Render hazard black holes
+        this.hazardBlackHoles.forEach(bh => {
+            ctx.save();
+            ctx.translate(bh.x, bh.y);
+
+            const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+            const size = bh.size / safeZoom;
+
+            // Event horizon (pure black center)
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Accretion disk (spinning particles)
+            bh.particleRings.forEach(p => {
+                p.angle += p.speed;
+                const r = size * p.radius;
+                const x = Math.cos(p.angle) * r;
+                const y = Math.sin(p.angle) * r * 0.3; // Elliptical orbit
+
+                ctx.fillStyle = `hsla(${p.hue}, 100%, ${50 + p.brightness * 30}%, ${p.brightness})`;
+                ctx.beginPath();
+                ctx.arc(x, y, 3 / safeZoom * p.brightness, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Gravitational lensing effect (ring of light)
+            ctx.strokeStyle = 'rgba(100, 200, 255, 0.5)';
+            ctx.lineWidth = 2 / safeZoom;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.5, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Outer distortion ring
+            const distortGrad = ctx.createRadialGradient(0, 0, size * 0.4, 0, 0, size * 1.5);
+            distortGrad.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
+            distortGrad.addColorStop(0.5, 'rgba(50, 0, 100, 0.3)');
+            distortGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = distortGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        });
+    }
+
+    // Render hazard effect overlay (full screen)
+    renderHazardEffect(ctx, time) {
+        if (!this.hazardEffect) return;
+
+        if (this.hazardEffect.type === 'supernova') {
+            this.renderSupernovaEffect(ctx, time);
+        } else if (this.hazardEffect.type === 'blackhole') {
+            this.renderBlackHoleEffect(ctx, time);
+        }
+    }
+
+    // Render supernova explosion effect - NEON GREEN/ORANGE BURST
+    renderSupernovaEffect(ctx, time) {
+        const effect = this.hazardEffect;
+        const elapsed = Date.now() - effect.startTime;
+        const progress = Math.min(1, elapsed / effect.duration);
+        const canvas = this.canvas;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const maxDim = Math.max(canvas.width, canvas.height);
+
+        // ==========================================
+        // PHASE 1: NEON GREEN/ORANGE EXPLOSION (0-10%) - FAST!
+        // ==========================================
+        if (progress < 0.1) {
+            const p = progress / 0.1;
+            const intensity = Math.pow(1 - p, 0.4); // Quick fade out
+
+            // Full screen neon explosion - green and orange layers
+            ctx.globalCompositeOperation = 'screen';
+
+            // Neon green burst
+            const greenGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxDim * (0.9 + p * 0.4));
+            greenGrad.addColorStop(0, `rgba(57, 255, 20, ${intensity})`);  // Neon green
+            greenGrad.addColorStop(0.25, `rgba(0, 255, 65, ${intensity * 0.8})`);
+            greenGrad.addColorStop(0.5, `rgba(50, 205, 50, ${intensity * 0.5})`);
+            greenGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = greenGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Neon orange burst (simultaneous)
+            const orangeGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxDim * (0.7 + p * 0.5));
+            orangeGrad.addColorStop(0, `rgba(255, 95, 31, ${intensity * 0.95})`);  // Neon orange
+            orangeGrad.addColorStop(0.2, `rgba(255, 165, 0, ${intensity * 0.75})`);
+            orangeGrad.addColorStop(0.45, `rgba(255, 69, 0, ${intensity * 0.5})`);
+            orangeGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = orangeGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // ==========================================
+        // PHASE 2: WHITE LIGHT FLASH (8-35%)
+        // ==========================================
+        if (progress >= 0.08 && progress < 0.35) {
+            const p = (progress - 0.08) / 0.27;
+            const whiteIntensity = p < 0.25 ? p / 0.25 : Math.pow(1 - (p - 0.25) / 0.75, 0.6);
+
+            // Pure white flash that builds then fades
+            const whiteGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxDim);
+            whiteGrad.addColorStop(0, `rgba(255, 255, 255, ${whiteIntensity * 0.98})`);
+            whiteGrad.addColorStop(0.35, `rgba(255, 255, 255, ${whiteIntensity * 0.75})`);
+            whiteGrad.addColorStop(0.7, `rgba(255, 255, 255, ${whiteIntensity * 0.4})`);
+            whiteGrad.addColorStop(1, `rgba(255, 255, 255, ${whiteIntensity * 0.15})`);
+            ctx.fillStyle = whiteGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // ==========================================
+        // PHASE 3: SLOW FADE TO UNIVERSE (35-100%)
+        // ==========================================
+        if (progress >= 0.35) {
+            const p = (progress - 0.35) / 0.65;
+            const fadeAlpha = Math.pow(1 - p, 1.0); // Smooth ease out
+
+            // Gentle white overlay that fades to transparent
+            ctx.fillStyle = `rgba(255, 255, 255, ${fadeAlpha * 0.4})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.restore();
+    }
+
+    // Render black hole wormhole effect - SPIRAL → IMPLODE → WHITE → FADE
+    renderBlackHoleEffect(ctx, time) {
+        const effect = this.hazardEffect;
+        const elapsed = Date.now() - effect.startTime;
+        const progress = Math.min(1, elapsed / effect.duration);
+        const canvas = this.canvas;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const maxDim = Math.max(canvas.width, canvas.height);
+
+        // ==========================================
+        // PHASE 1: SPIRAL TUNNEL (0-45%) - Start immediately!
+        // ==========================================
+        if (progress < 0.45) {
+            const p = progress / 0.45;
+
+            // Dark space background
+            const tunnelBg = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxDim);
+            tunnelBg.addColorStop(0, 'rgba(0, 0, 0, 1)');
+            tunnelBg.addColorStop(0.15, 'rgba(10, 0, 30, 0.98)');
+            tunnelBg.addColorStop(0.5, 'rgba(25, 10, 50, 0.95)');
+            tunnelBg.addColorStop(1, 'rgba(5, 0, 15, 1)');
+            ctx.fillStyle = tunnelBg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Hyperspace streaks being pulled in
+            ctx.globalCompositeOperation = 'screen';
+            for (let streak = 0; streak < 120; streak++) {
+                const streakAngle = (streak / 120) * Math.PI * 2 + (streak * 1.618) + time * 0.0005;
+                const streakDist = 40 + (streak % 35) * (maxDim / 40);
+                const streakSpeed = 4 + (streak % 8) * 2.5;
+                const streakOffset = (time * streakSpeed * 0.008) % maxDim;
+
+                const startDist = Math.max(20, streakDist - streakOffset);
+                const endDist = startDist + 80 + streak % 70;
+
+                if (startDist > maxDim * 0.9) continue;
+
+                const hue = 210 + (streak % 55);
+                const alpha = (0.35 + (streak % 4) * 0.08) * Math.min(1, p * 2);
+
+                ctx.strokeStyle = `hsla(${hue}, 75%, 65%, ${alpha})`;
+                ctx.lineWidth = 1.5 + (streak % 3);
+                ctx.beginPath();
+                ctx.moveTo(
+                    centerX + Math.cos(streakAngle) * startDist,
+                    centerY + Math.sin(streakAngle) * startDist * 0.65
+                );
+                ctx.lineTo(
+                    centerX + Math.cos(streakAngle) * Math.min(endDist, maxDim * 0.9),
+                    centerY + Math.sin(streakAngle) * Math.min(endDist, maxDim * 0.9) * 0.65
+                );
+                ctx.stroke();
+            }
+
+            // Spiraling tunnel rings
+            for (let ring = 0; ring < 25; ring++) {
+                const ringZ = (ring / 25) * 1800 - (time * 1.5) % 150;
+                const ringScale = 700 / (700 + ringZ);
+                const ringRadius = maxDim * 0.55 * ringScale;
+                const ringAlpha = Math.max(0, 1 - ring * 0.035) * Math.min(1, p * 2);
+
+                if (ringRadius < 8 || ringRadius > maxDim) continue;
+
+                const hue = 245 + ring * 2.5 + Math.sin(time * 0.002) * 15;
+                ctx.strokeStyle = `hsla(${hue}, 65%, 50%, ${ringAlpha})`;
+                ctx.lineWidth = (6 + ring * 0.4) * ringScale;
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, ringRadius, ringRadius * 0.55, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Energy pulses
+            for (let wave = 0; wave < 4; wave++) {
+                const waveOffset = (time * 0.0025 + wave * 0.25) % 1;
+                const waveRadius = waveOffset * maxDim * 0.7;
+                const waveAlpha = (1 - waveOffset) * 0.4 * Math.min(1, p * 2);
+
+                ctx.strokeStyle = `rgba(140, 100, 240, ${waveAlpha})`;
+                ctx.lineWidth = 15 * (1 - waveOffset * 0.5);
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, waveRadius, waveRadius * 0.55, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Tunnel particles
+            ctx.globalCompositeOperation = 'screen';
+            for (const particle of effect.tunnelParticles) {
+                const perspectiveScale = 550 / (550 + particle.z);
+                const x = centerX + Math.cos(particle.angle) * particle.radius * perspectiveScale;
+                const y = centerY + Math.sin(particle.angle) * particle.radius * perspectiveScale * 0.55;
+                const size = 6 * perspectiveScale * particle.brightness;
+
+                if (size < 1) continue;
+
+                const grad = ctx.createRadialGradient(x, y, 0, x, y, size * 1.8);
+                grad.addColorStop(0, `hsla(${particle.hue}, 100%, 80%, ${particle.brightness * perspectiveScale})`);
+                grad.addColorStop(0.6, `hsla(${particle.hue + 20}, 100%, 55%, ${particle.brightness * perspectiveScale * 0.4})`);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(x, y, size * 1.8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // ==========================================
+        // PHASE 2: UNIVERSE IMPLODES (45-70%)
+        // ==========================================
+        if (progress >= 0.45 && progress < 0.7) {
+            const p = (progress - 0.45) / 0.25;
+            const implodeIntensity = Math.pow(p, 0.6);
+
+            // Darken and collapse
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.7 + p * 0.3})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Collapsing rings from outside to center
+            ctx.globalCompositeOperation = 'screen';
+            for (let ring = 0; ring < 15; ring++) {
+                const ringP = Math.max(0, p - ring * 0.04);
+                if (ringP <= 0) continue;
+
+                const collapseRadius = maxDim * 0.8 * (1 - Math.pow(ringP, 0.7));
+                const ringAlpha = (1 - ringP) * 0.7;
+
+                if (collapseRadius < 5) continue;
+
+                ctx.strokeStyle = `rgba(160, 200, 255, ${ringAlpha})`;
+                ctx.lineWidth = 8 * (1 - ringP * 0.6);
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, collapseRadius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Stars/light being sucked to center
+            for (let star = 0; star < 60; star++) {
+                const starAngle = (star / 60) * Math.PI * 2 + star * 0.5;
+                const starDist = maxDim * (1 - p) * (0.3 + (star % 10) * 0.07);
+                const x = centerX + Math.cos(starAngle) * starDist;
+                const y = centerY + Math.sin(starAngle) * starDist;
+                const starAlpha = (1 - p * 0.7) * (0.5 + (star % 5) * 0.1);
+                const starSize = 2 + (star % 4);
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha})`;
+                ctx.beginPath();
+                ctx.arc(x, y, starSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Center singularity grows
+            const singularitySize = 20 + implodeIntensity * 100;
+            const singularityGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, singularitySize);
+            singularityGrad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+            singularityGrad.addColorStop(0.4, `rgba(30, 10, 60, ${0.9})`);
+            singularityGrad.addColorStop(0.7, `rgba(80, 50, 140, ${0.5 * implodeIntensity})`);
+            singularityGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = singularityGrad;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, singularitySize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // ==========================================
+        // PHASE 3: WHITE LIGHT FLASH (70-85%)
+        // ==========================================
+        if (progress >= 0.7 && progress < 0.85) {
+            const p = (progress - 0.7) / 0.15;
+            const whiteIntensity = p < 0.3 ? p / 0.3 : 1;
+
+            // Pure white flash from center
+            const whiteGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxDim);
+            whiteGrad.addColorStop(0, `rgba(255, 255, 255, ${whiteIntensity})`);
+            whiteGrad.addColorStop(0.3, `rgba(255, 255, 255, ${whiteIntensity * 0.9})`);
+            whiteGrad.addColorStop(0.6, `rgba(255, 255, 255, ${whiteIntensity * 0.7})`);
+            whiteGrad.addColorStop(1, `rgba(255, 255, 255, ${whiteIntensity * 0.5})`);
+            ctx.fillStyle = whiteGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // ==========================================
+        // PHASE 4: WHITE FADES TO REVEAL UNIVERSE (85-100%)
+        // ==========================================
+        if (progress >= 0.85) {
+            const p = (progress - 0.85) / 0.15;
+            const fadeAlpha = Math.pow(1 - p, 0.8);
+
+            // White overlay slowly fading away
+            ctx.fillStyle = `rgba(255, 255, 255, ${fadeAlpha})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.restore();
     }
 
     renderCollectionNotifications(ctx) {

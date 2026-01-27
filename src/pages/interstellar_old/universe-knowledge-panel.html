@@ -1,0 +1,276 @@
+<!-- === UNIVERSE KNOWLEDGE PANEL === -->
+<div id="universeKnowledgePanel" class="popup-panel hidden"
+    style="width: 700px; max-width: 95vw; max-height: 85vh; overflow-y: auto; top: 70px; right: 20px; padding: 20px;">
+    <h3 style="margin-bottom: 15px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; font-size: 18px;">
+        🌌 Explore the Universe!</h3>
+
+    <!-- Amazing Space Facts -->
+    <div style="margin-bottom: 25px;">
+        <h4 style="font-size: 14px; color: var(--accent); margin-bottom: 12px;">✨ Mind-Blowing Facts</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #00f3ff;">
+                <strong style="color: #00f3ff;">🌍 Earth's Speed:</strong> You're traveling at 67,000 mph around the
+                Sun right now, and 490,000 mph through the galaxy!
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #ff5500;">
+                <strong style="color: #ff5500;">⚫ Black Holes:</strong> If you fell into one, you'd be
+                "spaghettified" - stretched like noodles by gravity! Time would also slow down for you.
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #ffff00;">
+                <strong style="color: #ffff00;">💫 Neutron Stars:</strong> These spin up to 716 times per second! A
+                sugar cube of neutron star would weigh as much as Mount Everest.
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #39ff14;">
+                <strong style="color: #39ff14;">🌟 Star Light:</strong> When you look at stars, you're seeing the
+                past! The light from some stars took millions of years to reach your eyes.
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #ff00ff;">
+                <strong style="color: #ff00ff;">🌌 Dark Matter:</strong> 85% of matter in the universe is invisible!
+                Scientists can't see it but know it's there because of how galaxies move.
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #ff6b9d;">
+                <strong style="color: #ff6b9d;">🪐 Diamond Rain:</strong> On Neptune and Uranus, it rains diamonds!
+                The extreme pressure turns carbon into diamonds that fall through the atmosphere.
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #ff3333;">
+                <strong style="color: #ff3333;">💥 Gamma Bursts:</strong> A single gamma-ray burst can release more
+                energy in 10 seconds than our Sun will in its entire 10-billion-year lifetime!
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #00d4ff;">
+                <strong style="color: #00d4ff;">🌊 Space Silence:</strong> Space is completely silent! There's no
+                atmosphere to carry sound waves, so astronauts use radios to communicate.
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #ffa500;">
+                <strong style="color: #ffa500;">☄️ Asteroids:</strong> There are over 1 million asteroids in our
+                solar system! NASA tracks the big ones to make sure they don't hit Earth.
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #00ff00;">
+                <strong style="color: #00ff00;">🪐 Saturn's Rings:</strong> Saturn's rings are made of billions of
+                pieces of ice and rock, some as small as a grain of sand, others as big as a house!
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #ff1493;">
+                <strong style="color: #ff1493;">⏱️ Time Dilation:</strong> Time moves slower in stronger gravity! An
+                astronaut on the ISS ages slightly slower than people on Earth.
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #9370db;">
+                <strong style="color: #9370db;">🌟 Star Factories:</strong> The Milky Way creates about 7 new stars
+                every year from giant clouds of gas and dust!
+            </div>
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; border-left: 4px solid #ff4500;">
+                <strong style="color: #ff4500;">🔥 Venus Heat:</strong> Venus is hotter than Mercury even though
+                it's farther from the Sun - its thick atmosphere traps heat at 900°F (480°C)!
+            </div>
+        </div>
+    </div>
+
+    <!-- Planetary Tour -->
+    <div style="margin-bottom: 25px;">
+        <h4 style="font-size: 14px; color: var(--accent); margin-bottom: 12px;">🪐 Planetary Tour</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            <!-- Mercury -->
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #8c7853;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Mercury_in_color_-_Prockter07-edit1.jpg/480px-Mercury_in_color_-_Prockter07-edit1.jpg"
+                    style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Mercury"
+                    onclick="app.openImageLightbox(this.src, 'Mercury: The smallest planet, covered in craters.')"
+                    onerror="this.style.display='none'">
+                <div style="font-size: 12px;"><strong style="color: #8c7853;">☿️ Mercury</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Smallest planet • Extreme temperatures • No
+                    atmosphere</div>
+            </div>
+            <!-- Venus -->
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #ffd700;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Venus-real_color.jpg/480px-Venus-real_color.jpg"
+                    style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Venus"
+                    onclick="app.openImageLightbox(this.src, 'Venus: Earth\'s twin in size, but a scorching inferno.')"
+                    onerror="this.style.display='none'">
+                <div style="font-size: 12px;"><strong style="color: #ffd700;">♀️ Venus</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Hottest planet • Thick clouds • Spins
+                    backwards</div>
+            </div>
+            <!-- Earth -->
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #4169e1;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/480px-The_Earth_seen_from_Apollo_17.jpg"
+                    style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Earth" onclick="app.openImageLightbox(this.src, 'Earth: Our beautiful blue home in space.')"
+                    onerror="this.style.display='none'">
+                <div style="font-size: 12px;"><strong style="color: #4169e1;">🌍 Earth</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Our home • Only planet with life • Liquid
+                    water oceans</div>
+            </div>
+            <!-- Mars -->
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #cd5c5c;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/480px-OSIRIS_Mars_true_color.jpg"
+                    style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Mars"
+                    onclick="app.openImageLightbox(this.src, 'Mars: The Red Planet with towering volcanoes and deep canyons.')"
+                    onerror="this.style.display='none'">
+                <div style="font-size: 12px;"><strong style="color: #cd5c5c;">♂️ Mars</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">The Red Planet • Tallest volcano • Future
+                    human base?</div>
+            </div>
+            <!-- Jupiter -->
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #daa520;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Jupiter_and_its_shrunken_Great_Red_Spot.jpg/480px-Jupiter_and_its_shrunken_Great_Red_Spot.jpg"
+                    style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Jupiter"
+                    onclick="app.openImageLightbox(this.src, 'Jupiter: The giant with its famous Great Red Spot storm.')"
+                    onerror="this.style.display='none'">
+                <div style="font-size: 12px;"><strong style="color: #daa520;">♃ Jupiter</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Largest planet • Great Red Spot storm • 79+
+                    moons</div>
+            </div>
+            <!-- Saturn -->
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #f4a460;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Saturn_during_Equinox.jpg/480px-Saturn_during_Equinox.jpg"
+                    style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Saturn"
+                    onclick="app.openImageLightbox(this.src, 'Saturn: The ringed jewel of our solar system.')"
+                    onerror="this.style.display='none'">
+                <div style="font-size: 12px;"><strong style="color: #f4a460;">🪐 Saturn</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Spectacular rings • Could float on water •
+                    Titan moon has lakes</div>
+            </div>
+            <!-- Uranus -->
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #4fc3f7;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Uranus2.jpg/480px-Uranus2.jpg"
+                    style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Uranus"
+                    onclick="app.openImageLightbox(this.src, 'Uranus: The tilted ice giant spinning on its side.')"
+                    onerror="this.style.display='none'">
+                <div style="font-size: 12px;"><strong style="color: #4fc3f7;">♅ Uranus</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Sideways rotation • Methane atmosphere •
+                    Diamond rain</div>
+            </div>
+            <!-- Neptune -->
+            <div
+                style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #1e90ff;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Neptune_-_Voyager_2_%2829347980845%29_flatten_crop.jpg/480px-Neptune_-_Voyager_2_%2829347980845%29_flatten_crop.jpg"
+                    style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Neptune"
+                    onclick="app.openImageLightbox(this.src, 'Neptune: The windiest planet in the solar system.')"
+                    onerror="this.style.display='none'">
+                <div style="font-size: 12px;"><strong style="color: #1e90ff;">♆ Neptune</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Windiest planet • Supersonic winds • Deep
+                    blue color</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spectacular Images -->
+    <div style="margin-bottom: 25px;">
+        <h4 style="font-size: 14px; color: var(--accent); margin-bottom: 12px;">🖼️ Spectacular Space Photos</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+            <div style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px;">
+                <img src="https://stsci-opis.org/STScI-01GA76Q01D09HFEV174Z0QHJWZ.png"
+                    style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Webb Deep Field"
+                    onclick="app.openImageLightbox(this.src, 'Webb Deep Field: Thousands of galaxies in a grain of sand.')"
+                    onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Webb%27s_First_Deep_Field.jpg/1200px-Webb%27s_First_Deep_Field.jpg'">
+                <div style="font-size: 12px;"><strong style="color: #00f3ff;">Webb Deep Field</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Thousands of galaxies in a patch of sky
+                    the size of a grain of sand held at arm's length!</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px;">
+                <img src="https://stsci-opis.org/STScI-01GFNN3PWJMY4RQXKZ585BC4QH.png"
+                    style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Pillars of Creation"
+                    onclick="app.openImageLightbox(this.src, 'Pillars of Creation: A star-forming factory.')"
+                    onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Pillars_of_Creation_%28NIRCam_Image%29.jpg/1200px-Pillars_of_Creation_%28NIRCam_Image%29.jpg'">
+                <div style="font-size: 12px;"><strong style="color: #ff5500;">Pillars of Creation</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">Giant columns of gas where new stars are
+                    being born, 6,500 light-years away!</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Black_hole_-_Messier_87_crop_max_res.jpg/1200px-Black_hole_-_Messier_87_crop_max_res.jpg"
+                    style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; cursor: pointer;"
+                    alt="Black Hole"
+                    onclick="app.openImageLightbox(this.src, 'M87 Black Hole: The first image of a black hole shadow.')">
+                <div style="font-size: 12px;"><strong style="color: #ffff00;">First Black Hole Photo</strong></div>
+                <div style="font-size: 10px; color: #aaa; margin-top: 4px;">The first ever picture of a black hole's
+                    shadow, 55 million light-years away!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Videos -->
+    <div style="margin-bottom: 25px;">
+        <h4 style="font-size: 14px; color: var(--accent); margin-bottom: 12px;">🎥 Amazing Space Videos</h4>
+
+        <!-- Video 1 -->
+        <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+            <div style="font-size: 13px; margin-bottom: 8px;"><strong style="color: #00f3ff;">The Scale of the
+                    Universe</strong></div>
+            <iframe width="100%" height="250" src="https://www.youtube.com/embed/udAL48P5NJU" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen style="border-radius: 6px;"></iframe>
+            <div style="font-size: 11px; color: #aaa; margin-top: 6px;">Journey from the smallest particles to the
+                edge of the observable universe!</div>
+        </div>
+
+        <!-- Video 2 -->
+        <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+            <div style="font-size: 13px; margin-bottom: 8px;"><strong style="color: #ff5500;">What If You Fell Into
+                    A Black Hole?</strong></div>
+            <iframe width="100%" height="250" src="https://www.youtube.com/embed/QAa2O_8wBUQ" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen style="border-radius: 6px;"></iframe>
+            <div style="font-size: 11px; color: #aaa; margin-top: 6px;">Kurzgesagt explains what would happen to you
+                inside a black hole!</div>
+        </div>
+
+        <!-- Video 3 -->
+        <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px;">
+            <div style="font-size: 13px; margin-bottom: 8px;"><strong style="color: #39ff14;">Hubble's Greatest
+                    Discoveries</strong></div>
+            <iframe width="100%" height="250" src="https://www.youtube.com/embed/uD4izuDMUQA" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen style="border-radius: 6px;"></iframe>
+            <div style="font-size: 11px; color: #aaa; margin-top: 6px;">See 30 years of breathtaking discoveries
+                from the Hubble Space Telescope!</div>
+        </div>
+    </div>
+
+    <!-- Fun Activities -->
+    <div style="margin-bottom: 20px;">
+        <h4 style="font-size: 14px; color: var(--accent); margin-bottom: 12px;">🎨 Try This!</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12px;">
+            <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px;">
+                <strong style="color: #ffff00;">🌙 Make Moon Craters:</strong> Drop stones into flour or sand to see
+                how meteor impacts create craters!
+            </div>
+            <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px;">
+                <strong style="color: #00f3ff;">🌌 Star Gazing:</strong> Tonight, find the Big Dipper constellation
+                and follow its pointer stars to find the North Star!
+            </div>
+            <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px;">
+                <strong style="color: #ff00ff;">🎨 Galaxy Art:</strong> Swirl milk, food coloring, and dish soap to
+                create your own spiral galaxy!
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-small" onclick="app.toggleUniverseKnowledge()"
+        style="width: 100%; padding: 10px; font-weight: bold; margin-top: 10px;">CLOSE</button>
+</div>
