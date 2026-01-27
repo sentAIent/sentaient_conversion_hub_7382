@@ -319,19 +319,26 @@
             <div id="sectionControls" class="cockpit-section" style="top:70px; right:15px; width:220px;">
                 <div class="cockpit-header">
                     <h4>🎮 Flight Control</h4>
-                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')">−</button>
+                    <div style="display:flex; gap:4px;">
+                        <button class="window-btn" onclick="app.toggleControlsExpanded()"
+                            title="Expand Controls">⛶</button>
+                        <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')">−</button>
+                    </div>
                 </div>
                 <div class="cockpit-content">
                     <div class="controls-grid"
                         style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:15px;">
-                        <kbd title="W - Thrust Forward: Accelerate in the direction you're facing">W</kbd>
-                        <kbd title="S - Thrust Backward: Decelerate or reverse thrust">S</kbd>
-                        <kbd title="A - Roll Left: Rotate spacecraft counter-clockwise">A</kbd>
-                        <kbd title="D - Roll Right: Rotate spacecraft clockwise">D</kbd>
-                        <kbd title="Q - Strafe Up: Move upward without changing direction">Q</kbd>
-                        <kbd title="E - Strafe Down: Move downward without changing direction">E</kbd>
-                        <kbd title="R - Pitch Up: Tilt nose upward (3D rotation)">R</kbd>
-                        <kbd title="F - Pitch Down: Tilt nose downward (3D rotation)">F</kbd>
+                        <kbd data-key="W" data-cmd="Thrust Forward"
+                            data-desc="Accelerate in the direction you're facing">W</kbd>
+                        <kbd data-key="S" data-cmd="Thrust Backward" data-desc="Decelerate or reverse thrust">S</kbd>
+                        <kbd data-key="A" data-cmd="Roll Left" data-desc="Rotate spacecraft counter-clockwise">A</kbd>
+                        <kbd data-key="D" data-cmd="Roll Right" data-desc="Rotate spacecraft clockwise">D</kbd>
+                        <kbd data-key="Q" data-cmd="Strafe Up"
+                            data-desc="Move upward without changing direction">Q</kbd>
+                        <kbd data-key="E" data-cmd="Strafe Down"
+                            data-desc="Move downward without changing direction">E</kbd>
+                        <kbd data-key="R" data-cmd="Pitch Up" data-desc="Tilt nose upward (3D rotation)">R</kbd>
+                        <kbd data-key="F" data-cmd="Pitch Down" data-desc="Tilt nose downward (3D rotation)">F</kbd>
                     </div>
 
                     <div style="border-top: 1px solid rgba(0,243,255,0.2); padding-top: 10px;">
@@ -575,6 +582,56 @@
             </div>
         </div>
     </div>
+
+    <!-- === EXPANDED CONTROLS MODAL === -->
+    <div id="expandedControlsModal" class="modal-overlay">
+        <div class="modal" style="max-width: 600px; width: 90%;">
+            <h2 style="color: var(--accent); margin-bottom: 20px;">🎮 Flight Controls Reference</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3
+                        style="color: #ff5500; font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,85,0,0.3); padding-bottom: 6px;">
+                        Movement</h3>
+                    <div class="control-ref-item"><kbd>W</kbd><span><strong>Thrust Forward</strong><br>Accelerate in the
+                            direction you're facing</span></div>
+                    <div class="control-ref-item"><kbd>S</kbd><span><strong>Thrust Backward</strong><br>Decelerate or
+                            reverse thrust</span></div>
+                    <div class="control-ref-item"><kbd>Q</kbd><span><strong>Strafe Up</strong><br>Move upward without
+                            changing direction</span></div>
+                    <div class="control-ref-item"><kbd>E</kbd><span><strong>Strafe Down</strong><br>Move downward
+                            without changing direction</span></div>
+                </div>
+                <div>
+                    <h3
+                        style="color: #00f3ff; font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,243,255,0.3); padding-bottom: 6px;">
+                        Rotation</h3>
+                    <div class="control-ref-item"><kbd>A</kbd><span><strong>Roll Left</strong><br>Rotate spacecraft
+                            counter-clockwise</span></div>
+                    <div class="control-ref-item"><kbd>D</kbd><span><strong>Roll Right</strong><br>Rotate spacecraft
+                            clockwise</span></div>
+                    <div class="control-ref-item"><kbd>R</kbd><span><strong>Pitch Up</strong><br>Tilt nose upward (3D
+                            rotation)</span></div>
+                    <div class="control-ref-item"><kbd>F</kbd><span><strong>Pitch Down</strong><br>Tilt nose downward
+                            (3D rotation)</span></div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #ffd700; font-size: 14px; margin-bottom: 12px;">Special Controls</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="control-ref-item"><kbd>U</kbd><span><strong>Upgrade Dock</strong><br>Open the upgrade
+                            station</span></div>
+                    <div class="control-ref-item"><kbd>ESC</kbd><span><strong>Exit Flight</strong><br>Return to drawing
+                            mode</span></div>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 25px;">
+                <button class="btn-secondary" onclick="app.hideControlsExpanded()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Tooltip Element -->
+    <div id="kbdTooltip" class="kbd-tooltip"></div>
 
     <!-- Main Application Logic (Module) -->
     <!-- Mobile Joystick -->

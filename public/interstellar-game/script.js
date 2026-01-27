@@ -408,6 +408,9 @@ class AetherEngine {
         this.makeResizable('sectionControls');
         this.makeResizable('sectionRadar');
         this.makeResizable('sectionVelocity');
+
+        // Initialize kbd tooltips for flight controls
+        this.initKbdTooltips();
         this.makeResizable('sectionMap');
         this.makeResizable('sectionGems');
         this.initGemsSectionResize(); // Special handling for gems
@@ -999,6 +1002,53 @@ class AetherEngine {
             'floatingLeaders': '🏆 Leaders'
         };
         return names[id] || id;
+    }
+
+    // Toggle expanded controls modal
+    toggleControlsExpanded() {
+        const modal = document.getElementById('expandedControlsModal');
+        if (modal) {
+            modal.classList.toggle('active');
+        }
+    }
+
+    hideControlsExpanded() {
+        const modal = document.getElementById('expandedControlsModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    // Initialize kbd tooltips for flight controls
+    initKbdTooltips() {
+        const tooltip = document.getElementById('kbdTooltip');
+        if (!tooltip) return;
+
+        const kbdElements = document.querySelectorAll('.controls-grid kbd[data-key]');
+
+        kbdElements.forEach(kbd => {
+            kbd.addEventListener('mouseenter', (e) => {
+                const key = kbd.dataset.key;
+                const cmd = kbd.dataset.cmd;
+                const desc = kbd.dataset.desc;
+
+                tooltip.innerHTML = `
+                    <span class="tooltip-key">${key}</span>
+                    <span class="tooltip-cmd">— ${cmd}</span>
+                    <span class="tooltip-desc">${desc}</span>
+                `;
+
+                // Position tooltip above kbd element
+                const rect = kbd.getBoundingClientRect();
+                tooltip.style.left = rect.left + (rect.width / 2) - 80 + 'px';
+                tooltip.style.top = rect.top - 50 + 'px';
+                tooltip.classList.add('visible');
+            });
+
+            kbd.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('visible');
+            });
+        });
     }
 
     // Minimize window to taskbar
