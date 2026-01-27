@@ -495,7 +495,8 @@ export class Visualizer3D {
 
     initOcean() {
         // Ocean: Wave geometry + foam particles
-        const waveGeo = new THREE.PlaneGeometry(40, 40, 64, 64);
+        // Widen geometry for "Infinite" horizon effect
+        const waveGeo = new THREE.PlaneGeometry(300, 100, 128, 64);
         const waveMat = new THREE.MeshBasicMaterial({
             color: 0x00aaff,
             wireframe: true,
@@ -1233,21 +1234,38 @@ export class Visualizer3D {
         }
 
         if (this.activeModes.has('ocean') && this.oceanWave) {
-            // Ocean animation: Rolling waves (vertex displacement)
-            // Simple sine wave for now
-            const positions = this.oceanWave.geometry.attributes.position.array;
-            const count = positions.length / 3;
-            // Assume width segments = 64
-            const width = 64;
+            // Ocean animation: Waves
+            const wavePositions = this.oceanWave.geometry.attributes.position.array;
+            const speedFactor = this.speedMultiplier;
 
-            for (let i = 0; i < positions.length; i += 3) {
-                const x = positions[i];
-                const z = positions[i + 2];
-                // Rolling wave z-axis
-                positions[i + 1] = Math.sin(z * 0.5 + now * this.speedMultiplier) * 0.5 +
-                    Math.sin(x * 0.2 + now * 0.5) * 0.2;
+            for (let i = 0; i < wavePositions.length; i += 3) {
+                const x = wavePositions[i];
+                const y = wavePositions[i + 1];
+                const distFromCenter = Math.sqrt(x * x + y * y);
+                // Reduce amplitude slightly
+                const amp = 1.0 + (normBass * 2.5);
+                // Displace Z (normal to plane)
+                wavePositions[i + 2] = Math.sin(distFromCenter * 0.2 - now * speedFactor * 0.8) * amp +
+                    Math.cos(x * 0.15 + now * speedFactor * 0.6) * (amp * 0.5);
             }
             this.oceanWave.geometry.attributes.position.needsUpdate = true;
+
+            // Foam movement
+            if (this.oceanFoam) {
+                const foamPositions = this.oceanFoam.geometry.attributes.position.array;
+                for (let i = 0; i < foamPositions.length; i += 3) {
+                    foamPositions[i] += Math.sin(now * 2 + i) * 0.02 * speedFactor;
+                    foamPositions[i + 2] += Math.cos(now * 1.5 + i) * 0.02 * speedFactor;
+
+                    // Wrap foam
+                    if (foamPositions[i] > 15) foamPositions[i] = -15;
+                    if (foamPositions[i] < -15) foamPositions[i] = 15;
+                    if (foamPositions[i + 2] > 10) foamPositions[i + 2] = -10;
+                    if (foamPositions[i + 2] < -10) foamPositions[i + 2] = 10;
+                }
+                this.oceanFoam.geometry.attributes.position.needsUpdate = true;
+                this.oceanFoam.material.opacity = 0.4 + (normMids * 0.3);
+            }
         }
 
         if (this.activeModes.has('matrix') && this.matrixRain) {
