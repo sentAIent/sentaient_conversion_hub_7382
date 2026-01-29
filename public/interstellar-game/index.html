@@ -201,34 +201,38 @@
                             d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5v-4h9v4zm5 0h-4v-4h4v4zm0-5H5V5h14v7z" />
                     </svg>
                 </button>
-                <button class="btn" onclick="app.toggleFlightMode()" data-tooltip="Flight Mode">🚀</button>
-                <button class="btn" id="selectShipBtn" onclick="app.showShipModal()" data-tooltip="Select Ship"
-                    style="display:none">🛸</button>
-                <button class="btn" id="dockBtn" onclick="app.toggleUpgradePanel()" data-tooltip="Upgrade Dock"
-                    style="display:none">🛠️</button>
+            </div>
 
-                <!-- Window Taskbar - minimized windows appear here -->
-                <div id="windowTaskbar" class="window-taskbar" style="display:none"></div>
+            <!-- GAME CONTROLS - Separated and Prominent -->
+            <div class="game-controls-section">
+                <span class="game-label">🎮 PLAY GAME</span>
+                <button class="btn game-btn" onclick="app.toggleFlightMode()"
+                    data-tooltip="Enter Flight Mode - Use WASD to fly!">🚀 FLY</button>
+                <button class="btn game-btn" id="selectShipBtn" onclick="app.showShipModal()"
+                    data-tooltip="Choose Your Spaceship" style="display:none">🛸 SHIP</button>
+                <button class="btn game-btn" id="dockBtn" onclick="app.toggleUpgradePanel()"
+                    data-tooltip="Upgrade Your Ship" style="display:none">🛠️ UPGRADES</button>
+            </div>
 
-                <!-- Layout Presets -->
-                <div id="layoutPresets" class="layout-presets" style="display:none">
-                    <button class="layout-btn" onclick="app.saveLayout()" title="Save Current Layout">💾 Save</button>
-                    <button class="layout-btn" id="layout1Btn" onclick="app.loadLayout(1)"
-                        title="Load Layout 1">1</button>
-                    <button class="layout-btn" id="layout2Btn" onclick="app.loadLayout(2)"
-                        title="Load Layout 2">2</button>
-                    <button class="layout-btn" id="layout3Btn" onclick="app.loadLayout(3)"
-                        title="Load Layout 3">3</button>
-                </div>
+            <!-- Window Taskbar - minimized windows appear here -->
+            <div id="windowTaskbar" class="window-taskbar" style="display:none"></div>
+
+            <!-- Layout Presets -->
+            <div id="layoutPresets" class="layout-presets" style="display:none">
+                <button class="layout-btn" onclick="app.saveLayout()" title="Save Current Layout">💾 Save</button>
+                <button class="layout-btn" id="layout1Btn" onclick="app.loadLayout(1)" title="Load Layout 1">1</button>
+                <button class="layout-btn" id="layout2Btn" onclick="app.loadLayout(2)" title="Load Layout 2">2</button>
+                <button class="layout-btn" id="layout3Btn" onclick="app.loadLayout(3)" title="Load Layout 3">3</button>
             </div>
         </div>
-        <div class="bottom-bar-right">
-            <div class="bar-group">
-                <button class="zoom-btn" onclick="app.adjustZoom(-0.1)">-</button>
-                <button class="zoom-btn" onclick="app.resetView()">⟲</button>
-                <button class="zoom-btn" onclick="app.adjustZoom(0.1)">+</button>
-            </div>
+    </div>
+    <div class="bottom-bar-right">
+        <div class="bar-group">
+            <button class="zoom-btn" onclick="app.adjustZoom(-0.1)">-</button>
+            <button class="zoom-btn" onclick="app.resetView()">⟲</button>
+            <button class="zoom-btn" onclick="app.adjustZoom(0.1)">+</button>
         </div>
+    </div>
     </div>
 
     <!-- Template Selection Panel -->
@@ -406,8 +410,52 @@
                     </div>
                 </div>
             </div>
-        </div>
 
+            <!-- SHIP STATUS - Below Flight Control -->
+            <div id="sectionShipStatus" class="cockpit-section" style="top:360px; right:15px; width:220px;">
+                <div class="cockpit-header">
+                    <h4>🛡️ Ship Status</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionShipStatus')">−</button>
+                </div>
+                <div class="cockpit-content">
+                    <!-- Shield Bar -->
+                    <div style="margin-bottom: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                            <span>SHIELD</span>
+                            <span id="shieldText">50 / 50</span>
+                        </div>
+                        <div
+                            style="background: rgba(0,0,0,0.5); border-radius: 4px; height: 20px; overflow: hidden; border: 1px solid rgba(100,200,255,0.4);">
+                            <div id="shieldBar"
+                                style="height: 100%; width: 100%; background: linear-gradient(90deg, #00aaff, #00ffff); transition: width 0.3s ease; box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hull Bar (future expansion) -->
+                    <div style="margin-bottom: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                            <span>HULL</span>
+                            <span id="hullText">100%</span>
+                        </div>
+                        <div
+                            style="background: rgba(0,0,0,0.5); border-radius: 4px; height: 20px; overflow: hidden; border: 1px solid rgba(0,255,100,0.4);">
+                            <div id="hullBar"
+                                style="height: 100%; width: 100%; background: linear-gradient(90deg, #00cc55, #00ff88); transition: width 0.3s ease; box-shadow: 0 0 10px rgba(0, 255, 100, 0.5);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Damage Warning -->
+                    <div id="damageWarning"
+                        style="display: none; text-align: center; padding: 8px; background: rgba(255,0,0,0.2); border: 1px solid rgba(255,0,0,0.5); border-radius: 4px; color: #ff4444; font-size: 12px; font-weight: bold; animation: blink 0.5s infinite;">
+                        ⚠️ TAKING DAMAGE ⚠️
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- BOTTOM ROW: Radar, Engines, Map, Gems - horizontal layout -->
         <div class="hud-bottom">
             <!-- RADAR - Bottom Left-Center (Pos 2) -->

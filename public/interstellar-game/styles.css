@@ -686,6 +686,84 @@
             box-shadow: 0 0 15px var(--accent-glow);
         }
 
+        /* === GAME CONTROLS SECTION - Prominent & Distinct === */
+        .game-controls-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, rgba(0, 255, 100, 0.08), rgba(0, 200, 255, 0.08));
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            border: 2px solid rgba(0, 255, 150, 0.4);
+            box-shadow:
+                0 0 20px rgba(0, 255, 150, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            margin-left: 12px;
+            animation: game-section-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes game-section-pulse {
+
+            0%,
+            100% {
+                border-color: rgba(0, 255, 150, 0.4);
+                box-shadow: 0 0 20px rgba(0, 255, 150, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            }
+
+            50% {
+                border-color: rgba(0, 255, 150, 0.7);
+                box-shadow: 0 0 35px rgba(0, 255, 150, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .game-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #00ff88;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+            white-space: nowrap;
+        }
+
+        .game-btn {
+            background: linear-gradient(135deg, rgba(0, 255, 100, 0.15), rgba(0, 200, 255, 0.1)) !important;
+            border: 1px solid rgba(0, 255, 150, 0.5) !important;
+            color: #00ff88 !important;
+            font-weight: 600 !important;
+            font-size: 12px !important;
+            padding: 8px 14px !important;
+            width: auto !important;
+            height: auto !important;
+            white-space: nowrap;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+        }
+
+        .game-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 100, 0.3), rgba(0, 200, 255, 0.2)) !important;
+            border-color: #00ff88 !important;
+            box-shadow: 0 0 25px rgba(0, 255, 150, 0.5) !important;
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        /* Make "FLY" button extra prominent */
+        .game-btn:first-of-type {
+            animation: fly-btn-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes fly-btn-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px rgba(0, 255, 150, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(0, 255, 150, 0.6), 0 0 40px rgba(0, 255, 150, 0.3);
+            }
+        }
+
         /* === WINDOW TASKBAR - Minimized windows dock === */
         .window-taskbar {
             display: flex;
@@ -1845,6 +1923,7 @@
         #fullscreenMapCanvas:active {
             cursor: grabbing;
         }
+
         /* Force Mobile Toggle Visible Always */
         #mobile-toggle {
             display: block !important;
@@ -1885,4 +1964,17 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 243, 255, 0.6);
+        }
+
+        /* Damage Warning Blink Animation */
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
         }

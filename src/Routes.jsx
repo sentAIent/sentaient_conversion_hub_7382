@@ -9,6 +9,8 @@ import HomepageAIConsultancyHub from './pages/homepage-ai-consultancy-hub';
 import AISolutionsExperienceCenter from './pages/ai-solutions-experience-center';
 import TrustTransparencyHub from './pages/trust-transparency-hub';
 import AboutOurApproachIntelligenceCenter from './pages/about-our-approach-intelligence-center';
+import Pricing from './pages/pricing';
+import CheckoutSuccess from './pages/checkout-success';
 import ITravel from './pages/iTravel';
 import Interstellar from './pages/Interstellar';
 import MindWave from './pages/MindWave';
@@ -28,6 +30,8 @@ const ProjectRoutes = () => {
           <Route path="/ai-solutions-experience-center" element={<AISolutionsExperienceCenter />} />
           <Route path="/trust-transparency-hub" element={<TrustTransparencyHub />} />
           <Route path="/about-our-approach-intelligence-center" element={<AboutOurApproachIntelligenceCenter />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/checkout-success" element={<CheckoutSuccess />} />
           <Route path="/itravel" element={<ITravel />} />
           <Route path="/interstellar" element={<Interstellar />} />
           <Route path="/mindwave" element={<MindWave />} />
