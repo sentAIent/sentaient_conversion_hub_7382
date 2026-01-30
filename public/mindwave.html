@@ -62,14 +62,14 @@
     </script>
     <title>MindWave - Binaural Beats Studio</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
-    <link rel="stylesheet" href="binaural-assets/css/tailwind-compiled.css">
-    <link rel="stylesheet" href="binaural-assets/css/style.css?v=25">
-    <link rel="stylesheet" href="binaural-assets/css/visual-active.css?v=1">
+    <link rel="stylesheet" href="/binaural-assets/css/tailwind-compiled.css">
+    <link rel="stylesheet" href="/binaural-assets/css/style.css?v=25">
+    <link rel="stylesheet" href="/binaural-assets/css/visual-active.css?v=1">
     <!-- Preload critical resources -->
-    <link rel="preload" href="binaural-assets/js/main.js" as="script" crossorigin>
-    <script src="binaural-assets/config.js" defer
+    <link rel="preload" href="/binaural-assets/js/main.js" as="script" crossorigin>
+    <script src="/binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="binaural-assets/js/main.js?v=42"></script>
+    <script type="module" src="/binaural-assets/js/main.js?v=42"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -486,57 +486,49 @@
                         }
                     </style>
                     <button id="sphereBtn"
-                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
-                        onclick="setVisualMode('sphere')">
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🔮</span>
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
                     </button>
                     <button id="flowBtn"
-                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
-                        onclick="setVisualMode('flow')">
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌀</span>
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
                     </button>
                     <button id="lavaBtn"
-                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
-                        onclick="setVisualMode('lava')">
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌋</span>
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
                     </button>
                     <button id="fireplaceBtn"
-                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
-                        onclick="setVisualMode('fire')">
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🔥</span>
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
                     </button>
                     <button id="rainBtn"
-                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
-                        onclick="setVisualMode('rain')">
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌿</span>
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
                     </button>
                     <button id="zenBtn"
-                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
-                        onclick="setVisualMode('zen')">
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌸</span>
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
                     </button>
                     <button id="oceanBtn"
-                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
-                        onclick="setVisualMode('ocean')">
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌊</span>
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Ocean</span>
                     </button>
                     <button id="matrixBtn"
-                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
-                        onclick="setVisualMode('matrix')">
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">💻</span>
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Matrix</span>
@@ -1009,6 +1001,17 @@
                         </svg>
                         <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Journeys
                         </h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="event.stopPropagation(); showInfoModal('journeys')"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
                     </div>
                     <span id="sweepStatus" class="text-[9px] font-mono text-[var(--text-muted)] hidden">
                         <span class="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></span>Active
@@ -1599,7 +1602,7 @@
     <!-- THEME GALLERY MODAL -->
     <div id="themeModal"
         class="modal fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/40">
-        <div class="glass-card w-[95%] max-w-5xl mx-auto max-h-[85vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/10 transform scale-95 opacity-0 transition-all duration-300"
+        <div class="glass-card w-[90vw] md:w-[75vw] max-w-none max-h-[85vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/10 transform scale-95 opacity-0 transition-all duration-300"
             id="themeModalCard">
 
             <!-- Header -->
@@ -1639,7 +1642,7 @@
     <!-- Profile Modal -->
     <div id="profileModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 hidden p-4">
         <div
-            class="glass-card p-10 rounded-3xl shadow-2xl w-[95%] max-w-xl mx-auto flex flex-col gap-7 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            class="glass-card p-10 rounded-3xl shadow-2xl w-[90vw] md:w-[30vw] max-w-none flex flex-col gap-7 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <!-- Header -->
             <div class="flex justify-between items-center pb-2">
                 <h3 class="text-lg font-bold uppercase tracking-wider" style="color: var(--accent);">Your Profile</h3>
