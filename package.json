@@ -43,6 +43,7 @@
     "firebase": "^12.8.0",
     "framer-motion": "^10.16.4",
     "lucide-react": "^0.484.0",
+    "posthog-js": "^1.335.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet": "^6.1.0",

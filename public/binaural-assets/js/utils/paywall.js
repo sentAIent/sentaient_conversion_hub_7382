@@ -8,8 +8,10 @@ import { getAuth } from 'firebase/auth';
 
 // Free tier limits
 const FREE_TIER = {
-    maxPresets: 5,
-    maxJourneyLessons: 3,
+    // Only Delta (Sleep) and Beta (Focus) are free
+    freePresets: ['delta', 'beta'],
+    maxPresets: 2,
+    maxJourneyLessons: 1, // Only lesson 1 is free
     canExport: false,
     canUseAdvancedFeatures: false
 };
@@ -49,8 +51,8 @@ export async function canAccessFeature(featureType, featureId) {
     // Check free tier limits
     switch (featureType) {
         case 'preset':
-            const presetIndex = parseInt(featureId);
-            if (presetIndex < FREE_TIER.maxPresets) {
+            // featureId is the preset code (e.g., 'alpha', 'theta')
+            if (FREE_TIER.freePresets.includes(featureId)) {
                 return { allowed: true };
             }
             return { allowed: false, reason: 'premium_preset' };
@@ -84,18 +86,18 @@ export function showUpgradePrompt(reason, onContinue = null) {
 
     const messages = {
         'premium_preset': {
-            title: '🎵 Unlock All Presets',
-            description: 'Access our complete library of expertly crafted binaural beat presets.',
-            cta: 'Upgrade to Premium'
+            title: '🔒 Unlock Founders Club',
+            description: 'This wave is reserved for Founders Club members. Join the first 500 to lock in $9.99/mo forever.',
+            cta: 'Join & Unlock'
         },
         'premium_lesson': {
             title: '🧘 Continue Your Journey',
-            description: 'Unlock all meditation lessons and guided sessions.',
-            cta: 'Unlock Full Journey'
+            description: 'Unlock the full 30-day program with the Founders Club.',
+            cta: 'Join & Unlock'
         },
         'premium_feature': {
             title: '✨ Premium Feature',
-            description: 'Upgrade to access advanced features and tools.',
+            description: 'Upgrade to the Founders Club to access advanced tools.',
             cta: 'Go Premium'
         },
         'not_logged_in': {

@@ -14,9 +14,12 @@ import Interstellar from './pages/Interstellar';
 import MindWave from './pages/MindWave';
 
 
+import AnalyticsTracker from './components/AnalyticsTracker';
+
 const ProjectRoutes = () => {
   return (
     <BrowserRouter>
+      <AnalyticsTracker />
       <ErrorBoundary>
         <ScrollToTop />
         <RouterRoutes>

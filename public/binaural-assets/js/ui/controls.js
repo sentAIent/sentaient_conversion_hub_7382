@@ -11,6 +11,7 @@ import { setStoryVolume, storyState } from '../content/stories.js';
 import { setCustomAudioVolume } from '../content/audio-library.js';
 import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '../content/classical.js';
 import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '../audio/dj-synth.js';
+import { goToCheckout, hasPurchasedApp } from '../services/stripe-simple.js';
 
 // ... (existing code)
 
@@ -718,7 +719,36 @@ export function setupUI() {
     window.stopSweep = stopSweepUI; // NEW
     window.handleHyperGammaClick = handleHyperGammaClick; // NEW
 
-    // Ensure visual mode UI is synced on load
+    // PAYWALL HELPER: Handles Auth + Purchase
+    const checkAccessAndPurchase = async (tier) => {
+        // 1. Check if logged in
+        if (!auth.currentUser) {
+            // Show toast and open auth modal
+            // We need to import showToast or use a fallback
+            console.log('[Paywall] User not logged in. Opening auth modal.');
+            alert("Please sign in or create an account to purchase Lifetime Access.");
+            openAuthModal();
+            return;
+        }
+
+        // 2. Check if already purchased (double check)
+        const hasAccess = await hasPurchasedApp();
+        if (hasAccess) {
+            alert("You already have Lifetime Access! refreshing...");
+            window.location.reload();
+            return;
+        }
+
+        // 3. Proceed to Checkout
+        try {
+            goToCheckout(tier);
+        } catch (e) {
+            console.error('[Paywall] Checkout failed:', e);
+            alert("Checkout Error: " + e.message);
+        }
+    };
+
+    window.paywall = { goToCheckout, hasPurchasedApp, checkAccessAndPurchase }; // UPDATED
     // Ensure visual mode UI is synced on load (Force ON defaults)
     // Ensure visual mode UI is synced on load (Force ON defaults)
     setVisualMode('particles', true);
@@ -753,103 +783,6 @@ export function setupUI() {
         console.error("Failed to install protection:", e);
     }
 
-}
-
-function setupMatrixControls() {
-    const viz = getVisualizer();
-
-    // Elements
-    const colorPicker = document.getElementById('matrixColorPicker');
-    const speedSlider = document.getElementById('matrixSpeedSlider');
-    const lengthSlider = document.getElementById('matrixLengthSlider');
-    const angleSlider = document.getElementById('matrixAngleSlider');
-    const rainbowToggle = document.getElementById('matrixRainbowToggle');
-    const resetBtn = document.getElementById('matrixResetBtn');
-    const closeBtn = document.getElementById('matrixCloseBtn');
-
-    // Value Displays
-    const speedVal = document.getElementById('matrixSpeedVal');
-    const lengthVal = document.getElementById('matrixLengthVal');
-    const angleVal = document.getElementById('matrixAngleVal');
-
-    if (!colorPicker) return; // Exit if elements don't exist
-
-    // Color
-    colorPicker.addEventListener('input', (e) => {
-        const viz = getVisualizer();
-        if (viz && viz.setMatrixColor) {
-            viz.setMatrixColor(e.target.value);
-            // If user picks a color, disable rainbow
-            if (rainbowToggle.checked) {
-                rainbowToggle.checked = false;
-                viz.setMatrixRainbow(false);
-            }
-        }
-    });
-
-    // Speed
-    speedSlider.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (speedVal) speedVal.textContent = val.toFixed(1) + 'x';
-        const viz = getVisualizer();
-        if (viz && viz.setMatrixSpeed) viz.setMatrixSpeed(val);
-    });
-
-    // Length
-    lengthSlider.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (lengthVal) lengthVal.textContent = val.toFixed(1) + 'x';
-        const viz = getVisualizer();
-        if (viz && viz.setMatrixLength) viz.setMatrixLength(val);
-    });
-
-    // Angle
-    angleSlider.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
-        if (angleVal) angleVal.textContent = val + '°';
-        const viz = getVisualizer();
-        if (viz && viz.setMatrixAngle) viz.setMatrixAngle(val);
-    });
-
-    // Rainbow
-    rainbowToggle.addEventListener('change', (e) => {
-        const viz = getVisualizer();
-        if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(e.target.checked);
-    });
-
-    // Reset
-    resetBtn.addEventListener('click', () => {
-        // Defaults
-        colorPicker.value = '#00FF41';
-        speedSlider.value = 1.0;
-        lengthSlider.value = 1.0;
-        angleSlider.value = 0;
-        rainbowToggle.checked = false;
-
-        // Update Displays
-        if (speedVal) speedVal.textContent = '1.0x';
-        if (lengthVal) lengthVal.textContent = '1.0x';
-        if (angleVal) angleVal.textContent = '0°';
-
-        // Update Viz
-        const viz = getVisualizer();
-        if (viz && viz.setMatrixColor) {
-            viz.setMatrixColor('#00FF41');
-            viz.setMatrixSpeed(1.0);
-            viz.setMatrixLength(1.0);
-            viz.setMatrixAngle(0);
-            viz.setMatrixRainbow(false);
-        }
-    });
-
-    // Close
-    closeBtn.addEventListener('click', () => {
-        const panel = document.getElementById('matrixSettingsPanel');
-        if (panel) {
-            panel.classList.add('hidden');
-            panel.classList.remove('flex', 'flex-col');
-        }
-    });
 }
 
 // --- PLAY BUTTON HANDLER ---
@@ -1749,6 +1682,7 @@ export function setVisualMode(mode, forceState = null) {
         }
     }
 }
+window.setVisualMode = setVisualMode;
 
 
 export function setTheme(themeName) {
@@ -2276,7 +2210,8 @@ async function confirmSave() {
 export async function applyPreset(type, btnElement, autoStart = true, skipPaywall = false) {
     // Check paywall for presets (skip if called from combo preset)
     // EXEMPT BASIC BRAINWAVES from paywall
-    const freePresets = ['alpha', 'theta', 'beta', 'delta', 'gamma'];
+    // STRICT LOCKING: Only Delta (Sleep) and Beta (Focus) are free
+    const freePresets = ['delta', 'beta'];
 
     if (!skipPaywall && !freePresets.includes(type)) {
         const presetOrder = ['focus', 'sleep', 'meditation', 'creativity', 'relax'];
@@ -2716,7 +2651,19 @@ export function openThemeModal() {
         initThemeModal();
 
         // Add cursor settings UI to the modal
-        createCursorUIInThemeModal();
+        if (card.classList.contains('scale-95')) {
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        } else {
+            renderThemeModal(getTheme()); // Initial render
+            requestAnimationFrame(() => {
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            });
+        }
+
+        // Apply Layout Constraints
+        adjustModalLayout(modal);
 
         modal.classList.remove('hidden');
         // Force reflow
@@ -3379,6 +3326,7 @@ updateShowAllButton = function () {
 }
 
 // NEW: Update Stop All button state (Light Mode Aware)
+// NEW: Update Stop All button state (Light Mode Aware)
 function updateStopAllButton() {
     const stopAllBtn = document.getElementById('djStopAll');
     if (!stopAllBtn) return;
@@ -3416,4 +3364,572 @@ function updateStopAllButton() {
             stopAllBtn.className = 'px-2 py-1 rounded text-[9px] font-bold bg-white/5 text-[var(--text-muted)] border border-white/10 opacity-0 pointer-events-none transition-opacity duration-300 order-last ml-auto';
         }
     }
+}
+
+// --- INFO MODAL SYSTEM (Rich Tooltips) ---
+const INFO_CONTENT = {
+    brain_waves: {
+        title: "🧠 Brain Wave Frequencies",
+        emoji: "🌊",
+        content: `
+            <div class="space-y-4">
+                <p class="text-white/80 leading-relaxed font-sans">
+                    Entrain your brain to specific states of consciousness using precise frequency differences.
+                </p>
+                <div class="space-y-2 font-sans">
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+                        <div class="flex justify-between font-bold text-[var(--accent)] mb-1">
+                            <span>Delta (0.5-4Hz)</span>
+                            <span>💤 Deep Sleep</span>
+                        </div>
+                        <div class="text-xs text-white/60">Restorative sleep, dreamless state, and healing.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+                        <div class="flex justify-between font-bold text-[var(--accent)] mb-1">
+                            <span>Theta (4-8Hz)</span>
+                            <span>🧘 Meditation</span>
+                        </div>
+                        <div class="text-xs text-white/60">Deep relaxation, vivid imagery, and creativity.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+                        <div class="flex justify-between font-bold text-[var(--accent)] mb-1">
+                            <span>Alpha (8-14Hz)</span>
+                            <span>😌 Relaxation</span>
+                        </div>
+                        <div class="text-xs text-white/60">Calm focus, stress reduction, and light meditation.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+                        <div class="flex justify-between font-bold text-[var(--accent)] mb-1">
+                            <span>Mu (9-11Hz)</span>
+                            <span>🧠 Body Sync</span>
+                        </div>
+                        <div class="text-xs text-white/60">Sensorimotor rhythm, physical calm with mental alertness.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+                        <div class="flex justify-between font-bold text-[var(--accent)] mb-1">
+                            <span>Beta (14-30Hz)</span>
+                            <span>🎯 Active Focus</span>
+                        </div>
+                        <div class="text-xs text-white/60">Problem solving, high-level cognition, and active concentration.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+                        <div class="flex justify-between font-bold text-[var(--accent)] mb-1">
+                            <span>Gamma (30-100Hz)</span>
+                            <span>⚡ Peak Performance</span>
+                        </div>
+                        <div class="text-xs text-white/60">Universal consciousness, memory recall, and hyper-awareness.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-amber-500/30">
+                        <div class="flex justify-between font-bold text-amber-400 mb-1">
+                            <span>Hyper-Gamma (40-100Hz)</span>
+                            <span>🚀 Advanced</span>
+                        </div>
+                        <div class="text-xs text-white/60">High-intensity transcendental states. Use with caution.</div>
+                    </div>
+                </div>
+            </div>
+        `
+    },
+    healing: {
+        title: "✨ Solfeggio Healing Frequencies",
+        emoji: "🕊️",
+        content: `
+            <div class="space-y-4">
+                <p class="text-white/80 leading-relaxed font-sans">
+                    Ancient 6-tone scale frequencies believed to balance energy and promote healing.
+                </p>
+                <div class="bg-white/5 p-3 rounded-lg border border-white/5 space-y-2 font-sans">
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">174Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Pain Relief</span><span class="text-[10px] text-white/50">Natural anaesthetic, reduces pain</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">285Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Tissue Healing</span><span class="text-[10px] text-white/50">Restores tissues and organs</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">396Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Liberation</span><span class="text-[10px] text-white/50">Releases guilt and fear</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">417Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Change</span><span class="text-[10px] text-white/50">Undoing situations, facilitating change</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">432Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Nature</span><span class="text-[10px] text-white/50">Universal harmony, calming</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">528Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Miracles</span><span class="text-[10px] text-white/50">Transformation and DNA repair</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">639Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Connection</span><span class="text-[10px] text-white/50">Harmonizing relationships</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">741Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Intuition</span><span class="text-[10px] text-white/50">Awakening intuition, expression</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">852Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Spirit</span><span class="text-[10px] text-white/50">Returning to spiritual order</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">963Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Oneness</span><span class="text-[10px] text-white/50">Divine consciousness</span></div>
+                    </div>
+                </div>
+            </div>
+        `
+    },
+    ambience: {
+        title: "🌌 Immersive Ambience",
+        emoji: "🎧",
+        content: `
+            <div class="space-y-4">
+                <p class="text-white/80 leading-relaxed font-sans">
+                    Curated soundscapes to mask noise and deepen immersion.
+                </p>
+                <div class="grid grid-cols-2 gap-2 text-sm font-sans">
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">🌧️ Lofi Rain</div>
+                        <div class="text-[10px] text-white/50">Chill beats with gentle rain.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">🌙 Night</div>
+                        <div class="text-[10px] text-white/50">Crickets and peaceful silence.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">⚔️ Epic</div>
+                        <div class="text-[10px] text-white/50">Dramatic cinematic focus.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">🌊 Ocean</div>
+                        <div class="text-[10px] text-white/50">Rhythmic waves drift.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">⛈️ Storm</div>
+                        <div class="text-[10px] text-white/50">Intense thunder for deep work.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">🔔 Temple</div>
+                        <div class="text-[10px] text-white/50">Spiritual bowls and chants.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">🔥 Fireplace</div>
+                        <div class="text-[10px] text-white/50">Warm crackling fire.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">🌲 Forest</div>
+                        <div class="text-[10px] text-white/50">Birds and wind in trees.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">🌌 Cosmic</div>
+                        <div class="text-[10px] text-white/50">Deep space drones.</div>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5 flex flex-col gap-1">
+                        <div class="font-bold text-[var(--accent)]">☀️ Morning</div>
+                        <div class="text-[10px] text-white/50">Gentle sunrise vibes.</div>
+                    </div>
+                </div>
+            </div>
+        `,
+    },
+    atmosphere: {
+        title: "Atmosphere",
+        emoji: "🌫️",
+        content: `
+            <div class="space-y-4 text-white/80 font-sans">
+                <p>
+                    Immersive soundscapes designed to ground your practice. Layer these textures—rain, forest, fire, or cosmic drones—underneath binaural beats to mask distractions.
+                </p>
+                <div class="p-3 bg-white/5 rounded-lg border border-white/10">
+                    <h4 class="font-bold text-[var(--accent)] mb-1">How to Use:</h4>
+                    <ul class="list-disc list-inside text-sm space-y-1 text-white/70">
+                        <li>Use the <strong>Master Slider</strong> to control overall ambience volume.</li>
+                        <li>Mix multiple sounds (e.g., Rain + Fire) for a custom environment.</li>
+                    </ul>
+                </div>
+            </div>
+        `
+    },
+    djpads: {
+        title: "DJ Studio",
+        emoji: "🎧",
+        content: `
+            <div class="space-y-4 text-white/80 font-sans">
+                <p>
+                    A live performance interface for creating dynamic soundscapes. Use the pads to trigger one-shot effects, loops, and textures in real-time.
+                </p>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="bg-white/5 p-3 rounded-lg">
+                        <span class="font-bold text-[var(--accent)] block mb-1">One-Shot Mode</span>
+                        Plays the sound once. Good for hits and accents.
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-lg">
+                        <span class="font-bold text-[var(--accent)] block mb-1">Loop Mode</span>
+                        Repeats the sound continuously. Good for rhythmic layers.
+                    </div>
+                </div>
+            </div>
+        `
+    },
+    stories: {
+        title: "Sleep Stories",
+        emoji: "📚",
+        content: `
+            <div class="space-y-4 text-white/80 font-sans">
+                <p>
+                    Narrated journeys designed to disengage your active mind and drift you into deep sleep. Each story is mixed with Delta waves for maximum relaxation.
+                </p>
+                <p class="text-sm border-l-2 border-purple-500 pl-3">
+                    Select a story to begin. Use the volume slider to balance the voice against any background layers you've added.
+                </p>
+            </div>
+        `
+    },
+    journeys: {
+        title: "Journeys",
+        emoji: "🚀",
+        content: `
+            <div class="space-y-4 text-white/80 font-sans">
+                <p>
+                    Frequency sweeps that gradually transition your state of mind.
+                </p>
+                <div class="space-y-2 font-sans text-sm">
+                   <div class="bg-white/5 p-2.5 rounded-lg border border-white/5 flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-[var(--accent)]">🌅 Wake Up</span>
+                            <span class="text-[10px] text-white/50">5 mins</span>
+                        </div>
+                        <span class="text-xs text-white/60">Theta → Beta (Energize)</span>
+                   </div>
+                   <div class="bg-white/5 p-2.5 rounded-lg border border-white/5 flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-[var(--accent)]">🌙 Wind Down</span>
+                            <span class="text-[10px] text-white/50">10 mins</span>
+                        </div>
+                        <span class="text-xs text-white/60">Beta → Alpha (Relax)</span>
+                   </div>
+                   <div class="bg-white/5 p-2.5 rounded-lg border border-white/5 flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-[var(--accent)]">💤 Deep Sleep</span>
+                            <span class="text-[10px] text-white/50">20 mins</span>
+                        </div>
+                        <span class="text-xs text-white/60">Alpha → Delta (Sleep)</span>
+                   </div>
+                   <div class="bg-white/5 p-2.5 rounded-lg border border-white/5 flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-[var(--accent)]">🎯 Focus Builder</span>
+                            <span class="text-[10px] text-white/50">5 mins</span>
+                        </div>
+                        <span class="text-xs text-white/60">Alpha → Beta (Focus)</span>
+                   </div>
+                   <div class="bg-white/5 p-2.5 rounded-lg border border-white/5 flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-[var(--accent)]">🧘 Meditation</span>
+                            <span class="text-[10px] text-white/50">10 mins</span>
+                        </div>
+                        <span class="text-xs text-white/60">Alpha → Theta (Deep Dive)</span>
+                   </div>
+                </div>
+            </div>
+        `
+    },
+    uploads: {
+        title: "Upload Audio",
+        emoji: "📤",
+        content: `
+            <div class="space-y-4 text-white/80 font-sans">
+                <p>
+                    Enhance your session by layering your own audio files. Perfect for guided meditations, audiobooks, or your favorite music playlist.
+                </p>
+                <div class="p-3 bg-white/5 rounded-lg border border-white/10 text-sm">
+                    <span class="font-bold text-[var(--accent)]">Supported Formats:</span> MP3, WAV, OGG.<br>
+                    Files are processed locally in your browser for privacy.
+                </div>
+            </div>
+        `
+    },
+    classical: {
+        title: "Music Library",
+        emoji: "🎻",
+        content: `
+            <div class="space-y-4 text-white/80 font-sans">
+                <p>
+                    A curated collection of timeless masterpieces (Bach, Satie, Debussy) tuned to harmonize with our frequency generators.
+                </p>
+                <p class="text-sm">
+                    These pieces are selected for their calming tempo and structure, ideal for study, focus, or relaxation.
+                </p>
+            </div>
+        `
+    }
+};
+
+window.showInfoModal = function (key) {
+    const data = INFO_CONTENT[key];
+    if (!data) return;
+
+    // Check if modal already exists
+    let modal = document.getElementById('infoModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'infoModal';
+        modal.className = 'fixed inset-0 z-[9999] flex justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300';
+        modal.innerHTML = `
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeInfoModal()"></div>
+            <!-- UPDATED: balanced padding, max-h-full of safe area, max-w-md -->
+            <div class="relative w-[95%] max-w-md my-auto mx-auto bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl transform scale-95 transition-all duration-300 flex flex-col overflow-hidden max-h-[85%] glass-card" id="infoModalContent">
+                <!-- Header -->
+                <div class="bg-white/5 border-b border-white/5 p-5 flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl" id="infoEmoji">✨</span>
+                        <h3 class="text-lg font-bold text-white tracking-tight font-sans" id="infoTitle">Info</h3>
+                    </div>
+                    <button onclick="closeInfoModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Content -->
+                <div class="p-6 overflow-y-auto custom-scrollbar" id="infoBody">
+                    <!-- Dynamic Content -->
+                </div>
+                <!-- Footer -->
+                <div class="p-5 border-t border-white/5 bg-black/20 shrink-0">
+                    <button onclick="closeInfoModal()" class="w-full py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-main)] font-bold text-base hover:opacity-90 transition-all shadow-lg">
+                        Got it
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } else {
+        // ENFORCE UPDATED CLASSES IF MODAL ALREADY EXISTS
+        // Use z-[9999] (high z-index) and pb-32 (bottom padding for footer)
+        // ENFORCE UPDATED CLASSES IF MODAL ALREADY EXISTS
+        // UPDATED: Removed pb-20 for balanced centering
+        modal.className = 'fixed inset-0 z-[9999] flex justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300';
+
+        // Ensure content container also has updated sizing
+        const content = modal.querySelector('#infoModalContent');
+        if (content) {
+            // UPDATED: max-w-md and max-h-full (fits within safe area defined by adjustModalLayout)
+            content.className = 'relative w-[95%] max-w-md my-auto mx-auto bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl transform scale-95 transition-all duration-300 flex flex-col overflow-hidden max-h-[85%] glass-card';
+        }
+    }
+
+    // Populate Data
+    document.getElementById('infoEmoji').textContent = data.emoji;
+    document.getElementById('infoTitle').textContent = data.title;
+    document.getElementById('infoBody').innerHTML = data.content;
+
+    // Open Animation
+    requestAnimationFrame(() => {
+        // First Apply Layout Constraints to set size/pos
+        adjustModalLayout(modal);
+
+        // Then animate in
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        const content = modal.querySelector('#infoModalContent');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+    });
+};
+
+window.closeInfoModal = function () {
+    const modal = document.getElementById('infoModal');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    // Reset layout styles to defaults to avoid glitches on next open if state changes
+    setTimeout(() => {
+        modal.style.top = '';
+        modal.style.bottom = '';
+        modal.style.left = '';
+        modal.style.right = '';
+    }, 300);
+}
+
+
+// --- LAYOUT AWARENESS HELPER ---
+function getSafeArea() {
+    const isMobile = window.innerWidth < 768;
+
+    // Left Panel
+    const leftPanel = document.getElementById('leftPanel');
+    const leftActive = leftPanel && !leftPanel.classList.contains('-translate-x-full');
+    const leftW = (!isMobile && leftActive) ? leftPanel.getBoundingClientRect().width : 0;
+
+    // Right Panel
+    const rightPanel = document.getElementById('rightPanel');
+    const rightActive = rightPanel && !rightPanel.classList.contains('translate-x-full');
+    const rightW = (!isMobile && rightActive) ? rightPanel.getBoundingClientRect().width : 0;
+
+    // Header/Footer elements
+    // Note: Header/Footer are fixed z-100. We want to avoid them.
+    const header = document.querySelector('header');
+    const footer = document.querySelector('footer');
+    const topH = header ? header.offsetHeight : 0;
+    const bottomH = footer ? footer.offsetHeight : 0;
+
+    return { top: topH, right: rightW, bottom: bottomH, left: leftW };
+}
+
+function adjustModalLayout(modal) {
+    if (!modal) return;
+    const safe = getSafeArea();
+
+    // Apply safe area constraints to the modal container
+    // This confines the backdrop AND content to the "center stage"
+    modal.style.top = `${safe.top}px`;
+    modal.style.bottom = `${safe.bottom}px`;
+    modal.style.left = `${safe.left}px`;
+    modal.style.right = `${safe.right}px`;
+
+    // Ensure we override tailwind 'inset-0' if necessary (inline styles usually win)
+    // We also might want to reduce padding if the area is small, but flex center handles that.
+
+    // Explicitly set position to absolute/fixed behavior relative to the window
+    modal.style.position = 'fixed'; // Should already be fixed class, but ensure it.
+
+    // If safe area is very small (e.g. mobile landscape), maybe force some mins?
+    // For now, trust the flex centering.
+}
+
+// Global listener for window resize to adjust any open modals
+window.addEventListener('resize', () => {
+    // Info Modal
+    const infoModal = document.getElementById('infoModal');
+    if (infoModal && !infoModal.classList.contains('opacity-0')) {
+        adjustModalLayout(infoModal);
+    }
+
+    // Theme/Profile Modals (contain class 'modal' and not hidden)
+    document.querySelectorAll('.modal').forEach(m => {
+        if (!m.classList.contains('hidden')) {
+            adjustModalLayout(m);
+        }
+    });
+});
+
+// Hook into existing modal opens if possible, or exposing the adjuster
+window.adjustActiveModal = adjustModalLayout;
+
+
+// --- MATRIX SETTINGS CONTROL ---
+window.toggleMatrixSettings = function (toggleBtn) {
+    if (!els.matrixSettingsPanel) {
+        els.matrixSettingsPanel = document.getElementById('matrixSettingsPanel');
+    }
+
+    // Toggle state
+    if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
+    state.matrixPanelOpen = !state.matrixPanelOpen;
+
+    // Update UI
+    if (state.matrixPanelOpen) {
+        if (els.matrixSettingsPanel) {
+            els.matrixSettingsPanel.classList.remove('hidden');
+            els.matrixSettingsPanel.classList.add('flex', 'flex-col');
+        }
+    } else {
+        if (els.matrixSettingsPanel) {
+            els.matrixSettingsPanel.classList.add('hidden');
+            els.matrixSettingsPanel.classList.remove('flex', 'flex-col');
+        }
+    }
+};
+
+function setupMatrixControls() {
+    const closeBtn = document.getElementById('matrixCloseBtn');
+    const resetBtn = document.getElementById('matrixResetBtn');
+
+    if (closeBtn) {
+        // Clone to replace any existing listeners to be safe, or just add new one
+        // A simple addEventListener is fine usually.
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.matrixPanelOpen = false;
+            const panel = document.getElementById('matrixSettingsPanel');
+            if (panel) {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'flex-col');
+            }
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Reset logic
+            const viz = getVisualizer();
+            if (viz) {
+                viz.setMatrixColor('#00FF41');
+                viz.setMatrixRainbow(false);
+                viz.setMatrixSpeed(1.0);
+                viz.setMatrixLength(1.0);
+                viz.setMatrixAngle(0);
+
+                // Reset sliders/inputs if they exist
+                const colorPicker = document.getElementById('matrixColorPicker');
+                if (colorPicker) colorPicker.value = '#00FF41';
+
+                const rainbowToggle = document.getElementById('matrixRainbowToggle');
+                if (rainbowToggle) rainbowToggle.checked = false;
+
+                const speedSlider = document.getElementById('matrixSpeedSlider');
+                if (speedSlider) { speedSlider.value = 1.0; document.getElementById('matrixSpeedVal').textContent = '1.0x'; }
+
+                const lengthSlider = document.getElementById('matrixLengthSlider');
+                if (lengthSlider) { lengthSlider.value = 1.0; document.getElementById('matrixLengthVal').textContent = '1.0x'; }
+
+                const angleSlider = document.getElementById('matrixAngleSlider');
+                if (angleSlider) { angleSlider.value = 0; document.getElementById('matrixAngleVal').textContent = '0°'; }
+            }
+        });
+    }
+
+    // --- NEW: Slider Listeners ---
+    const speedSlider = document.getElementById('matrixSpeedSlider');
+    const speedVal = document.getElementById('matrixSpeedVal');
+    if (speedSlider && speedVal) {
+        speedSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            speedVal.textContent = val.toFixed(1) + 'x';
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixSpeed) viz.setMatrixSpeed(val);
+        });
+    }
+
+    const lengthSlider = document.getElementById('matrixLengthSlider');
+    const lengthVal = document.getElementById('matrixLengthVal');
+    if (lengthSlider && lengthVal) {
+        lengthSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            lengthVal.textContent = val.toFixed(1) + 'x';
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixLength) viz.setMatrixLength(val);
+        });
+    }
+
+    const angleSlider = document.getElementById('matrixAngleSlider');
+    const angleVal = document.getElementById('matrixAngleVal');
+    if (angleSlider && angleVal) {
+        angleSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            angleVal.textContent = val + '°';
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixAngle) viz.setMatrixAngle(val * (Math.PI / 180)); // Convert to radians if needed, or pass degrees
+        });
+    }
+}
+
+// Initialize Matrix controls immediately if DOM is ready, or wait
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupMatrixControls);
+} else {
+    setupMatrixControls();
 }

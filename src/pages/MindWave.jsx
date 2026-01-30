@@ -42,7 +42,7 @@ const MindWave = () => {
             {/* Fullscreen MindWave App Iframe */}
             <div className="fixed top-0 left-0 w-full h-full">
                 <iframe
-                    src="/mindwave.html"
+                    src={`/mindwave.html?v=${new Date().getTime()}`}
                     title="MindWave Binaural Beats Studio"
                     width="100%"
                     height="100%"

@@ -626,7 +626,7 @@ export class Visualizer3D {
                 uTime: { value: 0 },
                 uSpeed: { value: 1.0 },
                 uTailLength: { value: 1.0 },
-                uRainbow: { value: 0.0 } // 0.0 = false, 1.0 = true
+                uRainbow: { value: 1.0 } // 0.0 = false, 1.0 = true
             },
             vertexShader: `
                 attribute float aCharIndex;

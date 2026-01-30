@@ -34,6 +34,9 @@ export async function showPricingModal() {
         updateSubscriptionDisplay(modal, subscription);
     }
 
+    // Apply Layout Constraints (Safe Area Awareness)
+    if (window.adjustActiveModal) window.adjustActiveModal(modal);
+
     modal.classList.remove('hidden');
     // document.body.style.overflow = 'hidden';
 }
@@ -77,8 +80,10 @@ function createPricingModal() {
                         <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">Monthly</h3>
                         <div style="margin: 24px 0;">
                             <span style="font-size: 48px; font-weight: 700; color: white;">${formatPrice(PRICING.monthly.amount)}</span>
+
                             <span style="font-size: 18px; color: rgba(255, 255, 255, 0.6);">/month</span>
                         </div>
+                        <div style="font-size: 14px; color: #60a9ff; margin-bottom: 16px; font-weight: 600;">For the first 500 subscribers</div>
                         <button class="checkout-btn" data-plan="monthly" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #60a9ff 0%, #60a9ff 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
                             Get Started
                         </button>
@@ -110,7 +115,7 @@ function createPricingModal() {
                             <span style="font-size: 48px; font-weight: 700; color: white;">${formatPrice(PRICING.yearly.amount)}</span>
                             <span style="font-size: 18px; color: rgba(255, 255, 255, 0.6);">/year</span>
                         </div>
-                        <div style="font-size: 14px; color: #60a9ff; margin-bottom: 16px; font-weight: 600;">Save 17% vs monthly</div>
+                        <div style="font-size: 14px; color: #60a9ff; margin-bottom: 16px; font-weight: 600;">2 months free</div>
                         <button class="checkout-btn" data-plan="yearly" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #60a9ff 0%, #60a9ff 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
                             Get Started
                         </button>
@@ -128,33 +133,7 @@ function createPricingModal() {
                     </ul>
                 </div>
 
-                <!-- Lifetime Plan -->
-                <div class="pricing-card" data-plan="lifetime" style="background: rgba(255, 255, 255, 0.03); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 32px; cursor: pointer; transition: all 0.3s;">
-                    <div style="text-align: center;">
-                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">Lifetime</h3>
-                        <div style="margin: 24px 0;">
-                            <span style="font-size: 48px; font-weight: 700; color: white;">${formatPrice(PRICING.lifetime.amount)}</span>
-                            <span style="font-size: 18px; color: rgba(255, 255, 255, 0.6);">one-time</span>
-                        </div>
-                        <button class="checkout-btn" data-plan="lifetime" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #60a9ff 0%, #60a9ff 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
-                            Get Lifetime Access
-                        </button>
-                    </div>
-                    <ul style="margin-top: 32px; list-style: none; padding: 0;">
-                        <li style="padding: 12px 0; color: rgba(255, 255, 255, 0.8); display: flex; align-items: center; gap: 12px;">
-                            <span style="color: #60a9ff;">✓</span> Everything in Yearly
-                        </li>
-                        <li style="padding: 12px 0; color: rgba(255, 255, 255, 0.8); display: flex; align-items: center; gap: 12px;">
-                            <span style="color: #60a9ff;">✓</span> Pay once, own forever
-                        </li>
-                        <li style="padding: 12px 0; color: rgba(255, 255, 255, 0.8); display: flex; align-items: center; gap: 12px;">
-                            <span style="color: #60a9ff;">✓</span> All future updates
-                        </li>
-                        <li style="padding: 12px 0; color: rgba(255, 255, 255, 0.8); display: flex; align-items: center; gap: 12px;">
-                            <span style="color: #60a9ff;">✓</span> VIP support
-                        </li>
-                    </ul>
-                </div>
+
 
             </div>
 

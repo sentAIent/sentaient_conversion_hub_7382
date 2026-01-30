@@ -136,7 +136,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                navigator.serviceWorker.register('/binaural-assets/sw.js', { scope: '/' })
                     .then(function (registration) {
                         console.log('[PWA] Service Worker registered:', registration.scope);
                     })
@@ -476,42 +476,7 @@
                     <style>
                         /* FORCE TOOLTIP STYLES */
                         /* GENERALIZED TOOLTIP STYLES */
-                        .has-tooltip {
-                            position: relative;
-                            /* Ensure parent is relative */
-                        }
 
-                        .custom-tooltip {
-                            position: absolute;
-                            bottom: 120%;
-                            left: 50%;
-                            transform: translateX(-50%) translateY(0);
-                            background: rgba(10, 10, 15, 0.98);
-                            backdrop-filter: blur(12px) saturate(200%);
-                            border: 1px solid rgba(255, 255, 255, 0.15);
-                            color: #fc9c36;
-                            padding: 10px 16px;
-                            border-radius: 12px;
-                            font-size: 11px;
-                            font-weight: 900;
-                            opacity: 0;
-                            pointer-events: none;
-                            transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
-                            z-index: 10000;
-                            visibility: hidden;
-                            white-space: nowrap;
-                            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-                            text-transform: uppercase;
-                            letter-spacing: 0.15em;
-                        }
-
-                        /* Force visibility on hover */
-                        .has-tooltip:hover .custom-tooltip,
-                        .visual-btn:hover .custom-tooltip {
-                            opacity: 1;
-                            visibility: visible;
-                            transform: translateX(-50%) translateY(-10px);
-                        }
 
                         /* Specific override for visual grid buttons to maintain existing look */
                         .visual-btn .custom-tooltip {
@@ -520,78 +485,66 @@
                             transform: translateX(-50%);
                         }
                     </style>
-                    <script>
-                        // JS Enforced Tooltips
-                        document.addEventListener('DOMContentLoaded', () => {
-                            const btns = document.querySelectorAll('.visual-btn');
-                            btns.forEach(btn => {
-                                const tooltip = btn.querySelector('.custom-tooltip');
-                                if (!tooltip) return;
-
-                                btn.addEventListener('mouseenter', () => {
-                                    tooltip.style.opacity = '1';
-                                    tooltip.style.visibility = 'visible';
-                                });
-                                btn.addEventListener('mouseleave', () => {
-                                    tooltip.style.opacity = '0';
-                                    tooltip.style.visibility = 'hidden';
-                                });
-                            });
-                        });
-                    </script>
-
                     <button id="sphereBtn"
-                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
-                        title="Sphere">
-                        <span>🔮</span>
-                        <span class="custom-tooltip">SPHERE</span>
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
+                        onclick="setVisualMode('sphere')">
+                        <span class="text-2xl filter drop-shadow-lg">🔮</span>
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
                     </button>
                     <button id="flowBtn"
-                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
-                        title="Flow">
-                        <span>🌀</span>
-                        <span class="custom-tooltip">FLOW</span>
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
+                        onclick="setVisualMode('flow')">
+                        <span class="text-2xl filter drop-shadow-lg">🌀</span>
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
                     </button>
                     <button id="lavaBtn"
-                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
-                        title="Lava">
-                        <span>🌋</span>
-                        <span class="custom-tooltip">LAVA</span>
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
+                        onclick="setVisualMode('lava')">
+                        <span class="text-2xl filter drop-shadow-lg">🌋</span>
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
                     </button>
                     <button id="fireplaceBtn"
-                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
-                        title="Fire">
-                        <span>🔥</span>
-                        <span class="custom-tooltip">FIRE</span>
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
+                        onclick="setVisualMode('fire')">
+                        <span class="text-2xl filter drop-shadow-lg">🔥</span>
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
                     </button>
                     <button id="rainBtn"
-                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
-                        title="Rainforest">
-                        <span>🌿</span>
-                        <span class="custom-tooltip">RAIN</span>
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
+                        onclick="setVisualMode('rain')">
+                        <span class="text-2xl filter drop-shadow-lg">🌿</span>
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
                     </button>
                     <button id="zenBtn"
-                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
-                        title="Zen">
-                        <span>🌸</span>
-                        <span class="custom-tooltip">ZEN</span>
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
+                        onclick="setVisualMode('zen')">
+                        <span class="text-2xl filter drop-shadow-lg">🌸</span>
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
                     </button>
                     <button id="oceanBtn"
-                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
-                        title="Ocean">
-                        <span>🌊</span>
-                        <span class="custom-tooltip">OCEAN</span>
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
+                        onclick="setVisualMode('ocean')">
+                        <span class="text-2xl filter drop-shadow-lg">🌊</span>
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Ocean</span>
                     </button>
                     <button id="matrixBtn"
-                        class="visual-btn p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] hover:text-white transition-all text-xl group relative flex-shrink-0"
-                        title="Matrix">
-                        <span>💻</span>
-                        <span class="custom-tooltip">MATRIX</span>
+                        class="visual-btn p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
+                        onclick="setVisualMode('matrix')">
+                        <span class="text-2xl filter drop-shadow-lg">💻</span>
+                        <span
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Matrix</span>
                         <!-- Mini Settings Toggle -->
                         <div id="matrixSettingsToggle"
-                            class="absolute top-1 right-1 w-3 h-3 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20"
-                            title="Toggle Settings">
-                            <span class="text-[8px] leading-none">⚙️</span>
+                            class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
+                            title="Settings" onclick="event.stopPropagation(); toggleMatrixSettings(this);">
+                            <span class="text-[8px] leading-none text-white">⚙️</span>
                         </div>
                     </button>
                 </div>
@@ -599,7 +552,7 @@
                 <!-- Matrix Settings Panel (Hidden by default, shown when Matrix active) -->
                 <!-- MOVED: Anchored to right to avoid blocking other buttons -->
                 <div id="matrixSettingsPanel"
-                    class="hidden absolute bottom-full mb-4 right-0 bg-[#0a0a0f]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-64 gap-3 z-50 shadow-[0_0_50px_rgba(0,0,0,0.5)] origin-bottom-right">
+                    class="hidden absolute bottom-full mb-4 right-0 bg-[#0a0a0f]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-64 gap-3 z-50 shadow-[0_0_50px_rgba(0,0,0,0.5)] origin-bottom-right">
                     <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-1">
                         <span class="text-xs font-bold text-[var(--accent)] tracking-widest uppercase">Matrix
                             Control</span>
@@ -613,7 +566,7 @@
 
                     <!-- Color -->
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] text-white/70">Color</span>
+                        <span class="text-[10px] text-[var(--text-muted)]">Color</span>
                         <input type="color" id="matrixColorPicker" value="#00FF41"
                             class="w-6 h-6 rounded cursor-pointer bg-transparent border-none">
                     </div>
@@ -621,7 +574,8 @@
                     <!-- Rainbow Toggle -->
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] text-white/70">Rainbow Mode</span>
-                        <input type="checkbox" id="matrixRainbowToggle" class="accent-[var(--accent)] cursor-pointer">
+                        <input type="checkbox" id="matrixRainbowToggle" class="accent-[var(--accent)] cursor-pointer"
+                            checked>
                     </div>
 
                     <!-- Speed -->
@@ -721,18 +675,15 @@
                     <span
                         class="px-2 text-[10px] font-bold text-[var(--accent)] tracking-widest bg-[#0f172a]/0 whitespace-nowrap">BRAIN
                         WAVES</span>
-                    <button class="mr-2 text-white/30 hover:text-[var(--accent)] transition-colors has-tooltip relative"
-                        aria-label="Info">
+                    <button class="mr-2 transition-colors relative" aria-label="Info"
+                        onclick="showInfoModal('brain_waves')"
+                        style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
-                        <span class="custom-tooltip w-48 text-center"
-                            style="transform: translateX(-50%) translateY(10px); bottom: auto; top: 100%;">
-                            Specific frequencies to guide brain states (Sleep, Focus, etc).
-                        </span>
                     </button>
                     <div class="h-px w-full bg-white/10"></div>
                 </div>
@@ -745,20 +696,23 @@
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Sleep</span>
                     </button>
                     <button title="Deep meditation and dreaming (4-8Hz)" onclick="applyPreset('theta', this)"
-                        class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
+                        class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3 relative">
+                        <span class="absolute top-1 right-1 text-[9px] opacity-70">🔒</span>
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Theta</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Meditation</span>
                     </button>
                     <button title="Relaxed focus and creativity (8-14Hz)" onclick="applyPreset('alpha', this)"
-                        class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
+                        class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3 relative">
+                        <span class="absolute top-1 right-1 text-[9px] opacity-70">🔒</span>
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Alpha</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Relaxation</span>
                     </button>
                     <!-- Mu Waves (8-13Hz, between Alpha and Beta) -->
                     <button title="Sensorimotor rhythm for body syncing (9-11Hz)" onclick="applyPreset('mu', this)"
-                        class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
+                        class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3 relative">
+                        <span class="absolute top-1 right-1 text-[9px] opacity-70">🔒</span>
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Mu</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Body Sync</span>
@@ -770,7 +724,8 @@
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Focus</span>
                     </button>
                     <button title="Peak awareness and cognition (30-100Hz)" onclick="applyPreset('gamma', this)"
-                        class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3">
+                        class="preset-btn flex flex-col items-center justify-center rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group py-3 relative">
+                        <span class="absolute top-1 right-1 text-[9px] opacity-70">🔒</span>
                         <span
                             class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Gamma</span>
                         <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Awareness</span>
@@ -793,18 +748,14 @@
                 <div class="h-px w-full bg-white/10"></div>
                 <span
                     class="px-2 text-[10px] font-bold text-[var(--accent)] tracking-widest bg-[#0f172a]/0">HEALING</span>
-                <button class="mr-2 text-white/30 hover:text-[var(--accent)] transition-colors has-tooltip relative"
-                    aria-label="Info">
+                <button class="mr-2 transition-colors relative" aria-label="Info" onclick="showInfoModal('healing')"
+                    style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    <span class="custom-tooltip w-48 text-center"
-                        style="transform: translateX(-50%) translateY(10px); bottom: auto; top: 100%;">
-                        Solfeggio tones believed to promote balance and wellness.
-                    </span>
                 </button>
                 <div class="h-px w-full bg-white/10"></div>
             </div>
@@ -888,18 +839,14 @@
                 <div class="h-px w-full bg-white/10"></div>
                 <span
                     class="px-2 text-[10px] font-bold text-[var(--accent)] tracking-widest bg-[#0f172a]/0">AMBIENCE</span>
-                <button class="mr-2 text-white/30 hover:text-[var(--accent)] transition-colors has-tooltip relative"
-                    aria-label="Info">
+                <button class="mr-2 transition-colors relative" aria-label="Info" onclick="showInfoModal('ambience')"
+                    style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    <span class="custom-tooltip w-48 text-center"
-                        style="transform: translateX(-50%) translateY(10px); bottom: auto; top: 100%;">
-                        Immersive soundscapes mixed with binaural beats.
-                    </span>
                 </button>
                 <div class="h-px w-full bg-white/10"></div>
             </div>
@@ -1128,6 +1075,17 @@
                         </button>
                         <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">DJ Studio
                         </h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('djpads'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
                     </div>
                     <div class="flex items-center gap-2" onclick="event.stopPropagation()">
                         <span class="text-[10px] text-[var(--text-muted)]">VOL</span>
@@ -1250,6 +1208,17 @@
                         </svg>
                         <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Atmosphere
                         </h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('atmosphere'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
                     </div>
                     <div class="flex items-center gap-2" onclick="event.stopPropagation()">
                         <span class="text-[10px] text-[var(--text-muted)]">MASTER</span>
@@ -1277,6 +1246,17 @@
                         </svg>
                         <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Sleep
                             Stories</h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('stories'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
                     </div>
                     <div class="flex items-center gap-2" onclick="event.stopPropagation()">
                         <span class="text-[10px] text-[var(--text-muted)]">VOL</span>
@@ -1308,6 +1288,17 @@
                         </svg>
                         <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Upload
                             Audio</h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('uploads'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
                     </div>
                     <label for="audioUploadInput" onclick="event.stopPropagation()"
                         class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] text-[10px] font-bold uppercase tracking-wide cursor-pointer hover:bg-[var(--accent)]/20 transition-all">
@@ -1351,6 +1342,17 @@
                         </svg>
                         <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Music
                             Library</h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('classical'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
                     </div>
                     <label for="classicalUploadInput" onclick="event.stopPropagation()"
                         class="flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] text-[9px] font-bold uppercase tracking-wide cursor-pointer hover:bg-[var(--accent)]/20 transition-all">
@@ -1597,7 +1599,7 @@
     <!-- THEME GALLERY MODAL -->
     <div id="themeModal"
         class="modal fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/40">
-        <div class="glass-card w-full max-w-4xl max-h-[85vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/10 transform scale-95 opacity-0 transition-all duration-300"
+        <div class="glass-card w-[95%] max-w-5xl mx-auto max-h-[85vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/10 transform scale-95 opacity-0 transition-all duration-300"
             id="themeModalCard">
 
             <!-- Header -->
@@ -1637,7 +1639,7 @@
     <!-- Profile Modal -->
     <div id="profileModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 hidden p-4">
         <div
-            class="glass-card p-10 rounded-3xl shadow-2xl max-w-md w-full flex flex-col gap-7 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            class="glass-card p-10 rounded-3xl shadow-2xl w-[95%] max-w-xl mx-auto flex flex-col gap-7 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <!-- Header -->
             <div class="flex justify-between items-center pb-2">
                 <h3 class="text-lg font-bold uppercase tracking-wider" style="color: var(--accent);">Your Profile</h3>
@@ -2077,6 +2079,17 @@
         // Handle Download App button click (in sidebar)
         if (downloadAppBtn) {
             downloadAppBtn.addEventListener('click', async () => {
+                // PAYWALL CHECK: Source Code / App Download ($350)
+                if (window.paywall) {
+                    const hasAccess = await window.paywall.hasPurchasedApp();
+                    if (!hasAccess) {
+                        if (confirm("The Downloadable App & Source Code is a Premium Feature ($350 Lifetime Access). \n\nClick OK to purchase.")) {
+                            window.paywall.checkAccessAndPurchase('lifetime');
+                        }
+                        return;
+                    }
+                }
+
                 if (!deferredPrompt) {
                     // Already installed or not available
                     alert('App is already installed or installation is not available.');

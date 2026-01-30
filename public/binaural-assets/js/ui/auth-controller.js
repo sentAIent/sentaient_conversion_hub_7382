@@ -366,6 +366,9 @@ export function openAuthModal() {
 
             // Populate stats
             populateProfileStats();
+
+            // Apply Layout Constraints
+            if (window.adjustActiveModal) window.adjustActiveModal(profileModal);
         } else {
             // Fallback if profile modal doesn't exist
             showToast("Account menu coming soon. Use the profile button to sign out.", "info");
@@ -376,6 +379,10 @@ export function openAuthModal() {
     const m = document.getElementById('authModal');
     m.classList.remove('hidden');
     m.classList.add('active');
+
+    // Apply Layout Constraints
+    if (window.adjustActiveModal) window.adjustActiveModal(m);
+
     isLoginMode = true; // Reset to login
     document.getElementById('authTitle').textContent = "Sign In";
     document.getElementById('authSubmitBtn').textContent = "Sign In";

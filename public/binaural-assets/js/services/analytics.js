@@ -94,6 +94,10 @@ function saveSession(session) {
     updateStreak(analytics);
 
     saveAnalytics(analytics);
+
+    // Increment global session count for NPS trigger
+    const currentCount = parseInt(localStorage.getItem('mindwave_session_count') || '0');
+    localStorage.setItem('mindwave_session_count', (currentCount + 1).toString());
 }
 
 // --- STREAK TRACKING ---

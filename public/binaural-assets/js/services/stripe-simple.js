@@ -13,8 +13,7 @@ const ENV = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.
 
 export const PAYMENT_LINKS = {
     monthly: ENV.VITE_STRIPE_MONTHLY_LINK || 'https://buy.stripe.com/test/demo',
-    yearly: ENV.VITE_STRIPE_YEARLY_LINK || 'https://buy.stripe.com/test/demo',
-    lifetime: ENV.VITE_STRIPE_LIFETIME_LINK || 'https://buy.stripe.com/test/demo'
+    yearly: ENV.VITE_STRIPE_YEARLY_LINK || 'https://buy.stripe.com/test/demo'
 };
 
 // Stripe Customer Portal (for managing subscriptions)
@@ -98,9 +97,8 @@ export const PRICING_TIERS = {
 
 // Legacy pricing for backwards compatibility
 export const PRICING = {
-    monthly: { amount: 19, interval: 'month', name: 'Monthly Premium' },
-    yearly: { amount: 149, interval: 'year', name: 'Yearly Premium', savings: '37% off' },
-    lifetime: { amount: 299, interval: 'lifetime', name: 'Lifetime Access' }
+    monthly: { amount: 9.99, interval: 'month', name: 'Monthly Premium' },
+    yearly: { amount: 99, interval: 'year', name: 'Yearly Premium', savings: '2 months free' }
 };
 
 /**
@@ -198,6 +196,23 @@ export async function isPremiumUser() {
     }
 
     return false;
+}
+
+/**
+ * Check if user has purchased the full app (Lifetime)
+ */
+export async function hasPurchasedApp() {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) return false;
+
+    const db = getFirestore();
+    const subDoc = await getDoc(doc(db, 'subscriptions', user.uid));
+
+    if (!subDoc.exists()) return false;
+    const data = subDoc.data();
+
+    return data.status === 'active' && data.plan === 'lifetime';
 }
 
 /**
