@@ -30,6 +30,11 @@ const Header = () => {
       icon: 'Cpu'
     },
     {
+      name: 'Pricing',
+      path: '/pricing',
+      icon: 'DollarSign'
+    },
+    {
       name: 'Free Assessment',
       path: '/free-ai-assessment-portal',
       icon: 'ClipboardCheck'
@@ -62,8 +67,8 @@ const Header = () => {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-        ? 'bg-background/95 backdrop-blur-md shadow-elevation border-b border-border'
-        : 'bg-background'
+      ? 'bg-background/95 backdrop-blur-md shadow-elevation border-b border-border'
+      : 'bg-background'
       }`}>
       <div className="w-full">
         <div className="flex items-center justify-between h-16 px-6 lg:px-8">
@@ -89,8 +94,8 @@ const Header = () => {
                   key={item?.path}
                   to={item?.path}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${isActivePath(item?.path)
-                      ? 'bg-primary text-primary-foreground shadow-subtle'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    ? 'bg-primary text-primary-foreground shadow-subtle'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                     }`}
                 >
                   <Icon name={item?.icon} size={16} />
@@ -182,8 +187,8 @@ const Header = () => {
                     to={item?.path}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${isActivePath(item?.path)
-                        ? 'bg-primary text-primary-foreground shadow-subtle'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background'
+                      ? 'bg-primary text-primary-foreground shadow-subtle'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background'
                       }`}
                   >
                     <Icon name={item?.icon} size={18} />

@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aether Map | Pre-Placement Cartographer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #020205;
+            --glass: rgba(16, 20, 30, 0.85);
+            --glass-border: rgba(100, 220, 255, 0.2);
+            --accent: #00f3ff;
+            --accent-glow: rgba(0, 243, 255, 0.4);
+            --text-main: #e0faff;
+            --text-dim: #5c7a8a;
+            --bar-height: 52px;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-deep);
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-main);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            touch-action: none;
+            /* Prevents scrolling on mobile while drawing */
+        }
+
+        /* --- HUD UI --- */
+        .hud {
+            position: absolute;
+            z-index: 10;
+            padding: 16px;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-panel {
+            pointer-events: auto;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Top Left Info */
+        .info-panel {
+            align-self: flex-start;
+            padding: 20px 24px;
+            max-width: 320px;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            color: var(--accent);
+            text-shadow: 0 0 15px var(--accent-glow);
+            letter-spacing: 2px;
+        }
+
+        p.subtitle {
+            margin: 8px 0 0;
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* Left Side Color Controls (below info panel) */
+        #colorControls {
+            position: absolute;
+            top: 190px;
+            left: 20px;
+            align-self: flex-start;
+            padding: 15px;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #colorControls h2 {
+            font-size: 16px;
+            margin: 0 0 10px 0;
+            color: var(--accent);
+            text-shadow: none;
+            text-transform: uppercase;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .color-input-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        #colorInput {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--glass-border);
+            padding: 0;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        /* Customize the color swatch appearance within the native input */
+        #colorInput::-webkit-color-swatch {
+            border: 2px solid white;
+            border-radius: 6px;
+        }
+
+        #colorInput::-moz-color-swatch {
+            border: 2px solid white;
+            border-radius: 6px;
+        }
+
+        /* General Small Button Styling */
+        .btn-small {
+            flex-grow: 1;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-small:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Active Color Mode Indicator */
+        .color-mode-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg-deep);
+            box-shadow: 0 0 10px var(--accent);
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .color-mode-indicator.active {
+            opacity: 1;
+        }
+
+        #rainbowBtn.active {
+            background: #ff0077;
+            border-color: #ff0077;
+            color: #fff;
+            box-shadow: 0 0 15px #ff0077;
+        }
+
+        /* Active Background Toggle Styling */
+        .bg-toggle.active {
+            background: var(--accent);
+            color: var(--bg-deep);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* Active Button Small Styling (for Warp, Drift, Colors buttons) */
+        .btn-small.active {
+            background: var(--accent);
+            color: var(--bg-deep);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Bottom Left Tools */
+        .toolbar {
+            align-self: flex-start;
+            margin-bottom: 20px;
+            margin-left: 20px;
+            display: flex;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 16px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+            color: var(--text-main);
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+        }
+
+        .btn:hover {
+            background: rgba(0, 243, 255, 0.1);
+            border-color: var(--accent-glow);
+            transform: translateY(-2px);
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Active button style for selection mode */
+        .btn.active {
+            background: var(--accent);
+            color: var(--bg-deep);
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent);
+            transform: none;
+        }
+
+        .btn.active:hover {
+            background: var(--accent);
+            color: var(--bg-deep);
+        }
+
+
+        /* Tooltip */
+        .btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            border: 1px solid #333;
+        }
+
+        .btn:hover::after {
+            opacity: 1;
+        }
+
+        /* Zoom Controls (Left) */
+        .zoom-controls {
+            position: absolute;
+            left: 20px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        /* Stats */
+        .stats {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 11px;
+            font-family: monospace;
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+
+        /* Modal & Toast (unchanged) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: #0f1219;
+            border: 1px solid var(--accent);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.15);
+            max-width: 300px;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: #fff;
+            font-family: 'Cinzel', serif;
+        }
+
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            border-color: #666;
+            color: #fff;
+        }
+
+        .toast {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(0, 243, 255, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* HUD Panels */
+        #bgControls {
+            position: absolute;
+            top: 330px;
+            left: 20px;
+            padding: 15px;
+            max-width: 280px;
+        }
+
+        #rotationControls {
+            position: absolute;
+            top: 330px;
+            right: 20px;
+            padding: 15px;
+            max-width: 200px;
+        }
+
+        /* Responsive Controls */
+        @media (max-width: 768px) {
+            .hud-panel.info-panel {
+                top: 10px;
+                left: 10px;
+                max-width: 180px;
+            }
+
+            .hud-panel.toolbar {
+                width: 95%;
+                padding: 4px;
+                gap: 4px;
+                flex-wrap: wrap;
+                justify-content: center;
+                bottom: 10px;
+            }
+
+            #rotationControls {
+                top: auto;
+                bottom: 80px;
+                right: 10px;
+                max-width: 150px;
+                /* Smaller width for mobile */
+            }
+
+            #bgControls {
+                display: none;
+                /* Hide non-essential controls on small screens */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hud-panel h1 {
+                font-size: 16px;
+            }
+
+            .btn {
+                padding: 6px;
+            }
+
+            .btn svg {
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        /* === TOP BAR - Enhanced Glassmorphism === */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--bar-height);
+            background: rgba(10, 15, 25, 0.65);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border-bottom: 1px solid rgba(100, 220, 255, 0.12);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .top-bar h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            color: var(--accent);
+            text-shadow: 0 0 15px var(--accent-glow);
+            letter-spacing: 1.5px;
+            white-space: nowrap;
+        }
+
+        .top-bar-center {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        /* Visual group - Frosted Glass Pods */
+        .bar-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            -webkit-backdrop-filter: blur(8px);
+                    backdrop-filter: blur(8px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .bar-group+.bar-group {
+            margin-left: 4px;
+        }
+
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* === BOTTOM BAR - Enhanced Glassmorphism === */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--bar-height);
+            background: rgba(10, 15, 25, 0.65);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border-top: 1px solid rgba(100, 220, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .bottom-bar-left,
+        .bottom-bar-center,
+        .bottom-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bottom-bar-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Bottom bar tool buttons - Glassmorphic */
+        .bottom-bar .btn {
+            background: rgba(255, 255, 255, 0.06);
+            -webkit-backdrop-filter: blur(8px);
+                    backdrop-filter: blur(8px);
+            border: 1px solid rgba(100, 220, 255, 0.15);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        .bottom-bar .btn:hover {
+            background: rgba(0, 243, 255, 0.12);
+            border-color: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 20px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        /* Zoom buttons - Glassmorphic Circles */
+        .bottom-bar .zoom-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 15px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.06);
+            -webkit-backdrop-filter: blur(8px);
+                    backdrop-filter: blur(8px);
+            border: 1px solid rgba(100, 220, 255, 0.18);
+            border-radius: 50%;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        .bottom-bar .zoom-btn:hover {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* === REGENERATE BUTTON - Make it stand out === */
+        .btn-regen {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 180, 220, 0.1) 100%) !important;
+            border: 1px solid rgba(0, 243, 255, 0.4) !important;
+            color: var(--accent) !important;
+            font-size: 15px;
+            min-width: 32px;
+            transition: all 0.25s ease;
+        }
+
+        .btn-regen:hover {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.3) 0%, rgba(0, 180, 220, 0.2) 100%) !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px rgba(0, 243, 255, 0.1) !important;
+            transform: rotate(90deg);
+        }
+
+        /* === IMPROVED DIVIDER === */
+        .divider {
+            width: 1px;
+            height: 28px;
+            background: linear-gradient(180deg, transparent 0%, rgba(100, 220, 255, 0.3) 50%, transparent 100%);
+            margin: 0 4px;
+        }
+
+        /* === POPUP PANELS === */
+        .popup-panel {
+            position: fixed;
+            background: var(--glass);
+            -webkit-backdrop-filter: blur(12px);
+                    backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px 0 0 10px;
+            padding: 10px;
+            z-index: 150;
+            width: 110px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: calc(100vh - var(--bar-height) - 80px);
+        }
+
+        .popup-panel.hidden {
+            display: none;
+        }
+
+        .popup-panel h3 {
+            margin: 0 0 8px 0;
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            position: -webkit-sticky;
+            position: sticky;
+            top: -10px;
+            background: var(--glass);
+            padding: 5px 0;
+            z-index: 1;
+        }
+
+        #matrixPanel {
+            top: calc(var(--bar-height) + 8px);
+            right: 0;
+            max-height: calc(50vh - var(--bar-height) - 20px);
+        }
+
+        #rotationPanel {
+            bottom: calc(var(--bar-height) + 8px);
+            right: 0;
+            top: auto;
+            max-height: calc(50vh - var(--bar-height) - 20px);
+        }
+
+        .color-picker-mini {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        /* Star color pickers - just the color boxes, no border */
+        .color-picker-mini.star-color {
+            border: none;
+            border-radius: 2px;
+            width: 20px;
+            height: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .color-picker-mini.star-color::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker-mini.star-color::-webkit-color-swatch {
+            border: none;
+            border-radius: 2px;
+        }
+
+        .color-picker-mini.star-color::-moz-color-swatch {
+            border: none;
+            border-radius: 2px;
+        }
+
+        /* Star colors group - no background/border, just the label and boxes */
+        .star-colors-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 8px;
+        }
+
+        .star-colors-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+        }
+
+        /* ========== FLIGHT MODE HUD ========== */
+        .flight-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .flight-hud.hidden {
+            display: none;
+        }
+
+        .hud-controls,
+        .hud-speed,
+        .hud-inventory,
+        .hud-leaderboard {
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.9) 0%, rgba(0, 30, 50, 0.85) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+            -webkit-backdrop-filter: blur(10px);
+                    backdrop-filter: blur(10px);
+        }
+
+        .hud-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            min-width: 220px;
+        }
+
+        .hud-speed {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .hud-inventory {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            min-width: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .hud-leaderboard {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            min-width: 250px;
+        }
+
+        .hud-controls h3,
+        .hud-inventory h3,
+        .hud-leaderboard h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            letter-spacing: 2px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            font-size: 13px;
+            color: #e0faff;
+        }
+
+        .control-row kbd {
+            display: inline-block;
+            padding: 4px 8px;
+            background: linear-gradient(180deg, #1a2a3a 0%, #0f1f2f 100%);
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            border-radius: 4px;
+            font-size: 12px;
+            min-width: 24px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .speed-label {
+            font-size: 12px;
+            color: #5c7a8a;
+            letter-spacing: 2px;
+        }
+
+        .speed-value {
+            font-size: 42px;
+            font-weight: bold;
+            color: #00f3ff;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.8);
+            margin: 8px 0;
+        }
+
+        .speed-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 50, 80, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0 8px 0;
+        }
+
+        .speed-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00f3ff 0%, #00a8ff 50%, #0080ff 100%);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
+            transition: width 0.1s;
+            width: 0%;
+        }
+
+        .speed-max {
+            font-size: 10px;
+            color: #5c7a8a;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: rgba(0, 50, 80, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .inventory-item .name {
+            color: #e0faff;
+            font-weight: bold;
+        }
+
+        .inventory-item .count {
+            color: #00f3ff;
+            font-size: 14px;
+        }
+
+        .total-value {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 243, 255, 0.3);
+            text-align: right;
+            font-size: 16px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0, 50, 80, 0.3);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .leaderboard-entry.rank-1 {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, rgba(0, 50, 80, 0.3) 100%);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+
+        .leaderboard-entry .wealth {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Gem Icons */
+        .gem-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            vertical-align: middle;
+        }
+
+        /* Ship Selection Modal */
+        .ship-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .ship-option {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            text-align: left;
+        }
+
+        .ship-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .ship-option h3 {
+            margin: 0 0 5px 0;
+            color: var(--accent);
+        }
+
+        .ship-option p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        /* ===== COCKPIT BAR (Above Bottom Bar) ===== */
+        /* ===== COCKPIT BAR (Removed Container - Now separate floating items) ===== */
+        .flight-cockpit {
+            /* Now just a transparent layer for initial positioning if needed, or removed entirely */
+            pointer-events: none;
+            /* Let children receive events */
+        }
+
+        .cockpit-section {
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 10px;
+            padding: 0;
+            /* Content padding moved to content div */
+            min-width: 100px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            -webkit-backdrop-filter: blur(12px);
+                    backdrop-filter: blur(12px);
+            pointer-events: auto;
+            position: absolute;
+            /* Make them floating */
+            bottom: 60px;
+            /* Initial position */
+        }
+
+        /* Initial Positions for Sections - Organized Layout */
+        #sectionControls {
+            left: 20px;
+            bottom: 60px;
+        }
+
+        #sectionRadar {
+            left: 180px;
+            bottom: 60px;
+        }
+
+        #sectionVelocity {
+            left: 340px;
+            bottom: 60px;
+        }
+
+        #sectionGems {
+            left: 500px;
+            bottom: 60px;
+        }
+
+        .cockpit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            /* Changed to move for dragging */
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            padding: 6px 10px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .cockpit-content {
+            padding: 8px 12px;
+        }
+
+        .cockpit-section {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            min-width: 100px;
+        }
+
+        .cockpit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 6px;
+        }
+
+        .cockpit-header h4 {
+            margin: 0;
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cockpit-toggle {
+            font-size: 8px;
+            color: var(--accent);
+            transition: transform 0.2s;
+        }
+
+        .cockpit-section.collapsed .cockpit-content {
+            display: none;
+        }
+
+        .cockpit-section.collapsed {
+            min-height: 0;
+            padding-bottom: 2px;
+        }
+
+        .cockpit-section.collapsed .cockpit-toggle {
+            transform: rotate(-90deg);
+        }
+
+        /* Controls Section */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .controls-grid kbd {
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: center;
+            color: var(--accent);
+        }
+
+        /* Radar Section */
+        .radar-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .radar-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 30, 20, 0.9) 0%, rgba(0, 10, 5, 0.95) 100%);
+            border: 2px solid rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .radar-sweep {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(0, 255, 100, 0.8) 0%, transparent 100%);
+            transform-origin: left center;
+            animation: radarSweep 3s linear infinite;
+        }
+
+        @keyframes radarSweep {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .radar-coords {
+            font-size: 9px;
+            color: rgba(0, 243, 255, 0.7);
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        /* Velocity Section */
+        .velocity-display {
+            text-align: center;
+        }
+
+        .speed-gauge {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+        }
+
+        .speed-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .speed-unit {
+            font-size: 8px;
+            color: rgba(0, 243, 255, 0.6);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .cockpit-zoom-controls {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 6px;
+            align-items: center;
+        }
+
+        .cockpit-zoom-controls .zoom-btn {
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .cockpit-zoom-controls .zoom-value {
+            font-size: 10px;
+            color: rgba(0, 243, 255, 0.8);
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* Gems Section - Expands horizontally to the right */
+        .gems-section {
+            min-width: 140px;
+            max-width: none;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gems-grid {
+            display: flex;
+            flex-wrap: wrap;
+            /* Allow wrapping to multiple rows */
+            gap: 6px;
+            max-width: 600px;
+            /* Increased from 300px to show more gems */
+            max-height: 120px;
+            /* Limit height */
+            overflow-x: auto;
+            overflow-y: auto;
+            /* Allow vertical scroll if needed */
+            padding-bottom: 4px;
+        }
+
+        .gems-grid::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .gems-grid::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .gems-grid::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .gem-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            font-size: 14px;
+            /* Increased from 10px */
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .gem-emoji {
+            font-size: 14px;
+        }
+
+        .gem-count {
+            color: #fff;
+            font-weight: bold;
+            font-size: 13px;
+            /* Larger count */
+        }
+
+        .gems-total {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+            /* Increased from 11px */
+            font-weight: bold;
+            color: #ffd700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* ===== FLOATING WINDOWS (Map & Leaders) ===== */
+        .floating-window {
+            position: fixed;
+            background: linear-gradient(135deg, rgba(0, 15, 30, 0.95) 0%, rgba(0, 30, 50, 0.9) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            -webkit-backdrop-filter: blur(12px);
+                    backdrop-filter: blur(12px);
+            z-index: 85;
+            pointer-events: auto;
+            overflow: hidden;
+        }
+
+        .floating-window.hidden {
+            display: none;
+        }
+
+        .window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            cursor: move;
+        }
+
+        .window-header h4 {
+            margin: 0;
+            font-size: 11px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .window-btn {
+            width: 18px;
+            height: 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 3px;
+            color: var(--accent);
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .window-btn:hover {
+            background: rgba(0, 243, 255, 0.2);
+        }
+
+        .window-content {
+            padding: 10px;
+        }
+
+        /* Map Window - Bottom Left */
+        .map-window {
+            left: 20px;
+            bottom: 200px;
+            /* Moved up to avoid cockpit */
+            width: 200px;
+            height: 180px;
+        }
+
+        .map-window.collapsed {
+            height: auto;
+        }
+
+        .map-window.collapsed .window-content {
+            display: none;
+        }
+
+        .map-canvas {
+            width: 100%;
+            height: 120px;
+            background: radial-gradient(circle at center, rgba(0, 20, 40, 0.9) 0%, rgba(0, 5, 15, 0.95) 100%);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .map-legend {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .legend-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        /* Leaders Window - Bottom Right */
+        .leaders-window {
+            right: 20px;
+            bottom: 200px;
+            /* Moved up to avoid cockpit */
+            width: 180px;
+        }
+
+        .leaders-window.collapsed .window-content {
+            display: none;
+        }
+
+        .leaders-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .leaders-list::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .leaders-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 10px;
+        }
+
+        .leader-row:last-child {
+            border-bottom: none;
+        }
+
+        .leader-rank {
+            width: 20px;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .leader-name {
+            flex: 1;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .leader-wealth {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .flight-cockpit {
+                padding: 6px 8px;
+                gap: 6px;
+            }
+
+            .cockpit-section {
+                padding: 6px 8px;
+                min-width: 80px;
+            }
+
+            .radar-container {
+                width: 60px;
+                height: 60px;
+            }
+
+            .gems-section {
+                max-width: 200px;
+            }
+
+            .gems-grid {
+                max-width: 180px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .flight-cockpit {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .controls-section {
+                display: none;
+            }
+
+            .map-window,
+            .leaders-window {
+                width: 150px;
+                bottom: 110px;
+            }
+        }
+
+        /* Fullscreen Map Styles */
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 2000;
+            /* Ensure this is higher than everything else */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fullscreen-modal.hidden {
+            display: none;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 2001;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+        }
+
+        #fullscreenMapCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #fullscreenMapCanvas:active {
+            cursor: grabbing;
+        }
+    </style>
+  <script type="module" crossorigin src="/assets/interstellar-Cu--zowH.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/preload-helper-D7HrI6pR.js">
+</head>
+
+<body>
+
+    <div id="toast" class="toast">Action Successful</div>
+
+    <!-- === TOP BAR === -->
+    <div class="top-bar">
+        <h1>Interstellar Spacetime</h1>
+
+        <div class="top-bar-center">
+            <!-- Star Colors Group -->
+            <div class="star-colors-group">
+                <span class="star-colors-label">Star Colors</span>
+                <input type="color" id="starColor1" class="color-picker-mini star-color" value="#ffffff"
+                    title="Star Color 1" onchange="app.updateStarColors()">
+                <input type="color" id="starColor2" class="color-picker-mini star-color" value="#aaddff"
+                    title="Star Color 2" onchange="app.updateStarColors()">
+                <input type="color" id="starColor3" class="color-picker-mini star-color" value="#ffddaa"
+                    title="Star Color 3" onchange="app.updateStarColors()">
+            </div>
+            <!-- Motion Group -->
+            <div class="bar-group">
+                <button class="btn-small" id="bgDriftBtn" onclick="app.toggleBgDrift()">Drift</button>
+                <button class="btn-small" id="bgWarpBtn" onclick="app.toggleBgWarp()">Lightspeed</button>
+                <input type="range" id="warpSpeedSlider" min="0" max="100" step="1" value="10" style="width: 50px;"
+                    title="Warp Speed" oninput="app.setWarpSpeedMultiplier(this.value)">
+            </div>
+            <!-- Background Styles Group -->
+            <div class="bar-group">
+                <button class="btn-small bg-toggle" data-style="deep-space"
+                    onclick="app.toggleBgStyle('deep-space')">Deep Space</button>
+                <button class="btn-small bg-toggle" data-style="nebula"
+                    onclick="app.toggleBgStyle('nebula')">Nebula</button>
+                <button class="btn-small bg-toggle" data-style="alien"
+                    onclick="app.toggleBgStyle('alien')">Alien</button>
+                <button class="btn-small bg-toggle" data-style="cyber"
+                    onclick="app.toggleBgStyle('cyber')">Matrix</button>
+                <button class="btn-small btn-regen" onclick="app.generateBackground()"
+                    title="Regenerate Background">⟳</button>
+            </div>
+        </div>
+
+        <div class="top-bar-right">
+            <input type="color" id="colorInput" class="color-picker-mini" value="#00f3ff"
+                onchange="app.setFixedColor(this.value)">
+            <button class="btn-small" id="rainbowBtn" onclick="app.setRainbowMode()">🌈</button>
+            <div class="divider"></div>
+            <button class="btn-small" id="rotationToggle" onclick="app.toggleRotationPanel()">3D</button>
+        </div>
+    </div>
+
+
+    <!-- === MATRIX CONTROLS POPUP === -->
+    <div id="matrixPanel" class="popup-panel hidden">
+        <h3>Matrix</h3>
+        <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
+        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+
+        <label style="font-size:10px;margin-top:6px;display:block">Length: <span
+                id="matrixLengthValue">1.0x</span></label>
+        <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
+
+        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
+        <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
+
+        <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
+            <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
+                style="width:24px;height:24px">
+            <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
+                style="font-size:10px;padding:6px">🌈</button>
+        </div>
+    </div>
+
+
+    <!-- === FULLSCREEN MAP MODAL === -->
+    <div id="expandedMapModal" class="fullscreen-modal hidden">
+        <div class="map-controls">
+            <button class="btn-small" onclick="app.closeExpandedMap()">CLOSE MAP</button>
+            <span id="mapZoomLevel">Zoom: 1.0x</span>
+        </div>
+        <canvas id="fullscreenMapCanvas"></canvas>
+    </div>
+
+    <!-- === ROTATION CONTROLS POPUP === -->
+    <div id="rotationPanel" class="popup-panel hidden">
+        <h3>3D</h3>
+        <label style="font-size:10px">X: <span id="rotXValue">0°</span></label>
+        <input type="range" id="rotXSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <label style="font-size:10px;margin-top:6px;display:block">Y: <span id="rotYValue">0°</span></label>
+        <input type="range" id="rotYSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <label style="font-size:10px;margin-top:6px;display:block">Z: <span id="rotZValue">0°</span></label>
+        <input type="range" id="rotZSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <button class="btn-small" onclick="app.resetRotation()"
+            style="width:100%; margin-top:8px;font-size:10px;padding:6px">Reset</button>
+    </div>
+
+    <!-- === UPGRADE STATION POPUP === -->
+    <div id="upgradePanel" class="popup-panel hidden"
+        style="width: 220px; max-height: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; z-index: 200;">
+        <h3
+            style="text-align: center; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--accent); padding-bottom: 8px;">
+            Interstellar Dock</h3>
+
+        <div
+            style="margin-bottom: 15px; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+            <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">AVAILABLE CREDITS</div>
+            <div style="font-size: 24px; color: #ffd700; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"
+                id="dockCredits">$0</div>
+        </div>
+
+        <div id="upgradeList"
+            style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 300px; padding-right: 4px;">
+            <!-- Generated via JS -->
+        </div>
+
+        <button class="btn-small" onclick="document.getElementById('upgradePanel').classList.add('hidden')"
+            style="width: 100%; margin-top: 15px; padding: 10px; font-weight: bold;">CLOSE DOCK</button>
+    </div>
+
+
+    <!-- === BOTTOM BAR === -->
+    <div class="bottom-bar">
+        <div class="bottom-bar-left">
+            <div class="bar-group">
+                <button class="btn active" id="drawModeBtn" onclick="app.setMode('draw')" data-tooltip="Draw Stars">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+                    </svg>
+                </button>
+                <button class="btn" id="selectModeBtn" onclick="app.setMode('select')" data-tooltip="Select/Drag">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M7 19h10V4H7v15zm-2-2V6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v11c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="bottom-bar-center">
+            <div class="bar-group">
+                <button class="btn" onclick="app.undo()" data-tooltip="Undo">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.requestClear()" data-tooltip="Clear">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <button class="btn" onclick="app.downloadSVG()" data-tooltip="Export SVG">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.downloadPNG()" data-tooltip="Export PNG">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.triggerLoadSVG()" data-tooltip="Load SVG">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <select id="videoDuration"
+                    style="background: var(--glass); border: 1px solid var(--glass-border); color: var(--text); padding: 4px 6px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                    <option value="3000">3s</option>
+                    <option value="5000" selected>5s</option>
+                    <option value="10000">10s</option>
+                </select>
+                <button class="btn" id="exportVideoBtn" onclick="app.exportVideo()" data-tooltip="Record Video">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <button class="btn" onclick="app.toggleTemplatePanel()" data-tooltip="Templates">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5v-4h9v4zm5 0h-4v-4h4v4zm0-5H5V5h14v7z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.toggleFlightMode()" data-tooltip="Flight Mode">🚀</button>
+                <button class="btn" id="selectShipBtn" onclick="app.showShipModal()" data-tooltip="Select Ship"
+                    style="display:none">🛸</button>
+            </div>
+        </div>
+        <div class="bottom-bar-right">
+            <div class="bar-group">
+                <button class="zoom-btn" onclick="app.adjustZoom(-0.1)">-</button>
+                <button class="zoom-btn" onclick="app.resetView()">⟲</button>
+                <button class="zoom-btn" onclick="app.adjustZoom(0.1)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Selection Panel -->
+    <div id="templatePanel" class="hud-panel"
+        style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); width: 400px; max-height: 400px; display: none; overflow-y: auto; z-index: 100;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="font-size: 14px; margin: 0; color: var(--accent); text-transform: uppercase;">
+                Constellation Templates</h2>
+            <button class="btn-small" onclick="document.getElementById('templatePanel').style.display='none'"
+                style="min-width: 24px; padding: 2px 6px;">✕</button>
+        </div>
+
+        <div
+            style="margin-bottom: 10px; display: flex; align-items: center; gap: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+            <label style="font-size: 12px; color: var(--text); display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="templateRainbowMode" style="margin-right: 5px; accent-color: var(--accent);">
+                Rainbow Mode
+            </label>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <span style="font-size: 12px; color: var(--text);">Color:</span>
+                <input type="color" id="templateColorPicker" value="#00ffff"
+                    style="border: none; width: 24px; height: 24px; cursor: pointer; background: none;">
+            </div>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Zodiac Signs</h3>
+            <div id="zodiacTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Animals</h3>
+            <div id="animalTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+
+        <div>
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Mythology</h3>
+            <div id="mythTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Hidden file input for loading SVG -->
+    <input type="file" id="svgFileInput" accept=".svg" style="display: none;" onchange="app.loadSVG(event)">
+
+    <!-- Zoom controls now integrated in bottom-bar -->
+
+    <div class="stats" id="stats">
+        Mode: Draw | Stars: 0 | Constellations: 0 | Zoom: 1.00x
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="clearModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Implode Universe?</h2>
+            <p style="color: #888; margin-bottom: 20px;">This will remove all stars. This action cannot be undone
+                easily.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="app.closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="app.confirmClear()"
+                    style="background-color: #ff3333; border-color: #cc0000; color: white;">Implode</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <!-- Flight Mode HUD Overlay -->
+    <div id="flightHUD" class="flight-hud hidden">
+        <!-- Cockpit Bar (Above Bottom Bar) -->
+        <!-- Cockpit Separate Floating Windows -->
+
+        <!-- 1. CONTROLS Section -->
+        <div id="sectionControls" class="cockpit-section controls-section">
+            <div class="cockpit-header">
+                <h4>🎮 Controls</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')"
+                    title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div class="controls-grid">
+                    <kbd>W</kbd><kbd>S</kbd><kbd>A</kbd><kbd>D</kbd>
+                    <kbd>Q</kbd><kbd>E</kbd><kbd>⇧</kbd><kbd>U</kbd>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. RADAR Section -->
+        <div id="sectionRadar" class="cockpit-section">
+            <div class="cockpit-header">
+                <h4>📡 Radar</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')"
+                    title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div class="radar-container">
+                    <canvas id="radarCanvas" class="radar-canvas" width="80" height="80"></canvas>
+                    <div class="radar-sweep"></div>
+                </div>
+                <div class="radar-coords" id="radarCoords">X: 0 Y: 0</div>
+            </div>
+        </div>
+
+        <!-- 3. VELOCITY Section -->
+        <div id="sectionVelocity" class="cockpit-section">
+            <div class="cockpit-header">
+                <h4>⚡ Velocity</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('sectionVelocity')"
+                    title="Collapse">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div class="velocity-display">
+                    <div class="speed-gauge">
+                        <canvas id="speedGaugeCanvas" width="60" height="60"></canvas>
+                        <div id="speedNumber" class="speed-number">0</div>
+                    </div>
+                    <div class="speed-unit">km/s</div>
+                    <div class="cockpit-zoom-controls">
+                        <button class="zoom-btn" onclick="app.flightZoom(-0.2); event.stopPropagation();">−</button>
+                        <span id="zoomDisplay" class="zoom-value">1.0x</span>
+                        <button class="zoom-btn" onclick="app.flightZoom(0.2); event.stopPropagation();">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. GEMS Section -->
+        <div id="sectionGems" class="cockpit-section gems-section"
+            style="min-width: 200px; max-width: 600px; resize: horizontal; overflow: auto;">
+            <div class="cockpit-header">
+                <h4>💎 Gems</h4>
+                <div style="display:flex; gap:4px;">
+                    <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
+                        title="Toggle Values">$</button>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')"
+                        title="Collapse">−</button>
+                </div>
+            </div>
+            <div class="cockpit-content">
+                <div id="gemsGrid" class="gems-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="gems-total">Total: <span id="gemsTotal">$0</span></div>
+            </div>
+            <div class="resize-handle"
+                style="position:absolute; right:0; bottom:0; width:12px; height:12px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.3) 50%);">
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Map Window (Bottom Left, above cockpit) -->
+    <div id="floatingMap" class="floating-window map-window hidden">
+        <div class="window-header">
+            <h4>🗺️ Universe Map</h4>
+            <div class="window-controls">
+                <button class="window-btn" onclick="app.openExpandedMap()" title="Expand Map">⛶</button>
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingMap')" title="Collapse">−</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <canvas id="mapCanvas" class="map-canvas" width="180" height="120"></canvas>
+            <div class="map-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#0f0"></div>You
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ff0"></div>Stars
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#f0f"></div>Gems
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Leaders Window (Bottom Right, above cockpit) -->
+    <div id="floatingLeaders" class="floating-window leaders-window hidden">
+        <div class="window-header">
+            <h4>🏆 Leaders</h4>
+            <div class="window-controls">
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingLeaders')"
+                    title="Collapse">−</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="floatingLeadersList" class="leaders-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Spacecraft Selection Modal -->
+    <div id="shipModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Select Spacecraft</h2>
+            <div id="shipList" class="ship-list">
+                <div class="ship-option" onclick="app.selectShip('interceptor')">
+                    <h3>🚀 Interceptor</h3>
+                    <p>Balanced fighter. Speed: 50, Accel: 0.5</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('saucer')">
+                    <h3>🛸 Saucer</h3>
+                    <p>High speed, drift capability. Speed: 70, Accel: 0.7</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('hauler')">
+                    <h3>📦 Hauler</h3>
+                    <p>Heavy, stable platform. Speed: 30, Accel: 0.3</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('orion')">
+                    <h3>⭐ Orion</h3>
+                    <p>Constellation class. Speed: 60, Accel: 0.6</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('draco')">
+                    <h3>🐉 Draco</h3>
+                    <p>Dragon constellation. Speed: 80, Accel: 0.4</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('phoenix')">
+                    <h3>🔥 Phoenix</h3>
+                    <p>Reborn in fire. Speed: 55, Accel: 0.8</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('harvester')">
+                    <h3>💎 Starfighter</h3>
+                    <p>Advanced combat vessel. Speed: 80, Accel: 0.8</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="app.hideShipModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Logic (Module) -->
+</body>
+
+</html>
