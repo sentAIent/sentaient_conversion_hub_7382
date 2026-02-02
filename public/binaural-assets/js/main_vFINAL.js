@@ -1,6 +1,6 @@
 console.log("MAIN JS LOADED - NUCLEAR V4");
 window.NUCLEAR_MAIN_LOADED = true;
-import { setupUI } from './ui/controls_v3.js';
+import { setupUI } from './ui/controls_v3.js?v=FIX_ANGLE_1';
 import { initCursor } from './ui/cursor.js';
 import { initFirebase } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
