@@ -1,6 +1,8 @@
 import { state, els, SOUNDSCAPES, STATE_INSIGHTS, SOUND_INSIGHTS } from '../state.js';
-import { initVisualizer } from '../visuals/visualizer.js';
+import { getVisualizer } from '../visuals/visualizer_nuclear_v3.js';
 import { stopRecording } from '../export/recorder.js';
+import { DailyLimitService } from '../services/daily-limit.js';
+import { showPricingModal } from '../ui/pricing-3tier.js';
 
 let uiCallback = null;
 
@@ -237,6 +239,9 @@ export async function startAudio() {
         if (uiCallback) uiCallback(true);
         initVisualizer();
 
+        // Start Daily Limit Check
+        startDailyLimitCheck();
+
     } catch (e) {
         console.error("Audio Start Error:", e);
         alert("Audio Engine Error: " + e.message);
@@ -300,6 +305,30 @@ function setupMediaSession() {
     console.log('[MediaSession] Setup complete');
 }
 
+// --- DAILY LIMIT CHECK ---
+function startDailyLimitCheck() {
+    if (state.dailyLimitInterval) clearInterval(state.dailyLimitInterval);
+
+    // Check every second
+    state.dailyLimitInterval = setInterval(() => {
+        if (!state.isPlaying) return;
+
+        // Increment usage by 1 second and check if limit reached
+        const limitReached = DailyLimitService.increment(1);
+
+        if (limitReached) {
+            console.log('[DailyLimit] Limit reached! Stopping audio.');
+            pauseVisuals(); // Stop visuals to reset UI button
+            stopAudio(false); // Fade out
+            clearInterval(state.dailyLimitInterval);
+            state.dailyLimitInterval = null;
+
+            // Show paywall
+            showPricingModal();
+        }
+    }, 1000);
+}
+
 // Update media session when stopped
 function clearMediaSession() {
     if ('mediaSession' in navigator) {
@@ -310,6 +339,12 @@ function clearMediaSession() {
 export function stopAudio(immediate = false) {
     if (!state.oscLeft) return;
     if (state.isRecording) stopRecording();
+
+    // Stop daily limit check
+    if (state.dailyLimitInterval) {
+        clearInterval(state.dailyLimitInterval);
+        state.dailyLimitInterval = null;
+    }
 
     // Mark as not playing IMMEDIATELY for accurate button sync
     state.isPlaying = false;
@@ -366,7 +401,8 @@ export function stopAudio(immediate = false) {
     // Clear lock screen controls
     clearMediaSession();
 
-    // Note: UI callback removed - caller manages UI state to prevent race conditions
+    // Trigger UI update
+    if (uiCallback) uiCallback(false);
 }
 
 export function cancelStopAudio() {

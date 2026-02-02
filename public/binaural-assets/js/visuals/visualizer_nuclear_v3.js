@@ -6,7 +6,13 @@ export class Visualizer3D {
         this.canvas = canvas;
         this.canvas = canvas;
         this.activeModes = new Set(['particles', 'matrix']); // Default to Flow + Matrix
-        this.mode = 'particles'; // Legacy support for getters if any
+        this.mode = 'matrix'; // Legacy support
+
+        // Default settings - MUST be set before init methods
+        this.mindWaveMode = true; // Default to MindWave (all columns spell MindWave)
+        this.matrixSpeedMultiplier = 1.0; // Default speed to avoid NaN
+
+
         try {
             this.scene = new THREE.Scene();
             this.camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
@@ -60,6 +66,8 @@ export class Visualizer3D {
             console.error("Three.js Init Failed:", e);
             this.initialized = false;
         }
+
+
     }
 
     resize() {
@@ -557,10 +565,8 @@ export class Visualizer3D {
         // 0x30A0 - 0x30FF is Katakana
         // We want specific "Matrix-y" characters
         const katakana = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ";
-        const latin = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const nums = "0123456789";
+        const charPool = "MINDWAVE"; // Restricted to brand characters only to prevent random glyphs
         const special = ":・.\"=*+<>";
-        const charPool = katakana + latin + nums + special;
 
         // CRT GLOW EFFECT
         ctx.shadowBlur = 4;
@@ -577,37 +583,91 @@ export class Visualizer3D {
         const cellW = size / cols;
         const cellH = size / rows;
 
-        const specialWord = "MindWave";
+        const manualSequence = [
+            "LOGO", "M", "I", "N", "D", "W", "A", "V", "E"
+        ]; // 9 Items: Logo at start, then text. Loops to "Logo, M..."
 
         for (let i = 0; i < 64; i++) {
-            const col = i % cols;
-            const row = Math.floor(i / cols);
-            const x = col * cellW + cellW / 2;
-            const y = row * cellH + cellH / 2;
+            // Calculate grid position
+            const col = i % 8;
+            const row = Math.floor(i / 8);
+
+            // Draw background (clear)
+            ctx.fillStyle = 'rgba(0,0,0,0)';
+            ctx.fillRect(col * cellW, row * cellH, cellW, cellH);
+
+            // Save state
+            ctx.save();
+            ctx.translate(col * cellW + cellW / 2, row * cellH + cellH / 2);
 
             let char = '';
+            let isLogo = false;
             let allowFlip = true;
 
-            if (i < 8) {
-                // Special "MindWave" characters (Indices 0-7)
-                char = specialWord[i];
-                allowFlip = false; // Don't flip legible text
+            if (i < 9) {
+                // Special "Logo-MindWave" sequence (Indices 0-8)
+                const item = manualSequence[i];
+                if (item === "LOGO") {
+                    isLogo = true;
+                } else {
+                    char = item;
+                }
+                allowFlip = false;
             } else {
-                // Random Matrix glyphs
-                char = charPool.charAt(Math.floor(Math.random() * charPool.length));
+                // CLASSIC MODE SUPPORT:
+                // Indices 10-63 should be random Katakana for when MindWave mode is OFF.
+                if (i === 10) console.log("NUCLEAR TEXTURE GENERATING: HYBRID MODE (Legacy Katakana Restored)");
+
+                const randomChar = katakana.charAt(Math.floor(Math.random() * katakana.length));
+                char = randomChar;
+                allowFlip = true; // Allow flipping for authentic matrix feel
             }
 
-            // Authenticity: Vertical Flip for some (common in Matrix code)
-            // Actually, Matrix code is often flipped horizontally or vertically.
-            ctx.save();
-            ctx.translate(x, y);
+            // Draw Character or Logo
+            ctx.fillStyle = '#00FF41'; // Standard Matrix Green
+            ctx.font = 'bold 44px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = '#00FF41';
 
-            if (allowFlip && Math.random() > 0.5) {
-                // Flip Horizontal
-                ctx.scale(-1, 1);
+            if (isLogo) {
+                if (this.logoImage) {
+                    // Draw Real Logo
+                    const size = 44;
+                    const offset = -size / 2;
+                    ctx.drawImage(this.logoImage, offset, offset, size, size);
+                } else {
+                    // Fallback while loading or if failed
+                    if (!this.logoLoading && !this.logoFailed) {
+                        this.logoLoading = true;
+                        const loader = new THREE.ImageLoader();
+                        loader.load(
+                            '/mindwave-logo.png',
+                            (image) => {
+                                console.log('[Visualizer] Logo loaded');
+                                this.logoImage = image;
+                                this.logoLoading = false;
+                                if (this.matrixMaterial) {
+                                    const newTexture = this.createMatrixTexture();
+                                    this.matrixMaterial.uniforms.uTexture.value = newTexture;
+                                }
+                            },
+                            undefined,
+                            (err) => {
+                                console.error('[Visualizer] Logo load failed', err);
+                                this.logoFailed = true;
+                                this.logoLoading = false;
+                            }
+                        );
+                    }
+                    // Draw placeholder if not loaded yet
+                    ctx.fillText("MW", 0, 0);
+                }
+            } else {
+                ctx.fillText(char, 0, 0);
             }
 
-            ctx.fillText(char, 0, 0);
             ctx.restore();
         }
 
@@ -655,42 +715,38 @@ export class Visualizer3D {
                     // We need to know where the head is relative to THIS character
                     // position.y is fixed in the grid. We simulate the "stream" moving through it.
                     
-                    // Actually, simpler approach for grid:
-                    // The "rain" is a wave of brightness moving down.
-                    // distance = (headY - myY)
+                    // vUv = uv; // REMOVED: uv is not available in Points material by default and not used in fragment
+
+                    // ... physics ...
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                     
-                    // Head moves down: headY = top - (time * speed) % height
-                    // This is hard to sync with infinite scroll.
-                    
-                    // Alternative: Standard method used in other shaders.
-                    // Each vertex is a fixed point in space. Characters change? 
-                    // No, simpler: Brightness changes.
-                    
+                    // Fall animation
+                    // Restart every 80 units
+                    // Offset by spawnTime
                     float columnHeadY = 40.0 - mod(uTime * 5.0 * aSpeed * uSpeed + aSpawnTime, 80.0);
                     
                     float dist = columnHeadY - position.y;
                     
-                    // Head
-                    if (dist >= 0.0 && dist < 2.0) {
-                        vBrightness = 1.0;
-                        vAlpha = 1.0;
-                    } 
-                    // Trail
-                    else if (dist >= 2.0 && dist < (20.0 * uTailLength)) {
-                        vBrightness = 1.0 - (dist / (20.0 * uTailLength)); // Fade out
-                        vAlpha = vBrightness;
-                    } 
-                    // Ahead (invisible)
-                    else {
-                        vBrightness = 0.0;
-                        vAlpha = 0.0;
+                    // Trail length - Dynamic based on uniform
+                    float trailLen = 12.0 * uTailLength;
+                    if (dist >= 0.0 && dist < trailLen) {
+                         // Fade out along trail
+                         vAlpha = 1.0 - (dist / trailLen);
+                         vBrightness = 1.0 - (dist / trailLen);
+                    } else {
+                         vAlpha = 0.0;
+                         vBrightness = 0.0;
                     }
                     
-                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                     gl_Position = projectionMatrix * mvPosition;
                     
                     // constant size
-                    gl_PointSize = 160.0 / -mvPosition.z; 
+                    gl_PointSize = 480.0 / -mvPosition.z; // Increased by 50% (was 320.0) 
+
+                    // DOUBLE SIZE FOR LOGO (Index 0)
+                    if (abs(aCharIndex) < 0.1) {
+                        gl_PointSize *= 2.0;
+                    }
                 }
             `,
             fragmentShader: `
@@ -700,12 +756,11 @@ export class Visualizer3D {
                 uniform float uRainbow;
                 uniform float uTime;
                 
-                varying float vBrightness;
-                varying float vCharIndex;
                 varying float vAlpha;
+                varying float vCharIndex;
+                varying float vBrightness; // Not used but kept for struct
                 varying vec3 vPos;
-                
-                // HSL to RGB helper
+
                 float hue2rgb(float p, float q, float t) {
                     if(t < 0.0) t += 1.0;
                     if(t > 1.0) t -= 1.0;
@@ -714,11 +769,11 @@ export class Visualizer3D {
                     if(t < 2.0/3.0) return p + (q - p) * (2.0/3.0 - t) * 6.0;
                     return p;
                 }
-                
+
                 vec3 hslToRgb(float h, float s, float l) {
                     float r, g, b;
                     if(s == 0.0) {
-                        r = g = b = l;
+                        r = g = b = l; // achromatic
                     } else {
                         float q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
                         float p = 2.0 * l - q;
@@ -730,11 +785,14 @@ export class Visualizer3D {
                 }
 
                 void main() {
-                    // UV Calc
-                    float col = mod(vCharIndex, 8.0);
-                    float row = floor(vCharIndex / 8.0);
+                    // UV Calc - Snap index to integer to prevent float drift artifacts
+                    float index = floor(vCharIndex + 0.5);
+                    
+                    float col = mod(index, 8.0);
+                    float row = floor(index / 8.0);
                     row = 7.0 - row; 
                     vec2 uv = gl_PointCoord;
+                    uv.y = 1.0 - uv.y; // Flip Y for correct orientation (Canvas Top = V=1)
                     vec2 atlasUV = (uv + vec2(col, row)) / 8.0;
                     
                     vec4 texColor = texture2D(uTexture, atlasUV);
@@ -770,7 +828,25 @@ export class Visualizer3D {
     }
 
     initMatrix() {
-        const colCount = 60;
+        // AGGRESSIVE CLEANUP: Remove EVERYTHING from the cleanup group to prevent "Sticky" MindWave characters
+        while (this.matrixGroup.children.length > 0) {
+            const child = this.matrixGroup.children[0];
+            this.matrixGroup.remove(child);
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) child.material.dispose();
+            // Traverse if group
+            if (child.children) {
+                child.traverse((c) => {
+                    if (c.geometry) c.geometry.dispose();
+                    if (c.material) c.material.dispose();
+                });
+            }
+        }
+        this.matrixRotationGroup = null;
+        this.matrixPoints = null;
+
+        const depthLayer = 4; // Bring closer (was 20)
+        const colCount = 80;  // Increase density (was 60)
         const rowCount = 60;
         this.rowCount = rowCount;
 
@@ -781,9 +857,9 @@ export class Visualizer3D {
         const spawnTimes = [];
         const speeds = [];
 
-        // Grid setup
-        const viewWidth = 60;
-        const viewHeight = 45;
+        // Grid setup - Increased to cover frustum
+        const viewWidth = 120; // Was 60
+        const viewHeight = 80; // Was 45
 
         const colWidth = viewWidth / colCount;
         const rowHeight = viewHeight / rowCount;
@@ -792,7 +868,6 @@ export class Visualizer3D {
             const x = (c * colWidth) - (viewWidth / 2) + ((Math.random() * 0.8) * colWidth);
 
             // Random depth for parallax
-            const depthLayer = Math.floor(Math.random() * 3);
             const z = -(depthLayer * 5) - (Math.random() * 2);
 
             // Column properties
@@ -800,9 +875,9 @@ export class Visualizer3D {
             const spawnTime = Math.random() * 100.0; // Random start offset
 
             // Special Column: Spells "MindWave"
-            // 10% chance, or ensure at least one if colCount is low?
-            // Let's make it 10% chance.
-            const isSpecial = Math.random() < 0.1;
+            // If mindWaveMode is true, ALL columns are special.
+            // If false, NO columns are special (Strict Classic Mode).
+            const isSpecial = this.mindWaveMode;
 
             for (let r = 0; r < rowCount; r++) {
                 const y = (viewHeight / 2) - (r * rowHeight);
@@ -810,12 +885,12 @@ export class Visualizer3D {
                 positions.push(x, y, z);
 
                 if (isSpecial) {
-                    // Spell "MindWave" repeatedly
-                    const specialLen = 8; // "MindWave".length
+                    // Spell "Logo-MindWave" (indices 0-8)
+                    const specialLen = 9;
                     charIndices.push(r % specialLen);
                 } else {
-                    // Random glyphs (indices 8 to 63)
-                    charIndices.push(8 + Math.floor(Math.random() * 56));
+                    // Random glyphs (indices 9 to 63)
+                    charIndices.push(9 + Math.floor(Math.random() * 55));
                 }
 
                 spawnTimes.push(spawnTime);
@@ -828,19 +903,43 @@ export class Visualizer3D {
         geometry.setAttribute('aSpawnTime', new THREE.Float32BufferAttribute(spawnTimes, 1));
         geometry.setAttribute('aSpeed', new THREE.Float32BufferAttribute(speeds, 1));
 
+        this.matrixGeometry = geometry; // Save reference for updates
+
         const texture = this.createMatrixTexture();
         this.matrixMaterial = this.createMatrixShader(texture);
+        // this.matrixMaterial = new THREE.PointsMaterial({
+        //     color: 0x00ff00,
+        //     size: 2,
+        //     sizeAttenuation: false
+        // });
 
         this.matrixRain = new THREE.Points(geometry, this.matrixMaterial);
-
+        this.matrixRain.frustumCulled = false; // Prevent culling issues
         // Group to handle rotation
         this.matrixRotationGroup = new THREE.Group();
         this.matrixRotationGroup.add(this.matrixRain);
 
         this.matrixGroup.add(this.matrixRotationGroup);
-        this.matrixGroup.visible = false;
+        this.matrixGroup.visible = true; // Default visible for safety
 
         console.log('[Visualizer] Matrix (Shader Mode) initialized');
+        this.updateVisibility();
+    }
+
+    setMatrixMode(enabled) {
+        if (this.mindWaveMode === enabled) return;
+        this.mindWaveMode = enabled;
+        console.log('[Visualizer] Matrix MindWave Mode:', enabled, 'VERSION: NUCLEAR_PHASE_2_REAL');
+
+        // Force Texture Regeneration to ensure correct sequence
+        if (enabled && this.matrixMaterial) {
+            const newTexture = this.createMatrixTexture();
+            this.matrixMaterial.uniforms.uTexture.value = newTexture;
+            this.matrixMaterial.needsUpdate = true;
+        }
+
+        // Force Full Re-Init to ensure Geometry Attributes (Sequential Order) are applied
+        this.initMatrix();
     }
 
 
@@ -1297,45 +1396,36 @@ export class Visualizer3D {
         if (this.activeModes.has('matrix') && this.matrixRain) {
             // AUTHENTIC MATRIX ANIMATION (SHADER DRIVEN)
 
+            // Failsafe: Ensure it's visible if active
+            if (!this.matrixGroup.visible) {
+                this.matrixGroup.visible = true;
+            }
+
             // Audio Reactivity: Bass boosts speed slightly
-            const audioSpeedBoost = 1.0 + (normBass * 0.5);
+            const normBass = this.getAverageFrequency(0, 10) / 255.0; // Recalculate or use existing
+            const speedBoost = normBass * 0.5;
             const userSpeed = this.matrixSpeedMultiplier || 1.0;
 
             // Update Uniforms
-            if (this.matrixMaterial) {
+            if (this.matrixMaterial && this.matrixMaterial.uniforms) {
                 // Advance time
-                this.matrixMaterial.uniforms.uTime.value += dt * this.speedMultiplier * audioSpeedBoost * userSpeed;
+                // dt is already defined in outer scope
+                const timeStep = dt * this.speedMultiplier * (1.0 + speedBoost) * userSpeed;
+                this.matrixMaterial.uniforms.uTime.value += timeStep;
                 this.matrixMaterial.uniforms.uSpeed.value = this.speedMultiplier * userSpeed;
 
-                // Rainbow Mode Toggle (cycles if active)
-                // For now hardcoded to generic green, but good to have the uniform ready
-                // this.matrixMaterial.uniforms.uRainbow.value = (someGlobalState ? 1.0 : 0.0);
 
-                // Audio Reactivity: Brighten head color on kick
-                if (normBass > 0.6) {
-                    // Only flash if NOT in rainbow mode
-                    if (this.matrixMaterial.uniforms.uRainbow.value < 0.5) {
-                        const baseColor = this.matrixMaterial.uniforms.uColor.value;
-                        const headColor = this.matrixMaterial.uniforms.uHeadColor.value;
-                        // Flash to white
-                        headColor.lerp(new THREE.Color(0xffffff), 0.2);
-                    }
-                } else {
-                    // Return to base head color (lighter version of main color)
-                    if (this.matrixMaterial.uniforms.uRainbow.value < 0.5) {
-                        const baseColor = this.matrixMaterial.uniforms.uColor.value;
-                        const targetHead = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.8);
-                        this.matrixMaterial.uniforms.uHeadColor.value.lerp(targetHead, 0.1);
-                    }
-                }
             }
-            // For now, disable auto-spin to allow precise angle control.
-            // this.matrixRotationGroup.rotation.y += 0.05 * dt; 
         }
+        // For now, disable auto-spin to allow precise angle control.
+        // this.matrixRotationGroup.rotation.y += 0.05 * dt; 
 
-        this.renderer.clear();
+        // this.renderer.clear(); // REMOVED: Allow stacking (autoClear is false)
         this.renderer.render(this.scene, this.camera);
-        state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
+
+        if (this.active !== false) {
+            state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
+        }
     }
 
     // === MATRIX CONTROLS ===
@@ -1347,6 +1437,27 @@ export class Visualizer3D {
             color.lerp(new THREE.Color(0xffffff), 0.8);
             this.matrixMaterial.uniforms.uHeadColor.value.copy(color);
         }
+    }
+
+    // Helper to get average frequency from analyser node
+    getAverageFrequency(startIndex, endIndex) {
+        // Find active analyser
+        let analyser = state.analyserLeft || state.analyserRight;
+        if (!analyser) return 0;
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(dataArray);
+
+        if (startIndex === undefined) startIndex = 0;
+        if (endIndex === undefined) endIndex = dataArray.length;
+
+        let sum = 0;
+        let count = 0;
+        for (let i = startIndex; i < endIndex && i < dataArray.length; i++) {
+            sum += dataArray[i];
+            count++;
+        }
+        return count > 0 ? sum / count : 0;
     }
 
     setMatrixSpeed(speed) {
@@ -1367,7 +1478,7 @@ export class Visualizer3D {
     }
 
     setMatrixRainbow(isRainbow) {
-        if (this.matrixMaterial && this.matrixMaterial.uniforms.uRainbow) {
+        if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uRainbow) {
             this.matrixMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
         }
     }
@@ -1379,13 +1490,35 @@ export class Visualizer3D {
             this.matrixRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
         }
     }
+    dispose() {
+        this.active = false; // Flag to stop internal loops if any
+        if (this.renderer) {
+            this.renderer.dispose();
+            this.renderer.forceContextLoss();
+            this.renderer = null;
+        }
+    }
 }
 
 let viz3D;
 
 export function initVisualizer() {
+    // Prevent ghosting from HMR or re-initialization
+    if (els.canvas && els.canvas.activeVisualizer) {
+        console.log('[Visualizer] Disposing previous instance to prevent ghosting');
+        els.canvas.activeVisualizer.dispose();
+        els.canvas.activeVisualizer = null;
+    }
+
+    // Also cancel any global animation loop directly from state if it exists
+    if (state.animationId) {
+        cancelAnimationFrame(state.animationId);
+        state.animationId = null;
+    }
+
     if (!viz3D && els.canvas) {
         viz3D = new Visualizer3D(els.canvas);
+        els.canvas.activeVisualizer = viz3D; // Verify tag
         // Auto-start visuals on load for immediate feedback
         resumeVisuals();
     }
@@ -1426,4 +1559,26 @@ export function resumeVisuals() {
 
 export function isVisualsPaused() {
     return visualsPaused;
+}
+
+export function toggleVisual(mode) {
+    if (viz3D) {
+        viz3D.toggleMode(mode);
+    }
+}
+
+export function setVisualSpeed(speed) {
+    if (viz3D) {
+        viz3D.setSpeed(speed);
+        // Also update Matrix speed if applicable
+        if (viz3D.setMatrixSpeed) viz3D.setMatrixSpeed(speed);
+    }
+}
+
+export function setVisualColor(hex) {
+    if (viz3D) {
+        viz3D.setColor(hex);
+        // Also update Matrix color if applicable
+        if (viz3D.setMatrixColor) viz3D.setMatrixColor(hex);
+    }
 }

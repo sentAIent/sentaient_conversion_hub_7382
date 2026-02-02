@@ -691,11 +691,11 @@ window.startLessonAction = async (lessonId) => {
 
     try {
         // Import required modules
-        const [sessionTimer, { startAudio, fadeIn, fadeOut, stopAudio }, { resumeVisuals }, { syncAllButtons }] = await Promise.all([
+        const [sessionTimer, { startAudio, fadeIn, fadeOut, stopAudio }, { toggleVisual }, { syncAllButtons }] = await Promise.all([
             import('../audio/session-timer.js'),
             import('../audio/engine.js'),
-            import('../visuals/visualizer.js'),
-            import('../ui/controls.js')
+            import('../visuals/visualizer_nuclear_v3.js'),
+            import('../ui/controls_v3.js')
         ]);
 
         // Start audio playback and visuals

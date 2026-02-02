@@ -1,6 +1,6 @@
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, getVisualizer, pauseVisuals, resumeVisuals, isVisualsPaused } from '../visuals/visualizer.js';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused } from '../visuals/visualizer_nuclear_v3.js';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -599,6 +599,41 @@ export function setupUI() {
         }
     }
 
+    // Setup Matrix specific controls
+    function setupMatrixControls() {
+        // We need to inject the toggle if it doesn't exist, or just bind it if it does.
+        // Since the HTML is likely dynamic or we can append to the specialized panel.
+
+        const panel = document.getElementById('matrixSettingsPanel');
+        if (!panel) return;
+
+        // Check if toggle already exists to avoid dupes
+        if (!document.getElementById('mindWaveModeToggle')) {
+            const toggleHtml = `
+                <div class="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                    <label for="mindWaveModeToggle" class="text-xs text-[var(--text-muted)] font-medium">MindWave Mode</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="mindWaveModeToggle" class="sr-only peer" checked>
+                        <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--accent)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--accent)]"></div>
+                    </label>
+                </div>
+            `;
+            panel.insertAdjacentHTML('beforeend', toggleHtml);
+        }
+
+        const toggle = document.getElementById('mindWaveModeToggle');
+        if (toggle) {
+            console.log('[Controls] Matrix Toggle Found - CONTROLS_V3_REAL');
+            toggle.addEventListener('change', (e) => {
+                const viz = getVisualizer();
+                if (viz && viz.setMatrixMode) {
+                    viz.setMatrixMode(e.target.checked);
+                }
+            });
+        }
+    }
+
+
     if (els.visualColorPicker) {
         els.visualColorPicker.addEventListener('input', (e) => {
             updateColorWithHistory(e.target.value);
@@ -750,9 +785,17 @@ export function setupUI() {
 
     window.paywall = { goToCheckout, hasPurchasedApp, checkAccessAndPurchase }; // UPDATED
     // Ensure visual mode UI is synced on load (Force ON defaults)
-    // Ensure visual mode UI is synced on load (Force ON defaults)
-    setVisualMode('particles', true);
-    setVisualMode('matrix', true);
+    setVisualMode('particles', true); // Flow ON
+    // Delay Matrix init slightly to ensure state sync
+    setTimeout(() => setVisualMode('matrix', true), 100);
+
+    // Set Matrix Rainbow Mode ON by default
+    const viz = getVisualizer();
+    if (viz) {
+        viz.setMatrixRainbow(true);
+        viz.setMatrixMode(true); // Ensure MindWave text is on
+    }
+
     setVisualMode('ocean', false); // Explicitly ensure OFF
 
     // NUCLEAR OPTION: Hijack beatSlider value setter to catch the 5.5Hz culprit
@@ -1028,7 +1071,7 @@ export function syncAllButtons() {
         els.statusIndicator?.classList.remove('bg-teal-400', 'animate-pulse');
     }
 
-    console.log(`[Buttons] Synced - audio: ${audioPlaying}, visual: ${visualsPlaying} → main: ${isAnyPlaying ? 'PAUSE' : 'PLAY'}`);
+    console.log(`[Buttons] Synced - audio: ${audioPlaying}, visual: ${visualsPlaying} → main: ${isAnyPlaying ? 'PAUSE' : 'PLAY'} `);
 }
 
 
@@ -1217,7 +1260,7 @@ function openStatsModal() {
     const modalContent = els.statsModal.querySelector('.glass-card');
     if (modalContent) {
         modalContent.innerHTML = `
-            <!-- Header -->
+    < !--Header -->
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-500 flex items-center justify-center">
@@ -1236,7 +1279,7 @@ function openStatsModal() {
                 </button>
             </div>
 
-            <!-- Stats Grid - Revamped with proper icon placement -->
+            <!--Stats Grid - Revamped with proper icon placement-- >
             <div class="grid grid-cols-3 gap-3 mb-6">
                 <!-- Day Streak -->
                 <div class="rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-500/30 p-4 text-center">
@@ -1258,7 +1301,7 @@ function openStatsModal() {
                 </div>
             </div>
 
-            <!-- Weekly Chart -->
+            <!--Weekly Chart-- >
             <div class="rounded-xl bg-white/5 border border-white/10 p-4 mb-4">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-xs font-semibold text-white">This Week</span>
@@ -1294,7 +1337,7 @@ function openStatsModal() {
                 </div>
             </div>
 
-            <!-- Additional Stats -->
+            <!--Additional Stats-- >
             <div class="space-y-3">
                 <div class="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
                     <div class="flex items-center gap-2">
@@ -1319,13 +1362,13 @@ function openStatsModal() {
                 </div>
             </div>
 
-            <!-- Animation styles -->
-            <style>
-                @keyframes barGrow {
-                    from { height: 0%; }
+            <!--Animation styles-- >
+    <style>
+        @keyframes barGrow {
+            from {height: 0%; }
                 }
-            </style>
-        `;
+    </style>
+`;
 
         // Re-attach close button listener
         const closeBtn = modalContent.querySelector('#closeStatsBtn');
@@ -1439,7 +1482,7 @@ function updateJourneyStyles() {
                 btn.style.borderWidth = '1px';
             } else {
                 // DARK MODE: Generic Glass (Reset to default look if previously overridden)
-                // The HTML classes are `bg-white/5 border-white/10`.
+                // The HTML classes are `bg - white / 5 border - white / 10`.
                 // We can't easily "reset" to class values if we overrode with inline styles,
                 // so we must explicitly set them to matching values or remove the inline styles.
                 // Removing inline styles reverts to CSS classes.
@@ -1548,7 +1591,7 @@ function showVolumeWarning() {
 
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
-    toast.className = `fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-medium z-[200] transition-all duration-300 opacity-0 transform -translate-y-2`;
+    toast.className = `fixed top - 4 left - 1 / 2 - translate - x - 1 / 2 px - 4 py - 2 rounded - lg text - sm font - medium z - [200] transition - all duration - 300 opacity - 0 transform - translate - y - 2`;
 
     if (type === 'success') {
         toast.style.backgroundColor = 'rgba(16, 185, 129, 0.95)';
@@ -1963,19 +2006,19 @@ function saveStateToLocal() {
 function syncSliderDisplays() {
     // Base/Pitch slider
     if (els.baseSlider && els.baseValue) {
-        els.baseValue.textContent = `${els.baseSlider.value}Hz`;
+        els.baseValue.textContent = `${els.baseSlider.value} Hz`;
     }
     // Beat slider
     if (els.beatSlider && els.beatValue) {
-        els.beatValue.textContent = `${els.beatSlider.value}Hz`;
+        els.beatValue.textContent = `${els.beatSlider.value} Hz`;
     }
     // Volume slider
     if (els.volSlider && els.volValue) {
-        els.volValue.textContent = `${Math.round(els.volSlider.value * 100)}%`;
+        els.volValue.textContent = `${Math.round(els.volSlider.value * 100)}% `;
     }
     // Master volume slider
     if (els.masterVolSlider && els.masterVolValue) {
-        els.masterVolValue.textContent = `${Math.round(els.masterVolSlider.value * 100)}%`;
+        els.masterVolValue.textContent = `${Math.round(els.masterVolSlider.value * 100)}% `;
     }
     // LR Balance slider
     if (els.masterBalanceSlider && els.masterBalanceValue) {
@@ -1985,18 +2028,18 @@ function syncSliderDisplays() {
         } else if (Math.abs(val) < 0.05) {
             els.masterBalanceValue.textContent = 'C';
         } else if (val < 0) {
-            els.masterBalanceValue.textContent = `L ${Math.round(Math.abs(val) * 100)}%`;
+            els.masterBalanceValue.textContent = `L ${Math.round(Math.abs(val) * 100)}% `;
         } else {
-            els.masterBalanceValue.textContent = `R ${Math.round(val * 100)}%`;
+            els.masterBalanceValue.textContent = `R ${Math.round(val * 100)}% `;
         }
     }
     // Atmos Master slider
     if (els.atmosMasterSlider && els.atmosMasterValue) {
-        els.atmosMasterValue.textContent = `${Math.round(els.atmosMasterSlider.value * 100)}%`;
+        els.atmosMasterValue.textContent = `${Math.round(els.atmosMasterSlider.value * 100)}% `;
     }
     // Visual Speed slider
     if (els.visualSpeedSlider && els.speedValue) {
-        els.speedValue.textContent = `${parseFloat(els.visualSpeedSlider.value).toFixed(1)}x`;
+        els.speedValue.textContent = `${parseFloat(els.visualSpeedSlider.value).toFixed(1)} x`;
     }
     console.log('[Controls] Slider displays synchronized');
 }
@@ -2155,7 +2198,7 @@ function savePreset() {
         return;
     }
     els.saveModal.classList.add('active');
-    els.saveNameInput.value = `Mix ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    els.saveNameInput.value = `Mix ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} `;
     setTimeout(() => els.saveNameInput.select(), 50);
 }
 
@@ -2165,7 +2208,7 @@ async function confirmSave() {
 
     // Spinner
     const originalContent = els.saveMixBtn.innerHTML;
-    els.saveMixBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>`;
+    els.saveMixBtn.innerHTML = `< svg xmlns = "http://www.w3.org/2000/svg" width = "16" height = "16" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2" stroke - linecap="round" stroke - linejoin="round" class="animate-spin" > <path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg > `;
     els.saveMixBtn.style.color = "var(--accent)";
 
     const sessionData = {
@@ -2191,7 +2234,7 @@ async function confirmSave() {
     try {
         await saveMixToCloud(sessionData);
         // Success Tick
-        els.saveMixBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        els.saveMixBtn.innerHTML = `< svg xmlns = "http://www.w3.org/2000/svg" width = "16" height = "16" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2" stroke - linecap="round" stroke - linejoin="round" > <polyline points="20 6 9 17 4 12"></polyline></svg > `;
         // Open library to show result
         els.libraryPanel.classList.remove('translate-x-full');
     } catch (e) {
@@ -2279,7 +2322,7 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         });
 
         // Find button by type if not specific element passed
-        const targetBtn = btnElement || document.querySelector(`.preset-btn[onclick*="'${type}'"]`);
+        const targetBtn = btnElement || document.querySelector(`.preset - btn[onclick *= "'${type}'"]`);
         if (targetBtn) {
             targetBtn.classList.remove('bg-white/5', 'border-white/10');
             targetBtn.classList.add('bg-white/10', 'border-white/20');
@@ -2478,7 +2521,7 @@ export async function applyComboPreset(comboId, btnElement) {
     // 4. Activate the specified soundscapes with default volume (0.25)
     if (soundscapeContainer && combo.soundscapes) {
         combo.soundscapes.forEach(soundscapeId => {
-            const volInput = soundscapeContainer.querySelector(`input[data-id="${soundscapeId}"][data-type="vol"]`);
+            const volInput = soundscapeContainer.querySelector(`input[data - id= "${soundscapeId}"][data - type="vol"]`);
             if (volInput) {
                 const vol = 0.25; // 50% when displayed (0.25 * 200)
                 volInput.value = vol;
@@ -2539,7 +2582,7 @@ export async function applyComboPreset(comboId, btnElement) {
             syncAllButtons();
 
             // Show toast
-            showToast(`🎧 ${combo.label}: ${combo.description}`, 'success');
+            showToast(`🎧 ${combo.label}: ${combo.description} `, 'success');
 
             console.log('[Controls] Combo preset fully active - beats + ambience');
         } catch (err) {
@@ -2564,23 +2607,23 @@ export function initThemeModal() {
     Object.keys(THEMES).forEach(key => {
         const theme = THEMES[key];
         const card = document.createElement('div');
-        card.className = `theme-card group ${els.themeBtn && document.body.dataset.theme === key ? 'active' : ''}`;
+        card.className = `theme - card group ${els.themeBtn && document.body.dataset.theme === key ? 'active' : ''} `;
         card.style.setProperty('--theme-bg', theme.bg);
 
         // Card HTML - use CSS classes for theme-aware text colors
         const displayName = key === 'default' ? 'Emerald' : key;
 
         card.innerHTML = `
-            <div class="theme-preview">
-                <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
-            </div>
-            <div class="p-3 theme-card-content">
-                <div class="theme-card-title text-sm font-bold capitalize mb-1" style="color: var(--text-main);">${displayName}</div>
-                <div class="theme-card-desc text-[10px]" style="color: var(--text-muted);">
-                    ${getThemeDesc(key)}
-                </div>
-            </div>
-        `;
+    < div class="theme-preview" >
+        <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
+            </div >
+    <div class="p-3 theme-card-content">
+        <div class="theme-card-title text-sm font-bold capitalize mb-1" style="color: var(--text-main);">${displayName}</div>
+        <div class="theme-card-desc text-[10px]" style="color: var(--text-muted);">
+            ${getThemeDesc(key)}
+        </div>
+    </div>
+`;
 
         card.onclick = () => {
             setTheme(key);
@@ -2850,7 +2893,7 @@ function setupDJPads() {
         pitchSlider.addEventListener('input', () => {
             const val = parseInt(pitchSlider.value);
             setDJPitch(val);
-            pitchValue.textContent = val > 0 ? `+${val}` : val;
+            pitchValue.textContent = val > 0 ? `+ ${val} ` : val;
         });
     }
 
@@ -2976,12 +3019,12 @@ function updateCategoryTabs() {
             if (isLight) {
                 // Light Mode Active: Accent Tint BG + Category Text/Border
                 // Use color-mix for valid opacity with hex variable
-                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap border shadow-sm ${colors.text}`;
+                tab.className = `dj - cat - tab px - 2.5 py - 1 rounded - lg text - [9px] font - bold uppercase tracking - wide whitespace - nowrap border shadow - sm ${colors.text} `;
                 tab.style.borderColor = 'currentColor';
                 tab.style.backgroundColor = 'color-mix(in srgb, var(--accent), transparent 80%)';
             } else {
                 // Dark Mode Active: Legacy
-                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap ${colors.bg} ${colors.text} border ${colors.border}`;
+                tab.className = `dj - cat - tab px - 2.5 py - 1 rounded - lg text - [9px] font - bold uppercase tracking - wide whitespace - nowrap ${colors.bg} ${colors.text} border ${colors.border} `;
                 tab.style.borderColor = '';
                 tab.style.backgroundColor = '';
             }
@@ -2989,10 +3032,10 @@ function updateCategoryTabs() {
             // Inactive state
             tab.style.backgroundColor = ''; // Reset
             if (isLight) {
-                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap bg-transparent hover:bg-black/5 text-[var(--text-muted)] border border-transparent hover:border-black/5`;
+                tab.className = `dj - cat - tab px - 2.5 py - 1 rounded - lg text - [9px] font - bold uppercase tracking - wide whitespace - nowrap bg - transparent hover: bg - black / 5 text - [var(--text - muted)] border border - transparent hover: border - black / 5`;
                 tab.style.borderColor = '';
             } else {
-                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap hover:bg-white/10 ${colors.text} border border-white/10 hover:border-white/20`;
+                tab.className = `dj - cat - tab px - 2.5 py - 1 rounded - lg text - [9px] font - bold uppercase tracking - wide whitespace - nowrap hover: bg - white / 10 ${colors.text} border border - white / 10 hover: border - white / 20`;
                 tab.style.borderColor = '';
             }
         }
@@ -3078,13 +3121,13 @@ function renderDJPads(category) {
         const isActive = isLoopActive(id);
         const canLoop = sound.canLoop;
 
-        let inactiveClasses = `bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20`;
+        let inactiveClasses = `bg - white / 5 border - white / 10 hover: bg - white / 10 hover: border - white / 20`;
         let inactiveStyle = '';
 
         if (!isActive && isLight) {
             // Light Mode Outline Style: Transparent BG, Colored Border, Colored Text
             // We use inline styles for the specific category color on border/text
-            inactiveClasses = `bg-transparent hover:bg-[var(--accent)]/5`;
+            inactiveClasses = `bg - transparent hover: bg - [var(--accent)]/5`;
             // Note: Border width is handled by 'border' class in template below
         }
 

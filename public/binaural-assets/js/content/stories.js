@@ -2,6 +2,8 @@
 // Plays narrated stories layered with binaural frequencies
 
 import { state, els } from '../state.js';
+import { isPremiumUser } from '../services/stripe-simple.js';
+import { showPricingModal } from '../ui/pricing-3tier.js';
 
 // Built-in sleep stories with recommended soundscapes
 export const SLEEP_STORIES = [
@@ -19,7 +21,7 @@ export const SLEEP_STORIES = [
         category: 'kids',
         age: '4-8',
         bpm: 55,
-        premium: false
+        premium: true
     },
     {
         id: 'story-friendly-dragon',
@@ -34,7 +36,7 @@ export const SLEEP_STORIES = [
         category: 'kids',
         age: '5-10',
         bpm: 60,
-        premium: false
+        premium: true
     },
     {
         id: 'story-starlight-express',
@@ -65,7 +67,7 @@ export const SLEEP_STORIES = [
         recommendedSoundscape: 'strings',
         category: 'adults',
         bpm: 60,
-        premium: false
+        premium: true
     },
     {
         id: 'story-ocean-consciousness',
@@ -197,8 +199,9 @@ export async function playStory(storyId) {
     }
 
     // Check premium status
-    if (story.premium && !isPremiumUser()) {
-        showPremiumPrompt('story');
+    const isPremium = await isPremiumUser();
+    if (story.premium && !isPremium) {
+        showPricingModal();
         return false;
     }
 
@@ -520,15 +523,11 @@ function showStopButton(show) {
     }
 }
 
-// Check premium status (placeholder - implement with actual auth)
-function isPremiumUser() {
-    return localStorage.getItem('mindwave_premium') === 'true';
-}
+// DEPRECATED: Use imported isPremiumUser
+// function isPremiumUser() { ... }
 
-// Show premium upgrade prompt
-function showPremiumPrompt(feature) {
-    showToast('⭐ This is a premium feature. Upgrade to unlock!', 'warning');
-}
+// DEPRECATED: Use showPricingModal directly
+// function showPremiumPrompt(feature) { ... }
 
 // Toast helper
 function showToast(message, type = 'info') {
