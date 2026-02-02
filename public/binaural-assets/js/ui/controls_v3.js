@@ -3965,7 +3965,7 @@ function setupMatrixControls() {
             const val = parseInt(e.target.value);
             angleVal.textContent = val + '°';
             const viz = getVisualizer();
-            if (viz && viz.setMatrixAngle) viz.setMatrixAngle(val * (Math.PI / 180)); // Convert to radians if needed, or pass degrees
+            if (viz && viz.setMatrixAngle) viz.setMatrixAngle(val);
         });
     }
 }
