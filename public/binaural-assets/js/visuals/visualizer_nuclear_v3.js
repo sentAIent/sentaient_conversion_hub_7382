@@ -903,7 +903,10 @@ export class Visualizer3D {
             // WE NEED TO UPDATE createMatrixTexture TO SUPPORT CUSTOM TEXT RENDER.
             // But for now, let's just make the LOOP work with the mode switching.
             // If the text is "HELLO", and the texture only has "MINDWAVE", it will look wrong.
-            // I will add a FIXME comment about texture generation.
+            // FIXME: Texture generation only supports standard characters + LOGO. Custom strings might map incorrectly if font missing? 
+            // For now assuming texture atlas handles standard ASCII.
+
+            const speed = 1.0 + Math.random() * 1.5; // Base speed variance
 
             for (let r = 0; r < rowCount; r++) {
                 const y = (viewHeight / 2) - (r * rowHeight);
