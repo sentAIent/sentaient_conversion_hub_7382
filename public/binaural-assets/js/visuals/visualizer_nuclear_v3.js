@@ -876,8 +876,10 @@ export class Visualizer3D {
 
             // Special Column: Spells "MindWave"
             // If mindWaveMode is true, ALL columns are special.
-            if (this.mindWaveMode === undefined) this.mindWaveMode = true; // Safety Default
-            const isSpecial = this.mindWaveMode;
+            // Special Column: Spells "MindWave"
+            // FORCE ENABLE: User explicitly demanded MindWave mode always be on.
+            if (this.mindWaveMode === undefined) this.mindWaveMode = true;
+            const isSpecial = true; // BRUTE FORCE: Always True.
 
             for (let r = 0; r < rowCount; r++) {
                 const y = (viewHeight / 2) - (r * rowHeight);
