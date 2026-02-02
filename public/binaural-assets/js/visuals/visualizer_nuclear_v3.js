@@ -876,7 +876,7 @@ export class Visualizer3D {
 
             // Special Column: Spells "MindWave"
             // If mindWaveMode is true, ALL columns are special.
-            // If false, NO columns are special (Strict Classic Mode).
+            if (this.mindWaveMode === undefined) this.mindWaveMode = true; // Safety Default
             const isSpecial = this.mindWaveMode;
 
             for (let r = 0; r < rowCount; r++) {
@@ -920,6 +920,12 @@ export class Visualizer3D {
         this.matrixRotationGroup.add(this.matrixRain);
 
         this.matrixGroup.add(this.matrixRotationGroup);
+
+        // RESTORE ROTATION STATE
+        if (this.currentMatrixAngle !== undefined) {
+            this.matrixRotationGroup.rotation.z = THREE.MathUtils.degToRad(-this.currentMatrixAngle);
+        }
+
         this.matrixGroup.visible = true; // Default visible for safety
 
         console.log('[Visualizer] Matrix (Shader Mode) initialized');
@@ -929,7 +935,7 @@ export class Visualizer3D {
     setMatrixMode(enabled) {
         if (this.mindWaveMode === enabled) return;
         this.mindWaveMode = enabled;
-        console.log('[Visualizer] Matrix MindWave Mode:', enabled, 'VERSION: NUCLEAR_PHASE_2_REAL');
+        console.log('[Visualizer] Matrix MindWave Mode:', enabled, 'VERSION: NUCLEAR_PHASE_3_CRISIS_FIX');
 
         // Force Texture Regeneration to ensure correct sequence
         if (enabled && this.matrixMaterial) {
@@ -1484,6 +1490,7 @@ export class Visualizer3D {
     }
 
     setMatrixAngle(degrees) {
+        this.currentMatrixAngle = degrees; // PERSIST STATE
         if (this.matrixRotationGroup) {
             // Convert to radians. 0 degrees = upright.
             // Rotating around Z-axis (viewing axis)
