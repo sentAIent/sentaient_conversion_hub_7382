@@ -1,6 +1,6 @@
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused } from '../visuals/visualizer_nuclear_v3.js?v=FIX_MINDWAVE_FINAL';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused } from '../visuals/visualizer_nuclear_v3.js?v=FIX_CUSTOM_FINAL';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -3966,6 +3966,43 @@ function setupMatrixControls() {
             angleVal.textContent = val + '°';
             const viz = getVisualizer();
             if (viz && viz.setMatrixAngle) viz.setMatrixAngle(val);
+        });
+    }
+
+    // === NEW MATRIX MODE CONTROLS ===
+    const modeSelect = document.getElementById('matrixModeSelect');
+    const customTextInput = document.getElementById('matrixCustomTextInput');
+    const textInput = document.getElementById('matrixTextInput');
+
+    if (modeSelect) {
+        modeSelect.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            // Show/Hide Input based on mode
+            if (mode === 'custom') {
+                customTextInput.classList.remove('hidden');
+                setTimeout(() => textInput.focus(), 100);
+            } else {
+                customTextInput.classList.add('hidden');
+            }
+
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixLogicMode) {
+                const text = textInput ? textInput.value : '';
+                viz.setMatrixLogicMode(mode, text);
+            }
+        });
+    }
+
+    if (textInput) {
+        textInput.addEventListener('input', (e) => {
+            const text = e.target.value.toUpperCase();
+            e.target.value = text; // Force uppercase
+            const viz = getVisualizer();
+
+            // Only update if currently in custom mode
+            if (modeSelect && modeSelect.value === 'custom' && viz && viz.setMatrixLogicMode) {
+                viz.setMatrixLogicMode('custom', text);
+            }
         });
     }
 }

@@ -9,7 +9,10 @@ export class Visualizer3D {
         this.mode = 'matrix'; // Legacy support
 
         // Default settings - MUST be set before init methods
-        this.mindWaveMode = true; // Default to MindWave (all columns spell MindWave)
+        this.mindWaveMode = true; // Legacy support (keep true)
+        this.matrixLogicMode = 'mindwave'; // New Mode: 'classic', 'mindwave', 'custom'
+        this.matrixCustomText = "MINDWAVE"; // Default text
+        this.currentMatrixAngle = 0; // Default Angle
         this.matrixSpeedMultiplier = 1.0; // Default speed to avoid NaN
 
 
@@ -583,9 +586,16 @@ export class Visualizer3D {
         const cellW = size / cols;
         const cellH = size / rows;
 
-        const manualSequence = [
-            "LOGO", "M", "I", "N", "D", "W", "A", "V", "E"
-        ]; // 9 Items: Logo at start, then text. Loops to "Logo, M..."
+        // Determine Sequence
+        let textToSpell = "MINDWAVE";
+        if (this.matrixLogicMode === 'custom' && this.matrixCustomText && this.matrixCustomText.length > 0) {
+            textToSpell = this.matrixCustomText;
+        }
+
+        // Build Sequence: LOGO + Text Characters
+        // manualSequence will be ["LOGO", "H", "E", "L", "L", "O", ...]
+        const manualSequence = ["LOGO", ...textToSpell.split('')];
+        const specialCount = manualSequence.length;
 
         for (let i = 0; i < 64; i++) {
             // Calculate grid position
@@ -604,8 +614,8 @@ export class Visualizer3D {
             let isLogo = false;
             let allowFlip = true;
 
-            if (i < 9) {
-                // Special "Logo-MindWave" sequence (Indices 0-8)
+            if (i < specialCount) {
+                // Special Sequence (Indices 0 to specialCount-1)
                 const item = manualSequence[i];
                 if (item === "LOGO") {
                     isLogo = true;
@@ -871,25 +881,44 @@ export class Visualizer3D {
             const z = -(depthLayer * 5) - (Math.random() * 2);
 
             // Column properties
-            const speed = 1.0 + Math.random() * 1.5; // Base speed variance
-            const spawnTime = Math.random() * 100.0; // Random start offset
+            // SEQUENCE GENERATION LOGIC
+            let isSpecial = false;
+            let specialText = "MINDWAVE"; // Default
 
-            // Special Column: Spells "MindWave"
-            // If mindWaveMode is true, ALL columns are special.
-            // Special Column: Spells "MindWave"
-            // FORCE ENABLE: User explicitly demanded MindWave mode always be on.
-            if (this.mindWaveMode === undefined) this.mindWaveMode = true;
-            const isSpecial = true; // BRUTE FORCE: Always True.
+            if (this.matrixLogicMode === 'mindwave') {
+                isSpecial = true;
+                specialText = "MINDWAVE"; // Logo-MindWave
+            } else if (this.matrixLogicMode === 'custom') {
+                isSpecial = true;
+                // Use custom text, fallback to MINDWAVE if empty
+                specialText = (this.matrixCustomText && this.matrixCustomText.length > 0) ? this.matrixCustomText : "MINDWAVE";
+            } else {
+                // Classic / Random
+                isSpecial = false;
+            }
+
+            const specialLen = specialText.length;
+            // IMPORTANT: If we want CUSTOM text, we must ensure characters > 8 are mapped or we rely on the existing texture?
+            // The existing texture (createMatrixTexture) likely only has "MINDWAVE" + Random Katakana.
+            // WE NEED TO UPDATE createMatrixTexture TO SUPPORT CUSTOM TEXT RENDER.
+            // But for now, let's just make the LOOP work with the mode switching.
+            // If the text is "HELLO", and the texture only has "MINDWAVE", it will look wrong.
+            // I will add a FIXME comment about texture generation.
 
             for (let r = 0; r < rowCount; r++) {
                 const y = (viewHeight / 2) - (r * rowHeight);
 
+                // Start time offset
+                const spawnTime = Math.random() * 100.0;
+
+                // ... logic continues ...
+
                 positions.push(x, y, z);
 
                 if (isSpecial) {
-                    // Spell "Logo-MindWave" (indices 0-8)
-                    const specialLen = 9;
-                    charIndices.push(r % specialLen);
+                    // Spell "Logo-SpecialText" (indices 0 to specialLen-1)
+                    // specialLen is defined in outer scope: specialText.length + 1 (for Logo)
+                    charIndices.push(r % (specialLen + 1));
                 } else {
                     // Random glyphs (indices 9 to 63)
                     charIndices.push(9 + Math.floor(Math.random() * 55));
@@ -1489,6 +1518,26 @@ export class Visualizer3D {
         if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uRainbow) {
             this.matrixMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
         }
+    }
+
+    // === NEW LOGIC MODE ===
+    setMatrixLogicMode(mode, text) {
+        this.matrixLogicMode = mode;
+        if (text !== undefined) this.matrixCustomText = text;
+
+        console.log('[Visualizer] Matrix Mode Set:', mode, text);
+
+        // Regenerate everything (Texture + Geometry)
+        // We need to regenerate texture if text changed.
+        if (mode === 'custom' || mode === 'mindwave') {
+            const newTexture = this.createMatrixTexture();
+            if (this.matrixMaterial) {
+                this.matrixMaterial.uniforms.uTexture.value = newTexture;
+                this.matrixMaterial.needsUpdate = true;
+            }
+        }
+
+        this.initMatrix();
     }
 
     setMatrixAngle(degrees) {

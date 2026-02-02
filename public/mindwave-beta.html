@@ -69,7 +69,7 @@
     <link rel="preload" href="/binaural-assets/js/main_vFINAL.js" as="script" crossorigin>
     <script src="/binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=FIX_MINDWAVE_FINAL"></script>
+    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=FIX_CUSTOM_FINAL"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -561,6 +561,24 @@
                         <span class="text-[10px] text-[var(--text-muted)]">Color</span>
                         <input type="color" id="matrixColorPicker" value="#00FF41"
                             class="w-6 h-6 rounded cursor-pointer bg-transparent border-none">
+                    </div>
+
+                    <!-- Matrix Text Mode Selector -->
+                    <div class="flex flex-col gap-1 mb-2">
+                        <span class="text-[10px] text-[var(--text-muted)]">Matrix Style</span>
+                        <select id="matrixModeSelect"
+                            class="w-full bg-white/5 border border-white/10 rounded text-[10px] text-white p-1 outline-none focus:border-[var(--accent)]">
+                            <option value="mindwave">MindWave (Default)</option>
+                            <option value="classic">Classic (Random)</option>
+                            <option value="custom">Custom Text</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Text Input (Hidden by default) -->
+                    <div id="matrixCustomTextInput" class="flex flex-col gap-1 mb-2 hidden">
+                        <span class="text-[10px] text-[var(--text-muted)]">Custom Text</span>
+                        <input type="text" id="matrixTextInput" placeholder="ENTER TEXT" maxlength="20"
+                            class="w-full bg-white/5 border border-white/10 rounded text-[10px] text-white p-1 outline-none focus:border-[var(--accent)] uppercase font-mono">
                     </div>
 
                     <!-- Rainbow Toggle -->
