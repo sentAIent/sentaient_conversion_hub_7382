@@ -1627,6 +1627,28 @@ export class Visualizer3D {
             console.warn('[Visualizer] matrixRotationGroup missing inside setMatrixAngle');
         }
     }
+    setMatrixMode(active) {
+        console.log(`[Visualizer] setMatrixMode: ${active}`);
+        this.mindWaveMode = active;
+        if (active) {
+            this.activeModes.add('matrix');
+            if (this.matrixGroup) this.matrixGroup.visible = true;
+            // Also ensure mindwave logic is active if using standard toggle
+            if (this.matrixLogicMode === 'custom' || this.matrixLogicMode === 'mindwave') {
+                // Ensure texture is updated if needed
+            }
+        } else {
+            this.activeModes.delete('matrix');
+            if (this.matrixGroup) this.matrixGroup.visible = false;
+        }
+    }
+
+    setMatrixRainbow(active) {
+        if (this.matrixMaterial) {
+            this.matrixMaterial.uniforms.uRainbow.value = active ? 1.0 : 0.0;
+        }
+    }
+
     dispose() {
         this.active = false; // Flag to stop internal loops if any
         if (this.renderer) {
