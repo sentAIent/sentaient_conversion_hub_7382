@@ -53,8 +53,20 @@ export class Visualizer3D {
             this.initOcean();
             this.initMatrix();
             this.camera.position.z = 5;
-            window.addEventListener('resize', () => this.resize());
+            this.initMatrix();
+            this.camera.position.z = 5;
+
+            // Dynamic Layout Handling
+            this.handleLayoutChange = this.handleLayoutChange.bind(this);
+            window.addEventListener('resize', () => {
+                this.resize();
+                this.handleLayoutChange();
+            });
+            window.addEventListener('mindwave:layout-change', this.handleLayoutChange);
+
+            // Initial sizing
             this.resize();
+            setTimeout(this.handleLayoutChange, 100); // Delay slightly for DOM to settle
             this.speedMultiplier = 1.0;
 
             // Time Simulation
@@ -81,6 +93,48 @@ export class Visualizer3D {
         this.canvas.height = height * window.devicePixelRatio;
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
+
+        // Ensure layout is updated after standard resize
+        this.handleLayoutChange();
+    }
+
+    handleLayoutChange() {
+        if (!this.renderer || !this.camera) return;
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // Get sidebar states
+        const leftPanel = document.getElementById('leftPanel');
+        const rightPanel = document.getElementById('rightPanel');
+
+        let leftOffset = 0;
+        let rightOffset = 0;
+
+        if (leftPanel && !leftPanel.classList.contains('-translate-x-full')) {
+            leftOffset = leftPanel.offsetWidth;
+        }
+
+        if (rightPanel && !rightPanel.classList.contains('translate-x-full')) {
+            rightOffset = rightPanel.offsetWidth;
+        }
+
+        // Calculate available viewport
+        const visibleWidth = width - leftOffset - rightOffset;
+
+        // Center the camera in the visible area using setViewOffset
+        // setViewOffset(fullWidth, fullHeight, x, y, width, height)
+        // x is the offset from left
+
+        if (visibleWidth > 0) {
+            this.camera.setViewOffset(width, height, leftOffset, 0, visibleWidth, height);
+            // We do NOT update aspect ratio here because setViewOffset handles the sub-frame mapping
+        } else {
+            // Safety fallback
+            this.camera.clearViewOffset();
+        }
+
+        console.log(`[Visualizer] Layout update: L=${leftOffset} R=${rightOffset} Visible=${visibleWidth}`);
     }
 
     initSphere() {
@@ -738,7 +792,7 @@ export class Visualizer3D {
                     float dist = columnHeadY - position.y;
                     
                     // Trail length - Dynamic based on uniform
-                    float trailLen = 12.0 * uTailLength;
+                    float trailLen = 80.0 * uTailLength;
                     if (dist >= 0.0 && dist < trailLen) {
                          // Fade out along trail
                          vAlpha = 1.0 - (dist / trailLen);
@@ -796,7 +850,20 @@ export class Visualizer3D {
 
                 void main() {
                     // UV Calc - Snap index to integer to prevent float drift artifacts
-                    float index = floor(vCharIndex + 0.5);
+                    float rawIndex = floor(vCharIndex + 0.5);
+                    
+                    // "Movie-like" GLITCH EFFECT:
+                    // If index is > 8 (Random/Classic range), animate it to cycle through glyphs
+                    // If index <= 8 (Logo/Special Text), keep it static for readability
+                    
+                    if (rawIndex > 8.5) {
+                        float timeStep = floor(uTime * 5.0); // Change 5 times/sec (Slower/Smoother)
+                        // Map index into 9..63 range cyclically
+                        // (64 total - 9 reserved = 55 random slots)
+                        rawIndex = 9.0 + mod((rawIndex - 9.0) + timeStep, 55.0);
+                    }
+
+                    float index = floor(rawIndex + 0.5);
                     
                     float col = mod(index, 8.0);
                     float row = floor(index / 8.0);
@@ -879,6 +946,9 @@ export class Visualizer3D {
 
             // Random depth for parallax
             const z = -(depthLayer * 5) - (Math.random() * 2);
+
+            // Define column speed
+            const speed = 0.5 + Math.random() * 0.5;
 
             // Column properties
             // SEQUENCE GENERATION LOGIC
@@ -969,7 +1039,9 @@ export class Visualizer3D {
     setMatrixMode(enabled) {
         if (this.mindWaveMode === enabled) return;
         this.mindWaveMode = enabled;
-        console.log('[Visualizer] Matrix MindWave Mode:', enabled, 'VERSION: NUCLEAR_PHASE_3_CRISIS_FIX');
+        // SYNC LOGIC MODE
+        this.matrixLogicMode = enabled ? 'mindwave' : 'classic';
+        console.log('[Visualizer] Matrix MindWave Mode:', enabled, 'Logic Mode:', this.matrixLogicMode, 'VERSION: NUCLEAR_PHASE_3_CRISIS_FIX');
 
         // Force Texture Regeneration to ensure correct sequence
         if (enabled && this.matrixMaterial) {
@@ -1544,11 +1616,15 @@ export class Visualizer3D {
     }
 
     setMatrixAngle(degrees) {
+        console.log(`[Visualizer] setMatrixAngle: ${degrees}°`);
         this.currentMatrixAngle = degrees; // PERSIST STATE
         if (this.matrixRotationGroup) {
             // Convert to radians. 0 degrees = upright.
             // Rotating around Z-axis (viewing axis)
             this.matrixRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
+            console.log(`[Visualizer] matrixRotationGroup.rotation.z set to ${this.matrixRotationGroup.rotation.z}`);
+        } else {
+            console.warn('[Visualizer] matrixRotationGroup missing inside setMatrixAngle');
         }
     }
     dispose() {
