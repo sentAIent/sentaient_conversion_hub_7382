@@ -991,7 +991,8 @@ export class Visualizer3D {
                 if (isSpecial) {
                     // Spell "Logo-SpecialText" (indices 0 to specialLen-1)
                     // specialLen is defined in outer scope: specialText.length + 1 (for Logo)
-                    charIndices.push(r % (specialLen + 1));
+                    // ADDED: Offset by column index 'c' so neighbors don't match horizontally
+                    charIndices.push((r + c) % (specialLen + 1));
                 } else {
                     // Random glyphs (indices 9 to 63)
                     charIndices.push(9 + Math.floor(Math.random() * 55));
