@@ -3716,6 +3716,25 @@ const INFO_CONTENT = {
     }
 };
 
+window.toggleMatrixSettings = function (btn) {
+    const panel = document.getElementById('matrixSettingsPanel');
+    if (panel) {
+        panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            // If opening, ensure panel's toggle matches current rainbow state
+            // Import getVisualizer if needed, but it should be available in module scope
+            // However, this function is running in global scope?? No, it's defined in module but assigned to window.
+            // It captures 'getVisualizer' from the module closure.
+            const viz = getVisualizer();
+            const rainbowToggle = document.getElementById('matrixRainbowToggle');
+            if (viz && viz.matrixMaterial && viz.matrixMaterial.uniforms && rainbowToggle) {
+                // Check uniform value (1.0 is true)
+                rainbowToggle.checked = (viz.matrixMaterial.uniforms.uRainbow.value > 0.5);
+            }
+        }
+    }
+};
+
 window.showInfoModal = function (key) {
     const data = INFO_CONTENT[key];
     if (!data) return;
