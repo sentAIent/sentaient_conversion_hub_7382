@@ -1130,7 +1130,6 @@ select {
 
     /* Adjust Center Content to fit between panels */
     header,
-    footer,
     #tapZone {
         transition: all 0.5s ease;
         margin-left: 16rem;
@@ -1581,6 +1580,47 @@ button,
 .timer-container:hover #timerRing,
 .timer-container:hover #timerDisplay {
     opacity: 1 !important;
+}
+
+/* Responsive Footer */
+.footer-compact {
+    gap: 1rem !important;
+}
+
+.footer-medium {
+    gap: 1.5rem !important;
+}
+
+/* Hide labels in compact footer to save space */
+.footer-compact #speedSliderContainer label,
+.footer-compact #audioLabel,
+.footer-compact #sessionLabel,
+.footer-compact #visualsLabel,
+/* Hide specific text labels inside buttons */
+.footer-compact .visual-btn span.tracking-wider {
+    display: none !important;
+}
+
+/* Scale down Visual Dock in compact mode */
+.footer-compact .visual-btn {
+    height: 3.5rem !important;
+    min-width: 3.5rem !important;
+    padding: 0.25rem !important;
+}
+
+.footer-compact .visual-btn span.text-2xl {
+    font-size: 1.5rem !important;
+}
+
+/* Hide some elements in medium mode if needed */
+.footer-medium .visual-btn {
+    min-width: 3.5rem !important;
+}
+
+/* Toggle buttons positioning */
+.footer-compact #leftToggle,
+.footer-compact #rightToggle {
+    transform: scale(0.9);
 }
 
 /* ================================ */

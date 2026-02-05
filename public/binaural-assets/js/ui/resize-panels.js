@@ -41,12 +41,21 @@ export function initResizablePanels() {
     // Update top bar width and atmosphere columns on window resize
     window.addEventListener('resize', () => {
         updateTopBarWidth();
+        updateBottomBarWidth();
+        updateAtmosphereColumns();
+    });
+
+    // Listen for layout changes (e.g. toggle buttons)
+    window.addEventListener('mindwave:layout-change', () => {
+        updateTopBarWidth();
+        updateBottomBarWidth();
         updateAtmosphereColumns();
     });
 
     // Initial calls to set correct top bar width and atmosphere columns
     setTimeout(() => {
         updateTopBarWidth();
+        updateBottomBarWidth();
         updateAtmosphereColumns();
     }, 100);
 
@@ -134,6 +143,7 @@ function handleMouseMove(e) {
 
     // Update top bar width to adapt to panel resize
     updateTopBarWidth();
+    updateBottomBarWidth();
 }
 
 /**
@@ -226,6 +236,46 @@ export function updateTopBarWidth() {
 }
 
 /**
+ * Update bottom control bar width/position based on open panels
+ */
+export function updateBottomBarWidth() {
+    const bottomBar = document.getElementById('bottomControlBar');
+    if (!bottomBar) return;
+
+    const leftPanel = document.getElementById('leftPanel');
+    const rightPanel = document.getElementById('rightPanel');
+
+    // Check if panels are open
+    const leftOpen = leftPanel && !leftPanel.classList.contains('-translate-x-full');
+    const rightOpen = rightPanel && !rightPanel.classList.contains('translate-x-full');
+
+    // Get widths
+    // Use 0 if closed, actual width if open
+    const leftWidth = leftOpen ? leftPanel.getBoundingClientRect().width : 0;
+    const rightWidth = rightOpen ? rightPanel.getBoundingClientRect().width : 0;
+
+    // Apply basic positioning
+    // We adjust left/right properties to squeeze the footer into the center
+    bottomBar.style.left = `${leftWidth}px`;
+    bottomBar.style.right = `${rightWidth}px`;
+
+    // Calculate available width for content responsiveness
+    const windowWidth = window.innerWidth;
+    const availableWidth = windowWidth - leftWidth - rightWidth;
+
+    // Manage responsive classes for footer content
+    if (availableWidth < 600) {
+        bottomBar.classList.add('footer-compact');
+        bottomBar.classList.remove('footer-medium');
+    } else if (availableWidth < 900) {
+        bottomBar.classList.add('footer-medium');
+        bottomBar.classList.remove('footer-compact');
+    } else {
+        bottomBar.classList.remove('footer-compact', 'footer-medium');
+    }
+}
+
+/**
  * Set panel width and scale content
  */
 function setPanelWidth(panel, width) {
@@ -245,6 +295,9 @@ function setPanelWidth(panel, width) {
     if (panel.id === 'rightPanel') {
         updateAtmosphereColumns();
     }
+
+    // Emit layout change event for real-time visualizer adjustment
+    window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
 }
 
 /**

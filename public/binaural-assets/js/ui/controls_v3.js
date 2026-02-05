@@ -422,21 +422,25 @@ export function setupUI() {
     if (els.leftToggle) els.leftToggle.addEventListener('click', () => {
         els.leftPanel.classList.remove('-translate-x-full');
         updateVisualizerScale();
+        window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });
     if (els.closeLeftBtn) els.closeLeftBtn.addEventListener('click', () => {
         els.leftPanel.classList.add('-translate-x-full');
         updateVisualizerScale();
+        window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });
 
     if (els.rightToggle) els.rightToggle.addEventListener('click', () => {
         els.rightPanel.classList.remove('translate-x-full');
         updateVisualizerScale();
+        window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
         // Enforce light theme styles when panel opens
         enforceLightThemeStyles();
     });
     if (els.closeRightBtn) els.closeRightBtn.addEventListener('click', () => {
         els.rightPanel.classList.add('translate-x-full');
         updateVisualizerScale();
+        window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });
 
     // Enforce light theme styles on initial load (after a delay to ensure DOM is ready)
@@ -528,10 +532,10 @@ export function setupUI() {
             if (matrixPanel && viz && viz.activeModes.has('matrix')) {
                 if (state.matrixPanelOpen) {
                     matrixPanel.classList.remove('hidden');
-                    matrixPanel.classList.add('flex', 'flex-col');
+                    matrixPanel.classList.add('flex', 'items-center');
                 } else {
                     matrixPanel.classList.add('hidden');
-                    matrixPanel.classList.remove('flex', 'flex-col');
+                    matrixPanel.classList.remove('flex', 'items-center');
                 }
             }
         });
@@ -610,11 +614,11 @@ export function setupUI() {
         // Check if toggle already exists to avoid dupes
         if (!document.getElementById('mindWaveModeToggle')) {
             const toggleHtml = `
-                <div class="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
-                    <label for="mindWaveModeToggle" class="text-xs text-[var(--text-muted)] font-medium">MindWave Mode</label>
+                <div class="flex items-center gap-2 ml-4 pl-4 border-l border-white/10">
+                    <label for="mindWaveModeToggle" class="text-[8px] text-[var(--text-muted)] uppercase">Mindwave Mode</label>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="mindWaveModeToggle" class="sr-only peer" checked>
-                        <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--accent)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--accent)]"></div>
+                        <div class="w-7 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[var(--accent)]"></div>
                     </label>
                 </div>
             `;
@@ -1718,10 +1722,10 @@ export function setVisualMode(mode, forceState = null) {
 
         if (activeModes.has('matrix') && state.matrixPanelOpen) {
             matrixPanel.classList.remove('hidden');
-            matrixPanel.classList.add('flex', 'flex-col');
+            matrixPanel.classList.add('flex', 'items-center');
         } else {
             matrixPanel.classList.add('hidden');
-            matrixPanel.classList.remove('flex', 'flex-col');
+            matrixPanel.classList.remove('flex', 'items-center');
         }
     }
 }
@@ -2322,7 +2326,8 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         });
 
         // Find button by type if not specific element passed
-        const targetBtn = btnElement || document.querySelector(`.preset - btn[onclick *= "'${type}'"]`);
+        // Find button by type if not specific element passed
+        const targetBtn = btnElement || document.querySelector(`.preset-btn[onclick*="'${type}'"]`);
         if (targetBtn) {
             targetBtn.classList.remove('bg-white/5', 'border-white/10');
             targetBtn.classList.add('bg-white/10', 'border-white/20');
@@ -2521,7 +2526,7 @@ export async function applyComboPreset(comboId, btnElement) {
     // 4. Activate the specified soundscapes with default volume (0.25)
     if (soundscapeContainer && combo.soundscapes) {
         combo.soundscapes.forEach(soundscapeId => {
-            const volInput = soundscapeContainer.querySelector(`input[data - id= "${soundscapeId}"][data - type="vol"]`);
+            const volInput = soundscapeContainer.querySelector(`input[data-id="${soundscapeId}"][data-type="vol"]`);
             if (volInput) {
                 const vol = 0.25; // 50% when displayed (0.25 * 200)
                 volInput.value = vol;
@@ -2607,16 +2612,16 @@ export function initThemeModal() {
     Object.keys(THEMES).forEach(key => {
         const theme = THEMES[key];
         const card = document.createElement('div');
-        card.className = `theme - card group ${els.themeBtn && document.body.dataset.theme === key ? 'active' : ''} `;
+        card.className = `theme-card group ${els.themeBtn && document.body.dataset.theme === key ? 'active' : ''} `;
         card.style.setProperty('--theme-bg', theme.bg);
 
         // Card HTML - use CSS classes for theme-aware text colors
         const displayName = key === 'default' ? 'Emerald' : key;
 
         card.innerHTML = `
-    < div class="theme-preview" >
+    <div class="theme-preview">
         <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
-            </div >
+    </div>
     <div class="p-3 theme-card-content">
         <div class="theme-card-title text-sm font-bold capitalize mb-1" style="color: var(--text-main);">${displayName}</div>
         <div class="theme-card-desc text-[10px]" style="color: var(--text-muted);">
@@ -3876,12 +3881,12 @@ window.toggleMatrixSettings = function (toggleBtn) {
     if (state.matrixPanelOpen) {
         if (els.matrixSettingsPanel) {
             els.matrixSettingsPanel.classList.remove('hidden');
-            els.matrixSettingsPanel.classList.add('flex', 'flex-col');
+            els.matrixSettingsPanel.classList.add('flex', 'items-center');
         }
     } else {
         if (els.matrixSettingsPanel) {
             els.matrixSettingsPanel.classList.add('hidden');
-            els.matrixSettingsPanel.classList.remove('flex', 'flex-col');
+            els.matrixSettingsPanel.classList.remove('flex', 'items-center');
         }
     }
 };
@@ -3899,7 +3904,7 @@ function setupMatrixControls() {
             const panel = document.getElementById('matrixSettingsPanel');
             if (panel) {
                 panel.classList.add('hidden');
-                panel.classList.remove('flex', 'flex-col');
+                panel.classList.remove('flex', 'items-center');
             }
         });
     }
@@ -3996,11 +4001,11 @@ function setupMatrixControls() {
     if (textInput) {
         textInput.addEventListener('input', (e) => {
             const text = e.target.value.toUpperCase();
-            e.target.value = text; // Force uppercase
+            e.target.value = text;
             const viz = getVisualizer();
 
-            // Only update if currently in custom mode
-            if (modeSelect && modeSelect.value === 'custom' && viz && viz.setMatrixLogicMode) {
+            // Always treat text input as 'custom' mode override
+            if (viz && viz.setMatrixLogicMode) {
                 viz.setMatrixLogicMode('custom', text);
             }
         });
