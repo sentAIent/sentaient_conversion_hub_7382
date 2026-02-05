@@ -976,7 +976,7 @@ export class Visualizer3D {
             // FIXME: Texture generation only supports standard characters + LOGO. Custom strings might map incorrectly if font missing? 
             // For now assuming texture atlas handles standard ASCII.
 
-            const speed = 1.0 + Math.random() * 1.5; // Base speed variance
+            // const speed = 1.0 + Math.random() * 1.5; // Base speed variance - using definition above
 
             for (let r = 0; r < rowCount; r++) {
                 const y = (viewHeight / 2) - (r * rowHeight);
