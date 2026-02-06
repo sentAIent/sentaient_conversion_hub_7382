@@ -1,9 +1,9 @@
-// MindWave Onboarding Tutorial - Interactive & Deep Dive Enabled
-// Updated for V4 Features: Matrix, DJ Mixer, Pricing
+// MindWave Onboarding Tutorial - Premium Redesign
+// Features: Pulsing Highlight Boxes, Dark Tooltips, Arrow Indicators
 
-const ONBOARDING_KEY = 'mindwave_onboarding_complete_v4';
+const ONBOARDING_KEY = 'mindwave_onboarding_complete_v5'; // Bumped version for new flow
 
-// --- DEEP DIVE CONTENT ---
+// --- DEEP DIVE CONTENT (Unchanged) ---
 const DEEP_DIVE_CONTENT = {
     'modes': `
         <h3 class="text-xl font-bold text-[var(--accent)] mb-4">Understanding Audio Modes</h3>
@@ -92,7 +92,6 @@ const TUTORIAL_STEPS = [
         readMoreId: 'presets',
         action: () => {
             const panel = document.getElementById('leftPanel');
-            // Ensure panel is OPEN
             if (panel && panel.classList.contains('-translate-x-full')) {
                 if (window.toggleLeftPanel) window.toggleLeftPanel();
                 else panel.classList.remove('-translate-x-full');
@@ -107,7 +106,6 @@ const TUTORIAL_STEPS = [
         position: 'left',
         readMoreId: 'mixer',
         action: () => {
-            // Close left, Open right
             const left = document.getElementById('leftPanel');
             if (left) left.classList.add('-translate-x-full');
 
@@ -120,17 +118,21 @@ const TUTORIAL_STEPS = [
     },
     {
         id: 'matrix',
-        title: '🔮 Matrix Visuals',
+        title: '🔮 The Matrix',
         description: 'Select "Matrix" from the bottom dock. Use the Gear icon to customize text and colors.',
-        target: '.visual-dock', // Targeting the dock generally
+        target: '#matrixSettingsPanel', // Target the panel if visible, or dock? Let's target the dock area generally if panel hidden
+        fallbackTarget: '.visual-dock',
         position: 'top',
         readMoreId: 'matrix',
         action: () => {
-            // Close right panel
             const right = document.getElementById('rightPanel');
             if (right) right.classList.add('translate-x-full');
 
-            // Ensure dock is visible if possible
+            // Try to show matrix settings if possible, otherwise just point to dock
+            if (window.toggleMatrixSettings) {
+                const panel = document.getElementById('matrixSettingsPanel');
+                if (panel && panel.classList.contains('hidden')) window.toggleMatrixSettings();
+            }
         }
     },
     {
@@ -145,9 +147,8 @@ const TUTORIAL_STEPS = [
         title: '💎 Go Pro',
         description: 'Get the downloadable app for offline use and source code access.',
         target: '#downloadAppBtn',
-        position: 'right', // Sidebar is usually on left, so tooltip on right
+        position: 'right',
         action: () => {
-            // Open left panel again to show the button
             const panel = document.getElementById('leftPanel');
             if (panel && panel.classList.contains('-translate-x-full')) {
                 panel.classList.remove('-translate-x-full');
@@ -161,11 +162,13 @@ const TUTORIAL_STEPS = [
         target: '#playBtn',
         position: 'top',
         action: () => {
-            // Close all panels
             const left = document.getElementById('leftPanel');
             if (left) left.classList.add('-translate-x-full');
             const right = document.getElementById('rightPanel');
             if (right) right.classList.add('translate-x-full');
+
+            const mPanel = document.getElementById('matrixSettingsPanel');
+            if (mPanel && !mPanel.classList.contains('hidden')) mPanel.classList.add('hidden');
         }
     }
 ];
@@ -173,7 +176,41 @@ const TUTORIAL_STEPS = [
 let currentStep = 0;
 let onboardingOverlay = null;
 let onboardingHighlight = null;
+let onboardingTooltip = null;
 let deepDiveModal = null;
+
+// --- CSS STYLES INJECTION ---
+const styleId = 'onboarding-styles';
+if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        @keyframes border-pulse {
+            0% { box-shadow: 0 0 0 0px rgba(45, 212, 191, 0.7); border-color: rgba(45, 212, 191, 1); }
+            50% { box-shadow: 0 0 0 10px rgba(45, 212, 191, 0); border-color: rgba(45, 212, 191, 0.5); }
+            100% { box-shadow: 0 0 0 0px rgba(45, 212, 191, 0); border-color: rgba(45, 212, 191, 1); }
+        }
+        .highlight-box {
+            position: fixed;
+            z-index: 10002;
+            pointer-events: none;
+            border: 3px solid var(--accent);
+            border-radius: 8px;
+            animation: border-pulse 2s infinite;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .tooltip-arrow {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #0f172a; /* Match tooltip bg */
+            border: 1px solid var(--accent);
+            transform: rotate(45deg);
+            z-index: -1;
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 export function shouldShowOnboarding() {
     return localStorage.getItem(ONBOARDING_KEY) !== 'true';
@@ -191,162 +228,235 @@ export function startOnboarding(force = false) {
     showStep(currentStep);
 }
 
-// Global expose
 window.startOnboarding = () => startOnboarding(true);
 
 function createOnboardingUI() {
-    if (document.getElementById('onboardingOverlay')) return; // Already exists
+    if (document.getElementById('onboardingOverlay')) return;
 
-    // Overlay
+    // Dark Overlay
     onboardingOverlay = document.createElement('div');
     onboardingOverlay.id = 'onboardingOverlay';
-    onboardingOverlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 opacity-0';
+    onboardingOverlay.className = 'fixed inset-0 z-[10000] bg-black/80 backdrop-blur-[1px] transition-opacity duration-300 opacity-0';
 
-    // Tooltip Card
-    const tooltip = document.createElement('div');
-    tooltip.className = 'glass-card border border-white/10 p-6 rounded-2xl max-w-sm w-full mx-4 shadow-2xl transform transition-all duration-300';
-    tooltip.innerHTML = `
-        <div class="flex justify-between items-start mb-4">
-            <h3 id="onboardingTitle" class="text-xl font-bold text-white leading-tight"></h3>
-            <span id="onboardingCounter" class="text-[10px] bg-white/10 px-2 py-1 rounded-full text-[var(--text-muted)] font-mono">1/${TUTORIAL_STEPS.length}</span>
-        </div>
-        
-        <p id="onboardingDesc" class="text-sm text-slate-300 mb-6 leading-relaxed min-h-[60px]"></p>
-        
-        <div class="flex flex-col gap-3">
-            <div class="flex justify-between items-center bg-black/20 p-1 rounded-xl">
-                <button id="onboardingPrev" class="px-3 py-2 text-xs text-[var(--text-muted)] hover:text-white transition-colors">
-                    Back
-                </button>
-                
-                <div id="onboardingDots" class="flex gap-1"></div>
-                
-                <button id="onboardingNext" class="px-4 py-2 bg-[var(--accent)] text-[var(--bg-main)] text-xs font-bold rounded-lg hover:brightness-110 transition-all shadow-lg shadow-[var(--accent)]/20">
-                    Next
-                </button>
+    // Highlight Box
+    onboardingHighlight = document.createElement('div');
+    onboardingHighlight.className = 'highlight-box opacity-0';
+
+    // Tooltip Container
+    onboardingTooltip = document.createElement('div');
+    onboardingTooltip.className = 'fixed z-[10003] opacity-0 transition-all duration-300';
+    onboardingTooltip.innerHTML = `
+        <div class="relative bg-[#0f172a] border border-[var(--accent)] text-white p-5 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] max-w-xs w-[320px]">
+            <div class="tooltip-arrow"></div>
+            
+            <div class="flex justify-between items-start mb-3">
+                <h3 id="onboardingTitle" class="text-lg font-bold text-[var(--accent)] leading-tight"></h3>
+                <span id="onboardingCounter" class="text-[10px] text-slate-500 font-mono mt-1"></span>
             </div>
             
-            <div class="flex justify-between items-center text-[10px] text-[var(--text-muted)] px-1">
-                 <button id="onboardingReadMore" class="hover:text-[var(--accent)] transition-colors flex items-center gap-1 hidden">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    Read More
-                 </button>
-                 <button id="onboardingSkip" class="hover:text-white transition-colors">Skip Tutorial</button>
+            <p id="onboardingDesc" class="text-xs text-slate-300 leading-relaxed mb-5 min-h-[48px]"></p>
+            
+            <div class="flex items-center justify-between mt-auto">
+                <button id="onboardingPrev" class="text-xs text-slate-500 hover:text-white transition-colors px-2 py-1">Back</button>
+                
+                <div class="flex gap-2">
+                     <button id="onboardingReadMore" class="hidden text-[10px] text-[var(--accent)] border border-[var(--accent)] px-2 py-1 rounded hover:bg-[var(--accent)] hover:text-black transition-colors">
+                        Read More
+                     </button>
+                    <button id="onboardingNext" class="text-xs font-bold bg-[var(--accent)] text-black px-4 py-1.5 rounded-lg hover:brightness-110 transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,212,191,0.3)]">
+                        Next
+                    </button>
+                </div>
             </div>
+            
+             <button id="onboardingSkip" class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-white/40 hover:text-white transition-colors">Skip Tutorial</button>
         </div>
     `;
 
-    onboardingOverlay.appendChild(tooltip);
     document.body.appendChild(onboardingOverlay);
+    document.body.appendChild(onboardingHighlight);
+    document.body.appendChild(onboardingTooltip);
 
-    // Event Listeners
-    document.getElementById('onboardingPrev').onclick = () => {
-        if (currentStep > 0) {
-            currentStep--;
-            showStep(currentStep);
-        }
-    };
+    // Initial Fade In
+    requestAnimationFrame(() => {
+        onboardingOverlay.classList.remove('opacity-0');
+        onboardingHighlight.classList.remove('opacity-0');
+        onboardingTooltip.classList.remove('opacity-0');
+    });
 
-    document.getElementById('onboardingNext').onclick = () => {
-        if (currentStep < TUTORIAL_STEPS.length - 1) {
-            currentStep++;
-            showStep(currentStep);
-        } else {
-            endOnboarding();
-        }
-    };
-
+    // Listeners
+    document.getElementById('onboardingPrev').onclick = prevStep;
+    document.getElementById('onboardingNext').onclick = nextStep;
     document.getElementById('onboardingSkip').onclick = endOnboarding;
-
     document.getElementById('onboardingReadMore').onclick = () => {
         const step = TUTORIAL_STEPS[currentStep];
-        if (step && step.readMoreId) {
-            showDeepDive(step.readMoreId);
-        }
+        if (step.readMoreId) showDeepDive(step.readMoreId);
     };
+}
 
-    // Fade In
-    requestAnimationFrame(() => onboardingOverlay.classList.remove('opacity-0'));
+function prevStep() {
+    if (currentStep > 0) {
+        currentStep--;
+        showStep(currentStep);
+    }
+}
+
+function nextStep() {
+    if (currentStep < TUTORIAL_STEPS.length - 1) {
+        currentStep++;
+        showStep(currentStep);
+    } else {
+        endOnboarding();
+    }
 }
 
 function showStep(index) {
     const step = TUTORIAL_STEPS[index];
     if (!step) return;
 
-    // 1. Run Action (Open panels etc)
     if (step.action) step.action();
 
-    // 2. Update Content
-    const titleEl = document.getElementById('onboardingTitle');
-    const descEl = document.getElementById('onboardingDesc');
-    const countEl = document.getElementById('onboardingCounter');
-    const nextBtn = document.getElementById('onboardingNext');
-    const prevBtn = document.getElementById('onboardingPrev');
-    const readMoreBtn = document.getElementById('onboardingReadMore');
+    // Update Text
+    document.getElementById('onboardingTitle').textContent = step.title;
+    document.getElementById('onboardingDesc').textContent = step.description;
+    document.getElementById('onboardingCounter').textContent = `${index + 1}/${TUTORIAL_STEPS.length}`;
 
-    titleEl.textContent = step.title;
-    descEl.textContent = step.description;
-    countEl.textContent = `${index + 1}/${TUTORIAL_STEPS.length}`;
+    document.getElementById('onboardingNext').textContent = index === TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next';
+    document.getElementById('onboardingPrev').style.visibility = index === 0 ? 'hidden' : 'visible';
 
-    nextBtn.textContent = index === TUTORIAL_STEPS.length - 1 ? 'Start' : 'Next';
-    prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
-
-    // 3. Update Dots
-    const dotsContainer = document.getElementById('onboardingDots');
-    dotsContainer.innerHTML = TUTORIAL_STEPS.map((_, i) => `
-        <div class="w-1.5 h-1.5 rounded-full transition-colors duration-300 ${i === index ? 'bg-[var(--accent)]' : 'bg-white/10'}"></div>
-    `).join('');
-
-    // 4. Read More Toggle
+    // Read More visibility
+    const rmBtn = document.getElementById('onboardingReadMore');
     if (step.readMoreId && DEEP_DIVE_CONTENT[step.readMoreId]) {
-        readMoreBtn.classList.remove('hidden');
+        rmBtn.classList.remove('hidden');
     } else {
-        readMoreBtn.classList.add('hidden');
+        rmBtn.classList.add('hidden');
     }
 
-    // 5. Highlight Target
-    updateHighlight(step.target);
+    // Position Highlight & Tooltip
+    updatePosition(step);
 }
 
-function updateHighlight(selector) {
-    if (onboardingHighlight) {
-        onboardingHighlight.remove();
-        onboardingHighlight = null;
+function updatePosition(step) {
+    const highlight = onboardingHighlight;
+    const tooltip = onboardingTooltip;
+    const arrow = tooltip.querySelector('.tooltip-arrow');
+
+    // Helper to get element
+    let el = null;
+    if (step.target) el = document.querySelector(step.target);
+    if (!el && step.fallbackTarget) el = document.querySelector(step.fallbackTarget);
+
+    if (!el) {
+        // Center Fallback (Welcome Screen)
+        highlight.style.opacity = '0'; // Hide box for center steps
+        tooltip.style.left = '50%';
+        tooltip.style.top = '50%';
+        tooltip.style.transform = 'translate(-50%, -50%)';
+        arrow.style.display = 'none';
+        return;
     }
 
-    if (!selector) return;
+    // Show Highlight
+    highlight.style.opacity = '1';
 
-    setTimeout(() => {
-        const el = document.querySelector(selector);
-        if (el) {
-            const rect = el.getBoundingClientRect();
-            onboardingHighlight = document.createElement('div');
-            onboardingHighlight.className = 'fixed z-[9998] pointer-events-none border-2 border-[var(--accent)] rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] transition-all duration-300';
-            onboardingHighlight.style.left = (rect.left - 4) + 'px';
-            onboardingHighlight.style.top = (rect.top - 4) + 'px';
-            onboardingHighlight.style.width = (rect.width + 8) + 'px';
-            onboardingHighlight.style.height = (rect.height + 8) + 'px';
-            onboardingHighlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.7), 0 0 20px var(--accent-glow)';
+    const rect = el.getBoundingClientRect();
+    const padding = 8; // internal padding of highlight box regarding element
 
-            document.body.appendChild(onboardingHighlight);
-        }
-    }, 300); // Wait for potential panel transitions
+    // Set Highlight Box
+    highlight.style.left = (rect.left - padding) + 'px';
+    highlight.style.top = (rect.top - padding) + 'px';
+    highlight.style.width = (rect.width + padding * 2) + 'px';
+    highlight.style.height = (rect.height + padding * 2) + 'px';
+
+    // Position Tooltip
+    const tooltipRect = tooltip.firstElementChild.getBoundingClientRect(); // Get card dimensions (approx)
+    const tWidth = 320;
+    const tHeight = 200; // estimated max
+    const gap = 20;
+
+    let tLeft, tTop;
+    let arrowClass = ''; // helper for arrow positioning styling if we wanted classes, but we'll use inline styles
+
+    // Reset styles
+    tooltip.style.transform = 'none';
+    arrow.style.display = 'block';
+
+    // Clear arrow styles
+    arrow.style.top = ''; arrow.style.bottom = ''; arrow.style.left = ''; arrow.style.right = '';
+    arrow.style.borderWidth = '1px'; // reset
+
+    /* 
+       Logic: 
+       - If position 'right', place to the right of target.
+       - If 'left', place left.
+       - etc.
+    */
+
+    const pos = step.position || 'bottom';
+
+    if (pos === 'right') {
+        tLeft = rect.right + gap + padding;
+        tTop = rect.top + (rect.height / 2) - 100; // Center vertically roughly
+
+        // Arrow pointing left
+        arrow.style.left = '-6px';
+        arrow.style.top = '20px'; // near top of card or middle?
+        arrow.style.borderRight = '0'; arrow.style.borderTop = '0'; // Adjust for rotation
+    }
+    else if (pos === 'left') {
+        tLeft = rect.left - tWidth - gap - padding;
+        tTop = rect.top;
+
+        // Arrow pointing right
+        arrow.style.right = '-6px';
+        arrow.style.top = '20px';
+    }
+    else if (pos === 'top') {
+        tLeft = rect.left + (rect.width / 2) - (tWidth / 2);
+        tTop = rect.top - tHeight + 40; // Approx above
+
+        // Arrow pointing down
+        arrow.style.bottom = '-6px';
+        arrow.style.left = '50%';
+        arrow.style.transform = 'translateX(-50%) rotate(45deg)';
+    }
+    else { // bottom default
+        tLeft = rect.left + (rect.width / 2) - (tWidth / 2);
+        tTop = rect.bottom + gap + padding;
+
+        // Arrow pointing up
+        arrow.style.top = '-6px';
+        arrow.style.left = '50%';
+        arrow.style.transform = 'translateX(-50%) rotate(225deg)'; // Adjust rotation angle logic if needed
+        // Simpler: Rotate 45deg. To point up, top/left border. 
+        // We want pointing UP. So standard 45deg, but mask borders? 
+        // Let's simpler logic:
+        arrow.style.borderRight = '0'; arrow.style.borderBottom = '0';
+        arrow.style.transform = 'translateX(-50%) rotate(45deg)';
+    }
+
+    // Boundary Checks (Keep on screen)
+    if (tLeft < 10) tLeft = 10;
+    if (tLeft + tWidth > window.innerWidth - 10) tLeft = window.innerWidth - tWidth - 10;
+    if (tTop < 10) tTop = 10;
+    if (tTop + tHeight > window.innerHeight - 10) tTop = window.innerHeight - tHeight - 10;
+
+    tooltip.style.left = tLeft + 'px';
+    tooltip.style.top = tTop + 'px';
 }
 
 function endOnboarding() {
     markOnboardingComplete();
-    if (onboardingOverlay) {
-        onboardingOverlay.classList.add('opacity-0');
-        setTimeout(() => onboardingOverlay.remove(), 300);
-        onboardingOverlay = null;
-    }
-    if (onboardingHighlight) {
-        onboardingHighlight.remove();
-        onboardingHighlight = null;
-    }
+    if (onboardingOverlay) onboardingOverlay.remove();
+    if (onboardingHighlight) onboardingHighlight.remove();
+    if (onboardingTooltip) onboardingTooltip.remove();
+
+    onboardingOverlay = null;
+    onboardingHighlight = null;
+    onboardingTooltip = null;
 }
 
-// --- DEEP DIVE MODAL ---
+// --- DEEP DIVE MODAL (Unchanged Logic, just styling check) ---
 function showDeepDive(contentId) {
     if (deepDiveModal) deepDiveModal.remove();
 
@@ -354,29 +464,24 @@ function showDeepDive(contentId) {
     if (!content) return;
 
     deepDiveModal = document.createElement('div');
-    deepDiveModal.className = 'fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-[fade-in_0.2s]';
+    deepDiveModal.className = 'fixed inset-0 z-[11000] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-[fade-in_0.2s]';
     deepDiveModal.innerHTML = `
-        <div class="glass-card max-w-2xl w-full max-h-[80vh] overflow-y-auto rounded-3xl p-8 shadow-2xl relative border border-[var(--accent)]/20" onclick="event.stopPropagation()">
-            <button class="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors" onclick="this.closest('.fixed').remove()">
+        <div class="bg-[#0f172a] border border-[var(--accent)] max-w-2xl w-full max-h-[80vh] overflow-y-auto rounded-xl p-8 shadow-2xl relative" onclick="event.stopPropagation()">
+            <button class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors" onclick="this.closest('.fixed').remove()">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
-            
             <div class="prose prose-invert max-w-none">
                 ${content}
             </div>
-            
             <div class="mt-8 pt-6 border-t border-white/10 flex justify-end">
-                <button class="px-6 py-2 bg-[var(--accent)] text-[var(--bg-main)] font-bold rounded-xl hover:opacity-90 transition-opacity" onclick="this.closest('.fixed').remove()">
+                <button class="px-6 py-2 bg-[var(--accent)] text-[#0f172a] font-bold rounded-lg hover:brightness-110 transition-all" onclick="this.closest('.fixed').remove()">
                     Got it
                 </button>
             </div>
         </div>
     `;
-
-    // Close on backdrop click
     deepDiveModal.onclick = (e) => {
         if (e.target === deepDiveModal) deepDiveModal.remove();
     };
-
     document.body.appendChild(deepDiveModal);
 }
