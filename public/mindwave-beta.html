@@ -477,90 +477,77 @@
                     </div>
                 </div>
 
-                <!-- 2. Matrix Settings Bar (Redesigned Glassmorphism) -->
+                <!-- 2. Matrix Settings Bar (Horizontal - Refined) -->
                 <div id="matrixSettingsPanel"
-                    class="hidden order-2 flex flex-col gap-3 p-4 bg-[#0f172a]/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all animate-fade-in-up w-auto min-w-[300px]">
+                    class="hidden order-2 flex items-center gap-4 px-6 py-3 bg-[#0f172a]/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all animate-fade-in-up w-auto">
 
-                    <!-- Header Row -->
-                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-xs font-bold text-[var(--accent)] uppercase tracking-wider">Matrix
-                            Config</span>
-                        <button onclick="window.toggleMatrixSettings()"
-                            class="text-white/40 hover:text-white transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
+                    <!-- Label -->
+                    <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Matrix</span>
+
+                    <div class="w-px h-6 bg-white/10"></div>
+
+                    <!-- Custom Text Input -->
+                    <div id="matrixCustomTextInput" class="hidden flex items-center">
+                        <input type="text" id="matrixTextInput" placeholder="TXT" maxlength="20"
+                            class="w-24 bg-white/5 border border-white/10 rounded-lg text-xs text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-all">
                     </div>
 
-                    <!-- Row 1: Text & Angle -->
-                    <div class="flex gap-3">
-                        <!-- Custom Text -->
-                        <div id="matrixCustomTextInput" class="hidden flex-1 flex flex-col gap-1">
-                            <label class="text-[9px] text-[var(--text-muted)] uppercase font-semibold">Message</label>
-                            <input type="text" id="matrixTextInput" placeholder="MINDWAVE" maxlength="20"
-                                class="w-full bg-black/20 border border-white/10 rounded-lg text-xs text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] focus:bg-black/40 font-mono transition-all">
-                        </div>
-
-                        <!-- Angle -->
-                        <div class="w-24 flex flex-col gap-1">
-                            <div class="flex justify-between items-baseline">
-                                <label class="text-[9px] text-[var(--text-muted)] uppercase font-semibold">Angle</label>
-                                <span id="matrixAngleVal" class="text-[9px] font-mono text-[var(--accent)]">0°</span>
-                            </div>
-                            <input type="range" id="matrixAngleSlider" min="0" max="360" step="15" value="0"
-                                class="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-[var(--accent)] hover:accent-white transition-all">
-                        </div>
-                    </div>
-
-                    <!-- Row 2: Sliders -->
-                    <div class="flex gap-3">
-                        <!-- Speed -->
-                        <div class="flex-1 flex flex-col gap-1">
-                            <div class="flex justify-between items-baseline">
-                                <label class="text-[9px] text-[var(--text-muted)] uppercase font-semibold">Speed</label>
-                                <span id="matrixSpeedVal" class="text-[9px] font-mono text-[var(--accent)]">1.0</span>
-                            </div>
-                            <input type="range" id="matrixSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
-                                class="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-[var(--accent)] hover:accent-white transition-all">
-                        </div>
-
-                        <!-- Length -->
-                        <div class="flex-1 flex flex-col gap-1">
-                            <div class="flex justify-between items-baseline">
-                                <label
-                                    class="text-[9px] text-[var(--text-muted)] uppercase font-semibold">Length</label>
-                                <span id="matrixLengthVal" class="text-[9px] font-mono text-[var(--accent)]">1.0</span>
-                            </div>
-                            <input type="range" id="matrixLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                                class="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-[var(--accent)] hover:accent-white transition-all">
-                        </div>
-                    </div>
-
-                    <!-- Row 3: Styling (Color & Rainbow) -->
-                    <div class="pt-2 border-t border-white/5 flex justify-between items-center">
+                    <!-- Color & Toggle -->
+                    <div class="flex items-center gap-4">
                         <!-- Color Picker -->
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-col gap-0.5 items-center">
+                            <label class="text-[8px] text-[var(--text-muted)] uppercase tracking-wide">Tint</label>
                             <div
-                                class="relative w-8 h-8 rounded-full overflow-hidden border border-white/20 shadow-inner group cursor-pointer">
+                                class="relative w-6 h-6 rounded-full overflow-hidden border border-white/20 shadow-sm cursor-pointer hover:scale-110 transition-transform">
                                 <input type="color" id="matrixColorPicker" value="#00FF41"
                                     class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 border-none">
                             </div>
-                            <span
-                                class="text-[10px] text-[var(--text-muted)] group-hover:text-white transition-colors">Tint</span>
                         </div>
 
                         <!-- Rainbow Toggle -->
-                        <div class="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg border border-white/5">
-                            <span class="text-[10px] font-semibold text-[var(--text-muted)]">Rainbow</span>
+                        <div class="flex flex-col gap-0.5 items-center">
+                            <label class="text-[8px] text-[var(--text-muted)] uppercase tracking-wide">Rainbow</label>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="matrixRainbowToggle" class="sr-only peer">
                                 <div
-                                    class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500">
+                                    class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[var(--accent)]">
                                 </div>
                             </label>
+                        </div>
+                    </div>
+
+                    <div class="w-px h-6 bg-white/10"></div>
+
+                    <!-- Sliders Group -->
+                    <div class="flex items-center gap-4">
+                        <!-- Speed -->
+                        <div class="flex flex-col gap-1 w-20 group">
+                            <div class="flex justify-between text-[8px] text-[var(--text-muted)] uppercase">
+                                <span>Speed</span>
+                                <span id="matrixSpeedVal" class="text-[var(--accent)] font-mono">1.0</span>
+                            </div>
+                            <input type="range" id="matrixSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
+                                class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[var(--accent)] hover:bg-white/20 transition-all">
+                        </div>
+
+                        <!-- Length -->
+                        <div class="flex flex-col gap-1 w-20 group">
+                            <div class="flex justify-between text-[8px] text-[var(--text-muted)] uppercase">
+                                <span>Length</span>
+                                <span id="matrixLengthVal" class="text-[var(--accent)] font-mono">1.0</span>
+                            </div>
+                            <input type="range" id="matrixLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
+                                class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[var(--accent)] hover:bg-white/20 transition-all">
+                        </div>
+
+                        <!-- Angle -->
+                        <div class="flex flex-col gap-1 w-20 group">
+                            <div class="flex justify-between text-[8px] text-[var(--text-muted)] uppercase">
+                                <span>Angle</span>
+                                <span id="matrixAngleVal" class="text-[var(--accent)] font-mono">0°</span>
+                            </div>
+                            <input type="range" id="matrixAngleSlider" min="0" max="360" step="15" value="0"
+                                class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[var(--accent)] hover:bg-white/20 transition-all">
                         </div>
                     </div>
 
