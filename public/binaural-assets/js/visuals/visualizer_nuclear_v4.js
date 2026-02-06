@@ -680,12 +680,19 @@ export class Visualizer3D {
                 allowFlip = false;
             } else {
                 // CLASSIC MODE SUPPORT:
-                // Indices 10-63 should be random Katakana for when MindWave mode is OFF.
-                if (i === 10) console.log("NUCLEAR TEXTURE GENERATING: HYBRID MODE (Legacy Katakana Restored)");
-
-                const randomChar = katakana.charAt(Math.floor(Math.random() * katakana.length));
+                // Indices 9-63 should be random Mixed Glyphs
+                const mix = katakana + "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                const randomChar = mix.charAt(Math.floor(Math.random() * mix.length));
                 char = randomChar;
-                allowFlip = true; // Allow flipping for authentic matrix feel
+
+                // Randomly flip X for "Alien" look (50% chance)
+                if (Math.random() > 0.5) {
+                    ctx.save();
+                    ctx.scale(-1, 1);
+                    ctx.fillText(char, 0, 0);
+                    ctx.restore();
+                    char = ''; // Drawn already
+                }
             }
 
             // Draw Character or Logo
