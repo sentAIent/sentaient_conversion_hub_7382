@@ -28,7 +28,7 @@ export function startOnboarding(force = false) {
             {
                 element: '#nothing', // Center modal
                 popover: {
-                    title: '<span class="text-xl">✨ Welcome to MindWave</span>',
+                    title: '✨ Welcome to MindWave',
                     description: 'Your personal neuro-audio studio. <br><br>Experience a fusion of <strong>Binaural Beats</strong>, <strong>Isochronic Tones</strong>, and immersive visuals.<br><br>Let\'s take a quick tour.',
                     side: 'center',
                     align: 'center'
@@ -57,26 +57,60 @@ export function startOnboarding(force = false) {
                     }
                 }
             },
+            // --- RIGHT PANEL SEQUENCE ---
             {
-                element: '#rightToggle',
+                element: '#rightToggle', // 1. Point to toggle
                 popover: {
-                    title: 'DJ Mixer',
-                    description: 'Open the <strong>Right Panel</strong> to layer atmospheric sounds like Rain, Vinyl Crackle, and Rhythmic Pulses over your session.',
+                    title: 'DJ Mixer Access',
+                    description: 'Click here or slide open to access the <strong>Studio Mixer</strong>.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+            {
+                element: '#rightPanel', // 2. Force Open Panel
+                popover: {
+                    title: 'Studio Mixer',
+                    description: 'Layer powerful sounds over your session.',
                     side: 'left',
                     align: 'center',
                     onHighlightStarted: () => {
                         const panel = document.getElementById('rightPanel');
-                        if (panel && !panel.classList.contains('translate-x-full')) panel.classList.add('translate-x-full');
+                        if (panel && panel.classList.contains('translate-x-full')) panel.classList.remove('translate-x-full');
                     }
                 }
             },
+            {
+                element: 'section[data-section="journeys"] button[aria-label="Info"]', // 3. Info Icon Journeys
+                popover: {
+                    title: 'Journey Info',
+                    description: 'Click the <strong>(i)</strong> icon to learn about specific frequency ramps like "Wake Up" or "Deep Sleep".',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+            {
+                element: 'section[data-section="djpads"] button[aria-label="Info"]', // 4. Info Icon DJ
+                popover: {
+                    title: 'Sampler Info',
+                    description: 'Learn how to layer <strong>One-Shots</strong> and <strong>Loops</strong> like Rain, Fire, and Cosmic Drones.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+            // --- END RIGHT PANEL SEQUENCE ---
             {
                 element: '.visual-dock', // Bottom dock
                 popover: {
                     title: 'Visual Matrix',
                     description: 'Select <strong>Matrix</strong> or <strong>Flow</strong> modes for visual immersion. <br>Use the <strong>Gear Icon</strong> (when active) to customize colors and text.',
                     side: 'top',
-                    align: 'center'
+                    align: 'center',
+                    onHighlightStarted: () => {
+                        // Close Right Panel when moving to Matrix
+                        const panel = document.getElementById('rightPanel');
+                        if (panel && !panel.classList.contains('translate-x-full')) panel.classList.add('translate-x-full');
+                    }
                 }
             },
             {
