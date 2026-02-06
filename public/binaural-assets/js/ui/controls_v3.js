@@ -3959,6 +3959,28 @@ function setupMatrixControls() {
         });
     }
 
+    // --- NEW: Color & Rainbow Listeners ---
+    const colorPicker = document.getElementById('matrixColorPicker');
+    if (colorPicker) {
+        colorPicker.addEventListener('input', (e) => {
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixColor) {
+                viz.setMatrixColor(e.target.value);
+            }
+        });
+    }
+
+    const rainbowToggle = document.getElementById('matrixRainbowToggle');
+    if (rainbowToggle) {
+        rainbowToggle.addEventListener('change', (e) => {
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixRainbow) {
+                // Pass checked state directly
+                viz.setMatrixRainbow(e.target.checked);
+            }
+        });
+    }
+
     // --- NEW: Slider Listeners ---
     const speedSlider = document.getElementById('matrixSpeedSlider');
     const speedVal = document.getElementById('matrixSpeedVal');
