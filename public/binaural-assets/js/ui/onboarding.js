@@ -245,22 +245,23 @@ function createOnboardingUI() {
     // Tooltip Container
     onboardingTooltip = document.createElement('div');
     onboardingTooltip.className = 'fixed z-[10003] opacity-0 transition-all duration-300';
+    // Remove backdrop-blur, use solid high-contrast background
     onboardingTooltip.innerHTML = `
-        <div class="relative bg-[#0f172a] border border-[var(--accent)] text-white p-5 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] max-w-xs w-[320px]">
-            <div class="tooltip-arrow"></div>
+        <div class="relative bg-[#0f172a] border border-[var(--accent)] text-white p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] max-w-xs w-[320px]">
+            <div class="tooltip-arrow absolute w-3 h-3 bg-[#0f172a] border border-[var(--accent)] rotate-45 z-[-1]"></div>
             
             <div class="flex justify-between items-start mb-3">
                 <h3 id="onboardingTitle" class="text-lg font-bold text-[var(--accent)] leading-tight"></h3>
                 <span id="onboardingCounter" class="text-[10px] text-slate-500 font-mono mt-1"></span>
             </div>
             
-            <p id="onboardingDesc" class="text-xs text-slate-300 leading-relaxed mb-5 min-h-[48px]"></p>
+            <p id="onboardingDesc" class="text-xs text-slate-200 leading-relaxed mb-5 min-h-[48px] font-medium"></p>
             
             <div class="flex items-center justify-between mt-auto">
-                <button id="onboardingPrev" class="text-xs text-slate-500 hover:text-white transition-colors px-2 py-1">Back</button>
+                <button id="onboardingPrev" class="text-xs text-slate-400 hover:text-white transition-colors px-2 py-1">Back</button>
                 
                 <div class="flex gap-2">
-                     <button id="onboardingReadMore" class="hidden text-[10px] text-[var(--accent)] border border-[var(--accent)] px-2 py-1 rounded hover:bg-[var(--accent)] hover:text-black transition-colors">
+                     <button id="onboardingReadMore" class="hidden text-[10px] text-[var(--accent)] border border-[var(--accent)] px-2 py-1 rounded hover:bg-[var(--accent)] hover:text-black transition-colors font-bold">
                         Read More
                      </button>
                     <button id="onboardingNext" class="text-xs font-bold bg-[var(--accent)] text-black px-4 py-1.5 rounded-lg hover:brightness-110 transition-transform active:scale-95 shadow-[0_0_15px_rgba(45,212,191,0.3)]">
@@ -269,7 +270,7 @@ function createOnboardingUI() {
                 </div>
             </div>
             
-             <button id="onboardingSkip" class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-white/40 hover:text-white transition-colors">Skip Tutorial</button>
+             <button id="onboardingSkip" class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-white/50 hover:text-white transition-colors">Skip Tutorial</button>
         </div>
     `;
 
@@ -368,14 +369,10 @@ function updatePosition(step) {
     highlight.style.width = (rect.width + padding * 2) + 'px';
     highlight.style.height = (rect.height + padding * 2) + 'px';
 
-    // Position Tooltip
-    const tooltipRect = tooltip.firstElementChild.getBoundingClientRect(); // Get card dimensions (approx)
+    // Position Tooltip with Smart Logic
     const tWidth = 320;
-    const tHeight = 200; // estimated max
+    const tHeight = 220; // Estimated max height including padding
     const gap = 20;
-
-    let tLeft, tTop;
-    let arrowClass = ''; // helper for arrow positioning styling if we wanted classes, but we'll use inline styles
 
     // Reset styles
     tooltip.style.transform = 'none';
@@ -384,41 +381,68 @@ function updatePosition(step) {
     // Clear arrow styles
     arrow.style.top = ''; arrow.style.bottom = ''; arrow.style.left = ''; arrow.style.right = '';
     arrow.style.borderWidth = '1px'; // reset
+    arrow.style.borderRight = ''; arrow.style.borderBottom = ''; arrow.style.borderLeft = ''; arrow.style.borderTop = '';
 
-    /* 
-       Logic: 
-       - If position 'right', place to the right of target.
-       - If 'left', place left.
-       - etc.
-    */
+    let pos = step.position || 'bottom';
 
-    const pos = step.position || 'bottom';
+    // --- SMART FLIP LOGIC ---
+    // Calculate theoretical positions
+    const spaceRight = window.innerWidth - rect.right;
+    const spaceLeft = rect.left;
+    const spaceTop = rect.top;
+    const spaceBottom = window.innerHeight - rect.bottom;
+
+    // If preferred is right but no space, try left.
+    if (pos === 'right' && spaceRight < (tWidth + gap)) {
+        if (spaceLeft > (tWidth + gap)) pos = 'left';
+        else pos = 'bottom'; // Fallback
+    }
+    // If preferred is left but no space, try right.
+    else if (pos === 'left' && spaceLeft < (tWidth + gap)) {
+        if (spaceRight > (tWidth + gap)) pos = 'right';
+        else pos = 'bottom';
+    }
+    // If preferred is top but no space, try bottom
+    else if (pos === 'top' && spaceTop < (tHeight + gap)) {
+        pos = 'bottom';
+    }
+    // If preferred is bottom but no space, try top
+    else if (pos === 'bottom' && spaceBottom < (tHeight + gap)) {
+        pos = 'top';
+    }
+
+
+    let tLeft, tTop;
 
     if (pos === 'right') {
         tLeft = rect.right + gap + padding;
-        tTop = rect.top + (rect.height / 2) - 100; // Center vertically roughly
+        tTop = rect.top + (rect.height / 2) - (tHeight / 2); // Center vertically roughly
 
         // Arrow pointing left
         arrow.style.left = '-6px';
-        arrow.style.top = '20px'; // near top of card or middle?
-        arrow.style.borderRight = '0'; arrow.style.borderTop = '0'; // Adjust for rotation
+        arrow.style.top = '50%';
+        arrow.style.transform = 'translateY(-50%) rotate(45deg)';
+        arrow.style.borderRight = '0'; arrow.style.borderTop = '0'; // Point left
     }
     else if (pos === 'left') {
         tLeft = rect.left - tWidth - gap - padding;
-        tTop = rect.top;
+        tTop = rect.top + (rect.height / 2) - (tHeight / 2);
 
         // Arrow pointing right
         arrow.style.right = '-6px';
-        arrow.style.top = '20px';
+        arrow.style.top = '50%';
+        arrow.style.transform = 'translateY(-50%) rotate(45deg)';
+        arrow.style.borderLeft = '0'; arrow.style.borderBottom = '0'; // Point right
     }
     else if (pos === 'top') {
         tLeft = rect.left + (rect.width / 2) - (tWidth / 2);
-        tTop = rect.top - tHeight + 40; // Approx above
+        tTop = rect.top - gap - padding - 180; // Hard calc safety
 
         // Arrow pointing down
         arrow.style.bottom = '-6px';
         arrow.style.left = '50%';
         arrow.style.transform = 'translateX(-50%) rotate(45deg)';
+        arrow.style.borderLeft = '0'; arrow.style.borderTop = '0';
     }
     else { // bottom default
         tLeft = rect.left + (rect.width / 2) - (tWidth / 2);
@@ -427,18 +451,18 @@ function updatePosition(step) {
         // Arrow pointing up
         arrow.style.top = '-6px';
         arrow.style.left = '50%';
-        arrow.style.transform = 'translateX(-50%) rotate(225deg)'; // Adjust rotation angle logic if needed
-        // Simpler: Rotate 45deg. To point up, top/left border. 
-        // We want pointing UP. So standard 45deg, but mask borders? 
-        // Let's simpler logic:
-        arrow.style.borderRight = '0'; arrow.style.borderBottom = '0';
         arrow.style.transform = 'translateX(-50%) rotate(45deg)';
+        arrow.style.borderRight = '0'; arrow.style.borderBottom = '0';
     }
 
-    // Boundary Checks (Keep on screen)
+    // --- CLAMP LOGIC ---
+    // Force tooltip to stay in window
     if (tLeft < 10) tLeft = 10;
     if (tLeft + tWidth > window.innerWidth - 10) tLeft = window.innerWidth - tWidth - 10;
+
+    // Vertical clamp check
     if (tTop < 10) tTop = 10;
+    // Don't strict clamp bottom as it might overlap target, but better than offscreen
     if (tTop + tHeight > window.innerHeight - 10) tTop = window.innerHeight - tHeight - 10;
 
     tooltip.style.left = tLeft + 'px';
