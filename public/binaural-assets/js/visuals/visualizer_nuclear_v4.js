@@ -924,7 +924,7 @@ export class Visualizer3D {
         this.matrixPoints = null;
 
         const depthLayer = 4; // Bring closer (was 20)
-        const colCount = 80;  // Increase density (was 60)
+        const colCount = 40;  // Decrease density (was 80, halved as per request provided by user)
         const rowCount = 60;
         this.rowCount = rowCount;
 
