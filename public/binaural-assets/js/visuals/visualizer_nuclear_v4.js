@@ -14,6 +14,7 @@ export class Visualizer3D {
         this.matrixCustomText = "MINDWAVE"; // Default text
         this.currentMatrixAngle = 0; // Default Angle
         this.matrixSpeedMultiplier = 1.0; // Default speed to avoid NaN
+        this.initialized = false; // Initialize to false explicitly
 
 
         try {
@@ -1225,6 +1226,8 @@ export class Visualizer3D {
     }
 
     render(analyserL, analyserR) {
+        if (!this.initialized || !this.renderer) return;
+
         if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
 
         // Audio Data Processing
@@ -1654,7 +1657,7 @@ export class Visualizer3D {
         this.active = false; // Flag to stop internal loops if any
         if (this.renderer) {
             this.renderer.dispose();
-            this.renderer.forceContextLoss();
+            // REMOVED: this.renderer.forceContextLoss(); // Causes issues with canvas reuse
             this.renderer = null;
         }
     }
@@ -1668,6 +1671,7 @@ export function initVisualizer() {
         console.log('[Visualizer] Disposing previous instance to prevent ghosting');
         els.canvas.activeVisualizer.dispose();
         els.canvas.activeVisualizer = null;
+        viz3D = null; // Critical: Reset global reference
     }
 
     // Also cancel any global animation loop directly from state if it exists
