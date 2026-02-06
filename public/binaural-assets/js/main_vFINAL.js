@@ -4,7 +4,7 @@ import { setupUI } from './ui/controls_v3.js?v=FIX_SPEED_FINAL';
 import { initCursor } from './ui/cursor.js';
 import { initFirebase } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
-import { startOnboarding, shouldShowOnboarding } from './ui/onboarding.js';
+import { startOnboarding, shouldShowOnboarding } from './ui/onboarding_premium.js';
 import { initHaptics } from './utils/haptics.js';
 import { initShareFeature, copyShareLink } from './services/share.js';
 import { recordVisit } from './services/analytics.js';
