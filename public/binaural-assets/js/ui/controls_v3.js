@@ -4083,8 +4083,34 @@ function setupMatrixControls() {
             }, 1000);
         });
     }
+    // === Initialize State on Load ===
+    if (modeToggle) {
+        // Load saved text
+        const savedText = localStorage.getItem('mindwave_matrix_text');
+        if (savedText && textInput) {
+            textInput.value = savedText;
+        }
 
+        // Sync UI visibility
+        const isTextMode = modeToggle.checked;
+        if (isTextMode && textInput) {
+            textInput.classList.remove('hidden');
+        } else if (textInput) {
+            textInput.classList.add('hidden');
+        }
+
+        // Sync Visualizer Mode (must retrieve viz again as it might be ready)
+        // Note: viz might not be fully ready here if called too early, 
+        // but setMatrixLogicMode handles property setting even if init is delayed?
+        // Actually, let's try safely.
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixLogicMode) {
+            const text = (textInput && textInput.value) ? textInput.value : 'MINDWAVE';
+            viz.setMatrixLogicMode(isTextMode ? 'mindwave' : 'random', text);
+        }
+    }
 }
+
 
 // Initialize Matrix controls immediately if DOM is ready, or wait
 if (document.readyState === 'loading') {
