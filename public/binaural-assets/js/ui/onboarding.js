@@ -244,11 +244,12 @@ function createOnboardingUI() {
 
     // Tooltip Container
     onboardingTooltip = document.createElement('div');
-    onboardingTooltip.className = 'fixed z-[10003] opacity-0 transition-all duration-300';
-    // Remove backdrop-blur, use solid high-contrast background
+    onboardingTooltip.className = 'fixed z-[10003] opacity-0 transition-opacity duration-300 pointer-events-auto';
+
+    // Explicit Width handling: min(320px, 90vw) to ensure mobile fit
     onboardingTooltip.innerHTML = `
-        <div class="relative bg-[#0f172a] border border-[var(--accent)] text-white p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] max-w-xs w-[320px]">
-            <div class="tooltip-arrow absolute w-3 h-3 bg-[#0f172a] border border-[var(--accent)] rotate-45 z-[-1]"></div>
+        <div class="relative bg-[#0f172a] border border-[var(--accent)] text-white p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] w-[90vw] max-w-[320px]">
+            <div class="tooltip-arrow absolute w-4 h-4 bg-[#0f172a] border border-[var(--accent)] rotate-45 z-[-1]"></div>
             
             <div class="flex justify-between items-start mb-3">
                 <h3 id="onboardingTitle" class="text-lg font-bold text-[var(--accent)] leading-tight"></h3>
@@ -349,7 +350,7 @@ function updatePosition(step) {
 
     if (!el) {
         // Center Fallback (Welcome Screen)
-        highlight.style.opacity = '0'; // Hide box for center steps
+        highlight.style.opacity = '0';
         tooltip.style.left = '50%';
         tooltip.style.top = '50%';
         tooltip.style.transform = 'translate(-50%, -50%)';
@@ -361,7 +362,7 @@ function updatePosition(step) {
     highlight.style.opacity = '1';
 
     const rect = el.getBoundingClientRect();
-    const padding = 8; // internal padding of highlight box regarding element
+    const padding = 6;
 
     // Set Highlight Box
     highlight.style.left = (rect.left - padding) + 'px';
@@ -369,104 +370,126 @@ function updatePosition(step) {
     highlight.style.width = (rect.width + padding * 2) + 'px';
     highlight.style.height = (rect.height + padding * 2) + 'px';
 
-    // Position Tooltip with Smart Logic
-    const tWidth = 320;
-    const tHeight = 220; // Estimated max height including padding
-    const gap = 20;
+    // Get Tooltip Dimensions (Actual Rendered Size)
+    const tRect = tooltip.firstElementChild.getBoundingClientRect();
+    const tWidth = tRect.width;
+    const tHeight = tRect.height;
+
+    const gap = 15; // Gap between target and tooltip
 
     // Reset styles
     tooltip.style.transform = 'none';
     arrow.style.display = 'block';
 
-    // Clear arrow styles
+    // Reset arrow styles
     arrow.style.top = ''; arrow.style.bottom = ''; arrow.style.left = ''; arrow.style.right = '';
-    arrow.style.borderWidth = '1px'; // reset
-    arrow.style.borderRight = ''; arrow.style.borderBottom = ''; arrow.style.borderLeft = ''; arrow.style.borderTop = '';
 
     let pos = step.position || 'bottom';
 
-    // --- SMART FLIP LOGIC ---
-    // Calculate theoretical positions
-    const spaceRight = window.innerWidth - rect.right;
-    const spaceLeft = rect.left;
+    // --- FLIP LOGIC ---
+    // Check available space
     const spaceTop = rect.top;
     const spaceBottom = window.innerHeight - rect.bottom;
+    const spaceLeft = rect.left;
+    const spaceRight = window.innerWidth - rect.right;
 
-    // If preferred is right but no space, try left.
-    if (pos === 'right' && spaceRight < (tWidth + gap)) {
-        if (spaceLeft > (tWidth + gap)) pos = 'left';
-        else pos = 'bottom'; // Fallback
-    }
-    // If preferred is left but no space, try right.
-    else if (pos === 'left' && spaceLeft < (tWidth + gap)) {
-        if (spaceRight > (tWidth + gap)) pos = 'right';
-        else pos = 'bottom';
-    }
-    // If preferred is top but no space, try bottom
-    else if (pos === 'top' && spaceTop < (tHeight + gap)) {
-        pos = 'bottom';
-    }
-    // If preferred is bottom but no space, try top
-    else if (pos === 'bottom' && spaceBottom < (tHeight + gap)) {
-        pos = 'top';
-    }
+    // Flip if needed
+    if (pos === 'top' && spaceTop < tHeight + gap) pos = 'bottom';
+    else if (pos === 'bottom' && spaceBottom < tHeight + gap) pos = 'top';
+    else if (pos === 'left' && spaceLeft < tWidth + gap) pos = 'right';
+    else if (pos === 'right' && spaceRight < tWidth + gap) pos = 'left';
 
 
     let tLeft, tTop;
+    const targetCenterX = rect.left + rect.width / 2;
+    const targetCenterY = rect.top + rect.height / 2;
 
-    if (pos === 'right') {
-        tLeft = rect.right + gap + padding;
-        tTop = rect.top + (rect.height / 2) - (tHeight / 2); // Center vertically roughly
-
-        // Arrow pointing left
-        arrow.style.left = '-6px';
-        arrow.style.top = '50%';
-        arrow.style.transform = 'translateY(-50%) rotate(45deg)';
-        arrow.style.borderRight = '0'; arrow.style.borderTop = '0'; // Point left
-    }
-    else if (pos === 'left') {
-        tLeft = rect.left - tWidth - gap - padding;
-        tTop = rect.top + (rect.height / 2) - (tHeight / 2);
-
-        // Arrow pointing right
-        arrow.style.right = '-6px';
-        arrow.style.top = '50%';
-        arrow.style.transform = 'translateY(-50%) rotate(45deg)';
-        arrow.style.borderLeft = '0'; arrow.style.borderBottom = '0'; // Point right
-    }
-    else if (pos === 'top') {
-        tLeft = rect.left + (rect.width / 2) - (tWidth / 2);
-        tTop = rect.top - gap - padding - 180; // Hard calc safety
-
-        // Arrow pointing down
-        arrow.style.bottom = '-6px';
-        arrow.style.left = '50%';
-        arrow.style.transform = 'translateX(-50%) rotate(45deg)';
-        arrow.style.borderLeft = '0'; arrow.style.borderTop = '0';
-    }
-    else { // bottom default
-        tLeft = rect.left + (rect.width / 2) - (tWidth / 2);
-        tTop = rect.bottom + gap + padding;
-
-        // Arrow pointing up
-        arrow.style.top = '-6px';
-        arrow.style.left = '50%';
-        arrow.style.transform = 'translateX(-50%) rotate(45deg)';
-        arrow.style.borderRight = '0'; arrow.style.borderBottom = '0';
+    // --- MAIN POSITIONING ---
+    if (pos === 'top') {
+        tTop = rect.top - tHeight - gap;
+        tLeft = targetCenterX - (tWidth / 2);
+    } else if (pos === 'bottom') {
+        tTop = rect.bottom + gap;
+        tLeft = targetCenterX - (tWidth / 2);
+    } else if (pos === 'left') {
+        tLeft = rect.left - tWidth - gap;
+        tTop = targetCenterY - (tHeight / 2);
+    } else if (pos === 'right') {
+        tLeft = rect.right + gap;
+        tTop = targetCenterY - (tHeight / 2);
     }
 
-    // --- CLAMP LOGIC ---
-    // Force tooltip to stay in window
-    if (tLeft < 10) tLeft = 10;
-    if (tLeft + tWidth > window.innerWidth - 10) tLeft = window.innerWidth - tWidth - 10;
+    // --- CLAMP TOOLTIP TO VIEWPORT ---
+    // Keep 10px padding from screen edges
+    const screenPad = 10;
 
-    // Vertical clamp check
-    if (tTop < 10) tTop = 10;
-    // Don't strict clamp bottom as it might overlap target, but better than offscreen
-    if (tTop + tHeight > window.innerHeight - 10) tTop = window.innerHeight - tHeight - 10;
+    // Horizontal Clamp
+    if (tLeft < screenPad) tLeft = screenPad;
+    if (tLeft + tWidth > window.innerWidth - screenPad) tLeft = window.innerWidth - tWidth - screenPad;
 
+    // Vertical Clamp
+    if (tTop < screenPad) tTop = screenPad;
+    if (tTop + tHeight > window.innerHeight - screenPad) tTop = window.innerHeight - tHeight - screenPad;
+
+    // Apply Tooltip Position
     tooltip.style.left = tLeft + 'px';
     tooltip.style.top = tTop + 'px';
+
+    // --- DYNAMIC ARROW SLIDING ---
+    // Calculate where the arrow *should* be to point at target center
+    // Relative to the tooltip's top-left corner
+
+    // Borders reset
+    arrow.style.borderWidth = '1px';
+    arrow.style.borderColor = 'var(--accent)';
+
+    if (pos === 'top' || pos === 'bottom') {
+        // Arrow moves horizontally along the edge
+        let arrowX = targetCenterX - tLeft;
+
+        // Clamp arrow to keep it inside rounded corners (e.g., 20px from edge)
+        const cornerSafe = 20;
+        if (arrowX < cornerSafe) arrowX = cornerSafe;
+        if (arrowX > tWidth - cornerSafe) arrowX = tWidth - cornerSafe;
+
+        arrow.style.left = arrowX + 'px';
+        arrow.style.transform = 'translateX(-50%) rotate(45deg)';
+
+        if (pos === 'top') {
+            arrow.style.bottom = '-8px'; // Push out
+            // Hide Top/Left borders to look like it points down
+            arrow.style.borderTopColor = 'transparent';
+            arrow.style.borderLeftColor = 'transparent';
+        } else {
+            arrow.style.top = '-8px'; // Push out
+            // Hide Bottom/Right borders to look like it points up
+            arrow.style.borderBottomColor = 'transparent';
+            arrow.style.borderRightColor = 'transparent';
+        }
+    }
+    else { // Left or Right
+        // Arrow moves vertically along the edge
+        let arrowY = targetCenterY - tTop;
+
+        const cornerSafe = 20;
+        if (arrowY < cornerSafe) arrowY = cornerSafe;
+        if (arrowY > tHeight - cornerSafe) arrowY = tHeight - cornerSafe;
+
+        arrow.style.top = arrowY + 'px';
+        arrow.style.transform = 'translateY(-50%) rotate(45deg)';
+
+        if (pos === 'left') {
+            arrow.style.right = '-8px';
+            // Hide Left/Bottom
+            arrow.style.borderLeftColor = 'transparent';
+            arrow.style.borderBottomColor = 'transparent';
+        } else {
+            arrow.style.left = '-8px';
+            // Hide Right/Top
+            arrow.style.borderRightColor = 'transparent';
+            arrow.style.borderTopColor = 'transparent';
+        }
+    }
 }
 
 function endOnboarding() {
