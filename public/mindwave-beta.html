@@ -675,15 +675,16 @@
                     <!-- Color & Toggle -->
                     <div class="flex items-center gap-4 flex-nowrap">
 
-                        <!-- Color Picker (Styled input) -->
-                        <div class="relative group">
-                            <div
-                                class="w-8 h-8 rounded-full overflow-hidden shadow-inner ring-0 group-hover:scale-110 transition-transform">
-                                <input type="color" id="matrixColorPicker" value="#00FF41" class="block w-[150%] h-[150%] -m-[25%] p-0 bg-transparent border-0 cursor-pointer appearance-none outline-none
-                                       [&::-webkit-color-swatch-wrapper]:p-0 
-                                       [&::-webkit-color-swatch]:border-none 
-                                       [&::-webkit-color-swatch]:rounded-full">
+                        <!-- Color Picker (Proxy Pattern) -->
+                        <div class="relative w-8 h-8 group hover:scale-110 transition-transform cursor-pointer">
+                            <!-- Visual Swatch -->
+                            <div id="matrixColorSwatch"
+                                class="absolute inset-0 rounded-full shadow-inner ring-0 border border-white/10"
+                                style="background-color: #00FF41;">
                             </div>
+                            <!-- Invisible Input -->
+                            <input type="color" id="matrixColorPicker" value="#00FF41"
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer p-0 m-0 border-0 appearance-none">
                         </div>
 
                         <!-- Rainbow Toggle (Robust DOM Structure) -->

@@ -3966,10 +3966,22 @@ function setupMatrixControls() {
     // --- NEW: Color & Rainbow Listeners ---
     const colorPicker = document.getElementById('matrixColorPicker');
     if (colorPicker) {
+        // Sync Function
+        const updateSwatch = (hex) => {
+            const swatch = document.getElementById('matrixColorSwatch');
+            if (swatch) swatch.style.backgroundColor = hex;
+        };
+
+        // Init sync
+        updateSwatch(colorPicker.value);
+
         colorPicker.addEventListener('input', (e) => {
+            const val = e.target.value;
+            updateSwatch(val);
+
             const viz = getVisualizer();
             if (viz && viz.setMatrixColor) {
-                viz.setMatrixColor(e.target.value);
+                viz.setMatrixColor(val);
             }
         });
     }
