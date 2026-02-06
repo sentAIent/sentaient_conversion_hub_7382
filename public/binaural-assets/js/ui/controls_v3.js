@@ -798,6 +798,10 @@ export function setupUI() {
     if (viz) {
         viz.setMatrixRainbow(true);
         viz.setMatrixMode(true); // Ensure MindWave text is on
+
+        // Sync UI
+        const rainbowToggle = document.getElementById('matrixRainbowToggle');
+        if (rainbowToggle) rainbowToggle.checked = true;
     }
 
     setVisualMode('ocean', false); // Explicitly ensure OFF
