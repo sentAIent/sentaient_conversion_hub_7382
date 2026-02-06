@@ -4032,25 +4032,31 @@ function setupMatrixControls() {
     }
 
     // === NEW MATRIX MODE CONTROLS ===
-    const modeSelect = document.getElementById('matrixModeSelect');
-    const customTextInput = document.getElementById('matrixCustomTextInput');
+    // === NEW MATRIX MODE CONTROLS ===
+    const modeToggle = document.getElementById('matrixModeToggle');
+    // const customTextInput = document.getElementById('matrixCustomTextInput'); // REMOVED from HTML
     const textInput = document.getElementById('matrixTextInput');
 
-    if (modeSelect) {
-        modeSelect.addEventListener('change', (e) => {
-            const mode = e.target.value;
+    if (modeToggle) {
+        modeToggle.addEventListener('change', (e) => {
+            const isTextMode = e.target.checked;
+
             // Show/Hide Input based on mode
-            if (mode === 'custom') {
-                customTextInput.classList.remove('hidden');
-                setTimeout(() => textInput.focus(), 100);
+            if (isTextMode) {
+                if (textInput) {
+                    textInput.classList.remove('hidden');
+                    // setTimeout(() => textInput.focus(), 100); // Focus might be annoying if just toggling
+                }
             } else {
-                customTextInput.classList.add('hidden');
+                if (textInput) textInput.classList.add('hidden');
             }
 
             const viz = getVisualizer();
             if (viz && viz.setMatrixLogicMode) {
-                const text = textInput ? textInput.value : '';
-                viz.setMatrixLogicMode(mode, text);
+                const text = (textInput && textInput.value) ? textInput.value : 'MINDWAVE';
+                // 'mindwave' mode triggers the specific text falling logic
+                // 'matrix' or 'random' triggers random characters
+                viz.setMatrixLogicMode(isTextMode ? 'mindwave' : 'random', text);
             }
         });
     }
@@ -4058,15 +4064,26 @@ function setupMatrixControls() {
     if (textInput) {
         textInput.addEventListener('input', (e) => {
             const text = e.target.value.toUpperCase();
-            e.target.value = text;
-            const viz = getVisualizer();
 
-            // Always treat text input as 'custom' mode override
-            if (viz && viz.setMatrixLogicMode) {
-                viz.setMatrixLogicMode('custom', text);
+            // Auto-enable mode if typing
+            if (modeToggle && !modeToggle.checked) {
+                modeToggle.checked = true;
+                modeToggle.dispatchEvent(new Event('change'));
             }
+
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixLogicMode) {
+                viz.setMatrixLogicMode('mindwave', text);
+            }
+
+            // Debounce save
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                localStorage.setItem('mindwave_matrix_text', text);
+            }, 1000);
         });
     }
+
 }
 
 // Initialize Matrix controls immediately if DOM is ready, or wait
