@@ -673,28 +673,34 @@
                     </div>
 
                     <!-- Color & Toggle -->
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-4 flex-nowrap">
 
-                        <!-- Color Picker (Pure Circle) -->
-                        <div
-                            class="relative w-8 h-8 rounded-full overflow-hidden cursor-pointer hover:scale-110 transition-transform">
-                            <input type="color" id="matrixColorPicker" value="#00FF41"
-                                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] p-0 border-0 bg-transparent cursor-pointer appearance-none">
+                        <!-- Color Picker (Styled input) -->
+                        <div class="relative group">
+                            <div
+                                class="w-8 h-8 rounded-full overflow-hidden shadow-inner ring-0 group-hover:scale-110 transition-transform">
+                                <input type="color" id="matrixColorPicker" value="#00FF41" class="block w-[150%] h-[150%] -m-[25%] p-0 bg-transparent border-0 cursor-pointer appearance-none outline-none
+                                       [&::-webkit-color-swatch-wrapper]:p-0 
+                                       [&::-webkit-color-swatch]:border-none 
+                                       [&::-webkit-color-swatch]:rounded-full">
+                            </div>
                         </div>
 
-                        <!-- Rainbow Toggle (Gradient Switch) -->
-                        <label class="relative inline-flex items-center cursor-pointer group"
-                            title="Toggle Rainbow Mode">
-                            <input type="checkbox" id="matrixRainbowToggle" class="sr-only peer">
-                            <!-- Toggle Track -->
-                            <div
-                                class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer 
-                                        peer-checked:after:translate-x-full peer-checked:after:border-white 
-                                        after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                                        after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all
-                                        peer-checked:bg-gradient-to-r peer-checked:from-pink-500 peer-checked:via-red-500 peer-checked:to-yellow-500">
-                            </div>
-                        </label>
+                        <!-- Rainbow Toggle (Robust DOM Structure) -->
+                        <div class="flex items-center gap-2">
+                            <label class="relative inline-flex items-center cursor-pointer" title="Toggle Rainbow Mode">
+                                <input type="checkbox" id="matrixRainbowToggle" class="sr-only peer">
+                                <!-- Track -->
+                                <div
+                                    class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-gradient-to-r peer-checked:from-pink-500 peer-checked:via-red-500 peer-checked:to-yellow-500 transition-all">
+                                </div>
+                                <!-- Knob (Absolute) -->
+                                <span
+                                    class="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full shadow-sm transition-all peer-checked:translate-x-full"></span>
+                            </label>
+                            <span
+                                class="text-[9px] text-[var(--text-muted)] font-mono uppercase tracking-widest hidden sm:inline-block">Rainbow</span>
+                        </div>
                     </div>
 
                     <div class="w-px h-6 bg-white/10"></div>
