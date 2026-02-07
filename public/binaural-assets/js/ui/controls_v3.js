@@ -1,6 +1,6 @@
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused } from '../visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V7';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused } from '../visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V8';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -4038,27 +4038,35 @@ function setupMatrixControls() {
     const textInput = document.getElementById('matrixTextInput');
 
     if (modeToggle) {
+        console.log('[Controls] Matrix Mode Toggle Listener Attached');
         modeToggle.addEventListener('change', (e) => {
             const isTextMode = e.target.checked;
+            console.log('[Controls] Toggle Changed. Checked:', isTextMode);
 
             // Show/Hide Input based on mode
             if (isTextMode) {
                 if (textInput) {
                     textInput.classList.remove('hidden');
-                    // setTimeout(() => textInput.focus(), 100); // Focus might be annoying if just toggling
                 }
             } else {
                 if (textInput) textInput.classList.add('hidden');
             }
 
             const viz = getVisualizer();
-            if (viz && viz.setMatrixLogicMode) {
-                const text = (textInput && textInput.value) ? textInput.value : 'MINDWAVE';
-                // 'mindwave' mode triggers the specific text falling logic
-                // 'matrix' or 'random' triggers random characters
-                viz.setMatrixLogicMode(isTextMode ? 'mindwave' : 'random', text);
+            if (viz) {
+                console.log('[Controls] Visualizer found. Setting logic mode...');
+                if (viz.setMatrixLogicMode) {
+                    const text = (textInput && textInput.value) ? textInput.value : 'MINDWAVE';
+                    viz.setMatrixLogicMode(isTextMode ? 'mindwave' : 'random', text);
+                } else {
+                    console.error('[Controls] setMatrixLogicMode method missing on visualizer!');
+                }
+            } else {
+                console.error('[Controls] Visualizer NOT found when toggling!');
             }
         });
+    } else {
+        console.warn('[Controls] Matrix Mode Toggle Element NOT FOUND initially');
     }
 
     if (textInput) {
