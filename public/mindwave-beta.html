@@ -249,7 +249,7 @@
     <link rel="preload" href="/binaural-assets/js/main_vFINAL.js?v=FIX_SPEED_FINAL" as="script" crossorigin>
     <script src="/binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=MATRIX_FIX_V9"></script>
+    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=MATRIX_FIX_V10"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -659,7 +659,7 @@
 
                 <!-- 2. Matrix Settings Bar (Horizontal - Refined) -->
                 <div id="matrixSettingsPanel"
-                    class="hidden order-2 flex items-center gap-4 px-6 py-3 bg-[#0f172a]/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all animate-fade-in-up w-auto">
+                    class="hidden order-2 flex items-center gap-6 px-12 py-3 bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all animate-fade-in-up w-auto">
 
                     <!-- Label -->
                     <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Matrix</span>
@@ -668,7 +668,7 @@
 
                     <!-- Custom Text Input -->
                     <!-- Color, Rainbow & Mode -->
-                    <div class="flex items-center gap-4 flex-nowrap">
+                    <div class="flex items-center gap-6 flex-nowrap">
 
                         <!-- Color Picker (Proxy) -->
                         <div class="relative w-8 h-8 group hover:scale-110 transition-transform cursor-pointer">
@@ -679,18 +679,24 @@
                                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer p-0 m-0 border-0 appearance-none">
                         </div>
 
-                        <!-- Rainbow Toggle -->
-                        <div class="flex items-center gap-2">
+                        <!-- Rainbow Toggle (RGB / RAINBOW) -->
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] peer-checked:text-[var(--text-muted)]"
+                                id="labelRGB">RGB</span>
+
                             <label class="relative inline-flex items-center cursor-pointer" title="Toggle Rainbow Mode">
                                 <input type="checkbox" id="matrixRainbowToggle" class="sr-only peer">
                                 <div
-                                    class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:bg-gradient-to-r peer-checked:from-pink-500 peer-checked:via-red-500 peer-checked:to-yellow-500 transition-all">
+                                    class="w-12 h-6 bg-slate-700/50 border border-white/10 rounded-full peer peer-checked:bg-gradient-to-r peer-checked:from-pink-500 peer-checked:via-red-500 peer-checked:to-yellow-500 transition-all">
                                 </div>
                                 <span
-                                    class="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full shadow-sm transition-all peer-checked:translate-x-full"></span>
+                                    class="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full shadow-sm transition-all peer-checked:translate-x-full"></span>
                             </label>
+
                             <span
-                                class="text-[9px] text-[var(--text-muted)] font-mono uppercase tracking-widest hidden sm:inline-block">Rainbow</span>
+                                class="text-[9px] text-[var(--text-muted)] font-mono uppercase tracking-widest transition-colors peer-checked:text-white peer-checked:font-bold"
+                                id="labelRainbow">RAINBOW</span>
                         </div>
 
                         <!-- MindWave Mode Toggle -->
