@@ -689,59 +689,65 @@ export class Visualizer3D {
                 if (Math.random() > 0.5) {
                     ctx.save();
                     ctx.scale(-1, 1);
+                    // Set style explicitly before drawing
+                    ctx.fillStyle = '#00FF41';
+                    ctx.font = 'bold 44px monospace';
                     ctx.fillText(char, 0, 0);
                     ctx.restore();
                     char = ''; // Drawn already
                 }
             }
 
-            // Draw Character or Logo
-            ctx.fillStyle = '#00FF41'; // Standard Matrix Green
-            ctx.font = 'bold 44px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowBlur = 4;
-            ctx.shadowColor = '#00FF41';
+            // Draw Character or Logo (Non-flipped or Special)
+            // Draw Character or Logo (Non-flipped or Special)
+            if (char || isLogo) {
+                ctx.fillStyle = '#00FF41'; // Standard Matrix Green
+                ctx.font = 'bold 44px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = '#00FF41';
 
-            if (isLogo) {
-                if (this.logoImage) {
-                    // Draw Real Logo
-                    const size = 44;
-                    const offset = -size / 2;
-                    ctx.drawImage(this.logoImage, offset, offset, size, size);
-                } else {
-                    // Fallback while loading or if failed
-                    if (!this.logoLoading && !this.logoFailed) {
-                        this.logoLoading = true;
-                        const loader = new THREE.ImageLoader();
-                        loader.load(
-                            '/mindwave-logo.png',
-                            (image) => {
-                                console.log('[Visualizer] Logo loaded');
-                                this.logoImage = image;
-                                this.logoLoading = false;
-                                if (this.matrixMaterial) {
-                                    const newTexture = this.createMatrixTexture();
-                                    this.matrixMaterial.uniforms.uTexture.value = newTexture;
+                if (isLogo) {
+                    if (this.logoImage) {
+                        // Draw Real Logo
+                        const size = 44;
+                        const offset = -size / 2;
+                        ctx.drawImage(this.logoImage, offset, offset, size, size);
+                    } else {
+                        // Fallback while loading or if failed
+                        if (!this.logoLoading && !this.logoFailed) {
+                            this.logoLoading = true;
+                            const loader = new THREE.ImageLoader();
+                            loader.load(
+                                '/mindwave-logo.png',
+                                (image) => {
+                                    console.log('[Visualizer] Logo loaded');
+                                    this.logoImage = image;
+                                    this.logoLoading = false;
+                                    if (this.matrixMaterial) {
+                                        const newTexture = this.createMatrixTexture();
+                                        this.matrixMaterial.uniforms.uTexture.value = newTexture;
+                                    }
+                                },
+                                undefined,
+                                (err) => {
+                                    console.error('[Visualizer] Logo load failed', err);
+                                    this.logoFailed = true;
+                                    this.logoLoading = false;
                                 }
-                            },
-                            undefined,
-                            (err) => {
-                                console.error('[Visualizer] Logo load failed', err);
-                                this.logoFailed = true;
-                                this.logoLoading = false;
-                            }
-                        );
+                            );
+                        }
+                        // Draw placeholder if not loaded yet
+                        ctx.fillText("MW", 0, 0);
                     }
-                    // Draw placeholder if not loaded yet
-                    ctx.fillText("MW", 0, 0);
+                } else {
+                    ctx.fillText(char, 0, 0);
                 }
-            } else {
-                ctx.fillText(char, 0, 0);
-            }
+            } // End if (char || isLogo)
 
-            ctx.restore();
-        }
+            ctx.restore(); // MUST be called every iteration to match ctx.save()
+        } // End Loop
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.magFilter = THREE.NearestFilter;
@@ -1613,14 +1619,11 @@ export class Visualizer3D {
 
         console.log('[Visualizer] Matrix Mode Set:', mode, text);
 
-        // Regenerate everything (Texture + Geometry)
-        // We need to regenerate texture if text changed.
-        if (mode === 'custom' || mode === 'mindwave') {
-            const newTexture = this.createMatrixTexture();
-            if (this.matrixMaterial) {
-                this.matrixMaterial.uniforms.uTexture.value = newTexture;
-                this.matrixMaterial.needsUpdate = true;
-            }
+        // Regenerate texture for ALL modes to ensure fresh random glyphs or updated text
+        const newTexture = this.createMatrixTexture();
+        if (this.matrixMaterial) {
+            this.matrixMaterial.uniforms.uTexture.value = newTexture;
+            this.matrixMaterial.needsUpdate = true;
         }
 
         this.initMatrix();
