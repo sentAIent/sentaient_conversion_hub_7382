@@ -643,8 +643,11 @@ export class Visualizer3D {
 
         // Determine Sequence
         let textToSpell = "MINDWAVE";
+        // Only use custom text if in custom mode
         if (this.matrixLogicMode === 'custom' && this.matrixCustomText && this.matrixCustomText.length > 0) {
             textToSpell = this.matrixCustomText;
+        } else if (this.matrixLogicMode === 'random') {
+            textToSpell = ""; // No special text for random mode
         }
 
         // Build Sequence: LOGO + Text Characters
