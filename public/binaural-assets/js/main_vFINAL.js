@@ -1,6 +1,6 @@
 console.log("MAIN JS LOADED - NUCLEAR V4");
 window.NUCLEAR_MAIN_LOADED = true;
-import { setupUI } from './ui/controls_v3.js?v=MATRIX_FIX_V5';
+import { setupUI } from './ui/controls_v3.js?v=MATRIX_FIX_V7';
 import { initCursor } from './ui/cursor.js';
 import { initFirebase } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Expose share function globally for UI buttons
     window.shareCurrentPreset = async () => {
-        const { Visualizer3D } = await import('./visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V5');
+        const { Visualizer3D } = await import('./visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V7');
         const result = await copyShareLink();
         if (result.success) {
             const toast = document.createElement('div');

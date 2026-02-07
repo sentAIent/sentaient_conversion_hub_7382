@@ -679,11 +679,16 @@ export class Visualizer3D {
                 }
                 allowFlip = false;
             } else {
+                // DEBUG: Red Background - DISABLED
+                // ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+                // ctx.fillRect(col * cellW, row * cellH, cellW, cellH);
+
                 // CLASSIC MODE SUPPORT:
                 // Indices 9-63 should be random Mixed Glyphs
                 const mix = katakana + "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
                 const randomChar = mix.charAt(Math.floor(Math.random() * mix.length));
                 char = randomChar;
+                console.log(`[Visualizer] Generated Random Char at ${i}: ${char}`);
 
                 // Randomly flip X for "Alien" look (50% chance)
                 if (Math.random() > 0.5) {
@@ -969,11 +974,21 @@ export class Visualizer3D {
             let isSpecial = false;
             let specialText = "MINDWAVE"; // Default
 
-            if (this.matrixLogicMode === 'mindwave') {
-                isSpecial = true;
+            // Decide Mode
+            const isMindWave = (this.matrixLogicMode === 'mindwave');
+            const isCustom = (this.matrixLogicMode === 'custom');
+            isSpecial = (isMindWave || isCustom);
+
+            console.log(`[Visualizer] initMatrix: mode=${this.matrixLogicMode}, isSpecial=${isSpecial}`);
+
+            // If random mode, ensure we use random indices
+            if (!isSpecial) {
+                console.log(`[Visualizer] initMatrix: Generating RANDOM indices (9-63)`);
+            }
+
+            if (isMindWave) {
                 specialText = "MINDWAVE"; // Logo-MindWave
-            } else if (this.matrixLogicMode === 'custom') {
-                isSpecial = true;
+            } else if (isCustom) {
                 // Use custom text, fallback to MINDWAVE if empty
                 specialText = (this.matrixCustomText && this.matrixCustomText.length > 0) ? this.matrixCustomText : "MINDWAVE";
             } else {
@@ -1009,7 +1024,14 @@ export class Visualizer3D {
                     charIndices.push((r + c) % (specialLen + 1));
                 } else {
                     // Random glyphs (indices 9 to 63)
-                    charIndices.push(9 + Math.floor(Math.random() * 55));
+                    // 64 total - 9 reserved = 55 random slots
+                    const randIndex = 9 + Math.floor(Math.random() * 55);
+                    charIndices.push(randIndex);
+                }
+
+                // DEBUG LOG - Only log first few
+                if (c === 0 && r < 5) {
+                    console.log(`[Visualizer] Particle ${c},${r}: Index ${charIndices[charIndices.length - 1]}`);
                 }
 
                 spawnTimes.push(spawnTime);
@@ -1614,6 +1636,7 @@ export class Visualizer3D {
 
     // === NEW LOGIC MODE ===
     setMatrixLogicMode(mode, text) {
+        console.log(`[Visualizer] setMatrixLogicMode CALLED. Mode: ${mode}, Text: ${text}`);
         this.matrixLogicMode = mode;
         if (text !== undefined) this.matrixCustomText = text;
 
