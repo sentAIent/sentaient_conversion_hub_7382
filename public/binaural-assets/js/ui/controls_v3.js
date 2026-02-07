@@ -615,7 +615,7 @@ export function setupUI() {
         if (!document.getElementById('mindWaveModeToggle')) {
             const toggleHtml = `
                 <div class="flex items-center gap-2 ml-4 pl-4 border-l border-white/10">
-                    <label for="mindWaveModeToggle" class="text-[8px] text-[var(--text-muted)] uppercase">Mindwave Mode</label>
+                    <label for="mindWaveModeToggle" class="text-[8px] text-[var(--text-muted)] uppercase">Mindwave</label>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="mindWaveModeToggle" class="sr-only peer" checked>
                         <div class="w-7 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[var(--accent)]"></div>
