@@ -249,7 +249,7 @@
     <link rel="preload" href="/binaural-assets/js/main_vFINAL.js?v=FIX_SPEED_FINAL" as="script" crossorigin>
     <script src="/binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=MATRIX_FIX_V10"></script>
+    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=MATRIX_FIX_V11"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -700,7 +700,7 @@
                         </div>
 
                         <!-- MindWave Mode Toggle -->
-                        <div class="flex items-center gap-2 border-l border-white/10 pl-4">
+                        <div class="flex items-center gap-3 border-l border-white/10 pl-4">
                             <label class="relative inline-flex items-center cursor-pointer" title="Toggle Text Mode">
                                 <input type="checkbox" id="matrixModeToggle" class="sr-only peer" checked>
                                 <div
@@ -709,13 +709,17 @@
                                 <span
                                     class="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full shadow-sm transition-all peer-checked:translate-x-full"></span>
                             </label>
-                            <span
-                                class="text-[9px] text-[var(--text-muted)] font-mono uppercase tracking-widest hidden sm:inline-block">Mindwave</span>
-                        </div>
 
-                        <!-- Custom Text Input (Visible via JS) -->
-                        <input type="text" id="matrixTextInput" placeholder="MINDWAVE" maxlength="12"
-                            class="w-20 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-[10px] text-white outline-none focus:border-[var(--accent)] font-mono uppercase transition-all hidden">
+                            <!-- Label / Input Area -->
+                            <!-- Logic: When checked (Mindwave), Input is locked to "MINDWAVE" and dimmed.
+                                        When unchecked (Random), Input is editable. -->
+                            <div class="relative">
+                                <span id="matrixModeLabel"
+                                    class="text-[9px] text-[var(--accent)] font-mono uppercase tracking-widest absolute -top-3 left-0 pointer-events-none">Mindwave</span>
+                                <input type="text" id="matrixTextInput" value="MINDWAVE" maxlength="12" disabled
+                                    class="w-24 bg-transparent border-b border-white/20 px-0 py-0.5 text-[10px] text-white/50 outline-none focus:border-[var(--accent)] font-mono uppercase transition-all disabled:border-transparent disabled:text-[var(--accent)]">
+                            </div>
+                        </div>
 
                     </div>
 
