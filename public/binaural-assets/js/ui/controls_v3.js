@@ -1,6 +1,6 @@
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused } from '../visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V8';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused } from '../visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V9';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -612,7 +612,8 @@ export function setupUI() {
         if (!panel) return;
 
         // Check if toggle already exists to avoid dupes
-        if (!document.getElementById('mindWaveModeToggle')) {
+        // Check if toggle exists (HTML ID is matrixModeToggle)
+        if (!document.getElementById('matrixModeToggle') && !document.getElementById('mindWaveModeToggle')) {
             const toggleHtml = `
                 <div class="flex items-center gap-2 ml-4 pl-4 border-l border-white/10">
                     <label for="mindWaveModeToggle" class="text-[8px] text-[var(--text-muted)] uppercase">Mindwave</label>
@@ -4040,29 +4041,38 @@ function setupMatrixControls() {
     if (modeToggle) {
         console.log('[Controls] Matrix Mode Toggle Listener Attached');
         modeToggle.addEventListener('change', (e) => {
-            const isTextMode = e.target.checked;
-            console.log('[Controls] Toggle Changed. Checked:', isTextMode);
+            const isMindwaveMode = e.target.checked;
+            console.log('[Controls] Toggle Changed. Mindwave Mode:', isMindwaveMode);
 
-            // Show/Hide Input based on mode
-            if (isTextMode) {
+            // Logic:
+            // Checked (Mindwave) -> Mode: 'mindwave', Input: Hidden
+            // Unchecked (Random) -> Mode: 'random' (or 'custom' if text exists), Input: Visible
+
+            if (isMindwaveMode) {
+                // MINDWAVE MODE
+                if (textInput) textInput.classList.add('hidden');
+
+                const viz = getVisualizer();
+                if (viz && viz.setMatrixLogicMode) {
+                    viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
+                }
+            } else {
+                // RANDOM / CUSTOM MODE
                 if (textInput) {
                     textInput.classList.remove('hidden');
+                    // textInput.focus(); // Optional: Focus when switching to custom mode?
                 }
-            } else {
-                if (textInput) textInput.classList.add('hidden');
-            }
 
-            const viz = getVisualizer();
-            if (viz) {
-                console.log('[Controls] Visualizer found. Setting logic mode...');
-                if (viz.setMatrixLogicMode) {
-                    const text = (textInput && textInput.value) ? textInput.value : 'MINDWAVE';
-                    viz.setMatrixLogicMode(isTextMode ? 'mindwave' : 'random', text);
-                } else {
-                    console.error('[Controls] setMatrixLogicMode method missing on visualizer!');
+                const viz = getVisualizer();
+                if (viz && viz.setMatrixLogicMode) {
+                    // Check if there is custom text
+                    const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : '';
+                    if (customText.length > 0) {
+                        viz.setMatrixLogicMode('custom', customText);
+                    } else {
+                        viz.setMatrixLogicMode('random', '');
+                    }
                 }
-            } else {
-                console.error('[Controls] Visualizer NOT found when toggling!');
             }
         });
     } else {
@@ -4073,15 +4083,23 @@ function setupMatrixControls() {
         textInput.addEventListener('input', (e) => {
             const text = e.target.value.toUpperCase();
 
-            // Auto-enable mode if typing
-            if (modeToggle && !modeToggle.checked) {
-                modeToggle.checked = true;
-                modeToggle.dispatchEvent(new Event('change'));
+            // If Text Input is being typed in, we MUST be in the Unchecked state (as it's hidden otherwise).
+            // But just in case, ensure toggle is unchecked? No, let's just update mode.
+
+            if (modeToggle && modeToggle.checked) {
+                // If somehow typing while checked (should be hidden), uncheck it?
+                modeToggle.checked = false;
+                // Dispatch change? Or just handle logic here.
+                // Let's just handle logic.
             }
 
             const viz = getVisualizer();
             if (viz && viz.setMatrixLogicMode) {
-                viz.setMatrixLogicMode('mindwave', text);
+                if (text.length > 0) {
+                    viz.setMatrixLogicMode('custom', text);
+                } else {
+                    viz.setMatrixLogicMode('random', '');
+                }
             }
 
             // Debounce save
@@ -4111,10 +4129,16 @@ function setupMatrixControls() {
         // Note: viz might not be fully ready here if called too early, 
         // but setMatrixLogicMode handles property setting even if init is delayed?
         // Actually, let's try safely.
+        // Sync Visualizer Mode (must retrieve viz again as it might be ready)
         const viz = getVisualizer();
         if (viz && viz.setMatrixLogicMode) {
-            const text = (textInput && textInput.value) ? textInput.value : 'MINDWAVE';
-            viz.setMatrixLogicMode(isTextMode ? 'mindwave' : 'random', text);
+            if (isTextMode) {
+                viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
+            } else {
+                const text = (textInput && textInput.value) ? textInput.value : '';
+                if (text.length > 0) viz.setMatrixLogicMode('custom', text);
+                else viz.setMatrixLogicMode('random', '');
+            }
         }
     }
 }
