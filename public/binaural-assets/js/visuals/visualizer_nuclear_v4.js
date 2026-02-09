@@ -87,6 +87,8 @@ export class Visualizer3D {
     }
 
     resize() {
+        if (!this.renderer || !this.canvas || !this.camera) return;
+
         const width = window.innerWidth;
         const height = window.innerHeight;
         this.renderer.setSize(width, height);

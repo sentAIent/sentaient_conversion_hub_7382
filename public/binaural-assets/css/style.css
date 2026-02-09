@@ -313,12 +313,17 @@ a:active,
 }
 
 /* sentAIent Theme: Force Headers to Orange, everything else follows base theme (Blue) */
+body[data-theme="sentaient"] {
+    --accent: #fc9c36 !important;
+    --accent-glow: rgba(252, 156, 54, 0.4) !important;
+}
+
 body[data-theme="sentaient"] .mixer-section h3,
 body[data-theme="sentaient"] [data-section="atmosphere"] h3,
 body[data-theme="sentaient"] [data-section="journeys"] h3,
 body[data-theme="sentaient"] #rightPanel h3,
 body[data-theme="sentaient"] #leftPanel .section-label {
-    color: #fc9c36 !important;
+    color: var(--accent) !important;
 }
 
 /* 
@@ -1583,12 +1588,37 @@ button,
 }
 
 /* Responsive Footer */
+/* Responsive Footer */
 .footer-compact {
-    gap: 1rem !important;
+    gap: 0.5rem !important;
+    height: auto !important;
+    min-height: 80px !important;
+    max-height: none !important;
+    flex-wrap: wrap !important;
+    padding-bottom: 2rem !important;
+    justify-content: center !important;
+    overflow: visible !important;
+    /* Allow vertical expansion when wrapping */
+    flex-direction: row !important;
+    /* Ensure horizontal layout that can wrap */
 }
 
 .footer-medium {
     gap: 1.5rem !important;
+}
+
+/* Ensure children behave well when wrapped - force all columns to stack vertically in compact mode */
+.footer-compact>div {
+    margin-bottom: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+    flex: 1 0 100%;
+    /* Take full width, forcing each column to its own row */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 /* Hide labels in compact footer to save space */
@@ -1603,13 +1633,13 @@ button,
 
 /* Scale down Visual Dock in compact mode */
 .footer-compact .visual-btn {
-    height: 3.5rem !important;
-    min-width: 3.5rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
     padding: 0.25rem !important;
 }
 
 .footer-compact .visual-btn span.text-2xl {
-    font-size: 1.5rem !important;
+    font-size: 1.25rem !important;
 }
 
 /* Hide some elements in medium mode if needed */
@@ -1621,6 +1651,8 @@ button,
 .footer-compact #leftToggle,
 .footer-compact #rightToggle {
     transform: scale(0.9);
+    position: relative;
+    /* Changed from absolute - let them flow with content */
 }
 
 /* ================================ */

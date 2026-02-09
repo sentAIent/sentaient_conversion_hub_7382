@@ -1,6 +1,6 @@
 console.log("MAIN JS LOADED - NUCLEAR V4");
 window.NUCLEAR_MAIN_LOADED = true;
-import { setupUI } from './ui/controls_v3.js?v=MATRIX_FIX_V13';
+import { setupUI } from './ui/controls_v3.js?v=MATRIX_FIX_V15';
 import { initCursor } from './ui/cursor.js';
 import { initFirebase } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
@@ -15,6 +15,8 @@ import { handlePaymentSuccess } from './services/stripe-simple.js';  // Payment 
 import { initPaywall } from './utils/paywall.js';  // Paywall system
 import { initAnalytics, trackSignup, trackLogin, trackBeginCheckout, trackPurchase, trackFeatureUse, trackSessionStart, trackSessionEnd, trackPaywallShown, trackUpgradeClick, setUserProperties } from './utils/analytics.js';  // Analytics
 import { showFeedbackSurvey, checkSurveyTrigger, TRIGGER_CONDITIONS } from './utils/feedback-survey.js';  // Feedback system
+import { checkReferral } from './services/referral.js'; // Referral tracking
+import { initSocialProof } from './services/social-proof.js'; // Social Proof
 
 
 // Content Modules - Loaded dynamically after UI is ready
@@ -39,8 +41,12 @@ window.trackUpgradeClick = trackUpgradeClick;
 window.setUserProperties = setUserProperties;
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("[Main] DOMLoaded - Initializing UI...");
+const initApp = () => {
+    console.log("[Main] InitApp Calling - Initializing UI...");
+
+    // Check if already initialized to prevent double-init
+    if (window.APP_INITIALIZED) return;
+    window.APP_INITIALIZED = true;
 
     // Firebase & Auth (non-blocking)
     try {
@@ -74,6 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Custom Cursor
     initCursor();
 
+    // Check for referral code
+    checkReferral();
+
+    // Social Proof
+    initSocialProof();
+
     // Hide loading screen immediately once core UI is ready
     const loadingScreen = document.getElementById('loadingScreen');
     if (loadingScreen) {
@@ -94,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Expose share function globally for UI buttons
     window.shareCurrentPreset = async () => {
-        const { Visualizer3D } = await import('./visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V13');
+        const { Visualizer3D } = await import('./visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V14');
         const result = await copyShareLink();
         if (result.success) {
             const toast = document.createElement('div');
@@ -118,7 +130,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     console.log("[Main] App Initialization Complete.");
-});
+};
+
+// Check ready state to handle module deferral
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 // Load non-critical content modules after initial render
 async function loadContentModules() {

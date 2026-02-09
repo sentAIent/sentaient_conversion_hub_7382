@@ -134,17 +134,23 @@
 
     <!-- Service Worker Registration for PWA -->
     <script>
+        // EMERGENCY FIX: Unregister Service Workers
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('/binaural-assets/sw.js', { scope: '/' })
-                    .then(function (registration) {
-                        console.log('[PWA] Service Worker registered:', registration.scope);
-                    })
-                    .catch(function (error) {
-                        console.log('[PWA] Service Worker registration failed:', error);
-                    });
-            })
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (let registration of registrations) {
+                    console.log('Unregistering SW:', registration);
+                    registration.unregister();
+                }
+            });
         }
+
+        // VISUAL DEBUG MARKER
+        document.addEventListener('DOMContentLoaded', () => {
+            const debugDiv = document.createElement('div');
+            debugDiv.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:5px; background:red; z-index:9999; box-shadow:0 0 10px red;';
+            document.body.appendChild(debugDiv);
+            console.log('%c PAGE UPDATED SUCCESSFULLY ', 'background: #222; color: #bada55; font-size: 20px');
+        });
     </script>
     <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
 </head>
@@ -254,7 +260,7 @@
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                         </svg>
                     </button>
-                    <button id="profileBtn"
+                    <button id="profileBtn" onclick="window.openAuthModal()"
                         class="p-2 rounded-full bg-transparent hover:bg-[var(--accent)]/20 transition-all"
                         style="color: var(--accent);" title="Account">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -1640,92 +1646,124 @@
 
 
     <!-- Profile Modal -->
-    <div id="profileModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 hidden p-4">
+    <!-- Profile Modal -->
+    <div id="profileModal"
+        class="modal fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4">
         <div
-            class="glass-card p-10 rounded-3xl shadow-2xl w-[90vw] md:w-[30vw] max-w-none flex flex-col gap-7 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <!-- Header -->
-            <div class="flex justify-between items-center pb-2">
-                <h3 class="text-lg font-bold uppercase tracking-wider" style="color: var(--accent);">Your Profile</h3>
-                <button id="closeProfileBtn" class="p-3 rounded-full hover:bg-white/10 transition-all touch-target"
-                    style="color: var(--text-muted);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            class="glass-card relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex flex-col max-h-[90vh]">
+
+            <!-- Header / Close -->
+            <div class="absolute top-4 right-4 z-10">
+                <button id="closeProfileBtn"
+                    class="p-2 rounded-full bg-black/20 hover:bg-white/10 text-white/70 hover:text-white transition-all">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
             </div>
 
-            <!-- User Info -->
-            <div class="flex items-center gap-5 pb-7 border-b border-white/10">
+            <!-- Hero Section (Theme Aware) -->
+            <div class="relative p-8 pb-6 flex flex-col items-center justify-center gap-4 text-center transition-colors duration-500"
+                style="background: linear-gradient(to bottom, var(--accent-glow), transparent);">
                 <div id="profileAvatarBig"
-                    class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-4xl font-bold text-white shadow-lg">
-                    ?
+                    class="w-24 h-24 rounded-full border-4 border-white/10 bg-black/20 shadow-[0_0_40px_var(--accent-glow)] flex items-center justify-center text-3xl font-bold text-white relative backdrop-blur-sm">
+                    <!-- Initials injected here -->
                 </div>
-                <div class="flex-1">
-                    <div id="profileUserName" class="text-xl font-bold text-white mb-2">Guest User</div>
-                    <div id="profileUserEmail" class="text-sm text-[var(--text-muted)] mb-3">Not signed in</div>
-                    <div id="profileUserTier"
-                        class="inline-block text-[11px] font-bold uppercase px-4 py-1.5 rounded-full bg-purple-500/20 text-purple-400">
-                        Free</div>
+
+                <div>
+                    <h2 id="profileUserName" class="text-2xl font-bold text-white tracking-tight leading-tight">User
+                        Name</h2>
+                    <p id="profileUserEmail" class="text-sm text-[var(--text-muted)] mt-1">user@example.com</p>
+                </div>
+
+                <!-- Tier Badge -->
+                <div id="profileUserTier"
+                    class="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] shadow-lg backdrop-blur-md">
+                    Free Plan
                 </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 gap-5">
-                <div class="p-5 rounded-xl bg-white/5 border border-white/10 text-center">
-                    <div id="statTotalSessions" class="text-2xl font-bold text-white mb-2">0</div>
-                    <div class="text-[11px] text-[var(--text-muted)] uppercase tracking-wide">Sessions</div>
-                </div>
-                <div class="p-5 rounded-xl bg-white/5 border border-white/10 text-center">
-                    <div id="statTotalHours" class="text-2xl font-bold text-white mb-2">0</div>
-                    <div class="text-[11px] text-[var(--text-muted)] uppercase tracking-wide">Hours</div>
-                </div>
-                <div
-                    class="p-5 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30 text-center">
-                    <div id="statStreak" class="text-2xl font-bold text-orange-400 mb-2">🔥 0</div>
-                    <div class="text-[11px] text-[var(--text-muted)] uppercase tracking-wide">Day Streak</div>
-                </div>
-                <div class="p-5 rounded-xl bg-white/5 border border-white/10 text-center">
-                    <div id="statAvgSession" class="text-2xl font-bold text-white mb-2">0</div>
-                    <div class="text-[11px] text-[var(--text-muted)] uppercase tracking-wide">Avg Min</div>
-                </div>
-            </div>
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6 space-y-6">
 
-            <!-- Weekly Activity -->
-            <div class="p-5 rounded-xl bg-white/5 border border-white/10">
-                <div class="text-[12px] font-bold uppercase text-[var(--text-muted)] mb-4">This Week</div>
-                <div id="weeklyChart" class="flex justify-between items-end h-16 gap-1.5">
-                    <!-- Chart bars will be populated by JS -->
+                <!-- Upgrade Container (Dynamic injection point) -->
+                <div id="profileUpgradeContainer" class="empty:hidden"></div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div
+                        class="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center justify-center gap-1 group hover:bg-white/10 transition-colors">
+                        <span class="text-2xl">🧘</span>
+                        <div id="statTotalSessions" class="text-xl font-bold text-white">0</div>
+                        <div class="text-[9px] uppercase tracking-wider text-[var(--text-muted)]">Sessions</div>
+                    </div>
+                    <div
+                        class="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center justify-center gap-1 group hover:bg-white/10 transition-colors">
+                        <span class="text-2xl">⏱️</span>
+                        <div id="statTotalHours" class="text-xl font-bold text-white">0</div>
+                        <div class="text-[9px] uppercase tracking-wider text-[var(--text-muted)]">Hours Focus</div>
+                    </div>
+                    <div
+                        class="p-4 rounded-2xl bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 flex flex-col items-center justify-center gap-1 group hover:border-orange-500/40 transition-colors">
+                        <span class="text-2xl">🔥</span>
+                        <div id="statStreak" class="text-xl font-bold text-orange-400">0</div>
+                        <div class="text-[9px] uppercase tracking-wider text-orange-200/70">Day Streak</div>
+                    </div>
+                    <div
+                        class="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center justify-center gap-1 group hover:bg-white/10 transition-colors">
+                        <span class="text-2xl">📊</span>
+                        <div id="statAvgSession" class="text-xl font-bold text-white">0m</div>
+                        <div class="text-[9px] uppercase tracking-wider text-[var(--text-muted)]">Avg Session</div>
+                    </div>
                 </div>
-                <div class="flex justify-between text-[10px] text-[var(--text-muted)] mt-3">
-                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+
+                <!-- Weekly Activity Chart -->
+                <div class="p-5 rounded-2xl bg-white/5 border border-white/5">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-[11px] font-bold uppercase text-[var(--text-muted)] tracking-wider">Activity
+                        </div>
+                        <div class="text-[11px] text-[var(--accent)]" id="statTopPreset"></div>
+                    </div>
+                    <div id="weeklyChart" class="flex justify-between items-end h-24 gap-2">
+                        <!-- Bars injected here -->
+                    </div>
+                    <div
+                        class="flex justify-between text-[9px] text-[var(--text-muted)] mt-3 font-mono uppercase opacity-50">
+                        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Top Preset -->
-            <div class="flex items-center justify-between p-5 rounded-xl bg-white/5 border border-white/10">
-                <div class="text-sm font-medium text-[var(--text-muted)]">Top Preset</div>
-                <div id="statTopPreset" class="text-sm font-bold text-[var(--accent)]">None</div>
-            </div>
+                <!-- Settings / Edit Name -->
+                <div class="pt-2">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2"
+                                class="text-[var(--text-muted)] group-focus-within:text-[var(--accent)] transition-colors">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <input type="text" id="profileNameInput" placeholder="Display Name"
+                            class="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3.5 text-sm text-white focus:border-[var(--accent)] focus:bg-black/40 outline-none transition-all placeholder:text-white/20">
+                    </div>
+                </div>
 
-            <!-- Profile Name Edit -->
-            <div class="pt-6 border-t border-white/10 space-y-4">
-                <label class="text-[12px] font-bold uppercase block text-[var(--text-muted)]">Display Name</label>
-                <input type="text" id="profileNameInput"
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-base text-[var(--text-main)] focus:border-[var(--accent)] outline-none transition-all"
-                    placeholder="Enter your name">
-                <button id="saveProfileBtn"
-                    class="w-full py-4 px-6 rounded-xl bg-[var(--accent)] text-[var(--bg-main)] font-bold text-base uppercase tracking-wide hover:opacity-90 transition-all shadow-lg">
-                    Update Profile
-                </button>
-            </div>
+                <!-- Actions (Fixed Bottom Styling) -->
+                <div class="flex flex-col gap-3 pt-4 border-t border-white/5 mt-2">
+                    <button id="saveProfileBtn"
+                        class="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_var(--accent-glow)]"
+                        style="background-color: var(--accent); color: var(--bg-main);">
+                        Save Changes
+                    </button>
+                    <button id="logoutBtn"
+                        class="w-full py-4 rounded-xl bg-transparent border border-white/10 text-[var(--text-muted)] hover:text-white hover:bg-white/5 font-bold text-xs uppercase tracking-wide transition-all">
+                        Sign Out
+                    </button>
+                </div>
 
-            <!-- Logout -->
-            <button id="logoutBtn"
-                class="w-full py-4 px-6 mt-6 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-base uppercase tracking-wide hover:bg-red-500/20 transition-all shadow-sm">
-                Sign Out
-            </button>
+            </div>
         </div>
     </div>
 

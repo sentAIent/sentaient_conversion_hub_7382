@@ -5,6 +5,7 @@
 
 import { goToCheckout, getUserTier } from '../services/stripe-simple.js';
 import { getAuth } from 'firebase/auth';
+import { shareReferral } from '../services/referral.js';
 
 // PRICING CONFIGURATION
 // Easily toggle future price increases here
@@ -16,25 +17,34 @@ const PRICING_CONFIG = {
         period: "/forever",
         active: true
     },
-    founders: {
+    yogi: {
         name: "Founders Club",
         price: "$9.99",
         period: "/month",
-        productId: "founders_club_monthly",
+        productId: "yogi",
         description: "Everything unlocked. Forever.",
         warning: "⚠️ Price increases after 500 members",
         limitText: "Unlimited Play",
         active: true,
-        // FUTURE: Set to false to hide, or update price to $15.00
     },
-    professional: {
+    buddha: {
         name: "Professional",
-        price: "$25.00",
+        price: "$29.00",
         period: "/month",
-        productId: "professional_monthly",
+        productId: "buddha",
         description: "For coaches & power users",
         limitText: "Unlimited + Priority",
         active: true
+    },
+    lifetime: {
+        name: "Lifetime Access",
+        price: "$199",
+        period: "/once",
+        productId: "lifetime",
+        description: "Pay once, own it forever",
+        limitText: "Unlimited Forever",
+        active: true,
+        warning: "🔥 Best Value"
     }
 };
 
@@ -67,8 +77,13 @@ export async function showPricingModal() {
         return;
     }
 
-    // Get user's current tier
-    const currentTier = await getUserTier();
+    // Get user's current tier (with fallback for offline/errors)
+    let currentTier = 'free';
+    try {
+        currentTier = await getUserTier();
+    } catch (err) {
+        console.warn('[Pricing] Failed to get tier, defaulting to free:', err.message);
+    }
 
     // Create or show pricing modal
     let modal = document.getElementById('pricingModal');
@@ -89,6 +104,16 @@ export function hidePricingModal() {
 }
 
 function createPricingModal(currentTier) {
+    // Scarcity Logic
+    let spots = parseInt(localStorage.getItem('mindwave_founders_spots') || '432');
+    if (isNaN(spots)) spots = 432;
+
+    // Decrement occasionally
+    if (Math.random() > 0.5) {
+        spots = Math.max(14, spots - Math.floor(Math.random() * 2) - 1);
+        localStorage.setItem('mindwave_founders_spots', spots);
+    }
+
     const modal = document.createElement('div');
     modal.id = 'pricingModal';
     modal.className = 'fixed inset-0 z-[300] flex items-center justify-center p-4 hidden';
@@ -145,26 +170,32 @@ function createPricingModal(currentTier) {
                             <span style="color: var(--text-muted);">✕</span> No Visualizers
                         </li>
                     </ul>
-                    <button disabled style="width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: rgba(255, 255, 255, 0.4); font-weight: 600;">Currently Active</button>
+                    <button disabled style="width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: rgba(255, 255, 255, 0.4); font-weight: 600; margin-bottom: 12px;">Currently Active</button>
+                    <button id="referralBtn" style="width: 100%; padding: 12px; background: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; border-radius: 12px; color: #38bdf8; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; transition: all 0.2s;">
+                        <span>🎁</span> Give 1 Month, Get 1 Month
+                    </button>
                 </div>
 
-                <!-- Founders Club Tier -->
+                <!-- Founders Club Tier (Yogi) -->
                 <div class="pricing-tier" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.2)); border: 2px solid #10b981; border-radius: 20px; padding: 32px; position: relative; display: flex; flex-direction: column; transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 0.15); z-index: 10;">
                     <div style="position: absolute; top: -12px; right: 24px; background: #10b981; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; color: white; text-transform: uppercase;">Most Popular</div>
                     
                     <div style="padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(16, 185, 129, 0.3);">
-                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.founders.name}</h3>
-                        <p style="font-size: 14px; color: #6ee7b7;">${PRICING_CONFIG.founders.description}</p>
+                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.yogi.name}</h3>
+                        <p style="font-size: 14px; color: #6ee7b7;">${PRICING_CONFIG.yogi.description}</p>
                         <div style="margin-top: 16px;">
-                            <span style="font-size: 42px; font-weight: 700; color: white;">${PRICING_CONFIG.founders.price}</span>
-                            <span style="color: var(--text-muted);">${PRICING_CONFIG.founders.period}</span>
+                            <span style="font-size: 42px; font-weight: 700; color: white;">${PRICING_CONFIG.yogi.price}</span>
+                            <span style="color: var(--text-muted);">${PRICING_CONFIG.yogi.period}</span>
                         </div>
-                        <div style="font-size: 12px; color: #fbbf24; margin-top: 8px;">${PRICING_CONFIG.founders.warning}</div>
+                        <div style="font-size: 12px; color: #fbbf24; margin-top: 8px;">${PRICING_CONFIG.yogi.warning}</div>
+                        <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 8px; animation: pulse 2s infinite;">
+                            🔥 Only ${spots} spots left at this price
+                        </div>
                     </div>
 
                     <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
                         <li style="padding: 8px 0; color: white; display: flex; gap: 12px; font-weight: 500;">
-                            <span style="color: #10b981;">✓</span> <strong>${PRICING_CONFIG.founders.limitText}</strong>
+                            <span style="color: #10b981;">✓</span> <strong>${PRICING_CONFIG.yogi.limitText}</strong>
                         </li>
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
                             <span style="color: #10b981;">✓</span> All Brainwaves Unlocked
@@ -186,11 +217,11 @@ function createPricingModal(currentTier) {
                 <!-- Professional Tier -->
                 <div class="pricing-tier" style="background: rgba(124, 58, 237, 0.05); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 20px; padding: 32px; display: flex; flex-direction: column;">
                     <div style="padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(124, 58, 237, 0.3);">
-                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.professional.name}</h3>
-                        <p style="font-size: 14px; color: #a78bfa;">${PRICING_CONFIG.professional.description}</p>
+                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.buddha.name}</h3>
+                        <p style="font-size: 14px; color: #a78bfa;">${PRICING_CONFIG.buddha.description}</p>
                         <div style="margin-top: 16px;">
-                            <span style="font-size: 32px; font-weight: 700; color: white;">${PRICING_CONFIG.professional.price}</span>
-                            <span style="color: var(--text-muted);">${PRICING_CONFIG.professional.period}</span>
+                            <span style="font-size: 32px; font-weight: 700; color: white;">${PRICING_CONFIG.buddha.price}</span>
+                            <span style="color: var(--text-muted);">${PRICING_CONFIG.buddha.period}</span>
                         </div>
                     </div>
                     <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
@@ -211,7 +242,41 @@ function createPricingModal(currentTier) {
                         Go Professional
                     </button>
                 </div>
-            </div>
+
+                <!-- Lifetime Tier -->
+                <div class="pricing-tier" style="background: linear-gradient(145deg, rgba(251, 191, 36, 0.1), rgba(180, 83, 9, 0.2)); border: 2px solid #fbbf24; border-radius: 20px; padding: 32px; position: relative; display: flex; flex-direction: column; transform: scale(1.05); box-shadow: 0 0 40px rgba(251, 191, 36, 0.2); z-index: 20;">
+                    <div style="position: absolute; top: -12px; right: 24px; background: #fbbf24; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; color: black; text-transform: uppercase;">Best Value</div>
+                    
+                    <div style="padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(251, 191, 36, 0.3);">
+                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.lifetime.name}</h3>
+                        <p style="font-size: 14px; color: #fcd34d;">${PRICING_CONFIG.lifetime.description}</p>
+                        <div style="margin-top: 16px;">
+                            <span style="font-size: 42px; font-weight: 700; color: white;">${PRICING_CONFIG.lifetime.price}</span>
+                            <span style="color: var(--text-muted);">${PRICING_CONFIG.lifetime.period}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #fbbf24; margin-top: 8px;">${PRICING_CONFIG.lifetime.warning}</div>
+                    </div>
+
+                    <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
+                         <li style="padding: 8px 0; color: white; display: flex; gap: 12px; font-weight: 500;">
+                            <span style="color: #fbbf24;">✓</span> <strong>${PRICING_CONFIG.lifetime.limitText}</strong>
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #fbbf24;">✓</span> Pay Once, Own Forever
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #fbbf24;">✓</span> All Future Updates Included
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #fbbf24;">✓</span> VIP Support
+                        </li>
+                    </ul>
+
+                    <button id="upgradeBtnLifetime" style="width: 100%; padding: 16px; background: #fbbf24; border: none; border-radius: 12px; color: black; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);">
+                        Get Lifetime Access
+                    </button>
+                    <p style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 12px;">One-time payment.</p>
+                </div>
 
             <!-- Social Proof / Testimonials -->
             <div style="margin-bottom: 24px;">
@@ -230,21 +295,53 @@ function createPricingModal(currentTier) {
     `;
 
     // Handle Founders Upgrade Click
+    // Handle Founders (Yogi) Upgrade Click
     const upgradeBtnFounders = modal.querySelector('#upgradeBtnFounders');
-    upgradeBtnFounders.addEventListener('click', () => {
-        handleUpgrade(PRICING_CONFIG.founders.productId);
-    });
+    if (upgradeBtnFounders) {
+        upgradeBtnFounders.addEventListener('click', () => {
+            handleUpgrade(PRICING_CONFIG.yogi.productId, 'monthly');
+        });
+    }
 
-    // Handle Professional Upgrade Click
+    // Handle Professional (Buddha) Upgrade Click
     const upgradeBtnPro = modal.querySelector('#upgradeBtnPro');
-    upgradeBtnPro.addEventListener('click', () => {
-        handleUpgrade(PRICING_CONFIG.professional.productId);
-    });
+    if (upgradeBtnPro) {
+        upgradeBtnPro.addEventListener('click', () => {
+            handleUpgrade(PRICING_CONFIG.buddha.productId, 'monthly');
+        });
+    }
+
+    // Handle Lifetime Upgrade Click
+    const upgradeBtnLifetime = modal.querySelector('#upgradeBtnLifetime');
+    if (upgradeBtnLifetime) {
+        upgradeBtnLifetime.addEventListener('click', () => {
+            handleUpgrade(PRICING_CONFIG.lifetime.productId, 'oneTime');
+        });
+    }
+
+    // Handle Referral Button
+    const referralBtn = modal.querySelector('#referralBtn');
+    if (referralBtn) {
+        referralBtn.addEventListener('click', async () => {
+            const result = await shareReferral();
+            if (result.success) {
+                const text = result.copied ? 'Link Copied!' : 'Shared!';
+                referralBtn.innerHTML = `<span>✅</span> ${text}`;
+                setTimeout(() => {
+                    referralBtn.innerHTML = `<span>🎁</span> Give 1 Month, Get 1 Month`;
+                }, 2000);
+            } else if (result.error === 'not_logged_in') {
+                alert("Please sign in to invite friends!");
+            }
+        });
+    }
 
     // Hover effects
-    [upgradeBtnFounders, upgradeBtnPro].forEach(btn => {
-        btn.addEventListener('mouseenter', () => btn.style.transform = 'translateY(-2px)');
-        btn.addEventListener('mouseleave', () => btn.style.transform = 'translateY(0)');
+    [upgradeBtnFounders, upgradeBtnPro, upgradeBtnLifetime].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('mouseenter', () => btn.style.transform = 'translateY(-2px)');
+            btn.addEventListener('mouseleave', () => btn.style.transform = 'translateY(0)');
+        }
     });
 
     // Close on background click
@@ -257,15 +354,17 @@ function createPricingModal(currentTier) {
     return modal;
 }
 
-function handleUpgrade(productId) {
+// Separate function to update HTML to avoid undefined errors during refactor
+// (Use multi_replace in next step if needed)
+
+function handleUpgrade(productId, billingPeriod = 'monthly') {
     if (window.trackUpgradeClick) {
         window.trackUpgradeClick('pricing_modal', productId);
     }
 
     try {
-        // Map products to existing stripe logic if needed, or pass through
-        // Using 'monthly' billing period default for both for now
-        goToCheckout(productId, 'monthly');
+        // Map products to existing stripe logic
+        goToCheckout(productId, billingPeriod);
     } catch (error) {
         console.error('[Pricing] Checkout error:', error);
         alert(error.message);
@@ -277,6 +376,8 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.showPricingModal = showPricingModal;
         window.hidePricingModal = hidePricingModal;
+
+        // Defer attaching listeners until modal is created
     });
 } else {
     window.showPricingModal = showPricingModal;

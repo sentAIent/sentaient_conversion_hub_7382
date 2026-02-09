@@ -64,7 +64,12 @@ export function startOnboarding(force = false) {
                     title: 'DJ Mixer Access',
                     description: 'Click here or slide open to access the <strong>Studio Mixer</strong>.',
                     side: 'left',
-                    align: 'center'
+                    align: 'center',
+                    onHighlightStarted: () => {
+                        // Ensure panel is closed so we can point to the toggle
+                        const panel = document.getElementById('rightPanel');
+                        if (panel && !panel.classList.contains('translate-x-full')) panel.classList.add('translate-x-full');
+                    }
                 }
             },
             {

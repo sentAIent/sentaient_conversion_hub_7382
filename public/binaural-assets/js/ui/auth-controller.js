@@ -202,17 +202,25 @@ function updateProfileUI(user) {
             upgradeBtn.id = 'profileUpgradeBtn';
             upgradeBtn.className = 'w-full py-3 px-4 rounded-xl font-bold text-sm transition-all';
 
-            // Insert after tier badge
-            const profileHeader = tierEl?.parentElement;
-            if (profileHeader) {
-                profileHeader.appendChild(upgradeBtn);
+            // Insert into container or after tier badge
+            const container = document.getElementById('profileUpgradeContainer');
+            if (container) {
+                container.innerHTML = ''; // Clear previous
+                container.appendChild(upgradeBtn);
+            } else {
+                const profileHeader = tierEl?.parentElement;
+                if (profileHeader) {
+                    profileHeader.appendChild(upgradeBtn);
+                }
             }
         }
 
         if (isPremium) {
             // Premium user - show "Manage Subscription" button
             upgradeBtn.textContent = '⚙️ Manage Subscription';
-            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all';
+            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm bg-transparent border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--bg-main)] transition-all';
+            upgradeBtn.style.color = ''; // Reset inline style if any
+            upgradeBtn.style.backgroundColor = '';
             upgradeBtn.onclick = () => {
                 // Open Stripe Customer Portal
                 if (window.showPricingModal) {
@@ -222,7 +230,10 @@ function updateProfileUI(user) {
         } else {
             // Free user - show prominent "Upgrade to Pro" button
             upgradeBtn.textContent = '⚡ Upgrade to Pro';
-            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg';
+            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_var(--accent-glow)]';
+            // Force theme color via inline style to guarantee match
+            upgradeBtn.style.backgroundColor = 'var(--accent)';
+            upgradeBtn.style.color = 'var(--bg-main)';
             upgradeBtn.onclick = () => {
                 // Close profile modal and show pricing
                 const profileModal = document.getElementById('profileModal');
