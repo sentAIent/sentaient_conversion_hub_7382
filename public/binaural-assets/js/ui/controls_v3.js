@@ -5,7 +5,7 @@ import { startRecording, stopRecording, startExport, cancelExport, updateExportP
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
 import { auth, db, registerAuthCallback } from '../services/firebase.js';
-import { startSession, stopSession, pauseSession, resumeSession, isSessionPaused, formatTimeRemaining, getProgress, isSessionActive, DURATION_PRESETS } from '../audio/session-timer.js';
+import { startSession, stopSession, pauseSession, resumeSession, isSessionPaused, formatTime, getProgress, isSessionActive, DURATION_PRESETS } from '../audio/session-timer.js';
 import { startSessionTracking, endSessionTracking, getStats, getWeeklyData } from '../services/analytics.js';
 import { setStoryVolume, storyState } from '../content/stories.js';
 import { setCustomAudioVolume } from '../content/audio-library.js';
@@ -22,6 +22,7 @@ import { createCursorUIInThemeModal } from './cursor.js';
 
 
 export function setupUI() {
+    console.log('[Controls] setupUI CALLED');
     // Populate els (DOM Element References)
     els.playBtn = document.getElementById('playBtn');
     els.playIcon = document.getElementById('playIcon');
@@ -367,7 +368,29 @@ export function setupUI() {
         const viz = getVisualizer();
         if (viz) viz.setSpeed(val);
         if (els.speedValue) els.speedValue.textContent = val.toFixed(1) + 'x';
+        // Sync compact slider
+        const compactSlider = document.querySelector('.compact-speed-slider');
+        const compactValue = document.querySelector('.compact-speed-value');
+        if (compactSlider) compactSlider.value = val;
+        if (compactValue) compactValue.textContent = val.toFixed(1) + 'x';
     });
+
+    // Compact Speed Slider (syncs with main slider)
+    const compactSpeedSlider = document.querySelector('.compact-speed-slider');
+    if (compactSpeedSlider) {
+        compactSpeedSlider.addEventListener('input', () => {
+            const val = parseFloat(compactSpeedSlider.value);
+            // Sync to main slider
+            if (els.visualSpeedSlider) els.visualSpeedSlider.value = val;
+            // Update visualizer
+            const viz = getVisualizer();
+            if (viz) viz.setSpeed(val);
+            // Update both displays
+            if (els.speedValue) els.speedValue.textContent = val.toFixed(1) + 'x';
+            const compactValue = document.querySelector('.compact-speed-value');
+            if (compactValue) compactValue.textContent = val.toFixed(1) + 'x';
+        });
+    }
 
     // Auto Sync Toggle
     if (els.visualSyncBtn) {
@@ -378,8 +401,20 @@ export function setupUI() {
         });
     }
 
+    // Compact Sync Button (mirrors main sync button)
+    const compactSyncBtn = document.querySelector('.compact-sync-btn');
+    if (compactSyncBtn) {
+        compactSyncBtn.addEventListener('click', () => {
+            state.visualSpeedAuto = !state.visualSpeedAuto;
+            updateSyncUI();
+            updateFrequencies();
+        });
+    }
+
     function updateSyncUI() {
         if (!els.visualSyncBtn || !els.visualSpeedSlider || !els.speedSliderContainer) return;
+        const compactSyncBtn = document.querySelector('.compact-sync-btn');
+        const compactSpeedSlider = document.querySelector('.compact-speed-slider');
 
         if (state.visualSpeedAuto) {
             // Auto Mode: Active
@@ -388,6 +423,12 @@ export function setupUI() {
             els.visualSpeedSlider.disabled = true;
             els.speedSliderContainer.classList.add('opacity-50');
             els.speedSliderContainer.classList.remove('opacity-100');
+            // Update compact button
+            if (compactSyncBtn) {
+                compactSyncBtn.style.backgroundColor = "var(--accent)";
+                compactSyncBtn.style.color = "var(--bg-main)";
+            }
+            if (compactSpeedSlider) compactSpeedSlider.disabled = true;
         } else {
             // Manual Mode: Inactive
             els.visualSyncBtn.style.backgroundColor = "rgba(255,255,255,0.1)";
@@ -395,6 +436,12 @@ export function setupUI() {
             els.visualSpeedSlider.disabled = false;
             els.speedSliderContainer.classList.remove('opacity-50');
             els.speedSliderContainer.classList.add('opacity-100');
+            // Update compact button
+            if (compactSyncBtn) {
+                compactSyncBtn.style.backgroundColor = "rgba(255,255,255,0.1)";
+                compactSyncBtn.style.color = "var(--text-muted)";
+            }
+            if (compactSpeedSlider) compactSpeedSlider.disabled = false;
         }
     }
 
@@ -551,6 +598,7 @@ export function setupUI() {
     }
 
     // Matrix Controls
+    console.log('[Controls] Calling setupMatrixControls()...');
     setupMatrixControls();
 
     // Mobile Bottom Navigation Handlers
@@ -604,39 +652,7 @@ export function setupUI() {
     }
 
     // Setup Matrix specific controls
-    function setupMatrixControls() {
-        // We need to inject the toggle if it doesn't exist, or just bind it if it does.
-        // Since the HTML is likely dynamic or we can append to the specialized panel.
-
-        const panel = document.getElementById('matrixSettingsPanel');
-        if (!panel) return;
-
-        // Check if toggle already exists to avoid dupes
-        // Check if toggle exists (HTML ID is matrixModeToggle)
-        if (!document.getElementById('matrixModeToggle') && !document.getElementById('mindWaveModeToggle')) {
-            const toggleHtml = `
-                <div class="flex items-center gap-2 ml-4 pl-4 border-l border-white/10">
-                    <label for="mindWaveModeToggle" class="text-[8px] text-[var(--text-muted)] uppercase">Mindwave</label>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="mindWaveModeToggle" class="sr-only peer" checked>
-                        <div class="w-7 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[var(--accent)]"></div>
-                    </label>
-                </div>
-            `;
-            panel.insertAdjacentHTML('beforeend', toggleHtml);
-        }
-
-        const toggle = document.getElementById('mindWaveModeToggle');
-        if (toggle) {
-            console.log('[Controls] Matrix Toggle Found - CONTROLS_V3_REAL');
-            toggle.addEventListener('change', (e) => {
-                const viz = getVisualizer();
-                if (viz && viz.setMatrixMode) {
-                    viz.setMatrixMode(e.target.checked);
-                }
-            });
-        }
-    }
+    // Legacy setupMatrixControls removed to use main function (line 3918)
 
 
     if (els.visualColorPicker) {
@@ -917,15 +933,15 @@ async function handlePlayClick() {
             else presetName = 'Hyper-Gamma';
             startSessionTracking(presetName);
 
-            // 5. Start session timer if duration is set
+            // 5. Start session timer (0 = infinite/count-up)
             const duration = parseInt(els.sessionDuration?.value || 0);
-            if (duration > 0) {
-                startSession(duration, {
-                    onTick: updateTimerUI,
-                    onComplete: handleSessionComplete
-                });
-                showTimerUI();
-            }
+
+            startSession(duration, {
+                onTick: updateTimerUI,
+                onComplete: handleSessionComplete
+            });
+            showTimerUI();
+
         } catch (e) {
             console.error("Start Audio Failed", e);
         }
@@ -1091,9 +1107,7 @@ function setupTimerUI() {
     if (els.sessionDuration) {
         els.sessionDuration.addEventListener('change', () => {
             const duration = parseInt(els.sessionDuration.value);
-            if (duration === 0) {
-                hideTimerUI();
-            }
+            // Don't hide for 0 anymore
         });
     }
 }
@@ -1126,7 +1140,17 @@ function updateTimerUI(data) {
     // Update progress ring (circumference = 2 * PI * 54 = 339.292)
     if (els.timerProgress) {
         const circumference = 339.292;
-        const offset = circumference - (data.progress / 100) * circumference;
+
+        let offset;
+        if (data.isInfinite) {
+            // For infinite, maybe just keep it full or pulse? 
+            // Let's keep it full (0 offset)
+            offset = 0;
+        } else {
+            // standard countdown
+            offset = circumference - (data.progress / 100) * circumference;
+        }
+
         els.timerProgress.style.strokeDashoffset = offset;
     }
 }
@@ -3916,6 +3940,7 @@ window.toggleMatrixSettings = function (toggleBtn) {
 };
 
 function setupMatrixControls() {
+    console.log('[Controls] setupMatrixControls (Main) CALLED');
     const closeBtn = document.getElementById('matrixCloseBtn');
     const resetBtn = document.getElementById('matrixResetBtn');
 
@@ -3989,13 +4014,29 @@ function setupMatrixControls() {
 
     const rainbowToggle = document.getElementById('matrixRainbowToggle');
     if (rainbowToggle) {
+        const updateRainbowLabels = () => {
+            const labelRGB = document.getElementById('labelRGB');
+            const labelRainbow = document.getElementById('labelRainbow');
+            if (rainbowToggle.checked) {
+                // Rainbow mode active - highlight RAINBOW orange
+                if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
+                if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-orange-400 font-bold';
+            } else {
+                // RGB mode active - highlight RGB orange
+                if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-orange-400 font-bold';
+                if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
+            }
+        };
+        // Update on change
         rainbowToggle.addEventListener('change', (e) => {
             const viz = getVisualizer();
             if (viz && viz.setMatrixRainbow) {
-                // Pass checked state directly
                 viz.setMatrixRainbow(e.target.checked);
             }
+            updateRainbowLabels();
         });
+        // Set initial state
+        updateRainbowLabels();
     }
 
     // --- NEW: Slider Listeners ---
@@ -4038,20 +4079,61 @@ function setupMatrixControls() {
     // const customTextInput = document.getElementById('matrixCustomTextInput'); // REMOVED from HTML
     const textInput = document.getElementById('matrixTextInput');
 
+    // Define saveTimeout for text input
+    let saveTimeout;
+
     if (modeToggle) {
         console.log('[Controls] Matrix Mode Toggle Listener Attached');
+        // Helper to Sync Visual State (Labels & Input)
+        const __updateMatrixUI = () => {
+            console.log('__updateMatrixUI CALLED');
+            if (!modeToggle) { console.error('modeToggle IS NULL'); return; }
+            const isMindwaveMode = modeToggle.checked;
+            console.log('isMindwaveMode:', isMindwaveMode);
+
+            const labelRandom = document.getElementById('labelRandom');
+            const labelMindwave = document.getElementById('labelMindwave');
+
+            if (isMindwaveMode) {
+                // MINDWAVE ACTIVE-Sync
+                if (labelRandom) {
+                    labelRandom.classList.remove('text-white', 'font-bold');
+                    labelRandom.classList.add('text-[var(--text-muted)]', 'font-normal');
+                }
+                if (labelMindwave) {
+                    labelMindwave.classList.remove('text-[var(--text-muted)]', 'font-normal');
+                    labelMindwave.classList.add('text-[var(--accent)]', 'font-bold');
+                }
+                // Hide Input (Force)
+                // Input stays visible
+
+            } else {
+                // RANDOM ACTIVE-Sync
+                if (labelRandom) {
+                    labelRandom.classList.remove('text-[var(--text-muted)]', 'font-normal');
+                    labelRandom.classList.add('text-white', 'font-bold');
+                }
+                if (labelMindwave) {
+                    labelMindwave.classList.remove('text-[var(--accent)]', 'font-bold');
+                    labelMindwave.classList.add('text-[var(--text-muted)]', 'font-normal');
+                }
+                // Show Input (Force)
+                // Input stays visible
+
+            }
+        };
+
+        // Run once on init
+        __updateMatrixUI();
+
         modeToggle.addEventListener('change', (e) => {
             const isMindwaveMode = e.target.checked;
             console.log('[Controls] Toggle Changed. Mindwave Mode:', isMindwaveMode);
 
-            // Logic:
-            // Checked (Mindwave) -> Mode: 'mindwave', Input: Hidden
-            // Unchecked (Random) -> Mode: 'random' (or 'custom' if text exists), Input: Visible
+            __updateMatrixUI();
 
             if (isMindwaveMode) {
                 // MINDWAVE MODE
-                if (textInput) textInput.classList.add('hidden');
-
                 const viz = getVisualizer();
                 if (viz && viz.setMatrixLogicMode) {
                     viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
@@ -4059,8 +4141,9 @@ function setupMatrixControls() {
             } else {
                 // RANDOM / CUSTOM MODE
                 if (textInput) {
-                    textInput.classList.remove('hidden');
-                    // textInput.focus(); // Optional: Focus when switching to custom mode?
+                    textInput.disabled = false;
+                    textInput.placeholder = "CUSTOM TXT";
+                    if (textInput.value === "") textInput.focus();
                 }
 
                 const viz = getVisualizer();
@@ -4117,36 +4200,27 @@ function setupMatrixControls() {
             textInput.value = savedText;
         }
 
-        // Sync UI visibility
-        const isTextMode = modeToggle.checked;
-        if (isTextMode && textInput) {
-            textInput.classList.remove('hidden');
-        } else if (textInput) {
-            textInput.classList.add('hidden');
-        }
+        // Logic handled by init above
+    }
 
-        // Sync Visualizer Mode (must retrieve viz again as it might be ready)
-        // Note: viz might not be fully ready here if called too early, 
-        // but setMatrixLogicMode handles property setting even if init is delayed?
-        // Actually, let's try safely.
-        // Sync Visualizer Mode (must retrieve viz again as it might be ready)
-        const viz = getVisualizer();
-        if (viz && viz.setMatrixLogicMode) {
-            if (isTextMode) {
-                viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
-            } else {
-                const text = (textInput && textInput.value) ? textInput.value : '';
-                if (text.length > 0) viz.setMatrixLogicMode('custom', text);
-                else viz.setMatrixLogicMode('random', '');
-            }
+    // Sync Visualizer Mode (must retrieve viz again as it might be ready)
+    // Note: viz might not be fully ready here if called too early, 
+    // but setMatrixLogicMode handles property setting even if init is delayed?
+    // Actually, let's try safely.
+    // Sync Visualizer Mode (must retrieve viz again as it might be ready)
+    // Sync Visualizer Mode on Init
+    const viz = getVisualizer();
+    if (viz && viz.setMatrixLogicMode) {
+        if (modeToggle && modeToggle.checked) {
+            viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
+        } else {
+            const text = (textInput && textInput.value) ? textInput.value.toUpperCase() : '';
+            if (text.length > 0) viz.setMatrixLogicMode('custom', text);
+            else viz.setMatrixLogicMode('random', '');
         }
     }
 }
 
 
-// Initialize Matrix controls immediately if DOM is ready, or wait
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupMatrixControls);
-} else {
-    setupMatrixControls();
-}
+
+

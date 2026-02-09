@@ -32,21 +32,35 @@ export function initResizablePanels() {
     // Restore saved widths
     restorePanelWidths();
 
+    // FIX: Update layout IMMEDIATELY to prevent "jump" from default CSS
+    updateTopBarWidth();
+    updateBottomBarWidth();
+    updateAtmosphereColumns();
+
     // Add global event listeners
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleMouseUp);
 
-    // Update top bar width and atmosphere columns on window resize
-    window.addEventListener('resize', () => {
-        updateTopBarWidth();
-        updateBottomBarWidth();
-        updateAtmosphereColumns();
+    // ... (listeners)
+
+    // Listen for layout changes (sidebar open/close) to update footer position
+    window.addEventListener('mindwave:layout-change', () => {
+        // Small delay to allow CSS transition to start
+        setTimeout(() => {
+            updateTopBarWidth();
+            updateBottomBarWidth();
+        }, 50);
+        // Also update at end of transition (300ms)
+        setTimeout(() => {
+            updateTopBarWidth();
+            updateBottomBarWidth();
+        }, 350);
     });
 
-    // Listen for layout changes (e.g. toggle buttons)
-    window.addEventListener('mindwave:layout-change', () => {
+    // Also listen for window resize
+    window.addEventListener('resize', () => {
         updateTopBarWidth();
         updateBottomBarWidth();
         updateAtmosphereColumns();
@@ -54,6 +68,7 @@ export function initResizablePanels() {
 
     // Initial calls to set correct top bar width and atmosphere columns
     setTimeout(() => {
+        // Re-run updates just in case
         updateTopBarWidth();
         updateBottomBarWidth();
         updateAtmosphereColumns();
@@ -195,14 +210,19 @@ export function updateTopBarWidth() {
     const leftPanel = document.getElementById('leftPanel');
     const rightPanel = document.getElementById('rightPanel');
 
-    // Check if panels are open
-    const leftOpen = leftPanel && !leftPanel.classList.contains('-translate-x-full');
-    const rightOpen = rightPanel && !rightPanel.classList.contains('translate-x-full');
+    // Check if panels are open using their actual position on screen
+    const leftRect = leftPanel ? leftPanel.getBoundingClientRect() : null;
+    const rightRect = rightPanel ? rightPanel.getBoundingClientRect() : null;
+
+    // Left panel is open if its right edge is > 0 (visible)
+    const leftOpen = leftRect && leftRect.right > 0;
+    // Right panel is open if its left edge is < window width (visible)  
+    const rightOpen = rightRect && rightRect.left < window.innerWidth;
 
     // Get the right edge of left panel (or 0 if closed)
-    const leftEdge = leftOpen ? leftPanel.getBoundingClientRect().right : 0;
+    const leftEdge = leftOpen ? leftRect.right : 0;
     // Get the left edge of right panel (or window width if closed)
-    const rightEdge = rightOpen ? rightPanel.getBoundingClientRect().left : window.innerWidth;
+    const rightEdge = rightOpen ? rightRect.left : window.innerWidth;
 
     // The available gap between panels
     const gap = rightEdge - leftEdge;
@@ -245,26 +265,61 @@ export function updateBottomBarWidth() {
     const leftPanel = document.getElementById('leftPanel');
     const rightPanel = document.getElementById('rightPanel');
 
-    // Check if panels are open
-    const leftOpen = leftPanel && !leftPanel.classList.contains('-translate-x-full');
-    const rightOpen = rightPanel && !rightPanel.classList.contains('translate-x-full');
+    // Check if panels are open using their actual position on screen
+    // Panel is "open" if it's visible on screen (not translated off-screen)
+    const leftRect = leftPanel ? leftPanel.getBoundingClientRect() : null;
+    const rightRect = rightPanel ? rightPanel.getBoundingClientRect() : null;
 
-    // Get widths
-    // Use 0 if closed, actual width if open
-    const leftWidth = leftOpen ? leftPanel.getBoundingClientRect().width : 0;
-    const rightWidth = rightOpen ? rightPanel.getBoundingClientRect().width : 0;
+    // Left panel is open if its right edge is > 0 (visible)
+    const leftOpen = leftRect && leftRect.right > 0;
+    // Right panel is open if its left edge is < window width (visible)
+    const rightOpen = rightRect && rightRect.left < window.innerWidth;
 
-    // Apply basic positioning
-    // We adjust left/right properties to squeeze the footer into the center
-    bottomBar.style.left = `${leftWidth}px`;
-    bottomBar.style.right = `${rightWidth}px`;
-
-    // Calculate available width for content responsiveness
     const windowWidth = window.innerWidth;
+
+    // Get widths - use actual visible width on screen
+    const leftWidth = leftOpen ? Math.max(0, leftRect.right) : 0;
+    const rightWidth = rightOpen ? Math.max(0, windowWidth - rightRect.left) : 0;
+
     const availableWidth = windowWidth - leftWidth - rightWidth;
 
+    // RESPONSIVE LOGIC CHANGE:
+    // If available space is too small (e.g. tablet with both panels open), 
+    // trying to squeeze the footer between panels results in a broken layout.
+    // Instead, if width < 768px (or constrained), let the footer float OVER the panels (z-100).
+    const isConstrained = availableWidth < 600;
+
+    if (isConstrained) {
+        // Full width overlay mode
+        bottomBar.style.left = '0px';
+        bottomBar.style.right = '0px';
+        bottomBar.style.width = '100%';
+        // Ensure pointer events pass through empty space so we don't block sidebar clicks
+        bottomBar.style.pointerEvents = 'none';
+        // Re-enable pointer events on children
+        Array.from(bottomBar.children).forEach(child => {
+            child.style.pointerEvents = 'auto';
+        });
+        console.log(`[Footer] OVERLAY MODE - Available: ${availableWidth}px (constrained)`);
+    } else {
+        // Docked mode (sit between panels)
+        bottomBar.style.left = `${leftWidth}px`;
+        bottomBar.style.right = `${rightWidth}px`;
+        // Explicitly set width so flex children know the container size
+        bottomBar.style.width = `${availableWidth}px`;
+        bottomBar.style.pointerEvents = 'auto';
+        console.log(`[Footer] DOCKED MODE - Left: ${leftWidth}px, Right: ${rightWidth}px, Available: ${availableWidth}px`);
+    }
+
+    // Set a CSS variable so children can reference the available width
+    bottomBar.style.setProperty('--footer-width', `${availableWidth}px`);
+
+    // Force a reflow to ensure flex children recalculate
+    void bottomBar.offsetWidth;
+
     // Manage responsive classes for footer content
-    if (availableWidth < 600) {
+    // We still use availableWidth logic to determine compactness
+    if (availableWidth < 600 || windowWidth < 768) {
         bottomBar.classList.add('footer-compact');
         bottomBar.classList.remove('footer-medium');
     } else if (availableWidth < 900) {

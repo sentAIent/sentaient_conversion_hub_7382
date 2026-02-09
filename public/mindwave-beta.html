@@ -98,6 +98,21 @@
             font-family: monospace !important;
             font-size: 10px !important;
         }
+
+        /* Footer Compact Mode - Hide speed/color controls in left group */
+        .footer-compact #speedSliderContainer,
+        .footer-compact .left-group-color-controls {
+            display: none !important;
+        }
+
+        /* Show compact-mode-only elements only when footer is compact */
+        .compact-only {
+            display: none !important;
+        }
+
+        .footer-compact .compact-only {
+            display: flex !important;
+        }
     </style>
 
     <!-- Import Map for ES6 Module Resolution -->
@@ -466,10 +481,10 @@
 
         <!-- FOOTER -->
         <footer id="bottomControlBar"
-            class="fixed bottom-0 left-0 right-0 z-[100] p-6 pointer-events-auto flex justify-center items-end gap-8 pb-8 transition-[left,right] duration-300 ease-in-out">
+            class="fixed bottom-0 left-0 right-0 z-[100] p-6 pointer-events-auto flex flex-nowrap justify-between items-end gap-4 pb-8 transition-[left,right,width] duration-300 ease-in-out overflow-visible">
 
             <!-- LEFT: Visual Controls & Toggle -->
-            <div class="flex flex-col gap-4 items-center">
+            <div class="flex flex-col gap-4 items-center shrink-0">
                 <!-- New Presets Toggle Button (Use old ID 'leftToggle' for logic compat) -->
                 <button id="leftToggle"
                     class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all"
@@ -509,7 +524,7 @@
                 </div>
 
                 <!-- Color Controls -->
-                <div class="flex items-center gap-2 mt-1">
+                <div class="flex items-center gap-2 mt-1 left-group-color-controls">
                     <!-- Color Picker -->
                     <div class="relative group" title="Particle Color">
                         <div id="colorPreview"
@@ -546,7 +561,7 @@
             </div>
 
             <!-- CENTER: Main Play with Session Timer -->
-            <div class="flex flex-col items-center justify-end gap-3 pb-0 w-full max-w-4xl mx-auto">
+            <div class="flex flex-col items-center justify-end gap-3 pb-0 max-w-4xl mx-auto shrink min-w-0">
 
                 <!-- 1. Play & Timer Controls (Horizontal Row) -->
                 <div class="flex items-center gap-6 mb-1 order-1">
@@ -659,7 +674,7 @@
 
                 <!-- 2. Matrix Settings Bar (Horizontal - Refined) -->
                 <div id="matrixSettingsPanel"
-                    class="hidden order-2 flex items-center gap-6 px-12 py-3 bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all animate-fade-in-up w-auto">
+                    class="hidden order-2 flex flex-wrap items-center justify-center gap-3 px-4 py-3 bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all animate-fade-in-up w-auto max-w-full">
 
                     <!-- Label -->
                     <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Matrix</span>
@@ -668,7 +683,7 @@
 
                     <!-- Custom Text Input -->
                     <!-- Color, Rainbow & Mode -->
-                    <div class="flex items-center gap-6 flex-nowrap">
+                    <div class="flex flex-wrap items-center gap-3">
 
                         <!-- Color Picker (Proxy) -->
                         <div class="relative w-8 h-8 group hover:scale-110 transition-transform cursor-pointer">
@@ -714,10 +729,8 @@
                             <!-- Logic: When checked (Mindwave), Input is locked to "MINDWAVE" and dimmed.
                                         When unchecked (Random), Input is editable. -->
                             <div class="relative">
-                                <span id="matrixModeLabel"
-                                    class="text-[9px] text-[var(--accent)] font-mono uppercase tracking-widest absolute -top-3 left-0 pointer-events-none">Mindwave</span>
-                                <input type="text" id="matrixTextInput" value="MINDWAVE" maxlength="12" disabled
-                                    class="w-24 bg-transparent border-b border-white/20 px-0 py-0.5 text-[10px] text-white/50 outline-none focus:border-[var(--accent)] font-mono uppercase transition-all disabled:border-transparent disabled:text-[var(--accent)]">
+                                <input type="text" id="matrixTextInput" placeholder="MINDWAVE" maxlength="12" disabled
+                                    class="w-24 bg-transparent border-b border-white/20 px-0 py-0.5 text-[10px] text-white/50 outline-none focus:border-[var(--accent)] font-mono uppercase transition-all disabled:border-transparent disabled:text-[var(--accent)] placeholder:text-[var(--accent)]">
                             </div>
                         </div>
 
@@ -726,7 +739,7 @@
                     <div class="w-px h-6 bg-white/10"></div>
 
                     <!-- Sliders Group -->
-                    <div class="flex items-center gap-4">
+                    <div class="flex flex-wrap items-center gap-3">
                         <!-- Speed -->
                         <div class="flex flex-col gap-1 w-20 group">
                             <div class="flex justify-between text-[8px] text-[var(--text-muted)] uppercase">
@@ -762,8 +775,8 @@
 
 
                 <!-- 3. New Horizontal Visual Dock -->
-                <div
-                    class="order-3 flex flex-wrap justify-center items-center gap-2 mt-0 px-4 py-3 bg-[#0a0a12]/90 backdrop-blur-2xl rounded-2xl border border-white/5 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container">
+                <div id="visualDock"
+                    class="order-3 flex flex-wrap justify-center items-center gap-2 mt-0 px-4 py-3 bg-[#0a0a12]/90 backdrop-blur-2xl rounded-2xl border border-white/5 shadow-2xl overflow-visible w-fit max-w-[calc(100%-2rem)] mx-auto z-50 relative tooltip-container transition-all duration-300 ease-in-out">
 
                     <style>
                         .visual-btn .custom-tooltip {
@@ -847,33 +860,66 @@
             </div>
 
             <!-- RIGHT: Recording & Mixer Toggle -->
-            <div class="flex flex-col gap-3 items-center pb-2">
-                <!-- New Mixer Toggle Button (Use old ID 'rightToggle') -->
-                <button id="rightToggle"
-                    class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all order-first"
-                    title="Mixer">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 20v-6M6 20V10M18 20V4" />
-                    </svg>
-                </button>
-                <!-- Video Toggle (Modern) -->
-                <button id="videoToggleBtn"
-                    class="glass-pill p-3 rounded-full hover:bg-white/10 transition-all text-[var(--text-muted)]"
-                    title="Toggle Video Recording">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M23 7l-7 5 7 5V7z"></path>
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                    </svg>
-                </button>
+            <div class="flex flex-col gap-2 items-center pb-2 shrink-0">
+                <!-- Mixer & Video toggles row -->
+                <div class="flex items-center gap-2">
+                    <!-- New Mixer Toggle Button (Use old ID 'rightToggle') -->
+                    <button id="rightToggle"
+                        class="p-2 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all"
+                        title="Mixer">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 20v-6M6 20V10M18 20V4" />
+                        </svg>
+                    </button>
+                    <!-- Video Toggle (Modern) -->
+                    <button id="videoToggleBtn"
+                        class="p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-[var(--text-muted)]"
+                        title="Toggle Video Recording">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 7l-7 5 7 5V7z"></path>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                        </svg>
+                    </button>
+                </div>
 
-                <!-- Record Button -->
-                <button id="recordBtn"
-                    class="w-14 h-14 rounded-full border-2 border-[var(--border)] flex items-center justify-center hover:border-red-500 transition-colors group bg-black/20 backdrop-blur-sm">
-                    <div
-                        class="w-6 h-6 rounded-full bg-red-500 transition-all group-hover:scale-110 shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                <!-- Record + Speed row (horizontal, only in compact mode) -->
+                <div class="flex flex-row items-center gap-3 flex-nowrap">
+                    <!-- Compact Mode Speed Controls with Sync Button -->
+                    <div class="compact-only flex flex-row items-center gap-2 shrink-0">
+                        <!-- Speed Slider -->
+                        <div class="w-14 flex flex-col gap-0.5">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[6px] font-mono text-white/60 tracking-widest uppercase">SPD</label>
+                                <span
+                                    class="text-[7px] font-mono text-[var(--accent)] tabular-nums compact-speed-value">1.0x</span>
+                            </div>
+                            <input type="range"
+                                class="compact-speed-slider w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                                min="0.1" max="40.0" step="0.1" value="1.0">
+                        </div>
+                        <!-- Compact Sync Button -->
+                        <button
+                            class="compact-sync-btn p-1 rounded bg-[var(--accent)] text-[var(--bg-main)] hover:opacity-90 transition-all"
+                            title="Lock Speed to Hz (Auto)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </button>
                     </div>
-                </button>
+
+                    <!-- Record Button -->
+                    <button id="recordBtn"
+                        class="w-10 h-10 rounded-full border-2 border-[var(--border)] flex items-center justify-center hover:border-red-500 transition-colors group bg-black/20 backdrop-blur-sm shrink-0">
+                        <div
+                            class="w-4 h-4 rounded-full bg-red-500 transition-all group-hover:scale-110 shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                        </div>
+                    </button>
+                </div>
             </div>
         </footer>
 
