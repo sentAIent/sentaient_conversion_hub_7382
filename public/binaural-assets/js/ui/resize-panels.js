@@ -294,6 +294,8 @@ export function updateBottomBarWidth() {
         bottomBar.style.left = '0px';
         bottomBar.style.right = '0px';
         bottomBar.style.width = '100%';
+        bottomBar.style.marginLeft = '0';
+        bottomBar.style.marginRight = '0';
         // Ensure pointer events pass through empty space so we don't block sidebar clicks
         bottomBar.style.pointerEvents = 'none';
         // Re-enable pointer events on children
@@ -307,6 +309,8 @@ export function updateBottomBarWidth() {
         bottomBar.style.right = `${rightWidth}px`;
         // Explicitly set width so flex children know the container size
         bottomBar.style.width = `${availableWidth}px`;
+        bottomBar.style.marginLeft = '0';
+        bottomBar.style.marginRight = '0';
         bottomBar.style.pointerEvents = 'auto';
         console.log(`[Footer] DOCKED MODE - Left: ${leftWidth}px, Right: ${rightWidth}px, Available: ${availableWidth}px`);
     }

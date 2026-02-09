@@ -17,6 +17,9 @@ import { initAnalytics, trackSignup, trackLogin, trackBeginCheckout, trackPurcha
 import { showFeedbackSurvey, checkSurveyTrigger, TRIGGER_CONDITIONS } from './utils/feedback-survey.js';  // Feedback system
 import { checkReferral } from './services/referral.js'; // Referral tracking
 import { initSocialProof } from './services/social-proof.js'; // Social Proof
+import { initExitIntent } from './ui/exit-intent.js'; // Exit Intent Popup
+import { initNotifications } from './services/notifications.js'; // Push Notifications
+import { initEmailCapture } from './ui/email-capture.js'; // Email Capture
 
 
 // Content Modules - Loaded dynamically after UI is ready
@@ -85,6 +88,11 @@ const initApp = () => {
 
     // Social Proof
     initSocialProof();
+
+    // Phase 3: Retention Features
+    initExitIntent();      // Exit intent popup on mouse leave
+    initNotifications();    // Push notification permission handling
+    initEmailCapture();     // Email capture for non-logged-in users
 
     // Hide loading screen immediately once core UI is ready
     const loadingScreen = document.getElementById('loadingScreen');
