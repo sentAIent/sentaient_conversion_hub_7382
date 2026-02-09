@@ -116,7 +116,7 @@ function createPricingModal(currentTier) {
 
     const modal = document.createElement('div');
     modal.id = 'pricingModal';
-    modal.className = 'fixed inset-0 z-[300] flex items-center justify-center p-4 hidden';
+    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 hidden';
     modal.style.background = 'rgba(0, 0, 0, 0.95)';
     modal.style.backdropFilter = 'blur(20px)';
 
