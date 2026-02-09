@@ -2761,6 +2761,162 @@
         }
     </style>
 
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 hidden">
+        <div
+            class="glass-card p-5 rounded-2xl shadow-2xl max-w-sm w-full mx-4 flex flex-col gap-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <!-- Header -->
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold uppercase tracking-wider" style="color: var(--accent);">Your Profile</h3>
+                <button id="closeProfileBtn" class="p-2 rounded-full hover:bg-white/10 touch-target"
+                    style="color: var(--text-muted);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- User Info -->
+            <div class="flex items-center gap-4 pb-4 border-b border-white/10">
+                <div id="profileAvatarBig"
+                    class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-bold text-white shadow-lg">
+                    ?
+                </div>
+                <div class="flex-1">
+                    <div id="profileUserName" class="text-base font-bold text-white">Guest User</div>
+                    <div id="profileUserEmail" class="text-xs text-[var(--text-muted)]">Not signed in</div>
+                    <div id="profileUserTier"
+                        class="inline-block mt-1 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">
+                        Free</div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                    <div id="statTotalSessions" class="text-xl font-bold text-white">0</div>
+                    <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Sessions</div>
+                </div>
+                <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                    <div id="statTotalHours" class="text-xl font-bold text-white">0</div>
+                    <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Hours</div>
+                </div>
+                <div
+                    class="p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30 text-center">
+                    <div id="statStreak" class="text-xl font-bold text-orange-400">🔥 0</div>
+                    <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Day Streak</div>
+                </div>
+                <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                    <div id="statAvgSession" class="text-xl font-bold text-white">0</div>
+                    <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Avg Min</div>
+                </div>
+            </div>
+
+            <!-- Weekly Activity -->
+            <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div class="text-[10px] font-bold uppercase text-[var(--text-muted)] mb-2">This Week</div>
+                <div id="weeklyChart" class="flex justify-between items-end h-16 gap-1">
+                    <!-- Chart bars will be populated by JS -->
+                </div>
+                <div class="flex justify-between text-[8px] text-[var(--text-muted)] mt-1">
+                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                </div>
+            </div>
+
+            <!-- Top Preset -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                <div class="text-xs text-[var(--text-muted)]">Top Preset</div>
+                <div id="statTopPreset" class="text-xs font-bold text-[var(--accent)]">None</div>
+            </div>
+
+            <!-- Profile Name Edit -->
+            <div class="pt-3 border-t border-white/10">
+                <label class="text-[10px] font-bold uppercase mb-1 block text-[var(--text-muted)]">Display Name</label>
+                <input type="text" id="profileNameInput"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-sm text-[var(--text-main)] focus:border-[var(--accent)] outline-none"
+                    placeholder="Enter your name">
+                <button id="saveProfileBtn"
+                    class="w-full py-2.5 mt-2 rounded-lg bg-[var(--accent)] text-[var(--bg-main)] font-bold text-xs uppercase tracking-wide hover:opacity-90 transition-opacity">
+                    Update Profile
+                </button>
+            </div>
+
+            <!-- Logout -->
+            <button id="logoutBtn"
+                class="w-full py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wide hover:bg-red-500/20 transition-all">
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <!-- Collapsible Section Styles and Script -->
+    <style>
+        .mixer-section .section-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+            opacity: 1;
+        }
+
+        .mixer-section.collapsed .section-content {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .mixer-section.collapsed .section-arrow {
+            transform: rotate(-90deg);
+        }
+    </style>
+    <script>
+        // Toggle mixer sections collapse/expand
+        function toggleMixerSection(sectionName) {
+            const section = document.querySelector(`[data-section="${sectionName}"]`);
+            if (section) {
+                section.classList.toggle('collapsed');
+                // Save state to localStorage
+                const collapsed = section.classList.contains('collapsed');
+                const states = JSON.parse(localStorage.getItem('mixerSectionStates') || '{}');
+                states[sectionName] = collapsed;
+                localStorage.setItem('mixerSectionStates', JSON.stringify(states));
+            }
+        }
+
+        // Restore section states on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const states = JSON.parse(localStorage.getItem('mixerSectionStates') || '{}');
+            Object.keys(states).forEach(sectionName => {
+                if (states[sectionName]) {
+                    const section = document.querySelector(`[data-section="${sectionName}"]`);
+                    if (section) section.classList.add('collapsed');
+                }
+            });
+
+            // Collapse All / Expand All functionality
+            const collapseAllBtn = document.getElementById('collapseAllBtn');
+            if (collapseAllBtn) {
+                collapseAllBtn.addEventListener('click', () => {
+                    const sections = document.querySelectorAll('.mixer-section');
+                    const anyExpanded = Array.from(sections).some(section => !section.classList.contains('collapsed'));
+                    const states = {};
+
+                    sections.forEach(section => {
+                        const sectionName = section.getAttribute('data-section');
+                        if (anyExpanded) {
+                            section.classList.add('collapsed');
+                            states[sectionName] = true;
+                        } else {
+                            section.classList.remove('collapsed');
+                            states[sectionName] = false;
+                        }
+                    });
+                    localStorage.setItem('mixerSectionStates', JSON.stringify(states));
+                });
+            }
+        });
+    </script>
+
     <!-- Failsafe: Ensure app unlocks even if JS errors occur -->
     <script>
         setTimeout(() => {

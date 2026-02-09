@@ -303,9 +303,72 @@ function populateProfileStats() {
                 `;
             }).join('');
         }
+
+        // Add daily usage display for free users
+        updateDailyUsageDisplay();
     }).catch(err => {
         console.warn('[Profile] Failed to load analytics:', err);
     });
+}
+
+async function updateDailyUsageDisplay() {
+    try {
+        const { DailyLimitService } = await import('../services/daily-limit.js');
+        const usageSeconds = DailyLimitService.getUsage();
+        const usageMinutes = Math.floor(usageSeconds / 60);
+        const limitMinutes = 15;
+        const percentUsed = Math.min((usageMinutes / limitMinutes) * 100, 100);
+        const remaining = Math.max(0, limitMinutes - usageMinutes);
+
+        // Check if premium
+        const isPremium = localStorage.getItem('mindwave_premium') === 'true';
+
+        // Find or create daily usage element
+        let usageEl = document.getElementById('dailyUsageDisplay');
+        if (!usageEl) {
+            // Create the element in profile modal
+            const profileModal = document.getElementById('profileModal');
+            const statsGrid = profileModal?.querySelector('.grid');
+            if (statsGrid) {
+                usageEl = document.createElement('div');
+                usageEl.id = 'dailyUsageDisplay';
+                usageEl.className = 'col-span-2 p-3 rounded-xl border text-center';
+                statsGrid.parentElement.insertBefore(usageEl, statsGrid.nextSibling);
+            }
+        }
+
+        if (usageEl) {
+            if (isPremium) {
+                usageEl.innerHTML = `
+                    <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mb-1">Daily Usage</div>
+                    <div class="text-lg font-bold text-amber-400">
+                        ∞ Unlimited
+                    </div>
+                    <div class="text-[10px] text-[var(--text-muted)]">Pro member • ${usageMinutes}min today</div>
+                `;
+                usageEl.className = 'col-span-2 p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 text-center';
+            } else {
+                const isNearLimit = percentUsed >= 80;
+                const isAtLimit = percentUsed >= 100;
+                usageEl.innerHTML = `
+                    <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mb-1">Daily Usage (Free Plan)</div>
+                    <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+                        <div class="h-full transition-all ${isAtLimit ? 'bg-red-500' : isNearLimit ? 'bg-amber-500' : 'bg-[var(--accent)]'}" 
+                             style="width: ${percentUsed}%"></div>
+                    </div>
+                    <div class="text-sm font-bold ${isAtLimit ? 'text-red-400' : isNearLimit ? 'text-amber-400' : 'text-white'}">
+                        ${usageMinutes} / ${limitMinutes} min
+                    </div>
+                    <div class="text-[10px] ${isAtLimit ? 'text-red-300' : 'text-[var(--text-muted)]'}">
+                        ${isAtLimit ? 'Daily limit reached! Upgrade for unlimited.' : `${remaining} min remaining today`}
+                    </div>
+                `;
+                usageEl.className = `col-span-2 p-3 rounded-xl ${isAtLimit ? 'bg-red-500/10 border-red-500/30' : isNearLimit ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/5 border-white/10'} border text-center`;
+            }
+        }
+    } catch (err) {
+        console.warn('[Profile] Failed to load daily limit:', err);
+    }
 }
 
 // Setup logout button
