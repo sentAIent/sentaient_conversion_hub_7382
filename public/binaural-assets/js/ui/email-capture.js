@@ -3,9 +3,6 @@
  * Shows a newsletter signup for non-logged-in users
  */
 
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-
 const EMAIL_CAPTURE_KEY = 'mindwave_email_captured';
 const DELAY_MS = 120000; // 2 minutes
 
@@ -15,19 +12,24 @@ export function initEmailCapture() {
     // Don't show if already captured email
     if (localStorage.getItem(EMAIL_CAPTURE_KEY)) return;
 
-    // Don't show if user is logged in
-    const auth = getAuth();
-    if (auth.currentUser) return;
+    // Wait before showing (also gives Firebase time to initialize)
+    setTimeout(async () => {
+        try {
+            // Dynamically import Firebase auth to avoid race condition
+            const { getAuth } = await import('firebase/auth');
+            const auth = getAuth();
 
-    // Wait before showing
-    setTimeout(() => {
-        // Double check user didn't log in during the wait
-        if (auth.currentUser) return;
-        if (emailModalShown) return;
+            // Don't show if user is logged in
+            if (auth.currentUser) return;
+            if (emailModalShown) return;
 
-        showEmailCaptureModal();
+            showEmailCaptureModal();
+        } catch (err) {
+            console.warn('[Email Capture] Firebase not ready:', err.message);
+        }
     }, DELAY_MS);
 }
+
 
 function showEmailCaptureModal() {
     if (document.getElementById('emailCaptureModal')) return;
@@ -185,6 +187,9 @@ async function handleEmailSubmit(e) {
     button.disabled = true;
 
     try {
+        // Dynamically import Firestore
+        const { getFirestore, doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+
         // Save to Firestore
         const db = getFirestore();
         await setDoc(doc(db, 'email_subscribers', email.toLowerCase().replace(/[^a-z0-9]/g, '_')), {

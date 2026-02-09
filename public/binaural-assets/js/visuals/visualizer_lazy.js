@@ -112,8 +112,19 @@ export function isVisualsPaused() {
 
 /**
  * Preload the visualizer in background (call after page is idle)
+ * Also initializes the visualizer after loading
  */
 export function preloadVisualizer() {
-    requestIdleCallback ? requestIdleCallback(() => loadVisualizerModule())
-        : setTimeout(loadVisualizerModule, 2000);
+    const loadAndInit = async () => {
+        const module = await loadVisualizerModule();
+        // Initialize the visualizer after loading
+        if (module && typeof module.initVisualizer === 'function') {
+            console.log('[LazyViz] Initializing visualizer...');
+            await module.initVisualizer();
+            console.log('[LazyViz] Visualizer initialized');
+        }
+    };
+
+    requestIdleCallback ? requestIdleCallback(() => loadAndInit())
+        : setTimeout(loadAndInit, 2000);
 }
