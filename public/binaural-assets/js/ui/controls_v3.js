@@ -1,6 +1,6 @@
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused } from '../visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V13';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -728,7 +728,9 @@ export function setupUI() {
     // Safe Initialization Pattern
     try { initMixer(); } catch (e) { console.error("Mixer Init Failed:", e); }
     try { restoreStateFromLocal(); } catch (e) { console.error("State Restore Failed:", e); }
-    try { initVisualizer(); } catch (e) { console.error("Visualizer Init Failed:", e); }
+
+    // Defer visualizer loading until page is idle (saves 1.2MB on initial load)
+    preloadVisualizer();
 
 
     // Theme - force default (emerald) if no saved theme or if it's a light theme that shouldn't be default

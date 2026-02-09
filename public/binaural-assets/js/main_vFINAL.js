@@ -20,6 +20,8 @@ import { initSocialProof } from './services/social-proof.js'; // Social Proof
 import { initExitIntent } from './ui/exit-intent.js'; // Exit Intent Popup
 import { initNotifications } from './services/notifications.js'; // Push Notifications
 import { initEmailCapture } from './ui/email-capture.js'; // Email Capture
+import { initPWAInstall } from './utils/pwa-install.js'; // PWA Install Prompt
+import './utils/ab-testing.js'; // A/B Testing (auto-exposes window.AB)
 
 
 // Content Modules - Loaded dynamically after UI is ready
@@ -93,6 +95,9 @@ const initApp = () => {
     initExitIntent();      // Exit intent popup on mouse leave
     initNotifications();    // Push notification permission handling
     initEmailCapture();     // Email capture for non-logged-in users
+
+    // Phase 4: PWA Install Prompt
+    initPWAInstall();
 
     // Hide loading screen immediately once core UI is ready
     const loadingScreen = document.getElementById('loadingScreen');
