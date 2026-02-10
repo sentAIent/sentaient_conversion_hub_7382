@@ -729,8 +729,7 @@ export function setupUI() {
     try { initMixer(); } catch (e) { console.error("Mixer Init Failed:", e); }
     try { restoreStateFromLocal(); } catch (e) { console.error("State Restore Failed:", e); }
 
-    // Defer visualizer loading until page is idle (saves 1.2MB on initial load)
-    preloadVisualizer();
+    // Initialization happened after applyVisualDefaults moved up
 
 
     // Theme - force default (emerald) if no saved theme or if it's a light theme that shouldn't be default
@@ -808,45 +807,87 @@ export function setupUI() {
 
     window.paywall = { goToCheckout, hasPurchasedApp, checkAccessAndPurchase }; // UPDATED
 
+    // --- Visualizer Initialization & Defaults ---
+
     // Apply visual defaults once visualizer is actually loaded (lazy loader)
     const applyVisualDefaults = () => {
-        console.log('[Controls] Applying visual defaults...');
+        console.log('[Controls] Applying visual defaults starting...');
         const viz = getVisualizer();
-        if (!viz) return;
+        if (!viz) {
+            console.warn('[Controls] applyVisualDefaults: Visualizer not found');
+            return;
+        }
 
-        // Batch: Set all modes directly on the visualizer without triggering individual re-inits
-        viz._rainbowEnabled = true; // Pre-set rainbow before any matrix init
-        viz.activeModes.clear();
-        viz.activeModes.add('particles');
-        viz.activeModes.add('matrix');
-        viz.updateVisibility();
+        try {
+            // Batch: Set all modes directly on the visualizer without triggering individual re-inits
+            viz._rainbowEnabled = true; // Pre-set rainbow before any matrix init
+            viz.activeModes.clear();
+            viz.activeModes.add('particles');
+            viz.activeModes.add('matrix');
+            viz.updateVisibility();
 
-        // Single matrix init with mindwave + rainbow already set
-        viz.mindWaveMode = true;
-        viz.matrixLogicMode = 'mindwave';
-        viz.initMatrix(); // Only ONE matrix build
+            // Single matrix init with mindwave + rainbow already set
+            viz.mindWaveMode = true;
+            viz.matrixLogicMode = 'mindwave';
+            viz.initMatrix(); // Only ONE matrix build
 
-        // Now sync the UI buttons to match
-        setVisualMode('particles', true); // This will see it's already active and just sync buttons
-        setVisualMode('matrix', true);    // Same - already active, just syncs buttons
+            // Now sync the UI buttons to match
+            setVisualMode('particles', true); // This will see it's already active and just sync buttons
+            setVisualMode('matrix', true);    // Same - already active, just syncs buttons
 
-        // Smooth fade-in: reveal canvas after everything is ready
-        requestAnimationFrame(() => {
+            // Smooth fade-in: reveal canvas after everything is ready
+            // Use slightly longer delay to ensure DOM is ready for transition
+            setTimeout(() => {
+                const canvas = document.getElementById('visualizer');
+                if (canvas) {
+                    canvas.style.opacity = '1';
+                    console.log('[Controls] Visualizer fade-in triggered');
+                } else {
+                    console.error('[Controls] Visualizer canvas element NOT FOUND');
+                }
+            }, 100);
+
+            console.log('[Controls] Visual defaults applied (batched)');
+        } catch (e) {
+            console.error('[Controls] Error in applyVisualDefaults:', e);
+            // Emergency reveal
             const canvas = document.getElementById('visualizer');
             if (canvas) canvas.style.opacity = '1';
-        });
-
-        console.log('[Controls] Visual defaults applied (batched)');
+        }
     };
 
-    // Try immediately (if visualizer already loaded)
+    // Register Listener BEFORE preloading starts to avoid race condition
     const vizNow = getVisualizer();
     if (vizNow) {
+        console.log('[Controls] Visualizer already present, applying defaults immediately');
         applyVisualDefaults();
     } else {
-        // Wait for lazy-loaded visualizer
-        window.addEventListener('visualizerReady', applyVisualDefaults, { once: true });
+        console.log('[Controls] Visualizer not found yet. Registering "visualizerReady" listener...');
+        window.addEventListener('visualizerReady', () => {
+            console.log('[Controls] Received "visualizerReady" event. Proceeding...');
+            applyVisualDefaults();
+        }, { once: true });
     }
+
+    // Defer visualizer loading until page is idle (saves 1.2MB on initial load)
+    preloadVisualizer();
+
+    // WATCHDOG: Force reveal visualizer if it hasn't loaded after 10 seconds
+    setTimeout(() => {
+        const canvas = document.getElementById('visualizer');
+        if (canvas && canvas.style.opacity === '0') {
+            console.warn('[Watchdog] Visualizer still hidden after 10s. Forcing reveal...');
+
+            // Check if it was even dispatched
+            if (window.VIZ_READY_DISPATCHED) {
+                console.log('[Watchdog] Event was dispatched but not caught. Applying defaults manually.');
+                applyVisualDefaults();
+            } else {
+                console.log('[Watchdog] Event never dispatched. Forcing opacity 1 regardless.');
+                canvas.style.opacity = '1';
+            }
+        }
+    }, 10000);
 
     // NUCLEAR OPTION: Hijack beatSlider value setter to catch the 5.5Hz culprit
     try {
@@ -877,6 +918,8 @@ export function setupUI() {
     }
 
 }
+window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
+
 
 // --- PLAY BUTTON HANDLER ---
 let lastPlayClickTime = 0;
@@ -3770,22 +3813,31 @@ const INFO_CONTENT = {
     }
 };
 
+// --- MATRIX SETTINGS CONTROL (UNIFIED) ---
 window.toggleMatrixSettings = function (btn) {
     const panel = document.getElementById('matrixSettingsPanel');
-    if (panel) {
-        panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) {
-            // If opening, ensure panel's toggle matches current rainbow state
-            // Import getVisualizer if needed, but it should be available in module scope
-            // However, this function is running in global scope?? No, it's defined in module but assigned to window.
-            // It captures 'getVisualizer' from the module closure.
-            const viz = getVisualizer();
-            const rainbowToggle = document.getElementById('matrixRainbowToggle');
-            if (viz && viz.matrixMaterial && viz.matrixMaterial.uniforms && rainbowToggle) {
-                // Check uniform value (1.0 is true)
-                rainbowToggle.checked = (viz.matrixMaterial.uniforms.uRainbow.value > 0.5);
-            }
+    if (!panel) return;
+
+    // Toggle state
+    if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = false;
+    state.matrixPanelOpen = !state.matrixPanelOpen;
+
+    // Update UI
+    if (state.matrixPanelOpen) {
+        panel.classList.remove('hidden');
+        panel.classList.add('flex', 'items-center');
+
+        // Ensure panel's toggle matches current rainbow state
+        const viz = getVisualizer();
+        const rainbowToggle = document.getElementById('matrixRainbowToggle');
+        if (viz && viz.matrixMaterial && viz.matrixMaterial.uniforms && rainbowToggle) {
+            rainbowToggle.checked = (viz.matrixMaterial.uniforms.uRainbow.value > 0.5);
+            // Also update labels
+            if (window.updateRainbowLabels) window.updateRainbowLabels();
         }
+    } else {
+        panel.classList.add('hidden');
+        panel.classList.remove('flex', 'items-center');
     }
 };
 
@@ -3941,28 +3993,7 @@ window.adjustActiveModal = adjustModalLayout;
 
 
 // --- MATRIX SETTINGS CONTROL ---
-window.toggleMatrixSettings = function (toggleBtn) {
-    if (!els.matrixSettingsPanel) {
-        els.matrixSettingsPanel = document.getElementById('matrixSettingsPanel');
-    }
-
-    // Toggle state
-    if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
-    state.matrixPanelOpen = !state.matrixPanelOpen;
-
-    // Update UI
-    if (state.matrixPanelOpen) {
-        if (els.matrixSettingsPanel) {
-            els.matrixSettingsPanel.classList.remove('hidden');
-            els.matrixSettingsPanel.classList.add('flex', 'items-center');
-        }
-    } else {
-        if (els.matrixSettingsPanel) {
-            els.matrixSettingsPanel.classList.add('hidden');
-            els.matrixSettingsPanel.classList.remove('flex', 'items-center');
-        }
-    }
-};
+// DELETED: Moved to unified definition above
 
 function setupMatrixControls() {
     console.log('[Controls] setupMatrixControls (Main) CALLED');
@@ -4043,12 +4074,12 @@ function setupMatrixControls() {
             const labelRGB = document.getElementById('labelRGB');
             const labelRainbow = document.getElementById('labelRainbow');
             if (rainbowToggle.checked) {
-                // Rainbow mode active - highlight RAINBOW orange
+                // Rainbow mode active - highlight RAINBOW teal
                 if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
-                if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-orange-400 font-bold';
+                if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold';
             } else {
-                // RGB mode active - highlight RGB orange
-                if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-orange-400 font-bold';
+                // RGB mode active - highlight RGB teal
+                if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold';
                 if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
             }
         };
@@ -4099,88 +4130,83 @@ function setupMatrixControls() {
     }
 
     // === NEW MATRIX MODE CONTROLS ===
-    // === NEW MATRIX MODE CONTROLS ===
     const modeToggle = document.getElementById('matrixModeToggle');
-    // const customTextInput = document.getElementById('matrixCustomTextInput'); // REMOVED from HTML
     const textInput = document.getElementById('matrixTextInput');
 
     // Define saveTimeout for text input
     let saveTimeout;
 
-    if (modeToggle) {
-        console.log('[Controls] Matrix Mode Toggle Listener Attached');
-        // Helper to Sync Visual State (Labels & Input)
-        const __updateMatrixUI = () => {
-            console.log('__updateMatrixUI CALLED');
-            if (!modeToggle) { console.error('modeToggle IS NULL'); return; }
-            const isMindwaveMode = modeToggle.checked;
-            console.log('isMindwaveMode:', isMindwaveMode);
+    // Helper to Sync Visual State (Labels & Input)
+    const __updateMatrixUI = () => {
+        // console.log('[Controls] __updateMatrixUI CALLED');
+        if (!modeToggle) {
+            console.warn('[Controls] __updateMatrixUI: modeToggle NOT FOUND');
+            return;
+        }
+        const isTextMode = modeToggle.checked; // ON = Text Mode (Mindwave or Custom), OFF = Random
+        // console.log('isTextMode:', isTextMode);
 
-            const labelRandom = document.getElementById('labelRandom');
-            const labelMindwave = document.getElementById('labelMindwave');
+        const labelRandom = document.getElementById('labelRandom');
+        const labelMindwave = document.getElementById('labelMindwave');
 
-            if (isMindwaveMode) {
-                // MINDWAVE ACTIVE
-                if (labelRandom) {
-                    labelRandom.classList.remove('text-white', 'font-bold');
-                    labelRandom.classList.add('text-[var(--text-muted)]', 'font-normal');
-                }
-                if (labelMindwave) {
-                    labelMindwave.classList.remove('text-[var(--text-muted)]', 'font-normal');
-                    labelMindwave.classList.add('text-[var(--accent)]', 'font-bold');
-                }
-                // Lock input with MINDWAVE text
-                if (textInput) {
-                    textInput.value = 'MINDWAVE';
-                    textInput.disabled = true;
-                    textInput.placeholder = 'MINDWAVE';
-                }
-            } else {
-                // RANDOM / CUSTOM ACTIVE
-                if (labelRandom) {
-                    labelRandom.classList.remove('text-[var(--text-muted)]', 'font-normal');
-                    labelRandom.classList.add('text-white', 'font-bold');
-                }
-                if (labelMindwave) {
-                    labelMindwave.classList.remove('text-[var(--accent)]', 'font-bold');
-                    labelMindwave.classList.add('text-[var(--text-muted)]', 'font-normal');
-                }
-                // Enable input and clear MINDWAVE text
-                if (textInput) {
-                    if (textInput.value === 'MINDWAVE') {
-                        textInput.value = '';
-                    }
-                    textInput.disabled = false;
-                    textInput.placeholder = 'CUSTOM TXT';
+        if (isTextMode) {
+            // TEXT MODE ACTIVE (Mindwave or Custom)
+            if (labelRandom) {
+                labelRandom.classList.remove('text-[var(--accent)]', 'font-bold');
+                labelRandom.classList.add('text-[var(--text-muted)]', 'font-normal');
+            }
+            if (labelMindwave) {
+                labelMindwave.classList.remove('text-[var(--text-muted)]', 'font-normal');
+                labelMindwave.classList.add('text-[var(--accent)]', 'font-bold');
+            }
+
+            // Allow input interaction, ensure it shows current value or default
+            if (textInput && textInput.value === '') {
+                // Should default to MINDWAVE if empty to prevent blank state
+                if (textInput.placeholder === 'CUSTOM TXT') {
+                    if (!textInput.value) textInput.value = 'MINDWAVE';
                 }
             }
-        };
+        } else {
+            // RANDOM MODE ACTIVE
+            if (labelRandom) {
+                labelRandom.classList.remove('text-[var(--text-muted)]', 'font-normal');
+                labelRandom.classList.add('text-[var(--accent)]', 'font-bold');
+            }
+            if (labelMindwave) {
+                labelMindwave.classList.remove('text-[var(--accent)]', 'font-bold');
+                labelMindwave.classList.add('text-[var(--text-muted)]', 'font-normal');
+            }
+        }
+    };
+
+    if (modeToggle) {
+        console.log('[Controls] Matrix Mode Toggle Listener Attached');
 
         // Run once on init
         __updateMatrixUI();
 
         modeToggle.addEventListener('change', (e) => {
-            const isMindwaveMode = e.target.checked;
-            console.log('[Controls] Toggle Changed. Mindwave Mode:', isMindwaveMode);
+            const isTextMode = e.target.checked;
+            console.log('[Controls] Toggle Changed. Text Mode:', isTextMode);
 
             __updateMatrixUI();
 
-            if (isMindwaveMode) {
-                // MINDWAVE MODE
-                const viz = getVisualizer();
-                if (viz && viz.setMatrixLogicMode) {
-                    viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
-                }
-            } else {
-                // RANDOM / CUSTOM MODE
-                const viz = getVisualizer();
-                if (viz && viz.setMatrixLogicMode) {
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixLogicMode) {
+                if (isTextMode) {
+                    // Switch to TEXT mode (Mindwave or Custom)
                     const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : '';
-                    if (customText.length > 0) {
+                    if (customText.length > 0 && customText !== 'MINDWAVE') {
                         viz.setMatrixLogicMode('custom', customText);
                     } else {
-                        viz.setMatrixLogicMode('random', '');
+                        // Default to Mindwave if empty or specifically MINDWAVE
+                        if (textInput) textInput.value = 'MINDWAVE';
+                        viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
                     }
+                } else {
+                    // Switch to RANDOM mode
+                    viz.setMatrixLogicMode('random', '');
                 }
             }
         });
@@ -4189,17 +4215,33 @@ function setupMatrixControls() {
     }
 
     if (textInput) {
+        // AUTO-SWITCH: If user clicks/focuses text box, FORCE Toggle ON (Text Mode)
+        textInput.addEventListener('focus', () => {
+            if (modeToggle && !modeToggle.checked) {
+                console.log('[Controls] Text input focused while in Random mode. Switching to Text Mode...');
+                modeToggle.checked = true; // Turn ON
+                __updateMatrixUI();
+
+                // Update Visualizer
+                const viz = getVisualizer();
+                if (viz && viz.setMatrixLogicMode) {
+                    const customText = textInput.value.toUpperCase();
+                    if (customText.length > 0) {
+                        viz.setMatrixLogicMode('custom', customText);
+                    } else {
+                        viz.setMatrixLogicMode('mindwave', 'MINDWAVE'); // Default if empty
+                    }
+                }
+            }
+        });
+
         textInput.addEventListener('input', (e) => {
             const text = e.target.value.toUpperCase();
 
-            // If Text Input is being typed in, we MUST be in the Unchecked state (as it's hidden otherwise).
-            // But just in case, ensure toggle is unchecked? No, let's just update mode.
-
-            if (modeToggle && modeToggle.checked) {
-                // If somehow typing while checked (should be hidden), uncheck it?
-                modeToggle.checked = false;
-                // Dispatch change? Or just handle logic here.
-                // Let's just handle logic.
+            // Ensure Toggle is ON if typing
+            if (modeToggle && !modeToggle.checked) {
+                modeToggle.checked = true;
+                __updateMatrixUI();
             }
 
             const viz = getVisualizer();
@@ -4207,7 +4249,7 @@ function setupMatrixControls() {
                 if (text.length > 0) {
                     viz.setMatrixLogicMode('custom', text);
                 } else {
-                    viz.setMatrixLogicMode('random', '');
+                    viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
                 }
             }
 
@@ -4229,20 +4271,15 @@ function setupMatrixControls() {
         // Logic handled by init above
     }
 
-    // Sync Visualizer Mode (must retrieve viz again as it might be ready)
-    // Note: viz might not be fully ready here if called too early, 
-    // but setMatrixLogicMode handles property setting even if init is delayed?
-    // Actually, let's try safely.
-    // Sync Visualizer Mode (must retrieve viz again as it might be ready)
     // Sync Visualizer Mode on Init
     const viz = getVisualizer();
     if (viz && viz.setMatrixLogicMode) {
         if (modeToggle && modeToggle.checked) {
-            viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
-        } else {
             const text = (textInput && textInput.value) ? textInput.value.toUpperCase() : '';
-            if (text.length > 0) viz.setMatrixLogicMode('custom', text);
-            else viz.setMatrixLogicMode('random', '');
+            if (text.length > 0 && text !== 'MINDWAVE') viz.setMatrixLogicMode('custom', text);
+            else viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
+        } else {
+            viz.setMatrixLogicMode('random', '');
         }
     }
 }

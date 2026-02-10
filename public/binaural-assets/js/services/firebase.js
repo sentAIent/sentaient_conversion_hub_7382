@@ -34,9 +34,9 @@ export async function initFirebase() {
     try {
         const firebaseConfig = JSON.parse(window.__firebase_config || '{}');
 
-        // Validation: Check if config is dummy
-        if (firebaseConfig.apiKey === "dummy-api-key") {
-            console.warn("Using Dummy Firebase Config - ACTIVATING MOCK MODE");
+        // Validation: Check if config is missing or dummy
+        if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "dummy-api-key") {
+            console.warn(`[Firebase] No valid config found (apiKey: ${firebaseConfig.apiKey}) - ACTIVATING MOCK MODE`);
             isMock = true;
             // ✅ FIX Issue #7: Wrap JSON.parse in try/catch
             const storedUser = localStorage.getItem('mindwave_mock_user');

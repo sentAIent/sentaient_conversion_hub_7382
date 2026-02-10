@@ -3,6 +3,7 @@ import { getVisualizer, initVisualizer, pauseVisuals } from '../visuals/visualiz
 import { stopRecording } from '../export/recorder.js';
 import { DailyLimitService } from '../services/daily-limit.js';
 import { showPricingModal } from '../ui/pricing-3tier.js';
+import { isPremiumUser } from '../services/stripe-simple.js';
 
 let uiCallback = null;
 
@@ -313,15 +314,19 @@ function startDailyLimitCheck() {
     dailyLimitTriggered = false;
 
     // Check every second
-    state.dailyLimitInterval = setInterval(() => {
+    state.dailyLimitInterval = setInterval(async () => {
         if (!state.isPlaying || dailyLimitTriggered) return;
 
-        // Increment usage by 1 second and check if limit reached
-        const limitReached = DailyLimitService.increment(1);
+        // Use cached tier from state or check via service
+        const isPremium = state.userTier === 'pro' || state.userTier === 'yogi' || state.userTier === 'buddha' || (await isPremiumUser());
 
-        if (limitReached) {
+        // Increment usage (service handles storage logic)
+        // Pass premium status to service so it can decide whether to trigger limit
+        const limitReached = DailyLimitService.increment(1, isPremium);
+
+        if (limitReached && !isPremium) {
             dailyLimitTriggered = true; // Prevent re-entry
-            console.log('[DailyLimit] Limit reached! Stopping audio.');
+            console.log('[DailyLimit] 15-minute limit reached for Free user! Stopping audio.');
 
             // Clear interval first to prevent any further calls
             clearInterval(state.dailyLimitInterval);

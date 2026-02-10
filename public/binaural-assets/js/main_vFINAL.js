@@ -1,13 +1,13 @@
 console.log("MAIN JS LOADED - NUCLEAR V4");
 window.NUCLEAR_MAIN_LOADED = true;
-import { setupUI } from './ui/controls_v3.js?v=MATRIX_FIX_V15';
+import { setupUI } from './ui/controls_v3.js?v=MATRIX_FIX_V22';
 import { initCursor } from './ui/cursor.js';
 import { initFirebase } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
 import { startOnboarding, shouldShowOnboarding } from './ui/onboarding_premium.js';
 import { initHaptics } from './utils/haptics.js';
 import { initShareFeature, copyShareLink } from './services/share.js';
-import { recordVisit } from './services/analytics.js';
+import { recordVisit, syncDailyUsage } from './services/analytics.js';
 import { setupSwipeGestures } from './ui/layout.js';
 import { initResizablePanels } from './ui/resize-panels.js';
 import './ui/pricing-3tier.js';  // 3-Tier Pricing modal (Free/Yogi/Buddha)
@@ -67,7 +67,16 @@ const initApp = () => {
     // window.showFeedbackSurvey = showFeedbackSurvey; // Moved to top
 
     // Core UI Setup - Critical path
-    setupUI();
+    console.log("[Main] Attempting setupUI()...");
+    if (typeof setupUI === 'function') {
+        console.log("[Main] setupUI is a function, calling now.");
+        setupUI();
+    } else if (typeof window.setupUI === 'function') {
+        console.warn("[Main] setupUI not in scope but found on window. Calling fallback.");
+        window.setupUI();
+    } else {
+        console.error("[Main] setupUI is NOT A FUNCTION! Type:", typeof setupUI);
+    }
 
     // Mobile features
     initHaptics();
@@ -78,6 +87,7 @@ const initApp = () => {
 
     // Analytics
     recordVisit();
+    syncDailyUsage();
 
     // URL sharing
     initShareFeature();

@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/svg+xml" href="/icons/logo.svg">
 
     <!-- Driver.js (Premium Tour Engine) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css" />
@@ -112,6 +113,12 @@
 
         .footer-compact .compact-only {
             display: flex !important;
+        }
+
+        /* Matrix Rainbow Toggle Fill */
+        #matrixRainbowToggle:checked+.rainbow-track {
+            background: var(--accent) !important;
+            box-shadow: 0 0 10px var(--accent);
         }
     </style>
 
@@ -261,10 +268,10 @@
     <link rel="stylesheet" href="/binaural-assets/css/style.css?v=25">
     <link rel="stylesheet" href="/binaural-assets/css/visual-active.css?v=1">
     <!-- Preload critical resources -->
-    <link rel="preload" href="/binaural-assets/js/main_vFINAL.js?v=FIX_SPEED_FINAL" as="script" crossorigin>
+    <link rel="preload" href="/binaural-assets/js/main_vFINAL.js?v=RAINBOW_FIX_V23" as="script" crossorigin>
     <script src="/binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=MATRIX_FIX_V13"></script>
+    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=RAINBOW_FIX_V23"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -698,41 +705,42 @@
                         <!-- Rainbow Toggle (RGB / RAINBOW) -->
                         <div class="flex items-center gap-3">
                             <span
-                                class="text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] peer-checked:text-[var(--text-muted)]"
+                                class="text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)]"
                                 id="labelRGB">RGB</span>
 
                             <label class="relative inline-flex items-center cursor-pointer" title="Toggle Rainbow Mode">
                                 <input type="checkbox" id="matrixRainbowToggle" class="sr-only peer" checked>
-                                <div
-                                    class="w-12 h-6 bg-slate-700/50 border border-white/10 rounded-full peer peer-checked:bg-gradient-to-r peer-checked:from-pink-500 peer-checked:via-red-500 peer-checked:to-yellow-500 transition-all">
+                                <div class="rainbow-track w-9 h-5 bg-slate-700 rounded-full peer transition-all">
                                 </div>
                                 <span
-                                    class="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full shadow-sm transition-all peer-checked:translate-x-full"></span>
+                                    class="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full shadow-sm transition-all peer-checked:translate-x-4"></span>
                             </label>
 
                             <span
-                                class="text-[9px] text-[var(--text-muted)] font-mono uppercase tracking-widest transition-colors peer-checked:text-white peer-checked:font-bold"
+                                class="text-[9px] text-[var(--text-muted)] font-mono uppercase tracking-widest transition-colors"
                                 id="labelRainbow">RAINBOW</span>
                         </div>
 
                         <!-- MindWave Mode Toggle -->
                         <div class="flex items-center gap-3 border-l border-white/10 pl-4">
+                            <span id="labelRandom"
+                                class="text-[9px] font-mono uppercase tracking-widest text-[var(--text-muted)] transition-colors">RAND</span>
                             <label class="relative inline-flex items-center cursor-pointer" title="Toggle Text Mode">
                                 <input type="checkbox" id="matrixModeToggle" class="sr-only peer" checked>
                                 <div
                                     class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:bg-[var(--accent)] transition-all">
                                 </div>
                                 <span
-                                    class="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full shadow-sm transition-all peer-checked:translate-x-full"></span>
+                                    class="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full shadow-sm transition-all peer-checked:translate-x-4"></span>
                             </label>
+                            <span id="labelMindwave"
+                                class="text-[9px] font-mono uppercase tracking-widest text-[var(--accent)] font-bold transition-colors">WAVE</span>
 
                             <!-- Label / Input Area -->
-                            <!-- Logic: When checked (Mindwave), Input is locked to "MINDWAVE" and dimmed.
-                                        When unchecked (Random), Input is editable. -->
-                            <div class="relative">
-                                <input type="text" id="matrixTextInput" placeholder="MINDWAVE" value="MINDWAVE"
-                                    maxlength="12" disabled
-                                    class="w-24 bg-transparent border-b border-white/20 px-0 py-0.5 text-[10px] text-white/50 outline-none focus:border-[var(--accent)] font-mono uppercase transition-all disabled:border-transparent disabled:text-[var(--accent)] placeholder:text-[var(--accent)]">
+                            <div class="relative ml-1">
+                                <input type="text" id="matrixTextInput" placeholder="CUSTOM TXT" value="MINDWAVE"
+                                    maxlength="12"
+                                    class="w-20 bg-transparent border-b border-white/20 px-0 py-0.5 text-[9px] text-white/70 outline-none focus:border-[var(--accent)] font-mono uppercase transition-all placeholder:text-white/30">
                             </div>
                         </div>
 

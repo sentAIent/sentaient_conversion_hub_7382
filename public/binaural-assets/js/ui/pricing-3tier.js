@@ -6,6 +6,7 @@
 import { goToCheckout, getUserTier } from '../services/stripe-simple.js';
 import { getAuth } from 'firebase/auth';
 import { shareReferral } from '../services/referral.js';
+import { getVariant, trackConversion } from '../utils/ab-testing.js';
 
 // PRICING CONFIGURATION
 // Easily toggle future price increases here
@@ -141,7 +142,7 @@ function createPricingModal(currentTier) {
             <!-- Header -->
             <div style="text-align: center; margin-bottom: 48px;">
                 <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #facc15; letter-spacing: 2px; margin-bottom: 12px; border: 1px solid rgba(250, 204, 21, 0.3); display: inline-block; padding: 6px 12px; border-radius: 20px; background: rgba(250, 204, 21, 0.1);">Limited Time Offer</div>
-                <h2 style="font-size: 42px; font-weight: 700; color: white; margin-bottom: 12px;">Upgrade Your Mind</h2>
+                <h2 style="font-size: 42px; font-weight: 700; color: white; margin-bottom: 12px;">Upgrade Your Frequency</h2>
                 <p style="font-size: 18px; color: var(--text-muted);">Choose the plan that fits your journey.</p>
             </div>
 
@@ -209,7 +210,12 @@ function createPricingModal(currentTier) {
                     </ul>
 
                     <button id="upgradeBtnFounders" style="width: 100%; padding: 16px; background: #10b981; border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                        Join Founders Club
+                        ${(() => {
+            const variant = getVariant('pricing_cta');
+            if (variant === 'urgency') return 'Limited Time — Join Now';
+            if (variant === 'social_proof') return 'Join 10,000+ Members';
+            return 'Join Founders Club';
+        })()}
                     </button>
                     <p style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 12px;">Cancel anytime.</p>
                 </div>
@@ -299,6 +305,7 @@ function createPricingModal(currentTier) {
     const upgradeBtnFounders = modal.querySelector('#upgradeBtnFounders');
     if (upgradeBtnFounders) {
         upgradeBtnFounders.addEventListener('click', () => {
+            trackConversion('pricing_cta', 'upgrade_click', { tier: 'founders' });
             handleUpgrade(PRICING_CONFIG.yogi.productId, 'monthly');
         });
     }

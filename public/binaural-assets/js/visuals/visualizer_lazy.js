@@ -18,10 +18,12 @@ async function loadVisualizerModule() {
 
     if (loadPromise) return loadPromise;
 
-    console.log('[LazyViz] Loading visualizer module...');
+    const VISUALIZER_VERSION = 'RAINBOW_FIX_V25';
+    console.log(`[LazyViz] Loading visualizer module from ./visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`);
+    // Added version tracking
     const startTime = performance.now();
 
-    loadPromise = import('./visualizer_nuclear_v4.js?v=MATRIX_FIX_V13').then(module => {
+    loadPromise = import(`./visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`).then(module => {
         visualizerModule = module;
         const loadTime = (performance.now() - startTime).toFixed(0);
         console.log(`[LazyViz] Visualizer loaded in ${loadTime}ms`);
@@ -35,6 +37,7 @@ async function loadVisualizerModule() {
 
     return loadPromise;
 }
+
 
 /**
  * Initialize the visualizer (lazy loads if needed)
@@ -116,17 +119,24 @@ export function isVisualsPaused() {
  */
 export function preloadVisualizer() {
     const loadAndInit = async () => {
+        console.log('[LazyViz] Preload starting...');
         const module = await loadVisualizerModule();
         // Initialize the visualizer after loading
         if (module && typeof module.initVisualizer === 'function') {
-            console.log('[LazyViz] Initializing visualizer...');
+            console.log('[LazyViz] Initializing visualizer core...');
             await module.initVisualizer();
-            console.log('[LazyViz] Visualizer initialized');
+            console.log('[LazyViz] Visualizer core initialized. Dispatching ready event.');
+
+            // Mark global flag for debugging
+            window.VIZ_READY_DISPATCHED = true;
+
             // Notify controls that visualizer is ready for defaults
             window.dispatchEvent(new Event('visualizerReady'));
+        } else {
+            console.error('[LazyViz] Module loaded but initVisualizer not found');
         }
     };
 
-    requestIdleCallback ? requestIdleCallback(() => loadAndInit())
-        : setTimeout(loadAndInit, 2000);
+    // Use a fixed delay instead of requestIdleCallback for more predictable initial load
+    setTimeout(loadAndInit, 1000);
 }

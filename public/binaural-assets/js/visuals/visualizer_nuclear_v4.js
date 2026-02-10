@@ -2,19 +2,20 @@ import { state, els } from '../state.js';
 import * as THREE from '../vendor/three.module.js';
 
 export class Visualizer3D {
-    constructor(canvas) {
+    constructor(canvas, initialState = {}) {
         this.canvas = canvas;
-        this.canvas = canvas;
-        this.activeModes = new Set(['particles', 'matrix']); // Default to Flow + Matrix
-        this.mode = 'matrix'; // Legacy support
+        this.activeModes = initialState.activeModes || new Set(['particles', 'matrix']); // Default to Flow + Matrix
+        this.mode = initialState.mode || 'matrix'; // Legacy support
 
         // Default settings - MUST be set before init methods
-        this.mindWaveMode = true; // Legacy support (keep true)
-        this.matrixLogicMode = 'mindwave'; // New Mode: 'classic', 'mindwave', 'custom'
-        this.matrixCustomText = "MINDWAVE"; // Default text
-        this.currentMatrixAngle = 0; // Default Angle
-        this.matrixSpeedMultiplier = 1.0; // Default speed to avoid NaN
-        this.initialized = false; // Initialize to false explicitly
+        this.mindWaveMode = initialState.mindWaveMode !== undefined ? initialState.mindWaveMode : true;
+        this.matrixLogicMode = initialState.matrixLogicMode || 'mindwave';
+        this.matrixCustomText = initialState.matrixCustomText || "MINDWAVE";
+        this.currentMatrixAngle = initialState.currentMatrixAngle || 0;
+        this.matrixSpeedMultiplier = initialState.matrixSpeedMultiplier || 1.0;
+        this.initialized = false;
+        this._rainbowEnabled = initialState.rainbowEnabled || false;
+        this.isVisualizer3D = true;
 
 
         try {
@@ -52,8 +53,6 @@ export class Visualizer3D {
             this.initRainforest();
             this.initZenGarden();
             this.initOcean();
-            this.initMatrix();
-            this.camera.position.z = 5;
             this.initMatrix();
             this.camera.position.z = 5;
 
@@ -1634,6 +1633,8 @@ export class Visualizer3D {
     }
 
     setMatrixRainbow(isRainbow) {
+        console.log(`[Visualizer] setMatrixRainbow: ${isRainbow}`);
+        // console.trace(); // Enable to find stealth calls
         this._rainbowEnabled = isRainbow; // Persist state
         if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uRainbow) {
             this.matrixMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
@@ -1686,12 +1687,7 @@ export class Visualizer3D {
         }
     }
 
-    setMatrixRainbow(active) {
-        this._rainbowEnabled = active; // Persist state
-        if (this.matrixMaterial) {
-            this.matrixMaterial.uniforms.uRainbow.value = active ? 1.0 : 0.0;
-        }
-    }
+    // Unified Rainbow Setter (Removed duplicate)
 
     dispose() {
         this.active = false; // Flag to stop internal loops if any
@@ -1706,8 +1702,23 @@ export class Visualizer3D {
 let viz3D;
 
 export function initVisualizer() {
+    // 1. Adoption Logic: Check if a valid visualizer exists on the canvas from a previous module instance
+    if (!viz3D && els.canvas && els.canvas.activeVisualizer && els.canvas.activeVisualizer.isVisualizer3D) {
+        console.log('[Visualizer] Adopting existing Visualizer3D from canvas');
+        viz3D = els.canvas.activeVisualizer;
+    }
+
     // Prevent ghosting from HMR or re-initialization
     if (els.canvas && els.canvas.activeVisualizer) {
+
+        // NEW: Idempotency check 
+        // If the active visualizer is the same valid instance we are tracking, do nothing.
+        // This preserves state (like Rainbow Mode) when startAudio() is called.
+        if (viz3D && els.canvas.activeVisualizer === viz3D) {
+            console.log('[Visualizer] Already initialized and active. Skipping re-init to preserve state.');
+            return;
+        }
+
         console.log('[Visualizer] Disposing previous instance to prevent ghosting');
         els.canvas.activeVisualizer.dispose();
         els.canvas.activeVisualizer = null;
@@ -1721,7 +1732,19 @@ export function initVisualizer() {
     }
 
     if (!viz3D && els.canvas) {
-        viz3D = new Visualizer3D(els.canvas);
+        // Collect state if we had a previous instance we're about to replace
+        const prevState = (els.canvas.activeVisualizer && els.canvas.activeVisualizer.isVisualizer3D) ? {
+            activeModes: els.canvas.activeVisualizer.activeModes,
+            mode: els.canvas.activeVisualizer.mode,
+            mindWaveMode: els.canvas.activeVisualizer.mindWaveMode,
+            matrixLogicMode: els.canvas.activeVisualizer.matrixLogicMode,
+            matrixCustomText: els.canvas.activeVisualizer.matrixCustomText,
+            currentMatrixAngle: els.canvas.activeVisualizer.currentMatrixAngle,
+            matrixSpeedMultiplier: els.canvas.activeVisualizer.matrixSpeedMultiplier,
+            rainbowEnabled: els.canvas.activeVisualizer._rainbowEnabled
+        } : {};
+
+        viz3D = new Visualizer3D(els.canvas, prevState);
         els.canvas.activeVisualizer = viz3D; // Verify tag
         // Auto-start visuals on load for immediate feedback
         resumeVisuals();
