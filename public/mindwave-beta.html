@@ -701,7 +701,7 @@
                                 id="labelRGB">RGB</span>
 
                             <label class="relative inline-flex items-center cursor-pointer" title="Toggle Rainbow Mode">
-                                <input type="checkbox" id="matrixRainbowToggle" class="sr-only peer">
+                                <input type="checkbox" id="matrixRainbowToggle" class="sr-only peer" checked>
                                 <div
                                     class="w-12 h-6 bg-slate-700/50 border border-white/10 rounded-full peer peer-checked:bg-gradient-to-r peer-checked:from-pink-500 peer-checked:via-red-500 peer-checked:to-yellow-500 transition-all">
                                 </div>
@@ -729,7 +729,8 @@
                             <!-- Logic: When checked (Mindwave), Input is locked to "MINDWAVE" and dimmed.
                                         When unchecked (Random), Input is editable. -->
                             <div class="relative">
-                                <input type="text" id="matrixTextInput" placeholder="MINDWAVE" maxlength="12" disabled
+                                <input type="text" id="matrixTextInput" placeholder="MINDWAVE" value="MINDWAVE"
+                                    maxlength="12" disabled
                                     class="w-24 bg-transparent border-b border-white/20 px-0 py-0.5 text-[10px] text-white/50 outline-none focus:border-[var(--accent)] font-mono uppercase transition-all disabled:border-transparent disabled:text-[var(--accent)] placeholder:text-[var(--accent)]">
                             </div>
                         </div>

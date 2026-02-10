@@ -4097,7 +4097,7 @@ function setupMatrixControls() {
             const labelMindwave = document.getElementById('labelMindwave');
 
             if (isMindwaveMode) {
-                // MINDWAVE ACTIVE-Sync
+                // MINDWAVE ACTIVE
                 if (labelRandom) {
                     labelRandom.classList.remove('text-white', 'font-bold');
                     labelRandom.classList.add('text-[var(--text-muted)]', 'font-normal');
@@ -4106,11 +4106,14 @@ function setupMatrixControls() {
                     labelMindwave.classList.remove('text-[var(--text-muted)]', 'font-normal');
                     labelMindwave.classList.add('text-[var(--accent)]', 'font-bold');
                 }
-                // Hide Input (Force)
-                // Input stays visible
-
+                // Lock input with MINDWAVE text
+                if (textInput) {
+                    textInput.value = 'MINDWAVE';
+                    textInput.disabled = true;
+                    textInput.placeholder = 'MINDWAVE';
+                }
             } else {
-                // RANDOM ACTIVE-Sync
+                // RANDOM / CUSTOM ACTIVE
                 if (labelRandom) {
                     labelRandom.classList.remove('text-[var(--text-muted)]', 'font-normal');
                     labelRandom.classList.add('text-white', 'font-bold');
@@ -4119,9 +4122,14 @@ function setupMatrixControls() {
                     labelMindwave.classList.remove('text-[var(--accent)]', 'font-bold');
                     labelMindwave.classList.add('text-[var(--text-muted)]', 'font-normal');
                 }
-                // Show Input (Force)
-                // Input stays visible
-
+                // Enable input and clear MINDWAVE text
+                if (textInput) {
+                    if (textInput.value === 'MINDWAVE') {
+                        textInput.value = '';
+                    }
+                    textInput.disabled = false;
+                    textInput.placeholder = 'CUSTOM TXT';
+                }
             }
         };
 
@@ -4142,15 +4150,8 @@ function setupMatrixControls() {
                 }
             } else {
                 // RANDOM / CUSTOM MODE
-                if (textInput) {
-                    textInput.disabled = false;
-                    textInput.placeholder = "CUSTOM TXT";
-                    if (textInput.value === "") textInput.focus();
-                }
-
                 const viz = getVisualizer();
                 if (viz && viz.setMatrixLogicMode) {
-                    // Check if there is custom text
                     const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : '';
                     if (customText.length > 0) {
                         viz.setMatrixLogicMode('custom', customText);
