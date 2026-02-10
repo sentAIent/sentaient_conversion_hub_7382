@@ -807,23 +807,36 @@ export function setupUI() {
     };
 
     window.paywall = { goToCheckout, hasPurchasedApp, checkAccessAndPurchase }; // UPDATED
-    // Ensure visual mode UI is synced on load (Force ON defaults)
-    setVisualMode('particles', true); // Flow ON
-    // Delay Matrix init slightly to ensure state sync
-    setTimeout(() => setVisualMode('matrix', true), 100);
 
-    // Set Matrix Rainbow Mode ON by default
-    const viz = getVisualizer();
-    if (viz) {
-        viz.setMatrixRainbow(true);
-        viz.setMatrixMode(true); // Ensure MindWave text is on
+    // Apply visual defaults once visualizer is actually loaded (lazy loader)
+    const applyVisualDefaults = () => {
+        console.log('[Controls] Applying visual defaults...');
+        // Enable Flow and Matrix
+        setVisualMode('particles', true);
+        setTimeout(() => {
+            setVisualMode('matrix', true);
 
-        // Sync UI
-        const rainbowToggle = document.getElementById('matrixRainbowToggle');
-        if (rainbowToggle) rainbowToggle.checked = true;
+            // Set Matrix Rainbow Mode ON
+            const viz = getVisualizer();
+            if (viz) {
+                viz.setMatrixRainbow(true);
+                viz.setMatrixMode(true);
+                console.log('[Controls] Rainbow + Mindwave mode applied');
+            }
+
+            // Ensure Ocean is OFF
+            setVisualMode('ocean', false);
+        }, 100);
+    };
+
+    // Try immediately (if visualizer already loaded)
+    const vizNow = getVisualizer();
+    if (vizNow) {
+        applyVisualDefaults();
+    } else {
+        // Wait for lazy-loaded visualizer
+        window.addEventListener('visualizerReady', applyVisualDefaults, { once: true });
     }
-
-    setVisualMode('ocean', false); // Explicitly ensure OFF
 
     // NUCLEAR OPTION: Hijack beatSlider value setter to catch the 5.5Hz culprit
     try {

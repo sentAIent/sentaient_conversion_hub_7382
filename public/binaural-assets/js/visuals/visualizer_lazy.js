@@ -122,6 +122,8 @@ export function preloadVisualizer() {
             console.log('[LazyViz] Initializing visualizer...');
             await module.initVisualizer();
             console.log('[LazyViz] Visualizer initialized');
+            // Notify controls that visualizer is ready for defaults
+            window.dispatchEvent(new Event('visualizerReady'));
         }
     };
 
