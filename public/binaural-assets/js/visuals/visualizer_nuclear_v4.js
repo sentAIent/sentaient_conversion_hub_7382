@@ -774,7 +774,7 @@ export class Visualizer3D {
                 uTime: { value: 0 },
                 uSpeed: { value: 1.0 },
                 uTailLength: { value: 1.0 },
-                uRainbow: { value: 0.0 } // 0.0 = false, 1.0 = true
+                uRainbow: { value: this._rainbowEnabled ? 1.0 : 0.0 } // Persist rainbow state
             },
             vertexShader: `
                 attribute float aCharIndex;
@@ -1634,6 +1634,7 @@ export class Visualizer3D {
     }
 
     setMatrixRainbow(isRainbow) {
+        this._rainbowEnabled = isRainbow; // Persist state
         if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uRainbow) {
             this.matrixMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
         }
@@ -1686,6 +1687,7 @@ export class Visualizer3D {
     }
 
     setMatrixRainbow(active) {
+        this._rainbowEnabled = active; // Persist state
         if (this.matrixMaterial) {
             this.matrixMaterial.uniforms.uRainbow.value = active ? 1.0 : 0.0;
         }
