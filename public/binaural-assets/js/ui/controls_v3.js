@@ -811,22 +811,32 @@ export function setupUI() {
     // Apply visual defaults once visualizer is actually loaded (lazy loader)
     const applyVisualDefaults = () => {
         console.log('[Controls] Applying visual defaults...');
-        // Enable Flow and Matrix
-        setVisualMode('particles', true);
-        setTimeout(() => {
-            setVisualMode('matrix', true);
+        const viz = getVisualizer();
+        if (!viz) return;
 
-            // Set Matrix Rainbow Mode ON
-            const viz = getVisualizer();
-            if (viz) {
-                viz.setMatrixRainbow(true);
-                viz.setMatrixMode(true);
-                console.log('[Controls] Rainbow + Mindwave mode applied');
-            }
+        // Batch: Set all modes directly on the visualizer without triggering individual re-inits
+        viz._rainbowEnabled = true; // Pre-set rainbow before any matrix init
+        viz.activeModes.clear();
+        viz.activeModes.add('particles');
+        viz.activeModes.add('matrix');
+        viz.updateVisibility();
 
-            // Ensure Ocean is OFF
-            setVisualMode('ocean', false);
-        }, 100);
+        // Single matrix init with mindwave + rainbow already set
+        viz.mindWaveMode = true;
+        viz.matrixLogicMode = 'mindwave';
+        viz.initMatrix(); // Only ONE matrix build
+
+        // Now sync the UI buttons to match
+        setVisualMode('particles', true); // This will see it's already active and just sync buttons
+        setVisualMode('matrix', true);    // Same - already active, just syncs buttons
+
+        // Smooth fade-in: reveal canvas after everything is ready
+        requestAnimationFrame(() => {
+            const canvas = document.getElementById('visualizer');
+            if (canvas) canvas.style.opacity = '1';
+        });
+
+        console.log('[Controls] Visual defaults applied (batched)');
     };
 
     // Try immediately (if visualizer already loaded)
