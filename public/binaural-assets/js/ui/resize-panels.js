@@ -29,8 +29,32 @@ export function initResizablePanels() {
     createResizeHandle(leftPanel, 'right');
     createResizeHandle(rightPanel, 'left');
 
-    // Restore saved widths
+    // Mindwave UI specific layout change event (custom)
+    window.addEventListener('mindwave:layout-change', () => {
+        // Small delay to allow CSS transition to start
+        setTimeout(() => {
+            updateTopBarWidth();
+            updateBottomBarWidth();
+        }, 50);
+        // Final sync after transition finishes (max sidebar transition is 500ms)
+        setTimeout(() => {
+            updateTopBarWidth();
+            updateBottomBarWidth();
+        }, 550);
+    });
+
+    window.addEventListener('resize', () => {
+        updateTopBarWidth();
+        updateBottomBarWidth();
+        updateAtmosphereColumns();
+    });
+
+    // Restore saved widths - this will now trigger the layout-change listener
     restorePanelWidths();
+
+    // Force a reflow to ensure getBoundingClientRect is accurate for the first paint
+    void leftPanel.offsetWidth;
+    void rightPanel.offsetWidth;
 
     // FIX: Update layout IMMEDIATELY to prevent "jump" from default CSS
     updateTopBarWidth();
@@ -43,32 +67,9 @@ export function initResizablePanels() {
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleMouseUp);
 
-    // ... (listeners)
-
-    // Listen for layout changes (sidebar open/close) to update footer position
-    window.addEventListener('mindwave:layout-change', () => {
-        // Small delay to allow CSS transition to start
-        setTimeout(() => {
-            updateTopBarWidth();
-            updateBottomBarWidth();
-        }, 50);
-        // Also update at end of transition (300ms)
-        setTimeout(() => {
-            updateTopBarWidth();
-            updateBottomBarWidth();
-        }, 350);
-    });
-
-    // Also listen for window resize
-    window.addEventListener('resize', () => {
-        updateTopBarWidth();
-        updateBottomBarWidth();
-        updateAtmosphereColumns();
-    });
-
     // Initial calls to set correct top bar width and atmosphere columns
     setTimeout(() => {
-        // Re-run updates just in case
+        // Re-run updates just in case after all scripts initialized
         updateTopBarWidth();
         updateBottomBarWidth();
         updateAtmosphereColumns();
@@ -220,20 +221,36 @@ export function updateTopBarWidth() {
     const rightOpen = rightRect && rightRect.left < window.innerWidth;
 
     // Get the right edge of left panel (or 0 if closed)
-    const leftEdge = leftOpen ? leftRect.right : 0;
+    const leftWidth = leftOpen ? Math.max(0, leftRect.right) : 0;
     // Get the left edge of right panel (or window width if closed)
-    const rightEdge = rightOpen ? rightRect.left : window.innerWidth;
+    const rightWidth = rightOpen ? Math.max(0, window.innerWidth - rightRect.left) : 0;
 
-    // The available gap between panels
-    const gap = rightEdge - leftEdge;
+    // Update the header container's left/right bounds to match the gap
+    const topHeader = document.getElementById('topHeader');
+    const tapZone = document.getElementById('tapZone');
 
-    // Add some margin on each side (16px each = 32px total)
+    if (topHeader) {
+        topHeader.style.left = `${leftWidth}px`;
+        topHeader.style.right = `${rightWidth}px`;
+    }
+
+    // Also update the main content area (tapZone) for a balanced layout
+    if (tapZone) {
+        tapZone.style.marginLeft = `${leftWidth}px`;
+        tapZone.style.marginRight = `${rightWidth}px`;
+        tapZone.style.width = `calc(100% - ${leftWidth + rightWidth}px)`;
+    }
+
+    // Available width for the control bar itself
+    const gap = window.innerWidth - leftWidth - rightWidth;
     const margin = 32;
     const availableWidth = gap - margin;
 
-    // Set max-width (minimum 260px to keep it usable)
+    // Set max-width (minimum 260px)
     const maxWidth = Math.max(260, availableWidth);
     topBar.style.maxWidth = `${maxWidth}px`;
+
+    // DEBUG: console.log(`[TopBar] Gap: ${gap}px, Left: ${leftWidth}px, Right: ${rightWidth}px, MaxWidth: ${maxWidth}px`);
 
     // Add responsive class toggling based on available width
     // This allows CSS to progressively hide less critical elements

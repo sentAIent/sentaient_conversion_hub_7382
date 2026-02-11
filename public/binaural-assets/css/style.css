@@ -1133,14 +1133,12 @@ select {
         display: none !important;
     }
 
-    /* Adjust Center Content to fit between panels */
+    /* Adjust Center Content to fit between panels - handled dynamically by resize-panels.js */
     header,
     #tapZone {
         transition: all 0.5s ease;
-        margin-left: 16rem;
-        /* Match w-64 */
-        margin-right: 20rem;
-        /* Match w-80 */
+        margin-left: 0;
+        margin-right: 0;
     }
 
 }
