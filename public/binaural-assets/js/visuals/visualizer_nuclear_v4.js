@@ -103,44 +103,14 @@ export class Visualizer3D {
     handleLayoutChange() {
         if (!this.renderer || !this.camera) return;
 
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+        // Reset to full-window center (Backdrop mode)
+        // This ensures visuals stay behind menus instead of "squeezing" into the gap.
+        this.camera.clearViewOffset();
 
-        // Get sidebar states
-        const leftPanel = document.getElementById('leftPanel');
-        const rightPanel = document.getElementById('rightPanel');
-
-        let leftOffset = 0;
-        let rightOffset = 0;
-
-        if (leftPanel && !leftPanel.classList.contains('-translate-x-full')) {
-            leftOffset = leftPanel.offsetWidth;
-        }
-
-        if (rightPanel && !rightPanel.classList.contains('translate-x-full')) {
-            rightOffset = rightPanel.offsetWidth;
-        }
-
-        // Calculate available viewport
-        const visibleWidth = width - leftOffset - rightOffset;
-
-        // Center the camera in the visible area using setViewOffset
-        // setViewOffset(fullWidth, fullHeight, x, y, width, height)
-        // x is the offset from left
-
-        if (visibleWidth > 0) {
-            this.camera.setViewOffset(width, height, leftOffset, 0, visibleWidth, height);
-            // We do NOT update aspect ratio here because setViewOffset handles the sub-frame mapping
-        } else {
-            // Safety fallback
-            this.camera.clearViewOffset();
-        }
-
-        console.log(`[Visualizer] Layout update: L=${leftOffset} R=${rightOffset} Visible=${visibleWidth}`);
+        console.log(`[Visualizer] Layout update: Centered background mode (Full Window)`);
     }
 
     initSphere() {
-        // ... (unchanged)
         const geometry = new THREE.IcosahedronGeometry(2, 2);
         const material = new THREE.MeshBasicMaterial({
             color: 0x60a9ff, // Accent color
@@ -166,7 +136,6 @@ export class Visualizer3D {
     }
 
     initParticles() {
-        // ... (unchanged)
         const count = 1000;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
@@ -301,65 +270,36 @@ export class Visualizer3D {
     }
 
     initFireplace() {
-        // Hyper-Realistic Luxurious Fireplace
-        // Uses Volumetric-style Shader on Billboard + 3D Logs + Dynamic Lighting
+        // Hyper-Realistic Luxurious Fireplace - REDESIGNED
+        // A true full-screen atmospheric backdrop without firewood
 
-        // 1. Fire Shader (Volumetric look)
-        const fireWidth = 6;
-        const fireHeight = 8;
+        // 1. Fire Shader (Volumetric look) - FULL SCREEN ATMOSPHERIC REDESIGN
+        const fireWidth = 100; // Giant backdrop
+        const fireHeight = 80;
         const fireGeo = new THREE.PlaneGeometry(fireWidth, fireHeight);
 
         this.fireMaterial = this.createFireShader();
         this.fireMesh = new THREE.Mesh(fireGeo, this.fireMaterial);
-        this.fireMesh.position.set(0, -1.0, 0); // Center of flames
-        this.fireMesh.renderOrder = 10; // Draw after logs
+        this.fireMesh.position.set(0, 0, -15); // Slightly forward to clear rainforest foliage
+        this.fireMesh.renderOrder = 10;
 
-        // 2. Luxurious Logs (Dark Oak / Charred)
-        const logGroup = new THREE.Group();
-        const logMat = new THREE.MeshStandardMaterial({
-            color: 0x2a1d15, // Dark chocolate wood
-            roughness: 0.9,
-            metalness: 0.0,
-            emissive: 0x331100, // Inner heat
-            emissiveIntensity: 0.2
-        });
-        const logEndMat = new THREE.MeshStandardMaterial({
-            color: 0x110b07,
-            roughness: 1.0,
-            emissive: 0x220a00,
-            emissiveIntensity: 0.3
-        });
-
-        const createLog = (x, y, z, rx, ry, rz, s) => {
-            const geo = new THREE.CylinderGeometry(0.3 * s, 0.4 * s, 4 * s, 12);
-            const mesh = new THREE.Mesh(geo, [logMat, logEndMat, logEndMat]);
-            mesh.position.set(x, y, z);
-            mesh.rotation.set(rx, ry, rz);
-            mesh.castShadow = true;
-            return mesh;
-        };
-
-        // Teepee / Campfire Arrangement
-        logGroup.add(createLog(0, -3.5, -0.5, 0, 0, Math.PI / 2.5, 1.2)); // Left lean
-        logGroup.add(createLog(0, -3.5, 0.5, 0, 0, -Math.PI / 2.5, 1.2)); // Right lean
-        logGroup.add(createLog(0, -4.0, 1.0, Math.PI / 2, 0.2, 0, 1.0)); // Front bottom
-        logGroup.add(createLog(0, -4.0, -1.5, Math.PI / 2, -0.2, 0, 1.1)); // Back bottom
-
-        this.fireplaceGroup.add(logGroup);
+        // 2. Atmosphere (No Firewood)
+        // Firewood removed as per user request.
         this.fireplaceGroup.add(this.fireMesh);
 
-        // 3. Dynamic Lighting (Flickering Pulse)
-        this.fireLight = new THREE.PointLight(0xff6600, 1, 20);
-        this.fireLight.position.set(0, -2, 1);
+        // 3. Dynamic Lighting (Atmospheric Glow)
+        this.fireLight = new THREE.PointLight(0xff6600, 5, 200);
+        this.fireLight.position.set(0, 0, 30);
         this.fireplaceGroup.add(this.fireLight);
 
         // 4. Embers (Shader-based particles)
         // Re-use simple particles for embers rising
-        const emberCount = 100;
+        const emberCount = 650; // Denser atmospheric embers
         const emberGeo = new THREE.BufferGeometry();
         const emberPos = [];
         for (let i = 0; i < emberCount; i++) {
-            emberPos.push((Math.random() - 0.5) * 3, -3 + Math.random() * 2, (Math.random() - 0.5) * 3);
+            // Centering Z around -15 to mix with fireMesh (z=-15)
+            emberPos.push((Math.random() - 0.5) * 100, -20 + Math.random() * 40, -15 + (Math.random() - 0.5) * 20);
         }
         emberGeo.setAttribute('position', new THREE.Float32BufferAttribute(emberPos, 3));
         this.emberMat = new THREE.PointsMaterial({
@@ -368,7 +308,8 @@ export class Visualizer3D {
             map: this.createCircleTexture(), // Ensure circular embers
             transparent: true,
             opacity: 0.8,
-            blending: THREE.AdditiveBlending
+            blending: THREE.AdditiveBlending,
+            depthWrite: false // Allow embers to blend smoothly without sharp cutoffs
         });
         this.embers = new THREE.Points(emberGeo, this.emberMat);
         this.fireplaceGroup.add(this.embers);
@@ -378,6 +319,7 @@ export class Visualizer3D {
             this.emberVelocities[i] = 0.02 + Math.random() * 0.05;
         }
 
+        this.fireplaceGroup.position.set(0, 0, 0); // Reset for backdrop
         this.fireplaceGroup.visible = false;
         console.log('[Visualizer] Real Fireplace initialized');
     }
@@ -430,35 +372,29 @@ export class Visualizer3D {
                 void main() {
                     vec2 uv = vUv;
                     
-                    // Detail noise
-                    float n1 = snoise(uv * 3.0 - vec2(0, uTime * 2.0));
-                    float n2 = snoise(uv * 6.0 - vec2(0, uTime * 3.5));
+                    // ORGANIC FLOW NOISE - INCREASED DENSITY
+                    float n1 = snoise(uv * 2.5 - vec2(0, uTime * 1.5));
+                    float n2 = snoise(uv * 5.5 - vec2(0, uTime * 2.8));
                     
-                    // Flame shape (taper at top)
-                    float shape = 1.0 - uv.y; // Bottom = 1, Top = 0
-                    shape = pow(shape, 0.5); // Curve
+                    // Atmospheric Heat (Lower focus)
+                    float shape = 1.2 - uv.y; 
+                    shape = pow(shape, 1.4); 
                     
-                    // Combine noise
-                    float fire = n1 * 0.5 + n2 * 0.3;
+                    float fire = n1 * 0.7 + n2 * 0.5;
                     
-                    // Threshold / Mask
-                    float alpha = smoothstep(0.2, 0.6, fire + shape * 0.8);
+                    // Denser thresholds
+                    float alpha = smoothstep(-0.2, 0.6, fire + shape * 0.7);
+                    float core = smoothstep(0.0, 0.8, fire + shape * 0.5);
                     
-                    // Core brightness
-                    float core = smoothstep(0.4, 0.9, fire + shape * 0.6);
-                    
-                    // Colors
-                    vec3 red = vec3(1.0, 0.0, 0.0);
-                    vec3 yellow = vec3(1.0, 1.0, 0.0);
-                    vec3 white = vec3(1.0, 1.0, 1.0);
+                    // Brighter, more intense colors
+                    vec3 red = vec3(1.0, 0.1, 0.0);
+                    vec3 yellow = vec3(1.0, 0.9, 0.0);
+                    vec3 white = vec3(1.0, 1.0, 0.9);
                     
                     vec3 finalColor = mix(red, yellow, core);
-                    finalColor = mix(finalColor, white, core * 0.5);
+                    finalColor = mix(finalColor, white, core * 0.4);
                     
-                    // Side fading
-                    float sideFade = 1.0 - abs(uv.x - 0.5) * 2.0;
-                    alpha *= sideFade;
-                    
+                    // Edge fade removed - Fill edges edge-to-edge
                     gl_FragColor = vec4(finalColor, alpha);
                 }
             `,
@@ -507,7 +443,8 @@ export class Visualizer3D {
             side: THREE.DoubleSide
         });
         this.foliage = new THREE.Mesh(foliageGeo, foliageMat);
-        this.foliage.position.z = -10;
+        this.foliage.position.z = -40; // Deep backdrop, well behind fire (z=-15)
+        this.foliage.renderOrder = 0;
         this.rainforestGroup.add(this.foliage);
 
         this.rainforestGroup.visible = false;
@@ -515,7 +452,6 @@ export class Visualizer3D {
     }
 
     initZenGarden() {
-        // Zen Garden: Floating cherry blossom petals and ripples
         const petalCount = 200;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
@@ -544,28 +480,11 @@ export class Visualizer3D {
 
         this.petals = new THREE.Points(geometry, material);
         this.zenGardenGroup.add(this.petals);
-
-        // Calm water surface with ripples
-        const waterGeo = new THREE.PlaneGeometry(30, 30, 32, 32);
-        const waterMat = new THREE.MeshBasicMaterial({
-            color: 0x4488aa,
-            transparent: true,
-            opacity: 0.12,
-            wireframe: true,
-            side: THREE.DoubleSide
-        });
-        // this.zenWater = new THREE.Mesh(waterGeo, waterMat);
-        // this.zenWater.rotation.x = -Math.PI / 2;
-        // this.zenWater.position.y = -5;
-        // this.zenGardenGroup.add(this.zenWater);
-
         this.zenGardenGroup.visible = false;
         console.log('[Visualizer] Zen Garden initialized');
     }
 
     initOcean() {
-        // Ocean: Wave geometry + foam particles
-        // Widen geometry for "Infinite" horizon effect
         const waveGeo = new THREE.PlaneGeometry(300, 100, 128, 64);
         const waveMat = new THREE.MeshBasicMaterial({
             color: 0x00aaff,
@@ -620,20 +539,15 @@ export class Visualizer3D {
         ctx.fillStyle = 'rgba(0,0,0,0)';
         ctx.fillRect(0, 0, size, size);
 
-        // Glyphs: Authentic Matrix (Half-width Katakana + Coptic + Latin + Numerals)
-        // 0x30A0 - 0x30FF is Katakana
-        // We want specific "Matrix-y" characters
         const katakana = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ";
-        const charPool = "MINDWAVE"; // Restricted to brand characters only to prevent random glyphs
+        const charPool = "MINDWAVE";
         const special = ":・.\"=*+<>";
 
-        // CRT GLOW EFFECT
         ctx.shadowBlur = 4;
-        ctx.shadowColor = '#4bff4b'; // Phosphor green glow
+        ctx.shadowColor = '#4bff4b';
 
-        // Font: Monospace for alignment - using a font stack that likely has Japanese support
         ctx.font = 'bold 44px "Courier New", "MS Gothic", "Hiragino Kaku Gothic ProN", monospace';
-        ctx.fillStyle = '#ccffcc'; // Brighter center
+        ctx.fillStyle = '#ccffcc';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -642,75 +556,53 @@ export class Visualizer3D {
         const cellW = size / cols;
         const cellH = size / rows;
 
-        // Determine Sequence
         let textToSpell = "MINDWAVE";
-        // Only use custom text if in custom mode
         if (this.matrixLogicMode === 'custom' && this.matrixCustomText && this.matrixCustomText.length > 0) {
             textToSpell = this.matrixCustomText;
         } else if (this.matrixLogicMode === 'random') {
-            textToSpell = ""; // No special text for random mode
+            textToSpell = "";
         }
 
-        // Build Sequence: LOGO + Text Characters
-        // manualSequence will be ["LOGO", "H", "E", "L", "L", "O", ...]
         const manualSequence = ["LOGO", ...textToSpell.split('')];
         const specialCount = manualSequence.length;
 
         for (let i = 0; i < 64; i++) {
-            // Calculate grid position
             const col = i % 8;
             const row = Math.floor(i / 8);
 
-            // Draw background (clear)
             ctx.fillStyle = 'rgba(0,0,0,0)';
             ctx.fillRect(col * cellW, row * cellH, cellW, cellH);
 
-            // Save state
             ctx.save();
             ctx.translate(col * cellW + cellW / 2, row * cellH + cellH / 2);
 
             let char = '';
             let isLogo = false;
-            let allowFlip = true;
 
             if (i < specialCount) {
-                // Special Sequence (Indices 0 to specialCount-1)
                 const item = manualSequence[i];
                 if (item === "LOGO") {
                     isLogo = true;
                 } else {
                     char = item;
                 }
-                allowFlip = false;
             } else {
-                // DEBUG: Red Background - DISABLED
-                // ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-                // ctx.fillRect(col * cellW, row * cellH, cellW, cellH);
-
-                // CLASSIC MODE SUPPORT:
-                // Indices 9-63 should be random Mixed Glyphs
                 const mix = katakana + "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                const randomChar = mix.charAt(Math.floor(Math.random() * mix.length));
-                char = randomChar;
-                console.log(`[Visualizer] Generated Random Char at ${i}: ${char}`);
+                char = mix.charAt(Math.floor(Math.random() * mix.length));
 
-                // Randomly flip X for "Alien" look (50% chance)
                 if (Math.random() > 0.5) {
                     ctx.save();
                     ctx.scale(-1, 1);
-                    // Set style explicitly before drawing
                     ctx.fillStyle = '#00FF41';
                     ctx.font = 'bold 44px monospace';
                     ctx.fillText(char, 0, 0);
                     ctx.restore();
-                    char = ''; // Drawn already
+                    char = '';
                 }
             }
 
-            // Draw Character or Logo (Non-flipped or Special)
-            // Draw Character or Logo (Non-flipped or Special)
             if (char || isLogo) {
-                ctx.fillStyle = '#00FF41'; // Standard Matrix Green
+                ctx.fillStyle = '#00FF41';
                 ctx.font = 'bold 44px monospace';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -719,45 +611,33 @@ export class Visualizer3D {
 
                 if (isLogo) {
                     if (this.logoImage) {
-                        // Draw Real Logo
                         const size = 44;
                         const offset = -size / 2;
                         ctx.drawImage(this.logoImage, offset, offset, size, size);
                     } else {
-                        // Fallback while loading or if failed
                         if (!this.logoLoading && !this.logoFailed) {
                             this.logoLoading = true;
                             const loader = new THREE.ImageLoader();
-                            loader.load(
-                                '/mindwave-logo.png',
-                                (image) => {
-                                    console.log('[Visualizer] Logo loaded');
-                                    this.logoImage = image;
-                                    this.logoLoading = false;
-                                    if (this.matrixMaterial) {
-                                        const newTexture = this.createMatrixTexture();
-                                        this.matrixMaterial.uniforms.uTexture.value = newTexture;
-                                    }
-                                },
-                                undefined,
-                                (err) => {
-                                    console.error('[Visualizer] Logo load failed', err);
-                                    this.logoFailed = true;
-                                    this.logoLoading = false;
+                            loader.load('/mindwave-logo.png', (image) => {
+                                this.logoImage = image;
+                                this.logoLoading = false;
+                                if (this.matrixMaterial) {
+                                    const newTexture = this.createMatrixTexture();
+                                    this.matrixMaterial.uniforms.uTexture.value = newTexture;
                                 }
-                            );
+                            }, undefined, (err) => {
+                                this.logoFailed = true;
+                                this.logoLoading = false;
+                            });
                         }
-                        // Draw placeholder if not loaded yet
                         ctx.fillText("MW", 0, 0);
                     }
                 } else {
                     ctx.fillText(char, 0, 0);
                 }
-            } // End if (char || isLogo)
-
-            ctx.restore(); // MUST be called every iteration to match ctx.save()
-        } // End Loop
-
+            }
+            ctx.restore();
+        }
         const texture = new THREE.CanvasTexture(canvas);
         texture.magFilter = THREE.NearestFilter;
         texture.minFilter = THREE.NearestFilter;
@@ -768,72 +648,42 @@ export class Visualizer3D {
         return new THREE.ShaderMaterial({
             uniforms: {
                 uTexture: { value: texture },
-                uColor: { value: new THREE.Color(0x00FF41) }, // Authentic Matrix Green
-                uHeadColor: { value: new THREE.Color(0xF0FFF0) }, // White-ish green
+                uColor: { value: new THREE.Color(0x00FF41) },
+                uHeadColor: { value: new THREE.Color(0xF0FFF0) },
                 uTime: { value: 0 },
                 uSpeed: { value: 1.0 },
                 uTailLength: { value: 1.0 },
-                uRainbow: { value: this._rainbowEnabled ? 1.0 : 0.0 } // Persist rainbow state
+                uRainbow: { value: this._rainbowEnabled ? 1.0 : 0.0 }
             },
             vertexShader: `
                 attribute float aCharIndex;
-                attribute float aSpawnTime; // Offset for randomness
-                attribute float aSpeed;     // Individual column speed
-                
+                attribute float aSpawnTime;
+                attribute float aSpeed;
                 uniform float uTime;
                 uniform float uSpeed;
                 uniform float uTailLength;
-                
                 varying float vBrightness;
                 varying float vCharIndex;
                 varying float vAlpha;
-                varying vec3 vPos; // For rainbow calc
+                varying vec3 vPos;
                 
                 void main() {
                     vCharIndex = aCharIndex;
                     vPos = position;
-                    
-                    // Rain Simulation Logic in Vertex Shader
-                    // Calculate Y position based on time
-                    float fallSpeed = aSpeed * uSpeed;
-                    float yOffset = mod(uTime * fallSpeed + aSpawnTime, 100.0); // 100.0 is cycle loop
-                    
-                    // Calculate "Head" position of this column
-                    // We need to know where the head is relative to THIS character
-                    // position.y is fixed in the grid. We simulate the "stream" moving through it.
-                    
-                    // vUv = uv; // REMOVED: uv is not available in Points material by default and not used in fragment
-
-                    // ... physics ...
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    
-                    // Fall animation
-                    // Restart every 80 units
-                    // Offset by spawnTime
                     float columnHeadY = 40.0 - mod(uTime * 5.0 * aSpeed * uSpeed + aSpawnTime, 80.0);
-                    
                     float dist = columnHeadY - position.y;
-                    
-                    // Trail length - Dynamic based on uniform
                     float trailLen = 80.0 * uTailLength;
                     if (dist >= 0.0 && dist < trailLen) {
-                         // Fade out along trail
                          vAlpha = 1.0 - (dist / trailLen);
                          vBrightness = 1.0 - (dist / trailLen);
                     } else {
                          vAlpha = 0.0;
                          vBrightness = 0.0;
                     }
-                    
                     gl_Position = projectionMatrix * mvPosition;
-                    
-                    // constant size
-                    gl_PointSize = 480.0 / -mvPosition.z; // Increased by 50% (was 320.0) 
-
-                    // DOUBLE SIZE FOR LOGO (Index 0)
-                    if (abs(aCharIndex) < 0.1) {
-                        gl_PointSize *= 2.0;
-                    }
+                    gl_PointSize = 480.0 / -mvPosition.z;
+                    if (abs(aCharIndex) < 0.1) gl_PointSize *= 2.0;
                 }
             `,
             fragmentShader: `
@@ -842,12 +692,10 @@ export class Visualizer3D {
                 uniform vec3 uHeadColor;
                 uniform float uRainbow;
                 uniform float uTime;
-                
                 varying float vAlpha;
                 varying float vCharIndex;
-                varying float vBrightness; // Not used but kept for struct
+                varying float vBrightness;
                 varying vec3 vPos;
-
                 float hue2rgb(float p, float q, float t) {
                     if(t < 0.0) t += 1.0;
                     if(t > 1.0) t -= 1.0;
@@ -856,68 +704,38 @@ export class Visualizer3D {
                     if(t < 2.0/3.0) return p + (q - p) * (2.0/3.0 - t) * 6.0;
                     return p;
                 }
-
                 vec3 hslToRgb(float h, float s, float l) {
                     float r, g, b;
-                    if(s == 0.0) {
-                        r = g = b = l; // achromatic
-                    } else {
+                    if(s == 0.0) { r = g = b = l; } else {
                         float q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
                         float p = 2.0 * l - q;
-                        r = hue2rgb(p, q, h + 1.0/3.0);
-                        g = hue2rgb(p, q, h);
-                        b = hue2rgb(p, q, h - 1.0/3.0);
+                        r = hue2rgb(p, q, h + 1.0/3.0); g = hue2rgb(p, q, h); b = hue2rgb(p, q, h - 1.0/3.0);
                     }
                     return vec3(r, g, b);
                 }
-
                 void main() {
-                    // UV Calc - Snap index to integer to prevent float drift artifacts
                     float rawIndex = floor(vCharIndex + 0.5);
-                    
-                    // "Movie-like" GLITCH EFFECT:
-                    // If index is > 8 (Random/Classic range), animate it to cycle through glyphs
-                    // If index <= 8 (Logo/Special Text), keep it static for readability
-                    
                     if (rawIndex > 8.5) {
-                        float timeStep = floor(uTime * 5.0); // Change 5 times/sec (Slower/Smoother)
-                        // Map index into 9..63 range cyclically
-                        // (64 total - 9 reserved = 55 random slots)
+                        float timeStep = floor(uTime * 5.0);
                         rawIndex = 9.0 + mod((rawIndex - 9.0) + timeStep, 55.0);
                     }
-
                     float index = floor(rawIndex + 0.5);
-                    
                     float col = mod(index, 8.0);
-                    float row = floor(index / 8.0);
-                    row = 7.0 - row; 
+                    float row = 7.0 - floor(index / 8.0);
                     vec2 uv = gl_PointCoord;
-                    uv.y = 1.0 - uv.y; // Flip Y for correct orientation (Canvas Top = V=1)
+                    uv.y = 1.0 - uv.y;
                     vec2 atlasUV = (uv + vec2(col, row)) / 8.0;
-                    
                     vec4 texColor = texture2D(uTexture, atlasUV);
-                    
                     if (texColor.a < 0.1) discard;
                     if (vAlpha < 0.05) discard;
-                    
                     vec3 finalColor;
-                    
                     if (uRainbow > 0.5) {
-                        // Rainbow varying by X position and Time
                         float hue = fract(vPos.x * 0.05 + uTime * 0.1);
                         finalColor = hslToRgb(hue, 1.0, 0.6);
-                        
-                        if (vBrightness >= 0.95) {
-                            finalColor = mix(finalColor, vec3(1.0), 0.5); // White hot head
-                        }
+                        if (vBrightness >= 0.95) finalColor = mix(finalColor, vec3(1.0), 0.5);
                     } else {
-                        if (vBrightness >= 0.95) {
-                            finalColor = uHeadColor;
-                        } else {
-                            finalColor = uColor;
-                        }
+                        finalColor = (vBrightness >= 0.95) ? uHeadColor : uColor;
                     }
-                    
                     gl_FragColor = vec4(finalColor, vAlpha * texColor.a);
                 }
             `,
@@ -928,13 +746,11 @@ export class Visualizer3D {
     }
 
     initMatrix() {
-        // AGGRESSIVE CLEANUP: Remove EVERYTHING from the cleanup group to prevent "Sticky" MindWave characters
         while (this.matrixGroup.children.length > 0) {
             const child = this.matrixGroup.children[0];
             this.matrixGroup.remove(child);
             if (child.geometry) child.geometry.dispose();
             if (child.material) child.material.dispose();
-            // Traverse if group
             if (child.children) {
                 child.traverse((c) => {
                     if (c.geometry) c.geometry.dispose();
@@ -945,99 +761,38 @@ export class Visualizer3D {
         this.matrixRotationGroup = null;
         this.matrixPoints = null;
 
-        const depthLayer = 4; // Bring closer (was 20)
-        const colCount = 40;  // Decrease density (was 80, halved as per request provided by user)
+        const depthLayer = 4;
+        const colCount = 40;
         const rowCount = 60;
-        this.rowCount = rowCount;
-
         const geometry = new THREE.BufferGeometry();
         const positions = [];
         const charIndices = [];
-        // New attributes for shader-driven animation
         const spawnTimes = [];
         const speeds = [];
 
-        // Grid setup - Increased to cover frustum
-        const viewWidth = 120; // Was 60
-        const viewHeight = 80; // Was 45
-
+        const viewWidth = 120;
+        const viewHeight = 80;
         const colWidth = viewWidth / colCount;
         const rowHeight = viewHeight / rowCount;
 
         for (let c = 0; c < colCount; c++) {
             const x = (c * colWidth) - (viewWidth / 2) + ((Math.random() * 0.8) * colWidth);
-
-            // Random depth for parallax
             const z = -(depthLayer * 5) - (Math.random() * 2);
-
-            // Define column speed
             const speed = 0.5 + Math.random() * 0.5;
 
-            // Column properties
-            // SEQUENCE GENERATION LOGIC
-            let isSpecial = false;
-            let specialText = "MINDWAVE"; // Default
-
-            // Decide Mode
-            const isMindWave = (this.matrixLogicMode === 'mindwave');
-            const isCustom = (this.matrixLogicMode === 'custom');
-            isSpecial = (isMindWave || isCustom);
-
-            console.log(`[Visualizer] initMatrix: mode=${this.matrixLogicMode}, isSpecial=${isSpecial}`);
-
-            // If random mode, ensure we use random indices
-            if (!isSpecial) {
-                console.log(`[Visualizer] initMatrix: Generating RANDOM indices (9-63)`);
-            }
-
-            if (isMindWave) {
-                specialText = "MINDWAVE"; // Logo-MindWave
-            } else if (isCustom) {
-                // Use custom text, fallback to MINDWAVE if empty
-                specialText = (this.matrixCustomText && this.matrixCustomText.length > 0) ? this.matrixCustomText : "MINDWAVE";
-            } else {
-                // Classic / Random
-                isSpecial = false;
-            }
-
+            const isSpecial = (this.matrixLogicMode === 'mindwave' || this.matrixLogicMode === 'custom');
+            const specialText = (this.matrixLogicMode === 'custom' && this.matrixCustomText) ? this.matrixCustomText : "MINDWAVE";
             const specialLen = specialText.length;
-            // IMPORTANT: If we want CUSTOM text, we must ensure characters > 8 are mapped or we rely on the existing texture?
-            // The existing texture (createMatrixTexture) likely only has "MINDWAVE" + Random Katakana.
-            // WE NEED TO UPDATE createMatrixTexture TO SUPPORT CUSTOM TEXT RENDER.
-            // But for now, let's just make the LOOP work with the mode switching.
-            // If the text is "HELLO", and the texture only has "MINDWAVE", it will look wrong.
-            // FIXME: Texture generation only supports standard characters + LOGO. Custom strings might map incorrectly if font missing? 
-            // For now assuming texture atlas handles standard ASCII.
-
-            // const speed = 1.0 + Math.random() * 1.5; // Base speed variance - using definition above
 
             for (let r = 0; r < rowCount; r++) {
                 const y = (viewHeight / 2) - (r * rowHeight);
-
-                // Start time offset
                 const spawnTime = Math.random() * 100.0;
-
-                // ... logic continues ...
-
                 positions.push(x, y, z);
-
                 if (isSpecial) {
-                    // Spell "Logo-SpecialText" (indices 0 to specialLen-1)
-                    // specialLen is defined in outer scope: specialText.length + 1 (for Logo)
-                    // ADDED: Offset by column index 'c' so neighbors don't match horizontally
                     charIndices.push((r + c) % (specialLen + 1));
                 } else {
-                    // Random glyphs (indices 9 to 63)
-                    // 64 total - 9 reserved = 55 random slots
-                    const randIndex = 9 + Math.floor(Math.random() * 55);
-                    charIndices.push(randIndex);
+                    charIndices.push(9 + Math.floor(Math.random() * 55));
                 }
-
-                // DEBUG LOG - Only log first few
-                if (c === 0 && r < 5) {
-                    console.log(`[Visualizer] Particle ${c},${r}: Index ${charIndices[charIndices.length - 1]}`);
-                }
-
                 spawnTimes.push(spawnTime);
                 speeds.push(speed);
             }
@@ -1048,78 +803,50 @@ export class Visualizer3D {
         geometry.setAttribute('aSpawnTime', new THREE.Float32BufferAttribute(spawnTimes, 1));
         geometry.setAttribute('aSpeed', new THREE.Float32BufferAttribute(speeds, 1));
 
-        this.matrixGeometry = geometry; // Save reference for updates
-
+        this.matrixGeometry = geometry;
         const texture = this.createMatrixTexture();
         this.matrixMaterial = this.createMatrixShader(texture);
-        // this.matrixMaterial = new THREE.PointsMaterial({
-        //     color: 0x00ff00,
-        //     size: 2,
-        //     sizeAttenuation: false
-        // });
-
         this.matrixRain = new THREE.Points(geometry, this.matrixMaterial);
-        this.matrixRain.frustumCulled = false; // Prevent culling issues
-        // Group to handle rotation
+        this.matrixRain.frustumCulled = false;
         this.matrixRotationGroup = new THREE.Group();
         this.matrixRotationGroup.add(this.matrixRain);
-
         this.matrixGroup.add(this.matrixRotationGroup);
 
-        // RESTORE ROTATION STATE
         if (this.currentMatrixAngle !== undefined) {
             this.matrixRotationGroup.rotation.z = THREE.MathUtils.degToRad(-this.currentMatrixAngle);
         }
-
-        this.matrixGroup.visible = true; // Default visible for safety
-
-        console.log('[Visualizer] Matrix (Shader Mode) initialized');
+        this.matrixGroup.visible = true;
         this.updateVisibility();
     }
 
     setMatrixMode(enabled) {
         if (this.mindWaveMode === enabled) return;
         this.mindWaveMode = enabled;
-        // SYNC LOGIC MODE
         this.matrixLogicMode = enabled ? 'mindwave' : 'classic';
-        console.log('[Visualizer] Matrix MindWave Mode:', enabled, 'Logic Mode:', this.matrixLogicMode, 'VERSION: NUCLEAR_PHASE_3_CRISIS_FIX');
-
-        // Force Texture Regeneration to ensure correct sequence
         if (enabled && this.matrixMaterial) {
             const newTexture = this.createMatrixTexture();
             this.matrixMaterial.uniforms.uTexture.value = newTexture;
             this.matrixMaterial.needsUpdate = true;
         }
-
-        // Force Full Re-Init to ensure Geometry Attributes (Sequential Order) are applied
         this.initMatrix();
     }
 
-
     setMode(mode) {
-        // Exclusive switch (Classic behavior)
         this.activeModes.clear();
         this.activeModes.add(mode);
-        this.mode = mode; // Legacy sync
+        this.mode = mode;
         this.updateVisibility();
         this.updateLabel(mode);
     }
 
     toggleMode(mode) {
-        // Multi-mode toggle (New behavior)
         if (this.activeModes.has(mode)) {
             this.activeModes.delete(mode);
-            // If empty, maybe default to something? No, allow empty.
         } else {
             this.activeModes.add(mode);
         }
-
-        // Update legacy mode prop to last added (for simple checks)
         this.mode = mode;
-
         this.updateVisibility();
-
-        // If only one mode active, update label to that. If multiple, "MULTI-SENSORY".
         if (this.activeModes.size === 1) {
             this.updateLabel(Array.from(this.activeModes)[0]);
         } else if (this.activeModes.size > 1) {
@@ -1159,7 +886,6 @@ export class Visualizer3D {
     }
 
     initWaves() {
-        // ... (unchanged)
         this.wavesGroup = new THREE.Group();
         const geometry = new THREE.PlaneGeometry(30, 30, 64, 64);
         const material = new THREE.MeshBasicMaterial({
@@ -1177,73 +903,34 @@ export class Visualizer3D {
     }
 
     setSpeed(speed) {
-        console.log("Visual Speed Set:", speed);
         this.speedMultiplier = speed;
     }
 
     setColor(hex) {
         this.customColor = new THREE.Color(hex);
-
-        if (this.particles && this.particles.material) {
-            this.particles.material.color.set(hex);
-        }
+        if (this.particles && this.particles.material) this.particles.material.color.set(hex);
         if (this.sphere && this.sphere.material) {
             this.sphere.material.color.set(hex);
             this.core.material.color.set(hex);
         }
-        if (this.wavesMesh && this.wavesMesh.material) {
-            this.wavesMesh.material.color.set(hex);
-        }
-        if (this.lavaBlobs) {
-            this.lavaBlobs.forEach(blob => {
-                blob.material.color.set(hex);
-            });
-        }
-        if (this.lavaGlow && this.lavaGlow.material) {
-            this.lavaGlow.material.color.set(hex);
-        }
-        if (this.lavaBaseGlow && this.lavaBaseGlow.material) {
-            this.lavaBaseGlow.material.color.set(hex);
-        }
-
-        // New visual modes color support
-        if (this.flames && this.flames.material) {
-            this.flames.material.color.set(hex);
-        }
-        if (this.fireBase && this.fireBase.material) {
-            this.fireBase.material.color.set(hex);
-        }
-        if (this.raindrops && this.raindrops.material) {
-            this.raindrops.material.color.set(hex);
-        }
-        if (this.foliage && this.foliage.material) {
-            this.foliage.material.color.set(hex);
-        }
-        if (this.petals && this.petals.material) {
-            this.petals.material.color.set(hex);
-        }
-        if (this.zenWater && this.zenWater.material) {
-            this.zenWater.material.color.set(hex);
-        }
-        if (this.oceanWave && this.oceanWave.material) {
-            this.oceanWave.material.color.set(hex);
-        }
-        if (this.oceanFoam && this.oceanFoam.material) {
-            this.oceanFoam.material.color.set(hex);
-        }
+        if (this.wavesMesh && this.wavesMesh.material) this.wavesMesh.material.color.set(hex);
+        if (this.lavaBlobs) this.lavaBlobs.forEach(blob => blob.material.color.set(hex));
+        if (this.lavaGlow && this.lavaGlow.material) this.lavaGlow.material.color.set(hex);
+        if (this.flames && this.flames.material) this.flames.material.color.set(hex);
+        if (this.raindrops && this.raindrops.material) this.raindrops.material.color.set(hex);
+        if (this.foliage && this.foliage.material) this.foliage.material.color.set(hex);
+        if (this.petals && this.petals.material) this.petals.material.color.set(hex);
+        if (this.zenWater && this.zenWater.material) this.zenWater.material.color.set(hex);
+        if (this.oceanWave && this.oceanWave.material) this.oceanWave.material.color.set(hex);
+        if (this.oceanFoam && this.oceanFoam.material) this.oceanFoam.material.color.set(hex);
         if (this.matrixRain && this.matrixRain.material) {
-            // ShaderMaterial uses uniforms, not .color property
             if (this.matrixRain.material.uniforms && this.matrixRain.material.uniforms.uColor) {
                 this.matrixRain.material.uniforms.uColor.value.set(hex);
             }
         }
-
-        // Render a single frame to show the color change even when paused
         this.renderSingleFrame();
     }
 
-    // Render a single frame without starting the animation loop
-    // Used to show color changes when visuals are paused
     renderSingleFrame() {
         if (!this.renderer || !this.scene || !this.camera) return;
         this.renderer.clear();
@@ -1260,8 +947,7 @@ export class Visualizer3D {
         ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
-        const texture = new THREE.CanvasTexture(canvas);
-        return texture;
+        return new THREE.CanvasTexture(canvas);
     }
 
     render(analyserL, analyserR) {
@@ -1269,7 +955,6 @@ export class Visualizer3D {
 
         if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
 
-        // Audio Data Processing
         let normBass = 0, normMids = 0, normHighs = 0;
         let dataL = null;
 
@@ -1285,27 +970,20 @@ export class Visualizer3D {
         }
 
         const multiplier = this.speedMultiplier || 1.0;
-
-        // TIME MANAGEMENT
         const now = performance.now() * 0.001;
         if (!this.lastTime) this.lastTime = now;
         const dt = now - this.lastTime;
         this.lastTime = now;
 
-        // Animation Logic
         if (this.activeModes.has('sphere')) {
-            // Sphere uses real-time + simple multiplier
             const scale = 1 + (normBass * 0.4);
             this.sphere.scale.setScalar(scale);
             this.core.scale.setScalar(scale * 0.9);
-
             this.sphere.rotation.y += (0.016 * multiplier) + (normMids * 0.01);
             this.sphere.rotation.z += (0.008 * multiplier);
-
             const r = 45 / 255 + (normHighs * 0.5);
             const g = 212 / 255 - (normHighs * 0.2);
             const b = 191 / 255 + (normMids * 0.2);
-
             if (this.customColor) {
                 this.sphere.material.color.copy(this.customColor);
                 this.core.material.color.copy(this.customColor);
@@ -1315,110 +993,91 @@ export class Visualizer3D {
             }
         }
 
-        if (this.activeModes.has('particles')) { // Flow
-            const bassKick = normBass || 0;
-            const scaledMultiplier = Math.pow(multiplier, 1.2);
-            const flowSpeed = (0.015 * scaledMultiplier) + (bassKick * 0.1);
-
+        if (this.activeModes.has('particles')) {
+            const flowSpeed = (0.015 * multiplier) + (normBass * 0.1);
             const positions = this.particles.geometry.attributes.position.array;
             for (let i = 2; i < positions.length; i += 3) {
                 positions[i] += flowSpeed;
                 if (positions[i] > 10) positions[i] = -10;
             }
             this.particles.geometry.attributes.position.needsUpdate = true;
-            this.particleGroup.rotation.z += (0.001 * scaledMultiplier) + (normMids * 0.005);
+            this.particleGroup.rotation.z += (0.001 * multiplier) + (normMids * 0.005);
         }
 
         if (this.activeModes.has('lava') && this.lavaBlobs) {
-            // Updated Lava Animation: EASE-OUT, INCHING & 2-7s IDLE TIMING
-
-            // 1. Calculate Global Speed Factor (Motion, Physics rate)
-            // Updated: Direct scaling without floor for better sync sensitivity
-            const speedFactor = this.speedMultiplier * 0.04;
-
-            // Re-implementing Lava Logic based on previous view
-            const time = now;
-
-            // 2. Update Blobs
             this.lavaBlobs.forEach((blob, index) => {
-                // Initialize blob state if needed
-                if (!blob.userData.state) {
-                    blob.userData.state = 'idle';
-                    blob.userData.timer = 0;
-                    blob.userData.targetY = blob.position.y;
-                    blob.userData.startY = blob.position.y;
-                    blob.userData.speed = 0;
+                const config = blob.userData;
+                const dt_scaled = dt * multiplier;
+
+                // 1. STATE MACHINE & PHYSICS
+                if (config.state === 'heating') {
+                    // Stay at bottom, increase temperature
+                    blob.position.y = config.floatMin;
+                    config.temperature += config.heatRate * 0.15 * dt_scaled;
+                    if (config.temperature >= 1.0) {
+                        config.temperature = 1.0;
+                        config.state = 'rising';
+                    }
+                } else if (config.state === 'rising') {
+                    // Buoyancy proportional to temperature
+                    const riseVel = config.riseSpeed * config.temperature * dt_scaled * 5.0;
+                    blob.position.y += riseVel;
+
+                    // Vertical Stretch (Teardrop effect)
+                    const stretch = 1.0 + (riseVel / dt_scaled) * 2.0;
+                    blob.scale.set(config.baseSize, config.baseSize * Math.min(stretch, 1.5), config.baseSize);
+
+                    if (blob.position.y >= config.floatMax) {
+                        blob.position.y = config.floatMax;
+                        config.state = 'cooling';
+                    }
+                } else if (config.state === 'cooling') {
+                    // Stay at top, decrease temperature
+                    blob.position.y = config.floatMax;
+                    config.temperature -= config.coolRate * 0.15 * dt_scaled;
+                    if (config.temperature <= 0.0) {
+                        config.temperature = 0.0;
+                        config.state = 'falling';
+                    }
+                } else if (config.state === 'falling') {
+                    // Gravity proportional to density (1 - temp)
+                    const fallVel = config.fallSpeed * (1.1 - config.temperature) * dt_scaled * 5.0;
+                    blob.position.y -= fallVel;
+
+                    // Vertical Stretch (Drip effect)
+                    const stretch = 1.0 + (fallVel / dt_scaled) * 2.0;
+                    blob.scale.set(config.baseSize, config.baseSize * Math.min(stretch, 1.5), config.baseSize);
+
+                    if (blob.position.y <= config.floatMin) {
+                        blob.position.y = config.floatMin;
+                        config.state = 'heating';
+                    }
                 }
 
-                // State Machine
-                if (blob.userData.state === 'idle') {
-                    blob.userData.timer -= (0.016 + (normBass * 0.05)) * this.speedMultiplier; // Bass reduces idle time
-                    if (blob.userData.timer <= 0) {
-                        // Start Moving
-                        blob.userData.state = 'moving';
-                        blob.userData.startY = blob.position.y;
-                        // Move 1.5 - 3.0 units up or down (keep within bounds)
-                        const dir = Math.random() > 0.5 ? 1 : -1;
-                        let dist = 1.5 + Math.random() * 1.5;
-
-                        // Bounds check (-4 to 4)
-                        if (blob.position.y + dist > 4) dist = -dist; // Force down
-                        else if (blob.position.y - dist < -4) dist = dist; // Force up
-                        else dist = dir * dist; // Random
-
-                        blob.userData.targetY = blob.position.y + dist;
-                        // Duration: 2-4 seconds for the move
-                        blob.userData.moveDuration = 2.0 + Math.random() * 2.0;
-                        blob.userData.moveProgress = 0;
-                    }
-                } else if (blob.userData.state === 'moving') {
-                    // Easing Animation (Cubic Ease Out)
-                    blob.userData.moveProgress += (0.016 / blob.userData.moveDuration) * this.speedMultiplier * (1 + normBass);
-
-                    if (blob.userData.moveProgress >= 1) {
-                        // Finished
-                        blob.position.y = blob.userData.targetY;
-                        blob.userData.state = 'idle';
-                        blob.userData.timer = 2.0 + Math.random() * 3.0; // 2-5s idle
-                    } else {
-                        // Ease Out Cubic: 1 - pow(1 - x, 3)
-                        const t = blob.userData.moveProgress;
-                        const ease = 1 - Math.pow(1 - t, 3);
-                        blob.position.y = blob.userData.startY + (blob.userData.targetY - blob.userData.startY) * ease;
-                    }
+                // 2. THERMAL EXPANSION (Volume changes based on temperature)
+                // Heating makes it expand (~20%), Cooling makes it contract to base.
+                if (config.state === 'heating' || config.state === 'cooling') {
+                    const expansionFactor = 1.0 + (config.temperature * 0.2);
+                    blob.scale.setScalar(config.baseSize * expansionFactor);
                 }
 
-                // Morphing / Wobbly effect
-                const wobble = Math.sin(time * 2 + index) * 0.1;
-                blob.scale.setScalar(1.0 + wobble + (normBass * 0.2));
+                // 3. MINIMAL WOBBLE & DRIFT (Keep it mostly vertical)
+                const wobble = Math.sin(now * 1.5 + index) * 0.05;
+                blob.scale.x += wobble * (normBass * 0.2);
+                blob.scale.z += wobble * (normBass * 0.2);
 
-                // Drift X slightly
-                if (blob.position.x > 8) blob.position.x -= 0.05;
-                if (blob.position.x < -8) blob.position.x += 0.05;
+                // Drift X slightly based on phase
+                blob.position.x += Math.sin(now * 0.2 + config.driftPhase) * 0.005 * multiplier;
             });
-
-            // Container rotation using simTime
-            this.lavaGroup.rotation.y += 0.0002 * this.speedMultiplier;
-
-            if (this.lavaGlow) {
-                this.lavaGlow.material.opacity = 0.05 + (normBass * 0.05);
-            }
+            this.lavaGroup.rotation.y += 0.0001 * multiplier;
+            if (this.lavaGlow) this.lavaGlow.material.opacity = 0.05 + (normBass * 0.05);
         }
 
         if (this.activeModes.has('waves') && this.wavesMesh) {
             const wavePositions = this.wavesMesh.geometry.attributes.position.array;
-
             for (let i = 0; i < wavePositions.length; i += 3) {
-                const x = wavePositions[i];
-                const y = wavePositions[i + 1];
-                let amp = 0.5 + (normBass * 2);
-
-                let audioOffset = 0;
-                if (dataL && dataL.length > 0) {
-                    const bin = Math.floor(Math.abs(x) * 5) % dataL.length;
-                    audioOffset = dataL[bin] / 255;
-                }
-
+                const x = wavePositions[i], y = wavePositions[i + 1];
+                let audioOffset = (dataL && dataL.length > 0) ? dataL[Math.floor(Math.abs(x) * 5) % dataL.length] / 255 : 0;
                 wavePositions[i + 2] = Math.sin(x * 0.5 + now * multiplier) * Math.cos(y * 0.5 + now * multiplier) * (1 + audioOffset) + (audioOffset * 2);
             }
             this.wavesMesh.geometry.attributes.position.needsUpdate = true;
@@ -1426,56 +1085,36 @@ export class Visualizer3D {
         }
 
         if (this.activeModes.has('fireplace') && this.fireMaterial) {
-            // HYPER-REALISTIC FIRE UPDATE
-
-            // 1. Update Shader Uniforms
-            this.fireMaterial.uniforms.uTime.value += dt * this.speedMultiplier;
-            // Bass interaction: fire burns brighter/faster
-            this.fireMaterial.uniforms.uSpeed.value = this.speedMultiplier * (1.0 + normBass * 0.5);
-
-            // 2. Embers Animation
+            this.fireMaterial.uniforms.uTime.value += dt * multiplier;
+            this.fireMaterial.uniforms.uSpeed.value = multiplier * (1.0 + normBass * 0.5);
             if (this.embers) {
                 const positions = this.embers.geometry.attributes.position.array;
-                const speedFactor = this.speedMultiplier * 2.0;
-
+                const speedFactor = multiplier * 2.0;
                 for (let i = 0; i < positions.length; i += 3) {
                     const idx = i / 3;
-                    // Rise up
                     positions[i + 1] += this.emberVelocities[idx] * speedFactor;
-                    // Drift (turbulent)
                     positions[i] += Math.sin(now * 2.0 + positions[i + 1]) * 0.01 * speedFactor;
                     positions[i + 2] += Math.cos(now * 1.5 + positions[i + 1]) * 0.01 * speedFactor;
-
-                    // Reset if too high or opaque
                     if (positions[i + 1] > 4.0) {
                         positions[i + 1] = -3.0;
-                        positions[i] = (Math.random() - 0.5) * 3.0;
-                        positions[i + 2] = (Math.random() - 0.5) * 3.0;
+                        positions[i] = (Math.random() - 0.5) * 50.0;
+                        positions[i + 2] = -15 + (Math.random() - 0.5) * 20.0;
                     }
                 }
                 this.embers.geometry.attributes.position.needsUpdate = true;
-                // Embers pulse
-                this.emberMat.opacity = 0.5 + Math.random() * 0.5;
+                this.emberMat.opacity = 0.4 + Math.random() * 0.4;
             }
-
-            // 3. Dynamic Light Flickering
             if (this.fireLight) {
-                // Base intensity + Audio reaction + Random flicker
                 this.fireLight.intensity = 1.0 + (normBass * 1.5) + (Math.sin(now * 10) + Math.cos(now * 23)) * 0.3;
                 this.fireLight.distance = 20 + (normMids * 5);
-                this.fireLight.color.setHSL(0.05 + normBass * 0.05, 1.0, 0.5);
             }
         }
 
         if (this.activeModes.has('rainforest') && this.raindrops) {
-            // Rainforest animation: Falling rain
             const positions = this.raindrops.geometry.attributes.position.array;
-            const speedFactor = this.speedMultiplier * 0.8;
-
+            const speedFactor = multiplier * 0.8;
             for (let i = 0; i < positions.length; i += 3) {
                 positions[i + 1] -= this.rainVelocities[i / 3] * speedFactor;
-
-                // Loop back to top
                 if (positions[i + 1] < -10) {
                     positions[i + 1] = 10;
                     positions[i] = (Math.random() - 0.5) * 20;
@@ -1487,19 +1126,12 @@ export class Visualizer3D {
         }
 
         if (this.activeModes.has('zengarden') && this.petals) {
-            // Zen Garden animation: Floating petals
             const positions = this.petals.geometry.attributes.position.array;
-            const speedFactor = this.speedMultiplier * 0.3;
-
+            const speedFactor = multiplier * 0.3;
             for (let i = 0; i < positions.length; i += 3) {
-                // Gentle fall
                 positions[i + 1] -= 0.01 * speedFactor;
-
-                // Sway
                 positions[i] += Math.sin(now + positions[i + 1]) * 0.01 * speedFactor;
                 positions[i + 2] += Math.cos(now + positions[i + 1]) * 0.01 * speedFactor;
-
-                // Reset
                 if (positions[i + 1] < -5) {
                     positions[i + 1] = 5;
                     positions[i] = (Math.random() - 0.5) * 20;
@@ -1507,232 +1139,106 @@ export class Visualizer3D {
                 }
             }
             this.petals.geometry.attributes.position.needsUpdate = true;
-            // Water Ripple Shimmy
-            if (this.zenWater) {
-                this.zenWater.material.opacity = 0.3 + (Math.sin(now) * 0.1);
-            }
+            if (this.zenWater) this.zenWater.material.opacity = 0.3 + (Math.sin(now) * 0.1);
         }
 
         if (this.activeModes.has('ocean') && this.oceanWave) {
-            // Ocean animation: Waves
             const wavePositions = this.oceanWave.geometry.attributes.position.array;
-            const speedFactor = this.speedMultiplier;
-
             for (let i = 0; i < wavePositions.length; i += 3) {
-                const x = wavePositions[i];
-                const y = wavePositions[i + 1];
+                const x = wavePositions[i], y = wavePositions[i + 1];
                 const distFromCenter = Math.sqrt(x * x + y * y);
-                // Reduce amplitude slightly
                 const amp = 1.0 + (normBass * 2.5);
-                // Displace Z (normal to plane)
-                wavePositions[i + 2] = Math.sin(distFromCenter * 0.2 - now * speedFactor * 0.8) * amp +
-                    Math.cos(x * 0.15 + now * speedFactor * 0.6) * (amp * 0.5);
+                wavePositions[i + 2] = Math.sin(distFromCenter * 0.2 - now * multiplier * 0.8) * amp + Math.cos(x * 0.15 + now * multiplier * 0.6) * (amp * 0.5);
             }
             this.oceanWave.geometry.attributes.position.needsUpdate = true;
-
-            // Foam movement
             if (this.oceanFoam) {
                 const foamPositions = this.oceanFoam.geometry.attributes.position.array;
                 for (let i = 0; i < foamPositions.length; i += 3) {
-                    foamPositions[i] += Math.sin(now * 2 + i) * 0.02 * speedFactor;
-                    foamPositions[i + 2] += Math.cos(now * 1.5 + i) * 0.02 * speedFactor;
-
-                    // Wrap foam
-                    if (foamPositions[i] > 15) foamPositions[i] = -15;
-                    if (foamPositions[i] < -15) foamPositions[i] = 15;
-                    if (foamPositions[i + 2] > 10) foamPositions[i + 2] = -10;
-                    if (foamPositions[i + 2] < -10) foamPositions[i + 2] = 10;
+                    foamPositions[i] += Math.sin(now * 2 + i) * 0.02 * multiplier;
+                    foamPositions[i + 2] += Math.cos(now * 1.5 + i) * 0.02 * multiplier;
+                    if (foamPositions[i] > 15) foamPositions[i] = -15; if (foamPositions[i] < -15) foamPositions[i] = 15;
+                    if (foamPositions[i + 2] > 10) foamPositions[i + 2] = -10; if (foamPositions[i + 2] < -10) foamPositions[i + 2] = 10;
                 }
                 this.oceanFoam.geometry.attributes.position.needsUpdate = true;
                 this.oceanFoam.material.opacity = 0.4 + (normMids * 0.3);
             }
         }
 
-        if (this.activeModes.has('matrix') && this.matrixRain) {
-            // AUTHENTIC MATRIX ANIMATION (SHADER DRIVEN)
-
-            // Failsafe: Ensure it's visible if active
-            if (!this.matrixGroup.visible) {
-                this.matrixGroup.visible = true;
-            }
-
-            // Audio Reactivity: Bass boosts speed slightly
-            const normBass = this.getAverageFrequency(0, 10) / 255.0; // Recalculate or use existing
-            const speedBoost = normBass * 0.5;
-            const userSpeed = this.matrixSpeedMultiplier || 1.0;
-
-            // Update Uniforms
-            if (this.matrixMaterial && this.matrixMaterial.uniforms) {
-                // Advance time
-                // dt is already defined in outer scope
-                const timeStep = dt * this.speedMultiplier * (1.0 + speedBoost) * userSpeed;
-                this.matrixMaterial.uniforms.uTime.value += timeStep;
-                this.matrixMaterial.uniforms.uSpeed.value = this.speedMultiplier * userSpeed;
-
-
-            }
+        if (this.activeModes.has('matrix') && this.matrixMaterial) {
+            this.matrixMaterial.uniforms.uTime.value += dt * multiplier * (1.0 + normBass * 0.5) * (this.matrixSpeedMultiplier || 1.0);
+            this.matrixMaterial.uniforms.uSpeed.value = multiplier * (this.matrixSpeedMultiplier || 1.0);
         }
-        // For now, disable auto-spin to allow precise angle control.
-        // this.matrixRotationGroup.rotation.y += 0.05 * dt; 
 
-        // this.renderer.clear(); // REMOVED: Allow stacking (autoClear is false)
         this.renderer.render(this.scene, this.camera);
-
         if (this.active !== false) {
             state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
         }
     }
 
-    // === MATRIX CONTROLS ===
     setMatrixColor(hexColor) {
         if (this.matrixMaterial && this.matrixMaterial.uniforms.uColor) {
             this.matrixMaterial.uniforms.uColor.value.set(hexColor);
-            // Derive head color (lighter version)
             const color = new THREE.Color(hexColor);
             color.lerp(new THREE.Color(0xffffff), 0.8);
             this.matrixMaterial.uniforms.uHeadColor.value.copy(color);
         }
     }
 
-    // Helper to get average frequency from analyser node
     getAverageFrequency(startIndex, endIndex) {
-        // Find active analyser
         let analyser = state.analyserLeft || state.analyserRight;
         if (!analyser) return 0;
-
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
         analyser.getByteFrequencyData(dataArray);
-
         if (startIndex === undefined) startIndex = 0;
         if (endIndex === undefined) endIndex = dataArray.length;
-
-        let sum = 0;
-        let count = 0;
-        for (let i = startIndex; i < endIndex && i < dataArray.length; i++) {
-            sum += dataArray[i];
-            count++;
-        }
+        let sum = 0, count = 0;
+        for (let i = startIndex; i < endIndex && i < dataArray.length; i++) { sum += dataArray[i]; count++; }
         return count > 0 ? sum / count : 0;
     }
 
-    setMatrixSpeed(speed) {
-        // Speed multiplier is handled in render loop via this.speedMultiplier
-        // But we can add a specific matrix speed modifier if needed
-        // For now, let's stick to the global speed multiplier which is what the slider likely controls
-        // Actually, let's add a specific uniform override if we want separate control
-        // But the plan says "Speed Slider: For uSpeed".
-        // Let's assume the UI calls setSpeedMultiplier(val) OR we add a specific matrix modifier.
-        // Interstellar has "matrixSpeedMultiplier". Let's add that.
-        this.matrixSpeedMultiplier = speed;
-    }
-
-    setMatrixLength(length) {
-        if (this.matrixMaterial && this.matrixMaterial.uniforms.uTailLength) {
-            this.matrixMaterial.uniforms.uTailLength.value = length;
-        }
-    }
-
+    setMatrixSpeed(speed) { this.matrixSpeedMultiplier = speed; }
+    setMatrixLength(length) { if (this.matrixMaterial && this.matrixMaterial.uniforms.uTailLength) this.matrixMaterial.uniforms.uTailLength.value = length; }
     setMatrixRainbow(isRainbow) {
-        console.log(`[Visualizer] setMatrixRainbow: ${isRainbow}`);
-        // console.trace(); // Enable to find stealth calls
-        this._rainbowEnabled = isRainbow; // Persist state
-        if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uRainbow) {
-            this.matrixMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
-        }
+        this._rainbowEnabled = isRainbow;
+        if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uRainbow) this.matrixMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
     }
 
-    // === NEW LOGIC MODE ===
     setMatrixLogicMode(mode, text) {
-        console.log(`[Visualizer] setMatrixLogicMode CALLED. Mode: ${mode}, Text: ${text}`);
         this.matrixLogicMode = mode;
         if (text !== undefined) this.matrixCustomText = text;
-
-        console.log('[Visualizer] Matrix Mode Set:', mode, text);
-
-        // Regenerate texture for ALL modes to ensure fresh random glyphs or updated text
         const newTexture = this.createMatrixTexture();
-        if (this.matrixMaterial) {
-            this.matrixMaterial.uniforms.uTexture.value = newTexture;
-            this.matrixMaterial.needsUpdate = true;
-        }
-
+        if (this.matrixMaterial) { this.matrixMaterial.uniforms.uTexture.value = newTexture; this.matrixMaterial.needsUpdate = true; }
         this.initMatrix();
     }
 
     setMatrixAngle(degrees) {
-        console.log(`[Visualizer] setMatrixAngle: ${degrees}°`);
-        this.currentMatrixAngle = degrees; // PERSIST STATE
-        if (this.matrixRotationGroup) {
-            // Convert to radians. 0 degrees = upright.
-            // Rotating around Z-axis (viewing axis)
-            this.matrixRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
-            console.log(`[Visualizer] matrixRotationGroup.rotation.z set to ${this.matrixRotationGroup.rotation.z}`);
-        } else {
-            console.warn('[Visualizer] matrixRotationGroup missing inside setMatrixAngle');
-        }
+        this.currentMatrixAngle = degrees;
+        if (this.matrixRotationGroup) this.matrixRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
     }
-    setMatrixMode(active) {
-        console.log(`[Visualizer] setMatrixMode: ${active}`);
-        this.mindWaveMode = active;
-        if (active) {
-            this.activeModes.add('matrix');
-            if (this.matrixGroup) this.matrixGroup.visible = true;
-            // Also ensure mindwave logic is active if using standard toggle
-            if (this.matrixLogicMode === 'custom' || this.matrixLogicMode === 'mindwave') {
-                // Ensure texture is updated if needed
-            }
-        } else {
-            this.activeModes.delete('matrix');
-            if (this.matrixGroup) this.matrixGroup.visible = false;
-        }
-    }
-
-    // Unified Rainbow Setter (Removed duplicate)
 
     dispose() {
-        this.active = false; // Flag to stop internal loops if any
-        if (this.renderer) {
-            this.renderer.dispose();
-            // REMOVED: this.renderer.forceContextLoss(); // Causes issues with canvas reuse
-            this.renderer = null;
-        }
+        this.active = false;
+        if (this.renderer) { this.renderer.dispose(); this.renderer = null; }
     }
 }
 
 let viz3D;
 
 export function initVisualizer() {
-    // 1. Adoption Logic: Check if a valid visualizer exists on the canvas from a previous module instance
     if (!viz3D && els.canvas && els.canvas.activeVisualizer && els.canvas.activeVisualizer.isVisualizer3D) {
-        console.log('[Visualizer] Adopting existing Visualizer3D from canvas');
         viz3D = els.canvas.activeVisualizer;
     }
 
-    // Prevent ghosting from HMR or re-initialization
     if (els.canvas && els.canvas.activeVisualizer) {
-
-        // NEW: Idempotency check 
-        // If the active visualizer is the same valid instance we are tracking, do nothing.
-        // This preserves state (like Rainbow Mode) when startAudio() is called.
-        if (viz3D && els.canvas.activeVisualizer === viz3D) {
-            console.log('[Visualizer] Already initialized and active. Skipping re-init to preserve state.');
-            return;
-        }
-
-        console.log('[Visualizer] Disposing previous instance to prevent ghosting');
+        if (viz3D && els.canvas.activeVisualizer === viz3D) return;
         els.canvas.activeVisualizer.dispose();
         els.canvas.activeVisualizer = null;
-        viz3D = null; // Critical: Reset global reference
+        viz3D = null;
     }
 
-    // Also cancel any global animation loop directly from state if it exists
-    if (state.animationId) {
-        cancelAnimationFrame(state.animationId);
-        state.animationId = null;
-    }
+    if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
 
     if (!viz3D && els.canvas) {
-        // Collect state if we had a previous instance we're about to replace
         const prevState = (els.canvas.activeVisualizer && els.canvas.activeVisualizer.isVisualizer3D) ? {
             activeModes: els.canvas.activeVisualizer.activeModes,
             mode: els.canvas.activeVisualizer.mode,
@@ -1743,36 +1249,20 @@ export function initVisualizer() {
             matrixSpeedMultiplier: els.canvas.activeVisualizer.matrixSpeedMultiplier,
             rainbowEnabled: els.canvas.activeVisualizer._rainbowEnabled
         } : {};
-
         viz3D = new Visualizer3D(els.canvas, prevState);
-        els.canvas.activeVisualizer = viz3D; // Verify tag
-        // Auto-start visuals on load for immediate feedback
+        els.canvas.activeVisualizer = viz3D;
         resumeVisuals();
     }
 }
 
-export function getVisualizer() {
-    return viz3D;
-}
-
-// Visual pause state - starts playing on load for immediate feedback
+export function getVisualizer() { return viz3D; }
 let visualsPaused = false;
-
 export function pauseVisuals() {
-    // Always mark as paused for button sync
     visualsPaused = true;
-
-    // Cancel animation if running
     if (viz3D && state.animationId) {
         cancelAnimationFrame(state.animationId);
         state.animationId = null;
-
-        // Render one final frame WITHOUT clearing to freeze the current state
-        if (viz3D.renderer && viz3D.scene && viz3D.camera) {
-            viz3D.renderer.render(viz3D.scene, viz3D.camera);
-        }
-
-        console.log('[Visualizer] Visuals paused (frozen on last frame)');
+        if (viz3D.renderer && viz3D.scene && viz3D.camera) viz3D.renderer.render(viz3D.scene, viz3D.camera);
     }
 }
 
@@ -1780,32 +1270,10 @@ export function resumeVisuals() {
     if (viz3D && !state.animationId) {
         viz3D.render(state.analyserLeft, state.analyserRight);
         visualsPaused = false;
-        console.log('[Visualizer] Visuals resumed');
     }
 }
 
-export function isVisualsPaused() {
-    return visualsPaused;
-}
-
-export function toggleVisual(mode) {
-    if (viz3D) {
-        viz3D.toggleMode(mode);
-    }
-}
-
-export function setVisualSpeed(speed) {
-    if (viz3D) {
-        viz3D.setSpeed(speed);
-        // Also update Matrix speed if applicable
-        if (viz3D.setMatrixSpeed) viz3D.setMatrixSpeed(speed);
-    }
-}
-
-export function setVisualColor(hex) {
-    if (viz3D) {
-        viz3D.setColor(hex);
-        // Also update Matrix color if applicable
-        if (viz3D.setMatrixColor) viz3D.setMatrixColor(hex);
-    }
-}
+export function isVisualsPaused() { return visualsPaused; }
+export function toggleVisual(mode) { if (viz3D) viz3D.toggleMode(mode); }
+export function setVisualSpeed(speed) { if (viz3D) { viz3D.setSpeed(speed); if (viz3D.setMatrixSpeed) viz3D.setMatrixSpeed(speed); } }
+export function setVisualColor(hex) { if (viz3D) { viz3D.setColor(hex); if (viz3D.setMatrixColor) viz3D.setMatrixColor(hex); } }

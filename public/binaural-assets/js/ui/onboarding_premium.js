@@ -25,11 +25,13 @@ export function showGoalSelection(callback) {
 
     const modal = document.createElement('div');
     modal.id = 'goalSelectionModal';
-    modal.className = 'fixed inset-0 z-[10000] flex items-center justify-center p-4';
+    modal.className = 'fixed inset-0 flex items-center justify-center p-4';
     modal.style.cssText = `
-        background: rgba(0, 0, 0, 0.9);
-        backdrop-filter: blur(20px);
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(12px);
         animation: fadeIn 0.4s ease;
+        z-index: 100000;
+        pointer-events: auto;
     `;
 
     const goals = [

@@ -1,3 +1,4 @@
+console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
 import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js';
@@ -18,7 +19,7 @@ import { goToCheckout, hasPurchasedApp } from '../services/stripe-simple.js';
 // Use MultiReplace for multiple chunks? No, I'll use multi_replace tool.
 // This block is just for thought process.
 
-import { createCursorUIInThemeModal } from './cursor.js';
+// Cursor logic imports removed for inlined UI generation
 
 
 export function setupUI() {
@@ -623,6 +624,9 @@ export function setupUI() {
     }
 
     initThemeModal();
+    if (els.themeBtn) {
+        els.themeBtn.addEventListener('click', showThemeGallery);
+    }
 
 
     // Color Controls
@@ -1851,6 +1855,8 @@ export function setTheme(themeName) {
     const themeType = lightThemes.includes(themeName) ? 'light' : 'dark';
     document.body.dataset.themeType = themeType;
 
+    console.log(`[Theme] Setting theme to: ${themeName} (${themeType}) - CONSOLIDATED VERSION`);
+
     // Dispatch event for components that need to react (e.g. Cursor)
     window.dispatchEvent(new CustomEvent('themeChanged', {
         detail: {
@@ -1890,8 +1896,14 @@ export function setTheme(themeName) {
 
     if (isLightTheme) {
         const bgColor = t.panel;
-        if (leftPanel) leftPanel.style.backgroundColor = bgColor;
-        if (rightPanel) rightPanel.style.backgroundColor = bgColor;
+        if (leftPanel) {
+            leftPanel.style.backgroundColor = bgColor;
+            leftPanel.style.color = t.text;
+        }
+        if (rightPanel) {
+            rightPanel.style.backgroundColor = bgColor;
+            rightPanel.style.color = t.text;
+        }
 
         // Also fix all preset buttons text
         document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -1901,21 +1913,32 @@ export function setTheme(themeName) {
             });
         });
 
-        // FIX THEME MODAL TEXT VISIBILITY
+        // FIX THEME MODAL TEXT VISIBILITY (Aggressive)
         const themeModal = document.getElementById('themeModal');
         if (themeModal) {
-            // Modal header and all text elements
-            themeModal.querySelectorAll('h2, h3, .text-lg, .text-xs, .text-sm, div').forEach(el => {
-                // Skip if element has specific color styling that should be preserved
-                if (!el.style.color || el.style.color.includes('var(--accent)')) {
+            themeModal.style.color = t.text;
+            themeModal.querySelectorAll('h2, h3, .text-lg, .text-xs, .text-sm, div, span, label').forEach(el => {
+                if (!el.style.color || el.style.color.includes('rgba(255,255,255')) {
                     el.style.color = t.text;
                 }
             });
-            // Modal background
             const modalCard = document.getElementById('themeModalCard');
-            if (modalCard) {
-                modalCard.style.backgroundColor = t.panel;
-            }
+            if (modalCard) modalCard.style.backgroundColor = t.panel;
+        }
+
+        // FIX AUTH MODAL (Sign In) visibility
+        const authModal = document.getElementById('authModal');
+        if (authModal) {
+            authModal.querySelectorAll('h3, p, label, span, button:not([type="submit"])').forEach(el => {
+                if (!el.classList.contains('text-[var(--accent)]') && !el.classList.contains('text-white')) {
+                    el.style.color = t.text;
+                }
+            });
+            // Specifically fix the subtitle and forgot password link
+            const sub = document.getElementById('authSubtitle');
+            if (sub) sub.style.color = t.muted;
+            const forgot = document.getElementById('resetPasswordBtn');
+            if (forgot) forgot.style.color = t.muted;
         }
 
         // FIX TOP CONTROL BAR VISIBILITY
@@ -1923,15 +1946,13 @@ export function setTheme(themeName) {
         if (topBar) {
             topBar.style.backgroundColor = t.panel;
             topBar.style.borderColor = t.border;
-            // Fix all text in top bar
             topBar.querySelectorAll('button, span, div').forEach(el => {
-                if (!el.classList.contains('toggle-active') && !el.style.color) {
+                if (!el.classList.contains('toggle-active')) {
                     el.style.color = t.text;
                 }
             });
         }
 
-        // Force update of Journeys UI
         if (typeof updateJourneyStyles === 'function') updateJourneyStyles();
 
     } else {
@@ -2018,10 +2039,10 @@ export function initMixer() {
         const settings = state.soundscapeSettings[s.id];
         const item = document.createElement('div');
         item.className = "soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1";
-        item.innerHTML = `<label class="text-[10px] font-semibold truncate mb-1 block atmos-label" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] atmos-sublabel font-normal">${s.bpm} BPM</span>` : ''}</label>
-<div class="flex items-center gap-2"><span class="text-[8px] w-6 atmos-sublabel">VOL</span><input type="range" min="0" max="0.5" step="0.01" value="${settings.vol}" class="flex-1 h-1" data-id="${s.id}" data-type="vol"><span class="text-[9px] font-mono w-8 text-right tabular-nums atmos-val" data-val="vol">${Math.round(settings.vol * 200)}%</span></div>
-<div class="flex items-center gap-2"><span class="text-[8px] w-6 atmos-sublabel">TONE</span><input type="range" min="0" max="1" step="0.01" value="${settings.tone}" class="flex-1 tone-slider h-1" data-id="${s.id}" data-type="tone"><span class="text-[9px] font-mono w-8 text-right tabular-nums atmos-val" data-val="tone">${Math.round(settings.tone * 100)}%</span></div>
-<div class="flex items-center gap-2"><span class="text-[8px] w-6 atmos-sublabel">SPD</span><input type="range" min="0" max="1" step="0.01" value="${settings.speed}" class="flex-1 speed-slider h-1" data-id="${s.id}" data-type="speed"><span class="text-[9px] font-mono w-8 text-right tabular-nums atmos-val" data-val="speed">${Math.round(settings.speed * 100)}%</span></div>`;
+        item.innerHTML = `<label class="text-[10px] font-semibold truncate mb-1 block atmos-label" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] fader-label font-normal">${s.bpm} BPM</span>` : ''}</label>
+<div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">VOL</span><input type="range" min="0" max="0.5" step="0.01" value="${settings.vol}" class="flex-1 h-1" data-id="${s.id}" data-type="vol"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="vol">${Math.round(settings.vol * 200)}%</span></div>
+<div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">TONE</span><input type="range" min="0" max="1" step="0.01" value="${settings.tone}" class="flex-1 tone-slider h-1" data-id="${s.id}" data-type="tone"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="tone">${Math.round(settings.tone * 100)}%</span></div>
+<div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">SPD</span><input type="range" min="0" max="1" step="0.01" value="${settings.speed}" class="flex-1 speed-slider h-1" data-id="${s.id}" data-type="speed"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="speed">${Math.round(settings.speed * 100)}%</span></div>`;
 
         // Vol slider with value update
         const volInput = item.querySelector('input[data-type="vol"]');
@@ -2694,15 +2715,28 @@ export async function applyComboPreset(comboId, btnElement) {
 
     return true;
 }
+/** LEGACY FAILSAFE - DO NOT REMOVE **/
+window.renderThemeModal = () => {
+    console.log('[Failsafe] renderThemeModal redirected to showThemeGallery');
+    if (typeof showThemeGallery === 'function') showThemeGallery();
+};
 
-// Expose to global scope for HTML onclick handlers
-window.applyComboPreset = applyComboPreset;
-
-// --- THEME MODAL LOGIC ---
+window.setCursorShape = (s) => {
+    if (typeof window._setCursorShape === 'function') {
+        window._setCursorShape(s);
+    } else {
+        console.warn('[Failsafe] _setCursorShape not ready:', s);
+    }
+};
 
 export function initThemeModal() {
+    console.log('[Theme] initThemeModal CALLED');
     const grid = document.getElementById('themeGrid');
-    if (!grid) return;
+    const container = document.getElementById('themeModalContent');
+    if (!grid || !container) {
+        console.warn('[Theme] target elements missing for initThemeModal');
+        return;
+    }
 
     grid.innerHTML = ''; // Clear existing
 
@@ -2716,24 +2750,22 @@ export function initThemeModal() {
         const displayName = key === 'default' ? 'Emerald' : key;
 
         card.innerHTML = `
-    <div class="theme-preview">
-        <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
-    </div>
-    <div class="p-3 theme-card-content">
-        <div class="theme-card-title text-sm font-bold capitalize mb-1" style="color: var(--text-main);">${displayName}</div>
-        <div class="theme-card-desc text-[10px]" style="color: var(--text-muted);">
-            ${getThemeDesc(key)}
-        </div>
-    </div>
-`;
+            <div class="theme-preview">
+                <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
+            </div>
+            <div class="p-3 theme-card-content">
+                <div class="theme-card-title text-sm font-bold capitalize mb-1">${displayName}</div>
+                <div class="theme-card-desc text-[10px] opacity-70">
+                    ${getThemeDesc(key)}
+                </div>
+            </div>
+        `;
 
         card.onclick = () => {
             setTheme(key);
             // Flash "active" state
             document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            // Optional: Close modal after short delay or stay open? 
-            // Let's stay open so they can browse, but maybe close if they click outside.
         };
 
         grid.appendChild(card);
@@ -2743,14 +2775,99 @@ export function initThemeModal() {
     const closeBtn = document.getElementById('closeThemeBtn');
     if (closeBtn) closeBtn.onclick = closeThemeModal;
 
-    // Trigger button
-    if (els.themeBtn) els.themeBtn.addEventListener('click', openThemeModal);
-
     // Click outside to close
     const modal = document.getElementById('themeModal');
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeThemeModal();
+        });
+    }
+
+    // --- Cursor Settings UI (Inlined for robustness) ---
+    const existing = document.getElementById('cursorSettingsDefinitive');
+    if (existing) existing.remove();
+
+    const section = document.createElement('div');
+    section.id = 'cursorSettingsDefinitive';
+    section.className = 'mt-6 pt-6 border-t border-white/10';
+
+    const savedShape = localStorage.getItem('mindwave_cursor_shape') || 'default';
+    const savedColor = localStorage.getItem('mindwave_cursor_color') || null;
+    const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#60a9ff';
+    const effectiveColor = savedColor || accentColor;
+
+    const CURSOR_SHAPES_DATA = [
+        { id: 'sun', name: 'Sun', icon: '☀️' },
+        { id: 'moon', name: 'Moon', icon: '🌙' },
+        { id: 'plus', name: 'Plus', icon: '✚' },
+        { id: 'lotus', name: 'Lotus', icon: '🪷' },
+        { id: 'heart', name: 'Heart', icon: '❤️' },
+        { id: 'mindwave', name: 'MindWave', icon: '🧠' },
+        { id: 'ring', name: 'Ring', icon: '⭕' },
+        { id: 'target', name: 'Target', icon: '🎯' },
+        { id: 'default', name: 'Default', icon: '🖱️' }
+    ];
+
+    section.innerHTML = `
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 rounded-lg bg-[var(--accent)]/20">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5">
+                    <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6" fill="none"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold tracking-tight">CUSTOM CURSOR</h3>
+                <div class="text-xs opacity-70">Choose shape and color</div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20">
+            <span class="text-xs font-medium">Color:</span>
+            <div class="relative group">
+                <div id="cursorColorPreview" class="w-8 h-8 rounded-full border-2 border-[var(--accent)]/40 cursor-pointer shadow-lg transition-transform hover:scale-110" style="background-color: ${effectiveColor};"></div>
+                <input type="color" id="cursorColorPicker" value="${savedColor || '#60a9ff'}" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+            </div>
+            <button id="resetCursorColor" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 transition-all border border-[var(--accent)]/30">Reset</button>
+        </div>
+        <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="cursorShapeGrid">
+            ${CURSOR_SHAPES_DATA.map(s => `
+                <button class="cursor-option p-3 rounded-xl text-center transition-all border ${s.id === savedShape ? 'active bg-[var(--accent)]/20 border-[var(--accent)]' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'}" data-shape="${s.id}" title="${s.name}">
+                    <span class="text-2xl block">${s.icon}</span>
+                    <div class="text-[10px] mt-1 font-semibold">${s.name}</div>
+                </button>
+            `).join('')}
+        </div>`;
+
+    container.appendChild(section);
+
+    // Event Listeners for Cursor
+    section.querySelectorAll('.cursor-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (typeof window.setCursorShape === 'function') {
+                window.setCursorShape(btn.dataset.shape);
+                // Update UI active state
+                section.querySelectorAll('.cursor-option').forEach(b => b.classList.remove('active', 'bg-[var(--accent)]/20', 'border-[var(--accent)]'));
+                btn.classList.add('active', 'bg-[var(--accent)]/20', 'border-[var(--accent)]');
+            }
+        });
+    });
+
+    const cp = section.querySelector('#cursorColorPicker');
+    if (cp) {
+        cp.addEventListener('input', (e) => {
+            if (typeof window.setCursorColor === 'function') {
+                window.setCursorColor(e.target.value);
+                const prev = section.querySelector('#cursorColorPreview');
+                if (prev) prev.style.backgroundColor = e.target.value;
+            }
+        });
+    }
+
+    const rb = section.querySelector('#resetCursorColor');
+    if (rb) {
+        rb.addEventListener('click', () => {
+            if (typeof window.resetCursorColor === 'function') {
+                window.resetCursorColor();
+            }
         });
     }
 }
@@ -2788,37 +2905,35 @@ function getThemeDesc(key) {
     }
 }
 
-export function openThemeModal() {
+/**
+ * Definitive function to show the theme gallery.
+ * Renamed from openThemeModal to bypass potential caching/reference errors.
+ */
+export function showThemeGallery() {
+    console.log('[Theme] showThemeGallery CALLED');
     const modal = document.getElementById('themeModal');
     const card = document.getElementById('themeModalCard');
-    if (modal && card) {
-        // Re-render to update 'active' state
-        initThemeModal();
+    if (!modal || !card) return;
 
-        // Add cursor settings UI to the modal
-        if (card.classList.contains('scale-95')) {
-            card.classList.remove('scale-95');
-            card.classList.add('scale-100');
-        } else {
-            renderThemeModal(getTheme()); // Initial render
-            requestAnimationFrame(() => {
-                card.classList.remove('scale-95');
-                card.classList.add('scale-100');
-            });
-        }
+    // Render content (this now handles everything including cursors)
+    initThemeModal();
 
-        // Apply Layout Constraints
+    // Show modal
+    modal.classList.remove('hidden');
+    void modal.offsetWidth; // Force reflow
+    modal.classList.add('active');
+
+    // Reset scroll position on open
+    const scrollContent = document.getElementById('themeModalContent');
+    if (scrollContent) scrollContent.scrollTop = 0;
+
+    // Animation
+    card.classList.remove('opacity-0', 'scale-95');
+    card.classList.add('opacity-100', 'scale-100');
+
+    // Layout
+    if (typeof adjustModalLayout === 'function') {
         adjustModalLayout(modal);
-
-        modal.classList.remove('hidden');
-        // Force reflow
-        void modal.offsetWidth;
-        modal.classList.add('active');
-
-        setTimeout(() => {
-            card.classList.remove('scale-95', 'opacity-0');
-            card.classList.add('scale-100', 'opacity-100');
-        }, 10);
     }
 }
 
@@ -3953,12 +4068,22 @@ function getSafeArea() {
 
 function adjustModalLayout(modal) {
     if (!modal) return;
+    // Profile Modal handles its own layout (bottom sheet)
+    if (modal.id === 'profileModal') return;
+
     const safe = getSafeArea();
 
-    // Apply safe area constraints to the modal container
-    // This confines the backdrop AND content to the "center stage"
+    // Apply safe area constraints correctly for vertical centering
+    // We use top/bottom for general boundaries, but for large content, 
+    // we must ensure the container height allows for flex centering.
     modal.style.top = `${safe.top}px`;
-    modal.style.bottom = `${safe.bottom}px`;
+
+    // For large footers (e.g. 410px), we limit the safe bottom to a reasonable value 
+    // for CENTERED modals to avoid pushing them too far up.
+    const maxBottomCushion = 100;
+    const effectiveBottom = Math.min(safe.bottom, maxBottomCushion);
+    modal.style.bottom = `${effectiveBottom}px`;
+
     modal.style.left = `${safe.left}px`;
     modal.style.right = `${safe.right}px`;
 

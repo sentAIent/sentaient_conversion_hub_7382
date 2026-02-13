@@ -115,6 +115,75 @@ async function handleCheckoutComplete(session) {
     }
 
     console.log('[Stripe Webhook] Subscription created for user:', userId);
+
+    // ✅ REVENUE FEATURE: Handle referral approval
+    await handleReferralApproval(userId);
+}
+
+/**
+ * Handle referral approval
+ * If the user who just purchased was referred, approve the referral and reward the referrer
+ */
+async function handleReferralApproval(userId) {
+    console.log('[Stripe Webhook] Checking for pending referrals for user:', userId);
+
+    try {
+        const referralDoc = await db.collection('referrals').doc(userId).get();
+        if (!referralDoc.exists || referralDoc.data().status !== 'pending') {
+            console.log('[Stripe Webhook] No pending referral found for user:', userId);
+            return;
+        }
+
+        const referralData = referralDoc.data();
+        const referrerId = referralData.referrerId;
+
+        // 1. Mark referral as approved
+        await db.collection('referrals').doc(userId).update({
+            status: 'approved',
+            approvedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 2. Grant Reward to Referrer
+        await grantReferralBonus(referrerId, 'referrer');
+
+        // 3. Grant Reward to Referred User
+        await grantReferralBonus(userId, 'referred');
+
+    } catch (error) {
+        console.error('[Stripe Webhook] Error in handleReferralApproval:', error);
+    }
+}
+
+/**
+ * Helper: Grant 30-day bonus to a user
+ */
+async function grantReferralBonus(uid, role) {
+    console.log(`[Stripe Webhook] Granting bonus to ${role}:`, uid);
+    const subRef = db.collection('subscriptions').doc(uid);
+    const subDoc = await subRef.get();
+
+    if (subDoc.exists) {
+        const data = subDoc.data();
+        if (data.plan === 'lifetime') return;
+
+        let currentExpiry = data.expiresAt ? (data.expiresAt.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt)) : new Date();
+        const newExpiry = new Date(currentExpiry.getTime() + (30 * 24 * 60 * 60 * 1000));
+
+        await subRef.update({
+            expiresAt: admin.firestore.Timestamp.fromDate(newExpiry),
+            referralCreditsEarned: admin.firestore.FieldValue.increment(role === 'referrer' ? 1 : 0),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+    } else {
+        await subRef.set({
+            status: 'active',
+            plan: 'yogi',
+            expiresAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + (30 * 24 * 60 * 60 * 1000))),
+            referralCreditsEarned: role === 'referrer' ? 1 : 0,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+    }
 }
 
 /**
@@ -252,14 +321,25 @@ async function updateSubscriptionRecord(userId, customerId, subscription) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
 
-    // Add expiration date for non-lifetime plans
-    if (!isLifetime && subscription.current_period_end) {
-        subscriptionData.expiresAt = new Date(subscription.current_period_end * 1000);
-    }
-
-    // Add creation timestamp if new
     const docRef = db.collection('subscriptions').doc(userId);
     const doc = await docRef.get();
+
+    // Add expiration date for non-lifetime plans
+    if (!isLifetime && subscription.current_period_end) {
+        const stripeExpiry = new Date(subscription.current_period_end * 1000);
+
+        // If user already has an expiresAt (from referrals), don't set it to an earlier date
+        if (doc.exists && doc.data().expiresAt) {
+            const currentExpiry = doc.data().expiresAt.toDate();
+            if (currentExpiry > stripeExpiry) {
+                console.log('[Stripe Webhook] Existing expiry is further in future (referral?), keeping it.');
+            } else {
+                subscriptionData.expiresAt = admin.firestore.Timestamp.fromDate(stripeExpiry);
+            }
+        } else {
+            subscriptionData.expiresAt = admin.firestore.Timestamp.fromDate(stripeExpiry);
+        }
+    }
 
     if (!doc.exists) {
         subscriptionData.createdAt = admin.firestore.FieldValue.serverTimestamp();

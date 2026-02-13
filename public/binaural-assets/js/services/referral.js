@@ -32,6 +32,11 @@ export function checkReferral() {
     if (referrerId) {
         console.log('[Referral] Found referrer:', referrerId);
         localStorage.setItem(STORAGE_KEY, referrerId);
+
+        // Clear param from URL to keep it clean
+        const url = new URL(window.location.href);
+        url.searchParams.delete(REFERRAL_PARAM);
+        window.history.replaceState({}, '', url.toString());
     }
 }
 

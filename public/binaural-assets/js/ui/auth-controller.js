@@ -71,7 +71,10 @@ export function initAuthUI() {
         };
     }
 
-    // 2. Form Submit
+
+    // 5. Initialize Profile/Logout/Referral Handlers
+    setupProfileHandlers();
+
     if (authForm) {
         authForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -218,32 +221,27 @@ function updateProfileUI(user) {
         if (isPremium) {
             // Premium user - show "Manage Subscription" button
             upgradeBtn.textContent = '⚙️ Manage Subscription';
-            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm bg-transparent border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--bg-main)] transition-all';
-            upgradeBtn.style.color = ''; // Reset inline style if any
+            // Premium Glassmorphic Style
+            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wide bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/50 transition-all shadow-lg shadow-cyan-900/20';
+            upgradeBtn.style.color = '';
             upgradeBtn.style.backgroundColor = '';
             upgradeBtn.onclick = () => {
-                // Open Stripe Customer Portal
-                if (window.showPricingModal) {
-                    window.showPricingModal();
-                }
+                if (window.showPricingModal) window.showPricingModal();
             };
         } else {
             // Free user - show prominent "Upgrade to Pro" button
             upgradeBtn.textContent = '⚡ Upgrade to Pro';
-            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all shadow-[0_0_20px_var(--accent-glow)]';
-            // Force theme color via inline style to guarantee match
-            upgradeBtn.style.backgroundColor = 'var(--accent)';
-            upgradeBtn.style.color = 'var(--bg-main)';
+            // High-Conversion Gradient Style
+            upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wide text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-95 transition-all';
+            upgradeBtn.style.backgroundColor = ''; // Remove inline override to let gradient work
+            upgradeBtn.style.color = '';
             upgradeBtn.onclick = () => {
-                // Close profile modal and show pricing
                 const profileModal = document.getElementById('profileModal');
                 if (profileModal) {
                     profileModal.classList.add('hidden');
                     profileModal.classList.remove('active');
                 }
-                if (window.showPricingModal) {
-                    window.showPricingModal();
-                }
+                if (window.showPricingModal) window.showPricingModal();
             };
         }
 
@@ -346,24 +344,24 @@ async function updateDailyUsageDisplay() {
                     </div>
                     <div class="text-[10px] text-[var(--text-muted)]">Pro member • ${usageMinutes}min today</div>
                 `;
-                usageEl.className = 'col-span-2 p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 text-center';
+                usageEl.className = 'col-span-2 p-3 rounded-xl bg-[var(--accent)]/5 border border-[var(--accent)]/20 text-center';
             } else {
                 const isNearLimit = percentUsed >= 80;
                 const isAtLimit = percentUsed >= 100;
                 usageEl.innerHTML = `
                     <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mb-1">Daily Usage (Free Plan)</div>
-                    <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+                    <div class="w-full h-2 bg-[var(--text-main)]/10 rounded-full overflow-hidden mb-2">
                         <div class="h-full transition-all ${isAtLimit ? 'bg-red-500' : isNearLimit ? 'bg-amber-500' : 'bg-[var(--accent)]'}" 
                              style="width: ${percentUsed}%"></div>
                     </div>
-                    <div class="text-sm font-bold ${isAtLimit ? 'text-red-400' : isNearLimit ? 'text-amber-400' : 'text-white'}">
+                    <div class="text-sm font-bold ${isAtLimit ? 'text-red-400' : isNearLimit ? 'text-amber-400' : 'text-[var(--text-main)]'}">
                         ${usageMinutes} / ${limitMinutes} min
                     </div>
                     <div class="text-[10px] ${isAtLimit ? 'text-red-300' : 'text-[var(--text-muted)]'}">
                         ${isAtLimit ? 'Daily limit reached! Upgrade for unlimited.' : `${remaining} min remaining today`}
                     </div>
                 `;
-                usageEl.className = `col-span-2 p-3 rounded-xl ${isAtLimit ? 'bg-red-500/10 border-red-500/30' : isNearLimit ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/5 border-white/10'} border text-center`;
+                usageEl.className = `col-span-2 p-3 rounded-xl ${isAtLimit ? 'bg-red-500/10 border-red-500/30' : isNearLimit ? 'bg-amber-500/10 border-amber-500/30' : 'bg-[var(--text-main)]/5 border-[var(--text-main)]/10'} border text-center`;
             }
         }
     } catch (err) {
@@ -383,6 +381,7 @@ export function setupProfileHandlers() {
             try {
                 await logoutUser();
                 profileModal?.classList.add('hidden');
+                if (window.toggleFooterMode) window.toggleFooterMode(false); // Restore footer
                 showToast('Signed out successfully', 'info');
             } catch (err) {
                 console.error('[Profile] Logout error:', err);
@@ -394,6 +393,7 @@ export function setupProfileHandlers() {
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             profileModal?.classList.add('hidden');
+            if (window.toggleFooterMode) window.toggleFooterMode(false); // Restore footer
         });
     }
 
@@ -422,6 +422,30 @@ export function setupProfileHandlers() {
             }
         });
     }
+
+    const referralBtn = document.getElementById('profileReferralBtn');
+    if (referralBtn) {
+        referralBtn.addEventListener('click', () => {
+            // Get UID from state or auth
+            const uid = state.currentUser?.uid || 'guest';
+            const link = `${window.location.origin}?ref=${uid}`;
+
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Referral link copied!', 'success');
+                // Visual feedback
+                const originalText = referralBtn.textContent;
+                referralBtn.textContent = 'Copied!';
+                referralBtn.classList.add('bg-cyan-500/30');
+                setTimeout(() => {
+                    referralBtn.textContent = originalText;
+                    referralBtn.classList.remove('bg-cyan-500/30');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy code', err);
+                showToast('Failed to copy link', 'error');
+            });
+        });
+    }
 }
 
 export function openAuthModal() {
@@ -435,6 +459,10 @@ export function openAuthModal() {
             profileModal.classList.remove('hidden');
             profileModal.classList.add('active');
 
+            // Reset scroll position on open
+            const scrollContainer = profileModal.querySelector('.glass-card');
+            if (scrollContainer) scrollContainer.scrollTop = 0;
+
             // Update profile UI with current user data
             updateProfileUI(state.currentUser);
 
@@ -443,6 +471,9 @@ export function openAuthModal() {
 
             // Apply Layout Constraints
             if (window.adjustActiveModal) window.adjustActiveModal(profileModal);
+
+            // Auto-collapse footer for better visibility
+            if (window.toggleFooterMode) window.toggleFooterMode(true);
         } else {
             // Fallback if profile modal doesn't exist
             showToast("Account menu coming soon. Use the profile button to sign out.", "info");
@@ -451,11 +482,17 @@ export function openAuthModal() {
     }
 
     const m = document.getElementById('authModal');
-    m.classList.remove('hidden');
-    m.classList.add('active');
+    if (m) {
+        m.classList.remove('hidden');
+        m.classList.add('active');
 
-    // Apply Layout Constraints
-    if (window.adjustActiveModal) window.adjustActiveModal(m);
+        // Reset scroll position on open
+        const scrollContainer = m.querySelector('.custom-scrollbar');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
+
+        // Apply Layout Constraints
+        if (window.adjustActiveModal) window.adjustActiveModal(m);
+    }
 
     isLoginMode = true; // Reset to login
     document.getElementById('authTitle').textContent = "Sign In";

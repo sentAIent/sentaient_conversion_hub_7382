@@ -210,6 +210,12 @@ export async function isPremiumUser() {
 
     if (!user) return false;
 
+    // MOCK OVERRIDE (for testing without DB)
+    if (window.__MOCK_PREMIUM === true) {
+        console.log('[Stripe] Mock premium active');
+        return true;
+    }
+
     const db = getFirestore();
     const subDoc = await getDoc(doc(db, 'subscriptions', user.uid));
 

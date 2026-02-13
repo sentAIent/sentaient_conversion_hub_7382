@@ -1,7 +1,7 @@
-console.log("MAIN JS LOADED - NUCLEAR V4");
+console.log("MAIN JS LOADED - NUCLEAR V4 - CONSOLIDATED FIX V1");
 window.NUCLEAR_MAIN_LOADED = true;
-import { setupUI } from './ui/controls_v3.js?v=MATRIX_FIX_V22';
-import { initCursor } from './ui/cursor.js';
+import { setupUI } from './ui/controls_v3.js?v=NUCLEAR_V100';
+import { initCursor } from './ui/cursor.js?v=NUCLEAR_V100';
 import { initFirebase } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
 import { startOnboarding, shouldShowOnboarding } from './ui/onboarding_premium.js';

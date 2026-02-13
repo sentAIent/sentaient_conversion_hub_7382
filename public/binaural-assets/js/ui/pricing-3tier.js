@@ -30,7 +30,7 @@ const PRICING_CONFIG = {
     },
     buddha: {
         name: "Professional",
-        price: "$29.00",
+        price: "$29",
         period: "/month",
         productId: "buddha",
         description: "For coaches & power users",
@@ -147,7 +147,7 @@ function createPricingModal(currentTier) {
             </div>
 
             <!-- Pricing Cards Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 60px; align-items: stretch;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px; align-items: stretch;">
                 
                 <!-- Free Tier -->
                 <div class="pricing-tier" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 32px; display: flex; flex-direction: column;">
@@ -166,9 +166,6 @@ function createPricingModal(currentTier) {
                         </li>
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
                             <span style="color: var(--text-muted);">✓</span> 15 Minutes / Day
-                        </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.5); display: flex; gap: 12px;">
-                            <span style="color: var(--text-muted);">✕</span> No Visualizers
                         </li>
                     </ul>
                     <button disabled style="width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: rgba(255, 255, 255, 0.4); font-weight: 600; margin-bottom: 12px;">Currently Active</button>
@@ -189,9 +186,6 @@ function createPricingModal(currentTier) {
                             <span style="color: var(--text-muted);">${PRICING_CONFIG.yogi.period}</span>
                         </div>
                         <div style="font-size: 12px; color: #fbbf24; margin-top: 8px;">${PRICING_CONFIG.yogi.warning}</div>
-                        <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 8px; animation: pulse 2s infinite;">
-                            🔥 Only ${spots} spots left at this price
-                        </div>
                     </div>
 
                     <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
@@ -204,23 +198,14 @@ function createPricingModal(currentTier) {
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
                             <span style="color: #10b981;">✓</span> Full 30-Day Journey
                         </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #10b981;">✓</span> Advanced Visualizers
-                        </li>
                     </ul>
 
                     <button id="upgradeBtnFounders" style="width: 100%; padding: 16px; background: #10b981; border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                        ${(() => {
-            const variant = getVariant('pricing_cta');
-            if (variant === 'urgency') return 'Limited Time — Join Now';
-            if (variant === 'social_proof') return 'Join 10,000+ Members';
-            return 'Join Founders Club';
-        })()}
+                        Join Founders Club
                     </button>
-                    <p style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 12px;">Cancel anytime.</p>
                 </div>
 
-                <!-- Professional Tier -->
+                <!-- Professional Tier (Buddha) -->
                 <div class="pricing-tier" style="background: rgba(124, 58, 237, 0.05); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 20px; padding: 32px; display: flex; flex-direction: column;">
                     <div style="padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(124, 58, 237, 0.3);">
                         <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.buddha.name}</h3>
@@ -237,58 +222,72 @@ function createPricingModal(currentTier) {
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
                             <span style="color: #a78bfa;">✓</span> Priority Support
                         </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #a78bfa;">✓</span> Early Access Features
-                        </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #a78bfa;">✓</span> Commercial License
-                        </li>
                     </ul>
                     <button id="upgradeBtnPro" style="width: 100%; padding: 16px; background: rgba(124, 58, 237, 0.2); border: 1px solid #7c3aed; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                         Go Professional
                     </button>
                 </div>
+            </div>
 
-                <!-- Lifetime Tier -->
-                <div class="pricing-tier" style="background: linear-gradient(145deg, rgba(251, 191, 36, 0.1), rgba(180, 83, 9, 0.2)); border: 2px solid #fbbf24; border-radius: 20px; padding: 32px; position: relative; display: flex; flex-direction: column; transform: scale(1.05); box-shadow: 0 0 40px rgba(251, 191, 36, 0.2); z-index: 20;">
-                    <div style="position: absolute; top: -12px; right: 24px; background: #fbbf24; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; color: black; text-transform: uppercase;">Best Value</div>
-                    
-                    <div style="padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(251, 191, 36, 0.3);">
-                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.lifetime.name}</h3>
-                        <p style="font-size: 14px; color: #fcd34d;">${PRICING_CONFIG.lifetime.description}</p>
-                        <div style="margin-top: 16px;">
-                            <span style="font-size: 42px; font-weight: 700; color: white;">${PRICING_CONFIG.lifetime.price}</span>
-                            <span style="color: var(--text-muted);">${PRICING_CONFIG.lifetime.period}</span>
+            <!-- Special Lifetime Offer Section - Spans Full Width -->
+            <div id="lifetimeOfferSec" style="width: 100%; clear: both; background: linear-gradient(145deg, rgba(251, 191, 36, 0.15), rgba(180, 83, 9, 0.25)); border: 2px solid #fbbf24; border-radius: 24px; padding: 48px; position: relative; margin-bottom: 40px; box-shadow: 0 0 50px rgba(251, 191, 36, 0.25); overflow: hidden;">
+                <!-- Animated background element -->
+                <div style="position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
+                
+                <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: center; position: relative; z-index: 1;">
+                    <!-- Left Side: Price & CTA -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <div style="background: #fbbf24; padding: 4px 16px; border-radius: 20px; font-size: 11px; font-weight: 900; color: black; text-transform: uppercase; display: inline-block; margin-bottom: 16px; letter-spacing: 1px;">Special Limited Offer</div>
+                        <h3 style="font-size: 36px; font-weight: 800; color: white; margin-bottom: 12px;">${PRICING_CONFIG.lifetime.name}</h3>
+                        <p style="font-size: 18px; color: #fcd34d; margin-bottom: 24px;">One-time payment. Every feature. Forever.</p>
+                        
+                        <div style="margin-bottom: 32px;">
+                            <span style="font-size: 64px; font-weight: 900; color: white;">${PRICING_CONFIG.lifetime.price}</span>
+                            <span style="font-size: 18px; color: var(--text-muted); text-decoration: line-through; margin-left: 12px;">$999</span>
+                            <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 8px; display: inline-block; margin-top: 12px; animation: pulse 2.5s infinite;">
+                                🔥 Only ${spots} Founding Member spots left
+                            </div>
                         </div>
-                        <div style="font-size: 12px; color: #fbbf24; margin-top: 8px;">${PRICING_CONFIG.lifetime.warning}</div>
+
+                        <button id="upgradeBtnLifetime" style="width: 100%; max-width: 400px; padding: 20px 40px; background: #fbbf24; border: none; border-radius: 16px; color: black; font-size: 20px; font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);">
+                            Get Lifetime Access
+                        </button>
                     </div>
 
-                    <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
-                         <li style="padding: 8px 0; color: white; display: flex; gap: 12px; font-weight: 500;">
-                            <span style="color: #fbbf24;">✓</span> <strong>${PRICING_CONFIG.lifetime.limitText}</strong>
-                        </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #fbbf24;">✓</span> Pay Once, Own Forever
-                        </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #fbbf24;">✓</span> All Future Updates Included
-                        </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #fbbf24;">✓</span> VIP Support
-                        </li>
-                    </ul>
-
-                    <button id="upgradeBtnLifetime" style="width: 100%; padding: 16px; background: #fbbf24; border: none; border-radius: 12px; color: black; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);">
-                        Get Lifetime Access
-                    </button>
-                    <p style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 12px;">One-time payment.</p>
+                    <!-- Right Side: Features -->
+                    <div style="flex: 1.2; min-width: 320px; background: rgba(0,0,0,0.2); border-radius: 16px; padding: 32px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
+                                <span style="font-size: 20px; color: #fbbf24;">★</span> Unlimited Cloud Saves
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
+                                <span style="font-size: 20px; color: #fbbf24;">★</span> All Premium Visuals
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
+                                <span style="font-size: 20px; color: #fbbf24;">★</span> Commercial License
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
+                                <span style="font-size: 20px; color: #fbbf24;">★</span> Future Beta Access
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
+                                <span style="font-size: 20px; color: #fbbf24;">★</span> VIP Support
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
+                                <span style="font-size: 20px; color: #fbbf24;">★</span> Ad-Free Forever
+                            </div>
+                        </div>
+                        <div style="margin-top: 32px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
+                            <p style="font-size: 13px; color: var(--text-muted); font-style: italic;">"The best investment I've made in my mental performance." — David K., Software Engineer</p>
+                        </div>
+                    </div>
                 </div>
 
-            <!-- Social Proof / Testimonials -->
-            <div style="margin-bottom: 24px;">
-                <h4 style="text-align: center; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">Trusted by 10,000+ Meditators</h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-                    ${renderTestimonials()}
+                <!-- Testimonials Directly Under Lifetime Offer -->
+                <div style="margin-top: 48px; border-top: 1px solid rgba(251, 191, 36, 0.2); padding-top: 40px;">
+                    <h4 style="text-align: center; color: #fcd34d; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 32px; font-weight: 800;">Real Results from Lifetime Members</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        ${renderTestimonials()}
+                    </div>
                 </div>
             </div>
             
