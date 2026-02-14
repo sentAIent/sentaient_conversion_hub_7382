@@ -27,18 +27,18 @@ const ServiceShowcase = () => {
     ];
 
     return (
-        <section id="services" className="py-24 bg-black">
+        <section id="services" className="py-24 bg-background">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4">Our Services</h2>
-                    <div className="h-1 w-20 bg-conversion mx-auto rounded-full"></div>
+                    <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-4">Our Services</h2>
+                    <div className="h-1 w-20 bg-accent mx-auto rounded-full"></div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {services.map((service, index) => (
                         <div
                             key={index}
-                            className="group relative bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-all hover:-translate-y-2 overflow-hidden"
+                            className="group relative bg-card border border-border p-8 rounded-3xl hover:bg-muted transition-all hover:-translate-y-2 overflow-hidden"
                         >
                             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${service.color} opacity-10 blur-3xl group-hover:opacity-20 transition-opacity`}></div>
 
@@ -46,15 +46,15 @@ const ServiceShowcase = () => {
                                 <Icon name={service.icon} size={28} color="white" />
                             </div>
 
-                            <h3 className="text-2xl font-bold text-white mb-4">{service.title}</h3>
-                            <p className="text-white/60 mb-6 leading-relaxed">
+                            <h3 className="text-2xl font-bold text-foreground mb-4">{service.title}</h3>
+                            <p className="text-muted-foreground mb-6 leading-relaxed">
                                 {service.description}
                             </p>
 
                             <ul className="space-y-3">
                                 {service.features.map((feature, fIdx) => (
-                                    <li key={fIdx} className="flex items-center text-sm text-white/80">
-                                        <Icon name="Check" size={14} className="text-conversion mr-2" />
+                                    <li key={fIdx} className="flex items-center text-sm text-foreground/80">
+                                        <Icon name="Check" size={14} className="text-accent mr-2" />
                                         {feature}
                                     </li>
                                 ))}

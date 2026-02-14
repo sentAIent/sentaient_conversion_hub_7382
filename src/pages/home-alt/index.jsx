@@ -13,7 +13,7 @@ const HomeAlt = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-black text-white font-sans selection:bg-conversion selection:text-white">
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-background">
             <Header />
             <main>
                 <HeroSection />

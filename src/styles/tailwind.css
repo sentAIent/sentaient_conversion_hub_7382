@@ -7,55 +7,60 @@
 @layer base {
   :root {
     /* Background Colors */
-    --color-background: #ffffff; /* white */
-    --color-foreground: #202733; /* gray-800 */
-    --color-card: #ffffff; /* white */
-    --color-card-foreground: #202733; /* gray-800 */
-    --color-popover: #ffffff; /* white */
-    --color-popover-foreground: #202733; /* gray-800 */
-    --color-muted: #f7fafc; /* gray-50 */
-    --color-muted-foreground: #718096; /* gray-500 */
-    
+    --color-background: #202733;
+    /* Deep Navy (User Choice) */
+    --color-foreground: #F0EAD6;
+    /* Eggshell (User Choice) */
+    --color-card: #2a3441;
+    /* Slightly lighter navy for cards */
+    --color-card-foreground: #F0EAD6;
+    --color-popover: #2a3441;
+    --color-popover-foreground: #F0EAD6;
+    --color-muted: #2d3748;
+    --color-muted-foreground: #94a3b8;
+
     /* Border and Input */
-    --color-border: #e2e8f0; /* gray-200 */
-    --color-input: #ffffff; /* white */
-    --color-ring: #1a365d; /* blue-900 */
-    
+    --color-border: #3a4a5e;
+    --color-input: #2a3441;
+    --color-ring: #60a9ff;
+
     /* Brand Colors */
-    --color-primary: #60a9ff; /* blue-900 */
-    --color-primary-foreground: #ffffff; /* white */
-    --color-secondary: #202733; /* blue-700 */
-    --color-secondary-foreground: #ffffff; /* white */
-    --color-accent: #8cc9ff; /* cyan-400 */
-    --color-accent-foreground: #1a365d; /* blue-900 */
-    
+    --color-primary: #60a9ff;
+    /* Cyber Blue Accent */
+    --color-primary-foreground: #202733;
+    --color-secondary: #2a3441;
+    --color-secondary-foreground: #F0EAD6;
+    --color-accent: #60a9ff;
+    --color-accent-foreground: #202733;
+
     /* Status Colors */
-    --color-success: #38a169; /* green-500 */
-    --color-success-foreground: #ffffff; /* white */
-    --color-warning: #d69e2e; /* yellow-600 */
-    --color-warning-foreground: #ffffff; /* white */
-    --color-error: #e53e3e; /* red-500 */
-    --color-error-foreground: #ffffff; /* white */
-    --color-destructive: #e53e3e; /* red-500 */
-    --color-destructive-foreground: #ffffff; /* white */
-    
+    --color-success: #10b981;
+    --color-success-foreground: #ffffff;
+    --color-warning: #f59e0b;
+    --color-warning-foreground: #ffffff;
+    --color-error: #ef4444;
+    --color-error-foreground: #ffffff;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+
     /* Additional Brand Colors */
-    --color-conversion: #10b981; /* emerald-500 */
-    --color-conversion-foreground: #ffffff; /* white */
-    --color-trust: #6366f1; /* indigo-500 */
-    --color-trust-foreground: #ffffff; /* white */
-    --color-cta: #f59e0b; /* amber-500 */
-    --color-cta-foreground: #ffffff; /* white */
-    
+    --color-conversion: #60a9ff;
+    --color-conversion-foreground: #202733;
+    --color-trust: #4f46e5;
+    --color-trust-foreground: #ffffff;
+    --color-cta: #F0EAD6;
+    /* Eggshell for CTA contrast */
+    --color-cta-foreground: #202733;
+
     /* Text Colors */
-    --color-text-primary: #1f2937; /* gray-800 */
-    --color-text-secondary: #718096; /* gray-500 */
-    
+    --color-text-primary: #F0EAD6;
+    --color-text-secondary: #94a3b8;
+
     /* Shadow Variables */
-    --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-elevation: 0 4px 20px rgba(26, 54, 93, 0.1);
-    --shadow-deep: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    
+    --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-elevation: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-deep: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+
     /* Animation Variables */
     --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: 0.3s ease-in-out;
@@ -67,16 +72,26 @@
   }
 
   .hero-section {
-    background-image: url('https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2606&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Replace with your image path */
-    background-size: cover; /* Ensures the image covers the entire element */
-    background-position: center; /* Centers the image */
-    background-repeat: no-repeat; /* Prevents image repetition */
-    height: 100vh; /* Makes the hero section take full viewport height */
-    width: 100vw; /* Makes the hero section take full viewport width */
-    display: flex; /* Use flexbox for content alignment */
-    justify-content: center; /* Center content horizontally */
-    align-items: center; /* Center content vertically */
-    position: relative; /* Essential for positioning overlay or text */
+    background-image: url('https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2606&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+    /* Replace with your image path */
+    background-size: cover;
+    /* Ensures the image covers the entire element */
+    background-position: center;
+    /* Centers the image */
+    background-repeat: no-repeat;
+    /* Prevents image repetition */
+    height: 100vh;
+    /* Makes the hero section take full viewport height */
+    width: 100vw;
+    /* Makes the hero section take full viewport width */
+    display: flex;
+    /* Use flexbox for content alignment */
+    justify-content: center;
+    /* Center content horizontally */
+    align-items: center;
+    /* Center content vertically */
+    position: relative;
+    /* Essential for positioning overlay or text */
   }
 
   body {
@@ -85,12 +100,18 @@
     line-height: 1.6;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Inter', sans-serif;
     line-height: 1.2;
   }
 
-  code, pre {
+  code,
+  pre {
     font-family: 'Fira Code', monospace;
   }
 
@@ -99,63 +120,66 @@
     align-items: center;
     gap: 1rem;
   }
-  
+
   .logo {
-  height: 10px;
-  width: 20px;
-  transition: transform 0.3s ease;
+    height: 10px;
+    width: 20px;
+    transition: transform 0.3s ease;
   }
 
 }
 
 @layer components {
-.btn-primary  {
+  .btn-primary {
     @apply bg-primary text-primary-foreground transition-colors duration-300;
   }
-.btn-secondary  {
+
+  .btn-secondary {
     @apply bg-secondary text-secondary-foreground transition-colors duration-300;
   }
-.btn-accent  {
+
+  .btn-accent {
     @apply bg-accent text-accent-foreground transition-colors duration-300;
   }
-.btn-conversion  {
+
+  .btn-conversion {
     @apply bg-conversion text-conversion-foreground transition-colors duration-300;
   }
-  
+
   .card-elevated {
     box-shadow: var(--shadow-elevation);
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5;
   }
-  
+
   .text-fluid-xl {
     font-size: clamp(1.5rem, 4vw, 3rem);
   }
-  
+
   .text-fluid-lg {
     font-size: clamp(1.25rem, 3vw, 2rem);
   }
-  
+
   .text-fluid-base {
     font-size: clamp(1rem, 2.5vw, 1.125rem);
   }
-  
+
   .grid-responsive {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(clamp(300px, 33vw, 400px), 1fr));
     gap: 2rem;
   }
-  
+
   .animation-reveal {
     opacity: 0;
     transform: translateY(30px);
     transition: opacity var(--transition-reveal), transform var(--transition-reveal);
   }
-  
+
   .animation-reveal.in-view {
     opacity: 1;
     transform: translateY(0);
   }
-  
+
   .glass-morphism {
     backdrop-filter: blur(10px);
     background: rgba(255, 255, 255, 0.1);
@@ -167,19 +191,19 @@
   .transition-smooth {
     transition: all var(--transition-smooth);
   }
-  
+
   .transition-fast {
     transition: all var(--transition-fast);
   }
-  
+
   .shadow-brand {
     box-shadow: var(--shadow-elevation);
   }
-  
+
   .shadow-deep {
     box-shadow: var(--shadow-deep);
   }
-  
+
   .text-balance {
     text-wrap: balance;
   }
