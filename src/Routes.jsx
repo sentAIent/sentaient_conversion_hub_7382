@@ -25,7 +25,7 @@ const ProjectRoutes = () => {
       <ErrorBoundary>
         <ScrollToTop />
         <RouterRoutes>
-          <Route path="/" element={<HomepageAIConsultancyHub />} />
+          <Route path="/" element={<AboutOurApproachIntelligenceCenter />} />
           <Route path="/knowledge-nexus-resource-library" element={<KnowledgeNexusResourceLibrary />} />
           <Route path="/free-ai-assessment-portal" element={<FreeAIAssessmentPortal />} />
           <Route path="/homepage-ai-consultancy-hub" element={<HomepageAIConsultancyHub />} />
