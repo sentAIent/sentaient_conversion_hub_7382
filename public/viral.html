@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viral Hub | Autonomous Marketing Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/binaural-assets/css/style.css">
+    <style>
+        :root {
+            --accent: #2dd4bf;
+            --bg-dark: #0f172a;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at top left, rgba(45, 212, 191, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.1) 0%, transparent 50%);
+        }
+
+        .glow-btn {
+            background: var(--accent);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glow-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(45, 212, 191, 0.5);
+        }
+
+        .card-anim {
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card-anim:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen hero-gradient p-8">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-12">
+            <div>
+                <h1 class="text-4xl font-black tracking-tight text-white mb-2">Viral Hub <span
+                        class="text-teal-400">v1.0</span></h1>
+                <p class="text-slate-400">Autonomous Digital Marketing Engine</p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="/analytics-dashboard.html"
+                    class="glass-panel px-6 py-3 text-slate-400 hover:text-white hover:border-teal-400/50 transition-all font-medium text-sm flex items-center gap-2">
+                    <span>📊</span> View Analytics
+                </a>
+                <div class="h-10 w-px bg-white/10 mx-2"></div>
+                <select id="appSelector" class="glass-panel px-6 py-3 text-white outline-none cursor-pointer">
+                    <!-- Dynamic Options -->
+                </select>
+                <div class="h-10 w-px bg-white/10 mx-2"></div>
+                <div id="appStatus"
+                    class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                    <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">Engine Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- LEFT: Content Generator -->
+            <div class="lg:col-span-2 space-y-8">
+
+                <!-- Content Types -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button class="glass-panel p-6 card-anim text-center group active-gen" data-type="images">
+                        <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">🖼️</div>
+                        <div class="text-xs font-bold uppercase tracking-widest text-slate-400">AI Images</div>
+                    </button>
+                    <button class="glass-panel p-6 card-anim text-center group" data-type="scripts">
+                        <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">✍️</div>
+                        <div class="text-xs font-bold uppercase tracking-widest text-slate-400">Ad Scripts</div>
+                    </button>
+                    <button class="glass-panel p-6 card-anim text-center group" data-type="avatars">
+                        <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">🎭</div>
+                        <div class="text-xs font-bold uppercase tracking-widest text-slate-400">AI Avatars</div>
+                    </button>
+                    <button class="glass-panel p-6 card-anim text-center group" data-type="videos">
+                        <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">🎬</div>
+                        <div class="text-xs font-bold uppercase tracking-widest text-slate-400">Video Reels</div>
+                    </button>
+                </div>
+
+                <!-- Generator UI -->
+                <div class="glass-panel p-8 min-h-[400px] flex flex-col">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <h2 id="genTitle" class="text-2xl font-bold text-white mb-2">Generate Marketing Assets</h2>
+                            <p id="genDesc" class="text-slate-400 text-sm">Select a content type above to start the
+                                autonomous engine.</p>
+                        </div>
+                        <button id="generateBtn"
+                            class="glow-btn px-8 py-4 rounded-xl font-bold flex items-center gap-3">
+                            <span>🚀</span>
+                            <span>Generate Assets</span>
+                        </button>
+                    </div>
+
+                    <!-- Sandbox / Preview Area -->
+                    <div id="previewArea"
+                        class="flex-1 border-2 border-dashed border-white/5 rounded-2xl flex items-center justify-center p-8">
+                        <div class="text-center text-slate-600">
+                            <svg class="w-16 h-16 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                </path>
+                            </svg>
+                            <p id="previewText" class="font-medium">No assets generated yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: App Context & History -->
+            <div class="space-y-8">
+
+                <!-- App Info -->
+                <div class="glass-panel p-8">
+                    <h3 class="text-xs font-black uppercase text-teal-400 tracking-widest mb-6">Target App</h3>
+                    <div id="activeAppInfo" class="space-y-4">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+
+                <!-- Generation Queue -->
+                <div class="glass-panel p-8">
+                    <h3 class="text-xs font-black uppercase text-indigo-400 tracking-widest mb-6">Automation Log</h3>
+                    <div id="genLog" class="space-y-4 max-h-[300px] overflow-y-auto">
+                        <div class="text-[10px] text-slate-500 font-mono">[00:00:00] Engine initialized...</div>
+                        <div class="text-[10px] text-slate-500 font-mono">[00:00:01] Loaded apps-config.js</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { APPS_CONFIG } from '/binaural-assets/js/viral/apps-config.js';
+
+        const els = {
+            appSelector: document.getElementById('appSelector'),
+            appInfo: document.getElementById('activeAppInfo'),
+            genLog: document.getElementById('genLog'),
+            genTitle: document.getElementById('genTitle'),
+            genDesc: document.getElementById('genDesc'),
+            generateBtn: document.getElementById('generateBtn'),
+            previewArea: document.getElementById('previewArea'),
+            previewText: document.getElementById('previewText'),
+            typeBtns: document.querySelectorAll('[data-type]')
+        };
+
+        let activeApp = null;
+        let activeType = 'images';
+        const generatedResults = {
+            images: null,
+            scripts: null,
+            avatars: null,
+            videos: null
+        };
+
+        function init() {
+            // Populate App Selector
+            Object.keys(APPS_CONFIG).forEach(key => {
+                const app = APPS_CONFIG[key];
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = app.name;
+                els.appSelector.appendChild(opt);
+            });
+
+            // Listeners
+            els.appSelector.addEventListener('change', (e) => setApp(e.target.value));
+            els.typeBtns.forEach(btn => {
+                btn.addEventListener('click', () => setType(btn.dataset.type));
+            });
+            els.generateBtn.addEventListener('click', generate);
+
+            // Set Initial
+            const initialAppId = Object.keys(APPS_CONFIG)[0];
+            setApp(initialAppId);
+            setType('images');
+        }
+
+        function setApp(appId) {
+            // Support both internal key (mindwave) and display name (MindWave) for robustness
+            const key = APPS_CONFIG[appId] ? appId : Object.keys(APPS_CONFIG).find(k => APPS_CONFIG[k].name === appId);
+            if (!key) return;
+
+            activeApp = APPS_CONFIG[key];
+            els.appSelector.value = key;
+            log(`Switched context to: ${activeApp.name}`);
+
+            els.appInfo.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <img src="${activeApp.logo || '#'}" class="h-12 w-12 rounded-xl bg-white/5 p-2" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${activeApp.id}'">
+                    <div>
+                        <div class="text-white font-bold">${activeApp.name}</div>
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wide">${activeApp.tagline}</div>
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-white/5 space-y-2">
+                    <div class="text-[10px] text-slate-500 uppercase font-black">Core Topics</div>
+                    <div class="flex flex-wrap gap-2">
+                        ${activeApp.topics.map(t => `<span class="px-2 py-1 bg-white/5 rounded text-[10px] text-slate-300 border border-white/5">${t}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Clear generated results when app changes
+            Object.keys(generatedResults).forEach(k => generatedResults[k] = null);
+            renderResults();
+        }
+
+        function setType(type) {
+            activeType = type;
+            els.typeBtns.forEach(btn => btn.classList.toggle('border-teal-400', btn.dataset.type === type));
+            els.typeBtns.forEach(btn => btn.classList.toggle('bg-teal-400/5', btn.dataset.type === type));
+
+            const config = {
+                images: { title: 'AI Post Generator', desc: 'Create vivid Instagram and LinkedIn imagery' },
+                scripts: { title: 'Ad Script Factory', desc: 'Generate high-converting UGC and Facebook ad copy' },
+                avatars: { title: 'Avatar Studio', desc: 'Select and script AI avatars for UGC-style video' },
+                videos: { title: 'Video Reel Engine', desc: 'Auto-compile session footage into engaging reels' }
+            };
+
+            els.genTitle.textContent = config[type].title;
+            els.genDesc.textContent = config[type].desc;
+
+            renderResults();
+        }
+
+        async function generate() {
+            log(`Initiating ${activeType} generation for ${activeApp.name}...`);
+            els.generateBtn.disabled = true;
+            els.generateBtn.classList.add('opacity-50');
+            els.generateBtn.innerHTML = `<span>⏳</span><span>Neural Engine Busy...</span>`;
+
+            els.previewArea.innerHTML = `
+                <div class="text-center space-y-4">
+                    <div class="h-12 w-12 border-4 border-teal-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <div class="text-teal-400 font-bold animate-pulse">Analyzing App Context...</div>
+                </div>
+            `;
+
+            // Simulation of AI Generation
+            setTimeout(() => {
+                els.generateBtn.disabled = false;
+                els.generateBtn.classList.remove('opacity-50');
+                els.generateBtn.innerHTML = `<span>🚀</span><span>Generate Assets</span>`;
+
+                // Store state
+                generatedResults[activeType] = true;
+                renderResults();
+                log(`Successfully generated ${activeType} bundle.`);
+            }, 1500);
+        }
+
+        function renderResults() {
+            if (!generatedResults[activeType]) {
+                els.previewArea.innerHTML = `
+                    <div class="text-center text-slate-600">
+                        <p class="font-medium mb-2">No ${activeType} generated yet.</p>
+                        <p class="text-[10px] uppercase font-black text-slate-700">Ready to initiate</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (activeType === 'images') {
+                els.previewArea.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        <div class="aspect-square bg-slate-800 rounded-xl border border-white/10 flex items-center justify-center relative overflow-hidden group">
+                           <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                           <span class="text-xs text-center p-4 relative z-10 text-white font-medium">Concept: "The Flow State" - Focus/Minimalist Gradient</span>
+                           <button class="download-asset absolute top-4 right-4 bg-teal-400 text-black text-[10px] font-bold px-2 py-1 rounded hover:scale-105 transition-transform" data-name="flow_state_concept.png">DOWNLOAD</button>
+                        </div>
+                        <div class="aspect-square bg-slate-800 rounded-xl border border-white/10 flex items-center justify-center relative overflow-hidden group">
+                           <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                           <span class="text-xs text-center p-4 relative z-10 text-white font-medium">Concept: "Deep Sleep" - Nebula/Frequency theme</span>
+                           <button class="download-asset absolute top-4 right-4 bg-teal-400 text-black text-[10px] font-bold px-2 py-1 rounded hover:scale-105 transition-transform" data-name="deep_sleep_nebula.png">DOWNLOAD</button>
+                        </div>
+                    </div>
+                `;
+
+                // Download simulation
+                els.previewArea.querySelectorAll('.download-asset').forEach(btn => {
+                    btn.onclick = () => {
+                        log(`Downloading asset: ${btn.dataset.name}...`);
+                        const originalText = btn.textContent;
+                        btn.textContent = 'SAVED!';
+                        btn.style.background = '#fcd34d';
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.style.background = '';
+                        }, 2000);
+                    };
+                });
+            }
+            else if (activeType === 'scripts') {
+                const scripts = activeApp.scripts || [{ hook: 'Default Hook', body: 'Default Body', cta: 'Visit ' + activeApp.name }];
+                els.previewArea.innerHTML = `
+                    <div class="w-full space-y-4">
+                        <div id="scriptCarousel" class="space-y-4">
+                            ${scripts.map((script, idx) => `
+                                <div class="glass-panel p-6 text-xs font-mono text-slate-300 border-l-2 border-teal-400 bg-white/5 relative group">
+                                    <div class="absolute top-2 right-4 text-[10px] text-teal-400 opacity-50 font-bold">SCRIPT #${idx + 1}</div>
+                                    <div class="mb-4"><span class="text-teal-400 font-black mr-2">[HOOK]:</span>${script.hook}</div>
+                                    <div class="mb-4"><span class="text-teal-400 font-black mr-2">[BODY]:</span>${script.body}</div>
+                                    <div><span class="text-teal-400 font-black mr-2">[CTA]:</span>${script.cta}</div>
+                                    <button class="copy-script mt-4 text-[10px] text-teal-400 uppercase font-black tracking-widest px-2 py-1 border border-teal-400/20 rounded hover:bg-teal-400/10" 
+                                            data-hook="${script.hook}" data-body="${script.body}" data-cta="${script.cta}">Copy Script</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="flex gap-2">
+                             <button class="text-[10px] text-slate-400 uppercase font-bold tracking-widest px-4 py-2 border border-white/10 rounded-lg hover:bg-white/5 transition-colors">Regenerate AI Variation</button>
+                        </div>
+                    </div>
+                `;
+
+                // Add copy listeners
+                els.previewArea.querySelectorAll('.copy-script').forEach(btn => {
+                    btn.onclick = () => {
+                        const text = `HOOK: ${btn.dataset.hook}\nBODY: ${btn.dataset.body}\nCTA: ${btn.dataset.cta}`;
+                        navigator.clipboard.writeText(text);
+                        const originalText = btn.textContent;
+                        btn.textContent = 'COPIED!';
+                        btn.classList.add('bg-teal-400', 'text-black');
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.classList.remove('bg-teal-400', 'text-black');
+                        }, 2000);
+                        log('Script copied to clipboard.');
+                    };
+                });
+            } else if (activeType === 'avatars') {
+                const avatars = [
+                    { name: 'Aria (Zen UGC)', type: 'Realistic', emoji: '👩‍💼', script: 'Hey everyone, I used to struggle with burnout until I found MindWave. Now my deep work sessions are actually deep.' },
+                    { name: 'Leo (Tech Guru)', type: 'Cinematic', emoji: '👨‍💻', script: 'Coding for 8 hours straight is easy when your brain is literally in the Gamma frequency. MindWave is the dev tool you didnt know you needed.' },
+                    { name: 'Nova (Cosmic)', type: 'Stylized', emoji: '🤖', script: 'Human potential is limited by frequency. MindWave expands those boundaries autonomously.' }
+                ];
+                els.previewArea.innerHTML = `
+                    <div class="w-full grid grid-cols-3 gap-4">
+                        ${avatars.map(a => `
+                            <div class="glass-panel p-4 text-center cursor-pointer border-white/5 hover:border-teal-400/50 transition-all group">
+                                <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">${a.emoji}</div>
+                                <div class="text-xs font-bold text-white mb-1">${a.name}</div>
+                                <div class="text-[10px] text-slate-500 uppercase">${a.type}</div>
+                                <button class="select-avatar mt-4 w-full py-2 bg-white/5 rounded text-[9px] font-black uppercase text-teal-400 tracking-wider" 
+                                        data-name="${a.name}" data-script="${a.script}">Select & Script</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                // Add listeners to new buttons
+                document.querySelectorAll('.select-avatar').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const name = btn.dataset.name;
+                        const scriptBody = btn.dataset.script;
+                        log(`Avatar [${name}] selected. Generating custom UGC script...`);
+
+                        // Switch to script view and populate
+                        setType('scripts');
+                        generatedResults.scripts = true; // Mark as generated so setType doesn't reset it
+                        els.previewArea.innerHTML = `
+                            <div class="w-full space-y-4">
+                                <div class="text-[10px] text-teal-400 uppercase font-black mb-2">Custom Script for ${name}</div>
+                                <div class="glass-panel p-6 text-xs font-mono text-slate-300 border-l-2 border-teal-400 bg-white/5">
+                                    <div class="mb-4"><span class="text-teal-400 font-black mr-2">[HOOK]:</span>(Visual: ${name} looking directly into camera)</div>
+                                    <div class="mb-4"><span class="text-teal-400 font-black mr-2">[BODY]:</span>${scriptBody}</div>
+                                    <div><span class="text-teal-400 font-black mr-2">[CTA]:</span>Download ${activeApp.name} at the link below.</div>
+                                </div>
+                                <div class="flex gap-2">
+                                     <button class="text-[10px] text-teal-400 uppercase font-bold tracking-widest px-4 py-2 border border-teal-400/30 rounded-lg hover:bg-teal-400/10 transition-colors">Copy Final Script</button>
+                                     <button class="text-[10px] text-slate-400 uppercase font-bold tracking-widest px-4 py-2 border border-white/10 rounded-lg hover:bg-white/5 transition-colors">Change Avatar</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+            } else {
+                els.previewArea.innerHTML = `
+                    <div class="w-full space-y-4">
+                         <div class="aspect-video bg-slate-800 rounded-xl border border-white/10 flex items-center justify-center group relative overflow-hidden">
+                             <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="bg-white text-black px-4 py-2 rounded-full font-bold text-xs">Previewing Video...</span>
+                             </div>
+                             <div class="text-teal-400/20 text-6xl">▶️</div>
+                         </div>
+                         <p class="text-[10px] text-slate-500 text-center italic">Video generation requires local server-side hooks (v1.5+)</p>
+                    </div>
+                `;
+            }
+        }
+
+        function log(msg) {
+            const div = document.createElement('div');
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            div.className = "text-[10px] text-slate-500 font-mono";
+            div.textContent = `[${time}] ${msg}`;
+            els.genLog.prepend(div);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

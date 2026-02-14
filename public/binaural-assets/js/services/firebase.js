@@ -8,7 +8,7 @@ import { state } from '../state.js';
 let app, auth, db, storage;
 let initializeApp, getAuth, getFirestore, getStorage;
 let onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile;
-let collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, serverTimestamp;
+let collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, addDoc, where, limit;
 let ref, uploadBytes, getDownloadURL, deleteObject;
 
 const authCallbacks = [];
@@ -123,6 +123,9 @@ export async function initFirebase() {
         onSnapshot = firebaseFirestore.onSnapshot;
         query = firebaseFirestore.query;
         orderBy = firebaseFirestore.orderBy;
+        addDoc = firebaseFirestore.addDoc;
+        where = firebaseFirestore.where;
+        limit = firebaseFirestore.limit;
         serverTimestamp = firebaseFirestore.serverTimestamp;
 
         getStorage = firebaseStorage.getStorage;
@@ -512,6 +515,10 @@ export {
     query,
     orderBy,
     onSnapshot,
-    serverTimestamp
+    serverTimestamp,
+    addDoc,
+    where,
+    limit,
+    getDocs
 };
 

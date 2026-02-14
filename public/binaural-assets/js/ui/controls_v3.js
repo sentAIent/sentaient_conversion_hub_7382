@@ -13,6 +13,11 @@ import { setCustomAudioVolume } from '../content/audio-library.js';
 import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '../content/classical.js';
 import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '../audio/dj-synth.js';
 import { goToCheckout, hasPurchasedApp } from '../services/stripe-simple.js';
+import { initGallery } from './gallery-modal.js';
+import { getReferralCount, shareReferral } from '../services/referral.js';
+import { calculateFrequencyFromGoal, parseComplexGoal } from '../services/ai-intent-service.js';
+import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts } from '../services/presence-service.js';
+window.shareReferral = shareReferral;
 
 // ... (existing code)
 
@@ -45,6 +50,7 @@ export function setupUI() {
     els.canvas = document.getElementById('visualizer');
     els.canvas = document.getElementById('visualizer');
     els.themeBtn = document.getElementById('themeBtn');
+    els.galleryBtn = document.getElementById('galleryBtn');
     els.visualSpeedSlider = document.getElementById('visualSpeedSlider');
     els.speedValue = document.getElementById('speedValue');
     els.speedSliderContainer = document.getElementById('speedSliderContainer'); // Container for opacity
@@ -63,6 +69,7 @@ export function setupUI() {
     els.journeyBtn = document.getElementById('journeyBtn');
     els.libraryPanel = document.getElementById('libraryPanel');
     els.libraryList = document.getElementById('libraryList');
+    els.hapticSyncToggle = document.getElementById('hapticSyncToggle');
 
     // Button Labels
     els.audioLabel = document.getElementById('audioLabel');
@@ -111,6 +118,17 @@ export function setupUI() {
     els.closeProfileBtn = document.getElementById('closeProfileBtn');
     els.closeLibraryBtn = document.getElementById('closeLibraryBtn');
     els.closeModalBtn = document.getElementById('closeModalBtn'); // Playback modal close
+
+    // AI Goal Elements
+    els.aiGoalInput = document.getElementById('aiGoalInput');
+    els.aiGenerateBtn = document.getElementById('aiGenerateBtn');
+    els.aiBtnText = document.getElementById('aiBtnText');
+    els.aiBtnSpinner = document.getElementById('aiBtnSpinner');
+    els.aiInsight = document.getElementById('aiInsight');
+
+    // Presence Elements
+    els.presenceCounter = document.getElementById('presenceCounter');
+    els.presenceText = document.getElementById('presenceText');
 
     // Global Interactive Elements
     els.appOverlay = document.getElementById('appOverlay');
@@ -183,6 +201,9 @@ export function setupUI() {
     els.mobilePauseIcon = document.getElementById('mobilePauseIcon');
     els.mobileMixerBtn = document.getElementById('mobileMixerBtn');
 
+    // Init Gallery
+    initGallery();
+
     // Bind Event Listeners
 
     if (els.playBtn) {
@@ -197,6 +218,29 @@ export function setupUI() {
     // Visual Play Button - toggles visuals only
     if (els.visualPlayBtn) {
         els.visualPlayBtn.addEventListener('click', handleVisualToggle);
+    }
+
+    // Haptic Sync Toggle
+    if (els.hapticSyncToggle) {
+        import('../utils/haptics.js').then(m => {
+            els.hapticSyncToggle.checked = m.isHapticsEnabled();
+            els.hapticSyncToggle.addEventListener('change', (e) => {
+                m.setHapticsEnabled(e.target.checked);
+                updateHapticSync();
+            });
+        });
+    }
+
+    // AI Generate Button
+    if (els.aiGenerateBtn) {
+        els.aiGenerateBtn.addEventListener('click', handleAIGenerate);
+    }
+
+    // AI Input - trigger on Enter
+    if (els.aiGoalInput) {
+        els.aiGoalInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleAIGenerate();
+        });
     }
 
     if (els.recordBtn) {
@@ -758,6 +802,7 @@ export function setupUI() {
     setupSweepUI(); // NEW
     setupStatsUI(); // NEW - Session Analytics
     setupDJPads(); // NEW - DJ Sound Pads
+    setupPresenceUI(); // NEW - Social Pulse
 
     // SYNC SLIDER VALUES - Ensure displays match slider positions on load
     syncSliderDisplays();
@@ -1169,6 +1214,116 @@ export function syncAllButtons() {
     }
 
     console.log(`[Buttons] Synced - audio: ${audioPlaying}, visual: ${visualsPlaying} → main: ${isAnyPlaying ? 'PAUSE' : 'PLAY'} `);
+}
+// --- AI GOAL GENERATOR ---
+async function handleAIGenerate() {
+    const goal = els.aiGoalInput?.value.trim();
+    if (!goal) return;
+
+    // Loading State
+    els.aiBtnText?.classList.add('hidden');
+    els.aiBtnSpinner?.classList.remove('hidden');
+    els.aiGenerateBtn.disabled = true;
+
+    // Simulate "AI" processing delay
+    setTimeout(async () => {
+        const sequence = parseComplexGoal(goal);
+
+        if (sequence.length > 0) {
+            state.sessionQueue = sequence;
+            await applyNextAIStage();
+        }
+
+        // Reset UI
+        els.aiBtnText?.classList.remove('hidden');
+        els.aiBtnSpinner?.classList.add('hidden');
+        els.aiGenerateBtn.disabled = false;
+    }, 800);
+}
+
+async function applyNextAIStage() {
+    if (!state.sessionQueue || state.sessionQueue.length === 0) {
+        showToast('All stages of your session are complete. 🧘', 'success');
+        return;
+    }
+
+    const stage = state.sessionQueue.shift();
+    console.log('[AI Stage] Applying:', stage.preset, 'Soundscapes:', stage.soundscapes, 'Duration:', stage.duration);
+
+    // Apply main frequency preset and soundscapes
+    await applyAIPreset(stage);
+
+    // Show Insight
+    if (els.aiInsight) {
+        els.aiInsight.textContent = (state.sessionQueue.length > 0 ? "[Stage 1] " : "") + stage.insight;
+        els.aiInsight.classList.remove('hidden');
+        els.aiInsight.classList.add('animate-[fade-in_0.5s_ease]');
+    }
+
+    // Handle Duration / Timer integration
+    if (stage.duration) {
+        console.log(`[AI Timer] Setting session for ${stage.duration} minutes`);
+        startSession(stage.duration, {
+            onTick: updateTimerUI,
+            onComplete: () => {
+                if (state.sessionQueue.length > 0) {
+                    showToast('Next stage starting...', 'info');
+                    applyNextAIStage();
+                } else {
+                    handleSessionComplete();
+                }
+            }
+        });
+        showTimerUI();
+    }
+}
+
+async function applyAIPreset(result) {
+    console.log('[AI] Applying Preset:', result.preset, 'Soundscapes:', result.soundscapes);
+
+    // 1. Reset current soundscapes first
+    resetAllSoundscapes();
+
+    // 2. Apply main frequency preset
+    await applyPreset(result.preset, null, true, true);
+
+    // 3. Enable soundscapes
+    result.soundscapes.forEach(id => {
+        updateSoundscape(id, true, 0.5);
+    });
+
+    // 4. Force UI Sync
+    initMixer();
+
+    showToast(`AI Mix: ${result.preset.toUpperCase()}`, 'success');
+}
+
+
+// --- SOCIAL PRESENCE (PULSE) ---
+function setupPresenceUI() {
+    // Start Heartbeat immediately (Anonymous tracks as 'anonymous')
+    startPresenceHeartbeat();
+
+    // Subscribe to counts
+    subscribeToPresenceCounts((data) => {
+        if (!els.presenceText) return;
+
+        const count = data.total;
+        const preset = state.activePresetType || 'none';
+        const presetCount = data.byPreset[preset] || 0;
+
+        if (count > 1 && preset !== 'none') {
+            els.presenceText.textContent = `${count} Pulse (${presetCount} in ${preset.toUpperCase()})`;
+        } else {
+            els.presenceText.textContent = count === 1 ? 'You are the Pulse' : `${count} Pulse Active`;
+        }
+    });
+}
+
+function updatePresenceOnPresetChange() {
+    // Heartbeat will pick up new preset on next tick, 
+    // but we can force an update if we want better real-time feel.
+    // For now, 60s is fine to save Firestore writes.
 }
 
 
@@ -2274,6 +2429,21 @@ export function openProfile() {
     if (els.profileNameInput) els.profileNameInput.value = user.displayName || "";
     if (els.profileUid) els.profileUid.textContent = `ID: ${user.uid.slice(0, 6)}...`;
     if (els.profileAvatarBig) els.profileAvatarBig.textContent = (user.displayName || "A")[0].toUpperCase();
+
+    // Fetch and display referral count
+    getReferralCount(user.uid).then(count => {
+        const tierBadge = document.getElementById('profileUserTier');
+        if (tierBadge) {
+            if (count >= 10) tierBadge.innerHTML = '🌟 Grand Ambassador';
+            else if (count >= 5) tierBadge.innerHTML = '💎 Elite Ambassador';
+            else if (count >= 3) tierBadge.innerHTML = '🥈 Ambassador';
+            else tierBadge.innerHTML = 'Free Plan';
+        }
+
+        // Optionally update a stat box for referrals if exists
+        const refStat = document.getElementById('statReferrals');
+        if (refStat) refStat.textContent = count;
+    });
 }
 
 // --- Auth Logic (Profile Button) ---
@@ -2371,6 +2541,65 @@ async function confirmSave() {
     }
 }
 // Remove old setupLibraryListener and renderLibrary as they are handled by auth-controller now.
+
+/**
+ * Load a public preset from the gallery (Phase 7)
+ */
+window.loadPublicPreset = (preset) => {
+    if (!preset || !preset.settings) return;
+
+    console.log('[Gallery] Loading public preset data:', preset.name);
+
+    // Apply pitch and beat
+    if (els.baseSlider) {
+        els.baseSlider.value = preset.settings.base || 200;
+        els.baseValue.textContent = `${els.baseSlider.value} Hz`;
+    }
+    if (els.beatSlider) {
+        els.beatSlider.value = preset.settings.beat || 10;
+        els.beatValue.textContent = `${els.beatSlider.value} Hz`;
+    }
+
+    // Apply volumes if present
+    if (preset.settings.beatsVol && els.volSlider) {
+        els.volSlider.value = preset.settings.beatsVol;
+        els.volValue.textContent = `${Math.round(preset.settings.beatsVol * 100)}%`;
+    }
+
+    // Apply Mode
+    if (preset.settings.audioMode) {
+        setAudioMode(preset.settings.audioMode);
+    }
+
+    // Apply visuals
+    if (preset.settings.visualColor) {
+        setVisualColor(preset.settings.visualColor);
+    }
+    if (preset.settings.visualMode) {
+        toggleVisual(preset.settings.visualMode);
+    }
+
+    // Apply Soundscapes
+    if (preset.settings.soundscapes) {
+        Object.keys(preset.settings.soundscapes).forEach(id => {
+            updateSoundscape(id, preset.settings.soundscapes[id], false);
+        });
+    }
+
+    updateFrequencies();
+
+    // Toast notification
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 glass-card px-6 py-3 rounded-2xl border border-[var(--accent)]/30 text-white text-sm z-[300] animate-bounce';
+    toast.innerHTML = `🌟 Multi-user Mix Loaded: <b>${preset.name}</b>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+
+    // Start audio if not playing
+    if (!state.isPlaying) {
+        handlePlayClick();
+    }
+};
 
 export async function applyPreset(type, btnElement, autoStart = true, skipPaywall = false) {
     // Check paywall for presets (skip if called from combo preset)
@@ -2729,7 +2958,7 @@ window.setCursorShape = (s) => {
     }
 };
 
-export function initThemeModal() {
+export async function initThemeModal() {
     console.log('[Theme] initThemeModal CALLED');
     const grid = document.getElementById('themeGrid');
     const container = document.getElementById('themeModalContent');
@@ -2740,10 +2969,16 @@ export function initThemeModal() {
 
     grid.innerHTML = ''; // Clear existing
 
+    // Fetch referral count for locking logic
+    const refCount = state.currentUser ? (await getReferralCount(state.currentUser.uid)) : 0;
+    console.log('[Theme] User referral count:', refCount);
+
     Object.keys(THEMES).forEach(key => {
         const theme = THEMES[key];
+        const isLocked = theme.threshold && refCount < theme.threshold;
+
         const card = document.createElement('div');
-        card.className = `theme-card group ${els.themeBtn && document.body.dataset.theme === key ? 'active' : ''} `;
+        card.className = `theme-card group ${els.themeBtn && document.body.dataset.theme === key ? 'active' : ''} ${isLocked ? 'locked opacity-60' : ''} `;
         card.style.setProperty('--theme-bg', theme.bg);
 
         // Card HTML - use CSS classes for theme-aware text colors
@@ -2752,16 +2987,31 @@ export function initThemeModal() {
         card.innerHTML = `
             <div class="theme-preview">
                 <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
+                ${isLocked ? `
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/80">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                ` : ''}
             </div>
             <div class="p-3 theme-card-content">
-                <div class="theme-card-title text-sm font-bold capitalize mb-1">${displayName}</div>
+                <div class="flex justify-between items-start mb-1">
+                    <div class="theme-card-title text-sm font-bold capitalize">${displayName}</div>
+                    ${isLocked ? `<span class="text-[9px] font-bold text-amber-500">REF: ${refCount}/${theme.threshold}</span>` : ''}
+                </div>
                 <div class="theme-card-desc text-[10px] opacity-70">
-                    ${getThemeDesc(key)}
+                    ${isLocked ? `Refer ${theme.threshold} friends to unlock this Ambassador theme.` : getThemeDesc(key)}
                 </div>
             </div>
         `;
 
         card.onclick = () => {
+            if (isLocked) {
+                showToast(`🤝 Refer ${theme.threshold - refCount} more friends to unlock ${displayName}!`, 'warning');
+                return;
+            }
             setTheme(key);
             // Flash "active" state
             document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
@@ -2883,6 +3133,11 @@ function getThemeDesc(key) {
         case 'nebula': return "Cosmic Depth";
         case 'quantum': return "Matrix Grid";
         case 'sunset': return "Synthwave Glow";
+
+        // Ambassador Themes
+        case 'platinum': return "Elite Silver Focus";
+        case 'titanium': return "Indigo Power State";
+        case 'supernova': return "Peak Energetic Flow";
 
         // Premium Dark Themes
         case 'aurora': return "Glacial Cyan";

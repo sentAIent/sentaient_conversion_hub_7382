@@ -17,6 +17,7 @@ import MindWave from './pages/MindWave';
 
 
 import AnalyticsTracker from './components/AnalyticsTracker';
+import HomeAlt from './pages/home-alt';
 
 const ProjectRoutes = () => {
   return (
@@ -28,6 +29,7 @@ const ProjectRoutes = () => {
           <Route path="/" element={<AboutOurApproachIntelligenceCenter />} />
           <Route path="/knowledge-nexus-resource-library" element={<KnowledgeNexusResourceLibrary />} />
           <Route path="/free-ai-assessment-portal" element={<FreeAIAssessmentPortal />} />
+          <Route path="/home-alt" element={<HomeAlt />} />
           <Route path="/homepage-ai-consultancy-hub" element={<HomepageAIConsultancyHub />} />
           <Route path="/ai-solutions-experience-center" element={<AISolutionsExperienceCenter />} />
           <Route path="/trust-transparency-hub" element={<TrustTransparencyHub />} />

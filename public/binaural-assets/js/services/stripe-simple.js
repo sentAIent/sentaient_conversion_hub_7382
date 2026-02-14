@@ -4,8 +4,9 @@
  * NO Cloud Functions required!
  */
 
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { state } from '../state.js';
+import { trackGlobalEvent } from './analytics-service.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 
 // Stripe Payment Links - with fallbacks for static file serving
 // Note: Files in public/ don't get Vite env processing, so we need fallbacks
@@ -21,9 +22,10 @@ export const PAYMENT_LINKS = {
 export const CUSTOMER_PORTAL_URL = ENV.VITE_STRIPE_PORTAL_URL || 'https://billing.stripe.com/test/demo';
 
 // 3-Tier Pricing Structure: Free → Yogi → Buddha
+// Note: Founders Club ($9.99) is limited to the first 500 subscribers.
 export const PRICING_TIERS = {
     free: {
-        name: 'Seeker',
+        name: 'Free (Seeker)',
         description: 'Start your journey',
         monthlyPrice: 0,
         annualPrice: 0,
@@ -41,7 +43,7 @@ export const PRICING_TIERS = {
         }
     },
     yogi: {
-        name: 'Yogi',
+        name: 'Founders Club',
         description: 'Committed practitioner',
         monthlyPrice: 9.99,
         annualPrice: 79, // Save 33%
@@ -63,7 +65,7 @@ export const PRICING_TIERS = {
         }
     },
     buddha: {
-        name: 'Buddha',
+        name: 'Professional',
         description: 'Enlightened mastery',
         monthlyPrice: 29,
         annualPrice: 249, // Save 28%
@@ -271,10 +273,6 @@ export async function getSubscription() {
     return subDoc.data();
 }
 
-/**
- * Get user's current pricing tier
- * @returns {string} 'free', 'yogi', or 'buddha'
- */
 export async function getUserTier() {
     const isPremium = await isPremiumUser();
 
@@ -299,6 +297,45 @@ export async function getUserTier() {
     }
 
     return 'free';
+}
+/**
+ * Real-time subscriber count from Firestore
+ * Returns the number of 'active' subscriptions
+ */
+export async function getSubscriberCount() {
+    // MOCK OVERRIDE
+    if (window.__MOCK_SUBSCRIBER_COUNT !== undefined) {
+        return window.__MOCK_SUBSCRIBER_COUNT;
+    }
+
+    try {
+        const db = getFirestore();
+        const subsRef = collection(db, 'subscriptions');
+        const q = query(subsRef, where('status', '==', 'active'));
+        const snapshot = await getDocs(q);
+        return snapshot.size;
+    } catch (err) {
+        console.warn('[Stripe] Failed to fetch subscriber count:', err.message);
+        return 432; // Fallback to a believable number
+    }
+}
+
+/**
+ * Get the current active price for the Yogi (Founders) tier
+ * Shifts from $9.99 to $14.99 after 500 members
+ */
+export async function getActiveYogiPricing() {
+    const count = await getSubscriberCount();
+    const isFull = count >= 500;
+
+    return {
+        price: isFull ? "$14.99" : "$9.99",
+        isFull: isFull,
+        spotsLeft: Math.max(0, 500 - count),
+        link: isFull
+            ? (ENV.VITE_STRIPE_YOGI_STANDARD_LINK || 'https://buy.stripe.com/test/demo_standard')
+            : (ENV.VITE_STRIPE_YOGI_MONTHLY_LINK || 'https://buy.stripe.com/test/demo_founders')
+    };
 }
 
 /**
@@ -370,6 +407,16 @@ export async function handlePaymentSuccess() {
                     PRICING[subscription.plan]?.amount || 0
                 );
             }
+        }
+
+        // Track global event
+        const subscription = await getSubscription();
+        if (subscription) {
+            trackGlobalEvent('purchase', {
+                plan: subscription.plan,
+                value: PRICING[subscription.plan]?.amount || 0,
+                subscriptionId: subscription.subscriptionId
+            });
         }
 
         // Wait a moment, then check subscription status

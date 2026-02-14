@@ -1,38 +1,71 @@
-// NUCLEAR SW - SELF DESTRUCT & CACHE CLEAR
-// This Service Worker is designed to unregister itself and clear all caches immediately.
+/**
+ * MindWave Service Worker - Platform V1
+ * Robust caching strategy for offline performance and asset stability.
+ */
 
-const CACHE_NAME = 'NUCLEAR_PURGE_V101';
+const CACHE_NAME = 'mindwave-platform-v1';
+const STATIC_ASSETS = [
+    '/',
+    '/mindwave-v101.html',
+    '/binaural-assets/css/style.css',
+    '/binaural-assets/css/tailwind-compiled.css',
+    '/binaural-assets/js/main_vFINAL.js',
+    '/binaural-assets/js/state.js',
+    '/binaural-assets/config.js'
+];
+
+// Heavy assets (Audio/Visual) are cached on-demand using Cache-First
+const ASSET_CACHE_NAME = 'mindwave-media-v1';
 
 self.addEventListener('install', (event) => {
-    console.log('[NUCLEAR SW] Purge Install - Skip Waiting');
+    console.log('[SW] Platform Install - Caching Shell');
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(STATIC_ASSETS);
+        })
+    );
     self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-    console.log('[NUCLEAR SW] Purge Activate - Unregistering and Clearing Caches');
+    console.log('[SW] Platform Activate - Cleaning Legacy Caches');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    console.log('[NUCLEAR SW] Deleting Cache:', cacheName);
-                    return caches.delete(cacheName);
+                    if (cacheName !== CACHE_NAME && cacheName !== ASSET_CACHE_NAME) {
+                        console.log('[SW] Deleting Old Cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
                 })
             );
-        }).then(() => {
-            return self.registration.unregister();
-        }).then(() => {
-            console.log('[NUCLEAR SW] Unregistered successfully');
-            return self.clients.claim();
-        }).then(() => {
-            // Force reload all controlled clients
-            return self.clients.matchAll().then((clients) => {
-                clients.forEach(client => {
-                    if (client.url && 'navigate' in client) {
-                        console.log('[NUCLEAR SW] Reloading client:', client.url);
-                        client.navigate(client.url);
-                    }
+        }).then(() => self.clients.claim())
+    );
+});
+
+self.addEventListener('fetch', (event) => {
+    const url = new URL(event.request.url);
+
+    // Audio/Visual/Image assets -> Cache-First (save bandwidth)
+    if (url.pathname.match(/\.(mp3|wav|png|jpg|jpeg|svg|webp|glb|gltf)$/)) {
+        event.respondWith(
+            caches.open(ASSET_CACHE_NAME).then((cache) => {
+                return cache.match(event.request).then((response) => {
+                    if (response) return response;
+                    return fetch(event.request).then((networkResponse) => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    });
                 });
-            });
+            })
+        );
+        return;
+    }
+
+    // Default: Network-First with Cache Fallback (Ensures fresh code)
+    event.respondWith(
+        fetch(event.request).catch(() => {
+            return caches.match(event.request);
         })
     );
 });

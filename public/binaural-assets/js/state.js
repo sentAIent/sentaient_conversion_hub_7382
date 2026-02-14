@@ -9,6 +9,11 @@ export const THEMES = {
     quantum: { type: 'dark', bg: '#021a15', panel: '#0a3028', border: '#154540', text: '#d5fff5', muted: '#7eddc8', accent: '#2dd4bf', glow: 'rgba(45, 212, 191, 0.6)', volumeAccent: '#d42d48', volumeGlow: 'rgba(212, 45, 72, 0.5)' },
     sunset: { type: 'dark', bg: '#1a0a02', panel: '#301508', border: '#4a200a', text: '#fff0e0', muted: '#e8b080', accent: '#f97316', glow: 'rgba(249, 115, 22, 0.5)', volumeAccent: '#1673f9', volumeGlow: 'rgba(22, 115, 249, 0.4)' },
 
+    // Ambassador Themes (Referral Unlocks)
+    platinum: { type: 'dark', bg: '#0f172a', panel: '#1e293b', border: '#334155', text: '#f8fafc', muted: '#94a3b8', accent: '#94a3b8', glow: 'rgba(148, 163, 184, 0.4)', volumeAccent: '#38bdf8', volumeGlow: 'rgba(56, 189, 248, 0.4)', threshold: 3 },
+    titanium: { type: 'dark', bg: '#09090b', panel: '#18181b', border: '#27272a', text: '#fafafa', muted: '#a1a1aa', accent: '#6366f1', glow: 'rgba(99, 102, 241, 0.4)', volumeAccent: '#f43f5e', volumeGlow: 'rgba(244, 63, 94, 0.4)', threshold: 5 },
+    supernova: { type: 'dark', bg: '#020617', panel: '#0f172a', border: '#1e293b', text: '#fff1f2', muted: '#fda4af', accent: '#f43f5e', glow: 'rgba(244, 63, 94, 0.6)', volumeAccent: '#fbbf24', volumeGlow: 'rgba(251, 191, 36, 0.5)', threshold: 10 },
+
     // NEW Premium Dark Themes
     aurora: { type: 'dark', bg: '#051520', panel: '#0a2535', border: '#153a50', text: '#e0f8ff', muted: '#80d4f4', accent: '#22d3ee', glow: 'rgba(34, 211, 238, 0.5)', volumeAccent: '#ee22a8', volumeGlow: 'rgba(238, 34, 168, 0.4)' },
     forest: { type: 'dark', bg: '#0a120a', panel: '#142014', border: '#1e3018', text: '#e8f5e8', muted: '#90c090', accent: '#4ade80', glow: 'rgba(74, 222, 128, 0.5)', volumeAccent: '#de804a', volumeGlow: 'rgba(222, 128, 74, 0.4)' },
@@ -224,7 +229,13 @@ export const state = {
 
     // NEW: Extended Hyper-Gamma unlock
     hyperGammaUnlocked: false,
-    hyperGammaDisclaimerAccepted: false
+    hyperGammaDisclaimerAccepted: false,
+
+    // NEW: Phase 7 Haptic Sync
+    hapticInterval: null,
+
+    // NEW: Phase 7 AI Sequence Queue
+    sessionQueue: []
 };
 
 
@@ -238,7 +249,10 @@ export const els = {
     recordBtn: null, videoToggleBtn: null,
 
     // Visuals
-    sphereBtn: null, flowBtn: null, visualSpeedSlider: null, speedValue: null,
+    sphereBtn: null, themeBtn: null,
+    galleryBtn: null,
+    visualSpeedSlider: null,
+    speedValue: null,
     visualColorPicker: null, randomColorBtn: null, colorPreview: null,
 
     // Navigation / Sidebars
@@ -258,6 +272,7 @@ export const els = {
     masterVolValue: null, atmosMasterValue: null, balanceValue: null,
     soundscapeContainer: null,
     presetButtons: null,
+    hapticSyncToggle: null,
 
     // Modals & Panels
     libraryPanel: null, libraryList: null,

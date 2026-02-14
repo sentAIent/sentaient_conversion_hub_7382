@@ -3,7 +3,7 @@
  * Free (Seeker) vs Founders Club ($9.99/mo) vs Professional ($25/mo)
  */
 
-import { goToCheckout, getUserTier } from '../services/stripe-simple.js';
+import { goToCheckout, getUserTier, getActiveYogiPricing } from '../services/stripe-simple.js';
 import { getAuth } from 'firebase/auth';
 import { shareReferral } from '../services/referral.js';
 import { getVariant, trackConversion } from '../utils/ab-testing.js';
@@ -86,13 +86,18 @@ export async function showPricingModal() {
         console.warn('[Pricing] Failed to get tier, defaulting to free:', err.message);
     }
 
+    // Get dynamic pricing context
+    const yogiPricing = await getActiveYogiPricing();
+
     // Create or show pricing modal
     let modal = document.getElementById('pricingModal');
 
-    if (!modal) {
-        modal = createPricingModal(currentTier);
-        document.body.appendChild(modal);
+    if (modal) {
+        modal.remove(); // Re-create to ensure fresh data/state
     }
+
+    modal = createPricingModal(currentTier, yogiPricing);
+    document.body.appendChild(modal);
 
     modal.classList.remove('hidden');
 }
@@ -104,16 +109,11 @@ export function hidePricingModal() {
     }
 }
 
-function createPricingModal(currentTier) {
-    // Scarcity Logic
-    let spots = parseInt(localStorage.getItem('mindwave_founders_spots') || '432');
-    if (isNaN(spots)) spots = 432;
-
-    // Decrement occasionally
-    if (Math.random() > 0.5) {
-        spots = Math.max(14, spots - Math.floor(Math.random() * 2) - 1);
-        localStorage.setItem('mindwave_founders_spots', spots);
-    }
+function createPricingModal(currentTier, yogiPricing = null) {
+    // Scarcity Logic (Real or Fallback)
+    const spots = yogiPricing ? yogiPricing.spotsLeft : 432;
+    const currentPrice = yogiPricing ? yogiPricing.price : PRICING_CONFIG.yogi.price;
+    const isFull = yogiPricing ? yogiPricing.isFull : false;
 
     const modal = document.createElement('div');
     modal.id = 'pricingModal';
@@ -141,7 +141,7 @@ function createPricingModal(currentTier) {
 
             <!-- Header -->
             <div style="text-align: center; margin-bottom: 48px;">
-                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #facc15; letter-spacing: 2px; margin-bottom: 12px; border: 1px solid rgba(250, 204, 21, 0.3); display: inline-block; padding: 6px 12px; border-radius: 20px; background: rgba(250, 204, 21, 0.1);">Limited Time Offer</div>
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #facc15; letter-spacing: 2px; margin-bottom: 12px; border: 1px solid rgba(250, 204, 21, 0.3); display: inline-block; padding: 6px 12px; border-radius: 20px; background: rgba(250, 204, 21, 0.1);">${isFull ? 'Founders Club Full' : 'Limited Time Offer'}</div>
                 <h2 style="font-size: 42px; font-weight: 700; color: white; margin-bottom: 12px;">Upgrade Your Frequency</h2>
                 <p style="font-size: 18px; color: var(--text-muted);">Choose the plan that fits your journey.</p>
             </div>
@@ -182,10 +182,10 @@ function createPricingModal(currentTier) {
                         <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.yogi.name}</h3>
                         <p style="font-size: 14px; color: #6ee7b7;">${PRICING_CONFIG.yogi.description}</p>
                         <div style="margin-top: 16px;">
-                            <span style="font-size: 42px; font-weight: 700; color: white;">${PRICING_CONFIG.yogi.price}</span>
+                            <span style="font-size: 42px; font-weight: 700; color: white;">${currentPrice}</span>
                             <span style="color: var(--text-muted);">${PRICING_CONFIG.yogi.period}</span>
                         </div>
-                        <div style="font-size: 12px; color: #fbbf24; margin-top: 8px;">${PRICING_CONFIG.yogi.warning}</div>
+                        <div style="font-size: 12px; color: #fbbf24; margin-top: 8px;">${isFull ? '⚠️ Standard Rate ACTIVE' : PRICING_CONFIG.yogi.warning}</div>
                     </div>
 
                     <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
@@ -201,7 +201,7 @@ function createPricingModal(currentTier) {
                     </ul>
 
                     <button id="upgradeBtnFounders" style="width: 100%; padding: 16px; background: #10b981; border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                        Join Founders Club
+                        ${isFull ? 'Upgrade to Monthly' : 'Join Founders Club'}
                     </button>
                 </div>
 
@@ -245,7 +245,7 @@ function createPricingModal(currentTier) {
                             <span style="font-size: 64px; font-weight: 900; color: white;">${PRICING_CONFIG.lifetime.price}</span>
                             <span style="font-size: 18px; color: var(--text-muted); text-decoration: line-through; margin-left: 12px;">$999</span>
                             <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 8px; display: inline-block; margin-top: 12px; animation: pulse 2.5s infinite;">
-                                🔥 Only ${spots} Founding Member spots left
+                                🔥 Only ${isFull ? 'a few' : spots} Founding Member spots left
                             </div>
                         </div>
 
@@ -373,7 +373,15 @@ function handleUpgrade(productId, billingPeriod = 'monthly') {
         goToCheckout(productId, billingPeriod);
     } catch (error) {
         console.error('[Pricing] Checkout error:', error);
-        alert(error.message);
+        if (error.message.includes('logged in')) {
+            if (window.openAuthModal) {
+                window.openAuthModal();
+            } else {
+                alert('Please sign in to continue with your upgrade.');
+            }
+        } else {
+            alert(error.message);
+        }
     }
 }
 

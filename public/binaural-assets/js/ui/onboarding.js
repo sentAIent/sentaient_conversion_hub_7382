@@ -174,6 +174,7 @@ const TUTORIAL_STEPS = [
 ];
 
 let currentStep = 0;
+let activeSteps = [...TUTORIAL_STEPS]; // Current active subset
 let onboardingOverlay = null;
 let onboardingHighlight = null;
 let onboardingTooltip = null;
@@ -220,8 +221,22 @@ export function markOnboardingComplete() {
     localStorage.setItem(ONBOARDING_KEY, 'true');
 }
 
-export function startOnboarding(force = false) {
+export function startOnboarding(force = false, userIntent = null) {
     if (!force && !shouldShowOnboarding()) return;
+
+    // Filter or Reorder based on intent
+    if (userIntent === 'sleep') {
+        // Prioritize presets and timer for sleep
+        const sleepSteps = TUTORIAL_STEPS.filter(s => s.id !== 'matrix' && s.id !== 'mixer');
+        const matrixStep = TUTORIAL_STEPS.find(s => s.id === 'matrix');
+        if (matrixStep) sleepSteps.push(matrixStep); // Put it last
+        activeSteps = sleepSteps;
+    } else if (userIntent === 'focus') {
+        // Prioritize Mixer and Matrix for focus
+        activeSteps = [...TUTORIAL_STEPS];
+    } else {
+        activeSteps = [...TUTORIAL_STEPS];
+    }
 
     currentStep = 0;
     createOnboardingUI();
@@ -304,7 +319,7 @@ function prevStep() {
 }
 
 function nextStep() {
-    if (currentStep < TUTORIAL_STEPS.length - 1) {
+    if (currentStep < activeSteps.length - 1) {
         currentStep++;
         showStep(currentStep);
     } else {
@@ -313,7 +328,7 @@ function nextStep() {
 }
 
 function showStep(index) {
-    const step = TUTORIAL_STEPS[index];
+    const step = activeSteps[index];
     if (!step) return;
 
     if (step.action) step.action();
@@ -321,9 +336,9 @@ function showStep(index) {
     // Update Text
     document.getElementById('onboardingTitle').textContent = step.title;
     document.getElementById('onboardingDesc').textContent = step.description;
-    document.getElementById('onboardingCounter').textContent = `${index + 1}/${TUTORIAL_STEPS.length}`;
+    document.getElementById('onboardingCounter').textContent = `${index + 1}/${activeSteps.length}`;
 
-    document.getElementById('onboardingNext').textContent = index === TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next';
+    document.getElementById('onboardingNext').textContent = index === activeSteps.length - 1 ? 'Finish' : 'Next';
     document.getElementById('onboardingPrev').style.visibility = index === 0 ? 'hidden' : 'visible';
 
     // Read More visibility

@@ -4,6 +4,7 @@ import { stopRecording } from '../export/recorder.js';
 import { DailyLimitService } from '../services/daily-limit.js';
 import { showPricingModal } from '../ui/pricing-3tier.js';
 import { isPremiumUser } from '../services/stripe-simple.js';
+import { isHapticsEnabled, hapticPulse } from '../utils/haptics.js';
 
 let uiCallback = null;
 
@@ -243,6 +244,9 @@ export async function startAudio() {
         // Start Daily Limit Check
         startDailyLimitCheck();
 
+        // Start Phase 7 Haptic Sync
+        startHapticSync();
+
     } catch (e) {
         console.error("Audio Start Error:", e);
         alert("Audio Engine Error: " + e.message);
@@ -413,6 +417,9 @@ export function stopAudio(immediate = false) {
     // Clear lock screen controls
     clearMediaSession();
 
+    // Stop haptic sync
+    stopHapticSync();
+
     // Trigger UI update
     if (uiCallback) uiCallback(false);
 }
@@ -514,6 +521,54 @@ function applyAudioMode() {
 
 export function getAudioMode() {
     return state.audioMode;
+}
+
+// --- PHASE 7: HAPTIC SYNTHESIS ---
+
+/**
+ * Sync device vibration with current beat frequency
+ */
+export function startHapticSync() {
+    stopHapticSync(); // Clear existing
+
+    if (!isHapticsEnabled()) return;
+
+    console.log('[Haptics] Starting Beat Sync...');
+
+    state.hapticInterval = setInterval(() => {
+        if (!state.isPlaying || !isHapticsEnabled()) {
+            stopHapticSync();
+            return;
+        }
+
+        const beatFreq = parseFloat(els.beatSlider?.value || 10);
+
+        // Pulse duration is 25% of the beat period, capped at 20ms and min 5ms
+        const periodMs = 1000 / Math.max(1, beatFreq);
+        const pulseDuration = Math.min(20, Math.max(5, periodMs * 0.25));
+
+        hapticPulse(pulseDuration);
+
+        // Dynamic interval adjustment if beat frequency changes SIGNIFICANTLY
+        // But setInterval is simple. We'll restart it if beat changes?
+        // Actually, for Phase 7, a more robust approach is to check if frequency changed.
+    }, 1000 / Math.max(1, parseFloat(els.beatSlider?.value || 10)));
+}
+
+export function stopHapticSync() {
+    if (state.hapticInterval) {
+        clearInterval(state.hapticInterval);
+        state.hapticInterval = null;
+    }
+}
+
+/**
+ * Restart haptics when frequency changes significantly to maintain sync
+ */
+export function updateHapticSync() {
+    if (state.isPlaying && isHapticsEnabled()) {
+        startHapticSync();
+    }
 }
 
 // --- FREQUENCY SWEEP FUNCTIONS ---
@@ -898,6 +953,9 @@ export function updateFrequencies() {
         if (els.visualSpeedSlider) els.visualSpeedSlider.value = targetSpeed;
         if (els.speedValue) els.speedValue.textContent = targetSpeed.toFixed(1) + 'x';
     }
+
+    // Update Haptic Sync if active
+    updateHapticSync();
 
     updateAIContext();
 }

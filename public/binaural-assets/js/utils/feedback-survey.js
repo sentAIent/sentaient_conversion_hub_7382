@@ -3,8 +3,13 @@
  * Measures product-market fit, feature value, and emotional resonance
  */
 
-import { getAuth } from 'firebase/auth';
-import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import {
+    db,
+    auth as firebaseAuth,
+    collection,
+    addDoc,
+    serverTimestamp
+} from '../services/firebase.js';
 
 // Survey trigger conditions
 const TRIGGER_CONDITIONS = {
@@ -259,13 +264,15 @@ function setupSurveyHandlers(modal, triggerType) {
  * Submit feedback to Firestore
  */
 async function submitFeedback(data) {
-    const auth = getAuth();
-    const db = getFirestore();
+    if (!db) {
+        console.warn('[Survey] Firebase not initialized, cannot submit');
+        return;
+    }
 
     const feedbackDoc = {
         ...data,
-        userId: auth.currentUser?.uid || 'anonymous',
-        userEmail: auth.currentUser?.email || null,
+        userId: firebaseAuth?.currentUser?.uid || 'anonymous',
+        userEmail: firebaseAuth?.currentUser?.email || null,
         createdAt: serverTimestamp(),
         userAgent: navigator.userAgent,
         screenSize: `${window.innerWidth}x${window.innerHeight}`

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Setting Up Mock Profile...</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fff;
+            font-family: system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .loader {
+            border: 3px solid #333;
+            border-top: 3px solid #2dd4bf;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loader"></div>
+    <h1>Applying Mock User Profile...</h1>
+    <p id="status">Initializing...</p>
+    <script>
+        const profile = {
+            "auth": {
+                "uid": "user-referred-123",
+                "email": "referred@example.com",
+                "displayName": "Referred Friend",
+                "photoURL": "https://api.dicebear.com/7.x/avataaars/svg?seed=ReferredFriend"
+            },
+            "analytics": {
+                "sessions": [
+                    { "id": "session_1740000000000", "startTime": 1740000000000, "endTime": 1740001800000, "duration": 1800, "preset": "Deep Focus", "completed": true },
+                    { "id": "session_1740086400000", "startTime": 1740086400000, "endTime": 1740088200000, "duration": 1800, "preset": "Zen Meditation", "completed": true }
+                ],
+                "stats": {
+                    "totalSessions": 42,
+                    "totalMinutes": 1260,
+                    "totalHours": 21.0,
+                    "currentStreak": 7,
+                    "longestStreak": 12,
+                    "lastSessionDate": 1740088200000,
+                    "presetUsage": { "Deep Focus": 20, "Zen Meditation": 15, "Creative Flow": 7 }
+                }
+            },
+            "referrerId": "creator-999"
+        };
+
+        try {
+            console.log("Clearing localStorage...");
+            localStorage.clear();
+
+            console.log("Setting mock data...");
+            localStorage.setItem('mindwave_mock_user', JSON.stringify(profile.auth));
+            localStorage.setItem('mindwave_premium', 'true');
+            localStorage.setItem('mindwave_analytics', JSON.stringify(profile.analytics));
+            localStorage.setItem('mindwave_daily_usage', '1800');
+            localStorage.setItem('mindwave_referrer', profile.referrerId);
+            localStorage.setItem('mindwave_daily_date', new Date().toDateString());
+
+            document.getElementById('status').textContent = "Success! Redirecting...";
+            document.getElementById('status').style.color = '#2dd4bf';
+
+            setTimeout(() => {
+                window.location.href = '/mindwave-beta.html';
+            }, 1000);
+        } catch (e) {
+            document.getElementById('status').textContent = "Error: " + e.message;
+            document.getElementById('status').style.color = '#f87171';
+            console.error(e);
+        }
+    </script>
+</body>
+
+</html>
