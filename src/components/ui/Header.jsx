@@ -45,6 +45,11 @@ const Header = () => {
       icon: 'Target'
     },
     {
+      name: 'Home Alt',
+      path: '/home-alt',
+      icon: 'Layout'
+    },
+    {
       name: 'Trust & Transparency',
       path: '/trust-transparency-hub',
       icon: 'Shield'
