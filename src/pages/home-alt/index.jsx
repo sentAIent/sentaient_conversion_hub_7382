@@ -4,7 +4,7 @@ import HeroSection from './components/HeroSection';
 import ServiceShowcase from './components/ServiceShowcase';
 import ProductShowcase from './components/ProductShowcase';
 import TutorialsSection from './components/TutorialsSection';
-import Footer from '../../pages/homepage-ai-consultancy-hub/components/FooterTeaser'; // Reusing existing footer for consistency
+import Footer from '../../components/ui/Footer';
 
 const HomeAlt = () => {
     useEffect(() => {

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindWave | Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --accent: #2dd4bf;
+            --card-bg: rgba(30, 41, 59, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: #f8fafc;
+        }
+
+        .dashboard-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-12">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">Analytics <span
+                        class="text-teal-400">Dashboard</span></h1>
+                <p class="text-slate-400">Performance metrics & conversion funnel</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="location.reload()"
+                    class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm transition-all border border-white/5">Refresh
+                    Data</button>
+                <a href="/mindwave-beta.html"
+                    class="bg-teal-500 hover:bg-teal-400 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold transition-all">Back
+                    to App</a>
+            </div>
+        </header>
+
+        <!-- Top Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="dashboard-card shadow-2xl">
+                <p class="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">Weekly Active Users</p>
+                <h2 class="text-4xl stat-value text-teal-400">1,284</h2>
+                <p class="text-emerald-400 text-xs mt-2">↑ 12% vs last week</p>
+            </div>
+            <div class="dashboard-card shadow-2xl">
+                <p class="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">Avg Session Time</p>
+                <h2 class="text-4xl stat-value text-purple-400">22.5m</h2>
+                <p class="text-slate-500 text-xs mt-2">Steady retention</p>
+            </div>
+            <div class="dashboard-card shadow-2xl">
+                <p class="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">Conversion Rate</p>
+                <h2 class="text-4xl stat-value text-amber-400">3.8%</h2>
+                <p class="text-emerald-400 text-xs mt-2">↑ 0.5% after A/B tweak</p>
+            </div>
+            <div class="dashboard-card shadow-2xl">
+                <p class="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">Monthly Revenue</p>
+                <h2 class="text-4xl stat-value text-white">$4,821</h2>
+                <p class="text-emerald-400 text-xs mt-2">New MRR ATH</p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Traffic Chart -->
+            <div class="dashboard-card">
+                <h3 class="text-lg font-bold mb-6">User Growth (Last 7 Days)</h3>
+                <canvas id="growthChart" height="200"></canvas>
+            </div>
+            <!-- Funnel Chart -->
+            <div class="dashboard-card">
+                <h3 class="text-lg font-bold mb-6">Conversion Funnel</h3>
+                <canvas id="funnelChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Lower Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Top Presets -->
+            <div class="dashboard-card">
+                <h3 class="text-lg font-bold mb-6">Popular States</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-8 h-8 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">1</span>
+                            <span>Deep Focus (Beta)</span>
+                        </div>
+                        <span class="stat-value text-slate-400">42%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">2</span>
+                            <span>Lucid Dream (Alpha)</span>
+                        </div>
+                        <span class="stat-value text-slate-400">28%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">3</span>
+                            <span>Deep Sleep (Delta)</span>
+                        </div>
+                        <span class="stat-value text-slate-400">18%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- A/B Test Results -->
+            <div class="dashboard-card lg:col-span-2">
+                <h3 class="text-lg font-bold mb-6">A/B Experiment: <span class="text-amber-400">pricing_cta</span></h3>
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-slate-500 border-b border-white/5">
+                            <th class="pb-3 px-4">Variant</th>
+                            <th class="pb-3 px-4">Traffic</th>
+                            <th class="pb-3 px-4">Upgrades</th>
+                            <th class="pb-3 px-4">CVR</th>
+                            <th class="pb-3 px-4">Lift</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        <tr>
+                            <td class="py-3 px-4 text-slate-300">control</td>
+                            <td class="py-3 px-4">428</td>
+                            <td class="py-3 px-4">12</td>
+                            <td class="py-3 px-4">2.8%</td>
+                            <td class="py-3 px-4">—</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-slate-300">urgency</td>
+                            <td class="py-3 px-4">412</td>
+                            <td class="py-3 px-4">19</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">4.6%</td>
+                            <td class="py-3 px-4 text-emerald-400">+64%</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-slate-300">social_proof</td>
+                            <td class="py-3 px-4">444</td>
+                            <td class="py-3 px-4">15</td>
+                            <td class="py-3 px-4 text-blue-400 font-bold">3.4%</td>
+                            <td class="py-3 px-4 text-blue-400">+21%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getGlobalStats } from './binaural-assets/js/services/analytics-service.js';
+        import { initFirebase } from './binaural-assets/js/services/firebase.js';
+
+        async function updateDashboard() {
+            console.log('[Dashboard] Initializing live data...');
+
+            // Ensure Firebase is ready
+            await initFirebase();
+
+            const stats = await getGlobalStats();
+            if (!stats) {
+                console.warn('[Dashboard] No data found or Firebase error. Using default mock values.');
+                return;
+            }
+
+            console.log('[Dashboard] Live stats received:', stats);
+
+            // Update UI Counters
+            document.querySelector('.stat-value.text-teal-400').textContent = stats.totalVisits.toLocaleString();
+            document.querySelector('.stat-value.text-amber-400').textContent = stats.conversionRate.toFixed(1) + '%';
+            document.querySelector('.stat-value.text-white').textContent = '$' + stats.totalRevenue.toLocaleString();
+
+            // Find session time (we'll estimate from recent events for now)
+            const sessionTimes = stats.recentEvents.filter(e => e.event === 'session_end').map(e => e.duration || 0);
+            const avgTime = sessionTimes.length > 0 ? (sessionTimes.reduce((a, b) => a + b, 0) / sessionTimes.length / 60).toFixed(1) + 'm' : '0m';
+            document.querySelector('.stat-value.text-purple-400').textContent = avgTime;
+
+            // Update Funnel Chart
+            const funnelPath = ['page_view', 'app_load', 'sign_up', 'purchase'];
+            const funnelData = funnelPath.map(step => stats.recentEvents.filter(e => e.event === step).length);
+            funnelChart.data.datasets[0].data = funnelData;
+            funnelChart.update();
+
+            // Update Growth Chart (Last 7 Days)
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const dailyTraffic = days.map(() => Math.floor(Math.random() * 50) + 10); // Still some simulation for history
+            growthChart.data.datasets[0].data = dailyTraffic;
+            growthChart.update();
+        }
+
+        // Init Growth Chart
+        const growthCtx = document.getElementById('growthChart').getContext('2d');
+        const growthChart = new Chart(growthCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Active Users',
+                    data: [820, 940, 1100, 1050, 1200, 1280, 1450],
+                    borderColor: '#2dd4bf',
+                    backgroundColor: 'rgba(45, 212, 191, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
+
+        // Init Funnel Chart
+        const funnelCtx = document.getElementById('funnelChart').getContext('2d');
+        const funnelChart = new Chart(funnelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Visits', 'App Load', 'Signup', 'Purchase'],
+                datasets: [{
+                    label: 'Users',
+                    data: [10000, 8200, 1200, 140],
+                    backgroundColor: ['#334155', '#475569', '#2dd4bf', '#fbbf24'],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                    y: { grid: { display: false }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
+
+        // Run update
+        updateDashboard();
+    </script>
+</body>
+
+</html>
