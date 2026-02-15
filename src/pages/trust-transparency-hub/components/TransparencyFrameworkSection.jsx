@@ -151,11 +151,10 @@ const TransparencyFrameworkSection = () => {
             <button
               key={area?.id}
               onClick={() => setActiveTab(area?.id)}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-md text-sm font-medium transition-all duration-300 ${
-                activeTab === area?.id
+              className={`flex items-center space-x-2 px-4 py-3 rounded-md text-sm font-medium transition-all duration-300 ${activeTab === area?.id
                   ? 'bg-primary text-primary-foreground shadow-subtle'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
+                }`}
             >
               <Icon name={area?.icon} size={16} />
               <span>{area?.title}</span>
@@ -236,7 +235,7 @@ const TransparencyFrameworkSection = () => {
               variant="default"
               iconName="MessageCircle"
               iconPosition="left"
-              className="bg-accent hover:bg-accent/90"
+              className="bg-foreground text-accent hover:bg-foreground/90 border-foreground"
               onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
             >
               Schedule Transparency Discussion

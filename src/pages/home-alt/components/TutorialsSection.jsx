@@ -8,7 +8,7 @@ const TutorialsSection = () => {
             title: "ROI Calculation Framework for AI Investments",
             type: "Whitepaper",
             duration: "30 Min Read",
-            thumbnail: "bg-blue-900/40",
+            thumbnail: "bg-primary/20",
             description: "Learn how to build compelling business cases for AI projects with proven ROI methodologies.",
             category: "fundamentals"
         },

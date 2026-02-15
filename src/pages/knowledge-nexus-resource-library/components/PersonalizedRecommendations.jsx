@@ -139,19 +139,19 @@ const PersonalizedRecommendations = ({ userProfile, onResourceClick }) => {
                         </span>
                       </div>
                       <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                        <Icon name="Star" size={14} className="text-yellow-400 fill-current" />
+                        <Icon name="Star" size={14} className="text-warning fill-current" />
                         <span>{resource?.rating}</span>
                       </div>
                     </div>
-                    
+
                     <h4 className="text-lg font-semibold text-foreground mb-2">
                       {resource?.title}
                     </h4>
-                    
+
                     <p className="text-sm text-muted-foreground mb-3">
                       {resource?.description}
                     </p>
-                    
+
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                         <span>{resource?.difficulty}</span>
@@ -163,7 +163,7 @@ const PersonalizedRecommendations = ({ userProfile, onResourceClick }) => {
                         <span>{resource?.matchReason}</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex flex-wrap gap-1">
                         {resource?.tags?.slice(0, 2)?.map((tag, tagIndex) => (
@@ -214,11 +214,10 @@ const PersonalizedRecommendations = ({ userProfile, onResourceClick }) => {
             <div className="space-y-4">
               {learningPath?.map((step, index) => (
                 <div key={step?.step} className="flex items-start space-x-3">
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step?.status === 'completed' 
-                      ? 'bg-conversion text-conversion-foreground' 
-                      : step?.status === 'current' ?'bg-primary text-primary-foreground' :'bg-muted text-muted-foreground'
-                  }`}>
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step?.status === 'completed'
+                      ? 'bg-conversion text-conversion-foreground'
+                      : step?.status === 'current' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                    }`}>
                     {step?.status === 'completed' ? (
                       <Icon name="Check" size={16} />
                     ) : (
@@ -226,9 +225,8 @@ const PersonalizedRecommendations = ({ userProfile, onResourceClick }) => {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h5 className={`text-sm font-medium ${
-                      step?.status === 'current' ? 'text-primary' : 'text-foreground'
-                    }`}>
+                    <h5 className={`text-sm font-medium ${step?.status === 'current' ? 'text-primary' : 'text-foreground'
+                      }`}>
                       {step?.title}
                     </h5>
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-1">

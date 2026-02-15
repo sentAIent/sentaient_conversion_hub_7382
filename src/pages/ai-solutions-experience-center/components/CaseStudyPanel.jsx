@@ -125,9 +125,8 @@ const CaseStudyPanel = ({ solution }) => {
               <button
                 key={index}
                 onClick={() => setActiveCase(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === activeCase ? 'bg-primary' : 'bg-border hover:bg-border/80'
-                }`}
+                className={`w-3 h-3 rounded-full transition-colors ${index === activeCase ? 'bg-primary' : 'bg-border hover:bg-border/80'
+                  }`}
               />
             ))}
           </div>
@@ -148,18 +147,18 @@ const CaseStudyPanel = ({ solution }) => {
                 className="w-full h-32 object-cover rounded-lg"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-lg"></div>
-              <div className="absolute bottom-2 left-2 text-white">
+              <div className="absolute bottom-2 left-2 text-primary-foreground">
                 <h4 className="font-semibold text-sm">{currentCase?.company}</h4>
                 <p className="text-xs opacity-90">{currentCase?.industry}</p>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <div>
                 <h5 className="font-semibold text-foreground text-sm mb-1">Challenge</h5>
                 <p className="text-xs text-muted-foreground">{currentCase?.challenge}</p>
               </div>
-              
+
               <div>
                 <h5 className="font-semibold text-foreground text-sm mb-1">Solution</h5>
                 <p className="text-xs text-muted-foreground">{currentCase?.solution}</p>
@@ -174,16 +173,16 @@ const CaseStudyPanel = ({ solution }) => {
               {Object.entries(currentCase?.results)?.map(([key, value], index) => (
                 <div key={index} className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
                   <div className="w-8 h-8 bg-conversion/10 rounded-full flex items-center justify-center">
-                    <Icon 
+                    <Icon
                       name={
                         key?.includes('time') || key?.includes('delivery') ? 'Clock' :
-                        key?.includes('satisfaction') || key?.includes('retention') ? 'Heart' :
-                        key?.includes('cost') || key?.includes('revenue') ? 'DollarSign' :
-                        key?.includes('efficiency') || key?.includes('accuracy') ? 'Target' :
-                        'TrendingUp'
-                      } 
-                      size={16} 
-                      className="text-conversion" 
+                          key?.includes('satisfaction') || key?.includes('retention') ? 'Heart' :
+                            key?.includes('cost') || key?.includes('revenue') ? 'DollarSign' :
+                              key?.includes('efficiency') || key?.includes('accuracy') ? 'Target' :
+                                'TrendingUp'
+                      }
+                      size={16}
+                      className="text-conversion"
                     />
                   </div>
                   <div className="flex-1">
@@ -209,7 +208,7 @@ const CaseStudyPanel = ({ solution }) => {
                 — {currentCase?.author}
               </cite>
             </div>
-            
+
             <div className="mt-4 space-y-2">
               <Button
                 variant="outline"
@@ -226,7 +225,7 @@ const CaseStudyPanel = ({ solution }) => {
                 fullWidth
                 iconName="Users"
                 iconPosition="left"
-                className="bg-conversion hover:bg-conversion/90"
+                className="bg-foreground text-conversion hover:bg-foreground/90 border-foreground"
                 onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
               >
                 Connect with Similar Clients

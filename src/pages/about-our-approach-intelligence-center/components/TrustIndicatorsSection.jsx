@@ -159,12 +159,12 @@ const TrustIndicatorsSection = () => {
             </div>
             <span className="text-primary font-semibold text-lg">Trust & Recognition</span>
           </div>
-          
+
           <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
             Industry Recognition &
             <span className="block text-primary">Client Trust</span>
           </h2>
-          
+
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Our commitment to excellence, ethical practices, and measurable results has earned recognition from industry leaders and the trust of clients worldwide.
           </p>
@@ -326,16 +326,16 @@ const TrustIndicatorsSection = () => {
                     <p className="text-sm text-muted-foreground">{testimonial?.industry}</p>
                   </div>
                 </div>
-                
+
                 <blockquote className="text-muted-foreground italic leading-relaxed mb-4">
                   "{testimonial?.quote}"
                 </blockquote>
-                
+
                 <div className="mb-4">
                   <div className="font-semibold text-foreground">{testimonial?.author}</div>
                   <div className="text-sm text-muted-foreground">{testimonial?.role}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <h5 className="text-sm font-semibold text-foreground">Key Results:</h5>
                   {testimonial?.results?.map((result, resultIndex) => (
@@ -362,9 +362,9 @@ const TrustIndicatorsSection = () => {
             <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
               Experience the same level of excellence and results that have transformed your competitors' operational efficiency and positioned them for long-term success in the age of AI.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="px-8 py-4 bg-accent text-primary font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2"
+              <button className="px-8 py-4 bg-accent text-primary-foreground font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2"
                 onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
               >
                 <Icon name="Calendar" size={20} />

@@ -90,8 +90,8 @@ const IntegrationChecker = () => {
 
   const toggleSystem = (categoryId, systemId) => {
     const systemKey = `${categoryId}-${systemId}`;
-    setSelectedSystems(prev => 
-      prev?.includes(systemKey) 
+    setSelectedSystems(prev =>
+      prev?.includes(systemKey)
         ? prev?.filter(s => s !== systemKey)
         : [...prev, systemKey]
     );
@@ -99,7 +99,7 @@ const IntegrationChecker = () => {
 
   const checkCompatibility = () => {
     setIsChecking(true);
-    
+
     setTimeout(() => {
       const compatibilityScores = {
         native: 100,
@@ -108,26 +108,26 @@ const IntegrationChecker = () => {
         webhook: 70,
         custom: 60
       };
-      
+
       const setupComplexity = {
         easy: 'Quick Setup (1-2 days)',
         medium: 'Standard Setup (3-7 days)',
         complex: 'Custom Setup (2-4 weeks)'
       };
-      
+
       let totalScore = 0;
       let systemCount = 0;
       const integrationDetails = [];
-      
+
       selectedSystems?.forEach(systemKey => {
         const [categoryId, systemId] = systemKey?.split('-');
         const system = systemCategories?.[categoryId]?.systems?.find(s => s?.id === systemId);
-        
+
         if (system) {
           const score = compatibilityScores?.[system?.compatibility];
           totalScore += score;
           systemCount++;
-          
+
           integrationDetails?.push({
             category: systemCategories?.[categoryId]?.name,
             system: system?.name,
@@ -138,9 +138,9 @@ const IntegrationChecker = () => {
           });
         }
       });
-      
+
       const averageScore = systemCount > 0 ? Math.round(totalScore / systemCount) : 0;
-      
+
       // Business size impact
       const sizeMultipliers = {
         startup: 1.1,
@@ -149,9 +149,9 @@ const IntegrationChecker = () => {
         large: 0.9,
         enterprise: 0.85
       };
-      
+
       const finalScore = Math.round(averageScore * (sizeMultipliers?.[businessSize] || 1.0));
-      
+
       setCheckResults({
         overallScore: finalScore,
         systemCount,
@@ -160,14 +160,14 @@ const IntegrationChecker = () => {
         estimatedTimeline: calculateTimeline(integrationDetails, businessSize),
         estimatedCost: calculateCost(integrationDetails, businessSize)
       });
-      
+
       setIsChecking(false);
     }, 2000);
   };
 
   const generateRecommendations = (score, details, size, industryType) => {
     const recommendations = [];
-    
+
     if (score >= 90) {
       recommendations?.push({
         type: 'success',
@@ -187,7 +187,7 @@ const IntegrationChecker = () => {
         message: 'Several systems will need custom integration work. Consider our Enterprise package for dedicated support.'
       });
     }
-    
+
     // Add industry-specific recommendations
     if (industryType === 'healthcare') {
       recommendations?.push({
@@ -196,7 +196,7 @@ const IntegrationChecker = () => {
         message: 'We ensure all healthcare integrations meet HIPAA compliance requirements with encrypted data handling.'
       });
     }
-    
+
     return recommendations;
   };
 
@@ -208,7 +208,7 @@ const IntegrationChecker = () => {
       large: 6,
       enterprise: 8
     };
-    
+
     const complexityWeeks = details?.reduce((total, detail) => {
       const weeks = {
         easy: 0.5,
@@ -217,7 +217,7 @@ const IntegrationChecker = () => {
       };
       return total + (weeks?.[detail?.setupTime] || 1);
     }, 0);
-    
+
     return Math.ceil((baseWeeks?.[size] || 3) + complexityWeeks);
   };
 
@@ -229,7 +229,7 @@ const IntegrationChecker = () => {
       large: 25000,
       enterprise: 40000
     };
-    
+
     const integrationCosts = details?.reduce((total, detail) => {
       const costs = {
         easy: 500,
@@ -238,19 +238,19 @@ const IntegrationChecker = () => {
       };
       return total + (costs?.[detail?.setupTime] || 1000);
     }, 0);
-    
+
     return (baseCosts?.[size] || 10000) + integrationCosts;
   };
 
   const getCompatibilityColor = (compatibility) => {
     const colors = {
-      native: 'text-green-600',
-      api: 'text-blue-600',
-      plugin: 'text-yellow-600',
-      webhook: 'text-orange-600',
-      custom: 'text-red-600'
+      native: 'text-success',
+      api: 'text-primary',
+      plugin: 'text-warning',
+      webhook: 'text-orange-400',
+      custom: 'text-error'
     };
-    return colors?.[compatibility] || 'text-gray-600';
+    return colors?.[compatibility] || 'text-muted-foreground';
   };
 
   const getCompatibilityBadge = (compatibility) => {
@@ -286,7 +286,7 @@ const IntegrationChecker = () => {
               onChange={setBusinessSize}
               placeholder="Select business size"
             />
-            
+
             <Select
               label="Industry"
               options={industryOptions}
@@ -298,27 +298,26 @@ const IntegrationChecker = () => {
 
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Select Your Current Systems</h4>
-            
+
             {Object.entries(systemCategories)?.map(([categoryId, category]) => (
               <div key={categoryId} className="border border-border rounded-lg p-4">
                 <div className="flex items-center space-x-2 mb-3">
                   <Icon name={category?.icon} size={18} className="text-primary" />
                   <h5 className="font-medium text-foreground">{category?.name}</h5>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {category?.systems?.map((system) => {
                     const systemKey = `${categoryId}-${system?.id}`;
                     const isSelected = selectedSystems?.includes(systemKey);
-                    
+
                     return (
                       <button
                         key={system?.id}
                         onClick={() => toggleSystem(categoryId, system?.id)}
-                        className={`flex items-center justify-between p-2 rounded-lg border transition-all ${
-                          isSelected 
-                            ? 'border-primary bg-primary/5 text-primary' :'border-border hover:border-primary/50 text-foreground'
-                        }`}
+                        className={`flex items-center justify-between p-2 rounded-lg border transition-all ${isSelected
+                            ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50 text-foreground'
+                          }`}
                       >
                         <span className="text-sm font-medium">{system?.name}</span>
                         <span className={`text-xs px-2 py-1 rounded ${getCompatibilityColor(system?.compatibility)} bg-current/10`}>
@@ -340,7 +339,7 @@ const IntegrationChecker = () => {
             onClick={checkCompatibility}
             loading={isChecking}
             disabled={selectedSystems?.length === 0 || !businessSize || !industry}
-            className="bg-trust hover:bg-trust/90"
+            className="bg-foreground text-trust hover:bg-foreground/90 border-foreground"
           >
             {isChecking ? 'Checking Compatibility...' : 'Check Compatibility'}
           </Button>
@@ -354,26 +353,24 @@ const IntegrationChecker = () => {
               <div className="bg-muted rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-foreground">Compatibility Score</h4>
-                  <div className={`text-2xl font-bold ${
-                    checkResults?.overallScore >= 90 ? 'text-green-600' :
-                    checkResults?.overallScore >= 75 ? 'text-blue-600' :
-                    checkResults?.overallScore >= 60 ? 'text-yellow-600' : 'text-red-600'
-                  }`}>
+                  <div className={`text-2xl font-bold ${checkResults?.overallScore >= 90 ? 'text-success' :
+                      checkResults?.overallScore >= 75 ? 'text-primary' :
+                        checkResults?.overallScore >= 60 ? 'text-warning' : 'text-error'
+                    }`}>
                     {checkResults?.overallScore}%
                   </div>
                 </div>
-                
+
                 <div className="w-full bg-border rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-1000 ${
-                      checkResults?.overallScore >= 90 ? 'bg-green-600' :
-                      checkResults?.overallScore >= 75 ? 'bg-blue-600' :
-                      checkResults?.overallScore >= 60 ? 'bg-yellow-600' : 'bg-red-600'
-                    }`}
+                  <div
+                    className={`h-2 rounded-full transition-all duration-1000 ${checkResults?.overallScore >= 90 ? 'bg-success' :
+                        checkResults?.overallScore >= 75 ? 'bg-primary' :
+                          checkResults?.overallScore >= 60 ? 'bg-warning' : 'bg-error'
+                      }`}
                     style={{ width: `${checkResults?.overallScore}%` }}
                   ></div>
                 </div>
-                
+
                 <p className="text-sm text-muted-foreground mt-2">
                   Based on {checkResults?.systemCount} selected systems
                 </p>
@@ -382,10 +379,9 @@ const IntegrationChecker = () => {
               {/* Recommendations */}
               <div className="space-y-3">
                 {checkResults?.recommendations?.map((rec, index) => (
-                  <div key={index} className={`p-3 rounded-lg border-l-4 ${
-                    rec?.type === 'success' ? 'bg-green-50 border-green-500' :
-                    rec?.type === 'info'? 'bg-blue-50 border-blue-500' : 'bg-yellow-50 border-yellow-500'
-                  }`}>
+                  <div key={index} className={`p-3 rounded-lg border-l-4 ${rec?.type === 'success' ? 'bg-success/10 border-success' :
+                      rec?.type === 'info' ? 'bg-primary/10 border-primary' : 'bg-warning/10 border-warning'
+                    }`}>
                     <h5 className="font-medium text-foreground text-sm">{rec?.title}</h5>
                     <p className="text-xs text-muted-foreground mt-1">{rec?.message}</p>
                   </div>
@@ -399,7 +395,7 @@ const IntegrationChecker = () => {
                   <p className="text-xs text-muted-foreground">Estimated Timeline</p>
                   <p className="font-bold text-foreground">{checkResults?.estimatedTimeline} weeks</p>
                 </div>
-                
+
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <Icon name="DollarSign" size={20} className="text-conversion mx-auto mb-1" />
                   <p className="text-xs text-muted-foreground">Integration Cost</p>

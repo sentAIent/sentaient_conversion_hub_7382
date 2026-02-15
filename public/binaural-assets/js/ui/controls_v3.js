@@ -1279,23 +1279,54 @@ async function applyNextAIStage() {
 }
 
 async function applyAIPreset(result) {
-    console.log('[AI] Applying Preset:', result.preset, 'Soundscapes:', result.soundscapes);
+    console.log('[AI] Applying Preset:', result.preset, 'Soundscapes:', result.soundscapes, 'Visual:', result.visual);
 
     // 1. Reset current soundscapes first
     resetAllSoundscapes();
 
-    // 2. Apply main frequency preset
+    // 2. Clear current visuals
+    const viz = getVisualizer();
+    if (viz && viz.activeModes) {
+        const active = Array.from(viz.activeModes);
+        active.forEach(m => viz.toggleMode(m));
+    }
+
+    // 3. Apply main frequency preset
     await applyPreset(result.preset, null, true, true);
 
-    // 3. Enable soundscapes
+    // 4. Enable soundscapes
     result.soundscapes.forEach(id => {
         updateSoundscape(id, true, 0.5);
     });
 
-    // 4. Force UI Sync
+    // 5. Enable visual if suggested
+    if (result.visual) {
+        const visualMap = {
+            'flow': 'particles',
+            'zen': 'zengarden'
+        };
+        const vizMode = visualMap[result.visual] || result.visual;
+        setVisualMode(vizMode, true);
+    }
+
+    // 6. Force UI Sync
     initMixer();
 
     showToast(`AI Mix: ${result.preset.toUpperCase()}`, 'success');
+}
+
+/**
+ * Public wrapper to apply AI-derived intent.
+ * Used for auto-tuning session from survey.
+ */
+export async function applyAIIntent(intent) {
+    console.log('[AI] Applying Intent:', intent);
+    const result = calculateFrequencyFromGoal(intent);
+    if (result) {
+        await applyAIPreset(result);
+        return result.insight;
+    }
+    return null;
 }
 
 

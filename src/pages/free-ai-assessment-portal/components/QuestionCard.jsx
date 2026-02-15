@@ -39,16 +39,14 @@ const QuestionCard = ({ question, onAnswer, onNext, onPrevious, isFirst, isLast,
               <div
                 key={option?.value}
                 onClick={() => handleSingleChoice(option?.value)}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-subtle ${
-                  selectedAnswer === option?.value
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-subtle ${selectedAnswer === option?.value
                     ? 'border-primary bg-primary/5 shadow-subtle'
                     : 'border-border hover:border-primary/50'
-                }`}
+                  }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedAnswer === option?.value ? 'border-primary bg-primary' : 'border-muted-foreground'
-                  }`}>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedAnswer === option?.value ? 'border-primary bg-primary' : 'border-muted-foreground'
+                    }`}>
                     {selectedAnswer === option?.value && (
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     )}
@@ -121,7 +119,7 @@ const QuestionCard = ({ question, onAnswer, onNext, onPrevious, isFirst, isLast,
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-brand p-8 mb-6">
+    <div className="bg-card rounded-xl shadow-elevation border border-border p-8 mb-6">
       <div className="mb-6">
         <div className="flex items-start space-x-4 mb-4">
           <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -131,7 +129,7 @@ const QuestionCard = ({ question, onAnswer, onNext, onPrevious, isFirst, isLast,
             <h3 className="text-xl font-semibold text-foreground mb-2">{question?.title}</h3>
             <p className="text-muted-foreground leading-relaxed">{question?.description}</p>
             {question?.helpText && (
-              <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+              <div className="mt-3 p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-start space-x-2">
                   <Icon name="Info" size={16} className="text-primary mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-muted-foreground">{question?.helpText}</p>
@@ -162,7 +160,7 @@ const QuestionCard = ({ question, onAnswer, onNext, onPrevious, isFirst, isLast,
               <span className="text-sm">This question is required</span>
             </div>
           )}
-          
+
           <Button
             variant="default"
             onClick={onNext}

@@ -13,27 +13,27 @@ const CompanyCultureSection = () => {
       content: {
         philosophy: `Our collaborative approach brings together AI researchers, business strategists, and industry experts to create solutions that are both technically excellent and practically valuable. We foster an environment where every team member's expertise contributes to breakthrough innovations.`,
         practices: [
-          'Cross-functional project teams with diverse expertise','Regular knowledge sharing sessions and tech talks','Client collaboration workshops and co-creation sessions','Open-source contributions and community engagement','Peer review processes for all major decisions'
+          'Cross-functional project teams with diverse expertise', 'Regular knowledge sharing sessions and tech talks', 'Client collaboration workshops and co-creation sessions', 'Open-source contributions and community engagement', 'Peer review processes for all major decisions'
         ],
         impact: 'This collaborative culture has led to 40% faster project delivery and 95% client satisfaction rates.'
       }
     },
     {
-      id: 'learning',title: 'Continuous Learning',icon: 'BookOpen',description: 'In the rapidly evolving AI landscape, learning is not optional—it\'s essential.',
+      id: 'learning', title: 'Continuous Learning', icon: 'BookOpen', description: 'In the rapidly evolving AI landscape, learning is not optional—it\'s essential.',
       content: {
         philosophy: `We invest heavily in our team's continuous education because AI technology evolves rapidly. Our learning culture ensures we stay at the forefront of AI innovation while developing practical expertise that benefits our clients.`,
         practices: [
-          'Monthly AI research paper discussions and analysis','Quarterly training on emerging AI technologies','Conference attendance and knowledge sharing','Internal certification programs and skill development','Experimentation time for exploring new AI tools'
+          'Monthly AI research paper discussions and analysis', 'Quarterly training on emerging AI technologies', 'Conference attendance and knowledge sharing', 'Internal certification programs and skill development', 'Experimentation time for exploring new AI tools'
         ],
         impact: 'Our team completes 200+ hours of learning annually, keeping us ahead of industry trends.'
       }
     },
     {
-      id: 'ethics',title: 'Ethical Leadership',icon: 'Shield',description: 'We lead by example in responsible AI development and deployment.',
+      id: 'ethics', title: 'Ethical Leadership', icon: 'Shield', description: 'We lead by example in responsible AI development and deployment.',
       content: {
         philosophy: `Ethical AI isn't just a buzzword for us—it's a fundamental principle that guides every decision. We believe that responsible AI development today creates a better technological future for everyone.`,
         practices: [
-          'Mandatory ethics training for all team members','Bias detection and mitigation in every project','Transparent AI decision-making processes','Regular ethical impact assessments','Community education on responsible AI practices'
+          'Mandatory ethics training for all team members', 'Bias detection and mitigation in every project', 'Transparent AI decision-making processes', 'Regular ethical impact assessments', 'Community education on responsible AI practices'
         ],
         impact: 'We\'ve established industry-leading ethical AI frameworks adopted by 50+ organizations.'
       }
@@ -46,7 +46,7 @@ const CompanyCultureSection = () => {
       content: {
         philosophy: `Innovation requires courage to challenge existing approaches and creativity to envision new possibilities. We encourage calculated risk-taking and creative problem-solving to push the boundaries of what's possible with AI.`,
         practices: [
-          'Innovation time for experimental projects','Hackathons and creative problem-solving sessions','Patent applications and research publications','Startup mentoring and technology incubation','Industry speaking and thought leadership'
+          'Innovation time for experimental projects', 'Hackathons and creative problem-solving sessions', 'Patent applications and research publications', 'Startup mentoring and technology incubation', 'Industry speaking and thought leadership'
         ],
         impact: 'Our innovations have resulted in 12 patents and 25+ published research papers.'
       }
@@ -116,12 +116,12 @@ const CompanyCultureSection = () => {
             </div>
             <span className="text-primary font-semibold text-lg">Company Culture</span>
           </div>
-          
+
           <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
             Culture That Drives
             <span className="block text-primary">AI Excellence</span>
           </h2>
-          
+
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Our culture is built on collaboration, continuous learning, and ethical leadership. These values shape how we operate, innovate, and serve our clients.
           </p>
@@ -134,16 +134,15 @@ const CompanyCultureSection = () => {
               <button
                 key={value?.id}
                 onClick={() => setActiveTab(value?.id)}
-                className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === value?.id
-                    ? 'bg-primary text-white shadow-elevation'
+                className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${activeTab === value?.id
+                    ? 'bg-primary text-primary-foreground shadow-elevation'
                     : 'bg-card border border-border text-foreground hover:shadow-subtle'
-                }`}
+                  }`}
               >
-                <Icon 
-                  name={value?.icon} 
-                  size={20} 
-                  color={activeTab === value?.id ? 'white' : 'var(--color-primary)'} 
+                <Icon
+                  name={value?.icon}
+                  size={20}
+                  color={activeTab === value?.id ? 'var(--color-primary-foreground)' : 'var(--color-primary)'}
                 />
                 <span>{value?.title}</span>
               </button>
@@ -234,12 +233,12 @@ const CompanyCultureSection = () => {
                     </h4>
                   </div>
                 </div>
-                
+
                 <div className="p-6">
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     {activity?.description}
                   </p>
-                  
+
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-2">
                       <Icon name="Calendar" size={16} color="var(--color-primary)" />
@@ -301,16 +300,16 @@ const CompanyCultureSection = () => {
             <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
               Be part of a team that's shaping the future of AI while maintaining the highest ethical standards and human-centered approach.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
-                className="px-8 py-4 bg-accent text-primary font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2"
-              onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
+              <button
+                className="px-8 py-4 bg-accent text-primary-foreground font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2"
+                onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
               >
                 <Icon name="Users" size={20} />
                 <span>Discuss Open Positions</span>
               </button>
-              <button 
+              <button
                 className="px-8 py-4 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors duration-300 flex items-center justify-center space-x-2"
                 onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
               >

@@ -1,29 +1,28 @@
-console.log("MAIN JS LOADED - NUCLEAR V4 - CONSOLIDATED FIX V1");
+// Mindwave Studio Core
 window.NUCLEAR_MAIN_LOADED = true;
-import { setupUI } from './ui/controls_v3.js?v=NUCLEAR_V100';
-import { initCursor } from './ui/cursor.js?v=NUCLEAR_V100';
-import { initFirebase } from './services/firebase.js';
+// Core Modules for boot
+import { setupUI, applyAIIntent } from './ui/controls_v3.js?v=NUCLEAR_V100';
+import { initFirebase, registerAuthCallback } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
-import { startOnboarding, shouldShowOnboarding } from './ui/onboarding.js'; // Consolidated Onboarding
-import { initIntentSurvey } from './ui/intent-survey.js'; // Intent Capture
-import { initHaptics } from './utils/haptics.js';
-import { initShareFeature, copyShareLink } from './services/share.js';
-import { recordVisit, syncDailyUsage } from './services/analytics.js';
 import { setupSwipeGestures } from './ui/layout.js';
 import { initResizablePanels } from './ui/resize-panels.js';
-import './ui/pricing-3tier.js';  // 3-Tier Pricing modal
-import { handlePaymentSuccess } from './services/stripe-simple.js';
-import { initPaywall } from './utils/paywall.js';
-import { initAnalytics, trackSignup, trackLogin, trackBeginCheckout, trackPurchase, trackFeatureUse, trackSessionStart, trackSessionEnd, trackPaywallShown, trackUpgradeClick, setUserProperties } from './utils/analytics.js';
-import { showFeedbackSurvey, checkSurveyTrigger, TRIGGER_CONDITIONS } from './utils/feedback-survey.js';
-import { checkReferral } from './services/referral.js';
-import { initSocialProof } from './services/social-proof.js';
-import { initExitIntent } from './ui/exit-intent.js';
-import { initNotifications } from './services/notifications.js';
-import { initEmailCapture } from './ui/email-capture.js';
-import { trackGlobalEvent } from './services/analytics-service.js';
-import { initPWAInstall } from './utils/pwa-install.js';
+import { flowManager } from './utils/modal-manager.js';
+
+// Pre-define dynamic imports for performance modeling
+const lazy = {
+    onboarding: () => import('./ui/onboarding.js'),
+    intent: () => import('./ui/intent-survey.js'),
+    analytics: () => import('./utils/analytics.js'),
+    pwa: () => import('./utils/pwa-install.js'),
+    presence: () => import('./services/presence-service.js'),
+    cursor: () => import('./ui/cursor.js'),
+    share: () => import('./services/share.js'),
+    email: () => import('./ui/email-capture.js'),
+    exit: () => import('./ui/exit-intent.js'),
+    haptics: () => import('./utils/haptics.js')
+};
 import { getCloudPresets, syncLocalMixesToCloud } from './services/presets-service.js';
+import { flowManager } from './utils/modal-manager.js';
 import './utils/ab-testing.js';
 
 
@@ -63,21 +62,28 @@ const initApp = () => {
     const onboardingComplete = localStorage.getItem('mindwave_onboarding_complete_v5');
 
     if (!onboardingComplete) {
-        // Only trigger if disclaimer accepted (to avoid modal overlap)
-        const checkAndStartFlow = () => {
-            if (localStorage.getItem('mindwave_disclaimer_accepted') === 'true') {
-                setTimeout(() => {
-                    initIntentSurvey((intent) => {
-                        console.log('[Main] User intent captured:', intent);
-                        startOnboarding(true, intent);
-                    });
-                }, 1000);
-                return; // Stop checking once initiated
-            } else {
-                setTimeout(checkAndStartFlow, 1000);
-            }
-        };
-        checkAndStartFlow();
+        flowManager.enqueue('intent_survey', () => {
+            return new Promise((resolve) => {
+                const checkAndStartFlow = () => {
+                    if (localStorage.getItem('mindwave_disclaimer_accepted') === 'true') {
+                        setTimeout(() => {
+                            initIntentSurvey((intent) => {
+                                console.log('[Main] User intent captured:', intent);
+                                // Auto-tune player based on intent
+                                if (intent && intent !== 'explore') {
+                                    applyAIIntent(intent);
+                                }
+                                startOnboarding(true, intent);
+                                resolve();
+                            });
+                        }, 1000);
+                    } else {
+                        setTimeout(checkAndStartFlow, 1000);
+                    }
+                };
+                checkAndStartFlow();
+            });
+        }, 20);
     }
     // Scaling & Stability (Phase 6)
     initSessionMilestones();
@@ -89,6 +95,8 @@ const initApp = () => {
     try {
         initFirebase();
         initAuthUI();
+        initPresencePulse();
+        initConnectivityListener();
         initPaywall();  // Initialize paywall system
         initAnalytics();  // Initialize Google Analytics
 
@@ -116,32 +124,32 @@ const initApp = () => {
     }
 
     // Mobile features
-    initHaptics();
+    lazy.haptics().then(m => m.initHaptics());
     setupSwipeGestures();
 
     // Resizable side panels
     initResizablePanels();
 
-    // Analytics
-    recordVisit();
-    syncDailyUsage();
-    trackGlobalEvent('page_view', { page: 'mindwave-v101' });
-
-    // URL sharing
-    initShareFeature();
-
     // Custom Cursor
-    initCursor();
+    lazy.cursor().then(m => m.initCursor());
 
-    // Check for referral code
-    checkReferral();
+    // Exit Intent & Email Capture (Deferred via Flow)
+    lazy.exit().then(m => m.initExitIntent());
+    flowManager.enqueue('email_capture', () => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                lazy.email().then(m => m.initEmailCapture());
+                resolve();
+            }, 60000);
+        });
+    }, 10);
 
-    // Social Proof
-    initSocialProof();
-
-    initNotifications();    // Push notification permission handling
-    initEmailCapture();     // Email capture for non-logged-in users
-    initPWAInstall();       // PWA prompt logic
+    // PWA & Analytics (Non-blocking)
+    lazy.pwa().then(m => m.initPWAInstall());
+    lazy.analytics().then(m => {
+        m.initAnalytics();
+        m.trackSessionStart();
+    });
 
     // Hide loading screen immediately once core UI is ready
     const loadingScreen = document.getElementById('loadingScreen');
@@ -167,23 +175,48 @@ const initApp = () => {
         const result = await copyShareLink();
         if (result.success) {
             const toast = document.createElement('div');
-            toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(45,212,191,0.9);color:#0f172a;padding:12px 24px;border-radius:12px;font-size:12px;font-weight:bold;z-index:9999;`;
+            toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0f172a;padding:12px 24px;border-radius:12px;font-size:12px;font-weight:bold;z-index:9999;box-shadow:0 0 20px rgba(96,169,255,0.4);`;
             toast.textContent = '🔗 Share link copied!';
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
     };
 
     // Onboarding handled by Intent Survey flow above
-
-    console.log("[Main] App Initialization Complete.");
 };
 
 /**
  * Session Intelligence (Phase 6)
  * Tracks user engagement and triggers smart prompts.
  */
-function initSessionMilestones() {
+function initConnectivityListener() {
+    const updateStatus = () => {
+        const isOffline = !navigator.onLine;
+        document.body.classList.toggle('is-offline', isOffline);
+
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        if (offlineIndicator) {
+            offlineIndicator.classList.toggle('hidden', !isOffline);
+            offlineIndicator.classList.toggle('flex', isOffline);
+        }
+
+        if (isOffline) {
+            console.log('[Connectivity] App is OFFLINE - Switching to Cache Mode');
+        } else {
+            console.log('[Connectivity] App is ONLINE');
+        }
+    };
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus(); // Initial check
+}
+
+const initSessionMilestones = () => {
     let sessionCount = parseInt(localStorage.getItem('mindwave_session_count') || '0');
     sessionCount++;
     localStorage.setItem('mindwave_session_count', sessionCount);
@@ -291,4 +324,35 @@ async function loadContentModules() {
     } catch (e) {
         console.warn("[Main] Content module loading failed:", e);
     }
+}
+
+/**
+ * Real-time Social Presence Pulse
+ */
+function initPresencePulse() {
+    const presenceText = document.getElementById('presenceText');
+    if (!presenceText) return;
+
+    // Start tracking this session
+    startPresenceHeartbeat();
+
+    // Subscribe to live counts
+    subscribeToPresenceCounts((counts) => {
+        const total = counts.total || 0;
+        const countText = total === 1 ? '1 Mind Active' : `${total} Minds Active`;
+        presenceText.textContent = countText;
+        presenceText.classList.add('text-white/80');
+        presenceText.classList.remove('text-white/50');
+
+        // Optional: Update tooltip with breakdown
+        const counter = document.getElementById('presenceCounter');
+        if (counter) {
+            const breakdown = Object.entries(counts.byPreset)
+                .map(([preset, count]) => `${preset}: ${count}`)
+                .join(' | ');
+            if (breakdown) counter.title = `Pulse: ${breakdown}`;
+        }
+    });
+
+    console.log('[Presence] Pulse initialized');
 }

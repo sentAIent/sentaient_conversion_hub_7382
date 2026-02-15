@@ -9,13 +9,13 @@ const ResourceCard = ({ resource, onBookmark, onDownload, isBookmarked }) => {
   const getDifficultyColor = (level) => {
     switch (level) {
       case 'Beginner':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-success/10 text-success border-success/20';
       case 'Intermediate':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-warning/10 text-warning border-warning/20';
       case 'Advanced':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-error/10 text-error border-error/20';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted/30 text-muted-foreground border-border';
     }
   };
 
@@ -37,7 +37,7 @@ const ResourceCard = ({ resource, onBookmark, onDownload, isBookmarked }) => {
   };
 
   return (
-    <div 
+    <div
       className="bg-card border border-border rounded-lg overflow-hidden shadow-subtle hover:shadow-elevation transition-all duration-300 hover:-translate-y-1"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -56,16 +56,15 @@ const ResourceCard = ({ resource, onBookmark, onDownload, isBookmarked }) => {
         <div className="absolute top-3 right-3 flex space-x-2">
           <button
             onClick={() => onBookmark(resource?.id)}
-            className={`p-2 rounded-full transition-all duration-300 ${
-              isBookmarked 
-                ? 'bg-accent text-accent-foreground' 
+            className={`p-2 rounded-full transition-all duration-300 ${isBookmarked
+                ? 'bg-accent text-accent-foreground'
                 : 'bg-background/80 text-muted-foreground hover:bg-background hover:text-foreground'
-            }`}
+              }`}
           >
             <Icon name={isBookmarked ? "Bookmark" : "BookmarkPlus"} size={16} />
           </button>
           {resource?.type === 'Webinar' && (
-            <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+            <div className="bg-error text-error-foreground px-2 py-1 rounded-full text-xs font-medium flex items-center">
               <Icon name="Circle" size={8} className="mr-1 fill-current" />
               LIVE
             </div>
@@ -122,7 +121,7 @@ const ResourceCard = ({ resource, onBookmark, onDownload, isBookmarked }) => {
                   key={i}
                   name="Star"
                   size={14}
-                  className={i < Math.floor(resource?.rating) ? "text-yellow-400 fill-current" : "text-gray-300"}
+                  className={i < Math.floor(resource?.rating) ? "text-warning fill-current" : "text-muted/30"}
                 />
               ))}
             </div>
@@ -147,9 +146,8 @@ const ResourceCard = ({ resource, onBookmark, onDownload, isBookmarked }) => {
             iconName={resource?.type === 'Webinar' ? 'Play' : 'Download'}
             iconPosition="left"
             onClick={() => onDownload(resource)}
-            className={`transition-all duration-300 ${
-              isHovered ? 'bg-primary hover:bg-primary/90' : ''
-            }`}
+            className={`transition-all duration-300 ${isHovered ? 'bg-foreground text-conversion hover:bg-foreground/90 border-foreground' : ''
+              }`}
           >
             {resource?.type === 'Webinar' ? 'Watch' : 'Download'}
           </Button>

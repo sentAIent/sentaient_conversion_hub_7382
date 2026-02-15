@@ -44,7 +44,7 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
             <p className="text-white/90 text-lg">Comprehensive analysis completed on {new Date()?.toLocaleDateString()}</p>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
           <div className="bg-white/10 rounded-lg p-4">
             <div className="text-2xl font-bold">{results?.overallScore}%</div>
@@ -61,12 +61,12 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
         </div>
       </div>
       {/* Readiness Breakdown */}
-      <div className="bg-white rounded-xl shadow-brand p-8">
+      <div className="bg-card rounded-xl shadow-elevation border border-border p-8">
         <h3 className="text-2xl font-semibold text-foreground mb-6 flex items-center space-x-3">
           <Icon name="BarChart3" size={24} className="text-primary" />
           <span>AI Readiness Breakdown</span>
         </h3>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-4">
             {readinessData?.map((item, index) => (
@@ -77,22 +77,21 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
                 </div>
                 <div className="w-full bg-muted rounded-full h-3">
                   <div
-                    className={`h-3 rounded-full transition-all duration-1000 ${
-                      item?.score >= 80 ? 'bg-success' : item?.score >= 60 ? 'bg-warning' : 'bg-error'
-                    }`}
+                    className={`h-3 rounded-full transition-all duration-1000 ${item?.score >= 80 ? 'bg-success' : item?.score >= 60 ? 'bg-warning' : 'bg-error'
+                      }`}
                     style={{ width: `${item?.score}%` }}
                   ></div>
                 </div>
               </div>
             ))}
           </div>
-          
+
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={readinessData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="category" className="text-xs" />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} className="text-xs" />
+                <PolarGrid stroke="#3a4a5e" />
+                <PolarAngleAxis dataKey="category" className="text-xs" stroke="#94a3b8" />
+                <PolarRadiusAxis angle={90} domain={[0, 100]} className="text-xs" stroke="#3a4a5e" />
                 <Radar
                   name="Readiness Score"
                   dataKey="score"
@@ -107,12 +106,12 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
         </div>
       </div>
       {/* Automation Opportunities */}
-      <div className="bg-white rounded-xl shadow-brand p-8">
+      <div className="bg-card rounded-xl shadow-elevation border border-border p-8">
         <h3 className="text-2xl font-semibold text-foreground mb-6 flex items-center space-x-3">
           <Icon name="Zap" size={24} className="text-accent" />
           <span>Priority Automation Opportunities</span>
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {results?.opportunities?.map((opportunity, index) => (
             <div key={index} className={`p-6 rounded-lg border-2 ${getScoreBgColor(opportunity?.impact)} border-border`}>
@@ -125,7 +124,7 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
                   <p className="text-sm text-muted-foreground mt-1">{opportunity?.description}</p>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Impact Score:</span>
@@ -145,28 +144,32 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
         </div>
       </div>
       {/* ROI Projections */}
-      <div className="bg-white rounded-xl shadow-brand p-8">
+      <div className="bg-card rounded-xl shadow-elevation border border-border p-8">
         <h3 className="text-2xl font-semibold text-foreground mb-6 flex items-center space-x-3">
           <Icon name="TrendingUp" size={24} className="text-success" />
           <span>ROI Projections</span>
         </h3>
-        
+
         <div className="h-80 mb-6">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={roiData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="timeframe" />
-              <YAxis />
-              <Tooltip formatter={(value) => [`$${value?.toLocaleString()}`, '']} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#3a4a5e" />
+              <XAxis dataKey="timeframe" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip
+                contentStyle={{ background: '#2a3441', border: '1px solid #3a4a5e', borderRadius: '8px' }}
+                itemStyle={{ color: '#F0EAD6' }}
+                formatter={(value) => [`$${value?.toLocaleString()}`, '']}
+              />
               <Bar dataKey="savings" fill="var(--color-success)" name="Cumulative Savings" />
-              <Bar dataKey="investment" fill="var(--color-warning)" name="Investment" />
+              <Bar dataKey="investment" fill="var(--color-accent)" name="Investment" />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {roiData?.map((item, index) => (
-            <div key={index} className="text-center p-4 bg-muted/50 rounded-lg">
+            <div key={index} className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="text-lg font-bold text-success">${item?.savings?.toLocaleString()}</div>
               <div className="text-sm text-muted-foreground">{item?.timeframe}</div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -177,14 +180,14 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
         </div>
       </div>
       {/* Industry Benchmarking */}
-      <div className="bg-white rounded-xl shadow-brand p-8">
+      <div className="bg-card rounded-xl shadow-elevation border border-border p-8">
         <h3 className="text-2xl font-semibold text-foreground mb-6 flex items-center space-x-3">
           <Icon name="Target" size={24} className="text-primary" />
           <span>Industry Benchmarking</span>
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-6 bg-muted/50 rounded-lg">
+          <div className="text-center p-6 bg-muted/30 rounded-lg">
             <div className="text-3xl font-bold text-error mb-2">{results?.benchmarking?.bottom25}%</div>
             <div className="text-sm text-muted-foreground">Bottom 25%</div>
             <div className="text-xs text-muted-foreground mt-1">Industry Laggards</div>
@@ -194,13 +197,13 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
             <div className="text-sm font-medium text-primary">Your Score</div>
             <div className="text-xs text-muted-foreground mt-1">Current Position</div>
           </div>
-          <div className="text-center p-6 bg-muted/50 rounded-lg">
+          <div className="text-center p-6 bg-muted/30 rounded-lg">
             <div className="text-3xl font-bold text-success mb-2">{results?.benchmarking?.top25}%</div>
             <div className="text-sm text-muted-foreground">Top 25%</div>
             <div className="text-xs text-muted-foreground mt-1">Industry Leaders</div>
           </div>
         </div>
-        
+
         <div className="mt-6 p-4 bg-accent/10 rounded-lg">
           <div className="flex items-start space-x-3">
             <Icon name="Info" size={20} className="text-accent mt-0.5" />
@@ -219,7 +222,7 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
           <Icon name="Rocket" size={24} color="white" />
           <span>Recommended Next Steps</span>
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {results?.nextSteps?.map((step, index) => (
             <div key={index} className="bg-white/10 rounded-lg p-4">
@@ -236,7 +239,7 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
             </div>
           ))}
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-4">
           <Button
             variant="outline"
@@ -244,7 +247,7 @@ const AssessmentResults = ({ results, onStartOver, onBookConsultation }) => {
             onClick={onBookConsultation}
             iconName="Calendar"
             iconPosition="left"
-            className="bg-white text-conversion hover:bg-white/90 border-white"
+            className="bg-foreground text-conversion hover:bg-foreground/90 border-foreground"
           >
             Book Free Strategy Session
           </Button>

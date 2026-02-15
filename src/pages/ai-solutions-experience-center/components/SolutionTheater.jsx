@@ -25,16 +25,14 @@ const SolutionTheater = ({ solution, isActive, onActivate }) => {
   };
 
   return (
-    <div className={`bg-card rounded-xl border transition-all duration-500 ${
-      isActive ? 'border-primary shadow-brand scale-105' : 'border-border hover:border-primary/50'
-    }`}>
+    <div className={`bg-card rounded-xl border transition-all duration-500 ${isActive ? 'border-primary shadow-brand scale-105' : 'border-border hover:border-primary/50'
+      }`}>
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-              isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-            }`}>
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+              }`}>
               <Icon name={solution?.icon} size={24} />
             </div>
             <div>
@@ -67,14 +65,13 @@ const SolutionTheater = ({ solution, isActive, onActivate }) => {
                   {solution?.demoSteps?.map((_, index) => (
                     <div
                       key={index}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        index === demoStep ? 'bg-primary' : 'bg-border'
-                      }`}
+                      className={`w-2 h-2 rounded-full transition-colors ${index === demoStep ? 'bg-primary' : 'bg-border'
+                        }`}
                     />
                   ))}
                 </div>
               </div>
-              
+
               <div className="bg-background rounded-lg p-4 border">
                 <h4 className="font-semibold text-foreground mb-2">
                   {solution?.demoSteps?.[demoStep]?.title}
@@ -82,7 +79,7 @@ const SolutionTheater = ({ solution, isActive, onActivate }) => {
                 <p className="text-sm text-muted-foreground mb-3">
                   {solution?.demoSteps?.[demoStep]?.description}
                 </p>
-                
+
                 {/* Interactive Demo Content */}
                 <div className="bg-muted/50 rounded-lg p-3 font-mono text-sm">
                   {solution?.demoSteps?.[demoStep]?.content}
@@ -126,7 +123,8 @@ const SolutionTheater = ({ solution, isActive, onActivate }) => {
             size="sm"
             iconName="Calendar"
             iconPosition="left"
-            className="flex-1 bg-conversion hover:bg-conversion/90"
+            className="flex-1 bg-foreground text-conversion hover:bg-foreground/90 border-foreground"
+            onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
           >
             Book Demo
           </Button>

@@ -56,15 +56,15 @@ const CategoryTabs = ({ activeCategory, onCategoryChange }) => {
           <button
             key={category?.id}
             onClick={() => onCategoryChange(category?.id)}
-            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-md text-sm font-medium transition-all duration-300 ${
-              activeCategory === category?.id
-                ? 'bg-background text-foreground shadow-subtle'
-                : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-            }`}
+            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-md text-sm font-medium transition-all duration-300 ${activeCategory === category?.id
+                ? 'bg-card text-foreground shadow-subtle'
+                : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+              }`}
           >
             <Icon name={category?.icon} size={16} />
             <span>{category?.label}</span>
-            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${activeCategory === category?.id ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground'
+              }`}>
               {category?.count}
             </span>
           </button>
@@ -76,17 +76,15 @@ const CategoryTabs = ({ activeCategory, onCategoryChange }) => {
           <button
             key={category?.id}
             onClick={() => onCategoryChange(category?.id)}
-            className={`text-left p-4 rounded-lg border transition-all duration-300 ${
-              activeCategory === category?.id
+            className={`text-left p-4 rounded-lg border transition-all duration-300 ${activeCategory === category?.id
                 ? 'border-primary bg-primary/5 shadow-subtle'
                 : 'border-border bg-card hover:border-primary/50 hover:bg-primary/5'
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg ${
-                  activeCategory === category?.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}>
+                <div className={`p-2 rounded-lg ${activeCategory === category?.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                  }`}>
                   <Icon name={category?.icon} size={18} />
                 </div>
                 <div>
@@ -94,11 +92,10 @@ const CategoryTabs = ({ activeCategory, onCategoryChange }) => {
                   <p className="text-sm text-muted-foreground">{category?.description}</p>
                 </div>
               </div>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                activeCategory === category?.id 
-                  ? 'bg-primary text-primary-foreground' 
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${activeCategory === category?.id
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground'
-              }`}>
+                }`}>
                 {category?.count}
               </span>
             </div>
@@ -109,10 +106,10 @@ const CategoryTabs = ({ activeCategory, onCategoryChange }) => {
       <div className="bg-card border border-border rounded-lg p-6">
         <div className="flex items-start space-x-4">
           <div className="p-3 bg-primary/10 rounded-lg">
-            <Icon 
-              name={categories?.find(c => c?.id === activeCategory)?.icon || 'Grid3X3'} 
-              size={24} 
-              className="text-primary" 
+            <Icon
+              name={categories?.find(c => c?.id === activeCategory)?.icon || 'Grid3X3'}
+              size={24}
+              className="text-primary"
             />
           </div>
           <div className="flex-1">

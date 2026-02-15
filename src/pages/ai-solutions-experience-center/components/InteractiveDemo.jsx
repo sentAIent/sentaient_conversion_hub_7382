@@ -63,13 +63,13 @@ const InteractiveDemo = ({ type, isActive }) => {
 
     const typeResponses = responses?.[demoType] || responses?.chatbot;
     const lowerMessage = userMessage?.toLowerCase();
-    
+
     for (const [key, response] of Object.entries(typeResponses)) {
       if (key !== 'default' && lowerMessage?.includes(key)) {
         return response;
       }
     }
-    
+
     return typeResponses?.default;
   };
 
@@ -95,7 +95,7 @@ const InteractiveDemo = ({ type, isActive }) => {
         content: getBotResponse(inputValue, type),
         timestamp: new Date()
       };
-      
+
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
     }, 1500);
@@ -129,7 +129,7 @@ const InteractiveDemo = ({ type, isActive }) => {
           <p className="text-xs opacity-80">Try asking about our solutions, pricing, or support</p>
         </div>
         <div className="ml-auto flex items-center space-x-1">
-          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          <div className="w-2 h-2 bg-success rounded-full"></div>
           <span className="text-xs">Online</span>
         </div>
       </div>
@@ -141,20 +141,18 @@ const InteractiveDemo = ({ type, isActive }) => {
             className={`flex ${message?.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message?.type === 'user' ?'bg-primary text-primary-foreground' :'bg-muted text-foreground'
-              }`}
+              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message?.type === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
+                }`}
             >
               <p className="text-sm whitespace-pre-line">{message?.content}</p>
-              <p className={`text-xs mt-1 ${
-                message?.type === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
-              }`}>
+              <p className={`text-xs mt-1 ${message?.type === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                }`}>
                 {message?.timestamp?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           </div>
         ))}
-        
+
         {isTyping && (
           <div className="flex justify-start">
             <div className="bg-muted text-foreground px-4 py-2 rounded-lg">

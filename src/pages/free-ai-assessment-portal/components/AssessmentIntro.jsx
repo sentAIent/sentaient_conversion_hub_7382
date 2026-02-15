@@ -47,7 +47,7 @@ const AssessmentIntro = ({ onStartAssessment }) => {
             Free AI Readiness Assessment
           </h1>
           <p className="text-xl lg:text-2xl text-white/90 mb-8 leading-relaxed">
-            Discover your AI transformation potential with our comprehensive business analysis. 
+            Discover your AI transformation potential with our comprehensive business analysis.
             Get personalized insights, ROI projections, and a strategic roadmap tailored to your organization.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -74,7 +74,7 @@ const AssessmentIntro = ({ onStartAssessment }) => {
         </div>
       </div>
       {/* Benefits Grid */}
-      <div className="bg-white rounded-xl shadow-brand p-8">
+      <div className="bg-card rounded-xl shadow-elevation p-8 border border-border">
         <h2 className="text-3xl font-bold text-center text-foreground mb-8">
           What You'll Discover
         </h2>
@@ -94,7 +94,7 @@ const AssessmentIntro = ({ onStartAssessment }) => {
       </div>
       {/* Assessment Features */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl shadow-brand p-8">
+        <div className="bg-card rounded-xl shadow-elevation p-8 border border-border">
           <h3 className="text-2xl font-semibold text-foreground mb-6 flex items-center space-x-3">
             <Icon name="CheckCircle" size={24} className="text-success" />
             <span>Assessment Features</span>
@@ -109,7 +109,7 @@ const AssessmentIntro = ({ onStartAssessment }) => {
           </ul>
         </div>
 
-        <div className="bg-white rounded-xl shadow-brand p-8">
+        <div className="bg-card rounded-xl shadow-elevation p-8 border border-border">
           <h3 className="text-2xl font-semibold text-foreground mb-6 flex items-center space-x-3">
             <Icon name="Users" size={24} className="text-accent" />
             <span>Trusted by Industry Leaders</span>
@@ -133,7 +133,7 @@ const AssessmentIntro = ({ onStartAssessment }) => {
         </div>
       </div>
       {/* Process Overview */}
-      <div className="bg-white rounded-xl shadow-brand p-8">
+      <div className="bg-card rounded-xl shadow-elevation p-8 border border-border">
         <h3 className="text-2xl font-semibold text-center text-foreground mb-8">
           Simple 3-Step Process
         </h3>
@@ -168,7 +168,7 @@ const AssessmentIntro = ({ onStartAssessment }) => {
         </div>
       </div>
       {/* CTA Section */}
-      <div className="bg-conversion rounded-xl p-8 text-white text-center">
+      <div className="bg-conversion rounded-xl p-8 text-conversion-foreground text-center">
         <h3 className="text-2xl font-bold mb-4">Ready to Unlock Your AI Potential?</h3>
         <p className="text-conversion-foreground/90 mb-6 text-lg">
           Join thousands of business leaders who have discovered their AI transformation opportunities.
@@ -179,7 +179,7 @@ const AssessmentIntro = ({ onStartAssessment }) => {
           onClick={onStartAssessment}
           iconName="ArrowRight"
           iconPosition="right"
-          className="bg-white text-conversion hover:bg-white/90 border-white text-lg px-8 py-4"
+          className="bg-foreground text-conversion hover:bg-foreground/90 border-foreground text-lg px-8 py-4"
         >
           Begin Assessment Now
         </Button>

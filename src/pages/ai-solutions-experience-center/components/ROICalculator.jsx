@@ -18,7 +18,7 @@ const ROICalculator = () => {
     industry: 'general',
     solution: 'agent'
   });
-  
+
   const [results, setResults] = useState(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -50,7 +50,7 @@ const ROICalculator = () => {
       const industryMissedCallRate = 0.35;
       const industryMissedCallRatePrivateDining = 0.15;
       const missedRevenue = (avgCheck * (avgDailyCalls * industryMissedCallRate)) + (avgPrivateDining * (avgDailyCalls * industryMissedCallRatePrivateDining))
-      
+
       setResults({
         avgCheck,
         avgPrivateDining,
@@ -59,19 +59,19 @@ const ROICalculator = () => {
         industryMissedCallRatePrivateDining,
         missedRevenue
       });
-      
+
       setIsCalculating(false);
     }, 2000);
   };
 
   const calculateROI = () => {
     setIsCalculating(true);
-    
+
     setTimeout(() => {
       const hourlyRate = inputs?.avgSalary / (52 * 40);
       const weeklyTimeSaved = inputs?.hoursPerWeek;
       const annualTimeSaved = weeklyTimeSaved * 52;
-      const annualSavings = annualTimeSaved * hourlyRate * inputs?.employees;      
+      const annualSavings = annualTimeSaved * hourlyRate * inputs?.employees;
       // Industry multipliers
       const industryMultipliers = {
         healthcare: 1.3,
@@ -81,7 +81,7 @@ const ROICalculator = () => {
         education: 1.0,
         general: 1.0
       };
-      
+
       // Solution costs (annual)
       const solutionCosts = {
 
@@ -91,7 +91,7 @@ const ROICalculator = () => {
         marketing: 1500,
         all: 15000
       };
-      
+
       const multiplier = industryMultipliers?.[inputs?.industry];
       const adjustedSavings = annualSavings * multiplier;
       const implementationCost = solutionCosts?.[inputs?.solution];
@@ -104,7 +104,7 @@ const ROICalculator = () => {
       const industryMissedCallRate = 0.35;
       const industryMissedCallRatePrivateDining = 0.15;
       const missedRevenue = (avgCheck * (avgDailyCalls * industryMissedCallRate)) + (avgPrivateDining * (avgDailyCalls * industryMissedCallRatePrivateDining))
-      
+
       setResults({
         annualSavings: adjustedSavings,
         implementationCost,
@@ -120,7 +120,7 @@ const ROICalculator = () => {
         hoursPerYear: annualTimeSaved * inputs?.employees,
         productivityGain: Math.round((weeklyTimeSaved / 40) * 100)
       });
-      
+
       setIsCalculating(false);
     }, 2000);
   };
@@ -157,7 +157,7 @@ const ROICalculator = () => {
             min="1"
             max="10000"
           />
-          
+
           <Input
             label="Average Annual Salary ($)"
             type="number"
@@ -167,7 +167,7 @@ const ROICalculator = () => {
             min="20000"
             max="200000"
           />
-          
+
           <Input
             label="Hours Saved Per Employee/Week"
             type="number"
@@ -200,21 +200,21 @@ const ROICalculator = () => {
             max="100"
             description="Estimated average daily calls"
           />
-          
+
           <Select
             label="Industry"
             options={industryOptions}
             value={inputs?.industry}
             onChange={(value) => setInputs(prev => ({ ...prev, industry: value }))}
           />
-          
+
           <Select
             label="AI Solution"
             options={solutionOptions}
             value={inputs?.solution}
             onChange={(value) => setInputs(prev => ({ ...prev, solution: value }))}
           />
-          
+
           <Button
             variant="default"
             fullWidth
@@ -222,7 +222,7 @@ const ROICalculator = () => {
             iconPosition="left"
             onClick={calculateROI}
             loading={isCalculating}
-            className="bg-conversion hover:bg-conversion/90"
+            className="bg-foreground text-conversion hover:bg-foreground/90 border-foreground"
           >
             {isCalculating ? 'Calculating...' : 'Calculate ROI'}
           </Button>
@@ -234,7 +234,7 @@ const ROICalculator = () => {
             <>
               <div className="bg-muted rounded-lg p-4">
                 <h4 className="font-semibold text-foreground mb-3">Your ROI Analysis</h4>
-                
+
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Annual Savings:</span>
@@ -242,14 +242,14 @@ const ROICalculator = () => {
                       {formatCurrency(results?.annualSavings)}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Implementation Cost:</span>
                     <span className="font-semibold text-foreground">
                       {formatCurrency(results?.implementationCost)}
                     </span>
                   </div>
-                  
+
                   <div className="border-t border-border pt-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Net Annual Savings:</span>
@@ -258,16 +258,15 @@ const ROICalculator = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">ROI Percentage:</span>
-                    <span className={`font-bold text-lg ${
-                      results?.roiPercentage > 0 ? 'text-conversion' : 'text-error'
-                    }`}>
+                    <span className={`font-bold text-lg ${results?.roiPercentage > 0 ? 'text-conversion' : 'text-error'
+                      }`}>
                       {results?.roiPercentage?.toFixed(1)}%
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Payback Period:</span>
                     <span className="font-semibold text-foreground">
@@ -276,21 +275,21 @@ const ROICalculator = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <Icon name="Clock" size={20} className="text-primary mx-auto mb-1" />
                   <p className="text-xs text-muted-foreground">Hours Saved/Year</p>
                   <p className="font-bold text-foreground">{results?.hoursPerYear?.toLocaleString()}</p>
                 </div>
-                
+
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <Icon name="TrendingUp" size={20} className="text-conversion mx-auto mb-1" />
                   <p className="text-xs text-muted-foreground">Productivity Gain</p>
                   <p className="font-bold text-foreground">{results?.productivityGain}%</p>
                 </div>
               </div>
-              
+
               <Button
                 variant="outline"
                 fullWidth

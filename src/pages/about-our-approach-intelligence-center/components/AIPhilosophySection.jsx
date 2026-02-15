@@ -111,12 +111,12 @@ const AIPhilosophySection = () => {
             </div>
             <span className="text-primary font-semibold text-lg">Our AI Philosophy</span>
           </div>
-          
+
           <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
             Principles That Guide
             <span className="block text-primary">Every AI Decision</span>
           </h2>
-          
+
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Our approach to AI is grounded in ethical principles, business pragmatism, and human-centered design. These core beliefs shape every recommendation, implementation, and partnership.
           </p>
@@ -127,11 +127,10 @@ const AIPhilosophySection = () => {
           {philosophyPrinciples?.map((principle, index) => (
             <div
               key={index}
-              className={`bg-card border border-border rounded-2xl p-8 cursor-pointer transition-all duration-300 ${
-                activePhilosophy === index 
-                  ? 'shadow-elevation ring-2 ring-primary/20' 
+              className={`bg-card border border-border rounded-2xl p-8 cursor-pointer transition-all duration-300 ${activePhilosophy === index
+                  ? 'shadow-elevation ring-2 ring-primary/20'
                   : 'shadow-subtle hover:shadow-elevation'
-              }`}
+                }`}
               onClick={() => setActivePhilosophy(activePhilosophy === index ? -1 : index)}
             >
               <div className="flex items-start space-x-4 mb-6">
@@ -153,7 +152,7 @@ const AIPhilosophySection = () => {
                   <p className="text-foreground leading-relaxed">
                     {principle?.details}
                   </p>
-                  
+
                   <div>
                     <h4 className="text-sm font-semibold text-foreground mb-3">Practical Examples:</h4>
                     <ul className="space-y-2">
@@ -171,13 +170,13 @@ const AIPhilosophySection = () => {
               <div className="flex items-center justify-between mt-6">
                 <div className="flex items-center text-primary text-sm font-medium">
                   <span>{activePhilosophy === index ? 'Show less' : 'Learn more'}</span>
-                  <Icon 
-                    name={activePhilosophy === index ? "ChevronUp" : "ChevronDown"} 
-                    size={16} 
-                    className="ml-2 transition-transform duration-300" 
+                  <Icon
+                    name={activePhilosophy === index ? "ChevronUp" : "ChevronDown"}
+                    size={16}
+                    className="ml-2 transition-transform duration-300"
                   />
                 </div>
-                
+
                 <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
                   <span className="text-xs font-bold text-muted-foreground">
                     {String(index + 1)?.padStart(2, '0')}
@@ -206,20 +205,20 @@ const AIPhilosophySection = () => {
                 {index < ethicalFramework?.length - 1 && (
                   <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-border z-0"></div>
                 )}
-                
+
                 <div className="relative bg-card border border-border rounded-2xl p-6 text-center hover:shadow-elevation transition-all duration-300 z-10">
                   <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <Icon name={stage?.icon} size={24} color="var(--color-primary)" />
                   </div>
-                  
+
                   <div className="text-sm font-semibold text-primary mb-2">
                     {stage?.stage}
                   </div>
-                  
+
                   <h4 className="text-lg font-bold text-foreground mb-3">
                     {stage?.title}
                   </h4>
-                  
+
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     {stage?.description}
                   </p>
@@ -238,10 +237,10 @@ const AIPhilosophySection = () => {
             <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
               Let's discuss how our philosophy translates into practical AI solutions that align with your values and business objectives.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
-                className="px-8 py-4 bg-accent text-primary font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2"
+              <button
+                className="px-8 py-4 bg-accent text-primary-foreground font-semibold rounded-lg hover:bg-accent/90 transition-colors duration-300 flex items-center justify-center space-x-2"
                 onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
               >
                 <Icon name="Calendar" size={20} />

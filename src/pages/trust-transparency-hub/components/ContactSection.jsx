@@ -86,12 +86,12 @@ const ContactSection = () => {
   const handleSubmit = async (e) => {
     e?.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     alert('Thank you for your inquiry. Our team will respond within the specified timeframe based on your inquiry type.');
-    
+
     // Reset form
     setFormData({
       name: '',
@@ -102,7 +102,7 @@ const ContactSection = () => {
       message: '',
       urgency: 'normal'
     });
-    
+
     setIsSubmitting(false);
   };
 
@@ -228,7 +228,7 @@ const ContactSection = () => {
                   </li>
                 </ul>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
@@ -319,7 +319,7 @@ const ContactSection = () => {
                   iconName="Send"
                   iconPosition="right"
                   fullWidth
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-foreground text-accent hover:bg-foreground/90 border-foreground"
                 >
                   {isSubmitting ? 'Sending Message...' : 'Send Message'}
                 </Button>

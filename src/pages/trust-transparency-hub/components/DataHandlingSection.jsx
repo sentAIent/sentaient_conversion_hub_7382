@@ -187,11 +187,10 @@ const DataHandlingSection = () => {
               <button
                 key={phase?.id}
                 onClick={() => setActivePhase(phase?.id)}
-                className={`flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  activePhase === phase?.id
+                className={`flex items-center space-x-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${activePhase === phase?.id
                     ? 'bg-primary text-primary-foreground shadow-subtle'
                     : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
+                  }`}
               >
                 <Icon name={phase?.icon} size={16} />
                 <span>{phase?.title}</span>
@@ -205,19 +204,16 @@ const DataHandlingSection = () => {
               {dataLifecyclePhases?.map((phase, index) => (
                 <React.Fragment key={phase?.id}>
                   <div
-                    className={`flex flex-col items-center p-4 rounded-lg transition-all duration-300 ${
-                      activePhase === phase?.id
-                        ? 'bg-primary/10 border-2 border-primary' :'bg-muted/30 border border-border'
-                    }`}
+                    className={`flex flex-col items-center p-4 rounded-lg transition-all duration-300 ${activePhase === phase?.id
+                        ? 'bg-primary/10 border-2 border-primary' : 'bg-muted/30 border border-border'
+                      }`}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                      activePhase === phase?.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                    }`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${activePhase === phase?.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      }`}>
                       <Icon name={phase?.icon} size={20} />
                     </div>
-                    <span className={`text-xs font-medium ${
-                      activePhase === phase?.id ? 'text-primary' : 'text-muted-foreground'
-                    }`}>
+                    <span className={`text-xs font-medium ${activePhase === phase?.id ? 'text-primary' : 'text-muted-foreground'
+                      }`}>
                       {phase?.title}
                     </span>
                   </div>
@@ -346,7 +342,7 @@ const DataHandlingSection = () => {
               variant="default"
               iconName="Mail"
               iconPosition="left"
-              className="bg-primary hover:bg-primary/90"
+              className="bg-foreground text-primary hover:bg-foreground/90 border-foreground"
               onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
             >
               Contact Data Protection Officer

@@ -8,54 +8,63 @@ const MAPPING = {
         keywords: ['focus', 'study', 'work', 'concentrate', 'productivity', 'coding', 'read', 'learn'],
         preset: 'beta',
         soundscapes: ['rain', 'pink'],
-        insight: 'Focus mode engaged. Beta waves (12-30Hz) synchronized with pink noise for maximum cognitive throughput.'
+        visual: 'matrix',
+        insight: 'Focus mode engaged. Beta waves (12-30Hz) synchronized with pink noise and matrix visuals for maximum cognitive throughput.'
     },
     deep_focus: {
         keywords: ['intense', 'deep work', 'deadline', 'flow state', 'absorption'],
         preset: 'gamma',
         soundscapes: ['wind', 'white'],
-        insight: 'Peak awareness activated. Gamma waves (30-100Hz) for high-level information synthesis.'
+        visual: 'flow',
+        insight: 'Peak awareness activated. Gamma waves (30-100Hz) and flow patterns for high-level information synthesis.'
     },
     sleep: {
         keywords: ['sleep', 'nap', 'insomnia', 'night', 'rest', 'bed', 'tired'],
         preset: 'delta',
         soundscapes: ['brown', 'wind'],
-        insight: 'Sleep cycle initiation. Delta waves (0.5-4Hz) paired with brown noise for deep restorative rest.'
+        visual: 'zen',
+        insight: 'Sleep cycle initiation. Delta waves (0.5-4Hz) paired with brown noise and zen visuals for deep restorative rest.'
     },
     dream: {
         keywords: ['dream', 'subconscious', 'lucid', 'sleep meditation'],
         preset: 'theta',
         soundscapes: ['ocean'],
-        insight: 'Dream state activated. Theta waves (4-8Hz) for subconscious exploration and creativity.'
+        visual: 'sphere',
+        insight: 'Dream state activated. Theta waves (4-8Hz) and dimensional spheres for subconscious exploration.'
     },
     relax: {
         keywords: ['relax', 'calm', 'anxiety', 'stress', 'chill', 'peace', 'meditation', 'unwind'],
         preset: 'alpha',
         soundscapes: ['ocean', 'rain'],
+        visual: 'ocean',
         insight: 'Restorative calm. Alpha waves (8-12Hz) to bridge the mind between alertness and deep rest.'
     },
     healing: {
         keywords: ['heal', 'pain', 'miracle', 'dna', 'repair', 'physical', 'body'],
         preset: 'heal-528',
         soundscapes: ['strings'],
-        insight: 'Solfeggio 528Hz synchronized for DNA repair and cellular harmony.'
+        visual: 'lava',
+        insight: 'Solfeggio 528Hz synchronized with organic lava flows for DNA repair and cellular harmony.'
     },
     creativity: {
         keywords: ['creative', 'brainstorm', 'idea', 'art', 'write', 'draw', 'design', 'inspiration'],
         preset: 'theta',
         soundscapes: ['ocean', 'pink'],
+        visual: 'flow',
         insight: 'Flow state unlocked. Theta waves (5Hz) stimulate the bridge between conscious and subconscious creativity.'
     },
     peak_performance: {
         keywords: ['peak', 'performance', 'athlete', 'workout', 'energy', 'vitality', 'strength', 'speed'],
         preset: 'gamma',
         soundscapes: ['wind', 'white'],
+        visual: 'matrix',
         insight: 'Hyper-aware state. 40Hz Gamma synchronization for maximum physical and mental coordination.'
     },
     meditation: {
         keywords: ['meditate', 'zen', 'mindful', 'presence', 'here', 'now', 'void'],
         preset: 'alpha',
         soundscapes: ['strings', 'ocean'],
+        visual: 'zen',
         insight: 'Deep presence. Alpha waves (10Hz) for relaxed alertness and mindful center.'
     }
 };

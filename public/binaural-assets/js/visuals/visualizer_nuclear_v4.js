@@ -17,6 +17,12 @@ export class Visualizer3D {
         this._rainbowEnabled = initialState.rainbowEnabled || false;
         this.isVisualizer3D = true;
 
+        // Mobile / Battery Saver Defaults
+        const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
+        this.batterySaver = initialState.batterySaver !== undefined ? initialState.batterySaver : isMobile;
+        this.lastFrameRenderTime = 0;
+        this.targetFPS = this.batterySaver ? 30 : 60;
+
 
         try {
             this.scene = new THREE.Scene();
@@ -25,7 +31,10 @@ export class Visualizer3D {
             this.renderer.autoClear = false; // Prevent black flash on frame drops
             this.renderer.setClearColor(0x000000, 0); // Transparent background
             this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2x for performance
+
+            // Performance optimization: Cap pixel ratio based on battery saver
+            const maxPixelRatio = this.batterySaver ? 1.0 : 2.0;
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
 
             this.sphereGroup = new THREE.Group();
             this.particleGroup = new THREE.Group();
@@ -1169,7 +1178,15 @@ export class Visualizer3D {
             this.matrixMaterial.uniforms.uSpeed.value = multiplier * (this.matrixSpeedMultiplier || 1.0);
         }
 
-        this.renderer.render(this.scene, this.camera);
+        // Frame Skipping / Battery Saver Logic
+        const frameInterval = 1000 / this.targetFPS;
+        const timeSinceLastFrame = performance.now() - this.lastFrameRenderTime;
+
+        if (timeSinceLastFrame >= frameInterval) {
+            this.renderer.render(this.scene, this.camera);
+            this.lastFrameRenderTime = performance.now();
+        }
+
         if (this.active !== false) {
             state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
         }
@@ -1201,6 +1218,17 @@ export class Visualizer3D {
     setMatrixRainbow(isRainbow) {
         this._rainbowEnabled = isRainbow;
         if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uRainbow) this.matrixMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
+    }
+
+    setBatterySaver(enabled) {
+        this.batterySaver = enabled;
+        this.targetFPS = enabled ? 30 : 60;
+        const maxPixelRatio = enabled ? 1.0 : 2.0;
+        if (this.renderer) {
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
+            this.resize(); // Trigger resize to apply new pixel ratio
+        }
+        console.log(`[Visualizer] Battery Saver ${enabled ? 'ENABLED (30fps/1x)' : 'DISABLED (60fps/2x)'}`);
     }
 
     setMatrixLogicMode(mode, text) {

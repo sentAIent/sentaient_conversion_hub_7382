@@ -16,8 +16,8 @@ const ProductShowcase = () => {
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         <div className="order-2 lg:order-1">
                             <div className="flex items-center space-x-3 mb-6">
-                                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                                    <Icon name="Activity" size={24} className="text-blue-400" />
+                                <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                                    <Icon name="Activity" size={24} className="text-primary" />
                                 </div>
                                 <h3 className="text-4xl font-black text-foreground tracking-tight">MindWave</h3>
                             </div>

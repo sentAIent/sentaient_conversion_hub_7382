@@ -94,12 +94,12 @@ const TeamExpertiseSection = () => {
             </div>
             <span className="text-primary font-semibold text-lg">Our Expert Team</span>
           </div>
-          
+
           <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
             Meet the Minds Behind
             <span className="block text-primary">AI Transformation</span>
           </h2>
-          
+
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Our diverse team combines deep technical expertise with demonstrated operational excellence, ensuring every AI implementation delivers significant ROI while maintaining standards of risk management, ethics, and data privacy.
           </p>
@@ -124,7 +124,7 @@ const TeamExpertiseSection = () => {
                     <Icon name="CheckCircle" size={16} color="white" />
                   </div>
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-primary mb-1">
                   {member?.name}
                 </h3>
@@ -139,7 +139,7 @@ const TeamExpertiseSection = () => {
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-semibold text-primary mb-2">Bio</h4>
-                  <p className="text-sm font-semibold text-foreground mb-4">
+                  <p className="text-sm text-foreground mb-4">
                     {member?.shortBio}
                   </p>
                 </div>
@@ -169,20 +169,20 @@ const TeamExpertiseSection = () => {
                   <div className="flex space-x-3">
                     <a
                       href={member?.linkedin}
-                      className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center hover:bg-primary hover:text-white transition-colors duration-300"
+                      className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors duration-300"
                       onClick={(e) => e?.stopPropagation()}
                     >
                       <Icon name="Linkedin" size={16} />
                     </a>
                     <a
                       href={member?.twitter}
-                      className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center hover:bg-primary hover:text-white transition-colors duration-300"
+                      className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors duration-300"
                       onClick={(e) => e?.stopPropagation()}
                     >
                       <Icon name="Twitter" size={16} />
                     </a>
                   </div>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -252,7 +252,7 @@ const TeamExpertiseSection = () => {
                       </p>
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => setSelectedMember(null)}
                     className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center hover:bg-muted/80 transition-colors duration-300"
@@ -304,25 +304,25 @@ const TeamExpertiseSection = () => {
                   <div className="flex space-x-4">
                     <a
                       href={selectedMember?.linkedin}
-                      className="flex items-center space-x-2 px-4 py-2 bg-muted rounded-lg hover:bg-primary hover:text-white transition-colors duration-300"
+                      className="flex items-center space-x-2 px-4 py-2 bg-muted rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors duration-300"
                     >
                       <Icon name="Linkedin" size={16} />
                       <span className="text-sm font-medium">LinkedIn</span>
                     </a>
                     <a
                       href={selectedMember?.twitter}
-                      className="flex items-center space-x-2 px-4 py-2 bg-muted rounded-lg hover:bg-primary hover:text-white transition-colors duration-300"
+                      className="flex items-center space-x-2 px-4 py-2 bg-muted rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors duration-300"
                     >
                       <Icon name="Twitter" size={16} />
                       <span className="text-sm font-medium">Twitter</span>
                     </a>
                   </div>
-                  
+
                   <Button
                     variant="default"
                     iconName="Calendar"
                     iconPosition="left"
-                    className="bg-conversion hover:bg-conversion/90"
+                    className="bg-foreground text-conversion hover:bg-foreground/90 border-foreground"
                     onClick={() => window.open('https://sentaient.setmore.com/brian?step=time-slot&products=ab1e4953-92d5-442d-b53b-cf759334c2b4&type=service&staff=429be748-e76f-45c9-9e76-760cf1210fb7&staffSelected=false', '_blank')}
                   >
                     Schedule Meeting

@@ -76,7 +76,7 @@ const FeaturedSection = ({ onResourceClick }) => {
                   </span>
                 )}
                 {resource?.isLive && (
-                  <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                  <span className="bg-error text-error-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center">
                     <Icon name="Circle" size={8} className="mr-1 fill-current animate-pulse" />
                     LIVE
                   </span>
@@ -85,7 +85,7 @@ const FeaturedSection = ({ onResourceClick }) => {
               <div className="absolute top-4 right-4">
                 <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2">
                   <div className="flex items-center space-x-1 text-sm">
-                    <Icon name="Star" size={14} className="text-yellow-400 fill-current" />
+                    <Icon name="Star" size={14} className="text-warning fill-current" />
                     <span className="font-medium">{resource?.rating}</span>
                   </div>
                 </div>
@@ -95,10 +95,10 @@ const FeaturedSection = ({ onResourceClick }) => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <Icon 
-                    name={resource?.type === 'Guide' ? 'BookOpen' : 'Video'} 
-                    size={18} 
-                    className="text-primary" 
+                  <Icon
+                    name={resource?.type === 'Guide' ? 'BookOpen' : 'Video'}
+                    size={18}
+                    className="text-primary"
                   />
                   <span className="text-sm font-medium text-primary">{resource?.type}</span>
                   <span className="text-sm text-muted-foreground">•</span>
@@ -132,7 +132,7 @@ const FeaturedSection = ({ onResourceClick }) => {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">
+                    <span className="text-xs font-bold text-primary-foreground">
                       {resource?.author?.split(' ')?.map(n => n?.[0])?.join('')}
                     </span>
                   </div>
@@ -156,7 +156,7 @@ const FeaturedSection = ({ onResourceClick }) => {
                   iconName={resource?.type === 'Webinar' ? 'Calendar' : 'Download'}
                   iconPosition="left"
                   onClick={() => onResourceClick(resource)}
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-foreground text-conversion hover:bg-foreground/90 border-foreground"
                 >
                   {resource?.type === 'Webinar' ? 'Register Now' : 'Download Guide'}
                 </Button>
