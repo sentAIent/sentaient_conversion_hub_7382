@@ -72,6 +72,7 @@ const initApp = () => {
                         startOnboarding(true, intent);
                     });
                 }, 1000);
+                return; // Stop checking once initiated
             } else {
                 setTimeout(checkAndStartFlow, 1000);
             }

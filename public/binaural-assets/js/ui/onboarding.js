@@ -306,7 +306,7 @@ function createOnboardingUI() {
     document.getElementById('onboardingNext').onclick = nextStep;
     document.getElementById('onboardingSkip').onclick = endOnboarding;
     document.getElementById('onboardingReadMore').onclick = () => {
-        const step = TUTORIAL_STEPS[currentStep];
+        const step = activeSteps[currentStep];
         if (step.readMoreId) showDeepDive(step.readMoreId);
     };
 }
