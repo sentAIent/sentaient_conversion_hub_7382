@@ -12,6 +12,8 @@ import {
     orderBy,
     doc,
     setDoc,
+    addDoc,
+    limit,
     serverTimestamp
 } from 'firebase/firestore';
 import { PRESET_COMBOS, SOUNDSCAPES } from '../state.js';
@@ -102,5 +104,69 @@ export async function syncLocalMixesToCloud(user) {
         console.log('[Presets] Cloud sync complete.');
     } catch (err) {
         console.error('[Presets] Local-to-cloud sync failed:', err);
+    }
+}
+
+/**
+ * Publish a mix to the public gallery
+ */
+export async function publishPreset(mix, user) {
+    if (!user) throw new Error("Must be logged in to publish");
+
+    try {
+        const db = getFirestore();
+        const galleryRef = collection(db, PUBLIC_GALLERY_COLLECTION);
+
+        await addDoc(galleryRef, {
+            ...mix,
+            publishedBy: user.displayName || user.email,
+            uid: user.uid,
+            likes: 0,
+            views: 0,
+            publishedAt: serverTimestamp(),
+            isApproved: true // Auto-approve for now
+        });
+
+        return true;
+    } catch (err) {
+        console.error('[Presets] Failed to publish:', err);
+        throw err;
+    }
+}
+
+/**
+ * Fetch public gallery presets
+ */
+export async function getPublicGallery(category = null) {
+    try {
+        const db = getFirestore();
+        if (!db) return [];
+
+        let q;
+        if (category && category !== 'all') {
+            q = query(
+                collection(db, PUBLIC_GALLERY_COLLECTION),
+                where('category', '==', category),
+                orderBy('publishedAt', 'desc'),
+                limit(50)
+            );
+        } else {
+            q = query(
+                collection(db, PUBLIC_GALLERY_COLLECTION),
+                orderBy('publishedAt', 'desc'),
+                limit(50)
+            );
+        }
+
+        const snapshot = await getDocs(q);
+        const gallery = [];
+        snapshot.forEach(doc => {
+            gallery.push({ id: doc.id, ...doc.data() });
+        });
+
+        return gallery;
+    } catch (err) {
+        console.warn('[Presets] Failed to fetch gallery:', err);
+        return [];
     }
 }
