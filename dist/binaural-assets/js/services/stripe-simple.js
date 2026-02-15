@@ -6,6 +6,7 @@
 
 import { state } from '../state.js';
 import { trackGlobalEvent } from './analytics-service.js';
+import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 
 // Stripe Payment Links - with fallbacks for static file serving

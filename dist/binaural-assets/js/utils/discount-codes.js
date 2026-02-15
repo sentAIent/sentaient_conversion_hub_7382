@@ -139,21 +139,22 @@ export function trackDiscountUsage(code, tier) {
     }
 
     // Store in Firestore for analytics
-    const { getAuth } = require('firebase/auth');
-    const { getFirestore, collection, addDoc, serverTimestamp } = require('firebase/firestore');
+    import('firebase/auth').then(({ getAuth }) => {
+        import('firebase/firestore').then(({ getFirestore, collection, addDoc, serverTimestamp }) => {
+            try {
+                const auth = getAuth();
+                const db = getFirestore();
 
-    try {
-        const auth = getAuth();
-        const db = getFirestore();
-
-        addDoc(collection(db, 'discount_usage'), {
-            code: code,
-            tier: tier,
-            userId: auth.currentUser?.uid || 'anonymous',
-            userEmail: auth.currentUser?.email || null,
-            appliedAt: serverTimestamp()
+                addDoc(collection(db, 'discount_usage'), {
+                    code: code,
+                    tier: tier,
+                    userId: auth.currentUser?.uid || 'anonymous',
+                    userEmail: auth.currentUser?.email || null,
+                    appliedAt: serverTimestamp()
+                });
+            } catch (error) {
+                console.error('[Discount] Failed to track usage:', error);
+            }
         });
-    } catch (error) {
-        console.error('[Discount] Failed to track usage:', error);
-    }
+    });
 }
