@@ -66,10 +66,10 @@
     <link rel="stylesheet" href="/binaural-assets/css/style.css?v=25">
     <link rel="stylesheet" href="/binaural-assets/css/visual-active.css?v=1">
     <!-- Preload critical resources -->
-    <link rel="preload" href="/binaural-assets/js/main_vFINAL.js?v=FIX_SPEED_FINAL" as="script" crossorigin>
+    <link rel="preload" href="/binaural-assets/js/main_vFINAL.js?v=FIX_SPEED_V102" as="script" crossorigin>
     <script src="/binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=FIX_SPEED_FINAL"></script>
+    <script type="module" src="/binaural-assets/js/main_vFINAL.js?v=FIX_SPEED_V102"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -1651,7 +1651,8 @@
             </div>
 
             <!-- Grid Content -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-6" style="background-color: var(--bg-main);">
+            <div id="themeModalContent" class="flex-1 overflow-y-auto custom-scrollbar p-6"
+                style="background-color: var(--bg-main);">
                 <div id="themeGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <!-- Theme Cards Injected via JS -->
                 </div>

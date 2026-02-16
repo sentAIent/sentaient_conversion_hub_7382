@@ -3527,12 +3527,12 @@ function updateCategoryTabs() {
             if (isLight) {
                 // Light Mode Active: Accent Tint BG + Category Text/Border
                 // Use color-mix for valid opacity with hex variable
-                tab.className = `dj - cat - tab px - 2.5 py - 1 rounded - lg text - [9px] font - bold uppercase tracking - wide whitespace - nowrap border shadow - sm ${colors.text} `;
+                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap border shadow-sm ${colors.text}`;
                 tab.style.borderColor = 'currentColor';
                 tab.style.backgroundColor = 'color-mix(in srgb, var(--accent), transparent 80%)';
             } else {
                 // Dark Mode Active: Legacy
-                tab.className = `dj - cat - tab px - 2.5 py - 1 rounded - lg text - [9px] font - bold uppercase tracking - wide whitespace - nowrap ${colors.bg} ${colors.text} border ${colors.border} `;
+                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap ${colors.bg} ${colors.text} border ${colors.border}`;
                 tab.style.borderColor = '';
                 tab.style.backgroundColor = '';
             }
@@ -3540,10 +3540,10 @@ function updateCategoryTabs() {
             // Inactive state
             tab.style.backgroundColor = ''; // Reset
             if (isLight) {
-                tab.className = `dj - cat - tab px - 2.5 py - 1 rounded - lg text - [9px] font - bold uppercase tracking - wide whitespace - nowrap bg - transparent hover: bg - black / 5 text - [var(--text - muted)] border border - transparent hover: border - black / 5`;
+                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap bg-transparent hover:bg-black/5 text-[var(--text-muted)] border border-transparent hover:border-black/5`;
                 tab.style.borderColor = '';
             } else {
-                tab.className = `dj - cat - tab px - 2.5 py - 1 rounded - lg text - [9px] font - bold uppercase tracking - wide whitespace - nowrap hover: bg - white / 10 ${colors.text} border border - white / 10 hover: border - white / 20`;
+                tab.className = `dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide whitespace-nowrap hover:bg-white/10 ${colors.text} border border-white/10 hover:border-white/20`;
                 tab.style.borderColor = '';
             }
         }
@@ -3554,17 +3554,7 @@ function updateCategoryTabs() {
     updateStopAllButton();
 }
 
-function renderAllDJPads() {
-    const grid = document.getElementById('djPadsGrid');
-    if (!grid) return;
 
-    grid.innerHTML = '';
-
-    // Check for Light Mode
-    const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
-    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
-    const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
-}
 
 function updateModeButtons() {
     const modeOneShot = document.getElementById('djModeOneShot');
@@ -3641,13 +3631,13 @@ function renderDJPads(category) {
         const isActive = isLoopActive(id);
         const canLoop = sound.canLoop;
 
-        let inactiveClasses = `bg - white / 5 border - white / 10 hover: bg - white / 10 hover: border - white / 20`;
+        let inactiveClasses = `bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20`;
         let inactiveStyle = '';
 
         if (!isActive && isLight) {
             // Light Mode Outline Style: Transparent BG, Colored Border, Colored Text
             // We use inline styles for the specific category color on border/text
-            inactiveClasses = `bg - transparent hover: bg - [var(--accent)]/5`;
+            inactiveClasses = `bg-transparent hover:bg-[var(--accent)]/5`;
             // Note: Border width is handled by 'border' class in template below
         }
 
@@ -3888,7 +3878,6 @@ updateShowAllButton = function () {
     }
 }
 
-// NEW: Update Stop All button state (Light Mode Aware)
 // NEW: Update Stop All button state (Light Mode Aware)
 function updateStopAllButton() {
     const stopAllBtn = document.getElementById('djStopAll');
