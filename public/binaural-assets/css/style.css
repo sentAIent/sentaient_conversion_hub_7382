@@ -2876,3 +2876,50 @@ body[data-theme="dawn"] .custom-scrollbar::-webkit-scrollbar-track {
 #djStopAll.dj-playing:hover {
     background: rgba(239, 68, 68, 0.3) !important;
 }
+
+/* ==========================================
+   FEEDBACK SURVEY FIXES
+   Ensures the survey modal is always on top
+   and remains readable in all themes.
+   ========================================== */
+body #feedbackSurveyModal.survey-contrast-fix {
+    z-index: 10000 !important;
+}
+
+body #feedbackSurveyModal.survey-contrast-fix .glass-card {
+    background: rgba(15, 23, 42, 0.95) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(40px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+}
+
+body #feedbackSurveyModal.survey-contrast-fix .text-white,
+body #feedbackSurveyModal.survey-contrast-fix label,
+body #feedbackSurveyModal.survey-contrast-fix h2,
+body #feedbackSurveyModal.survey-contrast-fix p:not(.text-center) {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Special fix for gradient headers to ensure contrast */
+body #feedbackSurveyModal.survey-contrast-fix h2 {
+    background: none !important;
+    background-clip: initial !important;
+    -webkit-background-clip: initial !important;
+}
+
+body #feedbackSurveyModal.survey-contrast-fix .text-\[var\(--text-muted\)\] {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body #feedbackSurveyModal.survey-contrast-fix select,
+body #feedbackSurveyModal.survey-contrast-fix textarea {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+body #feedbackSurveyModal.survey-contrast-fix select option {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+}

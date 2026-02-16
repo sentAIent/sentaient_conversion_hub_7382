@@ -52,7 +52,7 @@ function createSurveyModal(triggerType) {
     const modal = document.createElement('div');
     modal.id = 'feedbackSurveyModal';
     // Use consistent overlay styles
-    modal.className = 'fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300';
+    modal.className = 'fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md opacity-0 transition-opacity duration-300 survey-contrast-fix';
 
     // We'll animate opacity in after append
     setTimeout(() => modal.classList.remove('opacity-0'), 10);

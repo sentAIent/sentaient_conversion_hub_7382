@@ -4,6 +4,10 @@
 const ANALYTICS_KEY = 'mindwave_analytics';
 const VISIT_KEY = 'mindwave_last_visit';
 
+// Integration Imports
+import * as ga from '../utils/analytics.js';
+import * as firestore from './analytics-service.js';
+
 // --- DAILY VISIT TRACKING (updates streak on app load) ---
 
 export function recordVisit() {
@@ -35,6 +39,9 @@ export function recordVisit() {
     saveAnalytics(analytics);
 
     console.log('[Analytics] Visit recorded. Streak:', analytics.stats.currentStreak);
+
+    // Track in Cloud Analytics
+    firestore.trackGlobalEvent('daily_visit', { streak: analytics.stats.currentStreak });
 }
 
 export function startSessionTracking(presetName = 'Custom') {
@@ -49,6 +56,11 @@ export function startSessionTracking(presetName = 'Custom') {
 
     // Store in-progress session
     localStorage.setItem('mindwave_current_session', JSON.stringify(session));
+
+    // Track in external services
+    ga.trackSessionStart(presetName, presetName);
+    firestore.trackGlobalEvent('session_start', { preset: presetName });
+
     return session;
 }
 
@@ -67,6 +79,15 @@ export function endSessionTracking(completed = false) {
     }
 
     localStorage.removeItem('mindwave_current_session');
+
+    // Track in external services
+    ga.trackSessionEnd(session.preset, Math.round(session.duration / 60));
+    firestore.trackGlobalEvent('session_end', {
+        preset: session.preset,
+        duration_sec: session.duration,
+        completed: completed
+    });
+
     return session;
 }
 

@@ -782,7 +782,8 @@ export function setupUI() {
 
     // Theme - force default (emerald) if no saved theme or if it's a light theme that shouldn't be default
     const savedTheme = localStorage.getItem('mindwave_theme');
-    if (!savedTheme || savedTheme === 'cloud' || savedTheme === 'dawn') {
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
+    if (!savedTheme || (savedTheme === 'cloud' || savedTheme === 'dawn') && !lightThemes.includes(savedTheme)) {
         // Clear and set to default emerald theme
         localStorage.removeItem('mindwave_theme');
         setTheme('default');
@@ -1745,7 +1746,7 @@ function updateSweepStatusUI(active, activePresetKey = null) {
 function updateJourneyStyles() {
     // Check for Light Mode
     const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
-    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
     const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
 
     const btns = document.querySelectorAll('.sweep-btn');
@@ -3009,7 +3010,8 @@ export async function initThemeModal() {
         const isLocked = theme.threshold && refCount < theme.threshold;
 
         const card = document.createElement('div');
-        card.className = `theme-card group ${els.themeBtn && document.body.dataset.theme === key ? 'active' : ''} ${isLocked ? 'locked opacity-60' : ''} `;
+        const currentTheme = document.body.dataset.theme;
+        card.className = `theme-card group ${currentTheme === key ? 'active' : ''} ${isLocked ? 'locked opacity-60' : ''} `;
         card.style.setProperty('--theme-bg', theme.bg);
 
         // Card HTML - use CSS classes for theme-aware text colors
@@ -3047,6 +3049,9 @@ export async function initThemeModal() {
             // Flash "active" state
             document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
+
+            // NEW: Auto-close after selection for better flow
+            setTimeout(closeThemeModal, 300);
         };
 
         grid.appendChild(card);
@@ -3510,7 +3515,7 @@ function updateCategoryTabs() {
 
     // Check for Light Mode
     const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
-    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
     const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
 
     tabs.forEach(tab => {
@@ -3549,13 +3554,25 @@ function updateCategoryTabs() {
     updateStopAllButton();
 }
 
+function renderAllDJPads() {
+    const grid = document.getElementById('djPadsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    // Check for Light Mode
+    const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
+    const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
+}
+
 function updateModeButtons() {
     const modeOneShot = document.getElementById('djModeOneShot');
     const modeLoop = document.getElementById('djModeLoop');
 
     // Check for Light Mode
     const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
-    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
     const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
 
     if (modeOneShot) {
@@ -3617,7 +3634,7 @@ function renderDJPads(category) {
 
     // Check for Light Mode
     const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
-    const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
     const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
 
     Object.entries(catData.sounds).forEach(([id, sound]) => {
@@ -3797,7 +3814,7 @@ renderAllDJPads = function () {
 
         // Check for Light Mode
         const themeAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
-        const lightThemes = ['cloud', 'dawn', 'paper', 'ash', 'light'];
+        const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
         const isLight = lightThemes.includes(themeAttr) || document.body.getAttribute('data-theme-type') === 'light';
 
         // Add all pads for this category

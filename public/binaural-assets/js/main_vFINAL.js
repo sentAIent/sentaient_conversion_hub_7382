@@ -22,8 +22,16 @@ const lazy = {
     haptics: () => import('./utils/haptics.js')
 };
 import { getCloudPresets, syncLocalMixesToCloud } from './services/presets-service.js';
-import { flowManager } from './utils/modal-manager.js';
 import './utils/ab-testing.js';
+import { initExitIntent } from './ui/exit-intent.js';
+import { initIntentSurvey } from './ui/intent-survey.js';
+import { initPaywall } from './utils/paywall.js';
+import { initAnalytics, trackSignup, trackLogin, trackBeginCheckout, trackPurchase, trackFeatureUse, trackSessionStart, trackSessionEnd, trackPaywallShown, trackUpgradeClick, setUserProperties } from './utils/analytics.js';
+import { handlePaymentSuccess } from './services/stripe-simple.js';
+import { checkSurveyTrigger, showFeedbackSurvey } from './utils/feedback-survey.js';
+import { startPresenceHeartbeat, subscribeToPresenceCounts } from './services/presence-service.js';
+import { copyShareLink } from './services/share.js';
+import { recordVisit, syncDailyUsage } from './services/analytics.js';
 
 
 // Content Modules - Loaded dynamically after UI is ready
@@ -41,6 +49,11 @@ window.trackLogin = trackLogin;
 window.trackBeginCheckout = trackBeginCheckout;
 window.trackPurchase = trackPurchase;
 window.trackFeatureUse = trackFeatureUse;
+
+// Expose onboarding globally
+import { startOnboarding } from './ui/onboarding.js';
+window.startOnboarding = () => startOnboarding(true);
+window.startTutorial = () => startOnboarding(true);
 window.trackSessionStart = trackSessionStart;
 window.trackSessionEnd = trackSessionEnd;
 window.trackPaywallShown = trackPaywallShown;
@@ -99,6 +112,8 @@ const initApp = () => {
         initConnectivityListener();
         initPaywall();  // Initialize paywall system
         initAnalytics();  // Initialize Google Analytics
+        recordVisit();    // Record daily visit and update streak
+        syncDailyUsage(); // Sync any offline usage
 
         // Cloud Presets & Sync
         getCloudPresets().then(presets => {
