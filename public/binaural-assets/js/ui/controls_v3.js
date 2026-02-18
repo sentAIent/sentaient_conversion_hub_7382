@@ -7,16 +7,17 @@ import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
 import { auth, db, registerAuthCallback } from '../services/firebase.js';
 import { startSession, stopSession, pauseSession, resumeSession, isSessionPaused, formatTime, getProgress, isSessionActive, DURATION_PRESETS } from '../audio/session-timer.js';
-import { startSessionTracking, endSessionTracking, getStats, getWeeklyData } from '../services/analytics.js';
-import { setStoryVolume, storyState } from '../content/stories.js';
+import { startSessionTracking, endSessionTracking, getStats, getWeeklyData, getImpactStats } from '../services/analytics.js';
+import { setStoryVolume, playStory, stopStory as stopCurrentStory, storyState } from '../content/stories.js';
 import { setCustomAudioVolume } from '../content/audio-library.js';
 import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '../content/classical.js';
 import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '../audio/dj-synth.js';
 import { goToCheckout, hasPurchasedApp } from '../services/stripe-simple.js';
 import { initGallery } from './gallery-modal.js';
 import { getReferralCount, shareReferral } from '../services/referral.js';
-import { calculateFrequencyFromGoal, parseComplexGoal } from '../services/ai-intent-service.js';
-import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts } from '../services/presence-service.js';
+import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
+import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
+import { showReflectionPrompt } from './reflection-journal.js';
 window.shareReferral = shareReferral;
 
 // ... (existing code)
@@ -407,16 +408,35 @@ export function setupUI() {
     if (els.atmosMasterSlider) els.atmosMasterSlider.addEventListener('input', () => { updateAtmosMaster(); saveStateToLocal(); });
     if (els.balanceSlider) els.balanceSlider.addEventListener('input', () => { updateMasterBalance(); saveStateToLocal(); });
 
+    // --- Speed Mapping Helpers (Quadratic) ---
+    // Maps 0-1 slider range to 0.1-15.0x speed with more resolution at low end
+    const mapSpeed = (p) => {
+        // v = 0.1 + p^2 * 14.9
+        const speed = 0.1 + (p * p) * 14.9;
+        return Math.round(speed * 10) / 10;
+    };
+    // Reverse mapping for setting slider from speed
+    const unmapSpeed = (v) => {
+        // p = sqrt((v - 0.1) / 14.9)
+        return Math.sqrt(Math.max(0, v - 0.1) / 14.9);
+    };
+
     // Visual Speed & Sync Controls
     if (els.visualSpeedSlider) els.visualSpeedSlider.addEventListener('input', () => {
-        const val = parseFloat(els.visualSpeedSlider.value);
+        // If user drags slider, auto-disengage sync mode
+        if (state.visualSpeedAuto) {
+            state.visualSpeedAuto = false;
+            updateSyncUI();
+        }
+        const p = parseFloat(els.visualSpeedSlider.value);
+        const val = mapSpeed(p);
         const viz = getVisualizer();
         if (viz) viz.setSpeed(val);
         if (els.speedValue) els.speedValue.textContent = val.toFixed(1) + 'x';
         // Sync compact slider
         const compactSlider = document.querySelector('.compact-speed-slider');
         const compactValue = document.querySelector('.compact-speed-value');
-        if (compactSlider) compactSlider.value = val;
+        if (compactSlider) compactSlider.value = p;
         if (compactValue) compactValue.textContent = val.toFixed(1) + 'x';
     });
 
@@ -424,9 +444,10 @@ export function setupUI() {
     const compactSpeedSlider = document.querySelector('.compact-speed-slider');
     if (compactSpeedSlider) {
         compactSpeedSlider.addEventListener('input', () => {
-            const val = parseFloat(compactSpeedSlider.value);
+            const p = parseFloat(compactSpeedSlider.value);
+            const val = mapSpeed(p);
             // Sync to main slider
-            if (els.visualSpeedSlider) els.visualSpeedSlider.value = val;
+            if (els.visualSpeedSlider) els.visualSpeedSlider.value = p;
             // Update visualizer
             const viz = getVisualizer();
             if (viz) viz.setSpeed(val);
@@ -457,36 +478,54 @@ export function setupUI() {
     }
 
     function updateSyncUI() {
-        if (!els.visualSyncBtn || !els.visualSpeedSlider || !els.speedSliderContainer) return;
+        console.log('[Controls] updateSyncUI. Auto:', state.visualSpeedAuto);
+        if (!els.visualSyncBtn || !els.visualSpeedSlider) {
+            console.warn('[Controls] Sync UI elements missing:', !!els.visualSyncBtn, !!els.visualSpeedSlider);
+            return;
+        }
+
         const compactSyncBtn = document.querySelector('.compact-sync-btn');
         const compactSpeedSlider = document.querySelector('.compact-speed-slider');
 
+        // Slider is ALWAYS enabled — dragging auto-disengages sync
+        els.visualSpeedSlider.disabled = false;
+        if (compactSpeedSlider) compactSpeedSlider.disabled = false;
+
         if (state.visualSpeedAuto) {
-            // Auto Mode: Active
-            els.visualSyncBtn.style.backgroundColor = "var(--accent)";
-            els.visualSyncBtn.style.color = "var(--bg-main)";
-            els.visualSpeedSlider.disabled = true;
-            els.speedSliderContainer.classList.add('opacity-50');
-            els.speedSliderContainer.classList.remove('opacity-100');
-            // Update compact button
-            if (compactSyncBtn) {
-                compactSyncBtn.style.backgroundColor = "var(--accent)";
-                compactSyncBtn.style.color = "var(--bg-main)";
+            // Auto Mode: Locked (accent/active styling)
+            els.visualSyncBtn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]');
+            els.visualSyncBtn.classList.remove('bg-white/10', 'text-white/50');
+            els.visualSyncBtn.title = 'Speed synced to Hz (Auto) — drag slider to override';
+            if (els.speedSliderContainer) {
+                els.speedSliderContainer.classList.add('opacity-50');
+                els.speedSliderContainer.classList.remove('opacity-100');
             }
-            if (compactSpeedSlider) compactSpeedSlider.disabled = true;
+            if (compactSyncBtn) {
+                compactSyncBtn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]');
+                compactSyncBtn.classList.remove('bg-white/10', 'text-white/50');
+            }
         } else {
-            // Manual Mode: Inactive
-            els.visualSyncBtn.style.backgroundColor = "rgba(255,255,255,0.1)";
-            els.visualSyncBtn.style.color = "var(--text-muted)";
-            els.visualSpeedSlider.disabled = false;
-            els.speedSliderContainer.classList.remove('opacity-50');
-            els.speedSliderContainer.classList.add('opacity-100');
-            // Update compact button
-            if (compactSyncBtn) {
-                compactSyncBtn.style.backgroundColor = "rgba(255,255,255,0.1)";
-                compactSyncBtn.style.color = "var(--text-muted)";
+            // Manual Mode: Unlocked (full opacity)
+            els.visualSyncBtn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]');
+            els.visualSyncBtn.classList.add('bg-white/10', 'text-white/50');
+            els.visualSyncBtn.title = 'Manual speed (click to re-sync)';
+            if (els.speedSliderContainer) {
+                els.speedSliderContainer.classList.remove('opacity-50');
+                els.speedSliderContainer.classList.add('opacity-100');
             }
-            if (compactSpeedSlider) compactSpeedSlider.disabled = false;
+            if (compactSyncBtn) {
+                compactSyncBtn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]');
+                compactSyncBtn.classList.add('bg-white/10', 'text-white/50');
+            }
+
+            // When switching to manual, ensure slider reflects current actual speed
+            const viz = getVisualizer();
+            if (viz && viz.speedMultiplier) {
+                const p = unmapSpeed(viz.speedMultiplier);
+                els.visualSpeedSlider.value = p;
+                if (compactSpeedSlider) compactSpeedSlider.value = p;
+                if (els.speedValue) els.speedValue.textContent = viz.speedMultiplier.toFixed(1) + 'x';
+            }
         }
     }
 
@@ -633,16 +672,9 @@ export function setupUI() {
         });
     }
 
-    if (els.visualSpeedSlider) {
-
-        els.visualSpeedSlider.addEventListener('input', (e) => {
-            console.log("Slider Input:", e.target.value);
-            const viz = getVisualizer();
-            if (viz) viz.setSpeed(parseFloat(e.target.value));
-        });
-    }
 
     // Matrix Controls
+
     console.log('[Controls] Calling setupMatrixControls()...');
     setupMatrixControls();
 
@@ -869,38 +901,52 @@ export function setupUI() {
         }
 
         try {
-            // Batch: Set all modes directly on the visualizer without triggering individual re-inits
-            viz._rainbowEnabled = true; // Pre-set rainbow before any matrix init
-            viz.activeModes.clear();
-            viz.activeModes.add('particles');
-            viz.activeModes.add('matrix');
-            viz.updateVisibility();
+            // Constructor already set activeModes to particles+matrix and called updateVisibility+initMatrix.
+            // We just need to ensure rainbow is on and sync the UI buttons.
+            viz._rainbowEnabled = true;
 
-            // Single matrix init with mindwave + rainbow already set
-            viz.mindWaveMode = true;
-            viz.matrixLogicMode = 'mindwave';
-            viz.initMatrix(); // Only ONE matrix build
-
-            // Now sync the UI buttons to match
-            setVisualMode('particles', true); // This will see it's already active and just sync buttons
-            setVisualMode('matrix', true);    // Same - already active, just syncs buttons
-
-            // Smooth fade-in: reveal canvas after everything is ready
-            // Use slightly longer delay to ensure DOM is ready for transition
-            setTimeout(() => {
-                const canvas = document.getElementById('visualizer');
-                if (canvas) {
-                    canvas.style.opacity = '1';
-                    console.log('[Controls] Visualizer fade-in triggered');
+            // Sync UI buttons to match the constructor's active modes (no toggleMode calls needed)
+            const buttons = [
+                { el: els.sphereBtn, mode: 'sphere' },
+                { el: els.flowBtn, mode: 'particles' },
+                { el: els.lavaBtn, mode: 'lava' },
+                { el: els.fireplaceBtn, mode: 'fireplace' },
+                { el: els.rainBtn, mode: 'rainforest' },
+                { el: els.zenBtn, mode: 'zengarden' },
+                { el: els.oceanBtn, mode: 'ocean' },
+                { el: els.matrixBtn, mode: 'matrix' }
+            ];
+            buttons.forEach(({ el, mode }) => {
+                if (!el) return;
+                if (viz.activeModes.has(mode)) {
+                    el.classList.add('toggle-active', 'active');
+                    el.classList.remove('toggle-inactive');
                 } else {
-                    console.error('[Controls] Visualizer canvas element NOT FOUND');
+                    el.classList.remove('toggle-active', 'active');
+                    el.classList.add('toggle-inactive');
                 }
-            }, 100);
+            });
 
-            console.log('[Controls] Visual defaults applied (batched)');
+            // Show matrix panel if matrix is active
+            const matrixPanel = document.getElementById('matrixSettingsPanel');
+            if (matrixPanel && viz.activeModes.has('matrix')) {
+                if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
+                if (state.matrixPanelOpen) {
+                    matrixPanel.classList.remove('hidden');
+                    matrixPanel.classList.add('flex', 'items-center');
+                }
+            }
+
+            // Reveal canvas immediately — everything is already ready
+            const canvas = document.getElementById('visualizer');
+            if (canvas) {
+                canvas.style.opacity = '1';
+                console.log('[Controls] Visualizer revealed');
+            }
+
+            console.log('[Controls] Visual defaults applied (streamlined)');
         } catch (e) {
             console.error('[Controls] Error in applyVisualDefaults:', e);
-            // Emergency reveal
             const canvas = document.getElementById('visualizer');
             if (canvas) canvas.style.opacity = '1';
         }
@@ -965,8 +1011,12 @@ export function setupUI() {
         }
     } catch (e) {
         console.error("Failed to install protection:", e);
+        // Pre-initialize modals for speed
+        initThemeModal();
     }
 
+    // Initialize UI State
+    updateSyncUI();
 }
 window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
 
@@ -1228,11 +1278,37 @@ async function handleAIGenerate() {
 
     // Simulate "AI" processing delay
     setTimeout(async () => {
-        const sequence = parseComplexGoal(goal);
+        // 1. Check for Story Match
+        const storyMatch = findBestStoryForGoal(goal);
+        const aiResult = calculateFrequencyFromGoal(goal);
 
-        if (sequence.length > 0) {
-            state.sessionQueue = sequence;
-            await applyNextAIStage();
+        if (storyMatch) {
+            console.log('[AI] Found Story Match:', storyMatch.title);
+
+            // Override story's recommended frequencies with AI intent if relevant
+            if (aiResult) {
+                // We'll temporarily modify the story object (or just pass the override)
+                // For now, let's just use the story's play logic but apply our frequencies after.
+                await playStory(storyMatch.id);
+
+                // Fine-tune after story starts
+                setTimeout(async () => {
+                    await applyAIPreset(aiResult);
+                    if (els.aiInsight) {
+                        els.aiInsight.textContent = `Matching Story: "${storyMatch.title}" — ${aiResult.insight}`;
+                        els.aiInsight.classList.remove('hidden');
+                    }
+                }, 500);
+            } else {
+                await playStory(storyMatch.id);
+            }
+        } else {
+            // 2. Regular Multi-stage Intent
+            const sequence = parseComplexGoal(goal);
+            if (sequence.length > 0) {
+                state.sessionQueue = sequence;
+                await applyNextAIStage();
+            }
         }
 
         // Reset UI
@@ -1280,7 +1356,15 @@ async function applyNextAIStage() {
 }
 
 async function applyAIPreset(result) {
-    console.log('[AI] Applying Preset:', result.preset, 'Soundscapes:', result.soundscapes, 'Visual:', result.visual);
+    console.log('[AI] Applying Preset:', result.preset, 'Soundscapes:', result.soundscapes, 'Visual:', result.visual, 'Intensity:', result.intensity);
+
+    // 0. Handle Intensity (Volume Scaling)
+    const baseVol = 0.5;
+    const scaledVol = Math.min(1.0, baseVol * (result.intensity || 1.0));
+    if (els.volSlider) {
+        els.volSlider.value = scaledVol;
+        if (typeof updateBeatsVolume === 'function') updateBeatsVolume(scaledVol);
+    }
 
     // 1. Reset current soundscapes first
     resetAllSoundscapes();
@@ -1292,25 +1376,34 @@ async function applyAIPreset(result) {
         active.forEach(m => viz.toggleMode(m));
     }
 
-    // 3. Apply main frequency preset
+    // 3. Apply Carrier Override (if present)
+    if (result.carrier && els.baseSlider) {
+        console.log('[AI] Overriding carrier frequency to:', result.carrier);
+        els.baseSlider.value = result.carrier;
+        if (els.baseValue) els.baseValue.textContent = result.carrier + ' Hz';
+    }
+
+    // 4. Apply main frequency preset
     await applyPreset(result.preset, null, true, true);
 
-    // 4. Enable soundscapes
+    // 5. Enable soundscapes with intensity mapping
     result.soundscapes.forEach(id => {
-        updateSoundscape(id, true, 0.5);
+        const scVol = 0.5 * (result.intensity || 1.0);
+        updateSoundscape(id, true, Math.min(1.0, scVol));
     });
 
-    // 5. Enable visual if suggested
+    // 6. Enable visual if suggested
     if (result.visual) {
         const visualMap = {
             'flow': 'particles',
-            'zen': 'zengarden'
+            'zen': 'zengarden',
+            'matrix': 'matrix'
         };
         const vizMode = visualMap[result.visual] || result.visual;
         setVisualMode(vizMode, true);
     }
 
-    // 6. Force UI Sync
+    // 7. Force UI Sync
     initMixer();
 
     showToast(`AI Mix: ${result.preset.toUpperCase()}`, 'success');
@@ -1338,6 +1431,7 @@ function setupPresenceUI() {
 
     // Subscribe to counts
     subscribeToPresenceCounts((data) => {
+        state.lastPresenceData = data;
         if (!els.presenceText) return;
 
         const count = data.total;
@@ -1353,9 +1447,8 @@ function setupPresenceUI() {
 }
 
 function updatePresenceOnPresetChange() {
-    // Heartbeat will pick up new preset on next tick, 
-    // but we can force an update if we want better real-time feel.
-    // For now, 60s is fine to save Firestore writes.
+    // Force immediate sync when preset changes
+    syncPresence();
 }
 
 
@@ -1424,6 +1517,13 @@ function handleSessionComplete() {
         stopAudio();
         hideTimerUI();
         showToast('Session complete! 🧘', 'success');
+
+        // Trigger Reflection Journal (Phase 5)
+        // Only trigger for sessions longer than 2 minutes to reduce friction
+        const sessionLength = parseInt(localStorage.getItem('mindwave_last_session_duration') || '0');
+        if (sessionLength > 120) {
+            setTimeout(() => showReflectionPrompt({ duration: sessionLength }), 1000);
+        }
     });
 }
 
@@ -1545,14 +1645,25 @@ function openStatsModal() {
 
     // Get stats data
     const stats = getStats();
+    const impact = getImpactStats();
     const weeklyData = getWeeklyData();
     const maxMinutes = Math.max(...weeklyData.map(d => d.minutes), 1);
+
+    // Live Community Sync Data (Phase 5)
+    let livePresenceTotal = state.livePresenceTotal || 42; // Fallback to mock/last known
+    subscribeToPresenceCounts((counts) => {
+        state.livePresenceTotal = counts.total;
+        const liveCountLabel = document.getElementById('liveSyncCount');
+        if (liveCountLabel) {
+            liveCountLabel.textContent = `${counts.total} Users Pulsing Now`;
+        }
+    });
 
     // Find the card container inside the modal and replace its content
     const modalContent = els.statsModal.querySelector('.glass-card');
     if (modalContent) {
         modalContent.innerHTML = `
-    < !--Header -->
+            <!-- Header -->
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-purple-500 flex items-center justify-center">
@@ -1571,21 +1682,18 @@ function openStatsModal() {
                 </button>
             </div>
 
-            <!--Stats Grid - Revamped with proper icon placement-- >
+            <!-- Stats Grid -->
             <div class="grid grid-cols-3 gap-3 mb-6">
-                <!-- Day Streak -->
                 <div class="rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-500/30 p-4 text-center">
                     <div class="text-2xl mb-1">🔥</div>
                     <div class="text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">${stats.currentStreak}</div>
                     <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mt-1">Day Streak</div>
                 </div>
-                <!-- Hours -->
                 <div class="rounded-xl bg-gradient-to-br from-[var(--accent)]/20 to-cyan-500/10 border border-[var(--accent)]/30 p-4 text-center">
                     <div class="text-2xl mb-1">⏱️</div>
                     <div class="text-3xl font-bold bg-gradient-to-r from-[var(--accent)] to-cyan-400 bg-clip-text text-transparent">${stats.totalHours}</div>
                     <div class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mt-1">Hours</div>
                 </div>
-                <!-- Sessions -->
                 <div class="rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/10 border border-purple-500/30 p-4 text-center">
                     <div class="text-2xl mb-1">🧘</div>
                     <div class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">${stats.totalSessions}</div>
@@ -1593,7 +1701,7 @@ function openStatsModal() {
                 </div>
             </div>
 
-            <!--Weekly Chart-- >
+            <!-- Weekly Chart -->
             <div class="rounded-xl bg-white/5 border border-white/10 p-4 mb-4">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-xs font-semibold text-white">This Week</span>
@@ -1601,18 +1709,10 @@ function openStatsModal() {
                 </div>
                 <div class="h-32 flex items-end gap-2 px-2">
                     ${weeklyData.map((d, i) => {
-            // Calculate bar height in pixels (max 100px for chart area minus label space)
             const maxBarHeight = 100;
-            const barHeight = d.minutes > 0
-                ? Math.max(Math.round((d.minutes / maxMinutes) * maxBarHeight), 8)
-                : 8;
+            const barHeight = d.minutes > 0 ? Math.max(Math.round((d.minutes / maxMinutes) * maxBarHeight), 8) : 8;
             const isToday = i === 6;
-            // Use inline styles for background to ensure visibility
-            const barBg = d.minutes > 0
-                ? (isToday
-                    ? 'background: linear-gradient(to top, #00d4ff, #06b6d4);'
-                    : 'background: linear-gradient(to top, #a855f7, #ec4899);')
-                : 'background: rgba(255,255,255,0.15);';
+            const barBg = d.minutes > 0 ? (isToday ? 'background: linear-gradient(to top, #00d4ff, #06b6d4);' : 'background: linear-gradient(to top, #a855f7, #ec4899);') : 'background: rgba(255,255,255,0.15);';
             return `
                                 <div class="flex-1 flex flex-col items-center justify-end h-full">
                                     <div class="w-full rounded-t-lg transition-all duration-500 ease-out hover:brightness-125 cursor-pointer relative group"
@@ -1629,7 +1729,42 @@ function openStatsModal() {
                 </div>
             </div>
 
-            <!--Additional Stats-- >
+            <!-- PERSONAL IMPACT REPORT -->
+            <div class="rounded-xl bg-gradient-to-br from-[var(--accent)]/10 to-purple-500/10 border border-[var(--accent)]/20 p-4 mb-4">
+                <h4 class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-widest mb-3">Personal Impact Report</h4>
+                
+                <!-- State Distribution -->
+                <div class="space-y-2 mb-4">
+                    ${Object.entries(impact.distribution).map(([state, mins]) => {
+            if (mins === 0 && impact.totalMinutes > 0) return '';
+            const percent = impact.totalMinutes > 0 ? Math.round((mins / impact.totalMinutes) * 100) : 0;
+            if (percent === 0 && impact.totalMinutes > 0) return '';
+            const colors = { delta: '#f87171', theta: '#fb923c', alpha: '#4ade80', beta: '#60a5fa', gamma: '#a78bfa' };
+            return `
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between text-[9px]">
+                                <span class="capitalize text-white/70">${state}</span>
+                                <span class="text-white/50">${mins}m (${percent}%)</span>
+                            </div>
+                            <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-1000" style="width: ${percent}%; background-color: ${colors[state] || '#fff'};"></div>
+                            </div>
+                        </div>
+                    `;
+        }).join('')}
+                </div>
+
+                <!-- Community Sync -->
+                <div class="flex items-center gap-3 p-2 rounded-lg bg-black/20 border border-white/5">
+                    <div class="w-8 h-8 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-sm">✨</div>
+                    <div class="flex-1">
+                        <div id="liveSyncCount" class="text-[10px] text-white/70">${livePresenceTotal} Users Pulsing Now</div>
+                        <div class="text-xs font-bold text-[var(--accent)]">${impact.pulseHours} Pulse Hours Generated</div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Additional Stats-->
             <div class="space-y-3">
                 <div class="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
                     <div class="flex items-center gap-2">
@@ -2697,21 +2832,31 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         }
     }
 
-    // 1. Update UI Buttons
+    // 1. Update UI Buttons & Sync Presence
     if (els.presetButtons) {
         els.presetButtons.forEach(b => {
             b.classList.remove('bg-white/10', 'border-white/20');
             b.classList.add('bg-white/5', 'border-white/10');
         });
 
-        // Find button by type if not specific element passed
-        // Find button by type if not specific element passed
         const targetBtn = btnElement || document.querySelector(`.preset-btn[onclick*="'${type}'"]`);
         if (targetBtn) {
             targetBtn.classList.remove('bg-white/5', 'border-white/10');
             targetBtn.classList.add('bg-white/10', 'border-white/20');
         }
     }
+
+    // Force immediate presence update
+    updatePresenceOnPresetChange();
+
+    // Show community count if available
+    setTimeout(() => {
+        const stats = state.lastPresenceData;
+        if (stats && stats.byPreset && stats.byPreset[type] > 1) {
+            const count = stats.byPreset[type];
+            showToast(`Joined ${count - 1} others in ${type.toUpperCase()}`, 'info');
+        }
+    }, 1500); // Wait for sync/snapshot
 
     // 2. Set Frequencies & Colors
     let base = 200, beat = 10;
@@ -2778,6 +2923,7 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
 
 // Expose to global scope for HTML onclick handlers
 window.applyPreset = applyPreset;
+window.applyComboPreset = applyComboPreset;
 
 // --- COMBO PRESET LOGIC (Ambient Presets) ---
 // Combines binaural frequency presets with atmospheric soundscapes
@@ -2990,8 +3136,8 @@ window.setCursorShape = (s) => {
     }
 };
 
-export async function initThemeModal() {
-    console.log('[Theme] initThemeModal CALLED');
+export function initThemeModal() {
+    console.log('[Theme] initThemeModal CALLED (Optimized)');
     const grid = document.getElementById('themeGrid');
     const container = document.getElementById('themeModalContent');
     if (!grid || !container) {
@@ -3001,61 +3147,72 @@ export async function initThemeModal() {
 
     grid.innerHTML = ''; // Clear existing
 
-    // Fetch referral count for locking logic
-    const refCount = state.currentUser ? (await getReferralCount(state.currentUser.uid)) : 0;
-    console.log('[Theme] User referral count:', refCount);
+    // Non-blocking referral count fetch
+    const renderThemes = (refCount) => {
+        grid.innerHTML = ''; // Clear for fresh render or update
+        Object.keys(THEMES).forEach(key => {
+            const theme = THEMES[key];
+            const isLocked = theme.threshold && refCount < theme.threshold;
 
-    Object.keys(THEMES).forEach(key => {
-        const theme = THEMES[key];
-        const isLocked = theme.threshold && refCount < theme.threshold;
+            const card = document.createElement('div');
+            const currentTheme = document.body.dataset.theme;
+            card.className = `theme-card group ${currentTheme === key ? 'active' : ''} ${isLocked ? 'locked opacity-60' : ''} `;
+            card.style.setProperty('--theme-bg', theme.bg);
+            card.dataset.themeId = key;
 
-        const card = document.createElement('div');
-        const currentTheme = document.body.dataset.theme;
-        card.className = `theme-card group ${currentTheme === key ? 'active' : ''} ${isLocked ? 'locked opacity-60' : ''} `;
-        card.style.setProperty('--theme-bg', theme.bg);
-
-        // Card HTML - use CSS classes for theme-aware text colors
-        const displayName = key === 'default' ? 'Emerald' : key;
-
-        card.innerHTML = `
-            <div class="theme-preview">
-                <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
-                ${isLocked ? `
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/80">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
+            // Card HTML
+            const displayName = key === 'default' ? 'Emerald' : key;
+            card.innerHTML = `
+                <div class="theme-preview">
+                    <div class="absolute inset-0 opacity-50" style="background: radial-gradient(circle at 50% 50%, ${theme.accent}, transparent 70%);"></div>
+                    ${isLocked ? `
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/80">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="p-3 theme-card-content">
+                    <div class="flex justify-between items-start mb-1">
+                        <div class="theme-card-title text-sm font-bold capitalize">${displayName}</div>
+                        ${isLocked ? `<span class="text-[9px] font-bold text-amber-500">REF: ${refCount}/${theme.threshold}</span>` : ''}
                     </div>
-                ` : ''}
-            </div>
-            <div class="p-3 theme-card-content">
-                <div class="flex justify-between items-start mb-1">
-                    <div class="theme-card-title text-sm font-bold capitalize">${displayName}</div>
-                    ${isLocked ? `<span class="text-[9px] font-bold text-amber-500">REF: ${refCount}/${theme.threshold}</span>` : ''}
+                    <div class="theme-card-desc text-[10px] opacity-70">
+                        ${isLocked ? `Refer ${theme.threshold} friends to unlock this Ambassador theme.` : getThemeDesc(key)}
+                    </div>
                 </div>
-                <div class="theme-card-desc text-[10px] opacity-70">
-                    ${isLocked ? `Refer ${theme.threshold} friends to unlock this Ambassador theme.` : getThemeDesc(key)}
-                </div>
-            </div>
-        `;
+            `;
 
-        card.onclick = () => {
-            if (isLocked) {
-                showToast(`🤝 Refer ${theme.threshold - refCount} more friends to unlock ${displayName}!`, 'warning');
-                return;
-            }
-            setTheme(key);
-            // Flash "active" state
-            document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
+            card.onclick = () => {
+                if (isLocked) {
+                    showToast(`🤝 Refer ${theme.threshold - refCount} more friends to unlock ${displayName}!`, 'warning');
+                    return;
+                }
+                setTheme(key);
+                document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                setTimeout(closeThemeModal, 300);
+            };
 
-            // NEW: Auto-close after selection for better flow
-            setTimeout(closeThemeModal, 300);
-        };
+            grid.appendChild(card);
+        });
+    };
 
-        grid.appendChild(card);
-    });
+    // Initial render with 0 (or cached if we add it)
+    renderThemes(0);
+
+    // Background update
+    if (state.currentUser) {
+        getReferralCount(state.currentUser.uid).then(count => {
+            console.log('[Theme] Async referral count update:', count);
+            renderThemes(count);
+        }).catch(err => {
+            console.error('[Theme] Failed to update referral count:', err);
+        });
+    }
+
 
     // Close Button
     const closeBtn = document.getElementById('closeThemeBtn');
@@ -3206,8 +3363,15 @@ export function showThemeGallery() {
     const card = document.getElementById('themeModalCard');
     if (!modal || !card) return;
 
-    // Render content (this now handles everything including cursors)
-    initThemeModal();
+    // Simplified: Just update active state and show
+    const currentTheme = document.body.dataset.theme;
+    document.querySelectorAll('.theme-card').forEach(card => {
+        if (card.dataset.themeId === currentTheme) {
+            card.classList.add('active');
+        } else {
+            card.classList.remove('active');
+        }
+    });
 
     // Show modal
     modal.classList.remove('hidden');
@@ -4546,119 +4710,70 @@ function setupMatrixControls() {
         });
     }
 
-    // === NEW MATRIX MODE CONTROLS ===
-    const modeToggle = document.getElementById('matrixModeToggle');
+    // === MATRIX MODE SELECTOR (3 buttons: RND / MW / TXT) ===
+    const modeBtns = document.querySelectorAll('[data-matrix-mode]');
     const textInput = document.getElementById('matrixTextInput');
+    const textInputWrapper = document.getElementById('matrixCustomTextInput');
+    const modeToggle = document.getElementById('matrixModeToggle'); // legacy compat
 
-    // Define saveTimeout for text input
     let saveTimeout;
+    let currentMatrixMode = 'mindwave'; // default
 
-    // Helper to Sync Visual State (Labels & Input)
-    const __updateMatrixUI = () => {
-        // console.log('[Controls] __updateMatrixUI CALLED');
-        if (!modeToggle) {
-            console.warn('[Controls] __updateMatrixUI: modeToggle NOT FOUND');
-            return;
+    // Helper: highlight active button, dim others
+    const setActiveMode = (mode) => {
+        currentMatrixMode = mode;
+        modeBtns.forEach(btn => {
+            if (btn.dataset.matrixMode === mode) {
+                btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
+                btn.classList.remove('text-[var(--text-muted)]');
+            } else {
+                btn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
+                btn.classList.add('text-[var(--text-muted)]');
+            }
+        });
+
+        // Focus text input when switching to custom
+        if (mode === 'custom' && textInput) {
+            textInput.focus();
         }
-        const isTextMode = modeToggle.checked; // ON = Text Mode (Mindwave or Custom), OFF = Random
-        // console.log('isTextMode:', isTextMode);
 
-        const labelRandom = document.getElementById('labelRandom');
-        const labelMindwave = document.getElementById('labelMindwave');
-
-        if (isTextMode) {
-            // TEXT MODE ACTIVE (Mindwave or Custom)
-            if (labelRandom) {
-                labelRandom.classList.remove('text-[var(--accent)]', 'font-bold');
-                labelRandom.classList.add('text-[var(--text-muted)]', 'font-normal');
-            }
-            if (labelMindwave) {
-                labelMindwave.classList.remove('text-[var(--text-muted)]', 'font-normal');
-                labelMindwave.classList.add('text-[var(--accent)]', 'font-bold');
-            }
-
-            // Allow input interaction, ensure it shows current value or default
-            if (textInput && textInput.value === '') {
-                // Should default to MINDWAVE if empty to prevent blank state
-                if (textInput.placeholder === 'CUSTOM TXT') {
-                    if (!textInput.value) textInput.value = 'MINDWAVE';
-                }
-            }
-        } else {
-            // RANDOM MODE ACTIVE
-            if (labelRandom) {
-                labelRandom.classList.remove('text-[var(--text-muted)]', 'font-normal');
-                labelRandom.classList.add('text-[var(--accent)]', 'font-bold');
-            }
-            if (labelMindwave) {
-                labelMindwave.classList.remove('text-[var(--accent)]', 'font-bold');
-                labelMindwave.classList.add('text-[var(--text-muted)]', 'font-normal');
-            }
-        }
+        // Sync legacy checkbox
+        if (modeToggle) modeToggle.checked = (mode !== 'random');
     };
 
-    if (modeToggle) {
-        console.log('[Controls] Matrix Mode Toggle Listener Attached');
-
-        // Run once on init
-        __updateMatrixUI();
-
-        modeToggle.addEventListener('change', (e) => {
-            const isTextMode = e.target.checked;
-            console.log('[Controls] Toggle Changed. Text Mode:', isTextMode);
-
-            __updateMatrixUI();
+    // Wire up mode buttons
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const mode = btn.dataset.matrixMode;
+            setActiveMode(mode);
 
             const viz = getVisualizer();
             if (viz && viz.setMatrixLogicMode) {
-                if (isTextMode) {
-                    // Switch to TEXT mode (Mindwave or Custom)
-                    const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : '';
-                    if (customText.length > 0 && customText !== 'MINDWAVE') {
-                        viz.setMatrixLogicMode('custom', customText);
-                    } else {
-                        // Default to Mindwave if empty or specifically MINDWAVE
-                        if (textInput) textInput.value = 'MINDWAVE';
-                        viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
-                    }
-                } else {
-                    // Switch to RANDOM mode
+                if (mode === 'random') {
                     viz.setMatrixLogicMode('random', '');
-                }
-            }
-        });
-    } else {
-        console.warn('[Controls] Matrix Mode Toggle Element NOT FOUND initially');
-    }
-
-    if (textInput) {
-        // AUTO-SWITCH: If user clicks/focuses text box, FORCE Toggle ON (Text Mode)
-        textInput.addEventListener('focus', () => {
-            if (modeToggle && !modeToggle.checked) {
-                console.log('[Controls] Text input focused while in Random mode. Switching to Text Mode...');
-                modeToggle.checked = true; // Turn ON
-                __updateMatrixUI();
-
-                // Update Visualizer
-                const viz = getVisualizer();
-                if (viz && viz.setMatrixLogicMode) {
-                    const customText = textInput.value.toUpperCase();
+                } else if (mode === 'mindwave') {
+                    viz.setMatrixLogicMode('mindwave', 'Welcome');
+                } else if (mode === 'custom') {
+                    const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : 'Welcome';
                     if (customText.length > 0) {
                         viz.setMatrixLogicMode('custom', customText);
                     } else {
-                        viz.setMatrixLogicMode('mindwave', 'MINDWAVE'); // Default if empty
+                        viz.setMatrixLogicMode('mindwave', 'Welcome');
                     }
                 }
             }
         });
+    });
 
+    // Text input: live update custom text
+    if (textInput) {
         textInput.addEventListener('input', (e) => {
             const text = e.target.value.toUpperCase();
 
-            // Ensure Toggle is ON if typing
-            if (modeToggle && !modeToggle.checked) {
-                modeToggle.checked = true;
-                __updateMatrixUI();
+            // Auto-switch to custom mode if typing
+            if (currentMatrixMode !== 'custom') {
+                setActiveMode('custom');
             }
 
             const viz = getVisualizer();
@@ -4666,7 +4781,7 @@ function setupMatrixControls() {
                 if (text.length > 0) {
                     viz.setMatrixLogicMode('custom', text);
                 } else {
-                    viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
+                    viz.setMatrixLogicMode('mindwave', 'Welcome');
                 }
             }
 
@@ -4676,28 +4791,40 @@ function setupMatrixControls() {
                 localStorage.setItem('mindwave_matrix_text', text);
             }, 1000);
         });
+
+        textInput.addEventListener('focus', () => {
+            if (currentMatrixMode !== 'custom') {
+                setActiveMode('custom');
+                const viz = getVisualizer();
+                if (viz && viz.setMatrixLogicMode) {
+                    const text = textInput.value.toUpperCase();
+                    if (text.length > 0) viz.setMatrixLogicMode('custom', text);
+                    else viz.setMatrixLogicMode('mindwave', 'Welcome');
+                }
+            }
+        });
     }
+
     // === Initialize State on Load ===
-    if (modeToggle) {
-        // Load saved text
-        const savedText = localStorage.getItem('mindwave_matrix_text');
-        if (savedText && textInput) {
-            textInput.value = savedText;
-        }
+    const MATRIX_DEFAULT_TEXT = 'Welcome';
 
-        // Logic handled by init above
+    // Clear stale localStorage values from previous versions
+    const savedText = localStorage.getItem('mindwave_matrix_text');
+    if (textInput) {
+        // Only use saved text if user explicitly set it (not a leftover default)
+        if (savedText && savedText.length > 0 && savedText !== 'HELLO' && savedText !== 'MINDWAVE') {
+            textInput.value = savedText;
+        } else {
+            textInput.value = MATRIX_DEFAULT_TEXT;
+            localStorage.setItem('mindwave_matrix_text', MATRIX_DEFAULT_TEXT);
+        }
     }
 
-    // Sync Visualizer Mode on Init
+    // Set initial mode and sync visualizer
+    setActiveMode(currentMatrixMode);
     const viz = getVisualizer();
     if (viz && viz.setMatrixLogicMode) {
-        if (modeToggle && modeToggle.checked) {
-            const text = (textInput && textInput.value) ? textInput.value.toUpperCase() : '';
-            if (text.length > 0 && text !== 'MINDWAVE') viz.setMatrixLogicMode('custom', text);
-            else viz.setMatrixLogicMode('mindwave', 'MINDWAVE');
-        } else {
-            viz.setMatrixLogicMode('random', '');
-        }
+        viz.setMatrixLogicMode('mindwave', 'Welcome');
     }
 }
 

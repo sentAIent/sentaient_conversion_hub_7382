@@ -137,6 +137,6 @@ export function preloadVisualizer() {
         }
     };
 
-    // Use a fixed delay instead of requestIdleCallback for more predictable initial load
-    setTimeout(loadAndInit, 1000);
+    // Load immediately on next frame — no artificial delay
+    requestAnimationFrame(loadAndInit);
 }

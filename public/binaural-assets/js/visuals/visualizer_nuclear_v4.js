@@ -10,7 +10,7 @@ export class Visualizer3D {
         // Default settings - MUST be set before init methods
         this.mindWaveMode = initialState.mindWaveMode !== undefined ? initialState.mindWaveMode : true;
         this.matrixLogicMode = initialState.matrixLogicMode || 'mindwave';
-        this.matrixCustomText = initialState.matrixCustomText || "MINDWAVE";
+        this.matrixCustomText = initialState.matrixCustomText || "Welcome";
         this.currentMatrixAngle = initialState.currentMatrixAngle || 0;
         this.matrixSpeedMultiplier = initialState.matrixSpeedMultiplier || 1.0;
         this.initialized = false;
@@ -680,7 +680,8 @@ export class Visualizer3D {
                     vCharIndex = aCharIndex;
                     vPos = position;
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    float columnHeadY = 40.0 - mod(uTime * 5.0 * aSpeed * uSpeed + aSpawnTime, 80.0);
+                    // FIXED: uTime already includes multipliers, avoid squaring speed in shader
+                    float columnHeadY = 40.0 - mod(uTime * 5.0 * aSpeed + aSpawnTime, 80.0);
                     float dist = columnHeadY - position.y;
                     float trailLen = 80.0 * uTailLength;
                     if (dist >= 0.0 && dist < trailLen) {
@@ -725,7 +726,8 @@ export class Visualizer3D {
                 void main() {
                     float rawIndex = floor(vCharIndex + 0.5);
                     if (rawIndex > 8.5) {
-                        float timeStep = floor(uTime * 5.0);
+                        // FIXED: Use a slower, stable interval for character cycling that ignores global speed
+                        float timeStep = floor(uTime * 0.5); 
                         rawIndex = 9.0 + mod((rawIndex - 9.0) + timeStep, 55.0);
                     }
                     float index = floor(rawIndex + 0.5);
@@ -984,18 +986,30 @@ export class Visualizer3D {
         const dt = now - this.lastTime;
         this.lastTime = now;
 
+        // Calculate Synesthetic Beat Pulse (0 to 1)
+        // If auto speed is ON, use the actual binaural beat frequency.
+        // If auto speed is OFF, use the manual speed slider (scaled so 1x approx 10Hz)
+        const visualBeatFreq = state.visualSpeedAuto ? (state.beatFrequency || 10) : (multiplier * 10);
+        const beatPulse = (Math.sin(now * Math.PI * 2 * visualBeatFreq) * 0.5) + 0.5;
+        const beatIntensity = beatPulse * (normBass * 0.5 + 0.5); // Scaled by volume
+
         if (this.activeModes.has('sphere')) {
-            const scale = 1 + (normBass * 0.4);
+            // Pulse scale with beat frequency
+            const scale = 1 + (normBass * 0.3) + (beatPulse * 0.15);
             this.sphere.scale.setScalar(scale);
-            this.core.scale.setScalar(scale * 0.9);
+            this.core.scale.setScalar(scale * (0.9 + beatPulse * 0.05));
+
             this.sphere.rotation.y += (0.016 * multiplier) + (normMids * 0.01);
             this.sphere.rotation.z += (0.008 * multiplier);
-            const r = 45 / 255 + (normHighs * 0.5);
+
+            const r = 45 / 255 + (normHighs * 0.5) + (beatPulse * 0.1);
             const g = 212 / 255 - (normHighs * 0.2);
-            const b = 191 / 255 + (normMids * 0.2);
+            const b = 191 / 255 + (normMids * 0.2) + (beatPulse * 0.1);
+
             if (this.customColor) {
-                this.sphere.material.color.copy(this.customColor);
-                this.core.material.color.copy(this.customColor);
+                const colorPulse = this.customColor.clone().lerp(new THREE.Color(1, 1, 1), beatPulse * 0.2);
+                this.sphere.material.color.copy(colorPulse);
+                this.core.material.color.copy(colorPulse);
             } else {
                 this.sphere.material.color.setRGB(r, g, b);
                 this.core.material.color.setRGB(r, g, b);
@@ -1003,7 +1017,8 @@ export class Visualizer3D {
         }
 
         if (this.activeModes.has('particles')) {
-            const flowSpeed = (0.015 * multiplier) + (normBass * 0.1);
+            // Flow speed surges on the beat
+            const flowSpeed = (0.015 * multiplier) + (normBass * 0.08) + (beatPulse * 0.05);
             const positions = this.particles.geometry.attributes.position.array;
             for (let i = 2; i < positions.length; i += 3) {
                 positions[i] += flowSpeed;
@@ -1018,7 +1033,12 @@ export class Visualizer3D {
                 const config = blob.userData;
                 const dt_scaled = dt * multiplier;
 
-                // 1. STATE MACHINE & PHYSICS
+                // Heat up slightly on the beat pulses
+                if (config.state === 'heating') {
+                    config.temperature += beatPulse * 0.01;
+                }
+
+                // ... physics logic ...
                 if (config.state === 'heating') {
                     // Stay at bottom, increase temperature
                     blob.position.y = config.floatMin;
@@ -1066,7 +1086,7 @@ export class Visualizer3D {
                 // 2. THERMAL EXPANSION (Volume changes based on temperature)
                 // Heating makes it expand (~20%), Cooling makes it contract to base.
                 if (config.state === 'heating' || config.state === 'cooling') {
-                    const expansionFactor = 1.0 + (config.temperature * 0.2);
+                    const expansionFactor = 1.0 + (config.temperature * 0.2) + (beatPulse * 0.05);
                     blob.scale.setScalar(config.baseSize * expansionFactor);
                 }
 
@@ -1079,7 +1099,7 @@ export class Visualizer3D {
                 blob.position.x += Math.sin(now * 0.2 + config.driftPhase) * 0.005 * multiplier;
             });
             this.lavaGroup.rotation.y += 0.0001 * multiplier;
-            if (this.lavaGlow) this.lavaGlow.material.opacity = 0.05 + (normBass * 0.05);
+            if (this.lavaGlow) this.lavaGlow.material.opacity = 0.05 + (normBass * 0.05) + (beatPulse * 0.1);
         }
 
         if (this.activeModes.has('waves') && this.wavesMesh) {
@@ -1087,7 +1107,8 @@ export class Visualizer3D {
             for (let i = 0; i < wavePositions.length; i += 3) {
                 const x = wavePositions[i], y = wavePositions[i + 1];
                 let audioOffset = (dataL && dataL.length > 0) ? dataL[Math.floor(Math.abs(x) * 5) % dataL.length] / 255 : 0;
-                wavePositions[i + 2] = Math.sin(x * 0.5 + now * multiplier) * Math.cos(y * 0.5 + now * multiplier) * (1 + audioOffset) + (audioOffset * 2);
+                // Add beat pulse to wave height
+                wavePositions[i + 2] = Math.sin(x * 0.5 + now * multiplier) * Math.cos(y * 0.5 + now * multiplier) * (1 + audioOffset + beatPulse * 0.4) + (audioOffset * 2);
             }
             this.wavesMesh.geometry.attributes.position.needsUpdate = true;
             this.wavesMesh.rotation.z += 0.001 * multiplier;
@@ -1095,10 +1116,10 @@ export class Visualizer3D {
 
         if (this.activeModes.has('fireplace') && this.fireMaterial) {
             this.fireMaterial.uniforms.uTime.value += dt * multiplier;
-            this.fireMaterial.uniforms.uSpeed.value = multiplier * (1.0 + normBass * 0.5);
+            this.fireMaterial.uniforms.uSpeed.value = multiplier * (1.0 + normBass * 0.5 + beatPulse * 0.2);
             if (this.embers) {
                 const positions = this.embers.geometry.attributes.position.array;
-                const speedFactor = multiplier * 2.0;
+                const speedFactor = multiplier * 2.0 * (1.0 + beatPulse * 0.5);
                 for (let i = 0; i < positions.length; i += 3) {
                     const idx = i / 3;
                     positions[i + 1] += this.emberVelocities[idx] * speedFactor;
@@ -1111,17 +1132,17 @@ export class Visualizer3D {
                     }
                 }
                 this.embers.geometry.attributes.position.needsUpdate = true;
-                this.emberMat.opacity = 0.4 + Math.random() * 0.4;
+                this.emberMat.opacity = 0.4 + (beatPulse * 0.4);
             }
             if (this.fireLight) {
-                this.fireLight.intensity = 1.0 + (normBass * 1.5) + (Math.sin(now * 10) + Math.cos(now * 23)) * 0.3;
-                this.fireLight.distance = 20 + (normMids * 5);
+                this.fireLight.intensity = 1.0 + (normBass * 1.5) + (beatPulse * 1.0) + (Math.sin(now * 10) + Math.cos(now * 23)) * 0.3;
+                this.fireLight.distance = 20 + (normMids * 5) + (beatPulse * 5);
             }
         }
 
         if (this.activeModes.has('rainforest') && this.raindrops) {
             const positions = this.raindrops.geometry.attributes.position.array;
-            const speedFactor = multiplier * 0.8;
+            const speedFactor = multiplier * 0.8 * (1.0 + beatPulse * 0.3);
             for (let i = 0; i < positions.length; i += 3) {
                 positions[i + 1] -= this.rainVelocities[i / 3] * speedFactor;
                 if (positions[i + 1] < -10) {
@@ -1131,12 +1152,12 @@ export class Visualizer3D {
                 }
             }
             this.raindrops.geometry.attributes.position.needsUpdate = true;
-            this.raindrops.material.opacity = 0.5 + (normMids * 0.2);
+            this.raindrops.material.opacity = 0.5 + (normMids * 0.2) + (beatPulse * 0.2);
         }
 
         if (this.activeModes.has('zengarden') && this.petals) {
             const positions = this.petals.geometry.attributes.position.array;
-            const speedFactor = multiplier * 0.3;
+            const speedFactor = multiplier * 0.3 * (1.0 + beatPulse * 0.5);
             for (let i = 0; i < positions.length; i += 3) {
                 positions[i + 1] -= 0.01 * speedFactor;
                 positions[i] += Math.sin(now + positions[i + 1]) * 0.01 * speedFactor;
@@ -1148,7 +1169,7 @@ export class Visualizer3D {
                 }
             }
             this.petals.geometry.attributes.position.needsUpdate = true;
-            if (this.zenWater) this.zenWater.material.opacity = 0.3 + (Math.sin(now) * 0.1);
+            if (this.zenWater) this.zenWater.material.opacity = 0.3 + (beatPulse * 0.2);
         }
 
         if (this.activeModes.has('ocean') && this.oceanWave) {
@@ -1156,7 +1177,7 @@ export class Visualizer3D {
             for (let i = 0; i < wavePositions.length; i += 3) {
                 const x = wavePositions[i], y = wavePositions[i + 1];
                 const distFromCenter = Math.sqrt(x * x + y * y);
-                const amp = 1.0 + (normBass * 2.5);
+                const amp = 1.0 + (normBass * 2.5) + (beatPulse * 0.8);
                 wavePositions[i + 2] = Math.sin(distFromCenter * 0.2 - now * multiplier * 0.8) * amp + Math.cos(x * 0.15 + now * multiplier * 0.6) * (amp * 0.5);
             }
             this.oceanWave.geometry.attributes.position.needsUpdate = true;
@@ -1169,13 +1190,15 @@ export class Visualizer3D {
                     if (foamPositions[i + 2] > 10) foamPositions[i + 2] = -10; if (foamPositions[i + 2] < -10) foamPositions[i + 2] = 10;
                 }
                 this.oceanFoam.geometry.attributes.position.needsUpdate = true;
-                this.oceanFoam.material.opacity = 0.4 + (normMids * 0.3);
+                this.oceanFoam.material.opacity = 0.4 + (normMids * 0.3) + (beatPulse * 0.2);
             }
         }
 
         if (this.activeModes.has('matrix') && this.matrixMaterial) {
-            this.matrixMaterial.uniforms.uTime.value += dt * multiplier * (1.0 + normBass * 0.5) * (this.matrixSpeedMultiplier || 1.0);
-            this.matrixMaterial.uniforms.uSpeed.value = multiplier * (this.matrixSpeedMultiplier || 1.0);
+            // FIXED: Only apply multipliers once here; uTime in shader handles the rest.
+            this.matrixMaterial.uniforms.uTime.value += dt * multiplier * (this.matrixSpeedMultiplier || 1.0);
+            // Normalize beat pulse influence separately
+            this.matrixMaterial.uniforms.uSpeed.value = 1.0 + beatPulse * 0.2;
         }
 
         // Frame Skipping / Battery Saver Logic

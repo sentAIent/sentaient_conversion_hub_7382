@@ -11,6 +11,25 @@ let currentSessionId = null;
 let unsubscribeCounts = null;
 
 /**
+ * Force an immediate presence update (e.g. when changing presets).
+ */
+export const syncPresence = async () => {
+    if (!db) return;
+
+    try {
+        const docRef = doc(db, 'presence_sessions', currentSessionId);
+        await setDoc(docRef, {
+            uid: state.currentUser ? state.currentUser.uid : 'anonymous',
+            preset: state.activePresetType || 'none',
+            lastActive: serverTimestamp(),
+            status: 'active'
+        }, { merge: true });
+    } catch (e) {
+        console.warn('[Presence] Sync failed:', e);
+    }
+};
+
+/**
  * Starts the presence heartbeat.
  * Updates Firestore every 60 seconds with current state.
  */
@@ -20,27 +39,11 @@ export function startPresenceHeartbeat() {
     // Generate a unique session ID for this tab/instance
     currentSessionId = `session_${Math.random().toString(36).substr(2, 9)}`;
 
-    const updatePresence = async () => {
-        if (!db) return; // Skip if in mock mode or not initialized
-
-        try {
-            const docRef = doc(db, 'presence_sessions', currentSessionId);
-            await setDoc(docRef, {
-                uid: state.currentUser ? state.currentUser.uid : 'anonymous',
-                preset: state.activePresetType || 'none',
-                lastActive: serverTimestamp(),
-                status: 'active'
-            });
-        } catch (e) {
-            console.warn('[Presence] Heartbeat failed:', e);
-        }
-    };
-
     // Initial update
-    updatePresence();
+    syncPresence();
 
     // Heartbeat every 60s
-    heartbeatInterval = setInterval(updatePresence, 60000);
+    heartbeatInterval = setInterval(syncPresence, 60000);
 
     // Cleanup on window close
     window.addEventListener('beforeunload', stopPresenceHeartbeat);

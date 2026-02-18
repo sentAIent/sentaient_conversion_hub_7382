@@ -914,6 +914,11 @@ export function playCompletionChime() {
 export function updateFrequencies() {
     const base = parseFloat(els.baseSlider.value);
     const beat = parseFloat(els.beatSlider.value);
+
+    // Store in global state for visualizer access
+    state.baseFrequency = base;
+    state.beatFrequency = beat;
+
     console.log(`[Freq] Update: Base=${base}Hz, Beat=${beat}Hz`);
     if (els.baseValue) els.baseValue.textContent = `${base} Hz`;
     if (els.beatValue) els.beatValue.textContent = `${beat} Hz`;
@@ -930,18 +935,32 @@ export function updateFrequencies() {
 
         if (base >= 100) {
             // Healing frequencies: speed based on base Hz (higher = faster) 
-            // 174Hz -> 1.74x, 528Hz -> 5.28x, 963Hz -> 9.63x
-            targetSpeed = base / 100;
+            targetSpeed = Math.min(base / 100, 15.0);
         } else {
             // Brainwave presets: LINEAR proportional to Hz
             // Alpha (10Hz) = 1.0x baseline, all others scale proportionally
             // Delta (2.5Hz) -> 0.25x, Theta (6Hz) -> 0.6x, Alpha (10Hz) -> 1x
             // Beta (18Hz) -> 1.8x, Gamma (40Hz) -> 4x, Hyper-Gamma (80Hz) -> 8x
-            targetSpeed = beat / 10;
+            targetSpeed = Math.min(beat / 10, 15.0);
         }
 
         if (targetSpeed < 0.1) targetSpeed = 0.1;
-        if (targetSpeed > 40.0) targetSpeed = 40.0;
+        if (targetSpeed > 15.0) targetSpeed = 15.0;
+
+        // Update UI Slider position (Quadratic mapping: p = sqrt((v - 0.1) / 14.9))
+        const p = Math.sqrt(Math.max(0, targetSpeed - 0.1) / 14.9);
+        if (els.visualSpeedSlider) {
+            els.visualSpeedSlider.value = p;
+        }
+        if (els.speedValue) {
+            els.speedValue.textContent = targetSpeed.toFixed(1) + 'x';
+        }
+
+        // Sync compact elements if they exist
+        const compactSlider = document.querySelector('.compact-speed-slider');
+        const compactValue = document.querySelector('.compact-speed-value');
+        if (compactSlider) compactSlider.value = p;
+        if (compactValue) compactValue.textContent = targetSpeed.toFixed(1) + 'x';
 
         // Update Visualizer
         import('../visuals/visualizer_nuclear_v4.js').then(m => {
@@ -949,9 +968,6 @@ export function updateFrequencies() {
             if (viz) viz.setSpeed(targetSpeed);
         });
 
-        // Update disabled slider for feedback
-        if (els.visualSpeedSlider) els.visualSpeedSlider.value = targetSpeed;
-        if (els.speedValue) els.speedValue.textContent = targetSpeed.toFixed(1) + 'x';
     }
 
     // Update Haptic Sync if active

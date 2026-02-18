@@ -10,21 +10,21 @@ import { flowManager } from './utils/modal-manager.js';
 
 // Pre-define dynamic imports for performance modeling
 const lazy = {
-    onboarding: () => import('./ui/onboarding.js'),
-    intent: () => import('./ui/intent-survey.js'),
-    analytics: () => import('./utils/analytics.js'),
+    onboarding: () => import('./ui/onboarding.js?v=FIX_TUTORIAL_V127'),
     pwa: () => import('./utils/pwa-install.js'),
     presence: () => import('./services/presence-service.js'),
     cursor: () => import('./ui/cursor.js'),
     share: () => import('./services/share.js'),
     email: () => import('./ui/email-capture.js'),
-    exit: () => import('./ui/exit-intent.js'),
     haptics: () => import('./utils/haptics.js')
 };
-import { getCloudPresets, syncLocalMixesToCloud } from './services/presets-service.js';
-import './utils/ab-testing.js';
+
 import { initExitIntent } from './ui/exit-intent.js';
 import { initIntentSurvey } from './ui/intent-survey.js';
+
+// Static imports for core non-lazy modules
+import { getCloudPresets, syncLocalMixesToCloud } from './services/presets-service.js';
+import './utils/ab-testing.js';
 import { initPaywall } from './utils/paywall.js';
 import { initAnalytics, trackSignup, trackLogin, trackBeginCheckout, trackPurchase, trackFeatureUse, trackSessionStart, trackSessionEnd, trackPaywallShown, trackUpgradeClick, setUserProperties } from './utils/analytics.js';
 import { handlePaymentSuccess } from './services/stripe-simple.js';
@@ -50,10 +50,13 @@ window.trackBeginCheckout = trackBeginCheckout;
 window.trackPurchase = trackPurchase;
 window.trackFeatureUse = trackFeatureUse;
 
-// Expose onboarding globally
-import { startOnboarding } from './ui/onboarding.js';
-window.startOnboarding = () => startOnboarding(true);
-window.startTutorial = () => startOnboarding(true);
+// Expose onboarding globally (Lazy)
+window.startOnboarding = async (force = false) => {
+    const { startOnboarding: start } = await lazy.onboarding();
+    start(force);
+};
+window.startTutorial = () => window.startOnboarding(true);
+
 window.trackSessionStart = trackSessionStart;
 window.trackSessionEnd = trackSessionEnd;
 window.trackPaywallShown = trackPaywallShown;
@@ -148,8 +151,7 @@ const initApp = () => {
     // Custom Cursor
     lazy.cursor().then(m => m.initCursor());
 
-    // Exit Intent & Email Capture (Deferred via Flow)
-    lazy.exit().then(m => m.initExitIntent());
+    // Email Capture (Deferred via Flow)
     flowManager.enqueue('email_capture', () => {
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -159,12 +161,8 @@ const initApp = () => {
         });
     }, 10);
 
-    // PWA & Analytics (Non-blocking)
+    // PWA (Non-blocking)
     lazy.pwa().then(m => m.initPWAInstall());
-    lazy.analytics().then(m => {
-        m.initAnalytics();
-        m.trackSessionStart();
-    });
 
     // Hide loading screen immediately once core UI is ready
     const loadingScreen = document.getElementById('loadingScreen');
