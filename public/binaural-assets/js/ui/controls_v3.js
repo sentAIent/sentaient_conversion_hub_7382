@@ -18,6 +18,7 @@ import { getReferralCount, shareReferral } from '../services/referral.js';
 import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
 import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
 import { showReflectionPrompt } from './reflection-journal.js';
+import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
 window.shareReferral = shareReferral;
 
 // ... (existing code)
@@ -110,6 +111,13 @@ export function setupUI() {
     els.aiPrompt = document.getElementById('aiPrompt');
     els.statusIndicator = document.getElementById('statusIndicator');
     els.audioOnlyPlayer = document.getElementById('audioOnlyPlayer');
+
+    // INITIAL LAYOUT SYNC:
+    // Force immediate calculation before reveal to prevent shift
+    updateTopBarWidth();
+    updateBottomBarWidth();
+
+    console.log('[Controls] Initial layout synchronized');
     els.playbackAudio = document.getElementById('playbackAudio');
     els.profileModal = document.getElementById('profileModal');
     els.profileNameInput = document.getElementById('profileNameInput');
@@ -901,9 +909,26 @@ export function setupUI() {
         }
 
         try {
-            // Constructor already set activeModes to particles+matrix and called updateVisibility+initMatrix.
-            // We just need to ensure rainbow is on and sync the UI buttons.
-            viz._rainbowEnabled = true;
+            // Ensure Flow (particles) and Matrix are BOTH active on load
+            if (!viz.activeModes.has('particles')) {
+                viz.toggleMode('particles');
+            }
+            if (!viz.activeModes.has('matrix')) {
+                viz.toggleMode('matrix');
+            }
+
+            // Force Mindwave logic mode (MW) for Matrix
+            if (viz.setMatrixMode) viz.setMatrixMode(true);
+
+            // Matrix Rainbow mode is forced to true on load per user request
+            const isRainbowEnabled = true;
+
+            if (viz.setMatrixRainbow) viz.setMatrixRainbow(isRainbowEnabled);
+            const rainbowToggle = document.getElementById('matrixRainbowToggle');
+            if (rainbowToggle) rainbowToggle.checked = isRainbowEnabled;
+
+            // Sync UI labels
+            if (setupUI.updateRainbowLabels) setupUI.updateRainbowLabels();
 
             // Sync UI buttons to match the constructor's active modes (no toggleMode calls needed)
             const buttons = [
@@ -937,12 +962,28 @@ export function setupUI() {
                 }
             }
 
-            // Reveal canvas immediately — everything is already ready
+            // Reveal canvas and controls — everything is ready
             const canvas = document.getElementById('visualizer');
             if (canvas) {
                 canvas.style.opacity = '1';
-                console.log('[Controls] Visualizer revealed');
             }
+            const footer = document.getElementById('bottomControlBar');
+            const header = document.getElementById('topControlBar');
+
+            if (footer) {
+                // Ensure layout is current one last time
+                updateBottomBarWidth();
+                footer.style.opacity = '1';
+                // Remove no-transition class AFTER first paint to enable future transitions
+                setTimeout(() => footer.classList.remove('no-transition'), 100);
+            }
+            if (header) {
+                updateTopBarWidth();
+                header.style.opacity = '1';
+                setTimeout(() => header.classList.remove('no-transition'), 100);
+            }
+
+            console.log('[Controls] Visualizer and controls revealed');
 
             console.log('[Controls] Visual defaults applied (streamlined)');
         } catch (e) {
@@ -4627,53 +4668,96 @@ function setupMatrixControls() {
     }
 
     // --- NEW: Color & Rainbow Listeners ---
+    const updateSwatch = (hex) => {
+        const swatch = document.getElementById('matrixColorSwatch');
+        if (swatch) swatch.style.backgroundColor = hex;
+    };
+
     const colorPicker = document.getElementById('matrixColorPicker');
     if (colorPicker) {
-        // Sync Function
-        const updateSwatch = (hex) => {
-            const swatch = document.getElementById('matrixColorSwatch');
-            if (swatch) swatch.style.backgroundColor = hex;
-        };
-
         // Init sync
-        updateSwatch(colorPicker.value);
+        const swatch = document.getElementById('matrixColorSwatch');
+        if (swatch) swatch.style.backgroundColor = colorPicker.value;
 
         colorPicker.addEventListener('input', (e) => {
             const val = e.target.value;
             updateSwatch(val);
 
             const viz = getVisualizer();
-            if (viz && viz.setMatrixColor) {
-                viz.setMatrixColor(val);
+            if (viz) {
+                if (viz.setMatrixColor) viz.setMatrixColor(val);
+                localStorage.setItem('mindwave_matrix_color', val);
+
+                // Switch off rainbow mode automatically if color is changed
+                const rainbowToggle = document.getElementById('matrixRainbowToggle');
+                if (rainbowToggle && rainbowToggle.checked) {
+                    rainbowToggle.checked = false;
+                    localStorage.setItem('mindwave_matrix_rainbow', 'false');
+                    if (viz.setMatrixRainbow) viz.setMatrixRainbow(false);
+                    setupUI.updateRainbowLabels();
+                }
             }
         });
     }
 
+    // --- RAINBOW LABELS HELPER ---
+    setupUI.updateRainbowLabels = () => {
+        const rainbowToggle = document.getElementById('matrixRainbowToggle');
+        if (!rainbowToggle) return;
+        const labelRGB = document.getElementById('labelRGB');
+        const labelRainbow = document.getElementById('labelRainbow');
+        if (rainbowToggle.checked) {
+            // Rainbow mode active - highlight RAINBOW teal
+            if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
+            if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold';
+        } else {
+            // RGB mode active - highlight RGB teal
+            if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold';
+            if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
+        }
+    };
+
     const rainbowToggle = document.getElementById('matrixRainbowToggle');
+    const labelRGB = document.getElementById('labelRGB');
+    const labelRainbow = document.getElementById('labelRainbow');
+
     if (rainbowToggle) {
-        const updateRainbowLabels = () => {
-            const labelRGB = document.getElementById('labelRGB');
-            const labelRainbow = document.getElementById('labelRainbow');
-            if (rainbowToggle.checked) {
-                // Rainbow mode active - highlight RAINBOW teal
-                if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
-                if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold';
-            } else {
-                // RGB mode active - highlight RGB teal
-                if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold';
-                if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
-            }
-        };
         // Update on change
         rainbowToggle.addEventListener('change', (e) => {
             const viz = getVisualizer();
             if (viz && viz.setMatrixRainbow) {
                 viz.setMatrixRainbow(e.target.checked);
             }
-            updateRainbowLabels();
+            localStorage.setItem('mindwave_matrix_rainbow', e.target.checked ? 'true' : 'false');
+            setupUI.updateRainbowLabels();
         });
+
+        // Make labels interactive toggles
+        if (labelRGB) {
+            labelRGB.addEventListener('click', () => {
+                if (rainbowToggle.checked) {
+                    rainbowToggle.checked = false;
+                    const viz = getVisualizer();
+                    if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(false);
+                    localStorage.setItem('mindwave_matrix_rainbow', 'false');
+                    setupUI.updateRainbowLabels();
+                }
+            });
+        }
+        if (labelRainbow) {
+            labelRainbow.addEventListener('click', () => {
+                if (!rainbowToggle.checked) {
+                    rainbowToggle.checked = true;
+                    const viz = getVisualizer();
+                    if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(true);
+                    localStorage.setItem('mindwave_matrix_rainbow', 'true');
+                    setupUI.updateRainbowLabels();
+                }
+            });
+        }
+
         // Set initial state
-        updateRainbowLabels();
+        setupUI.updateRainbowLabels();
     }
 
     // --- NEW: Slider Listeners ---
@@ -4739,6 +4823,9 @@ function setupMatrixControls() {
 
         // Sync legacy checkbox
         if (modeToggle) modeToggle.checked = (mode !== 'random');
+
+        // Save mode
+        localStorage.setItem('mindwave_matrix_mode', mode);
     };
 
     // Wire up mode buttons
@@ -4753,13 +4840,13 @@ function setupMatrixControls() {
                 if (mode === 'random') {
                     viz.setMatrixLogicMode('random', '');
                 } else if (mode === 'mindwave') {
-                    viz.setMatrixLogicMode('mindwave', 'Welcome');
+                    viz.setMatrixLogicMode('mindwave', 'WELCOME');
                 } else if (mode === 'custom') {
-                    const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : 'Welcome';
+                    const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : 'WELCOME';
                     if (customText.length > 0) {
                         viz.setMatrixLogicMode('custom', customText);
                     } else {
-                        viz.setMatrixLogicMode('mindwave', 'Welcome');
+                        viz.setMatrixLogicMode('mindwave', 'WELCOME');
                     }
                 }
             }
@@ -4781,7 +4868,7 @@ function setupMatrixControls() {
                 if (text.length > 0) {
                     viz.setMatrixLogicMode('custom', text);
                 } else {
-                    viz.setMatrixLogicMode('mindwave', 'Welcome');
+                    viz.setMatrixLogicMode('mindwave', 'WELCOME');
                 }
             }
 
@@ -4799,20 +4886,22 @@ function setupMatrixControls() {
                 if (viz && viz.setMatrixLogicMode) {
                     const text = textInput.value.toUpperCase();
                     if (text.length > 0) viz.setMatrixLogicMode('custom', text);
-                    else viz.setMatrixLogicMode('mindwave', 'Welcome');
+                    else viz.setMatrixLogicMode('mindwave', 'WELCOME');
                 }
             }
         });
     }
 
     // === Initialize State on Load ===
-    const MATRIX_DEFAULT_TEXT = 'Welcome';
-
-    // Clear stale localStorage values from previous versions
+    const savedMode = localStorage.getItem('mindwave_matrix_mode') || 'mindwave';
     const savedText = localStorage.getItem('mindwave_matrix_text');
+    const savedRainbow = localStorage.getItem('mindwave_matrix_rainbow');
+    const savedColor = localStorage.getItem('mindwave_matrix_color');
+    const MATRIX_DEFAULT_TEXT = 'WELCOME';
+
     if (textInput) {
-        // Only use saved text if user explicitly set it (not a leftover default)
-        if (savedText && savedText.length > 0 && savedText !== 'HELLO' && savedText !== 'MINDWAVE') {
+        // Only use saved text if user explicitly set it
+        if (savedText && savedText.length > 0) {
             textInput.value = savedText;
         } else {
             textInput.value = MATRIX_DEFAULT_TEXT;
@@ -4820,12 +4909,44 @@ function setupMatrixControls() {
         }
     }
 
-    // Set initial mode and sync visualizer
-    setActiveMode(currentMatrixMode);
-    const viz = getVisualizer();
-    if (viz && viz.setMatrixLogicMode) {
-        viz.setMatrixLogicMode('mindwave', 'Welcome');
+    if (rainbowToggle) {
+        // Always load in rainbow mode per user request
+        rainbowToggle.checked = true;
+        setupUI.updateRainbowLabels();
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(true);
     }
+
+    if (colorPicker && savedColor) {
+        colorPicker.value = savedColor;
+        updateSwatch(savedColor);
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixColor) viz.setMatrixColor(savedColor);
+    }
+
+    // Set initial mode and sync visualizer
+    setActiveMode(savedMode);
+
+    // Matrix sub-mode logic is also triggered in applyVisualDefaults, 
+    // but we ensure it's set here for immediate UI consistency.
+    const syncMatrixWithVisualizer = () => {
+        const viz = getVisualizer();
+        if (viz && viz.setMatrixLogicMode) {
+            if (savedMode === 'random') {
+                viz.setMatrixLogicMode('random', '');
+            } else if (savedMode === 'mindwave') {
+                viz.setMatrixLogicMode('mindwave', 'WELCOME');
+            } else if (savedMode === 'custom') {
+                const text = (textInput && textInput.value) ? textInput.value.toUpperCase() : 'WELCOME';
+                viz.setMatrixLogicMode('custom', text);
+            }
+            console.log(`[Controls] Initial Matrix mode synced: ${savedMode}`);
+        }
+    };
+
+    // Try immediately and also via applyVisualDefaults trigger
+    syncMatrixWithVisualizer();
+    window.addEventListener('visualizerReady', syncMatrixWithVisualizer);
 }
 
 
