@@ -2,46 +2,54 @@
 // Tracks listening sessions and provides stats
 
 const ANALYTICS_KEY = 'mindwave_analytics';
-const VISIT_KEY = 'mindwave_last_visit';
 
 // Integration Imports
 import * as ga from '../utils/analytics.js';
 import * as firestore from './analytics-service.js';
 
-// --- DAILY VISIT TRACKING (updates streak on app load) ---
+// --- STREAK & VISIT TRACKING ---
 
-export function recordVisit() {
-    const today = new Date().toDateString();
-    const lastVisit = localStorage.getItem(VISIT_KEY);
+/**
+ * Unified helper to update user streaks based on activity date.
+ * @param {Object} analytics The current analytics object
+ * @param {number} timestamp The timestamp of the new activity
+ * @returns {boolean} True if a new day milestone was reached
+ */
+function internalUpdateStreak(analytics, timestamp) {
+    const today = new Date(timestamp).toDateString();
+    const lastDate = analytics.stats.lastActivityDate
+        ? new Date(analytics.stats.lastActivityDate).toDateString()
+        : null;
 
-    if (lastVisit === today) {
-        // Already visited today
-        return;
-    }
+    if (lastDate === today) return false; // Already recorded today
 
-    const analytics = getAnalytics();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const yesterday = new Date(timestamp - 86400000).toDateString();
 
-    if (lastVisit === yesterday) {
-        // Continuing streak
+    if (lastDate === yesterday) {
         analytics.stats.currentStreak++;
-    } else if (lastVisit !== today) {
-        // Streak broken or first visit
+    } else {
         analytics.stats.currentStreak = 1;
     }
 
-    // Update longest streak
     if (analytics.stats.currentStreak > analytics.stats.longestStreak) {
         analytics.stats.longestStreak = analytics.stats.currentStreak;
     }
 
-    localStorage.setItem(VISIT_KEY, today);
-    saveAnalytics(analytics);
+    analytics.stats.lastActivityDate = timestamp;
+    return true;
+}
 
-    console.log('[Analytics] Visit recorded. Streak:', analytics.stats.currentStreak);
+export function recordVisit() {
+    const analytics = getAnalytics();
+    const now = Date.now();
 
-    // Track in Cloud Analytics
-    firestore.trackGlobalEvent('daily_visit', { streak: analytics.stats.currentStreak });
+    if (internalUpdateStreak(analytics, now)) {
+        saveAnalytics(analytics);
+        console.log('[Analytics] Daily visit recorded. Streak:', analytics.stats.currentStreak);
+
+        // Track in Cloud Analytics (once per day)
+        firestore.trackGlobalEvent('daily_visit', { streak: analytics.stats.currentStreak });
+    }
 }
 
 export function startSessionTracking(presetName = 'Custom') {
@@ -73,6 +81,9 @@ export function endSessionTracking(completed = false) {
     session.duration = Math.round((session.endTime - session.startTime) / 1000);
     session.completed = completed;
 
+    // Store for UI triggers (Phase 5)
+    localStorage.setItem('mindwave_last_session_duration', session.duration.toString());
+
     // Only save sessions longer than 30 seconds
     if (session.duration >= 30) {
         saveSession(session);
@@ -103,16 +114,15 @@ function saveSession(session) {
     // Update stats
     analytics.stats.totalSessions++;
     analytics.stats.totalMinutes += Math.round(session.duration / 60);
-    analytics.stats.lastSessionDate = session.startTime;
+
+    // Unified streak update
+    internalUpdateStreak(analytics, session.startTime);
 
     // Track preset usage
     if (!analytics.stats.presetUsage[session.preset]) {
         analytics.stats.presetUsage[session.preset] = 0;
     }
     analytics.stats.presetUsage[session.preset]++;
-
-    // Update streaks
-    updateStreak(analytics);
 
     saveAnalytics(analytics);
 
@@ -121,55 +131,37 @@ function saveSession(session) {
     localStorage.setItem('mindwave_session_count', (currentCount + 1).toString());
 }
 
-// --- STREAK TRACKING ---
-
-function updateStreak(analytics) {
-    const today = new Date().toDateString();
-    const lastDate = analytics.stats.lastSessionDate
-        ? new Date(analytics.stats.lastSessionDate).toDateString()
-        : null;
-
-    if (lastDate !== today) {
-        // Check if streak continues (yesterday)
-        const yesterday = new Date(Date.now() - 86400000).toDateString();
-        if (lastDate === yesterday) {
-            analytics.stats.currentStreak++;
-        } else {
-            // Streak broken, start new
-            analytics.stats.currentStreak = 1;
-        }
-
-        // Update longest streak
-        if (analytics.stats.currentStreak > analytics.stats.longestStreak) {
-            analytics.stats.longestStreak = analytics.stats.currentStreak;
-        }
-    }
-}
-
 // --- DATA ACCESS ---
 
 export function getAnalytics() {
     const stored = localStorage.getItem(ANALYTICS_KEY);
-    if (stored) {
-        try {
-            return JSON.parse(stored);
-        } catch (e) {
-            console.warn('[Analytics] Parse error, resetting');
-        }
-    }
-
     // Default structure
-    return {
+    const analytics = {
         sessions: [],
         stats: {
             totalSessions: 0,
             totalMinutes: 0,
             currentStreak: 0,
             longestStreak: 0,
-            lastSessionDate: null,
+            lastActivityDate: null,
             presetUsage: {}
         }
     };
+
+    if (stored) {
+        try {
+            const parsed = JSON.parse(stored);
+            // Migration: lastSessionDate -> lastActivityDate
+            if (parsed.stats && parsed.stats.lastSessionDate && !parsed.stats.lastActivityDate) {
+                parsed.stats.lastActivityDate = parsed.stats.lastSessionDate;
+            }
+            return { ...analytics, ...parsed, stats: { ...analytics.stats, ...parsed.stats } };
+        } catch (e) {
+            console.warn('[Analytics] Parse error, resetting');
+        }
+    }
+
+    return analytics;
 }
 
 function saveAnalytics(analytics) {
@@ -207,6 +199,49 @@ export function getStats() {
         longestStreak: stats.longestStreak,
         topPreset,
         avgMinutes
+    };
+}
+
+/**
+ * Calculates session distribution across mental states and community sync impact.
+ * States: Delta (<4Hz), Theta (4-8Hz), Alpha (8-13Hz), Beta (13-30Hz), Gamma (>30Hz)
+ */
+export function getImpactStats() {
+    const analytics = getAnalytics();
+    const distribution = {
+        delta: 0,
+        theta: 0,
+        alpha: 0,
+        beta: 0,
+        gamma: 0
+    };
+
+    analytics.sessions.forEach(s => {
+        // Map common presets to states
+        const p = s.preset.toLowerCase();
+        let state = 'alpha'; // Default
+        if (p.includes('delta')) state = 'delta';
+        else if (p.includes('theta')) state = 'theta';
+        else if (p.includes('alpha')) state = 'alpha';
+        else if (p.includes('beta')) state = 'beta';
+        else if (p.includes('gamma')) state = 'gamma';
+        // Handle common combos
+        else if (p.includes('focus') || p.includes('sharp')) state = 'beta';
+        else if (p.includes('drift') || p.includes('creative')) state = 'theta';
+        else if (p.includes('sleep') || p.includes('night')) state = 'delta';
+
+        distribution[state] += Math.round(s.duration / 60);
+    });
+
+    // Calculate Community Sync (Pulse Hours)
+    // Formula: Total Hours * (Random modifier between 4-12 to simulate avg community size)
+    const basePulseHours = (analytics.stats.totalMinutes / 60) * 8.5;
+    const pulseHours = Math.round(basePulseHours * 10) / 10;
+
+    return {
+        distribution,
+        pulseHours,
+        totalMinutes: analytics.stats.totalMinutes
     };
 }
 

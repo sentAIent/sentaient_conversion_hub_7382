@@ -5,6 +5,11 @@ const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.c
 
 export const initAnalytics = () => {
     try {
+        if (POSTHOG_API_KEY.includes('PLACEHOLDER')) {
+            console.log('[Analytics] PostHog placeholder key detected - skipping initialization');
+            return;
+        }
+
         posthog.init(POSTHOG_API_KEY, {
             api_host: POSTHOG_HOST,
             autocapture: true,
