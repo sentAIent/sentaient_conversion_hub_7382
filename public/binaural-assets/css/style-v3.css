@@ -507,28 +507,25 @@ body[data-theme="sentaient"] #leftPanel .section-label {
     color: rgb(52, 211, 153) !important;
 }
 
-/* Force Atmosphere descriptions and percentage values to Theme Accent */
+/* Force Atmosphere descriptions and percentage values to Blue as requested */
 body[data-theme="sentaient"] #soundscapeContainer .text-white,
 body[data-theme="sentaient"] #soundscapeContainer .text-white\/70,
 body[data-theme="sentaient"] #soundscapeContainer .atmos-sublabel,
 body[data-theme="sentaient"] #soundscapeContainer .text-\[var\(--accent\)\] {
-    color: var(--accent) !important;
+    color: #60a9ff !important;
 }
 
 /* Ensure active button text is consistent and has high contrast in sentAIent theme */
 body[data-theme="sentaient"] .toggle-active,
 body[data-theme="sentaient"] .active-mode,
 body[data-theme="sentaient"] .glass-pill.active {
-    color: #0f172a !important;
-    /* Dark text on bright Teal accent */
-    background-color: var(--accent) !important;
+    color: #202733 !important;
 }
 
-/* Force theme accent text for inactive toggle buttons in sentAIent theme */
+/* Force blue text for inactive toggle buttons in sentAIent theme */
 body[data-theme="sentaient"] .toggle-inactive,
 body[data-theme="sentaient"] .glass-pill:not(.active) {
-    color: var(--accent) !important;
-    opacity: 0.7;
+    color: #60a9ff !important;
 }
 
 /* Fix visual mode button text */
@@ -1417,60 +1414,6 @@ button,
     #leftPanel .grid.grid-cols-2 .preset-btn {
         min-height: 44px;
     }
-}
-
-/* FOOTER CHILD OVERFLOW FIX */
-#bottomControlBar>div {
-    min-width: 0;
-    /* Allow flex children to shrink below content size */
-    overflow: hidden;
-    /* Prevent spillover */
-}
-
-#bottomControlBar .flex-1 {
-    min-width: 0;
-}
-
-/* ==========================================
-   FOOTER RESPONSIVE ADAPTATION (Dynamic Width)
-   ========================================== */
-
-/* Medium Footer (Width < 900px) */
-.footer-medium .range-label {
-    display: none;
-    /* Hide labels like "PITCH", "BEAT" */
-}
-
-.footer-medium {
-    gap: 1rem !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-}
-
-/* Compact Footer (Width < 600px OR Mobile) */
-.footer-compact .range-label,
-.footer-compact .value-display,
-.footer-compact .control-divider {
-    display: none !important;
-    /* Hide labels, values, and dividers */
-}
-
-.footer-compact {
-    gap: 0.5rem !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    justify-content: space-around !important;
-}
-
-.footer-compact .control-group {
-    flex-direction: column;
-    gap: 2px;
-}
-
-/* Make sliders smaller in compact mode */
-.footer-compact input[type=range] {
-    width: 60px !important;
-    height: 4px !important;
 }
 
 /* ==========================================
@@ -3143,83 +3086,4 @@ body #feedbackSurveyModal.survey-contrast-fix textarea {
 body #feedbackSurveyModal.survey-contrast-fix select option {
     background-color: #0f172a !important;
     color: #ffffff !important;
-}
-
-/* --- RESPONSIVE FOOTER STYLES (DYNAMISM) --- */
-#bottomControlBar {
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        right 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Medium Footer (< 900px wide available) */
-.footer-medium .premium-label {
-    display: none;
-    /* Hide text labels but keep values */
-}
-
-.footer-medium #speedSliderContainer {
-    width: 80px !important;
-    /* Shrink sliders */
-}
-
-.footer-medium .gap-4 {
-    gap: 0.75rem !important;
-    /* gap-3 */
-}
-
-/* Compact Footer (< 600px wide available) */
-.footer-compact .premium-label {
-    display: none;
-}
-
-.footer-compact .premium-value {
-    display: none;
-    /* Hide values to save space */
-}
-
-.footer-compact #speedSliderContainer {
-    width: 60px !important;
-}
-
-.footer-compact #leftToggle,
-.footer-compact #rightToggle {
-    padding: 0.5rem !important;
-    /* p-2 */
-}
-
-.footer-compact #recordBtn {
-    width: 2.5rem !important;
-    /* w-10 */
-    height: 2.5rem !important;
-    /* h-10 */
-}
-
-.footer-compact .gap-6 {
-    gap: 0.5rem !important;
-    /* Shrink main central gap */
-}
-
-/* Shrink Play Buttons */
-.footer-compact #audioPlayBtn,
-.footer-compact #visualPlayBtn {
-    width: 28px !important;
-    height: 28px !important;
-}
-
-.footer-compact #playBtn {
-    width: 44px !important;
-    height: 44px !important;
-}
-
-.footer-compact #timerRing {
-    width: 56px !important;
-    height: 56px !important;
-    margin: -1px !important;
-}
-
-.footer-compact #timerDisplay {
-    font-size: 0.75rem !important;
-    /* xs */
 }

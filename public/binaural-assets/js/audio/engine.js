@@ -1160,7 +1160,60 @@ function startSingleSoundscape(id, vol, tone, speed) {
         nodes.push(n, f);
     }
     else if (id === 'rain') { const n = state.audioCtx.createBufferSource(); n.buffer = createPinkNoiseBuffer(); n.loop = true; n.playbackRate.value = rate; const f = state.audioCtx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 200 + (tone * 1800); n.connect(f); f.connect(channelGain); n.start(); nodes.push(n, f); }
-    else if (id === 'wind') { const n = state.audioCtx.createBufferSource(); n.buffer = createPinkNoiseBuffer(); n.loop = true; n.playbackRate.value = rate; const f = state.audioCtx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 200 + (tone * 800); f.Q.value = 1; const lfo = state.audioCtx.createOscillator(); lfo.frequency.value = 0.1 * rate; const lfoG = state.audioCtx.createGain(); lfoG.gain.value = 200; lfo.connect(lfoG); lfoG.connect(f.frequency); n.connect(f); f.connect(channelGain); n.start(); lfo.start(); nodes.push(n, f, lfo, lfoG); }
+    else if (id === 'wind' || id === 'mountain_wind') {
+        const n = state.audioCtx.createBufferSource();
+        n.buffer = createPinkNoiseBuffer();
+        n.loop = true;
+        n.playbackRate.value = rate;
+        const f = state.audioCtx.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.value = (id === 'mountain_wind' ? 400 : 200) + (tone * 800);
+        f.Q.value = id === 'mountain_wind' ? 2.5 : 1;
+        const lfo = state.audioCtx.createOscillator();
+        lfo.frequency.value = (id === 'mountain_wind' ? 0.05 : 0.1) * rate;
+        const lfoG = state.audioCtx.createGain();
+        lfoG.gain.value = id === 'mountain_wind' ? 150 : 200;
+        lfo.connect(lfoG);
+        lfoG.connect(f.frequency);
+        n.connect(f);
+        f.connect(channelGain);
+        n.start();
+        lfo.start();
+        nodes.push(n, f, lfo, lfoG);
+    }
+    else if (id === 'river') {
+        // Mountain River: pink noise + bandpass + fast rippling LFO
+        const n = state.audioCtx.createBufferSource();
+        n.buffer = createPinkNoiseBuffer();
+        n.loop = true;
+        n.playbackRate.value = rate * 0.8;
+        const f = state.audioCtx.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.value = 800 + (tone * 2000);
+        f.Q.value = 0.8;
+
+        // Ripple LFO (Fast volume/filter modulation)
+        const rippleLFO = state.audioCtx.createOscillator();
+        rippleLFO.frequency.value = 4.0 * rate;
+        const rippleGain = state.audioCtx.createGain();
+        rippleGain.gain.value = 0.2;
+        rippleLFO.connect(rippleGain);
+        rippleGain.connect(channelGain.gain);
+
+        const filterLFO = state.audioCtx.createOscillator();
+        filterLFO.frequency.value = 0.5 * rate;
+        const filterLG = state.audioCtx.createGain();
+        filterLG.gain.value = 400;
+        filterLFO.connect(filterLG);
+        filterLG.connect(f.frequency);
+
+        n.connect(f);
+        f.connect(channelGain);
+        n.start();
+        rippleLFO.start();
+        filterLFO.start();
+        nodes.push(n, f, rippleLFO, rippleGain, filterLFO, filterLG);
+    }
     else if (id === 'fireplace') {
         // Fireplace: brown noise base + random crackle simulation
         const baseNoise = state.audioCtx.createBufferSource();
@@ -1268,7 +1321,7 @@ function startSingleSoundscape(id, vol, tone, speed) {
     else if (id === 'strings') createDrone([65.41, 98.00, 130.81], 'sawtooth', 1500, 'lowpass', 3.0);
     else if (id === 'brass') createDrone([130.81, 196.00, 261.63], 'sawtooth', 400, 'lowpass', 0.2);
     else if (id === 'winds') createDrone([261.63, 329.63, 392.00], 'triangle', 1000, 'bandpass', 4.0);
-    else if (['bells', 'wood', 'timpani', 'orch_perc'].includes(id)) {
+    else if (['bells', 'wood', 'timpani', 'orch_perc', 'forest_birds'].includes(id)) {
         let active = true;
         const loop = () => {
             if (!active || !state.isPlaying) return;
@@ -1325,6 +1378,22 @@ function playOneShot(type, dest, tone) {
     }
     else if (type === 'wood') { const osc = state.audioCtx.createOscillator(), env = state.audioCtx.createGain(); osc.frequency.setValueAtTime((800 + Math.random() * 200) * pitchMult, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.1); env.gain.setValueAtTime(0.3, t); env.gain.exponentialRampToValueAtTime(0.001, t + 0.15); osc.connect(env); env.connect(dest); osc.start(t); osc.stop(t + 0.2); }
     else if (type === 'timpani') { const osc = state.audioCtx.createOscillator(), gain = state.audioCtx.createGain(); const freq = (60 + Math.random() * 30) * pitchMult; osc.frequency.setValueAtTime(freq + (50 * pitchMult), t); osc.frequency.exponentialRampToValueAtTime(freq, t + 0.1); gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.6, t + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, t + 2.0); osc.connect(gain); gain.connect(dest); osc.start(t); osc.stop(t + 2.5); }
+    else if (type === 'forest_birds') {
+        // Birds: high pitched sine chirps
+        const fund = (2000 + Math.random() * 3000) * pitchMult;
+        const osc = state.audioCtx.createOscillator();
+        const gain = state.audioCtx.createGain();
+        osc.frequency.setValueAtTime(fund, t);
+        // Quick frequency slide for "chirp"
+        osc.frequency.exponentialRampToValueAtTime(fund * 1.5, t + 0.05);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.1, t + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(gain);
+        gain.connect(dest);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    }
     else if (type === 'orch_perc') { const r = Math.random(); if (r < 0.33) { const osc = state.audioCtx.createOscillator(), gain = state.audioCtx.createGain(); osc.frequency.setValueAtTime(80 * pitchMult, t); osc.frequency.exponentialRampToValueAtTime(10, t + 0.5); gain.gain.setValueAtTime(0.7, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6); osc.connect(gain); gain.connect(dest); osc.start(t); osc.stop(t + 0.7); } else if (r < 0.66) { const noise = state.audioCtx.createBufferSource(); noise.buffer = createPinkNoiseBuffer(); const filter = state.audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 2000 * pitchMult; const gain = state.audioCtx.createGain(); gain.gain.setValueAtTime(0.4, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); noise.connect(filter); filter.connect(gain); gain.connect(dest); noise.start(t); noise.stop(t + 0.3); } else { const noise = state.audioCtx.createBufferSource(); noise.buffer = createPinkNoiseBuffer(); const filter = state.audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 5000 * pitchMult; const gain = state.audioCtx.createGain(); gain.gain.setValueAtTime(0.05, t); gain.gain.linearRampToValueAtTime(0.15, t + 0.2); gain.gain.exponentialRampToValueAtTime(0.001, t + 3.5); noise.connect(filter); filter.connect(gain); gain.connect(dest); noise.start(t); noise.stop(t + 4.0); } }
 }
 

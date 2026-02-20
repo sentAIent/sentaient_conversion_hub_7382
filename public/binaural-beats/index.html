@@ -53,7 +53,7 @@
     <link rel="stylesheet" href="css/tailwind-compiled.css">
     <link rel="stylesheet" href="css/style.css?v=20">
     <!-- Preload critical resources -->
-    <link rel="preload" href="js/main.js" as="script" crossorigin>
+    <link rel="modulepreload" href="js/main.js">
     <script src="config.js" defer onerror="console.log('[Config] No config.js found - using mock mode')"></script>
     <script type="module" src="js/main.js?v=34"></script>
     <style>
@@ -1139,7 +1139,7 @@
                                     </div>
                                 `).join('');
                             }
-                        }, 2000);
+                        }, 5000);
                     </script>
 
 

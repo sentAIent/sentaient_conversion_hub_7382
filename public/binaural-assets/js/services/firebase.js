@@ -114,6 +114,10 @@ export async function initFirebase() {
         updateProfile = firebaseAuth.updateProfile;
 
         getFirestore = firebaseFirestore.getFirestore;
+        const initializeFirestore = firebaseFirestore.initializeFirestore;
+        const persistentLocalCache = firebaseFirestore.persistentLocalCache;
+        const persistentMultipleTabManager = firebaseFirestore.persistentMultipleTabManager;
+
         collection = firebaseFirestore.collection;
         doc = firebaseFirestore.doc;
         setDoc = firebaseFirestore.setDoc;
@@ -137,25 +141,64 @@ export async function initFirebase() {
         // Initialize App
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
-        db = getFirestore(app);
         storage = getStorage(app);
+
+        // Initialize Firestore with Persistence (Modern API)
+        try {
+            db = initializeFirestore(app, {
+                localCache: persistentLocalCache({
+                    tabManager: persistentMultipleTabManager()
+                })
+            });
+            console.log('[Firebase] Persistence enabled (Modern API)');
+        } catch (e) {
+            console.warn('[Firebase] Firestore init custom settings failed, falling back to default:', e);
+            db = getFirestore(app);
+        }
 
         console.log("Firebase initialized successfully");
 
         // Auth Listener
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             state.currentUser = user;
             console.log("Auth State Changed:", user ? user.uid : "No User");
 
-            // ✅ FIX Issue #2: Update tier based on subscription status
             if (user) {
                 if (!user.displayName && user.email) user.displayName = user.email.split('@')[0];
-                // Check if user has premium subscription
+
+                // 1. Initial check from localStorage (Cache)
                 const isPremium = localStorage.getItem('mindwave_premium') === 'true';
+                const isLifetime = localStorage.getItem('mindwave_lifetime') === 'true';
+
                 state.userTier = isPremium ? 'pro' : 'free';
-                console.log('[Auth] User tier:', state.userTier);
+                state.isLifetime = isLifetime;
+
+                console.log('[Auth] Initial Tier:', state.userTier, 'Lifetime:', state.isLifetime);
+
+                // 2. Background Refresh from Firestore
+                try {
+                    const subDoc = await getDoc(doc(db, 'subscriptions', user.uid));
+                    if (subDoc.exists()) {
+                        const data = subDoc.data();
+                        const active = data.status === 'active';
+                        const lifetime = data.plan === 'lifetime';
+
+                        // Update state
+                        state.isLifetime = active && lifetime;
+                        state.userTier = active ? 'pro' : 'free';
+
+                        // Sync localStorage
+                        localStorage.setItem('mindwave_premium', active ? 'true' : 'false');
+                        localStorage.setItem('mindwave_lifetime', (active && lifetime) ? 'true' : 'false');
+
+                        console.log('[Auth] Refreshed Tier:', state.userTier, 'Lifetime:', state.isLifetime);
+                    }
+                } catch (err) {
+                    console.warn('[Auth] sub refresh failed:', err.message);
+                }
             } else {
                 state.userTier = 'free';
+                state.isLifetime = false;
                 if (unsubscribeLibrary) { unsubscribeLibrary(); unsubscribeLibrary = null; }
                 if (unsubscribeAudioLibrary) { unsubscribeAudioLibrary(); unsubscribeAudioLibrary = null; }
             }

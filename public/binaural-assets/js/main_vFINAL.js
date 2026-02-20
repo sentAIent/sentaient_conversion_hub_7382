@@ -1,7 +1,7 @@
 // Mindwave Studio Core
 window.NUCLEAR_MAIN_LOADED = true;
 // Core Modules for boot
-import { setupUI, applyAIIntent } from './ui/controls_v3.js?v=NUCLEAR_V100';
+import { setupUI, applyAIIntent, showDisclaimerModal } from './ui/controls_v3.js?v=NUCLEAR_FIX_V2';
 import { initFirebase, registerAuthCallback } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
 import { setupSwipeGestures } from './ui/layout.js';
@@ -65,6 +65,7 @@ window.setUserProperties = setUserProperties;
 
 // Initialize Application
 const initApp = () => {
+    console.time('InitApp');
     console.log("[Main] InitApp Calling - Initializing UI...");
 
     // Check if already initialized to prevent double-init
@@ -94,6 +95,8 @@ const initApp = () => {
                             });
                         }, 1000);
                     } else {
+                        // Trigger disclaimer automatically if missing
+                        showDisclaimerModal();
                         setTimeout(checkAndStartFlow, 1000);
                     }
                 };
@@ -133,7 +136,9 @@ const initApp = () => {
     console.log("[Main] Attempting setupUI()...");
     if (typeof setupUI === 'function') {
         console.log("[Main] setupUI is a function, calling now.");
+        console.time('setupUI_Total');
         setupUI();
+        console.timeEnd('setupUI_Total');
     } else if (typeof window.setupUI === 'function') {
         console.warn("[Main] setupUI not in scope but found on window. Calling fallback.");
         window.setupUI();
@@ -144,6 +149,7 @@ const initApp = () => {
     // Mobile features
     lazy.haptics().then(m => m.initHaptics());
     setupSwipeGestures();
+    console.timeEnd('InitApp');
 
     // Resizable side panels
     initResizablePanels();
@@ -165,10 +171,18 @@ const initApp = () => {
     lazy.pwa().then(m => m.initPWAInstall());
 
     // Hide loading screen immediately once core UI is ready
+    // Hide loading screen immediately once core UI is ready
     const loadingScreen = document.getElementById('loadingScreen');
     if (loadingScreen) {
-        loadingScreen.classList.add('fade-out');
-        setTimeout(() => loadingScreen.remove(), 500);
+        // FORCE REMOVAL - Critical Path
+        console.log('[Main] Removing loading screen immediately (Time: ' + performance.now().toFixed(0) + 'ms)');
+        loadingScreen.style.opacity = '0';
+        loadingScreen.style.pointerEvents = 'none';
+
+        // Use a short timeout to allow CSS transition, but ensure removal
+        setTimeout(() => {
+            if (loadingScreen.parentNode) loadingScreen.parentNode.removeChild(loadingScreen);
+        }, 500);
     }
 
     console.log("[Main] Core UI Ready - Loading content modules...");

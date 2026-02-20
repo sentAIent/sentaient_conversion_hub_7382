@@ -1,3 +1,5 @@
+import { state } from '../state.js';
+
 /**
  * PWA Install Prompt
  * Shows a custom install banner when the app is installable
@@ -37,6 +39,12 @@ export function initPWAInstall() {
 }
 
 function showInstallBanner() {
+    // LOCK: Only show install banner to lifetime members
+    if (!state.isLifetime) {
+        console.log('[PWA] skipping install banner - not a lifetime member');
+        return;
+    }
+
     if (!deferredPrompt || installBannerShown) return;
     installBannerShown = true;
 

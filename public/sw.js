@@ -3,7 +3,7 @@
  * Robust caching strategy for offline performance and asset stability.
  */
 
-const CACHE_NAME = 'mindwave-platform-v1';
+const CACHE_NAME = 'mindwave-platform-v2';
 const STATIC_ASSETS = [
     '/',
     '/mindwave-v101.html',

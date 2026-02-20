@@ -371,6 +371,11 @@ export async function playStory(storyId) {
         window.trackFeatureUse('story_play', { story_id: storyId });
     }
 
+    // 6. Total Immersion: Apply Story Visuals
+    if (window.setVisualMode) {
+        window.setVisualMode(['rainforest', 'zengarden']);
+    }
+
     console.log('[Stories] Playing:', story.title);
     return true;
 }

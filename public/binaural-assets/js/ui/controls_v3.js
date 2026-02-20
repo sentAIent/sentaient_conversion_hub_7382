@@ -1,7 +1,7 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=2';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -17,11 +17,12 @@ import { initGallery } from './gallery-modal.js';
 import { getReferralCount, shareReferral } from '../services/referral.js';
 import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
 import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
-import { showReflectionPrompt } from './reflection-journal.js';
-import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
-window.shareReferral = shareReferral;
-
 // ... (existing code)
+import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
+import { loadUserPreferences, saveUserPreferences } from '../services/persistence.js?v=NUCLEAR_FIX_V2';
+
+// Global reference for restored prefs to be used during initialization
+let restoredPrefs = null;
 
 // Use MultiReplace for multiple chunks? No, I'll use multi_replace tool.
 // This block is just for thought process.
@@ -60,6 +61,7 @@ export function setupUI() {
     els.visualColorPicker = document.getElementById('visualColorPicker');
     els.randomColorBtn = document.getElementById('randomColorBtn');
     els.prevColorBtn = document.getElementById('prevColorBtn');
+    els.vibrationToggleBtn = document.getElementById('vibrationToggleBtn');
     els.colorPreview = document.getElementById('colorPreview');
     els.profileBtn = document.getElementById('profileBtn');
     els.recordBtn = document.getElementById('recordBtn');
@@ -90,6 +92,10 @@ export function setupUI() {
     els.closeRightBtn = document.getElementById('closeRightBtn');
     els.statusIndicator = document.getElementById('statusIndicator');
     els.aiPrompt = document.getElementById('aiPrompt');
+    els.lockUIBtn = document.getElementById('lockUIBtn');
+    els.lockIcon = document.getElementById('lockIcon');
+    els.unlockIcon = document.getElementById('unlockIcon');
+    els.visualDock = document.getElementById('visualDock');
     els.saveModal = document.getElementById('saveModal');
     els.saveNameInput = document.getElementById('saveNameInput');
     els.cancelSaveBtn = document.getElementById('cancelSaveBtn');
@@ -193,6 +199,63 @@ export function setupUI() {
     // NEW: Stats Modal Elements
     els.statsModal = document.getElementById('statsModal');
     els.statsBtn = document.getElementById('statsBtn');
+
+    // --- PERSISTENCE RESTORATION ---
+    restoredPrefs = loadUserPreferences();
+    if (restoredPrefs) {
+        // 1. Apply Volumes to State & UI
+        if (restoredPrefs.volumes) {
+            state.masterVolume = restoredPrefs.volumes.master;
+            state.binauralVolume = restoredPrefs.volumes.binaural;
+            state.atmosVolume = restoredPrefs.volumes.atmos;
+
+            if (els.masterVolSlider) els.masterVolSlider.value = state.masterVolume;
+            if (els.beatSlider) els.beatSlider.value = state.binauralVolume;
+            if (els.atmosMasterSlider) els.atmosMasterSlider.value = state.atmosVolume;
+
+            // Trigger updates to engine
+            updateMasterVolume(state.masterVolume);
+            updateBeatsVolume(state.binauralVolume);
+            updateAtmosMaster(state.atmosVolume);
+        }
+
+        // 2. Apply Visual State
+        if (restoredPrefs.visuals) {
+            state.aiVisualsLocked = restoredPrefs.visuals.aiLocked;
+            // Update lock UI
+            if (els.lockUIBtn) {
+                if (state.aiVisualsLocked) {
+                    els.lockUIBtn.classList.add('locked');
+                    els.lockIcon.style.display = 'block';
+                    els.unlockIcon.style.display = 'none';
+                } else {
+                    els.lockUIBtn.classList.remove('locked');
+                    els.lockIcon.style.display = 'none';
+                    els.unlockIcon.style.display = 'block';
+                }
+            }
+
+            // Speed/Brightness
+            if (restoredPrefs.visuals.speed !== undefined) setVisualSpeed(restoredPrefs.visuals.speed);
+            if (restoredPrefs.visuals.brightness !== undefined) setVisualBrightness(restoredPrefs.visuals.brightness);
+        }
+
+        // 3. Theme
+        // Theme application usually happens in main.js or separate init, but we can enforce here if needed.
+        // For now, checks if we need to override the default.
+    }
+
+    // Attach Auto-Save Listeners
+    const saveTriggers = [
+        els.masterVolSlider, els.beatSlider, els.atmosMasterSlider,
+        els.visualSpeedSlider, els.lockUIBtn
+    ];
+    saveTriggers.forEach(el => {
+        if (el) el.addEventListener('input', saveUserPreferences); // For sliders
+        if (el) el.addEventListener('click', saveUserPreferences); // For buttons
+    });
+
+    console.log('[Controls] UI Setup & Persistence Loaded');
     els.closeStatsBtn = document.getElementById('closeStatsBtn');
     els.statStreak = document.getElementById('statStreak');
     els.statHours = document.getElementById('statHours');
@@ -210,8 +273,8 @@ export function setupUI() {
     els.mobilePauseIcon = document.getElementById('mobilePauseIcon');
     els.mobileMixerBtn = document.getElementById('mobileMixerBtn');
 
-    // Init Gallery
-    initGallery();
+    // Init Gallery (Moved to Deferred Block)
+    // initGallery();
 
     // Bind Event Listeners
 
@@ -245,12 +308,38 @@ export function setupUI() {
         els.aiGenerateBtn.addEventListener('click', handleAIGenerate);
     }
 
-    // AI Input - trigger on Enter
     if (els.aiGoalInput) {
         els.aiGoalInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleAIGenerate();
         });
     }
+
+    // Ghost Mode: Lock UI Button
+    if (els.lockUIBtn) {
+        // Load initial state
+        // Load initial state - FORCE UNLOCKED on load per user request
+        // const savedLock = localStorage.getItem('mindwave_ui_locked');
+        state.uiLocked = false;
+        localStorage.setItem('mindwave_ui_locked', 'false'); // Sync storage
+        updateLockUI();
+
+        els.lockUIBtn.addEventListener('click', () => {
+            state.uiLocked = !state.uiLocked;
+            localStorage.setItem('mindwave_ui_locked', state.uiLocked);
+            updateLockUI();
+
+            // If locking, force show everything immediately
+            if (state.uiLocked) {
+                showUI();
+            } else {
+                // If unlocking, start idle timer
+                resetIdleTimer();
+            }
+        });
+    }
+
+    // Ghost Mode: Activity Listeners
+    setupIdleTimer();
 
     if (els.recordBtn) {
         els.recordBtn.addEventListener('click', () => {
@@ -684,7 +773,7 @@ export function setupUI() {
     // Matrix Controls
 
     console.log('[Controls] Calling setupMatrixControls()...');
-    setupMatrixControls();
+    setTimeout(() => setupMatrixControls(), 50);
 
     // Mobile Bottom Navigation Handlers
     if (els.mobilePresetsBtn) {
@@ -774,6 +863,32 @@ export function setupUI() {
         });
     }
 
+    if (els.vibrationToggleBtn) {
+        els.vibrationToggleBtn.addEventListener('click', () => {
+            state.visualVibration = !state.visualVibration;
+            const viz = getVisualizer();
+            if (viz && viz.setVibrationEnabled) {
+                viz.setVibrationEnabled(state.visualVibration);
+            }
+            updateVibrationUI();
+        });
+    }
+
+    function updateVibrationUI() {
+        if (!els.vibrationToggleBtn) return;
+        if (state.visualVibration) {
+            els.vibrationToggleBtn.classList.remove('text-[var(--text-muted)]');
+            els.vibrationToggleBtn.classList.add('text-[var(--accent)]');
+            els.vibrationToggleBtn.title = "Visual Vibration: ON";
+        } else {
+            els.vibrationToggleBtn.classList.remove('text-[var(--accent)]');
+            els.vibrationToggleBtn.classList.add('text-[var(--text-muted)]');
+            els.vibrationToggleBtn.title = "Visual Vibration: OFF (Static)";
+        }
+    }
+    // Update initial UI state
+    updateVibrationUI();
+
     // Export Controls
     if (els.modalDlBtn) els.modalDlBtn.addEventListener('click', startExport);
     if (els.quickExportBtn) els.quickExportBtn.addEventListener('click', () => {
@@ -842,8 +957,37 @@ export function setupUI() {
     setupHyperGammaUI(); // NEW
     setupSweepUI(); // NEW
     setupStatsUI(); // NEW - Session Analytics
-    setupDJPads(); // NEW - DJ Sound Pads
-    setupPresenceUI(); // NEW - Social Pulse
+    // Initialize Timer & Disclaimer UI
+    setupTimerUI();
+    setupDisclaimerUI();
+    setupModeToggle(); // NEW
+    setupHyperGammaUI(); // NEW
+    setupSweepUI(); // NEW
+    setupStatsUI(); // NEW - Session Analytics
+
+    // Mobile Bottom Navigation Handlers
+    // ... (existing code) ...
+
+    // IMMEDIATE DISPLAY: Reveal controls now, don't wait for visualizer
+    const footer = document.getElementById('bottomControlBar');
+    const header = document.getElementById('topControlBar');
+    if (footer) {
+        footer.style.opacity = '1';
+        footer.classList.remove('no-transition');
+    }
+    if (header) {
+        header.style.opacity = '1';
+        header.classList.remove('no-transition');
+    }
+
+    // DEFERRED INITIALIZATION: Unblock Main Thread for Loading Screen Removal
+    setTimeout(() => {
+        console.log('[Controls] deferred setup starting...');
+        setupDJPads(); // NEW - DJ Sound Pads
+        setupPresenceUI(); // NEW - Social Pulse
+        initGallery(); // Moved from line 219
+        console.log('[Controls] deferred setup complete');
+    }, 100);
 
     // SYNC SLIDER VALUES - Ensure displays match slider positions on load
     syncSliderDisplays();
@@ -1006,8 +1150,12 @@ export function setupUI() {
         }, { once: true });
     }
 
-    // Defer visualizer loading until page is idle (saves 1.2MB on initial load)
-    preloadVisualizer();
+    // Defer visualizer loading slightly to prioritize UI paint (500ms delay)
+    // Removed requestIdleCallback as it was too slow on some devices
+    setTimeout(() => {
+        console.log('[Controls] Starting visualizer preload...');
+        preloadVisualizer();
+    }, 500);
 
     // WATCHDOG: Force reveal visualizer if it hasn't loaded after 10 seconds
     setTimeout(() => {
@@ -1342,6 +1490,8 @@ async function handleAIGenerate() {
                 }, 500);
             } else {
                 await playStory(storyMatch.id);
+                // Total Immersion: Stories
+                if (window.setVisualMode) window.setVisualMode(['rainforest', 'zengarden']);
             }
         } else {
             // 2. Regular Multi-stage Intent
@@ -1397,7 +1547,11 @@ async function applyNextAIStage() {
 }
 
 async function applyAIPreset(result) {
-    console.log('[AI] Applying Preset:', result.preset, 'Soundscapes:', result.soundscapes, 'Visual:', result.visual, 'Intensity:', result.intensity);
+    console.log('[AI] Applying Preset:', result.preset, 'Visuals:', result.visuals, 'Intensity:', result.intensity);
+
+    // Lock visuals to prevent accidental overrides during "Force Mode"
+    state.aiVisualsLocked = true;
+    showToast('AI Focus Mode Active 🔒', 'info');
 
     // 0. Handle Intensity (Volume Scaling)
     const baseVol = 0.5;
@@ -1433,21 +1587,41 @@ async function applyAIPreset(result) {
         updateSoundscape(id, true, Math.min(1.0, scVol));
     });
 
-    // 6. Enable visual if suggested
-    if (result.visual) {
+    // 6. Enable visuals if suggested (Total Immersion)
+    if (result.visuals && Array.isArray(result.visuals)) {
         const visualMap = {
             'flow': 'particles',
             'zen': 'zengarden',
-            'matrix': 'matrix'
+            'matrix': 'matrix',
+            'rain': 'rainforest'
         };
-        const vizMode = visualMap[result.visual] || result.visual;
-        setVisualMode(vizMode, true);
+
+        // Apply Speed & Brightness if available
+        if (viz && (result.speed !== undefined || result.brightness !== undefined)) {
+            console.log('[AI] Visual Parameters:', { speed: result.speed, brightness: result.brightness });
+
+            // Speed
+            if (result.speed !== undefined && viz.setGlobalSpeed) {
+                viz.setGlobalSpeed(result.speed);
+            }
+
+            // Brightness (Intensity)
+            if (result.brightness !== undefined && viz.setGlobalBrightness) {
+                viz.setGlobalBrightness(result.brightness);
+            }
+        }
+
+        result.visuals.forEach(v => {
+            const vizMode = visualMap[v] || v;
+            // Pass 'true' to forceState to bypass lock we just set
+            setVisualMode(vizMode, true);
+        });
     }
 
     // 7. Force UI Sync
     initMixer();
 
-    showToast(`AI Mix: ${result.preset.toUpperCase()}`, 'success');
+    showToast(`Total Immersion: ${result.preset.toUpperCase()}`, 'success');
 }
 
 /**
@@ -1596,7 +1770,7 @@ function setupDisclaimerUI() {
     }
 }
 
-function showDisclaimerModal() {
+export function showDisclaimerModal() {
     if (els.disclaimerModal) {
         els.disclaimerModal.classList.remove('hidden');
         els.disclaimerModal.classList.add('active');
@@ -2127,21 +2301,41 @@ export function resetImmersiveTimer() {
 }
 
 export function setVisualMode(mode, forceState = null) {
-    // state.visualMode = mode; // Single mode legacy. We'll rely on viz state.
     const viz = getVisualizer();
     let activeModes = new Set();
 
     if (viz) {
-        if (forceState !== null) {
-            // Force specific state (ON/OFF)
-            const isActive = viz.activeModes.has(mode);
-            if (isActive !== forceState) {
-                viz.toggleMode(mode);
-            }
-        } else {
-            // Default toggle behavior
-            viz.toggleMode(mode);
+        const modes = Array.isArray(mode) ? mode : [mode];
+
+        // If applying an array (preset), clear existing modes for 'Total Immersion'
+        if (Array.isArray(mode)) {
+            viz.activeModes.clear();
         }
+
+        // NEW: Check for AI Lock
+        // We reuse 'forceState' as a bypass flag if it equals true (boolean), 
+        // regarding it as "fromSystem" or "fromAI"
+        if (state.aiVisualsLocked && forceState !== true) {
+            console.log('[Visuals] Blocked by AI Lock');
+            showToast('Visuals locked by AI Focus Mode 🔒', 'info');
+            return;
+        }
+
+        modes.forEach(m => {
+            if (forceState !== null) {
+                const isActive = viz.activeModes.has(m);
+                if (isActive !== forceState) {
+                    viz.toggleMode(m);
+                }
+            } else {
+                // If applying an array, ensure it's enabled.
+                if (Array.isArray(mode)) {
+                    if (!viz.activeModes.has(m)) viz.toggleMode(m);
+                } else {
+                    viz.toggleMode(m);
+                }
+            }
+        });
         // Render a single frame so the mode is visible even when paused
         if (isVisualsPaused()) {
             viz.renderSingleFrame();
@@ -2178,8 +2372,14 @@ export function setVisualMode(mode, forceState = null) {
         }
     });
 
-    // Toggle Matrix Settings Panel
+    // Hide Matrix Settings Panel if Matrix is no longer active
     const matrixPanel = document.getElementById('matrixSettingsPanel');
+    if (matrixPanel && !activeModes.has('matrix')) {
+        matrixPanel.classList.add('hidden');
+        matrixPanel.classList.remove('flex', 'items-center');
+    }
+
+    // Toggle Matrix Settings Panel
     if (matrixPanel) {
         // Initialize state if undefined
         if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
@@ -2195,6 +2395,23 @@ export function setVisualMode(mode, forceState = null) {
 }
 window.setVisualMode = setVisualMode;
 
+/**
+ * Toggle mixer sections collapse/expand
+ * @param {string} sectionName 
+ */
+export function toggleMixerSection(sectionName) {
+    const section = document.querySelector(`[data-section="${sectionName}"]`);
+    if (section) {
+        section.classList.toggle('collapsed');
+        // Save state to localStorage
+        const collapsed = section.classList.contains('collapsed');
+        const states = JSON.parse(localStorage.getItem('mixerSectionStates') || '{}');
+        states[sectionName] = collapsed;
+        localStorage.setItem('mixerSectionStates', JSON.stringify(states));
+    }
+}
+window.toggleMixerSection = toggleMixerSection;
+
 
 export function setTheme(themeName) {
     const t = THEMES[themeName] || THEMES.default;
@@ -2209,6 +2426,9 @@ export function setTheme(themeName) {
     r.setProperty('--accent', t.accent);
     r.setProperty('--accent-glow', t.glow);
     r.setProperty('--slider-track', t.border);
+
+    // SYNC VISUALS WITH THEME
+    setVisualColor(t.accent);
 
     // CRITICAL: Set data-theme on body for CSS selectors to work
     document.body.dataset.theme = themeName;
@@ -2810,6 +3030,12 @@ window.loadPublicPreset = (preset) => {
 };
 
 export async function applyPreset(type, btnElement, autoStart = true, skipPaywall = false) {
+    // NEW: Manual Override Check
+    // If a user clicks a preset button (btnElement exists), we unlock the AI visual lock
+    if (btnElement && state.aiVisualsLocked) {
+        state.aiVisualsLocked = false;
+        showToast('AI Focus Mode Unlocked 🔓', 'info');
+    }
     // Check paywall for presets (skip if called from combo preset)
     // EXEMPT BASIC BRAINWAVES from paywall
     // STRICT LOCKING: Only Delta (Sleep) and Beta (Focus) are free
@@ -2859,6 +3085,24 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     }
 
     state.activePresetType = type;
+
+    // 1. Total Immersion: Apply Visuals
+    const { BRAINWAVE_VISUALS } = await import('../state.js');
+    if (BRAINWAVE_VISUALS[type]) {
+        console.log('[Controls] Total Immersion: Applying brainwave visuals', BRAINWAVE_VISUALS[type]);
+        if (window.setVisualMode) {
+            window.setVisualMode(BRAINWAVE_VISUALS[type]);
+        }
+    } else if (type.startsWith('heal-')) {
+        // Healing Frequency visual logic
+        let healingVisuals = ['matrix', 'particles']; // Default
+        const freq = parseInt(type.split('-')[1]);
+        if (freq <= 396) healingVisuals = ['lava', 'fireplace'];
+        else if (freq <= 528) healingVisuals = ['rainforest', 'ocean'];
+
+        console.log('[Controls] Total Immersion: Applying healing visuals', healingVisuals);
+        if (window.setVisualMode) window.setVisualMode(healingVisuals);
+    }
 
     // 1. Auto-Play FIRST (Critical for UX) - Only if triggered by user gesture
     // We try to start audio immediately on the click event
@@ -3136,7 +3380,15 @@ export async function applyComboPreset(comboId, btnElement) {
         btnElement.classList.add('bg-white/10', 'border-white/20');
     }
 
-    // 7. Save state
+    // 7. Total Immersion: Apply Visuals
+    if (combo.visuals && combo.visuals.length > 0) {
+        console.log('[Controls] Total Immersion: Applying combo visuals', combo.visuals);
+        if (window.setVisualMode) {
+            window.setVisualMode(combo.visuals);
+        }
+    }
+
+    // 8. Save state
     saveStateToLocal();
 
     console.log('[Controls] Combo preset configured:', comboId);
@@ -4893,14 +5145,21 @@ function setupMatrixControls() {
     }
 
     // === Initialize State on Load ===
-    const savedMode = localStorage.getItem('mindwave_matrix_mode') || 'mindwave';
-    const savedText = localStorage.getItem('mindwave_matrix_text');
+    let savedMode = localStorage.getItem('mindwave_matrix_mode') || 'mindwave';
+    let savedText = localStorage.getItem('mindwave_matrix_text');
     const savedRainbow = localStorage.getItem('mindwave_matrix_rainbow');
     const savedColor = localStorage.getItem('mindwave_matrix_color');
     const MATRIX_DEFAULT_TEXT = 'WELCOME';
 
+    // Sanitize saved text to prevent "WELCOMEFINAL..." issue
+    if (savedText && (savedText.includes('WELCOMEFINAL') || savedText.includes('TEJETSKI'))) {
+        console.log('[Matrix] sanitizing problematic text');
+        savedText = MATRIX_DEFAULT_TEXT;
+        localStorage.setItem('mindwave_matrix_text', MATRIX_DEFAULT_TEXT);
+    }
+
     if (textInput) {
-        // Only use saved text if user explicitly set it
+        // Only use saved text if user explicitly set it and it's not the problematic string
         if (savedText && savedText.length > 0) {
             textInput.value = savedText;
         } else {
@@ -4947,6 +5206,91 @@ function setupMatrixControls() {
     // Try immediately and also via applyVisualDefaults trigger
     syncMatrixWithVisualizer();
     window.addEventListener('visualizerReady', syncMatrixWithVisualizer);
+}
+
+// --- GHOST MODE (Idle UI Fade-out) ---
+
+function setupIdleTimer() {
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+
+    activityEvents.forEach(evt => {
+        window.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+
+    // Initial start
+    resetIdleTimer();
+}
+
+function resetIdleTimer() {
+    if (state.idleTimeout) clearTimeout(state.idleTimeout);
+
+    // Always show UI on activity
+    showUI();
+
+    // If locked, don't set the fade-out timeout
+    if (state.uiLocked) return;
+
+    state.idleTimeout = setTimeout(() => {
+        hideUI();
+    }, 8000); // 8 seconds
+}
+
+function showUI() {
+    const targets = document.querySelectorAll('.ui-fade-target');
+    targets.forEach(el => {
+        el.classList.remove('idle-hidden');
+    });
+    // Fade OUT logo when UI is visible (Keep faint watermark)
+    import('../visuals/visualizer_nuclear_v4.js').then(m => {
+        if (m.setVisualLogoOpacity) m.setVisualLogoOpacity(0.1);
+    });
+}
+
+function hideUI() {
+    // Check if we should actually hide (extra safety)
+    if (state.uiLocked) return;
+
+    // Don't hide if a modal is open
+    if (document.querySelector('.modal.active')) return;
+
+    const targets = document.querySelectorAll('.ui-fade-target');
+    targets.forEach(el => {
+        el.classList.add('idle-hidden');
+    });
+    // Fade IN logo when UI is hidden (Ghost Mode watermark)
+    import('../visuals/visualizer_nuclear_v4.js').then(m => {
+        if (m.setVisualLogoOpacity) m.setVisualLogoOpacity(0.5); // 50% opacity
+    });
+}
+
+function updateLockUI() {
+    if (!els.lockIcon || !els.unlockIcon) return;
+
+    if (state.uiLocked) {
+        // LOCKED STATE (UI is fixed visible)
+        els.lockIcon.classList.remove('hidden');
+        els.unlockIcon.classList.add('hidden');
+        if (els.lockUIBtn) {
+            els.lockUIBtn.title = "Unlock Menus (Enable auto-fade)";
+            els.lockUIBtn.style.color = 'var(--text-muted)'; // Dim when locked (or maybe Red?) - User asked for Unlocked = Accent
+            els.lockUIBtn.classList.add('toggle-active');
+            els.lockUIBtn.classList.remove('hover:bg-[var(--accent)]/20');
+        }
+        // Ensure UI is visible
+        showUI();
+    } else {
+        // UNLOCKED STATE (Auto-fade enabled)
+        els.lockIcon.classList.add('hidden');
+        els.unlockIcon.classList.remove('hidden');
+        if (els.lockUIBtn) {
+            els.lockUIBtn.title = "Lock Menus (Keep visible)";
+            els.lockUIBtn.style.color = 'var(--accent)'; // Unlocked = Accent Color
+            els.lockUIBtn.classList.remove('toggle-active');
+            els.lockUIBtn.classList.add('hover:bg-[var(--accent)]/20');
+        }
+        // Start timer if not already running
+        resetIdleTimer();
+    }
 }
 
 
