@@ -744,8 +744,10 @@ export function isAudioPlaying() {
     return state.isPlaying;
 }
 
-// Helpers
+const noiseBufferCache = {};
+
 function createPinkNoiseBuffer() {
+    if (noiseBufferCache.pink) return noiseBufferCache.pink;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
@@ -765,20 +767,24 @@ function createPinkNoiseBuffer() {
     let maxVal = 0;
     for (let i = 0; i < bs; i++) { if (Math.abs(o[i]) > maxVal) maxVal = Math.abs(o[i]); }
     if (maxVal > 0) { for (let i = 0; i < bs; i++) { o[i] = o[i] / maxVal; } }
+    noiseBufferCache.pink = b;
     return b;
 }
 
 function createWhiteNoiseBuffer() {
+    if (noiseBufferCache.white) return noiseBufferCache.white;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
     for (let i = 0; i < bs; i++) {
         o[i] = Math.random() * 2 - 1;
     }
+    noiseBufferCache.white = b;
     return b;
 }
 
 function createBrownNoiseBuffer() {
+    if (noiseBufferCache.brown) return noiseBufferCache.brown;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
@@ -793,6 +799,7 @@ function createBrownNoiseBuffer() {
     let maxVal = 0;
     for (let i = 0; i < bs; i++) { if (Math.abs(o[i]) > maxVal) maxVal = Math.abs(o[i]); }
     if (maxVal > 0) { for (let i = 0; i < bs; i++) { o[i] = o[i] / maxVal; } }
+    noiseBufferCache.brown = b;
     return b;
 }
 
