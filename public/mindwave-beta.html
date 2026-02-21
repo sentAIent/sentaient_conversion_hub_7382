@@ -319,6 +319,36 @@
                         <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.5"
                             class="premium-slider w-14 sm:w-18">
                     </div>
+
+                    <!-- Separator -->
+                    <div class="w-[1px] h-6 bg-white/20 mx-1"></div>
+
+                    <!-- Master Volume -->
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between items-center w-full px-0.5">
+                            <label class="premium-label">MAIN OUT</label>
+                            <span id="masterVolValue" class="premium-value ml-2">100%</span>
+                        </div>
+                        <input type="range" id="masterVolSlider" min="0" max="1" step="0.01" value="1.0"
+                            class="premium-slider w-14 sm:w-18">
+                    </div>
+
+                    <!-- L/R Balance -->
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between items-center w-full px-0.5">
+                            <label class="premium-label">L/R FADER</label>
+                            <span id="balanceValue" class="premium-value ml-2">0</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="premium-label text-[8px] opacity-60">L</span>
+                            <div class="relative flex-1 flex items-center justify-center w-14 sm:w-16">
+                                <div class="absolute w-0.5 h-3 bg-white/20 rounded-full z-10 pointer-events-none"></div>
+                                <input type="range" id="balanceSlider" min="-1" max="1" step="0.1" value="0"
+                                    class="premium-slider w-full" style="padding:0; margin:0;">
+                            </div>
+                            <span class="premium-label text-[8px] opacity-60">R</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Divider -->
@@ -1682,33 +1712,7 @@
         </div> <!-- End scrollable container -->
 
         <!-- Master Volume & Balance Footer -->
-        <div class="p-6 pr-10 border-t border-white/10 bg-black/20 shrink-0 space-y-4">
-            <!-- Volume -->
-            <div class="flex flex-col gap-0.5">
-                <div class="flex justify-between items-center px-0.5">
-                    <label class="premium-label">MAIN OUT</label>
-                    <span id="masterVolValue" class="premium-value">100%</span>
-                </div>
-                <input type="range" id="masterVolSlider" min="0" max="1" step="0.01" value="1.0" class="premium-slider">
-            </div>
-
-            <!-- Balance -->
-            <div class="flex flex-col gap-0.5">
-                <div class="flex justify-between items-center px-0.5">
-                    <label class="premium-label">L/R FADER</label>
-                    <span id="balanceValue" class="premium-value">0</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="premium-label text-[9px] opacity-60">L</span>
-                    <div class="relative flex-1 flex items-center">
-                        <div class="absolute w-0.5 h-3 bg-white/20 left-1/2 -translate-x-1/2 rounded-full z-10"></div>
-                        <input type="range" id="balanceSlider" min="-1" max="1" step="0.1" value="0"
-                            class="premium-slider">
-                    </div>
-                    <span class="premium-label text-[9px] opacity-60">R</span>
-                </div>
-            </div>
-        </div>
+        <!-- Master Volume & Balance (Moved to Top Control Bar) -->
     </aside>
 
     <!-- Modals (kept outside overlay for z-index) -->
@@ -2256,15 +2260,17 @@
         // Handle Download App button click (in sidebar)
         if (downloadAppBtn) {
             downloadAppBtn.addEventListener('click', async () => {
-                // PAYWALL CHECK: Source Code / App Download ($350)
-                if (window.paywall) {
-                    const hasAccess = await window.paywall.hasPurchasedApp();
-                    if (!hasAccess) {
-                        if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
-                            if (window.showPricingModal) window.showPricingModal();
-                        }
-                        return;
+                // STRICT PAYWALL CHECK: Source Code / App Download ($350)
+                if (!window.paywall) {
+                    alert('Loading purchase verification... Please try again in a moment.');
+                    return;
+                }
+                const hasAccess = await window.paywall.hasPurchasedApp();
+                if (!hasAccess) {
+                    if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
+                        if (window.showPricingModal) window.showPricingModal();
                     }
+                    return;
                 }
 
                 if (!deferredPrompt) {
@@ -2288,15 +2294,17 @@
 
         if (installAccept) {
             installAccept.addEventListener('click', async () => {
-                // PAYWALL CHECK: Source Code / App Download ($350)
-                if (window.paywall) {
-                    const hasAccess = await window.paywall.hasPurchasedApp();
-                    if (!hasAccess) {
-                        if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
-                            if (window.showPricingModal) window.showPricingModal();
-                        }
-                        return;
+                // STRICT PAYWALL CHECK: Source Code / App Download ($350)
+                if (!window.paywall) {
+                    alert('Loading purchase verification... Please try again in a moment.');
+                    return;
+                }
+                const hasAccess = await window.paywall.hasPurchasedApp();
+                if (!hasAccess) {
+                    if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
+                        if (window.showPricingModal) window.showPricingModal();
                     }
+                    return;
                 }
 
                 if (!deferredPrompt) return;

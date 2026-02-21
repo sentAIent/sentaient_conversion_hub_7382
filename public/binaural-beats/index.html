@@ -209,6 +209,29 @@
                         <span id="volValue"
                             class="text-[10px] font-mono text-white/70 w-7 text-right font-bold">50%</span>
                     </div>
+
+                    <!-- Master Volume -->
+                    <div class="flex items-center gap-1.5 ml-1">
+                        <span class="text-[10px] font-bold text-[var(--accent)]">MAIN</span>
+                        <input type="range" id="masterVolSlider" min="0" max="1" step="0.01" value="1.0"
+                            class="w-12 sm:w-14 h-1.5 bg-white/15 rounded-full appearance-none cursor-pointer hover:bg-white/25 transition-all">
+                        <span id="masterVolValue"
+                            class="text-[10px] font-mono text-[var(--accent)] w-7 text-right font-bold">100%</span>
+                    </div>
+
+                    <!-- L/R Balance -->
+                    <div class="flex items-center gap-1.5 ml-1">
+                        <span class="text-[10px] font-bold text-[var(--accent)]">L/R</span>
+                        <div class="relative flex items-center w-12 sm:w-14">
+                            <div
+                                class="absolute w-0.5 h-2 bg-white/30 left-1/2 -translate-x-1/2 rounded-full z-10 pointer-events-none">
+                            </div>
+                            <input type="range" id="balanceSlider" min="-1" max="1" step="0.1" value="0"
+                                class="w-full h-1.5 bg-white/15 rounded-full appearance-none cursor-pointer hover:bg-white/25 transition-all">
+                        </div>
+                        <span id="balanceValue"
+                            class="text-[10px] font-mono text-[var(--accent)] w-7 text-right font-bold">0</span>
+                    </div>
                 </div>
 
                 <!-- Divider -->
@@ -1229,39 +1252,7 @@
 
         </div>
 
-        <!-- Master Volume & Balance Footer -->
-        <div class="p-6 pr-10 border-t border-white/10 bg-black/20 shrink-0 space-y-4">
-            <!-- Volume -->
-            <div>
-                <div class="flex justify-between mb-2">
-                    <span class="text-xs font-bold text-[var(--accent)]">MAIN OUT</span>
-                    <span id="masterVolValue" class="text-xs font-mono text-[var(--accent)]">100%</span>
-                </div>
-                <input type="range" id="masterVolSlider" min="0" max="1" step="0.01" value="1.0"
-                    class="w-full h-2 bg-slate-700 rounded-full appearance-none cursor-pointer accent-[var(--accent)]">
-            </div>
-
-            <!-- Balance -->
-            <div>
-                <div class="flex justify-between mb-1">
-                    <span class="text-xs font-bold text-[var(--accent)]">L/R FADER</span>
-                </div>
-                <!-- Custom styled balance slider with L/R labels -->
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-mono text-[var(--accent)]">L</span>
-                    <div class="relative flex-1 h-2 flex items-center">
-                        <div class="absolute w-0.5 h-3 bg-white/30 left-1/2 -translate-x-1/2 rounded-full z-10"></div>
-                        <input type="range" id="balanceSlider" min="-1" max="1" step="0.1" value="0"
-                            class="relative w-full h-2 bg-slate-700/50 rounded-full appearance-none cursor-pointer accent-[var(--text-muted)] hover:accent-[var(--accent)] transition-all">
-                    </div>
-                    <span class="text-[10px] font-mono text-[var(--accent)]">R</span>
-                </div>
-                <div class="text-center mt-1 overflow-visible">
-                    <span id="balanceValue"
-                        class="text-xs font-mono text-[var(--accent)] inline-block min-w-[3rem]">0</span>
-                </div>
-            </div>
-        </div>
+        <!-- Master Volume & Balance (Moved to Top Control Bar) -->
     </aside>
 
     <!-- Modals (kept outside overlay for z-index) -->
@@ -1807,15 +1798,17 @@
         // Handle Download App button click (in sidebar)
         if (downloadAppBtn) {
             downloadAppBtn.addEventListener('click', async () => {
-                // PAYWALL CHECK: Source Code / App Download ($350)
-                if (window.paywall) {
-                    const hasAccess = await window.paywall.hasPurchasedApp();
-                    if (!hasAccess) {
-                        if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
-                            if (window.showPricingModal) window.showPricingModal();
-                        }
-                        return;
+                // STRICT PAYWALL CHECK: Source Code / App Download ($350)
+                if (!window.paywall) {
+                    alert('Loading purchase verification... Please try again in a moment.');
+                    return;
+                }
+                const hasAccess = await window.paywall.hasPurchasedApp();
+                if (!hasAccess) {
+                    if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
+                        if (window.showPricingModal) window.showPricingModal();
                     }
+                    return;
                 }
 
                 if (!deferredPrompt) {
@@ -1839,15 +1832,17 @@
 
         if (installAccept) {
             installAccept.addEventListener('click', async () => {
-                // PAYWALL CHECK: Source Code / App Download ($350)
-                if (window.paywall) {
-                    const hasAccess = await window.paywall.hasPurchasedApp();
-                    if (!hasAccess) {
-                        if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
-                            if (window.showPricingModal) window.showPricingModal();
-                        }
-                        return;
+                // STRICT PAYWALL CHECK: Source Code / App Download ($350)
+                if (!window.paywall) {
+                    alert('Loading purchase verification... Please try again in a moment.');
+                    return;
+                }
+                const hasAccess = await window.paywall.hasPurchasedApp();
+                if (!hasAccess) {
+                    if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
+                        if (window.showPricingModal) window.showPricingModal();
                     }
+                    return;
                 }
 
                 if (!deferredPrompt) return;

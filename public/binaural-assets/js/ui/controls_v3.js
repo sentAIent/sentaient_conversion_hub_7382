@@ -3095,10 +3095,11 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         }
     } else if (type.startsWith('heal-')) {
         // Healing Frequency visual logic
-        let healingVisuals = ['matrix', 'particles']; // Default
+        let healingVisuals = ['particles', 'waves']; // Default for deeper healing (852Hz, 963Hz)
         const freq = parseInt(type.split('-')[1]);
-        if (freq <= 396) healingVisuals = ['lava', 'fireplace'];
-        else if (freq <= 528) healingVisuals = ['rainforest', 'ocean'];
+        if (freq <= 396) healingVisuals = ['zengarden', 'particles']; // Grounding, calming
+        else if (freq <= 528) healingVisuals = ['rainforest', 'ocean']; // Restorative, soothing
+        else if (freq <= 741) healingVisuals = ['particles', 'ocean']; // Flowing energy
 
         console.log('[Controls] Total Immersion: Applying healing visuals', healingVisuals);
         if (window.setVisualMode) window.setVisualMode(healingVisuals);
@@ -5272,7 +5273,7 @@ function updateLockUI() {
         els.unlockIcon.classList.add('hidden');
         if (els.lockUIBtn) {
             els.lockUIBtn.title = "Unlock Menus (Enable auto-fade)";
-            els.lockUIBtn.style.color = 'var(--text-muted)'; // Dim when locked (or maybe Red?) - User asked for Unlocked = Accent
+            els.lockUIBtn.style.color = ''; // Let CSS handle colors
             els.lockUIBtn.classList.add('toggle-active');
             els.lockUIBtn.classList.remove('hover:bg-[var(--accent)]/20');
         }
@@ -5284,7 +5285,7 @@ function updateLockUI() {
         els.unlockIcon.classList.remove('hidden');
         if (els.lockUIBtn) {
             els.lockUIBtn.title = "Lock Menus (Keep visible)";
-            els.lockUIBtn.style.color = 'var(--accent)'; // Unlocked = Accent Color
+            els.lockUIBtn.style.color = ''; // Let CSS handle colors
             els.lockUIBtn.classList.remove('toggle-active');
             els.lockUIBtn.classList.add('hover:bg-[var(--accent)]/20');
         }
