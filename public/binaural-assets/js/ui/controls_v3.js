@@ -3084,6 +3084,25 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         }
     }
 
+    // NEW FIX: Clear Combo Presets if coming from a mixed state
+    if (state.activeComboPreset) {
+        console.log('[Controls] Clearing combo preset soundscapes before applying standard preset');
+        resetAllSoundscapes();
+        const soundscapeContainer = document.getElementById('soundscapeContainer');
+        if (soundscapeContainer) {
+            const allVolInputs = soundscapeContainer.querySelectorAll('input[data-type="vol"]');
+            allVolInputs.forEach(input => {
+                input.value = 0;
+                const valSpan = input.closest('div')?.querySelector('[data-val="vol"]');
+                if (valSpan) valSpan.textContent = '0%';
+            });
+        }
+        Object.keys(state.soundscapeSettings).forEach(id => {
+            state.soundscapeSettings[id].vol = 0;
+        });
+        state.activeComboPreset = null;
+    }
+
     state.activePresetType = type;
 
     // 1. Total Immersion: Apply Visuals

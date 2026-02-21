@@ -1805,8 +1805,11 @@
                 }
                 const hasAccess = await window.paywall.hasPurchasedApp();
                 if (!hasAccess) {
-                    if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
-                        if (window.showPricingModal) window.showPricingModal();
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
+                        if (window.showToast) window.showToast('Founders Gear required to download app.', 'info');
+                    } else {
+                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
                     }
                     return;
                 }
@@ -1839,8 +1842,11 @@
                 }
                 const hasAccess = await window.paywall.hasPurchasedApp();
                 if (!hasAccess) {
-                    if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
-                        if (window.showPricingModal) window.showPricingModal();
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
+                        if (window.showToast) window.showToast('Founders Gear required to download app.', 'info');
+                    } else {
+                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
                     }
                     return;
                 }
