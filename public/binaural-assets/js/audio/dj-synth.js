@@ -1334,12 +1334,14 @@ function synthGater(ctx, output, isLoop = false) {
 // =============================================================================
 
 const djNoiseBufferCache = {};
+let _djCacheSampleRate = 0;
 
 /**
  * Create a noise buffer source with caching
  */
 function createNoiseSource(ctx, type = 'white') {
-    if (!djNoiseBufferCache[type]) {
+    if (!djNoiseBufferCache[type] || _djCacheSampleRate !== ctx.sampleRate) {
+        _djCacheSampleRate = ctx.sampleRate;
         const bufferSize = 2 * ctx.sampleRate;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const output = buffer.getChannelData(0);

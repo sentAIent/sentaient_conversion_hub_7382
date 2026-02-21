@@ -1231,6 +1231,8 @@ async function handlePlayClick() {
     if (state.isStopping) {
         console.log('[Controls] Fast Resume triggered!');
         cancelFadeOut();
+        // Crucial Fix: Ramp the master gain back up to 1, or else it stays at 0 forever
+        fadeIn(0.5);
         state.isStopping = false;
         // Ensure UI reflects playing immediately
         syncAllButtons();

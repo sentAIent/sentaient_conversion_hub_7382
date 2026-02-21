@@ -391,8 +391,8 @@ export function stopAudio(immediate = false) {
         state.masterGain.gain.setValueAtTime(0, now);
 
         // Stop oscillators immediately (no timeout)
-        if (state.oscLeft) { state.oscLeft.stop(); state.oscLeft.disconnect(); }
-        if (state.oscRight) { state.oscRight.stop(); state.oscRight.disconnect(); }
+        if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); }
+        if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); }
         state.oscLeft = null;
         state.oscRight = null;
         Object.keys(state.activeSoundscapes).forEach(id => stopSingleSoundscape(id));
@@ -406,8 +406,8 @@ export function stopAudio(immediate = false) {
         if (state.stopTimeout) clearTimeout(state.stopTimeout);
 
         state.stopTimeout = setTimeout(() => {
-            if (state.oscLeft) { state.oscLeft.stop(); state.oscLeft.disconnect(); }
-            if (state.oscRight) { state.oscRight.stop(); state.oscRight.disconnect(); }
+            if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); }
+            if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); }
             state.oscLeft = null; state.oscRight = null;
             Object.keys(state.activeSoundscapes).forEach(id => stopSingleSoundscape(id));
             state.stopTimeout = null;
@@ -745,9 +745,11 @@ export function isAudioPlaying() {
 }
 
 const noiseBufferCache = {};
+let _cacheSampleRate = 0;
 
 function createPinkNoiseBuffer() {
-    if (noiseBufferCache.pink) return noiseBufferCache.pink;
+    if (noiseBufferCache.pink && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.pink;
+    _cacheSampleRate = state.audioCtx.sampleRate;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
@@ -772,7 +774,8 @@ function createPinkNoiseBuffer() {
 }
 
 function createWhiteNoiseBuffer() {
-    if (noiseBufferCache.white) return noiseBufferCache.white;
+    if (noiseBufferCache.white && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.white;
+    _cacheSampleRate = state.audioCtx.sampleRate;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
@@ -784,7 +787,8 @@ function createWhiteNoiseBuffer() {
 }
 
 function createBrownNoiseBuffer() {
-    if (noiseBufferCache.brown) return noiseBufferCache.brown;
+    if (noiseBufferCache.brown && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.brown;
+    _cacheSampleRate = state.audioCtx.sampleRate;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
