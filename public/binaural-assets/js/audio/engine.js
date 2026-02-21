@@ -1087,6 +1087,12 @@ function updateSoundscapeSpeed(id, speedVal) {
 }
 
 function startSingleSoundscape(id, vol, tone, speed) {
+    // Prevent orphaned nodes: stop existing soundscape before creating a new one
+    if (state.activeSoundscapes[id]) {
+        console.warn(`[Soundscape] ${id} already active. Stopping old instance to prevent orphans.`);
+        stopSingleSoundscape(id, true); // Immediate stop of the old instance
+    }
+
     // Ensure audio context exists and is resumed
     initAudio();
 
