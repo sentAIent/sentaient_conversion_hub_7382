@@ -113,6 +113,17 @@ function showInstallBanner() {
 
     // Event listeners
     document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
+        // PAYWALL CHECK: Source Code / App Download ($350)
+        if (window.paywall) {
+            const hasAccess = await window.paywall.hasPurchasedApp();
+            if (!hasAccess) {
+                if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
+                    if (window.showPricingModal) window.showPricingModal();
+                }
+                return;
+            }
+        }
+
         if (!deferredPrompt) return;
 
         deferredPrompt.prompt();
