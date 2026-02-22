@@ -400,9 +400,9 @@ export function stopAudio(immediate = false) {
         // NORMAL STOP: Fade out gracefully
         state.masterGain.gain.cancelScheduledValues(now);
         state.masterGain.gain.setValueAtTime(state.masterGain.gain.value, now);
-        state.masterGain.gain.linearRampToValueAtTime(0, now + 0.3);
+        state.masterGain.gain.linearRampToValueAtTime(0, now + 0.05);
 
-        // Delay oscillator cleanup to allow for volume fade
+        // Delay oscillator cleanup to allow for volume micro-fade
         if (state.stopTimeout) clearTimeout(state.stopTimeout);
 
         state.stopTimeout = setTimeout(() => {
@@ -411,7 +411,7 @@ export function stopAudio(immediate = false) {
             state.oscLeft = null; state.oscRight = null;
             Object.keys(state.activeSoundscapes).forEach(id => stopSingleSoundscape(id));
             state.stopTimeout = null;
-        }, 350);
+        }, 60);
     }
 
     // Clear lock screen controls
@@ -1467,10 +1467,10 @@ export function stopSingleSoundscape(id, immediate = false) {
             console.warn(`[Audio] Race detected: stopSingleSoundscape for ${id} tried to delete checking new instance.`);
         }
     } else {
-        // NORMAL STOP: Fade out gracefully
+        // NORMAL STOP: Micro-fade out gracefully (50ms)
         try {
             sc.gainNode.gain.cancelScheduledValues(state.audioCtx.currentTime);
-            sc.gainNode.gain.setTargetAtTime(0, state.audioCtx.currentTime, 0.5);
+            sc.gainNode.gain.setTargetAtTime(0, state.audioCtx.currentTime, 0.015); // ~50ms decay
         } catch (e) { }
 
         // Store timeout ID on the soundscape object itself to allow cancellation if needed
@@ -1480,7 +1480,7 @@ export function stopSingleSoundscape(id, immediate = false) {
             if (state.activeSoundscapes[id] === sc) {
                 delete state.activeSoundscapes[id];
             }
-        }, 600);
+        }, 60);
     }
 }
 

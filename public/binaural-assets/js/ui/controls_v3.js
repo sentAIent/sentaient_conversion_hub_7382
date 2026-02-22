@@ -1258,8 +1258,8 @@ async function handlePlayClick() {
         if (isClassicalPlaying()) stopClassical();
         endSessionTracking(false);
 
-        console.log('[Controls] Calling fadeOut(1.5)...');
-        fadeOut(1.5, () => {
+        console.log('[Controls] Calling fadeOut(0.05)...');
+        fadeOut(0.05, () => {
             console.log('[Controls] fadeOut complete callback -> calling stopAudio()');
             stopAudio();
             state.isStopping = false; // Reset flag when actually stopped
@@ -1330,7 +1330,7 @@ async function handleAudioToggle() {
         stopSession();
         if (isClassicalPlaying()) stopClassical();
         endSessionTracking(false);
-        fadeOut(1.5, () => {
+        fadeOut(0.05, () => {
             stopAudio();
             state.isAudioStopping = false; // Reset flag when actually stopped
             syncAllButtons(); // Sync after audio fully stops
@@ -3300,8 +3300,9 @@ export async function applyComboPreset(comboId, btnElement) {
         cancelFadeOut();
         state.isStopping = false;
 
-        // Wait for audio nodes to fully clear out before applying new preset
-        await new Promise(resolve => setTimeout(resolve, 400));
+        // With the new 60ms micro-fade architecture, nodes are cleared almost instantly.
+        // A minimal 50ms await ensures the JS event loop processes the disconnects before rebuilding.
+        await new Promise(resolve => setTimeout(resolve, 50));
     }
 
     // 1. Update frequencies immediately (bypass Firebase dependency)
