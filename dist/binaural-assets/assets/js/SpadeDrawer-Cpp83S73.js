@@ -1,1 +1,0 @@
-import{d as s,p as a}from"./Utils-CEAqaCTL.js";class p{draw(p){s(p,a.spade)}}export{p as SpadeDrawer};

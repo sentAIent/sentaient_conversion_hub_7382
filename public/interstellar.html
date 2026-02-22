@@ -8,7 +8,7 @@
     <title>Aether Map | Pre-Placement Cartographer</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./styles.css?v=hangar_polish">
 </head>
 
 <body>
@@ -58,6 +58,8 @@
             <button class="btn-small" id="rainbowBtn" onclick="app.setRainbowMode()">🌈</button>
             <div class="divider"></div>
             <button class="btn-small" id="rotationToggle" onclick="app.toggleRotationPanel()">3D</button>
+            <div class="divider"></div>
+            <button class="btn-small" onclick="app.toggleAdminPanel()">👑 Admin</button>
         </div>
     </div>
 
@@ -594,42 +596,88 @@
         <div class="resize-handle"></div>
     </div>
 
-    <!-- Spacecraft Selection Modal -->
-    <div id="shipModal" class="modal-overlay">
-        <div class="modal">
-            <h2>Select Spacecraft</h2>
-            <div id="shipList" class="ship-list">
-                <div class="ship-option" onclick="app.selectShip('interceptor')">
-                    <h3>🚀 Interceptor</h3>
-                    <p>Balanced fighter. Speed: 50, Accel: 0.5</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('saucer')">
-                    <h3>🛸 Saucer</h3>
-                    <p>High speed, drift capability. Speed: 70, Accel: 0.7</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('hauler')">
-                    <h3>💀 Mauler</h3>
-                    <p>Death Star class. Gravitational pull. Speed: 40, Accel: 0.4</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('orion')">
-                    <h3>⭐ Orion</h3>
-                    <p>Constellation class. Speed: 60, Accel: 0.6</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('draco')">
-                    <h3>🐉 Draco</h3>
-                    <p>Dragon constellation. Speed: 80, Accel: 0.4</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('phoenix')">
-                    <h3>🔥 Phoenix</h3>
-                    <p>Reborn in fire. Speed: 55, Accel: 0.8</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('harvester')">
-                    <h3>💎 Starfighter</h3>
-                    <p>Advanced combat vessel. Speed: 80, Accel: 0.8</p>
+    <!-- === ADMIN PANEL (God Mode) === -->
+    <div id="adminPanel" class="popup-panel hidden"
+        style="width: 280px; top: 20%; right: 20px; border: 1px solid #ff00ff; box-shadow: 0 0 15px rgba(255,0,255,0.3);">
+        <h3 style="color: #ff00ff; border-bottom: 1px solid #ff00ff;">⚡ ADMIN TOOLS</h3>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                <span style="color: #ffd700;">PREMIUM STATUS</span>
+                <input type="checkbox" id="adminPremiumToggle" style="accent-color: #ffd700;">
+            </label>
+            <div style="font-size: 10px; color: #888;">Unlocks Pro ships & features</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+            <button id="adminAddCreditsBtn" class="btn-small" style="border-color: #00ff00; color: #00ff00;">💰
+                +$10k</button>
+            <button id="adminAddMineralsBtn" class="btn-small" style="border-color: #00ffff; color: #00ffff;">💎
+                Gems</button>
+        </div>
+
+        <button id="adminUnlockShipsBtn" class="btn-small"
+            style="width: 100%; margin-bottom: 8px; border-color: #ff5500; color: #ff5500;">
+            🔓 UNLOCK ALL SHIPS
+        </button>
+
+        <div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+            <div style="font-size: 10px; color: #aaa;">DEBUG INFO:</div>
+            <div id="adminDebugInfo" style="font-family: monospace; font-size: 10px; color: #fff;">-</div>
+        </div>
+
+        <button id="adminCloseBtn" class="btn-small" style="width: 100%; margin-top: 10px;">CLOSE</button>
+    </div>
+
+    <!-- === 3D HANGAR OVERHAUL === -->
+    <div id="shipModal" class="modal-overlay hangar-overlay">
+        <div class="hangar-container">
+            <div class="hangar-header">
+                <h2>AURORA DOCKING BAY</h2>
+                <div class="hangar-status">STATUS: ONLINE | STAGING AREA B-12</div>
+            </div>
+
+            <div class="hangar-viewport">
+                <div id="hangarTrack" class="hangar-track">
+                    <!-- Bays will be dynamically populated/modified -->
+                    <!-- Docking Bay 1: Interceptor -->
+                    <div class="docking-bay" id="bay-interceptor">
+                        <div class="bay-floor"></div>
+                        <div class="bay-walls">
+                            <div class="wall wall-back">
+                                <div class="ship-specs">
+                                    <h3>MODEL: INTERCEPTOR</h3>
+                                    <div class="spec-line"><span class="label">SPEED:</span> <span class="val">90</span>
+                                    </div>
+                                    <div class="spec-line"><span class="label">ARMOR:</span> <span
+                                            class="val">NONE</span></div>
+                                    <div class="spec-line"><span class="label">POWER:</span> <span class="val">NIMBLE
+                                            DASH</span></div>
+                                    <p class="spec-desc">The standard scout of the Aether Fleet. Unmatched
+                                        maneuverability in tight asteroid fields.</p>
+                                </div>
+                            </div>
+                            <div class="wall wall-side left"></div>
+                            <div class="wall wall-side right"></div>
+                        </div>
+                        <div class="ship-hologram">
+                            <canvas id="preview-interceptor" width="200" height="200"></canvas>
+                        </div>
+                        <button class="select-ship-btn" onclick="app.selectShip('interceptor')">ENGAGE PILOT</button>
+                    </div>
+
+                    <!-- Additional bays will be added in JS but defining structure here -->
                 </div>
             </div>
+
+            <div class="hangar-nav">
+                <button class="nav-btn prev" onclick="app.prevHangarBay()">◀ PREV BAY</button>
+                <div id="bayIndicator" class="bay-indicator">BAY 1 / 17</div>
+                <button class="nav-btn next" onclick="app.nextHangarBay()">NEXT BAY ▶</button>
+            </div>
+
             <div class="modal-actions">
-                <button class="btn-secondary" onclick="app.hideShipModal()">Close</button>
+                <button class="btn-secondary" onclick="app.hideShipModal()">EXIT HANGAR</button>
             </div>
         </div>
     </div>
@@ -704,7 +752,7 @@
     </button>
 
     <!-- Style for Mobile Visibility & UI Polish -->
-    <script type="module" src="./script.js"></script>
+    <script type="module" src="./script.js?v=nuclear_v11"></script>
 </body>
 
 </html>
