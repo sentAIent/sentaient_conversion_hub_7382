@@ -3031,7 +3031,16 @@ window.loadPublicPreset = (preset) => {
     }
 };
 
+let lastPresetClickTime = 0;
+
 export async function applyPreset(type, btnElement, autoStart = true, skipPaywall = false) {
+    const now = Date.now();
+    if (now - lastPresetClickTime < 300) {
+        console.log('[Controls] Preset click debounced');
+        return;
+    }
+    lastPresetClickTime = now;
+
     // NEW: Manual Override Check
     // If a user clicks a preset button (btnElement exists), we unlock the AI visual lock
     if (btnElement && state.aiVisualsLocked) {
@@ -3235,6 +3244,13 @@ window.applyComboPreset = applyComboPreset;
 // --- COMBO PRESET LOGIC (Ambient Presets) ---
 // Combines binaural frequency presets with atmospheric soundscapes
 export async function applyComboPreset(comboId, btnElement) {
+    const now = Date.now();
+    if (now - lastPresetClickTime < 300) {
+        console.log('[Controls] Preset click debounced');
+        return;
+    }
+    lastPresetClickTime = now;
+
     const combo = PRESET_COMBOS.find(c => c.id === comboId);
     if (!combo) {
         console.warn('[Controls] Unknown combo preset:', comboId);
