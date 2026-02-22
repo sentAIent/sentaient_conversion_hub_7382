@@ -3109,6 +3109,3 @@ body.custom-sun-cursor .combo-preset-btn,
 body.custom-sun-cursor .sweep-btn,
 body.custom-sun-cursor .dj-pad,
 body.custom-sun-cursor [onclick],
-body.custom-sun-cursor .cursor-pointer {
-    cursor: url('../images/sun_cursor.svg') 16 16, auto !important;
-}

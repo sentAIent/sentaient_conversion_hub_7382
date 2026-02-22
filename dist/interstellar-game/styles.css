@@ -374,74 +374,381 @@
             flex-direction: column;
         }
 
-        .ship-list {
-            max-height: 500px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 10px;
-            margin: 10px 0;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+        /* --- 3D HANGAR OVERHAUL --- */
+        .hangar-overlay {
+            background: radial-gradient(circle at center, rgba(10, 20, 30, 0.95) 0%, rgba(2, 5, 10, 1) 100%);
+            perspective: 2000px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
         }
 
-        .ship-option {
-            background-color: #000000 !important;
-            border: 2px solid #ffffff !important;
-            border-radius: 8px;
-            padding: 10px;
+        .hangar-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .hangar-container {
+            width: 90vw;
+            height: 85vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 160px;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            position: relative;
         }
 
-        .ship-option:hover {
-            background: rgba(20, 40, 60, 1);
-            border-color: #fff;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 243, 255, 0.3);
+        .hangar-header {
+            text-align: center;
+            margin-bottom: 20px;
+            z-index: 10;
         }
 
-        .ship-option canvas {
-            margin-bottom: 12px;
-            filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.8));
-            transition: transform 0.3s ease;
-            background: radial-gradient(circle at center, rgba(0, 50, 80, 0.8) 0%, transparent 70%);
-            /* Darker center for contrast */
-            border-radius: 50%;
-            border: 1px solid rgba(0, 243, 255, 0.2);
-        }
-
-        .ship-option:hover canvas {
-            transform: scale(1.15);
-            filter: drop-shadow(0 0 12px rgba(0, 243, 255, 1));
-            background: radial-gradient(circle at center, rgba(0, 60, 100, 0.9) 0%, transparent 70%);
-        }
-
-        .ship-option h3 {
-            margin: 8px 0 4px 0;
-            color: #ffffff !important;
-            /* Force White */
-            font-size: 16px;
-            /* Larger */
-            font-weight: 800;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(0, 243, 255, 0.8);
-        }
-
-        .ship-option p {
+        .hangar-header h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 32px;
+            color: var(--accent);
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px var(--accent-glow);
             margin: 0;
-            color: #aaddff !important;
-            /* Bright Blue-White */
-            font-size: 12px;
+        }
+
+        .hangar-status {
+            font-size: 10px;
+            color: #00ff88;
+            letter-spacing: 2px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+
+        .hangar-viewport {
+            width: 100%;
+            flex: 1;
+            overflow: visible;
+            position: relative;
+            perspective: 1500px;
+        }
+
+        .hangar-track {
+            display: flex;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .docking-bay {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Bay Geometry */
+        .bay-floor {
+            position: absolute;
+            width: 2000px;
+            height: 2000px;
+            background:
+                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                #05080c;
+            background-size: 100px 100px;
+            transform: rotateX(90deg) translateZ(-150px);
+            box-shadow: inset 0 0 500px rgba(0, 0, 0, 0.8);
+        }
+
+        .bay-floor::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            /* Centered beneath the ship hologram without distorting perspective */
+            transform: translate(-50%, calc(-50% + 50px));
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 243, 255, 0.2) 0%, transparent 70%);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 50px var(--accent-glow);
+        }
+
+        .bay-walls {
+            position: absolute;
+            width: 1200px;
+            height: 800px;
+            transform-style: preserve-3d;
+            pointer-events: none;
+        }
+
+        .wall {
+            position: absolute;
+            background: #0a1018;
+            border: 1px solid rgba(0, 243, 255, 0.1);
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+        }
+
+        .wall-back {
+            width: 100%;
+            height: 100%;
+            transform: translateZ(-800px);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 40px;
+            box-sizing: border-box;
+            background: linear-gradient(180deg, #05080c 0%, #0a1018 100%);
+        }
+
+        .wall-side {
+            width: 1600px;
+            height: 800px;
+            background: linear-gradient(90deg, #05080c 0%, #0a1018 100%);
+        }
+
+        .wall-side.left {
+            transform: rotateY(90deg) translateZ(-600px) translateX(-800px);
+        }
+
+        .wall-side.right {
+            transform: rotateY(-90deg) translateZ(-600px) translateX(800px);
+        }
+
+        /* Hangar UI Elements (The Specs) */
+        .ship-specs {
+            width: 350px;
+            background: rgba(0, 20, 40, 0.6);
+            backdrop-filter: blur(10px);
+            border-left: 4px solid var(--accent);
+            padding: 30px;
+            border-radius: 4px;
+            pointer-events: auto;
+            /* Moved left 20px (-250 -> -270) and up 60px */
+            transform: translateX(-270px) translateY(-60px);
+            /* Shifted further left from -150px */
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .ship-specs h3 {
+            font-family: 'Exo 2', sans-serif;
+            font-size: 24px;
+            color: var(--accent);
+            margin: 0 0 15px 0;
+            letter-spacing: 2px;
+        }
+
+        .spec-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .spec-line .label {
+            color: var(--text-dim);
+        }
+
+        .spec-line .val {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .spec-desc {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #aaddff;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        /* Interactive Elements */
+        .ship-hologram {
+            position: absolute;
+            left: 50%;
+            top: 45%;
+            transform-style: preserve-3d;
+            animation: float-ship 4s ease-in-out infinite;
+            z-index: 5;
+            /* Center the 400x400 canvas inside the bay */
+            margin-left: -200px;
+            margin-top: -200px;
+        }
+
+        @keyframes float-ship {
+
+            0%,
+            100% {
+                transform: translateY(0) rotateY(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotateY(10deg);
+            }
+        }
+
+        .select-ship-btn {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, 220px);
+            /* We strictly center it so non-absolute siblings don't offset its static origin */
+            padding: 15px 40px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px var(--accent-glow);
+            z-index: 50;
+            /* ensure it stays above nav if it overlaps */
+        }
+
+        .select-ship-btn:hover {
+            transform: translate(-50%, 220px) scale(1.05);
+            /* maintain position during scale */
+            background: #fff;
+            box-shadow: 0 0 40px var(--accent);
+        }
+
+        .lock-overlay {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 10, 0.85);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            z-index: 60;
+            pointer-events: none;
+        }
+
+        /* Navigation */
+        /* Hangar Color Selector */
+        .color-selector-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            /* Add space above */
+            width: 100%;
+            /* Force new line */
+            order: 2;
+            /* Ensure it's last visually if flex order matters */
+        }
+
+        .color-selector-container label {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .color-options {
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .color-option:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .color-option.active {
+            border-color: #fff;
+            box-shadow: 0 0 15px currentColor;
+            transform: scale(1.1);
+        }
+
+        .color-option-custom {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            padding: 0;
+            overflow: hidden;
+            cursor: pointer;
+            background: none;
+        }
+
+        /* End Hangar Color Selector */
+
+        .hangar-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            /* Allow wrapping */
+            gap: 20px;
+            /* Reduced gap since we have wrapping */
+            margin: 60px 0 30px 0;
+            z-index: 10;
+            width: 100%;
+            max-width: 600px;
+            /* Constrain width to keep buttons close */
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
             font-weight: 600;
-            line-height: 1.4;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            letter-spacing: 1px;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .bay-indicator {
+            font-family: monospace;
+            color: var(--accent);
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        .hangar-container .modal-actions .btn-secondary {
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .modal h2 {

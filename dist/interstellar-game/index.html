@@ -4,20 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aether Map | Pre-Placement Cartographer</title>
+    <title>Interstellar Map | Pre-Placement Cartographer</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css">
-    <script>
-        window.onerror = function (msg, url, line, col, error) {
-            const div = document.createElement('div');
-            div.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:red;color:white;z-index:99999;padding:20px;font-size:16px;font-family:monospace;white-space:pre-wrap;box-shadow:0 0 20px rgba(0,0,0,0.5);';
-            div.textContent = '❌ ERROR: ' + msg + '\nLocation: ' + url + ':' + line + ':' + col + '\n' + (error ? error.stack : '');
-            document.body.appendChild(div);
-            return false;
-        };
-        console.log("Global Error Handler Installed");
-    </script>
+    <link rel="stylesheet" href="./styles.css?v=hangar_polish">
 </head>
 
 <body>
@@ -105,58 +95,77 @@
         <canvas id="fullscreenMapCanvas"></canvas>
     </div>
 
-    <!-- === SHIP SELECTION MODAL === -->
-    <div id="shipModal" class="modal-overlay">
-        <div class="modal">
-            <h2>Select Spacecraft</h2>
-            <div class="ship-list">
-                <!-- Interceptor -->
-                <div class="ship-option" onclick="app.selectShip('interceptor')">
-                    <canvas id="preview-interceptor" width="80" height="80"></canvas>
-                    <h3>Interceptor</h3>
-                    <p>Speed: 90 | Accel: 0.8</p>
-                </div>
-                <!-- Orion -->
-                <div class="ship-option" onclick="app.selectShip('orion')">
-                    <canvas id="preview-orion" width="80" height="80"></canvas>
-                    <h3>Orion</h3>
-                    <p>Custom Constellation</p>
-                </div>
-                <!-- Mauler -->
-                <div class="ship-option" onclick="app.selectShip('hauler')">
-                    <canvas id="preview-hauler" width="80" height="80"></canvas>
-                    <h3>Mauler</h3>
-                    <p>Speed: 70 | Armor: +++</p>
-                </div>
-                <!-- Draco -->
-                <div class="ship-option" onclick="app.selectShip('draco')">
-                    <canvas id="preview-draco" width="80" height="80"></canvas>
-                    <h3>Draco</h3>
-                    <p>Speed: 130 | Accel: 0.7</p>
-                </div>
-                <!-- Phoenix -->
-                <div class="ship-option" onclick="app.selectShip('phoenix')">
-                    <canvas id="preview-phoenix" width="80" height="80"></canvas>
-                    <h3>Phoenix</h3>
-                    <p>Speed: 95 | Regen: ++</p>
-                </div>
-                <!-- PREMIUM: Saucer -->
-                <div class="ship-option" style="border-color: #ffd700; background: rgba(255, 215, 0, 0.05);"
-                    onclick="app.selectShip('saucer')">
-                    <canvas id="preview-saucer" width="80" height="80"></canvas>
-                    <h3 style="color: #ffd700">🛸 Saucer</h3>
-                    <p style="color: #ffd700">Pro Only | Agile</p>
-                </div>
-                <!-- PREMIUM: Starfighter -->
-                <div class="ship-option" style="border-color: #ffd700; background: rgba(255, 215, 0, 0.05);"
-                    onclick="app.selectShip('harvester')">
-                    <canvas id="preview-harvester" width="80" height="80"></canvas>
-                    <h3 style="color: #ffd700">⚡ Starfighter</h3>
-                    <p style="color: #ffd700">Pro Only | Ultimate</p>
+    <!-- === 3D HANGAR OVERHAUL === -->
+    <div id="shipModal" class="modal-overlay hangar-overlay">
+        <div class="hangar-container">
+            <div class="hangar-header">
+                <h2>INTERSTELLAR DOCKING BAY</h2>
+                <div class="hangar-status">STATUS: ONLINE | STAGING AREA B-12</div>
+            </div>
+
+            <div class="hangar-viewport">
+                <div id="hangarTrack" class="hangar-track">
+                    <!-- Bays will be dynamically populated/modified -->
+                    <!-- Docking Bay 1: Interceptor -->
+                    <div class="docking-bay" id="bay-interceptor">
+                        <div class="bay-floor"></div>
+                        <div class="bay-walls">
+                            <div class="wall wall-back">
+                                <div class="ship-specs">
+                                    <h3>MODEL: INTERCEPTOR</h3>
+                                    <div class="spec-line"><span class="label">SPEED:</span> <span class="val">90</span>
+                                    </div>
+                                    <div class="spec-line"><span class="label">ARMOR:</span> <span
+                                            class="val">NONE</span></div>
+                                    <div class="spec-line"><span class="label">POWER:</span> <span class="val">NIMBLE
+                                            DASH</span></div>
+                                    <p class="spec-desc">The standard scout of the Interstellar Fleet. Unmatched
+                                        maneuverability in tight asteroid fields.</p>
+                                </div>
+                            </div>
+                            <div class="wall wall-side left"></div>
+                            <div class="wall wall-side right"></div>
+                        </div>
+                        <div class="ship-hologram">
+                            <canvas id="preview-interceptor" width="200" height="200"></canvas>
+                        </div>
+                        <button class="select-ship-btn" onclick="window.game.selectShip('interceptor')">ENGAGE
+                            PILOT</button>
+                    </div>
+
+                    <!-- Additional bays will be added in JS but defining structure here -->
                 </div>
             </div>
+
+            <div class="hangar-nav">
+                <button class="nav-btn prev" onclick="window.game.prevHangarBay()">◀ PREV BAY</button>
+                <div id="bayIndicator" class="bay-indicator">BAY 1 / 7</div>
+                <button class="nav-btn next" onclick="window.game.nextHangarBay()">NEXT BAY ▶</button>
+
+                <div class="color-selector-container">
+                    <label>SHIP LIVERY</label>
+                    <div class="color-options">
+                        <div class="color-option" style="background-color: #00f3ff;" data-color="#00f3ff"
+                            onclick="window.game.setHangarColor('#00f3ff')"></div>
+                        <div class="color-option" style="background-color: #ff0055;" data-color="#ff0055"
+                            onclick="window.game.setHangarColor('#ff0055')"></div>
+                        <div class="color-option" style="background-color: #ffd700;" data-color="#ffd700"
+                            onclick="window.game.setHangarColor('#ffd700')"></div>
+                        <div class="color-option" style="background-color: #00ff66;" data-color="#00ff66"
+                            onclick="window.game.setHangarColor('#00ff66')"></div>
+                        <div class="color-option" style="background-color: #aa00ff;" data-color="#aa00ff"
+                            onclick="window.game.setHangarColor('#aa00ff')"></div>
+                        <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"
+                            onclick="window.game.setHangarColor('#ffffff')"></div>
+                        <input type="color" id="hangarColorPicker" class="color-option-custom" value="#00f3ff"
+                            onchange="window.game.setHangarColor(this.value)"
+                            oninput="window.game.setHangarColor(this.value)">
+                    </div>
+                </div>
+            </div>
+
             <div class="modal-actions">
-                <button class="btn-secondary" onclick="app.hideShipModal()">Cancel</button>
+                <button class="btn-secondary" onclick="window.game.hideShipModal()">EXIT HANGAR</button>
             </div>
         </div>
     </div>
@@ -280,11 +289,11 @@
             <!-- GAME CONTROLS - Separated and Prominent -->
             <div class="game-controls-section">
                 <span class="game-label">🎮 PLAY GAME</span>
-                <button class="btn game-btn" onclick="app.toggleFlightMode()"
+                <button class="btn game-btn" onclick="window.game.toggleFlightMode()"
                     data-tooltip="Enter Flight Mode - Use WASD to fly!">🚀 FLY</button>
-                <button class="btn game-btn" id="selectShipBtn" onclick="app.showShipModal()"
+                <button class="btn game-btn" id="selectShipBtn" onclick="window.game.showShipModal()"
                     data-tooltip="Choose Your Spaceship" style="display:none">🛸 SHIP</button>
-                <button class="btn game-btn" id="dockBtn" onclick="app.toggleUpgradePanel()"
+                <button class="btn game-btn" id="dockBtn" onclick="window.game.toggleUpgradePanel()"
                     data-tooltip="Upgrade Your Ship" style="display:none">🛠️ UPGRADES</button>
             </div>
 
@@ -683,45 +692,7 @@
         <div class="resize-handle"></div>
     </div>
 
-    <!-- Spacecraft Selection Modal -->
-    <div id="shipModal" class="modal-overlay">
-        <div class="modal">
-            <h2>Select Spacecraft</h2>
-            <div id="shipList" class="ship-list">
-                <div class="ship-option" onclick="app.selectShip('interceptor')">
-                    <h3>🚀 Interceptor</h3>
-                    <p>Balanced fighter. Speed: 50, Accel: 0.5</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('saucer')">
-                    <h3>🛸 Saucer</h3>
-                    <p>High speed, drift capability. Speed: 70, Accel: 0.7</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('hauler')">
-                    <h3>💀 Mauler</h3>
-                    <p>Death Star class. Gravitational pull. Speed: 40, Accel: 0.4</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('orion')">
-                    <h3>⭐ Orion</h3>
-                    <p>Constellation class. Speed: 60, Accel: 0.6</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('draco')">
-                    <h3>🐉 Draco</h3>
-                    <p>Dragon constellation. Speed: 80, Accel: 0.4</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('phoenix')">
-                    <h3>🔥 Phoenix</h3>
-                    <p>Reborn in fire. Speed: 55, Accel: 0.8</p>
-                </div>
-                <div class="ship-option" onclick="app.selectShip('harvester')">
-                    <h3>💎 Starfighter</h3>
-                    <p>Advanced combat vessel. Speed: 80, Accel: 0.8</p>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-secondary" onclick="app.hideShipModal()">Close</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Gem Guide Modal -->
     <div id="gemGuideModal" class="modal-overlay">
@@ -883,7 +854,7 @@
     </button>
 
     <!-- Style for Mobile Visibility & UI Polish -->
-    <script type="module" src="./script.js?v=nuclear_v10"></script>
+    <script type="module" src="./script.js?v=nuclear_v11"></script>
 </body>
 
 </html>

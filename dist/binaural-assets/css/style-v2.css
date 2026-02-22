@@ -3087,3 +3087,25 @@ body #feedbackSurveyModal.survey-contrast-fix select option {
     background-color: #0f172a !important;
     color: #ffffff !important;
 }
+/* ==========================================
+   TRIBAL SUN CUSTOM CURSOR
+   Applies custom SVG cursor globally when .custom-sun-cursor class is active on body.
+   Use !important to override all other interactive element cursors.
+   ========================================== */
+body.custom-sun-cursor,
+body.custom-sun-cursor * {
+    cursor: url('../images/sun_cursor.svg') 16 16, auto !important;
+}
+
+body.custom-sun-cursor a,
+body.custom-sun-cursor button,
+body.custom-sun-cursor [role='button'],
+body.custom-sun-cursor .preset-btn,
+body.custom-sun-cursor .mode-btn,
+body.custom-sun-cursor .visual-btn,
+body.custom-sun-cursor .glass-pill,
+body.custom-sun-cursor .theme-card,
+body.custom-sun-cursor .combo-preset-btn,
+body.custom-sun-cursor .sweep-btn,
+body.custom-sun-cursor .dj-pad,
+body.custom-sun-cursor [onclick],

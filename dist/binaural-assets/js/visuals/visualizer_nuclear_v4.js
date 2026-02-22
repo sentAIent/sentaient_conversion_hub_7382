@@ -775,6 +775,10 @@ export class Visualizer3D {
             depthWrite: false,
             blending: THREE.AdditiveBlending
         });
+
+        // Ensure Matrix renders behind other visuals by rendering it first
+        material.sceneRenderOrder = -1; // Custom property handled by mesh later
+        return material;
     }
 
     initEnvironment() {
@@ -867,6 +871,11 @@ export class Visualizer3D {
         this.matrixMaterial = this.createMatrixShader(texture);
         this.matrixRain = new THREE.Points(geometry, this.matrixMaterial);
         this.matrixRain.frustumCulled = false;
+
+        // CRITICAL FOR EPIC FOCUS COMBO: 
+        // Ensure Matrix renders behind ocean and zen particles to prevent AdditiveBlending washout
+        this.matrixRain.renderOrder = -1;
+
         this.matrixRotationGroup = new THREE.Group();
         this.matrixRotationGroup.add(this.matrixRain);
         this.matrixGroup.add(this.matrixRotationGroup);
