@@ -5,22 +5,26 @@
 
 // Discount tiers and their codes
 export const DISCOUNT_CODES = {
-    // 10% Off - Beta Testers
+    // Legacy Codes
     'BETA10': { discount: 10, type: 'beta', description: 'Beta Tester' },
     'EARLYBIRD': { discount: 10, type: 'beta', description: 'Early Access' },
-
-    // 20% Off - Extended Beta / Supporters
     'BETA20': { discount: 20, type: 'supporter', description: 'Beta Supporter' },
     'FRIEND20': { discount: 20, type: 'friend', description: 'Friend Discount' },
-
-    // 50% Off - Close Friends & Family
     'FAMILY50': { discount: 50, type: 'family', description: 'Friends & Family' },
     'VIP50': { discount: 50, type: 'vip', description: 'VIP Access' },
-
-    // 100% Off - Employees & Core Team
     'TEAM100': { discount: 100, type: 'employee', description: 'Team Member' },
     'STAFF': { discount: 100, type: 'employee', description: 'Staff' },
-    'FOUNDER': { discount: 100, type: 'employee', description: 'Founder Circle' }
+    'FOUNDER': { discount: 100, type: 'employee', description: 'Founder Circle' },
+
+    // Thematic App Codes
+    'ELEVATE10': { discount: 10, type: 'promo', description: '10% Off' },
+    'FREQUENCY15': { discount: 15, type: 'promo', description: '15% Off' },
+    'HARMONY20': { discount: 20, type: 'promo', description: '20% Off' },
+    'CLARITY25': { discount: 25, type: 'promo', description: '25% Off' },
+    'RESONANCE30': { discount: 30, type: 'promo', description: '30% Off' },
+    'PRESENCE40': { discount: 40, type: 'promo', description: '40% Off' },
+    'ZEN50': { discount: 50, type: 'promo', description: '50% Off' },
+    'NIRVANA100': { discount: 100, type: 'promo', description: '100% Off' }
 };
 
 /**

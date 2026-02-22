@@ -25,7 +25,7 @@ const PRICING_CONFIG = {
         productId: "yogi",
         description: "Everything unlocked. Forever.",
         warning: "⚠️ Price increases after 500 members",
-        limitText: "Unlimited Play",
+        limitText: "2 Hours / Day",
         active: true,
     },
     buddha: {
@@ -34,7 +34,7 @@ const PRICING_CONFIG = {
         period: "/month",
         productId: "buddha",
         description: "For coaches & power users",
-        limitText: "Unlimited + Priority",
+        limitText: "Unlimited Play",
         active: true
     },
     lifetime: {
@@ -220,7 +220,19 @@ function createPricingModal(currentTier, yogiPricing = null) {
                             <span style="color: #a78bfa;">✓</span> Everything in Founders
                         </li>
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #a78bfa;">✓</span> Priority Support
+                            <span style="color: #a78bfa;">✓</span> <strong>${PRICING_CONFIG.buddha.limitText}</strong>
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #a78bfa;">✓</span> Advanced Matrix Visualizers
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #a78bfa;">✓</span> Commercial Use License
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #a78bfa;">✓</span> Offline MP3 Export
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #a78bfa;">✓</span> AI Custom Frequencies (Beta)
                         </li>
                     </ul>
                     <button id="upgradeBtnPro" style="width: 100%; padding: 16px; background: rgba(124, 58, 237, 0.2); border: 1px solid #7c3aed; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">

@@ -321,16 +321,15 @@ function startDailyLimitCheck() {
     state.dailyLimitInterval = setInterval(async () => {
         if (!state.isPlaying || dailyLimitTriggered) return;
 
-        // Use cached tier from state or check via service
-        const isPremium = state.userTier === 'pro' || state.userTier === 'yogi' || state.userTier === 'buddha' || (await isPremiumUser());
+        // Use cached tier from state directly
+        const currentTier = state.userTier || 'free';
 
-        // Increment usage (service handles storage logic)
-        // Pass premium status to service so it can decide whether to trigger limit
-        const limitReached = DailyLimitService.increment(1, isPremium);
+        // Increment usage (service handles storage logic based on tier)
+        const limitReached = DailyLimitService.increment(1, currentTier);
 
-        if (limitReached && !isPremium) {
+        if (limitReached) {
             dailyLimitTriggered = true; // Prevent re-entry
-            console.log('[DailyLimit] 15-minute limit reached for Free user! Stopping audio.');
+            console.log(`[DailyLimit] Time limit reached for ${currentTier} tier! Stopping audio.`);
 
             // Clear interval first to prevent any further calls
             clearInterval(state.dailyLimitInterval);

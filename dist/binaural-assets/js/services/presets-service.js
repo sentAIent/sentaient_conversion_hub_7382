@@ -16,6 +16,7 @@ import {
     limit,
     serverTimestamp
 } from 'firebase/firestore';
+import { getApps } from 'firebase/app';
 import { PRESET_COMBOS, SOUNDSCAPES } from '../state.js';
 
 const PRESETS_COLLECTION = 'global_presets';
@@ -28,8 +29,13 @@ const PUBLIC_GALLERY_COLLECTION = 'public_gallery';
  */
 export async function getCloudPresets() {
     try {
+        // Safety: Check if Firebase is initialized
+        if (getApps().length === 0) {
+            console.warn('[Presets] Firebase not initialized yet, using local fallbacks');
+            return PRESET_COMBOS;
+        }
+
         const db = getFirestore();
-        if (!db) throw new Error("Firebase not ready");
 
         const q = query(collection(db, PRESETS_COLLECTION), orderBy('order', 'asc'));
         const snapshot = await getDocs(q);

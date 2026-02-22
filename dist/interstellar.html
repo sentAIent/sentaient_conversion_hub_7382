@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <base href="/interstellar-game/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aether Map | Pre-Placement Cartographer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+
+    <div id="toast" class="toast">Action Successful</div>
+
+    <!-- === TOP BAR === -->
+    <div class="top-bar">
+        <h1>Interstellar Spacetime</h1>
+
+        <div class="top-bar-center">
+            <!-- Star Colors Group -->
+            <div class="star-colors-group">
+                <span class="star-colors-label">Star Colors</span>
+                <input type="color" id="starColor1" class="color-picker-mini star-color" value="#ffffff"
+                    title="Star Color 1" onchange="app.updateStarColors()">
+                <input type="color" id="starColor2" class="color-picker-mini star-color" value="#aaddff"
+                    title="Star Color 2" onchange="app.updateStarColors()">
+                <input type="color" id="starColor3" class="color-picker-mini star-color" value="#ffddaa"
+                    title="Star Color 3" onchange="app.updateStarColors()">
+            </div>
+            <!-- Motion Group -->
+            <div class="bar-group">
+                <button class="btn-small" id="bgDriftBtn" onclick="app.toggleBgDrift()">Drift</button>
+                <button class="btn-small" id="bgWarpBtn" onclick="app.toggleBgWarp()">Lightspeed</button>
+                <input type="range" id="warpSpeedSlider" min="0" max="100" step="1" value="10" style="width: 50px;"
+                    title="Warp Speed" oninput="app.setWarpSpeedMultiplier(this.value)">
+            </div>
+            <!-- Background Styles Group -->
+            <div class="bar-group">
+                <button class="btn-small bg-toggle" data-style="deep-space"
+                    onclick="app.toggleBgStyle('deep-space')">Deep Space</button>
+                <button class="btn-small bg-toggle" data-style="nebula"
+                    onclick="app.toggleBgStyle('nebula')">Nebula</button>
+                <button class="btn-small bg-toggle" data-style="alien"
+                    onclick="app.toggleBgStyle('alien')">Alien</button>
+                <button class="btn-small bg-toggle" data-style="cyber"
+                    onclick="app.toggleBgStyle('cyber')">Matrix</button>
+                <button class="btn-small btn-regen" onclick="app.generateBackground()"
+                    title="Regenerate Background">⟳</button>
+            </div>
+        </div>
+
+        <div class="top-bar-right">
+            <input type="color" id="colorInput" class="color-picker-mini" value="#00f3ff"
+                onchange="app.setFixedColor(this.value)">
+            <button class="btn-small" id="rainbowBtn" onclick="app.setRainbowMode()">🌈</button>
+            <div class="divider"></div>
+            <button class="btn-small" id="rotationToggle" onclick="app.toggleRotationPanel()">3D</button>
+        </div>
+    </div>
+
+
+    <!-- === MATRIX CONTROLS POPUP === -->
+    <div id="matrixPanel" class="popup-panel hidden">
+        <h3>Matrix</h3>
+        <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
+        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+
+        <label style="font-size:10px;margin-top:6px;display:block">Length: <span
+                id="matrixLengthValue">1.0x</span></label>
+        <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
+
+        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
+        <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
+
+        <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
+            <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
+                style="width:24px;height:24px">
+            <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
+                style="font-size:10px;padding:6px">🌈</button>
+        </div>
+    </div>
+
+
+    <!-- === FULLSCREEN MAP MODAL === -->
+    <div id="expandedMapModal" class="fullscreen-modal hidden">
+        <div class="map-controls">
+            <button class="btn-small" onclick="app.closeExpandedMap()">CLOSE MAP</button>
+            <span id="mapZoomLevel">Zoom: 1.0x</span>
+        </div>
+        <canvas id="fullscreenMapCanvas"></canvas>
+    </div>
+
+    <!-- === ROTATION CONTROLS POPUP === -->
+    <div id="rotationPanel" class="popup-panel hidden">
+        <h3>3D</h3>
+        <label style="font-size:10px">X: <span id="rotXValue">0°</span></label>
+        <input type="range" id="rotXSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <label style="font-size:10px;margin-top:6px;display:block">Y: <span id="rotYValue">0°</span></label>
+        <input type="range" id="rotYSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <label style="font-size:10px;margin-top:6px;display:block">Z: <span id="rotZValue">0°</span></label>
+        <input type="range" id="rotZSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <button class="btn-small" onclick="app.resetRotation()"
+            style="width:100%; margin-top:8px;font-size:10px;padding:6px">Reset</button>
+    </div>
+
+    <!-- === UPGRADE STATION POPUP === -->
+    <div id="upgradePanel" class="popup-panel hidden"
+        style="width: 220px; max-height: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; z-index: 200;">
+        <h3
+            style="text-align: center; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--accent); padding-bottom: 8px;">
+            Interstellar Dock</h3>
+
+        <div
+            style="margin-bottom: 15px; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+            <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">AVAILABLE CREDITS</div>
+            <div style="font-size: 24px; color: #ffd700; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"
+                id="dockCredits">$0</div>
+        </div>
+
+        <div id="upgradeList"
+            style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 300px; padding-right: 4px;">
+            <!-- Generated via JS -->
+        </div>
+
+        <button class="btn-small" onclick="document.getElementById('upgradePanel').classList.add('hidden')"
+            style="width: 100%; margin-top: 15px; padding: 10px; font-weight: bold;">CLOSE DOCK</button>
+    </div>
+
+
+    <!-- === BOTTOM BAR === -->
+    <div class="bottom-bar">
+        <div class="bottom-bar-left">
+            <div class="bar-group">
+                <button class="btn active" id="drawModeBtn" onclick="app.setMode('draw')" data-tooltip="Draw Stars">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+                    </svg>
+                </button>
+                <button class="btn" id="selectModeBtn" onclick="app.setMode('select')" data-tooltip="Select/Drag">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M7 19h10V4H7v15zm-2-2V6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v11c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="bottom-bar-center">
+            <div class="bar-group">
+                <button class="btn" onclick="app.undo()" data-tooltip="Undo">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.requestClear()" data-tooltip="Clear">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <button class="btn" onclick="app.downloadSVG()" data-tooltip="Export SVG">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.downloadPNG()" data-tooltip="Export PNG">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.triggerLoadSVG()" data-tooltip="Load SVG">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <select id="videoDuration"
+                    style="background: var(--glass); border: 1px solid var(--glass-border); color: var(--text); padding: 4px 6px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                    <option value="3000">3s</option>
+                    <option value="5000" selected>5s</option>
+                    <option value="10000">10s</option>
+                </select>
+                <button class="btn" id="exportVideoBtn" onclick="app.exportVideo()" data-tooltip="Record Video">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <button class="btn" onclick="app.toggleTemplatePanel()" data-tooltip="Templates">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5v-4h9v4zm5 0h-4v-4h4v4zm0-5H5V5h14v7z" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- GAME CONTROLS - Separated and Prominent -->
+            <div class="game-controls-section">
+                <span class="game-label">🎮 PLAY GAME</span>
+                <button class="btn game-btn" onclick="app.toggleFlightMode()"
+                    data-tooltip="Enter Flight Mode - Use WASD to fly!">🚀 FLY</button>
+                <button class="btn game-btn" id="selectShipBtn" onclick="app.showShipModal()"
+                    data-tooltip="Choose Your Spaceship" style="display:none">🛸 SHIP</button>
+                <button class="btn game-btn" id="dockBtn" onclick="app.toggleUpgradePanel()"
+                    data-tooltip="Upgrade Your Ship" style="display:none">🛠️ UPGRADES</button>
+            </div>
+
+            <!-- Window Taskbar - minimized windows appear here -->
+            <div id="windowTaskbar" class="window-taskbar" style="display:none"></div>
+
+            <!-- Layout Presets -->
+            <div id="layoutPresets" class="layout-presets" style="display:none">
+                <button class="layout-btn" onclick="app.saveLayout()" title="Save Current Layout">💾 Save</button>
+                <button class="layout-btn" id="layout1Btn" onclick="app.loadLayout(1)" title="Load Layout 1">1</button>
+                <button class="layout-btn" id="layout2Btn" onclick="app.loadLayout(2)" title="Load Layout 2">2</button>
+                <button class="layout-btn" id="layout3Btn" onclick="app.loadLayout(3)" title="Load Layout 3">3</button>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-bar-right">
+        <div class="bar-group">
+            <button class="zoom-btn" onclick="app.adjustZoom(-0.1)">-</button>
+            <button class="zoom-btn" onclick="app.resetView()">⟲</button>
+            <button class="zoom-btn" onclick="app.adjustZoom(0.1)">+</button>
+        </div>
+    </div>
+    </div>
+
+    <!-- Template Selection Panel -->
+    <div id="templatePanel" class="hud-panel"
+        style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); width: 400px; max-height: 400px; display: none; overflow-y: auto; z-index: 100;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="font-size: 14px; margin: 0; color: var(--accent); text-transform: uppercase;">
+                Constellation Templates</h2>
+            <button class="btn-small" onclick="document.getElementById('templatePanel').style.display='none'"
+                style="min-width: 24px; padding: 2px 6px;">✕</button>
+        </div>
+
+        <div
+            style="margin-bottom: 10px; display: flex; align-items: center; gap: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+            <label style="font-size: 12px; color: var(--text); display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="templateRainbowMode" style="margin-right: 5px; accent-color: var(--accent);">
+                Rainbow Mode
+            </label>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <span style="font-size: 12px; color: var(--text);">Color:</span>
+                <input type="color" id="templateColorPicker" value="#00ffff"
+                    style="border: none; width: 24px; height: 24px; cursor: pointer; background: none;">
+            </div>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Zodiac Signs</h3>
+            <div id="zodiacTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Animals</h3>
+            <div id="animalTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+
+        <div>
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Mythology</h3>
+            <div id="mythTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Hidden file input for loading SVG -->
+    <input type="file" id="svgFileInput" accept=".svg" style="display: none;" onchange="app.loadSVG(event)">
+
+    <!-- Zoom controls now integrated in bottom-bar -->
+
+    <div class="stats" id="stats">
+        Mode: Draw | Stars: 0 | Constellations: 0 | Zoom: 1.00x
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="clearModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Implode Universe?</h2>
+            <p style="color: #888; margin-bottom: 20px;">This will remove all stars. This action cannot be undone
+                easily.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="app.closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="app.confirmClear()"
+                    style="background-color: #ff3333; border-color: #cc0000; color: white;">Implode</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <!-- Flight Mode HUD Overlay -->
+    <!-- Flight Mode HUD Overlay (Command Center Layout) -->
+    <div id="flightHUD" class="flight-hud hidden">
+
+        <!-- LEFT COLUMN: Now empty, Leaders floats separately -->
+        <div class="hud-column hud-left">
+            <!-- Leaders window floats in top-left independently -->
+        </div>
+
+        <!-- CENTER COLUMN (Spacer) -->
+        <div class="hud-column hud-center">
+            <!-- Can put reticle or warnings here later -->
+        </div>
+
+        <!-- RIGHT COLUMN: Controls & Ship Config -->
+        <div class="hud-column hud-right">
+            <!-- CONTROLS - Top Right -->
+            <div id="sectionControls" class="cockpit-section" style="top:70px; right:15px; width:220px;">
+                <div class="cockpit-header">
+                    <h4>🎮 Flight Control</h4>
+                    <div style="display:flex; gap:4px;">
+                        <button class="window-btn" onclick="app.toggleControlsExpanded()"
+                            title="Expand Controls">⛶</button>
+                        <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')">−</button>
+                    </div>
+                </div>
+                <div class="cockpit-content">
+                    <div class="controls-grid"
+                        style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:15px;">
+                        <kbd data-key="W" data-cmd="Thrust Forward"
+                            data-desc="Accelerate in the direction you're facing">W</kbd>
+                        <kbd data-key="S" data-cmd="Thrust Backward" data-desc="Decelerate or reverse thrust">S</kbd>
+                        <kbd data-key="A" data-cmd="Roll Left" data-desc="Rotate spacecraft counter-clockwise">A</kbd>
+                        <kbd data-key="D" data-cmd="Roll Right" data-desc="Rotate spacecraft clockwise">D</kbd>
+                        <kbd data-key="Q" data-cmd="Strafe Up"
+                            data-desc="Move upward without changing direction">Q</kbd>
+                        <kbd data-key="E" data-cmd="Strafe Down"
+                            data-desc="Move downward without changing direction">E</kbd>
+                        <kbd data-key="R" data-cmd="Pitch Up" data-desc="Tilt nose upward (3D rotation)">R</kbd>
+                        <kbd data-key="F" data-cmd="Pitch Down" data-desc="Tilt nose downward (3D rotation)">F</kbd>
+                    </div>
+
+                    <div style="border-top: 1px solid rgba(0,243,255,0.2); padding-top: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label style="font-size: 12px; color: #aaa;">Paint:</label>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <input type="color" id="shipColorPicker" value="#00f3ff"
+                                    style="width: 30px; height: 30px; border:none; background:none; cursor:pointer;">
+                                <button class="btn-small" onclick="app.resetShipColor()">↺</button>
+                            </div>
+                        </div>
+
+                        <button class="btn-small" style="width:100%; padding:8px;" onclick="app.toggleAutopilot()">
+                            <span id="autopilotStatus">✈️ Engage Autopilot</span>
+                        </button>
+
+                        <!-- 3D Rotation Controls -->
+                        <div style="border-top: 1px solid rgba(0,243,255,0.2); margin-top: 10px; padding-top: 10px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label style="font-size: 12px; color: #aaa;">🔄 3D Rotation</label>
+                                <button class="btn-small" onclick="app.resetShipRotation()"
+                                    title="Reset Rotation">↺</button>
+                            </div>
+
+                            <!-- Yaw (Z-axis) - Spin left/right -->
+                            <div style="margin-bottom: 6px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                    <span>Yaw (Z)</span>
+                                    <span id="yawValue">0°</span>
+                                </div>
+                                <input type="range" id="yawSlider" min="-180" max="180" value="0"
+                                    style="width: 100%; cursor: pointer;"
+                                    oninput="app.setShipRotation('yaw', this.value)">
+                            </div>
+
+                            <!-- Pitch (X-axis) - Tilt up/down -->
+                            <div style="margin-bottom: 6px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                    <span>Pitch (X)</span>
+                                    <span id="pitchValue">0°</span>
+                                </div>
+                                <input type="range" id="pitchSlider" min="-90" max="90" value="0"
+                                    style="width: 100%; cursor: pointer;"
+                                    oninput="app.setShipRotation('pitch', this.value)">
+                            </div>
+
+                            <!-- Roll (Y-axis) - Barrel roll -->
+                            <div style="margin-bottom: 6px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                    <span>Roll (Y)</span>
+                                    <span id="rollValue">0°</span>
+                                </div>
+                                <input type="range" id="rollSlider" min="-180" max="180" value="0"
+                                    style="width: 100%; cursor: pointer;"
+                                    oninput="app.setShipRotation('roll', this.value)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHIP STATUS - Below Flight Control -->
+            <div id="sectionShipStatus" class="cockpit-section" style="top:360px; right:15px; width:220px;">
+                <div class="cockpit-header">
+                    <h4>🛡️ Ship Status</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionShipStatus')">−</button>
+                </div>
+                <div class="cockpit-content">
+                    <!-- Shield Bar -->
+                    <div style="margin-bottom: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                            <span>SHIELD</span>
+                            <span id="shieldText">50 / 50</span>
+                        </div>
+                        <div
+                            style="background: rgba(0,0,0,0.5); border-radius: 4px; height: 20px; overflow: hidden; border: 1px solid rgba(100,200,255,0.4);">
+                            <div id="shieldBar"
+                                style="height: 100%; width: 100%; background: linear-gradient(90deg, #00aaff, #00ffff); transition: width 0.3s ease; box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hull Bar (future expansion) -->
+                    <div style="margin-bottom: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                            <span>HULL</span>
+                            <span id="hullText">100%</span>
+                        </div>
+                        <div
+                            style="background: rgba(0,0,0,0.5); border-radius: 4px; height: 20px; overflow: hidden; border: 1px solid rgba(0,255,100,0.4);">
+                            <div id="hullBar"
+                                style="height: 100%; width: 100%; background: linear-gradient(90deg, #00cc55, #00ff88); transition: width 0.3s ease; box-shadow: 0 0 10px rgba(0, 255, 100, 0.5);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Damage Warning -->
+                    <div id="damageWarning"
+                        style="display: none; text-align: center; padding: 8px; background: rgba(255,0,0,0.2); border: 1px solid rgba(255,0,0,0.5); border-radius: 4px; color: #ff4444; font-size: 12px; font-weight: bold; animation: blink 0.5s infinite;">
+                        ⚠️ TAKING DAMAGE ⚠️
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- BOTTOM ROW: Radar, Engines, Map, Gems - horizontal layout -->
+        <div class="hud-bottom">
+            <!-- RADAR - Bottom Left-Center (Pos 2) -->
+            <div id="sectionRadar" class="cockpit-section" style="bottom:80px; left:210px; width:170px; height:200px;">
+                <div class="cockpit-header">
+                    <h4>📡 Radar</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')">−</button>
+                </div>
+                <div class="cockpit-content" style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="radar-container" style="margin-bottom:10px;">
+                        <canvas id="radarCanvas" class="radar-canvas" width="120" height="120"></canvas>
+                        <div class="radar-sweep"></div>
+                    </div>
+                    <div class="radar-coords" id="radarCoords" style="font-family:monospace; color:#0ff;">X: 0 Y: 0
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENGINES - Bottom Center (Pos 3) -->
+            <div id="sectionVelocity" class="cockpit-section"
+                style="bottom:80px; left:395px; width:180px; height:200px;">
+                <div class="cockpit-header">
+                    <h4>⚡ Engines</h4>
+                </div>
+                <div class="cockpit-content">
+                    <div class="velocity-display"
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:5px;">
+                        <div class="speed-unit" style="color:var(--text-dim); font-size:11px; margin-bottom:5px;">
+                            VELOCITY</div>
+                        <div class="speed-gauge" style="position:relative;">
+                            <canvas id="speedGaugeCanvas" width="80" height="80"></canvas>
+                            <div id="speedNumber" class="speed-number"
+                                style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold; font-size:18px;">
+                                0</div>
+                        </div>
+                        <div class="cockpit-zoom-controls"
+                            style="margin-top:5px; display:flex; align-items:center; gap:8px;">
+                            <button class="zoom-btn" onclick="app.flightZoom(-0.2)"
+                                style="width:24px; height:24px; line-height:22px;">−</button>
+                            <span id="zoomDisplay" class="zoom-value"
+                                style="background:rgba(0,0,0,0.5); padding:2px 8px; border-radius:4px; font-size:12px;">1.0x</span>
+                            <button class="zoom-btn" onclick="app.flightZoom(0.2)"
+                                style="width:24px; height:24px; line-height:22px;">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAP - Bottom Far Left (Pos 1) -->
+            <div id="sectionMap" class="cockpit-section" style="bottom:80px; left:15px; width:180px; height:200px;">
+                <div class="cockpit-header">
+                    <h4>🗺️ Map</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionMap')">−</button>
+                </div>
+                <div class="cockpit-content" style="display:flex; flex-direction:column; align-items:center;">
+                    <canvas id="inlineMapCanvas" class="map-canvas" width="150" height="100"></canvas>
+                    <div style="font-size:9px; color:#888; margin-top:4px;">Click for full map</div>
+                </div>
+            </div>
+
+            <!-- GEMS - Bottom Right (Pos 4 - Constrained) -->
+            <div id="sectionGems" class="cockpit-section gems-section"
+                style="bottom:80px; left:590px; right:20px; width:auto; height:200px;">
+                <div class="cockpit-header" style="justify-content:space-between; padding-right:8px;">
+                    <h4>💎 Precious Elements</h4>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="gems-total" style="font-size:11px; color:#aaa;">Est: <span id="gemsTotal"
+                                style="color:#0ff;">$0</span></div>
+                        <div style="font-size:11px; color:#aaa;">Credits: <span id="walletValue"
+                                style="color:#0f0;">0</span>
+                        </div>
+
+                        <div style="width:1px; height:14px; background:rgba(255,255,255,0.1); margin:0 4px;"></div>
+                        <div style="display:flex; gap:4px;">
+                            <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
+                                title="Toggle Values"
+                                style="color: #00ff00; text-shadow: 0 0 10px #00ff00; font-weight: bold;">$</button>
+                            <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')">−</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="cockpit-content" style="padding:5px; overflow-y:auto; flex:1;">
+                    <div id="gemsGrid" class="gems-grid"
+                        style="grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <div class="resize-handle"
+                    style="position:absolute; right:0; bottom:0; width:12px; height:12px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.3) 50%);">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Map Window (Bottom Left, above cockpit) -->
+    <div id="floatingMap" class="floating-window map-window hidden">
+        <div class="window-header">
+            <h4>🗺️ Universe Map</h4>
+            <div class="window-controls">
+                <button class="window-btn" onclick="app.openExpandedMap()" title="Expand Map">⛶</button>
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingMap')" title="Collapse">−</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <canvas id="mapCanvas" class="map-canvas" width="180" height="120"></canvas>
+            <div class="map-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#0f0"></div>You
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ff0"></div>Stars
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#f0f"></div>Gems
+                </div>
+            </div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <!-- Floating Leaders Window (Bottom Right, above cockpit) -->
+    <div id="floatingLeaders" class="floating-window leaders-window hidden">
+        <div class="window-header">
+            <h4>🏆 Leaders</h4>
+            <div class="window-controls">
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingLeaders')"
+                    title="Collapse">−</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="floatingLeadersList" class="leaders-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <!-- Spacecraft Selection Modal -->
+    <div id="shipModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Select Spacecraft</h2>
+            <div id="shipList" class="ship-list">
+                <div class="ship-option" onclick="app.selectShip('interceptor')">
+                    <h3>🚀 Interceptor</h3>
+                    <p>Balanced fighter. Speed: 50, Accel: 0.5</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('saucer')">
+                    <h3>🛸 Saucer</h3>
+                    <p>High speed, drift capability. Speed: 70, Accel: 0.7</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('hauler')">
+                    <h3>💀 Mauler</h3>
+                    <p>Death Star class. Gravitational pull. Speed: 40, Accel: 0.4</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('orion')">
+                    <h3>⭐ Orion</h3>
+                    <p>Constellation class. Speed: 60, Accel: 0.6</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('draco')">
+                    <h3>🐉 Draco</h3>
+                    <p>Dragon constellation. Speed: 80, Accel: 0.4</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('phoenix')">
+                    <h3>🔥 Phoenix</h3>
+                    <p>Reborn in fire. Speed: 55, Accel: 0.8</p>
+                </div>
+                <div class="ship-option" onclick="app.selectShip('harvester')">
+                    <h3>💎 Starfighter</h3>
+                    <p>Advanced combat vessel. Speed: 80, Accel: 0.8</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="app.hideShipModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === EXPANDED CONTROLS MODAL === -->
+    <div id="expandedControlsModal" class="modal-overlay">
+        <div class="modal" style="max-width: 600px; width: 90%;">
+            <h2 style="color: var(--accent); margin-bottom: 20px;">🎮 Flight Controls Reference</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3
+                        style="color: #ff5500; font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,85,0,0.3); padding-bottom: 6px;">
+                        Movement</h3>
+                    <div class="control-ref-item"><kbd>W</kbd><span><strong>Thrust Forward</strong><br>Accelerate in the
+                            direction you're facing</span></div>
+                    <div class="control-ref-item"><kbd>S</kbd><span><strong>Thrust Backward</strong><br>Decelerate or
+                            reverse thrust</span></div>
+                    <div class="control-ref-item"><kbd>Q</kbd><span><strong>Strafe Up</strong><br>Move upward without
+                            changing direction</span></div>
+                    <div class="control-ref-item"><kbd>E</kbd><span><strong>Strafe Down</strong><br>Move downward
+                            without changing direction</span></div>
+                </div>
+                <div>
+                    <h3
+                        style="color: #00f3ff; font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,243,255,0.3); padding-bottom: 6px;">
+                        Rotation</h3>
+                    <div class="control-ref-item"><kbd>A</kbd><span><strong>Roll Left</strong><br>Rotate spacecraft
+                            counter-clockwise</span></div>
+                    <div class="control-ref-item"><kbd>D</kbd><span><strong>Roll Right</strong><br>Rotate spacecraft
+                            clockwise</span></div>
+                    <div class="control-ref-item"><kbd>R</kbd><span><strong>Pitch Up</strong><br>Tilt nose upward (3D
+                            rotation)</span></div>
+                    <div class="control-ref-item"><kbd>F</kbd><span><strong>Pitch Down</strong><br>Tilt nose downward
+                            (3D rotation)</span></div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #ffd700; font-size: 14px; margin-bottom: 12px;">Special Controls</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="control-ref-item"><kbd>U</kbd><span><strong>Upgrade Dock</strong><br>Open the upgrade
+                            station</span></div>
+                    <div class="control-ref-item"><kbd>ESC</kbd><span><strong>Exit Flight</strong><br>Return to drawing
+                            mode</span></div>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 25px;">
+                <button class="btn-secondary" onclick="app.hideControlsExpanded()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Tooltip Element -->
+    <div id="kbdTooltip" class="kbd-tooltip"></div>
+
+    <!-- Main Application Logic (Module) -->
+    <!-- Mobile Joystick -->
+    <div id="joystick-container"
+        style="display: none; position: fixed; bottom: 30px; left: 30px; width: 120px; height: 120px; z-index: 1000;">
+        <div id="joystick-base"
+            style="width: 100%; height: 100%; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 50%; position: relative; touch-action: none;">
+            <div id="joystick-stick"
+                style="width: 50px; height: 50px; background: rgba(0, 255, 255, 0.5); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #00ffff;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Toggle Button (Visible only on small screens or by default) -->
+    <!-- Mobile Toggle Button (Visible always now via CSS) -->
+    <button id="mobile-toggle" onclick="app.toggleMobileControls()"
+        style="position: fixed; bottom: 85px; right: 30px; z-index: 1000; background: rgba(0,0,0,0.6); color: #0ff; border: 1px solid #0ff; padding: 12px; border-radius: 50%; font-size: 24px; cursor: pointer;">
+        🎮
+    </button>
+
+    <!-- Style for Mobile Visibility & UI Polish -->
+    <script type="module" src="./script.js"></script>
+</body>
+
+</html>

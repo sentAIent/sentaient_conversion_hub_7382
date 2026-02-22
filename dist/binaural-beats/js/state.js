@@ -32,7 +32,7 @@ export const SOUNDSCAPES = [
     { id: 'brown', label: 'Brown Noise', type: 'nature', bpm: null },
     { id: 'rain', label: 'Heavy Rain', type: 'nature', bpm: null },
     { id: 'wind', label: 'Mountain Wind', type: 'nature', bpm: null },
-    { id: 'ocean', label: 'Ocean Waves', type: 'nature', bpm: null },
+    { id: 'ocean', label: 'Waves', type: 'nature', bpm: null },
     { id: 'strings', label: 'Orchestral Strings', type: 'drone', bpm: null },
     { id: 'brass', label: 'Brass Swell', type: 'drone', bpm: null },
     { id: 'winds', label: 'Woodwinds', type: 'drone', bpm: null },
@@ -116,7 +116,7 @@ export const STATE_INSIGHTS = {
 
 export const SOUND_INSIGHTS = {
     pink: "Noise masking distractions.", white: "Pure static clearing the mind.", brown: "Deep rumble grounding awareness.",
-    rain: "Rainfall washing away stress.", wind: "Wind carrying thoughts away.", ocean: "Ocean waves calming the mind.",
+    rain: "Rainfall washing away stress.", wind: "Wind carrying thoughts away.", ocean: "Waves calming the mind.",
     strings: "Harmonies evoking emotion.", brass: "Warmth expanding the mind.", winds: "Breath guiding the flow.",
     bells: "Chimes marking the present moment.", wood: "Rhythm grounding the body.", timpani: "Deep resonance strengthening will.",
     orch_perc: "Dynamic textures stimulating alertness."

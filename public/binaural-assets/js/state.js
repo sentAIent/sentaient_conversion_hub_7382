@@ -82,7 +82,7 @@ export const PRESET_COMBOS = [
         icon: '⚔️',
         preset: 'beta',
         soundscapes: ['strings', 'brass'],
-        visuals: ['matrix', 'particles'],
+        visuals: ['matrix', 'particles', 'waves', 'zengarden'],
         atmosVolume: 0.4,
         color: '#b45309'
     },

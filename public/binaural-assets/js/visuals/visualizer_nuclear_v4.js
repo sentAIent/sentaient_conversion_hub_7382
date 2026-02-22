@@ -775,6 +775,10 @@ export class Visualizer3D {
             depthWrite: false,
             blending: THREE.AdditiveBlending
         });
+
+        // Ensure Matrix renders behind other visuals by rendering it first
+        material.sceneRenderOrder = -1; // Custom property handled by mesh later
+        return material;
     }
 
     initEnvironment() {
@@ -867,6 +871,11 @@ export class Visualizer3D {
         this.matrixMaterial = this.createMatrixShader(texture);
         this.matrixRain = new THREE.Points(geometry, this.matrixMaterial);
         this.matrixRain.frustumCulled = false;
+
+        // CRITICAL FOR EPIC FOCUS COMBO: 
+        // Ensure Matrix renders behind ocean and zen particles to prevent AdditiveBlending washout
+        this.matrixRain.renderOrder = -1;
+
         this.matrixRotationGroup = new THREE.Group();
         this.matrixRotationGroup.add(this.matrixRain);
         this.matrixGroup.add(this.matrixRotationGroup);
@@ -991,8 +1000,9 @@ export class Visualizer3D {
                 this.matrixRain.material.uniforms.uColor.value.set(hex);
             }
         }
-        if (this.logoMesh && this.logoMesh.material) {
-            this.logoMesh.material.color.set(hex);
+        if (this.logoMesh && this.originalLogoImg) {
+            // Re-burn new colors into the texture instead of uniform tint
+            this.updateLogoTexture();
         }
         this.renderSingleFrame();
     }
@@ -1366,56 +1376,95 @@ export class Visualizer3D {
         this.vibrationEnabled = enabled;
     }
 
-    initOverlayLogo() {
-        if (this.logoMesh) return;
+    updateLogoTexture() {
+        if (!this.originalLogoImg) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = this.originalLogoImg.width;
+        canvas.height = this.originalLogoImg.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(this.originalLogoImg, 0, 0);
 
-        const loader = new THREE.TextureLoader();
-        loader.load('/mindwave-logo.png', (texture) => {
-            // Crop out text at bottom
-            // Adjusted: Cut less (15%) to preserve bottom of lotus
-            texture.offset.set(0, 0.15);
-            texture.repeat.set(1, 0.85);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
 
-            // Plane geometry for logo - Large background watermark
-            // Adjust height to match cropped aspect ratio (15 * 0.85 = 12.75)
+        const accentHex = this.customColor ? this.customColor.getHex() : 0x2dd4bf;
+        const accentR = (accentHex >> 16) & 255;
+        const accentG = (accentHex >> 8) & 255;
+        const accentB = accentHex & 255;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+            if (a < 10) continue; // Skip transparency
+
+            // If bright white (M/W and text) -> Theme Accent
+            if (r > 200 && g > 200 && b > 200) {
+                data[i] = accentR;
+                data[i + 1] = accentG;
+                data[i + 2] = accentB;
+                // Boost alpha slightly for vibrant center
+                data[i + 3] = Math.min(255, a + 50);
+            } else {
+                // Outer Lotus Petals -> Distinct White/Muted
+                data[i] = 255;
+                data[i + 1] = 255;
+                data[i + 2] = 255;
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        // Crop out text at bottom
+        texture.offset.set(0, 0.15);
+        texture.repeat.set(1, 0.85);
+
+        if (!this.logoMesh) {
             const geometry = new THREE.PlaneGeometry(15, 12.75);
             const material = new THREE.MeshBasicMaterial({
                 map: texture,
                 transparent: true,
-                opacity: 0.12, // Subtle but visible
-                opacity: 0.12, // Subtle but visible
-                color: this.customColor || 0x2dd4bf, // Dynamic or User Accent
-                // blending: THREE.NormalBlending, // Default blending for sharper look
-                // blending: THREE.NormalBlending, // Default blending for sharper look
+                opacity: 0.12,
+                color: 0xffffff, // White overlay guarantees exact texture colors
                 depthTest: false,
                 depthWrite: false
             });
 
             this.logoMesh = new THREE.Mesh(geometry, material);
-            // Re-center: Since we cropped the bottom, the visual center shifts up. 
-            // We might want to move it slightly down to compensate, or keep it centered.
-            // Let's keep it at 0,0,-10 for now.
             this.logoMesh.position.set(0, 0, -10);
-            this.logoMesh.renderOrder = -1; // Render before other transparent elements (Background)
-
+            this.logoMesh.renderOrder = -1;
             this.scene.add(this.logoMesh);
-            console.log('[Visualizer] Overlay Logo Initialized (Blue #60a9ff, Cropped Text)');
+            console.log('[Visualizer] Overlay Logo Initialized (Dynamic Canvas)');
+        } else {
+            const oldMap = this.logoMesh.material.map;
+            this.logoMesh.material.map = texture;
+            if (oldMap) oldMap.dispose();
+            this.logoMesh.material.needsUpdate = true;
+        }
+
+        if (this.renderer && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
+    }
+
+    initOverlayLogo() {
+        if (this.logoMesh) return;
+
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = '/mindwave-logo.png';
+        img.onload = () => {
+            this.originalLogoImg = img;
+            this.updateLogoTexture();
 
             // Apply pending opacity if any
             if (this.targetLogoOpacity !== undefined) {
                 this.setLogoOpacity(this.targetLogoOpacity);
             } else {
-                this.setLogoOpacity(0.1); // Default faint
+                this.setLogoOpacity(0.12);
             }
-
-            // Force Render
-            if (this.renderer && this.camera) {
-                this.renderer.render(this.scene, this.camera);
-            }
-
-        }, undefined, (err) => {
+        };
+        img.onerror = (err) => {
             console.warn('[Visualizer] Failed to load logo:', err);
-        });
+        };
     }
 
     setLogoOpacity(targetOpacity) {

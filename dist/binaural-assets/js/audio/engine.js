@@ -321,16 +321,15 @@ function startDailyLimitCheck() {
     state.dailyLimitInterval = setInterval(async () => {
         if (!state.isPlaying || dailyLimitTriggered) return;
 
-        // Use cached tier from state or check via service
-        const isPremium = state.userTier === 'pro' || state.userTier === 'yogi' || state.userTier === 'buddha' || (await isPremiumUser());
+        // Use cached tier from state directly
+        const currentTier = state.userTier || 'free';
 
-        // Increment usage (service handles storage logic)
-        // Pass premium status to service so it can decide whether to trigger limit
-        const limitReached = DailyLimitService.increment(1, isPremium);
+        // Increment usage (service handles storage logic based on tier)
+        const limitReached = DailyLimitService.increment(1, currentTier);
 
-        if (limitReached && !isPremium) {
+        if (limitReached) {
             dailyLimitTriggered = true; // Prevent re-entry
-            console.log('[DailyLimit] 15-minute limit reached for Free user! Stopping audio.');
+            console.log(`[DailyLimit] Time limit reached for ${currentTier} tier! Stopping audio.`);
 
             // Clear interval first to prevent any further calls
             clearInterval(state.dailyLimitInterval);
@@ -391,8 +390,8 @@ export function stopAudio(immediate = false) {
         state.masterGain.gain.setValueAtTime(0, now);
 
         // Stop oscillators immediately (no timeout)
-        if (state.oscLeft) { state.oscLeft.stop(); state.oscLeft.disconnect(); }
-        if (state.oscRight) { state.oscRight.stop(); state.oscRight.disconnect(); }
+        if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); }
+        if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); }
         state.oscLeft = null;
         state.oscRight = null;
         Object.keys(state.activeSoundscapes).forEach(id => stopSingleSoundscape(id));
@@ -400,18 +399,18 @@ export function stopAudio(immediate = false) {
         // NORMAL STOP: Fade out gracefully
         state.masterGain.gain.cancelScheduledValues(now);
         state.masterGain.gain.setValueAtTime(state.masterGain.gain.value, now);
-        state.masterGain.gain.linearRampToValueAtTime(0, now + 0.3);
+        state.masterGain.gain.linearRampToValueAtTime(0, now + 0.05);
 
-        // Delay oscillator cleanup to allow for volume fade
+        // Delay oscillator cleanup to allow for volume micro-fade
         if (state.stopTimeout) clearTimeout(state.stopTimeout);
 
         state.stopTimeout = setTimeout(() => {
-            if (state.oscLeft) { state.oscLeft.stop(); state.oscLeft.disconnect(); }
-            if (state.oscRight) { state.oscRight.stop(); state.oscRight.disconnect(); }
+            if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); }
+            if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); }
             state.oscLeft = null; state.oscRight = null;
             Object.keys(state.activeSoundscapes).forEach(id => stopSingleSoundscape(id));
             state.stopTimeout = null;
-        }, 350);
+        }, 60);
     }
 
     // Clear lock screen controls
@@ -744,8 +743,12 @@ export function isAudioPlaying() {
     return state.isPlaying;
 }
 
-// Helpers
+const noiseBufferCache = {};
+let _cacheSampleRate = 0;
+
 function createPinkNoiseBuffer() {
+    if (noiseBufferCache.pink && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.pink;
+    _cacheSampleRate = state.audioCtx.sampleRate;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
@@ -765,20 +768,26 @@ function createPinkNoiseBuffer() {
     let maxVal = 0;
     for (let i = 0; i < bs; i++) { if (Math.abs(o[i]) > maxVal) maxVal = Math.abs(o[i]); }
     if (maxVal > 0) { for (let i = 0; i < bs; i++) { o[i] = o[i] / maxVal; } }
+    noiseBufferCache.pink = b;
     return b;
 }
 
 function createWhiteNoiseBuffer() {
+    if (noiseBufferCache.white && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.white;
+    _cacheSampleRate = state.audioCtx.sampleRate;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
     for (let i = 0; i < bs; i++) {
         o[i] = Math.random() * 2 - 1;
     }
+    noiseBufferCache.white = b;
     return b;
 }
 
 function createBrownNoiseBuffer() {
+    if (noiseBufferCache.brown && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.brown;
+    _cacheSampleRate = state.audioCtx.sampleRate;
     const bs = 2 * state.audioCtx.sampleRate;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
@@ -793,6 +802,7 @@ function createBrownNoiseBuffer() {
     let maxVal = 0;
     for (let i = 0; i < bs; i++) { if (Math.abs(o[i]) > maxVal) maxVal = Math.abs(o[i]); }
     if (maxVal > 0) { for (let i = 0; i < bs; i++) { o[i] = o[i] / maxVal; } }
+    noiseBufferCache.brown = b;
     return b;
 }
 
@@ -914,6 +924,11 @@ export function playCompletionChime() {
 export function updateFrequencies() {
     const base = parseFloat(els.baseSlider.value);
     const beat = parseFloat(els.beatSlider.value);
+
+    // Store in global state for visualizer access
+    state.baseFrequency = base;
+    state.beatFrequency = beat;
+
     console.log(`[Freq] Update: Base=${base}Hz, Beat=${beat}Hz`);
     if (els.baseValue) els.baseValue.textContent = `${base} Hz`;
     if (els.beatValue) els.beatValue.textContent = `${beat} Hz`;
@@ -930,18 +945,32 @@ export function updateFrequencies() {
 
         if (base >= 100) {
             // Healing frequencies: speed based on base Hz (higher = faster) 
-            // 174Hz -> 1.74x, 528Hz -> 5.28x, 963Hz -> 9.63x
-            targetSpeed = base / 100;
+            targetSpeed = Math.min(base / 100, 15.0);
         } else {
             // Brainwave presets: LINEAR proportional to Hz
             // Alpha (10Hz) = 1.0x baseline, all others scale proportionally
             // Delta (2.5Hz) -> 0.25x, Theta (6Hz) -> 0.6x, Alpha (10Hz) -> 1x
             // Beta (18Hz) -> 1.8x, Gamma (40Hz) -> 4x, Hyper-Gamma (80Hz) -> 8x
-            targetSpeed = beat / 10;
+            targetSpeed = Math.min(beat / 10, 15.0);
         }
 
         if (targetSpeed < 0.1) targetSpeed = 0.1;
-        if (targetSpeed > 40.0) targetSpeed = 40.0;
+        if (targetSpeed > 15.0) targetSpeed = 15.0;
+
+        // Update UI Slider position (Quadratic mapping: p = sqrt((v - 0.1) / 14.9))
+        const p = Math.sqrt(Math.max(0, targetSpeed - 0.1) / 14.9);
+        if (els.visualSpeedSlider) {
+            els.visualSpeedSlider.value = p;
+        }
+        if (els.speedValue) {
+            els.speedValue.textContent = targetSpeed.toFixed(1) + 'x';
+        }
+
+        // Sync compact elements if they exist
+        const compactSlider = document.querySelector('.compact-speed-slider');
+        const compactValue = document.querySelector('.compact-speed-value');
+        if (compactSlider) compactSlider.value = p;
+        if (compactValue) compactValue.textContent = targetSpeed.toFixed(1) + 'x';
 
         // Update Visualizer
         import('../visuals/visualizer_nuclear_v4.js').then(m => {
@@ -949,9 +978,6 @@ export function updateFrequencies() {
             if (viz) viz.setSpeed(targetSpeed);
         });
 
-        // Update disabled slider for feedback
-        if (els.visualSpeedSlider) els.visualSpeedSlider.value = targetSpeed;
-        if (els.speedValue) els.speedValue.textContent = targetSpeed.toFixed(1) + 'x';
     }
 
     // Update Haptic Sync if active
@@ -1071,6 +1097,12 @@ function updateSoundscapeSpeed(id, speedVal) {
 }
 
 function startSingleSoundscape(id, vol, tone, speed) {
+    // Prevent orphaned nodes: stop existing soundscape before creating a new one
+    if (state.activeSoundscapes[id]) {
+        console.warn(`[Soundscape] ${id} already active. Stopping old instance to prevent orphans.`);
+        stopSingleSoundscape(id, true); // Immediate stop of the old instance
+    }
+
     // Ensure audio context exists and is resumed
     initAudio();
 
@@ -1144,7 +1176,60 @@ function startSingleSoundscape(id, vol, tone, speed) {
         nodes.push(n, f);
     }
     else if (id === 'rain') { const n = state.audioCtx.createBufferSource(); n.buffer = createPinkNoiseBuffer(); n.loop = true; n.playbackRate.value = rate; const f = state.audioCtx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 200 + (tone * 1800); n.connect(f); f.connect(channelGain); n.start(); nodes.push(n, f); }
-    else if (id === 'wind') { const n = state.audioCtx.createBufferSource(); n.buffer = createPinkNoiseBuffer(); n.loop = true; n.playbackRate.value = rate; const f = state.audioCtx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 200 + (tone * 800); f.Q.value = 1; const lfo = state.audioCtx.createOscillator(); lfo.frequency.value = 0.1 * rate; const lfoG = state.audioCtx.createGain(); lfoG.gain.value = 200; lfo.connect(lfoG); lfoG.connect(f.frequency); n.connect(f); f.connect(channelGain); n.start(); lfo.start(); nodes.push(n, f, lfo, lfoG); }
+    else if (id === 'wind' || id === 'mountain_wind') {
+        const n = state.audioCtx.createBufferSource();
+        n.buffer = createPinkNoiseBuffer();
+        n.loop = true;
+        n.playbackRate.value = rate;
+        const f = state.audioCtx.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.value = (id === 'mountain_wind' ? 400 : 200) + (tone * 800);
+        f.Q.value = id === 'mountain_wind' ? 2.5 : 1;
+        const lfo = state.audioCtx.createOscillator();
+        lfo.frequency.value = (id === 'mountain_wind' ? 0.05 : 0.1) * rate;
+        const lfoG = state.audioCtx.createGain();
+        lfoG.gain.value = id === 'mountain_wind' ? 150 : 200;
+        lfo.connect(lfoG);
+        lfoG.connect(f.frequency);
+        n.connect(f);
+        f.connect(channelGain);
+        n.start();
+        lfo.start();
+        nodes.push(n, f, lfo, lfoG);
+    }
+    else if (id === 'river') {
+        // Mountain River: pink noise + bandpass + fast rippling LFO
+        const n = state.audioCtx.createBufferSource();
+        n.buffer = createPinkNoiseBuffer();
+        n.loop = true;
+        n.playbackRate.value = rate * 0.8;
+        const f = state.audioCtx.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.value = 800 + (tone * 2000);
+        f.Q.value = 0.8;
+
+        // Ripple LFO (Fast volume/filter modulation)
+        const rippleLFO = state.audioCtx.createOscillator();
+        rippleLFO.frequency.value = 4.0 * rate;
+        const rippleGain = state.audioCtx.createGain();
+        rippleGain.gain.value = 0.2;
+        rippleLFO.connect(rippleGain);
+        rippleGain.connect(channelGain.gain);
+
+        const filterLFO = state.audioCtx.createOscillator();
+        filterLFO.frequency.value = 0.5 * rate;
+        const filterLG = state.audioCtx.createGain();
+        filterLG.gain.value = 400;
+        filterLFO.connect(filterLG);
+        filterLG.connect(f.frequency);
+
+        n.connect(f);
+        f.connect(channelGain);
+        n.start();
+        rippleLFO.start();
+        filterLFO.start();
+        nodes.push(n, f, rippleLFO, rippleGain, filterLFO, filterLG);
+    }
     else if (id === 'fireplace') {
         // Fireplace: brown noise base + random crackle simulation
         const baseNoise = state.audioCtx.createBufferSource();
@@ -1252,7 +1337,7 @@ function startSingleSoundscape(id, vol, tone, speed) {
     else if (id === 'strings') createDrone([65.41, 98.00, 130.81], 'sawtooth', 1500, 'lowpass', 3.0);
     else if (id === 'brass') createDrone([130.81, 196.00, 261.63], 'sawtooth', 400, 'lowpass', 0.2);
     else if (id === 'winds') createDrone([261.63, 329.63, 392.00], 'triangle', 1000, 'bandpass', 4.0);
-    else if (['bells', 'wood', 'timpani', 'orch_perc'].includes(id)) {
+    else if (['bells', 'wood', 'timpani', 'orch_perc', 'forest_birds'].includes(id)) {
         let active = true;
         const loop = () => {
             if (!active || !state.isPlaying) return;
@@ -1309,6 +1394,22 @@ function playOneShot(type, dest, tone) {
     }
     else if (type === 'wood') { const osc = state.audioCtx.createOscillator(), env = state.audioCtx.createGain(); osc.frequency.setValueAtTime((800 + Math.random() * 200) * pitchMult, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.1); env.gain.setValueAtTime(0.3, t); env.gain.exponentialRampToValueAtTime(0.001, t + 0.15); osc.connect(env); env.connect(dest); osc.start(t); osc.stop(t + 0.2); }
     else if (type === 'timpani') { const osc = state.audioCtx.createOscillator(), gain = state.audioCtx.createGain(); const freq = (60 + Math.random() * 30) * pitchMult; osc.frequency.setValueAtTime(freq + (50 * pitchMult), t); osc.frequency.exponentialRampToValueAtTime(freq, t + 0.1); gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.6, t + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, t + 2.0); osc.connect(gain); gain.connect(dest); osc.start(t); osc.stop(t + 2.5); }
+    else if (type === 'forest_birds') {
+        // Birds: high pitched sine chirps
+        const fund = (2000 + Math.random() * 3000) * pitchMult;
+        const osc = state.audioCtx.createOscillator();
+        const gain = state.audioCtx.createGain();
+        osc.frequency.setValueAtTime(fund, t);
+        // Quick frequency slide for "chirp"
+        osc.frequency.exponentialRampToValueAtTime(fund * 1.5, t + 0.05);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.1, t + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(gain);
+        gain.connect(dest);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    }
     else if (type === 'orch_perc') { const r = Math.random(); if (r < 0.33) { const osc = state.audioCtx.createOscillator(), gain = state.audioCtx.createGain(); osc.frequency.setValueAtTime(80 * pitchMult, t); osc.frequency.exponentialRampToValueAtTime(10, t + 0.5); gain.gain.setValueAtTime(0.7, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6); osc.connect(gain); gain.connect(dest); osc.start(t); osc.stop(t + 0.7); } else if (r < 0.66) { const noise = state.audioCtx.createBufferSource(); noise.buffer = createPinkNoiseBuffer(); const filter = state.audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 2000 * pitchMult; const gain = state.audioCtx.createGain(); gain.gain.setValueAtTime(0.4, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); noise.connect(filter); filter.connect(gain); gain.connect(dest); noise.start(t); noise.stop(t + 0.3); } else { const noise = state.audioCtx.createBufferSource(); noise.buffer = createPinkNoiseBuffer(); const filter = state.audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 5000 * pitchMult; const gain = state.audioCtx.createGain(); gain.gain.setValueAtTime(0.05, t); gain.gain.linearRampToValueAtTime(0.15, t + 0.2); gain.gain.exponentialRampToValueAtTime(0.001, t + 3.5); noise.connect(filter); filter.connect(gain); gain.connect(dest); noise.start(t); noise.stop(t + 4.0); } }
 }
 
@@ -1365,10 +1466,10 @@ export function stopSingleSoundscape(id, immediate = false) {
             console.warn(`[Audio] Race detected: stopSingleSoundscape for ${id} tried to delete checking new instance.`);
         }
     } else {
-        // NORMAL STOP: Fade out gracefully
+        // NORMAL STOP: Micro-fade out gracefully (50ms)
         try {
             sc.gainNode.gain.cancelScheduledValues(state.audioCtx.currentTime);
-            sc.gainNode.gain.setTargetAtTime(0, state.audioCtx.currentTime, 0.5);
+            sc.gainNode.gain.setTargetAtTime(0, state.audioCtx.currentTime, 0.015); // ~50ms decay
         } catch (e) { }
 
         // Store timeout ID on the soundscape object itself to allow cancellation if needed
@@ -1378,7 +1479,7 @@ export function stopSingleSoundscape(id, immediate = false) {
             if (state.activeSoundscapes[id] === sc) {
                 delete state.activeSoundscapes[id];
             }
-        }, 600);
+        }, 60);
     }
 }
 

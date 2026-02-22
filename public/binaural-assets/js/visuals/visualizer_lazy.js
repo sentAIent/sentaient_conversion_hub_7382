@@ -18,7 +18,7 @@ async function loadVisualizerModule() {
 
     if (loadPromise) return loadPromise;
 
-    const VISUALIZER_VERSION = 'RAINBOW_FIX_V25';
+    const VISUALIZER_VERSION = 'MATRIX_FIX_V26';
     console.log(`[LazyViz] Loading visualizer module from ./visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`);
     // Added version tracking
     const startTime = performance.now();

@@ -37,9 +37,11 @@ export const SOUNDSCAPES = [
     { id: 'white', label: 'White Noise', type: 'nature', bpm: null },
     { id: 'brown', label: 'Brown Noise', type: 'nature', bpm: null },
     { id: 'rain', label: 'Heavy Rain', type: 'nature', bpm: null },
-    { id: 'wind', label: 'Mountain Wind', type: 'nature', bpm: null },
     { id: 'fireplace', label: 'Fireplace', type: 'nature', bpm: null },
-    { id: 'ocean', label: 'Ocean Waves', type: 'nature', bpm: null },
+    { id: 'ocean', label: 'Waves', type: 'nature', bpm: null },
+    { id: 'river', label: 'Mountain River', type: 'nature', bpm: null },
+    { id: 'mountain_wind', label: 'Alpine Wind', type: 'nature', bpm: null },
+    { id: 'forest_birds', label: 'Forest Birds', type: 'nature', bpm: null },
     { id: 'strings', label: 'Orchestral Strings', type: 'drone', bpm: null },
     { id: 'brass', label: 'Brass Swell', type: 'drone', bpm: null },
     { id: 'winds', label: 'Woodwinds', type: 'drone', bpm: null },
@@ -58,6 +60,7 @@ export const PRESET_COMBOS = [
         icon: '🌧️',
         preset: 'alpha',
         soundscapes: ['rain'],
+        visuals: ['rainforest', 'lava'],
         atmosVolume: 0.6,
         color: '#6b7280'
     },
@@ -68,6 +71,7 @@ export const PRESET_COMBOS = [
         icon: '🌙',
         preset: 'delta',
         soundscapes: ['wind'],
+        visuals: ['matrix'],
         atmosVolume: 0.5,
         color: '#1e3a5f'
     },
@@ -78,6 +82,7 @@ export const PRESET_COMBOS = [
         icon: '⚔️',
         preset: 'beta',
         soundscapes: ['strings', 'brass'],
+        visuals: ['matrix', 'particles'],
         atmosVolume: 0.4,
         color: '#b45309'
     },
@@ -88,6 +93,7 @@ export const PRESET_COMBOS = [
         icon: '🌊',
         preset: 'theta',
         soundscapes: ['ocean'],
+        visuals: ['ocean', 'zengarden'],
         atmosVolume: 0.7,
         color: '#0891b2'
     },
@@ -98,6 +104,7 @@ export const PRESET_COMBOS = [
         icon: '⛈️',
         preset: 'gamma',
         soundscapes: ['rain', 'wind'],
+        visuals: ['rainforest', 'matrix'],
         atmosVolume: 0.5,
         color: '#4b5563'
     },
@@ -108,6 +115,7 @@ export const PRESET_COMBOS = [
         icon: '🔔',
         preset: 'mu',
         soundscapes: ['bells'],
+        visuals: ['zengarden', 'sphere'],
         atmosVolume: 0.4,
         color: '#a855f7'
     },
@@ -118,6 +126,7 @@ export const PRESET_COMBOS = [
         icon: '🔥',
         preset: 'alpha',
         soundscapes: ['fireplace'],
+        visuals: ['fireplace'],
         atmosVolume: 0.6,
         color: '#f97316'
     },
@@ -127,9 +136,32 @@ export const PRESET_COMBOS = [
         description: 'Deep nature immersion',
         icon: '🌲',
         preset: 'theta',
-        soundscapes: ['winds', 'brown'],
+        soundscapes: ['winds', 'brown', 'forest_birds'],
+        visuals: ['rainforest', 'matrix'],
         atmosVolume: 0.5,
         color: '#10b981'
+    },
+    {
+        id: 'mountain-zen',
+        label: 'Mountain Zen',
+        description: 'Alpine tranquility',
+        icon: '🏔️',
+        preset: 'alpha',
+        soundscapes: ['mountain_wind', 'forest_birds'],
+        visuals: ['ocean', 'zengarden'],
+        atmosVolume: 0.5,
+        color: '#94a3b8'
+    },
+    {
+        id: 'river-flow',
+        label: 'River Flow',
+        description: 'Serene water journey',
+        icon: '🛶',
+        preset: 'theta',
+        soundscapes: ['river', 'forest_birds'],
+        visuals: ['ocean', 'particles'],
+        atmosVolume: 0.7,
+        color: '#38bdf8'
     },
     {
         id: 'cosmic-journey',
@@ -138,6 +170,7 @@ export const PRESET_COMBOS = [
         icon: '🌌',
         preset: 'gamma',
         soundscapes: ['strings', 'white'],
+        visuals: ['sphere', 'particles', 'matrix'],
         atmosVolume: 0.45,
         color: '#8b5cf6'
     },
@@ -148,10 +181,22 @@ export const PRESET_COMBOS = [
         icon: '☀️',
         preset: 'beta',
         soundscapes: ['pink', 'wood'],
+        visuals: ['sphere', 'zengarden'],
         atmosVolume: 0.5,
         color: '#fbbf24'
     }
 ];
+
+// Brainwave-to-Visual mapping for standard presets
+export const BRAINWAVE_VISUALS = {
+    delta: ['particles'],
+    theta: ['zengarden'],
+    alpha: ['sphere'],
+    beta: ['matrix'],
+    gamma: ['particles', 'matrix'],
+    mu: ['zengarden'],
+    'hyper-gamma': ['matrix', 'particles']
+};
 
 export const STATE_INSIGHTS = {
     delta: ["Deep sleep approaches.", "Total regeneration.", "Unconscious healing."],
@@ -194,7 +239,10 @@ export const state = {
     currentRecordingDuration: 0,
     currentUser: null,
     userTier: 'free', // ✅ FIX: Default to free tier, check actual subscription
+    isLifetime: false, // NEW: Restricted to Lifetime members for PWA install
+    visualVibration: true, // NEW: Toggle synesthetic vibrations
     visualSpeedAuto: true, // Default to Hz sync
+    aiVisualsLocked: false, // NEW: Prevent manual overrides when AI set the mood
 
     // Preset tracking
     activePresetType: null, // Tracks active healing frequency preset (alpha, theta, etc.)
@@ -235,7 +283,11 @@ export const state = {
     hapticInterval: null,
 
     // NEW: Phase 7 AI Sequence Queue
-    sessionQueue: []
+    sessionQueue: [],
+
+    // NEW (Ghost Mode): Idle UI Fade-out
+    uiLocked: false,
+    idleTimeout: null
 };
 
 
@@ -253,6 +305,7 @@ export const els = {
     galleryBtn: null,
     visualSpeedSlider: null,
     speedValue: null,
+    vibrationToggleBtn: null,
     visualColorPicker: null, randomColorBtn: null, colorPreview: null,
 
     // Navigation / Sidebars

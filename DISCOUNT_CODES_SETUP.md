@@ -12,22 +12,38 @@ MindWave includes a discount code system with 4 tiers:
 
 ## Discount Codes
 
-### 10% Off - Beta Testers
-- `BETA10` - Beta Tester
-- `EARLYBIRD` - Early Access
+### 10% Off
+- `ELEVATE10` - Promo 10% Off
+- `BETA10` - Beta Tester (Legacy)
+- `EARLYBIRD` - Early Access (Legacy)
 
-### 20% Off - Supporters
-- `BETA20` - Beta Supporter
-- `FRIEND20` - Friend Discount
+### 15% Off
+- `FREQUENCY15` - Promo 15% Off
 
-### 50% Off - Friends & Family
-- `FAMILY50` - Friends & Family
-- `VIP50` - VIP Access
+### 20% Off
+- `HARMONY20` - Promo 20% Off
+- `BETA20` - Beta Supporter (Legacy)
+- `FRIEND20` - Friend Discount (Legacy)
 
-### 100% Off - Team/Employees
-- `TEAM100` - Team Member
-- `STAFF` - Staff
-- `FOUNDER` - Founder Circle
+### 25% Off
+- `CLARITY25` - Promo 25% Off
+
+### 30% Off
+- `RESONANCE30` - Promo 30% Off
+
+### 40% Off
+- `PRESENCE40` - Promo 40% Off
+
+### 50% Off
+- `ZEN50` - Promo 50% Off
+- `FAMILY50` - Friends & Family (Legacy)
+- `VIP50` - VIP Access (Legacy)
+
+### 100% Off
+- `NIRVANA100` - Promo 100% Off
+- `TEAM100` - Team Member (Legacy)
+- `STAFF` - Staff (Legacy)
+- `FOUNDER` - Founder Circle (Legacy)
 
 ---
 

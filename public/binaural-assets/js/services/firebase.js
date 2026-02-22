@@ -170,7 +170,7 @@ export async function initFirebase() {
                 const isPremium = localStorage.getItem('mindwave_premium') === 'true';
                 const isLifetime = localStorage.getItem('mindwave_lifetime') === 'true';
 
-                state.userTier = isPremium ? 'pro' : 'free';
+                state.userTier = localStorage.getItem('mindwave_tier') || (isPremium ? 'pro' : 'free');
                 state.isLifetime = isLifetime;
 
                 console.log('[Auth] Initial Tier:', state.userTier, 'Lifetime:', state.isLifetime);
@@ -185,10 +185,11 @@ export async function initFirebase() {
 
                         // Update state
                         state.isLifetime = active && lifetime;
-                        state.userTier = active ? 'pro' : 'free';
+                        state.userTier = active ? (data.plan || 'pro') : 'free';
 
                         // Sync localStorage
                         localStorage.setItem('mindwave_premium', active ? 'true' : 'false');
+                        localStorage.setItem('mindwave_tier', state.userTier);
                         localStorage.setItem('mindwave_lifetime', (active && lifetime) ? 'true' : 'false');
 
                         console.log('[Auth] Refreshed Tier:', state.userTier, 'Lifetime:', state.isLifetime);

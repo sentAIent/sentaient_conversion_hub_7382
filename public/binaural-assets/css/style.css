@@ -634,6 +634,10 @@ body[data-theme="sentaient"] .glass-pill:not(.active) {
     opacity: 1;
 }
 
+#lockUIBtn:not(.toggle-active) {
+    color: var(--accent) !important;
+}
+
 /* VISIBILITY FIXES (User Feedback) */
 
 /* 1. Force Numbers/Values to Accent Color (vs Gray/White) */

@@ -95,6 +95,32 @@ export function pauseVisuals() {
 }
 
 /**
+ * Set visual brightness
+ */
+export function setVisualBrightness(brightness) {
+    if (!visualizerModule) {
+        pendingActions.push(() => {
+            if (visualizerModule && visualizerModule.setVisualBrightness) visualizerModule.setVisualBrightness(brightness);
+        });
+        return;
+    }
+    if (visualizerModule.setVisualBrightness) return visualizerModule.setVisualBrightness(brightness);
+}
+
+/**
+ * Set visual logo opacity
+ */
+export function setVisualLogoOpacity(opacity) {
+    if (!visualizerModule) {
+        pendingActions.push(() => {
+            if (visualizerModule && visualizerModule.setVisualLogoOpacity) visualizerModule.setVisualLogoOpacity(opacity);
+        });
+        return;
+    }
+    if (visualizerModule.setVisualLogoOpacity) return visualizerModule.setVisualLogoOpacity(opacity);
+}
+
+/**
  * Resume visuals
  */
 export function resumeVisuals() {
@@ -137,6 +163,6 @@ export function preloadVisualizer() {
         }
     };
 
-    // Use a fixed delay instead of requestIdleCallback for more predictable initial load
-    setTimeout(loadAndInit, 1000);
+    // Load immediately on next frame — no artificial delay
+    requestAnimationFrame(loadAndInit);
 }

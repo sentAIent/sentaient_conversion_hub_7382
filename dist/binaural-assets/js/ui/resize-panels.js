@@ -279,6 +279,7 @@ export function updateBottomBarWidth() {
     const bottomBar = document.getElementById('bottomControlBar');
     if (!bottomBar) return;
 
+
     const leftPanel = document.getElementById('leftPanel');
     const rightPanel = document.getElementById('rightPanel');
 
@@ -287,10 +288,10 @@ export function updateBottomBarWidth() {
     const leftRect = leftPanel ? leftPanel.getBoundingClientRect() : null;
     const rightRect = rightPanel ? rightPanel.getBoundingClientRect() : null;
 
-    // Left panel is open if its right edge is > 0 (visible)
-    const leftOpen = leftRect && leftRect.right > 0;
-    // Right panel is open if its left edge is < window width (visible)
-    const rightOpen = rightRect && rightRect.left < window.innerWidth;
+    // Left panel is open if its right edge is > 10 (visible)
+    const leftOpen = leftRect && leftRect.right > 10;
+    // Right panel is open if its left edge is < window width - 10 (visible)
+    const rightOpen = rightRect && rightRect.left < (window.innerWidth - 10);
 
     const windowWidth = window.innerWidth;
 
@@ -303,33 +304,37 @@ export function updateBottomBarWidth() {
     // RESPONSIVE LOGIC CHANGE:
     // If available space is too small (e.g. tablet with both panels open), 
     // trying to squeeze the footer between panels results in a broken layout.
-    // Instead, if width < 768px (or constrained), let the footer float OVER the panels (z-100).
-    const isConstrained = availableWidth < 600;
+    // Instead, if width < 450px (or constrained), let the footer float OVER the panels (z-100).
+    const isConstrained = availableWidth < 450;
 
     if (isConstrained) {
         // Full width overlay mode
-        bottomBar.style.left = '0px';
-        bottomBar.style.right = '0px';
+        // We set fixed positioning to '0' to override any previous calculated pixels
+        bottomBar.style.left = '0';
+        bottomBar.style.right = '0';
         bottomBar.style.width = '100%';
         bottomBar.style.marginLeft = '0';
         bottomBar.style.marginRight = '0';
+
         // Ensure pointer events pass through empty space so we don't block sidebar clicks
         bottomBar.style.pointerEvents = 'none';
         // Re-enable pointer events on children
         Array.from(bottomBar.children).forEach(child => {
             child.style.pointerEvents = 'auto';
         });
-        console.log(`[Footer] OVERLAY MODE - Available: ${availableWidth}px (constrained)`);
+        // Console log removed to prevent spam during resize
     } else {
         // Docked mode (sit between panels)
+        // CRITICAL FIX: Use CSS constraints (left/right) instead of explicit width
+        // This avoids issues with scrollbars causing 'too wide' calculations
+        bottomBar.style.removeProperty('width');
+
         bottomBar.style.left = `${leftWidth}px`;
         bottomBar.style.right = `${rightWidth}px`;
-        // Explicitly set width so flex children know the container size
-        bottomBar.style.width = `${availableWidth}px`;
+        bottomBar.style.width = 'auto';
         bottomBar.style.marginLeft = '0';
         bottomBar.style.marginRight = '0';
         bottomBar.style.pointerEvents = 'auto';
-        console.log(`[Footer] DOCKED MODE - Left: ${leftWidth}px, Right: ${rightWidth}px, Available: ${availableWidth}px`);
     }
 
     // Set a CSS variable so children can reference the available width

@@ -198,7 +198,7 @@ const initApp = () => {
 
     // Expose share function globally for UI buttons
     window.shareCurrentPreset = async () => {
-        const { Visualizer3D } = await import('./visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V14');
+        const { Visualizer3D } = await import('./visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V15');
         const result = await copyShareLink();
         if (result.success) {
             const toast = document.createElement('div');

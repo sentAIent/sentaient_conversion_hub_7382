@@ -176,11 +176,13 @@ export function goToCheckout(tier, billingPeriod = 'monthly', discountCode = nul
     checkoutUrl += `&metadata[tier]=${tier}`;
     checkoutUrl += `&metadata[billing_period]=${billingPeriod}`;
 
-    // Add discount code if provided
-    if (discountCode) {
+    // Add discount code if provided AND not a lifetime deal
+    if (discountCode && billingPeriod !== 'oneTime') {
         // Note: Coupon must exist in Stripe Dashboard with this exact ID
         checkoutUrl += `&discounts[0][coupon]=${encodeURIComponent(discountCode)}`;
         checkoutUrl += `&metadata[discount_code]=${encodeURIComponent(discountCode)}`;
+    } else if (discountCode && billingPeriod === 'oneTime') {
+        console.warn(`[Stripe] Discount codes cannot be applied to Lifetime deals. Code '${discountCode}' was removed.`);
     }
 
     // Redirect to Stripe
