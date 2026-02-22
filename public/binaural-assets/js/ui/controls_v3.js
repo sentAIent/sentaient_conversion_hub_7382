@@ -3300,8 +3300,8 @@ export async function applyComboPreset(comboId, btnElement) {
         cancelFadeOut();
         state.isStopping = false;
 
-        // Wait a moment for audio to fade out
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Wait for audio nodes to fully clear out before applying new preset
+        await new Promise(resolve => setTimeout(resolve, 400));
     }
 
     // 1. Update frequencies immediately (bypass Firebase dependency)
