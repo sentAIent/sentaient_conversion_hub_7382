@@ -126,7 +126,7 @@ export const PRESET_COMBOS = [
         icon: '🔥',
         preset: 'alpha',
         soundscapes: ['fireplace'],
-        visuals: ['fireplace', 'lava'],
+        visuals: ['fireplace'],
         atmosVolume: 0.6,
         color: '#f97316'
     },
@@ -170,7 +170,7 @@ export const PRESET_COMBOS = [
         icon: '🌌',
         preset: 'gamma',
         soundscapes: ['strings', 'white'],
-        visuals: ['sphere', 'particles'],
+        visuals: ['sphere', 'particles', 'matrix'],
         atmosVolume: 0.45,
         color: '#8b5cf6'
     },
