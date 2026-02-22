@@ -1,4 +1,5 @@
 import { state } from '../state.js';
+import { hasPurchasedApp } from '../services/stripe-simple.js';
 
 /**
  * PWA Install Prompt
@@ -10,7 +11,23 @@ let installBannerShown = false;
 const INSTALL_DECLINED_KEY = 'mindwave_install_declined';
 const INSTALL_COMPLETED_KEY = 'mindwave_installed';
 
-export function initPWAInstall() {
+export async function initPWAInstall() {
+    // Ensure manifest is only injected for Lifetime members to prevent browser bypass
+    try {
+        const hasAccess = await hasPurchasedApp();
+        if (hasAccess) {
+            console.log('[PWA] Verified Lifetime Access: Injecting manifest.json');
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = 'manifest.json';
+            document.head.appendChild(manifestLink);
+        } else {
+            console.log('[PWA] Standard User: Skipping manifest injection to enforce app download paywall.');
+        }
+    } catch (e) {
+        console.warn('[PWA] Error checking app purchase access:', e);
+    }
+
     // Skip if already installed or declined
     if (localStorage.getItem(INSTALL_COMPLETED_KEY)) return;
 
@@ -114,18 +131,17 @@ function showInstallBanner() {
     // Event listeners
     document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
         // STRICT PAYWALL CHECK: Source Code / App Download ($350)
-        // Fail-closed: block if window.paywall is missing or fails verification.
-        if (!window.paywall) {
-            alert('Loading purchase verification... Please try again in a moment.');
-            return;
-        }
-
-        const hasAccess = await window.paywall.hasPurchasedApp();
-        if (!hasAccess) {
-            if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
-                if (window.showPricingModal) window.showPricingModal();
+        // We also check here just in case, but the prompt shouldn't even exist otherwise
+        try {
+            const hasAccess = await hasPurchasedApp();
+            if (!hasAccess) {
+                if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
+                    if (window.showPricingModal) window.showPricingModal();
+                }
+                return;
             }
-            return;
+        } catch (e) {
+            console.warn('[PWA] Error checking purchase on install button:', e);
         }
 
         if (!deferredPrompt) return;
