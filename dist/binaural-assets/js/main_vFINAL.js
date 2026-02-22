@@ -381,3 +381,7 @@ function initPresencePulse() {
         }
     });
 
+    console.log('[Presence] Pulse initialized');
+}
+
+
