@@ -6,10 +6,24 @@ const CURSOR_SHAPES = {
         name: 'Sun',
         icon: '☀️',
         create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
-            <g stroke="rgba(255,255,255,0.7)" stroke-width="4" stroke-linejoin="round">
-                <circle cx="50" cy="50" r="14" stroke="${color}" stroke-width="7" fill="none" />
-                <path d="M 67.9 47.8 Q 75.9 47.3 87.9 52.7 Q 75.4 55.4 67.9 52.2 Z M 66.6 57.0 Q 73.8 60.6 81.5 71.2 Q 69.3 67.4 64.4 60.8 Z M 60.8 64.4 Q 65.3 71.0 66.7 84.2 Q 58.0 74.7 57.0 66.6 Z M 52.2 67.9 Q 52.7 75.9 47.3 87.9 Q 44.6 75.4 47.8 67.9 Z M 43.0 66.6 Q 39.4 73.8 28.8 81.5 Q 32.6 69.3 39.2 64.4 Z M 35.6 60.8 Q 29.0 65.3 15.8 66.7 Q 25.3 58.0 33.4 57.0 Z M 32.1 52.2 Q 24.1 52.7 12.1 47.3 Q 24.6 44.6 32.1 47.8 Z M 33.4 43.0 Q 26.2 39.4 18.5 28.8 Q 30.7 32.6 35.6 39.2 Z M 39.2 35.6 Q 34.7 29.0 33.3 15.8 Q 42.0 25.3 43.0 33.4 Z M 47.8 32.1 Q 47.3 24.1 52.7 12.1 Q 55.4 24.6 52.2 32.1 Z M 57.0 33.4 Q 60.6 26.2 71.2 18.5 Q 67.4 30.7 60.8 35.6 Z M 64.4 39.2 Q 71.0 34.7 84.2 33.3 Q 74.7 42.0 66.6 43.0 Z " fill="${color}" />
-                <circle cx="50" cy="50" r="14" stroke="${color}" stroke-width="7" fill="none" />
+            <g>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(0,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(45,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(90,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(135,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(180,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(225,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(270,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(315,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(22.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(67.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(112.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(157.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(202.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(247.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(292.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(337.5,50,50)"/>
+                <circle cx="50" cy="50" r="15" fill="none" stroke="${color}" stroke-width="5"/>
             </g>
         </svg>`
     },
