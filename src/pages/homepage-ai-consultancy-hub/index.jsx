@@ -17,9 +17,9 @@ const HomepageAIConsultancyHub = () => {
     <>
       <Helmet>
         <title>sentAIent - AI That Amplifies Human Potential</title>
-        <meta 
-          name="description" 
-          content="Transform your business with intelligent AI automation. Experience measurable growth without disruption through our proven AI implementation methodology. Start your free assessment today." 
+        <meta
+          name="description"
+          content="Transform your business with intelligent AI automation. Experience measurable growth without disruption through our proven AI implementation methodology. Start your free assessment today."
         />
         <meta name="keywords" content="AI automation, business transformation, artificial intelligence, AI consulting, automation solutions, AI implementation" />
         <meta property="og:title" content="sentAIent Conversion Hub - AI That Amplifies Human Potential" />
@@ -33,20 +33,20 @@ const HomepageAIConsultancyHub = () => {
       </Helmet>
       <div className="min-h-screen bg-background">
         <Header />
-        
+
         <main>
           {/* Hero Section with AI Impact Calculator */}
           <HeroSection />
-          
+
           {/* Success Stories Carousel */}
           <SuccessStoriesCarousel />
-          
+
           {/* Solutions Preview with Interactive Cards */}
           <SolutionsPreview />
-          
+
           {/* Trust Signals Bar */}
           <TrustSignalsBar />
-          
+
           {/* Transformation Gallery Teaser */}
           <TransformationGalleryTeaser />
         </main>
@@ -55,20 +55,16 @@ const HomepageAIConsultancyHub = () => {
         <footer className="bg-primary text-primary-foreground py-16">
           <div className="container mx-auto px-6 lg:px-8">
             <div className="grid md:grid-cols-4 gap-8 mb-12">
-              
+
               {/* Company Info */}
               <div className="md:col-span-2">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-primary font-bold text-lg">S</span>
-                  </div>
-                  <div>
-                    <div className="text-xl font-bold">sentAIent</div>
-                    <div className="text-sm text-primary-foreground/80">Conversion Hub</div>
+                <div className="flex flex-col space-y-2 mb-6">
+                  <div className="flex items-center justify-start py-2 h-16 md:h-20">
+                    <img src="/sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png" alt="sentAIent" className="h-full w-auto object-contain" />
                   </div>
                 </div>
                 <p className="text-primary-foreground/90 leading-relaxed mb-6 max-w-md">
-                  Transforming businesses through intelligent AI automation that amplifies human potential. 
+                  Transforming businesses through intelligent AI automation that amplifies human potential.
                   Experience measurable growth without disruption.
                 </p>
                 <div className="flex items-center space-x-4">
