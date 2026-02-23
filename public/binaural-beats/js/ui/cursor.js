@@ -5,17 +5,25 @@ const CURSOR_SHAPES = {
     sun: {
         name: 'Sun',
         icon: '☀️',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-            <circle cx="16" cy="16" r="6" fill="${color}"/>
-            <g stroke="${color}" stroke-width="2" stroke-linecap="round">
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="16" y1="26" x2="16" y2="30"/>
-                <line x1="2" y1="16" x2="6" y2="16"/>
-                <line x1="26" y1="16" x2="30" y2="16"/>
-                <line x1="6" y1="6" x2="9" y2="9"/>
-                <line x1="23" y1="23" x2="26" y2="26"/>
-                <line x1="6" y1="26" x2="9" y2="23"/>
-                <line x1="23" y1="9" x2="26" y2="6"/>
+        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
+            <g>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(0,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(45,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(90,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(135,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(180,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(225,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(270,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="${color}" transform="rotate(315,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(22.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(67.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(112.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(157.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(202.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(247.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(292.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="${color}" transform="rotate(337.5,50,50)"/>
+                <circle cx="50" cy="50" r="15" fill="none" stroke="${color}" stroke-width="5"/>
             </g>
         </svg>`
     },
@@ -37,12 +45,13 @@ const CURSOR_SHAPES = {
     lotus: {
         name: 'Lotus',
         icon: '🪷',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.8"/>
-            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(45 16 16)"/>
-            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(-45 16 16)"/>
-            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(90 16 16)"/>
-            <circle cx="16" cy="16" r="3" fill="${color}"/>
+        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 128 128">
+            <path d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M44 72 C30 76 20 64 20 52 C20 40 36 30 36 30" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M84 72 C98 76 108 64 108 52 C108 40 92 30 92 30" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M48 96 L64 108 L80 96" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`
     },
     heart: {
