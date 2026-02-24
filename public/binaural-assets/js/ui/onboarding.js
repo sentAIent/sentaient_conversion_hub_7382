@@ -241,7 +241,7 @@ function createOnboardingUI() {
 
     onboardingOverlay = document.createElement('div');
     onboardingOverlay.id = 'onboardingOverlay';
-    onboardingOverlay.className = 'fixed inset-0 bg-black/40 transition-opacity duration-300 opacity-0';
+    onboardingOverlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-[8px] transition-opacity duration-300 opacity-0';
     onboardingOverlay.style.zIndex = Z_OVERLAY;
 
     onboardingHighlight = document.createElement('div');
@@ -253,7 +253,7 @@ function createOnboardingUI() {
     onboardingTooltip.className = 'tooltip-stationary pointer-events-auto';
 
     onboardingTooltip.innerHTML = `
-        <div class="flex-1 relative bg-[#0f172a] border border-[var(--accent)] text-white p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] flex flex-col pointer-events-auto">
+        <div class="flex-1 relative bg-[#0f172a] border border-[var(--accent)] text-white p-5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] flex flex-col pointer-events-auto" style="background-color: #0f172a !important; opacity: 1 !important;">
             <!-- Modern Close X Button -->
             <button id="onboardingClose" class="absolute top-3 right-3 text-slate-500 hover:text-white transition-colors p-1" title="Close Tutorial">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -352,10 +352,11 @@ function startTracking(step) {
     let framesThisStep = 0;
 
     function tick() {
-        if (!onboardingHighlight || currentStep < 0) return;
+        if (!onboardingHighlight || !onboardingOverlay || currentStep < 0) return;
         const currentStepData = activeSteps[currentStep];
         const target = detectVisibleTarget(currentStepData);
         const highlight = onboardingHighlight;
+        const overlay = onboardingOverlay;
 
         framesThisStep++;
 
@@ -380,6 +381,17 @@ function startTracking(step) {
                 highlight.style.height = (rect.height + padding * 2) + 'px';
                 highlight.style.opacity = '1';
 
+                // HOLE-PUNCHING LOGIC (Clip-path)
+                // We use even-odd rule to punch a hole in the overlay
+                const hL = rect.left - padding;
+                const hT = rect.top - padding;
+                const hR = rect.right + padding;
+                const hB = rect.bottom + padding;
+
+                // Path describes the full screen and then "punches" the hole by drawing it inside
+                overlay.style.clipPath = `polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%, ${hL}px ${hT}px, ${hR}px ${hT}px, ${hR}px ${hB}px, ${hL}px ${hB}px, ${hL}px ${hT}px)`;
+                overlay.style.webkitClipPath = overlay.style.clipPath; // Compatibility
+
                 // Sidebar scroll helper
                 const sidebar = target.closest('#leftPanel, #rightPanel');
                 if (sidebar) {
@@ -390,9 +402,11 @@ function startTracking(step) {
                 }
             } else {
                 highlight.style.display = 'none';
+                overlay.style.clipPath = 'none';
             }
         } else {
             highlight.style.display = 'none';
+            overlay.style.clipPath = 'none';
         }
         trackingId = requestAnimationFrame(tick);
     }

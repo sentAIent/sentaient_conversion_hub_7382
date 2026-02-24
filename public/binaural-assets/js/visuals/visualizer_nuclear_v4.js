@@ -570,11 +570,11 @@ export class Visualizer3D {
         const charPool = "MINDWAVE";
         const special = ":・.\"=*+<>";
 
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = '#4bff4b';
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
 
         ctx.font = 'bold 44px "Courier New", "MS Gothic", "Hiragino Kaku Gothic ProN", monospace';
-        ctx.fillStyle = '#ccffcc';
+        ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -590,7 +590,12 @@ export class Visualizer3D {
             textToSpell = "";
         }
 
-        const manualSequence = ["LOGO", ...textToSpell.split('')];
+        const mid = Math.floor(textToSpell.length / 2);
+        const manualSequence = [
+            ...textToSpell.slice(0, mid).split(''),
+            "LOGO",
+            ...textToSpell.slice(mid).split('')
+        ];
         const specialCount = manualSequence.length;
 
         for (let i = 0; i < 64; i++) {
@@ -620,7 +625,7 @@ export class Visualizer3D {
                 if (Math.random() > 0.5) {
                     ctx.save();
                     ctx.scale(-1, 1);
-                    ctx.fillStyle = '#00FF41';
+                    ctx.fillStyle = '#ffffff';
                     ctx.font = 'bold 44px monospace';
                     ctx.fillText(char, 0, 0);
                     ctx.restore();
@@ -629,23 +634,38 @@ export class Visualizer3D {
             }
 
             if (char || isLogo) {
-                ctx.fillStyle = '#00FF41';
+                ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 44px monospace';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowBlur = 4;
-                ctx.shadowColor = '#00FF41';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
 
                 if (isLogo) {
                     if (this.logoImage) {
                         const size = 44;
                         const offset = -size / 2;
-                        ctx.drawImage(this.logoImage, offset, offset, size, size);
+
+                        // Create a temporary canvas to tint the logo
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = size;
+                        tempCanvas.height = size;
+                        const tCtx = tempCanvas.getContext('2d');
+
+                        // Draw logo
+                        tCtx.drawImage(this.logoImage, 0, 0, size, size);
+
+                        // Tint with white (for shader to tint later)
+                        tCtx.globalCompositeOperation = 'source-in';
+                        tCtx.fillStyle = '#ffffff';
+                        tCtx.fillRect(0, 0, size, size);
+
+                        ctx.drawImage(tempCanvas, offset, offset, size, size);
                     } else {
                         if (!this.logoLoading && !this.logoFailed) {
                             this.logoLoading = true;
                             const loader = new THREE.ImageLoader();
-                            loader.load('/mindwave-logo.png', (image) => {
+                            loader.load('./mindwave-cursor.png', (image) => {
                                 this.logoImage = image;
                                 this.logoLoading = false;
                                 if (this.matrixMaterial) {
@@ -712,8 +732,9 @@ export class Visualizer3D {
                          vBrightness = 0.0;
                     }
                     gl_Position = projectionMatrix * mvPosition;
+                    gl_Position.z -= 0.01; // Avoid flickering
                     gl_PointSize = 480.0 / -mvPosition.z;
-                    if (abs(aCharIndex) < 0.1) gl_PointSize *= 2.0;
+                    if (abs(aCharIndex - 4.0) < 0.1) gl_PointSize *= 1.4;
                 }
             `,
             fragmentShader: `
@@ -1378,11 +1399,15 @@ export class Visualizer3D {
 
     updateLogoTexture() {
         if (!this.originalLogoImg) return;
+        // Render at high resolution for crisp display
+        const renderSize = 512;
         const canvas = document.createElement('canvas');
-        canvas.width = this.originalLogoImg.width;
-        canvas.height = this.originalLogoImg.height;
+        canvas.width = renderSize;
+        canvas.height = renderSize;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(this.originalLogoImg, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(this.originalLogoImg, 0, 0, renderSize, renderSize);
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
@@ -1401,24 +1426,30 @@ export class Visualizer3D {
                 data[i] = accentR;
                 data[i + 1] = accentG;
                 data[i + 2] = accentB;
-                // Boost alpha slightly for vibrant center
-                data[i + 3] = Math.min(255, a + 50);
+                // Boost alpha for vibrant center (Full opacity for branding)
+                data[i + 3] = 255;
             } else {
                 // Outer Lotus Petals -> Distinct White/Muted
-                data[i] = 255;
-                data[i + 1] = 255;
-                data[i + 2] = 255;
+                data[i] = 200;
+                data[i + 1] = 200;
+                data[i + 2] = 200;
+                // Reduce alpha for petals to make center pop
+                data[i + 3] = Math.min(255, a * 0.5);
             }
         }
         ctx.putImageData(imageData, 0, 0);
 
         const texture = new THREE.CanvasTexture(canvas);
-        // Crop out text at bottom
-        texture.offset.set(0, 0.15);
-        texture.repeat.set(1, 0.85);
+        // High-quality texture filtering for crisp logo
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = true;
+        if (this.renderer) {
+            texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+        }
 
         if (!this.logoMesh) {
-            const geometry = new THREE.PlaneGeometry(15, 12.75);
+            const geometry = new THREE.PlaneGeometry(11.25, 9.56);
             const material = new THREE.MeshBasicMaterial({
                 map: texture,
                 transparent: true,
@@ -1450,7 +1481,7 @@ export class Visualizer3D {
 
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = '/mindwave-logo.png';
+        img.src = './mindwave-logo-icon.png';
         img.onload = () => {
             this.originalLogoImg = img;
             this.updateLogoTexture();

@@ -9,7 +9,7 @@ export const APPS_CONFIG = {
         tagline: 'Personal Binaural Beats Studio',
         url: 'https://sentaient.com/mindwave-beta.html',
         demoUrl: 'https://sentaient.com/mindwave-demo.html',
-        logo: '/mindwave-logo.png',
+        logo: './mindwave-logo.png',
         primaryColor: '#2dd4bf', // Teal
         topics: ['Focus', 'Sleep', 'Meditation', 'Deep Work', 'Anxiety Relief'],
         scripts: [

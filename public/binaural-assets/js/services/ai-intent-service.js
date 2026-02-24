@@ -2,7 +2,7 @@ import { SLEEP_STORIES } from '../content/stories.js';
 
 const MAPPING = {
     focus: {
-        keywords: ['focus', 'study', 'work', 'concentrate', 'productivity', 'coding', 'read', 'learn'],
+        keywords: ['focus', 'study', 'work', 'concentrate', 'productivity', 'coding', 'read', 'learn', 'beta', 'frequency'],
         preset: 'beta',
         soundscapes: ['rain', 'pink'],
         visuals: ['matrix', 'particles'],
@@ -21,7 +21,7 @@ const MAPPING = {
         insight: 'Peak awareness activated. Gamma waves (40Hz) and neural flow patterns for high-level information synthesis.'
     },
     sleep: {
-        keywords: ['sleep', 'nap', 'insomnia', 'night', 'rest', 'bed', 'tired'],
+        keywords: ['sleep', 'nap', 'insomnia', 'night', 'rest', 'bed', 'tired', 'delta', 'deep sleep'],
         preset: 'delta',
         soundscapes: ['brown', 'wind'],
         visuals: ['zengarden'],
@@ -41,7 +41,7 @@ const MAPPING = {
         insight: 'Lucid dreaming protocol. 6Hz Theta synchronization with ethereal soundscapes to bridge conscious and subconscious.'
     },
     relax: {
-        keywords: ['relax', 'calm', 'anxiety', 'stress', 'chill', 'peace', 'meditation', 'unwind'],
+        keywords: ['relax', 'calm', 'anxiety', 'stress', 'chill', 'peace', 'meditation', 'unwind', 'alpha', 'waves'],
         preset: 'alpha',
         soundscapes: ['ocean', 'rain'],
         visuals: ['ocean', 'zengarden'],
