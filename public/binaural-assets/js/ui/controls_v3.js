@@ -1804,6 +1804,10 @@ function setupModeToggle() {
             updateModeUI(mode);
         });
     });
+
+    // Apply initial toggle classes so buttons match theme on load
+    const currentMode = state.audioMode || 'binaural';
+    updateModeUI(currentMode);
 }
 
 function updateModeUI(mode) {
@@ -2472,8 +2476,8 @@ export function setTheme(themeName) {
     // Theme-Aware Logo Switching
     const logoImg = document.querySelector('#leftPanel img');
     if (logoImg) {
-        // Use the new light logo for bright themes, standard logo for dark themes
-        const newSrc = isLightTheme ? '/mindwave-logo-light.png' : '/mindwave-logo.png';
+        // Stop using blurry PNGs - use the authentic crisp SVG for both themes
+        const newSrc = './mindwave-logo.png';
         if (logoImg.getAttribute('src') !== newSrc) {
             logoImg.src = newSrc;
         }
@@ -2790,11 +2794,11 @@ export function loadSettings(payload) {
         const modeButtons = document.querySelectorAll('.mode-btn');
         modeButtons.forEach(btn => {
             if (btn.dataset.mode === settings.audioMode) {
-                btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]');
-                btn.classList.remove('text-[var(--text-muted)]');
+                btn.classList.add('toggle-active');
+                btn.classList.remove('toggle-inactive');
             } else {
-                btn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]');
-                btn.classList.add('text-[var(--text-muted)]');
+                btn.classList.remove('toggle-active');
+                btn.classList.add('toggle-inactive');
             }
         });
         if (els.modeLabel) {
@@ -3574,12 +3578,9 @@ export function initThemeModal() {
     const CURSOR_SHAPES_DATA = [
         { id: 'sun', name: 'Sun', icon: '☀️' },
         { id: 'moon', name: 'Moon', icon: '🌙' },
-        { id: 'plus', name: 'Plus', icon: '✚' },
-        { id: 'lotus', name: 'Lotus', icon: '🪷' },
         { id: 'heart', name: 'Heart', icon: '❤️' },
-        { id: 'mindwave', name: 'MindWave', icon: '🧠' },
-        { id: 'ring', name: 'Ring', icon: '⭕' },
-        { id: 'target', name: 'Target', icon: '🎯' },
+        { id: 'mindwave', name: 'MindWave', icon: '<img src="./mindwave-cursor.png" width="56" height="56" style="display:inline-block;object-fit:contain;">' },
+        { id: 'sun2', name: 'Sun 2', icon: '🌞' },
         { id: 'default', name: 'Default', icon: '🖱️' }
     ];
 
@@ -3595,13 +3596,29 @@ export function initThemeModal() {
                 <div class="text-xs opacity-70">Choose shape and color</div>
             </div>
         </div>
-        <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20">
-            <span class="text-xs font-medium">Color:</span>
-            <div class="relative group">
-                <div id="cursorColorPreview" class="w-8 h-8 rounded-full border-2 border-[var(--accent)]/40 cursor-pointer shadow-lg transition-transform hover:scale-110" style="background-color: ${effectiveColor};"></div>
-                <input type="color" id="cursorColorPicker" value="${savedColor || '#60a9ff'}" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+        <div class="mb-4 p-3 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="text-xs font-medium">Color:</span>
+                <div id="cursorColorPreview" class="w-8 h-8 rounded-full border-2 border-[var(--accent)]/40 shadow-lg" style="background-color: ${effectiveColor};"></div>
+                <button id="resetCursorColor" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 transition-all border border-[var(--accent)]/30">Reset</button>
             </div>
-            <button id="resetCursorColor" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 transition-all border border-[var(--accent)]/30">Reset</button>
+            <div class="mb-2">
+                <label class="text-[10px] font-bold uppercase tracking-wide opacity-60 block mb-1">Hue</label>
+                <input type="range" id="cursorHueSlider" min="0" max="360" value="180"
+                    style="width:100%;height:12px;-webkit-appearance:none;appearance:none;border-radius:6px;outline:none;cursor:pointer;
+                    background:linear-gradient(to right,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%));">
+            </div>
+            <div class="mb-2">
+                <label class="text-[10px] font-bold uppercase tracking-wide opacity-60 block mb-1">Brightness</label>
+                <input type="range" id="cursorBrightnessSlider" min="20" max="100" value="60"
+                    style="width:100%;height:12px;-webkit-appearance:none;appearance:none;border-radius:6px;outline:none;cursor:pointer;
+                    background:linear-gradient(to right,hsl(180,100%,20%),hsl(180,100%,50%),hsl(180,100%,100%));">
+            </div>
+            <div class="flex gap-1.5 flex-wrap mt-2" id="cursorSwatches">
+                ${['#2dd4bf', '#60a5fa', '#a855f7', '#f472b6', '#facc15', '#f97316', '#ef4444', '#10b981', '#6366f1', '#ffffff'].map(c =>
+        `<div class="w-6 h-6 rounded-full cursor-pointer border border-white/20 hover:scale-110 transition-transform" style="background:${c};" data-color="${c}"></div>`
+    ).join('')}
+            </div>
         </div>
         <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="cursorShapeGrid">
             ${CURSOR_SHAPES_DATA.map(s => `
@@ -3626,14 +3643,59 @@ export function initThemeModal() {
         });
     });
 
-    const cp = section.querySelector('#cursorColorPicker');
-    if (cp) {
-        cp.addEventListener('input', (e) => {
-            if (typeof window.setCursorColor === 'function') {
-                window.setCursorColor(e.target.value);
-                const prev = section.querySelector('#cursorColorPreview');
-                if (prev) prev.style.backgroundColor = e.target.value;
-            }
+    // --- Real-time color picker via hue/brightness sliders ---
+    const hueSlider = section.querySelector('#cursorHueSlider');
+    const brightSlider = section.querySelector('#cursorBrightnessSlider');
+    const preview = section.querySelector('#cursorColorPreview');
+    const swatches = section.querySelector('#cursorSwatches');
+
+    const hslToHex = (h, s, l) => {
+        s /= 100; l /= 100;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => { const k = (n + h / 30) % 12; const c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * c).toString(16).padStart(2, '0'); };
+        return `#${f(0)}${f(8)}${f(4)}`;
+    };
+
+    const applyCursorColor = (hex) => {
+        if (preview) preview.style.backgroundColor = hex;
+        if (typeof window.setCursorColor === 'function') window.setCursorColor(hex);
+    };
+
+    const updateFromSliders = () => {
+        const h = parseInt(hueSlider.value);
+        const l = parseInt(brightSlider.value);
+        const hex = hslToHex(h, 100, l);
+        applyCursorColor(hex);
+        // Update brightness slider gradient to match current hue
+        brightSlider.style.background = `linear-gradient(to right,hsl(${h},100%,20%),hsl(${h},100%,50%),hsl(${h},100%,100%))`;
+    };
+
+    // Initialize sliders from saved color
+    if (savedColor) {
+        // Parse saved hex to set slider positions
+        const r = parseInt(savedColor.slice(1, 3), 16) / 255, g = parseInt(savedColor.slice(3, 5), 16) / 255, b = parseInt(savedColor.slice(5, 7), 16) / 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0; const l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+            else if (max === g) h = ((b - r) / d + 2) * 60;
+            else h = ((r - g) / d + 4) * 60;
+        }
+        hueSlider.value = Math.round(h);
+        brightSlider.value = Math.round(l * 100);
+        brightSlider.style.background = `linear-gradient(to right,hsl(${Math.round(h)},100%,20%),hsl(${Math.round(h)},100%,50%),hsl(${Math.round(h)},100%,100%))`;
+    }
+
+    if (hueSlider) hueSlider.addEventListener('input', updateFromSliders);
+    if (brightSlider) brightSlider.addEventListener('input', updateFromSliders);
+
+    // Preset swatches
+    if (swatches) {
+        swatches.querySelectorAll('[data-color]').forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                applyCursorColor(swatch.dataset.color);
+            });
         });
     }
 
@@ -3643,6 +3705,8 @@ export function initThemeModal() {
             if (typeof window.resetCursorColor === 'function') {
                 window.resetCursorColor();
             }
+            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+            if (preview) preview.style.backgroundColor = accent;
         });
     }
 }
@@ -5280,6 +5344,8 @@ function showUI() {
         el.classList.remove('idle-hidden');
     });
     // Fade OUT logo when UI is visible (Keep faint watermark)
+    const logoImg = document.querySelector('#leftPanel img');
+    if (logoImg) logoImg.style.opacity = '1'; // Keep solid since it's a brand asset now
     import('../visuals/visualizer_nuclear_v4.js').then(m => {
         if (m.setVisualLogoOpacity) m.setVisualLogoOpacity(0.1);
     });

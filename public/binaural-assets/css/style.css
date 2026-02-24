@@ -16,6 +16,61 @@
     --volume-glow: rgba(212, 45, 72, 0.4);
 }
 
+/* AI Goal Input - Accent placeholder & Input Text */
+#aiGoalInput {
+    color: var(--accent) !important;
+    text-shadow: 0 0 5px var(--accent-glow);
+}
+
+#aiGoalInput::placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Vendor specific placeholder styling */
+#aiGoalInput::-webkit-input-placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    text-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 700;
+}
+
+#aiGoalInput::-moz-placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    text-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 700;
+}
+
+#aiGoalInput:-ms-input-placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    text-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 700;
+}
+
+#aiGoalInput:-moz-placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    text-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 700;
+}
+
+
+/* Vibrant Logo Utility for Branding Consistency */
+.vibrant-logo {
+    filter: drop-shadow(0 0 15px rgba(45, 212, 191, 0.4)) brightness(1.1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vibrant-logo:hover {
+    filter: drop-shadow(0 0 25px rgba(45, 212, 191, 0.6)) brightness(1.2);
+    transform: scale(1.02);
+}
+
 * {
     -webkit-tap-highlight-color: transparent;
 }
@@ -285,6 +340,30 @@ input[type='range']::-webkit-slider-thumb {
 .toggle-inactive:hover {
     background-color: rgba(255, 255, 255, 0.15) !important;
     color: var(--text-main) !important;
+}
+
+/* Mode toggle buttons (Binaural/Isochronic/Monaural) - accent text when inactive */
+#modeToggle .mode-btn.toggle-inactive {
+    color: var(--accent) !important;
+    opacity: 0.85;
+}
+
+#modeToggle .mode-btn.toggle-inactive:hover {
+    color: var(--accent) !important;
+    opacity: 1;
+}
+
+/* Light themes: stronger accent text for inactive mode buttons */
+[data-theme-type="light"] #modeToggle .mode-btn.toggle-inactive {
+    color: var(--accent) !important;
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Light themes: active mode button uses white text for contrast against accent bg */
+[data-theme-type="light"] #modeToggle .mode-btn.toggle-active {
+    color: white !important;
 }
 
 /* ==========================================
@@ -1342,12 +1421,12 @@ select {
 
 .toggle-inactive {
     background: transparent !important;
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: var(--text-muted) !important;
 }
 
 .toggle-inactive:hover {
     background: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.9) !important;
+    color: var(--text-main) !important;
 }
 
 /* Prevent text selection on buttons */
@@ -1994,16 +2073,7 @@ body[data-theme="dawn"] .preset-btn.active {
 /* TOP BAR BUTTONS FOR LIGHT THEMES */
 /* ================================ */
 
-/* Mode toggle buttons (Binaural/Isochronic/Monaural) - dark text on light bar */
-body[data-theme="cloud"] #modeToggle .mode-btn,
-body[data-theme="dawn"] #modeToggle .mode-btn {
-    color: var(--text-muted) !important;
-}
-
-body[data-theme="cloud"] #modeToggle .mode-btn.toggle-active,
-body[data-theme="dawn"] #modeToggle .mode-btn.toggle-active {
-    color: white !important;
-}
+/* Mode toggle buttons for light themes - handled by generic [data-theme-type="light"] rules above */
 
 /* Visual mode buttons (Sphere/Flow/Lava) - dark text for light themes */
 body[data-theme="cloud"] #topControlBar button[id$="Btn"],

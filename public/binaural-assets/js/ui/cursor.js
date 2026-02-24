@@ -34,26 +34,6 @@ const CURSOR_SHAPES = {
             <path d="M14 4C9.5 4 6 7.5 6 12c0 4.5 3.5 8 8 8 1.5 0 2.9-.4 4.1-1.1-1.5-1.5-2.4-3.6-2.4-5.9 0-2.3.9-4.4 2.4-5.9C16.9 4.4 15.5 4 14 4z" fill="${color}"/>
         </svg>`
     },
-    plus: {
-        name: 'Plus',
-        icon: '➕',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <line x1="12" y1="4" x2="12" y2="20" stroke="${color}" stroke-width="3" stroke-linecap="round"/>
-            <line x1="4" y1="12" x2="20" y2="12" stroke="${color}" stroke-width="3" stroke-linecap="round"/>
-        </svg>`
-    },
-    lotus: {
-        name: 'Lotus',
-        icon: '🪷',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 128 128">
-            <path d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M44 72 C30 76 20 64 20 52 C20 40 36 30 36 30" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M84 72 C98 76 108 64 108 52 C108 40 92 30 92 30" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M48 96 L64 108 L80 96" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>`
-    },
     heart: {
         name: 'Heart',
         icon: '❤️',
@@ -64,32 +44,22 @@ const CURSOR_SHAPES = {
     mindwave: {
         name: 'MindWave',
         icon: 'mw',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-            <g stroke="${color}" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 4 C16 4 21 10 21 15 C21 18 19 20 16 20 C13 20 11 18 11 15 C11 10 16 4 16 4 Z"/>
-                <path d="M16 20 C14 20 9 18 9 14 C9 11 12 8 12 8"/>
-                <path d="M16 20 C18 20 23 18 23 14 C23 11 20 8 20 8"/>
-                <path d="M10 15 C7 16 5 13 5 10 C5 8 9 6 9 6"/>
-                <path d="M22 15 C25 16 27 13 27 10 C27 8 23 6 23 6"/>
+        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 128 128">
+            <!-- Branded M/W MindWave Logo -->
+            <g stroke="${color}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Outer Petal Outline -->
+                <path d="M64 20 C80 20 108 50 108 80 C108 105 88 115 64 115 C40 115 20 105 20 80 C20 50 48 20 64 20 Z" opacity="0.3"/>
+                <!-- Branded M shape -->
+                <path d="M40 85 L52 55 L64 75 L76 55 L88 85" stroke-width="8"/>
+                <!-- Underline Wave -->
+                <path d="M30 95 C45 85 83 85 98 95" stroke-width="4" opacity="0.6"/>
             </g>
         </svg>`
     },
-    ring: {
-        name: 'Ring',
-        icon: '◯',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-            <circle cx="14" cy="14" r="10" fill="none" stroke="${color}" stroke-width="2"/>
-            <circle cx="14" cy="14" r="2" fill="${color}"/>
-        </svg>`
-    },
-    target: {
-        name: 'Target',
-        icon: '◎',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-            <circle cx="14" cy="14" r="10" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.5"/>
-            <circle cx="14" cy="14" r="5" fill="none" stroke="${color}" stroke-width="1.5"/>
-            <circle cx="14" cy="14" r="2" fill="${color}"/>
-        </svg>`
+    sun2: {
+        name: 'Sun 2',
+        icon: '🌞',
+        create: () => null // uses image file instead
     },
     default: {
         name: 'Default',
@@ -121,8 +91,6 @@ export function initCursor() {
 
 function getEffectiveCursorColor() {
     if (customColor) return customColor;
-    const lightThemes = ['cloud', 'dawn', 'paper', 'ash'];
-    if (lightThemes.includes(state.currentTheme || 'default') && currentShape === 'lotus') return '#1e3a8a';
     return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#60a9ff';
 }
 
@@ -138,7 +106,11 @@ function updateCursorStyle() {
         return;
     }
     if (currentShape === 'mindwave') {
-        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('/mindwave-logo.png') 16 16, auto !important; }`;
+        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./mindwave-cursor.png') 31 31, auto !important; }`;
+        return;
+    }
+    if (currentShape === 'sun2') {
+        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./tribal-sun-cursor.png') 16 16, auto !important; }`;
         return;
     }
     const color = getEffectiveCursorColor();
@@ -214,7 +186,7 @@ export function createCursorUIInThemeModal() {
         </div>
         <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="cursorShapeGrid">
             ${Object.entries(CURSOR_SHAPES).map(([key, shape]) => {
-        const icon = { sun: '☀️', moon: '🌙', plus: '<span style="color:#22c55e;">✚</span>', lotus: '🪷', heart: '❤️', mindwave: '🧠', ring: '⭕', target: '🎯', default: '🖱️' }[key] || '🖱️';
+        const icon = { sun: '☀️', moon: '🌙', heart: '❤️', mindwave: '<img src="./mindwave-cursor.png" width="24" height="24" style="display:inline-block;">', sun2: '🌞', default: '🖱️' }[key] || '🖱️';
         return `<button class="cursor-option p-3 rounded-xl text-center transition-all border ${key === currentShape ? 'active bg-[var(--accent)]/20 border-[var(--accent)]' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'}" data-shape="${key}" title="${shape.name}"><span class="text-2xl block">${icon}</span><div class="text-[10px] mt-1 font-semibold" style="color: var(--text-main);">${shape.name}</div></button>`;
     }).join('')}
         </div>`;
