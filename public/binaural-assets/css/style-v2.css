@@ -16,6 +16,50 @@
     --volume-glow: rgba(212, 45, 72, 0.4);
 }
 
+/* AI Goal Input - Accent placeholder & Input Text */
+#aiGoalInput {
+    color: var(--accent) !important;
+    text-shadow: 0 0 5px var(--accent-glow);
+}
+
+#aiGoalInput::placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Vendor specific placeholder styling */
+#aiGoalInput::-webkit-input-placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    text-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 700;
+}
+
+#aiGoalInput::-moz-placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    text-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 700;
+}
+
+#aiGoalInput:-ms-input-placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    text-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 700;
+}
+
+#aiGoalInput:-moz-placeholder {
+    color: var(--accent) !important;
+    opacity: 0.9 !important;
+    text-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 700;
+}
+
+
 * {
     -webkit-tap-highlight-color: transparent;
 }
@@ -1335,12 +1379,12 @@ select {
 
 .toggle-inactive {
     background: transparent !important;
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: var(--text-muted) !important;
 }
 
 .toggle-inactive:hover {
     background: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.9) !important;
+    color: var(--text-main) !important;
 }
 
 /* Prevent text selection on buttons */
@@ -3087,6 +3131,7 @@ body #feedbackSurveyModal.survey-contrast-fix select option {
     background-color: #0f172a !important;
     color: #ffffff !important;
 }
+
 /* ==========================================
    TRIBAL SUN CUSTOM CURSOR
    Applies custom SVG cursor globally when .custom-sun-cursor class is active on body.
