@@ -404,6 +404,16 @@ a:active,
     animation: cursorClickPulse 0.15s ease-out;
 }
 
+/* Cursor description contrast */
+.cursor-option div {
+    color: var(--text-main) !important;
+    opacity: 1 !important;
+}
+
+.cursor-option.active div {
+    color: white !important;
+}
+
 .glass-pill:hover,
 .glass-pill.active {
     background: rgba(255, 255, 255, 0.2);

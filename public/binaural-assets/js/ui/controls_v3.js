@@ -3593,7 +3593,7 @@ export function initThemeModal() {
             </div>
             <div>
                 <h3 class="text-sm font-bold tracking-tight">CUSTOM CURSOR</h3>
-                <div class="text-xs opacity-70">Choose shape and color</div>
+                <div class="text-xs text-[var(--text-muted)]">Choose shape and color</div>
             </div>
         </div>
         <div class="mb-4 p-3 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20">
@@ -3603,13 +3603,13 @@ export function initThemeModal() {
                 <button id="resetCursorColor" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 transition-all border border-[var(--accent)]/30">Reset</button>
             </div>
             <div class="mb-2">
-                <label class="text-[10px] font-bold uppercase tracking-wide opacity-60 block mb-1">Hue</label>
+                <label class="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] block mb-1">Hue</label>
                 <input type="range" id="cursorHueSlider" min="0" max="360" value="180"
                     style="width:100%;height:12px;-webkit-appearance:none;appearance:none;border-radius:6px;outline:none;cursor:pointer;
                     background:linear-gradient(to right,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%));">
             </div>
             <div class="mb-2">
-                <label class="text-[10px] font-bold uppercase tracking-wide opacity-60 block mb-1">Brightness</label>
+                <label class="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] block mb-1">Brightness</label>
                 <input type="range" id="cursorBrightnessSlider" min="20" max="100" value="60"
                     style="width:100%;height:12px;-webkit-appearance:none;appearance:none;border-radius:6px;outline:none;cursor:pointer;
                     background:linear-gradient(to right,hsl(180,100%,20%),hsl(180,100%,50%),hsl(180,100%,100%));">
