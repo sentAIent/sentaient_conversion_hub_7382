@@ -1,6 +1,407 @@
 /**
  * Interstellar Map Engine v5.0 - Pre-Placement Color Model
  */
+
+// === PROCEDURAL AUDIO ENGINE ===
+class AudioEngine {
+    constructor() {
+        this.ctx = null; // AudioContext (lazy init on user interaction)
+        this.masterGain = null;
+        this.musicGain = null;
+        this.sfxGain = null;
+        this.muted = localStorage.getItem('audioMuted') === 'true';
+        this.musicPlaying = false;
+        this.volume = parseFloat(localStorage.getItem('audioVolume')) || 0.3;
+        this.musicVolume = 0.15;
+        this.engineNode = null;
+        this.engineGain = null;
+        // Rate limiting: prevent audio node flooding during intense combat
+        this._lastPlay = {};
+    }
+
+    // Rate limiter: returns false if same sound played too recently
+    _canPlay(key, minIntervalMs = 50) {
+        const now = Date.now();
+        if (this._lastPlay[key] && now - this._lastPlay[key] < minIntervalMs) return false;
+        this._lastPlay[key] = now;
+        return true;
+    }
+
+    init() {
+        if (this.ctx) return;
+        try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.value = this.muted ? 0 : this.volume;
+            this.masterGain.connect(this.ctx.destination);
+
+            this.sfxGain = this.ctx.createGain();
+            this.sfxGain.gain.value = 1.0;
+            this.sfxGain.connect(this.masterGain);
+
+            this.musicGain = this.ctx.createGain();
+            this.musicGain.gain.value = this.musicVolume;
+            this.musicGain.connect(this.masterGain);
+
+            console.log('[Audio] Engine initialized');
+        } catch (e) {
+            console.warn('[Audio] Web Audio not supported:', e);
+        }
+    }
+
+    ensureContext() {
+        if (!this.ctx) this.init();
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    }
+
+    toggleMute() {
+        this.muted = !this.muted;
+        localStorage.setItem('audioMuted', this.muted);
+        if (this.masterGain) {
+            this.masterGain.gain.setTargetAtTime(this.muted ? 0 : this.volume, this.ctx.currentTime, 0.05);
+        }
+        return this.muted;
+    }
+
+    // --- SOUND EFFECTS ---
+
+    playLaser() {
+        if (!this._canPlay('laser', 100)) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, t);
+        osc.frequency.exponentialRampToValueAtTime(220, t + 0.15);
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    }
+
+    playEnemyLaser() {
+        if (!this._canPlay('enemyLaser', 80)) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(440, t);
+        osc.frequency.exponentialRampToValueAtTime(110, t + 0.1);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.1);
+    }
+
+    playExplosionSmall() {
+        if (!this._canPlay('expSmall', 60)) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        // Noise burst for explosion
+        const bufferSize = this.ctx.sampleRate * 0.3;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2000, t);
+        filter.frequency.exponentialRampToValueAtTime(200, t + 0.3);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+        noise.start(t);
+        noise.stop(t + 0.3);
+    }
+
+    playExplosionBig() {
+        if (!this._canPlay('expBig', 150)) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        // Low rumble + noise
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(80, t);
+        osc.frequency.exponentialRampToValueAtTime(20, t + 0.8);
+
+        const bufferSize = this.ctx.sampleRate * 0.8;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(3000, t);
+        filter.frequency.exponentialRampToValueAtTime(100, t + 0.8);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.35, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+
+        const oscGain = this.ctx.createGain();
+        oscGain.gain.setValueAtTime(0.3, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+
+        osc.connect(oscGain);
+        oscGain.connect(this.sfxGain);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.8);
+        noise.start(t);
+        noise.stop(t + 0.8);
+    }
+
+    playShieldHit() {
+        if (!this._canPlay('shield', 100)) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, t);
+        osc.frequency.exponentialRampToValueAtTime(400, t + 0.2);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.2);
+    }
+
+    playHullHit() {
+        if (!this._canPlay('hull', 100)) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        // Metallic clang
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300, t);
+        osc.frequency.exponentialRampToValueAtTime(80, t + 0.15);
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    }
+
+    playUIClick() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(660, t);
+        osc.frequency.setValueAtTime(880, t + 0.03);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.08);
+    }
+
+    playMissionComplete() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        // Victory fanfare — ascending tones
+        const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, t + i * 0.15);
+            gain.gain.linearRampToValueAtTime(0.12, t + i * 0.15 + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.3);
+            osc.connect(gain);
+            gain.connect(this.sfxGain);
+            osc.start(t + i * 0.15);
+            osc.stop(t + i * 0.15 + 0.3);
+        });
+    }
+
+    playBossAlert() {
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        // Warning siren
+        for (let i = 0; i < 3; i++) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, t + i * 0.4);
+            osc.frequency.linearRampToValueAtTime(600, t + i * 0.4 + 0.2);
+            osc.frequency.linearRampToValueAtTime(200, t + i * 0.4 + 0.4);
+            gain.gain.setValueAtTime(0.1, t + i * 0.4);
+            gain.gain.setValueAtTime(0.1, t + i * 0.4 + 0.35);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.4 + 0.4);
+            osc.connect(gain);
+            gain.connect(this.sfxGain);
+            osc.start(t + i * 0.4);
+            osc.stop(t + i * 0.4 + 0.4);
+        }
+    }
+
+    playCollect() {
+        if (!this._canPlay('collect', 100)) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, t);
+        osc.frequency.exponentialRampToValueAtTime(1200, t + 0.1);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.12);
+    }
+
+    // --- ENGINE HUM ---
+
+    startEngineHum() {
+        this.ensureContext();
+        if (!this.ctx || this.engineNode) return;
+
+        this.engineNode = this.ctx.createOscillator();
+        this.engineGain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        this.engineNode.type = 'sawtooth';
+        this.engineNode.frequency.value = 40;
+        filter.type = 'lowpass';
+        filter.frequency.value = 150;
+        filter.Q.value = 2;
+        this.engineGain.gain.value = 0.04;
+
+        this.engineNode.connect(filter);
+        filter.connect(this.engineGain);
+        this.engineGain.connect(this.sfxGain);
+        this.engineNode.start();
+    }
+
+    updateEngineHum(speed) {
+        if (!this.engineNode || !this.ctx) return;
+        const freq = 40 + speed * 8; // Pitch up with speed
+        this.engineNode.frequency.setTargetAtTime(Math.min(freq, 200), this.ctx.currentTime, 0.1);
+        const vol = 0.02 + Math.min(speed * 0.005, 0.08);
+        this.engineGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
+    }
+
+    stopEngineHum() {
+        if (this.engineNode) {
+            try { this.engineNode.stop(); } catch (e) { }
+            this.engineNode = null;
+            this.engineGain = null;
+        }
+    }
+
+    // --- AMBIENT SPACE MUSIC ---
+
+    startAmbientMusic() {
+        this.ensureContext();
+        if (!this.ctx || this.musicPlaying) return;
+        this.musicPlaying = true;
+        this._playAmbientLoop();
+    }
+
+    _playAmbientLoop() {
+        if (!this.musicPlaying || !this.ctx) return;
+
+        const t = this.ctx.currentTime;
+        // Ethereal pad: layers of detuned sine waves with slow modulation
+        const baseFreqs = [65, 98, 131, 196]; // C2, G2, C3, G3
+        const duration = 8;
+
+        baseFreqs.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const filter = this.ctx.createBiquadFilter();
+
+            osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+            osc.frequency.value = freq + (Math.random() - 0.5) * 2; // Slight detune
+            // Slow pitch drift
+            osc.frequency.setValueAtTime(freq, t);
+            osc.frequency.linearRampToValueAtTime(freq * (1 + (Math.random() - 0.5) * 0.02), t + duration);
+
+            filter.type = 'lowpass';
+            filter.frequency.value = 400 + Math.random() * 200;
+
+            // Fade in and out
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.06, t + duration * 0.3);
+            gain.gain.setValueAtTime(0.06, t + duration * 0.7);
+            gain.gain.linearRampToValueAtTime(0, t + duration);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.musicGain);
+            osc.start(t);
+            osc.stop(t + duration);
+        });
+
+        // Add a high shimmering note occasionally
+        if (Math.random() < 0.5) {
+            const shimmer = this.ctx.createOscillator();
+            const shimGain = this.ctx.createGain();
+            shimmer.type = 'sine';
+            const shimFreqs = [523, 659, 784, 880, 1047];
+            shimmer.frequency.value = shimFreqs[Math.floor(Math.random() * shimFreqs.length)];
+            shimGain.gain.setValueAtTime(0, t + 2);
+            shimGain.gain.linearRampToValueAtTime(0.02, t + 3);
+            shimGain.gain.exponentialRampToValueAtTime(0.001, t + 6);
+            shimmer.connect(shimGain);
+            shimGain.connect(this.musicGain);
+            shimmer.start(t + 2);
+            shimmer.stop(t + 6);
+        }
+
+        // Schedule next loop with slight overlap
+        setTimeout(() => this._playAmbientLoop(), (duration - 1) * 1000);
+    }
+
+    stopAmbientMusic() {
+        this.musicPlaying = false;
+    }
+}
+
+// Global audio engine instance
+const gameAudio = new AudioEngine();
+window.gameAudio = gameAudio;
 class InterstellarEngine {
     constructor() {
         console.log("🚀 InterstellarEngine: Initializing...");
@@ -61,6 +462,11 @@ class InterstellarEngine {
         this.flightMode = false;
         this.keysPressed = {};
         this.credits = this.loadCredits();
+
+        // Economy and Progression Loop
+        this.playerGems = parseInt(localStorage.getItem('playerGems')) || 0;
+        this.unlockedShips = JSON.parse(localStorage.getItem('unlockedShips')) || ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
+
         const savedUpgrades = this.loadUpgrades();
 
         this.playerShip = {
@@ -101,6 +507,14 @@ class InterstellarEngine {
         this.hazardBlackHoles = [];      // Hazard black hole objects (separate from background blackHoles)
         this.missileBases = [];    // Enemy bases that shoot heat-seeking missiles
         this.enemyMissiles = [];   // Active heat-seeking missiles
+        this.enemyShips = [];      // Hostile AI ships
+        this.enemyBullets = [];    // Enemy laser projectiles
+        this.enemyKills = 0;       // Kill counter
+        this.activeBoss = null;    // Current boss entity
+        this.activeMission = null; // Current mission objective
+        this.missionsCompleted = parseInt(localStorage.getItem('missionsCompleted')) || 0;
+        this.bossesDefeated = parseInt(localStorage.getItem('bossesDefeated')) || 0;
+        this.missionBoardOpen = false;
         this.hazardEffect = null;  // Active effect: {type: 'supernova'|'blackhole', startTime, data}
         this.glowSprites = {};     // Cached offscreen canvases for fast rendering
 
@@ -629,6 +1043,7 @@ class InterstellarEngine {
         // Initial UI population
         this.updateWalletUI();
         this.updateInventoryUI();
+        if (this.updateGemsUI) this.updateGemsUI();
         this.updateShipStatus();
         this.updateMap();
 
@@ -1232,9 +1647,15 @@ class InterstellarEngine {
             // floatingMap is removed - we use inline sectionMap now
             if (floatingLeaders) floatingLeaders.classList.remove('hidden');
             this.updateFloatingLeaderboard();
+            // Audio: start engine hum + ambient music
+            gameAudio.startEngineHum();
+            gameAudio.startAmbientMusic();
         } else {
             if (hud) hud.classList.add('hidden');
             if (floatingLeaders) floatingLeaders.classList.add('hidden');
+            // Audio: stop engine + music
+            gameAudio.stopEngineHum();
+            gameAudio.stopAmbientMusic();
         }
 
         // Ensure a background is active
@@ -2708,29 +3129,32 @@ class InterstellarEngine {
         ctx.save();
         ctx.translate(x, y);
 
-        // Outer colored glow
-        ctx.shadowColor = color;
-        ctx.shadowBlur = size * 10;
+        // Find the closest cached sprite. If none matches exactly, fallback to fire.
+        let sprite = this.glowSprites.fire;
+        const colorStr = (color || '').toLowerCase();
 
-        // Flame shape extending backward (-x direction)
+        if (colorStr.includes('00ff') || colorStr.includes('cyan')) sprite = this.glowSprites.cyan;
+        else if (colorStr.includes('ff0000') || colorStr === 'red') sprite = this.glowSprites.red;
+        else if (colorStr.includes('ff88') || colorStr === 'orange') sprite = this.glowSprites.orange;
+        else if (colorStr.includes('ffd7') || colorStr === 'gold') sprite = this.glowSprites.yellow;
+        else if (colorStr.includes('7700') || colorStr === 'purple') sprite = this.glowSprites.purple;
+        else if (colorStr.includes('aa00') || colorStr === 'magenta') sprite = this.glowSprites.magenta;
+        else if (colorStr.includes('00ff66') || colorStr === 'green') sprite = this.glowSprites.green;
+        else if (colorStr.includes('00cc') || colorStr === 'blue') sprite = this.glowSprites.blue;
+
+        // Shape and size
         const flameLength = size * 2.5 * pulse * flicker;
         const flameWidth = size * 0.8 * pulse;
 
-        // Gradient for depth
-        const grad = ctx.createLinearGradient(0, 0, -flameLength, 0);
-        grad.addColorStop(0, 'rgba(255, 255, 255, 0.8)'); // Core
-        grad.addColorStop(0.4, color); // Mid
-        grad.addColorStop(1, 'transparent'); // Tail
+        // Draw elongated glowing thrust using composite operation stretching the circular sprite
+        ctx.globalCompositeOperation = 'screen';
 
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(0, flameWidth * 0.5);
-        ctx.lineTo(-flameLength, 0);
-        ctx.lineTo(0, -flameWidth * 0.5);
-        ctx.quadraticCurveTo(size * 0.2, 0, 0, flameWidth * 0.5);
-        ctx.fill();
+        // Draw main body of flame (stretched backwards)
+        ctx.drawImage(sprite, -flameLength, -flameWidth, flameLength, flameWidth * 2);
 
-        ctx.shadowBlur = 0;
+        // Draw intense core
+        ctx.drawImage(this.glowSprites.white, -size * 0.5 * pulse, -size * 0.5 * pulse, size * pulse, size * pulse);
+
         ctx.restore();
     }
 
@@ -2948,6 +3372,9 @@ class InterstellarEngine {
         if (ship.lastShot && now - ship.lastShot < 150) return;
         ship.lastShot = now;
 
+        // Audio: player laser
+        gameAudio.playLaser();
+
         // Muzzle Flash
         ship.muzzleFlash = 1.0;
 
@@ -3044,10 +3471,60 @@ class InterstellarEngine {
                 this.projectiles.splice(i, 1);
                 continue;
             }
+
+            // Check collisions with Enemy Ships
+            for (let e = this.enemyShips.length - 1; e >= 0; e--) {
+                const enemy = this.enemyShips[e];
+                const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+                const dx = p.x - enemy.x;
+                const dy = p.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < typeDef.size + p.width) {
+                    this.createExplosion(p.x, p.y, 'hit');
+                    enemy.health -= 25;
+                    enemy.hitFlash = 10;
+                    hit = true;
+
+                    if (enemy.health <= 0) {
+                        this.destroyEnemyShip(e);
+                    }
+                    break;
+                }
+            }
+
+            if (hit) {
+                this.projectiles.splice(i, 1);
+                continue;
+            }
+
+            // Check collision with Boss
+            if (this.activeBoss) {
+                const boss = this.activeBoss;
+                const bTypeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+                const dx = p.x - boss.x;
+                const dy = p.y - boss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < bTypeDef.size + p.width) {
+                    this.createExplosion(p.x, p.y, 'hit');
+                    this.damageBoss(25);
+                    hit = true;
+                }
+            }
+
+            if (hit) {
+                this.projectiles.splice(i, 1);
+                continue;
+            }
         }
     }
 
     createExplosion(x, y, type) {
+        // Audio: explosion
+        if (type === 'hit') gameAudio.playExplosionSmall();
+        else gameAudio.playExplosionBig();
+
         // Simple particle explosion
         const count = type === 'hit' ? 5 : 20;
         const color = type === 'hit' ? '#ffff00' : '#ffaa00';
@@ -3088,6 +3565,761 @@ class InterstellarEngine {
         this.spawnLoot(base.x, base.y, 'plutonium', 10);
 
         this.missileBases.splice(index, 1);
+    }
+
+    // === ENEMY SHIP COMBAT SYSTEM ===
+
+    static ENEMY_TYPES = {
+        scout: {
+            name: 'Scout',
+            health: 50,
+            maxSpeed: 3.0,
+            acceleration: 0.08,
+            fireRate: 2000,
+            aggroRange: 600,
+            attackRange: 400,
+            bulletSpeed: 8,
+            bulletDamage: 10,
+            gemDrop: 5,
+            color: '#ff4444',
+            glowColor: 'rgba(255, 68, 68, 0.6)',
+            size: 18
+        },
+        fighter: {
+            name: 'Fighter',
+            health: 100,
+            maxSpeed: 2.5,
+            acceleration: 0.06,
+            fireRate: 1500,
+            aggroRange: 800,
+            attackRange: 500,
+            bulletSpeed: 10,
+            bulletDamage: 15,
+            gemDrop: 15,
+            color: '#ff8800',
+            glowColor: 'rgba(255, 136, 0, 0.6)',
+            size: 24
+        },
+        cruiser: {
+            name: 'Cruiser',
+            health: 200,
+            maxSpeed: 1.5,
+            acceleration: 0.03,
+            fireRate: 3000,
+            aggroRange: 1000,
+            attackRange: 600,
+            bulletSpeed: 7,
+            bulletDamage: 25,
+            gemDrop: 40,
+            burstCount: 3,
+            burstDelay: 200,
+            color: '#aa44ff',
+            glowColor: 'rgba(170, 68, 255, 0.6)',
+            size: 32
+        }
+    };
+
+    spawnEnemyShips() {
+        if (!this.flightMode || !this.playerShip) return;
+
+        const ship = this.playerShip;
+        const spawnRadius = 2000;
+        const minSpawnDist = 800;
+        const targetCount = 4; // Max active enemies
+
+        // Remove enemies too far away
+        this.enemyShips = this.enemyShips.filter(e => {
+            const dist = Math.hypot(e.x - ship.x, e.y - ship.y);
+            return dist < spawnRadius * 2;
+        });
+
+        // Remove distant enemy bullets
+        this.enemyBullets = this.enemyBullets.filter(b => {
+            const dist = Math.hypot(b.x - ship.x, b.y - ship.y);
+            return dist < spawnRadius * 2 && b.life > 0;
+        });
+
+        // Spawn new enemies
+        while (this.enemyShips.length < targetCount) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = minSpawnDist + Math.random() * (spawnRadius - minSpawnDist);
+
+            // Random type weighted: 50% scout, 35% fighter, 15% cruiser
+            const roll = Math.random();
+            let type = 'scout';
+            if (roll > 0.85) type = 'cruiser';
+            else if (roll > 0.5) type = 'fighter';
+
+            const typeDef = InterstellarEngine.ENEMY_TYPES[type];
+
+            this.enemyShips.push({
+                x: ship.x + Math.cos(angle) * dist,
+                y: ship.y + Math.sin(angle) * dist,
+                vx: 0,
+                vy: 0,
+                rotation: Math.random() * Math.PI * 2,
+                type: type,
+                health: typeDef.health,
+                maxHealth: typeDef.health,
+                state: 'patrol', // patrol, chase, attack, flee
+                patrolAngle: Math.random() * Math.PI * 2,
+                patrolTimer: 0,
+                lastFireTime: 0,
+                burstRemaining: 0,
+                burstTimer: 0,
+                hitFlash: 0,
+                spawnTime: Date.now()
+            });
+        }
+    }
+
+    updateEnemyShips() {
+        if (!this.flightMode || !this.playerShip) return;
+
+        const ship = this.playerShip;
+        const now = Date.now();
+        const isPlayerCloaked = ship.isCloaked || ship.type === 'spectre';
+
+        for (const enemy of this.enemyShips) {
+            const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+            const distToPlayer = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
+            const angleToPlayer = Math.atan2(ship.y - enemy.y, ship.x - enemy.x);
+
+            // Determine AI state
+            if (enemy.health < typeDef.health * 0.2) {
+                enemy.state = 'flee';
+            } else if (isPlayerCloaked) {
+                enemy.state = 'patrol';
+            } else if (distToPlayer < typeDef.attackRange) {
+                enemy.state = 'attack';
+            } else if (distToPlayer < typeDef.aggroRange) {
+                enemy.state = 'chase';
+            } else {
+                enemy.state = 'patrol';
+            }
+
+            // Execute state behavior
+            let targetAngle = enemy.patrolAngle;
+            let thrust = 0;
+
+            switch (enemy.state) {
+                case 'patrol':
+                    enemy.patrolTimer++;
+                    if (enemy.patrolTimer > 180 + Math.random() * 120) {
+                        enemy.patrolAngle += (Math.random() - 0.5) * Math.PI;
+                        enemy.patrolTimer = 0;
+                    }
+                    targetAngle = enemy.patrolAngle;
+                    thrust = typeDef.maxSpeed * 0.4;
+                    break;
+
+                case 'chase':
+                    targetAngle = angleToPlayer;
+                    thrust = typeDef.maxSpeed;
+                    break;
+
+                case 'attack':
+                    targetAngle = angleToPlayer;
+                    thrust = typeDef.maxSpeed * 0.3; // Slow approach during attack
+
+                    // Fire weapons
+                    if (enemy.burstRemaining > 0) {
+                        if (now - enemy.burstTimer > (typeDef.burstDelay || 0)) {
+                            this.fireEnemyBullet(enemy, typeDef);
+                            enemy.burstRemaining--;
+                            enemy.burstTimer = now;
+                        }
+                    } else if (now - enemy.lastFireTime > typeDef.fireRate) {
+                        if (typeDef.burstCount) {
+                            enemy.burstRemaining = typeDef.burstCount;
+                            enemy.burstTimer = now;
+                        } else {
+                            this.fireEnemyBullet(enemy, typeDef);
+                        }
+                        enemy.lastFireTime = now;
+                    }
+                    break;
+
+                case 'flee':
+                    targetAngle = angleToPlayer + Math.PI; // Run away
+                    thrust = typeDef.maxSpeed;
+                    break;
+            }
+
+            // Smooth rotation toward target angle
+            let angleDiff = targetAngle - enemy.rotation;
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+            enemy.rotation += angleDiff * 0.06;
+
+            // Apply thrust
+            enemy.vx += Math.cos(enemy.rotation) * typeDef.acceleration;
+            enemy.vy += Math.sin(enemy.rotation) * typeDef.acceleration;
+
+            // Clamp speed
+            const speed = Math.hypot(enemy.vx, enemy.vy);
+            if (speed > thrust) {
+                const scale = thrust / speed;
+                enemy.vx *= scale;
+                enemy.vy *= scale;
+            }
+
+            // Apply friction
+            enemy.vx *= 0.98;
+            enemy.vy *= 0.98;
+
+            // Move
+            enemy.x += enemy.vx;
+            enemy.y += enemy.vy;
+
+            // Decay hit flash
+            if (enemy.hitFlash > 0) enemy.hitFlash--;
+        }
+
+        // Spawn new enemies
+        this.spawnEnemyShips();
+    }
+
+    fireEnemyBullet(enemy, typeDef) {
+        gameAudio.playEnemyLaser();
+        const angleToPlayer = Math.atan2(
+            this.playerShip.y - enemy.y,
+            this.playerShip.x - enemy.x
+        );
+
+        // Lead the player's movement for smarter aiming
+        const dist = Math.hypot(this.playerShip.x - enemy.x, this.playerShip.y - enemy.y);
+        const timeToHit = dist / typeDef.bulletSpeed;
+        const leadX = this.playerShip.x + (this.playerShip.vx || 0) * timeToHit * 0.3;
+        const leadY = this.playerShip.y + (this.playerShip.vy || 0) * timeToHit * 0.3;
+        const leadAngle = Math.atan2(leadY - enemy.y, leadX - enemy.x);
+
+        // Add slight inaccuracy
+        const spread = (Math.random() - 0.5) * 0.15;
+
+        this.enemyBullets.push({
+            x: enemy.x + Math.cos(leadAngle) * (typeDef.size + 5),
+            y: enemy.y + Math.sin(leadAngle) * (typeDef.size + 5),
+            vx: Math.cos(leadAngle + spread) * typeDef.bulletSpeed,
+            vy: Math.sin(leadAngle + spread) * typeDef.bulletSpeed,
+            rotation: leadAngle + spread,
+            damage: typeDef.bulletDamage,
+            life: 80, // ~1.3 seconds
+            color: typeDef.color,
+            width: 3,
+            length: 25
+        });
+    }
+
+    updateEnemyBullets() {
+        if (!this.flightMode || !this.playerShip) return;
+
+        const ship = this.playerShip;
+
+        for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
+            const b = this.enemyBullets[i];
+            b.x += b.vx;
+            b.y += b.vy;
+            b.life--;
+
+            if (b.life <= 0) {
+                this.enemyBullets.splice(i, 1);
+                continue;
+            }
+
+            // Check collision with player
+            const dist = Math.hypot(b.x - ship.x, b.y - ship.y);
+            if (dist < 30) {
+                this.createExplosion(b.x, b.y, 'hit');
+                this.damagePlayer(b.damage);
+                this.enemyBullets.splice(i, 1);
+            }
+        }
+    }
+
+    destroyEnemyShip(index) {
+        const enemy = this.enemyShips[index];
+        const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+
+        // Big explosion
+        this.createExplosion(enemy.x, enemy.y, 'destruction');
+
+        // Award gems
+        this.playerGems += typeDef.gemDrop;
+        localStorage.setItem('playerGems', this.playerGems);
+
+        // Increment kill counter
+        this.enemyKills++;
+
+        // Track mission progress
+        if (this.activeMission) {
+            if (this.activeMission.type === 'kill' && this.activeMission.targetType === enemy.type) {
+                this.activeMission.progress++;
+                this.checkMissionComplete();
+            } else if (this.activeMission.type === 'kill_any') {
+                this.activeMission.progress++;
+                this.checkMissionComplete();
+            }
+        }
+
+        // Drop mineral loot
+        const lootTypes = ['diamond', 'ruby', 'sapphire', 'gold', 'platinum'];
+        const lootType = lootTypes[Math.floor(Math.random() * lootTypes.length)];
+        this.spawnLoot(enemy.x, enemy.y, lootType, Math.ceil(typeDef.gemDrop / 3));
+
+        this.showToast(`💥 ${typeDef.name} destroyed! +${typeDef.gemDrop} Gems`, 2000);
+
+        this.enemyShips.splice(index, 1);
+    }
+
+    // === BOSS FIGHT SYSTEM ===
+
+    static BOSS_TYPES = {
+        dreadnought: {
+            name: 'Dreadnought',
+            health: 500,
+            size: 50,
+            speed: 1.2,
+            acceleration: 0.02,
+            fireRate: 1500,
+            bulletSpeed: 6,
+            bulletDamage: 20,
+            gemReward: 100,
+            color: '#ff2222',
+            glowColor: 'rgba(255, 34, 34, 0.7)',
+            mechanic: 'shield_arc' // Frontal shield, attack from behind
+        },
+        hivequeen: {
+            name: 'Hive Queen',
+            health: 400,
+            size: 45,
+            speed: 1.0,
+            acceleration: 0.015,
+            fireRate: 2500,
+            bulletSpeed: 5,
+            bulletDamage: 15,
+            gemReward: 150,
+            color: '#44ff44',
+            glowColor: 'rgba(68, 255, 68, 0.7)',
+            mechanic: 'spawn_swarm' // Spawns scouts every 5s
+        },
+        voidreaper: {
+            name: 'Void Reaper',
+            health: 600,
+            size: 55,
+            speed: 2.0,
+            acceleration: 0.04,
+            fireRate: 2000,
+            bulletSpeed: 5,
+            bulletDamage: 30,
+            gemReward: 200,
+            color: '#9944ff',
+            glowColor: 'rgba(153, 68, 255, 0.7)',
+            mechanic: 'teleport' // Teleports when hit, fires homing bolts
+        }
+    };
+
+    spawnBoss(bossType) {
+        if (this.activeBoss) return; // Only one boss at a time
+
+        const typeDef = InterstellarEngine.BOSS_TYPES[bossType];
+        if (!typeDef) return;
+
+        const ship = this.playerShip;
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 1200;
+
+        this.activeBoss = {
+            x: ship.x + Math.cos(angle) * dist,
+            y: ship.y + Math.sin(angle) * dist,
+            vx: 0,
+            vy: 0,
+            rotation: Math.atan2(ship.y - (ship.y + Math.sin(angle) * dist), ship.x - (ship.x + Math.cos(angle) * dist)),
+            type: bossType,
+            health: typeDef.health,
+            maxHealth: typeDef.health,
+            lastFireTime: 0,
+            lastSpawnTime: 0,
+            hitFlash: 0,
+            shieldAngle: 0,
+            teleportCooldown: 0,
+            phase: 1 // 1 = full power, 2 = enraged at 50% HP
+        };
+
+        this.showToast(`⚠️ BOSS INCOMING: ${typeDef.name}! ⚠️`, 4000);
+        gameAudio.playBossAlert();
+    }
+
+    updateBoss() {
+        if (!this.activeBoss || !this.flightMode || !this.playerShip) return;
+
+        const boss = this.activeBoss;
+        const ship = this.playerShip;
+        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+        const now = Date.now();
+        const distToPlayer = Math.hypot(boss.x - ship.x, boss.y - ship.y);
+        const angleToPlayer = Math.atan2(ship.y - boss.y, ship.x - boss.x);
+
+        // Enrage at 50% HP
+        if (boss.health < typeDef.health * 0.5) boss.phase = 2;
+        const enraged = boss.phase === 2;
+        const speedMult = enraged ? 1.5 : 1.0;
+        const fireRateMult = enraged ? 0.7 : 1.0;
+
+        // Check if player is cloaked
+        const isPlayerCloaked = ship.isCloaked || ship.type === 'spectre';
+
+        // === BOSS-SPECIFIC MECHANICS ===
+        switch (boss.type) {
+            case 'dreadnought':
+                // Rotating shield - blocks frontal shots
+                boss.shieldAngle += 0.02;
+                // Chase player
+                if (!isPlayerCloaked) {
+                    let aDiff = angleToPlayer - boss.rotation;
+                    while (aDiff > Math.PI) aDiff -= Math.PI * 2;
+                    while (aDiff < -Math.PI) aDiff += Math.PI * 2;
+                    boss.rotation += aDiff * 0.03;
+                }
+                break;
+
+            case 'hivequeen':
+                // Spawn scout swarm every 5 seconds (3s if enraged)
+                const spawnInterval = enraged ? 3000 : 5000;
+                if (now - boss.lastSpawnTime > spawnInterval && !isPlayerCloaked) {
+                    const spawnCount = enraged ? 3 : 2;
+                    for (let i = 0; i < spawnCount; i++) {
+                        const sAngle = boss.rotation + (Math.random() - 0.5) * Math.PI;
+                        const sDist = typeDef.size * 2;
+                        const scoutDef = InterstellarEngine.ENEMY_TYPES.scout;
+                        this.enemyShips.push({
+                            x: boss.x + Math.cos(sAngle) * sDist,
+                            y: boss.y + Math.sin(sAngle) * sDist,
+                            vx: 0, vy: 0,
+                            rotation: sAngle,
+                            type: 'scout',
+                            health: scoutDef.health,
+                            maxHealth: scoutDef.health,
+                            state: 'chase',
+                            patrolAngle: sAngle,
+                            patrolTimer: 0,
+                            lastFireTime: 0,
+                            burstRemaining: 0,
+                            burstTimer: 0,
+                            hitFlash: 0,
+                            spawnTime: now
+                        });
+                    }
+                    boss.lastSpawnTime = now;
+                    this.showToast('🐛 Hive Queen spawned reinforcements!', 1500);
+                }
+                if (!isPlayerCloaked) {
+                    let aDiff = angleToPlayer - boss.rotation;
+                    while (aDiff > Math.PI) aDiff -= Math.PI * 2;
+                    while (aDiff < -Math.PI) aDiff += Math.PI * 2;
+                    boss.rotation += aDiff * 0.02;
+                }
+                break;
+
+            case 'voidreaper':
+                // Teleport handled in damageBoss()
+                if (!isPlayerCloaked) {
+                    let aDiff = angleToPlayer - boss.rotation;
+                    while (aDiff > Math.PI) aDiff -= Math.PI * 2;
+                    while (aDiff < -Math.PI) aDiff += Math.PI * 2;
+                    boss.rotation += aDiff * 0.04;
+                }
+                break;
+        }
+
+        // Movement — chase player
+        if (!isPlayerCloaked && distToPlayer > 300) {
+            boss.vx += Math.cos(angleToPlayer) * typeDef.acceleration * speedMult;
+            boss.vy += Math.sin(angleToPlayer) * typeDef.acceleration * speedMult;
+        } else if (distToPlayer < 200) {
+            // Back away if too close
+            boss.vx -= Math.cos(angleToPlayer) * typeDef.acceleration * 0.5;
+            boss.vy -= Math.sin(angleToPlayer) * typeDef.acceleration * 0.5;
+        }
+
+        const speed = Math.hypot(boss.vx, boss.vy);
+        const maxSpeed = typeDef.speed * speedMult;
+        if (speed > maxSpeed) {
+            boss.vx *= maxSpeed / speed;
+            boss.vy *= maxSpeed / speed;
+        }
+        boss.vx *= 0.98;
+        boss.vy *= 0.98;
+        boss.x += boss.vx;
+        boss.y += boss.vy;
+
+        // Fire weapons
+        if (!isPlayerCloaked && distToPlayer < 800 && now - boss.lastFireTime > typeDef.fireRate * fireRateMult) {
+            this.fireBossBullet(boss, typeDef);
+            boss.lastFireTime = now;
+        }
+
+        // Boss-player collision
+        if (distToPlayer < typeDef.size + 30) {
+            this.damagePlayer(30);
+        }
+
+        // Decay hit flash
+        if (boss.hitFlash > 0) boss.hitFlash--;
+        if (boss.teleportCooldown > 0) boss.teleportCooldown--;
+    }
+
+    fireBossBullet(boss, typeDef) {
+        const ship = this.playerShip;
+        const angleToPlayer = Math.atan2(ship.y - boss.y, ship.x - boss.x);
+
+        // Boss fires 2-3 bullets in a spread
+        const bulletCount = boss.phase === 2 ? 3 : 2;
+        const spreadAngle = 0.2;
+
+        for (let i = 0; i < bulletCount; i++) {
+            const offset = (i - (bulletCount - 1) / 2) * spreadAngle;
+            const angle = angleToPlayer + offset;
+
+            this.enemyBullets.push({
+                x: boss.x + Math.cos(angle) * (typeDef.size + 10),
+                y: boss.y + Math.sin(angle) * (typeDef.size + 10),
+                vx: Math.cos(angle) * typeDef.bulletSpeed,
+                vy: Math.sin(angle) * typeDef.bulletSpeed,
+                rotation: angle,
+                damage: typeDef.bulletDamage,
+                life: 100,
+                color: typeDef.color,
+                width: 4,
+                length: 30
+            });
+        }
+    }
+
+    damageBoss(amount) {
+        if (!this.activeBoss) return;
+
+        const boss = this.activeBoss;
+        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+
+        // Dreadnought shield check — blocks frontal damage
+        if (boss.type === 'dreadnought') {
+            const hitAngle = Math.atan2(this.playerShip.y - boss.y, this.playerShip.x - boss.x);
+            let shieldDiff = hitAngle - boss.rotation;
+            while (shieldDiff > Math.PI) shieldDiff -= Math.PI * 2;
+            while (shieldDiff < -Math.PI) shieldDiff += Math.PI * 2;
+            // Shield covers front 120 degrees
+            if (Math.abs(shieldDiff) < Math.PI / 3) {
+                this.showToast('🛡️ Shield blocked!', 1000);
+                return;
+            }
+        }
+
+        // Void Reaper teleport on hit
+        if (boss.type === 'voidreaper' && boss.teleportCooldown <= 0) {
+            const tAngle = Math.random() * Math.PI * 2;
+            boss.x += Math.cos(tAngle) * 300;
+            boss.y += Math.sin(tAngle) * 300;
+            boss.teleportCooldown = 60; // ~1 second cooldown
+        }
+
+        boss.health -= amount;
+        boss.hitFlash = 10;
+
+        if (boss.health <= 0) {
+            this.destroyBoss();
+        }
+    }
+
+    destroyBoss() {
+        if (!this.activeBoss) return;
+
+        const boss = this.activeBoss;
+        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+
+        // Massive explosion
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                if (this.activeBoss === null && i > 0) return;
+                this.createExplosion(
+                    boss.x + (Math.random() - 0.5) * typeDef.size * 2,
+                    boss.y + (Math.random() - 0.5) * typeDef.size * 2,
+                    'destruction'
+                );
+            }, i * 200);
+        }
+
+        // Award gems
+        this.playerGems += typeDef.gemReward;
+        localStorage.setItem('playerGems', this.playerGems);
+
+        // Track boss kills
+        this.bossesDefeated++;
+        localStorage.setItem('bossesDefeated', this.bossesDefeated);
+
+        // Rich loot drop
+        const rareLoots = ['antimatter', 'darkmatter', 'neodymium', 'lanthanum'];
+        const lootType = rareLoots[Math.floor(Math.random() * rareLoots.length)];
+        this.spawnLoot(boss.x, boss.y, lootType, 20);
+
+        this.showToast(`🏆 BOSS DEFEATED: ${typeDef.name}! +${typeDef.gemReward} Gems! 🏆`, 5000);
+
+        // Track mission
+        if (this.activeMission && this.activeMission.type === 'boss') {
+            this.activeMission.progress++;
+            this.checkMissionComplete();
+        }
+
+        this.activeBoss = null;
+    }
+
+    // === MISSION SYSTEM ===
+
+    static MISSION_TEMPLATES = [
+        { type: 'kill', name: 'Scout Sweep', desc: 'Destroy {goal} Scouts', targetType: 'scout', goal: 5, reward: 30 },
+        { type: 'kill', name: 'Fighter Patrol', desc: 'Destroy {goal} Fighters', targetType: 'fighter', goal: 3, reward: 50 },
+        { type: 'kill_any', name: 'Space Cleaner', desc: 'Destroy {goal} enemy ships', goal: 8, reward: 60 },
+        { type: 'boss', name: 'Boss Hunt: Dreadnought', desc: 'Defeat the Dreadnought', bossType: 'dreadnought', goal: 1, reward: 100 },
+        { type: 'boss', name: 'Boss Hunt: Hive Queen', desc: 'Defeat the Hive Queen', bossType: 'hivequeen', goal: 1, reward: 150 },
+        { type: 'boss', name: 'Boss Hunt: Void Reaper', desc: 'Defeat the Void Reaper', bossType: 'voidreaper', goal: 1, reward: 200 },
+        { type: 'survive', name: 'Endurance Trial', desc: 'Survive for {goal}s', goal: 60, reward: 40 },
+        { type: 'collect', name: 'Mining Run', desc: 'Collect {goal} minerals', goal: 20, reward: 35 }
+    ];
+
+    generateMissionBoard() {
+        // Return 3 random missions
+        const templates = InterstellarEngine.MISSION_TEMPLATES;
+        const shuffled = [...templates].sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, 3);
+    }
+
+    acceptMission(missionTemplate) {
+        if (this.activeMission) {
+            this.showToast('⚠️ Complete or abandon current mission first!', 2000);
+            return;
+        }
+
+        this.activeMission = {
+            ...missionTemplate,
+            progress: 0,
+            startTime: Date.now(),
+            desc: missionTemplate.desc.replace('{goal}', missionTemplate.goal)
+        };
+
+        this.showToast(`📋 Mission Accepted: ${this.activeMission.name}`, 3000);
+
+        // Spawn boss for boss missions
+        if (missionTemplate.type === 'boss' && missionTemplate.bossType) {
+            setTimeout(() => this.spawnBoss(missionTemplate.bossType), 2000);
+        }
+
+        this.missionBoardOpen = false;
+    }
+
+    abandonMission() {
+        if (!this.activeMission) return;
+        this.showToast(`❌ Mission abandoned: ${this.activeMission.name}`, 2000);
+        if (this.activeBoss && this.activeMission.type === 'boss') {
+            this.activeBoss = null; // Remove boss
+        }
+        this.activeMission = null;
+    }
+
+    checkMissionComplete() {
+        if (!this.activeMission) return;
+
+        const m = this.activeMission;
+
+        // Check survival timer
+        if (m.type === 'survive') {
+            const elapsed = (Date.now() - m.startTime) / 1000;
+            m.progress = Math.floor(elapsed);
+        }
+
+        if (m.progress >= m.goal) {
+            // Mission complete!
+            this.playerGems += m.reward;
+            localStorage.setItem('playerGems', this.playerGems);
+            this.missionsCompleted++;
+            localStorage.setItem('missionsCompleted', this.missionsCompleted);
+            if (this.updateGemsUI) this.updateGemsUI();
+
+            this.showToast(`✅ MISSION COMPLETE: ${m.name}! +${m.reward} Gems! ✅`, 4000);
+            gameAudio.playMissionComplete();
+            this.activeMission = null;
+        }
+    }
+
+    toggleMissionBoard() {
+        this.missionBoardOpen = !this.missionBoardOpen;
+        if (this.missionBoardOpen) {
+            this.showMissionBoardUI();
+        } else {
+            this.hideMissionBoardUI();
+        }
+    }
+
+    showMissionBoardUI() {
+        // Remove existing
+        let overlay = document.getElementById('missionBoardOverlay');
+        if (overlay) overlay.remove();
+
+        const missions = this.generateMissionBoard();
+
+        overlay = document.createElement('div');
+        overlay.id = 'missionBoardOverlay';
+        overlay.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(10, 15, 30, 0.95); border: 2px solid #00ffcc;
+            border-radius: 12px; padding: 30px; z-index: 10000;
+            min-width: 400px; max-width: 500px; color: #e0e0e0;
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.3);
+            font-family: 'Orbitron', monospace;
+        `;
+
+        let html = `<h2 style="color: #00ffcc; margin: 0 0 5px; font-size: 18px; text-align: center;">📋 MISSION BOARD</h2>`;
+        html += `<p style="color: #888; font-size: 11px; text-align: center; margin: 0 0 15px;">Missions Completed: ${this.missionsCompleted} | Bosses Defeated: ${this.bossesDefeated}</p>`;
+
+        if (this.activeMission) {
+            html += `<div style="background: rgba(255,170,0,0.15); border: 1px solid #ffaa00; border-radius: 8px; padding: 12px; margin-bottom: 10px;">`;
+            html += `<div style="color: #ffaa00; font-size: 14px; font-weight: bold;">ACTIVE: ${this.activeMission.name}</div>`;
+            html += `<div style="color: #ccc; font-size: 12px; margin: 4px 0;">${this.activeMission.desc}</div>`;
+            html += `<div style="color: #00ff88; font-size: 12px;">Progress: ${this.activeMission.progress}/${this.activeMission.goal}</div>`;
+            html += `<button onclick="window.game.abandonMission(); window.game.hideMissionBoardUI();" style="
+                margin-top: 8px; padding: 6px 16px; background: rgba(255,50,50,0.3); color: #ff4444;
+                border: 1px solid #ff4444; border-radius: 6px; cursor: pointer; font-size: 11px;
+            ">ABANDON</button></div>`;
+        } else {
+            missions.forEach((m, i) => {
+                const desc = m.desc.replace('{goal}', m.goal);
+                html += `<div style="background: rgba(0,255,204,0.08); border: 1px solid rgba(0,255,204,0.3); border-radius: 8px; padding: 12px; margin-bottom: 8px;">`;
+                html += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
+                html += `<div><div style="color: #00ffcc; font-size: 13px; font-weight: bold;">${m.name}</div>`;
+                html += `<div style="color: #aaa; font-size: 11px; margin-top: 2px;">${desc}</div></div>`;
+                html += `<div style="text-align: right;"><div style="color: #ffdd44; font-size: 12px;">💎 ${m.reward}</div>`;
+                html += `<button onclick="window.game.acceptMission(window.game._boardMissions[${i}])" style="
+                    margin-top: 4px; padding: 4px 12px; background: rgba(0,255,204,0.2); color: #00ffcc;
+                    border: 1px solid #00ffcc; border-radius: 6px; cursor: pointer; font-size: 11px;
+                ">ACCEPT</button></div></div></div>`;
+            });
+        }
+
+        html += `<button onclick="window.game.hideMissionBoardUI()" style="
+            width: 100%; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.1);
+            color: #888; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-size: 12px;
+        ">CLOSE</button>`;
+
+        overlay.innerHTML = html;
+        document.body.appendChild(overlay);
+
+        // Store missions for button callbacks
+        this._boardMissions = missions;
+    }
+
+    hideMissionBoardUI() {
+        const overlay = document.getElementById('missionBoardOverlay');
+        if (overlay) overlay.remove();
+        this.missionBoardOpen = false;
     }
 
     spawnLoot(x, y, type, amount) {
@@ -3714,17 +4946,32 @@ class InterstellarEngine {
             }
 
             this.credits += totalValue;
+
+            // Also award permanent gems (1 gem per 10 credit value = 10%)
+            const gemsAwarded = Math.floor(totalValue / 10);
+            this.playerGems += gemsAwarded;
+            localStorage.setItem('playerGems', this.playerGems);
+
             this.saveCredits();
             this.saveInventory();
-            this.showToast(`Sold ${count} gems for $${totalValue.toLocaleString()}${this.isPro ? ' (w/ Pro Bonus!)' : ''}`);
-            console.log('[Sell All] Success:', count, 'gems for $', totalValue);
+            this.showToast(`Sold ${count} ores for $${totalValue.toLocaleString()} and earned ${gemsAwarded} Gems!`);
+            console.log('[Sell All] Success:', count, 'gems for $', totalValue, 'Gems:', gemsAwarded);
 
             // Update UI immediately
             this.updateWalletUI();
             this.updateInventoryUI();
+            if (this.updateGemsUI) this.updateGemsUI();
         } else {
-            this.showToast('No gems to sell');
+            this.showToast('No ores to sell');
             console.log('[Sell All] No gems in inventory');
+        }
+    }
+
+    updateGemsUI() {
+        // Update the Hangar Gem counter if it exists
+        const hangarGemsEl = document.getElementById('hangarGemBalance');
+        if (hangarGemsEl) {
+            hangarGemsEl.textContent = this.playerGems.toLocaleString();
         }
     }
 
@@ -4033,6 +5280,13 @@ class InterstellarEngine {
             }
             this.playerInventory[mineral.type]++;
             this.saveInventory();
+
+            // Award permanent gems (1 gem per mineral collected)
+            this.playerGems += 1;
+            localStorage.setItem('playerGems', this.playerGems);
+
+            // Audio: collect jingle
+            gameAudio.playCollect();
 
             // Show notification
             this.collectionNotifications.push({
@@ -4546,12 +5800,15 @@ class InterstellarEngine {
         if (this.playerShip.shield > 0 && !ignoreShield) {
             const shieldDamage = Math.min(this.playerShip.shield, amount);
             this.playerShip.shield -= shieldDamage;
+            gameAudio.playShieldHit();
             const remainingDamage = amount - shieldDamage;
             if (remainingDamage > 0) {
                 this.playerShip.hullHealth = Math.max(0, this.playerShip.hullHealth - remainingDamage);
+                gameAudio.playHullHit();
             }
         } else {
             this.playerShip.hullHealth = Math.max(0, this.playerShip.hullHealth - amount);
+            gameAudio.playHullHit();
         }
 
         this.updateShipStatus();
@@ -4665,6 +5922,14 @@ class InterstellarEngine {
 
         // Show death message
         this.showToast('💀 Critical Failure! Ejecting...');
+
+        // Clean up boss on death (prevents ghost boss after respawn)
+        if (this.activeBoss) {
+            this.activeBoss = null;
+        }
+
+        // Stop engine hum during death sequence
+        gameAudio.stopEngineHum();
 
         // NOVA: Volatile Core (AoE explosion on death)
         if (this.playerShip.type === 'nova') {
@@ -6701,13 +7966,12 @@ class InterstellarEngine {
     initGlowSprites() {
         if (this.glowSprites.fire) return;
 
-        const createGlow = (r, g, b) => {
-            const size = 128;
+        const createGlow = (r, g, b, size = 128) => {
             const canvas = document.createElement('canvas');
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
-            const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
             grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1)`);
             grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
             ctx.fillStyle = grad;
@@ -6715,9 +7979,18 @@ class InterstellarEngine {
             return canvas;
         };
 
+        // Cache common colors used by engine flames and glowing elements
         this.glowSprites = {
             white: createGlow(255, 255, 255),
-            fire: createGlow(255, 120, 0),
+            fire: createGlow(255, 120, 0),        // Default thrust (orange/red)
+            cyan: createGlow(0, 255, 255),        // Interceptor, Viper, Orion
+            red: createGlow(255, 0, 0),           // Titan
+            orange: createGlow(255, 136, 0),      // Bulwark
+            yellow: createGlow(255, 215, 0),      // Prospector
+            purple: createGlow(119, 0, 255),      // Spectre
+            magenta: createGlow(170, 0, 255),     // Siphon
+            green: createGlow(0, 255, 102),       // Flux
+            blue: createGlow(0, 150, 255),        // Pulse
             quantum: createGlow(100, 200, 255),
             cool: createGlow(50, 60, 220)
         };
@@ -8513,6 +9786,19 @@ class InterstellarEngine {
             this.updateDamageParticles();
             this.updateMinerals();
             this.updateHazards();
+            this.updateEnemyShips();
+            this.updateEnemyBullets();
+            this.updateBoss();
+            // Update engine hum pitch based on ship speed
+            const shipSpeed = Math.hypot(this.playerShip.vx || 0, this.playerShip.vy || 0);
+            gameAudio.updateEngineHum(shipSpeed);
+            if (this.activeMission && this.activeMission.type === 'survive') this.checkMissionComplete();
+            if (this.activeMission && this.activeMission.type === 'collect') {
+                // Track mineral collection progress
+                const totalMinerals = Object.values(this.playerInventory).reduce((a, b) => a + b, 0);
+                this.activeMission.progress = totalMinerals;
+                this.checkMissionComplete();
+            }
             this.updateFlightHUD();
         }
 
@@ -9490,9 +10776,11 @@ class InterstellarEngine {
 
     drawSaucer(ctx, size, shipColor, pitchScale, time) {
         // Classic flying saucer
-        // Base
         ctx.save();
         ctx.scale(1, pitchScale || 1);
+        ctx.rotate(Math.PI / 2); // Rotate 90 degrees to face sideways like other ships
+
+        // Base
         ctx.strokeStyle = this.adjustColor(shipColor, -30);
         ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
         ctx.fillStyle = shipColor;
@@ -9500,11 +10788,13 @@ class InterstellarEngine {
         ctx.ellipse(0, 0, size, size * 0.4, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+
         // Dome
         ctx.fillStyle = this.adjustColor(shipColor, 50); // Lighter for dome
         ctx.beginPath();
         ctx.ellipse(0, -size * 0.15, size * 0.5, size * 0.35, 0, Math.PI, 0);
         ctx.fill();
+
         // Lights around edge
         for (let i = 0; i < 6; i++) {
             const angle = (i / 6) * Math.PI * 2 + (time || Date.now()) * 0.005;
@@ -9514,9 +10804,9 @@ class InterstellarEngine {
             ctx.fill();
         }
 
-        // Muzzle Flash (Front/Right edge)
+        // Muzzle Flash (Front/Right edge) - adjusted target since ship is rotated
         if (this.playerShip && this.playerShip.muzzleFlash) {
-            this.drawMuzzleFlash(ctx, size * 0.8, 0, size * 0.6, '#00ff00', this.playerShip.muzzleFlash);
+            this.drawMuzzleFlash(ctx, 0, size * 0.8, size * 0.6, '#00ff00', this.playerShip.muzzleFlash);
         }
         ctx.restore();
     }
@@ -9716,26 +11006,51 @@ class InterstellarEngine {
     }
 
     drawDraco(ctx, size, shipColor, pitchScale, time) {
-        // Dragon constellation - serpentine shape
+        // DRACO - Swept-wing aerodynamic chassis with glowing energy veins
         ctx.save();
         ctx.scale(1, pitchScale || 1);
+        const t = (time || Date.now()) * 0.003;
 
-        // Dragon head (Original visual, simplified)
-        ctx.fillStyle = this.adjustColor(shipColor, -60);
-        ctx.strokeStyle = shipColor;
-        ctx.lineWidth = 3 / (this.camera ? this.camera.zoom : 1);
+        // Shadow/Underbelly
+        ctx.fillStyle = this.adjustColor(shipColor, -70);
         ctx.beginPath();
-        ctx.moveTo(size, 0);
-        ctx.lineTo(-size * 0.5, size * 0.5);
-        ctx.lineTo(-size * 0.2, 0);
-        ctx.lineTo(-size * 0.5, -size * 0.5);
-        ctx.closePath();
+        ctx.moveTo(size * 0.8, 0);
+        ctx.bezierCurveTo(size * 0.2, -size * 0.4, -size * 0.4, -size * 0.7, -size * 0.8, -size * 0.2);
+        ctx.bezierCurveTo(-size * 0.5, 0, -size * 0.5, 0, -size * 0.8, size * 0.2);
+        ctx.bezierCurveTo(-size * 0.4, size * 0.7, size * 0.2, size * 0.4, size * 0.8, 0);
+        ctx.fill();
+
+        // Main Hull (Top plates)
+        ctx.fillStyle = shipColor;
+        ctx.strokeStyle = this.adjustColor(shipColor, 40);
+        ctx.lineWidth = 1.5 / (this.camera ? this.camera.zoom : 1);
+        ctx.beginPath();
+        ctx.moveTo(size * 1.1, 0);
+        ctx.bezierCurveTo(size * 0.3, -size * 0.3, -size * 0.2, -size * 0.6, -size * 0.6, -size * 0.8);
+        ctx.bezierCurveTo(-size * 0.3, -size * 0.2, -size * 0.3, size * 0.2, -size * 0.6, size * 0.8);
+        ctx.bezierCurveTo(-size * 0.2, size * 0.6, size * 0.3, size * 0.3, size * 1.1, 0);
         ctx.fill();
         ctx.stroke();
 
-        // Muzzle Flash (Nose)
+        // Energy Veins
+        ctx.strokeStyle = '#00ffcc';
+        ctx.lineWidth = 2.5 / (this.camera ? this.camera.zoom : 1);
+        ctx.globalAlpha = 0.6 + Math.sin(t * 2) * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(size * 0.5, 0);
+        ctx.quadraticCurveTo(0, -size * 0.2, -size * 0.4, -size * 0.5);
+        ctx.moveTo(size * 0.5, 0);
+        ctx.quadraticCurveTo(0, size * 0.2, -size * 0.4, size * 0.5);
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+
+        // Engines
+        this.drawEngineFlame(ctx, -size * 0.6, -size * 0.3, size * 0.4, '#00ffcc', time);
+        this.drawEngineFlame(ctx, -size * 0.6, size * 0.3, size * 0.4, '#00ffcc', time);
+
+        // Muzzle Flash
         if (this.playerShip && this.playerShip.muzzleFlash) {
-            this.drawMuzzleFlash(ctx, size, 0, size * 0.9, '#ff4400', this.playerShip.muzzleFlash);
+            this.drawMuzzleFlash(ctx, size * 1.1, 0, size * 0.8, '#00ffcc', this.playerShip.muzzleFlash);
         }
         ctx.restore();
     }
@@ -9912,44 +11227,282 @@ class InterstellarEngine {
     }
 
     drawViper(ctx, size, shipColor, pitchScale, time) {
-        ctx.save(); ctx.scale(1, pitchScale || 1); ctx.fillStyle = shipColor; ctx.strokeStyle = this.adjustColor(shipColor, -50); ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
-        ctx.beginPath(); ctx.moveTo(size * 1.2, 0); ctx.lineTo(-size * 0.8, -size * 0.7); ctx.lineTo(-size * 0.4, 0); ctx.lineTo(-size * 0.8, size * 0.7); ctx.closePath();
-        ctx.fill(); ctx.stroke();
-        this.drawEngineFlame(ctx, -size * 0.7, -size * 0.3, size * 0.4, '#00f3ff', time || Date.now());
-        this.drawEngineFlame(ctx, -size * 0.7, size * 0.3, size * 0.4, '#00f3ff', time || Date.now());
+        // VIPER - Aggressive, forward-swept segmented wings
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        const t = (time || Date.now()) * 0.005;
+
+        // Core Fuselage
+        ctx.fillStyle = this.adjustColor(shipColor, -50);
+        ctx.strokeStyle = shipColor;
+        ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
+        ctx.beginPath();
+        ctx.moveTo(size * 1.4, 0); // Sharp needle nose
+        ctx.lineTo(size * 0.4, -size * 0.15);
+        ctx.lineTo(-size * 0.5, -size * 0.2);
+        ctx.lineTo(-size * 0.5, size * 0.2);
+        ctx.lineTo(size * 0.4, size * 0.15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Forward-swept segmented wings
+        ctx.fillStyle = shipColor;
+        // Left Wing
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, -size * 0.15);
+        ctx.lineTo(size * 0.5, -size * 0.8);
+        ctx.lineTo(-size * 0.2, -size * 0.9);
+        ctx.lineTo(-size * 0.4, -size * 0.2);
+        ctx.fill();
+        ctx.stroke();
+        // Right Wing
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, size * 0.15);
+        ctx.lineTo(size * 0.5, size * 0.8);
+        ctx.lineTo(-size * 0.2, size * 0.9);
+        ctx.lineTo(-size * 0.4, size * 0.2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Glowing Thruster Ports built into fuselage
+        ctx.fillStyle = '#00ffff';
+        ctx.globalAlpha = 0.7 + Math.sin(t * 3) * 0.3;
+        ctx.beginPath(); ctx.ellipse(-size * 0.2, -size * 0.3, size * 0.2, size * 0.05, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-size * 0.2, size * 0.3, size * 0.2, size * 0.05, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // Main Engines
+        this.drawEngineFlame(ctx, -size * 0.5, -size * 0.1, size * 0.5, '#00f3ff', time);
+        this.drawEngineFlame(ctx, -size * 0.5, size * 0.1, size * 0.5, '#00f3ff', time);
         ctx.restore();
     }
 
     drawBulwark(ctx, size, shipColor, pitchScale, time) {
-        ctx.save(); ctx.scale(1, pitchScale || 1); ctx.fillStyle = shipColor; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3 / (this.camera ? this.camera.zoom : 1);
-        ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(size * 0.5, -size * 0.8); ctx.lineTo(-size * 0.7, -size * 0.8); ctx.lineTo(-size, 0); ctx.lineTo(-size * 0.7, size * 0.8); ctx.lineTo(size * 0.5, size * 0.8); ctx.closePath();
-        ctx.fill(); ctx.stroke();
-        this.drawEngineFlame(ctx, -size * 0.9, 0, size * 0.5, '#ff8800', time || Date.now());
+        // BULWARK - Flying Fortress, hexagonal plates, orbiting shield struts
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        const t = (time || Date.now()) * 0.002;
+
+        // Base heavy chassis
+        ctx.fillStyle = this.adjustColor(shipColor, -60);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
+
+        // Draw interlocking hexagons
+        const drawHex = (cx, cy, r) => {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3;
+                if (i === 0) ctx.moveTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+                else ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+            }
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+        };
+
+        drawHex(0, 0, size * 0.8);
+        drawHex(size * 0.4, 0, size * 0.6);
+        drawHex(-size * 0.3, -size * 0.4, size * 0.5);
+        drawHex(-size * 0.3, size * 0.4, size * 0.5);
+
+        // Core Energy
+        ctx.fillStyle = '#ff8800';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff8800';
+        ctx.beginPath(); ctx.arc(size * 0.2, 0, size * 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Orbiting Shield Struts
+        ctx.strokeStyle = '#ffbb00';
+        ctx.lineWidth = 3 / (this.camera ? this.camera.zoom : 1);
+        for (let i = 0; i < 3; i++) {
+            const angle = t + (i * Math.PI * 2 / 3);
+            const r = size * 1.1;
+            const sx = Math.cos(angle) * r;
+            const sy = Math.sin(angle) * r;
+            ctx.beginPath();
+            ctx.arc(sx, sy, size * 0.1, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = shipColor;
+            ctx.fill();
+            // Connect to core
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath(); ctx.moveTo(size * 0.2, 0); ctx.lineTo(sx, sy); ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        }
+
+        this.drawEngineFlame(ctx, -size * 0.8, 0, size * 0.7, '#ff8800', time);
         ctx.restore();
     }
 
     drawProspector(ctx, size, shipColor, pitchScale, time) {
-        ctx.save(); ctx.scale(1, pitchScale || 1); ctx.fillStyle = shipColor; ctx.strokeStyle = this.adjustColor(shipColor, -40); ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
-        ctx.fillRect(-size * 0.8, -size * 0.4, size * 1.2, size * 0.8); ctx.strokeRect(-size * 0.8, -size * 0.4, size * 1.2, size * 0.8);
-        ctx.fillRect(size * 0.4, -size * 0.6, size * 0.6, size * 0.2); ctx.fillRect(size * 0.4, size * 0.4, size * 0.6, size * 0.2);
-        this.drawEngineFlame(ctx, -size * 0.8, 0, size * 0.6, '#ffd700', time || Date.now());
+        // PROSPECTOR - Industrial, utility arms, glowing hoppers
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        const t = (time || Date.now()) * 0.005;
+
+        // Main blocky chassis
+        ctx.fillStyle = this.adjustColor(shipColor, -40);
+        ctx.strokeStyle = '#222222';
+        ctx.lineWidth = 3 / (this.camera ? this.camera.zoom : 1);
+        ctx.fillRect(-size * 0.6, -size * 0.5, size * 1.0, size * 1.0);
+        ctx.strokeRect(-size * 0.6, -size * 0.5, size * 1.0, size * 1.0);
+
+        // Cockpit canopy (front off-center)
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(size * 0.4, -size * 0.2, size * 0.3, size * 0.4);
+
+        // Glowing Hoppers (Cargo)
+        const cargoGlow = 0.5 + Math.sin(t) * 0.5;
+        ctx.fillStyle = `rgba(255, 215, 0, ${cargoGlow})`;
+        ctx.fillRect(-size * 0.3, -size * 0.4, size * 0.4, size * 0.3);
+        ctx.fillRect(-size * 0.3, size * 0.1, size * 0.4, size * 0.3);
+
+        ctx.strokeStyle = shipColor;
+        ctx.strokeRect(-size * 0.3, -size * 0.4, size * 0.4, size * 0.3);
+        ctx.strokeRect(-size * 0.3, size * 0.1, size * 0.4, size * 0.3);
+
+        // Utility Arms (extending forward)
+        ctx.strokeStyle = this.adjustColor(shipColor, -20);
+        ctx.lineWidth = 6 / (this.camera ? this.camera.zoom : 1);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Arm 1
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, -size * 0.6);
+        ctx.lineTo(size * 0.8, -size * 0.8);
+        ctx.lineTo(size * 1.2, -size * 0.4);
+        ctx.stroke();
+        // Claw 1
+        ctx.fillStyle = shipColor;
+        ctx.beginPath(); ctx.arc(size * 1.2, -size * 0.4, size * 0.15, 0, Math.PI * 2); ctx.fill();
+
+        // Arm 2
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, size * 0.6);
+        ctx.lineTo(size * 0.8, size * 0.8);
+        ctx.lineTo(size * 1.2, size * 0.4);
+        ctx.stroke();
+        // Claw 2
+        ctx.beginPath(); ctx.arc(size * 1.2, size * 0.4, size * 0.15, 0, Math.PI * 2); ctx.fill();
+
+        // Main Engines (heavy industrial)
+        this.drawEngineFlame(ctx, -size * 0.7, -size * 0.3, size * 0.4, '#ffd700', time);
+        this.drawEngineFlame(ctx, -size * 0.7, size * 0.3, size * 0.4, '#ffd700', time);
         ctx.restore();
     }
 
     drawSpectre(ctx, size, shipColor, pitchScale, time) {
-        ctx.save(); ctx.scale(1, pitchScale || 1); ctx.fillStyle = shipColor; ctx.shadowBlur = 15; ctx.shadowColor = shipColor;
-        ctx.beginPath(); ctx.moveTo(size * 0.9, 0); ctx.lineTo(-size * 0.9, -size * 0.6); ctx.lineTo(-size * 0.4, 0); ctx.lineTo(-size * 0.9, size * 0.6); ctx.closePath();
-        ctx.fill();
+        // SPECTRE - Faceted stealth geometry, neon edges
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        const t = (time || Date.now()) * 0.004;
+
+        // Stealth Cloak Effect (opacity pulses)
+        ctx.globalAlpha = 0.8 + Math.sin(t) * 0.2;
+
+        // Dark, radar-absorbing hull
+        ctx.fillStyle = '#0a0a0c';
+        ctx.strokeStyle = shipColor;
+        ctx.lineWidth = 1.5 / (this.camera ? this.camera.zoom : 1);
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = shipColor;
+
+        // Faceted Central Body
+        ctx.beginPath();
+        ctx.moveTo(size * 1.2, 0); // Sharp nose
+        ctx.lineTo(size * 0.4, -size * 0.2);
+        ctx.lineTo(-size * 0.5, -size * 0.3);
+        ctx.lineTo(-size * 0.3, 0); // Inner V
+        ctx.lineTo(-size * 0.5, size * 0.3);
+        ctx.lineTo(size * 0.4, size * 0.2);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        // Faceted Wings (Outer)
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, -size * 0.15);
+        ctx.lineTo(-size * 0.4, -size * 0.9);
+        ctx.lineTo(-size * 0.8, -size * 0.9);
+        ctx.lineTo(-size * 0.5, -size * 0.3);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, size * 0.15);
+        ctx.lineTo(-size * 0.4, size * 0.9);
+        ctx.lineTo(-size * 0.8, size * 0.9);
+        ctx.lineTo(-size * 0.5, size * 0.3);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.shadowBlur = 0; // Reset
+        ctx.globalAlpha = 1.0;
+
+        // Hidden Engines (slit thrusters)
+        this.drawEngineFlame(ctx, -size * 0.4, -size * 0.1, size * 0.3, '#7700ff', time);
+        this.drawEngineFlame(ctx, -size * 0.4, size * 0.1, size * 0.3, '#7700ff', time);
         ctx.restore();
     }
 
     drawNova(ctx, size, shipColor, pitchScale, time) {
-        ctx.save(); ctx.scale(1, pitchScale || 1); ctx.fillStyle = shipColor; ctx.strokeStyle = '#ff0055'; ctx.lineWidth = 3 / (this.camera ? this.camera.zoom : 1);
-        ctx.beginPath(); ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        for (let i = 0; i < 8; i++) {
-            let angle = (i * Math.PI / 4) + ((time || Date.now()) * 0.001);
-            ctx.beginPath(); ctx.moveTo(Math.cos(angle) * size * 0.6, Math.sin(angle) * size * 0.6); ctx.lineTo(Math.cos(angle) * size * 1.1, Math.sin(angle) * size * 1.1); ctx.stroke();
+        // NOVA - Floating rotating core and rings
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        const t = (time || Date.now()) * 0.002;
+
+        // Super-dense Glowing Core
+        const coreGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.8);
+        coreGlow.addColorStop(0, '#ffffff');
+        coreGlow.addColorStop(0.3, shipColor);
+        coreGlow.addColorStop(1, 'rgba(0,0,0,0)');
+
+        ctx.fillStyle = coreGlow;
+        ctx.beginPath(); ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2); ctx.fill();
+
+        // Solid Inner Sphere
+        ctx.fillStyle = shipColor;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = shipColor;
+        ctx.beginPath(); ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Floating Rotating Rings
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
+
+        // Ring 1 (X-Axis dominant rotation)
+        ctx.save();
+        ctx.rotate(t);
+        ctx.beginPath();
+        for (let i = 0; i < Math.PI * 2; i += 0.2) {
+            ctx.lineTo(Math.cos(i) * size * 1.0, Math.sin(i) * size * 0.3);
         }
+        ctx.closePath(); ctx.stroke();
+        ctx.restore();
+
+        // Ring 2 (Y-Axis dominant rotation, reverse)
+        ctx.save();
+        ctx.rotate(-t * 1.5 + Math.PI / 4);
+        ctx.beginPath();
+        for (let i = 0; i < Math.PI * 2; i += 0.2) {
+            ctx.lineTo(Math.cos(i) * size * 0.2, Math.sin(i) * size * 1.2);
+        }
+        ctx.closePath(); ctx.stroke();
+        ctx.restore();
+
+        // Emitted Particles
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 6; i++) {
+            const pt = t * 3 + (i * Math.PI / 3);
+            const r = size * 0.6 + Math.sin(t * 5 + i) * size * 0.2;
+            ctx.beginPath(); ctx.arc(Math.cos(pt) * r, Math.sin(pt) * r, size * 0.08, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Engine Trail (central exhaust)
+        this.drawEngineFlame(ctx, -size * 0.5, 0, size * 0.8, shipColor, time);
         ctx.restore();
     }
 
@@ -9971,23 +11524,130 @@ class InterstellarEngine {
     }
 
     drawPulse(ctx, size, shipColor, pitchScale, time) {
-        ctx.save(); ctx.scale(1, pitchScale || 1); ctx.fillStyle = shipColor; ctx.strokeStyle = this.adjustColor(shipColor, -30); ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
-        ctx.fillRect(-size * 0.8, -size * 0.3, size * 1.2, size * 0.6);
-        ctx.beginPath(); ctx.ellipse(size * 0.4, 0, size * 0.3, size * 0.8, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(size * 0.4, 0, size * 0.1, 0, Math.PI * 2); ctx.fill();
-        this.drawEngineFlame(ctx, -size * 0.8, 0, size * 0.4, '#00f3ff', time || Date.now());
+        // PULSE - Asymmetric sensor dish arrays, scanning waves
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        const t = (time || Date.now()) * 0.003;
+
+        // Long asymmetric central boom
+        ctx.fillStyle = this.adjustColor(shipColor, -50);
+        ctx.strokeStyle = shipColor;
+        ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
+
+        ctx.beginPath();
+        ctx.moveTo(size * 1.2, 0); // Nose sensor
+        ctx.lineTo(-size * 0.8, -size * 0.1);
+        ctx.lineTo(-size * 0.8, size * 0.1);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        // Right Wing (Large Sensor Dish)
+        ctx.beginPath();
+        ctx.moveTo(0, size * 0.1);
+        ctx.lineTo(-size * 0.2, size * 0.8);
+        ctx.lineTo(-size * 0.5, size * 0.8);
+        ctx.lineTo(-size * 0.6, size * 0.1);
+        ctx.fill(); ctx.stroke();
+
+        // The Dish Parabola
+        ctx.beginPath();
+        ctx.arc(-size * 0.35, size * 0.8, size * 0.3, Math.PI, Math.PI * 2);
+        ctx.stroke();
+
+        // Left Wing (Counterweight/Comms)
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, -size * 0.08);
+        ctx.lineTo(size * 0.1, -size * 0.5);
+        ctx.lineTo(-size * 0.3, -size * 0.5);
+        ctx.lineTo(-size * 0.5, -size * 0.1);
+        ctx.fill(); ctx.stroke();
+        // Antenna
+        ctx.beginPath(); ctx.moveTo(-size * 0.1, -size * 0.5); ctx.lineTo(-size * 0.1, -size * 1.0); ctx.stroke();
+        ctx.fillStyle = '#ff0000';
+        if (Math.sin(t * 10) > 0) { ctx.beginPath(); ctx.arc(-size * 0.1, -size * 1.0, size * 0.08, 0, Math.PI * 2); ctx.fill(); }
+
+        // Scanning Wave Animation (expanding rings from dish)
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+        for (let i = 0; i < 3; i++) {
+            const wave = (t * 2 + i) % 3; // 0 to 3 scale
+            ctx.globalAlpha = 1.0 - (wave / 3);
+            ctx.beginPath();
+            ctx.arc(-size * 0.35, size * 0.8, size * 0.2 + (wave * size * 0.5), Math.PI * 0.1, Math.PI * 0.9);
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1.0;
+
+        // Engine
+        this.drawEngineFlame(ctx, -size * 0.8, 0, size * 0.4, '#00f3ff', time);
         ctx.restore();
     }
 
     drawFlux(ctx, size, shipColor, pitchScale, time) {
-        ctx.save(); ctx.scale(1, pitchScale || 1); ctx.fillStyle = shipColor;
-        let t = (time || Date.now()) * 0.005;
-        let offset1 = Math.sin(t) * size * 0.2;
-        let offset2 = Math.cos(t) * size * 0.2;
-        ctx.globalAlpha = 0.8;
-        ctx.beginPath(); ctx.moveTo(size + offset1, 0); ctx.lineTo(offset1, -size * 0.5); ctx.lineTo(size * 0.2 + offset1, 0); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-size * 0.2 - offset2, -size * 0.8); ctx.lineTo(-size * 0.8 - offset2, -size * 0.2); ctx.lineTo(-size * 0.2 - offset2, 0); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-size * 0.2 + offset2, size * 0.8); ctx.lineTo(-size * 0.8 + offset2, size * 0.2); ctx.lineTo(-size * 0.2 + offset2, 0); ctx.fill();
+        // FLUX - Disconnected floating shards, energy tethers
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        const t = (time || Date.now()) * 0.005;
+
+        // Setup for floating shards
+        ctx.fillStyle = shipColor;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5 / (this.camera ? this.camera.zoom : 1);
+
+        // Core/Cockpit Shard (Center-Forward)
+        const coreOffY = Math.sin(t) * size * 0.1;
+        const corePts = [{ x: size, y: 0 }, { x: 0, y: -size * 0.3 }, { x: -size * 0.2, y: 0 }, { x: 0, y: size * 0.3 }];
+
+        ctx.shadowBlur = 10; ctx.shadowColor = shipColor;
+        ctx.beginPath();
+        ctx.moveTo(corePts[0].x, corePts[0].y + coreOffY);
+        for (let i = 1; i < corePts.length; i++) ctx.lineTo(corePts[i].x, corePts[i].y + coreOffY);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // Left Wing Shard
+        const lwX = Math.cos(t * 1.2) * size * 0.1;
+        const lwY = Math.sin(t * 1.5) * size * 0.1;
+        const lwPts = [{ x: -size * 0.1, y: -size * 0.4 }, { x: -size * 0.8, y: -size * 0.8 }, { x: -size * 0.6, y: -size * 0.2 }];
+
+        ctx.beginPath();
+        ctx.moveTo(lwPts[0].x + lwX, lwPts[0].y + lwY);
+        for (let i = 1; i < lwPts.length; i++) ctx.lineTo(lwPts[i].x + lwX, lwPts[i].y + lwY);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // Right Wing Shard
+        const rwX = Math.cos(t * 1.1 + Math.PI) * size * 0.1;
+        const rwY = Math.sin(t * 1.4 + Math.PI) * size * 0.1;
+        const rwPts = [{ x: -size * 0.1, y: size * 0.4 }, { x: -size * 0.8, y: size * 0.8 }, { x: -size * 0.6, y: size * 0.2 }];
+
+        ctx.beginPath();
+        ctx.moveTo(rwPts[0].x + rwX, rwPts[0].y + rwY);
+        for (let i = 1; i < rwPts.length; i++) ctx.lineTo(rwPts[i].x + rwX, rwPts[i].y + rwY);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        // Tail Drive Shard
+        const tdX = Math.sin(t * 2) * size * 0.05;
+        const tdPts = [{ x: -size * 0.5, y: -size * 0.1 }, { x: -size * 0.5, y: size * 0.1 }, { x: -size * 0.9, y: 0 }];
+
+        ctx.beginPath();
+        ctx.moveTo(tdPts[0].x + tdX, tdPts[0].y);
+        for (let i = 1; i < tdPts.length; i++) ctx.lineTo(tdPts[i].x + tdX, tdPts[i].y);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        ctx.shadowBlur = 0; // reset
+
+        // Energy Tethers (crackling lightning connecting the pieces)
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 1 / (this.camera ? this.camera.zoom : 1);
+        ctx.beginPath();
+        // Core to Left Wing
+        if (Math.random() > 0.2) { ctx.moveTo(-size * 0.1, coreOffY); ctx.lineTo(-size * 0.1 + lwX, -size * 0.4 + lwY); }
+        // Core to Right Wing
+        if (Math.random() > 0.2) { ctx.moveTo(-size * 0.1, coreOffY); ctx.lineTo(-size * 0.1 + rwX, size * 0.4 + rwY); }
+        // Core to Tail
+        if (Math.random() > 0.2) { ctx.moveTo(-size * 0.2, coreOffY); ctx.lineTo(-size * 0.5 + tdX, 0); }
+        ctx.stroke();
+
+        // Main Engine from Tail Shard
+        this.drawEngineFlame(ctx, -size * 0.9 + tdX, 0, size * 0.4, '#00ffff', time);
         ctx.restore();
     }
 
@@ -10530,6 +12190,287 @@ class InterstellarEngine {
 
             ctx.restore();
         });
+
+        // === RENDER ENEMY SHIPS ===
+        this.enemyShips.forEach(enemy => {
+            const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+            const sz = enemy.z || 0;
+            const rotated = this.rotate3D(enemy.x, enemy.y, sz, rotCenterX, rotCenterY);
+            const rx = rotated.x;
+            const ry = rotated.y;
+            const rScale = rotated.scale;
+
+            ctx.save();
+            const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+            const size = typeDef.size * rScale / safeZoom;
+
+            ctx.translate(rx, ry);
+            ctx.rotate(enemy.rotation);
+
+            // Hit flash effect
+            const baseColor = enemy.hitFlash > 0 ? '#ffffff' : typeDef.color;
+
+            // Engine glow
+            const glowSize = size * 1.5;
+            const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
+            glow.addColorStop(0, typeDef.glowColor);
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ship body — aggressive triangle
+            ctx.fillStyle = baseColor;
+            ctx.shadowColor = typeDef.color;
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.moveTo(size * 1.5, 0);           // Nose
+            ctx.lineTo(-size, -size * 0.8);       // Top wing
+            ctx.lineTo(-size * 0.4, 0);           // Indent
+            ctx.lineTo(-size, size * 0.8);        // Bottom wing
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Cockpit stripe
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath();
+            ctx.moveTo(size * 0.8, 0);
+            ctx.lineTo(size * 0.2, -size * 0.15);
+            ctx.lineTo(size * 0.2, size * 0.15);
+            ctx.closePath();
+            ctx.fill();
+
+            // Engine flame
+            const flameLen = (0.5 + Math.random() * 0.4) * size;
+            ctx.fillStyle = `rgba(255, 150, 50, 0.8)`;
+            ctx.beginPath();
+            ctx.moveTo(-size * 0.4, -size * 0.15);
+            ctx.lineTo(-size * 0.4 - flameLen, 0);
+            ctx.lineTo(-size * 0.4, size * 0.15);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+
+            // Health bar (above ship, not rotated with ship)
+            if (enemy.health < enemy.maxHealth) {
+                const barWidth = size * 3;
+                const barHeight = 4 / safeZoom;
+                const barX = rx - barWidth / 2;
+                const barY = ry - size * 2.5;
+                const healthRatio = enemy.health / enemy.maxHealth;
+
+                // Background
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(barX, barY, barWidth, barHeight);
+                // Health fill
+                const barColor = healthRatio > 0.5 ? '#00ff44' : healthRatio > 0.25 ? '#ffaa00' : '#ff2222';
+                ctx.fillStyle = barColor;
+                ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+                // Border
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctx.strokeRect(barX, barY, barWidth, barHeight);
+            }
+
+            // State indicator (tiny dot above health bar)
+            const indicatorY = ry - size * 3;
+            ctx.fillStyle = enemy.state === 'attack' ? '#ff0000' :
+                enemy.state === 'chase' ? '#ffaa00' :
+                    enemy.state === 'flee' ? '#00ffff' : '#44ff44';
+            ctx.beginPath();
+            ctx.arc(rx, indicatorY, 3 / safeZoom, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // === RENDER ENEMY BULLETS ===
+        this.enemyBullets.forEach(b => {
+            const sz = b.z || 0;
+            const rotated = this.rotate3D(b.x, b.y, sz, rotCenterX, rotCenterY);
+            const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+
+            ctx.save();
+            ctx.translate(rotated.x, rotated.y);
+            ctx.rotate(b.rotation);
+
+            const len = b.length * rotated.scale / safeZoom;
+            const w = b.width * rotated.scale / safeZoom;
+
+            // Glow
+            ctx.shadowColor = b.color;
+            ctx.shadowBlur = 10;
+            // Bolt
+            ctx.strokeStyle = b.color;
+            ctx.lineWidth = w;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-len / 2, 0);
+            ctx.lineTo(len / 2, 0);
+            ctx.stroke();
+            // Core
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = w * 0.4;
+            ctx.beginPath();
+            ctx.moveTo(-len / 2, 0);
+            ctx.lineTo(len / 2, 0);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            ctx.restore();
+        });
+
+        // === RENDER BOSS ===
+        if (this.activeBoss) {
+            const boss = this.activeBoss;
+            const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+            const sz = boss.z || 0;
+            const rotated = this.rotate3D(boss.x, boss.y, sz, rotCenterX, rotCenterY);
+            const rx = rotated.x;
+            const ry = rotated.y;
+            const rScale = rotated.scale;
+
+            ctx.save();
+            const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+            const size = typeDef.size * rScale / safeZoom;
+            const baseColor = boss.hitFlash > 0 ? '#ffffff' : typeDef.color;
+
+            ctx.translate(rx, ry);
+            ctx.rotate(boss.rotation);
+
+            // Boss aura / glow
+            const auraSize = size * 2.5;
+            const aura = ctx.createRadialGradient(0, 0, size * 0.5, 0, 0, auraSize);
+            aura.addColorStop(0, typeDef.glowColor);
+            aura.addColorStop(0.5, typeDef.glowColor.replace('0.7', '0.2'));
+            aura.addColorStop(1, 'transparent');
+            ctx.fillStyle = aura;
+            ctx.beginPath();
+            ctx.arc(0, 0, auraSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Boss body — larger, more angular
+            ctx.fillStyle = baseColor;
+            ctx.shadowColor = typeDef.color;
+            ctx.shadowBlur = 25;
+            ctx.beginPath();
+            ctx.moveTo(size * 2, 0);                // Nose
+            ctx.lineTo(size * 0.5, -size * 0.6);    // Upper hull
+            ctx.lineTo(-size * 1.2, -size * 1.2);   // Top wing tip
+            ctx.lineTo(-size * 0.6, -size * 0.3);   // Wing joint
+            ctx.lineTo(-size * 0.8, 0);             // Rear indent
+            ctx.lineTo(-size * 0.6, size * 0.3);    // Wing joint
+            ctx.lineTo(-size * 1.2, size * 1.2);    // Bottom wing tip
+            ctx.lineTo(size * 0.5, size * 0.6);     // Lower hull
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Engine flames (twin)
+            const fLen = (0.6 + Math.random() * 0.4) * size;
+            ctx.fillStyle = 'rgba(255, 100, 50, 0.8)';
+            ctx.beginPath();
+            ctx.moveTo(-size * 0.7, -size * 0.2);
+            ctx.lineTo(-size * 0.7 - fLen, 0);
+            ctx.lineTo(-size * 0.7, size * 0.2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Dreadnought shield arc
+            if (boss.type === 'dreadnought') {
+                ctx.strokeStyle = boss.phase === 2 ? 'rgba(255,100,100,0.6)' : 'rgba(100,200,255,0.6)';
+                ctx.lineWidth = 4 / safeZoom;
+                ctx.beginPath();
+                ctx.arc(0, 0, size * 2, -Math.PI / 3, Math.PI / 3);
+                ctx.stroke();
+                // Shield shimmer
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctx.lineWidth = 2 / safeZoom;
+                ctx.beginPath();
+                ctx.arc(0, 0, size * 2 + 2, -Math.PI / 4, Math.PI / 4);
+                ctx.stroke();
+            }
+
+            // Hive Queen pulsing organic glow
+            if (boss.type === 'hivequeen') {
+                const pulse = 0.5 + Math.sin(Date.now() * 0.005) * 0.3;
+                ctx.fillStyle = `rgba(68, 255, 68, ${pulse * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(0, 0, size * 1.8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Void Reaper dark energy tendrils
+            if (boss.type === 'voidreaper') {
+                const time = Date.now() * 0.003;
+                ctx.strokeStyle = 'rgba(153, 68, 255, 0.4)';
+                ctx.lineWidth = 2 / safeZoom;
+                for (let i = 0; i < 4; i++) {
+                    const tAngle = time + (i * Math.PI / 2);
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(
+                        Math.cos(tAngle) * size * 1.5,
+                        Math.sin(tAngle) * size * 1.5,
+                        Math.cos(tAngle + 0.5) * size * 2.5,
+                        Math.sin(tAngle + 0.5) * size * 2.5
+                    );
+                    ctx.stroke();
+                }
+            }
+
+            ctx.restore();
+
+            // === BOSS HEALTH BAR (top of screen) ===
+            const barWidth = 400;
+            const barHeight = 14;
+            const barX = (ctx.canvas.width - barWidth) / 2;
+            const barY = 20;
+            const hpRatio = boss.health / boss.maxHealth;
+
+            // Background
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+            // Health fill
+            const hpColor = hpRatio > 0.5 ? typeDef.color : '#ff4400';
+            ctx.fillStyle = hpColor;
+            ctx.fillRect(barX, barY, barWidth * hpRatio, barHeight);
+            // Border
+            ctx.strokeStyle = typeDef.color;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+            // Name
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '12px Orbitron, monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`⚠ ${typeDef.name.toUpperCase()} ${boss.phase === 2 ? '(ENRAGED)' : ''}`, ctx.canvas.width / 2, barY - 6);
+            // HP text
+            ctx.fillStyle = '#cccccc';
+            ctx.font = '10px Orbitron, monospace';
+            ctx.fillText(`${boss.health} / ${boss.maxHealth}`, ctx.canvas.width / 2, barY + barHeight + 14);
+            ctx.textAlign = 'left';
+        }
+
+        // === MISSION OBJECTIVE HUD ===
+        if (this.activeMission && this.flightMode) {
+            const m = this.activeMission;
+            const mx = 15;
+            const my = 80;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(mx, my, 220, 50);
+            ctx.strokeStyle = 'rgba(0,255,204,0.5)';
+            ctx.strokeRect(mx, my, 220, 50);
+
+            ctx.fillStyle = '#00ffcc';
+            ctx.font = '11px Orbitron, monospace';
+            ctx.fillText(`📋 ${m.name}`, mx + 8, my + 16);
+            ctx.fillStyle = '#aaaaaa';
+            ctx.font = '10px monospace';
+            ctx.fillText(m.desc, mx + 8, my + 30);
+            ctx.fillStyle = '#00ff88';
+            ctx.fillText(`Progress: ${m.progress}/${m.goal}`, mx + 8, my + 43);
+        }
     }
 
     // Helper to draw a missile base structure
@@ -13016,13 +14957,51 @@ class InterstellarEngine {
 
         track.innerHTML = ''; // Clear old bays
 
+        // Premium prices
+        const shipPrices = {
+            saucer: 500,
+            viper: 600,
+            orion: 700,
+            draco: 800,
+            hauler: 900,
+            interceptor: 1000,
+            bulwark: 1200,
+            prospector: 1500,
+            spectre: 2000,
+            siphon: 2500,
+            titan: 3500,
+            nova: 4000,
+            flux: 4500,
+            pulses: 5000,
+            apex: 6000,
+            harvester: 7500,
+            phoenix: 10000
+        };
+
         this.hangarShips.forEach((ship, index) => {
             const bay = document.createElement('div');
             bay.className = 'docking-bay';
             bay.id = `bay-${ship.id}`;
 
-            const isLocked = ship.premium && !this.isPro;
-            const lockHtml = isLocked ? `<div class="lock-overlay">⭐ PRO REQUIRED</div>` : '';
+            const isLocked = ship.premium && !this.unlockedShips.includes(ship.id);
+            const price = shipPrices[ship.id] || 1000;
+            const lockHtml = isLocked ? `<div class="lock-overlay">⭐ ${price} GEMS</div>` : '';
+
+            let btnAction = `window.game.selectShip('${ship.id}')`;
+            let btnText = 'ENGAGE PILOT';
+            let btnClass = 'select-ship-btn';
+
+            if (isLocked) {
+                if (this.playerGems >= price) {
+                    btnAction = `window.game.unlockShip('${ship.id}', ${price})`;
+                    btnText = `UNLOCK (${price} GEMS)`;
+                    btnClass += ' unlock-btn available';
+                } else {
+                    btnAction = `window.game.showToast('Not enough gems!', 2000)`;
+                    btnText = `${price} GEMS REQUIRED`;
+                    btnClass += ' unlock-btn locked';
+                }
+            }
 
             bay.innerHTML = `
            <div class="bay-floor"></div>
@@ -13045,8 +15024,8 @@ class InterstellarEngine {
                <canvas id="preview-${ship.id}" width="400" height="400"></canvas>
            </div>
            ${lockHtml}
-           <button class="select-ship-btn" onclick="window.game.selectShip('${ship.id}')">
-               ${isLocked ? 'UPGRADE TO PILOT' : 'ENGAGE PILOT'}
+           <button class="${btnClass}" onclick="${btnAction}">
+               ${btnText}
            </button>
        `;
             track.appendChild(bay);
@@ -13261,13 +15240,12 @@ class InterstellarEngine {
         };
         const ship = ships[shipType];
 
-        // Check for premium lock
-        if (ship && ship.premium && !this.isPro) {
-            this.showToast("⭐ Pro Pilot Required for this vessel!", 3000);
-            // Open the store in the React UI
-            window.parent.postMessage({ type: 'OPEN_STORE' }, '*');
+        // Ensure player owns the ship before selecting
+        if (ship && ship.premium && !this.unlockedShips.includes(shipType)) {
+            this.showToast(`🔒 ${ship.name} requires unlocking!`, 3000);
             return;
         }
+
         if (ship && this.playerShip) {
             this.playerShip.type = shipType;
             this.playerShip.maxSpeed = ship.maxSpeed;
@@ -13285,9 +15263,31 @@ class InterstellarEngine {
                 this.camera.y = -this.playerShip.y * this.camera.zoom;
             }
 
-            this.showToast(`Selected ${ship.name}`);
         }
         this.hideShipModal();
+    }
+
+    unlockShip(shipId, cost) {
+        if (this.playerGems >= cost) {
+            // Deduct gems and unlock
+            this.playerGems -= cost;
+            this.unlockedShips.push(shipId);
+
+            // Save state
+            localStorage.setItem('playerGems', this.playerGems);
+            localStorage.setItem('unlockedShips', JSON.stringify(this.unlockedShips));
+
+            this.showToast(`✨ UNLOCKED ${shipId.toUpperCase()}! ✨`, 3000);
+
+            // Refresh Hangar UI to reflect the unlocked state
+            this.initHangar();
+
+            // Automatically select the newly unlocked ship
+            this.selectShip(shipId);
+            if (this.updateGemsUI) this.updateGemsUI();
+        } else {
+            this.showToast("Insufficient Gems!", 2000);
+        }
     }
 
     toggleAutopilot() {
@@ -13602,16 +15602,25 @@ class InterstellarEngine {
 
         // Add Minerals
         document.getElementById('adminAddMineralsBtn')?.addEventListener('click', () => {
-            this.gemsTotal += 5000;
-            this.showToast("ADDED 5000 GEMS VALUE");
+            this.playerGems += 5000;
+            localStorage.setItem('playerGems', this.playerGems);
+            if (this.updateGemsUI) this.updateGemsUI();
+            this.showToast(`ADDED 5000 GEMS (Total: ${this.playerGems})`);
         });
 
         // Unlock Ships
         document.getElementById('adminUnlockShipsBtn')?.addEventListener('click', () => {
+            const allPremium = ['saucer', 'harvester', 'viper', 'bulwark', 'prospector', 'spectre', 'nova', 'siphon', 'titan', 'pulse', 'flux', 'apex'];
+            allPremium.forEach(id => {
+                if (!this.unlockedShips.includes(id)) {
+                    this.unlockedShips.push(id);
+                }
+            });
+            localStorage.setItem('unlockedShips', JSON.stringify(this.unlockedShips));
             this.isPro = true;
             localStorage.setItem('isPro', 'true');
             if (premiumToggle) premiumToggle.checked = true;
-            this.showToast("ALL SHIPS UNLOCKED (PREMIUM ENABLED)");
+            this.showToast("ALL SHIPS UNLOCKED!");
         });
 
         // Close Button

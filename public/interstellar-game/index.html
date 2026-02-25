@@ -100,7 +100,11 @@
         <div class="hangar-container">
             <div class="hangar-header">
                 <h2>INTERSTELLAR DOCKING BAY</h2>
-                <div class="hangar-status">STATUS: ONLINE | STAGING AREA B-12</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div class="hangar-status">STATUS: ONLINE | STAGING AREA B-12</div>
+                    <div class="hangar-gems">GEMS OVERRIDE: <span id="hangarGemBalance"
+                            style="color: #00ff00; font-weight: bold; text-shadow: 0 0 10px #00ff00;">0</span></div>
+                </div>
             </div>
 
             <div class="hangar-viewport">
@@ -295,6 +299,20 @@
                     data-tooltip="Choose Your Spaceship" style="display:none">🛸 SHIP</button>
                 <button class="btn game-btn" id="dockBtn" onclick="window.game.toggleUpgradePanel()"
                     data-tooltip="Upgrade Your Ship" style="display:none">🛠️ UPGRADES</button>
+                <button class="btn game-btn" id="missionsBtn" onclick="window.game.toggleMissionBoard()"
+                    data-tooltip="View Available Missions">📋 MISSIONS</button>
+                <button class="btn game-btn" id="audioMuteBtn"
+                    onclick="gameAudio.init(); const m = gameAudio.toggleMute(); this.textContent = m ? '🔇 MUTED' : '🔊 AUDIO';"
+                    data-tooltip="Toggle Audio">🔊 AUDIO</button>
+                <script>
+                    // Sync mute button text on page load
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const btn = document.getElementById('audioMuteBtn');
+                        if (btn && localStorage.getItem('audioMuted') === 'true') {
+                            btn.textContent = '🔇 MUTED';
+                        }
+                    });
+                </script>
             </div>
 
             <!-- Window Taskbar - minimized windows appear here -->
