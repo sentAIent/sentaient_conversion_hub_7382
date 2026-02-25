@@ -16,6 +16,8 @@ export class Visualizer3D {
         this.initialized = false;
         this._rainbowEnabled = initialState.rainbowEnabled || false;
         this.isVisualizer3D = true;
+        // Detect initial theme type from document if available, fallback to dark
+        this.themeType = document.body.dataset.themeType || 'dark';
 
         // Mobile / Battery Saver Defaults
         const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -80,6 +82,19 @@ export class Visualizer3D {
             // Initial sizing
             this.resize();
             setTimeout(this.handleLayoutChange, 100); // Delay slightly for DOM to settle
+
+            // Theme Tracking for Adaptive Logo
+            window.addEventListener('themeChanged', (e) => {
+                if (e.detail && e.detail.type) {
+                    const newType = e.detail.type;
+                    if (this.themeType !== newType) {
+                        this.themeType = newType;
+                        console.log(`[Visualizer] Theme type changed to: ${newType}. Updating logo texture.`);
+                        this.updateLogoTexture();
+                    }
+                }
+            });
+
             this.speedMultiplier = 1.0;
             this.brightnessMultiplier = 1.0;
 
@@ -556,7 +571,7 @@ export class Visualizer3D {
 
 
     createMatrixTexture() {
-        const size = 512;
+        const size = 1024; // Doubled for HD crispness
         const canvas = document.createElement('canvas');
         canvas.width = size;
         canvas.height = size;
@@ -570,10 +585,10 @@ export class Visualizer3D {
         const charPool = "MINDWAVE";
         const special = ":・.\"=*+<>";
 
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 12; // Adjusted for 1024
         ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
 
-        ctx.font = 'bold 44px "Courier New", "MS Gothic", "Hiragino Kaku Gothic ProN", monospace';
+        ctx.font = 'bold 100px "Courier New", "MS Gothic", "Hiragino Kaku Gothic ProN", monospace';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -626,7 +641,7 @@ export class Visualizer3D {
                     ctx.save();
                     ctx.scale(-1, 1);
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 44px monospace';
+                    ctx.font = 'bold 100px monospace';
                     ctx.fillText(char, 0, 0);
                     ctx.restore();
                     char = '';
@@ -635,37 +650,55 @@ export class Visualizer3D {
 
             if (char || isLogo) {
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 44px monospace';
+                ctx.font = 'bold 100px monospace';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowBlur = 8;
+                ctx.shadowBlur = 16;
                 ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
 
                 if (isLogo) {
                     if (this.logoImage) {
-                        const size = 44;
-                        const offset = -size / 2;
+                        // Base size 100 (Increased for better 128px cell fill)
+                        const charBaseSize = 100;
+                        const logoRenderSize = 125; // Maintaining 25% larger ratio
+
+                        const offset = -logoRenderSize / 2;
 
                         // Create a temporary canvas to tint the logo
                         const tempCanvas = document.createElement('canvas');
-                        tempCanvas.width = size;
-                        tempCanvas.height = size;
+                        tempCanvas.width = logoRenderSize;
+                        tempCanvas.height = logoRenderSize;
                         const tCtx = tempCanvas.getContext('2d');
 
-                        // Draw logo
-                        tCtx.drawImage(this.logoImage, 0, 0, size, size);
+                        // Draw logo with high quality scaling
+                        tCtx.imageSmoothingEnabled = true;
+                        tCtx.imageSmoothingQuality = 'high';
+                        tCtx.drawImage(this.logoImage, 0, 0, logoRenderSize, logoRenderSize);
 
-                        // Tint with white (for shader to tint later)
-                        tCtx.globalCompositeOperation = 'source-in';
-                        tCtx.fillStyle = '#ffffff';
-                        tCtx.fillRect(0, 0, size, size);
+                        // Preserving internal detail (M/W) by using a high-contrast brightness-to-white conversion
+                        const imageData = tCtx.getImageData(0, 0, logoRenderSize, logoRenderSize);
+                        const data = imageData.data;
+                        for (let j = 0; j < data.length; j += 4) {
+                            const avg = (data[j] + data[j + 1] + data[j + 2]) / 3;
+                            // Push everything to bright white while keeping relative contrast for M/W (the darker shapes)
+                            const bright = 180 + (avg / 255) * 75;
+                            data[j] = bright;
+                            data[j + 1] = bright;
+                            data[j + 2] = bright;
+                            // Alpha remains unchanged from source
+                        }
+                        tCtx.putImageData(imageData, 0, 0);
 
-                        ctx.drawImage(tempCanvas, offset, offset, size, size);
+                        // Final crispness pass: high-quality draw onto main canvas
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+
+                        ctx.drawImage(tempCanvas, offset, offset, logoRenderSize, logoRenderSize);
                     } else {
                         if (!this.logoLoading && !this.logoFailed) {
                             this.logoLoading = true;
                             const loader = new THREE.ImageLoader();
-                            loader.load('./mindwave-cursor.png', (image) => {
+                            loader.load('./mindwave-logo-icon.png', (image) => {
                                 this.logoImage = image;
                                 this.logoLoading = false;
                                 if (this.matrixMaterial) {
@@ -734,8 +767,9 @@ export class Visualizer3D {
                     gl_Position = projectionMatrix * mvPosition;
                     gl_Position.z -= 0.01; // Avoid flickering
                     gl_PointSize = 480.0 / -mvPosition.z;
-                    if (abs(aCharIndex - 4.0) < 0.1) gl_PointSize *= 1.4;
+                    if (abs(aCharIndex - 4.0) < 0.1) gl_PointSize *= 1.6;
                 }
+
             `,
             fragmentShader: `
                 uniform sampler2D uTexture;
@@ -1399,48 +1433,49 @@ export class Visualizer3D {
 
     updateLogoTexture() {
         if (!this.originalLogoImg) return;
-        // Render at high resolution for crisp display
         const renderSize = 512;
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = renderSize;
         canvas.height = renderSize;
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(this.originalLogoImg, 0, 0, renderSize, renderSize);
+        const ctx = canvas.getContext("2d");
 
+        ctx.drawImage(this.originalLogoImg, 0, 0, renderSize, renderSize);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        const accentHex = this.customColor ? this.customColor.getHex() : 0x2dd4bf;
+        const accentHex = this.customColor ? this.customColor.getHex() : 0x60a9ff;
         const accentR = (accentHex >> 16) & 255;
         const accentG = (accentHex >> 8) & 255;
         const accentB = accentHex & 255;
 
+        this.themeType = document.body.dataset.themeType || "dark"; const isLight = (this.themeType === "light");
+
         for (let i = 0; i < data.length; i += 4) {
             const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
-            if (a < 10) continue; // Skip transparency
+            if (a < 10) continue;
 
-            // If bright white (M/W and text) -> Theme Accent
             if (r > 200 && g > 200 && b > 200) {
                 data[i] = accentR;
                 data[i + 1] = accentG;
                 data[i + 2] = accentB;
-                // Boost alpha for vibrant center (Full opacity for branding)
                 data[i + 3] = 255;
             } else {
-                // Outer Lotus Petals -> Distinct White/Muted
-                data[i] = 200;
-                data[i + 1] = 200;
-                data[i + 2] = 200;
-                // Reduce alpha for petals to make center pop
-                data[i + 3] = Math.min(255, a * 0.5);
+                if (isLight) {
+                    data[i] = 30;
+                    data[i + 1] = 30;
+                    data[i + 2] = 30;
+                    data[i + 3] = Math.min(255, a * 1.2);
+                } else {
+                    data[i] = 255;
+                    data[i + 1] = 255;
+                    data[i + 2] = 255;
+                    data[i + 3] = Math.min(255, a * 0.7);
+                }
             }
         }
         ctx.putImageData(imageData, 0, 0);
 
         const texture = new THREE.CanvasTexture(canvas);
-        // High-quality texture filtering for crisp logo
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.generateMipmaps = true;
@@ -1454,7 +1489,7 @@ export class Visualizer3D {
                 map: texture,
                 transparent: true,
                 opacity: 0.12,
-                color: 0xffffff, // White overlay guarantees exact texture colors
+                color: 0xffffff,
                 depthTest: false,
                 depthWrite: false
             });
@@ -1463,19 +1498,13 @@ export class Visualizer3D {
             this.logoMesh.position.set(0, 0, -10);
             this.logoMesh.renderOrder = -1;
             this.scene.add(this.logoMesh);
-            console.log('[Visualizer] Overlay Logo Initialized (Dynamic Canvas)');
         } else {
             const oldMap = this.logoMesh.material.map;
             this.logoMesh.material.map = texture;
-            if (oldMap) oldMap.dispose();
             this.logoMesh.material.needsUpdate = true;
-        }
-
-        if (this.renderer && this.camera) {
-            this.renderer.render(this.scene, this.camera);
+            if (oldMap) oldMap.dispose();
         }
     }
-
     initOverlayLogo() {
         if (this.logoMesh) return;
 
