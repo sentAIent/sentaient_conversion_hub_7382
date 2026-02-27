@@ -1,5 +1,7 @@
-import { state, els } from '../state.js';
+import { state, els, THEMES } from '../state.js';
 import * as THREE from '../vendor/three.module.js';
+
+let viz3D = null;
 
 export class Visualizer3D {
     constructor(canvas, initialState = {}) {
@@ -16,6 +18,11 @@ export class Visualizer3D {
         this.initialized = false;
         this._rainbowEnabled = initialState.rainbowEnabled || false;
         this.isVisualizer3D = true;
+
+        // Logo Opacity State (Start bright to match active UI)
+        this.currentLogoOpacity = 0.8;
+        this.targetLogoOpacity = 0.8;
+        viz3D = this; // Ensure module-level viz3D is set immediately
         // Detect initial theme type from document if available, fallback to dark
         this.themeType = document.body.dataset.themeType || 'dark';
 
@@ -25,6 +32,11 @@ export class Visualizer3D {
         this.lastFrameRenderTime = 0;
         this.targetFPS = this.batterySaver ? 30 : 60;
         this.vibrationEnabled = initialState.visualVibration !== undefined ? initialState.visualVibration : true;
+
+        // Adaptive Level of Detail (LOD) Tracking
+        this.fpsFrameStats = [];
+        this.lastLodDegradation = 0;
+        this.currentLodLevel = 'high'; // 'high', 'medium', 'low'
 
 
         try {
@@ -79,6 +91,18 @@ export class Visualizer3D {
             });
             window.addEventListener('mindwave:layout-change', this.handleLayoutChange);
 
+            // Page Visibility API - Battery Saver
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    console.log('[Visualizer] Tab hidden, pausing render loop to save battery.');
+                } else {
+                    console.log('[Visualizer] Tab visible, resuming render loop.');
+                    this.lastTime = performance.now() * 0.001; // Prevent time-jump glitches
+                    if (this.active !== false && this.initialized) {
+                        this.render(state.analyserLeft, state.analyserRight);
+                    }
+                }
+            });
             // Initial sizing
             this.resize();
             setTimeout(this.handleLayoutChange, 100); // Delay slightly for DOM to settle
@@ -605,11 +629,10 @@ export class Visualizer3D {
             textToSpell = "";
         }
 
-        const mid = Math.floor(textToSpell.length / 2);
+        // Place LOGO first, before the active word string
         const manualSequence = [
-            ...textToSpell.slice(0, mid).split(''),
             "LOGO",
-            ...textToSpell.slice(mid).split('')
+            ...textToSpell.split('')
         ];
         const specialCount = manualSequence.length;
 
@@ -767,7 +790,7 @@ export class Visualizer3D {
                     gl_Position = projectionMatrix * mvPosition;
                     gl_Position.z -= 0.01; // Avoid flickering
                     gl_PointSize = 480.0 / -mvPosition.z;
-                    if (abs(aCharIndex - 4.0) < 0.1) gl_PointSize *= 1.6;
+                    if (abs(aCharIndex - 0.0) < 0.1) gl_PointSize *= 1.6;
                 }
 
             `,
@@ -1034,6 +1057,38 @@ export class Visualizer3D {
         this.speedMultiplier = speed;
     }
 
+    setIntent(intent) {
+        this.currentIntent = intent;
+        if (intent === 'delta' || intent === 'theta') {
+            // Calm, slow, gentle. Increase particle size for a soft focus effect.
+            if (this.particles && this.particles.material) {
+                this.particles.material.size = 0.3;
+                this.particles.material.opacity = 0.5;
+            }
+        } else if (intent === 'gamma' || intent === 'hyper-gamma') {
+            // Sharp, fast, intense. Decrease size for sharp focus.
+            if (this.particles && this.particles.material) {
+                this.particles.material.size = 0.08;
+                this.particles.material.opacity = 0.9;
+            }
+            if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uTailLength) {
+                this.matrixMaterial.uniforms.uHeadColor.value.setHex(0xffffff);
+                this.matrixMaterial.uniforms.uTailLength.value = 0.4; // Short, fast tails
+            }
+        } else {
+            // Normal (Alpha, Beta)
+            if (this.particles && this.particles.material) {
+                this.particles.material.size = 0.15;
+                this.particles.material.opacity = 0.8;
+            }
+            if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uTailLength) {
+                this.matrixMaterial.uniforms.uHeadColor.value.setHex(0xF0FFF0);
+                this.matrixMaterial.uniforms.uTailLength.value = 1.0;
+            }
+        }
+        this.renderSingleFrame();
+    }
+
     setColor(hex) {
         this.customColor = new THREE.Color(hex);
         if (this.particles && this.particles.material) this.particles.material.color.set(hex);
@@ -1262,8 +1317,12 @@ export class Visualizer3D {
             for (let i = 0; i < wavePositions.length; i += 3) {
                 const x = wavePositions[i], y = wavePositions[i + 1];
                 let audioOffset = (dataL && dataL.length > 0) ? dataL[Math.floor(Math.abs(x) * 5) % dataL.length] / 255 : 0;
-                // Add beat pulse to wave height (Controlled by vFactor)
-                wavePositions[i + 2] = Math.sin(x * 0.5 + now * multiplier) * Math.cos(y * 0.5 + now * multiplier) * (1 + audioOffset + vBeatPulse * 0.4) + (audioOffset * 2);
+                // Ultra-smooth, peaceful rolling waves
+                // Much lower frequency for wide, slow swells
+                let baseWave = Math.sin(x * 0.15 + now * 0.3 * multiplier) + Math.cos(y * 0.15 + now * 0.25 * multiplier);
+                // Gentle audio reactivity that swells instead of bounces
+                let gentleAudio = audioOffset * 0.4 * (1.0 + vBeatPulse * 0.3);
+                wavePositions[i + 2] = baseWave * (0.8 + normBass * 0.2) + gentleAudio;
             }
             this.wavesMesh.geometry.attributes.position.needsUpdate = true;
             this.wavesMesh.rotation.z += 0.001 * multiplier;
@@ -1338,6 +1397,24 @@ export class Visualizer3D {
         const frameInterval = 1000 / this.targetFPS;
         const timeSinceLastFrame = performance.now() - this.lastFrameRenderTime;
 
+        // Adaptive LOD FPS Measurement
+        if (dt > 0) {
+            const currentFps = 1 / dt;
+            this.fpsFrameStats.push(currentFps);
+            if (this.fpsFrameStats.length > 60) this.fpsFrameStats.shift();
+
+            // Evaluate LOD downgrade every 5 seconds if running below target
+            if (now - this.lastLodDegradation > 5.0 && this.fpsFrameStats.length === 60) {
+                const avgFps = this.fpsFrameStats.reduce((a, b) => a + b) / 60;
+                // If dropping 25% below target consistently
+                if (avgFps < (this.targetFPS * 0.75)) {
+                    this.degradeLOD();
+                    this.lastLodDegradation = now;
+                    this.fpsFrameStats = []; // Reset after degrading
+                }
+            }
+        }
+
         // Create a property to track current opacity for smoothing
         if (this.currentLogoOpacity === undefined) this.currentLogoOpacity = 0.1;
 
@@ -1349,8 +1426,12 @@ export class Visualizer3D {
                 this.currentLogoOpacity = this.targetLogoOpacity;
             }
 
-            // Apply to single mesh
-            if (this.logoMesh) this.logoMesh.material.opacity = this.currentLogoOpacity;
+            // Apply to single mesh material
+            if (this.logoMesh && this.logoMesh.material) {
+                this.logoMesh.material.opacity = this.currentLogoOpacity;
+                this.logoMesh.material.transparent = true;
+                this.logoMesh.material.needsUpdate = true;
+            }
         }
 
         if (timeSinceLastFrame >= frameInterval) {
@@ -1358,7 +1439,7 @@ export class Visualizer3D {
             this.lastFrameRenderTime = performance.now();
         }
 
-        if (this.active !== false) {
+        if (this.active !== false && !document.hidden) {
             state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
         }
     }
@@ -1414,6 +1495,22 @@ export class Visualizer3D {
         console.log(`[Visualizer] Battery Saver ${enabled ? 'ENABLED (30fps/1x)' : 'DISABLED (60fps/2x)'}`);
     }
 
+    degradeLOD() {
+        if (!this.renderer) return;
+
+        if (this.currentLodLevel === 'high') {
+            console.log('[Visualizer] FPS dropping. Degrading LOD to Medium (Pixel Ratio: 1.0)');
+            this.renderer.setPixelRatio(1.0);
+            this.currentLodLevel = 'medium';
+            this.resize();
+        } else if (this.currentLodLevel === 'medium') {
+            console.log('[Visualizer] FPS dropping. Degrading LOD to Low (Pixel Ratio: 0.75)');
+            this.renderer.setPixelRatio(0.75); // Extreme cut for weak GPUs
+            this.currentLodLevel = 'low';
+            this.resize();
+        }
+    }
+
     setMatrixLogicMode(mode, text) {
         this.matrixLogicMode = mode;
         if (text !== undefined) this.matrixCustomText = text;
@@ -1443,34 +1540,42 @@ export class Visualizer3D {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        const accentHex = this.customColor ? this.customColor.getHex() : 0x60a9ff;
+        const themeName = document.body.dataset.theme || 'default';
+        const currentTheme = THEMES[themeName] || THEMES.default;
+        const secondaryHex = currentTheme.secondary || currentTheme.accent || '#ffffff';
+
+        const accentHex = this.customColor ? this.customColor.getHex() : parseInt(currentTheme.accent.replace('#', ''), 16);
+        const secondaryInt = parseInt(secondaryHex.replace('#', ''), 16);
+
         const accentR = (accentHex >> 16) & 255;
         const accentG = (accentHex >> 8) & 255;
         const accentB = accentHex & 255;
 
-        this.themeType = document.body.dataset.themeType || "dark"; const isLight = (this.themeType === "light");
+        const secondaryR = (secondaryInt >> 16) & 255;
+        const secondaryG = (secondaryInt >> 8) & 255;
+        const secondaryB = secondaryInt & 255;
+
+        this.themeType = document.body.dataset.themeType || "dark";
+        const isLight = (this.themeType === "light");
 
         for (let i = 0; i < data.length; i += 4) {
             const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
             if (a < 10) continue;
 
+            // Detect M and W (brightest parts of original logo)
             if (r > 200 && g > 200 && b > 200) {
+                // PRIMARY ACCENT for M/W
                 data[i] = accentR;
                 data[i + 1] = accentG;
                 data[i + 2] = accentB;
                 data[i + 3] = 255;
             } else {
-                if (isLight) {
-                    data[i] = 30;
-                    data[i + 1] = 30;
-                    data[i + 2] = 30;
-                    data[i + 3] = Math.min(255, a * 1.2);
-                } else {
-                    data[i] = 255;
-                    data[i + 1] = 255;
-                    data[i + 2] = 255;
-                    data[i + 3] = Math.min(255, a * 0.7);
-                }
+                // CURATED SECONDARY for petals/outlines
+                data[i] = secondaryR;
+                data[i + 1] = secondaryG;
+                data[i + 2] = secondaryB;
+                // Maintain internal logo detail via texture alpha
+                data[i + 3] = Math.min(255, a * 1.5);
             }
         }
         ctx.putImageData(imageData, 0, 0);
@@ -1484,11 +1589,11 @@ export class Visualizer3D {
         }
 
         if (!this.logoMesh) {
-            const geometry = new THREE.PlaneGeometry(11.25, 9.56);
+            const geometry = new THREE.PlaneGeometry(5.625, 4.78);
             const material = new THREE.MeshBasicMaterial({
                 map: texture,
                 transparent: true,
-                opacity: 0.12,
+                opacity: 0.8,
                 color: 0xffffff,
                 depthTest: false,
                 depthWrite: false
@@ -1519,7 +1624,7 @@ export class Visualizer3D {
             if (this.targetLogoOpacity !== undefined) {
                 this.setLogoOpacity(this.targetLogoOpacity);
             } else {
-                this.setLogoOpacity(0.12);
+                this.setLogoOpacity(0.8);
             }
         };
         img.onerror = (err) => {
@@ -1529,9 +1634,12 @@ export class Visualizer3D {
 
     setLogoOpacity(targetOpacity) {
         this.targetLogoOpacity = targetOpacity;
-        if (!this.logoMesh) {
+
+        // Update 3D Logo Mesh
+        if (this.logoMesh && this.logoMesh.material) {
+            this.logoMesh.material.opacity = targetOpacity * this.brightnessMultiplier;
+        } else if (!this.logoMesh && targetOpacity > 0) {
             this.initOverlayLogo();
-            return;
         }
     }
 
@@ -1541,7 +1649,7 @@ export class Visualizer3D {
     }
 }
 
-let viz3D;
+// viz3D is declared at the top now
 
 export function initVisualizer() {
     if (!viz3D && els.canvas && els.canvas.activeVisualizer && els.canvas.activeVisualizer.isVisualizer3D) {

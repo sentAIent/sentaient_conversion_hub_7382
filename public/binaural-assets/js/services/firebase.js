@@ -8,7 +8,7 @@ import { state } from '../state.js';
 let app, auth, db, storage;
 let initializeApp, getAuth, getFirestore, getStorage;
 let onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile;
-let collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, addDoc, where, limit;
+let collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, addDoc, where, limit, collectionGroup;
 let ref, uploadBytes, getDownloadURL, deleteObject;
 
 const authCallbacks = [];
@@ -119,6 +119,7 @@ export async function initFirebase() {
         const persistentMultipleTabManager = firebaseFirestore.persistentMultipleTabManager;
 
         collection = firebaseFirestore.collection;
+        collectionGroup = firebaseFirestore.collectionGroup;
         doc = firebaseFirestore.doc;
         setDoc = firebaseFirestore.setDoc;
         getDoc = firebaseFirestore.getDoc;
@@ -174,6 +175,13 @@ export async function initFirebase() {
                 state.isLifetime = isLifetime;
 
                 console.log('[Auth] Initial Tier:', state.userTier, 'Lifetime:', state.isLifetime);
+
+                // 1.5 Cloud Sync Analytics
+                import('./cloud-sync.js').then(module => {
+                    module.syncAnalyticsFromCloud(user.uid);
+                }).catch(err => {
+                    console.warn('[Cloud Sync] Failed to load module:', err);
+                });
 
                 // 2. Background Refresh from Firestore
                 try {
@@ -547,7 +555,6 @@ export async function fetchAudioLibrary() {
     });
     return tracks;
 }
-
 export {
     auth,
     db,
@@ -566,6 +573,6 @@ export {
     addDoc,
     where,
     limit,
-    getDocs
+    getDocs,
+    collectionGroup
 };
-

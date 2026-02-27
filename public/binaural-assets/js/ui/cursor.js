@@ -30,8 +30,8 @@ const CURSOR_SHAPES = {
     moon: {
         name: 'Moon',
         icon: '🌙',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-            <path d="M14 4C9.5 4 6 7.5 6 12c0 4.5 3.5 8 8 8 1.5 0 2.9-.4 4.1-1.1-1.5-1.5-2.4-3.6-2.4-5.9 0-2.3.9-4.4 2.4-5.9C16.9 4.4 15.5 4 14 4z" fill="${color}"/>
+        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+            <path d="M 26 4 A 14 14 0 1 1 4 26 A 16 16 0 0 0 26 4 Z" fill="${color}"/>
         </svg>`
     },
     heart: {
@@ -44,15 +44,15 @@ const CURSOR_SHAPES = {
     mindwave: {
         name: 'MindWave',
         icon: 'mw',
-        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 128 128">
+        create: (color, secondary) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 128 128">
             <!-- Branded M/W MindWave Logo -->
-            <g stroke="${color}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <!-- Outer Petal Outline -->
-                <path d="M64 20 C80 20 108 50 108 80 C108 105 88 115 64 115 C40 115 20 105 20 80 C20 50 48 20 64 20 Z" opacity="0.3"/>
-                <!-- Branded M shape -->
-                <path d="M40 85 L52 55 L64 75 L76 55 L88 85" stroke-width="8"/>
-                <!-- Underline Wave -->
-                <path d="M30 95 C45 85 83 85 98 95" stroke-width="4" opacity="0.6"/>
+            <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+                <!-- Outer Petal Outline (Curated Secondary) -->
+                <path d="M64 20 C80 20 108 50 108 80 C108 105 88 115 64 115 C40 115 20 105 20 80 C20 50 48 20 64 20 Z" stroke="${secondary || color}" stroke-width="6" opacity="0.4"/>
+                <!-- Branded M shape (Primary Accent) -->
+                <path d="M40 85 L52 55 L64 75 L76 55 L88 85" stroke="${color}" stroke-width="8"/>
+                <!-- Underline Wave (Primary Accent) -->
+                <path d="M30 95 C45 85 83 85 98 95" stroke="${color}" stroke-width="4" opacity="0.6"/>
             </g>
         </svg>`
     },
@@ -94,6 +94,10 @@ function getEffectiveCursorColor() {
     return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#60a9ff';
 }
 
+function getSecondaryCursorColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--accent-secondary').trim() || '#fb7185';
+}
+
 function updateCursorStyle() {
     let styleTag = document.getElementById('dynamic-cursor-styles');
     if (!styleTag) {
@@ -105,16 +109,20 @@ function updateCursorStyle() {
         styleTag.textContent = '';
         return;
     }
-    if (currentShape === 'mindwave') {
-        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./mindwave-cursor.png') 31 31, auto !important; }`;
-        return;
-    }
+    const color = getEffectiveCursorColor();
+    const secondary = getSecondaryCursorColor();
+
     if (currentShape === 'sun2') {
         styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./tribal-sun-cursor.png') 16 16, auto !important; }`;
         return;
     }
-    const color = getEffectiveCursorColor();
-    const svg = CURSOR_SHAPES[currentShape].create(color);
+
+    if (currentShape === 'mindwave') {
+        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./mindwave-cursor.png') 31 31, auto !important; }`;
+        return;
+    }
+
+    const svg = CURSOR_SHAPES[currentShape].create(color, secondary);
     if (!svg) {
         styleTag.textContent = '';
         return;

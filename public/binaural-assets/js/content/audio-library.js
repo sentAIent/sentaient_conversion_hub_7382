@@ -13,6 +13,7 @@ import {
     setDoc
 } from '../services/firebase.js';
 import { openAuthModal } from '../ui/auth-controller.js';
+import { getCachedAudioUrl } from '../utils/audio-offline-manager.js';
 
 // IndexedDB database name and store
 const DB_NAME = 'MindWaveAudioLibrary';
@@ -210,7 +211,7 @@ export async function deleteTrack(trackId) {
 }
 
 // Play a track (Handles both Blob URL from Cloud and Base64 from Local)
-export function playCustomAudio(trackId) {
+export async function playCustomAudio(trackId) {
     const track = audioLibraryState.tracks.find(t => t.id === trackId);
     if (!track) {
         console.error('[AudioLibrary] Track not found:', trackId);
@@ -227,7 +228,20 @@ export function playCustomAudio(trackId) {
     audioLibraryState.currentTrack = track;
 
     // Usage: Cloud uses downloadUrl, Local uses audioData
-    const src = track.downloadUrl || track.audioData;
+    let src = track.downloadUrl || track.audioData;
+
+    // Offline Cache Intercept
+    try {
+        const cachedUrl = await getCachedAudioUrl(src);
+        if (cachedUrl) {
+            console.log(`[AudioLibrary] Serving ${trackId} from Offline Cache`);
+            src = cachedUrl;
+        } else {
+            console.log(`[AudioLibrary] Serving ${trackId} from Network (${track.isLocal ? 'Local' : 'Cloud'})`);
+        }
+    } catch (e) {
+        console.warn('[AudioLibrary] Failed to check offline cache, defaulting to network:', e);
+    }
 
     audioLibraryState.audioElement = new Audio(src);
     audioLibraryState.audioElement.volume = audioLibraryState.volume;
@@ -410,7 +424,7 @@ function renderLibraryUI() {
         const icon = isCloud ? '☁️' : '💾';
         const isCurrentTrack = audioLibraryState.currentTrack?.id === track.id;
         return `
-        <div class="audio-track-card flex flex-col gap-2 p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-all ${isCurrentTrack ? 'playing border-[var(--primary)]' : ''}"
+        <div class="audio-track-card flex flex-col gap-2 p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] active:border-[var(--accent)] transition-all ${isCurrentTrack ? 'playing border-[var(--primary)]' : ''}"
             data-track-id="${track.id}">
             <div class="flex items-center gap-3">
                 <button class="play-track-btn w-8 h-8 flex items-center justify-center rounded-full bg-[var(--primary)]/20 text-[var(--primary)] hover:bg-[var(--primary)]/30 transition-all shrink-0"

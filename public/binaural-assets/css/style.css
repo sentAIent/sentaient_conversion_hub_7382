@@ -71,6 +71,25 @@
     transform: scale(1.02);
 }
 
+/* Light Theme Contrast Fixes for Logo and Inputs */
+[data-theme-type="light"] .vibrant-logo {
+    filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 10px rgba(0, 0, 0, 0.1)) brightness(0.8) !important;
+}
+
+[data-theme-type="light"] .vibrant-logo:hover {
+    filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 15px rgba(0, 0, 0, 0.2)) brightness(0.6) !important;
+    transform: scale(1.02);
+}
+
+[data-theme-type="light"] input.bg-black\/40 {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: var(--text-main) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+[data-theme-type="light"] input.bg-black\/40::placeholder {
+    color: var(--text-muted) !important;
+}
+
 * {
     -webkit-tap-highlight-color: transparent;
 }
@@ -498,7 +517,8 @@ a:active,
 [data-theme-type="light"] [data-section="uploads"] .text-white,
 [data-theme-type="light"] [data-section="uploads"] .text-white\/70,
 [data-theme-type="light"] [data-section="classical"] .text-white,
-[data-theme-type="light"] [data-section="classical"] .text-white\/70 {
+[data-theme-type="light"] [data-section="classical"] .text-white\/70,
+[data-theme-type="light"] #aiGoalSection .text-white {
     color: var(--accent) !important;
 }
 

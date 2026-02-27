@@ -490,6 +490,201 @@
             <!-- CENTER: Main Play with Session Timer -->
             <div class="flex-1 flex flex-col items-center justify-end gap-6 pb-0 max-w-4xl">
 
+                <!-- 3. New Horizontal Visual Dock -->
+                <div id="visualDock"
+                    class="flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border border-[var(--accent)]/30 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
+
+                    <style>
+                        .visual-btn .custom-tooltip {
+                            top: -40px;
+                            bottom: auto;
+                            transform: translateX(-50%);
+                        }
+                    </style>
+
+                    <!-- SPHERE -->
+                    <button id="sphereBtn"
+                        class="visual-btn relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all group active:scale-95"
+                        data-tooltip="Sphere" onclick="window.visualizer.setShape('sphere')">
+                        <span
+                            class="custom-tooltip absolute left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Sphere</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path
+                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                            </path>
+                            <path d="M2 12h20"></path>
+                        </svg>
+                    </button>
+
+                    <!-- CUBE -->
+                    <button id="cubeBtn"
+                        class="visual-btn relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all group active:scale-95"
+                        data-tooltip="Cube" onclick="window.visualizer.setShape('box')">
+                        <span
+                            class="custom-tooltip absolute left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Cube</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linejoin="round">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                            </path>
+                            <polyline points="3.29 7 12 12 20.71 7"></polyline>
+                            <line x1="12" y1="22" x2="12" y2="12"></line>
+                        </svg>
+                    </button>
+
+                    <!-- DNA -->
+                    <button id="dnaBtn"
+                        class="visual-btn relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all group active:scale-95"
+                        data-tooltip="DNA" onclick="window.visualizer.setShape('torus')">
+                        <span
+                            class="custom-tooltip absolute left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">DNA</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M18 4c0 2-4 4-6 8s-6 6-6 8M6 4c0 2 4 4 6 8s6 6 6 8"></path>
+                            <line x1="8" y1="6" x2="16" y2="6"></line>
+                            <line x1="10" y1="10" x2="14" y2="10"></line>
+                            <line x1="10" y1="14" x2="14" y2="14"></line>
+                            <line x1="8" y1="18" x2="16" y2="18"></line>
+                        </svg>
+                    </button>
+
+                    <!-- GALAXY -->
+                    <button id="galaxyBtn"
+                        class="visual-btn relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all group active:scale-95"
+                        data-tooltip="Galaxy" onclick="window.visualizer.setShape('galaxy')">
+                        <span
+                            class="custom-tooltip absolute left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Galaxy</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M12 2v20M2 12h20"></path>
+                            <path d="M4.9 4.9l14.2 14.2M4.9 19.1l14.2-14.2"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+
+                    <div class="w-px h-8 bg-white/10 mx-1"></div>
+
+                    <!-- MANDALA -->
+                    <button id="mandalaBtn"
+                        class="visual-btn relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all group active:scale-95"
+                        data-tooltip="Mandala" onclick="window.visualizer.setShape('mandala')">
+                        <span
+                            class="custom-tooltip absolute left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Mandala</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M4.9 19.1l14.2-14.2"></path>
+                        </svg>
+                    </button>
+
+                    <!-- MATRIX -->
+                    <button id="matrixBtn"
+                        class="visual-btn relative p-2 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all group active:scale-95"
+                        data-tooltip="Matrix" onclick="window.visualizer.setShape('matrix')">
+                        <span
+                            class="custom-tooltip absolute left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Matrix</span>
+                        <div class="flex flex-col items-center justify-center gap-0.5">
+                            <span class="text-[9px] font-mono leading-none font-bold text-[#00FF41]">01</span>
+                            <span class="text-[9px] font-mono leading-none font-bold text-[#00FF41]">10</span>
+                        </div>
+
+                        <!-- Toggle Icon (Optional now since panel is auto-shown or accessed via global UI) -->
+                        <div id="matrixSettingsToggle"
+                            class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
+                            title="Settings" onclick="event.stopPropagation(); toggleMatrixSettings(this);">
+                            <span class="text-[8px] leading-none text-white">⚙️</span>
+                        </div>
+                    </button>
+                    <div id="matrixSettingsPanel"
+                        class="hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+
+                        <span
+                            class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Matrix</span>
+
+                        <!-- Mode Selector (3 buttons) -->
+                        <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
+                            <button id="matrixModeRandom" data-matrix-mode="random"
+                                class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                                title="Random characters">RND</button>
+                            <button id="matrixModeMindwave" data-matrix-mode="mindwave"
+                                class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                                title="MINDWAVE text">MW</button>
+                            <button id="matrixModeCustom" data-matrix-mode="custom"
+                                class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                                title="Custom text">TXT</button>
+                        </div>
+
+                        <!-- Custom Text Input (always visible) -->
+                        <div id="matrixCustomTextInput">
+                            <input type="text" id="matrixTextInput" placeholder="Welcome" maxlength="20"
+                                autocomplete="off"
+                                class="w-24 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
+                        </div>
+
+                        <!-- Hidden checkbox for legacy JS compat -->
+                        <input type="checkbox" id="matrixModeToggle" class="hidden" checked>
+
+                        <div class="w-px h-6 bg-white/10 mx-0.5"></div>
+
+                        <!-- Color -->
+                        <div class="flex flex-col gap-0.5 items-center">
+                            <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
+                            <input type="color" id="matrixColorPicker" value="#00FF41"
+                                class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
+                        </div>
+
+                        <!-- Rainbow -->
+                        <div class="flex flex-col gap-0.5 items-center justify-center -mt-0.5 pl-1 pr-1">
+                            <div class="flex items-center gap-1 group/rainbow"
+                                onclick="document.getElementById('matrixRainbowToggle').click()">
+                                <span
+                                    class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
+                            </div>
+                            <label class="premium-toggle">
+                                <input type="checkbox" id="matrixRainbowToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="w-px h-6 bg-white/10 mx-0.5 hidden sm:block"></div>
+
+                        <!-- Speed -->
+                        <div class="flex flex-col gap-0.5 w-16 group/speed" title="Fall Speed">
+                            <div class="flex justify-between items-center px-0.5">
+                                <label class="premium-label">SPD</label>
+                                <span id="matrixSpeedVal" class="premium-value">1.0</span>
+                            </div>
+                            <input type="range" id="matrixSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
+                                class="premium-slider">
+                        </div>
+
+                        <!-- Length -->
+                        <div class="flex flex-col gap-0.5 w-16 group/len" title="Trail Length">
+                            <div class="flex justify-between items-center px-0.5">
+                                <label class="premium-label">LEN</label>
+                                <span id="matrixLengthVal" class="premium-value">1.0</span>
+                            </div>
+                            <input type="range" id="matrixLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
+                                class="premium-slider">
+                        </div>
+
+                        <!-- Angle -->
+                        <div class="flex flex-col gap-0.5 w-16 hidden sm:flex group/ang" title="Rotation">
+                            <div class="flex justify-between items-center px-0.5">
+                                <label class="premium-label">ANG</label>
+                                <span id="matrixAngleVal" class="premium-value">0°</span>
+                            </div>
+                            <input type="range" id="matrixAngleSlider" min="0" max="360" step="15" value="0"
+                                class="premium-slider">
+                        </div>
+
+                    </div>
+
+                </div>
+
                 <!-- 1. Play & Timer Controls (Horizontal Row) -->
                 <div
                     class="flex flex-wrap justify-center items-center gap-4 sm:gap-6 bg-[#0a0a12]/50 backdrop-blur-xl px-4 sm:px-6 py-2 rounded-2xl border border-[var(--accent)]/30 max-w-[95vw]">
@@ -650,196 +845,181 @@
                     </div>
                 </div>
 
-
-
-
-                <!-- 3. New Horizontal Visual Dock -->
-                <div id="visualDock"
-                    class="flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border border-[var(--accent)]/30 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
-
-                    <style>
-                        .visual-btn .custom-tooltip {
-                            top: -40px;
-                            bottom: auto;
-                            transform: translateX(-50%);
-                        }
-                    </style>
-
-                    <!-- SPHERE -->
-                    <button id="sphereBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🔮</span>
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
-                    </button>
-
-                    <!-- FLOW -->
-                    <button id="flowBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌀</span>
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
-                    </button>
-
-                    <!-- LAVA -->
-                    <button id="lavaBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌋</span>
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
-                    </button>
-
-                    <!-- FIRE -->
-                    <button id="fireplaceBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🔥</span>
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
-                    </button>
-
-                    <!-- RAIN -->
-                    <button id="rainBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌿</span>
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
-                    </button>
-
-                    <!-- ZEN -->
-                    <button id="zenBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌸</span>
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
-                    </button>
-
-                    <!-- OCEAN -->
-                    <button id="oceanBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🏝️</span>
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Waves</span>
-                    </button>
-
-                    <!-- MATRIX -->
-                    <button id="matrixBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">💻</span>
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Matrix</span>
-
-                        <!-- Toggle Icon (Optional now since panel is auto-shown or accessed via global UI) -->
-                        <div id="matrixSettingsToggle"
-                            class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
-                            title="Settings" onclick="event.stopPropagation(); toggleMatrixSettings(this);">
-                            <span class="text-[8px] leading-none text-white">⚙️</span>
-                        </div>
-                    </button>
-                </div>
-
-                <div id="matrixSettingsPanel"
-                    class="hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
-
+                <!-- SPHERE -->
+                <button id="sphereBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl filter drop-shadow-lg">🔮</span>
                     <span
-                        class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Matrix</span>
-
-                    <!-- Mode Selector (3 buttons) -->
-                    <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
-                        <button id="matrixModeRandom" data-matrix-mode="random"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Random characters">RND</button>
-                        <button id="matrixModeMindwave" data-matrix-mode="mindwave"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="MINDWAVE text">MW</button>
-                        <button id="matrixModeCustom" data-matrix-mode="custom"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Custom text">TXT</button>
-                    </div>
-
-                    <!-- Custom Text Input (always visible) -->
-                    <div id="matrixCustomTextInput">
-                        <input type="text" id="matrixTextInput" placeholder="Welcome" maxlength="20" autocomplete="off"
-                            class="w-24 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
-                    </div>
-
-                    <!-- Hidden checkbox for legacy JS compat -->
-                    <input type="checkbox" id="matrixModeToggle" class="hidden" checked>
-
-                    <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                    <!-- Color -->
-                    <div class="flex flex-col gap-0.5 items-center">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
-                        <input type="color" id="matrixColorPicker" value="#00FF41"
-                            class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
-                    </div>
-
-                    <!-- Rainbow -->
-                    <div class="flex flex-col gap-0.5 items-center">
-                        <div class="flex gap-1 items-center">
-                            <span id="labelRGB"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
-                            <span class="text-[8px] text-white/20 select-none">/</span>
-                            <span id="labelRainbow"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
-                        </div>
-                        <label class="premium-toggle">
-                            <input type="checkbox" id="matrixRainbowToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                    <!-- Sliders Group -->
-                    <div class="flex items-center gap-3">
-                        <!-- Speed -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">SPD</label>
-                                <span id="matrixSpeedVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="matrixSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Length -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">LEN</label>
-                                <span id="matrixLengthVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="matrixLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Angle -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">ANG</label>
-                                <span id="matrixAngleVal" class="premium-value">0°</span>
-                            </div>
-                            <input type="range" id="matrixAngleSlider" min="0" max="360" step="15" value="0"
-                                class="premium-slider">
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- RIGHT: Recording & Mixer Toggle -->
-            <div class="flex flex-col gap-3 items-center pb-2">
-                <!-- New Mixer Toggle Button (Use old ID 'rightToggle') -->
-                <button id="rightToggle"
-                    class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all order-first"
-                    title="Mixer">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 20v-6M6 20V10M18 20V4" />
-                    </svg>
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
                 </button>
-                <!-- Record controls moved to center play row -->
+
+                <!-- FLOW -->
+                <button id="flowBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl filter drop-shadow-lg">🌀</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
+                </button>
+
+                <!-- LAVA -->
+                <button id="lavaBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl filter drop-shadow-lg">🌋</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
+                </button>
+
+                <!-- FIRE -->
+                <button id="fireplaceBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl filter drop-shadow-lg">🔥</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
+                </button>
+
+                <!-- RAIN -->
+                <button id="rainBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl filter drop-shadow-lg">🌿</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
+                </button>
+
+                <!-- ZEN -->
+                <button id="zenBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl filter drop-shadow-lg">🌸</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
+                </button>
+
+                <!-- OCEAN -->
+                <button id="oceanBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl filter drop-shadow-lg">🏝️</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Waves</span>
+                </button>
+
+                <!-- MATRIX -->
+                <button id="matrixBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl filter drop-shadow-lg">💻</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Matrix</span>
+
+                    <!-- Toggle Icon (Optional now since panel is auto-shown or accessed via global UI) -->
+                    <div id="matrixSettingsToggle"
+                        class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
+                        title="Settings" onclick="event.stopPropagation(); toggleMatrixSettings(this);">
+                        <span class="text-[8px] leading-none text-white">⚙️</span>
+                    </div>
+                </button>
             </div>
-        </footer>
+
+            <div id="matrixSettingsPanel"
+                class="hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+
+                <span
+                    class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Matrix</span>
+
+                <!-- Mode Selector (3 buttons) -->
+                <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
+                    <button id="matrixModeRandom" data-matrix-mode="random"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="Random characters">RND</button>
+                    <button id="matrixModeMindwave" data-matrix-mode="mindwave"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="MINDWAVE text">MW</button>
+                    <button id="matrixModeCustom" data-matrix-mode="custom"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="Custom text">TXT</button>
+                </div>
+
+                <!-- Custom Text Input (always visible) -->
+                <div id="matrixCustomTextInput">
+                    <input type="text" id="matrixTextInput" placeholder="Welcome" maxlength="20" autocomplete="off"
+                        class="w-24 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
+                </div>
+
+                <!-- Hidden checkbox for legacy JS compat -->
+                <input type="checkbox" id="matrixModeToggle" class="hidden" checked>
+
+                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
+
+                <!-- Color -->
+                <div class="flex flex-col gap-0.5 items-center">
+                    <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
+                    <input type="color" id="matrixColorPicker" value="#00FF41"
+                        class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
+                </div>
+
+                <!-- Rainbow -->
+                <div class="flex flex-col gap-0.5 items-center">
+                    <div class="flex gap-1 items-center">
+                        <span id="labelRGB"
+                            class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
+                        <span class="text-[8px] text-white/20 select-none">/</span>
+                        <span id="labelRainbow"
+                            class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
+                    </div>
+                    <label class="premium-toggle">
+                        <input type="checkbox" id="matrixRainbowToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
+
+                <!-- Sliders Group -->
+                <div class="flex items-center gap-3">
+                    <!-- Speed -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">SPD</label>
+                            <span id="matrixSpeedVal" class="premium-value">1.0</span>
+                        </div>
+                        <input type="range" id="matrixSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
+                            class="premium-slider">
+                    </div>
+
+                    <!-- Length -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">LEN</label>
+                            <span id="matrixLengthVal" class="premium-value">1.0</span>
+                        </div>
+                        <input type="range" id="matrixLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
+                            class="premium-slider">
+                    </div>
+
+                    <!-- Angle -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">ANG</label>
+                            <span id="matrixAngleVal" class="premium-value">0°</span>
+                        </div>
+                        <input type="range" id="matrixAngleSlider" min="0" max="360" step="15" value="0"
+                            class="premium-slider">
+                    </div>
+                </div>
+
+            </div>
+    </div>
+
+    <!-- RIGHT: Recording & Mixer Toggle -->
+    <div class="flex flex-col gap-3 items-center pb-2">
+        <!-- New Mixer Toggle Button (Use old ID 'rightToggle') -->
+        <button id="rightToggle"
+            class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all order-first"
+            title="Mixer">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20v-6M6 20V10M18 20V4" />
+            </svg>
+        </button>
+        <!-- Record controls moved to center play row -->
+    </div>
+    </footer>
 
     </div>
 
@@ -857,8 +1037,7 @@
             <div id="aiGoalSection" class="w-full px-2 animate-[fade-in_0.5s_ease]">
                 <div class="relative group">
                     <input type="text" id="aiGoalInput" placeholder="What's your goal?"
-                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-all pr-12"
-                        style="--goal-accent: var(--accent);">
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-all pr-12">
                     <button id="aiGenerateBtn"
                         class="absolute right-1 top-1 bottom-1 px-3 bg-[var(--accent)] text-[var(--bg-main)] rounded-lg text-[10px] font-bold uppercase tracking-tighter hover:opacity-90 active:scale-95 transition-all flex items-center justify-center">
                         <span id="aiBtnText">GO</span>

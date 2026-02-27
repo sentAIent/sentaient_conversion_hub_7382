@@ -12,11 +12,12 @@ import { setStoryVolume, playStory, stopStory as stopCurrentStory, storyState } 
 import { setCustomAudioVolume } from '../content/audio-library.js';
 import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '../content/classical.js';
 import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '../audio/dj-synth.js';
-import { goToCheckout, hasPurchasedApp } from '../services/stripe-simple.js';
+import { goToCheckout, hasPurchasedApp, getUserTier, openCustomerPortal } from '../services/stripe-simple.js';
+import { getLeaderboard } from '../services/leaderboard-service.js';
 import { initGallery } from './gallery-modal.js';
 import { getReferralCount, shareReferral } from '../services/referral.js';
 import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
-import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
+import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence, setPresencePhase } from '../services/presence-service.js';
 // ... (existing code)
 import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
 import { loadUserPreferences, saveUserPreferences } from '../services/persistence.js?v=NUCLEAR_FIX_V2';
@@ -824,7 +825,7 @@ export function setupUI() {
 
         // Show back button if we have a previous color
         if (els.prevColorBtn && previousColor) {
-            els.prevColorBtn.classList.remove('hidden');
+            els.prevColorBtn.classList.remove('opacity-30', 'pointer-events-none');
         }
     }
 
@@ -1271,6 +1272,11 @@ async function handlePlayClick() {
     } else {
         // STARTING
         try {
+            // Request Desktop Notification Permission explicitly on their first ever play
+            if (window.requestNotificationPermission) {
+                window.requestNotificationPermission();
+            }
+
             // 1. Resume visuals FIRST so they're ready when audio starts
             resumeVisuals();
 
@@ -1724,6 +1730,31 @@ function updateTimerUI(data) {
     }
 }
 
+function handlePhaseChange(newPhase) {
+    console.log(`[Pomodoro] Phase transitioned to: ${newPhase}`);
+
+    // Broadcast state to Firebase Live Pulse
+    if (typeof setPresencePhase === 'function') {
+        setPresencePhase(newPhase);
+    }
+
+    // Phase 4: Desktop Push Notifications
+    if (window.showNotification) {
+        if (newPhase === 'REST') {
+            window.showNotification("Focus Complete! 🧠", "Time for a 5-minute break. Stretch your legs!");
+        } else if (newPhase === 'LONG_REST') {
+            window.showNotification("Deep Work Cycle Finished! 🏆", "You earned a 15-minute extended break.");
+        } else if (newPhase === 'FOCUS') {
+            window.showNotification("Break's Over! 🚀", "Time to dive back into deep work.");
+        }
+    }
+
+    // Play gentle transition chime
+    if (newPhase !== 'NONE') {
+        playCompletionChime(); // Reusing the same soft bell for transitions
+    }
+}
+
 function handleSessionComplete() {
     console.log('[Session] Complete - playing chime and fading out...');
     // Mark session as completed in analytics
@@ -1861,7 +1892,7 @@ function setupStatsUI() {
     }
 }
 
-function openStatsModal() {
+async function openStatsModal() {
     if (!els.statsModal) return;
 
     // Get stats data
@@ -1873,12 +1904,87 @@ function openStatsModal() {
     // Live Community Sync Data (Phase 5)
     let livePresenceTotal = state.livePresenceTotal || 42; // Fallback to mock/last known
     subscribeToPresenceCounts((counts) => {
-        state.livePresenceTotal = counts.total;
-        const liveCountLabel = document.getElementById('liveSyncCount');
-        if (liveCountLabel) {
-            liveCountLabel.textContent = `${counts.total} Users Pulsing Now`;
+        // UI expects total string matching the count initially
+        const totalUsers = isDemo ? Math.floor(Math.random() * 20) + 30 : counts.total;
+
+        // Advanced Network Readouts
+        const focusCount = counts.totalFocus || 0;
+        const restCount = counts.totalRest || 0;
+
+        // Find the pulse element within the modal content
+        const pulseEl = els.statsModal.querySelector('#liveSyncCount').closest('.flex'); // Assuming the parent flex container is the target
+
+        if (pulseEl) {
+            let displayHtml = `<div class="pulse-ring"></div>` +
+                `<span class="ml-2 font-medium">${totalUsers} Syncing</span>`;
+
+            // Show deep work ratio if data exists
+            if (focusCount > 0 || restCount > 0) {
+                displayHtml += `<span class="ml-3 text-xs text-[var(--accent)] opacity-80">(🧠 ${focusCount} | 🧘 ${restCount})</span>`;
+            }
+
+            pulseEl.innerHTML = displayHtml;
+
+            // Apply slight glow based on volume
+            pulseEl.style.boxShadow = `0 0 ${10 + (totalUsers * 0.5)}px rgba(96, 169, 255, 0.2)`;
         }
     });
+
+    // Phase 1 Optimization: Stripe Tier Fetch
+    let userTier = 'free';
+    try {
+        if (auth?.currentUser) {
+            userTier = await getUserTier();
+        }
+    } catch (e) {
+        console.warn("[Controls] Failed to fetch Stripe tier:", e);
+    }
+
+    const isPremium = userTier !== 'free';
+
+    // Phase 5: Fetch Leaderboard
+    const topUsers = await getLeaderboard(5);
+
+    // Generate Leaderboard HTML
+    let leaderboardHtml = `
+        <div class="mt-8">
+            <h4 class="text-sm font-bold text-[var(--accent)] mb-4 flex items-center gap-2">
+                <span>🏆</span> Global Deep Work Leaderboard
+            </h4>
+            <div class="flex flex-col gap-2">
+    `;
+
+    if (topUsers.length === 0) {
+        leaderboardHtml += `<div class="text-sm text-white/50 text-center py-4 bg-white/5 rounded-xl border border-white/5">No deep work data found yet. Be the first!</div>`;
+    } else {
+        topUsers.forEach((user, index) => {
+            const isTop3 = index < 3;
+            const badgeColors = ['bg-yellow-500', 'bg-slate-300', 'bg-amber-700'];
+            const badgeClass = isTop3 ? badgeColors[index] : 'bg-white/10 text-white/50';
+            const icon = isTop3 ? '★' : `${index + 1}`;
+
+            leaderboardHtml += `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--accent)]/30 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full ${badgeClass} flex items-center justify-center text-[10px] font-bold shadow-md shrink-0">
+                            ${icon}
+                        </div>
+                        <img src="${user.photoURL}" class="w-8 h-8 rounded-full bg-white/10 shrink-0" alt="Avatar">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-white truncate max-w-[120px]">${user.displayName}</span>
+                            <span class="text-[10px] text-[var(--text-muted)]">${user.minutes} mins</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-sm border py-0.5 px-2 rounded font-bold text-[var(--accent)] border-[var(--accent)]/30 shadow-[0_0_10px_rgba(var(--accent-rgb),0.2)] bg-[var(--accent)]/10 truncate">
+                            ${user.cycles} Cycles
+                        </span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    leaderboardHtml += `</div></div>`;
 
     // Find the card container inside the modal and replace its content
     const modalContent = els.statsModal.querySelector('.glass-card');
@@ -1900,6 +2006,24 @@ function openStatsModal() {
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
+                </button>
+            </div>
+
+            <!-- Stripe Billing Banner -->
+            <div class="mb-6 w-full p-4 rounded-xl border ${isPremium ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/30'} flex items-center justify-between transition-all">
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold text-white flex items-center gap-2">
+                        ${isPremium ? '💎 Premium Member' : '⭐ Free Tier'} 
+                        <span class="text-[10px] px-2 py-0.5 rounded-full ${isPremium ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-500'} uppercase tracking-wider">
+                            ${userTier}
+                        </span>
+                    </span>
+                    <span class="text-[10px] text-[var(--text-muted)] mt-1">
+                        ${isPremium ? 'Thank you for supporting MindWave.' : 'Unlock all presets, ad-free offline playback.'}
+                    </span>
+                </div>
+                <button id="stripeConnectBtn" class="px-4 py-2 rounded-lg font-bold text-xs transition-transform hover:scale-105 ${isPremium ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]'}">
+                    ${isPremium ? 'Manage Subscription' : 'Upgrade to Premium'}
                 </button>
             </div>
 
@@ -2010,6 +2134,9 @@ function openStatsModal() {
                 </div>
             </div>
 
+            <!-- Inject Dynamic Phase 5 Leaderboard Underneath the Stats -->
+            ${leaderboardHtml}
+
             <!--Animation styles-- >
     <style>
         @keyframes barGrow {
@@ -2022,6 +2149,33 @@ function openStatsModal() {
         const closeBtn = modalContent.querySelector('#closeStatsBtn');
         if (closeBtn) {
             closeBtn.addEventListener('click', closeStatsModal);
+        }
+
+        // Phase 1 Optimization: Stripe Connect Handler
+        const stripeConnectBtn = modalContent.querySelector('#stripeConnectBtn');
+        if (stripeConnectBtn) {
+            stripeConnectBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                if (!auth.currentUser) {
+                    showToast("Please sign in first.", "warning");
+                    if (window.openAuthModal) window.openAuthModal();
+                    return;
+                }
+
+                if (isPremium) {
+                    // Send to Stripe Portal to manage subscripton
+                    console.log("[Stripe] Opening Customer Portal");
+                    openCustomerPortal();
+                } else {
+                    // Send to pricing sheet to upgrade
+                    console.log("[Stripe] Opening Pricing Modal");
+                    closeStatsModal();
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
+                    }
+                }
+            });
         }
     }
 
@@ -3127,6 +3281,12 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         if (window.setVisualMode) {
             window.setVisualMode(BRAINWAVE_VISUALS[type]);
         }
+
+        // Link visualizer state to AI intent (Delta vs Gamma)
+        import('../visuals/visualizer_nuclear_v4.js').then(m => {
+            const viz = m.getVisualizer();
+            if (viz && viz.setIntent) viz.setIntent(type);
+        });
     } else if (type.startsWith('heal-')) {
         // Healing Frequency visual logic
         let healingVisuals = ['particles', 'waves']; // Default for deeper healing (852Hz, 963Hz)

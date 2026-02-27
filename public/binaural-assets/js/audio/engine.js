@@ -382,6 +382,13 @@ export function stopAudio(immediate = false) {
         state.isochronicGain = null;
     }
 
+    // Clean up Generative Audio Hooks
+    if (state.pinkNoiseNode) { try { state.pinkNoiseNode.stop(); } catch (e) { } state.pinkNoiseNode.disconnect(); state.pinkNoiseNode = null; }
+    if (state.pinkNoiseGain) { state.pinkNoiseGain.disconnect(); state.pinkNoiseGain = null; }
+    if (state.brownNoiseNode) { try { state.brownNoiseNode.stop(); } catch (e) { } state.brownNoiseNode.disconnect(); state.brownNoiseNode = null; }
+    if (state.brownNoiseGain) { state.brownNoiseGain.disconnect(); state.brownNoiseGain = null; }
+    if (state.customAudioSource) { try { state.customAudioSource.disconnect(); } catch (e) { } state.customAudioSource = null; }
+
     const now = state.audioCtx.currentTime;
 
     if (immediate) {
@@ -980,6 +987,49 @@ export function updateFrequencies() {
 
     }
 
+    // --- ADVANCED GENERATIVE AUDIO HOOKS ---
+    if (state.isPlaying && state.audioCtx) {
+        const now = state.audioCtx.currentTime;
+
+        // Ensure nodes exist for Generative synthesis
+        if (!state.brownNoiseNode) {
+            state.brownNoiseNode = state.audioCtx.createBufferSource();
+            state.brownNoiseNode.buffer = createBrownNoiseBuffer();
+            state.brownNoiseNode.loop = true;
+            state.brownNoiseGain = state.audioCtx.createGain();
+            state.brownNoiseGain.gain.setValueAtTime(0, now);
+            state.brownNoiseNode.connect(state.brownNoiseGain);
+            state.brownNoiseGain.connect(state.masterAtmosGain);
+            state.brownNoiseNode.start(now);
+        }
+        if (!state.pinkNoiseNode) {
+            state.pinkNoiseNode = state.audioCtx.createBufferSource();
+            state.pinkNoiseNode.buffer = createPinkNoiseBuffer();
+            state.pinkNoiseNode.loop = true;
+            state.pinkNoiseGain = state.audioCtx.createGain();
+            state.pinkNoiseGain.gain.setValueAtTime(0, now);
+            state.pinkNoiseNode.connect(state.pinkNoiseGain);
+            state.pinkNoiseGain.connect(state.masterAtmosGain);
+            state.pinkNoiseNode.start(now);
+        }
+
+        // DELTA (Deep Sleep) -> Fade in Brown Noise (Rumble)
+        if (beat < 4) {
+            state.brownNoiseGain.gain.setTargetAtTime(0.15, now, 2.0);
+            state.pinkNoiseGain.gain.setTargetAtTime(0, now, 2.0);
+        }
+        // GAMMA (High Focus) -> Fade in Pink Noise (Static focus)
+        else if (beat >= 30) {
+            state.brownNoiseGain.gain.setTargetAtTime(0, now, 2.0);
+            state.pinkNoiseGain.gain.setTargetAtTime(0.1, now, 2.0);
+        }
+        // NORMAL -> Fade both out
+        else {
+            state.brownNoiseGain.gain.setTargetAtTime(0, now, 2.0);
+            state.pinkNoiseGain.gain.setTargetAtTime(0, now, 2.0);
+        }
+    }
+
     // Update Haptic Sync if active
     updateHapticSync();
 
@@ -996,6 +1046,25 @@ export function updateMasterVolume() {
     const vol = parseFloat(els.masterVolSlider.value);
     if (els.masterVolValue) els.masterVolValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.masterGain && state.isPlaying) state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
+}
+
+// ---- New Programmatic Volume Control Setters ----
+export function setMasterVolume(vol) {
+    if (state.masterGain && state.isPlaying) {
+        state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
+    }
+}
+
+export function setBeatsVolume(vol) {
+    if (state.beatsGain && state.isPlaying) {
+        state.beatsGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
+    }
+}
+
+export function setAtmosVolume(vol) {
+    if (state.masterAtmosGain && state.isPlaying) {
+        state.masterAtmosGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
+    }
 }
 
 export function updateMasterBalance() {
@@ -1533,3 +1602,24 @@ export function resetAllSoundscapes() {
         state.masterAtmosGain.gain.value = atmosVal;
     }
 }
+
+// --- CUSTOM LOCAL AUDIO MIXING ---
+export function connectCustomAudio(audioElement) {
+    if (!state.audioCtx) initAudio();
+
+    // Disconnect previous if exists
+    if (state.customAudioSource) {
+        try { state.customAudioSource.disconnect(); } catch (e) { }
+        state.customAudioSource = null;
+    }
+
+    // Create new route directly to Atmos master controls 
+    try {
+        state.customAudioSource = state.audioCtx.createMediaElementSource(audioElement);
+        state.customAudioSource.connect(state.masterAtmosGain);
+        console.log('[Engine] Custom Audio dynamically routed into Master WebAudio Chain');
+    } catch (err) {
+        console.warn('[Engine] Failed to route custom audio (already connected?):', err);
+    }
+}
+window.connectCustomAudio = connectCustomAudio;

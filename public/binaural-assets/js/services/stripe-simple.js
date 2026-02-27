@@ -163,8 +163,12 @@ export function goToCheckout(tier, billingPeriod = 'monthly', discountCode = nul
 
     // Get Payment Link URL
     let checkoutUrl = billingPeriod === 'oneTime'
-        ? tierConfig.stripe.oneTime
-        : tierConfig.stripe[billingPeriod];
+        ? (tierConfig.stripe.oneTime)
+        : (tierConfig.stripe[billingPeriod]);
+
+    if (!checkoutUrl || checkoutUrl === 'your-stripe-link-here') {
+        throw new Error(`Checkout link for ${tier} (${billingPeriod}) is not configured. Please check your .env file.`);
+    }
 
     // Add user email as prefill
     checkoutUrl += `?prefilled_email=${encodeURIComponent(user.email)}`;
@@ -185,8 +189,21 @@ export function goToCheckout(tier, billingPeriod = 'monthly', discountCode = nul
         console.warn(`[Stripe] Discount codes cannot be applied to Lifetime deals. Code '${discountCode}' was removed.`);
     }
 
-    // Redirect to Stripe
-    window.location.href = checkoutUrl;
+    // Redirect to Stripe or show a helpful error
+    try {
+        // Basic URL validation
+        new URL(checkoutUrl);
+
+        // Final safety check: if it's still the default demo link in a non-dev environment, warn the user
+        if (checkoutUrl.includes('buy.stripe.com/test/demo') && window.location.hostname !== 'localhost') {
+            console.warn('[Stripe] Using demo link in production!');
+        }
+
+        window.location.href = checkoutUrl;
+    } catch (e) {
+        console.error('[Stripe] Invalid Checkout URL:', checkoutUrl);
+        alert('Invalid checkout link. Please contact support or check your environment configuration.');
+    }
 }
 
 /**
@@ -215,9 +232,9 @@ export async function isPremiumUser() {
 
     if (!user) return false;
 
-    // MOCK OVERRIDE (for testing without DB)
-    if (window.__MOCK_PREMIUM === true) {
-        console.log('[Stripe] Mock premium active');
+    // MOCK OVERRIDE (for testing without DB or 100% promo codes)
+    if (window.__MOCK_PREMIUM === true || localStorage.getItem('mindwave_premium_unlocked') === 'true') {
+        console.log('[Stripe] Premium override active');
         return true;
     }
 
@@ -250,6 +267,11 @@ export async function hasPurchasedApp() {
     const user = auth.currentUser;
     if (!user) return false;
 
+    // Promo Code Bypass
+    if (window.__MOCK_PREMIUM === true || localStorage.getItem('mindwave_premium_unlocked') === 'true') {
+        return true;
+    }
+
     const db = getFirestore();
     const subDoc = await getDoc(doc(db, 'subscriptions', user.uid));
 
@@ -267,6 +289,15 @@ export async function getSubscription() {
     const user = auth.currentUser;
 
     if (!user) return null;
+
+    // Promo Code Bypass fake subscription
+    if (window.__MOCK_PREMIUM === true || localStorage.getItem('mindwave_premium_unlocked') === 'true') {
+        return {
+            status: 'active',
+            plan: 'lifetime',
+            tier: 'buddha'
+        };
+    }
 
     const db = getFirestore();
     const subDoc = await getDoc(doc(db, 'subscriptions', user.uid));

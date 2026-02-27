@@ -6,6 +6,7 @@ const ANALYTICS_KEY = 'mindwave_analytics';
 // Integration Imports
 import * as ga from '../utils/analytics.js';
 import * as firestore from './analytics-service.js';
+import { getCurrentUser } from './firebase.js';
 
 // --- STREAK & VISIT TRACKING ---
 
@@ -131,6 +132,16 @@ function saveSession(session) {
     localStorage.setItem('mindwave_session_count', (currentCount + 1).toString());
 }
 
+export function logPomodoroCycle(durationMinutes) {
+    const analytics = getAnalytics();
+
+    analytics.stats.pomodoroCyclesCompleted++;
+    analytics.stats.totalPomodoroMinutes += durationMinutes;
+
+    saveAnalytics(analytics);
+    console.log(`[Analytics] Tracked Completed Pomodoro. Total Cycles: ${analytics.stats.pomodoroCyclesCompleted}`);
+}
+
 // --- DATA ACCESS ---
 
 export function getAnalytics() {
@@ -144,7 +155,10 @@ export function getAnalytics() {
             currentStreak: 0,
             longestStreak: 0,
             lastActivityDate: null,
-            presetUsage: {}
+            presetUsage: {},
+            // Pomodoro Stats
+            pomodoroCyclesCompleted: 0,
+            totalPomodoroMinutes: 0
         }
     };
 
@@ -155,6 +169,12 @@ export function getAnalytics() {
             if (parsed.stats && parsed.stats.lastSessionDate && !parsed.stats.lastActivityDate) {
                 parsed.stats.lastActivityDate = parsed.stats.lastSessionDate;
             }
+            // Migration: Add Pomodoro tracking for older accounts
+            if (parsed.stats) {
+                if (parsed.stats.pomodoroCyclesCompleted === undefined) parsed.stats.pomodoroCyclesCompleted = 0;
+                if (parsed.stats.totalPomodoroMinutes === undefined) parsed.stats.totalPomodoroMinutes = 0;
+            }
+
             return { ...analytics, ...parsed, stats: { ...analytics.stats, ...parsed.stats } };
         } catch (e) {
             console.warn('[Analytics] Parse error, resetting');
@@ -166,6 +186,16 @@ export function getAnalytics() {
 
 function saveAnalytics(analytics) {
     localStorage.setItem(ANALYTICS_KEY, JSON.stringify(analytics));
+
+    // Cloud Sync Integration
+    const user = getCurrentUser();
+    if (user && user.uid) {
+        import('./cloud-sync.js').then(module => {
+            module.syncAnalyticsToCloud(user.uid);
+        }).catch(err => {
+            console.warn('[Cloud Sync] Failed to load module:', err);
+        });
+    }
 }
 
 // --- COMPUTED STATS ---

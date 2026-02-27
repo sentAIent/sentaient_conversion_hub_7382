@@ -63,6 +63,12 @@ window.trackPaywallShown = trackPaywallShown;
 window.trackUpgradeClick = trackUpgradeClick;
 window.setUserProperties = setUserProperties;
 
+// Expose Volume Mixers globally
+import { setMasterVolume, setBeatsVolume, setAtmosVolume } from './audio/engine.js';
+window.setMasterVolume = setMasterVolume;
+window.setBeatsVolume = setBeatsVolume;
+window.setAtmosVolume = setAtmosVolume;
+
 // Initialize Application
 const initApp = () => {
     console.time('InitApp');
