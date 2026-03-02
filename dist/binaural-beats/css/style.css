@@ -782,12 +782,12 @@ select {
 
 .toggle-inactive {
     background: transparent !important;
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: var(--text-muted) !important;
 }
 
 .toggle-inactive:hover {
     background: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.9) !important;
+    color: var(--text-main) !important;
 }
 
 /* Prevent text selection on buttons */
@@ -2344,6 +2344,7 @@ body[data-theme="dawn"] .custom-scrollbar::-webkit-scrollbar-track {
 #djStopAll.dj-playing:hover {
     background: rgba(239, 68, 68, 0.3) !important;
 }
+
 /* ==========================================
    THEME-AWARE HOVER STATES & ICON VISIBILITY
    Uses data-theme-type attribute (light/dark)

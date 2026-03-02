@@ -81,10 +81,8 @@
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
-            background-color: #0f172a;
-            color: #e2e8f0;
-            /* Visualizer Fallback Gradient (Instant Load) */
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background-color: var(--bg-main, #0f172a);
+            color: var(--text-main, #e2e8f0);
             height: 100vh;
             width: 100vw;
             overflow: hidden;
@@ -498,7 +496,7 @@
 
                 <!-- 1. Play & Timer Controls (Horizontal Row) -->
                 <div
-                    class="flex flex-wrap justify-center items-center gap-4 sm:gap-6 bg-[#0a0a12]/50 backdrop-blur-xl px-4 sm:px-6 py-2 rounded-2xl border border-[var(--accent)]/30 max-w-[95vw]">
+                    class="order-1 flex flex-wrap justify-center items-center gap-4 sm:gap-6 bg-[#0a0a12]/50 backdrop-blur-xl px-4 sm:px-6 py-2 rounded-2xl border border-[var(--accent)]/30 max-w-[95vw]">
                     <!-- Audio Play/Pause Button -->
                     <div class="flex flex-col items-center gap-1">
                         <button id="audioPlayBtn"
@@ -661,7 +659,7 @@
 
                 <!-- 3. New Horizontal Visual Dock -->
                 <div id="visualDock"
-                    class="flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border border-[var(--accent)]/30 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
+                    class="order-3 flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border !border-[var(--accent)]/30 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
 
                     <style>
                         .visual-btn .custom-tooltip {
@@ -744,7 +742,7 @@
                 </div>
 
                 <div id="matrixSettingsPanel"
-                    class="hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+                    class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
 
                     <span
                         class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Matrix</span>
@@ -856,13 +854,18 @@
             class="relative w-full p-6 border-b border-white/10 flex flex-col justify-center items-center bg-[var(--bg-panel)] shrink-0 min-h-[140px] gap-4">
             <a href="#" onclick="window.location.reload()" class="hover:opacity-80 transition-opacity block">
                 <img src="./mindwave-logo.png" alt="MindWave Logo"
-                    class="h-20 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.3)] rounded-xl relative z-10">
+                    class="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.3)] rounded-xl relative z-10 vibrant-logo">
             </a>
 
             <!-- AI GOAL INPUT SECTION -->
             <div id="aiGoalSection" class="w-full px-2 animate-[fade-in_0.5s_ease]">
+                <div
+                    class="text-[10px] font-bold text-[var(--accent)] tracking-widest mb-2 px-1 flex items-center gap-2">
+                    <span>ASK MINDWAVE</span>
+                    <div class="h-px flex-1 bg-gradient-to-r from-[var(--accent)]/30 to-transparent"></div>
+                </div>
                 <div class="relative group">
-                    <input type="text" id="aiGoalInput" placeholder="What's your goal?"
+                    <input type="text" id="aiGoalInput" placeholder="Try 'Focus for 20 mins'..."
                         class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[var(--accent)] transition-all pr-12">
                     <button id="aiGenerateBtn"
                         class="absolute right-1 top-1 bottom-1 px-3 bg-[var(--accent)] text-[var(--bg-main)] rounded-lg text-[10px] font-bold uppercase tracking-tighter hover:opacity-90 active:scale-95 transition-all flex items-center justify-center">

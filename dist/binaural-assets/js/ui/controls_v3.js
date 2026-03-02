@@ -12,11 +12,12 @@ import { setStoryVolume, playStory, stopStory as stopCurrentStory, storyState } 
 import { setCustomAudioVolume } from '../content/audio-library.js';
 import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '../content/classical.js';
 import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '../audio/dj-synth.js';
-import { goToCheckout, hasPurchasedApp } from '../services/stripe-simple.js';
+import { goToCheckout, hasPurchasedApp, getUserTier, openCustomerPortal } from '../services/stripe-simple.js';
+import { getLeaderboard } from '../services/leaderboard-service.js';
 import { initGallery } from './gallery-modal.js';
 import { getReferralCount, shareReferral } from '../services/referral.js';
 import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
-import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
+import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence, setPresencePhase } from '../services/presence-service.js';
 // ... (existing code)
 import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
 import { loadUserPreferences, saveUserPreferences } from '../services/persistence.js?v=NUCLEAR_FIX_V2';
@@ -149,6 +150,10 @@ export function setupUI() {
     els.appOverlay = document.getElementById('appOverlay');
     els.tapZone = document.getElementById('tapZone');
     els.sphereBtn = document.getElementById('sphereBtn');
+    els.cubeBtn = document.getElementById('cubeBtn');
+    els.dragonBtn = document.getElementById('dragonBtn');
+    els.galaxyBtn = document.getElementById('galaxyBtn');
+
     els.flowBtn = document.getElementById('flowBtn');
     els.lavaBtn = document.getElementById('lavaBtn');
     els.fireplaceBtn = document.getElementById('fireplaceBtn');
@@ -735,6 +740,10 @@ export function setupUI() {
 
     // Visual Modes
     if (els.sphereBtn) els.sphereBtn.addEventListener('click', () => setVisualMode('sphere'));
+    if (els.cubeBtn) els.cubeBtn.addEventListener('click', () => setVisualMode('box'));
+    if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon'));
+    if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy'));
+
     if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles'));
     if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava'));
     if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace'));
@@ -746,6 +755,16 @@ export function setupUI() {
         if (e.target.closest('#matrixSettingsToggle')) return;
         setVisualMode('matrix');
     });
+
+    // Glow Mode Buttons (Auto, Dim, Full, Heartbeat)
+    const glowAutoBtn = document.getElementById('glowAutoBtn');
+    const glowDimBtn = document.getElementById('glowDimBtn');
+    const glowFullBtn = document.getElementById('glowFullBtn');
+    const glowHeartbeatBtn = document.getElementById('glowHeartbeatBtn');
+    if (glowAutoBtn) glowAutoBtn.addEventListener('click', () => setGlowMode('auto'));
+    if (glowDimBtn) glowDimBtn.addEventListener('click', () => setGlowMode('faded'));
+    if (glowFullBtn) glowFullBtn.addEventListener('click', () => setGlowMode('full'));
+    if (glowHeartbeatBtn) glowHeartbeatBtn.addEventListener('click', () => setGlowMode('heartbeat'));
 
     // Matrix Mini-Toggle Logic
     const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
@@ -824,7 +843,7 @@ export function setupUI() {
 
         // Show back button if we have a previous color
         if (els.prevColorBtn && previousColor) {
-            els.prevColorBtn.classList.remove('hidden');
+            els.prevColorBtn.classList.remove('hidden', 'opacity-30', 'pointer-events-none');
         }
     }
 
@@ -1077,6 +1096,10 @@ export function setupUI() {
             // Sync UI buttons to match the constructor's active modes (no toggleMode calls needed)
             const buttons = [
                 { el: els.sphereBtn, mode: 'sphere' },
+                { el: els.cubeBtn, mode: 'box' },
+                { el: els.dragonBtn, mode: 'dragon' },
+                { el: els.galaxyBtn, mode: 'galaxy' },
+
                 { el: els.flowBtn, mode: 'particles' },
                 { el: els.lavaBtn, mode: 'lava' },
                 { el: els.fireplaceBtn, mode: 'fireplace' },
@@ -1271,6 +1294,11 @@ async function handlePlayClick() {
     } else {
         // STARTING
         try {
+            // Request Desktop Notification Permission explicitly on their first ever play
+            if (window.requestNotificationPermission) {
+                window.requestNotificationPermission();
+            }
+
             // 1. Resume visuals FIRST so they're ready when audio starts
             resumeVisuals();
 
@@ -1724,6 +1752,31 @@ function updateTimerUI(data) {
     }
 }
 
+function handlePhaseChange(newPhase) {
+    console.log(`[Pomodoro] Phase transitioned to: ${newPhase}`);
+
+    // Broadcast state to Firebase Live Pulse
+    if (typeof setPresencePhase === 'function') {
+        setPresencePhase(newPhase);
+    }
+
+    // Phase 4: Desktop Push Notifications
+    if (window.showNotification) {
+        if (newPhase === 'REST') {
+            window.showNotification("Focus Complete! 🧠", "Time for a 5-minute break. Stretch your legs!");
+        } else if (newPhase === 'LONG_REST') {
+            window.showNotification("Deep Work Cycle Finished! 🏆", "You earned a 15-minute extended break.");
+        } else if (newPhase === 'FOCUS') {
+            window.showNotification("Break's Over! 🚀", "Time to dive back into deep work.");
+        }
+    }
+
+    // Play gentle transition chime
+    if (newPhase !== 'NONE') {
+        playCompletionChime(); // Reusing the same soft bell for transitions
+    }
+}
+
 function handleSessionComplete() {
     console.log('[Session] Complete - playing chime and fading out...');
     // Mark session as completed in analytics
@@ -1804,6 +1857,10 @@ function setupModeToggle() {
             updateModeUI(mode);
         });
     });
+
+    // Apply initial toggle classes so buttons match theme on load
+    const currentMode = state.audioMode || 'binaural';
+    updateModeUI(currentMode);
 }
 
 function updateModeUI(mode) {
@@ -1857,7 +1914,7 @@ function setupStatsUI() {
     }
 }
 
-function openStatsModal() {
+async function openStatsModal() {
     if (!els.statsModal) return;
 
     // Get stats data
@@ -1869,12 +1926,87 @@ function openStatsModal() {
     // Live Community Sync Data (Phase 5)
     let livePresenceTotal = state.livePresenceTotal || 42; // Fallback to mock/last known
     subscribeToPresenceCounts((counts) => {
-        state.livePresenceTotal = counts.total;
-        const liveCountLabel = document.getElementById('liveSyncCount');
-        if (liveCountLabel) {
-            liveCountLabel.textContent = `${counts.total} Users Pulsing Now`;
+        // UI expects total string matching the count initially
+        const totalUsers = isDemo ? Math.floor(Math.random() * 20) + 30 : counts.total;
+
+        // Advanced Network Readouts
+        const focusCount = counts.totalFocus || 0;
+        const restCount = counts.totalRest || 0;
+
+        // Find the pulse element within the modal content
+        const pulseEl = els.statsModal.querySelector('#liveSyncCount').closest('.flex'); // Assuming the parent flex container is the target
+
+        if (pulseEl) {
+            let displayHtml = `<div class="pulse-ring"></div>` +
+                `<span class="ml-2 font-medium">${totalUsers} Syncing</span>`;
+
+            // Show deep work ratio if data exists
+            if (focusCount > 0 || restCount > 0) {
+                displayHtml += `<span class="ml-3 text-xs text-[var(--accent)] opacity-80">(🧠 ${focusCount} | 🧘 ${restCount})</span>`;
+            }
+
+            pulseEl.innerHTML = displayHtml;
+
+            // Apply slight glow based on volume
+            pulseEl.style.boxShadow = `0 0 ${10 + (totalUsers * 0.5)}px rgba(96, 169, 255, 0.2)`;
         }
     });
+
+    // Phase 1 Optimization: Stripe Tier Fetch
+    let userTier = 'free';
+    try {
+        if (auth?.currentUser) {
+            userTier = await getUserTier();
+        }
+    } catch (e) {
+        console.warn("[Controls] Failed to fetch Stripe tier:", e);
+    }
+
+    const isPremium = userTier !== 'free';
+
+    // Phase 5: Fetch Leaderboard
+    const topUsers = await getLeaderboard(5);
+
+    // Generate Leaderboard HTML
+    let leaderboardHtml = `
+        <div class="mt-8">
+            <h4 class="text-sm font-bold text-[var(--accent)] mb-4 flex items-center gap-2">
+                <span>🏆</span> Global Deep Work Leaderboard
+            </h4>
+            <div class="flex flex-col gap-2">
+    `;
+
+    if (topUsers.length === 0) {
+        leaderboardHtml += `<div class="text-sm text-white/50 text-center py-4 bg-white/5 rounded-xl border border-white/5">No deep work data found yet. Be the first!</div>`;
+    } else {
+        topUsers.forEach((user, index) => {
+            const isTop3 = index < 3;
+            const badgeColors = ['bg-yellow-500', 'bg-slate-300', 'bg-amber-700'];
+            const badgeClass = isTop3 ? badgeColors[index] : 'bg-white/10 text-white/50';
+            const icon = isTop3 ? '★' : `${index + 1}`;
+
+            leaderboardHtml += `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--accent)]/30 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full ${badgeClass} flex items-center justify-center text-[10px] font-bold shadow-md shrink-0">
+                            ${icon}
+                        </div>
+                        <img src="${user.photoURL}" class="w-8 h-8 rounded-full bg-white/10 shrink-0" alt="Avatar">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-white truncate max-w-[120px]">${user.displayName}</span>
+                            <span class="text-[10px] text-[var(--text-muted)]">${user.minutes} mins</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-sm border py-0.5 px-2 rounded font-bold text-[var(--accent)] border-[var(--accent)]/30 shadow-[0_0_10px_rgba(var(--accent-rgb),0.2)] bg-[var(--accent)]/10 truncate">
+                            ${user.cycles} Cycles
+                        </span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    leaderboardHtml += `</div></div>`;
 
     // Find the card container inside the modal and replace its content
     const modalContent = els.statsModal.querySelector('.glass-card');
@@ -1896,6 +2028,24 @@ function openStatsModal() {
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
+                </button>
+            </div>
+
+            <!-- Stripe Billing Banner -->
+            <div class="mb-6 w-full p-4 rounded-xl border ${isPremium ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/30'} flex items-center justify-between transition-all">
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold text-white flex items-center gap-2">
+                        ${isPremium ? '💎 Premium Member' : '⭐ Free Tier'} 
+                        <span class="text-[10px] px-2 py-0.5 rounded-full ${isPremium ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-500'} uppercase tracking-wider">
+                            ${userTier}
+                        </span>
+                    </span>
+                    <span class="text-[10px] text-[var(--text-muted)] mt-1">
+                        ${isPremium ? 'Thank you for supporting MindWave.' : 'Unlock all presets, ad-free offline playback.'}
+                    </span>
+                </div>
+                <button id="stripeConnectBtn" class="px-4 py-2 rounded-lg font-bold text-xs transition-transform hover:scale-105 ${isPremium ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]'}">
+                    ${isPremium ? 'Manage Subscription' : 'Upgrade to Premium'}
                 </button>
             </div>
 
@@ -2006,6 +2156,9 @@ function openStatsModal() {
                 </div>
             </div>
 
+            <!-- Inject Dynamic Phase 5 Leaderboard Underneath the Stats -->
+            ${leaderboardHtml}
+
             <!--Animation styles-- >
     <style>
         @keyframes barGrow {
@@ -2018,6 +2171,33 @@ function openStatsModal() {
         const closeBtn = modalContent.querySelector('#closeStatsBtn');
         if (closeBtn) {
             closeBtn.addEventListener('click', closeStatsModal);
+        }
+
+        // Phase 1 Optimization: Stripe Connect Handler
+        const stripeConnectBtn = modalContent.querySelector('#stripeConnectBtn');
+        if (stripeConnectBtn) {
+            stripeConnectBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                if (!auth.currentUser) {
+                    showToast("Please sign in first.", "warning");
+                    if (window.openAuthModal) window.openAuthModal();
+                    return;
+                }
+
+                if (isPremium) {
+                    // Send to Stripe Portal to manage subscripton
+                    console.log("[Stripe] Opening Customer Portal");
+                    openCustomerPortal();
+                } else {
+                    // Send to pricing sheet to upgrade
+                    console.log("[Stripe] Opening Pricing Modal");
+                    closeStatsModal();
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
+                    }
+                }
+            });
         }
     }
 
@@ -2302,6 +2482,104 @@ export function resetImmersiveTimer() {
     }
 }
 
+// --- GLOW MODE CONTROL (Auto / Dim / Full / Heartbeat) ---
+let heartbeatInterval = null;
+
+function setGlowMode(mode) {
+    // Cancel any active heartbeat animation
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+
+    state.lotusState = mode;
+
+    switch (mode) {
+        case 'auto':
+            setVisualBrightness(1.0);
+            if (window.setCursorOpacity) window.setCursorOpacity(1.0);
+            break;
+        case 'faded':
+            setVisualBrightness(0.3);
+            if (window.setCursorOpacity) window.setCursorOpacity(0.3);
+            break;
+        case 'full':
+            setVisualBrightness(1.0);
+            if (window.setCursorOpacity) window.setCursorOpacity(1.0);
+            break;
+        case 'heartbeat': {
+            let currentPhase = 0;
+            let lastTick = performance.now();
+            const startMs = lastTick;
+            const intervalMs = 16; // ~60fps
+
+            heartbeatInterval = setInterval(() => {
+                const now = performance.now();
+                const deltaMs = now - lastTick;
+                lastTick = now;
+
+                const elapsedMins = (now - startMs) / 60000;
+
+                // Dynamic Heartbeat Curve
+                let currentBPM = 80; // Start fast
+                if (elapsedMins < 2) {
+                    // 0 to 2 mins: smoothly drop from 80 to 45 BPM
+                    currentBPM = 80 - (35 * (elapsedMins / 2));
+                } else if (elapsedMins < 5) {
+                    // 2 to 5 mins: smoothly drop from 45 to 22.5 BPM (half of 45)
+                    const t = (elapsedMins - 2) / 3;
+                    currentBPM = 45 - (22.5 * t);
+                } else {
+                    // 5+ mins: hold steady at 22.5 BPM
+                    currentBPM = 22.5;
+                }
+
+                // Accumulate phase properly based on current BPM to avoid jumps
+                const beatsPerMs = currentBPM / 60000;
+                currentPhase = (currentPhase + deltaMs * beatsPerMs) % 1;
+
+                let pulse;
+                if (currentPhase < 0.15) {
+                    // First beat (sharp rise)
+                    pulse = 0.3 + 0.7 * Math.sin((currentPhase / 0.15) * Math.PI);
+                } else if (currentPhase < 0.25) {
+                    // Brief dip
+                    pulse = 0.3 + 0.2 * Math.sin(((currentPhase - 0.15) / 0.1) * Math.PI);
+                } else if (currentPhase < 0.4) {
+                    // Second beat (slightly softer)
+                    pulse = 0.3 + 0.5 * Math.sin(((currentPhase - 0.25) / 0.15) * Math.PI);
+                } else {
+                    // Rest period
+                    pulse = 0.3;
+                }
+                setVisualBrightness(pulse);
+                if (window.setCursorOpacity) window.setCursorOpacity(pulse);
+            }, intervalMs);
+            break;
+        }
+    }
+
+    // Update button highlight states
+    const glowBtns = document.querySelectorAll('.glow-btn');
+    glowBtns.forEach(btn => {
+        const btnMode = btn.dataset.glowMode;
+        if (btnMode === mode) {
+            btn.classList.add('active');
+            btn.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+            btn.classList.add('bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]');
+            btn.style.boxShadow = '0 0 12px var(--accent-glow)';
+        } else {
+            btn.classList.remove('active');
+            btn.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+            btn.classList.remove('bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]');
+            btn.style.boxShadow = '';
+        }
+    });
+
+    console.log(`[Glow] Mode set to: ${mode}`);
+}
+window.setGlowMode = setGlowMode;
+
 export function setVisualMode(mode, forceState = null) {
     const viz = getVisualizer();
     let activeModes = new Set();
@@ -2334,6 +2612,7 @@ export function setVisualMode(mode, forceState = null) {
                 if (Array.isArray(mode)) {
                     if (!viz.activeModes.has(m)) viz.toggleMode(m);
                 } else {
+                    // Toggle mode on/off independently so multiple visuals can layer
                     viz.toggleMode(m);
                 }
             }
@@ -2348,6 +2627,10 @@ export function setVisualMode(mode, forceState = null) {
     // Update button states with theme-aware styling
     const buttons = [
         { el: els.sphereBtn, mode: 'sphere' },
+        { el: els.cubeBtn, mode: 'box' },
+        { el: els.dragonBtn, mode: 'dragon' },
+        { el: els.galaxyBtn, mode: 'galaxy' },
+        { el: els.mandalaBtn, mode: 'mandala' },
         { el: els.flowBtn, mode: 'particles' },
         { el: els.lavaBtn, mode: 'lava' },
         { el: els.fireplaceBtn, mode: 'fireplace' },
@@ -2472,8 +2755,8 @@ export function setTheme(themeName) {
     // Theme-Aware Logo Switching
     const logoImg = document.querySelector('#leftPanel img');
     if (logoImg) {
-        // Use the new light logo for bright themes, standard logo for dark themes
-        const newSrc = isLightTheme ? '/mindwave-logo-light.png' : '/mindwave-logo.png';
+        // Stop using blurry PNGs - use the authentic crisp SVG for both themes
+        const newSrc = './mindwave-logo.png';
         if (logoImg.getAttribute('src') !== newSrc) {
             logoImg.src = newSrc;
         }
@@ -2790,11 +3073,11 @@ export function loadSettings(payload) {
         const modeButtons = document.querySelectorAll('.mode-btn');
         modeButtons.forEach(btn => {
             if (btn.dataset.mode === settings.audioMode) {
-                btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]');
-                btn.classList.remove('text-[var(--text-muted)]');
+                btn.classList.add('toggle-active');
+                btn.classList.remove('toggle-inactive');
             } else {
-                btn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]');
-                btn.classList.add('text-[var(--text-muted)]');
+                btn.classList.remove('toggle-active');
+                btn.classList.add('toggle-inactive');
             }
         });
         if (els.modeLabel) {
@@ -3123,6 +3406,12 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         if (window.setVisualMode) {
             window.setVisualMode(BRAINWAVE_VISUALS[type]);
         }
+
+        // Link visualizer state to AI intent (Delta vs Gamma)
+        import('../visuals/visualizer_nuclear_v4.js').then(m => {
+            const viz = m.getVisualizer();
+            if (viz && viz.setIntent) viz.setIntent(type);
+        });
     } else if (type.startsWith('heal-')) {
         // Healing Frequency visual logic
         let healingVisuals = ['particles', 'waves']; // Default for deeper healing (852Hz, 963Hz)
@@ -3574,12 +3863,9 @@ export function initThemeModal() {
     const CURSOR_SHAPES_DATA = [
         { id: 'sun', name: 'Sun', icon: '☀️' },
         { id: 'moon', name: 'Moon', icon: '🌙' },
-        { id: 'plus', name: 'Plus', icon: '✚' },
-        { id: 'lotus', name: 'Lotus', icon: '🪷' },
         { id: 'heart', name: 'Heart', icon: '❤️' },
-        { id: 'mindwave', name: 'MindWave', icon: '🧠' },
-        { id: 'ring', name: 'Ring', icon: '⭕' },
-        { id: 'target', name: 'Target', icon: '🎯' },
+        { id: 'mindwave', name: 'MindWave', icon: '<img src="./mindwave-cursor.png" width="56" height="56" style="display:inline-block;object-fit:contain;">' },
+        { id: 'sun2', name: 'Sun 2', icon: '🌞' },
         { id: 'default', name: 'Default', icon: '🖱️' }
     ];
 
@@ -3592,16 +3878,32 @@ export function initThemeModal() {
             </div>
             <div>
                 <h3 class="text-sm font-bold tracking-tight">CUSTOM CURSOR</h3>
-                <div class="text-xs opacity-70">Choose shape and color</div>
+                <div class="text-xs text-[var(--text-muted)]">Choose shape and color</div>
             </div>
         </div>
-        <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20">
-            <span class="text-xs font-medium">Color:</span>
-            <div class="relative group">
-                <div id="cursorColorPreview" class="w-8 h-8 rounded-full border-2 border-[var(--accent)]/40 cursor-pointer shadow-lg transition-transform hover:scale-110" style="background-color: ${effectiveColor};"></div>
-                <input type="color" id="cursorColorPicker" value="${savedColor || '#60a9ff'}" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+        <div class="mb-4 p-3 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="text-xs font-medium">Color:</span>
+                <div id="cursorColorPreview" class="w-8 h-8 rounded-full border-2 border-[var(--accent)]/40 shadow-lg" style="background-color: ${effectiveColor};"></div>
+                <button id="resetCursorColor" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 transition-all border border-[var(--accent)]/30">Reset</button>
             </div>
-            <button id="resetCursorColor" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 transition-all border border-[var(--accent)]/30">Reset</button>
+            <div class="mb-2">
+                <label class="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] block mb-1">Hue</label>
+                <input type="range" id="cursorHueSlider" min="0" max="360" value="180"
+                    style="width:100%;height:12px;-webkit-appearance:none;appearance:none;border-radius:6px;outline:none;cursor:pointer;
+                    background:linear-gradient(to right,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%));">
+            </div>
+            <div class="mb-2">
+                <label class="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] block mb-1">Brightness</label>
+                <input type="range" id="cursorBrightnessSlider" min="20" max="100" value="60"
+                    style="width:100%;height:12px;-webkit-appearance:none;appearance:none;border-radius:6px;outline:none;cursor:pointer;
+                    background:linear-gradient(to right,hsl(180,100%,20%),hsl(180,100%,50%),hsl(180,100%,100%));">
+            </div>
+            <div class="flex gap-1.5 flex-wrap mt-2" id="cursorSwatches">
+                ${['#2dd4bf', '#60a5fa', '#a855f7', '#f472b6', '#facc15', '#f97316', '#ef4444', '#10b981', '#6366f1', '#ffffff'].map(c =>
+        `<div class="w-6 h-6 rounded-full cursor-pointer border border-white/20 hover:scale-110 transition-transform" style="background:${c};" data-color="${c}"></div>`
+    ).join('')}
+            </div>
         </div>
         <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="cursorShapeGrid">
             ${CURSOR_SHAPES_DATA.map(s => `
@@ -3626,14 +3928,59 @@ export function initThemeModal() {
         });
     });
 
-    const cp = section.querySelector('#cursorColorPicker');
-    if (cp) {
-        cp.addEventListener('input', (e) => {
-            if (typeof window.setCursorColor === 'function') {
-                window.setCursorColor(e.target.value);
-                const prev = section.querySelector('#cursorColorPreview');
-                if (prev) prev.style.backgroundColor = e.target.value;
-            }
+    // --- Real-time color picker via hue/brightness sliders ---
+    const hueSlider = section.querySelector('#cursorHueSlider');
+    const brightSlider = section.querySelector('#cursorBrightnessSlider');
+    const preview = section.querySelector('#cursorColorPreview');
+    const swatches = section.querySelector('#cursorSwatches');
+
+    const hslToHex = (h, s, l) => {
+        s /= 100; l /= 100;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => { const k = (n + h / 30) % 12; const c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * c).toString(16).padStart(2, '0'); };
+        return `#${f(0)}${f(8)}${f(4)}`;
+    };
+
+    const applyCursorColor = (hex) => {
+        if (preview) preview.style.backgroundColor = hex;
+        if (typeof window.setCursorColor === 'function') window.setCursorColor(hex);
+    };
+
+    const updateFromSliders = () => {
+        const h = parseInt(hueSlider.value);
+        const l = parseInt(brightSlider.value);
+        const hex = hslToHex(h, 100, l);
+        applyCursorColor(hex);
+        // Update brightness slider gradient to match current hue
+        brightSlider.style.background = `linear-gradient(to right,hsl(${h},100%,20%),hsl(${h},100%,50%),hsl(${h},100%,100%))`;
+    };
+
+    // Initialize sliders from saved color
+    if (savedColor) {
+        // Parse saved hex to set slider positions
+        const r = parseInt(savedColor.slice(1, 3), 16) / 255, g = parseInt(savedColor.slice(3, 5), 16) / 255, b = parseInt(savedColor.slice(5, 7), 16) / 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0; const l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+            else if (max === g) h = ((b - r) / d + 2) * 60;
+            else h = ((r - g) / d + 4) * 60;
+        }
+        hueSlider.value = Math.round(h);
+        brightSlider.value = Math.round(l * 100);
+        brightSlider.style.background = `linear-gradient(to right,hsl(${Math.round(h)},100%,20%),hsl(${Math.round(h)},100%,50%),hsl(${Math.round(h)},100%,100%))`;
+    }
+
+    if (hueSlider) hueSlider.addEventListener('input', updateFromSliders);
+    if (brightSlider) brightSlider.addEventListener('input', updateFromSliders);
+
+    // Preset swatches
+    if (swatches) {
+        swatches.querySelectorAll('[data-color]').forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                applyCursorColor(swatch.dataset.color);
+            });
         });
     }
 
@@ -3643,6 +3990,8 @@ export function initThemeModal() {
             if (typeof window.resetCursorColor === 'function') {
                 window.resetCursorColor();
             }
+            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+            if (preview) preview.style.backgroundColor = accent;
         });
     }
 }
@@ -5280,6 +5629,8 @@ function showUI() {
         el.classList.remove('idle-hidden');
     });
     // Fade OUT logo when UI is visible (Keep faint watermark)
+    const logoImg = document.querySelector('#leftPanel img');
+    if (logoImg) logoImg.style.opacity = '1'; // Keep solid since it's a brand asset now
     import('../visuals/visualizer_nuclear_v4.js').then(m => {
         if (m.setVisualLogoOpacity) m.setVisualLogoOpacity(0.1);
     });

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-cache-v2'; // Bumped version for new assets
+const CACHE_NAME = 'mindwave-cache-v3';
 
 // Essential assets to cache immediately upon installation
 const PRECACHE_URLS = [
@@ -22,11 +22,11 @@ const PRECACHE_URLS = [
     '/binaural-assets/js/ui/controls_v3.js',
     '/binaural-assets/js/ui/cursor.js',
     '/binaural-assets/js/ui/pricing-3tier.js',
-    '/binaural-assets/js/ui/stripe-simple.js',
-    '/binaural-assets/js/analytics.js',
+    '/binaural-assets/js/services/stripe-simple.js',
+    '/binaural-assets/js/utils/analytics.js',
 
     // Audio Engine
-    '/binaural-assets/js/audio/audioEngine_v4.js',
+    '/binaural-assets/js/audio/engine.js',
     '/binaural-assets/js/audio/dj-synth.js',
     '/binaural-assets/js/audio/session-timer.js',
     '/binaural-assets/js/content/audio-library.js',
@@ -109,8 +109,10 @@ self.addEventListener('fetch', event => {
                     // Clone the response because it's a stream and can only be consumed once
                     const responseToCache = response.clone();
 
-                    // Optional: dynamically cache other specific assets like fonts or images
-                    if (event.request.url.includes('/fonts/') || event.request.url.includes('.js')) {
+                    // Dynamically cache JS, fonts, and audio files
+                    if (event.request.url.includes('/fonts/') ||
+                        event.request.url.includes('.js') ||
+                        event.request.url.includes('/audio/')) {
                         caches.open(CACHE_NAME)
                             .then(cache => {
                                 cache.put(event.request, responseToCache);

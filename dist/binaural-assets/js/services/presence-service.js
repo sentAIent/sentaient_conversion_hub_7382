@@ -10,8 +10,16 @@ let heartbeatInterval = null;
 let currentSessionId = null;
 let unsubscribeCounts = null;
 
+// Allow external scripts to pass in their current Pomodoro phase (FOCUS, REST, NONE)
+let currentPhaseTracker = 'NONE';
+
+export function setPresencePhase(phase) {
+    currentPhaseTracker = phase;
+    syncPresence(); // Force an immediate update to the network
+}
+
 /**
- * Force an immediate presence update (e.g. when changing presets).
+ * Force an immediate presence update (e.g. when changing presets or phases).
  */
 export const syncPresence = async () => {
     if (!db) return;
@@ -21,6 +29,7 @@ export const syncPresence = async () => {
         await setDoc(docRef, {
             uid: state.currentUser ? state.currentUser.uid : 'anonymous',
             preset: state.activePresetType || 'none',
+            phase: currentPhaseTracker,
             lastActive: serverTimestamp(),
             status: 'active'
         }, { merge: true });
@@ -73,12 +82,17 @@ export async function stopPresenceHeartbeat() {
 
 /**
  * Listens for active session counts.
- * @param {Function} callback - Called with { total, byPreset: { alpha, beta, etc. } }
+ * @param {Function} callback - Called with { total, byPreset: { alpha, beta, etc. }, totalFocus, totalRest }
  */
 export function subscribeToPresenceCounts(callback) {
     if (!db) {
-        // Mock data for demo/mock mode
-        setTimeout(() => callback({ total: 42, byPreset: { alpha: 12, beta: 8, gamma: 5, delta: 10, theta: 7 } }), 1000);
+        console.warn("[Presence] No Firebase DB, running mock sync data.");
+        setTimeout(() => callback({
+            total: 42,
+            byPreset: { alpha: 12, beta: 8, gamma: 5, delta: 10, theta: 7 },
+            totalFocus: 18,
+            totalRest: 3
+        }), 1000);
         return () => { };
     }
 
@@ -89,13 +103,18 @@ export function subscribeToPresenceCounts(callback) {
     unsubscribeCounts = onSnapshot(q, (snapshot) => {
         const counts = {
             total: snapshot.size,
-            byPreset: {}
+            byPreset: {},
+            totalFocus: 0,
+            totalRest: 0
         };
 
         snapshot.forEach(doc => {
             const data = doc.data();
             const preset = data.preset || 'none';
             counts.byPreset[preset] = (counts.byPreset[preset] || 0) + 1;
+
+            if (data.phase === 'FOCUS') counts.totalFocus++;
+            if (data.phase === 'REST') counts.totalRest++;
         });
 
         callback(counts);

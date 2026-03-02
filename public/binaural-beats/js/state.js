@@ -52,7 +52,8 @@ export const PRESET_COMBOS = [
         preset: 'alpha',
         soundscapes: ['rain'],
         atmosVolume: 0.6,
-        color: '#6b7280'
+        color: '#6b7280',
+        visual: 'particles'
     },
     {
         id: 'night-ambient',
@@ -62,7 +63,8 @@ export const PRESET_COMBOS = [
         preset: 'delta',
         soundscapes: ['wind'],
         atmosVolume: 0.5,
-        color: '#1e3a5f'
+        color: '#1e3a5f',
+        visual: 'lava'
     },
     {
         id: 'epic-focus',
@@ -72,7 +74,8 @@ export const PRESET_COMBOS = [
         preset: 'beta',
         soundscapes: ['strings', 'brass'],
         atmosVolume: 0.4,
-        color: '#b45309'
+        color: '#b45309',
+        visual: 'sphere'
     },
     {
         id: 'ocean-drift',
@@ -82,7 +85,8 @@ export const PRESET_COMBOS = [
         preset: 'theta',
         soundscapes: ['ocean'],
         atmosVolume: 0.7,
-        color: '#0891b2'
+        color: '#0891b2',
+        visual: 'waves'
     },
     {
         id: 'storm-focus',
@@ -92,7 +96,8 @@ export const PRESET_COMBOS = [
         preset: 'beta',
         soundscapes: ['rain', 'wind'],
         atmosVolume: 0.5,
-        color: '#4b5563'
+        color: '#4b5563',
+        visual: 'particles'
     },
     {
         id: 'temple-zen',
@@ -102,9 +107,19 @@ export const PRESET_COMBOS = [
         preset: 'theta',
         soundscapes: ['bells'],
         atmosVolume: 0.4,
-        color: '#a855f7'
+        color: '#a855f7',
+        visual: 'waves'
     }
 ];
+
+// Default visuals for raw brainwave states
+export const STATE_VISUALS = {
+    delta: 'lava',
+    theta: 'waves',
+    alpha: 'particles',
+    beta: 'sphere',
+    gamma: 'sphere'
+};
 
 export const STATE_INSIGHTS = {
     delta: ["Deep sleep approaches.", "Total regeneration.", "Unconscious healing."],

@@ -41,6 +41,17 @@ const CURSOR_SHAPES = {
             <path d="M14 24l-1.5-1.3C7.4 18.1 4 15.1 4 11.5 4 8.4 6.4 6 9.5 6c1.7 0 3.4.8 4.5 2.1 1.1-1.3 2.8-2.1 4.5-2.1 3.1 0 5.5 2.4 5.5 5.5 0 3.6-3.4 6.6-8.5 11.2L14 24z" fill="${color}"/>
         </svg>`
     },
+    lotus: {
+        name: 'Lotus',
+        icon: '🪷',
+        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.8"/>
+            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(45 16 16)"/>
+            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(-45 16 16)"/>
+            <ellipse cx="16" cy="16" rx="4" ry="8" fill="${color}" opacity="0.6" transform="rotate(90 16 16)"/>
+            <circle cx="16" cy="16" r="3" fill="${color}"/>
+        </svg>`
+    },
     mindwave: {
         name: 'MindWave',
         icon: 'mw',
@@ -68,8 +79,9 @@ const CURSOR_SHAPES = {
     }
 };
 
-let currentShape = 'sun';
+let currentShape = 'lotus';
 let customColor = null;
+let customOpacity = 1.0;
 
 export function initCursor() {
     state.currentTheme = localStorage.getItem('mindwave_theme') || 'default';
@@ -127,7 +139,14 @@ function updateCursorStyle() {
         styleTag.textContent = '';
         return;
     }
-    const dataUri = `url("data:image/svg+xml,${encodeURIComponent(svg)}") 16 16, auto`;
+
+    // Inject custom opacity directly into the SVG tag
+    let finalSvg = svg;
+    if (customOpacity !== 1.0) {
+        finalSvg = finalSvg.replace('<svg ', `<svg opacity="${customOpacity}" `);
+    }
+
+    const dataUri = `url("data:image/svg+xml,${encodeURIComponent(finalSvg)}") 16 16, auto`;
     styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: ${dataUri} !important; }`;
 }
 
@@ -147,6 +166,11 @@ export function setCursorShape(shape) {
             btn.classList.add('bg-white/5', 'border-white/10');
         }
     });
+}
+
+export function setCursorOpacity(opacity) {
+    customOpacity = opacity;
+    updateCursorStyle();
 }
 
 export function setCursorColor(color) {
@@ -213,5 +237,6 @@ export function createCursorUIInThemeModal() {
 
 window.setCursorShape = setCursorShape;
 window.setCursorColor = setCursorColor;
+window.setCursorOpacity = setCursorOpacity;
 window.resetCursorColor = resetCursorColor;
 window.createCursorUIInThemeModal = createCursorUIInThemeModal;

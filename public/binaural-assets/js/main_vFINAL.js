@@ -21,6 +21,9 @@ const lazy = {
 
 import { initExitIntent } from './ui/exit-intent.js';
 import { initIntentSurvey } from './ui/intent-survey.js';
+import { initSocialProof } from './services/social-proof.js';
+import { checkReferral } from './services/referral.js';
+import { handleError, logErrorToAnalytics } from './utils/error-handler.js';
 
 // Static imports for core non-lazy modules
 import { getCloudPresets, syncLocalMixesToCloud } from './services/presets-service.js';
@@ -69,6 +72,16 @@ window.setMasterVolume = setMasterVolume;
 window.setBeatsVolume = setBeatsVolume;
 window.setAtmosVolume = setAtmosVolume;
 
+// Global Error Handlers (must be before anything else)
+window.onerror = (message, source, lineno, colno, error) => {
+    handleError(error || new Error(message), 'Uncaught');
+    logErrorToAnalytics(error || new Error(message), `${source}:${lineno}:${colno}`);
+};
+window.onunhandledrejection = (event) => {
+    handleError(event.reason || new Error('Unhandled rejection'), 'Promise');
+    logErrorToAnalytics(event.reason || new Error('Unhandled rejection'), 'UnhandledPromise');
+};
+
 // Initialize Application
 const initApp = () => {
     console.time('InitApp');
@@ -77,6 +90,9 @@ const initApp = () => {
     // Check if already initialized to prevent double-init
     if (window.APP_INITIALIZED) return;
     window.APP_INITIALIZED = true;
+
+    // Capture referral codes from URL immediately
+    checkReferral();
 
     // Retention & Personalization
     initExitIntent();
@@ -126,6 +142,11 @@ const initApp = () => {
         initAnalytics();  // Initialize Google Analytics
         recordVisit();    // Record daily visit and update streak
         syncDailyUsage(); // Sync any offline usage
+
+        // Social Proof toasts (only for non-premium users)
+        if (localStorage.getItem('mindwave_premium') !== 'true') {
+            initSocialProof();
+        }
 
         // Cloud Presets & Sync
         getCloudPresets().then(presets => {

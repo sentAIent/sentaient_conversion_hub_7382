@@ -18,8 +18,8 @@ export function initIntentSurvey(onComplete) {
 function createSurveyUI(onComplete) {
     const modal = document.createElement('div');
     modal.id = 'intentSurveyModal';
-    // Use an massive z-index to stay on top of all other elements (loading screen is 99999)
-    modal.className = 'fixed inset-0 z-[2000000] flex items-center justify-center animate-[fade-in_0.3s_ease] bg-transparent pointer-events-none';
+    // Overlay with dimming to focus attention
+    modal.className = 'fixed inset-0 z-[2000000] flex items-center justify-center animate-[fade-in_0.3s_ease] bg-black/60 backdrop-blur-sm pointer-events-auto';
     modal.style.zIndex = '2000000';
 
     modal.innerHTML = `
@@ -28,11 +28,11 @@ function createSurveyUI(onComplete) {
             @keyframes scale-up { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
             .intent-card:hover { border-color: var(--accent) !important; background: rgba(255,255,255,0.1) !important; transform: translateY(-2px); }
             .survey-popup {
-                background: rgba(15, 23, 42, 0.9);
+                background: rgba(15, 23, 42, 0.95);
                 backdrop-filter: blur(40px) saturate(160%);
                 -webkit-backdrop-filter: blur(40px) saturate(160%);
-                border: 2px solid rgba(255,255,255,0.2);
-                box-shadow: 0 60px 120px -30px rgba(0,0,0,0.9), 0 0 50px rgba(var(--accent-rgb, 45, 212, 191), 0.15);
+                border: 2px solid rgba(255,255,255,0.15);
+                box-shadow: 0 60px 120px -30px rgba(0,0,0,0.9), 0 0 50px rgba(45, 212, 191, 0.1);
                 overflow-y: auto;
                 pointer-events: auto !important;
                 transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
@@ -41,10 +41,19 @@ function createSurveyUI(onComplete) {
                 align-items: center;
                 justify-content: center;
                 position: relative;
+                margin: 20px;
+                max-width: 90vw;
+                max-height: 90vh;
             }
             .intent-card { cursor: pointer !important; pointer-events: auto !important; }
             .survey-popup::-webkit-scrollbar { width: 4px; }
             .survey-popup::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+            @media (max-height: 600px) {
+                .survey-popup { py-8; }
+                .survey-popup h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+                .survey-popup p { margin-bottom: 1rem; }
+                .intent-card { p-4; }
+            }
         </style>
         
         <div class="survey-popup max-w-2xl w-full text-center py-16 px-8 md:px-14 rounded-[2.5rem] animate-[scale-up_0.5s_cubic-bezier(0.16, 1, 0.3, 1)]">
@@ -118,49 +127,18 @@ function cleanup(resizeHandler) {
 function updatePopupPosition(popup) {
     if (!popup) return;
 
-    // 1. Detect Elements
-    const header = document.querySelector('header');
-    const footer = document.querySelector('#bottomControlBar');
-    const leftPanel = document.getElementById('leftPanel');
-    const rightPanel = document.getElementById('rightPanel');
+    // Use pure CSS for centering (flex container handled this, but we'll ensure constraints)
+    popup.style.maxWidth = 'min(90vw, 700px)';
+    popup.style.maxHeight = 'min(90vh, 800px)';
+    popup.style.transform = 'none'; // Reset any manual translations
 
-    // 2. Get Safe Margins
-    const topMargin = header ? header.offsetHeight + 20 : 40;
-    const bottomMargin = footer ? footer.offsetHeight + 20 : 40;
-
-    // Check panel visibility (usually controlled by transforms)
-    const isLeftOpen = leftPanel && !leftPanel.classList.contains('-translate-x-full');
-    const isRightOpen = rightPanel && !rightPanel.classList.contains('translate-x-full');
-
-    const leftMargin = isLeftOpen ? leftPanel.offsetWidth + 20 : 20;
-    const rightMargin = isRightOpen ? rightPanel.offsetWidth + 20 : 20;
-
-    // 3. Calculate Available Space
+    // Scale factor for smaller devices
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
+    const scaleFactor = Math.min(1, screenHeight / 700, screenWidth / 600);
 
-    const availableWidth = screenWidth - leftMargin - rightMargin;
-    const availableHeight = screenHeight - topMargin - bottomMargin;
-
-    // 4. Apply Constraints
-    popup.style.maxWidth = `${Math.min(availableWidth - 40, 700)}px`;
-    popup.style.maxHeight = `${availableHeight - 40}px`;
-
-    // 5. Explicit Positioning
-    // We use translate to center it in the "Safe Zone"
-    const centerX = leftMargin + (availableWidth / 2);
-    const centerY = topMargin + (availableHeight / 2);
-
-    // Since container is full-screen flex items-center justify-center, we just shift it
-    const offsetX = centerX - (screenWidth / 2);
-    const offsetY = centerY - (screenHeight / 2);
-
-    popup.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-
-    // Scale content for very small screens
-    const scaleFactor = Math.min(1, availableHeight / 600, availableWidth / 500);
     if (scaleFactor < 0.9) {
-        popup.style.fontSize = `${scaleFactor * 100}%`;
+        popup.style.fontSize = `${Math.max(0.7, scaleFactor) * 100}%`;
     } else {
         popup.style.fontSize = '';
     }

@@ -150,6 +150,10 @@ export function setupUI() {
     els.appOverlay = document.getElementById('appOverlay');
     els.tapZone = document.getElementById('tapZone');
     els.sphereBtn = document.getElementById('sphereBtn');
+    els.cubeBtn = document.getElementById('cubeBtn');
+    els.dragonBtn = document.getElementById('dragonBtn');
+    els.galaxyBtn = document.getElementById('galaxyBtn');
+
     els.flowBtn = document.getElementById('flowBtn');
     els.lavaBtn = document.getElementById('lavaBtn');
     els.fireplaceBtn = document.getElementById('fireplaceBtn');
@@ -736,6 +740,10 @@ export function setupUI() {
 
     // Visual Modes
     if (els.sphereBtn) els.sphereBtn.addEventListener('click', () => setVisualMode('sphere'));
+    if (els.cubeBtn) els.cubeBtn.addEventListener('click', () => setVisualMode('box'));
+    if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon'));
+    if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy'));
+
     if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles'));
     if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava'));
     if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace'));
@@ -747,6 +755,16 @@ export function setupUI() {
         if (e.target.closest('#matrixSettingsToggle')) return;
         setVisualMode('matrix');
     });
+
+    // Glow Mode Buttons (Auto, Dim, Full, Heartbeat)
+    const glowAutoBtn = document.getElementById('glowAutoBtn');
+    const glowDimBtn = document.getElementById('glowDimBtn');
+    const glowFullBtn = document.getElementById('glowFullBtn');
+    const glowHeartbeatBtn = document.getElementById('glowHeartbeatBtn');
+    if (glowAutoBtn) glowAutoBtn.addEventListener('click', () => setGlowMode('auto'));
+    if (glowDimBtn) glowDimBtn.addEventListener('click', () => setGlowMode('faded'));
+    if (glowFullBtn) glowFullBtn.addEventListener('click', () => setGlowMode('full'));
+    if (glowHeartbeatBtn) glowHeartbeatBtn.addEventListener('click', () => setGlowMode('heartbeat'));
 
     // Matrix Mini-Toggle Logic
     const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
@@ -825,7 +843,7 @@ export function setupUI() {
 
         // Show back button if we have a previous color
         if (els.prevColorBtn && previousColor) {
-            els.prevColorBtn.classList.remove('opacity-30', 'pointer-events-none');
+            els.prevColorBtn.classList.remove('hidden', 'opacity-30', 'pointer-events-none');
         }
     }
 
@@ -1078,6 +1096,10 @@ export function setupUI() {
             // Sync UI buttons to match the constructor's active modes (no toggleMode calls needed)
             const buttons = [
                 { el: els.sphereBtn, mode: 'sphere' },
+                { el: els.cubeBtn, mode: 'box' },
+                { el: els.dragonBtn, mode: 'dragon' },
+                { el: els.galaxyBtn, mode: 'galaxy' },
+
                 { el: els.flowBtn, mode: 'particles' },
                 { el: els.lavaBtn, mode: 'lava' },
                 { el: els.fireplaceBtn, mode: 'fireplace' },
@@ -2460,6 +2482,104 @@ export function resetImmersiveTimer() {
     }
 }
 
+// --- GLOW MODE CONTROL (Auto / Dim / Full / Heartbeat) ---
+let heartbeatInterval = null;
+
+function setGlowMode(mode) {
+    // Cancel any active heartbeat animation
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+
+    state.lotusState = mode;
+
+    switch (mode) {
+        case 'auto':
+            setVisualBrightness(1.0);
+            if (window.setCursorOpacity) window.setCursorOpacity(1.0);
+            break;
+        case 'faded':
+            setVisualBrightness(0.3);
+            if (window.setCursorOpacity) window.setCursorOpacity(0.3);
+            break;
+        case 'full':
+            setVisualBrightness(1.0);
+            if (window.setCursorOpacity) window.setCursorOpacity(1.0);
+            break;
+        case 'heartbeat': {
+            let currentPhase = 0;
+            let lastTick = performance.now();
+            const startMs = lastTick;
+            const intervalMs = 16; // ~60fps
+
+            heartbeatInterval = setInterval(() => {
+                const now = performance.now();
+                const deltaMs = now - lastTick;
+                lastTick = now;
+
+                const elapsedMins = (now - startMs) / 60000;
+
+                // Dynamic Heartbeat Curve
+                let currentBPM = 80; // Start fast
+                if (elapsedMins < 2) {
+                    // 0 to 2 mins: smoothly drop from 80 to 45 BPM
+                    currentBPM = 80 - (35 * (elapsedMins / 2));
+                } else if (elapsedMins < 5) {
+                    // 2 to 5 mins: smoothly drop from 45 to 22.5 BPM (half of 45)
+                    const t = (elapsedMins - 2) / 3;
+                    currentBPM = 45 - (22.5 * t);
+                } else {
+                    // 5+ mins: hold steady at 22.5 BPM
+                    currentBPM = 22.5;
+                }
+
+                // Accumulate phase properly based on current BPM to avoid jumps
+                const beatsPerMs = currentBPM / 60000;
+                currentPhase = (currentPhase + deltaMs * beatsPerMs) % 1;
+
+                let pulse;
+                if (currentPhase < 0.15) {
+                    // First beat (sharp rise)
+                    pulse = 0.3 + 0.7 * Math.sin((currentPhase / 0.15) * Math.PI);
+                } else if (currentPhase < 0.25) {
+                    // Brief dip
+                    pulse = 0.3 + 0.2 * Math.sin(((currentPhase - 0.15) / 0.1) * Math.PI);
+                } else if (currentPhase < 0.4) {
+                    // Second beat (slightly softer)
+                    pulse = 0.3 + 0.5 * Math.sin(((currentPhase - 0.25) / 0.15) * Math.PI);
+                } else {
+                    // Rest period
+                    pulse = 0.3;
+                }
+                setVisualBrightness(pulse);
+                if (window.setCursorOpacity) window.setCursorOpacity(pulse);
+            }, intervalMs);
+            break;
+        }
+    }
+
+    // Update button highlight states
+    const glowBtns = document.querySelectorAll('.glow-btn');
+    glowBtns.forEach(btn => {
+        const btnMode = btn.dataset.glowMode;
+        if (btnMode === mode) {
+            btn.classList.add('active');
+            btn.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+            btn.classList.add('bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]');
+            btn.style.boxShadow = '0 0 12px var(--accent-glow)';
+        } else {
+            btn.classList.remove('active');
+            btn.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+            btn.classList.remove('bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]');
+            btn.style.boxShadow = '';
+        }
+    });
+
+    console.log(`[Glow] Mode set to: ${mode}`);
+}
+window.setGlowMode = setGlowMode;
+
 export function setVisualMode(mode, forceState = null) {
     const viz = getVisualizer();
     let activeModes = new Set();
@@ -2492,6 +2612,7 @@ export function setVisualMode(mode, forceState = null) {
                 if (Array.isArray(mode)) {
                     if (!viz.activeModes.has(m)) viz.toggleMode(m);
                 } else {
+                    // Toggle mode on/off independently so multiple visuals can layer
                     viz.toggleMode(m);
                 }
             }
@@ -2506,6 +2627,10 @@ export function setVisualMode(mode, forceState = null) {
     // Update button states with theme-aware styling
     const buttons = [
         { el: els.sphereBtn, mode: 'sphere' },
+        { el: els.cubeBtn, mode: 'box' },
+        { el: els.dragonBtn, mode: 'dragon' },
+        { el: els.galaxyBtn, mode: 'galaxy' },
+        { el: els.mandalaBtn, mode: 'mandala' },
         { el: els.flowBtn, mode: 'particles' },
         { el: els.lavaBtn, mode: 'lava' },
         { el: els.fireplaceBtn, mode: 'fireplace' },

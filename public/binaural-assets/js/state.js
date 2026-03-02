@@ -60,7 +60,7 @@ export const PRESET_COMBOS = [
         icon: '🌧️',
         preset: 'alpha',
         soundscapes: ['rain'],
-        visuals: ['rainforest', 'lava'],
+        visuals: ['rainforest', 'waves'],
         atmosVolume: 0.6,
         color: '#6b7280'
     },
@@ -71,7 +71,7 @@ export const PRESET_COMBOS = [
         icon: '🌙',
         preset: 'delta',
         soundscapes: ['wind'],
-        visuals: ['matrix'],
+        visuals: ['galaxy', 'particles'],
         atmosVolume: 0.5,
         color: '#1e3a5f'
     },
@@ -82,7 +82,7 @@ export const PRESET_COMBOS = [
         icon: '⚔️',
         preset: 'beta',
         soundscapes: ['strings', 'brass'],
-        visuals: ['matrix', 'particles', 'waves', 'zengarden'],
+        visuals: ['dragon', 'matrix'],
         atmosVolume: 0.4,
         color: '#b45309'
     },
@@ -93,7 +93,7 @@ export const PRESET_COMBOS = [
         icon: '🌊',
         preset: 'theta',
         soundscapes: ['ocean'],
-        visuals: ['ocean', 'zengarden'],
+        visuals: ['ocean', 'waves'],
         atmosVolume: 0.7,
         color: '#0891b2'
     },
@@ -104,7 +104,7 @@ export const PRESET_COMBOS = [
         icon: '⛈️',
         preset: 'gamma',
         soundscapes: ['rain', 'wind'],
-        visuals: ['rainforest', 'matrix'],
+        visuals: ['rainforest', 'box', 'matrix'],
         atmosVolume: 0.5,
         color: '#4b5563'
     },
@@ -115,7 +115,7 @@ export const PRESET_COMBOS = [
         icon: '🔔',
         preset: 'mu',
         soundscapes: ['bells'],
-        visuals: ['zengarden', 'sphere'],
+        visuals: ['mandala', 'zengarden'],
         atmosVolume: 0.4,
         color: '#a855f7'
     },
@@ -126,7 +126,7 @@ export const PRESET_COMBOS = [
         icon: '🔥',
         preset: 'alpha',
         soundscapes: ['fireplace'],
-        visuals: ['fireplace'],
+        visuals: ['fireplace', 'lava'],
         atmosVolume: 0.6,
         color: '#f97316'
     },
@@ -137,7 +137,7 @@ export const PRESET_COMBOS = [
         icon: '🌲',
         preset: 'theta',
         soundscapes: ['winds', 'brown', 'forest_birds'],
-        visuals: ['rainforest', 'matrix'],
+        visuals: ['rainforest', 'particles'],
         atmosVolume: 0.5,
         color: '#10b981'
     },
@@ -148,7 +148,7 @@ export const PRESET_COMBOS = [
         icon: '🏔️',
         preset: 'alpha',
         soundscapes: ['mountain_wind', 'forest_birds'],
-        visuals: ['ocean', 'zengarden'],
+        visuals: ['galaxy', 'zengarden'],
         atmosVolume: 0.5,
         color: '#94a3b8'
     },
@@ -159,7 +159,7 @@ export const PRESET_COMBOS = [
         icon: '🛶',
         preset: 'theta',
         soundscapes: ['river', 'forest_birds'],
-        visuals: ['ocean', 'particles'],
+        visuals: ['waves', 'particles'],
         atmosVolume: 0.7,
         color: '#38bdf8'
     },
@@ -170,7 +170,7 @@ export const PRESET_COMBOS = [
         icon: '🌌',
         preset: 'gamma',
         soundscapes: ['strings', 'white'],
-        visuals: ['sphere', 'particles', 'matrix'],
+        visuals: ['galaxy', 'mandala'],
         atmosVolume: 0.45,
         color: '#8b5cf6'
     },
@@ -181,7 +181,7 @@ export const PRESET_COMBOS = [
         icon: '☀️',
         preset: 'beta',
         soundscapes: ['pink', 'wood'],
-        visuals: ['sphere', 'zengarden'],
+        visuals: ['sphere', 'waves', 'particles'],
         atmosVolume: 0.5,
         color: '#fbbf24'
     }
@@ -189,13 +189,13 @@ export const PRESET_COMBOS = [
 
 // Brainwave-to-Visual mapping for standard presets
 export const BRAINWAVE_VISUALS = {
-    delta: ['particles'],
-    theta: ['zengarden'],
-    alpha: ['sphere'],
-    beta: ['matrix'],
-    gamma: ['particles', 'matrix'],
-    mu: ['zengarden'],
-    'hyper-gamma': ['matrix', 'particles']
+    delta: ['waves', 'particles'],
+    theta: ['ocean', 'mandala'],
+    alpha: ['zengarden', 'sphere'],
+    beta: ['box', 'matrix'],
+    gamma: ['dragon', 'galaxy'],
+    mu: ['mandala', 'sphere'],
+    'hyper-gamma': ['dragon', 'galaxy']
 };
 
 export const STATE_INSIGHTS = {
@@ -304,7 +304,7 @@ export const els = {
     recordBtn: null, videoToggleBtn: null,
 
     // Visuals
-    sphereBtn: null, themeBtn: null,
+    sphereBtn: null, cubeBtn: null, dragonBtn: null, galaxyBtn: null, mandalaBtn: null, themeBtn: null,
     galleryBtn: null,
     visualSpeedSlider: null,
     speedValue: null,

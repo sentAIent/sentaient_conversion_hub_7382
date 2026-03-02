@@ -81,10 +81,8 @@
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
-            background-color: #0f172a;
-            color: #e2e8f0;
-            /* Visualizer Fallback Gradient (Instant Load) */
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background-color: var(--bg-main, #0f172a);
+            color: var(--text-main, #e2e8f0);
             height: 100vh;
             width: 100vw;
             overflow: hidden;
@@ -498,7 +496,7 @@
 
                 <!-- 1. Play & Timer Controls (Horizontal Row) -->
                 <div
-                    class="flex flex-wrap justify-center items-center gap-4 sm:gap-6 bg-[#0a0a12]/50 backdrop-blur-xl px-4 sm:px-6 py-2 rounded-2xl border border-[var(--accent)]/30 max-w-[95vw]">
+                    class="order-1 flex flex-wrap justify-center items-center gap-4 sm:gap-6 bg-[#0a0a12]/50 backdrop-blur-xl px-4 sm:px-6 py-2 rounded-2xl border border-[var(--accent)]/30 max-w-[95vw]">
                     <!-- Audio Play/Pause Button -->
                     <div class="flex flex-col items-center gap-1">
                         <button id="audioPlayBtn"
@@ -661,7 +659,7 @@
 
                 <!-- 3. New Horizontal Visual Dock -->
                 <div id="visualDock"
-                    class="flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border border-[var(--accent)]/30 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
+                    class="order-3 flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border !border-[var(--accent)]/30 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
 
                     <style>
                         .visual-btn .custom-tooltip {
@@ -744,7 +742,7 @@
                 </div>
 
                 <div id="matrixSettingsPanel"
-                    class="hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+                    class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
 
                     <span
                         class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Matrix</span>

@@ -1,71 +1,130 @@
-/**
- * MindWave Service Worker - Platform V1
- * Robust caching strategy for offline performance and asset stability.
- */
+const CACHE_NAME = 'mindwave-cache-v3';
 
-const CACHE_NAME = 'mindwave-platform-v2';
-const STATIC_ASSETS = [
+// Essential assets to cache immediately upon installation
+const PRECACHE_URLS = [
     '/',
-    '/mindwave-v101.html',
+    '/mindwave-beta.html',
+    '/manifest.json',
+
+    // CSS & Fonts
     '/binaural-assets/css/style.css',
     '/binaural-assets/css/tailwind-compiled.css',
+    '/binaural-assets/fonts/inter/Inter-VariableFont_slnt,wght.ttf',
+    '/binaural-assets/fonts/orbitron/Orbitron-VariableFont_wght.ttf',
+
+    // Core Dependencies
+    '/binaural-assets/js/lib/howler.min.js',
+    '/binaural-assets/js/lib/three.min.js',
+
+    // Core App Logic
     '/binaural-assets/js/main_vFINAL.js',
     '/binaural-assets/js/state.js',
-    '/binaural-assets/config.js'
+    '/binaural-assets/js/ui/controls_v3.js',
+    '/binaural-assets/js/ui/cursor.js',
+    '/binaural-assets/js/ui/pricing-3tier.js',
+    '/binaural-assets/js/services/stripe-simple.js',
+    '/binaural-assets/js/utils/analytics.js',
+
+    // Audio Engine
+    '/binaural-assets/js/audio/engine.js',
+    '/binaural-assets/js/audio/dj-synth.js',
+    '/binaural-assets/js/audio/session-timer.js',
+    '/binaural-assets/js/content/audio-library.js',
+    '/binaural-assets/js/content/classical.js',
+    '/binaural-assets/js/content/stories.js',
+
+    // Visualizers
+    '/binaural-assets/js/visuals/visualizer_lazy.js',
+    '/binaural-assets/js/visuals/visualizer_nuclear_v4.js',
+
+    // Assets
+    '/binaural-assets/mindwave-logo-icon.png',
+    '/binaural-assets/images/tribal-sun.svg',
+    '/binaural-assets/images/lotus-logo-color.svg',
+
+    // Utilities
+    '/binaural-assets/js/utils/audio-offline-manager.js',
+    '/binaural-assets/js/utils/pwa-install.js',
+    '/binaural-assets/js/utils/discount-codes.js',
+    '/binaural-assets/js/utils/haptics.js'
 ];
 
-// Heavy assets (Audio/Visual) are cached on-demand using Cache-First
-const ASSET_CACHE_NAME = 'mindwave-media-v1';
-
-self.addEventListener('install', (event) => {
-    console.log('[SW] Platform Install - Caching Shell');
+self.addEventListener('install', event => {
+    console.log('[ServiceWorker] Install');
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(STATIC_ASSETS);
-        })
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('[ServiceWorker] Pre-caching core assets');
+                return cache.addAll(PRECACHE_URLS);
+            })
+            // Force the waiting service worker to become the active service worker
+            .then(() => self.skipWaiting())
     );
-    self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-    console.log('[SW] Platform Activate - Cleaning Legacy Caches');
+self.addEventListener('activate', event => {
+    console.log('[ServiceWorker] Activate');
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
+        caches.keys().then(cacheNames => {
             return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME && cacheName !== ASSET_CACHE_NAME) {
-                        console.log('[SW] Deleting Old Cache:', cacheName);
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('[ServiceWorker] Removing old cache', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
-        }).then(() => self.clients.claim())
+        })
     );
+    // Ensure the service worker takes control of all clients immediately
+    return self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
+self.addEventListener('fetch', event => {
+    // We only want to handle GET requests
+    if (event.request.method !== 'GET') return;
 
-    // Audio/Visual/Image assets -> Cache-First (save bandwidth)
-    if (url.pathname.match(/\.(mp3|wav|png|jpg|jpeg|svg|webp|glb|gltf)$/)) {
-        event.respondWith(
-            caches.open(ASSET_CACHE_NAME).then((cache) => {
-                return cache.match(event.request).then((response) => {
-                    if (response) return response;
-                    return fetch(event.request).then((networkResponse) => {
-                        cache.put(event.request, networkResponse.clone());
-                        return networkResponse;
-                    });
-                });
-            })
-        );
+    // Ignore chrome extension requests and auth/analytics APIs
+    if (event.request.url.startsWith('chrome-extension') ||
+        event.request.url.includes('firestore.googleapis.com') ||
+        event.request.url.includes('google-analytics.com')) {
         return;
     }
 
-    // Default: Network-First with Cache Fallback (Ensures fresh code)
     event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
-        })
+        caches.match(event.request)
+            .then(cachedResponse => {
+                // Return cached response if found
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+
+                // Otherwise go to network
+                return fetch(event.request).then(response => {
+                    // Check if we received a valid response
+                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                        return response;
+                    }
+
+                    // Clone the response because it's a stream and can only be consumed once
+                    const responseToCache = response.clone();
+
+                    // Dynamically cache JS, fonts, and audio files
+                    if (event.request.url.includes('/fonts/') ||
+                        event.request.url.includes('.js') ||
+                        event.request.url.includes('/audio/')) {
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                cache.put(event.request, responseToCache);
+                            });
+                    }
+
+                    return response;
+                }).catch(err => {
+                    // If network fails (offline), and we don't have it in cache, 
+                    // we could return an offline fallback page here if implemented
+                    console.error('[ServiceWorker] Fetch failed; offline and not cached', err);
+                });
+            })
     );
 });

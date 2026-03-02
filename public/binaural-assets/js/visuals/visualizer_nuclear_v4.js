@@ -75,6 +75,18 @@ export class Visualizer3D {
             this.matrixGroup = new THREE.Group();
             this.scene.add(this.matrixGroup);
 
+            this.boxGroup = new THREE.Group();
+            this.scene.add(this.boxGroup);
+
+            this.dragonGroup = new THREE.Group();
+            this.scene.add(this.dragonGroup);
+
+            this.galaxyGroup = new THREE.Group();
+            this.scene.add(this.galaxyGroup);
+
+            this.mandalaGroup = new THREE.Group();
+            this.scene.add(this.mandalaGroup);
+
             this.textures = {};
 
             this.initEnvironment();
@@ -148,8 +160,6 @@ export class Visualizer3D {
         const width = window.innerWidth;
         const height = window.innerHeight;
         this.renderer.setSize(width, height);
-        this.canvas.width = width * window.devicePixelRatio;
-        this.canvas.height = height * window.devicePixelRatio;
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
 
@@ -198,25 +208,40 @@ export class Visualizer3D {
     }
 
     initParticles() {
-        // OPTIMIZATION: Reduced particle count for faster init (was 1000)
-        const count = this.batterySaver ? 300 : 800;
+        // Flow mode: streaming particles through space
+        const count = this.batterySaver ? 400 : 1200;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
+        const colors = [];
         for (let i = 0; i < count; i++) {
-            positions.push((Math.random() - 0.5) * 20); // x
-            positions.push((Math.random() - 0.5) * 20); // y
-            positions.push((Math.random() - 0.5) * 20); // z
+            positions.push((Math.random() - 0.5) * 60); // x
+            positions.push((Math.random() - 0.5) * 60); // y
+            positions.push((Math.random() - 0.5) * 80); // z - deeper
+
+            // Vary colors: cyan, blue, purple, white
+            const t = Math.random();
+            if (t < 0.3) {
+                colors.push(0.4, 0.7, 1.0); // blue
+            } else if (t < 0.6) {
+                colors.push(0.3, 0.9, 0.95); // cyan
+            } else if (t < 0.85) {
+                colors.push(0.6, 0.4, 1.0); // purple
+            } else {
+                colors.push(0.9, 0.9, 1.0); // white
+            }
         }
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
         const material = new THREE.PointsMaterial({
-            color: 0x60a9ff,
-            size: 0.15,
+            size: 0.4,
+            vertexColors: true,
             map: this.createCircleTexture(),
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.9,
             blending: THREE.AdditiveBlending,
-            depthWrite: false
+            depthWrite: false,
+            sizeAttenuation: true
         });
 
         this.particles = new THREE.Points(geometry, material);
@@ -225,6 +250,334 @@ export class Visualizer3D {
 
         if (this.customColor) {
             this.particles.material.color.copy(this.customColor);
+        }
+    }
+
+    initBox() {
+        // Rotating glowing wireframe cube with thick lines
+        this.boxOuter = new THREE.Group();
+
+        const outerGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(3, 3, 3));
+        const outerMatCore = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+        const outerMatGlow = new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
+
+        this.boxOuter.add(new THREE.LineSegments(outerGeo, outerMatCore));
+
+        // Simulating thickness with slightly scaled outer layers
+        for (let i = 1; i <= 3; i++) {
+            const glowMesh = new THREE.LineSegments(outerGeo, outerMatGlow);
+            glowMesh.scale.setScalar(1 + (i * 0.012));
+            this.boxOuter.add(glowMesh);
+        }
+
+        const innerGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2));
+        const innerMatCore = new THREE.LineBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+        const innerMatGlow = new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending });
+
+        this.boxInner = new THREE.Group();
+        this.boxInner.add(new THREE.LineSegments(innerGeo, innerMatCore));
+
+        for (let i = 1; i <= 2; i++) {
+            const glowMesh = new THREE.LineSegments(innerGeo, innerMatGlow);
+            glowMesh.scale.setScalar(1 + (i * 0.015));
+            this.boxInner.add(glowMesh);
+        }
+
+        // Edge glow
+        const edgesGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(3.05, 3.05, 3.05));
+        const edgesMat = new THREE.LineBasicMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+        this.boxEdges = new THREE.LineSegments(edgesGeo, edgesMat);
+
+        this.boxGroup.add(this.boxOuter);
+        this.boxGroup.add(this.boxInner);
+        this.boxGroup.add(this.boxEdges);
+        this.boxGroup.visible = false;
+
+        if (this.customColor) {
+            this.boxOuter.children.forEach(c => c.material.color.copy(this.customColor));
+            this.boxInner.children.forEach(c => c.material.color.copy(this.customColor));
+            if (this.boxEdges && this.boxEdges.material) this.boxEdges.material.color.copy(this.customColor);
+        }
+    }
+
+    initDragon() {
+        // High-Quality Chinese Dragon Visual using InstancedMesh for segmented body
+        this.dragonDummy = new THREE.Object3D();
+        this.dragonLength = 80; // Number of body segments
+
+        // 1. Dragon Body Segments (InstancedMesh)
+        // Icosahedron shape looks like crystalline or sharp scales 
+        const segmentGeo = new THREE.IcosahedronGeometry(0.8, 1);
+        const segmentMat = new THREE.MeshBasicMaterial({
+            color: 0xef4444, // Crimson Red
+            wireframe: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        // Inner golden glow for each segment
+        const innerGeo = new THREE.IcosahedronGeometry(0.5, 1);
+        const innerMat = new THREE.MeshBasicMaterial({
+            color: 0xf59e0b, // Gold
+            wireframe: false,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+
+        this.dragonBodyInstanced = new THREE.InstancedMesh(segmentGeo, segmentMat, this.dragonLength);
+        this.dragonGlowInstanced = new THREE.InstancedMesh(innerGeo, innerMat, this.dragonLength);
+
+        // 2. Dragon Head
+        const headGeo = new THREE.ConeGeometry(1.5, 3.5, 5);
+        headGeo.rotateX(Math.PI / 2); // Point forward along Z
+        const headMat = new THREE.MeshBasicMaterial({
+            color: 0xfde047, // Bright Gold
+            wireframe: true,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending
+        });
+        this.dragonHead = new THREE.Mesh(headGeo, headMat);
+
+        // 3. Orbiting Pearl (Dragon's Pearl)
+        this.dragonPearlGroup = new THREE.Group();
+        const pearlGeo = new THREE.SphereGeometry(1.0, 16, 16);
+        const pearlMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: false, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+        const pearlGlowGeo = new THREE.SphereGeometry(1.3, 16, 16);
+        const pearlGlowMat = new THREE.MeshBasicMaterial({ color: 0x7dd3fc, wireframe: true, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
+
+        this.dragonPearl = new THREE.Mesh(pearlGeo, pearlMat);
+        this.dragonPearlHalo = new THREE.Mesh(pearlGlowGeo, pearlGlowMat);
+        this.dragonPearlGroup.add(this.dragonPearl);
+        this.dragonPearlGroup.add(this.dragonPearlHalo);
+
+        this.dragonGroup.add(this.dragonBodyInstanced);
+        this.dragonGroup.add(this.dragonGlowInstanced);
+        this.dragonGroup.add(this.dragonHead);
+        this.dragonGroup.add(this.dragonPearlGroup);
+
+        this.dragonGroup.visible = false;
+
+        if (this.customColor) {
+            this.updateDragonColor(this.customColor);
+        }
+    }
+
+    updateDragonColor(color) {
+        if (!this.dragonBodyInstanced) return;
+        this.dragonBodyInstanced.material.color.copy(color);
+        this.dragonHead.material.color.copy(color);
+        // We typically leave the core glow / pearl as its contrasting color, or tint them slightly.
+    }
+
+    initGalaxy() {
+        // Swirling galaxy with star-shaped particles and central sun
+        const count = this.batterySaver ? 600 : 2000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const colors = [];
+        const sizes = [];
+
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 10; // tighter spiral arms
+            const radius = 2.5 + (i / count) * 20 + Math.random() * 2;
+            const armOffset = (i % 4) * (Math.PI * 2 / 4); // 4 spiral arms
+            const scatter = Math.max(0.5, (i / count) * 4); // more scatter at edges
+            const x = Math.cos(angle + armOffset) * radius + (Math.random() - 0.5) * scatter;
+            const y = (Math.random() - 0.5) * 1.5; // thin disk
+            const z = Math.sin(angle + armOffset) * radius + (Math.random() - 0.5) * scatter;
+            positions.push(x, y, z);
+
+            // Color: warm white in center → blue/purple at edges
+            const t = i / count;
+            if (t < 0.2) {
+                // Inner: warm golden-white stars
+                colors.push(1.0, 0.95, 0.7);
+            } else if (t < 0.5) {
+                // Mid: blue-white stars
+                colors.push(0.7 + Math.random() * 0.3, 0.8, 1.0);
+            } else {
+                // Outer: blue/purple stars
+                colors.push(0.4 + Math.random() * 0.2, 0.3 + Math.random() * 0.3, 0.8 + Math.random() * 0.2);
+            }
+
+            // Varying star sizes - some bright, most dim
+            sizes.push(Math.random() < 0.05 ? 0.4 + Math.random() * 0.3 : 0.08 + Math.random() * 0.15);
+        }
+
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+
+        const starTexture = this.createStarTexture();
+        const material = new THREE.PointsMaterial({
+            size: 0.25,
+            vertexColors: true,
+            map: starTexture,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            sizeAttenuation: true
+        });
+
+        this.galaxyStars = new THREE.Points(geometry, material);
+        this.galaxyGroup.add(this.galaxyStars);
+
+        // True 3D Tribal Sun Geometry
+        this.galaxySunMesh = new THREE.Group();
+
+        // The tribal sun material: bright cyan-blue, additive blending to glow
+        const sunMaterial = new THREE.MeshBasicMaterial({
+            color: 0x4aa6ff, // Bright tribal blue
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const sunGeometryGroup = new THREE.Group();
+
+        // 1. The Ring
+        const ringGeo = new THREE.TorusGeometry(1.5, 0.25, 16, 64); // Adjusted tube to 0.25 (matching stroke-width 5 on r=15)
+        const ringMesh = new THREE.Mesh(ringGeo, sunMaterial);
+        sunGeometryGroup.add(ringMesh);
+
+        // 2. The Spikes (8 large, 8 small, alternating)
+        const numSpikes = 8;
+
+        // Large Spike Geometry (scaled from SVG 46,35 54,35 50,8: length 27, radius 4)
+        const largeSpikeLength = 2.7;
+        const largeSpikeRadius = 0.4;
+        const largeSpikeGeo = new THREE.ConeGeometry(largeSpikeRadius, largeSpikeLength, 4);
+        largeSpikeGeo.translate(0, largeSpikeLength / 2, 0); // Base at y=0
+
+        // Small Spike Geometry (scaled from SVG 48,35 52,35 50,18: length 17, radius 2)
+        const smallSpikeLength = 1.7;
+        const smallSpikeRadius = 0.2;
+        const smallSpikeGeo = new THREE.ConeGeometry(smallSpikeRadius, smallSpikeLength, 4);
+        smallSpikeGeo.translate(0, smallSpikeLength / 2, 0); // Base at y=0
+
+        for (let i = 0; i < numSpikes; i++) {
+            // --- Large Spike (0, 45, 90, 135... degrees) ---
+            const angleLarge = (i / numSpikes) * Math.PI * 2;
+            const largeMesh = new THREE.Mesh(largeSpikeGeo, sunMaterial);
+            largeMesh.rotation.z = -angleLarge;
+            // Place base exactly at ring edge
+            largeMesh.position.x = Math.sin(angleLarge) * 1.5;
+            largeMesh.position.y = Math.cos(angleLarge) * 1.5;
+            sunGeometryGroup.add(largeMesh);
+
+            // --- Small Spike (22.5, 67.5, 112.5... degrees) ---
+            const angleSmall = angleLarge + (Math.PI / numSpikes);
+            const smallMesh = new THREE.Mesh(smallSpikeGeo, sunMaterial);
+            smallMesh.rotation.z = -angleSmall;
+            // Place base exactly at ring edge
+            smallMesh.position.x = Math.sin(angleSmall) * 1.5;
+            smallMesh.position.y = Math.cos(angleSmall) * 1.5;
+            sunGeometryGroup.add(smallMesh);
+        }
+
+        this.galaxySunMesh.add(sunGeometryGroup);
+        this.galaxySunMesh.position.set(0, 0, 0.1);
+        this.galaxyGroup.add(this.galaxySunMesh);
+
+        this.galaxyGroup.visible = false;
+    }
+
+    createStarTexture() {
+        const size = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const cx = size / 2;
+        const cy = size / 2;
+
+        // Draw a 4-point star shape with glow
+        ctx.clearRect(0, 0, size, size);
+
+        // Outer glow
+        const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, size / 2);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+        gradient.addColorStop(0.1, 'rgba(255, 255, 240, 0.8)');
+        gradient.addColorStop(0.25, 'rgba(255, 255, 200, 0.3)');
+        gradient.addColorStop(0.5, 'rgba(200, 200, 255, 0.1)');
+        gradient.addColorStop(1, 'rgba(100, 100, 255, 0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+
+        // Horizontal spike
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.moveTo(0, cy - 1);
+        ctx.lineTo(cx, cy - 0.5);
+        ctx.lineTo(size, cy - 1);
+        ctx.lineTo(size, cy + 1);
+        ctx.lineTo(cx, cy + 0.5);
+        ctx.lineTo(0, cy + 1);
+        ctx.closePath();
+        ctx.fill();
+
+        // Vertical spike
+        ctx.beginPath();
+        ctx.moveTo(cx - 1, 0);
+        ctx.lineTo(cx - 0.5, cy);
+        ctx.lineTo(cx - 1, size);
+        ctx.lineTo(cx + 1, size);
+        ctx.lineTo(cx + 0.5, cy);
+        ctx.lineTo(cx + 1, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Bright center dot
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+        ctx.fill();
+
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    initMandala() {
+        // Sacred geometry: concentric rotating rings
+        this.mandalaRings = [];
+        const ringColors = [0xf59e0b, 0xfbbf24, 0xf97316, 0xfb923c, 0xef4444];
+
+        for (let i = 0; i < 5; i++) {
+            const radius = 1.2 + i * 0.8;
+            const segments = 6 + i * 6; // More segments for outer rings
+            const ringGeo = new THREE.RingGeometry(radius - 0.05, radius + 0.05, segments);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: ringColors[i],
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.4 - i * 0.05,
+                blending: THREE.AdditiveBlending
+            });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.userData = { speed: (0.01 + i * 0.005) * (i % 2 === 0 ? 1 : -1), segments };
+            this.mandalaRings.push(ring);
+            this.mandalaGroup.add(ring);
+        }
+
+        // Center dot
+        const dotGeo = new THREE.CircleGeometry(0.3, 32);
+        const dotMat = new THREE.MeshBasicMaterial({
+            color: 0xfbbf24,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+        this.mandalaCenter = new THREE.Mesh(dotGeo, dotMat);
+        this.mandalaGroup.add(this.mandalaCenter);
+        this.mandalaGroup.visible = false;
+
+        if (this.customColor) {
+            this.mandalaRings.forEach(r => r.material.color.copy(this.customColor));
+            this.mandalaCenter.material.color.copy(this.customColor);
         }
     }
 
@@ -262,9 +615,9 @@ export class Visualizer3D {
                 const states = ['heating', 'rising', 'cooling', 'falling'];
                 const startState = states[Math.floor(Math.random() * states.length)];
 
-                // BOUNDS: Tightened to +/- 3.5 to keep blobs always visible on screen
-                const floatMin = -3.5 + (Math.random() * 0.5); // Bottom pile
-                const floatMax = 3.5 + (Math.random() * 0.5);  // Top pile
+                // BOUNDS: Expanded to +/- 15 to cover larger vertical screens
+                const floatMin = -15 + (Math.random() * 2); // Bottom pile
+                const floatMax = 15 + (Math.random() * 2);  // Top pile
 
                 let startY = 0;
                 let startTemp = 0.5;
@@ -480,9 +833,9 @@ export class Visualizer3D {
         const velocities = [];
 
         for (let i = 0; i < dropCount; i++) {
-            positions.push((Math.random() - 0.5) * 20);
-            positions.push(-5 + Math.random() * 15);
-            positions.push((Math.random() - 0.5) * 15);
+            positions.push((Math.random() - 0.5) * 80);
+            positions.push(-20 + Math.random() * 40);
+            positions.push((Math.random() - 0.5) * 40);
 
             velocities.push(0.08 + Math.random() * 0.12);
         }
@@ -515,9 +868,9 @@ export class Visualizer3D {
         const drifts = [];
 
         for (let i = 0; i < petalCount; i++) {
-            positions.push((Math.random() - 0.5) * 15);
-            positions.push(-5 + Math.random() * 12);
-            positions.push((Math.random() - 0.5) * 10);
+            positions.push((Math.random() - 0.5) * 80);
+            positions.push(-20 + Math.random() * 40);
+            positions.push((Math.random() - 0.5) * 40);
 
             drifts.push(Math.random() * Math.PI * 2);
         }
@@ -777,9 +1130,9 @@ export class Visualizer3D {
                     vPos = position;
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                     // FIXED: uTime already includes multipliers, avoid squaring speed in shader
-                    float columnHeadY = 40.0 - mod(uTime * 5.0 * aSpeed + aSpawnTime, 80.0);
+                    float columnHeadY = 80.0 - mod(uTime * 5.0 * aSpeed + aSpawnTime, 160.0);
                     float dist = columnHeadY - position.y;
-                    float trailLen = 80.0 * uTailLength;
+                    float trailLen = 160.0 * uTailLength;
                     if (dist >= 0.0 && dist < trailLen) {
                          vAlpha = 1.0 - (dist / trailLen);
                          vBrightness = 1.0 - (dist / trailLen);
@@ -883,6 +1236,10 @@ export class Visualizer3D {
         if (mode === 'zengarden' && this.zenGardenGroup.children.length === 0) this.initZenGarden();
         if (mode === 'ocean' && this.oceanGroup.children.length === 0) this.initOcean();
         if (mode === 'matrix' && this.matrixGroup.children.length === 0) this.initMatrix();
+        if (mode === 'box' && this.boxGroup.children.length === 0) this.initBox();
+        if (mode === 'dragon' && this.dragonGroup.children.length === 0) this.initDragon();
+        if (mode === 'galaxy' && this.galaxyGroup.children.length === 0) this.initGalaxy();
+        if (mode === 'mandala' && this.mandalaGroup.children.length === 0) this.initMandala();
         console.timeEnd(tLabel);
     }
 
@@ -903,16 +1260,16 @@ export class Visualizer3D {
         this.matrixPoints = null;
 
         const depthLayer = 4;
-        const colCount = 40;
-        const rowCount = 60;
+        const colCount = 80;
+        const rowCount = 120;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
         const charIndices = [];
         const spawnTimes = [];
         const speeds = [];
 
-        const viewWidth = 120;
-        const viewHeight = 80;
+        const viewWidth = 240;
+        const viewHeight = 160;
         const colWidth = viewWidth / colCount;
         const rowHeight = viewHeight / rowCount;
 
@@ -1014,6 +1371,10 @@ export class Visualizer3D {
         if (this.zenGardenGroup) this.zenGardenGroup.visible = this.activeModes.has('zengarden');
         if (this.oceanGroup) this.oceanGroup.visible = this.activeModes.has('ocean');
         if (this.matrixGroup) this.matrixGroup.visible = this.activeModes.has('matrix');
+        if (this.boxGroup) this.boxGroup.visible = this.activeModes.has('box');
+        if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
+        if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
+        if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
     }
 
     updateLabel(mode) {
@@ -1114,6 +1475,9 @@ export class Visualizer3D {
             // Re-burn new colors into the texture instead of uniform tint
             this.updateLogoTexture();
         }
+        if (this.dragonGroup && this.updateDragonColor) {
+            this.updateDragonColor(this.customColor);
+        }
         this.renderSingleFrame();
     }
 
@@ -1208,7 +1572,7 @@ export class Visualizer3D {
             const positions = this.particles.geometry.attributes.position.array;
             for (let i = 2; i < positions.length; i += 3) {
                 positions[i] += flowSpeed;
-                if (positions[i] > 10) positions[i] = -10;
+                if (positions[i] > 40) positions[i] = -40;
             }
             this.particles.geometry.attributes.position.needsUpdate = true;
             this.particleGroup.rotation.z += (0.001 * multiplier) + (normMids * 0.005);
@@ -1386,6 +1750,125 @@ export class Visualizer3D {
             if (this.zenWater) this.zenWater.material.opacity = (0.3 + (beatPulse * 0.2)) * this.brightnessMultiplier;
         }
 
+        // BOX (Cube)
+        if (this.activeModes.has('box') && this.boxOuter) {
+            this.boxOuter.rotation.x += 0.008 * multiplier + normBass * 0.02;
+            this.boxOuter.rotation.y += 0.012 * multiplier;
+            this.boxInner.rotation.x -= 0.015 * multiplier;
+            this.boxInner.rotation.y -= 0.01 * multiplier;
+            this.boxEdges.rotation.copy(this.boxOuter.rotation);
+            const cubeScale = 1 + vNormBass * 0.2;
+            this.boxOuter.scale.setScalar(cubeScale);
+            this.boxEdges.scale.setScalar(cubeScale);
+            this.boxInner.scale.setScalar(cubeScale * 0.95);
+            if (!this.customColor) {
+                const b = 0.48 + normHighs * 0.3;
+                this.boxOuter.children.forEach(c => c.material.color.setRGB(0.23, 0.51, b));
+            }
+        }
+
+        // DRAGON
+        if (this.activeModes.has('dragon') && this.dragonBodyInstanced) {
+            // Serpentine global rotation
+            this.dragonGroup.rotation.y += 0.005 * multiplier;
+
+            // Dynamically update the segmented body traversing a curve in 3D
+            const time = now * multiplier * 2.0;
+            const globalScale = 1 + vNormBass * 0.2; // Bass pulse
+
+            for (let i = 0; i < this.dragonLength; i++) {
+                // Phase determines position along the winding path (i=0 is head)
+                const phase = time - i * 0.12;
+
+                // Advanced 3D Lissajous curve for highly organic serpentine flight
+                const x = Math.sin(phase) * 8;
+                const y = Math.cos(phase * 1.5) * 4 + Math.sin(phase * 0.5) * 3;
+                const z = Math.cos(phase * 0.8) * 8;
+
+                this.dragonDummy.position.set(x, y, z);
+
+                // Look ahead to calculate rotation for segment
+                const nextPhase = phase + 0.1;
+                const nx = Math.sin(nextPhase) * 8;
+                const ny = Math.cos(nextPhase * 1.5) * 4 + Math.sin(nextPhase * 0.5) * 3;
+                const nz = Math.cos(nextPhase * 0.8) * 8;
+                this.dragonDummy.lookAt(nx, ny, nz);
+
+                // Scale decays to a point towards the tail (i -> dragonLength)
+                const taper = 1.0 - (i / this.dragonLength) * 0.8;
+                // Add a flowing "breathing" or "muscle" ripple down the body
+                const breath = 1.0 + Math.sin(phase * 4) * 0.15 * (0.5 + normBass);
+                this.dragonDummy.scale.setScalar(taper * breath * globalScale);
+
+                this.dragonDummy.updateMatrix();
+
+                this.dragonBodyInstanced.setMatrixAt(i, this.dragonDummy.matrix);
+                this.dragonGlowInstanced.setMatrixAt(i, this.dragonDummy.matrix);
+
+                // Match the distinct head mesh to the lead index (i=0)
+                if (i === 0) {
+                    this.dragonHead.position.copy(this.dragonDummy.position);
+                    this.dragonHead.quaternion.copy(this.dragonDummy.quaternion);
+                    // Make the head slightly larger
+                    this.dragonHead.scale.copy(this.dragonDummy.scale).multiplyScalar(1.4);
+                }
+            }
+
+            this.dragonBodyInstanced.instanceMatrix.needsUpdate = true;
+            this.dragonGlowInstanced.instanceMatrix.needsUpdate = true;
+
+            // Orbiting Dragon Pearl (Chased by the dragon head)
+            // Position it slightly ahead of the phase zero
+            const pearlPhase = time + 0.5;
+            this.dragonPearlGroup.position.x = Math.sin(pearlPhase) * 9;
+            this.dragonPearlGroup.position.y = Math.cos(pearlPhase * 1.5) * 5 + Math.sin(pearlPhase * 0.5) * 4;
+            this.dragonPearlGroup.position.z = Math.cos(pearlPhase * 0.8) * 9;
+
+            // Rapid rotation for the pearl
+            this.dragonPearlGroup.rotation.x += 0.08 * multiplier;
+            this.dragonPearlGroup.rotation.y += 0.12 * multiplier;
+
+            // Color pulsing
+            if (!this.customColor) {
+                // Flash body Crimson/Gold based on audio
+                this.dragonBodyInstanced.material.color.setRGB(0.9 + normBass * 0.1, 0.2 + normMids * 0.1, 0.1);
+                // Flash pearl Cyan/White
+                const pw = 0.5 + normHighs * 0.5;
+                this.dragonPearl.material.color.setRGB(pw * 0.5, pw, 1.0);
+            }
+        }
+
+        // GALAXY
+        if (this.activeModes.has('galaxy') && this.galaxyStars) {
+            this.galaxyGroup.rotation.y += 0.002 * multiplier + normBass * 0.003;
+            this.galaxyGroup.rotation.x = Math.sin(now * 0.08) * 0.25; // gentle tilt
+            this.galaxyStars.material.size = 0.2 + normBass * 0.1 + beatPulse * 0.08;
+
+            // Tribal sun - slow steady 3D rotation, no pulsing
+            if (this.galaxySunMesh) {
+                this.galaxySunMesh.rotation.y += 0.005 * multiplier; // Spins like a coin
+                this.galaxySunMesh.rotation.z += 0.003 * multiplier; // Rotates like a wheel
+                this.galaxySunMesh.rotation.x = Math.sin(now * 0.1) * 0.2; // Gentle tilt
+            }
+        }
+
+        // MANDALA
+        if (this.activeModes.has('mandala') && this.mandalaRings) {
+            this.mandalaRings.forEach((ring, i) => {
+                ring.rotation.z += ring.userData.speed * multiplier + normBass * 0.005;
+                const pulse = 1 + vBeatPulse * 0.1 * (i + 1) * 0.3;
+                ring.scale.setScalar(pulse);
+                if (!this.customColor) {
+                    ring.material.opacity = (0.35 - i * 0.04) + normMids * 0.2;
+                }
+            });
+            if (this.mandalaCenter) {
+                this.mandalaCenter.material.opacity = 0.4 + beatPulse * 0.3;
+                const cScale = 1 + vNormBass * 0.3;
+                this.mandalaCenter.scale.setScalar(cScale);
+            }
+        }
+
         if (this.activeModes.has('matrix') && this.matrixMaterial) {
             // FIXED: Only apply multipliers once here; uTime in shader handles the rest.
             this.matrixMaterial.uniforms.uTime.value += dt * multiplier * (this.matrixSpeedMultiplier || 1.0);
@@ -1432,6 +1915,29 @@ export class Visualizer3D {
                 this.logoMesh.material.transparent = true;
                 this.logoMesh.material.needsUpdate = true;
             }
+        }
+
+        // Heartbeat animation for the MindWave lotus logo
+        // Dual-pulse "lub-dub" pattern: two quick beats then a rest
+        if (this.logoMesh) {
+            const heartRate = 1.2; // ~72 BPM natural resting heart rate
+            const cycle = (now * heartRate) % 1.0; // 0-1 cycle phase
+
+            let heartScale = 1.0;
+            // First beat (lub) at 0.0-0.12
+            if (cycle < 0.12) {
+                heartScale = 1.0 + 0.08 * Math.sin(cycle / 0.12 * Math.PI);
+            }
+            // Second beat (dub) at 0.18-0.28
+            else if (cycle > 0.18 && cycle < 0.28) {
+                heartScale = 1.0 + 0.05 * Math.sin((cycle - 0.18) / 0.10 * Math.PI);
+            }
+            // Rest phase - smoothly settle back to 1.0
+            else {
+                heartScale = 1.0;
+            }
+
+            this.logoMesh.scale.setScalar(heartScale);
         }
 
         if (timeSinceLastFrame >= frameInterval) {

@@ -67,6 +67,9 @@ const TESTIMONIALS = [
     }
 ];
 
+// CACHE for pricing data to avoid repeated slow Firestore calls
+let cachedPricingData = null;
+
 export async function showPricingModal() {
     // Check if user is logged in
     const auth = getAuth();
@@ -86,8 +89,20 @@ export async function showPricingModal() {
         console.warn('[Pricing] Failed to get tier, defaulting to free:', err.message);
     }
 
-    // Get dynamic pricing context
-    const yogiPricing = await getActiveYogiPricing();
+    // Get dynamic pricing context - USE CACHE IF AVAILABLE
+    let yogiPricing = cachedPricingData;
+    if (!yogiPricing) {
+        // Fetch background, but use a fast fallback if it takes too long
+        const pricingPromise = getActiveYogiPricing();
+        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 1500));
+        yogiPricing = await Promise.race([pricingPromise, timeoutPromise]);
+
+        if (yogiPricing) {
+            cachedPricingData = yogiPricing;
+        } else {
+            console.log('[Pricing] Dynamic fetch slow, using default layout.');
+        }
+    }
 
     // Create or show pricing modal
     let modal = document.getElementById('pricingModal');
@@ -303,6 +318,16 @@ function createPricingModal(currentTier, yogiPricing = null) {
                 </div>
             </div>
             
+            <!-- Coupon Code Section -->
+            <div style="max-width: 400px; margin: 0 auto; margin-top: 32px; padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; text-align: center;">
+                <button id="toggleCouponBtn" style="background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: underline; margin-bottom: 0;">Have a coupon code?</button>
+                <div id="couponInputCont" class="hidden" style="margin-top: 12px; display: flex; gap: 8px;">
+                    <input type="text" id="couponCodeInput" placeholder="Enter code" style="flex: 1; min-width: 0; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; color: white; font-size: 13px; outline: none; transition: border-color 0.2s;">
+                    <button id="applyCouponBtn" style="padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 13px; font-weight: 600; cursor: pointer;">Apply</button>
+                </div>
+                <div id="couponStatus" style="font-size: 11px; margin-top: 8px; display: none;"></div>
+            </div>
+            
             <!-- Footer -->
             <div style="text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 24px; margin-top: 48px;">
                 <p style="font-size: 13px; color: rgba(255, 255, 255, 0.4);">Questions? Contact founders@mindwave.com</p>
@@ -333,8 +358,55 @@ function createPricingModal(currentTier, yogiPricing = null) {
     const upgradeBtnLifetime = modal.querySelector('#upgradeBtnLifetime');
     if (upgradeBtnLifetime) {
         upgradeBtnLifetime.addEventListener('click', () => {
-            handleUpgrade(PRICING_CONFIG.lifetime.productId, 'oneTime');
+            const coupon = modal.querySelector('#couponCodeInput')?.value.trim();
+            handleUpgrade(PRICING_CONFIG.lifetime.productId, 'oneTime', coupon);
         });
+    }
+
+    // Handle Subscription Upgrade Clicks (passing coupon)
+    if (upgradeBtnFounders) {
+        upgradeBtnFounders.removeEventListener('click', null); // Generic placeholder reminder
+        upgradeBtnFounders.onclick = () => {
+            const coupon = modal.querySelector('#couponCodeInput')?.value.trim();
+            handleUpgrade(PRICING_CONFIG.yogi.productId, 'monthly', coupon);
+        };
+    }
+    if (upgradeBtnPro) {
+        upgradeBtnPro.onclick = () => {
+            const coupon = modal.querySelector('#couponCodeInput')?.value.trim();
+            handleUpgrade(PRICING_CONFIG.buddha.productId, 'monthly', coupon);
+        };
+    }
+
+    // Handle Coupon UI
+    const toggleBtn = modal.querySelector('#toggleCouponBtn');
+    const inputCont = modal.querySelector('#couponInputCont');
+    const applyBtn = modal.querySelector('#applyCouponBtn');
+    const couponInput = modal.querySelector('#couponCodeInput');
+    const statusDiv = modal.querySelector('#couponStatus');
+
+    if (toggleBtn && inputCont) {
+        toggleBtn.onclick = () => {
+            inputCont.classList.toggle('hidden');
+            if (!inputCont.classList.contains('hidden')) {
+                couponInput.focus();
+                toggleBtn.style.display = 'none';
+            }
+        };
+    }
+
+    if (applyBtn && couponInput) {
+        applyBtn.onclick = () => {
+            const code = couponInput.value.trim();
+            if (code) {
+                statusDiv.textContent = `Discount code "${code}" will be applied at checkout.`;
+                statusDiv.style.color = '#10b981';
+                statusDiv.style.display = 'block';
+                applyBtn.textContent = 'Applied';
+                applyBtn.style.background = 'rgba(16, 185, 129, 0.2)';
+                applyBtn.style.borderColor = '#10b981';
+            }
+        };
     }
 
     // Handle Referral Button
@@ -375,14 +447,53 @@ function createPricingModal(currentTier, yogiPricing = null) {
 // Separate function to update HTML to avoid undefined errors during refactor
 // (Use multi_replace in next step if needed)
 
-function handleUpgrade(productId, billingPeriod = 'monthly') {
+async function handleUpgrade(productId, billingPeriod = 'monthly', couponCode = null) {
     if (window.trackUpgradeClick) {
         window.trackUpgradeClick('pricing_modal', productId);
     }
 
     try {
+        // --- 100% Promo Code Bypass ---
+        // If the user has a 100% off code, completely bypass Stripe checkout 
+        // and instantly unlock premium locally for friends & family testing.
+        if (couponCode) {
+            try {
+                const { validateDiscountCode, trackDiscountUsage } = await import('../utils/discount-codes.js');
+                const discountInfo = validateDiscountCode(couponCode);
+
+                if (discountInfo && discountInfo.discount === 100) {
+                    console.log(`[Pricing] 100% Promo Code (${couponCode}) applied. Bypassing Stripe checkout.`);
+
+                    // Activate local app overrides
+                    window.__MOCK_PREMIUM = true;
+                    localStorage.setItem('mindwave_premium_unlocked', 'true');
+
+                    if (window.showToast) {
+                        window.showToast('Premium Unlocked! 🚀 Welcome to MindWave.', 'success');
+                    } else {
+                        alert('Premium Unlocked! 🚀 Welcome to MindWave.');
+                    }
+
+                    if (trackDiscountUsage) {
+                        trackDiscountUsage(couponCode, productId);
+                    }
+
+                    if (window.hidePricingModal) {
+                        window.hidePricingModal();
+                    }
+
+                    // Reload to ensure all components recognize premium status
+                    setTimeout(() => window.location.reload(), 1500);
+                    return; // Short-circuit, don't run Stripe checkout
+                }
+            } catch (err) {
+                console.warn('[Pricing] Failed to run discount code bypass verification:', err);
+            }
+        }
+        // ------------------------------
+
         // Map products to existing stripe logic
-        goToCheckout(productId, billingPeriod);
+        goToCheckout(productId, billingPeriod, couponCode);
     } catch (error) {
         console.error('[Pricing] Checkout error:', error);
         if (error.message.includes('logged in')) {
