@@ -55,7 +55,7 @@ window.trackFeatureUse = trackFeatureUse;
 
 // Expose onboarding globally (Lazy)
 window.startOnboarding = async (force = false) => {
-    const { startOnboarding: start } = await lazy.onboarding();
+    const { initializeOnboarding: start } = await lazy.onboarding();
     start(force);
 };
 window.startTutorial = () => window.startOnboarding(true);
