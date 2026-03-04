@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-cache-v3';
+const CACHE_NAME = 'mindwave-cache-v4';
 
 // Essential assets to cache immediately upon installation
 const PRECACHE_URLS = [
@@ -50,7 +50,7 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', event => {
-    console.log('[ServiceWorker] Install');
+    console.log('[ServiceWorker] Install v4');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -63,7 +63,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-    console.log('[ServiceWorker] Activate');
+    console.log('[ServiceWorker] Activate v4');
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
@@ -80,6 +80,11 @@ self.addEventListener('activate', event => {
     return self.clients.claim();
 });
 
+// Helper: Is this a mutable resource that should always be fresh?
+function isCodeOrMarkup(url) {
+    return url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.html');
+}
+
 self.addEventListener('fetch', event => {
     // We only want to handle GET requests
     if (event.request.method !== 'GET') return;
@@ -91,38 +96,47 @@ self.addEventListener('fetch', event => {
         return;
     }
 
+    // NETWORK-FIRST for JS / CSS / HTML — always get latest code, fall back to cache offline
+    if (isCodeOrMarkup(event.request.url)) {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
+                    if (response && response.status === 200) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    }
+                    return response;
+                })
+                .catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
+    // CACHE-FIRST for static assets (fonts, images, audio) — fast + offline friendly
     event.respondWith(
         caches.match(event.request)
             .then(cachedResponse => {
-                // Return cached response if found
                 if (cachedResponse) {
                     return cachedResponse;
                 }
 
-                // Otherwise go to network
                 return fetch(event.request).then(response => {
-                    // Check if we received a valid response
                     if (!response || response.status !== 200 || response.type !== 'basic') {
                         return response;
                     }
 
-                    // Clone the response because it's a stream and can only be consumed once
                     const responseToCache = response.clone();
 
-                    // Dynamically cache JS, fonts, and audio files
                     if (event.request.url.includes('/fonts/') ||
-                        event.request.url.includes('.js') ||
-                        event.request.url.includes('/audio/')) {
+                        event.request.url.includes('/audio/') ||
+                        event.request.url.includes('/images/') ||
+                        event.request.url.match(/\.(png|jpg|svg|woff2?|ttf|mp3|ogg|wav)$/)) {
                         caches.open(CACHE_NAME)
-                            .then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
+                            .then(cache => cache.put(event.request, responseToCache));
                     }
 
                     return response;
                 }).catch(err => {
-                    // If network fails (offline), and we don't have it in cache, 
-                    // we could return an offline fallback page here if implemented
                     console.error('[ServiceWorker] Fetch failed; offline and not cached', err);
                 });
             })

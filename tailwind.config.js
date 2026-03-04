@@ -133,6 +133,11 @@ export default {
       },
     },
   },
+  safelist: [
+    {
+      pattern: /(bg|border|text|shadow|from|to)-(red|blue|amber|emerald|purple|indigo|pink|cyan|yellow|orange|rose|violet|green|teal|fuchsia)-(400|500|600)(\/(20|30))?/,
+    }
+  ],
   plugins: [
     require('@tailwindcss/typography'),
     require('@tailwindcss/forms'),

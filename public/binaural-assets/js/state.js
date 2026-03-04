@@ -240,7 +240,7 @@ export const state = {
     currentUser: null,
     userTier: 'free', // ✅ FIX: Default to free tier, check actual subscription
     isLifetime: false, // NEW: Restricted to Lifetime members for PWA install
-    visualVibration: true, // NEW: Toggle synesthetic vibrations
+    visualVibration: false, // Default OFF — toggle synesthetic vibrations
     visualSpeedAuto: true, // Default to Hz sync
     aiVisualsLocked: false, // NEW: Prevent manual overrides when AI set the mood
 
@@ -290,7 +290,7 @@ export const state = {
     idleTimeout: null,
 
     // NEW (Lotus State Options)
-    lotusState: 'auto' // 'auto', 'full', 'faded', 'heartbeat'
+    lotusState: 'full' // 'auto', 'full', 'faded', 'heartbeat'
 };
 
 

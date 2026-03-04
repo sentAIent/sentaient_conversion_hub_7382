@@ -2906,7 +2906,7 @@ export function initMixer() {
         }
         const settings = state.soundscapeSettings[s.id];
         const item = document.createElement('div');
-        item.className = "soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1";
+        item.className = `soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1${settings.vol > 0 ? ' soundscape-active' : ''}`;
         item.innerHTML = `<label class="text-[10px] font-semibold truncate mb-1 block atmos-label" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] fader-label font-normal">${s.bpm} BPM</span>` : ''}</label>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">VOL</span><input type="range" min="0" max="0.5" step="0.01" value="${settings.vol}" class="flex-1 h-1" data-id="${s.id}" data-type="vol"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="vol">${Math.round(settings.vol * 200)}%</span></div>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">TONE</span><input type="range" min="0" max="1" step="0.01" value="${settings.tone}" class="flex-1 tone-slider h-1" data-id="${s.id}" data-type="tone"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="tone">${Math.round(settings.tone * 100)}%</span></div>
@@ -2923,6 +2923,13 @@ export function initMixer() {
             state.soundscapeSettings[s.id].vol = v;
             updateSoundscape(s.id, 'vol', v);
             saveStateToLocal();
+
+            // Toggle active border on the soundscape item
+            if (v > 0) {
+                item.classList.add('soundscape-active');
+            } else {
+                item.classList.remove('soundscape-active');
+            }
 
             // When ambience volume is increased, just ensure visuals are running and sync button states
             if (v > 0) {
@@ -3438,18 +3445,7 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     }
 
     // 1. Update UI Buttons & Sync Presence
-    if (els.presetButtons) {
-        els.presetButtons.forEach(b => {
-            b.classList.remove('bg-white/10', 'border-white/20');
-            b.classList.add('bg-white/5', 'border-white/10');
-        });
-
-        const targetBtn = btnElement || document.querySelector(`.preset-btn[onclick*="'${type}'"]`);
-        if (targetBtn) {
-            targetBtn.classList.remove('bg-white/5', 'border-white/10');
-            targetBtn.classList.add('bg-white/10', 'border-white/20');
-        }
-    }
+    updatePresetButtons(type);
 
     // Force immediate presence update
     updatePresenceOnPresetChange();
@@ -4090,14 +4086,14 @@ export function updatePresetButtons(activeType) {
     if (!els.presetButtons) return;
 
     els.presetButtons.forEach(b => {
-        b.classList.remove('bg-white/10', 'border-white/20');
+        b.classList.remove('active', 'bg-white/10', 'border-white/20');
         b.classList.add('bg-white/5', 'border-white/10');
 
         // Check if this button matches the active type
         // Note: onclick string matching is fragile, but consistent with existing app structure
         if (activeType && b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${activeType}'`)) {
             b.classList.remove('bg-white/5', 'border-white/10');
-            b.classList.add('bg-white/10', 'border-white/20');
+            b.classList.add('active', 'bg-white/10', 'border-white/20');
         }
     });
 }
@@ -4286,6 +4282,10 @@ function getCategoryColor(cat) {
         return {
             name: 'red',
             text: 'text-red-400',
+            hex: '#ef4444',
+            hexBg: 'rgba(239,68,68,0.2)',
+            hexBorder: 'rgba(239,68,68,0.4)',
+            hexGlow: '0 0 12px rgba(239,68,68,0.3)',
             bg: 'bg-red-500/20',
             border: 'border-red-500/30',
             from: 'from-red-500',
@@ -4296,6 +4296,10 @@ function getCategoryColor(cat) {
         return {
             name: 'blue',
             text: 'text-blue-400',
+            hex: '#3b82f6',
+            hexBg: 'rgba(59,130,246,0.2)',
+            hexBorder: 'rgba(59,130,246,0.4)',
+            hexGlow: '0 0 12px rgba(59,130,246,0.3)',
             bg: 'bg-blue-500/20',
             border: 'border-blue-500/30',
             from: 'from-blue-500',
@@ -4306,6 +4310,10 @@ function getCategoryColor(cat) {
         return {
             name: 'gold',
             text: 'text-amber-500',
+            hex: '#f59e0b',
+            hexBg: 'rgba(245,158,11,0.2)',
+            hexBorder: 'rgba(245,158,11,0.4)',
+            hexGlow: '0 0 12px rgba(245,158,11,0.3)',
             bg: 'bg-amber-500/20',
             border: 'border-amber-500/30',
             from: 'from-amber-400',
@@ -4316,6 +4324,10 @@ function getCategoryColor(cat) {
         return {
             name: 'emerald',
             text: 'text-emerald-400',
+            hex: '#10b981',
+            hexBg: 'rgba(16,185,129,0.2)',
+            hexBorder: 'rgba(16,185,129,0.4)',
+            hexGlow: '0 0 12px rgba(16,185,129,0.3)',
             bg: 'bg-emerald-500/20',
             border: 'border-emerald-500/30',
             from: 'from-emerald-500',
@@ -4326,6 +4338,10 @@ function getCategoryColor(cat) {
         return {
             name: 'purple',
             text: 'text-purple-400',
+            hex: '#a855f7',
+            hexBg: 'rgba(168,85,247,0.2)',
+            hexBorder: 'rgba(168,85,247,0.4)',
+            hexGlow: '0 0 12px rgba(168,85,247,0.3)',
             bg: 'bg-purple-500/20',
             border: 'border-purple-500/30',
             from: 'from-purple-500',
@@ -4336,17 +4352,25 @@ function getCategoryColor(cat) {
         return {
             name: 'indigo',
             text: 'text-indigo-400',
+            hex: '#6366f1',
+            hexBg: 'rgba(99,102,241,0.2)',
+            hexBorder: 'rgba(99,102,241,0.4)',
+            hexGlow: '0 0 12px rgba(99,102,241,0.3)',
             bg: 'bg-indigo-500/20',
             border: 'border-indigo-500/30',
             from: 'from-indigo-500',
             to: 'to-blue-600',
-            glow: 'shadow-indigo-500/30'
+            glow: 'shadow-blue-500/30'
         };
     }
     // Default
     return {
         name: 'gray',
         text: 'text-[var(--text-muted)]',
+        hex: '#94a3b8',
+        hexBg: 'rgba(255,255,255,0.05)',
+        hexBorder: 'rgba(255,255,255,0.15)',
+        hexGlow: 'none',
         bg: 'bg-white/5',
         border: 'border-white/10',
         from: 'from-gray-500',
@@ -4487,26 +4511,11 @@ function renderDJPads(category) {
         }
 
         const pad = document.createElement('button');
-        pad.className = `dj-pad group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 active:scale-95
-            ${isActive
-                ? `bg-gradient-to-br ${gradientFrom}/30 ${gradientTo}/20 ${borderColor} shadow-lg ${glowColor}`
-                : inactiveClasses}`;
-
-        pad.dataset.soundId = id;
-        pad.dataset.canLoop = canLoop;
-
-        // Force inline colors for Light Mode Inactive
-        if (!isActive && isLight) {
-            pad.style.borderColor = textColor.replace('text-', 'var(--color-').replace('-400', '-500'); // Approximate or use standard var if possible? 
-            // Better: use the hex colors from getCategoryColor logic/map if we had access, 
-            // OR just use the computed color of the text class.
-            // Simpler: Use the text class for the element, and set border-color: currentColor
-            pad.style.borderColor = 'currentColor';
-            pad.style.color = 'currentColor';
-            // Wait, we need to SET the color first. 
-            // The class `textColor` (e.g. text-blue-400) is NOT applied to the pad container, it's inside on the icon/label?
-            // Actually, usually `text-blue-400` is applied to inner, but we want the Whole Pad to have this text color so border matches.
-            pad.classList.add(textColor);
+        if (isActive) {
+            pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-[var(--accent)] hover:bg-white/10 transition-all group py-3`;
+            pad.style.boxShadow = `0 0 12px var(--accent-glow)`;
+        } else {
+            pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3`;
         }
 
         // Add loop indicator if looping
@@ -4665,21 +4674,11 @@ renderAllDJPads = function () {
             }
 
             const pad = document.createElement('button');
-            pad.className = `dj-pad group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 active:scale-95
-                ${isActive
-                    ? `bg-gradient-to-br ${gradientFrom}/30 ${gradientTo}/20 ${borderColor} shadow-lg ${glowColor}`
-                    : inactiveClasses}`;
-
-            pad.dataset.soundId = id;
-            pad.dataset.canLoop = canLoop;
-
-            // Force inline colors for Light Mode Inactive
-            if (!isActive && isLight) {
-                // Approximate valid text color class usage or fallback
-                // We use currentColor approach which is safest
-                pad.style.borderColor = 'currentColor';
-                pad.style.color = 'currentColor';
-                pad.classList.add(headerColor); // headerColor is e.g. 'text-blue-400'
+            if (isActive) {
+                pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-[var(--accent)] hover:bg-white/10 transition-all group py-3`;
+                pad.style.boxShadow = `0 0 12px var(--accent-glow)`;
+            } else {
+                pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3`;
             }
 
             const loopIndicator = isActive ? `<div class="absolute top-1 right-1 w-2 h-2 rounded-full bg-gradient-to-r ${gradientFrom} ${gradientTo} animate-pulse"></div>` : '';
@@ -5063,6 +5062,18 @@ const INFO_CONTENT = {
             </div>
         `
     }
+};
+
+// --- GALAXY SUN STYLE TOGGLE ---
+let currentGalaxySunStyle = 'sun'; // 'sun' (flat geometric) or 'sun2' (tribal cone)
+window.toggleGalaxySun = function () {
+    currentGalaxySunStyle = currentGalaxySunStyle === 'sun' ? 'sun2' : 'sun';
+    const viz = getVisualizer();
+    if (viz && viz.setGalaxySunStyle) {
+        viz.setGalaxySunStyle(currentGalaxySunStyle);
+    }
+    const label = currentGalaxySunStyle === 'sun' ? 'Sun ☀️' : 'Tribal Sun 🌞';
+    showToast(`Galaxy Sun: ${label}`, 'info');
 };
 
 // --- MATRIX SETTINGS CONTROL (UNIFIED) ---

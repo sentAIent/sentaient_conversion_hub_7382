@@ -31,7 +31,7 @@ export class Visualizer3D {
         this.batterySaver = initialState.batterySaver !== undefined ? initialState.batterySaver : isMobile;
         this.lastFrameRenderTime = 0;
         this.targetFPS = this.batterySaver ? 30 : 60;
-        this.vibrationEnabled = initialState.visualVibration !== undefined ? initialState.visualVibration : true;
+        this.vibrationEnabled = (typeof state !== 'undefined' && state.visualVibration !== undefined) ? state.visualVibration : (initialState.visualVibration !== undefined ? initialState.visualVibration : false);
 
         // Adaptive Level of Detail (LOD) Tracking
         this.fpsFrameStats = [];
@@ -89,6 +89,9 @@ export class Visualizer3D {
 
             this.textures = {};
 
+            // Cached frequency data buffer — avoids allocating new Uint8Array every frame
+            this._freqDataArray = null;
+
             this.initEnvironment();
             // REMOVED: Exhaustive initialization calls here to fix 5s loading delay.
             // Modes are now initialized lazily in updateVisibility().
@@ -115,6 +118,30 @@ export class Visualizer3D {
                     }
                 }
             });
+
+            // WebGL Context Loss Recovery — avoids permanent black screen on GPU crash
+            canvas.addEventListener('webglcontextlost', (e) => {
+                e.preventDefault();
+                console.warn('[Visualizer] WebGL context LOST. Halting render loop.');
+                this.active = false;
+                if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
+            });
+            canvas.addEventListener('webglcontextrestored', () => {
+                console.log('[Visualizer] WebGL context RESTORED. Reinitializing...');
+                try {
+                    this.initialized = false;
+                    this._freqDataArray = null;
+                    this.initEnvironment();
+                    this.updateVisibility();
+                    this.initialized = true;
+                    this.active = true;
+                    this.lastTime = performance.now() * 0.001;
+                    this.render(state.analyserLeft, state.analyserRight);
+                } catch (err) {
+                    console.error('[Visualizer] Failed to recover from context loss:', err);
+                }
+            });
+
             // Initial sizing
             this.resize();
             setTimeout(this.handleLayoutChange, 100); // Delay slightly for DOM to settle
@@ -365,11 +392,47 @@ export class Visualizer3D {
         }
     }
 
+    updateGalaxyColor(color) {
+        // Sun = picked color
+        if (this.galaxySunMesh) {
+            this.galaxySunMesh.traverse(child => {
+                if (child.isMesh && child.material) {
+                    child.material.color.copy(color);
+                }
+            });
+        }
+        // Stars = complementary color (180° hue shift)
+        if (this.galaxyStars && this.galaxyStars.geometry) {
+            const hsl = {};
+            color.getHSL(hsl);
+            const compHue = (hsl.h + 0.5) % 1.0;
+            const colorAttr = this.galaxyStars.geometry.getAttribute('color');
+            if (colorAttr) {
+                const count = colorAttr.count;
+                for (let i = 0; i < count; i++) {
+                    const t = i / count;
+                    // Vary lightness per star position (inner brighter, outer dimmer)
+                    const l = t < 0.2 ? 0.8 : (t < 0.5 ? 0.6 : 0.4 + Math.random() * 0.15);
+                    const s = 0.6 + Math.random() * 0.3;
+                    const c = new THREE.Color().setHSL(compHue, s, l);
+                    colorAttr.setXYZ(i, c.r, c.g, c.b);
+                }
+                colorAttr.needsUpdate = true;
+            }
+        }
+    }
+
     updateDragonColor(color) {
         if (!this.dragonBodyInstanced) return;
         this.dragonBodyInstanced.material.color.copy(color);
         this.dragonHead.material.color.copy(color);
-        // We typically leave the core glow / pearl as its contrasting color, or tint them slightly.
+
+        // Inner glow = perfect complementary color (180° hue shift)
+        const hsl = {};
+        color.getHSL(hsl);
+        const complementHue = (hsl.h + 0.5) % 1.0; // Rotate hue 180°
+        const complementColor = new THREE.Color().setHSL(complementHue, hsl.s, hsl.l);
+        this.dragonGlowInstanced.material.color.copy(complementColor);
     }
 
     initGalaxy() {
@@ -426,65 +489,116 @@ export class Visualizer3D {
         this.galaxyStars = new THREE.Points(geometry, material);
         this.galaxyGroup.add(this.galaxyStars);
 
-        // True 3D Tribal Sun Geometry
+        // Galaxy Sun — switchable between 'sun' (flat geometric) and 'sun2' (chunky tribal cones)
+        this.galaxySunStyle = this.galaxySunStyle || 'sun'; // Default to clean geometric
+        this.createGalaxySun(this.galaxySunStyle);
+
+        this.galaxyGroup.visible = false;
+
+        // Apply custom color if already set
+        if (this.customColor) {
+            this.updateGalaxyColor(this.customColor);
+        }
+    }
+
+    createGalaxySun(style) {
+        // Remove existing sun if any
+        if (this.galaxySunMesh) {
+            this.galaxyGroup.remove(this.galaxySunMesh);
+            this.galaxySunMesh = null;
+        }
+
         this.galaxySunMesh = new THREE.Group();
 
-        // The tribal sun material: bright cyan-blue, additive blending to glow
         const sunMaterial = new THREE.MeshBasicMaterial({
-            color: 0x4aa6ff, // Bright tribal blue
+            color: 0x4aa6ff,
             transparent: true,
             opacity: 0.85,
             blending: THREE.AdditiveBlending,
-            depthWrite: false
+            depthWrite: false,
+            side: THREE.DoubleSide
         });
 
         const sunGeometryGroup = new THREE.Group();
 
-        // 1. The Ring
-        const ringGeo = new THREE.TorusGeometry(1.5, 0.25, 16, 64); // Adjusted tube to 0.25 (matching stroke-width 5 on r=15)
-        const ringMesh = new THREE.Mesh(ringGeo, sunMaterial);
-        sunGeometryGroup.add(ringMesh);
+        if (style === 'sun2') {
+            // ── SUN 2: Chunky cone-based tribal sun (original) ──
+            const coneMaterial = sunMaterial.clone();
+            coneMaterial.side = THREE.FrontSide; // Cones don't need double-sided
 
-        // 2. The Spikes (8 large, 8 small, alternating)
-        const numSpikes = 8;
+            const ringGeo = new THREE.TorusGeometry(1.5, 0.25, 16, 64);
+            sunGeometryGroup.add(new THREE.Mesh(ringGeo, coneMaterial));
 
-        // Large Spike Geometry (scaled from SVG 46,35 54,35 50,8: length 27, radius 4)
-        const largeSpikeLength = 2.7;
-        const largeSpikeRadius = 0.4;
-        const largeSpikeGeo = new THREE.ConeGeometry(largeSpikeRadius, largeSpikeLength, 4);
-        largeSpikeGeo.translate(0, largeSpikeLength / 2, 0); // Base at y=0
+            const numSpikes = 8;
+            const largeSpikeGeo = new THREE.ConeGeometry(0.4, 2.7, 4);
+            largeSpikeGeo.translate(0, 2.7 / 2, 0);
+            const smallSpikeGeo = new THREE.ConeGeometry(0.2, 1.7, 4);
+            smallSpikeGeo.translate(0, 1.7 / 2, 0);
 
-        // Small Spike Geometry (scaled from SVG 48,35 52,35 50,18: length 17, radius 2)
-        const smallSpikeLength = 1.7;
-        const smallSpikeRadius = 0.2;
-        const smallSpikeGeo = new THREE.ConeGeometry(smallSpikeRadius, smallSpikeLength, 4);
-        smallSpikeGeo.translate(0, smallSpikeLength / 2, 0); // Base at y=0
+            for (let i = 0; i < numSpikes; i++) {
+                const angleLarge = (i / numSpikes) * Math.PI * 2;
+                const large = new THREE.Mesh(largeSpikeGeo, coneMaterial);
+                large.rotation.z = -angleLarge;
+                large.position.set(Math.sin(angleLarge) * 1.5, Math.cos(angleLarge) * 1.5, 0);
+                sunGeometryGroup.add(large);
 
-        for (let i = 0; i < numSpikes; i++) {
-            // --- Large Spike (0, 45, 90, 135... degrees) ---
-            const angleLarge = (i / numSpikes) * Math.PI * 2;
-            const largeMesh = new THREE.Mesh(largeSpikeGeo, sunMaterial);
-            largeMesh.rotation.z = -angleLarge;
-            // Place base exactly at ring edge
-            largeMesh.position.x = Math.sin(angleLarge) * 1.5;
-            largeMesh.position.y = Math.cos(angleLarge) * 1.5;
-            sunGeometryGroup.add(largeMesh);
+                const angleSmall = angleLarge + (Math.PI / numSpikes);
+                const small = new THREE.Mesh(smallSpikeGeo, coneMaterial);
+                small.rotation.z = -angleSmall;
+                small.position.set(Math.sin(angleSmall) * 1.5, Math.cos(angleSmall) * 1.5, 0);
+                sunGeometryGroup.add(small);
+            }
+        } else {
+            // ── SUN 1: Clean flat geometric sun (SVG cursor style) ──
+            // Thin ring (torus with small tube = outline look)
+            const ringGeo = new THREE.TorusGeometry(1.5, 0.12, 8, 64);
+            sunGeometryGroup.add(new THREE.Mesh(ringGeo, sunMaterial));
 
-            // --- Small Spike (22.5, 67.5, 112.5... degrees) ---
-            const angleSmall = angleLarge + (Math.PI / numSpikes);
-            const smallMesh = new THREE.Mesh(smallSpikeGeo, sunMaterial);
-            smallMesh.rotation.z = -angleSmall;
-            // Place base exactly at ring edge
-            smallMesh.position.x = Math.sin(angleSmall) * 1.5;
-            smallMesh.position.y = Math.cos(angleSmall) * 1.5;
-            sunGeometryGroup.add(smallMesh);
+            const numSpikes = 8;
+
+            // Large spikes: flat triangles (base 0.8, length 2.7)
+            for (let i = 0; i < numSpikes; i++) {
+                const angle = (i / numSpikes) * Math.PI * 2;
+
+                // Large spike — flat triangle shape
+                const largeShape = new THREE.Shape();
+                largeShape.moveTo(-0.4, 0);   // left base
+                largeShape.lineTo(0.4, 0);    // right base
+                largeShape.lineTo(0, 2.7);    // tip
+                largeShape.lineTo(-0.4, 0);
+                const largeGeo = new THREE.ShapeGeometry(largeShape);
+                const largeMesh = new THREE.Mesh(largeGeo, sunMaterial);
+                largeMesh.rotation.z = -angle;
+                largeMesh.position.set(Math.sin(angle) * 1.5, Math.cos(angle) * 1.5, 0);
+                sunGeometryGroup.add(largeMesh);
+
+                // Small spike — narrow flat triangle
+                const angleSmall = angle + (Math.PI / numSpikes);
+                const smallShape = new THREE.Shape();
+                smallShape.moveTo(-0.2, 0);
+                smallShape.lineTo(0.2, 0);
+                smallShape.lineTo(0, 1.7);
+                smallShape.lineTo(-0.2, 0);
+                const smallGeo = new THREE.ShapeGeometry(smallShape);
+                const smallMesh = new THREE.Mesh(smallGeo, sunMaterial);
+                smallMesh.rotation.z = -angleSmall;
+                smallMesh.position.set(Math.sin(angleSmall) * 1.5, Math.cos(angleSmall) * 1.5, 0);
+                sunGeometryGroup.add(smallMesh);
+            }
         }
 
         this.galaxySunMesh.add(sunGeometryGroup);
         this.galaxySunMesh.position.set(0, 0, 0.1);
         this.galaxyGroup.add(this.galaxySunMesh);
+    }
 
-        this.galaxyGroup.visible = false;
+    setGalaxySunStyle(style) {
+        if (style !== 'sun' && style !== 'sun2') return;
+        this.galaxySunStyle = style;
+        // Recreate if galaxy is already initialized
+        if (this.galaxyGroup && this.galaxyGroup.children.length > 0) {
+            this.createGalaxySun(style);
+        }
     }
 
     createStarTexture() {
@@ -1395,7 +1509,19 @@ export class Visualizer3D {
     }
 
     initWaves() {
-        this.wavesGroup = new THREE.Group();
+        // FIX: Use the pre-created wavesGroup from constructor instead of creating
+        // a new group. Previous code leaked groups into the scene on every init.
+        if (!this.wavesGroup) {
+            this.wavesGroup = new THREE.Group();
+            this.scene.add(this.wavesGroup);
+        }
+        // Clear any existing children first
+        while (this.wavesGroup.children.length > 0) {
+            const child = this.wavesGroup.children[0];
+            this.wavesGroup.remove(child);
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) child.material.dispose();
+        }
         const geometry = new THREE.PlaneGeometry(30, 30, 64, 64);
         const material = new THREE.MeshBasicMaterial({
             color: 0x60a9ff,
@@ -1407,7 +1533,6 @@ export class Visualizer3D {
         this.wavesMesh = new THREE.Mesh(geometry, material);
         this.wavesMesh.rotation.x = -Math.PI / 2;
         this.wavesGroup.add(this.wavesMesh);
-        this.scene.add(this.wavesGroup);
 
         if (this.customColor && this.wavesMesh) {
             this.wavesMesh.material.color.copy(this.customColor);
@@ -1478,6 +1603,10 @@ export class Visualizer3D {
         if (this.dragonGroup && this.updateDragonColor) {
             this.updateDragonColor(this.customColor);
         }
+        // Galaxy: sun = picked color, stars = complementary
+        if (this.galaxyStars || this.galaxySunMesh) {
+            this.updateGalaxyColor(this.customColor);
+        }
         this.renderSingleFrame();
     }
 
@@ -1501,452 +1630,549 @@ export class Visualizer3D {
     }
 
     render(analyserL, analyserR) {
-        if (!this.initialized || !this.renderer) return;
+        try {
+            if (!this.initialized || !this.renderer) return;
 
-        if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
+            if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
 
-        let normBass = 0, normMids = 0, normHighs = 0;
-        let dataL = null;
+            let normBass = 0, normMids = 0, normHighs = 0;
+            let dataL = null;
 
-        if (analyserL) {
-            dataL = new Uint8Array(analyserL.frequencyBinCount);
-            analyserL.getByteFrequencyData(dataL);
-            let bass = 0; for (let i = 0; i < 10; i++) bass += dataL[i];
-            normBass = (bass / 10) / 255;
-            let mids = 0; for (let i = 10; i < 100; i++) mids += dataL[i];
-            normMids = (mids / 90) / 255;
-            let highs = 0; for (let i = 100; i < 300; i++) highs += dataL[i];
-            normHighs = (highs / 200) / 255;
-        }
-
-        const multiplier = this.speedMultiplier || 1.0;
-        const now = performance.now() * 0.001;
-        if (!this.lastTime) this.lastTime = now;
-        const dt = now - this.lastTime;
-        this.lastTime = now;
-
-        // Calculate Synesthetic Beat Pulse (0 to 1)
-        // If auto speed is ON, use the actual binaural beat frequency.
-        // If auto speed is OFF, use the manual speed slider (scaled so 1x approx 10Hz)
-        const visualBeatFreq = state.visualSpeedAuto ? (state.beatFrequency || 10) : (multiplier * 10);
-        const beatPulse = (Math.sin(now * Math.PI * 2 * visualBeatFreq) * 0.5) + 0.5;
-        const beatIntensity = beatPulse * (normBass * 0.5 + 0.5); // Scaled by volume
-
-        // Vibration Factor (Toggled by user)
-        const vFactor = this.vibrationEnabled ? 1.0 : 0.0;
-        const vBeatPulse = beatPulse * vFactor;
-        const vNormBass = normBass * vFactor;
-
-        if (this.activeModes.has('sphere')) {
-            // Smooth natural scale with bass response (Controlled by vFactor)
-            const scale = 1 + (vNormBass * 0.15);
-            this.sphere.scale.setScalar(scale);
-            this.core.scale.setScalar(scale * 0.9);
-
-            // Multi-axis rotation for the sphere (Spins in different directions)
-            // Sphere Animation (Bio-Resonance)
-            this.sphere.rotation.y += (0.005 * multiplier);
-            this.sphere.rotation.z += (0.006 * multiplier);
-
-            // Independent counter-rotation for the core
-            this.core.rotation.y -= (0.015 * multiplier);
-            this.core.rotation.x -= (0.010 * multiplier);
-
-            // Clean color transitions without beat pulsing
-            const r = 45 / 255 + (normHighs * 0.3);
-            const g = 212 / 255 - (normHighs * 0.1);
-            const b = 191 / 255 + (normMids * 0.2);
-
-            if (this.customColor) {
-                this.sphere.material.color.copy(this.customColor);
-                this.core.material.color.copy(this.customColor);
-            } else {
-                this.sphere.material.color.setRGB(r, g, b);
-                this.core.material.color.setRGB(r, g, b);
-            }
-        }
-
-        if (this.activeModes.has('particles') && this.particles) {
-            // Flow speed surges on the beat
-            const flowSpeed = (0.015 * multiplier) + (normBass * 0.08) + (beatPulse * 0.05);
-            const positions = this.particles.geometry.attributes.position.array;
-            for (let i = 2; i < positions.length; i += 3) {
-                positions[i] += flowSpeed;
-                if (positions[i] > 40) positions[i] = -40;
-            }
-            this.particles.geometry.attributes.position.needsUpdate = true;
-            this.particleGroup.rotation.z += (0.001 * multiplier) + (normMids * 0.005);
-        }
-
-        if (this.activeModes.has('lava') && this.lavaBlobs) {
-            this.lavaBlobs.forEach((blob, index) => {
-                const config = blob.userData;
-                const dt_scaled = dt * multiplier;
-
-                // Heat up slightly on the beat pulses
-                if (config.state === 'heating') {
-                    config.temperature += vBeatPulse * 0.01;
+            if (analyserL) {
+                // Reuse cached buffer to avoid per-frame allocation
+                const binCount = analyserL.frequencyBinCount;
+                if (!this._freqDataArray || this._freqDataArray.length !== binCount) {
+                    this._freqDataArray = new Uint8Array(binCount);
                 }
+                dataL = this._freqDataArray;
+                analyserL.getByteFrequencyData(dataL);
+                let bass = 0; for (let i = 0; i < 10; i++) bass += dataL[i];
+                normBass = (bass / 10) / 255;
+                let mids = 0; for (let i = 10; i < 100; i++) mids += dataL[i];
+                normMids = (mids / 90) / 255;
+                let highs = 0; for (let i = 100; i < 300; i++) highs += dataL[i];
+                normHighs = (highs / 200) / 255;
+            }
 
-                // ... physics logic ...
-                if (config.state === 'heating') {
-                    // Stay at bottom, increase temperature
-                    blob.position.y = config.floatMin;
-                    config.temperature += config.heatRate * 0.15 * dt_scaled;
-                    if (config.temperature >= 1.0) {
-                        config.temperature = 1.0;
-                        config.state = 'rising';
+            const multiplier = this.speedMultiplier || 1.0;
+            const now = performance.now() * 0.001;
+            if (!this.lastTime) this.lastTime = now;
+            const dt = now - this.lastTime;
+            this.lastTime = now;
+
+            // Calculate Synesthetic Beat Pulse (0 to 1)
+            // If auto speed is ON, use the actual binaural beat frequency.
+            // If auto speed is OFF, use the manual speed slider (scaled so 1x approx 10Hz)
+            const visualBeatFreq = state.visualSpeedAuto ? (state.beatFrequency || 10) : (multiplier * 10);
+            const beatPulse = (Math.sin(now * Math.PI * 2 * visualBeatFreq) * 0.5) + 0.5;
+            const beatIntensity = beatPulse * (normBass * 0.5 + 0.5); // Scaled by volume
+
+            // Vibration Factor (Toggled by user)
+            const vFactor = this.vibrationEnabled ? 1.0 : 0.0;
+            const vBeatPulse = beatPulse * vFactor;
+            const vNormBass = normBass * vFactor;
+            const vNormMids = normMids * vFactor;
+            const vNormHighs = normHighs * vFactor;
+
+            // ═══════════════════════════════════════════════════
+            // UNIVERSAL VIBRATION SHAKE — applies to ALL visuals
+            // ═══════════════════════════════════════════════════
+            // When vibration is ON: rapid position jitter driven by bass
+            // When vibration is OFF: everything stays perfectly still
+            const shakeIntensity = vFactor * (0.03 + normBass * 0.15 + beatPulse * 0.08);
+            const shakeX = (Math.sin(now * 47.3) * Math.cos(now * 31.7)) * shakeIntensity;
+            const shakeY = (Math.cos(now * 53.1) * Math.sin(now * 29.3)) * shakeIntensity;
+            const shakeZ = (Math.sin(now * 37.9) * Math.cos(now * 43.1)) * shakeIntensity;
+
+            // Apply shake to all visual groups/meshes
+            const shakeTargets = [
+                this.sphereGroup, this.particleGroup, this.lavaGroup,
+                this.wavesGroup, this.flames, this.raindrops,
+                this.petals, this.boxOuter, this.dragonGroup,
+                this.galaxyGroup, this.mandalaGroup, this.matrixGroup
+            ];
+            for (const target of shakeTargets) {
+                if (target) {
+                    target.position.x = shakeX;
+                    target.position.y = shakeY;
+                    target.position.z = shakeZ;
+                }
+            }
+
+            if (this.activeModes.has('sphere')) {
+                // Smooth natural scale with bass response (Controlled by vFactor)
+                const scale = 1 + (vNormBass * 0.15);
+                this.sphere.scale.setScalar(scale);
+                this.core.scale.setScalar(scale * 0.9);
+
+                // Multi-axis rotation for the sphere (Spins in different directions)
+                // Sphere Animation (Bio-Resonance)
+                this.sphere.rotation.y += (0.005 * multiplier);
+                this.sphere.rotation.z += (0.006 * multiplier);
+
+                // Independent counter-rotation for the core
+                this.core.rotation.y -= (0.015 * multiplier);
+                this.core.rotation.x -= (0.010 * multiplier);
+
+                // Clean color transitions without beat pulsing
+                const r = 45 / 255 + (vNormHighs * 0.3);
+                const g = 212 / 255 - (vNormHighs * 0.1);
+                const b = 191 / 255 + (vNormMids * 0.2);
+
+                if (this.customColor) {
+                    this.sphere.material.color.copy(this.customColor);
+                    this.core.material.color.copy(this.customColor);
+                } else {
+                    this.sphere.material.color.setRGB(r, g, b);
+                    this.core.material.color.setRGB(r, g, b);
+                }
+            }
+
+            if (this.activeModes.has('particles') && this.particles) {
+                // Flow speed surges on the beat
+                const flowSpeed = (0.015 * multiplier) + (vNormBass * 0.08) + (vBeatPulse * 0.05);
+                const positions = this.particles.geometry.attributes.position.array;
+                for (let i = 2; i < positions.length; i += 3) {
+                    positions[i] += flowSpeed;
+                    if (positions[i] > 40) positions[i] = -40;
+                }
+                this.particles.geometry.attributes.position.needsUpdate = true;
+                this.particleGroup.rotation.z += (0.001 * multiplier) + (vNormMids * 0.005);
+            }
+
+            if (this.activeModes.has('lava') && this.lavaBlobs) {
+                this.lavaBlobs.forEach((blob, index) => {
+                    const config = blob.userData;
+                    const dt_scaled = dt * multiplier;
+
+                    // Heat up slightly on the beat pulses
+                    if (config.state === 'heating') {
+                        config.temperature += vBeatPulse * 0.01;
                     }
-                } else if (config.state === 'rising') {
-                    // Buoyancy proportional to temperature
-                    const riseVel = config.riseSpeed * config.temperature * dt_scaled * 5.0;
-                    blob.position.y += riseVel;
 
-                    // Vertical Stretch (Teardrop effect)
-                    const stretch = 1.0 + (riseVel / dt_scaled) * 2.0;
-                    blob.scale.set(config.baseSize, config.baseSize * Math.min(stretch, 1.5), config.baseSize);
-
-                    if (blob.position.y >= config.floatMax) {
-                        blob.position.y = config.floatMax;
-                        config.state = 'cooling';
-                    }
-                } else if (config.state === 'cooling') {
-                    // Stay at top, decrease temperature
-                    blob.position.y = config.floatMax;
-                    config.temperature -= config.coolRate * 0.15 * dt_scaled;
-                    if (config.temperature <= 0.0) {
-                        config.temperature = 0.0;
-                        config.state = 'falling';
-                    }
-                } else if (config.state === 'falling') {
-                    // Gravity proportional to density (1 - temp)
-                    const fallVel = config.fallSpeed * (1.1 - config.temperature) * dt_scaled * 5.0;
-                    blob.position.y -= fallVel;
-
-                    // Vertical Stretch (Drip effect)
-                    const stretch = 1.0 + (fallVel / dt_scaled) * 2.0;
-                    blob.scale.set(config.baseSize, config.baseSize * Math.min(stretch, 1.5), config.baseSize);
-
-                    if (blob.position.y <= config.floatMin) {
+                    // ... physics logic ...
+                    if (config.state === 'heating') {
+                        // Stay at bottom, increase temperature
                         blob.position.y = config.floatMin;
-                        config.state = 'heating';
+                        config.temperature += config.heatRate * 0.15 * dt_scaled;
+                        if (config.temperature >= 1.0) {
+                            config.temperature = 1.0;
+                            config.state = 'rising';
+                        }
+                    } else if (config.state === 'rising') {
+                        // Buoyancy proportional to temperature
+                        const riseVel = config.riseSpeed * config.temperature * dt_scaled * 5.0;
+                        blob.position.y += riseVel;
+
+                        // Vertical Stretch (Teardrop effect)
+                        const stretch = 1.0 + (riseVel / dt_scaled) * 2.0;
+                        blob.scale.set(config.baseSize, config.baseSize * Math.min(stretch, 1.5), config.baseSize);
+
+                        if (blob.position.y >= config.floatMax) {
+                            blob.position.y = config.floatMax;
+                            config.state = 'cooling';
+                        }
+                    } else if (config.state === 'cooling') {
+                        // Stay at top, decrease temperature
+                        blob.position.y = config.floatMax;
+                        config.temperature -= config.coolRate * 0.15 * dt_scaled;
+                        if (config.temperature <= 0.0) {
+                            config.temperature = 0.0;
+                            config.state = 'falling';
+                        }
+                    } else if (config.state === 'falling') {
+                        // Gravity proportional to density (1 - temp)
+                        const fallVel = config.fallSpeed * (1.1 - config.temperature) * dt_scaled * 5.0;
+                        blob.position.y -= fallVel;
+
+                        // Vertical Stretch (Drip effect)
+                        const stretch = 1.0 + (fallVel / dt_scaled) * 2.0;
+                        blob.scale.set(config.baseSize, config.baseSize * Math.min(stretch, 1.5), config.baseSize);
+
+                        if (blob.position.y <= config.floatMin) {
+                            blob.position.y = config.floatMin;
+                            config.state = 'heating';
+                        }
                     }
-                }
 
-                // 2. THERMAL EXPANSION (Volume changes based on temperature)
-                // Heating makes it expand (~20%), Cooling makes it contract to base.
-                if (config.state === 'heating' || config.state === 'cooling') {
-                    const expansionFactor = 1.0 + (config.temperature * 0.2);
-                    blob.scale.setScalar(config.baseSize * expansionFactor);
-                }
+                    // 2. THERMAL EXPANSION (Volume changes based on temperature)
+                    // Heating makes it expand (~20%), Cooling makes it contract to base.
+                    if (config.state === 'heating' || config.state === 'cooling') {
+                        const expansionFactor = 1.0 + (config.temperature * 0.2);
+                        blob.scale.setScalar(config.baseSize * expansionFactor);
+                    }
 
-                // 3. MINIMAL WOBBLE & DRIFT (Keep it mostly vertical)
-                const wobble = Math.sin(now * 1.5 + index) * 0.05;
-                blob.scale.x += wobble * (normBass * 0.2);
-                blob.scale.z += wobble * (normBass * 0.2);
+                    // 3. MINIMAL WOBBLE & DRIFT (Keep it mostly vertical)
+                    const wobble = Math.sin(now * 1.5 + index) * 0.05;
+                    blob.scale.x += wobble * (vNormBass * 0.2);
+                    blob.scale.z += wobble * (vNormBass * 0.2);
 
-                // Drift X slightly based on phase
-                blob.position.x += Math.sin(now * 0.2 + config.driftPhase) * 0.005 * multiplier;
-            });
-            this.lavaGroup.rotation.y += 0.0001 * multiplier;
-            if (this.lavaGlow) this.lavaGlow.material.opacity = (0.05 + (vNormBass * 0.05) + (vBeatPulse * 0.1)) * this.brightnessMultiplier;
-        }
-
-        if (this.activeModes.has('ocean') && this.oceanWave) {
-            const positions = this.oceanWave.geometry.attributes.position.array;
-            const time = now * multiplier;
-            for (let i = 0; i < positions.length; i += 3) {
-                const x = positions[i];
-                const y = positions[i + 1];
-                const distFromCenter = Math.sqrt(x * x + y * y);
-                // Complex interference pattern for organic wave motion
-                const amp = 1.0 + (normBass * 2.5) + (vBeatPulse * 0.8);
-                positions[i + 2] = Math.sin(distFromCenter * 0.2 - time * 0.8) * amp +
-                    Math.cos(x * 0.15 + time * 0.6) * (amp * 0.5);
+                    // Drift X slightly based on phase
+                    blob.position.x += Math.sin(now * 0.2 + config.driftPhase) * 0.005 * multiplier;
+                });
+                this.lavaGroup.rotation.y += 0.0001 * multiplier;
+                if (this.lavaGlow) this.lavaGlow.material.opacity = (0.05 + (vNormBass * 0.05) + (vBeatPulse * 0.1)) * this.brightnessMultiplier;
             }
-            this.oceanWave.geometry.attributes.position.needsUpdate = true;
 
-            if (this.oceanFoam) {
-                const foamPos = this.oceanFoam.geometry.attributes.position.array;
-                for (let i = 2; i < foamPos.length; i += 3) {
-                    foamPos[i] = -2.5 + Math.sin(now * 2.0 + i) * 0.1; // bobbing foam
-                }
-                this.oceanFoam.geometry.attributes.position.needsUpdate = true;
-                this.oceanFoam.material.opacity = (0.4 + (normMids * 0.3) + (vBeatPulse * 0.2)) * this.brightnessMultiplier;
-            }
-        }
-
-        if (this.activeModes.has('waves') && this.wavesMesh) {
-            const wavePositions = this.wavesMesh.geometry.attributes.position.array;
-            for (let i = 0; i < wavePositions.length; i += 3) {
-                const x = wavePositions[i], y = wavePositions[i + 1];
-                let audioOffset = (dataL && dataL.length > 0) ? dataL[Math.floor(Math.abs(x) * 5) % dataL.length] / 255 : 0;
-                // Ultra-smooth, peaceful rolling waves
-                // Much lower frequency for wide, slow swells
-                let baseWave = Math.sin(x * 0.15 + now * 0.3 * multiplier) + Math.cos(y * 0.15 + now * 0.25 * multiplier);
-                // Gentle audio reactivity that swells instead of bounces
-                let gentleAudio = audioOffset * 0.4 * (1.0 + vBeatPulse * 0.3);
-                wavePositions[i + 2] = baseWave * (0.8 + normBass * 0.2) + gentleAudio;
-            }
-            this.wavesMesh.geometry.attributes.position.needsUpdate = true;
-            this.wavesMesh.rotation.z += 0.001 * multiplier;
-        }
-
-        if (this.activeModes.has('fireplace') && this.fireMaterial) {
-            this.fireMaterial.uniforms.uTime.value += dt * multiplier;
-            this.fireMaterial.uniforms.uSpeed.value = multiplier * (1.0 + normBass * 0.5 + beatPulse * 0.2);
-            if (this.embers) {
-                const positions = this.embers.geometry.attributes.position.array;
-                const speedFactor = multiplier * 2.0 * (1.0 + beatPulse * 0.5);
+            if (this.activeModes.has('ocean') && this.oceanWave) {
+                const positions = this.oceanWave.geometry.attributes.position.array;
+                const time = now * multiplier;
                 for (let i = 0; i < positions.length; i += 3) {
-                    const idx = i / 3;
-                    positions[i + 1] += this.emberVelocities[idx] * speedFactor;
-                    positions[i] += Math.sin(now * 2.0 + positions[i + 1]) * 0.01 * speedFactor;
-                    positions[i + 2] += Math.cos(now * 1.5 + positions[i + 1]) * 0.01 * speedFactor;
-                    if (positions[i + 1] > 4.0) {
-                        positions[i + 1] = -3.0;
-                        positions[i] = (Math.random() - 0.5) * 50.0;
-                        positions[i + 2] = -15 + (Math.random() - 0.5) * 20.0;
+                    const x = positions[i];
+                    const y = positions[i + 1];
+                    const distFromCenter = Math.sqrt(x * x + y * y);
+                    // Complex interference pattern for organic wave motion
+                    const amp = 1.0 + (vNormBass * 2.5) + (vBeatPulse * 0.8);
+                    positions[i + 2] = Math.sin(distFromCenter * 0.2 - time * 0.8) * amp +
+                        Math.cos(x * 0.15 + time * 0.6) * (amp * 0.5);
+                }
+                this.oceanWave.geometry.attributes.position.needsUpdate = true;
+
+                if (this.oceanFoam) {
+                    const foamPos = this.oceanFoam.geometry.attributes.position.array;
+                    for (let i = 2; i < foamPos.length; i += 3) {
+                        foamPos[i] = -2.5 + Math.sin(now * 2.0 + i) * 0.1; // bobbing foam
+                    }
+                    this.oceanFoam.geometry.attributes.position.needsUpdate = true;
+                    this.oceanFoam.material.opacity = (0.4 + (vNormMids * 0.3) + (vBeatPulse * 0.2)) * this.brightnessMultiplier;
+                }
+            }
+
+            if (this.activeModes.has('waves') && this.wavesMesh) {
+                const wavePositions = this.wavesMesh.geometry.attributes.position.array;
+                for (let i = 0; i < wavePositions.length; i += 3) {
+                    const x = wavePositions[i], y = wavePositions[i + 1];
+                    let audioOffset = (dataL && dataL.length > 0) ? dataL[Math.floor(Math.abs(x) * 5) % dataL.length] / 255 : 0;
+                    // Ultra-smooth, peaceful rolling waves
+                    // Much lower frequency for wide, slow swells
+                    let baseWave = Math.sin(x * 0.15 + now * 0.3 * multiplier) + Math.cos(y * 0.15 + now * 0.25 * multiplier);
+                    // Gentle audio reactivity that swells instead of bounces
+                    let gentleAudio = audioOffset * 0.4 * (1.0 + vBeatPulse * 0.3);
+                    wavePositions[i + 2] = baseWave * (0.8 + vNormBass * 0.2) + gentleAudio;
+                }
+                this.wavesMesh.geometry.attributes.position.needsUpdate = true;
+                this.wavesMesh.rotation.z += 0.001 * multiplier;
+            }
+
+            if (this.activeModes.has('fireplace') && this.fireMaterial) {
+                this.fireMaterial.uniforms.uTime.value += dt * multiplier;
+                this.fireMaterial.uniforms.uSpeed.value = multiplier * (1.0 + vNormBass * 0.5 + vBeatPulse * 0.2);
+                if (this.embers) {
+                    const positions = this.embers.geometry.attributes.position.array;
+                    const speedFactor = multiplier * 2.0 * (1.0 + vBeatPulse * 0.5);
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const idx = i / 3;
+                        positions[i + 1] += this.emberVelocities[idx] * speedFactor;
+                        positions[i] += Math.sin(now * 2.0 + positions[i + 1]) * 0.01 * speedFactor;
+                        positions[i + 2] += Math.cos(now * 1.5 + positions[i + 1]) * 0.01 * speedFactor;
+                        if (positions[i + 1] > 4.0) {
+                            positions[i + 1] = -3.0;
+                            positions[i] = (Math.random() - 0.5) * 50.0;
+                            positions[i + 2] = -15 + (Math.random() - 0.5) * 20.0;
+                        }
+                    }
+                    this.embers.geometry.attributes.position.needsUpdate = true;
+                    this.emberMat.opacity = (0.4 + (vBeatPulse * 0.4)) * this.brightnessMultiplier;
+                }
+                if (this.fireLight) {
+                    this.fireLight.intensity = 1.0 + (vNormBass * 1.5) + (vBeatPulse * 1.0) + (Math.sin(now * 10) + Math.cos(now * 23)) * 0.3;
+                    this.fireLight.distance = 20 + (vNormMids * 5) + (vBeatPulse * 5);
+                }
+            }
+
+            if (this.activeModes.has('rainforest') && this.raindrops) {
+                const positions = this.raindrops.geometry.attributes.position.array;
+                const speedFactor = multiplier * 0.8 * (1.0 + vBeatPulse * 0.3);
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i + 1] -= this.rainVelocities[i / 3] * speedFactor;
+                    if (positions[i + 1] < -10) {
+                        positions[i + 1] = 10;
+                        positions[i] = (Math.random() - 0.5) * 20;
+                        positions[i + 2] = (Math.random() - 0.5) * 15;
                     }
                 }
-                this.embers.geometry.attributes.position.needsUpdate = true;
-                this.emberMat.opacity = (0.4 + (beatPulse * 0.4)) * this.brightnessMultiplier;
+                this.raindrops.geometry.attributes.position.needsUpdate = true;
+                this.raindrops.material.opacity = (0.5 + (vNormMids * 0.2) + (vBeatPulse * 0.2)) * this.brightnessMultiplier;
             }
-            if (this.fireLight) {
-                this.fireLight.intensity = 1.0 + (normBass * 1.5) + (beatPulse * 1.0) + (Math.sin(now * 10) + Math.cos(now * 23)) * 0.3;
-                this.fireLight.distance = 20 + (normMids * 5) + (beatPulse * 5);
-            }
-        }
 
-        if (this.activeModes.has('rainforest') && this.raindrops) {
-            const positions = this.raindrops.geometry.attributes.position.array;
-            const speedFactor = multiplier * 0.8 * (1.0 + beatPulse * 0.3);
-            for (let i = 0; i < positions.length; i += 3) {
-                positions[i + 1] -= this.rainVelocities[i / 3] * speedFactor;
-                if (positions[i + 1] < -10) {
-                    positions[i + 1] = 10;
-                    positions[i] = (Math.random() - 0.5) * 20;
-                    positions[i + 2] = (Math.random() - 0.5) * 15;
+            if (this.activeModes.has('zengarden') && this.petals) {
+                const positions = this.petals.geometry.attributes.position.array;
+                const speedFactor = multiplier * 0.3 * (1.0 + vBeatPulse * 0.5);
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i + 1] -= 0.01 * speedFactor;
+                    positions[i] += Math.sin(now + positions[i + 1]) * 0.01 * speedFactor;
+                    positions[i + 2] += Math.cos(now + positions[i + 1]) * 0.01 * speedFactor;
+                    if (positions[i + 1] < -5) {
+                        positions[i + 1] = 5;
+                        positions[i] = (Math.random() - 0.5) * 20;
+                        positions[i + 2] = (Math.random() - 0.5) * 20;
+                    }
                 }
-            }
-            this.raindrops.geometry.attributes.position.needsUpdate = true;
-            this.raindrops.material.opacity = (0.5 + (normMids * 0.2) + (beatPulse * 0.2)) * this.brightnessMultiplier;
-        }
-
-        if (this.activeModes.has('zengarden') && this.petals) {
-            const positions = this.petals.geometry.attributes.position.array;
-            const speedFactor = multiplier * 0.3 * (1.0 + beatPulse * 0.5);
-            for (let i = 0; i < positions.length; i += 3) {
-                positions[i + 1] -= 0.01 * speedFactor;
-                positions[i] += Math.sin(now + positions[i + 1]) * 0.01 * speedFactor;
-                positions[i + 2] += Math.cos(now + positions[i + 1]) * 0.01 * speedFactor;
-                if (positions[i + 1] < -5) {
-                    positions[i + 1] = 5;
-                    positions[i] = (Math.random() - 0.5) * 20;
-                    positions[i + 2] = (Math.random() - 0.5) * 20;
-                }
-            }
-            this.petals.geometry.attributes.position.needsUpdate = true;
-            if (this.zenWater) this.zenWater.material.opacity = (0.3 + (beatPulse * 0.2)) * this.brightnessMultiplier;
-        }
-
-        // BOX (Cube)
-        if (this.activeModes.has('box') && this.boxOuter) {
-            this.boxOuter.rotation.x += 0.008 * multiplier + normBass * 0.02;
-            this.boxOuter.rotation.y += 0.012 * multiplier;
-            this.boxInner.rotation.x -= 0.015 * multiplier;
-            this.boxInner.rotation.y -= 0.01 * multiplier;
-            this.boxEdges.rotation.copy(this.boxOuter.rotation);
-            const cubeScale = 1 + vNormBass * 0.2;
-            this.boxOuter.scale.setScalar(cubeScale);
-            this.boxEdges.scale.setScalar(cubeScale);
-            this.boxInner.scale.setScalar(cubeScale * 0.95);
-            if (!this.customColor) {
-                const b = 0.48 + normHighs * 0.3;
-                this.boxOuter.children.forEach(c => c.material.color.setRGB(0.23, 0.51, b));
-            }
-        }
-
-        // DRAGON
-        if (this.activeModes.has('dragon') && this.dragonBodyInstanced) {
-            // Serpentine global rotation
-            this.dragonGroup.rotation.y += 0.005 * multiplier;
-
-            // Dynamically update the segmented body traversing a curve in 3D
-            const time = now * multiplier * 2.0;
-            const globalScale = 1 + vNormBass * 0.2; // Bass pulse
-
-            for (let i = 0; i < this.dragonLength; i++) {
-                // Phase determines position along the winding path (i=0 is head)
-                const phase = time - i * 0.12;
-
-                // Advanced 3D Lissajous curve for highly organic serpentine flight
-                const x = Math.sin(phase) * 8;
-                const y = Math.cos(phase * 1.5) * 4 + Math.sin(phase * 0.5) * 3;
-                const z = Math.cos(phase * 0.8) * 8;
-
-                this.dragonDummy.position.set(x, y, z);
-
-                // Look ahead to calculate rotation for segment
-                const nextPhase = phase + 0.1;
-                const nx = Math.sin(nextPhase) * 8;
-                const ny = Math.cos(nextPhase * 1.5) * 4 + Math.sin(nextPhase * 0.5) * 3;
-                const nz = Math.cos(nextPhase * 0.8) * 8;
-                this.dragonDummy.lookAt(nx, ny, nz);
-
-                // Scale decays to a point towards the tail (i -> dragonLength)
-                const taper = 1.0 - (i / this.dragonLength) * 0.8;
-                // Add a flowing "breathing" or "muscle" ripple down the body
-                const breath = 1.0 + Math.sin(phase * 4) * 0.15 * (0.5 + normBass);
-                this.dragonDummy.scale.setScalar(taper * breath * globalScale);
-
-                this.dragonDummy.updateMatrix();
-
-                this.dragonBodyInstanced.setMatrixAt(i, this.dragonDummy.matrix);
-                this.dragonGlowInstanced.setMatrixAt(i, this.dragonDummy.matrix);
-
-                // Match the distinct head mesh to the lead index (i=0)
-                if (i === 0) {
-                    this.dragonHead.position.copy(this.dragonDummy.position);
-                    this.dragonHead.quaternion.copy(this.dragonDummy.quaternion);
-                    // Make the head slightly larger
-                    this.dragonHead.scale.copy(this.dragonDummy.scale).multiplyScalar(1.4);
-                }
+                this.petals.geometry.attributes.position.needsUpdate = true;
+                if (this.zenWater) this.zenWater.material.opacity = (0.3 + (vBeatPulse * 0.2)) * this.brightnessMultiplier;
             }
 
-            this.dragonBodyInstanced.instanceMatrix.needsUpdate = true;
-            this.dragonGlowInstanced.instanceMatrix.needsUpdate = true;
-
-            // Orbiting Dragon Pearl (Chased by the dragon head)
-            // Position it slightly ahead of the phase zero
-            const pearlPhase = time + 0.5;
-            this.dragonPearlGroup.position.x = Math.sin(pearlPhase) * 9;
-            this.dragonPearlGroup.position.y = Math.cos(pearlPhase * 1.5) * 5 + Math.sin(pearlPhase * 0.5) * 4;
-            this.dragonPearlGroup.position.z = Math.cos(pearlPhase * 0.8) * 9;
-
-            // Rapid rotation for the pearl
-            this.dragonPearlGroup.rotation.x += 0.08 * multiplier;
-            this.dragonPearlGroup.rotation.y += 0.12 * multiplier;
-
-            // Color pulsing
-            if (!this.customColor) {
-                // Flash body Crimson/Gold based on audio
-                this.dragonBodyInstanced.material.color.setRGB(0.9 + normBass * 0.1, 0.2 + normMids * 0.1, 0.1);
-                // Flash pearl Cyan/White
-                const pw = 0.5 + normHighs * 0.5;
-                this.dragonPearl.material.color.setRGB(pw * 0.5, pw, 1.0);
-            }
-        }
-
-        // GALAXY
-        if (this.activeModes.has('galaxy') && this.galaxyStars) {
-            this.galaxyGroup.rotation.y += 0.002 * multiplier + normBass * 0.003;
-            this.galaxyGroup.rotation.x = Math.sin(now * 0.08) * 0.25; // gentle tilt
-            this.galaxyStars.material.size = 0.2 + normBass * 0.1 + beatPulse * 0.08;
-
-            // Tribal sun - slow steady 3D rotation, no pulsing
-            if (this.galaxySunMesh) {
-                this.galaxySunMesh.rotation.y += 0.005 * multiplier; // Spins like a coin
-                this.galaxySunMesh.rotation.z += 0.003 * multiplier; // Rotates like a wheel
-                this.galaxySunMesh.rotation.x = Math.sin(now * 0.1) * 0.2; // Gentle tilt
-            }
-        }
-
-        // MANDALA
-        if (this.activeModes.has('mandala') && this.mandalaRings) {
-            this.mandalaRings.forEach((ring, i) => {
-                ring.rotation.z += ring.userData.speed * multiplier + normBass * 0.005;
-                const pulse = 1 + vBeatPulse * 0.1 * (i + 1) * 0.3;
-                ring.scale.setScalar(pulse);
+            // BOX (Cube)
+            if (this.activeModes.has('box') && this.boxOuter) {
+                this.boxOuter.rotation.x += 0.008 * multiplier + vNormBass * 0.02;
+                this.boxOuter.rotation.y += 0.012 * multiplier;
+                this.boxInner.rotation.x -= 0.015 * multiplier;
+                this.boxInner.rotation.y -= 0.01 * multiplier;
+                this.boxEdges.rotation.copy(this.boxOuter.rotation);
+                const cubeScale = 1 + vNormBass * 0.2;
+                this.boxOuter.scale.setScalar(cubeScale);
+                this.boxEdges.scale.setScalar(cubeScale);
+                this.boxInner.scale.setScalar(cubeScale * 0.95);
                 if (!this.customColor) {
-                    ring.material.opacity = (0.35 - i * 0.04) + normMids * 0.2;
-                }
-            });
-            if (this.mandalaCenter) {
-                this.mandalaCenter.material.opacity = 0.4 + beatPulse * 0.3;
-                const cScale = 1 + vNormBass * 0.3;
-                this.mandalaCenter.scale.setScalar(cScale);
-            }
-        }
-
-        if (this.activeModes.has('matrix') && this.matrixMaterial) {
-            // FIXED: Only apply multipliers once here; uTime in shader handles the rest.
-            this.matrixMaterial.uniforms.uTime.value += dt * multiplier * (this.matrixSpeedMultiplier || 1.0);
-            // Normalize beat pulse influence separately
-            this.matrixMaterial.uniforms.uSpeed.value = 1.0 + beatPulse * 0.2;
-        }
-
-        // Frame Skipping / Battery Saver Logic
-        const frameInterval = 1000 / this.targetFPS;
-        const timeSinceLastFrame = performance.now() - this.lastFrameRenderTime;
-
-        // Adaptive LOD FPS Measurement
-        if (dt > 0) {
-            const currentFps = 1 / dt;
-            this.fpsFrameStats.push(currentFps);
-            if (this.fpsFrameStats.length > 60) this.fpsFrameStats.shift();
-
-            // Evaluate LOD downgrade every 5 seconds if running below target
-            if (now - this.lastLodDegradation > 5.0 && this.fpsFrameStats.length === 60) {
-                const avgFps = this.fpsFrameStats.reduce((a, b) => a + b) / 60;
-                // If dropping 25% below target consistently
-                if (avgFps < (this.targetFPS * 0.75)) {
-                    this.degradeLOD();
-                    this.lastLodDegradation = now;
-                    this.fpsFrameStats = []; // Reset after degrading
+                    const b = 0.48 + vNormHighs * 0.3;
+                    this.boxOuter.children.forEach(c => c.material.color.setRGB(0.23, 0.51, b));
                 }
             }
-        }
 
-        // Create a property to track current opacity for smoothing
-        if (this.currentLogoOpacity === undefined) this.currentLogoOpacity = 0.1;
+            // DRAGON
+            if (this.activeModes.has('dragon') && this.dragonBodyInstanced) {
+                // Serpentine global rotation
+                this.dragonGroup.rotation.y += 0.005 * multiplier;
 
-        if (this.targetLogoOpacity !== undefined) {
-            const diff = this.targetLogoOpacity - this.currentLogoOpacity;
-            if (Math.abs(diff) > 0.001) {
-                this.currentLogoOpacity += diff * 0.05;
-            } else {
-                this.currentLogoOpacity = this.targetLogoOpacity;
+                // Dynamically update the segmented body traversing a curve in 3D
+                const time = now * multiplier * 2.0;
+                const globalScale = 1 + vNormBass * 0.2; // Bass pulse
+
+                for (let i = 0; i < this.dragonLength; i++) {
+                    // Phase determines position along the winding path (i=0 is head)
+                    const phase = time - i * 0.12;
+
+                    // Advanced 3D Lissajous curve for highly organic serpentine flight
+                    const x = Math.sin(phase) * 8;
+                    const y = Math.cos(phase * 1.5) * 4 + Math.sin(phase * 0.5) * 3;
+                    const z = Math.cos(phase * 0.8) * 8;
+
+                    this.dragonDummy.position.set(x, y, z);
+
+                    // Look ahead to calculate rotation for segment
+                    const nextPhase = phase + 0.1;
+                    const nx = Math.sin(nextPhase) * 8;
+                    const ny = Math.cos(nextPhase * 1.5) * 4 + Math.sin(nextPhase * 0.5) * 3;
+                    const nz = Math.cos(nextPhase * 0.8) * 8;
+                    this.dragonDummy.lookAt(nx, ny, nz);
+
+                    // Scale decays to a point towards the tail (i -> dragonLength)
+                    const taper = 1.0 - (i / this.dragonLength) * 0.8;
+                    // Add a flowing "breathing" or "muscle" ripple down the body
+                    const breath = 1.0 + Math.sin(phase * 4) * 0.15 * (0.5 + vNormBass);
+                    this.dragonDummy.scale.setScalar(taper * breath * globalScale);
+
+                    this.dragonDummy.updateMatrix();
+
+                    this.dragonBodyInstanced.setMatrixAt(i, this.dragonDummy.matrix);
+                    this.dragonGlowInstanced.setMatrixAt(i, this.dragonDummy.matrix);
+
+                    // Match the distinct head mesh to the lead index (i=0)
+                    if (i === 0) {
+                        this.dragonHead.position.copy(this.dragonDummy.position);
+                        this.dragonHead.quaternion.copy(this.dragonDummy.quaternion);
+                        // Make the head slightly larger
+                        this.dragonHead.scale.copy(this.dragonDummy.scale).multiplyScalar(1.4);
+                    }
+                }
+
+                this.dragonBodyInstanced.instanceMatrix.needsUpdate = true;
+                this.dragonGlowInstanced.instanceMatrix.needsUpdate = true;
+
+                // Orbiting Dragon Pearl (Chased by the dragon head)
+                // Position it slightly ahead of the phase zero
+                const pearlPhase = time + 0.5;
+                this.dragonPearlGroup.position.x = Math.sin(pearlPhase) * 9;
+                this.dragonPearlGroup.position.y = Math.cos(pearlPhase * 1.5) * 5 + Math.sin(pearlPhase * 0.5) * 4;
+                this.dragonPearlGroup.position.z = Math.cos(pearlPhase * 0.8) * 9;
+
+                // Rapid rotation for the pearl
+                this.dragonPearlGroup.rotation.x += 0.08 * multiplier;
+                this.dragonPearlGroup.rotation.y += 0.12 * multiplier;
+
+                // Color pulsing
+                if (!this.customColor) {
+                    // Flash body Crimson/Gold based on audio
+                    this.dragonBodyInstanced.material.color.setRGB(0.9 + vNormBass * 0.1, 0.2 + vNormMids * 0.1, 0.1);
+                    // Flash pearl Cyan/White
+                    const pw = 0.5 + vNormHighs * 0.5;
+                    this.dragonPearl.material.color.setRGB(pw * 0.5, pw, 1.0);
+                }
             }
 
-            // Apply to single mesh material
-            if (this.logoMesh && this.logoMesh.material) {
-                this.logoMesh.material.opacity = this.currentLogoOpacity;
+            // GALAXY
+            if (this.activeModes.has('galaxy') && this.galaxyStars) {
+                this.galaxyGroup.rotation.y += 0.002 * multiplier + vNormBass * 0.003;
+                this.galaxyGroup.rotation.x = Math.sin(now * 0.08) * 0.25; // gentle tilt
+                this.galaxyStars.material.size = 0.2 + vNormBass * 0.1 + vBeatPulse * 0.08;
+
+                // Tribal sun - slow steady 3D rotation, no pulsing
+                if (this.galaxySunMesh) {
+                    this.galaxySunMesh.rotation.y += 0.005 * multiplier; // Spins like a coin
+                    this.galaxySunMesh.rotation.z += 0.003 * multiplier; // Rotates like a wheel
+                    this.galaxySunMesh.rotation.x = Math.sin(now * 0.1) * 0.2; // Gentle tilt
+                }
+            }
+
+            // MANDALA
+            if (this.activeModes.has('mandala') && this.mandalaRings) {
+                this.mandalaRings.forEach((ring, i) => {
+                    ring.rotation.z += ring.userData.speed * multiplier + vNormBass * 0.005;
+                    const pulse = 1 + vBeatPulse * 0.1 * (i + 1) * 0.3;
+                    ring.scale.setScalar(pulse);
+                    if (!this.customColor) {
+                        ring.material.opacity = (0.35 - i * 0.04) + vNormMids * 0.2;
+                    }
+                });
+                if (this.mandalaCenter) {
+                    this.mandalaCenter.material.opacity = 0.4 + vBeatPulse * 0.3;
+                    const cScale = 1 + vNormBass * 0.3;
+                    this.mandalaCenter.scale.setScalar(cScale);
+                }
+            }
+
+            if (this.activeModes.has('matrix') && this.matrixMaterial) {
+                // FIXED: Only apply multipliers once here; uTime in shader handles the rest.
+                this.matrixMaterial.uniforms.uTime.value += dt * multiplier * (this.matrixSpeedMultiplier || 1.0);
+                // Normalize beat pulse influence separately
+                this.matrixMaterial.uniforms.uSpeed.value = 1.0 + vBeatPulse * 0.2;
+            }
+
+            // Frame Skipping / Battery Saver Logic
+            const frameInterval = 1000 / this.targetFPS;
+            const timeSinceLastFrame = performance.now() - this.lastFrameRenderTime;
+
+            // Adaptive LOD FPS Measurement
+            if (dt > 0) {
+                const currentFps = 1 / dt;
+                this.fpsFrameStats.push(currentFps);
+                if (this.fpsFrameStats.length > 60) this.fpsFrameStats.shift();
+
+                // Evaluate LOD downgrade every 5 seconds if running below target
+                if (now - this.lastLodDegradation > 5.0 && this.fpsFrameStats.length === 60) {
+                    const avgFps = this.fpsFrameStats.reduce((a, b) => a + b) / 60;
+                    // If dropping 25% below target consistently
+                    if (avgFps < (this.targetFPS * 0.75)) {
+                        this.degradeLOD();
+                        this.lastLodDegradation = now;
+                        this.fpsFrameStats = []; // Reset after degrading
+                    }
+                }
+            }
+
+            // Create a property to track current opacity for smoothing
+            if (this.currentLogoOpacity === undefined) this.currentLogoOpacity = 0.1;
+
+            // Legacy opacity smoothing — only runs when glow system is not active
+            // The lotus glow mode system below handles opacity for all active modes
+            if (this.targetLogoOpacity !== undefined && !state.lotusState) {
+                const diff = this.targetLogoOpacity - this.currentLogoOpacity;
+                if (Math.abs(diff) > 0.001) {
+                    this.currentLogoOpacity += diff * 0.05;
+                } else {
+                    this.currentLogoOpacity = this.targetLogoOpacity;
+                }
+
+                // Apply to single mesh material
+                if (this.logoMesh && this.logoMesh.material) {
+                    this.logoMesh.material.opacity = this.currentLogoOpacity;
+                    this.logoMesh.material.transparent = true;
+                    this.logoMesh.material.needsUpdate = true;
+                }
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // LOTUS GLOW MODE SYSTEM (Auto / Dim / Full / Heartbeat)
+            // ═══════════════════════════════════════════════════════
+            if (this.logoMesh) {
+                const lotusMode = state.lotusState || 'auto';
+                let lotusTargetOpacity = 0.8; // default
+                let doScaleHeartbeat = false;
+
+                switch (lotusMode) {
+                    case 'faded': // DIM mode
+                        lotusTargetOpacity = 0.15;
+                        break;
+
+                    case 'full': // FULL mode
+                        lotusTargetOpacity = 1.0;
+                        break;
+
+                    case 'heartbeat': {
+                        // Smooth sinusoidal fade: full→dim→full at 20 BPM (3s cycle)
+                        // 20 BPM = 20/60 = 0.333 Hz
+                        const heartbeatFreq = 20 / 60; // 0.333 Hz
+                        const fade = (Math.sin(now * Math.PI * 2 * heartbeatFreq) + 1) / 2; // 0→1
+                        lotusTargetOpacity = 0.15 + 0.85 * fade; // 0.15→1.0
+                        doScaleHeartbeat = true;
+
+                        // Sync matrix brightness with lotus heartbeat
+                        if (this.activeModes.has('matrix') && this.matrixMaterial) {
+                            if (this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uBrightness) {
+                                this.matrixMaterial.uniforms.uBrightness.value = 0.3 + 0.7 * fade;
+                            }
+                        }
+                        break;
+                    }
+
+                    case 'auto':
+                    default: {
+                        // Dynamic: lotus opacity reacts to audio energy
+                        const audioEnergy = vNormBass * 0.5 + vNormMids * 0.3 + vNormHighs * 0.2;
+                        lotusTargetOpacity = 0.25 + audioEnergy * 0.75; // 0.25→1.0
+                        // Occasional beat sync: brighter on beat peaks
+                        lotusTargetOpacity = Math.min(1.0, lotusTargetOpacity + beatPulse * 0.15);
+                        doScaleHeartbeat = true; // Gentle scale pulse in auto
+
+                        // Sync matrix with lotus in auto mode
+                        if (this.activeModes.has('matrix') && this.matrixMaterial) {
+                            if (this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uBrightness) {
+                                // Matrix syncs with lotus but with slight delay/smoothing
+                                const matrixSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
+                                this.matrixMaterial.uniforms.uBrightness.value = Math.min(1.0, matrixSync);
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                // Smooth opacity transition (lerp towards target)
+                if (this._lotusCurrentOpacity === undefined) this._lotusCurrentOpacity = 0.8;
+                this._lotusCurrentOpacity += (lotusTargetOpacity - this._lotusCurrentOpacity) * 0.08;
+                this.logoMesh.material.opacity = this._lotusCurrentOpacity;
                 this.logoMesh.material.transparent = true;
                 this.logoMesh.material.needsUpdate = true;
-            }
-        }
 
-        // Heartbeat animation for the MindWave lotus logo
-        // Dual-pulse "lub-dub" pattern: two quick beats then a rest
-        if (this.logoMesh) {
-            const heartRate = 1.2; // ~72 BPM natural resting heart rate
-            const cycle = (now * heartRate) % 1.0; // 0-1 cycle phase
-
-            let heartScale = 1.0;
-            // First beat (lub) at 0.0-0.12
-            if (cycle < 0.12) {
-                heartScale = 1.0 + 0.08 * Math.sin(cycle / 0.12 * Math.PI);
-            }
-            // Second beat (dub) at 0.18-0.28
-            else if (cycle > 0.18 && cycle < 0.28) {
-                heartScale = 1.0 + 0.05 * Math.sin((cycle - 0.18) / 0.10 * Math.PI);
-            }
-            // Rest phase - smoothly settle back to 1.0
-            else {
-                heartScale = 1.0;
+                // Scale heartbeat (lub-dub) - runs in heartbeat + auto modes
+                if (doScaleHeartbeat) {
+                    const heartRate = 1.2; // ~72 BPM natural resting heart rate
+                    const cycle = (now * heartRate) % 1.0;
+                    let heartScale = 1.0;
+                    if (cycle < 0.12) {
+                        heartScale = 1.0 + 0.08 * Math.sin(cycle / 0.12 * Math.PI);
+                    } else if (cycle > 0.18 && cycle < 0.28) {
+                        heartScale = 1.0 + 0.05 * Math.sin((cycle - 0.18) / 0.10 * Math.PI);
+                    }
+                    this.logoMesh.scale.setScalar(heartScale);
+                } else {
+                    this.logoMesh.scale.setScalar(1.0); // Reset scale in DIM/FULL
+                }
             }
 
-            this.logoMesh.scale.setScalar(heartScale);
-        }
+            if (timeSinceLastFrame >= frameInterval) {
+                this.renderer.render(this.scene, this.camera);
+                this.lastFrameRenderTime = performance.now();
+            }
 
-        if (timeSinceLastFrame >= frameInterval) {
-            this.renderer.render(this.scene, this.camera);
-            this.lastFrameRenderTime = performance.now();
-        }
-
-        if (this.active !== false && !document.hidden) {
-            state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
+            if (this.active !== false && !document.hidden) {
+                state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
+            }
+        } catch (err) {
+            console.error('[Visualizer] Render error caught (animation continues):', err);
+            // Ensure the loop keeps going even after an error
+            if (this.active !== false && !document.hidden) {
+                state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
+            }
         }
     }
 
@@ -2151,7 +2377,62 @@ export class Visualizer3D {
 
     dispose() {
         this.active = false;
+        if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
+
+        // Dispose all Three.js resources to prevent GPU memory leaks
+        const disposeGroup = (group) => {
+            if (!group) return;
+            while (group.children.length > 0) {
+                const child = group.children[0];
+                group.remove(child);
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (child.material.map) child.material.map.dispose();
+                    child.material.dispose();
+                }
+                if (child.children && child.children.length) {
+                    child.traverse((c) => {
+                        if (c.geometry) c.geometry.dispose();
+                        if (c.material) {
+                            if (c.material.map) c.material.map.dispose();
+                            c.material.dispose();
+                        }
+                    });
+                }
+            }
+        };
+
+        const groups = [
+            this.sphereGroup, this.particleGroup, this.lavaGroup,
+            this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup,
+            this.oceanGroup, this.matrixGroup, this.boxGroup,
+            this.dragonGroup, this.galaxyGroup, this.mandalaGroup,
+            this.wavesGroup
+        ];
+        groups.forEach(disposeGroup);
+
+        // Dispose standalone materials / textures
+        if (this.matrixMaterial) { this.matrixMaterial.dispose(); this.matrixMaterial = null; }
+        if (this.fireMaterial) { this.fireMaterial.dispose(); this.fireMaterial = null; }
+        if (this.logoMesh) {
+            if (this.logoMesh.material) {
+                if (this.logoMesh.material.map) this.logoMesh.material.map.dispose();
+                this.logoMesh.material.dispose();
+            }
+            if (this.logoMesh.geometry) this.logoMesh.geometry.dispose();
+            if (this.scene) this.scene.remove(this.logoMesh);
+            this.logoMesh = null;
+        }
+        for (const key in this.textures) {
+            if (this.textures[key] && this.textures[key].dispose) this.textures[key].dispose();
+        }
+        this.textures = {};
+
+        // Free cached buffers
+        this._freqDataArray = null;
+
         if (this.renderer) { this.renderer.dispose(); this.renderer = null; }
+        console.log('[Visualizer] Disposed all GPU resources.');
     }
 }
 
