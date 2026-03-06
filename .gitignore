@@ -10,3 +10,4 @@ vite.config.*s.*
 
 .cursor/rules/kluster-code-verify.mdc
 .kluster
+**/api-keys.local.js
