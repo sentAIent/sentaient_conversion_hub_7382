@@ -1063,7 +1063,7 @@ export function setupUI() {
     // --- Visualizer Initialization & Defaults ---
 
     // Apply visual defaults once visualizer is actually loaded (lazy loader)
-    const applyVisualDefaults = () => {
+    const applyVisualDefaults = async () => {
         console.log('[Controls] Applying visual defaults starting...');
         const viz = getVisualizer();
         if (!viz) {
@@ -1073,18 +1073,20 @@ export function setupUI() {
 
         try {
             // Ensure Flow (particles), Galaxy, Dragon, and Matrix are active on load per user request
-            if (!viz.activeModes.has('particles')) {
-                viz.toggleMode('particles');
-            }
-            if (!viz.activeModes.has('matrix')) {
-                viz.toggleMode('matrix');
-            }
-            if (!viz.activeModes.has('galaxy')) {
-                viz.toggleMode('galaxy');
-            }
-            if (!viz.activeModes.has('dragon')) {
-                viz.toggleMode('dragon');
-            }
+            // BUT delay the loading slightly to prevent iOS/Safari WebGL watchdog from crashing the tab
+
+            const reqMode = async (mode) => {
+                if (!viz.activeModes.has(mode)) {
+                    viz.toggleMode(mode);
+                    // Yield to browser to compile shaders and update DOM
+                    await new Promise(r => requestAnimationFrame(r));
+                }
+            };
+
+            await reqMode('particles');
+            await reqMode('matrix');
+            await reqMode('galaxy');
+            await reqMode('dragon');
 
             // Force Mindwave logic mode (MW) for Matrix
             if (viz.setMatrixMode) viz.setMatrixMode(true);
@@ -2912,8 +2914,8 @@ function enforceLightThemeStyles() {
 export function initMixer() {
     els.soundscapeContainer.innerHTML = '';
     SOUNDSCAPES.forEach(s => {
-        // Force Bells to 0 volume per user request, or init missing
-        if (!state.soundscapeSettings[s.id] || s.id === 'bells') {
+        // Init missing soundscapes to 0
+        if (!state.soundscapeSettings[s.id]) {
             state.soundscapeSettings[s.id] = { vol: 0, tone: 0.5, speed: 0.5 };
         }
         const settings = state.soundscapeSettings[s.id];
