@@ -1072,12 +1072,18 @@ export function setupUI() {
         }
 
         try {
-            // Ensure Flow (particles) and Matrix are BOTH active on load
+            // Ensure Flow (particles), Galaxy, Dragon, and Matrix are active on load per user request
             if (!viz.activeModes.has('particles')) {
                 viz.toggleMode('particles');
             }
             if (!viz.activeModes.has('matrix')) {
                 viz.toggleMode('matrix');
+            }
+            if (!viz.activeModes.has('galaxy')) {
+                viz.toggleMode('galaxy');
+            }
+            if (!viz.activeModes.has('dragon')) {
+                viz.toggleMode('dragon');
             }
 
             // Force Mindwave logic mode (MW) for Matrix
@@ -1153,6 +1159,12 @@ export function setupUI() {
             console.log('[Controls] Visualizer and controls revealed');
 
             console.log('[Controls] Visual defaults applied (streamlined)');
+
+            // Explicitly force visuals to play on load per user request
+            if (typeof resumeVisuals === 'function') {
+                resumeVisuals();
+            }
+
         } catch (e) {
             console.error('[Controls] Error in applyVisualDefaults:', e);
             const canvas = document.getElementById('visualizer');
