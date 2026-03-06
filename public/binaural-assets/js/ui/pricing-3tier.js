@@ -30,12 +30,13 @@ const PRICING_CONFIG = {
     },
     buddha: {
         name: "Professional",
-        price: "$29",
+        price: "$19.99",
         period: "/month",
         productId: "buddha",
         description: "For coaches & power users",
         limitText: "Unlimited Play",
-        active: true
+        active: true,
+        warning: "🔥 40% off for the first 500"
     },
     lifetime: {
         name: "Lifetime Access",
@@ -229,6 +230,7 @@ function createPricingModal(currentTier, yogiPricing = null) {
                             <span style="font-size: 32px; font-weight: 700; color: white;">${PRICING_CONFIG.buddha.price}</span>
                             <span style="color: var(--text-muted);">${PRICING_CONFIG.buddha.period}</span>
                         </div>
+                        ${PRICING_CONFIG.buddha.warning ? `<div style="font-size: 12px; color: #fbbf24; margin-top: 8px;">${PRICING_CONFIG.buddha.warning}</div>` : ''}
                     </div>
                     <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
                         <li style="padding: 8px 0; color: white; display: flex; gap: 12px; font-weight: 500;">
