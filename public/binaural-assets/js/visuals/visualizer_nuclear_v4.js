@@ -2719,7 +2719,7 @@ export class Visualizer3D {
         console.log(`[Visualizer] setCyberLogicMode(mode="${mode}", text="${text}")`);
         this.cyberConfig.logicMode = mode;
         if (text !== undefined) this.cyberConfig.customText = text;
-        this.updateCyberStrings();
+        this.updateCyberStrings(); // Needs to update based on cyberConfig
     }
 
     setMatrixLogicMode(mode, text) {
@@ -2739,6 +2739,7 @@ export class Visualizer3D {
 
     setCyberAngle(degrees) {
         this.cyberConfig.angle = degrees;
+        // The 2D overlay rotates via its rendering context.
     }
 
     setMatrixAngle(degrees) {
