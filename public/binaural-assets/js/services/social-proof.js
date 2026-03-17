@@ -16,12 +16,12 @@ const LOCATIONS = [
 ];
 
 const ACTIONS = [
-    { text: "joined Founders Club", premium: true, icon: "⚡" },
-    { text: "unlocked Lifetime Access", premium: true, icon: "🔥" },
+    { text: "joined Zen", premium: true, icon: "⚡" },
+    { text: "unlocked Eternity Access", premium: true, icon: "🔥" },
     { text: "is in Deep Focus mode", premium: false, icon: "🧠" },
     { text: "is meditating with Theta waves", premium: false, icon: "🧘" },
     { text: "is manifestating in Alpha state", premium: false, icon: "🍃" },
-    { text: "unlocked Professional Tier", premium: true, icon: "💎" },
+    { text: "unlocked Nirvana", premium: true, icon: "💎" },
     { text: "started a 30-Day Journey", premium: false, icon: "🚀" }
 ];
 

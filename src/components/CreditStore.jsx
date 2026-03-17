@@ -7,7 +7,7 @@ import { STRIPE_PUBLISHABLE_KEY, STRIPE_PRODUCTS, CHECKOUT_SUCCESS_URL, CHECKOUT
 
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
-// 7 Credit Pack Tiers + Pro Pilot
+// 7 Credit Pack Tiers + Nirvana Pilot
 const creditPacks = [
     {
         id: 'thruster',
@@ -121,7 +121,7 @@ const CreditStore = ({ isOpen, onClose }) => {
 
         const product = STRIPE_PRODUCTS.proPilotMonthly;
         if (!product || product.priceId.includes('REPLACE') || product.priceId.includes('price_')) {
-            alert('Pro Pilot subscription coming soon!');
+            alert('Nirvana Pilot subscription coming soon!');
             return;
         }
 
@@ -187,17 +187,17 @@ const CreditStore = ({ isOpen, onClose }) => {
                             className="text-sm bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2"
                         >
                             <span>⭐</span>
-                            {showProPilot ? 'Show Credit Packs' : 'Pro Pilot Subscription'}
+                            {showProPilot ? 'Show Credit Packs' : 'Nirvana Pilot Subscription'}
                         </button>
                     </div>
                 </div>
 
                 {showProPilot ? (
-                    /* Pro Pilot Subscription */
+                    /* Nirvana Pilot Subscription */
                     <div className="p-6">
                         <div className="bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-accent rounded-2xl p-8 text-center">
                             <div className="text-6xl mb-4">🌟</div>
-                            <h3 className="text-3xl font-bold text-foreground mb-2">Pro Pilot</h3>
+                            <h3 className="text-3xl font-bold text-foreground mb-2">Nirvana Pilot</h3>
                             <p className="text-muted-foreground mb-6">The ultimate commander experience</p>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -213,7 +213,7 @@ const CreditStore = ({ isOpen, onClose }) => {
                                 </div>
                                 <div className="bg-background/50 rounded-xl p-4">
                                     <div className="text-2xl mb-2">🎨</div>
-                                    <div className="font-bold text-foreground">4 Pro Skins</div>
+                                    <div className="font-bold text-foreground">4 Nirvana Skins</div>
                                     <div className="text-sm text-muted-foreground">Exclusive designs</div>
                                 </div>
                             </div>

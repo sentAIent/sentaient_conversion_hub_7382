@@ -349,7 +349,7 @@ async function updateDailyUsageDisplay() {
                     <div class="text-lg font-bold text-amber-400">
                         ∞ Unlimited
                     </div>
-                    <div class="text-[10px] text-[var(--text-muted)]">Pro member • ${usageMinutes}min today</div>
+                    <div class="text-[10px] text-[var(--text-muted)]">Nirvana member • ${usageMinutes}min today</div>
                 `;
                 usageEl.className = 'col-span-2 p-3 rounded-xl bg-[var(--accent)]/5 border border-[var(--accent)]/20 text-center';
             } else {

@@ -51,7 +51,7 @@ export const APPS_CONFIG = {
                 type: 'ugc',
                 hook: 'Stop wasting hours on marketing creative. Let the robot do it.',
                 body: 'Viral Hub creates your ad scripts, UGC concepts, and AI visuals in seconds. It is like having a marketing team in a single tab.',
-                cta: 'Get Lifetime Access to Viral Hub'
+                cta: 'Get Eternity Access to Viral Hub'
             }
         ],
         assets: {

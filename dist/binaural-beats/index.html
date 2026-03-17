@@ -1806,11 +1806,11 @@
                 }
                 const hasAccess = await window.paywall.hasPurchasedApp();
                 if (!hasAccess) {
-                    if (window.showPricingModal) {
-                        window.showPricingModal();
-                        if (window.showToast) window.showToast('Founders Gear required to download app.', 'info');
+                    if (window.showToast) window.showToast('Redirecting to Eternity upgrade...', 'info');
+                    if (window.paywall && window.paywall.goToCheckout) {
+                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Eternity Members. Please upgrade to unlock.");
                     }
                     return;
                 }
@@ -1843,11 +1843,11 @@
                 }
                 const hasAccess = await window.paywall.hasPurchasedApp();
                 if (!hasAccess) {
-                    if (window.showPricingModal) {
-                        window.showPricingModal();
-                        if (window.showToast) window.showToast('Founders Gear required to download app.', 'info');
+                    if (window.showToast) window.showToast('Redirecting to Eternity upgrade...', 'info');
+                    if (window.paywall && window.paywall.goToCheckout) {
+                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Eternity Members. Please upgrade to unlock.");
                     }
                     return;
                 }

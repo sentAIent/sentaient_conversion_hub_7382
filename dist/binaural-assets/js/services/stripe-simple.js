@@ -23,7 +23,7 @@ export const PAYMENT_LINKS = {
 export const CUSTOMER_PORTAL_URL = ENV.VITE_STRIPE_PORTAL_URL || 'https://billing.stripe.com/test/demo';
 
 // 3-Tier Pricing Structure: Free → Yogi → Buddha
-// Note: Founders Club ($9.99) is limited to the first 500 subscribers.
+// Note: Zen ($9.99) is limited to the first 500 subscribers.
 export const PRICING_TIERS = {
     free: {
         name: 'Free (Seeker)',
@@ -43,14 +43,14 @@ export const PRICING_TIERS = {
             offline: false
         }
     },
-    yogi: {
-        name: 'Founders Club',
+    zen: {
+        name: 'Zen',
         description: 'Committed practitioner',
-        monthlyPrice: 9.99,
-        annualPrice: 79, // Save 33%
+        monthlyPrice: 19.99,
+        annualPrice: 149, // Save 38%
         stripe: {
-            monthly: ENV.VITE_STRIPE_YOGI_MONTHLY_LINK || 'https://buy.stripe.com/test/demo',
-            annual: ENV.VITE_STRIPE_YOGI_ANNUAL_LINK || 'https://buy.stripe.com/test/demo'
+            monthly: ENV.VITE_STRIPE_ZEN_MONTHLY_LINK || 'https://buy.stripe.com/eVq7sD9rW6vJ2yT7ibgfu00',
+            annual: ENV.VITE_STRIPE_ZEN_ANNUAL_LINK || 'https://buy.stripe.com/eVqdR17jO9HV1uP8mfgfu01'
         },
         features: {
             presets: 15,
@@ -65,14 +65,14 @@ export const PRICING_TIERS = {
             offline: true
         }
     },
-    buddha: {
-        name: 'Professional',
+    nirvana: {
+        name: 'Nirvana',
         description: 'Enlightened mastery',
-        monthlyPrice: 29,
-        annualPrice: 249, // Save 28%
+        monthlyPrice: 39.99,
+        annualPrice: 349, // Save 27%
         stripe: {
-            monthly: ENV.VITE_STRIPE_BUDDHA_MONTHLY_LINK || 'https://buy.stripe.com/test/demo',
-            annual: ENV.VITE_STRIPE_BUDDHA_ANNUAL_LINK || 'https://buy.stripe.com/test/demo'
+            monthly: ENV.VITE_STRIPE_NIRVANA_MONTHLY_LINK || 'https://buy.stripe.com/14A8wH0VqbQ34H1cCvgfu03',
+            annual: ENV.VITE_STRIPE_NIRVANA_ANNUAL_LINK || 'https://buy.stripe.com/5kQ28jcE8dYbddxcCvgfu04'
         },
         features: {
             presets: null, // all presets (40+)
@@ -97,11 +97,11 @@ export const PRICING_TIERS = {
         }
     },
     lifetime: {
-        name: 'Lifetime',
+        name: 'Eternity',
         description: 'One-time payment for forever access',
         oneTimePrice: 199,
         stripe: {
-            oneTime: ENV.VITE_STRIPE_LIFETIME_LINK || 'https://buy.stripe.com/test/demo'
+            oneTime: ENV.VITE_STRIPE_LIFETIME_LINK || 'https://buy.stripe.com/9B6dR11Zu5rFc9t8mfgfu05'
         },
         features: {
             presets: null,
@@ -135,7 +135,7 @@ export const PRICING = {
 
 /**
  * Redirect to Stripe checkout with user metadata
- * @param {string} tier - Pricing tier: 'yogi' or 'buddha'
+ * @param {string} tier - Pricing tier: 'zen' or 'nirvana'
  * @param {string} billingPeriod - 'monthly' or 'annual'
  * @param {string} discountCode - Optional discount code
  */
@@ -182,8 +182,8 @@ export function goToCheckout(tier, billingPeriod = 'monthly', discountCode = nul
 
     // Add discount code if provided AND not a lifetime deal
     if (discountCode && billingPeriod !== 'oneTime') {
-        // Note: Coupon must exist in Stripe Dashboard with this exact ID
-        checkoutUrl += `&discounts[0][coupon]=${encodeURIComponent(discountCode)}`;
+        // Support both direct coupons and prefilled promo codes
+        checkoutUrl += `&prefilled_promo_code=${encodeURIComponent(discountCode)}`;
         checkoutUrl += `&metadata[discount_code]=${encodeURIComponent(discountCode)}`;
     } else if (discountCode && billingPeriod === 'oneTime') {
         console.warn(`[Stripe] Discount codes cannot be applied to Lifetime deals. Code '${discountCode}' was removed.`);
@@ -295,7 +295,7 @@ export async function getSubscription() {
         return {
             status: 'active',
             plan: 'lifetime',
-            tier: 'buddha'
+            tier: 'nirvana'
         };
     }
 
@@ -324,10 +324,10 @@ export async function getUserTier() {
     const tier = subscription.tier || subscription.plan;
 
     // Map old plans to new tiers
-    if (tier === 'buddha' || subscription.monthlyPrice >= 29) {
-        return 'buddha';
-    } else if (tier === 'yogi' || subscription.monthlyPrice >= 9) {
-        return 'yogi';
+    if (tier === 'nirvana' || tier === 'buddha' || subscription.monthlyPrice >= 29) {
+        return 'nirvana';
+    } else if (tier === 'zen' || tier === 'yogi' || subscription.monthlyPrice >= 9) {
+        return 'zen';
     }
 
     return 'free';
@@ -355,20 +355,28 @@ export async function getSubscriberCount() {
 }
 
 /**
- * Get the current active price for the Yogi (Founders) tier
- * Shifts from $9.99 to $14.99 after 500 members
+ * Get the current active pricing conditions for both Zen and Nirvana
+ * - Zen: 40% off for first 500
+ * - Nirvana: 20% off for first 500
  */
-export async function getActiveYogiPricing() {
+export async function getActiveTierPricing() {
     const count = await getSubscriberCount();
+    const spotsLeft = Math.max(0, 500 - count);
     const isFull = count >= 500;
 
     return {
-        price: isFull ? "$14.99" : "$9.99",
-        isFull: isFull,
-        spotsLeft: Math.max(0, 500 - count),
-        link: isFull
-            ? (ENV.VITE_STRIPE_YOGI_STANDARD_LINK || 'https://buy.stripe.com/test/demo_standard')
-            : (ENV.VITE_STRIPE_YOGI_MONTHLY_LINK || 'https://buy.stripe.com/test/demo_founders')
+        isFull,
+        spotsLeft,
+        zen: {
+            monthlyPrice: isFull ? "$19.99" : "$11.99",
+            annualPrice: isFull ? "$149" : "$89",
+            coupon: isFull ? null : (ENV.VITE_ZEN_PROMO_CODE || 'ZEN40')
+        },
+        nirvana: {
+            monthlyPrice: isFull ? "$39.99" : "$31.99",
+            annualPrice: isFull ? "$349" : "$279",
+            coupon: isFull ? null : (ENV.VITE_NIRVANA_PROMO_CODE || 'NIRVANA20')
+        }
     };
 }
 

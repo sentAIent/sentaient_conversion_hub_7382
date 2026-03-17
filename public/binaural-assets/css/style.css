@@ -253,8 +253,8 @@ input[type='range']::-webkit-slider-thumb {
     background: linear-gradient(135deg,
             rgba(30, 41, 59, 0.7) 0%,
             rgba(15, 23, 42, 0.8) 100%);
-    backdrop-filter: blur(40px) saturate(200%);
-    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-top: 1px solid rgba(255, 255, 255, 0.24);
     /* Glass edge highlight */
@@ -280,8 +280,8 @@ input[type='range']::-webkit-slider-thumb {
     background: linear-gradient(165deg,
             rgba(15, 23, 42, 0.85) 0%,
             rgba(2, 6, 23, 0.95) 100%);
-    backdrop-filter: blur(64px) saturate(220%);
-    -webkit-backdrop-filter: blur(64px) saturate(220%);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow:
@@ -294,8 +294,8 @@ input[type='range']::-webkit-slider-thumb {
     background: linear-gradient(165deg,
             rgba(255, 255, 255, 0.85) 0%,
             rgba(240, 249, 255, 0.95) 100%) !important;
-    backdrop-filter: blur(40px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.8) !important;
     box-shadow:
@@ -305,16 +305,16 @@ input[type='range']::-webkit-slider-thumb {
 
 [data-theme-type="light"] .glass-pill {
     background: rgba(255, 255, 255, 0.6) !important;
-    backdrop-filter: blur(16px) saturate(150%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+    backdrop-filter: blur(12px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(140%) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
 .glass-pill {
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 9999px;
     color: var(--text-muted);
@@ -322,6 +322,59 @@ input[type='range']::-webkit-slider-thumb {
         0 8px 32px rgba(0, 0, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- CRASH MITIGATION: Disable backdrop-filter for macOS 12 Monterey --- */
+/* Broad safeguard to disable ANY backdrop-filter when stability mode is on */
+.no-backdrop-filter *,
+.no-backdrop-filter .glass-card,
+.no-backdrop-filter .glass-lux,
+.no-backdrop-filter .glass-pill,
+.no-backdrop-filter .glass-card:hover,
+.no-backdrop-filter .glass-lux:hover,
+.no-backdrop-filter .glass-pill:hover {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Specifically target Tailwind-like classes that might be used */
+.no-backdrop-filter .backdrop-blur-sm,
+.no-backdrop-filter .backdrop-blur-md,
+.no-backdrop-filter .backdrop-blur-lg,
+.no-backdrop-filter .backdrop-blur-xl {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Compensate for loss of blur with higher opacity backgrounds */
+.no-backdrop-filter .glass-card {
+    background: rgba(15, 23, 42, 1.0) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.no-backdrop-filter .glass-lux {
+    background: rgba(2, 6, 23, 1.0) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+.no-backdrop-filter .glass-pill {
+    background: rgba(30, 41, 59, 1.0) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Redundant but safe: Ensure any Tailwind shadows with blur are controlled */
+.no-backdrop-filter .shadow-2xl,
+.no-backdrop-filter .shadow-3xl,
+.no-backdrop-filter #matrixSettingsPanel {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme-type="light"].no-backdrop-filter .glass-lux {
+    background: rgba(240, 249, 255, 1.0) !important;
+}
+
+[data-theme-type="light"].no-backdrop-filter .glass-pill {
+    background: rgba(255, 255, 255, 1.0) !important;
 }
 
 /* ==========================================

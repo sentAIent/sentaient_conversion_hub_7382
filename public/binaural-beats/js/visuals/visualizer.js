@@ -310,16 +310,17 @@ export class Visualizer3D {
 
         // Audio Data Processing
         let normBass = 0, normMids = 0, normHighs = 0;
-        let dataL = null;
 
         if (analyserL) {
-            dataL = new Uint8Array(analyserL.frequencyBinCount);
-            analyserL.getByteFrequencyData(dataL);
-            let bass = 0; for (let i = 0; i < 10; i++) bass += dataL[i];
+            if (!this.dataL || this.dataL.length !== analyserL.frequencyBinCount) {
+                this.dataL = new Uint8Array(analyserL.frequencyBinCount);
+            }
+            analyserL.getByteFrequencyData(this.dataL);
+            let bass = 0; for (let i = 0; i < 10; i++) bass += this.dataL[i];
             normBass = (bass / 10) / 255;
-            let mids = 0; for (let i = 10; i < 100; i++) mids += dataL[i];
+            let mids = 0; for (let i = 10; i < 100; i++) mids += this.dataL[i];
             normMids = (mids / 90) / 255;
-            let highs = 0; for (let i = 100; i < 300; i++) highs += dataL[i];
+            let highs = 0; for (let i = 100; i < 300; i++) highs += this.dataL[i];
             normHighs = (highs / 200) / 255;
         }
 
@@ -490,9 +491,9 @@ export class Visualizer3D {
                 let amp = 0.5 + (normBass * 2);
 
                 let audioOffset = 0;
-                if (dataL && dataL.length > 0) {
-                    const bin = Math.floor(Math.abs(x) * 5) % dataL.length;
-                    audioOffset = dataL[bin] / 255;
+                if (this.dataL && this.dataL.length > 0) {
+                    const bin = Math.floor(Math.abs(x) * 5) % this.dataL.length;
+                    audioOffset = this.dataL[bin] / 255;
                 }
 
                 wavePositions[i + 2] = Math.sin(x * 0.5 + now * multiplier) * Math.cos(y * 0.5 + now * multiplier) * (1 + audioOffset) + (audioOffset * 2);
@@ -525,7 +526,7 @@ export function getVisualizer() {
 }
 
 // Visual pause state - starts playing on load for immediate feedback
-let visualsPaused = false;
+let visualsPaused = true;
 
 export function pauseVisuals() {
     // Always mark as paused for button sync

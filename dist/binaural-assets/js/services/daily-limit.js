@@ -10,8 +10,8 @@ const KEY_DATE = 'mindwave_daily_date';
 
 const LIMITS_SECONDS = {
     free: 15 * 60,       // 15 minutes
-    yogi: 120 * 60,      // 2 hours
-    buddha: Infinity,    // Unlimited
+    zen: 120 * 60,       // 2 hours
+    nirvana: Infinity,   // Unlimited
     lifetime: Infinity   // Unlimited
 };
 
@@ -43,6 +43,9 @@ export const DailyLimitService = {
      * Returns true if limit reached based on provided tier
      */
     increment(seconds = 1, tier = 'free') {
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocal) return false; // Bypass limit on localhost
+
         const current = this.getUsage();
         const verifiedNew = current + seconds;
         localStorage.setItem(KEY_USAGE, verifiedNew);
@@ -60,6 +63,11 @@ export const DailyLimitService = {
      * @returns {Promise<{allowed: boolean, remaining: number}>}
      */
     async checkLimit() {
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocal) {
+            return { allowed: true, remaining: Infinity };
+        }
+
         const tier = await getUserTier();
         const limit = LIMITS_SECONDS[tier] || LIMITS_SECONDS.free;
 

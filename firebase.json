@@ -12,5 +12,25 @@
         "*.local"
       ]
     }
-  ]
+  ],
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "rewrites": [
+      {
+        "source": "/",
+        "destination": "/mindwave.html"
+      },
+      {
+        "source": "**",
+        "destination": "/mindwave.html"
+      }
+    ]
+  }
 }

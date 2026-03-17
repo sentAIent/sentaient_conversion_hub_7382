@@ -6,18 +6,57 @@ let viz3D = null;
 export class Visualizer3D {
     constructor(canvas, initialState = {}) {
         this.canvas = canvas;
-        this.activeModes = initialState.activeModes || new Set(['particles', 'matrix']); // Default to Flow + Matrix
-        this.mode = initialState.mode || 'matrix'; // Legacy support
+        this.activeModes = initialState.activeModes || new Set(['particles', 'cyber']); // Default to Flow + Cyber
+        this.mode = initialState.mode || 'cyber'; // Legacy support
 
         // Default settings - MUST be set before init methods
         this.mindWaveMode = initialState.mindWaveMode !== undefined ? initialState.mindWaveMode : true;
-        this.matrixLogicMode = initialState.matrixLogicMode || 'mindwave';
-        this.matrixCustomText = initialState.matrixCustomText || "Welcome";
-        this.currentMatrixAngle = initialState.currentMatrixAngle || 0;
-        this.matrixSpeedMultiplier = initialState.matrixSpeedMultiplier || 1.0;
+        
+        // Cyber (2D Overlay) Configuration
+        this.cyberConfig = {
+            logicMode: initialState.cyberLogicMode || 'matrix', // Default to Japanese characters
+            customText: initialState.cyberCustomText || "WELCOME",
+            angle: initialState.cyberAngle || 0,
+            speed: initialState.cyberSpeedMultiplier || 1.0,
+            length: 1.0,
+            color: '#00FF41',
+            rainbow: false
+        };
+
+        // Matrix (3D Portal) Configuration
+        this.matrixConfig = {
+            logicMode: initialState.matrixLogicMode || 'interstellar', // Default to Interstellar style
+            customText: initialState.matrixCustomText || "MINDWAVE",
+            angle: 0,
+            speed: 1.0,
+            length: 1.0,
+            color: '#00FF41',
+            rainbow: false
+        };
+
         this.initialized = false;
         this._rainbowEnabled = initialState.rainbowEnabled || false;
         this.isVisualizer3D = true;
+
+        // Cyber 2D Overlay State (Cyber Mode)
+        this.overlayCanvas = document.getElementById('cyber-overlay-canvas');
+        this.overlayCtx = this.overlayCanvas ? this.overlayCanvas.getContext('2d', { alpha: true }) : null;
+        if (this.overlayCanvas) {
+            this.resizeOverlayCanvas();
+            window.addEventListener('resize', () => this.resizeOverlayCanvas());
+        }
+
+        this.matrixCyberStreams = [];
+        this.cyberColorCustomized = false;
+
+        try {
+            const savedHistory = localStorage.getItem('cyberThemeHistory');
+            this.themeHistory = savedHistory ? JSON.parse(savedHistory) : [];
+            this.lastCyberFamily = localStorage.getItem('cyberLastFamily') || '';
+        } catch (e) {
+            this.themeHistory = [];
+            this.lastCyberFamily = '';
+        }
 
         // Logo Opacity State (Start bright to match active UI)
         this.currentLogoOpacity = 0.8;
@@ -29,14 +68,24 @@ export class Visualizer3D {
         // Mobile / Battery Saver Defaults
         const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
         this.batterySaver = initialState.batterySaver !== undefined ? initialState.batterySaver : isMobile;
+        this.isLowPower = this.batterySaver ||
+            localStorage.getItem('mindwave_battery_saver') === 'true' ||
+            document.body.classList.contains('system-stability-mode');
+
         this.lastFrameRenderTime = 0;
-        this.targetFPS = this.batterySaver ? 30 : 60;
+        this.targetFPS = this.isLowPower ? 30 : 60;
         this.vibrationEnabled = (typeof state !== 'undefined' && state.visualVibration !== undefined) ? state.visualVibration : (initialState.visualVibration !== undefined ? initialState.visualVibration : false);
 
-        // Adaptive Level of Detail (LOD) Tracking
-        this.fpsFrameStats = [];
+        // Adaptive Level of Detail (LOD) Tracking — Ring Buffer (avoids push/shift deopt)
+        this._fpsRingBuffer = new Float64Array(60);
+        this._fpsRingIndex = 0;
+        this._fpsRingCount = 0;
         this.lastLodDegradation = 0;
         this.currentLodLevel = 'high'; // 'high', 'medium', 'low'
+
+        // Reusable scratch objects to avoid per-frame/per-call allocations
+        this._tempColor = new THREE.Color();
+        this._logoRenderCanvas = null; // Lazily created, reused
 
 
         try {
@@ -47,8 +96,8 @@ export class Visualizer3D {
             this.renderer.setClearColor(0x000000, 0); // Transparent background
             this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-            // Performance optimization: Cap pixel ratio based on battery saver
-            const maxPixelRatio = this.batterySaver ? 1.0 : 2.0;
+            // Performance optimization: Cap pixel ratio based on stability mode
+            const maxPixelRatio = this.isLowPower ? 1.0 : 2.0;
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
 
             this.sphereGroup = new THREE.Group();
@@ -72,8 +121,8 @@ export class Visualizer3D {
             this.oceanGroup = new THREE.Group();
             this.scene.add(this.oceanGroup);
 
-            this.matrixGroup = new THREE.Group();
-            this.scene.add(this.matrixGroup);
+            this.cyberGroup = new THREE.Group();
+            this.scene.add(this.cyberGroup);
 
             this.boxGroup = new THREE.Group();
             this.scene.add(this.boxGroup);
@@ -83,6 +132,12 @@ export class Visualizer3D {
 
             this.galaxyGroup = new THREE.Group();
             this.scene.add(this.galaxyGroup);
+
+            // Sun Rotation Speeds (Blender-style X, Y, Z controls)
+            this.sunRotationSpeedX = 0;
+            this.sunRotationSpeedY = 0.005; // Default spinning like a coin
+            this.sunRotationSpeedZ = 0.003; // Default rotating like a wheel
+            this.sunRotationTiltX = 0;     // Oscillating tilt base
 
             this.mandalaGroup = new THREE.Group();
             this.scene.add(this.mandalaGroup);
@@ -105,6 +160,15 @@ export class Visualizer3D {
                 this.handleLayoutChange();
             });
             window.addEventListener('mindwave:layout-change', this.handleLayoutChange);
+
+            // Memory Guard: Safe Mode listener
+            window.addEventListener('mindwave:safe-mode-start', () => {
+                if (this.currentLodLevel !== 'low') {
+                    console.log("[Visualizer] Safe Mode: Dropping LOD to 'low'.");
+                    this.degradeLOD();
+                    this.degradeLOD();
+                }
+            });
 
             // Page Visibility API - Battery Saver
             document.addEventListener('visibilitychange', () => {
@@ -204,6 +268,215 @@ export class Visualizer3D {
         console.log(`[Visualizer] Layout update: Centered background mode (Full Window)`);
     }
 
+    resizeOverlayCanvas() {
+        if (!this.overlayCanvas) return;
+        this.overlayCanvas.width = window.innerWidth;
+        this.overlayCanvas.height = window.innerHeight;
+    }
+
+    generateCyberStyle() {
+        const canvas = this.overlayCanvas;
+        const ctx = this.overlayCtx;
+        if (!canvas || !ctx) return;
+
+        // CRUCIAL: Empty out the stream array so we don't infinitely leak memory 
+        // every time we re-trigger Cyber style (which was causing massive Chrome lock-ups).
+        this.matrixCyberStreams = [];
+
+        // Dynamic density based on screen size - reduced for stability on high-res Macs
+        const fontSize = Math.max(14, Math.min(26, Math.floor(canvas.width / 40)));
+        this.isLowPower = localStorage.getItem('mindwave_battery_saver') === 'true' ||
+            document.body.classList.contains('system-stability-mode');
+
+        let columns = Math.ceil(canvas.width / fontSize);
+        if (!this.isLowPower) {
+            columns *= 1.5; // Only boost density if system is stable/powerful
+        }
+
+        // Sync local settings with theme
+        let currentTheme = window.getCurrentTheme ? window.getCurrentTheme() : { color: '#2dd4bf' };
+
+        this.resizeOverlayCanvas();
+        this.cyberColorCustomized = false;
+
+        const themes = [
+            { name: 'System Yellow', color: '#FFFF00', family: 'yellow' },
+            { name: 'Neon Pink', color: '#FF1493', family: 'pink' },
+            { name: 'Chrome Static', color: '#C0C0C0', family: 'mono' },
+            { name: 'Royal Data', color: '#4169E1', family: 'blue' },
+            { name: 'White Noise', color: '#FFFFFF', family: 'mono' },
+            { name: 'Cyan Future', color: '#00FFFF', family: 'blue' },
+            { name: 'Lime Access', color: '#32CD32', family: 'green' },
+            { name: 'Purple Haze', color: '#800080', family: 'purple' },
+            { name: 'Emerald Link', color: '#50C878', family: 'green' },
+            { name: 'Ice Blue', color: '#A5F2F3', family: 'blue' },
+            { name: 'sentAIent Blue', color: '#60A9FF', family: 'blue' },
+            { name: 'Rainbow Surge', color: 'rainbow', family: 'rainbow' }
+        ];
+
+        const lastFamily = this.lastCyberFamily || '';
+        let availableThemes = themes.filter(t => !this.themeHistory.includes(t.name));
+        const familyFiltered = availableThemes.filter(t => t.family !== lastFamily);
+        if (familyFiltered.length > 0) availableThemes = familyFiltered;
+
+        let pool = availableThemes;
+        if (pool.length === 0) {
+            const lastTheme = this.themeHistory[this.themeHistory.length - 1];
+            pool = themes.filter(t => t.name !== lastTheme);
+        }
+
+        const theme = pool[Math.floor(Math.random() * pool.length)];
+
+        this.themeHistory.push(theme.name);
+        if (this.themeHistory.length > 5) this.themeHistory.shift();
+        this.lastCyberFamily = theme.family;
+
+        try {
+            localStorage.setItem('cyberThemeHistory', JSON.stringify(this.themeHistory));
+            localStorage.setItem('cyberLastFamily', this.lastCyberFamily);
+        } catch (e) {
+            console.warn('LocalStorage failed', e);
+        }
+
+        // Ensure base multipliers exist but do not overwrite user settings
+        if (this.cyberSpeedMultiplier === undefined) this.cyberSpeedMultiplier = 0.2;
+        if (this.cyberLengthMultiplier === undefined) this.cyberLengthMultiplier = 0.7;
+
+        // Sync Rainbow UI ONLY if it hasn't been manually set or if we really need to force a default
+        // But crucially, don't override if the user has a preference set.
+        const rainbowToggle = document.getElementById('cyberRainbowToggle');
+        if (rainbowToggle) {
+            // Only sync if the toggle doesn't match the theme AND we aren't in a custom state
+            // Actually, simpler: just don't touch this.cyberRainbowMode here if it's already defined
+            if (this.cyberRainbowMode === undefined) {
+                this.cyberRainbowMode = (currentTheme.color === 'rainbow');
+                rainbowToggle.checked = this.cyberRainbowMode;
+            }
+        }
+
+        // Set color if NOT in rainbow mode
+        if (!this.cyberRainbowMode && currentTheme.color !== 'rainbow') {
+            this.cyberColor = currentTheme.color;
+            const colorPicker = document.getElementById('cyberColorPicker');
+            if (colorPicker) colorPicker.value = this.cyberColor;
+        }
+
+        for (let i = 0; i < columns; i++) {
+            const depth = Math.random();
+            const size = Math.floor(10 + depth * 14);
+            const speed = (2 + depth * 8 + Math.random() * 2) * this.cyberSpeedMultiplier;
+
+            this.matrixCyberStreams.push({
+                x: i * fontSize,
+                // Make streams span completely across the visible view perfectly so they appear genuinely instantly!
+                y: (Math.random() * this.overlayCanvas.height * 1.5) - (this.overlayCanvas.height * 0.5),
+                baseSpeed: speed,
+                opacity: 0.2 + depth * 0.8,
+                size: size,
+                chars: [], // Will be populated by updateCyberStrings
+                color: currentTheme.color !== 'rainbow' ? currentTheme.color : '#FFFFFF'
+            });
+        }
+
+        // Generate the correctly spaced and sequenced strings
+        this.updateCyberStrings();
+
+        // PERFORMANCE (macOS): Sort exactly by size ascending to group font sizes.
+        // This allows us to set `ctx.font` exponentially fewer times per frame.
+        this.matrixCyberStreams.sort((a, b) => a.size - b.size);
+    }
+
+    renderCyberCyber() {
+        // Guard: render 2D overlay for cyber mode
+        const shouldRender = this.activeModes.has('cyber');
+        if (!this.overlayCtx || !this.matrixCyberStreams || !shouldRender) return;
+
+        const ctx = this.overlayCtx;
+        const canvas = this.overlayCanvas;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // DYNAMIC BACKGROUND: Dim more if alone, less if layering
+        const isLayered = this.activeModes.size > 1;
+        ctx.fillStyle = isLayered ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.textAlign = 'center';
+
+        const config = this.cyberConfig;
+        const speedMult = config.speed || 1.0;
+        const lengthMult = config.length || 1.0;
+
+        if (config.angle !== 0) {
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((config.angle * Math.PI) / 180);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        }
+
+        const baseVisibleLength = 20;
+        const rainbowHueOffset = Date.now() * 0.1;
+
+        // macOS optimization: cache font setting
+        ctx.textBaseline = 'middle';
+        let lastSize = -1;
+
+        this.matrixCyberStreams.forEach((stream, streamIndex) => {
+            stream.y += stream.baseSpeed * speedMult;
+            let visibleLength = Math.max(3, Math.floor(baseVisibleLength * lengthMult));
+            if (this.isLowPower) visibleLength = Math.floor(visibleLength * 0.6); // Reduce vertical draw calls
+
+            if (stream.y - (visibleLength * stream.size) > canvas.height * 1.5) {
+                // Fix major glitch gap: wrap perfectly so the head spawns exactly at the top of the canvas
+                stream.y = 0;
+            }
+
+            const alphanumericPool = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+            // Only trigger expensive context state change if size physically changes
+            if (stream.size !== lastSize) {
+                ctx.font = `${stream.size}px monospace`;
+                lastSize = stream.size;
+            }
+
+            for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
+                // FLICKER EFFECT: make random characters change to feel alive like the real Cyber!
+                if (!stream.isTextMode && Math.random() < 0.02) {
+                    stream.chars[i] = alphanumericPool.charAt(Math.floor(Math.random() * alphanumericPool.length));
+                }
+
+                const char = stream.chars[i];
+                const charY = stream.y - (i * stream.size);
+                if (charY < -stream.size * 2 || charY > canvas.height * 1.5) continue;
+
+                const relativePos = 1 - (i / visibleLength);
+                // Increased base alpha for better visibility
+                const alpha = Math.pow(relativePos, 0.4) * (stream.opacity * 1.2);
+
+                ctx.globalAlpha = Math.min(1.0, alpha);
+
+                if (this.cyberRainbowMode) {
+                    const hue = (rainbowHueOffset + streamIndex * 15 + i * 5) % 360;
+                    ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+                } else {
+                    ctx.fillStyle = stream.color || this.cyberColor;
+                }
+
+                // PERFORMANCE: Disable shadows for stability on macOS
+                // if (!this.batterySaver) {
+                //    ctx.shadowBlur = 4;
+                //    ctx.shadowColor = ctx.fillStyle;
+                // }
+
+                ctx.fillText(char, stream.x, charY);
+            }
+        });
+
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+    }
+
     initSphere() {
         const geometry = new THREE.IcosahedronGeometry(2, 2);
         const material = new THREE.MeshBasicMaterial({
@@ -236,7 +509,8 @@ export class Visualizer3D {
 
     initParticles() {
         // Flow mode: streaming particles through space
-        const count = this.batterySaver ? 400 : 1200;
+        // OPTIMIZATION: Reduce particle count for stability
+        const count = this.batterySaver ? 300 : 800;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
         const colors = [];
@@ -409,13 +683,14 @@ export class Visualizer3D {
             const colorAttr = this.galaxyStars.geometry.getAttribute('color');
             if (colorAttr) {
                 const count = colorAttr.count;
+                const tc = this._tempColor;
                 for (let i = 0; i < count; i++) {
                     const t = i / count;
                     // Vary lightness per star position (inner brighter, outer dimmer)
                     const l = t < 0.2 ? 0.8 : (t < 0.5 ? 0.6 : 0.4 + Math.random() * 0.15);
                     const s = 0.6 + Math.random() * 0.3;
-                    const c = new THREE.Color().setHSL(compHue, s, l);
-                    colorAttr.setXYZ(i, c.r, c.g, c.b);
+                    tc.setHSL(compHue, s, l);
+                    colorAttr.setXYZ(i, tc.r, tc.g, tc.b);
                 }
                 colorAttr.needsUpdate = true;
             }
@@ -437,7 +712,8 @@ export class Visualizer3D {
 
     initGalaxy() {
         // Swirling galaxy with star-shaped particles and central sun
-        const count = this.batterySaver ? 600 : 2000;
+        // OPTIMIZATION: Reduce galaxy particle count
+        const count = this.batterySaver ? 500 : 1500;
         const geometry = new THREE.BufferGeometry();
         const positions = [];
         const colors = [];
@@ -601,7 +877,16 @@ export class Visualizer3D {
         }
     }
 
+    setGalaxySunRotation(axis, speed) {
+        if (axis === 'x') this.sunRotationSpeedX = parseFloat(speed);
+        if (axis === 'y') this.sunRotationSpeedY = parseFloat(speed);
+        if (axis === 'z') this.sunRotationSpeedZ = parseFloat(speed);
+    }
+
     createStarTexture() {
+        // Cache: star texture never changes, reuse GPU upload
+        if (this.textures.star) return this.textures.star;
+
         const size = 64;
         const canvas = document.createElement('canvas');
         canvas.width = size;
@@ -652,7 +937,8 @@ export class Visualizer3D {
         ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
         ctx.fill();
 
-        return new THREE.CanvasTexture(canvas);
+        this.textures.star = new THREE.CanvasTexture(canvas);
+        return this.textures.star;
     }
 
     initMandala() {
@@ -1061,7 +1347,7 @@ export class Visualizer3D {
 
 
 
-    createMatrixTexture() {
+    createCyberTexture(config = this.matrixConfig) {
         const size = 1024; // Doubled for HD crispness
         const canvas = document.createElement('canvas');
         canvas.width = size;
@@ -1090,16 +1376,19 @@ export class Visualizer3D {
         const cellH = size / rows;
 
         let textToSpell = "MINDWAVE";
-        if (this.matrixLogicMode === 'custom' && this.matrixCustomText && this.matrixCustomText.length > 0) {
-            textToSpell = this.matrixCustomText;
-        } else if (this.matrixLogicMode === 'random') {
+        const logicMode = config.logicMode;
+        const customText = config.customText;
+
+        if ((logicMode === 'custom' || logicMode === 'txt') && customText && customText.length > 0) {
+            textToSpell = "🪷" + customText;
+        } else if (logicMode === 'random' || logicMode === 'rnd' || logicMode === 'matrix' || logicMode === 'int' || logicMode === 'interstellar') {
             textToSpell = "";
         }
-
-        // Place LOGO first, before the active word string
-        const manualSequence = [
+        
+        // 3D Matrix Style: Mixture of Logo/Text and Random Rain
+        const manualSequence = (logicMode === 'matrix' || logicMode === 'int' || logicMode === 'interstellar') ? [] : [
             "LOGO",
-            ...textToSpell.split('')
+            ...([...textToSpell])
         ];
         const specialCount = manualSequence.length;
 
@@ -1116,6 +1405,9 @@ export class Visualizer3D {
             let char = '';
             let isLogo = false;
 
+            // In Cyber (3D) mode, we want a 'rain' effect.
+            // We use the first few indices for our special word/logo,
+            // and the rest for random Cyber characters.
             if (i < specialCount) {
                 const item = manualSequence[i];
                 if (item === "LOGO") {
@@ -1124,9 +1416,12 @@ export class Visualizer3D {
                     char = item;
                 }
             } else {
+                // Random Cyber Characters (Katakana mix)
+                const katakana = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ";
                 const mix = katakana + "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
                 char = mix.charAt(Math.floor(Math.random() * mix.length));
 
+                // Add some flipped characters for authenticity
                 if (Math.random() > 0.5) {
                     ctx.save();
                     ctx.scale(-1, 1);
@@ -1191,9 +1486,9 @@ export class Visualizer3D {
                             loader.load('./mindwave-logo-icon.png', (image) => {
                                 this.logoImage = image;
                                 this.logoLoading = false;
-                                if (this.matrixMaterial) {
-                                    const newTexture = this.createMatrixTexture();
-                                    this.matrixMaterial.uniforms.uTexture.value = newTexture;
+                                if (this.cyberMaterial) {
+                                    const newTexture = this.createCyberTexture();
+                                    this.cyberMaterial.uniforms.uTexture.value = newTexture;
                                 }
                             }, undefined, (err) => {
                                 this.logoFailed = true;
@@ -1214,19 +1509,18 @@ export class Visualizer3D {
         return texture;
     }
 
-    createMatrixShader(texture) {
+    createCyberShader(texture, config = this.matrixConfig) {
         return new THREE.ShaderMaterial({
-            uniformParams: {
+            uniforms: {
                 uTexture: { value: texture },
-                uColor: { value: new THREE.Color(0x00FF41) },
+                uColor: { value: new THREE.Color(config.color || 0x00FF41) },
                 uHeadColor: { value: new THREE.Color(0xF0FFF0) },
                 uTime: { value: 0 },
-                uSpeed: { value: 1.0 },
-                uTailLength: { value: 1.0 },
-                uRainbow: { value: this._rainbowEnabled ? 1.0 : 0.0 },
-                uBrightness: { value: this.brightnessMultiplier }
+                uSpeed: { value: config.speed || 1.0 },
+                uTailLength: { value: config.length || 1.0 },
+                uRainbow: { value: config.rainbow ? 1.0 : 0.0 },
+                uBrightness: { value: this.brightnessMultiplier || 1.0 }
             },
-            get uniforms() { return this.uniformParams; }, // Compatibility getter
             vertexShader: `
                 attribute float aCharIndex;
                 attribute float aSpawnTime;
@@ -1245,7 +1539,9 @@ export class Visualizer3D {
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                     // FIXED: uTime already includes multipliers, avoid squaring speed in shader
                     float columnHeadY = 80.0 - mod(uTime * 5.0 * aSpeed + aSpawnTime, 160.0);
-                    float dist = columnHeadY - position.y;
+                    // FIXED: The trail is ABOVE the head (higher Y value). So position.y > columnHeadY.
+                    // To get a positive distance for the trail, we need position.y - columnHeadY.
+                    float dist = position.y - columnHeadY;
                     float trailLen = 160.0 * uTailLength;
                     if (dist >= 0.0 && dist < trailLen) {
                          vAlpha = 1.0 - (dist / trailLen);
@@ -1321,7 +1617,7 @@ export class Visualizer3D {
             blending: THREE.AdditiveBlending
         });
 
-        // Ensure Matrix renders behind other visuals by rendering it first
+        // Ensure Cyber renders behind other visuals by rendering it first
         material.sceneRenderOrder = -1; // Custom property handled by mesh later
         return material;
     }
@@ -1341,26 +1637,26 @@ export class Visualizer3D {
         // Profiling to find the 5s bottleneck
         const tLabel = `[VizInit] ${mode}`;
         console.time(tLabel);
-        if (mode === 'sphere' && this.sphereGroup.children.length === 0) this.initSphere();
-        if (mode === 'particles' && this.particleGroup.children.length === 0) this.initParticles();
+        if (mode === 'sphere' && this.sphereGroup && this.sphereGroup.children.length === 0) this.initSphere();
+        if (mode === 'particles' && this.particleGroup && this.particleGroup.children.length === 0) this.initParticles();
         if (mode === 'waves' && this.wavesGroup && this.wavesGroup.children.length === 0) this.initWaves();
-        if (mode === 'lava' && this.lavaGroup.children.length === 0) this.initLava();
-        if (mode === 'fireplace' && this.fireplaceGroup.children.length === 0) this.initFireplace();
-        if (mode === 'rainforest' && this.rainforestGroup.children.length === 0) this.initRainforest();
-        if (mode === 'zengarden' && this.zenGardenGroup.children.length === 0) this.initZenGarden();
-        if (mode === 'ocean' && this.oceanGroup.children.length === 0) this.initOcean();
-        if (mode === 'matrix' && this.matrixGroup.children.length === 0) this.initMatrix();
-        if (mode === 'box' && this.boxGroup.children.length === 0) this.initBox();
-        if (mode === 'dragon' && this.dragonGroup.children.length === 0) this.initDragon();
-        if (mode === 'galaxy' && this.galaxyGroup.children.length === 0) this.initGalaxy();
-        if (mode === 'mandala' && this.mandalaGroup.children.length === 0) this.initMandala();
+        if (mode === 'lava' && this.lavaGroup && this.lavaGroup.children.length === 0) this.initLava();
+        if (mode === 'fireplace' && this.fireplaceGroup && this.fireplaceGroup.children.length === 0) this.initFireplace();
+        if (mode === 'rainforest' && this.rainforestGroup && this.rainforestGroup.children.length === 0) this.initRainforest();
+        if (mode === 'zengarden' && this.zenGardenGroup && this.zenGardenGroup.children.length === 0) this.initZenGarden();
+        if (mode === 'ocean' && this.oceanGroup && this.oceanGroup.children.length === 0) this.initOcean();
+        if ((mode === 'cyber' || mode === 'matrix') && this.cyberGroup && this.cyberGroup.children.length === 0) this.initCyber();
+        if (mode === 'box' && this.boxGroup && this.boxGroup.children.length === 0) this.initBox();
+        if (mode === 'dragon' && this.dragonGroup && this.dragonGroup.children.length === 0) this.initDragon();
+        if (mode === 'galaxy' && this.galaxyGroup && this.galaxyGroup.children.length === 0) this.initGalaxy();
+        if (mode === 'mandala' && this.mandalaGroup && this.mandalaGroup.children.length === 0) this.initMandala();
         console.timeEnd(tLabel);
     }
 
-    initMatrix() {
-        while (this.matrixGroup.children.length > 0) {
-            const child = this.matrixGroup.children[0];
-            this.matrixGroup.remove(child);
+    initCyber() {
+        while (this.cyberGroup.children.length > 0) {
+            const child = this.cyberGroup.children[0];
+            this.cyberGroup.remove(child);
             if (child.geometry) child.geometry.dispose();
             if (child.material) child.material.dispose();
             if (child.children) {
@@ -1370,8 +1666,8 @@ export class Visualizer3D {
                 });
             }
         }
-        this.matrixRotationGroup = null;
-        this.matrixPoints = null;
+        this.cyberRotationGroup = null;
+        this.cyberPoints = null;
 
         const depthLayer = 4;
         const colCount = 80;
@@ -1392,21 +1688,35 @@ export class Visualizer3D {
             const z = -(depthLayer * 5) - (Math.random() * 2);
             const speed = 0.5 + Math.random() * 0.5;
 
-            const isSpecial = (this.matrixLogicMode === 'mindwave' || this.matrixLogicMode === 'custom');
-            const specialText = (this.matrixLogicMode === 'custom' && this.matrixCustomText) ? this.matrixCustomText : "MINDWAVE";
+            const config = this.matrixConfig;
+            const isSpecial = (config.logicMode === 'mindwave' || config.logicMode === 'mw' || config.logicMode === 'custom' || config.logicMode === 'txt');
+            const isCyber = (config.logicMode === 'matrix' || config.logicMode === 'int' || config.logicMode === 'interstellar');
+            const specialText = ((config.logicMode === 'custom' || config.logicMode === 'txt') && config.customText) ? "🪷" + config.customText : "MINDWAVE";
             const specialLen = specialText.length;
+            // In matrix mode, streams are less uniform
+            const streamOffset = isCyber ? Math.random() * 100 : 0;
+            const matrixSpeedMult = isCyber ? (0.5 + Math.random() * 1.5) : 1.0;
+            const streamSpawnTime = Math.random() * 100.0 + streamOffset;
 
             for (let r = 0; r < rowCount; r++) {
                 const y = (viewHeight / 2) - (r * rowHeight);
-                const spawnTime = Math.random() * 100.0;
                 positions.push(x, y, z);
+
                 if (isSpecial) {
-                    charIndices.push((r + c) % (specialLen + 1));
+                    // Repeat the text characters throughout the ENTIRE stream
+                    // Indices 0 = LOGO, 1-specialLen = text characters
+                    // This ensures MW/TXT text is visible in ALL chars of the falling stream
+                    // (shader keeps indices <= 8 static, so text won't animate away)
+                    charIndices.push(r % (specialLen + 1));
+                } else if (isCyber) {
+                    // Cyber uses full character map randomly
+                    charIndices.push(Math.floor(Math.random() * 64));
                 } else {
+                    // Legacy random mode
                     charIndices.push(9 + Math.floor(Math.random() * 55));
                 }
-                spawnTimes.push(spawnTime);
-                speeds.push(speed);
+                spawnTimes.push(streamSpawnTime);
+                speeds.push(speed * matrixSpeedMult);
             }
         }
 
@@ -1415,37 +1725,40 @@ export class Visualizer3D {
         geometry.setAttribute('aSpawnTime', new THREE.Float32BufferAttribute(spawnTimes, 1));
         geometry.setAttribute('aSpeed', new THREE.Float32BufferAttribute(speeds, 1));
 
-        this.matrixGeometry = geometry;
-        const texture = this.createMatrixTexture();
-        this.matrixMaterial = this.createMatrixShader(texture);
-        this.matrixRain = new THREE.Points(geometry, this.matrixMaterial);
-        this.matrixRain.frustumCulled = false;
+        this.cyberGeometry = geometry;
+        const texture = this.createCyberTexture(this.matrixConfig);
+        this.cyberMaterial = this.createCyberShader(texture, this.matrixConfig);
+        this.cyberRain = new THREE.Points(geometry, this.cyberMaterial);
+        this.cyberRain.frustumCulled = false;
 
         // CRITICAL FOR EPIC FOCUS COMBO: 
-        // Ensure Matrix renders behind ocean and zen particles to prevent AdditiveBlending washout
-        this.matrixRain.renderOrder = -1;
+        // Ensure Cyber renders behind ocean and zen particles to prevent AdditiveBlending washout
+        this.cyberRain.renderOrder = -1;
 
-        this.matrixRotationGroup = new THREE.Group();
-        this.matrixRotationGroup.add(this.matrixRain);
-        this.matrixGroup.add(this.matrixRotationGroup);
+        this.cyberRotationGroup = new THREE.Group();
+        this.cyberRotationGroup.add(this.cyberRain);
+        this.cyberGroup.add(this.cyberRotationGroup);
 
-        if (this.currentMatrixAngle !== undefined) {
-            this.matrixRotationGroup.rotation.z = THREE.MathUtils.degToRad(-this.currentMatrixAngle);
+        if (this.currentCyberAngle !== undefined) {
+            this.cyberRotationGroup.rotation.z = THREE.MathUtils.degToRad(-this.currentCyberAngle);
         }
-        this.matrixGroup.visible = true;
+
         this.updateVisibility();
     }
 
-    setMatrixMode(enabled) {
+    setCyberMode(enabled) {
         if (this.mindWaveMode === enabled) return;
         this.mindWaveMode = enabled;
-        this.matrixLogicMode = enabled ? 'mindwave' : 'classic';
-        if (enabled && this.matrixMaterial) {
-            const newTexture = this.createMatrixTexture();
-            this.matrixMaterial.uniforms.uTexture.value = newTexture;
-            this.matrixMaterial.needsUpdate = true;
+        this.cyberLogicMode = enabled ? 'mindwave' : 'classic';
+        if (enabled && this.cyberMaterial) {
+            // Dispose old texture before creating new one to prevent GPU leak
+            const oldTex = this.cyberMaterial.uniforms.uTexture.value;
+            const newTexture = this.createCyberTexture();
+            this.cyberMaterial.uniforms.uTexture.value = newTexture;
+            this.cyberMaterial.needsUpdate = true;
+            if (oldTex) oldTex.dispose();
         }
-        this.initMatrix();
+        this.initCyber();
     }
 
     setMode(mode) {
@@ -1456,14 +1769,31 @@ export class Visualizer3D {
         this.updateLabel(mode);
     }
 
+    mapMode(mode) {
+        if (mode === 'interstellar') return 'matrix'; // UI "Matrix" -> Internal 3D Matrix
+        return mode;
+    }
+
     toggleMode(mode) {
-        if (this.activeModes.has(mode)) {
-            this.activeModes.delete(mode);
-        } else {
-            this.activeModes.add(mode);
+        const target = this.mapMode(mode);
+        
+        // If activating Matrix (3D), ensure it starts in interstellar mode if not set
+        if (target === 'matrix' && !this.activeModes.has('matrix')) {
+            if (!this.matrixConfig.logicMode) this.matrixConfig.logicMode = 'interstellar';
         }
-        this.mode = mode;
+        // If activating Cyber (2D), ensure it starts in matrix logic if not set
+        if (target === 'cyber' && !this.activeModes.has('cyber')) {
+            if (!this.cyberConfig.logicMode) this.cyberConfig.logicMode = 'matrix';
+        }
+
+        if (this.activeModes.has(target)) {
+            this.activeModes.delete(target);
+        } else {
+            this.activeModes.add(target);
+        }
+        this.mode = target;
         this.updateVisibility();
+        
         if (this.activeModes.size === 1) {
             this.updateLabel(Array.from(this.activeModes)[0]);
         } else if (this.activeModes.size > 1) {
@@ -1471,6 +1801,9 @@ export class Visualizer3D {
         } else {
             this.updateLabel('none');
         }
+        
+        // Ensure strings are regenerated if mode changed
+        if (this.updateCyberStrings) this.updateCyberStrings();
     }
 
     updateVisibility() {
@@ -1484,7 +1817,24 @@ export class Visualizer3D {
         if (this.rainforestGroup) this.rainforestGroup.visible = this.activeModes.has('rainforest');
         if (this.zenGardenGroup) this.zenGardenGroup.visible = this.activeModes.has('zengarden');
         if (this.oceanGroup) this.oceanGroup.visible = this.activeModes.has('ocean');
-        if (this.matrixGroup) this.matrixGroup.visible = this.activeModes.has('matrix');
+
+        // Independently show 3D Matrix (Portal)
+        if (this.cyberGroup) {
+            this.cyberGroup.visible = this.activeModes.has('matrix');
+        }
+
+        // Independently show 2D Cyber (Overlay)
+        if (this.overlayCanvas) {
+            if (this.activeModes.has('cyber')) {
+                this.overlayCanvas.classList.remove('hidden');
+                if (!this.matrixCyberStreams || this.matrixCyberStreams.length === 0) {
+                    this.generateCyberStyle();
+                }
+            } else {
+                this.overlayCanvas.classList.add('hidden');
+            }
+        }
+
         if (this.boxGroup) this.boxGroup.visible = this.activeModes.has('box');
         if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
         if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
@@ -1502,7 +1852,8 @@ export class Visualizer3D {
             else if (mode === 'rainforest') label.textContent = "RAINFOREST";
             else if (mode === 'zengarden') label.textContent = "ZEN GARDEN";
             else if (mode === 'ocean') label.textContent = "WAVES";
-            else if (mode === 'matrix') label.textContent = "THE MATRIX";
+            else if (mode === 'cyber') label.textContent = "CYBER";
+            else if (mode === 'matrix') label.textContent = "MATRIX";
             else if (mode === 'multi') label.textContent = "MULTI-SENSORY";
             else label.textContent = "";
         }
@@ -1557,9 +1908,9 @@ export class Visualizer3D {
                 this.particles.material.size = 0.08;
                 this.particles.material.opacity = 0.9;
             }
-            if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uTailLength) {
-                this.matrixMaterial.uniforms.uHeadColor.value.setHex(0xffffff);
-                this.matrixMaterial.uniforms.uTailLength.value = 0.4; // Short, fast tails
+            if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uTailLength) {
+                this.cyberMaterial.uniforms.uHeadColor.value.setHex(0xffffff);
+                this.cyberMaterial.uniforms.uTailLength.value = 0.4; // Short, fast tails
             }
         } else {
             // Normal (Alpha, Beta)
@@ -1567,9 +1918,9 @@ export class Visualizer3D {
                 this.particles.material.size = 0.15;
                 this.particles.material.opacity = 0.8;
             }
-            if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uTailLength) {
-                this.matrixMaterial.uniforms.uHeadColor.value.setHex(0xF0FFF0);
-                this.matrixMaterial.uniforms.uTailLength.value = 1.0;
+            if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uTailLength) {
+                this.cyberMaterial.uniforms.uHeadColor.value.setHex(0xF0FFF0);
+                this.cyberMaterial.uniforms.uTailLength.value = 1.0;
             }
         }
         this.renderSingleFrame();
@@ -1591,9 +1942,9 @@ export class Visualizer3D {
         if (this.zenWater && this.zenWater.material) this.zenWater.material.color.set(hex);
         if (this.oceanWave && this.oceanWave.material) this.oceanWave.material.color.set(hex);
         if (this.oceanFoam && this.oceanFoam.material) this.oceanFoam.material.color.set(hex);
-        if (this.matrixRain && this.matrixRain.material) {
-            if (this.matrixRain.material.uniforms && this.matrixRain.material.uniforms.uColor) {
-                this.matrixRain.material.uniforms.uColor.value.set(hex);
+        if (this.cyberRain && this.cyberRain.material) {
+            if (this.cyberRain.material.uniforms && this.cyberRain.material.uniforms.uColor) {
+                this.cyberRain.material.uniforms.uColor.value.set(hex);
             }
         }
         if (this.logoMesh && this.originalLogoImg) {
@@ -1617,6 +1968,9 @@ export class Visualizer3D {
     }
 
     createCircleTexture() {
+        // Cache: circle texture never changes, reuse GPU upload
+        if (this.textures.circle) return this.textures.circle;
+
         const size = 32;
         const canvas = document.createElement('canvas');
         canvas.width = size;
@@ -1626,12 +1980,13 @@ export class Visualizer3D {
         ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
-        return new THREE.CanvasTexture(canvas);
+        this.textures.circle = new THREE.CanvasTexture(canvas);
+        return this.textures.circle;
     }
 
     render(analyserL, analyserR) {
         try {
-            if (!this.initialized || !this.renderer) return;
+            if (!this.initialized || !this.renderer || document.hidden) return;
 
             if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
 
@@ -1689,7 +2044,7 @@ export class Visualizer3D {
                 this.sphereGroup, this.particleGroup, this.lavaGroup,
                 this.wavesGroup, this.flames, this.raindrops,
                 this.petals, this.boxOuter, this.dragonGroup,
-                this.galaxyGroup, this.mandalaGroup, this.matrixGroup
+                this.galaxyGroup, this.mandalaGroup, this.cyberGroup
             ];
             for (const target of shakeTargets) {
                 if (target) {
@@ -2003,14 +2358,14 @@ export class Visualizer3D {
             // GALAXY
             if (this.activeModes.has('galaxy') && this.galaxyStars) {
                 this.galaxyGroup.rotation.y += 0.002 * multiplier + vNormBass * 0.003;
-                this.galaxyGroup.rotation.x = Math.sin(now * 0.08) * 0.25; // gentle tilt
+                // REMOVED gentle tilt for absolute control
                 this.galaxyStars.material.size = 0.2 + vNormBass * 0.1 + vBeatPulse * 0.08;
 
-                // Tribal sun - slow steady 3D rotation, no pulsing
+                // Tribal sun - absolute 3D rotation controlled by sliders
                 if (this.galaxySunMesh) {
-                    this.galaxySunMesh.rotation.y += 0.005 * multiplier; // Spins like a coin
-                    this.galaxySunMesh.rotation.z += 0.003 * multiplier; // Rotates like a wheel
-                    this.galaxySunMesh.rotation.x = Math.sin(now * 0.1) * 0.2; // Gentle tilt
+                    this.galaxySunMesh.rotation.x = this.sunRotationSpeedX;
+                    this.galaxySunMesh.rotation.y = this.sunRotationSpeedY;
+                    this.galaxySunMesh.rotation.z = this.sunRotationSpeedZ;
                 }
             }
 
@@ -2031,33 +2386,63 @@ export class Visualizer3D {
                 }
             }
 
-            if (this.activeModes.has('matrix') && this.matrixMaterial) {
-                // FIXED: Only apply multipliers once here; uTime in shader handles the rest.
-                this.matrixMaterial.uniforms.uTime.value += dt * multiplier * (this.matrixSpeedMultiplier || 1.0);
-                // Normalize beat pulse influence separately
-                this.matrixMaterial.uniforms.uSpeed.value = 1.0 + vBeatPulse * 0.2;
+            if (this.activeModes.has('cyber')) {
+                this.renderCyberCyber();
+            }
+
+            if (this.activeModes.has('matrix')) {
+                if (this.cyberMaterial) {
+                    const config = this.matrixConfig;
+                    // Multiply dt by config.speed to drive shader animation
+                    this.cyberMaterial.uniforms.uTime.value += dt * multiplier * (config.speed || 1.0);
+                    // Modulate base speed uniform with beat pulse for reactive rain
+                    this.cyberMaterial.uniforms.uSpeed.value = (config.speed || 1.0) * (1.0 + vBeatPulse * 0.2);
+                }
             }
 
             // Frame Skipping / Battery Saver Logic
             const frameInterval = 1000 / this.targetFPS;
             const timeSinceLastFrame = performance.now() - this.lastFrameRenderTime;
 
-            // Adaptive LOD FPS Measurement
+            // Adaptive LOD FPS Measurement (Ring Buffer — no push/shift GC pressure)
             if (dt > 0) {
                 const currentFps = 1 / dt;
-                this.fpsFrameStats.push(currentFps);
-                if (this.fpsFrameStats.length > 60) this.fpsFrameStats.shift();
+                this._fpsRingBuffer[this._fpsRingIndex] = currentFps;
+                this._fpsRingIndex = (this._fpsRingIndex + 1) % 60;
+                if (this._fpsRingCount < 60) this._fpsRingCount++;
 
-                // Evaluate LOD downgrade every 5 seconds if running below target
-                if (now - this.lastLodDegradation > 5.0 && this.fpsFrameStats.length === 60) {
-                    const avgFps = this.fpsFrameStats.reduce((a, b) => a + b) / 60;
+                // Memory Guard: Feed FPS info to state monitor if available
+                if (typeof state !== 'undefined' && state.performanceMonitor) {
+                    const monitor = state.performanceMonitor;
+                    if (currentFps < monitor.fpsThreshold) {
+                        monitor.lowPerformanceCount++;
+                        if (monitor.lowPerformanceCount >= monitor.lowPerformanceLimit) {
+                            monitor.triggerSafeMode();
+                        }
+                    } else {
+                        // Slowly recovery counter if performance is stable
+                        if (monitor.lowPerformanceCount > 0) monitor.lowPerformanceCount -= 0.5;
+                    }
+                }
+
+                // Evaluate LOD downgrade if running poorly
+                if (now - this.lastLodDegradation > 5.0 && this._fpsRingCount === 60) {
+                    let fpsSum = 0;
+                    for (let fi = 0; fi < 60; fi++) fpsSum += this._fpsRingBuffer[fi];
+                    const avgFps = fpsSum / 60;
                     // If dropping 25% below target consistently
                     if (avgFps < (this.targetFPS * 0.75)) {
                         this.degradeLOD();
                         this.lastLodDegradation = now;
-                        this.fpsFrameStats = []; // Reset after degrading
+                        this._fpsRingCount = 0; // Reset after degrading
                     }
                 }
+            }
+
+            // STABILITY: If we are in system-stability-mode, ensure LOD is low
+            if (document.body.classList.contains('system-stability-mode') && this.currentLodLevel !== 'low') {
+                this.degradeLOD();
+                this.degradeLOD(); // Double drop to 'low'
             }
 
             // Create a property to track current opacity for smoothing
@@ -2076,8 +2461,6 @@ export class Visualizer3D {
                 // Apply to single mesh material
                 if (this.logoMesh && this.logoMesh.material) {
                     this.logoMesh.material.opacity = this.currentLogoOpacity;
-                    this.logoMesh.material.transparent = true;
-                    this.logoMesh.material.needsUpdate = true;
                 }
             }
 
@@ -2106,10 +2489,10 @@ export class Visualizer3D {
                         lotusTargetOpacity = 0.15 + 0.85 * fade; // 0.15→1.0
                         doScaleHeartbeat = true;
 
-                        // Sync matrix brightness with lotus heartbeat
-                        if (this.activeModes.has('matrix') && this.matrixMaterial) {
-                            if (this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uBrightness) {
-                                this.matrixMaterial.uniforms.uBrightness.value = 0.3 + 0.7 * fade;
+                        // Sync cyber brightness with lotus heartbeat
+                        if (this.activeModes.has('cyber') && this.cyberMaterial) {
+                            if (this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
+                                this.cyberMaterial.uniforms.uBrightness.value = 0.3 + 0.7 * fade;
                             }
                         }
                         break;
@@ -2124,12 +2507,12 @@ export class Visualizer3D {
                         lotusTargetOpacity = Math.min(1.0, lotusTargetOpacity + beatPulse * 0.15);
                         doScaleHeartbeat = true; // Gentle scale pulse in auto
 
-                        // Sync matrix with lotus in auto mode
-                        if (this.activeModes.has('matrix') && this.matrixMaterial) {
-                            if (this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uBrightness) {
-                                // Matrix syncs with lotus but with slight delay/smoothing
-                                const matrixSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
-                                this.matrixMaterial.uniforms.uBrightness.value = Math.min(1.0, matrixSync);
+                        // Sync cyber with lotus in auto mode
+                        if (this.activeModes.has('cyber') && this.cyberMaterial) {
+                            if (this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
+                                // Cyber syncs with lotus but with slight delay/smoothing
+                                const cyberSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
+                                this.cyberMaterial.uniforms.uBrightness.value = Math.min(1.0, cyberSync);
                             }
                         }
                         break;
@@ -2140,8 +2523,6 @@ export class Visualizer3D {
                 if (this._lotusCurrentOpacity === undefined) this._lotusCurrentOpacity = 0.8;
                 this._lotusCurrentOpacity += (lotusTargetOpacity - this._lotusCurrentOpacity) * 0.08;
                 this.logoMesh.material.opacity = this._lotusCurrentOpacity;
-                this.logoMesh.material.transparent = true;
-                this.logoMesh.material.needsUpdate = true;
 
                 // Scale heartbeat (lub-dub) - runs in heartbeat + auto modes
                 if (doScaleHeartbeat) {
@@ -2176,19 +2557,38 @@ export class Visualizer3D {
         }
     }
 
+    setCyberColor(hexColor) {
+        this.cyberConfig.color = hexColor;
+        this.cyberConfig.rainbow = false;
+        this.cyberColorCustomized = true;
+        if (this.matrixCyberStreams) {
+            this.matrixCyberStreams.forEach(stream => { stream.color = hexColor; });
+        }
+    }
+
     setMatrixColor(hexColor) {
-        if (this.matrixMaterial && this.matrixMaterial.uniforms.uColor) {
-            this.matrixMaterial.uniforms.uColor.value.set(hexColor);
-            const color = new THREE.Color(hexColor);
-            color.lerp(new THREE.Color(0xffffff), 0.8);
-            this.matrixMaterial.uniforms.uHeadColor.value.copy(color);
+        this.matrixConfig.color = hexColor;
+        this.matrixConfig.rainbow = false;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms.uColor) {
+            this.cyberMaterial.uniforms.uColor.value.set(hexColor);
+            this._tempColor.set(hexColor);
+            this._tempColor.r += (1 - this._tempColor.r) * 0.8;
+            this._tempColor.g += (1 - this._tempColor.g) * 0.8;
+            this._tempColor.b += (1 - this._tempColor.b) * 0.8;
+            this.cyberMaterial.uniforms.uHeadColor.value.copy(this._tempColor);
+            if (this.cyberMaterial.uniforms.uRainbow) this.cyberMaterial.uniforms.uRainbow.value = 0.0;
         }
     }
 
     getAverageFrequency(startIndex, endIndex) {
         let analyser = state.analyserLeft || state.analyserRight;
         if (!analyser) return 0;
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        // Reuse cached buffer instead of allocating new Uint8Array every call
+        const binCount = analyser.frequencyBinCount;
+        if (!this._freqDataArray || this._freqDataArray.length !== binCount) {
+            this._freqDataArray = new Uint8Array(binCount);
+        }
+        const dataArray = this._freqDataArray;
         analyser.getByteFrequencyData(dataArray);
         if (startIndex === undefined) startIndex = 0;
         if (endIndex === undefined) endIndex = dataArray.length;
@@ -2199,21 +2599,48 @@ export class Visualizer3D {
 
     setGlobalSpeed(speed) {
         this.speedMultiplier = speed;
-        if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uSpeed)
-            this.matrixMaterial.uniforms.uSpeed.value = 1.0 + (speed - 1.0) * 0.5; // Scale gently
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uSpeed)
+            this.cyberMaterial.uniforms.uSpeed.value = 1.0 + (speed - 1.0) * 0.5; // Scale gently
     }
 
     setGlobalBrightness(brightness) {
         this.brightnessMultiplier = brightness;
-        if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uBrightness)
-            this.matrixMaterial.uniforms.uBrightness.value = brightness;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness)
+            this.cyberMaterial.uniforms.uBrightness.value = brightness;
     }
 
-    setMatrixSpeed(speed) { this.matrixSpeedMultiplier = speed; }
-    setMatrixLength(length) { if (this.matrixMaterial && this.matrixMaterial.uniforms.uTailLength) this.matrixMaterial.uniforms.uTailLength.value = length; }
+    setCyberSpeed(speed) {
+        this.cyberConfig.speed = speed;
+    }
+    setMatrixSpeed(speed) {
+        this.matrixConfig.speed = speed;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms.uSpeed) {
+            this.cyberMaterial.uniforms.uSpeed.value = speed;
+        }
+    }
+    setCyberLength(length) {
+        this.cyberConfig.length = length;
+    }
+    setMatrixLength(length) {
+        this.matrixConfig.length = length;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms.uTailLength) {
+            this.cyberMaterial.uniforms.uTailLength.value = length;
+        }
+    }
+    setCyberRainbow(isRainbow) {
+        this.cyberConfig.rainbow = isRainbow;
+        if (!isRainbow) {
+            const hex = this.cyberConfig.color || '#00FF41';
+            if (this.matrixCyberStreams) {
+                this.matrixCyberStreams.forEach(stream => { stream.color = hex; });
+            }
+        }
+    }
     setMatrixRainbow(isRainbow) {
-        this._rainbowEnabled = isRainbow;
-        if (this.matrixMaterial && this.matrixMaterial.uniforms && this.matrixMaterial.uniforms.uRainbow) this.matrixMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
+        this.matrixConfig.rainbow = isRainbow;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
+            this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
+        }
     }
 
     setBatterySaver(enabled) {
@@ -2243,17 +2670,82 @@ export class Visualizer3D {
         }
     }
 
+    updateCyberStrings() {
+        if (!this.matrixCyberStreams) return;
+
+        let isTextMode = false;
+        let textToSpell = "MINDWAVE🪷";
+        const config = this.cyberConfig;
+
+        if (config.logicMode === 'custom' || config.logicMode === 'txt') {
+            isTextMode = true;
+            textToSpell = "🪷" + (config.customText || "WELCOME");
+        } else if (config.logicMode === 'mindwave' || config.logicMode === 'mw') {
+            isTextMode = true;
+            textToSpell = "MINDWAVE🪷";
+        }
+
+        const cyberStrict = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ";
+        const alphaNumericMix = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const matrixDataMix = "0123456789·:.-+x[]<>/\\∆ΣΩ∞";
+
+        // Generate a huge enough buffer so even the longest UI slider settings never clip!
+        const MAX_BUFFER = 100;
+
+        // Clear chars and replace without disrupting their position
+        this.matrixCyberStreams.forEach(stream => {
+            stream.chars = []; // Explicitly reset buffer
+            stream.isTextMode = isTextMode; // Used for render-time flicker logic
+
+            if (isTextMode && textToSpell.length > 0) {
+                // To spell Normal (Top-to-Bottom) where chars[0] leads at the bottom:
+                const wordChars = [...textToSpell].reverse();
+                for (let c = 0; c < MAX_BUFFER; c++) {
+                    stream.chars.push(wordChars[c % wordChars.length]);
+                }
+            } else if (config.logicMode === 'matrix' || config.logicMode === 'interstellar' || config.logicMode === 'int') {
+                for (let c = 0; c < MAX_BUFFER; c++) {
+                    stream.chars.push(matrixDataMix.charAt(Math.floor(Math.random() * matrixDataMix.length)));
+                }
+            } else { // RND / Random -> Cyber style
+                for (let c = 0; c < MAX_BUFFER; c++) {
+                    stream.chars.push(cyberStrict.charAt(Math.floor(Math.random() * cyberStrict.length)));
+                }
+            }
+        });
+    }
+
+    setCyberLogicMode(mode, text) {
+        console.log(`[Visualizer] setCyberLogicMode(mode="${mode}", text="${text}")`);
+        this.cyberConfig.logicMode = mode;
+        if (text !== undefined) this.cyberConfig.customText = text;
+        this.updateCyberStrings();
+    }
+
     setMatrixLogicMode(mode, text) {
-        this.matrixLogicMode = mode;
-        if (text !== undefined) this.matrixCustomText = text;
-        const newTexture = this.createMatrixTexture();
-        if (this.matrixMaterial) { this.matrixMaterial.uniforms.uTexture.value = newTexture; this.matrixMaterial.needsUpdate = true; }
-        this.initMatrix();
+        console.log(`[Visualizer] setMatrixLogicMode(mode="${mode}", text="${text}")`);
+        this.matrixConfig.logicMode = mode;
+        if (text !== undefined) this.matrixConfig.customText = text;
+
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uTexture) {
+            const oldTex = this.cyberMaterial.uniforms.uTexture.value;
+            const newTexture = this.createCyberTexture(this.matrixConfig);
+            this.cyberMaterial.uniforms.uTexture.value = newTexture;
+            this.cyberMaterial.needsUpdate = true;
+            if (oldTex) oldTex.dispose();
+        }
+        this.initCyber();
+    }
+
+    setCyberAngle(degrees) {
+        this.cyberConfig.angle = degrees;
     }
 
     setMatrixAngle(degrees) {
-        this.currentMatrixAngle = degrees;
-        if (this.matrixRotationGroup) this.matrixRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
+        this.matrixConfig.angle = degrees;
+        if (this.cyberRotationGroup) {
+            this.cyberRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
+        }
     }
 
     setVibrationEnabled(enabled) {
@@ -2263,10 +2755,15 @@ export class Visualizer3D {
     updateLogoTexture() {
         if (!this.originalLogoImg) return;
         const renderSize = 512;
-        const canvas = document.createElement("canvas");
-        canvas.width = renderSize;
-        canvas.height = renderSize;
+        // Reuse offscreen canvas instead of creating a new one each time
+        if (!this._logoRenderCanvas) {
+            this._logoRenderCanvas = document.createElement("canvas");
+            this._logoRenderCanvas.width = renderSize;
+            this._logoRenderCanvas.height = renderSize;
+        }
+        const canvas = this._logoRenderCanvas;
         const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, renderSize, renderSize);
 
         ctx.drawImage(this.originalLogoImg, 0, 0, renderSize, renderSize);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -2405,14 +2902,19 @@ export class Visualizer3D {
         const groups = [
             this.sphereGroup, this.particleGroup, this.lavaGroup,
             this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup,
-            this.oceanGroup, this.matrixGroup, this.boxGroup,
+            this.oceanGroup, this.cyberGroup, this.boxGroup,
             this.dragonGroup, this.galaxyGroup, this.mandalaGroup,
             this.wavesGroup
         ];
+
+        // Release ring buffer and scratch objects
+        this._fpsRingBuffer = null;
+        this._tempColor = null;
+        this._logoRenderCanvas = null;
         groups.forEach(disposeGroup);
 
         // Dispose standalone materials / textures
-        if (this.matrixMaterial) { this.matrixMaterial.dispose(); this.matrixMaterial = null; }
+        if (this.cyberMaterial) { this.cyberMaterial.dispose(); this.cyberMaterial = null; }
         if (this.fireMaterial) { this.fireMaterial.dispose(); this.fireMaterial = null; }
         if (this.logoMesh) {
             if (this.logoMesh.material) {
@@ -2457,10 +2959,10 @@ export function initVisualizer() {
             activeModes: els.canvas.activeVisualizer.activeModes,
             mode: els.canvas.activeVisualizer.mode,
             mindWaveMode: els.canvas.activeVisualizer.mindWaveMode,
-            matrixLogicMode: els.canvas.activeVisualizer.matrixLogicMode,
-            matrixCustomText: els.canvas.activeVisualizer.matrixCustomText,
-            currentMatrixAngle: els.canvas.activeVisualizer.currentMatrixAngle,
-            matrixSpeedMultiplier: els.canvas.activeVisualizer.matrixSpeedMultiplier,
+            cyberLogicMode: els.canvas.activeVisualizer.cyberLogicMode,
+            cyberCustomText: els.canvas.activeVisualizer.cyberCustomText,
+            currentCyberAngle: els.canvas.activeVisualizer.currentCyberAngle,
+            cyberSpeedMultiplier: els.canvas.activeVisualizer.cyberSpeedMultiplier,
             rainbowEnabled: els.canvas.activeVisualizer._rainbowEnabled
         } : {};
         viz3D = new Visualizer3D(els.canvas, prevState);
@@ -2477,7 +2979,10 @@ export function initVisualizer() {
     }
 }
 
-export function getVisualizer() { return viz3D; }
+export function getVisualizer() {
+    if (!viz3D) console.warn('[Visualizer] getVisualizer() called but viz3D is null');
+    return viz3D;
+}
 let visualsPaused = false;
 export function pauseVisuals() {
     visualsPaused = true;
@@ -2497,7 +3002,7 @@ export function resumeVisuals() {
 
 export function isVisualsPaused() { return visualsPaused; }
 export function toggleVisual(mode) { if (viz3D) viz3D.toggleMode(mode); }
-export function setVisualSpeed(speed) { if (viz3D) { viz3D.setGlobalSpeed(speed); if (viz3D.setMatrixSpeed) viz3D.setMatrixSpeed(speed); } }
-export function setVisualColor(hex) { if (viz3D) { viz3D.setColor(hex); if (viz3D.setMatrixColor) viz3D.setMatrixColor(hex); } }
+export function setVisualSpeed(speed) { if (viz3D) { viz3D.setGlobalSpeed(speed); if (viz3D.setCyberSpeed) viz3D.setCyberSpeed(speed); } }
+export function setVisualColor(hex) { if (viz3D) { viz3D.setColor(hex); if (viz3D.setCyberColor) viz3D.setCyberColor(hex); } }
 export function setVisualBrightness(brightness) { if (viz3D && viz3D.setGlobalBrightness) viz3D.setGlobalBrightness(brightness); }
 export function setVisualLogoOpacity(opacity) { if (viz3D) viz3D.setLogoOpacity(opacity); }

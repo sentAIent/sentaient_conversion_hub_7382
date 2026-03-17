@@ -82,84 +82,87 @@ export async function startAudio() {
         }
 
         await setupWorklet();
-        state.destStreamNode = state.audioCtx.createMediaStreamDestination();
+        if (!state.destStreamNode) {
+            state.destStreamNode = state.audioCtx.createMediaStreamDestination();
+        }
 
-        // Create Nodes
+        if (!state.masterGain) {
+            // StereoPanner fallback for older browsers just in case
+            if (state.audioCtx.createStereoPanner) {
+                state.panLeft = state.audioCtx.createStereoPanner();
+                state.panRight = state.audioCtx.createStereoPanner();
+                state.panLeft.pan.value = -1;
+                state.panRight.pan.value = 1;
+            } else {
+                state.panLeft = state.audioCtx.createPanner();
+                state.panLeft.panningModel = 'equalpower';
+                // Simple panner fallback 
+                state.panLeft.setPosition(-1, 0, 0);
+                state.panRight = state.audioCtx.createPanner();
+                state.panRight.panningModel = 'equalpower';
+                state.panRight.setPosition(1, 0, 0);
+            }
+
+            state.beatsGain = state.audioCtx.createGain();
+            state.masterAtmosGain = state.audioCtx.createGain();
+            state.masterGain = state.audioCtx.createGain();
+
+            // Master Balance Panner
+            if (state.audioCtx.createStereoPanner) {
+                state.masterPanner = state.audioCtx.createStereoPanner();
+            } else {
+                console.warn("StereoPanner not supported for Master Balance");
+                state.masterPanner = state.audioCtx.createGain(); // Dummy fallback
+            }
+
+            state.masterCompressor = state.audioCtx.createDynamicsCompressor();
+            state.analyserLeft = state.audioCtx.createAnalyser();
+            state.analyserRight = state.audioCtx.createAnalyser();
+            state.analyserLeft.fftSize = 2048;
+            state.analyserRight.fftSize = 2048;
+
+            // Safety Limiter
+            state.limiter = state.audioCtx.createDynamicsCompressor();
+            state.limiter.threshold.value = -1.0;
+            state.limiter.knee.value = 0;
+            state.limiter.ratio.value = 20.0;
+            state.limiter.attack.value = 0.001;
+            state.limiter.release.value = 0.1;
+
+            // Routing
+            state.panLeft.connect(state.analyserLeft);
+            state.panLeft.connect(state.beatsGain);
+            state.panRight.connect(state.analyserRight);
+            state.panRight.connect(state.beatsGain);
+            state.beatsGain.connect(state.masterGain);
+            state.masterAtmosGain.connect(state.masterGain);
+
+            state.masterGain.connect(state.masterPanner);
+            state.masterPanner.connect(state.masterCompressor);
+            state.masterCompressor.connect(state.limiter);
+            state.limiter.connect(state.audioCtx.destination);
+
+            // Recording Route
+            state.videoCaptureGain = state.audioCtx.createGain();
+            state.videoCaptureGain.gain.value = 1;
+            state.limiter.connect(state.videoCaptureGain);
+            state.videoCaptureGain.connect(state.destStreamNode);
+
+            // Compressor Settings
+            state.masterCompressor.threshold.value = -3;
+            state.masterCompressor.knee.value = 12;
+            state.masterCompressor.ratio.value = 2;
+            state.masterCompressor.attack.value = 0.05;
+            state.masterCompressor.release.value = 0.1;
+        }
+
+        // Create Source Nodes (Oscillators)
         state.oscLeft = state.audioCtx.createOscillator();
         state.oscRight = state.audioCtx.createOscillator();
 
-        // StereoPanner fallback for older browsers just in case
-        if (state.audioCtx.createStereoPanner) {
-            state.panLeft = state.audioCtx.createStereoPanner();
-            state.panRight = state.audioCtx.createStereoPanner();
-            state.panLeft.pan.value = -1;
-            state.panRight.pan.value = 1;
-        } else {
-            // Simple panner fallback if needed (rare now)
-            state.panLeft = state.audioCtx.createPanner();
-            state.panLeft.panningModel = 'equalpower';
-            state.panLeft.setPosition(-1, 0, 0);
-            state.panRight = state.audioCtx.createPanner();
-            state.panRight.panningModel = 'equalpower';
-            state.panRight.setPosition(1, 0, 0);
-        }
-
-        state.beatsGain = state.audioCtx.createGain();
-        state.masterAtmosGain = state.audioCtx.createGain();
-        state.masterGain = state.audioCtx.createGain();
-
-        // Master Balance Panner
-        if (state.audioCtx.createStereoPanner) {
-            state.masterPanner = state.audioCtx.createStereoPanner();
-        } else {
-            console.warn("StereoPanner not supported for Master Balance");
-            state.masterPanner = state.audioCtx.createGain(); // Dummy fallback
-        }
-
-        state.masterCompressor = state.audioCtx.createDynamicsCompressor();
-        state.analyserLeft = state.audioCtx.createAnalyser();
-        state.analyserRight = state.audioCtx.createAnalyser();
-        state.analyserLeft.fftSize = 2048;
-        state.analyserRight.fftSize = 2048;
-
-
-        // Connections
+        // Connect Sources
         state.oscLeft.connect(state.panLeft);
         state.oscRight.connect(state.panRight);
-        state.panLeft.connect(state.analyserLeft);
-        state.panLeft.connect(state.beatsGain);
-        state.panRight.connect(state.analyserRight);
-        state.panRight.connect(state.beatsGain);
-        state.beatsGain.connect(state.masterGain);
-        state.masterAtmosGain.connect(state.masterGain);
-
-        // Output Chain: Gain -> Panner -> Compressor -> Limiter -> Dest
-        state.masterGain.connect(state.masterPanner);
-        state.masterPanner.connect(state.masterCompressor);
-
-        // Safety Limiter (Promoted to state to avoid GC)
-        state.limiter = state.audioCtx.createDynamicsCompressor();
-        state.limiter.threshold.value = -1.0;
-        state.limiter.knee.value = 0;
-        state.limiter.ratio.value = 20.0;
-        state.limiter.attack.value = 0.001;
-        state.limiter.release.value = 0.1;
-
-        state.masterCompressor.connect(state.limiter);
-        state.limiter.connect(state.audioCtx.destination);
-
-        // Recording Route
-        state.videoCaptureGain = state.audioCtx.createGain();
-        state.videoCaptureGain.gain.value = 1;
-        state.limiter.connect(state.videoCaptureGain);
-        state.videoCaptureGain.connect(state.destStreamNode);
-
-        // Compressor Settings
-        state.masterCompressor.threshold.value = -3;
-        state.masterCompressor.knee.value = 12;
-        state.masterCompressor.ratio.value = 2;
-        state.masterCompressor.attack.value = 0.05;
-        state.masterCompressor.release.value = 0.1;
 
         // Worklet Node
         console.log('[Worklet] Creating worklet node - workletInitialized:', state.workletInitialized);

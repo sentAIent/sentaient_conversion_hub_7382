@@ -1,5 +1,5 @@
-import { state, els, SOUNDSCAPES, STATE_INSIGHTS, SOUND_INSIGHTS } from '../state.js';
-import { getVisualizer, initVisualizer, pauseVisuals } from '../visuals/visualizer_nuclear_v4.js';
+import { state, els, SOUNDSCAPES, STATE_INSIGHTS, SOUND_INSIGHTS, VISUALIZER_VERSION } from '../state.js';
+import { getVisualizer, initVisualizer, pauseVisuals } from '../visuals/visualizer_lazy.js?v=4';
 import { stopRecording } from '../export/recorder.js';
 import { DailyLimitService } from '../services/daily-limit.js';
 import { showPricingModal } from '../ui/pricing-3tier.js';
@@ -980,7 +980,7 @@ export function updateFrequencies() {
         if (compactValue) compactValue.textContent = targetSpeed.toFixed(1) + 'x';
 
         // Update Visualizer
-        import('../visuals/visualizer_nuclear_v4.js').then(m => {
+        import(`../visuals/visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`).then(m => {
             const viz = m.getVisualizer();
             if (viz) viz.setSpeed(targetSpeed);
         });

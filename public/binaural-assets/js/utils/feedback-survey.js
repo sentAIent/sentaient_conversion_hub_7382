@@ -135,6 +135,14 @@ function createSurveyModal(triggerType) {
                     </div>
                 </div>
 
+                <!-- Visual Styles -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-bold text-white">
+                        What are your favorite visual styles and combinations?
+                    </label>
+                    <input type="text" name="favorite_visuals" placeholder="e.g. Interstellar with Gamma waves..." class="w-[100%] bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-[var(--accent)] outline-none placeholder:text-white/20">
+                </div>
+
                 <!-- Improvements -->
                 <div class="space-y-3">
                     <label class="block text-sm font-bold text-white">
@@ -223,6 +231,7 @@ function setupSurveyHandlers(modal, triggerType) {
                 best_feature: formData.get('best_feature'),
                 use_case: formData.get('use_case'),
                 feelings: formData.getAll('feelings'),
+                favorite_visuals: formData.get('favorite_visuals') || '',
                 improvements: formData.get('improvements') || '',
                 competitors_used: formData.get('competitors_used') || '',
                 trigger_type: triggerType,

@@ -4918,7 +4918,7 @@ class InterstellarEngine {
                 this.isPro = !!data.subscription.isProPilot;
                 console.log('[Bridge] Subscription status updated. Pro Pilot:', this.isPro);
                 if (this.isPro) {
-                    this.showToast("🚀 Pro Pilot Active - 20% Bonus gems enabled!", 5000);
+                    this.showToast("🚀 Nirvana Pilot Active - 20% Bonus gems enabled!", 5000);
                 }
             }
         }

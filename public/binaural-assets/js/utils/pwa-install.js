@@ -44,7 +44,7 @@ export async function initPWAInstall() {
         // Ensure manifest is only injected for Lifetime members to prevent browser bypass
         if (hasAccess && !isStandalone) {
             if (!document.querySelector('link[rel="manifest"]')) {
-                console.log('[PWA] Verified Lifetime Access: Injecting manifest.json');
+                console.log('[PWA] Verified Eternity Access: Injecting manifest.json');
                 const manifestLink = document.createElement('link');
                 manifestLink.rel = 'manifest';
                 manifestLink.href = 'manifest.json';
@@ -162,7 +162,7 @@ function showInstallBanner() {
         try {
             const hasAccess = await hasPurchasedApp();
             if (!hasAccess) {
-                if (confirm("The Downloadable App is exclusive to Lifetime Members ($199 Founders Gear). \n\nClick OK to upgrade and unlock.")) {
+                if (confirm("The Downloadable App is exclusive to Eternity Members ($488.88 Zen Gear). \n\nClick OK to upgrade and unlock.")) {
                     if (window.showPricingModal) window.showPricingModal();
                 }
                 return;

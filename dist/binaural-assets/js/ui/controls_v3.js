@@ -153,6 +153,7 @@ export function setupUI() {
     els.cubeBtn = document.getElementById('cubeBtn');
     els.dragonBtn = document.getElementById('dragonBtn');
     els.galaxyBtn = document.getElementById('galaxyBtn');
+    els.mandalaBtn = document.getElementById('mandalaBtn');
 
     els.flowBtn = document.getElementById('flowBtn');
     els.lavaBtn = document.getElementById('lavaBtn');
@@ -160,6 +161,7 @@ export function setupUI() {
     els.rainBtn = document.getElementById('rainBtn');
     els.zenBtn = document.getElementById('zenBtn');
     els.oceanBtn = document.getElementById('oceanBtn');
+    els.cyberBtn = document.getElementById('cyberBtn');
     els.matrixBtn = document.getElementById('matrixBtn');
 
     // Session Timer Elements
@@ -743,6 +745,7 @@ export function setupUI() {
     if (els.cubeBtn) els.cubeBtn.addEventListener('click', () => setVisualMode('box'));
     if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon'));
     if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy'));
+    if (els.mandalaBtn) els.mandalaBtn.addEventListener('click', () => setVisualMode('mandala'));
 
     if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles'));
     if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava'));
@@ -750,11 +753,12 @@ export function setupUI() {
     if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest'));
     if (els.zenBtn) els.zenBtn.addEventListener('click', () => setVisualMode('zengarden'));
     if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean'));
-    if (els.matrixBtn) els.matrixBtn.addEventListener('click', (e) => {
+    if (els.cyberBtn) els.cyberBtn.addEventListener('click', (e) => {
         // Prevent triggering if clicking the mini-toggle
-        if (e.target.closest('#matrixSettingsToggle')) return;
-        setVisualMode('matrix');
+        if (e.target.closest('#cyberSettingsToggle')) return;
+        setVisualMode('cyber');
     });
+    if (els.matrixBtn) els.matrixBtn.addEventListener('click', () => setVisualMode('matrix'));
 
     // Glow Mode Buttons (Auto, Dim, Full, Heartbeat)
     const glowAutoBtn = document.getElementById('glowAutoBtn');
@@ -766,33 +770,33 @@ export function setupUI() {
     if (glowFullBtn) glowFullBtn.addEventListener('click', () => setGlowMode('full'));
     if (glowHeartbeatBtn) glowHeartbeatBtn.addEventListener('click', () => setGlowMode('heartbeat'));
 
-    // Matrix Mini-Toggle Logic
-    const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
-    if (matrixSettingsToggle) {
-        matrixSettingsToggle.addEventListener('click', (e) => {
-            e.stopPropagation(); // Don't trigger matrix toggle
-            state.matrixPanelOpen = !state.matrixPanelOpen; // Toggle state
+    // Cyber Mini-Toggle Logic
+    const cyberSettingsToggle = document.getElementById('cyberSettingsToggle');
+    if (cyberSettingsToggle) {
+        cyberSettingsToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Don't trigger cyber toggle
+            state.cyberPanelOpen = !state.cyberPanelOpen; // Toggle state
 
-            // Update panel visibility immediately if Matrix is active
-            const matrixPanel = document.getElementById('matrixSettingsPanel');
+            // Update panel visibility immediately if Cyber is active
+            const cyberPanel = document.getElementById('cyberSettingsPanel');
             const viz = getVisualizer();
-            if (matrixPanel && viz && viz.activeModes.has('matrix')) {
-                if (state.matrixPanelOpen) {
-                    matrixPanel.classList.remove('hidden');
-                    matrixPanel.classList.add('flex', 'items-center');
+            if (cyberPanel && viz && viz.activeModes.has('cyber')) {
+                if (state.cyberPanelOpen) {
+                    cyberPanel.classList.remove('hidden');
+                    cyberPanel.classList.add('flex', 'items-center');
                 } else {
-                    matrixPanel.classList.add('hidden');
-                    matrixPanel.classList.remove('flex', 'items-center');
+                    cyberPanel.classList.add('hidden');
+                    cyberPanel.classList.remove('flex', 'items-center');
                 }
             }
         });
     }
 
 
-    // Matrix Controls
+    // Cyber Controls
 
-    console.log('[Controls] Calling setupMatrixControls()...');
-    setTimeout(() => setupMatrixControls(), 50);
+    console.log('[Controls] Calling setupCyberControls()...');
+    setTimeout(() => setupCyberControls(), 50);
 
     // Mobile Bottom Navigation Handlers
     if (els.mobilePresetsBtn) {
@@ -847,8 +851,8 @@ export function setupUI() {
         }
     }
 
-    // Setup Matrix specific controls
-    // Legacy setupMatrixControls removed to use main function (line 3918)
+    // Setup Cyber specific controls
+    // Legacy setupCyberControls removed to use main function (line 3918)
 
 
     if (els.visualColorPicker) {
@@ -1063,7 +1067,7 @@ export function setupUI() {
     // --- Visualizer Initialization & Defaults ---
 
     // Apply visual defaults once visualizer is actually loaded (lazy loader)
-    const applyVisualDefaults = () => {
+    const applyVisualDefaults = async () => {
         console.log('[Controls] Applying visual defaults starting...');
         const viz = getVisualizer();
         if (!viz) {
@@ -1072,22 +1076,30 @@ export function setupUI() {
         }
 
         try {
-            // Ensure Flow (particles) and Matrix are BOTH active on load
-            if (!viz.activeModes.has('particles')) {
-                viz.toggleMode('particles');
-            }
-            if (!viz.activeModes.has('matrix')) {
-                viz.toggleMode('matrix');
-            }
+            // Ensure Flow (particles), Galaxy, Dragon, and Cyber are active on load per user request
+            // BUT delay the loading slightly to prevent iOS/Safari WebGL watchdog from crashing the tab
 
-            // Force Mindwave logic mode (MW) for Matrix
-            if (viz.setMatrixMode) viz.setMatrixMode(true);
+            const reqMode = async (mode) => {
+                if (!viz.activeModes.has(mode)) {
+                    viz.toggleMode(mode);
+                    // Yield to browser to compile shaders and update DOM
+                    await new Promise(r => requestAnimationFrame(r));
+                }
+            };
 
-            // Matrix Rainbow mode is forced to true on load per user request
+            await reqMode('particles');
+            await reqMode('cyber');
+            await reqMode('galaxy');
+            await reqMode('dragon');
+
+            // Force Mindwave logic mode (MW) for Cyber
+            if (viz.setCyberMode) viz.setCyberMode(true);
+
+            // Cyber Rainbow mode is forced to true on load per user request
             const isRainbowEnabled = true;
 
-            if (viz.setMatrixRainbow) viz.setMatrixRainbow(isRainbowEnabled);
-            const rainbowToggle = document.getElementById('matrixRainbowToggle');
+            if (viz.setCyberRainbow) viz.setCyberRainbow(isRainbowEnabled);
+            const rainbowToggle = document.getElementById('cyberRainbowToggle');
             if (rainbowToggle) rainbowToggle.checked = isRainbowEnabled;
 
             // Sync UI labels
@@ -1099,6 +1111,7 @@ export function setupUI() {
                 { el: els.cubeBtn, mode: 'box' },
                 { el: els.dragonBtn, mode: 'dragon' },
                 { el: els.galaxyBtn, mode: 'galaxy' },
+                { el: els.mandalaBtn, mode: 'mandala' },
 
                 { el: els.flowBtn, mode: 'particles' },
                 { el: els.lavaBtn, mode: 'lava' },
@@ -1106,6 +1119,7 @@ export function setupUI() {
                 { el: els.rainBtn, mode: 'rainforest' },
                 { el: els.zenBtn, mode: 'zengarden' },
                 { el: els.oceanBtn, mode: 'ocean' },
+                { el: els.cyberBtn, mode: 'cyber' },
                 { el: els.matrixBtn, mode: 'matrix' }
             ];
             buttons.forEach(({ el, mode }) => {
@@ -1119,13 +1133,13 @@ export function setupUI() {
                 }
             });
 
-            // Show matrix panel if matrix is active
-            const matrixPanel = document.getElementById('matrixSettingsPanel');
-            if (matrixPanel && viz.activeModes.has('matrix')) {
-                if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
-                if (state.matrixPanelOpen) {
-                    matrixPanel.classList.remove('hidden');
-                    matrixPanel.classList.add('flex', 'items-center');
+            // Show cyber panel if cyber is active
+            const cyberPanel = document.getElementById('cyberSettingsPanel');
+            if (cyberPanel && viz.activeModes.has('cyber')) {
+                if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = true;
+                if (state.cyberPanelOpen) {
+                    cyberPanel.classList.remove('hidden');
+                    cyberPanel.classList.add('flex', 'items-center');
                 }
             }
 
@@ -1153,6 +1167,12 @@ export function setupUI() {
             console.log('[Controls] Visualizer and controls revealed');
 
             console.log('[Controls] Visual defaults applied (streamlined)');
+
+            // Explicitly force visuals to play on load per user request
+            if (typeof resumeVisuals === 'function') {
+                resumeVisuals();
+            }
+
         } catch (e) {
             console.error('[Controls] Error in applyVisualDefaults:', e);
             const canvas = document.getElementById('visualizer');
@@ -1622,7 +1642,7 @@ async function applyAIPreset(result) {
         const visualMap = {
             'flow': 'particles',
             'zen': 'zengarden',
-            'matrix': 'matrix',
+            'cyber': 'cyber',
             'rain': 'rainforest'
         };
 
@@ -2637,6 +2657,7 @@ export function setVisualMode(mode, forceState = null) {
         { el: els.rainBtn, mode: 'rainforest' },
         { el: els.zenBtn, mode: 'zengarden' },
         { el: els.oceanBtn, mode: 'ocean' },
+        { el: els.cyberBtn, mode: 'cyber' },
         { el: els.matrixBtn, mode: 'matrix' }
     ];
 
@@ -2657,24 +2678,39 @@ export function setVisualMode(mode, forceState = null) {
         }
     });
 
-    // Hide Matrix Settings Panel if Matrix is no longer active
-    const matrixPanel = document.getElementById('matrixSettingsPanel');
-    if (matrixPanel && !activeModes.has('matrix')) {
-        matrixPanel.classList.add('hidden');
-        matrixPanel.classList.remove('flex', 'items-center');
+    // Hide Panels if modes are no longer active
+    const cyberPanel = document.getElementById('cyberSettingsPanel');
+    if (cyberPanel && !activeModes.has('cyber') && !activeModes.has('matrix')) {
+        cyberPanel.classList.add('hidden');
+        cyberPanel.classList.remove('flex', 'items-center');
     }
 
-    // Toggle Matrix Settings Panel
-    if (matrixPanel) {
-        // Initialize state if undefined
-        if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
+    const galaxyPanel = document.getElementById('galaxySettingsPanel');
+    if (galaxyPanel && !activeModes.has('galaxy')) {
+        galaxyPanel.classList.add('hidden');
+        galaxyPanel.classList.remove('flex', 'items-center');
+    }
 
-        if (activeModes.has('matrix') && state.matrixPanelOpen) {
-            matrixPanel.classList.remove('hidden');
-            matrixPanel.classList.add('flex', 'items-center');
+    // Toggle Panels
+    if (cyberPanel) {
+        if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = true;
+        if ((activeModes.has('cyber') || activeModes.has('matrix')) && state.cyberPanelOpen) {
+            cyberPanel.classList.remove('hidden');
+            cyberPanel.classList.add('flex', 'items-center');
         } else {
-            matrixPanel.classList.add('hidden');
-            matrixPanel.classList.remove('flex', 'items-center');
+            cyberPanel.classList.add('hidden');
+            cyberPanel.classList.remove('flex', 'items-center');
+        }
+    }
+
+    if (galaxyPanel) {
+        if (typeof state.galaxyPanelOpen === 'undefined') state.galaxyPanelOpen = true;
+        if (activeModes.has('galaxy') && state.galaxyPanelOpen) {
+            galaxyPanel.classList.remove('hidden');
+            galaxyPanel.classList.add('flex', 'items-center');
+        } else {
+            galaxyPanel.classList.add('hidden');
+            galaxyPanel.classList.remove('flex', 'items-center');
         }
     }
 }
@@ -2900,13 +2936,13 @@ function enforceLightThemeStyles() {
 export function initMixer() {
     els.soundscapeContainer.innerHTML = '';
     SOUNDSCAPES.forEach(s => {
-        // Force Bells to 0 volume per user request, or init missing
-        if (!state.soundscapeSettings[s.id] || s.id === 'bells') {
+        // Init missing soundscapes to 0
+        if (!state.soundscapeSettings[s.id]) {
             state.soundscapeSettings[s.id] = { vol: 0, tone: 0.5, speed: 0.5 };
         }
         const settings = state.soundscapeSettings[s.id];
         const item = document.createElement('div');
-        item.className = "soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1";
+        item.className = `soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1${settings.vol > 0 ? ' soundscape-active' : ''}`;
         item.innerHTML = `<label class="text-[10px] font-semibold truncate mb-1 block atmos-label" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] fader-label font-normal">${s.bpm} BPM</span>` : ''}</label>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">VOL</span><input type="range" min="0" max="0.5" step="0.01" value="${settings.vol}" class="flex-1 h-1" data-id="${s.id}" data-type="vol"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="vol">${Math.round(settings.vol * 200)}%</span></div>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">TONE</span><input type="range" min="0" max="1" step="0.01" value="${settings.tone}" class="flex-1 tone-slider h-1" data-id="${s.id}" data-type="tone"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="tone">${Math.round(settings.tone * 100)}%</span></div>
@@ -2923,6 +2959,13 @@ export function initMixer() {
             state.soundscapeSettings[s.id].vol = v;
             updateSoundscape(s.id, 'vol', v);
             saveStateToLocal();
+
+            // Toggle active border on the soundscape item
+            if (v > 0) {
+                item.classList.add('soundscape-active');
+            } else {
+                item.classList.remove('soundscape-active');
+            }
 
             // When ambience volume is increased, just ensure visuals are running and sync button states
             if (v > 0) {
@@ -3400,7 +3443,7 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     state.activePresetType = type;
 
     // 1. Total Immersion: Apply Visuals
-    const { BRAINWAVE_VISUALS } = await import('../state.js');
+    const { BRAINWAVE_VISUALS, HEALING_VISUALS } = await import('../state.js');
     if (BRAINWAVE_VISUALS[type]) {
         console.log('[Controls] Total Immersion: Applying brainwave visuals', BRAINWAVE_VISUALS[type]);
         if (window.setVisualMode) {
@@ -3413,12 +3456,8 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
             if (viz && viz.setIntent) viz.setIntent(type);
         });
     } else if (type.startsWith('heal-')) {
-        // Healing Frequency visual logic
-        let healingVisuals = ['particles', 'waves']; // Default for deeper healing (852Hz, 963Hz)
-        const freq = parseInt(type.split('-')[1]);
-        if (freq <= 396) healingVisuals = ['zengarden', 'particles']; // Grounding, calming
-        else if (freq <= 528) healingVisuals = ['rainforest', 'ocean']; // Restorative, soothing
-        else if (freq <= 741) healingVisuals = ['particles', 'ocean']; // Flowing energy
+        // Healing Frequency visual logic using multi-visual mapping
+        const healingVisuals = HEALING_VISUALS[type] || ['waves'];
 
         console.log('[Controls] Total Immersion: Applying healing visuals', healingVisuals);
         if (window.setVisualMode) window.setVisualMode(healingVisuals);
@@ -3438,18 +3477,7 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     }
 
     // 1. Update UI Buttons & Sync Presence
-    if (els.presetButtons) {
-        els.presetButtons.forEach(b => {
-            b.classList.remove('bg-white/10', 'border-white/20');
-            b.classList.add('bg-white/5', 'border-white/10');
-        });
-
-        const targetBtn = btnElement || document.querySelector(`.preset-btn[onclick*="'${type}'"]`);
-        if (targetBtn) {
-            targetBtn.classList.remove('bg-white/5', 'border-white/10');
-            targetBtn.classList.add('bg-white/10', 'border-white/20');
-        }
-    }
+    updatePresetButtons(type);
 
     // Force immediate presence update
     updatePresenceOnPresetChange();
@@ -4005,7 +4033,7 @@ function getThemeDesc(key) {
         case 'abyss': return "Total Darkness";
         case 'cyberpunk': return "Neon & High-Contrast";
         case 'nebula': return "Cosmic Depth";
-        case 'quantum': return "Matrix Grid";
+        case 'quantum': return "Cyber Grid";
         case 'sunset': return "Synthwave Glow";
 
         // Ambassador Themes
@@ -4090,14 +4118,14 @@ export function updatePresetButtons(activeType) {
     if (!els.presetButtons) return;
 
     els.presetButtons.forEach(b => {
-        b.classList.remove('bg-white/10', 'border-white/20');
+        b.classList.remove('active', 'bg-white/10', 'border-white/20');
         b.classList.add('bg-white/5', 'border-white/10');
 
         // Check if this button matches the active type
         // Note: onclick string matching is fragile, but consistent with existing app structure
         if (activeType && b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${activeType}'`)) {
             b.classList.remove('bg-white/5', 'border-white/10');
-            b.classList.add('bg-white/10', 'border-white/20');
+            b.classList.add('active', 'bg-white/10', 'border-white/20');
         }
     });
 }
@@ -4286,6 +4314,10 @@ function getCategoryColor(cat) {
         return {
             name: 'red',
             text: 'text-red-400',
+            hex: '#ef4444',
+            hexBg: 'rgba(239,68,68,0.2)',
+            hexBorder: 'rgba(239,68,68,0.4)',
+            hexGlow: '0 0 12px rgba(239,68,68,0.3)',
             bg: 'bg-red-500/20',
             border: 'border-red-500/30',
             from: 'from-red-500',
@@ -4296,6 +4328,10 @@ function getCategoryColor(cat) {
         return {
             name: 'blue',
             text: 'text-blue-400',
+            hex: '#3b82f6',
+            hexBg: 'rgba(59,130,246,0.2)',
+            hexBorder: 'rgba(59,130,246,0.4)',
+            hexGlow: '0 0 12px rgba(59,130,246,0.3)',
             bg: 'bg-blue-500/20',
             border: 'border-blue-500/30',
             from: 'from-blue-500',
@@ -4306,6 +4342,10 @@ function getCategoryColor(cat) {
         return {
             name: 'gold',
             text: 'text-amber-500',
+            hex: '#f59e0b',
+            hexBg: 'rgba(245,158,11,0.2)',
+            hexBorder: 'rgba(245,158,11,0.4)',
+            hexGlow: '0 0 12px rgba(245,158,11,0.3)',
             bg: 'bg-amber-500/20',
             border: 'border-amber-500/30',
             from: 'from-amber-400',
@@ -4316,6 +4356,10 @@ function getCategoryColor(cat) {
         return {
             name: 'emerald',
             text: 'text-emerald-400',
+            hex: '#10b981',
+            hexBg: 'rgba(16,185,129,0.2)',
+            hexBorder: 'rgba(16,185,129,0.4)',
+            hexGlow: '0 0 12px rgba(16,185,129,0.3)',
             bg: 'bg-emerald-500/20',
             border: 'border-emerald-500/30',
             from: 'from-emerald-500',
@@ -4326,6 +4370,10 @@ function getCategoryColor(cat) {
         return {
             name: 'purple',
             text: 'text-purple-400',
+            hex: '#a855f7',
+            hexBg: 'rgba(168,85,247,0.2)',
+            hexBorder: 'rgba(168,85,247,0.4)',
+            hexGlow: '0 0 12px rgba(168,85,247,0.3)',
             bg: 'bg-purple-500/20',
             border: 'border-purple-500/30',
             from: 'from-purple-500',
@@ -4336,17 +4384,25 @@ function getCategoryColor(cat) {
         return {
             name: 'indigo',
             text: 'text-indigo-400',
+            hex: '#6366f1',
+            hexBg: 'rgba(99,102,241,0.2)',
+            hexBorder: 'rgba(99,102,241,0.4)',
+            hexGlow: '0 0 12px rgba(99,102,241,0.3)',
             bg: 'bg-indigo-500/20',
             border: 'border-indigo-500/30',
             from: 'from-indigo-500',
             to: 'to-blue-600',
-            glow: 'shadow-indigo-500/30'
+            glow: 'shadow-blue-500/30'
         };
     }
     // Default
     return {
         name: 'gray',
         text: 'text-[var(--text-muted)]',
+        hex: '#94a3b8',
+        hexBg: 'rgba(255,255,255,0.05)',
+        hexBorder: 'rgba(255,255,255,0.15)',
+        hexGlow: 'none',
         bg: 'bg-white/5',
         border: 'border-white/10',
         from: 'from-gray-500',
@@ -4487,26 +4543,11 @@ function renderDJPads(category) {
         }
 
         const pad = document.createElement('button');
-        pad.className = `dj-pad group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 active:scale-95
-            ${isActive
-                ? `bg-gradient-to-br ${gradientFrom}/30 ${gradientTo}/20 ${borderColor} shadow-lg ${glowColor}`
-                : inactiveClasses}`;
-
-        pad.dataset.soundId = id;
-        pad.dataset.canLoop = canLoop;
-
-        // Force inline colors for Light Mode Inactive
-        if (!isActive && isLight) {
-            pad.style.borderColor = textColor.replace('text-', 'var(--color-').replace('-400', '-500'); // Approximate or use standard var if possible? 
-            // Better: use the hex colors from getCategoryColor logic/map if we had access, 
-            // OR just use the computed color of the text class.
-            // Simpler: Use the text class for the element, and set border-color: currentColor
-            pad.style.borderColor = 'currentColor';
-            pad.style.color = 'currentColor';
-            // Wait, we need to SET the color first. 
-            // The class `textColor` (e.g. text-blue-400) is NOT applied to the pad container, it's inside on the icon/label?
-            // Actually, usually `text-blue-400` is applied to inner, but we want the Whole Pad to have this text color so border matches.
-            pad.classList.add(textColor);
+        if (isActive) {
+            pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-[var(--accent)] hover:bg-white/10 transition-all group py-3`;
+            pad.style.boxShadow = `0 0 12px var(--accent-glow)`;
+        } else {
+            pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3`;
         }
 
         // Add loop indicator if looping
@@ -4665,21 +4706,11 @@ renderAllDJPads = function () {
             }
 
             const pad = document.createElement('button');
-            pad.className = `dj-pad group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 active:scale-95
-                ${isActive
-                    ? `bg-gradient-to-br ${gradientFrom}/30 ${gradientTo}/20 ${borderColor} shadow-lg ${glowColor}`
-                    : inactiveClasses}`;
-
-            pad.dataset.soundId = id;
-            pad.dataset.canLoop = canLoop;
-
-            // Force inline colors for Light Mode Inactive
-            if (!isActive && isLight) {
-                // Approximate valid text color class usage or fallback
-                // We use currentColor approach which is safest
-                pad.style.borderColor = 'currentColor';
-                pad.style.color = 'currentColor';
-                pad.classList.add(headerColor); // headerColor is e.g. 'text-blue-400'
+            if (isActive) {
+                pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-[var(--accent)] hover:bg-white/10 transition-all group py-3`;
+                pad.style.boxShadow = `0 0 12px var(--accent-glow)`;
+            } else {
+                pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3`;
             }
 
             const loopIndicator = isActive ? `<div class="absolute top-1 right-1 w-2 h-2 rounded-full bg-gradient-to-r ${gradientFrom} ${gradientTo} animate-pulse"></div>` : '';
@@ -5065,28 +5096,58 @@ const INFO_CONTENT = {
     }
 };
 
-// --- MATRIX SETTINGS CONTROL (UNIFIED) ---
-window.toggleMatrixSettings = function (btn) {
-    const panel = document.getElementById('matrixSettingsPanel');
+// --- GALAXY SUN STYLE TOGGLE ---
+let currentGalaxySunStyle = 'sun'; // 'sun' (flat geometric) or 'sun2' (tribal cone)
+window.toggleGalaxySun = function () {
+    currentGalaxySunStyle = currentGalaxySunStyle === 'sun' ? 'sun2' : 'sun';
+    const viz = getVisualizer();
+    if (viz && viz.setGalaxySunStyle) {
+        viz.setGalaxySunStyle(currentGalaxySunStyle);
+    }
+    const label = currentGalaxySunStyle === 'sun' ? 'Sun ☀️' : 'Tribal Sun 🌞';
+    showToast(`Galaxy Sun: ${label}`, 'info');
+};
+
+// --- CYBER SETTINGS CONTROL (UNIFIED) ---
+window.toggleCyberSettings = function (btn) {
+    const panel = document.getElementById('cyberSettingsPanel');
     if (!panel) return;
 
     // Toggle state
-    if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = false;
-    state.matrixPanelOpen = !state.matrixPanelOpen;
+    if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = false;
+    state.cyberPanelOpen = !state.cyberPanelOpen;
 
     // Update UI
-    if (state.matrixPanelOpen) {
+    if (state.cyberPanelOpen) {
         panel.classList.remove('hidden');
         panel.classList.add('flex', 'items-center');
 
         // Ensure panel's toggle matches current rainbow state
         const viz = getVisualizer();
-        const rainbowToggle = document.getElementById('matrixRainbowToggle');
-        if (viz && viz.matrixMaterial && viz.matrixMaterial.uniforms && rainbowToggle) {
-            rainbowToggle.checked = (viz.matrixMaterial.uniforms.uRainbow.value > 0.5);
+        const rainbowToggle = document.getElementById('cyberRainbowToggle');
+        if (viz && viz.cyberMaterial && viz.cyberMaterial.uniforms && rainbowToggle) {
+            rainbowToggle.checked = (viz.cyberMaterial.uniforms.uRainbow.value > 0.5);
             // Also update labels
             if (window.updateRainbowLabels) window.updateRainbowLabels();
         }
+    } else {
+        panel.classList.add('hidden');
+        panel.classList.remove('flex', 'items-center');
+    }
+};
+
+window.toggleGalaxySettings = function (btn) {
+    const panel = document.getElementById('galaxySettingsPanel');
+    if (!panel) return;
+
+    // Toggle state
+    if (typeof state.galaxyPanelOpen === 'undefined') state.galaxyPanelOpen = false;
+    state.galaxyPanelOpen = !state.galaxyPanelOpen;
+
+    // Update UI
+    if (state.galaxyPanelOpen) {
+        panel.classList.remove('hidden');
+        panel.classList.add('flex', 'items-center');
     } else {
         panel.classList.add('hidden');
         panel.classList.remove('flex', 'items-center');
@@ -5254,21 +5315,21 @@ window.addEventListener('resize', () => {
 window.adjustActiveModal = adjustModalLayout;
 
 
-// --- MATRIX SETTINGS CONTROL ---
+// --- CYBER SETTINGS CONTROL ---
 // DELETED: Moved to unified definition above
 
-function setupMatrixControls() {
-    console.log('[Controls] setupMatrixControls (Main) CALLED');
-    const closeBtn = document.getElementById('matrixCloseBtn');
-    const resetBtn = document.getElementById('matrixResetBtn');
+function setupCyberControls() {
+    console.log('[Controls] setupCyberControls (Main) CALLED');
+    const closeBtn = document.getElementById('cyberCloseBtn');
+    const resetBtn = document.getElementById('cyberResetBtn');
 
     if (closeBtn) {
         // Clone to replace any existing listeners to be safe, or just add new one
         // A simple addEventListener is fine usually.
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            state.matrixPanelOpen = false;
-            const panel = document.getElementById('matrixSettingsPanel');
+            state.cyberPanelOpen = false;
+            const panel = document.getElementById('cyberSettingsPanel');
             if (panel) {
                 panel.classList.add('hidden');
                 panel.classList.remove('flex', 'items-center');
@@ -5282,41 +5343,41 @@ function setupMatrixControls() {
             // Reset logic
             const viz = getVisualizer();
             if (viz) {
-                viz.setMatrixColor('#00FF41');
-                viz.setMatrixRainbow(false);
-                viz.setMatrixSpeed(1.0);
-                viz.setMatrixLength(1.0);
-                viz.setMatrixAngle(0);
+                viz.setCyberColor('#00FF41');
+                viz.setCyberRainbow(false);
+                viz.setCyberSpeed(1.0);
+                viz.setCyberLength(1.0);
+                viz.setCyberAngle(0);
 
                 // Reset sliders/inputs if they exist
-                const colorPicker = document.getElementById('matrixColorPicker');
+                const colorPicker = document.getElementById('cyberColorPicker');
                 if (colorPicker) colorPicker.value = '#00FF41';
 
-                const rainbowToggle = document.getElementById('matrixRainbowToggle');
+                const rainbowToggle = document.getElementById('cyberRainbowToggle');
                 if (rainbowToggle) rainbowToggle.checked = false;
 
-                const speedSlider = document.getElementById('matrixSpeedSlider');
-                if (speedSlider) { speedSlider.value = 1.0; document.getElementById('matrixSpeedVal').textContent = '1.0x'; }
+                const speedSlider = document.getElementById('cyberSpeedSlider');
+                if (speedSlider) { speedSlider.value = 1.0; document.getElementById('cyberSpeedVal').textContent = '1.0x'; }
 
-                const lengthSlider = document.getElementById('matrixLengthSlider');
-                if (lengthSlider) { lengthSlider.value = 1.0; document.getElementById('matrixLengthVal').textContent = '1.0x'; }
+                const lengthSlider = document.getElementById('cyberLengthSlider');
+                if (lengthSlider) { lengthSlider.value = 1.0; document.getElementById('cyberLengthVal').textContent = '1.0x'; }
 
-                const angleSlider = document.getElementById('matrixAngleSlider');
-                if (angleSlider) { angleSlider.value = 0; document.getElementById('matrixAngleVal').textContent = '0°'; }
+                const angleSlider = document.getElementById('cyberAngleSlider');
+                if (angleSlider) { angleSlider.value = 0; document.getElementById('cyberAngleVal').textContent = '0°'; }
             }
         });
     }
 
     // --- NEW: Color & Rainbow Listeners ---
     const updateSwatch = (hex) => {
-        const swatch = document.getElementById('matrixColorSwatch');
+        const swatch = document.getElementById('cyberColorSwatch');
         if (swatch) swatch.style.backgroundColor = hex;
     };
 
-    const colorPicker = document.getElementById('matrixColorPicker');
+    const colorPicker = document.getElementById('cyberColorPicker');
     if (colorPicker) {
         // Init sync
-        const swatch = document.getElementById('matrixColorSwatch');
+        const swatch = document.getElementById('cyberColorSwatch');
         if (swatch) swatch.style.backgroundColor = colorPicker.value;
 
         colorPicker.addEventListener('input', (e) => {
@@ -5325,15 +5386,15 @@ function setupMatrixControls() {
 
             const viz = getVisualizer();
             if (viz) {
-                if (viz.setMatrixColor) viz.setMatrixColor(val);
-                localStorage.setItem('mindwave_matrix_color', val);
+                if (viz.setCyberColor) viz.setCyberColor(val);
+                localStorage.setItem('mindwave_cyber_color', val);
 
                 // Switch off rainbow mode automatically if color is changed
-                const rainbowToggle = document.getElementById('matrixRainbowToggle');
+                const rainbowToggle = document.getElementById('cyberRainbowToggle');
                 if (rainbowToggle && rainbowToggle.checked) {
                     rainbowToggle.checked = false;
-                    localStorage.setItem('mindwave_matrix_rainbow', 'false');
-                    if (viz.setMatrixRainbow) viz.setMatrixRainbow(false);
+                    localStorage.setItem('mindwave_cyber_rainbow', 'false');
+                    if (viz.setCyberRainbow) viz.setCyberRainbow(false);
                     setupUI.updateRainbowLabels();
                 }
             }
@@ -5342,7 +5403,7 @@ function setupMatrixControls() {
 
     // --- RAINBOW LABELS HELPER ---
     setupUI.updateRainbowLabels = () => {
-        const rainbowToggle = document.getElementById('matrixRainbowToggle');
+        const rainbowToggle = document.getElementById('cyberRainbowToggle');
         if (!rainbowToggle) return;
         const labelRGB = document.getElementById('labelRGB');
         const labelRainbow = document.getElementById('labelRainbow');
@@ -5357,7 +5418,7 @@ function setupMatrixControls() {
         }
     };
 
-    const rainbowToggle = document.getElementById('matrixRainbowToggle');
+    const rainbowToggle = document.getElementById('cyberRainbowToggle');
     const labelRGB = document.getElementById('labelRGB');
     const labelRainbow = document.getElementById('labelRainbow');
 
@@ -5365,10 +5426,10 @@ function setupMatrixControls() {
         // Update on change
         rainbowToggle.addEventListener('change', (e) => {
             const viz = getVisualizer();
-            if (viz && viz.setMatrixRainbow) {
-                viz.setMatrixRainbow(e.target.checked);
+            if (viz && viz.setCyberRainbow) {
+                viz.setCyberRainbow(e.target.checked);
             }
-            localStorage.setItem('mindwave_matrix_rainbow', e.target.checked ? 'true' : 'false');
+            localStorage.setItem('mindwave_cyber_rainbow', e.target.checked ? 'true' : 'false');
             setupUI.updateRainbowLabels();
         });
 
@@ -5378,8 +5439,8 @@ function setupMatrixControls() {
                 if (rainbowToggle.checked) {
                     rainbowToggle.checked = false;
                     const viz = getVisualizer();
-                    if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(false);
-                    localStorage.setItem('mindwave_matrix_rainbow', 'false');
+                    if (viz && viz.setCyberRainbow) viz.setCyberRainbow(false);
+                    localStorage.setItem('mindwave_cyber_rainbow', 'false');
                     setupUI.updateRainbowLabels();
                 }
             });
@@ -5389,8 +5450,8 @@ function setupMatrixControls() {
                 if (!rainbowToggle.checked) {
                     rainbowToggle.checked = true;
                     const viz = getVisualizer();
-                    if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(true);
-                    localStorage.setItem('mindwave_matrix_rainbow', 'true');
+                    if (viz && viz.setCyberRainbow) viz.setCyberRainbow(true);
+                    localStorage.setItem('mindwave_cyber_rainbow', 'true');
                     setupUI.updateRainbowLabels();
                 }
             });
@@ -5401,53 +5462,77 @@ function setupMatrixControls() {
     }
 
     // --- NEW: Slider Listeners ---
-    const speedSlider = document.getElementById('matrixSpeedSlider');
-    const speedVal = document.getElementById('matrixSpeedVal');
+    const speedSlider = document.getElementById('cyberSpeedSlider');
+    const speedVal = document.getElementById('cyberSpeedVal');
     if (speedSlider && speedVal) {
         speedSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             speedVal.textContent = val.toFixed(1) + 'x';
             const viz = getVisualizer();
-            if (viz && viz.setMatrixSpeed) viz.setMatrixSpeed(val);
+            if (viz && viz.setCyberSpeed) viz.setCyberSpeed(val);
         });
     }
 
-    const lengthSlider = document.getElementById('matrixLengthSlider');
-    const lengthVal = document.getElementById('matrixLengthVal');
+    const lengthSlider = document.getElementById('cyberLengthSlider');
+    const lengthVal = document.getElementById('cyberLengthVal');
     if (lengthSlider && lengthVal) {
         lengthSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             lengthVal.textContent = val.toFixed(1) + 'x';
             const viz = getVisualizer();
-            if (viz && viz.setMatrixLength) viz.setMatrixLength(val);
+            if (viz && viz.setCyberLength) viz.setCyberLength(val);
         });
     }
 
-    const angleSlider = document.getElementById('matrixAngleSlider');
-    const angleVal = document.getElementById('matrixAngleVal');
+    const angleSlider = document.getElementById('cyberAngleSlider');
+    const angleVal = document.getElementById('cyberAngleVal');
     if (angleSlider && angleVal) {
         angleSlider.addEventListener('input', (e) => {
             const val = parseInt(e.target.value);
             angleVal.textContent = val + '°';
             const viz = getVisualizer();
-            if (viz && viz.setMatrixAngle) viz.setMatrixAngle(val);
+            if (viz && viz.setCyberAngle) viz.setCyberAngle(val);
         });
     }
 
-    // === MATRIX MODE SELECTOR (3 buttons: RND / MW / TXT) ===
-    const modeBtns = document.querySelectorAll('[data-matrix-mode]');
-    const textInput = document.getElementById('matrixTextInput');
-    const textInputWrapper = document.getElementById('matrixCustomTextInput');
-    const modeToggle = document.getElementById('matrixModeToggle'); // legacy compat
+    // --- NEW: Galaxy Rotation Listeners ---
+    const rx = document.getElementById('galaxySunRX');
+    const ry = document.getElementById('galaxySunRY');
+    const rz = document.getElementById('galaxySunRZ');
+
+    if (rx) {
+        rx.addEventListener('input', (e) => {
+            const viz = getVisualizer();
+            if (viz && viz.setGalaxySunRotation) viz.setGalaxySunRotation('x', e.target.value);
+        });
+    }
+    if (ry) {
+        ry.addEventListener('input', (e) => {
+            const viz = getVisualizer();
+            if (viz && viz.setGalaxySunRotation) viz.setGalaxySunRotation('y', e.target.value);
+        });
+    }
+    if (rz) {
+        rz.addEventListener('input', (e) => {
+            const viz = getVisualizer();
+            if (viz && viz.setGalaxySunRotation) viz.setGalaxySunRotation('z', e.target.value);
+        });
+    }
+
+    // === CYBER MODE SELECTOR (4 buttons: RND / MW / TXT / INT) ===
+    const modeBtns = document.querySelectorAll('[data-cyber-mode]');
+    const textInput = document.getElementById('cyberTextInput');
+    const textInputWrapper = document.getElementById('cyberCustomTextInput');
+    const modeToggle = document.getElementById('cyberModeToggle'); // legacy compat
 
     let saveTimeout;
-    let currentMatrixMode = 'mindwave'; // default
+    let currentCyberMode = 'mindwave'; // default
 
     // Helper: highlight active button, dim others
     const setActiveMode = (mode) => {
-        currentMatrixMode = mode;
+        currentCyberMode = mode;
         modeBtns.forEach(btn => {
-            if (btn.dataset.matrixMode === mode) {
+            if (btn.dataset.cyberMode === mode) {
                 btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
                 btn.classList.remove('text-[var(--text-muted)]');
             } else {
@@ -5465,28 +5550,30 @@ function setupMatrixControls() {
         if (modeToggle) modeToggle.checked = (mode !== 'random');
 
         // Save mode
-        localStorage.setItem('mindwave_matrix_mode', mode);
+        localStorage.setItem('mindwave_cyber_mode', mode);
     };
 
     // Wire up mode buttons
     modeBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const mode = btn.dataset.matrixMode;
+            const mode = btn.dataset.cyberMode;
             setActiveMode(mode);
 
             const viz = getVisualizer();
-            if (viz && viz.setMatrixLogicMode) {
+            if (viz && viz.setCyberLogicMode) {
                 if (mode === 'random') {
-                    viz.setMatrixLogicMode('random', '');
+                    viz.setCyberLogicMode('random', '');
                 } else if (mode === 'mindwave') {
-                    viz.setMatrixLogicMode('mindwave', 'WELCOME');
+                    viz.setCyberLogicMode('mindwave', 'WELCOME');
+                } else if (mode === 'interstellar') {
+                    viz.setCyberLogicMode('interstellar', '');
                 } else if (mode === 'custom') {
                     const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : 'WELCOME';
                     if (customText.length > 0) {
-                        viz.setMatrixLogicMode('custom', customText);
+                        viz.setCyberLogicMode('custom', customText);
                     } else {
-                        viz.setMatrixLogicMode('mindwave', 'WELCOME');
+                        viz.setCyberLogicMode('mindwave', 'WELCOME');
                     }
                 }
             }
@@ -5499,51 +5586,51 @@ function setupMatrixControls() {
             const text = e.target.value.toUpperCase();
 
             // Auto-switch to custom mode if typing
-            if (currentMatrixMode !== 'custom') {
+            if (currentCyberMode !== 'custom') {
                 setActiveMode('custom');
             }
 
             const viz = getVisualizer();
-            if (viz && viz.setMatrixLogicMode) {
+            if (viz && viz.setCyberLogicMode) {
                 if (text.length > 0) {
-                    viz.setMatrixLogicMode('custom', text);
+                    viz.setCyberLogicMode('custom', text);
                 } else {
-                    viz.setMatrixLogicMode('mindwave', 'WELCOME');
+                    viz.setCyberLogicMode('mindwave', 'WELCOME');
                 }
             }
 
             // Debounce save
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                localStorage.setItem('mindwave_matrix_text', text);
+                localStorage.setItem('mindwave_cyber_text', text);
             }, 1000);
         });
 
         textInput.addEventListener('focus', () => {
-            if (currentMatrixMode !== 'custom') {
+            if (currentCyberMode !== 'custom') {
                 setActiveMode('custom');
                 const viz = getVisualizer();
-                if (viz && viz.setMatrixLogicMode) {
+                if (viz && viz.setCyberLogicMode) {
                     const text = textInput.value.toUpperCase();
-                    if (text.length > 0) viz.setMatrixLogicMode('custom', text);
-                    else viz.setMatrixLogicMode('mindwave', 'WELCOME');
+                    if (text.length > 0) viz.setCyberLogicMode('custom', text);
+                    else viz.setCyberLogicMode('mindwave', 'WELCOME');
                 }
             }
         });
     }
 
     // === Initialize State on Load ===
-    let savedMode = localStorage.getItem('mindwave_matrix_mode') || 'mindwave';
-    let savedText = localStorage.getItem('mindwave_matrix_text');
-    const savedRainbow = localStorage.getItem('mindwave_matrix_rainbow');
-    const savedColor = localStorage.getItem('mindwave_matrix_color');
-    const MATRIX_DEFAULT_TEXT = 'WELCOME';
+    let savedMode = localStorage.getItem('mindwave_cyber_mode') || 'mindwave';
+    let savedText = localStorage.getItem('mindwave_cyber_text');
+    const savedRainbow = localStorage.getItem('mindwave_cyber_rainbow');
+    const savedColor = localStorage.getItem('mindwave_cyber_color');
+    const CYBER_DEFAULT_TEXT = 'WELCOME';
 
     // Sanitize saved text to prevent "WELCOMEFINAL..." issue
     if (savedText && (savedText.includes('WELCOMEFINAL') || savedText.includes('TEJETSKI'))) {
-        console.log('[Matrix] sanitizing problematic text');
-        savedText = MATRIX_DEFAULT_TEXT;
-        localStorage.setItem('mindwave_matrix_text', MATRIX_DEFAULT_TEXT);
+        console.log('[Cyber] sanitizing problematic text');
+        savedText = CYBER_DEFAULT_TEXT;
+        localStorage.setItem('mindwave_cyber_text', CYBER_DEFAULT_TEXT);
     }
 
     if (textInput) {
@@ -5551,8 +5638,8 @@ function setupMatrixControls() {
         if (savedText && savedText.length > 0) {
             textInput.value = savedText;
         } else {
-            textInput.value = MATRIX_DEFAULT_TEXT;
-            localStorage.setItem('mindwave_matrix_text', MATRIX_DEFAULT_TEXT);
+            textInput.value = CYBER_DEFAULT_TEXT;
+            localStorage.setItem('mindwave_cyber_text', CYBER_DEFAULT_TEXT);
         }
     }
 
@@ -5561,39 +5648,39 @@ function setupMatrixControls() {
         rainbowToggle.checked = true;
         setupUI.updateRainbowLabels();
         const viz = getVisualizer();
-        if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(true);
+        if (viz && viz.setCyberRainbow) viz.setCyberRainbow(true);
     }
 
     if (colorPicker && savedColor) {
         colorPicker.value = savedColor;
         updateSwatch(savedColor);
         const viz = getVisualizer();
-        if (viz && viz.setMatrixColor) viz.setMatrixColor(savedColor);
+        if (viz && viz.setCyberColor) viz.setCyberColor(savedColor);
     }
 
     // Set initial mode and sync visualizer
     setActiveMode(savedMode);
 
-    // Matrix sub-mode logic is also triggered in applyVisualDefaults, 
+    // Cyber sub-mode logic is also triggered in applyVisualDefaults, 
     // but we ensure it's set here for immediate UI consistency.
-    const syncMatrixWithVisualizer = () => {
+    const syncCyberWithVisualizer = () => {
         const viz = getVisualizer();
-        if (viz && viz.setMatrixLogicMode) {
+        if (viz && viz.setCyberLogicMode) {
             if (savedMode === 'random') {
-                viz.setMatrixLogicMode('random', '');
+                viz.setCyberLogicMode('random', '');
             } else if (savedMode === 'mindwave') {
-                viz.setMatrixLogicMode('mindwave', 'WELCOME');
+                viz.setCyberLogicMode('mindwave', 'WELCOME');
             } else if (savedMode === 'custom') {
                 const text = (textInput && textInput.value) ? textInput.value.toUpperCase() : 'WELCOME';
-                viz.setMatrixLogicMode('custom', text);
+                viz.setCyberLogicMode('custom', text);
             }
-            console.log(`[Controls] Initial Matrix mode synced: ${savedMode}`);
+            console.log(`[Controls] Initial Cyber mode synced: ${savedMode}`);
         }
     };
 
     // Try immediately and also via applyVisualDefaults trigger
-    syncMatrixWithVisualizer();
-    window.addEventListener('visualizerReady', syncMatrixWithVisualizer);
+    syncCyberWithVisualizer();
+    window.addEventListener('visualizerReady', syncCyberWithVisualizer);
 }
 
 // --- GHOST MODE (Idle UI Fade-out) ---

@@ -197,14 +197,14 @@
             document.querySelector('.stat-value.text-purple-400').textContent = avgTime;
 
             // Update Funnel Chart
-            const funnelPath = ['page_view', 'app_load', 'sign_up', 'purchase'];
+            const funnelPath = ['daily_visit', 'viewed_pricing_modal', 'initiated_checkout', 'purchase'];
             const funnelData = funnelPath.map(step => stats.recentEvents.filter(e => e.event === step).length);
             funnelChart.data.datasets[0].data = funnelData;
             funnelChart.update();
 
-            // Update Growth Chart (Last 7 Days)
+            // Update Growth Chart (Last 7 Days - simulate with real total visits as baseline)
             const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            const dailyTraffic = days.map(() => Math.floor(Math.random() * 50) + 10); // Still some simulation for history
+            const dailyTraffic = days.map(() => Math.floor(stats.totalVisits * 0.1) + Math.floor(Math.random() * 20));
             growthChart.data.datasets[0].data = dailyTraffic;
             growthChart.update();
         }
@@ -239,7 +239,7 @@
         const funnelChart = new Chart(funnelCtx, {
             type: 'bar',
             data: {
-                labels: ['Visits', 'App Load', 'Signup', 'Purchase'],
+                labels: ['App Visits', 'Viewed Pricing', 'Started Checkout', 'Purchase'],
                 datasets: [{
                     label: 'Users',
                     data: [10000, 8200, 1200, 140],

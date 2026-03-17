@@ -1,7 +1,7 @@
 // Mindwave Studio Core
 window.NUCLEAR_MAIN_LOADED = true;
 // Core Modules for boot
-import { setupUI, applyAIIntent, showDisclaimerModal } from './ui/controls_v3.js?v=NUCLEAR_FIX_V2';
+import { setupUI, applyAIIntent, showDisclaimerModal } from './ui/controls_v3.js?v=MATRIX_FIX_V40';
 import { initFirebase, registerAuthCallback } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
 import { setupSwipeGestures } from './ui/layout.js';
@@ -55,7 +55,7 @@ window.trackFeatureUse = trackFeatureUse;
 
 // Expose onboarding globally (Lazy)
 window.startOnboarding = async (force = false) => {
-    const { startOnboarding: start } = await lazy.onboarding();
+    const { initializeOnboarding: start } = await lazy.onboarding();
     start(force);
 };
 window.startTutorial = () => window.startOnboarding(true);
@@ -85,11 +85,26 @@ window.onunhandledrejection = (event) => {
 // Initialize Application
 const initApp = () => {
     console.time('InitApp');
-    console.log("[Main] InitApp Calling - Initializing UI...");
+    console.time('InitApp');
 
     // Check if already initialized to prevent double-init
     if (window.APP_INITIALIZED) return;
     window.APP_INITIALIZED = true;
+
+    // CRASH MITIGATION: Detect high-risk macOS environments (Monterey/SIGABRT risk)
+    const ua = navigator.userAgent;
+    const isMac = ua.includes('Mac OS X');
+    const isMonterey = ua.includes('Mac OS X 12');
+    const isSafari15 = ua.includes('Version/15') && ua.includes('Safari');
+    const isHighRes = window.devicePixelRatio > 1.5;
+
+    if (isMonterey || isSafari15 || (isMac && isHighRes)) {
+        console.warn('[Main] High-risk Graphics Environment detected - Enabling Safeguards');
+        document.body.classList.add('no-backdrop-filter');
+        document.body.classList.add('system-stability-mode');
+        // Force battery saver / low LOD by default for these users
+        localStorage.setItem('mindwave_battery_saver', 'true');
+    }
 
     // Capture referral codes from URL immediately
     checkReferral();
@@ -160,12 +175,8 @@ const initApp = () => {
     // window.showFeedbackSurvey = showFeedbackSurvey; // Moved to top
 
     // Core UI Setup - Critical path
-    console.log("[Main] Attempting setupUI()...");
     if (typeof setupUI === 'function') {
-        console.log("[Main] setupUI is a function, calling now.");
-        console.time('setupUI_Total');
         setupUI();
-        console.timeEnd('setupUI_Total');
     } else if (typeof window.setupUI === 'function') {
         console.warn("[Main] setupUI not in scope but found on window. Calling fallback.");
         window.setupUI();
@@ -198,11 +209,9 @@ const initApp = () => {
     lazy.pwa().then(m => m.initPWAInstall());
 
     // Hide loading screen immediately once core UI is ready
-    // Hide loading screen immediately once core UI is ready
     const loadingScreen = document.getElementById('loadingScreen');
     if (loadingScreen) {
         // FORCE REMOVAL - Critical Path
-        console.log('[Main] Removing loading screen immediately (Time: ' + performance.now().toFixed(0) + 'ms)');
         loadingScreen.style.opacity = '0';
         loadingScreen.style.pointerEvents = 'none';
 
@@ -211,8 +220,6 @@ const initApp = () => {
             if (loadingScreen.parentNode) loadingScreen.parentNode.removeChild(loadingScreen);
         }, 500);
     }
-
-    console.log("[Main] Core UI Ready - Loading content modules...");
 
     // Defer content module loading to after paint (non-blocking)
     requestIdleCallback ? requestIdleCallback(loadContentModules) : setTimeout(loadContentModules, 100);
@@ -225,7 +232,7 @@ const initApp = () => {
 
     // Expose share function globally for UI buttons
     window.shareCurrentPreset = async () => {
-        const { Visualizer3D } = await import('./visuals/visualizer_nuclear_v4.js?v=MATRIX_FIX_V15');
+        const { Visualizer3D } = await import(`./visuals/visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`);
         const result = await copyShareLink();
         if (result.success) {
             const toast = document.createElement('div');
@@ -276,13 +283,10 @@ const initSessionMilestones = () => {
     localStorage.setItem('mindwave_session_count', sessionCount);
     localStorage.setItem('mindwave_last_session', Date.now());
 
-    console.log(`[Intelligence] Session #${sessionCount} starting.`);
-
     // Smart Triggers
     setTimeout(() => {
         // Referral Milestone: Day 3 or Session 5
         if (sessionCount === 5 || sessionCount === 10) {
-            console.log('[Intelligence] Milestone hit: Prompting referral.');
             // We could trigger a "Share the vibes" toast or modal here
         }
 
@@ -292,7 +296,6 @@ const initSessionMilestones = () => {
             const cooldown = 24 * 60 * 60 * 1000; // 24 hours
 
             if (Date.now() - lastNag > cooldown) {
-                console.log('[Intelligence] Retention trigger: Soft-prompting upgrade.');
                 // triggerExitIntentOffer('soft_retention');
                 localStorage.setItem('mindwave_last_nag', Date.now());
             }
@@ -343,9 +346,7 @@ async function loadContentModules() {
         }
 
         // Classical Library
-        console.log("[Main] Initializing Classical...");
         classicalModule.initClassical();
-        console.log("[Main] Classical initialized successfully");
 
         // Audio Library
         await audioLibModule.initAudioLibrary();
@@ -373,8 +374,6 @@ async function loadContentModules() {
                 if (e.target === journeyModal) journeyModal.classList.add('hidden');
             });
         }
-
-        console.log("[Main] Content modules loaded successfully");
     } catch (e) {
         console.warn("[Main] Content module loading failed:", e);
     }
@@ -407,8 +406,6 @@ function initPresencePulse() {
             if (breakdown) counter.title = `Pulse: ${breakdown}`;
         }
     });
-
-    console.log('[Presence] Pulse initialized');
 }
 
 

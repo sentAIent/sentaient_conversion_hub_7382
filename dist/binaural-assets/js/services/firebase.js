@@ -176,11 +176,19 @@ export async function initFirebase() {
 
                 console.log('[Auth] Initial Tier:', state.userTier, 'Lifetime:', state.isLifetime);
 
-                // 1.5 Cloud Sync Analytics
+                // 1.5 Cloud Sync Analytics & Media Vault
                 import('./cloud-sync.js').then(module => {
                     module.syncAnalyticsFromCloud(user.uid);
                 }).catch(err => {
                     console.warn('[Cloud Sync] Failed to load module:', err);
+                });
+
+                import('./storage-manager.js').then(module => {
+                    module.syncCloudDown().catch(err => {
+                        console.warn('[StorageManager] Background sync failed:', err);
+                    });
+                }).catch(err => {
+                    console.warn('[StorageManager] Failed to load module:', err);
                 });
 
                 // 2. Background Refresh from Firestore

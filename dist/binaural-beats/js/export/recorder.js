@@ -1,5 +1,6 @@
 // Simplified recorder using only MediaRecorder (no worklet complexity)
 import { state, els } from '../state.js';
+import { saveMedia } from '../../binaural-assets/js/services/storage-manager.js';
 
 export function startRecording() {
     console.log('[Recording] Starting (simplified MediaRecorder mode)');
@@ -201,26 +202,35 @@ export function startExport() {
     processWithWorker(loopCount);
 }
 
-// Fast path: instant download (current behavior)
-function downloadInstantly() {
-    console.log('📥 Starting instant download...');
+// Fast path: instant save to vault
+async function downloadInstantly() {
+    console.log('📥 Saving single recording to Vault...');
 
-    const filename = `${state.currentModalName || 'mindwave_recording'}.webm`;
-    const url = URL.createObjectURL(state.currentModalBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
+    if (!state.currentModalBlob) return;
 
-    console.log('[Export] Triggering download for:', filename);
-    a.click();
+    const isVideo = state.currentModalBlob.type.includes('video');
+    const type = isVideo ? 'video' : 'audio-export';
+    const filename = `${state.currentModalName || 'mindwave_recording'}`;
 
-    setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log('[Export] ✅ Download complete! File should be saved to Downloads folder');
-    }, 100);
+    try {
+        await saveMedia(type, state.currentModalBlob, {
+            name: filename,
+            preset: state.currentPreset || 'Custom' // Assuming state.currentPreset exists
+        });
+
+        console.log('[Export] ✅ Saved to Media Vault!');
+        alert("Saved to Media Vault! You can view it in your Gallery.");
+
+        // Close modal
+        if (els.videoModal) {
+            els.videoModal.classList.remove('active');
+            if (els.playbackVideo) { els.playbackVideo.pause(); els.playbackVideo.src = ""; }
+            if (els.playbackAudio) { els.playbackAudio.pause(); }
+        }
+    } catch (e) {
+        console.error("Failed to save to vault", e);
+        alert("Failed to save recording.");
+    }
 }
 
 // Worker path: process with loops and format conversion
@@ -314,24 +324,28 @@ async function processWithWorker(loopCount) {
                 console.log('[Export Worker] ✅ Complete! Size:', buffer.byteLength, 'bytes');
 
                 const blob = new Blob([buffer], { type: mimeType || 'audio/wav' });
-                const filename = `${state.currentModalName || 'mindwave'}_x${loopCount}.${ext || 'wav'}`;
+                const filename = `${state.currentModalName || 'mindwave'}_x${loopCount}`;
 
-                // Download
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                a.click();
-
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                saveMedia('audio-export', blob, {
+                    name: filename,
+                    preset: state.currentPreset || 'Custom',
+                    loops: loopCount
+                }).then(() => {
                     if (els.loopProcessing) els.loopProcessing.style.display = 'none';
-                    console.log('[Export Worker] ✅ Download complete!');
+                    if (els.videoModal) {
+                        els.videoModal.classList.remove('active');
+                        if (els.playbackVideo) { els.playbackVideo.pause(); els.playbackVideo.src = ""; }
+                        if (els.playbackAudio) { els.playbackAudio.pause(); }
+                    }
+                    console.log('[Export Worker] ✅ Saved loop to Media Vault!');
+                    alert(`Saved ${loopCount}x loop to Media Vault!`);
                     worker.terminate();
-                }, 100);
+                }).catch(e => {
+                    console.error("Failed to save loop", e);
+                    alert("Failed to save loop.");
+                    if (els.loopProcessing) els.loopProcessing.style.display = 'none';
+                    worker.terminate();
+                });
             } else if (type === 'error') {
                 clearTimeout(workerTimeout);
                 console.error('[Export Worker] ❌ Error:', e.data.message);

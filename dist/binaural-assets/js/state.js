@@ -60,7 +60,7 @@ export const PRESET_COMBOS = [
         icon: '🌧️',
         preset: 'alpha',
         soundscapes: ['rain'],
-        visuals: ['rainforest', 'waves'],
+        visuals: ['rainforest', 'ocean', 'zengarden'],
         atmosVolume: 0.6,
         color: '#6b7280'
     },
@@ -71,7 +71,7 @@ export const PRESET_COMBOS = [
         icon: '🌙',
         preset: 'delta',
         soundscapes: ['wind'],
-        visuals: ['galaxy', 'particles'],
+        visuals: ['galaxy', 'ocean', 'zengarden'],
         atmosVolume: 0.5,
         color: '#1e3a5f'
     },
@@ -82,7 +82,7 @@ export const PRESET_COMBOS = [
         icon: '⚔️',
         preset: 'beta',
         soundscapes: ['strings', 'brass'],
-        visuals: ['dragon', 'matrix'],
+        visuals: ['dragon', 'cyber', 'particles'],
         atmosVolume: 0.4,
         color: '#b45309'
     },
@@ -93,7 +93,7 @@ export const PRESET_COMBOS = [
         icon: '🌊',
         preset: 'theta',
         soundscapes: ['ocean'],
-        visuals: ['ocean', 'waves'],
+        visuals: ['ocean', 'particles', 'flow'],
         atmosVolume: 0.7,
         color: '#0891b2'
     },
@@ -104,7 +104,7 @@ export const PRESET_COMBOS = [
         icon: '⛈️',
         preset: 'gamma',
         soundscapes: ['rain', 'wind'],
-        visuals: ['rainforest', 'box', 'matrix'],
+        visuals: ['rainforest', 'cyber', 'matrix'],
         atmosVolume: 0.5,
         color: '#4b5563'
     },
@@ -115,7 +115,7 @@ export const PRESET_COMBOS = [
         icon: '🔔',
         preset: 'mu',
         soundscapes: ['bells'],
-        visuals: ['mandala', 'zengarden'],
+        visuals: ['zengarden', 'sphere', 'particles'],
         atmosVolume: 0.4,
         color: '#a855f7'
     },
@@ -126,7 +126,7 @@ export const PRESET_COMBOS = [
         icon: '🔥',
         preset: 'alpha',
         soundscapes: ['fireplace'],
-        visuals: ['fireplace', 'lava'],
+        visuals: ['fireplace', 'lava', 'particles'],
         atmosVolume: 0.6,
         color: '#f97316'
     },
@@ -137,7 +137,7 @@ export const PRESET_COMBOS = [
         icon: '🌲',
         preset: 'theta',
         soundscapes: ['winds', 'brown', 'forest_birds'],
-        visuals: ['rainforest', 'particles'],
+        visuals: ['rainforest', 'zengarden', 'particles'],
         atmosVolume: 0.5,
         color: '#10b981'
     },
@@ -148,7 +148,7 @@ export const PRESET_COMBOS = [
         icon: '🏔️',
         preset: 'alpha',
         soundscapes: ['mountain_wind', 'forest_birds'],
-        visuals: ['galaxy', 'zengarden'],
+        visuals: ['zengarden', 'galaxy', 'sphere'],
         atmosVolume: 0.5,
         color: '#94a3b8'
     },
@@ -159,7 +159,7 @@ export const PRESET_COMBOS = [
         icon: '🛶',
         preset: 'theta',
         soundscapes: ['river', 'forest_birds'],
-        visuals: ['waves', 'particles'],
+        visuals: ['particles', 'ocean', 'matrix'],
         atmosVolume: 0.7,
         color: '#38bdf8'
     },
@@ -170,7 +170,7 @@ export const PRESET_COMBOS = [
         icon: '🌌',
         preset: 'gamma',
         soundscapes: ['strings', 'white'],
-        visuals: ['galaxy', 'mandala'],
+        visuals: ['galaxy', 'dragon', 'cyber'],
         atmosVolume: 0.45,
         color: '#8b5cf6'
     },
@@ -181,7 +181,7 @@ export const PRESET_COMBOS = [
         icon: '☀️',
         preset: 'beta',
         soundscapes: ['pink', 'wood'],
-        visuals: ['sphere', 'waves', 'particles'],
+        visuals: ['sphere', 'zengarden', 'particles'],
         atmosVolume: 0.5,
         color: '#fbbf24'
     }
@@ -189,13 +189,26 @@ export const PRESET_COMBOS = [
 
 // Brainwave-to-Visual mapping for standard presets
 export const BRAINWAVE_VISUALS = {
-    delta: ['waves', 'particles'],
-    theta: ['ocean', 'mandala'],
+    delta: ['ocean', 'zengarden'],
+    theta: ['particles', 'ocean'],
     alpha: ['zengarden', 'sphere'],
-    beta: ['box', 'matrix'],
-    gamma: ['dragon', 'galaxy'],
-    mu: ['mandala', 'sphere'],
-    'hyper-gamma': ['dragon', 'galaxy']
+    beta: ['cyber', 'dragon'],
+    gamma: ['galaxy', 'dragon', 'cyber'],
+    mu: ['sphere', 'particles'],
+    'hyper-gamma': ['dragon', 'cyber', 'matrix']
+};
+
+export const HEALING_VISUALS = {
+    'heal-174': ['ocean', 'zengarden'],      // Pain Relief
+    'heal-285': ['particles', 'sphere'],    // Tissue Regen
+    'heal-396': ['fireplace', 'dragon'],    // Liberation
+    'heal-417': ['lava', 'particles'],      // Change
+    'heal-432': ['zengarden', 'ocean'],       // Nature
+    'heal-528': ['galaxy', 'sphere', 'particles'],  // DNA Repair
+    'heal-639': ['sphere', 'particles', 'matrix'],    // Connection
+    'heal-741': ['cyber', 'matrix', 'galaxy'],  // Intuition
+    'heal-852': ['galaxy', 'dragon', 'lava'],  // Spirit
+    'heal-963': ['dragon', 'matrix', 'cyber'] // Oneness
 };
 
 export const STATE_INSIGHTS = {
@@ -224,7 +237,7 @@ export const state = {
     mediaRecorder: null, recordedChunks: [], destStreamNode: null,
     activeSoundscapes: {},
     soundscapeSettings: {},
-    matrixPanelOpen: true, // Default open when Matrix active
+    matrixPanelOpen: true, // Default open when Cyber/Matrix active
     currentSessions: [],
     currentModalBlob: null,
     currentModalIsVideo: false,
@@ -240,7 +253,7 @@ export const state = {
     currentUser: null,
     userTier: 'free', // ✅ FIX: Default to free tier, check actual subscription
     isLifetime: false, // NEW: Restricted to Lifetime members for PWA install
-    visualVibration: true, // NEW: Toggle synesthetic vibrations
+    visualVibration: false, // Default OFF — toggle synesthetic vibrations
     visualSpeedAuto: true, // Default to Hz sync
     aiVisualsLocked: false, // NEW: Prevent manual overrides when AI set the mood
 
@@ -290,9 +303,10 @@ export const state = {
     idleTimeout: null,
 
     // NEW (Lotus State Options)
-    lotusState: 'auto' // 'auto', 'full', 'faded', 'heartbeat'
+    lotusState: 'full' // 'auto', 'full', 'faded', 'heartbeat'
 };
 
+export const VISUALIZER_VERSION = 'MATRIX_RENAME_V111';
 
 // Global Elements Container
 export const els = {
@@ -344,5 +358,39 @@ export const els = {
     modalDlBtn: null, quickExportBtn: null, cancelExportBtn: null,
 
     // Media
-    playbackVideo: null, playbackAudio: null
+    playbackVideo: null, playbackAudio: null,
+
+    // Memory Guard (Performance Monitoring)
+    performanceMonitor: {
+        fpsThreshold: 15,
+        lowPerformanceCount: 0,
+        lowPerformanceLimit: 120, // ~2 seconds at 60fps drops
+        isSafeModeActive: false,
+        triggerSafeMode: function () {
+            if (this.isSafeModeActive) return;
+            this.isSafeModeActive = true;
+            console.warn("⚠️ Memory Guard: Low performance detected. Triggering Safe Mode.");
+
+            // Dispatch event for UI/Visualizers to react
+            window.dispatchEvent(new CustomEvent('mindwave:safe-mode-start'));
+
+            // Auto-cleanup: If more than 2 high-intensity modes are active, close the last one
+            if (window.state && window.state.visualizer && window.state.visualizer.activeModes) {
+                const viz = window.state.visualizer;
+                const modes = Array.from(viz.activeModes);
+                const complexModes = ['dragon', 'galaxy', 'mandala', 'cyber'];
+                const activeComplex = modes.filter(m => complexModes.includes(m));
+
+                if (activeComplex.length > 1) {
+                    const toRemove = activeComplex[activeComplex.length - 1];
+                    console.log(`Memory Guard: Closing complex mode '${toRemove}' to preserve memory.`);
+                    viz.toggleMode(toRemove);
+                }
+            }
+        },
+        reset: function () {
+            this.lowPerformanceCount = 0;
+            this.isSafeModeActive = false;
+        }
+    }
 };

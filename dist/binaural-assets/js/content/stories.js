@@ -353,6 +353,13 @@ export async function playStory(storyId, intentOnly = false) {
         storyState.audioElement.volume = storyState.volume;
         storyState.audioElement.loop = false;
 
+        // NEW: Graceful error handling for missing/broken audio assets
+        storyState.audioElement.addEventListener('error', (e) => {
+            console.error('[Stories] Audio load error:', e);
+            showToast('Narration failed to load. Continuing in Binaural-Hz Mode.', 'warning');
+            storyState.audioElement = null;
+        });
+
         storyState.audioElement.addEventListener('ended', () => {
             console.log('[Stories] Audio playback ended');
             // Keep frequencies playing, just mark audio as not playing
@@ -382,6 +389,9 @@ export async function playStory(storyId, intentOnly = false) {
     if (story.premium && !isPremium && intentOnly) {
         showToast(`✨ Intent Match: ${story.recommendedFreq.beat}Hz + ${soundscapeName}`);
         showToast(`Upgrade to hear the full story meditation!`, 'info');
+    } else if (isDraft) {
+        showToast(`🌙 "${story.title}" — Playing Frequency + ${soundscapeName}`);
+        showToast(`Voice track coming soon!`, 'info');
     } else {
         showToast(`🌙 "${story.title}" — ${story.recommendedFreq.beat}Hz + ${soundscapeName}`);
     }
@@ -661,7 +671,7 @@ export function renderStoryCards(container) {
             <!-- Premium badge -->
             <div class="absolute top-1 right-1 flex gap-1">
                 ${hasAudio ? '<span class="text-[8px] px-1 py-0.5 rounded-full bg-green-500/20 text-green-400">🎵</span>' : ''}
-                ${isDraft ? '<span class="text-[8px] px-1 py-0.5 rounded-full bg-slate-500/20 text-slate-400 font-bold">DRAFT</span>' : ''}
+                ${isDraft ? '<span class="text-[8px] px-1 py-0.5 rounded-full bg-slate-500/20 text-slate-400 font-bold">VOICE COMING SOON</span>' : ''}
                 ${story.premium ? '<span class="text-[8px] px-1 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">PRO</span>' : ''}
             </div>
             

@@ -1000,8 +1000,6 @@ function setupDisclaimerUI() {
             state.disclaimerAccepted = true;
             localStorage.setItem('mindwave_disclaimer_accepted', 'true');
             hideDisclaimerModal();
-            // Auto-start after accepting
-            handlePlayClick();
         });
     }
 
