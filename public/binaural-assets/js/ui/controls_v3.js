@@ -5390,6 +5390,7 @@ function setupCyberControls() {
 setTimeout(() => {
     if (typeof setupMatrixControls === 'function') setupMatrixControls();
     if (typeof setupCyberControls === 'function') setupCyberControls();
+    if (typeof setupMasterVisualControls === 'function') setupMasterVisualControls();
 }, 2000);
 
 window.addEventListener('resize', () => {
@@ -5432,4 +5433,103 @@ export function initVisualColorPickers() {
             e.stopPropagation();
         });
     });
+}
+
+// --- MASTER VISUAL CONTROLS ---
+export function setupMasterVisualControls() {
+    console.log('[Controls] Initializing Master Visual Controls');
+    
+    const masterColorPicker = document.getElementById('masterColorPicker');
+    const masterColorPreview = document.getElementById('masterColorPreview');
+    const masterRandomBtn = document.getElementById('masterRandomBtn');
+    const masterPrevColorBtn = document.getElementById('masterPrevColorBtn');
+    const masterVibrationToggle = document.getElementById('masterVibrationToggle');
+    
+    // Master Color Picker
+    if (masterColorPicker && masterColorPreview) {
+        masterColorPicker.addEventListener('input', (e) => {
+            const hex = e.target.value;
+            masterColorPreview.style.backgroundColor = hex;
+            
+            if (state.masterVisualColor && state.masterVisualColor !== hex) {
+                state.previousVisualColor = state.masterVisualColor;
+            } else if (!state.masterVisualColor) {
+                state.previousVisualColor = '#60a9ff';
+            }
+
+            state.masterVisualColor = hex;
+            
+            const viz = getVisualizer();
+            if (viz && viz.setVisualColor) {
+                viz.setVisualColor(hex);
+            }
+        });
+    }
+
+    // Master Random Color
+    if (masterRandomBtn) {
+        masterRandomBtn.addEventListener('click', () => {
+            const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            
+            if (masterColorPicker) masterColorPicker.value = randomHex;
+            if (masterColorPreview) masterColorPreview.style.backgroundColor = randomHex;
+            
+            if (state.masterVisualColor) {
+                state.previousVisualColor = state.masterVisualColor;
+            } else if (!state.masterVisualColor) {
+                state.previousVisualColor = '#60a9ff';
+            }
+            
+            state.masterVisualColor = randomHex;
+
+            const viz = getVisualizer();
+            if (viz && viz.setVisualColor) {
+                viz.setVisualColor(randomHex);
+            }
+        });
+    }
+
+    // Master Previous Color
+    if (masterPrevColorBtn) {
+        masterPrevColorBtn.addEventListener('click', () => {
+            if (state.previousVisualColor) {
+                const prev = state.previousVisualColor;
+                
+                state.previousVisualColor = state.masterVisualColor;
+                state.masterVisualColor = prev;
+
+                if (masterColorPicker) masterColorPicker.value = prev;
+                if (masterColorPreview) masterColorPreview.style.backgroundColor = prev;
+
+                const viz = getVisualizer();
+                if (viz && viz.setVisualColor) {
+                    viz.setVisualColor(prev);
+                }
+            }
+        });
+    }
+
+    // Master Vibration Toggle
+    if (masterVibrationToggle) {
+        
+        // Set initial UI state if vibration is already enabled in global state
+        if (state.visualVibration) {
+            masterVibrationToggle.classList.add('bg-white/20', 'border-white/50', 'shadow-[0_0_15px_rgba(255,255,255,0.3)]');
+        }
+
+        masterVibrationToggle.addEventListener('click', () => {
+            state.visualVibration = !state.visualVibration;
+            
+            if (state.visualVibration) {
+                masterVibrationToggle.classList.add('bg-white/20', 'border-white/50', 'shadow-[0_0_15px_rgba(255,255,255,0.3)]');
+            } else {
+                masterVibrationToggle.classList.remove('bg-white/20', 'border-white/50', 'shadow-[0_0_15px_rgba(255,255,255,0.3)]');
+            }
+
+            const viz = getVisualizer();
+            if (viz && viz.setVibrationEnabled) {
+                viz.setVibrationEnabled(state.visualVibration);
+            }
+        });
+    }
 }
