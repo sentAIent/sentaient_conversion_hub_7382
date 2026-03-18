@@ -1829,6 +1829,14 @@ export class Visualizer3D {
         if (this.overlayCanvas) {
             if (this.activeModes.has('cyber')) {
                 this.overlayCanvas.classList.remove('hidden');
+                // Dim 3D scene significantly to let Cyber shine, UNLESS Matrix is active
+                if (this.activeModes.has('matrix')) {
+                    this.renderer.domElement.style.opacity = '1.0';
+                } else if (this.activeModes.size > 1) {
+                    this.renderer.domElement.style.opacity = '0.3'; 
+                } else {
+                    this.renderer.domElement.style.opacity = '1.0';
+                }
                 if (!this.matrixCyberStreams || this.matrixCyberStreams.length === 0) {
                     this.generateCyberStyle();
                 }
