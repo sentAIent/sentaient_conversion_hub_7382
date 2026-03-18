@@ -838,54 +838,40 @@
                     </button>
 
                     <!-- DIVIDER -->
-                    <div class="w-px h-10 bg-gradient-to-b from-transparent via-[var(--accent)]/50 to-transparent mx-2 hidden sm:block"></div>
+                    <div class="w-px h-10 bg-gradient-to-b from-transparent via-white/20 to-transparent mx-2 hidden sm:block"></div>
 
-                    <!-- MASTER VISUAL CONTROLS MODULE -->
-                    <!-- Matches height (h-16) and styling of visual buttons, but structured as a wide control strip -->
-                    <div class="h-16 flex items-center bg-[#050510]/60 backdrop-blur-2xl rounded-xl border border-white/10 hover:border-[var(--accent)]/50 transition-all shadow-[0_0_20px_rgba(45,212,191,0.15)] group relative overflow-visible">
-                        
-                        <!-- Animated ambient background glow -->
-                        <div class="absolute inset-0 bg-gradient-to-r from-[var(--accent)]/0 via-[var(--accent)]/10 to-[var(--accent)]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-xl"></div>
-
-                        <!-- 1. Master Color Circle -->
-                        <div class="relative h-full px-4 flex flex-col items-center justify-center border-r border-white/5 hover:bg-white/5 transition-colors cursor-pointer tooltip-container z-10" onclick="document.getElementById('masterColorPicker').click()">
-                            <div class="relative w-8 h-8 rounded-full border-2 border-[var(--accent)]/50 overflow-hidden shadow-[0_0_15px_var(--accent)] flex items-center justify-center bg-black/50 group-hover:scale-110 transition-transform">
-                                <input type="color" id="masterColorPicker" class="absolute -top-4 -left-4 w-16 h-16 cursor-pointer opacity-0" value="#60a9ff">
-                                <div id="masterColorPreview" class="w-full h-full bg-[#60a9ff] transition-colors"></div>
-                            </div>
-                            <div class="custom-tooltip opacity-0 transition-opacity whitespace-nowrap z-30 pointer-events-none">Global Tone</div>
+                    <!-- MASTER COLOR PICKER -->
+                    <button class="visual-btn p-2 rounded-xl border border-[var(--accent)]/50 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem] shadow-[0_0_15px_rgba(45,212,191,0.15)]">
+                        <div class="relative w-8 h-8 rounded-full shadow-inner overflow-hidden border border-white/20">
+                            <input type="color" id="masterColorPicker" class="absolute -top-4 -left-4 w-16 h-16 opacity-0 cursor-pointer z-20" value="#60a9ff">
+                            <div id="masterColorPreview" class="absolute inset-0 bg-[#60a9ff] transition-colors z-10 pointer-events-none group-hover:scale-110"></div>
                         </div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--accent)] group-hover:text-white transition-colors">Color</span>
+                    </button>
 
-                        <!-- 2. Action Buttons Column -->
-                        <div class="h-full flex flex-col justify-center gap-1 px-3 border-r border-white/5 z-10">
-                            <!-- Randomize -->
-                            <button id="masterRandomBtn" class="h-6 px-3 mx-auto rounded text-[var(--accent)] bg-white/5 hover:bg-[var(--accent)] hover:text-black shadow-[0_0_10px_transparent] hover:shadow-[0_0_15px_var(--accent)] transition-all flex items-center justify-center active:scale-95 tooltip-container">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line>
-                                </svg>
-                                <div class="custom-tooltip opacity-0 transition-opacity whitespace-nowrap z-30 pointer-events-none">Randomize Sweep</div>
-                            </button>
-                            <!-- Undo -->
-                            <button id="masterPrevColorBtn" class="h-6 px-3 mx-auto rounded text-white/50 bg-white/5 hover:bg-white/20 hover:text-white transition-all flex items-center justify-center active:scale-95 tooltip-container">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
-                                <div class="custom-tooltip opacity-0 transition-opacity whitespace-nowrap z-30 pointer-events-none">Undo Color</div>
-                            </button>
-                        </div>
+                    <!-- MASTER RANDOM -->
+                    <button id="masterRandomBtn" class="visual-btn p-2 rounded-xl glass-pill border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem] active:scale-95">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/60 group-hover:text-white transition-colors">
+                            <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line>
+                        </svg>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-white/50 group-hover:text-white transition-colors">Random</span>
+                    </button>
 
-                        <!-- 3. Master Vibration Toggle -->
-                        <div class="relative h-full px-4 flex flex-col items-center justify-center hover:bg-white/5 transition-colors z-10 tooltip-container">
-                            <button id="masterVibrationToggle" class="w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 text-white/40 bg-black/40 border border-white/10 hover:border-white/30 hover:text-white transition-all active:scale-95 shadow-inner">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                                </svg>
-                                <span class="text-[7px] font-bold uppercase tracking-widest leading-none">Vibe</span>
-                            </button>
-                            <div class="custom-tooltip opacity-0 transition-opacity whitespace-nowrap z-30 pointer-events-none">Global Shake FX</div>
-                        </div>
+                    <!-- MASTER UNDO -->
+                    <button id="masterPrevColorBtn" class="visual-btn p-2 rounded-xl glass-pill border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem] active:scale-95">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/60 group-hover:text-white transition-colors">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-white/50 group-hover:text-white transition-colors">Undo</span>
+                    </button>
 
-                    </div>
+                    <!-- MASTER VIBRATE -->
+                    <button id="masterVibrationToggle" class="visual-btn p-2 rounded-xl glass-pill border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem] active:scale-95">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/50 group-hover:text-white transition-colors">
+                            <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
+                        </svg>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-white/50 group-hover:text-white transition-colors">Vibe</span>
+                    </button>
                 </div>
 
 

@@ -5513,12 +5513,31 @@ export function setupMasterVisualControls() {
     if (masterVibrationToggle) {
         // Helper function for UI states
         const updateVibeUI = (isOn) => {
+            const svg = masterVibrationToggle.querySelector('svg');
+            const span = masterVibrationToggle.querySelector('span');
+            
             if (isOn) {
-                masterVibrationToggle.classList.add('border-[var(--accent)]', 'text-[var(--accent)]', 'shadow-[0_0_15px_var(--accent)]', 'bg-[var(--accent)]/10');
-                masterVibrationToggle.classList.remove('text-white/40', 'border-white/10', 'bg-black/40', 'hover:border-white/30', 'hover:text-white');
+                masterVibrationToggle.classList.add('border-[var(--accent)]', 'bg-white/10', 'shadow-[0_0_15px_rgba(45,212,191,0.2)]');
+                masterVibrationToggle.classList.remove('border-white/10');
+                if (svg) {
+                    svg.classList.add('text-[var(--accent)]');
+                    svg.classList.remove('text-white/50', 'group-hover:text-white');
+                }
+                if (span) {
+                    span.classList.add('text-[var(--accent)]');
+                    span.classList.remove('text-white/50', 'group-hover:text-white');
+                }
             } else {
-                masterVibrationToggle.classList.remove('border-[var(--accent)]', 'text-[var(--accent)]', 'shadow-[0_0_15px_var(--accent)]', 'bg-[var(--accent)]/10');
-                masterVibrationToggle.classList.add('text-white/40', 'border-white/10', 'bg-black/40', 'hover:border-white/30', 'hover:text-white');
+                masterVibrationToggle.classList.remove('border-[var(--accent)]', 'bg-white/10', 'shadow-[0_0_15px_rgba(45,212,191,0.2)]');
+                masterVibrationToggle.classList.add('border-white/10');
+                if (svg) {
+                    svg.classList.remove('text-[var(--accent)]');
+                    svg.classList.add('text-white/50', 'group-hover:text-white');
+                }
+                if (span) {
+                    span.classList.remove('text-[var(--accent)]');
+                    span.classList.add('text-white/50', 'group-hover:text-white');
+                }
             }
         };
 
