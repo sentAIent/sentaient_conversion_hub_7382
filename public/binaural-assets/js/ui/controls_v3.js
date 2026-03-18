@@ -118,27 +118,40 @@ export function updateDockScaling() {
     const width = window.innerWidth;
     const footer = document.getElementById('bottomControlBar');
 
-    // Only scale the main container to avoid double-scaling nested elements like visualDock
     if (!footer) return;
 
-    let scale = 1.0;
-    if (width < 1400 && width >= 1024) {
-        scale = 0.92 + (width - 1024) / (1400 - 1024) * 0.08;
-    } else if (width < 1024 && width >= 768) {
-        scale = 0.85 + (width - 768) / (1024 - 768) * 0.07;
-    } else if (width < 768) {
-        scale = Math.max(0.7, (width / 768) * 0.9);
+    // Output CSS variables based on screen width instead of using transform: scale()
+    // This allows children to elegantly rearrange instead of becoming unreadable ants
+    let dockGap = '16px';
+    let btnSize = '56px';
+    let iconSize = '24px';
+    let auxBtnSize = '36px';
+    let auxIconSize = '14px';
+
+    if (width < 600) {
+        dockGap = '8px';
+        btnSize = '42px';
+        iconSize = '20px';
+        auxBtnSize = '32px';
+        auxIconSize = '12px';
+    } else if (width < 900) {
+        dockGap = '12px';
+        btnSize = '48px';
+        iconSize = '22px';
+        auxBtnSize = '34px';
+        auxIconSize = '13px';
     }
 
-    // Force visibility and correct positioning
-    footer.style.transform = `scale(${scale})`;
-    footer.style.transformOrigin = 'bottom center';
-    footer.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
-    footer.style.bottom = '0px';
-    footer.style.display = 'flex';
-    footer.style.zIndex = '1000';
+    footer.style.setProperty('--dock-gap', dockGap);
+    footer.style.setProperty('--dock-btn-size', btnSize);
+    footer.style.setProperty('--dock-icon-size', iconSize);
+    footer.style.setProperty('--aux-btn-size', auxBtnSize);
+    footer.style.setProperty('--aux-icon-size', auxIconSize);
+    
+    // Clear legacy transform logic
+    footer.style.transform = 'none';
 
-    console.log(`[Resizing] Footer scale set to ${scale} for width ${width}`);
+    console.log(`[Resizing] Dock CSS vars updated for width ${width}`);
 }
 window.updateDockScaling = updateDockScaling;
 
@@ -1331,6 +1344,9 @@ export function setupUI() {
 
     // Initialize UI State
     updateSyncUI();
+    
+    // Initialize Per-Visual Color Pickers
+    initVisualColorPickers();
 }
 window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
 
@@ -5380,3 +5396,40 @@ window.addEventListener('resize', () => {
     if (typeof updateDockScaling === 'function') updateDockScaling();
     if (typeof resetIdleTimer === 'function') resetIdleTimer();
 });
+
+// --- PER-VISUAL COLOR PICKERS ---
+export function initVisualColorPickers() {
+    console.log('[Controls] Initializing 13 Per-Visual RGB Pickers');
+    const colorInputs = document.querySelectorAll('input[data-visual-color]');
+    
+    colorInputs.forEach(input => {
+        const mode = input.getAttribute('data-visual-color');
+        
+        // Load saved color or use default
+        if (state.visualColors && state.visualColors[mode]) {
+            input.value = state.visualColors[mode];
+        }
+
+        // Apply color instantly on change
+        input.addEventListener('input', (e) => {
+            const newColor = e.target.value;
+            // Stop propagation so it doesn't trigger the button underneath
+            e.stopPropagation(); 
+            
+            if (state.visualColors) {
+                state.visualColors[mode] = newColor;
+            }
+            
+            // If this is the active mode, apply it to the visualizer immediately
+            const viz = getVisualizer();
+            if (viz && viz.activeModes && viz.activeModes.has(mode)) {
+                setVisualColor(newColor);
+            }
+        });
+        
+        // Prevent click from bubbling up to the mode toggle button
+        input.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    });
+}

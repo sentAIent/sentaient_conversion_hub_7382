@@ -1762,15 +1762,17 @@ export class Visualizer3D {
     }
 
     setMode(mode) {
+        const target = this.mapMode(mode);
         this.activeModes.clear();
-        this.activeModes.add(mode);
-        this.mode = mode;
+        this.activeModes.add(target);
+        this.mode = target;
         this.updateVisibility();
-        this.updateLabel(mode);
+        this.updateLabel(target);
     }
 
     mapMode(mode) {
         if (mode === 'interstellar') return 'matrix'; // UI "Matrix" -> Internal 3D Matrix
+        if (mode === 'cube') return 'box';
         return mode;
     }
 
@@ -2363,9 +2365,9 @@ export class Visualizer3D {
 
                 // Tribal sun - absolute 3D rotation controlled by sliders
                 if (this.galaxySunMesh) {
-                    this.galaxySunMesh.rotation.x = this.sunRotationSpeedX;
-                    this.galaxySunMesh.rotation.y = this.sunRotationSpeedY;
-                    this.galaxySunMesh.rotation.z = this.sunRotationSpeedZ;
+                    this.galaxySunMesh.rotation.x += this.sunRotationSpeedX;
+                    this.galaxySunMesh.rotation.y += this.sunRotationSpeedY;
+                    this.galaxySunMesh.rotation.z += this.sunRotationSpeedZ;
                 }
             }
 

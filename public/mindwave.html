@@ -200,19 +200,6 @@
             opacity: 0 !important;
             pointer-events: none !important;
         }
-
-        /* EXTRA WIDE SCREENS (>= 1400px) — Flatten to a Single Row */
-        @media (min-width: 1400px) {
-            #bottomControlCenter {
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                justify-content: center !important;
-                align-items: center !important;
-            }
-            #bottomControlCenter > * {
-                margin: 0 !important;
-            }
-        }
     </style>
 
     <!-- PWA Manifest -->
@@ -265,7 +252,7 @@
     </div>
 
     <!-- FULL-SCREEN 3D BACKGROUND -->
-    <canvas id="visualizer" class="fixed inset-0 w-full h-full -z-10"></canvas>
+    <canvas id="visualizer" class="fixed inset-0 w-full h-full z-0"></canvas>
     <canvas id="cyber-overlay-canvas" class="fixed inset-0 w-full h-full z-[1] pointer-events-none hidden"></canvas>
 
 
@@ -287,7 +274,24 @@
                 <div id="statusIndicator"
                     class="h-3 w-3 rounded-full bg-slate-600 shadow-[0_0_12px_currentColor] shrink-0"></div>
 
-                <!-- Mode Toggles Moved to Left Menu -->
+                <!-- Mode Toggles - Theme Aware -->
+                <div id="modeToggle" class="flex gap-0.5 p-1 bg-black/40 rounded-xl border border-white/10 shrink-0">
+                    <button data-mode="binaural"
+                        class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200">
+                        Binaural
+                    </button>
+                    <button data-mode="isochronic"
+                        class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200">
+                        Isochronic
+                    </button>
+                    <button data-mode="monaural"
+                        class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200">
+                        Monaural
+                    </button>
+                </div>
+
+                <!-- Divider - Hidden on narrow screens -->
+                <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
 
                 <!-- Generator Sliders - Standardized Premium -->
                 <div class="flex items-center gap-6 flex-wrap justify-center ml-2">
@@ -419,6 +423,35 @@
         <main class="flex-1 flex items-center justify-center pointer-events-auto" id="tapZone">
         </main>
 
+        <style>
+            /* Footer left/right control groups compress */
+            .footer-slim #bottomControlBar > div:first-child,
+            .footer-slim #bottomControlBar > div:last-child,
+            .footer-ultra #bottomControlBar > div:first-child,
+            .footer-ultra #bottomControlBar > div:last-child {
+                gap: 0.25rem !important;
+            }
+
+            /* ─── WIDTH CONTAINMENT ────────────────────────────────────────── */
+            /* Prevent the center column from stretching across ultra-wide     */
+            /* viewports. Responds to --footer-width set by sidebar changes.   */
+            #bottomControlCenter {
+                max-width: min(900px, var(--footer-width, 900px)) !important;
+                transition: max-width 0.35s cubic-bezier(0.4,0,0.2,1),
+                            gap 0.35s cubic-bezier(0.4,0,0.2,1) !important;
+            }
+
+            /* Play row */
+            #bottomControlCenter > .order-1 {
+                max-width: min(800px, var(--footer-width, 800px)) !important;
+            }
+
+            /* Dock — prevent single-row stretch */
+            #visualDock {
+                max-width: min(850px, var(--footer-width, 850px)) !important;
+            }
+        </style>
+
         <!-- FOOTER -->
         <footer id="bottomControlBar" style="opacity: 0"
             class="fixed bottom-0 left-0 right-0 z-[100] p-6 px-12 pointer-events-auto flex justify-between items-end pb-8 transition-[left,right,opacity,transform] duration-300 ease-in-out no-transition ui-fade-target">
@@ -489,7 +522,7 @@
             </div>
 
             <!-- CENTER: Main Play with Session Timer -->
-            <div id="bottomControlCenter" class="flex-1 flex flex-col items-center justify-end gap-6 pb-0 max-w-[95vw] xl:max-w-[none]">
+            <div id="bottomControlCenter" class="flex-1 flex flex-col items-center justify-end gap-6 pb-0 max-w-4xl">
 
                 <!-- 1. Play & Timer Controls (Horizontal Row) -->
                 <div
@@ -656,7 +689,7 @@
 
                 <!-- 3. New Horizontal Visual Dock -->
                 <div id="visualDock"
-                    class="order-3 flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border-2 !border-[var(--accent)]/50 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
+                    class="order-3 flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border !border-[var(--accent)]/30 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
 
                     <style>
                         .visual-btn .custom-tooltip {
@@ -670,6 +703,7 @@
                     <button id="sphereBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🔮</span>
+                        <input type="color" data-visual-color="sphere" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
                     </button>
@@ -678,6 +712,7 @@
                     <button id="cubeBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">📦</span>
+                        <input type="color" data-visual-color="cube" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cube</span>
                     </button>
@@ -686,6 +721,7 @@
                     <button id="dragonBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🐉</span>
+                        <input type="color" data-visual-color="dragon" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Dragon</span>
                     </button>
@@ -694,6 +730,7 @@
                     <button id="galaxyBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌌</span>
+                        <input type="color" data-visual-color="galaxy" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Galaxy</span>
 
@@ -709,6 +746,7 @@
                     <button id="mandalaBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🕉️</span>
+                        <input type="color" data-visual-color="mandala" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Mandala</span>
                     </button>
@@ -717,6 +755,7 @@
                     <button id="flowBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌀</span>
+                        <input type="color" data-visual-color="particles" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
                     </button>
@@ -725,6 +764,7 @@
                     <button id="lavaBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌋</span>
+                        <input type="color" data-visual-color="lava" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
                     </button>
@@ -733,6 +773,7 @@
                     <button id="fireplaceBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🔥</span>
+                        <input type="color" data-visual-color="fireplace" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
                     </button>
@@ -741,6 +782,7 @@
                     <button id="rainBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌿</span>
+                        <input type="color" data-visual-color="rainforest" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
                     </button>
@@ -749,6 +791,7 @@
                     <button id="zenBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🌸</span>
+                        <input type="color" data-visual-color="zengarden" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
                     </button>
@@ -757,6 +800,7 @@
                     <button id="oceanBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🏝️</span>
+                        <input type="color" data-visual-color="ocean" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Waves</span>
                     </button>
@@ -765,9 +809,10 @@
                     <button id="cyberBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">⚡</span>
+                        <input type="color" data-visual-color="cyber" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#00FF41">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cyber</span>
-
+                        
                         <!-- Toggle Icon -->
                         <div id="cyberSettingsToggle"
                             class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
@@ -780,6 +825,7 @@
                     <button id="matrixBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                         <span class="text-2xl filter drop-shadow-lg">🚀</span>
+                        <input type="color" data-visual-color="matrix" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#00FF41">
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Matrix</span>
 
@@ -793,187 +839,180 @@
                 </div>
 
                 <div id="galaxySettingsPanel"
-                    class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
-                    <!-- Back Button -->
-                    <button onclick="document.getElementById('galaxySettingsPanel').classList.add('hidden')"
-                        class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                        Back
-                    </button>
-                    <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Sun
-                        Rotation</span>
-                    <div class="flex items-center gap-4">
-                        <div class="flex flex-col gap-0.5">
-                            <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RX</label>
-                            <input type="range" id="galaxySunRX" min="-2.0" max="2.0" step="0.1" value="0"
-                                class="premium-slider w-16">
+                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+                <!-- Back Button -->
+                <button onclick="document.getElementById('galaxySettingsPanel').classList.add('hidden')"
+                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Back
+                </button>
+                <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Sun Rotation</span>
+                <div class="flex items-center gap-4">
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RX</label>
+                        <input type="range" id="galaxySunRX" min="-2.0" max="2.0" step="0.1" value="0"
+                            class="premium-slider w-16">
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RY</label>
+                        <input type="range" id="galaxySunRY" min="-2.0" max="2.0" step="0.1" value="0.5"
+                            class="premium-slider w-16">
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RZ</label>
+                        <input type="range" id="galaxySunRZ" min="-2.0" max="2.0" step="0.1" value="0"
+                            class="premium-slider w-16">
+                    </div>
+                </div>
+            </div>
+
+            <div id="cyberSettingsPanel"
+                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30_px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+
+                <!-- Back Button -->
+                <button onclick="document.getElementById('cyberSettingsPanel').classList.add('hidden')"
+                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Back
+                </button>
+
+                <span
+                    class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Cyber</span>
+
+                <!-- Mode Selector (4 buttons) -->
+                <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
+                    <button id="cyberModeRandom" data-cyber-mode="random"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="Random characters">RND</button>
+                    <button id="cyberModeMindwave" data-cyber-mode="mindwave"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="MINDWAVE text">MW</button>
+                    <button id="cyberModeCustom" data-cyber-mode="custom"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="Custom text">TXT</button>
+                    <button id="cyberModeInterstellar" data-cyber-mode="interstellar"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="Interstellar NavData">INT</button>
+                </div>
+
+                <!-- Custom Text Input (always visible) -->
+                <div id="cyberCustomTextInput">
+                    <input type="text" id="cyberTextInput" placeholder="Welcome" maxlength="20" autocomplete="off"
+                        class="w-24 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
+                </div>
+
+                <!-- Hidden checkbox for legacy JS compat -->
+                <input type="checkbox" id="cyberModeToggle" class="hidden" checked>
+
+                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
+
+                <!-- Color Area -->
+                <div class="flex items-center gap-3">
+                    <!-- Color -->
+                    <div class="flex flex-col gap-0.5 items-center">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
+                        <input type="color" id="cyberColorPicker" value="#00FF41"
+                            class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
+                    </div>
+
+                    <!-- Cyber Panel Specific Color Controls -->
+                    <div class="flex items-center gap-1 mt-2">
+                        <!-- Random Color -->
+                        <button id="cyberRandomColorBtn"
+                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
+                            title="Random Cyber Color">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 3 21 3 21 8"></polyline>
+                                <line x1="4" y1="20" x2="21" y2="3"></line>
+                                <polyline points="21 16 21 21 16 21"></polyline>
+                                <line x1="15" y1="15" x2="21" y2="21"></line>
+                                <line x1="4" y1="4" x2="9" y2="9"></line>
+                            </svg>
+                        </button>
+                        <!-- Previous Color (Back) -->
+                        <button id="cyberPrevColorBtn"
+                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
+                            title="Previous Cyber Color">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <!-- Vibration Toggle -->
+                        <button id="cyberVibrationToggle"
+                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
+                            title="Toggle Cyber Vibration">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Rainbow -->
+                    <div class="flex flex-col gap-0.5 items-center ml-2">
+                        <div class="flex gap-1 items-center">
+                            <span id="labelCyberRGB"
+                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
+                            <span class="text-[8px] text-white/20 select-none">/</span>
+                            <span id="labelCyberRainbow"
+                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
                         </div>
-                        <div class="flex flex-col gap-0.5">
-                            <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RY</label>
-                            <input type="range" id="galaxySunRY" min="-2.0" max="2.0" step="0.1" value="0.5"
-                                class="premium-slider w-16">
-                        </div>
-                        <div class="flex flex-col gap-0.5">
-                            <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RZ</label>
-                            <input type="range" id="galaxySunRZ" min="-2.0" max="2.0" step="0.1" value="0"
-                                class="premium-slider w-16">
-                        </div>
+                        <label class="premium-toggle">
+                            <input type="checkbox" id="cyberRainbowToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
                 </div>
 
-                <div id="cyberSettingsPanel"
-                    class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30_px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
 
-                    <!-- Back Button -->
-                    <button onclick="document.getElementById('cyberSettingsPanel').classList.add('hidden')"
-                        class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                        Back
-                    </button>
-
-                    <span
-                        class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Cyber</span>
-
-                    <!-- Mode Selector (4 buttons) -->
-                    <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
-                        <button id="cyberModeRandom" data-cyber-mode="random"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Random characters">RND</button>
-                        <button id="cyberModeMindwave" data-cyber-mode="mindwave"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="MINDWAVE text">MW</button>
-                        <button id="cyberModeCustom" data-cyber-mode="custom"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Custom text">TXT</button>
-                        <button id="cyberModeInterstellar" data-cyber-mode="interstellar"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Interstellar NavData">INT</button>
+                <!-- Sliders Group -->
+                <div class="flex items-center gap-3">
+                    <!-- Speed -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">SPD</label>
+                            <span id="cyberSpeedVal" class="premium-value">1.0</span>
+                        </div>
+                        <input type="range" id="cyberSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
+                            class="premium-slider">
                     </div>
 
-                    <!-- Custom Text Input (always visible) -->
-                    <div id="cyberCustomTextInput">
-                        <input type="text" id="cyberTextInput" placeholder="Welcome" maxlength="20" autocomplete="off"
-                            class="w-24 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
+                    <!-- Length -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">LEN</label>
+                            <span id="cyberLengthVal" class="premium-value">1.0</span>
+                        </div>
+                        <input type="range" id="cyberLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
+                            class="premium-slider">
                     </div>
 
-                    <!-- Hidden checkbox for legacy JS compat -->
-                    <input type="checkbox" id="cyberModeToggle" class="hidden" checked>
-
-                    <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                    <!-- Color Area -->
-                    <div class="flex items-center gap-3">
-                        <!-- Color -->
-                        <div class="flex flex-col gap-0.5 items-center">
-                            <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
-                            <input type="color" id="cyberColorPicker" value="#00FF41"
-                                class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
+                    <!-- Angle -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">ANG</label>
+                            <span id="cyberAngleVal" class="premium-value">0°</span>
                         </div>
-
-                        <!-- Cyber Panel Specific Color Controls -->
-                        <div class="flex items-center gap-1 mt-2">
-                            <!-- Random Color -->
-                            <button id="cyberRandomColorBtn"
-                                class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                                title="Random Cyber Color">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polyline points="16 3 21 3 21 8"></polyline>
-                                    <line x1="4" y1="20" x2="21" y2="3"></line>
-                                    <polyline points="21 16 21 21 16 21"></polyline>
-                                    <line x1="15" y1="15" x2="21" y2="21"></line>
-                                    <line x1="4" y1="4" x2="9" y2="9"></line>
-                                </svg>
-                            </button>
-                            <!-- Previous Color (Back) -->
-                            <button id="cyberPrevColorBtn"
-                                class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                                title="Previous Cyber Color">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
-                            </button>
-                            <!-- Vibration Toggle -->
-                            <button id="cyberVibrationToggle"
-                                class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
-                                title="Toggle Cyber Vibration">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                                </svg>
-                            </button>
-                        </div>
-
-                        <!-- Rainbow -->
-                        <div class="flex flex-col gap-0.5 items-center ml-2">
-                            <div class="flex gap-1 items-center">
-                                <span id="labelCyberRGB"
-                                    class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
-                                <span class="text-[8px] text-white/20 select-none">/</span>
-                                <span id="labelCyberRainbow"
-                                    class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
-                            </div>
-                            <label class="premium-toggle">
-                                <input type="checkbox" id="cyberRainbowToggle" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                    <!-- Sliders Group -->
-                    <div class="flex items-center gap-3">
-                        <!-- Speed -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">SPD</label>
-                                <span id="cyberSpeedVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="cyberSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Length -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">LEN</label>
-                                <span id="cyberLengthVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="cyberLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Angle -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">ANG</label>
-                                <span id="cyberAngleVal" class="premium-value">0°</span>
-                            </div>
-                            <input type="range" id="cyberAngleSlider" min="0" max="360" step="15" value="0"
-                                class="premium-slider">
-                        </div>
+                        <input type="range" id="cyberAngleSlider" min="0" max="360" step="15" value="0"
+                            class="premium-slider">
                     </div>
                 </div>
+            </div>
 
-                <div id="matrixSettingsPanel"
+            <div id="matrixSettingsPanel"
                     class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
-
+                    
                     <!-- Back Button -->
                     <button onclick="document.getElementById('matrixSettingsPanel').classList.add('hidden')"
                         class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="15 18 9 12 15 6"></polyline>
                         </svg>
                         Back
@@ -1009,68 +1048,65 @@
 
                     <div class="w-px h-6 bg-white/10 mx-0.5"></div>
 
-                    <!-- Color Area -->
-                    <div class="flex items-center gap-3">
-                        <!-- Color -->
-                        <div class="flex flex-col gap-0.5 items-center">
-                            <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
-                            <input type="color" id="matrixColorPicker" value="#00FF41"
-                                class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
-                        </div>
-
-                        <!-- Matrix Panel Specific Color Controls -->
-                        <div class="flex items-center gap-1 mt-2">
-                            <!-- Random Color -->
-                            <button id="matrixRandomColorBtn"
-                                class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                                title="Random Matrix Color">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polyline points="16 3 21 3 21 8"></polyline>
-                                    <line x1="4" y1="20" x2="21" y2="3"></line>
-                                    <polyline points="21 16 21 21 16 21"></polyline>
-                                    <line x1="15" y1="15" x2="21" y2="21"></line>
-                                    <line x1="4" y1="4" x2="9" y2="9"></line>
-                                </svg>
-                            </button>
-                            <!-- Previous Color (Back) -->
-                            <button id="matrixPrevColorBtn"
-                                class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                                title="Previous Matrix Color">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
-                            </button>
-                            <!-- Vibration Toggle -->
-                            <button id="matrixVibrationToggle"
-                                class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
-                                title="Toggle Matrix Vibration">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                                </svg>
-                            </button>
-                        </div>
-
-                        <!-- Rainbow -->
-                        <div class="flex flex-col gap-0.5 items-center ml-2">
-                            <div class="flex gap-1 items-center">
-                                <span id="labelRGB"
-                                    class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
-                                <span class="text-[8px] text-white/20 select-none">/</span>
-                                <span id="labelRainbow"
-                                    class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
-                            </div>
-                            <label class="premium-toggle">
-                                <input type="checkbox" id="matrixRainbowToggle" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
+                <!-- Color Area -->
+                <div class="flex items-center gap-3">
+                    <!-- Color -->
+                    <div class="flex flex-col gap-0.5 items-center">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
+                        <input type="color" id="matrixColorPicker" value="#00FF41"
+                            class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
                     </div>
+
+                    <!-- Matrix Panel Specific Color Controls -->
+                    <div class="flex items-center gap-1 mt-2">
+                        <!-- Random Color -->
+                        <button id="matrixRandomColorBtn"
+                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
+                            title="Random Matrix Color">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 3 21 3 21 8"></polyline>
+                                <line x1="4" y1="20" x2="21" y2="3"></line>
+                                <polyline points="21 16 21 21 16 21"></polyline>
+                                <line x1="15" y1="15" x2="21" y2="21"></line>
+                                <line x1="4" y1="4" x2="9" y2="9"></line>
+                            </svg>
+                        </button>
+                        <!-- Previous Color (Back) -->
+                        <button id="matrixPrevColorBtn"
+                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
+                            title="Previous Matrix Color">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <!-- Vibration Toggle -->
+                        <button id="matrixVibrationToggle"
+                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
+                            title="Toggle Matrix Vibration">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Rainbow -->
+                    <div class="flex flex-col gap-0.5 items-center ml-2">
+                        <div class="flex gap-1 items-center">
+                            <span id="labelRGB"
+                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
+                            <span class="text-[8px] text-white/20 select-none">/</span>
+                            <span id="labelRainbow"
+                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
+                        </div>
+                        <label class="premium-toggle">
+                            <input type="checkbox" id="matrixRainbowToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
 
                     <div class="w-px h-6 bg-white/10 mx-0.5"></div>
 
@@ -1166,23 +1202,6 @@
 
         <!-- MAIN CONTAINER FOR BUTTONS - Scrollable -->
         <div class="flex-1 flex flex-col p-2 gap-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
-            
-            <!-- Mode Toggles -->
-            <div id="modeToggle" class="flex w-full gap-0.5 p-1 bg-black/40 rounded-xl border border-white/10 shrink-0 mb-3 mt-1">
-                <button data-mode="binaural"
-                    class="mode-btn flex-1 px-0.5 py-1.5 rounded-lg text-[8px] 2xl:text-[9px] font-bold uppercase tracking-tight transition-all duration-200 text-center leading-tight">
-                    Binaural
-                </button>
-                <button data-mode="isochronic"
-                    class="mode-btn flex-1 px-0.5 py-1.5 rounded-lg text-[8px] 2xl:text-[9px] font-bold uppercase tracking-tight transition-all duration-200 text-center leading-tight">
-                    Isochronic
-                </button>
-                <button data-mode="monaural"
-                    class="mode-btn flex-1 px-0.5 py-1.5 rounded-lg text-[8px] 2xl:text-[9px] font-bold uppercase tracking-tight transition-all duration-200 text-center leading-tight">
-                    Monaural
-                </button>
-            </div>
-
             <!-- Brain Waves Group -->
             <section class="mixer-section" data-section="brain_waves">
                 <div class="py-2 flex items-center justify-between shrink-0 cursor-pointer section-header"
@@ -1192,14 +1211,12 @@
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="6 9 12 15 18 9" />
                         </svg>
-                        <h3 class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase">Brain Waves
-                        </h3>
+                        <h3 class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase">Brain Waves</h3>
                         <button class="ml-2 transition-colors relative" aria-label="Info"
                             onclick="event.stopPropagation(); showInfoModal('brain_waves')"
                             style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -1278,9 +1295,8 @@
                         <button class="ml-2 transition-colors relative" aria-label="Info"
                             onclick="event.stopPropagation(); showInfoModal('healing')"
                             style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -1378,9 +1394,8 @@
                         <button class="ml-2 transition-colors relative" aria-label="Info"
                             onclick="event.stopPropagation(); showInfoModal('ambience')"
                             style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -2486,7 +2501,7 @@
     </div>
 
     <!-- Stats Modal -->
-    <div id="statsModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+    <div id="statsModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 hidden">
 
         <div class="glass-card p-6 rounded-2xl shadow-2xl max-w-md w-full mx-4 flex flex-col gap-4">
             <div class="flex justify-between items-center">
