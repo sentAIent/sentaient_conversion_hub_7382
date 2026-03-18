@@ -5511,20 +5511,23 @@ export function setupMasterVisualControls() {
 
     // Master Vibration Toggle
     if (masterVibrationToggle) {
-        
-        // Set initial UI state if vibration is already enabled in global state
-        if (state.visualVibration) {
-            masterVibrationToggle.classList.add('bg-white/20', 'border-white/50', 'shadow-[0_0_15px_rgba(255,255,255,0.3)]');
-        }
+        // Helper function for UI states
+        const updateVibeUI = (isOn) => {
+            if (isOn) {
+                masterVibrationToggle.classList.add('border-[var(--accent)]', 'text-[var(--accent)]', 'shadow-[0_0_15px_var(--accent)]', 'bg-[var(--accent)]/10');
+                masterVibrationToggle.classList.remove('text-white/40', 'border-white/10', 'bg-black/40', 'hover:border-white/30', 'hover:text-white');
+            } else {
+                masterVibrationToggle.classList.remove('border-[var(--accent)]', 'text-[var(--accent)]', 'shadow-[0_0_15px_var(--accent)]', 'bg-[var(--accent)]/10');
+                masterVibrationToggle.classList.add('text-white/40', 'border-white/10', 'bg-black/40', 'hover:border-white/30', 'hover:text-white');
+            }
+        };
+
+        // Set initial UI state
+        updateVibeUI(state.visualVibration || false);
 
         masterVibrationToggle.addEventListener('click', () => {
             state.visualVibration = !state.visualVibration;
-            
-            if (state.visualVibration) {
-                masterVibrationToggle.classList.add('bg-white/20', 'border-white/50', 'shadow-[0_0_15px_rgba(255,255,255,0.3)]');
-            } else {
-                masterVibrationToggle.classList.remove('bg-white/20', 'border-white/50', 'shadow-[0_0_15px_rgba(255,255,255,0.3)]');
-            }
+            updateVibeUI(state.visualVibration);
 
             const viz = getVisualizer();
             if (viz && viz.setVibrationEnabled) {
