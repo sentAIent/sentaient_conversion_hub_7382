@@ -1743,8 +1743,6 @@ export class Visualizer3D {
         if (this.currentCyberAngle !== undefined) {
             this.cyberRotationGroup.rotation.z = THREE.MathUtils.degToRad(-this.currentCyberAngle);
         }
-
-        this.updateVisibility();
     }
 
     setCyberMode(enabled) {

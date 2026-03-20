@@ -29,9 +29,17 @@ const PUBLIC_GALLERY_COLLECTION = 'public_gallery';
  */
 export async function getCloudPresets() {
     try {
-        // Safety: Check if Firebase is initialized
+        // Safety: Wait for Firebase if it's currently loading
+        if (getApps().length === 0 && !window.__firebase_initialized) {
+             // Wait up to 5 seconds for Firebase to init
+             for (let i = 0; i < 50; i++) {
+                 if (window.__firebase_initialized || getApps().length > 0) break;
+                 await new Promise(r => setTimeout(r, 100));
+             }
+        }
+
         if (getApps().length === 0) {
-            console.warn('[Presets] Firebase not initialized yet, using local fallbacks');
+            console.warn('[Presets] Firebase not initialized after wait, using local fallbacks');
             return PRESET_COMBOS;
         }
 
