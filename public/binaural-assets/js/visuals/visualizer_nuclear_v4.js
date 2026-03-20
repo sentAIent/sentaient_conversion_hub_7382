@@ -2610,14 +2610,27 @@ export class Visualizer3D {
 
     setGlobalSpeed(speed) {
         this.speedMultiplier = speed;
-        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uSpeed)
-            this.cyberMaterial.uniforms.uSpeed.value = 1.0 + (speed - 1.0) * 0.5; // Scale gently
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uSpeed) {
+            this.cyberMaterial.uniforms.uSpeed.value = 1.0 + (speed - 1.0) * 0.5;
+        }
     }
 
     setGlobalBrightness(brightness) {
         this.brightnessMultiplier = brightness;
-        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness)
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
             this.cyberMaterial.uniforms.uBrightness.value = brightness;
+        }
+    }
+
+    setCyberBrightness(brightness) {
+        this.cyberConfig.brightness = brightness;
+    }
+
+    setMatrixBrightness(brightness) {
+        this.matrixConfig.brightness = brightness;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms.uBrightness) {
+            this.cyberMaterial.uniforms.uBrightness.value = brightness;
+        }
     }
 
     // --- CYBER (UI) -> Internal Cyber (2D Overlay) ---
@@ -2652,10 +2665,6 @@ export class Visualizer3D {
     }
     setMatrixRainbow(isRainbow) {
         this.matrixConfig.rainbow = isRainbow;
-        if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
-            this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
-        }
-    }
         if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
             this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
         }
