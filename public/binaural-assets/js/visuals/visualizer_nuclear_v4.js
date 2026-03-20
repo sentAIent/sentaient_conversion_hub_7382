@@ -3022,7 +3022,6 @@ export function initVisualizer() {
 }
 
 export function getVisualizer() {
-    if (!viz3D) console.warn('[Visualizer] getVisualizer() called but viz3D is null');
     return viz3D;
 }
 let visualsPaused = false;
