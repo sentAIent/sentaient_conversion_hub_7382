@@ -52,67 +52,71 @@ export function toggleLeftMenuSection(sectionName) {
 }
 window.toggleLeftMenuSection = toggleLeftMenuSection;
 
-window.toggleGalaxySettings = function (btn) {
-    state.galaxyPanelOpen = !state.galaxyPanelOpen;
-    const panel = document.getElementById('galaxySettingsPanel');
-    const viz = getVisualizer();
-    const isActive = viz && viz.activeModes && viz.activeModes.has('galaxy');
-    if (panel && isActive) {
-        if (state.galaxyPanelOpen) {
-            panel.classList.remove('hidden');
-            panel.classList.add('flex', 'items-center');
-        } else {
-            panel.classList.add('hidden');
-            panel.classList.remove('flex', 'items-center');
+// NEW: Interface for mindwave.html proxies
+window.controls = {
+    toggleGalaxySettings: function(btn) {
+        state.galaxyPanelOpen = !state.galaxyPanelOpen;
+        const panel = document.getElementById('galaxySettingsPanel');
+        const viz = getVisualizer();
+        const isActive = viz && viz.activeModes && viz.activeModes.has('galaxy');
+        if (panel && isActive) {
+            if (state.galaxyPanelOpen) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex', 'items-center');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'items-center');
+            }
+        } else if (panel) {
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            panel.classList.toggle('items-center');
         }
-    } else if (panel) {
-        panel.classList.toggle('hidden');
-        panel.classList.toggle('flex');
-        panel.classList.toggle('items-center');
+    },
+    toggleCyberSettings: function(btn) {
+        state.cyberPanelOpen = !state.cyberPanelOpen;
+        const panel = document.getElementById('cyberSettingsPanel');
+        const viz = getVisualizer();
+        const isActive = viz && viz.activeModes && viz.activeModes.has('cyber');
+        if (panel && isActive) {
+            if (state.cyberPanelOpen) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex', 'items-center');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'items-center');
+            }
+        } else if (panel) {
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            panel.classList.toggle('items-center');
+        }
+    },
+    toggleMatrixSettings: function(btn) {
+        state.matrixPanelOpen = !state.matrixPanelOpen;
+        const panel = document.getElementById('matrixSettingsPanel');
+        const viz = getVisualizer();
+        const active = viz && viz.activeModes && viz.activeModes.has('matrix');
+        if (panel && active) {
+            if (state.matrixPanelOpen) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex', 'items-center');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'items-center');
+            }
+        } else if (panel) {
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            panel.classList.toggle('items-center');
+        }
     }
 };
 
-window.toggleCyberSettings = function (btn) {
-    state.cyberPanelOpen = !state.cyberPanelOpen;
-    const panel = document.getElementById('cyberSettingsPanel');
-    const viz = getVisualizer();
-    // Cyber mode is 'cyber' in the underlying engine (v4 mapping)
-    const isActive = viz && viz.activeModes && viz.activeModes.has('cyber');
-    if (panel && isActive) {
-        if (state.cyberPanelOpen) {
-            panel.classList.remove('hidden');
-            panel.classList.add('flex', 'items-center');
-        } else {
-            panel.classList.add('hidden');
-            panel.classList.remove('flex', 'items-center');
-        }
-    } else if (panel) {
-        panel.classList.toggle('hidden');
-        panel.classList.toggle('flex');
-        panel.classList.toggle('items-center');
-    }
-};
-
-window.toggleMatrixSettings = function (btn) {
-    state.matrixPanelOpen = !state.matrixPanelOpen;
-    const panel = document.getElementById('matrixSettingsPanel');
-    const viz = getVisualizer();
-    // Matrix mode is 'matrix' in the underlying engine (v4 mapping)
-    const active = viz && viz.activeModes && viz.activeModes.has('matrix');
-    if (panel && active) {
-        if (state.matrixPanelOpen) {
-            panel.classList.remove('hidden');
-            panel.classList.add('flex', 'items-center');
-        } else {
-            panel.classList.add('hidden');
-            panel.classList.remove('flex', 'items-center');
-        }
-    } else if (panel) {
-        panel.classList.toggle('hidden');
-        panel.classList.toggle('flex');
-        panel.classList.toggle('items-center');
-    }
-};
+// Legacy support
+window.toggleGalaxySettings = window.controls.toggleGalaxySettings;
+window.toggleCyberSettings = window.controls.toggleCyberSettings;
+window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
 
 export function updateDockScaling() {
     const width = window.innerWidth;
@@ -871,21 +875,21 @@ export function setupUI() {
     });
 
     // Visual Modes
-    if (els.sphereBtn) els.sphereBtn.addEventListener('click', () => setVisualMode('sphere'));
-    if (els.cubeBtn) els.cubeBtn.addEventListener('click', () => setVisualMode('cube'));
-    if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon'));
-    if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy'));
-    if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles'));
-    if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava'));
-    if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace'));
-    if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest'));
-    if (els.zenBtn) els.zenBtn.addEventListener('click', () => setVisualMode('zengarden'));
-    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean'));
-    if (els.mandalaBtn) els.mandalaBtn.addEventListener('click', () => setVisualMode('mandala'));
-    if (els.cyberBtn) els.cyberBtn.addEventListener('click', () => setVisualMode('cyber'));
+    if (els.sphereBtn) els.sphereBtn.addEventListener('click', () => setVisualMode('sphere', null, true));
+    if (els.cubeBtn) els.cubeBtn.addEventListener('click', () => setVisualMode('cube', null, true));
+    if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon', null, true));
+    if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy', null, true));
+    if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles', null, true));
+    if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava', null, true));
+    if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace', null, true));
+    if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest', null, true));
+    if (els.zenBtn) els.zenBtn.addEventListener('click', () => setVisualMode('zengarden', null, true));
+    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean', null, true));
+    if (els.mandalaBtn) els.mandalaBtn.addEventListener('click', () => setVisualMode('mandala', null, true));
+    if (els.cyberBtn) els.cyberBtn.addEventListener('click', () => setVisualMode('cyber', null, true));
     if (els.matrixBtn) els.matrixBtn.addEventListener('click', (e) => {
         if (e.target.closest('#matrixSettingsToggle')) return;
-        setVisualMode('matrix');
+        setVisualMode('matrix', null, true);
     });
 
     // Matrix Mini-Toggle Logic
@@ -1215,12 +1219,17 @@ export function setupUI() {
             // Sync UI buttons to match the constructor's active modes (no toggleMode calls needed)
             const buttons = [
                 { el: els.sphereBtn, mode: 'sphere' },
+                { el: els.cubeBtn, mode: 'box' },
+                { el: els.dragonBtn, mode: 'dragon' },
+                { el: els.galaxyBtn, mode: 'galaxy' },
                 { el: els.flowBtn, mode: 'particles' },
                 { el: els.lavaBtn, mode: 'lava' },
                 { el: els.fireplaceBtn, mode: 'fireplace' },
                 { el: els.rainBtn, mode: 'rainforest' },
                 { el: els.zenBtn, mode: 'zengarden' },
                 { el: els.oceanBtn, mode: 'ocean' },
+                { el: els.mandalaBtn, mode: 'mandala' },
+                { el: els.cyberBtn, mode: 'cyber' },
                 { el: els.matrixBtn, mode: 'matrix' }
             ];
             buttons.forEach(({ el, mode }) => {
@@ -2467,9 +2476,32 @@ export function resetImmersiveTimer() {
     }
 }
 
-export function setVisualMode(mode, forceState = null) {
-    const viz = getVisualizer();
+export function setVisualMode(mode, forceState = null, isManual = false) {
+    let viz = getVisualizer();
     let activeModes = new Set();
+
+    // 1. Manual Override Check (Unlock AI Lock)
+    if (isManual && state.aiVisualsLocked) {
+        state.aiVisualsLocked = false;
+        showToast('AI Focus Mode Unlocked 🔓', 'info');
+    }
+
+    // 2. Check for AI Lock (if still locked)
+    if (state.aiVisualsLocked && forceState !== true) {
+        console.log('[Visuals] Blocked by AI Lock');
+        showToast('Visuals locked by AI Focus Mode 🔒', 'info');
+        return;
+    }
+
+    if (!viz) {
+        console.warn('[Controls] Visualizer not ready for setVisualMode. Triggering load...');
+        preloadVisualizer();
+        // If it was a manual click, give feedback
+        if (isManual) {
+            showToast('Initializing Visualizer...', 'info');
+        }
+        return; // EXIT EARLY to avoid resetting highlights
+    }
 
     if (viz) {
         const modes = Array.isArray(mode) ? mode : [mode];
@@ -2477,15 +2509,6 @@ export function setVisualMode(mode, forceState = null) {
         // If applying an array (preset), clear existing modes for 'Total Immersion'
         if (Array.isArray(mode)) {
             viz.activeModes.clear();
-        }
-
-        // NEW: Check for AI Lock
-        // We reuse 'forceState' as a bypass flag if it equals true (boolean), 
-        // regarding it as "fromSystem" or "fromAI"
-        if (state.aiVisualsLocked && forceState !== true) {
-            console.log('[Visuals] Blocked by AI Lock');
-            showToast('Visuals locked by AI Focus Mode 🔒', 'info');
-            return;
         }
 
         modes.forEach(m => {
@@ -2508,41 +2531,41 @@ export function setVisualMode(mode, forceState = null) {
             viz.renderSingleFrame();
         }
         activeModes = viz.activeModes;
+
+        // Update button states with theme-aware styling
+        const buttons = [
+            { el: els.sphereBtn, mode: 'sphere' },
+            { el: els.cubeBtn, mode: 'box' },
+            { el: els.dragonBtn, mode: 'dragon' },
+            { el: els.galaxyBtn, mode: 'galaxy' },
+            { el: els.flowBtn, mode: 'particles' },
+            { el: els.lavaBtn, mode: 'lava' },
+            { el: els.fireplaceBtn, mode: 'fireplace' },
+            { el: els.rainBtn, mode: 'rainforest' },
+            { el: els.zenBtn, mode: 'zengarden' },
+            { el: els.oceanBtn, mode: 'ocean' },
+            { el: els.mandalaBtn, mode: 'mandala' },
+            { el: els.cyberBtn, mode: 'cyber' }, // UI "Cyber" -> Internal 2D
+            { el: els.matrixBtn, mode: 'matrix' } // UI "Matrix" -> Internal 3D
+        ];
+
+        buttons.forEach(({ el, mode: btnMode }) => {
+            if (!el) return;
+            const isActive = activeModes.has(btnMode);
+
+            if (isActive) {
+                // Active style - theme-aware
+                el.classList.add('toggle-active');
+                el.classList.add('active'); // Added for visual-active.css support
+                el.classList.remove('toggle-inactive');
+            } else {
+                // Inactive style - theme-aware
+                el.classList.remove('toggle-active');
+                el.classList.remove('active'); // Added to clear highlight
+                el.classList.add('toggle-inactive');
+            }
+        });
     }
-
-    // Update button states with theme-aware styling
-    const buttons = [
-        { el: els.sphereBtn, mode: 'sphere' },
-        { el: els.cubeBtn, mode: 'box' },
-        { el: els.dragonBtn, mode: 'dragon' },
-        { el: els.galaxyBtn, mode: 'galaxy' },
-        { el: els.flowBtn, mode: 'particles' },
-        { el: els.lavaBtn, mode: 'lava' },
-        { el: els.fireplaceBtn, mode: 'fireplace' },
-        { el: els.rainBtn, mode: 'rainforest' },
-        { el: els.zenBtn, mode: 'zengarden' },
-        { el: els.oceanBtn, mode: 'ocean' },
-        { el: els.mandalaBtn, mode: 'mandala' },
-        { el: els.cyberBtn, mode: 'cyber' }, // UI "Cyber" -> Internal 2D
-        { el: els.matrixBtn, mode: 'matrix' } // UI "Matrix" -> Internal 3D
-    ];
-
-    buttons.forEach(({ el, mode: btnMode }) => {
-        if (!el) return;
-        const isActive = activeModes.has(btnMode);
-
-        if (isActive) {
-            // Active style - theme-aware
-            el.classList.add('toggle-active');
-            el.classList.add('active'); // Added for visual-active.css support
-            el.classList.remove('toggle-inactive');
-        } else {
-            // Inactive style - theme-aware
-            el.classList.remove('toggle-active');
-            el.classList.remove('active'); // Added to clear highlight
-            el.classList.add('toggle-inactive');
-        }
-    });
 
     // Panel Visibility Logic
     const matrixPanel = document.getElementById('matrixSettingsPanel');
@@ -5069,6 +5092,8 @@ function setupMatrixControls() {
                 if (lengthSlider) { lengthSlider.value = 1.0; document.getElementById('matrixLengthVal').textContent = '1.0x'; }
                 const angleSlider = document.getElementById('matrixAngleSlider');
                 if (angleSlider) { angleSlider.value = 0; document.getElementById('matrixAngleVal').textContent = '0°'; }
+                const brightnessSlider = document.getElementById('matrixBrightnessSlider');
+                if (brightnessSlider) { brightnessSlider.value = 1.0; document.getElementById('matrixBrightnessVal').textContent = '1.0'; }
             }
         });
     }
@@ -5146,7 +5171,8 @@ function setupMatrixControls() {
     const sliders = [
         { id: 'matrixSpeed', method: 'setMatrixSpeed' },
         { id: 'matrixLength', method: 'setMatrixLength' },
-        { id: 'matrixAngle', method: 'setMatrixAngle' }
+        { id: 'matrixAngle', method: 'setMatrixAngle' },
+        { id: 'matrixBrightness', method: 'setGlobalBrightness' }
     ];
 
     sliders.forEach(s => {
@@ -5155,7 +5181,11 @@ function setupMatrixControls() {
         if (slider) {
             slider.addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value);
-                if (valDisp) valDisp.textContent = s.id.includes('Angle') ? `${val}°` : `${val.toFixed(1)}x`;
+                if (valDisp) {
+                    if (s.id.includes('Angle')) valDisp.textContent = `${val}°`;
+                    else if (s.id.includes('Brightness')) valDisp.textContent = val.toFixed(1);
+                    else valDisp.textContent = `${val.toFixed(1)}x`;
+                }
                 const viz = getVisualizer();
                 if (viz && viz[s.method]) viz[s.method](val);
             });
@@ -5369,7 +5399,8 @@ function setupCyberControls() {
     const sliders = [
         { id: 'cyberSpeed', method: 'setCyberSpeed' },
         { id: 'cyberLength', method: 'setCyberLength' },
-        { id: 'cyberAngle', method: 'setCyberAngle' }
+        { id: 'cyberAngle', method: 'setCyberAngle' },
+        { id: 'cyberBrightness', method: 'setGlobalBrightness' }
     ];
 
     sliders.forEach(s => {
@@ -5378,7 +5409,11 @@ function setupCyberControls() {
         if (slider) {
             slider.addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value);
-                if (valDisp) valDisp.textContent = s.id.includes('Angle') ? `${val}°` : `${val.toFixed(1)}x`;
+                if (valDisp) {
+                    if (s.id.includes('Angle')) valDisp.textContent = `${val}°`;
+                    else if (s.id.includes('Brightness')) valDisp.textContent = val.toFixed(1);
+                    else valDisp.textContent = `${val.toFixed(1)}x`;
+                }
                 const viz = getVisualizer();
                 if (viz && viz[s.method]) viz[s.method](val);
             });
@@ -5511,33 +5546,18 @@ export function setupMasterVisualControls() {
 
     // Master Vibration Toggle
     if (masterVibrationToggle) {
-        // Helper function for UI states
+        // Helper function for UI states (Quad Edition)
         const updateVibeUI = (isOn) => {
             const svg = masterVibrationToggle.querySelector('svg');
-            const span = masterVibrationToggle.querySelector('span');
             
             if (isOn) {
-                masterVibrationToggle.classList.add('border-[var(--accent)]', 'bg-white/10', 'shadow-[0_0_15px_rgba(45,212,191,0.2)]');
-                masterVibrationToggle.classList.remove('border-white/10');
-                if (svg) {
-                    svg.classList.add('text-[var(--accent)]');
-                    svg.classList.remove('text-white/50', 'group-hover:text-white');
-                }
-                if (span) {
-                    span.classList.add('text-[var(--accent)]');
-                    span.classList.remove('text-white/50', 'group-hover:text-white');
-                }
+                masterVibrationToggle.classList.add('border-[var(--accent)]/50', 'bg-[var(--accent)]/10', 'text-[var(--accent)]', 'shadow-[0_0_10px_rgba(45,212,191,0.2)]');
+                masterVibrationToggle.classList.remove('border-white/5', 'text-white/40');
+                if (svg) svg.classList.add('text-[var(--accent)]');
             } else {
-                masterVibrationToggle.classList.remove('border-[var(--accent)]', 'bg-white/10', 'shadow-[0_0_15px_rgba(45,212,191,0.2)]');
-                masterVibrationToggle.classList.add('border-white/10');
-                if (svg) {
-                    svg.classList.remove('text-[var(--accent)]');
-                    svg.classList.add('text-white/50', 'group-hover:text-white');
-                }
-                if (span) {
-                    span.classList.remove('text-[var(--accent)]');
-                    span.classList.add('text-white/50', 'group-hover:text-white');
-                }
+                masterVibrationToggle.classList.remove('border-[var(--accent)]/50', 'bg-[var(--accent)]/10', 'text-[var(--accent)]', 'shadow-[0_0_10px_rgba(45,212,191,0.2)]');
+                masterVibrationToggle.classList.add('border-white/5', 'text-white/40');
+                if (svg) svg.classList.remove('text-[var(--accent)]');
             }
         };
 

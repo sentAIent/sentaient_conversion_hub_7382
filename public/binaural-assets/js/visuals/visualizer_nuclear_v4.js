@@ -6,8 +6,8 @@ let viz3D = null;
 export class Visualizer3D {
     constructor(canvas, initialState = {}) {
         this.canvas = canvas;
-        this.activeModes = initialState.activeModes || new Set(['particles', 'cyber']); // Default to Flow + Cyber
-        this.mode = initialState.mode || 'cyber'; // Legacy support
+        this.activeModes = initialState.activeModes || new Set(); // Start empty to match UI
+        this.mode = initialState.mode || 'none'; // Legacy support
 
         // Default settings - MUST be set before init methods
         this.mindWaveMode = initialState.mindWaveMode !== undefined ? initialState.mindWaveMode : true;
@@ -47,6 +47,7 @@ export class Visualizer3D {
         }
 
         this.matrixCyberStreams = [];
+        this.currentCyberAngle = initialState.cyberAngle !== undefined ? initialState.cyberAngle : 0;
         this.cyberColorCustomized = false;
 
         try {
@@ -2619,17 +2620,20 @@ export class Visualizer3D {
             this.cyberMaterial.uniforms.uBrightness.value = brightness;
     }
 
+    // --- CYBER (UI) -> Internal Cyber (2D Overlay) ---
     setCyberSpeed(speed) {
         this.cyberConfig.speed = speed;
     }
+    setCyberLength(length) {
+        this.cyberConfig.length = length;
+    }
+
+    // --- MATRIX (UI) -> Internal Matrix (3D Rain) ---
     setMatrixSpeed(speed) {
         this.matrixConfig.speed = speed;
         if (this.cyberMaterial && this.cyberMaterial.uniforms.uSpeed) {
             this.cyberMaterial.uniforms.uSpeed.value = speed;
         }
-    }
-    setCyberLength(length) {
-        this.cyberConfig.length = length;
     }
     setMatrixLength(length) {
         this.matrixConfig.length = length;
@@ -2648,6 +2652,10 @@ export class Visualizer3D {
     }
     setMatrixRainbow(isRainbow) {
         this.matrixConfig.rainbow = isRainbow;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
+            this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
+        }
+    }
         if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
             this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
         }
@@ -2733,7 +2741,7 @@ export class Visualizer3D {
     }
 
     setMatrixLogicMode(mode, text) {
-        console.log(`[Visualizer] setMatrixLogicMode(mode="${mode}", text="${text}")`);
+        console.log(`[Visualizer] setMatrixLogicMode(mode="${mode}", text="${text}") -> 3D config`);
         this.matrixConfig.logicMode = mode;
         if (text !== undefined) this.matrixConfig.customText = text;
 
@@ -2747,13 +2755,29 @@ export class Visualizer3D {
         this.initCyber();
     }
 
+    setCyberColor(hex) {
+        this.cyberConfig.color = hex;
+        // 2D Overlay update logic
+        if (this.matrixCyberStreams) {
+            this.matrixCyberStreams.forEach(stream => { stream.color = hex; });
+        }
+    }
+
+    setMatrixColor(hex) {
+        this.matrixConfig.color = hex;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uColor) {
+            this.cyberMaterial.uniforms.uColor.value.set(hex);
+        }
+    }
+
     setCyberAngle(degrees) {
         this.cyberConfig.angle = degrees;
-        // The 2D overlay rotates via its rendering context.
+        // 2D Rotation handled in render loop
     }
 
     setMatrixAngle(degrees) {
         this.matrixConfig.angle = degrees;
+        this.currentCyberAngle = degrees; // Persistence for initCyber
         if (this.cyberRotationGroup) {
             this.cyberRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
         }
@@ -3005,7 +3029,9 @@ export function pauseVisuals() {
 }
 
 export function resumeVisuals() {
+    console.log('[Visualizer] resumeVisuals CALLED. viz3D:', !!viz3D, 'animId:', state.animationId);
     if (viz3D && !state.animationId) {
+        viz3D.active = true;
         viz3D.render(state.analyserLeft, state.analyserRight);
         visualsPaused = false;
     }

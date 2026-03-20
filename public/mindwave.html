@@ -65,6 +65,36 @@
             box.innerHTML += `<div>PROMISE REJECT: ${event.reason}</div>`;
             document.body.appendChild(box);
         });
+
+        // GLOBAL UI TOGGLES (Proxies to controls_v3.js)
+        window.toggleGalaxySettings = function(btn) {
+            console.log('[HTML] toggleGalaxySettings clicked');
+            if (window.controls && window.controls.toggleGalaxySettings) {
+                window.controls.toggleGalaxySettings(btn);
+            } else {
+                // Fallback: Just toggle visibility manually if controls aren't ready
+                const panel = document.getElementById('galaxySettingsPanel');
+                if (panel) panel.classList.toggle('hidden');
+            }
+        };
+        window.toggleCyberSettings = function(btn) {
+            console.log('[HTML] toggleCyberSettings clicked');
+            if (window.controls && window.controls.toggleCyberSettings) {
+                window.controls.toggleCyberSettings(btn);
+            } else {
+                const panel = document.getElementById('cyberSettingsPanel');
+                if (panel) panel.classList.toggle('hidden');
+            }
+        };
+        window.toggleMatrixSettings = function(btn) {
+            console.log('[HTML] toggleMatrixSettings clicked');
+            if (window.controls && window.controls.toggleMatrixSettings) {
+                window.controls.toggleMatrixSettings(btn);
+            } else {
+                const panel = document.getElementById('matrixSettingsPanel');
+                if (panel) panel.classList.toggle('hidden');
+            }
+        };
     </script>
     <title>MindWave - Binaural Beats Studio</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
@@ -840,38 +870,37 @@
                     <!-- DIVIDER -->
                     <div class="w-px h-10 bg-gradient-to-b from-transparent via-white/20 to-transparent mx-2 hidden sm:block"></div>
 
-                    <!-- MASTER COLOR PICKER -->
-                    <button class="visual-btn p-2 rounded-xl border border-[var(--accent)]/50 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem] shadow-[0_0_15px_rgba(45,212,191,0.15)]">
-                        <div class="relative w-8 h-8 rounded-full shadow-inner overflow-hidden border border-white/20">
-                            <input type="color" id="masterColorPicker" class="absolute -top-4 -left-4 w-16 h-16 opacity-0 cursor-pointer z-20" value="#60a9ff">
-                            <div id="masterColorPreview" class="absolute inset-0 bg-[#60a9ff] transition-colors z-10 pointer-events-none group-hover:scale-110"></div>
+                    <!-- GLOBAL FX QUAD BUTTON -->
+                    <div class="visual-btn p-1.5 rounded-xl glass-pill border border-white/10 hover:border-[var(--accent)]/50 transition-all group relative flex flex-col items-center justify-center h-16 w-16 bg-[#050510]/60 shadow-[0_0_20px_rgba(45,212,191,0.1)]">
+                        <div class="grid grid-cols-2 grid-rows-2 gap-1 w-full h-full">
+                            <!-- Quad 1: Master Color -->
+                            <div class="relative rounded-md border border-white/5 hover:border-[var(--accent)]/50 bg-white/5 flex items-center justify-center cursor-pointer transition-all hover:bg-white/10 overflow-hidden group/color" onclick="document.getElementById('masterColorPicker').click()">
+                                <input type="color" id="masterColorPicker" class="absolute inset-0 opacity-0 cursor-pointer z-10" value="#60a9ff">
+                                <div id="masterColorPreview" class="w-2.5 h-2.5 rounded-full bg-[#60a9ff] shadow-[0_0_8px_rgba(96,169,255,0.5)] transition-transform group-hover/color:scale-125"></div>
+                            </div>
+                            
+                            <!-- Quad 2: Random -->
+                            <button id="masterRandomBtn" class="rounded-md border border-white/5 hover:border-[var(--accent)]/50 bg-white/5 flex items-center justify-center transition-all hover:bg-[var(--accent)]/10 text-white/40 hover:text-[var(--accent)] active:scale-90" title="Random Color">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line>
+                                </svg>
+                            </button>
+
+                            <!-- Quad 3: Undo -->
+                            <button id="masterPrevColorBtn" class="rounded-md border border-white/5 hover:border-[var(--accent)]/50 bg-white/5 flex items-center justify-center transition-all hover:bg-white/10 text-white/40 hover:text-white active:scale-90" title="Undo Color">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+
+                            <!-- Quad 4: Vibration Toggle -->
+                            <button id="masterVibrationToggle" class="rounded-md border border-white/5 hover:border-[var(--accent)]/50 bg-white/5 flex items-center justify-center transition-all hover:bg-[var(--accent)]/10 text-white/40 hover:text-[var(--accent)] active:scale-90" title="Global Vibration">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
+                                </svg>
+                            </button>
                         </div>
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--accent)] group-hover:text-white transition-colors">Color</span>
-                    </button>
-
-                    <!-- MASTER RANDOM -->
-                    <button id="masterRandomBtn" class="visual-btn p-2 rounded-xl glass-pill border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem] active:scale-95">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/60 group-hover:text-white transition-colors">
-                            <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line>
-                        </svg>
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-white/50 group-hover:text-white transition-colors">Random</span>
-                    </button>
-
-                    <!-- MASTER UNDO -->
-                    <button id="masterPrevColorBtn" class="visual-btn p-2 rounded-xl glass-pill border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem] active:scale-95">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/60 group-hover:text-white transition-colors">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-white/50 group-hover:text-white transition-colors">Undo</span>
-                    </button>
-
-                    <!-- MASTER VIBRATE -->
-                    <button id="masterVibrationToggle" class="visual-btn p-2 rounded-xl glass-pill border border-white/10 hover:bg-white/10 hover:border-white/30 transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem] active:scale-95">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/50 group-hover:text-white transition-colors">
-                            <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                        </svg>
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-white/50 group-hover:text-white transition-colors">Vibe</span>
-                    </button>
+                    </div>
                 </div>
 
 
@@ -1040,6 +1069,16 @@
                         <input type="range" id="cyberAngleSlider" min="0" max="360" step="15" value="0"
                             class="premium-slider">
                     </div>
+
+                    <!-- Brightness (LUM) -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">LUM</label>
+                            <span id="cyberBrightnessVal" class="premium-value">1.0</span>
+                        </div>
+                        <input type="range" id="cyberBrightnessSlider" min="0.1" max="2.0" step="0.1" value="1.0"
+                            class="premium-slider">
+                    </div>
                 </div>
             </div>
 
@@ -1176,6 +1215,16 @@
                                 <span id="matrixAngleVal" class="premium-value">0°</span>
                             </div>
                             <input type="range" id="matrixAngleSlider" min="0" max="360" step="15" value="0"
+                                class="premium-slider">
+                        </div>
+
+                        <!-- Brightness (LUM) -->
+                        <div class="flex flex-col gap-0.5 w-24">
+                            <div class="flex justify-between items-center px-0.5">
+                                <label class="premium-label">LUM</label>
+                                <span id="matrixBrightnessVal" class="premium-value">1.0</span>
+                            </div>
+                            <input type="range" id="matrixBrightnessSlider" min="0.1" max="2.0" step="0.1" value="1.0"
                                 class="premium-slider">
                         </div>
                     </div>
