@@ -1264,8 +1264,11 @@ export function setupUI() {
             });
 
             // Set both Cyber and Matrix to TXT (custom) mode by default
-            if (viz.setCyberLogicMode) viz.setCyberLogicMode('custom');
-            if (viz.setMatrixLogicMode) viz.setMatrixLogicMode('custom');
+            const cText = document.getElementById('cyberTextInput')?.value || "";
+            const mText = document.getElementById('matrixTextInput')?.value || "";
+
+            if (viz.setCyberLogicMode) viz.setCyberLogicMode('custom', cText);
+            if (viz.setMatrixLogicMode) viz.setMatrixLogicMode('custom', mText);
 
             // Force Mindwave logic mode (MW) for Matrix? No, user wants TXT.
             if (viz.setMatrixMode) viz.setMatrixMode(false); 
