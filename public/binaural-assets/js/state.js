@@ -313,7 +313,7 @@ export const state = {
     }
 };
 
-export const VISUALIZER_VERSION = 'PERFECT_V12';
+export const VISUALIZER_VERSION = 'PERFECT_V16';
 
 // Global Elements Container
 export const els = {

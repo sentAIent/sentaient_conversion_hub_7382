@@ -19,7 +19,7 @@ const lazy = {
     haptics: () => import('./utils/haptics.js')
 };
 
-import { initExitIntent } from './ui/exit-intent.js';
+// import { initExitIntent } from './ui/exit-intent.js';
 import { initIntentSurvey } from './ui/intent-survey.js';
 import { initSocialProof } from './services/social-proof.js';
 import { checkReferral } from './services/referral.js';
@@ -95,7 +95,7 @@ const initApp = () => {
     checkReferral();
 
     // Retention & Personalization
-    initExitIntent();
+    // initExitIntent();
 
     // Check for first-time session (v5 for new Intent-based flow)
     const onboardingComplete = localStorage.getItem('mindwave_onboarding_complete_v5');

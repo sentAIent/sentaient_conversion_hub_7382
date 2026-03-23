@@ -184,6 +184,9 @@ export function setupUI() {
     els.themeBtn = document.getElementById('themeBtn');
     els.galleryBtn = document.getElementById('galleryBtn');
     els.visualSpeedSlider = document.getElementById('visualSpeedSlider');
+    els.globalDimmerSlider = document.getElementById('globalDimmerSlider');
+    els.dimmerValue = document.getElementById('dimmerValue');
+    els.dimmerOverlay = document.getElementById('dimmerOverlay');
     els.speedValue = document.getElementById('speedValue');
     els.speedSliderContainer = document.getElementById('speedSliderContainer'); // Container for opacity
     els.visualSyncBtn = document.getElementById('visualSyncBtn');
@@ -284,6 +287,7 @@ export function setupUI() {
     els.dragonBtn = document.getElementById('dragonBtn');
     els.galaxyBtn = document.getElementById('galaxyBtn');
     els.flowBtn = document.getElementById('flowBtn');
+    els.lightspeedBtn = document.getElementById('lightspeedBtn');
     els.lavaBtn = document.getElementById('lavaBtn');
     els.fireplaceBtn = document.getElementById('fireplaceBtn');
     els.rainBtn = document.getElementById('rainBtn');
@@ -659,6 +663,33 @@ export function setupUI() {
         return Math.sqrt(Math.max(0, v - 0.1) / 14.9);
     };
 
+    // Global Dimmer
+    const updateDimmerUI = (val) => {
+        if (els.globalDimmerSlider) els.globalDimmerSlider.value = val;
+        if (els.dimmerValue) els.dimmerValue.textContent = `${Math.round(val * 100)}%`;
+        if (els.dimmerOverlay) els.dimmerOverlay.style.opacity = val.toString();
+        
+        // Also dim the physical WebGL scene behind it
+        const vizCanvas = document.getElementById('visualizerCanvas') || document.getElementById('visualizer');
+        if (vizCanvas) {
+            vizCanvas.style.opacity = Math.max(0, 1.0 - val).toString();
+        }
+    };
+
+    if (els.globalDimmerSlider) {
+        els.globalDimmerSlider.addEventListener('input', () => {
+            const val = parseFloat(els.globalDimmerSlider.value);
+            updateDimmerUI(val);
+        });
+    }
+
+    // Allow Visualizer Engine to forcefully update the Dimmer slider position
+    window.addEventListener('mindwave:set-dimmer', (e) => {
+        if (e.detail && typeof e.detail.value === 'number') {
+            updateDimmerUI(e.detail.value);
+        }
+    });
+
     // Visual Speed & Sync Controls
     if (els.visualSpeedSlider) els.visualSpeedSlider.addEventListener('input', () => {
         // If user drags slider, auto-disengage sync mode
@@ -880,6 +911,7 @@ export function setupUI() {
     if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon', null, true));
     if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy', null, true));
     if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles', null, true));
+    if (els.lightspeedBtn) els.lightspeedBtn.addEventListener('click', () => setVisualMode('lightspeed', null, true));
     if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava', null, true));
     if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace', null, true));
     if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest', null, true));
@@ -1223,6 +1255,7 @@ export function setupUI() {
                 { el: els.dragonBtn, mode: 'dragon' },
                 { el: els.galaxyBtn, mode: 'galaxy' },
                 { el: els.flowBtn, mode: 'particles' },
+                { el: els.lightspeedBtn, mode: 'lightspeed' },
                 { el: els.lavaBtn, mode: 'lava' },
                 { el: els.fireplaceBtn, mode: 'fireplace' },
                 { el: els.rainBtn, mode: 'rainforest' },
@@ -2479,6 +2512,7 @@ export function resetImmersiveTimer() {
 export function setVisualMode(mode, forceState = null, isManual = false) {
     let viz = getVisualizer();
     let activeModes = new Set();
+    const state = window.MindWaveState || {};
 
     // 1. Manual Override Check (Unlock AI Lock)
     if (isManual && state.aiVisualsLocked) {
@@ -2496,11 +2530,18 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     if (!viz) {
         console.warn('[Controls] Visualizer not ready for setVisualMode. Triggering load...');
         preloadVisualizer();
-        // If it was a manual click, give feedback
-        if (isManual) {
-            showToast('Initializing Visualizer...', 'info');
-        }
-        return; // EXIT EARLY to avoid resetting highlights
+        if (isManual) { showToast('Initializing Visualizer...', 'info'); }
+
+        // Queue the click action instead of silently dropping it!
+        const checkViz = setInterval(() => {
+            const v = getVisualizer();
+            if (v && v.initialized) {
+                clearInterval(checkViz);
+                setVisualMode(mode, forceState, false); // Re-execute silently
+            }
+        }, 500);
+
+        return; // EXIT EARLY
     }
 
     if (viz) {
@@ -2525,6 +2566,13 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
                     viz.toggleMode(m);
                 }
             }
+
+            // RESTORE ISOLATED COLOR: If the mode just became active, ensure it uses its specific saved color if one exists
+            if (viz.activeModes.has(m) && state.visualColors && state.visualColors[m]) {
+                const col = state.visualColors[m];
+                // Apply to the 3D engine specifically for this mode
+                if (viz.setColor) viz.setColor(col, m);
+            }
         });
         // Render a single frame so the mode is visible even when paused
         if (isVisualsPaused()) {
@@ -2539,6 +2587,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             { el: els.dragonBtn, mode: 'dragon' },
             { el: els.galaxyBtn, mode: 'galaxy' },
             { el: els.flowBtn, mode: 'particles' },
+            { el: els.lightspeedBtn, mode: 'lightspeed' },
             { el: els.lavaBtn, mode: 'lava' },
             { el: els.fireplaceBtn, mode: 'fireplace' },
             { el: els.rainBtn, mode: 'rainforest' },
@@ -3745,12 +3794,9 @@ export function initThemeModal() {
     const CURSOR_SHAPES_DATA = [
         { id: 'sun', name: 'Sun', icon: '☀️' },
         { id: 'moon', name: 'Moon', icon: '🌙' },
-        { id: 'plus', name: 'Plus', icon: '✚' },
-        { id: 'lotus', name: 'Lotus', icon: '🪷' },
         { id: 'heart', name: 'Heart', icon: '❤️' },
         { id: 'mindwave', name: 'MindWave', icon: '🧠' },
-        { id: 'ring', name: 'Ring', icon: '⭕' },
-        { id: 'target', name: 'Target', icon: '🎯' },
+        { id: 'sun2', name: 'Sun 2', icon: '🌞' },
         { id: 'default', name: 'Default', icon: '🖱️' }
     ];
 
@@ -5214,7 +5260,7 @@ function setupMatrixControls() {
             const mode = btn.dataset.matrixMode;
             const viz = getVisualizer();
             if (viz && viz.setMatrixLogicMode) {
-                const text = textInput ? textInput.value : 'WELCOME';
+                const text = textInput ? textInput.value : '';
                 viz.setMatrixLogicMode(mode, text);
                 modeBtns.forEach(b => {
                     b.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
@@ -5301,7 +5347,7 @@ function setupCyberControls() {
                 const viz = getVisualizer();
                 const modeStr = btn.dataset.cyberMode;
                 if (viz && viz.setCyberLogicMode) {
-                    const text = document.getElementById('cyberTextInput')?.value || 'WELCOME';
+                    const text = document.getElementById('cyberTextInput')?.value || '';
                     viz.setCyberLogicMode(modeStr, text);
                     // Update UI state
                     modes.forEach(mx => {
@@ -5459,7 +5505,7 @@ export function initVisualColorPickers() {
             // If this is the active mode, apply it to the visualizer immediately
             const viz = getVisualizer();
             if (viz && viz.activeModes && viz.activeModes.has(mode)) {
-                setVisualColor(newColor);
+                setVisualColor(newColor, mode);
             }
         });
         
