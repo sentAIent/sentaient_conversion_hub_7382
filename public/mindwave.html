@@ -744,6 +744,13 @@
                         <span
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Galaxy</span>
 
+                        <!-- Sun Style Toggle (Left) -->
+                        <div id="galaxySunToggle"
+                            class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
+                            title="Toggle Sun Style" onclick="event.stopPropagation(); toggleGalaxySun();">
+                            <span class="text-[8px] leading-none text-white">☀️</span>
+                        </div>
+
                         <!-- Galaxy Settings Toggle -->
                         <div id="galaxySettingsToggle"
                             class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
@@ -857,8 +864,49 @@
                     </button>
                 </div>
 
+            <div id="galaxySettingsPanel"
+                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full">
+                <!-- Back Button -->
+                <button onclick="document.getElementById('galaxySettingsPanel').classList.add('hidden')"
+                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Back
+                </button>
+                <button onclick="resetGalaxySettings()"
+                    class="px-2 py-1 rounded bg-white/5 hover:bg-[var(--accent)]/20 hover:text-[var(--accent)] text-[9px] font-bold uppercase tracking-widest text-[var(--accent)]/70 transition-all border border-[var(--accent)]/30 mr-1 flex items-center gap-1">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                        <path d="M21 3v5h-5"></path>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                        <path d="M8 16H3v5"></path>
+                    </svg>
+                    Reset
+                </button>
+                <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Sun
+                    Rotation</span>
+                <div class="flex items-center gap-4">
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RX</label>
+                        <input type="range" id="galaxySunRX" min="-2.0" max="2.0" step="0.1" value="0"
+                            class="premium-slider w-16">
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RY</label>
+                        <input type="range" id="galaxySunRY" min="-2.0" max="2.0" step="0.1" value="0.5"
+                            class="premium-slider w-16">
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RZ</label>
+                        <input type="range" id="galaxySunRZ" min="-2.0" max="2.0" step="0.1" value="0"
+                            class="premium-slider w-16">
+                    </div>
+                </div>
+            </div>
+
             <div id="cyberSettingsPanel"
-                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30_px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full">
+                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full">
 
                 <!-- Back Button -->
                 <button onclick="document.getElementById('cyberSettingsPanel').classList.add('hidden')"
