@@ -465,12 +465,17 @@ class InterstellarEngine {
 
         // Economy and Progression Loop
         this.playerGems = parseInt(localStorage.getItem('playerGems')) || 0;
-        this.unlockedShips = JSON.parse(localStorage.getItem('unlockedShips')) || ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
+        try {
+            this.unlockedShips = JSON.parse(localStorage.getItem('unlockedShips')) || ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
+        } catch (e) {
+            this.unlockedShips = ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
+        }
 
         const savedUpgrades = this.loadUpgrades();
 
+        const savedShipType = localStorage.getItem('playerShipType') || 'interceptor';
         this.playerShip = {
-            type: 'default',
+            type: savedShipType,
             x: 0, y: 0, z: 0,
             vx: 0, vy: 0, vz: 0,
             rotation: 0,
@@ -1706,6 +1711,7 @@ class InterstellarEngine {
             'sectionGems': '💎 Gems',
             'sectionVelocity': '🚀 Engines',
             'sectionShipStatus': '🛡️ Shield',
+            'sectionShipDesign': '🎨 Ship Design',
             'floatingMap': '🗺️ Map',
             'floatingLeaders': '🏆 Leaders'
         };
@@ -1825,7 +1831,7 @@ class InterstellarEngine {
         const slot = prompt('Save to layout slot (1, 2, or 3):', '1');
         if (!slot || !['1', '2', '3'].includes(slot)) return;
 
-        const windows = ['sectionRadar', 'sectionControls', 'sectionGems', 'sectionVelocity', 'floatingMap', 'floatingLeaders', 'sectionMap'];
+        const windows = ['sectionRadar', 'sectionControls', 'sectionGems', 'sectionVelocity', 'floatingMap', 'floatingLeaders', 'sectionMap', 'sectionShipDesign', 'sectionShipStatus'];
         const layout = {};
 
         windows.forEach(id => {
@@ -6371,6 +6377,23 @@ class InterstellarEngine {
                 if (this.hazardEffect.type === 'boost') {
                     this.playerShip.boostActive = false;
                 }
+                
+                // UNIVERSAL RESPAWN FAILSAFE: Ensure health/shield are always restored after any death-causing hazard
+                const finishedHazardType = this.hazardEffect.type;
+                if (this.playerShip.hullHealth <= 0) {
+                    this.playerShip.shield = this.playerShip.maxShield;
+                    this.playerShip.hullHealth = this.playerShip.maxHull;
+
+                    // If it wasn't a player_death or blackhole (which handle their own spatial relocation), safely teleport them
+                    if (finishedHazardType !== 'player_death' && finishedHazardType !== 'blackhole') {
+                        const teleportDist = 2000 + Math.random() * 3000;
+                        const teleportAngle = Math.random() * Math.PI * 2;
+                        this.playerShip.x += Math.cos(teleportAngle) * teleportDist;
+                        this.playerShip.y += Math.sin(teleportAngle) * teleportDist;
+                        this.showToast('🚀 Systems restored after critical impact.');
+                    }
+                }
+
                 this.hazardEffect = null;
 
                 // Reset camera to prevent permanent drift (Missing Ship bug)
@@ -14988,8 +15011,8 @@ class InterstellarEngine {
             const lockHtml = isLocked ? `<div class="lock-overlay">⭐ ${price} GEMS</div>` : '';
 
             let btnAction = `window.game.selectShip('${ship.id}')`;
-            let btnText = 'ENGAGE PILOT';
-            let btnClass = 'select-ship-btn';
+            let btnText = (this.playerShip && this.playerShip.type === ship.id) ? 'SELECTED' : 'SELECT SHIP';
+            let btnClass = (this.playerShip && this.playerShip.type === ship.id) ? 'select-ship-btn active' : 'select-ship-btn';
 
             if (isLocked) {
                 if (this.playerGems >= price) {
@@ -15692,3 +15715,4 @@ class InterstellarEngine {
 
 
 window.game = new InterstellarEngine();
+window.app = window.game; // Bridge for HTML handlers

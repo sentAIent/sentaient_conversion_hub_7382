@@ -457,10 +457,11 @@
             background:
                 linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
-                #05080c;
+                transparent;
             background-size: 100px 100px;
             transform: rotateX(90deg) translateZ(-150px);
             box-shadow: inset 0 0 500px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
         }
 
         .bay-floor::after {
@@ -521,32 +522,30 @@
 
         /* Hangar UI Elements (The Specs) */
         .ship-specs {
-            width: 350px;
+            width: 550px;
             background: rgba(0, 20, 40, 0.6);
             backdrop-filter: blur(10px);
             border-left: 4px solid var(--accent);
-            padding: 30px;
+            padding: 40px;
             border-radius: 4px;
             pointer-events: auto;
-            /* Moved left 20px (-250 -> -270) and up 60px */
-            transform: translateX(-270px) translateY(-60px);
-            /* Shifted further left from -150px */
+            transform: translateX(-500px) translateY(-60px);
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
         }
 
         .ship-specs h3 {
             font-family: 'Exo 2', sans-serif;
-            font-size: 24px;
+            font-size: 30px;
             color: var(--accent);
-            margin: 0 0 15px 0;
+            margin: 0 0 25px 0;
             letter-spacing: 2px;
         }
 
         .spec-line {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 16px;
+            font-size: 18px;
         }
 
         .spec-line .label {
@@ -559,8 +558,8 @@
         }
 
         .spec-desc {
-            margin-top: 20px;
-            font-size: 13px;
+            margin-top: 30px;
+            font-size: 16px;
             color: #aaddff;
             line-height: 1.6;
             font-style: italic;
@@ -595,10 +594,11 @@
             position: absolute;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, 220px);
+            transform: translate(-50%, 260px);
             /* We strictly center it so non-absolute siblings don't offset its static origin */
             padding: 15px 40px;
             background: var(--accent);
+            pointer-events: auto;
             color: #000;
             border: none;
             border-radius: 4px;
@@ -609,12 +609,12 @@
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 0 20px var(--accent-glow);
-            z-index: 50;
+            z-index: 150;
             /* ensure it stays above nav if it overlaps */
         }
 
         .select-ship-btn:hover {
-            transform: translate(-50%, 220px) scale(1.05);
+            transform: translate(-50%, 260px) scale(1.05);
             /* maintain position during scale */
             background: #fff;
             box-shadow: 0 0 40px var(--accent);
@@ -647,7 +647,7 @@
         }
 
         .select-ship-btn.unlock-btn.available:hover {
-            transform: translate(-50%, 220px) scale(1.08);
+            transform: translate(-50%, 260px) scale(1.08);
             box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
         }
 
@@ -739,7 +739,7 @@
             /* Allow wrapping */
             gap: 20px;
             /* Reduced gap since we have wrapping */
-            margin: 60px 0 30px 0;
+            margin: 180px 0 30px 0;
             z-index: 10;
             width: 100%;
             max-width: 600px;
