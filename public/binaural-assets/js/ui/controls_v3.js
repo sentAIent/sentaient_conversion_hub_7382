@@ -1321,6 +1321,16 @@ export function setupUI() {
                 }
             }
 
+            // Show cyber panel if cyber is active
+            const cyberPanel = document.getElementById('cyberSettingsPanel');
+            if (cyberPanel && viz.activeModes.has('cyber')) {
+                if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = true;
+                if (state.cyberPanelOpen) {
+                    cyberPanel.classList.remove('hidden');
+                    cyberPanel.classList.add('flex', 'items-center');
+                }
+            }
+
             // Reveal canvas and controls — everything is ready
             const canvas = document.getElementById('visualizer');
             if (canvas) {

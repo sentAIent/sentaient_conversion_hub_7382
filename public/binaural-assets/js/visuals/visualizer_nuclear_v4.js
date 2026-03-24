@@ -979,7 +979,7 @@ export class Visualizer3D {
     initMandala() {
         // Sacred geometry: concentric rotating rings
         this.mandalaRings = [];
-        const ringColors = [0xf59e0b, 0xfbbf24, 0xf97316, 0xfb923c, 0xef4444];
+        const ringColors = [0x2563eb, 0xea580c, 0x3b82f6, 0xf97316, 0xbfdbfe];
 
         for (let i = 0; i < 5; i++) {
             const radius = 1.2 + i * 0.8;
@@ -1001,7 +1001,7 @@ export class Visualizer3D {
         // Center dot
         const dotGeo = new THREE.CircleGeometry(0.3, 32);
         const dotMat = new THREE.MeshBasicMaterial({
-            color: 0xfbbf24,
+            color: 0xf97316,
             transparent: true,
             opacity: 0.6,
             blending: THREE.AdditiveBlending
@@ -1010,7 +1010,7 @@ export class Visualizer3D {
         this.mandalaGroup.add(this.mandalaCenter);
         this.mandalaGroup.visible = false;
 
-        const manInitCol = this.customColors?.["mandala"] || this.customColor;
+        const manInitCol = this.customColors?.["mandala"];
         if (manInitCol) {
             this.mandalaRings.forEach(r => r.material.color.copy(manInitCol));
             this.mandalaCenter.material.color.copy(manInitCol);
@@ -2010,9 +2010,19 @@ export class Visualizer3D {
         }
         
         if (this.particles && this.particles.material) this.particles.material.color.set(hex);
+        if (this.lightspeed && this.lightspeed.material) this.lightspeed.material.color.set(hex);
         if (this.sphere && this.sphere.material) {
             this.sphere.material.color.set(hex);
             this.core.material.color.set(hex);
+        }
+        if (mode === 'box' || !mode || mode === 'all') {
+            if (this.boxOuter) this.boxOuter.children.forEach(c => c.material.color.set(hex));
+            if (this.boxInner) this.boxInner.children.forEach(c => c.material.color.set(hex));
+            if (this.boxEdges && this.boxEdges.material) this.boxEdges.material.color.set(hex);
+        }
+        if (mode === 'mandala') {
+            if (this.mandalaRings) this.mandalaRings.forEach(r => r.material.color.set(hex));
+            if (this.mandalaCenter && this.mandalaCenter.material) this.mandalaCenter.material.color.set(hex);
         }
         if (this.wavesMesh && this.wavesMesh.material) this.wavesMesh.material.color.set(hex);
         if (this.lavaBlobs) this.lavaBlobs.forEach(blob => blob.material.color.set(hex));
@@ -2033,11 +2043,11 @@ export class Visualizer3D {
             this.updateLogoTexture();
         }
         if (this.dragonGroup && this.updateDragonColor) {
-            this.updateDragonColor(this.customColor);
+            this.updateDragonColor(new THREE.Color(hex));
         }
         // Galaxy: sun = picked color, stars = complementary
         if (this.galaxyStars || this.galaxySunMesh) {
-            this.updateGalaxyColor(this.customColor);
+            this.updateGalaxyColor(new THREE.Color(hex));
         }
         this.renderSingleFrame();
     }
