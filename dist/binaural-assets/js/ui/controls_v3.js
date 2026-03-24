@@ -12,12 +12,11 @@ import { setStoryVolume, playStory, stopStory as stopCurrentStory, storyState } 
 import { setCustomAudioVolume } from '../content/audio-library.js';
 import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '../content/classical.js';
 import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '../audio/dj-synth.js';
-import { goToCheckout, hasPurchasedApp, getUserTier, openCustomerPortal } from '../services/stripe-simple.js';
-import { getLeaderboard } from '../services/leaderboard-service.js';
+import { goToCheckout, hasPurchasedApp } from '../services/stripe-simple.js';
 import { initGallery } from './gallery-modal.js';
 import { getReferralCount, shareReferral } from '../services/referral.js';
 import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
-import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence, setPresencePhase } from '../services/presence-service.js';
+import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
 // ... (existing code)
 import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
 import { loadUserPreferences, saveUserPreferences } from '../services/persistence.js?v=NUCLEAR_FIX_V2';
@@ -29,7 +28,162 @@ let restoredPrefs = null;
 // This block is just for thought process.
 
 // Cursor logic imports removed for inlined UI generation
+export function toggleMixerSection(sectionName) {
+    const section = document.querySelector(`[data-section="${sectionName}"]`);
+    if (section) {
+        section.classList.toggle('collapsed');
+        const collapsed = section.classList.contains('collapsed');
+        const states = JSON.parse(localStorage.getItem('mixerSectionStates') || '{}');
+        states[sectionName] = collapsed;
+        localStorage.setItem('mixerSectionStates', JSON.stringify(states));
+    }
+}
+window.toggleMixerSection = toggleMixerSection;
 
+export function toggleLeftMenuSection(sectionName) {
+    const section = document.querySelector(`#leftPanel [data-section="${sectionName}"]`);
+    if (section) {
+        section.classList.toggle('collapsed');
+        const collapsed = section.classList.contains('collapsed');
+        const states = JSON.parse(localStorage.getItem('leftMenuSectionStates') || '{}');
+        states[sectionName] = collapsed;
+        localStorage.setItem('leftMenuSectionStates', JSON.stringify(states));
+    }
+}
+window.toggleLeftMenuSection = toggleLeftMenuSection;
+
+// NEW: Interface for mindwave.html proxies
+window.controls = {
+    toggleGalaxySettings: function(btn) {
+        state.galaxyPanelOpen = !state.galaxyPanelOpen;
+        const panel = document.getElementById('galaxySettingsPanel');
+        const viz = getVisualizer();
+        const isActive = viz && viz.activeModes && viz.activeModes.has('galaxy');
+        if (panel && isActive) {
+            if (state.galaxyPanelOpen) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex', 'items-center');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'items-center');
+            }
+        } else if (panel) {
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            panel.classList.toggle('items-center');
+        }
+    },
+    toggleCyberSettings: function(btn) {
+        state.cyberPanelOpen = !state.cyberPanelOpen;
+        const panel = document.getElementById('cyberSettingsPanel');
+        const viz = getVisualizer();
+        const isActive = viz && viz.activeModes && viz.activeModes.has('cyber');
+        if (panel && isActive) {
+            if (state.cyberPanelOpen) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex', 'items-center');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'items-center');
+            }
+        } else if (panel) {
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            panel.classList.toggle('items-center');
+        }
+    },
+    toggleMatrixSettings: function(btn) {
+        state.matrixPanelOpen = !state.matrixPanelOpen;
+        const panel = document.getElementById('matrixSettingsPanel');
+        const viz = getVisualizer();
+        const active = viz && viz.activeModes && viz.activeModes.has('matrix');
+        if (panel && active) {
+            if (state.matrixPanelOpen) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex', 'items-center');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'items-center');
+            }
+        } else if (panel) {
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            panel.classList.toggle('items-center');
+        }
+    },
+    toggleGalaxySun: function() {
+        const viz = getVisualizer();
+        if (viz && viz.setGalaxySunStyle) {
+            const current = viz.galaxySunStyle || 'sun';
+            const next = current === 'sun' ? 'sun2' : 'sun';
+            viz.setGalaxySunStyle(next);
+        }
+    },
+    resetGalaxySettings: function() {
+        const rx = document.getElementById('galaxySunRX');
+        const ry = document.getElementById('galaxySunRY');
+        const rz = document.getElementById('galaxySunRZ');
+        if (rx) rx.value = 0;
+        if (ry) ry.value = 0.5;
+        if (rz) rz.value = 0;
+        
+        const viz = getVisualizer();
+        // If galaxy is active or was recently active, reset its rotation speeds
+        if (viz) {
+            viz.sunRotationSpeedX = 0;
+            viz.sunRotationSpeedY = 0.5;
+            viz.sunRotationSpeedZ = 0;
+        }
+    }
+};
+
+// Legacy support
+window.toggleGalaxySettings = window.controls.toggleGalaxySettings;
+window.toggleCyberSettings = window.controls.toggleCyberSettings;
+window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
+window.toggleGalaxySun = window.controls.toggleGalaxySun;
+window.resetGalaxySettings = window.controls.resetGalaxySettings;
+
+export function updateDockScaling() {
+    const width = window.innerWidth;
+    const footer = document.getElementById('bottomControlBar');
+
+    if (!footer) return;
+
+    // Output CSS variables based on screen width instead of using transform: scale()
+    // This allows children to elegantly rearrange instead of becoming unreadable ants
+    let dockGap = '16px';
+    let btnSize = '56px';
+    let iconSize = '24px';
+    let auxBtnSize = '36px';
+    let auxIconSize = '14px';
+
+    if (width < 600) {
+        dockGap = '8px';
+        btnSize = '42px';
+        iconSize = '20px';
+        auxBtnSize = '32px';
+        auxIconSize = '12px';
+    } else if (width < 900) {
+        dockGap = '12px';
+        btnSize = '48px';
+        iconSize = '22px';
+        auxBtnSize = '34px';
+        auxIconSize = '13px';
+    }
+
+    footer.style.setProperty('--dock-gap', dockGap);
+    footer.style.setProperty('--dock-btn-size', btnSize);
+    footer.style.setProperty('--dock-icon-size', iconSize);
+    footer.style.setProperty('--aux-btn-size', auxBtnSize);
+    footer.style.setProperty('--aux-icon-size', auxIconSize);
+    
+    // Clear legacy transform logic
+    footer.style.transform = 'none';
+
+    console.log(`[Resizing] Dock CSS vars updated for width ${width}`);
+}
+window.updateDockScaling = updateDockScaling;
 
 export function setupUI() {
     console.log('[Controls] setupUI CALLED');
@@ -56,6 +210,9 @@ export function setupUI() {
     els.themeBtn = document.getElementById('themeBtn');
     els.galleryBtn = document.getElementById('galleryBtn');
     els.visualSpeedSlider = document.getElementById('visualSpeedSlider');
+    els.globalDimmerSlider = document.getElementById('globalDimmerSlider');
+    els.dimmerValue = document.getElementById('dimmerValue');
+    els.dimmerOverlay = document.getElementById('dimmerOverlay');
     els.speedValue = document.getElementById('speedValue');
     els.speedSliderContainer = document.getElementById('speedSliderContainer'); // Container for opacity
     els.visualSyncBtn = document.getElementById('visualSyncBtn');
@@ -123,6 +280,8 @@ export function setupUI() {
     // Force immediate calculation before reveal to prevent shift
     updateTopBarWidth();
     updateBottomBarWidth();
+    updateDockScaling();
+
 
     console.log('[Controls] Initial layout synchronized');
     els.playbackAudio = document.getElementById('playbackAudio');
@@ -153,16 +312,17 @@ export function setupUI() {
     els.cubeBtn = document.getElementById('cubeBtn');
     els.dragonBtn = document.getElementById('dragonBtn');
     els.galaxyBtn = document.getElementById('galaxyBtn');
-    els.mandalaBtn = document.getElementById('mandalaBtn');
-
     els.flowBtn = document.getElementById('flowBtn');
+    els.lightspeedBtn = document.getElementById('lightspeedBtn');
     els.lavaBtn = document.getElementById('lavaBtn');
     els.fireplaceBtn = document.getElementById('fireplaceBtn');
     els.rainBtn = document.getElementById('rainBtn');
     els.zenBtn = document.getElementById('zenBtn');
     els.oceanBtn = document.getElementById('oceanBtn');
+    els.mandalaBtn = document.getElementById('mandalaBtn');
     els.cyberBtn = document.getElementById('cyberBtn');
     els.matrixBtn = document.getElementById('matrixBtn');
+    els.interstellarBtn = els.matrixBtn; // Legacy alias for some internal functions
 
     // Session Timer Elements
     els.sessionDuration = document.getElementById('sessionDuration');
@@ -206,6 +366,10 @@ export function setupUI() {
     // NEW: Stats Modal Elements
     els.statsModal = document.getElementById('statsModal');
     els.statsBtn = document.getElementById('statsBtn');
+
+    // --- INITIALIZATION ---
+    setupGalaxyControls();
+    // setupMatrixControls(); // Functionality migrated to direct mode setting, but kept for future refactors
 
     // --- PERSISTENCE RESTORATION ---
     restoredPrefs = loadUserPreferences();
@@ -525,6 +689,33 @@ export function setupUI() {
         return Math.sqrt(Math.max(0, v - 0.1) / 14.9);
     };
 
+    // Global Dimmer
+    const updateDimmerUI = (val) => {
+        if (els.globalDimmerSlider) els.globalDimmerSlider.value = val;
+        if (els.dimmerValue) els.dimmerValue.textContent = `${Math.round(val * 100)}%`;
+        if (els.dimmerOverlay) els.dimmerOverlay.style.opacity = val.toString();
+        
+        // Also dim the physical WebGL scene behind it
+        const vizCanvas = document.getElementById('visualizerCanvas') || document.getElementById('visualizer');
+        if (vizCanvas) {
+            vizCanvas.style.opacity = Math.max(0, 1.0 - val).toString();
+        }
+    };
+
+    if (els.globalDimmerSlider) {
+        els.globalDimmerSlider.addEventListener('input', () => {
+            const val = parseFloat(els.globalDimmerSlider.value);
+            updateDimmerUI(val);
+        });
+    }
+
+    // Allow Visualizer Engine to forcefully update the Dimmer slider position
+    window.addEventListener('mindwave:set-dimmer', (e) => {
+        if (e.detail && typeof e.detail.value === 'number') {
+            updateDimmerUI(e.detail.value);
+        }
+    });
+
     // Visual Speed & Sync Controls
     if (els.visualSpeedSlider) els.visualSpeedSlider.addEventListener('input', () => {
         // If user drags slider, auto-disengage sync mode
@@ -741,62 +932,51 @@ export function setupUI() {
     });
 
     // Visual Modes
-    if (els.sphereBtn) els.sphereBtn.addEventListener('click', () => setVisualMode('sphere'));
-    if (els.cubeBtn) els.cubeBtn.addEventListener('click', () => setVisualMode('box'));
-    if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon'));
-    if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy'));
-    if (els.mandalaBtn) els.mandalaBtn.addEventListener('click', () => setVisualMode('mandala'));
-
-    if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles'));
-    if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava'));
-    if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace'));
-    if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest'));
-    if (els.zenBtn) els.zenBtn.addEventListener('click', () => setVisualMode('zengarden'));
-    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean'));
-    if (els.cyberBtn) els.cyberBtn.addEventListener('click', (e) => {
-        // Prevent triggering if clicking the mini-toggle
-        if (e.target.closest('#cyberSettingsToggle')) return;
-        setVisualMode('cyber');
+    if (els.sphereBtn) els.sphereBtn.addEventListener('click', () => setVisualMode('sphere', null, true));
+    if (els.cubeBtn) els.cubeBtn.addEventListener('click', () => setVisualMode('cube', null, true));
+    if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon', null, true));
+    if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy', null, true));
+    if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles', null, true));
+    if (els.lightspeedBtn) els.lightspeedBtn.addEventListener('click', () => setVisualMode('lightspeed', null, true));
+    if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava', null, true));
+    if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace', null, true));
+    if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest', null, true));
+    if (els.zenBtn) els.zenBtn.addEventListener('click', () => setVisualMode('zengarden', null, true));
+    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean', null, true));
+    if (els.mandalaBtn) els.mandalaBtn.addEventListener('click', () => setVisualMode('mandala', null, true));
+    if (els.cyberBtn) els.cyberBtn.addEventListener('click', () => setVisualMode('cyber', null, true));
+    if (els.matrixBtn) els.matrixBtn.addEventListener('click', (e) => {
+        if (e.target.closest('#matrixSettingsToggle')) return;
+        setVisualMode('matrix', null, true);
     });
-    if (els.matrixBtn) els.matrixBtn.addEventListener('click', () => setVisualMode('matrix'));
 
-    // Glow Mode Buttons (Auto, Dim, Full, Heartbeat)
-    const glowAutoBtn = document.getElementById('glowAutoBtn');
-    const glowDimBtn = document.getElementById('glowDimBtn');
-    const glowFullBtn = document.getElementById('glowFullBtn');
-    const glowHeartbeatBtn = document.getElementById('glowHeartbeatBtn');
-    if (glowAutoBtn) glowAutoBtn.addEventListener('click', () => setGlowMode('auto'));
-    if (glowDimBtn) glowDimBtn.addEventListener('click', () => setGlowMode('faded'));
-    if (glowFullBtn) glowFullBtn.addEventListener('click', () => setGlowMode('full'));
-    if (glowHeartbeatBtn) glowHeartbeatBtn.addEventListener('click', () => setGlowMode('heartbeat'));
+    // Matrix Mini-Toggle Logic
+    const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
+    if (matrixSettingsToggle) {
+        matrixSettingsToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Don't trigger matrix toggle
+            state.matrixPanelOpen = !state.matrixPanelOpen; // Toggle state
 
-    // Cyber Mini-Toggle Logic
-    const cyberSettingsToggle = document.getElementById('cyberSettingsToggle');
-    if (cyberSettingsToggle) {
-        cyberSettingsToggle.addEventListener('click', (e) => {
-            e.stopPropagation(); // Don't trigger cyber toggle
-            state.cyberPanelOpen = !state.cyberPanelOpen; // Toggle state
-
-            // Update panel visibility immediately if Cyber is active
-            const cyberPanel = document.getElementById('cyberSettingsPanel');
+            // Update panel visibility immediately if Matrix is active
+            const matrixPanel = document.getElementById('matrixSettingsPanel');
             const viz = getVisualizer();
-            if (cyberPanel && viz && viz.activeModes.has('cyber')) {
-                if (state.cyberPanelOpen) {
-                    cyberPanel.classList.remove('hidden');
-                    cyberPanel.classList.add('flex', 'items-center');
+            if (matrixPanel && viz && viz.activeModes.has('matrix')) {
+                if (state.matrixPanelOpen) {
+                    matrixPanel.classList.remove('hidden');
+                    matrixPanel.classList.add('flex', 'items-center');
                 } else {
-                    cyberPanel.classList.add('hidden');
-                    cyberPanel.classList.remove('flex', 'items-center');
+                    matrixPanel.classList.add('hidden');
+                    matrixPanel.classList.remove('flex', 'items-center');
                 }
             }
         });
     }
 
 
-    // Cyber Controls
+    // Matrix Controls
 
-    console.log('[Controls] Calling setupCyberControls()...');
-    setTimeout(() => setupCyberControls(), 50);
+    console.log('[Controls] Calling setupMatrixControls()...');
+    setTimeout(() => setupMatrixControls(), 50);
 
     // Mobile Bottom Navigation Handlers
     if (els.mobilePresetsBtn) {
@@ -847,12 +1027,12 @@ export function setupUI() {
 
         // Show back button if we have a previous color
         if (els.prevColorBtn && previousColor) {
-            els.prevColorBtn.classList.remove('hidden', 'opacity-30', 'pointer-events-none');
+            els.prevColorBtn.classList.remove('hidden');
         }
     }
 
-    // Setup Cyber specific controls
-    // Legacy setupCyberControls removed to use main function (line 3918)
+    // Setup Matrix specific controls
+    // Legacy setupMatrixControls removed to use main function (line 3918)
 
 
     if (els.visualColorPicker) {
@@ -980,13 +1160,7 @@ export function setupUI() {
     setupHyperGammaUI(); // NEW
     setupSweepUI(); // NEW
     setupStatsUI(); // NEW - Session Analytics
-    // Initialize Timer & Disclaimer UI
-    setupTimerUI();
-    setupDisclaimerUI();
-    setupModeToggle(); // NEW
-    setupHyperGammaUI(); // NEW
-    setupSweepUI(); // NEW
-    setupStatsUI(); // NEW - Session Analytics
+    setupGalaxyControls(); // RESTORED MAR 11
 
     // Mobile Bottom Navigation Handlers
     // ... (existing code) ...
@@ -995,6 +1169,9 @@ export function setupUI() {
     const footer = document.getElementById('bottomControlBar');
     const header = document.getElementById('topControlBar');
     if (footer) {
+        updateBottomBarWidth();
+        updateDockScaling(); // Ensure scaling is applied immediately
+        footer.classList.remove('idle-hidden'); // EXPLICITLY REMOVE
         footer.style.opacity = '1';
         footer.classList.remove('no-transition');
     }
@@ -1067,7 +1244,7 @@ export function setupUI() {
     // --- Visualizer Initialization & Defaults ---
 
     // Apply visual defaults once visualizer is actually loaded (lazy loader)
-    const applyVisualDefaults = async () => {
+    const applyVisualDefaults = () => {
         console.log('[Controls] Applying visual defaults starting...');
         const viz = getVisualizer();
         if (!viz) {
@@ -1076,30 +1253,31 @@ export function setupUI() {
         }
 
         try {
-            // Ensure Flow (particles), Galaxy, Dragon, and Cyber are active on load per user request
-            // BUT delay the loading slightly to prevent iOS/Safari WebGL watchdog from crashing the tab
+            // Default only Cyber active on load
+            if (!viz.activeModes.has('cyber')) {
+                viz.toggleMode('cyber');
+            }
+            
+            // Deactivate others if they were on (e.g., matrix/particles)
+            ['particles', 'matrix'].forEach(mode => {
+                if (viz.activeModes.has(mode)) viz.toggleMode(mode);
+            });
 
-            const reqMode = async (mode) => {
-                if (!viz.activeModes.has(mode)) {
-                    viz.toggleMode(mode);
-                    // Yield to browser to compile shaders and update DOM
-                    await new Promise(r => requestAnimationFrame(r));
-                }
-            };
+            // Set both Cyber and Matrix to TXT (custom) mode by default
+            const cText = document.getElementById('cyberTextInput')?.value || "";
+            const mText = document.getElementById('matrixTextInput')?.value || "";
 
-            await reqMode('particles');
-            await reqMode('cyber');
-            await reqMode('galaxy');
-            await reqMode('dragon');
+            if (viz.setCyberLogicMode) viz.setCyberLogicMode('custom', cText);
+            if (viz.setMatrixLogicMode) viz.setMatrixLogicMode('custom', mText);
 
-            // Force Mindwave logic mode (MW) for Cyber
-            if (viz.setCyberMode) viz.setCyberMode(true);
+            // Force Mindwave logic mode (MW) for Matrix? No, user wants TXT.
+            if (viz.setMatrixMode) viz.setMatrixMode(false); 
 
-            // Cyber Rainbow mode is forced to true on load per user request
+            // Matrix Rainbow mode is forced to true on load per user request
             const isRainbowEnabled = true;
 
-            if (viz.setCyberRainbow) viz.setCyberRainbow(isRainbowEnabled);
-            const rainbowToggle = document.getElementById('cyberRainbowToggle');
+            if (viz.setMatrixRainbow) viz.setMatrixRainbow(isRainbowEnabled);
+            const rainbowToggle = document.getElementById('matrixRainbowToggle');
             if (rainbowToggle) rainbowToggle.checked = isRainbowEnabled;
 
             // Sync UI labels
@@ -1111,14 +1289,14 @@ export function setupUI() {
                 { el: els.cubeBtn, mode: 'box' },
                 { el: els.dragonBtn, mode: 'dragon' },
                 { el: els.galaxyBtn, mode: 'galaxy' },
-                { el: els.mandalaBtn, mode: 'mandala' },
-
                 { el: els.flowBtn, mode: 'particles' },
+                { el: els.lightspeedBtn, mode: 'lightspeed' },
                 { el: els.lavaBtn, mode: 'lava' },
                 { el: els.fireplaceBtn, mode: 'fireplace' },
                 { el: els.rainBtn, mode: 'rainforest' },
                 { el: els.zenBtn, mode: 'zengarden' },
                 { el: els.oceanBtn, mode: 'ocean' },
+                { el: els.mandalaBtn, mode: 'mandala' },
                 { el: els.cyberBtn, mode: 'cyber' },
                 { el: els.matrixBtn, mode: 'matrix' }
             ];
@@ -1132,6 +1310,16 @@ export function setupUI() {
                     el.classList.add('toggle-inactive');
                 }
             });
+
+            // Show matrix panel if matrix is active
+            const matrixPanel = document.getElementById('matrixSettingsPanel');
+            if (matrixPanel && viz.activeModes.has('matrix')) {
+                if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
+                if (state.matrixPanelOpen) {
+                    matrixPanel.classList.remove('hidden');
+                    matrixPanel.classList.add('flex', 'items-center');
+                }
+            }
 
             // Show cyber panel if cyber is active
             const cyberPanel = document.getElementById('cyberSettingsPanel');
@@ -1167,12 +1355,6 @@ export function setupUI() {
             console.log('[Controls] Visualizer and controls revealed');
 
             console.log('[Controls] Visual defaults applied (streamlined)');
-
-            // Explicitly force visuals to play on load per user request
-            if (typeof resumeVisuals === 'function') {
-                resumeVisuals();
-            }
-
         } catch (e) {
             console.error('[Controls] Error in applyVisualDefaults:', e);
             const canvas = document.getElementById('visualizer');
@@ -1249,6 +1431,9 @@ export function setupUI() {
 
     // Initialize UI State
     updateSyncUI();
+    
+    // Initialize Per-Visual Color Pickers
+    initVisualColorPickers();
 }
 window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
 
@@ -1274,8 +1459,6 @@ async function handlePlayClick() {
     if (state.isStopping) {
         console.log('[Controls] Fast Resume triggered!');
         cancelFadeOut();
-        // Crucial Fix: Ramp the master gain back up to 1, or else it stays at 0 forever
-        fadeIn(0.5);
         state.isStopping = false;
         // Ensure UI reflects playing immediately
         syncAllButtons();
@@ -1301,8 +1484,8 @@ async function handlePlayClick() {
         if (isClassicalPlaying()) stopClassical();
         endSessionTracking(false);
 
-        console.log('[Controls] Calling fadeOut(0.05)...');
-        fadeOut(0.05, () => {
+        console.log('[Controls] Calling fadeOut(1.5)...');
+        fadeOut(1.5, () => {
             console.log('[Controls] fadeOut complete callback -> calling stopAudio()');
             stopAudio();
             state.isStopping = false; // Reset flag when actually stopped
@@ -1314,11 +1497,6 @@ async function handlePlayClick() {
     } else {
         // STARTING
         try {
-            // Request Desktop Notification Permission explicitly on their first ever play
-            if (window.requestNotificationPermission) {
-                window.requestNotificationPermission();
-            }
-
             // 1. Resume visuals FIRST so they're ready when audio starts
             resumeVisuals();
 
@@ -1378,7 +1556,7 @@ async function handleAudioToggle() {
         stopSession();
         if (isClassicalPlaying()) stopClassical();
         endSessionTracking(false);
-        fadeOut(0.05, () => {
+        fadeOut(1.5, () => {
             stopAudio();
             state.isAudioStopping = false; // Reset flag when actually stopped
             syncAllButtons(); // Sync after audio fully stops
@@ -1642,7 +1820,7 @@ async function applyAIPreset(result) {
         const visualMap = {
             'flow': 'particles',
             'zen': 'zengarden',
-            'cyber': 'cyber',
+            'matrix': 'matrix',
             'rain': 'rainforest'
         };
 
@@ -1729,6 +1907,32 @@ function setupTimerUI() {
     }
 }
 
+function setupGalaxyControls() {
+    const rx = document.getElementById('galaxySunRX');
+    const ry = document.getElementById('galaxySunRY');
+    const rz = document.getElementById('galaxySunRZ');
+
+    const updateSun = () => {
+        const viz = getVisualizer();
+        // Check for 'galaxy' in activeModes directly via viz.activeModes
+        if (viz && viz.activeModes && viz.activeModes.has('galaxy')) {
+            if (rx) viz.sunRotationSpeedX = parseFloat(rx.value);
+            if (ry) viz.sunRotationSpeedY = parseFloat(ry.value);
+            if (rz) viz.sunRotationSpeedZ = parseFloat(rz.value);
+        }
+    };
+
+    [rx, ry, rz].forEach(el => {
+        if (el) el.addEventListener('input', updateSun);
+    });
+
+    console.log('[Controls] Galaxy Sun Controls Initialized');
+}
+
+// Toggles moved to top for global availability
+
+
+
 function showTimerUI() {
     if (els.timerRing) els.timerRing.style.opacity = '1';
     if (els.timerDisplay) els.timerDisplay.style.opacity = '1';
@@ -1769,31 +1973,6 @@ function updateTimerUI(data) {
         }
 
         els.timerProgress.style.strokeDashoffset = offset;
-    }
-}
-
-function handlePhaseChange(newPhase) {
-    console.log(`[Pomodoro] Phase transitioned to: ${newPhase}`);
-
-    // Broadcast state to Firebase Live Pulse
-    if (typeof setPresencePhase === 'function') {
-        setPresencePhase(newPhase);
-    }
-
-    // Phase 4: Desktop Push Notifications
-    if (window.showNotification) {
-        if (newPhase === 'REST') {
-            window.showNotification("Focus Complete! 🧠", "Time for a 5-minute break. Stretch your legs!");
-        } else if (newPhase === 'LONG_REST') {
-            window.showNotification("Deep Work Cycle Finished! 🏆", "You earned a 15-minute extended break.");
-        } else if (newPhase === 'FOCUS') {
-            window.showNotification("Break's Over! 🚀", "Time to dive back into deep work.");
-        }
-    }
-
-    // Play gentle transition chime
-    if (newPhase !== 'NONE') {
-        playCompletionChime(); // Reusing the same soft bell for transitions
     }
 }
 
@@ -1877,10 +2056,6 @@ function setupModeToggle() {
             updateModeUI(mode);
         });
     });
-
-    // Apply initial toggle classes so buttons match theme on load
-    const currentMode = state.audioMode || 'binaural';
-    updateModeUI(currentMode);
 }
 
 function updateModeUI(mode) {
@@ -1934,7 +2109,7 @@ function setupStatsUI() {
     }
 }
 
-async function openStatsModal() {
+function openStatsModal() {
     if (!els.statsModal) return;
 
     // Get stats data
@@ -1946,87 +2121,12 @@ async function openStatsModal() {
     // Live Community Sync Data (Phase 5)
     let livePresenceTotal = state.livePresenceTotal || 42; // Fallback to mock/last known
     subscribeToPresenceCounts((counts) => {
-        // UI expects total string matching the count initially
-        const totalUsers = isDemo ? Math.floor(Math.random() * 20) + 30 : counts.total;
-
-        // Advanced Network Readouts
-        const focusCount = counts.totalFocus || 0;
-        const restCount = counts.totalRest || 0;
-
-        // Find the pulse element within the modal content
-        const pulseEl = els.statsModal.querySelector('#liveSyncCount').closest('.flex'); // Assuming the parent flex container is the target
-
-        if (pulseEl) {
-            let displayHtml = `<div class="pulse-ring"></div>` +
-                `<span class="ml-2 font-medium">${totalUsers} Syncing</span>`;
-
-            // Show deep work ratio if data exists
-            if (focusCount > 0 || restCount > 0) {
-                displayHtml += `<span class="ml-3 text-xs text-[var(--accent)] opacity-80">(🧠 ${focusCount} | 🧘 ${restCount})</span>`;
-            }
-
-            pulseEl.innerHTML = displayHtml;
-
-            // Apply slight glow based on volume
-            pulseEl.style.boxShadow = `0 0 ${10 + (totalUsers * 0.5)}px rgba(96, 169, 255, 0.2)`;
+        state.livePresenceTotal = counts.total;
+        const liveCountLabel = document.getElementById('liveSyncCount');
+        if (liveCountLabel) {
+            liveCountLabel.textContent = `${counts.total} Users Pulsing Now`;
         }
     });
-
-    // Phase 1 Optimization: Stripe Tier Fetch
-    let userTier = 'free';
-    try {
-        if (auth?.currentUser) {
-            userTier = await getUserTier();
-        }
-    } catch (e) {
-        console.warn("[Controls] Failed to fetch Stripe tier:", e);
-    }
-
-    const isPremium = userTier !== 'free';
-
-    // Phase 5: Fetch Leaderboard
-    const topUsers = await getLeaderboard(5);
-
-    // Generate Leaderboard HTML
-    let leaderboardHtml = `
-        <div class="mt-8">
-            <h4 class="text-sm font-bold text-[var(--accent)] mb-4 flex items-center gap-2">
-                <span>🏆</span> Global Deep Work Leaderboard
-            </h4>
-            <div class="flex flex-col gap-2">
-    `;
-
-    if (topUsers.length === 0) {
-        leaderboardHtml += `<div class="text-sm text-white/50 text-center py-4 bg-white/5 rounded-xl border border-white/5">No deep work data found yet. Be the first!</div>`;
-    } else {
-        topUsers.forEach((user, index) => {
-            const isTop3 = index < 3;
-            const badgeColors = ['bg-yellow-500', 'bg-slate-300', 'bg-amber-700'];
-            const badgeClass = isTop3 ? badgeColors[index] : 'bg-white/10 text-white/50';
-            const icon = isTop3 ? '★' : `${index + 1}`;
-
-            leaderboardHtml += `
-                <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--accent)]/30 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-6 h-6 rounded-full ${badgeClass} flex items-center justify-center text-[10px] font-bold shadow-md shrink-0">
-                            ${icon}
-                        </div>
-                        <img src="${user.photoURL}" class="w-8 h-8 rounded-full bg-white/10 shrink-0" alt="Avatar">
-                        <div class="flex flex-col">
-                            <span class="text-xs font-bold text-white truncate max-w-[120px]">${user.displayName}</span>
-                            <span class="text-[10px] text-[var(--text-muted)]">${user.minutes} mins</span>
-                        </div>
-                    </div>
-                    <div class="flex flex-col items-end">
-                        <span class="text-sm border py-0.5 px-2 rounded font-bold text-[var(--accent)] border-[var(--accent)]/30 shadow-[0_0_10px_rgba(var(--accent-rgb),0.2)] bg-[var(--accent)]/10 truncate">
-                            ${user.cycles} Cycles
-                        </span>
-                    </div>
-                </div>
-            `;
-        });
-    }
-    leaderboardHtml += `</div></div>`;
 
     // Find the card container inside the modal and replace its content
     const modalContent = els.statsModal.querySelector('.glass-card');
@@ -2048,24 +2148,6 @@ async function openStatsModal() {
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                </button>
-            </div>
-
-            <!-- Stripe Billing Banner -->
-            <div class="mb-6 w-full p-4 rounded-xl border ${isPremium ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/30'} flex items-center justify-between transition-all">
-                <div class="flex flex-col">
-                    <span class="text-sm font-bold text-white flex items-center gap-2">
-                        ${isPremium ? '💎 Premium Member' : '⭐ Free Tier'} 
-                        <span class="text-[10px] px-2 py-0.5 rounded-full ${isPremium ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-500'} uppercase tracking-wider">
-                            ${userTier}
-                        </span>
-                    </span>
-                    <span class="text-[10px] text-[var(--text-muted)] mt-1">
-                        ${isPremium ? 'Thank you for supporting MindWave.' : 'Unlock all presets, ad-free offline playback.'}
-                    </span>
-                </div>
-                <button id="stripeConnectBtn" class="px-4 py-2 rounded-lg font-bold text-xs transition-transform hover:scale-105 ${isPremium ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]'}">
-                    ${isPremium ? 'Manage Subscription' : 'Upgrade to Premium'}
                 </button>
             </div>
 
@@ -2176,9 +2258,6 @@ async function openStatsModal() {
                 </div>
             </div>
 
-            <!-- Inject Dynamic Phase 5 Leaderboard Underneath the Stats -->
-            ${leaderboardHtml}
-
             <!--Animation styles-- >
     <style>
         @keyframes barGrow {
@@ -2191,33 +2270,6 @@ async function openStatsModal() {
         const closeBtn = modalContent.querySelector('#closeStatsBtn');
         if (closeBtn) {
             closeBtn.addEventListener('click', closeStatsModal);
-        }
-
-        // Phase 1 Optimization: Stripe Connect Handler
-        const stripeConnectBtn = modalContent.querySelector('#stripeConnectBtn');
-        if (stripeConnectBtn) {
-            stripeConnectBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-
-                if (!auth.currentUser) {
-                    showToast("Please sign in first.", "warning");
-                    if (window.openAuthModal) window.openAuthModal();
-                    return;
-                }
-
-                if (isPremium) {
-                    // Send to Stripe Portal to manage subscripton
-                    console.log("[Stripe] Opening Customer Portal");
-                    openCustomerPortal();
-                } else {
-                    // Send to pricing sheet to upgrade
-                    console.log("[Stripe] Opening Pricing Modal");
-                    closeStatsModal();
-                    if (window.showPricingModal) {
-                        window.showPricingModal();
-                    }
-                }
-            });
         }
     }
 
@@ -2502,107 +2554,40 @@ export function resetImmersiveTimer() {
     }
 }
 
-// --- GLOW MODE CONTROL (Auto / Dim / Full / Heartbeat) ---
-let heartbeatInterval = null;
-
-function setGlowMode(mode) {
-    // Cancel any active heartbeat animation
-    if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-    }
-
-    state.lotusState = mode;
-
-    switch (mode) {
-        case 'auto':
-            setVisualBrightness(1.0);
-            if (window.setCursorOpacity) window.setCursorOpacity(1.0);
-            break;
-        case 'faded':
-            setVisualBrightness(0.3);
-            if (window.setCursorOpacity) window.setCursorOpacity(0.3);
-            break;
-        case 'full':
-            setVisualBrightness(1.0);
-            if (window.setCursorOpacity) window.setCursorOpacity(1.0);
-            break;
-        case 'heartbeat': {
-            let currentPhase = 0;
-            let lastTick = performance.now();
-            const startMs = lastTick;
-            const intervalMs = 16; // ~60fps
-
-            heartbeatInterval = setInterval(() => {
-                const now = performance.now();
-                const deltaMs = now - lastTick;
-                lastTick = now;
-
-                const elapsedMins = (now - startMs) / 60000;
-
-                // Dynamic Heartbeat Curve
-                let currentBPM = 80; // Start fast
-                if (elapsedMins < 2) {
-                    // 0 to 2 mins: smoothly drop from 80 to 45 BPM
-                    currentBPM = 80 - (35 * (elapsedMins / 2));
-                } else if (elapsedMins < 5) {
-                    // 2 to 5 mins: smoothly drop from 45 to 22.5 BPM (half of 45)
-                    const t = (elapsedMins - 2) / 3;
-                    currentBPM = 45 - (22.5 * t);
-                } else {
-                    // 5+ mins: hold steady at 22.5 BPM
-                    currentBPM = 22.5;
-                }
-
-                // Accumulate phase properly based on current BPM to avoid jumps
-                const beatsPerMs = currentBPM / 60000;
-                currentPhase = (currentPhase + deltaMs * beatsPerMs) % 1;
-
-                let pulse;
-                if (currentPhase < 0.15) {
-                    // First beat (sharp rise)
-                    pulse = 0.3 + 0.7 * Math.sin((currentPhase / 0.15) * Math.PI);
-                } else if (currentPhase < 0.25) {
-                    // Brief dip
-                    pulse = 0.3 + 0.2 * Math.sin(((currentPhase - 0.15) / 0.1) * Math.PI);
-                } else if (currentPhase < 0.4) {
-                    // Second beat (slightly softer)
-                    pulse = 0.3 + 0.5 * Math.sin(((currentPhase - 0.25) / 0.15) * Math.PI);
-                } else {
-                    // Rest period
-                    pulse = 0.3;
-                }
-                setVisualBrightness(pulse);
-                if (window.setCursorOpacity) window.setCursorOpacity(pulse);
-            }, intervalMs);
-            break;
-        }
-    }
-
-    // Update button highlight states
-    const glowBtns = document.querySelectorAll('.glow-btn');
-    glowBtns.forEach(btn => {
-        const btnMode = btn.dataset.glowMode;
-        if (btnMode === mode) {
-            btn.classList.add('active');
-            btn.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-            btn.classList.add('bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]');
-            btn.style.boxShadow = '0 0 12px var(--accent-glow)';
-        } else {
-            btn.classList.remove('active');
-            btn.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-            btn.classList.remove('bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]');
-            btn.style.boxShadow = '';
-        }
-    });
-
-    console.log(`[Glow] Mode set to: ${mode}`);
-}
-window.setGlowMode = setGlowMode;
-
-export function setVisualMode(mode, forceState = null) {
-    const viz = getVisualizer();
+export function setVisualMode(mode, forceState = null, isManual = false) {
+    let viz = getVisualizer();
     let activeModes = new Set();
+    const state = window.MindWaveState || {};
+
+    // 1. Manual Override Check (Unlock AI Lock)
+    if (isManual && state.aiVisualsLocked) {
+        state.aiVisualsLocked = false;
+        showToast('AI Focus Mode Unlocked 🔓', 'info');
+    }
+
+    // 2. Check for AI Lock (if still locked)
+    if (state.aiVisualsLocked && forceState !== true) {
+        console.log('[Visuals] Blocked by AI Lock');
+        showToast('Visuals locked by AI Focus Mode 🔒', 'info');
+        return;
+    }
+
+    if (!viz) {
+        console.warn('[Controls] Visualizer not ready for setVisualMode. Triggering load...');
+        preloadVisualizer();
+        if (isManual) { showToast('Initializing Visualizer...', 'info'); }
+
+        // Queue the click action instead of silently dropping it!
+        const checkViz = setInterval(() => {
+            const v = getVisualizer();
+            if (v && v.initialized) {
+                clearInterval(checkViz);
+                setVisualMode(mode, forceState, false); // Re-execute silently
+            }
+        }, 500);
+
+        return; // EXIT EARLY
+    }
 
     if (viz) {
         const modes = Array.isArray(mode) ? mode : [mode];
@@ -2610,15 +2595,6 @@ export function setVisualMode(mode, forceState = null) {
         // If applying an array (preset), clear existing modes for 'Total Immersion'
         if (Array.isArray(mode)) {
             viz.activeModes.clear();
-        }
-
-        // NEW: Check for AI Lock
-        // We reuse 'forceState' as a bypass flag if it equals true (boolean), 
-        // regarding it as "fromSystem" or "fromAI"
-        if (state.aiVisualsLocked && forceState !== true) {
-            console.log('[Visuals] Blocked by AI Lock');
-            showToast('Visuals locked by AI Focus Mode 🔒', 'info');
-            return;
         }
 
         modes.forEach(m => {
@@ -2632,9 +2608,15 @@ export function setVisualMode(mode, forceState = null) {
                 if (Array.isArray(mode)) {
                     if (!viz.activeModes.has(m)) viz.toggleMode(m);
                 } else {
-                    // Toggle mode on/off independently so multiple visuals can layer
                     viz.toggleMode(m);
                 }
+            }
+
+            // RESTORE ISOLATED COLOR: If the mode just became active, ensure it uses its specific saved color if one exists
+            if (viz.activeModes.has(m) && state.visualColors && state.visualColors[m]) {
+                const col = state.visualColors[m];
+                // Apply to the 3D engine specifically for this mode
+                if (viz.setColor) viz.setColor(col, m);
             }
         });
         // Render a single frame so the mode is visible even when paused
@@ -2642,59 +2624,72 @@ export function setVisualMode(mode, forceState = null) {
             viz.renderSingleFrame();
         }
         activeModes = viz.activeModes;
+
+        // Update button states with theme-aware styling
+        const buttons = [
+            { el: els.sphereBtn, mode: 'sphere' },
+            { el: els.cubeBtn, mode: 'box' },
+            { el: els.dragonBtn, mode: 'dragon' },
+            { el: els.galaxyBtn, mode: 'galaxy' },
+            { el: els.flowBtn, mode: 'particles' },
+            { el: els.lightspeedBtn, mode: 'lightspeed' },
+            { el: els.lavaBtn, mode: 'lava' },
+            { el: els.fireplaceBtn, mode: 'fireplace' },
+            { el: els.rainBtn, mode: 'rainforest' },
+            { el: els.zenBtn, mode: 'zengarden' },
+            { el: els.oceanBtn, mode: 'ocean' },
+            { el: els.mandalaBtn, mode: 'mandala' },
+            { el: els.cyberBtn, mode: 'cyber' }, // UI "Cyber" -> Internal 2D
+            { el: els.matrixBtn, mode: 'matrix' } // UI "Matrix" -> Internal 3D
+        ];
+
+        buttons.forEach(({ el, mode: btnMode }) => {
+            if (!el) return;
+            const isActive = activeModes.has(btnMode);
+
+            if (isActive) {
+                // Active style - theme-aware
+                el.classList.add('toggle-active');
+                el.classList.add('active'); // Added for visual-active.css support
+                el.classList.remove('toggle-inactive');
+            } else {
+                // Inactive style - theme-aware
+                el.classList.remove('toggle-active');
+                el.classList.remove('active'); // Added to clear highlight
+                el.classList.add('toggle-inactive');
+            }
+        });
     }
 
-    // Update button states with theme-aware styling
-    const buttons = [
-        { el: els.sphereBtn, mode: 'sphere' },
-        { el: els.cubeBtn, mode: 'box' },
-        { el: els.dragonBtn, mode: 'dragon' },
-        { el: els.galaxyBtn, mode: 'galaxy' },
-        { el: els.mandalaBtn, mode: 'mandala' },
-        { el: els.flowBtn, mode: 'particles' },
-        { el: els.lavaBtn, mode: 'lava' },
-        { el: els.fireplaceBtn, mode: 'fireplace' },
-        { el: els.rainBtn, mode: 'rainforest' },
-        { el: els.zenBtn, mode: 'zengarden' },
-        { el: els.oceanBtn, mode: 'ocean' },
-        { el: els.cyberBtn, mode: 'cyber' },
-        { el: els.matrixBtn, mode: 'matrix' }
-    ];
-
-    buttons.forEach(({ el, mode: btnMode }) => {
-        if (!el) return;
-        const isActive = activeModes.has(btnMode);
-
-        if (isActive) {
-            // Active style - theme-aware
-            el.classList.add('toggle-active');
-            el.classList.add('active'); // Added for visual-active.css support
-            el.classList.remove('toggle-inactive');
-        } else {
-            // Inactive style - theme-aware
-            el.classList.remove('toggle-active');
-            el.classList.remove('active'); // Added to clear highlight
-            el.classList.add('toggle-inactive');
-        }
-    });
-
-    // Hide Panels if modes are no longer active
+    // Panel Visibility Logic
+    const matrixPanel = document.getElementById('matrixSettingsPanel');
     const cyberPanel = document.getElementById('cyberSettingsPanel');
-    if (cyberPanel && !activeModes.has('cyber') && !activeModes.has('matrix')) {
-        cyberPanel.classList.add('hidden');
-        cyberPanel.classList.remove('flex', 'items-center');
-    }
-
     const galaxyPanel = document.getElementById('galaxySettingsPanel');
-    if (galaxyPanel && !activeModes.has('galaxy')) {
-        galaxyPanel.classList.add('hidden');
-        galaxyPanel.classList.remove('flex', 'items-center');
+
+    const matrixActive = activeModes.has('matrix'); // 3D Matrix
+    const cyberActive = activeModes.has('cyber');   // 2D Cyber
+    const galaxyActive = activeModes.has('galaxy');
+
+    console.log('[Visuals] activeModes:', Array.from(activeModes));
+
+    // Matrix Panel Toggle (3D)
+    if (matrixPanel) {
+        if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
+        const shouldShow = matrixActive && state.matrixPanelOpen;
+        if (shouldShow) {
+            matrixPanel.classList.remove('hidden');
+            matrixPanel.classList.add('flex', 'items-center');
+        } else {
+            matrixPanel.classList.add('hidden');
+            matrixPanel.classList.remove('flex', 'items-center');
+        }
     }
 
-    // Toggle Panels
+    // Cyber Panel Toggle (2D)
     if (cyberPanel) {
         if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = true;
-        if ((activeModes.has('cyber') || activeModes.has('matrix')) && state.cyberPanelOpen) {
+        const shouldShow = cyberActive && state.cyberPanelOpen;
+        if (shouldShow) {
             cyberPanel.classList.remove('hidden');
             cyberPanel.classList.add('flex', 'items-center');
         } else {
@@ -2703,9 +2698,11 @@ export function setVisualMode(mode, forceState = null) {
         }
     }
 
+    // Galaxy Panel Toggle
     if (galaxyPanel) {
         if (typeof state.galaxyPanelOpen === 'undefined') state.galaxyPanelOpen = true;
-        if (activeModes.has('galaxy') && state.galaxyPanelOpen) {
+        const shouldShow = galaxyActive && state.galaxyPanelOpen;
+        if (shouldShow) {
             galaxyPanel.classList.remove('hidden');
             galaxyPanel.classList.add('flex', 'items-center');
         } else {
@@ -2716,22 +2713,8 @@ export function setVisualMode(mode, forceState = null) {
 }
 window.setVisualMode = setVisualMode;
 
-/**
- * Toggle mixer sections collapse/expand
- * @param {string} sectionName 
- */
-export function toggleMixerSection(sectionName) {
-    const section = document.querySelector(`[data-section="${sectionName}"]`);
-    if (section) {
-        section.classList.toggle('collapsed');
-        // Save state to localStorage
-        const collapsed = section.classList.contains('collapsed');
-        const states = JSON.parse(localStorage.getItem('mixerSectionStates') || '{}');
-        states[sectionName] = collapsed;
-        localStorage.setItem('mixerSectionStates', JSON.stringify(states));
-    }
-}
-window.toggleMixerSection = toggleMixerSection;
+// Redundant toggleMixerSection removed to fix syntax error
+
 
 
 export function setTheme(themeName) {
@@ -2791,8 +2774,8 @@ export function setTheme(themeName) {
     // Theme-Aware Logo Switching
     const logoImg = document.querySelector('#leftPanel img');
     if (logoImg) {
-        // Stop using blurry PNGs - use the authentic crisp SVG for both themes
-        const newSrc = './mindwave-logo.png';
+        // Use the new light logo for bright themes, standard logo for dark themes
+        const newSrc = isLightTheme ? '/mindwave-logo-light.png' : '/mindwave-logo.png';
         if (logoImg.getAttribute('src') !== newSrc) {
             logoImg.src = newSrc;
         }
@@ -2936,13 +2919,13 @@ function enforceLightThemeStyles() {
 export function initMixer() {
     els.soundscapeContainer.innerHTML = '';
     SOUNDSCAPES.forEach(s => {
-        // Init missing soundscapes to 0
-        if (!state.soundscapeSettings[s.id]) {
+        // Force Bells to 0 volume per user request, or init missing
+        if (!state.soundscapeSettings[s.id] || s.id === 'bells') {
             state.soundscapeSettings[s.id] = { vol: 0, tone: 0.5, speed: 0.5 };
         }
         const settings = state.soundscapeSettings[s.id];
         const item = document.createElement('div');
-        item.className = `soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1${settings.vol > 0 ? ' soundscape-active' : ''}`;
+        item.className = "soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1";
         item.innerHTML = `<label class="text-[10px] font-semibold truncate mb-1 block atmos-label" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] fader-label font-normal">${s.bpm} BPM</span>` : ''}</label>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">VOL</span><input type="range" min="0" max="0.5" step="0.01" value="${settings.vol}" class="flex-1 h-1" data-id="${s.id}" data-type="vol"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="vol">${Math.round(settings.vol * 200)}%</span></div>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">TONE</span><input type="range" min="0" max="1" step="0.01" value="${settings.tone}" class="flex-1 tone-slider h-1" data-id="${s.id}" data-type="tone"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="tone">${Math.round(settings.tone * 100)}%</span></div>
@@ -2959,13 +2942,6 @@ export function initMixer() {
             state.soundscapeSettings[s.id].vol = v;
             updateSoundscape(s.id, 'vol', v);
             saveStateToLocal();
-
-            // Toggle active border on the soundscape item
-            if (v > 0) {
-                item.classList.add('soundscape-active');
-            } else {
-                item.classList.remove('soundscape-active');
-            }
 
             // When ambience volume is increased, just ensure visuals are running and sync button states
             if (v > 0) {
@@ -3116,11 +3092,11 @@ export function loadSettings(payload) {
         const modeButtons = document.querySelectorAll('.mode-btn');
         modeButtons.forEach(btn => {
             if (btn.dataset.mode === settings.audioMode) {
-                btn.classList.add('toggle-active');
-                btn.classList.remove('toggle-inactive');
+                btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]');
+                btn.classList.remove('text-[var(--text-muted)]');
             } else {
-                btn.classList.remove('toggle-active');
-                btn.classList.add('toggle-inactive');
+                btn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]');
+                btn.classList.add('text-[var(--text-muted)]');
             }
         });
         if (els.modeLabel) {
@@ -3357,16 +3333,7 @@ window.loadPublicPreset = (preset) => {
     }
 };
 
-let lastPresetClickTime = 0;
-
 export async function applyPreset(type, btnElement, autoStart = true, skipPaywall = false) {
-    const now = Date.now();
-    if (now - lastPresetClickTime < 300) {
-        console.log('[Controls] Preset click debounced');
-        return;
-    }
-    lastPresetClickTime = now;
-
     // NEW: Manual Override Check
     // If a user clicks a preset button (btnElement exists), we unlock the AI visual lock
     if (btnElement && state.aiVisualsLocked) {
@@ -3421,43 +3388,21 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         }
     }
 
-    // NEW FIX: Clear Combo Presets if coming from a mixed state
-    if (state.activeComboPreset) {
-        console.log('[Controls] Clearing combo preset soundscapes before applying standard preset');
-        resetAllSoundscapes();
-        const soundscapeContainer = document.getElementById('soundscapeContainer');
-        if (soundscapeContainer) {
-            const allVolInputs = soundscapeContainer.querySelectorAll('input[data-type="vol"]');
-            allVolInputs.forEach(input => {
-                input.value = 0;
-                const valSpan = input.closest('div')?.querySelector('[data-val="vol"]');
-                if (valSpan) valSpan.textContent = '0%';
-            });
-        }
-        Object.keys(state.soundscapeSettings).forEach(id => {
-            state.soundscapeSettings[id].vol = 0;
-        });
-        state.activeComboPreset = null;
-    }
-
     state.activePresetType = type;
 
     // 1. Total Immersion: Apply Visuals
-    const { BRAINWAVE_VISUALS, HEALING_VISUALS } = await import('../state.js');
+    const { BRAINWAVE_VISUALS } = await import('../state.js');
     if (BRAINWAVE_VISUALS[type]) {
         console.log('[Controls] Total Immersion: Applying brainwave visuals', BRAINWAVE_VISUALS[type]);
         if (window.setVisualMode) {
             window.setVisualMode(BRAINWAVE_VISUALS[type]);
         }
-
-        // Link visualizer state to AI intent (Delta vs Gamma)
-        import('../visuals/visualizer_nuclear_v4.js').then(m => {
-            const viz = m.getVisualizer();
-            if (viz && viz.setIntent) viz.setIntent(type);
-        });
     } else if (type.startsWith('heal-')) {
-        // Healing Frequency visual logic using multi-visual mapping
-        const healingVisuals = HEALING_VISUALS[type] || ['waves'];
+        // Healing Frequency visual logic
+        let healingVisuals = ['matrix', 'particles']; // Default
+        const freq = parseInt(type.split('-')[1]);
+        if (freq <= 396) healingVisuals = ['lava', 'fireplace'];
+        else if (freq <= 528) healingVisuals = ['rainforest', 'ocean'];
 
         console.log('[Controls] Total Immersion: Applying healing visuals', healingVisuals);
         if (window.setVisualMode) window.setVisualMode(healingVisuals);
@@ -3477,7 +3422,18 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     }
 
     // 1. Update UI Buttons & Sync Presence
-    updatePresetButtons(type);
+    if (els.presetButtons) {
+        els.presetButtons.forEach(b => {
+            b.classList.remove('bg-white/10', 'border-white/20');
+            b.classList.add('bg-white/5', 'border-white/10');
+        });
+
+        const targetBtn = btnElement || document.querySelector(`.preset-btn[onclick*="'${type}'"]`);
+        if (targetBtn) {
+            targetBtn.classList.remove('bg-white/5', 'border-white/10');
+            targetBtn.classList.add('bg-white/10', 'border-white/20');
+        }
+    }
 
     // Force immediate presence update
     updatePresenceOnPresetChange();
@@ -3561,13 +3517,6 @@ window.applyComboPreset = applyComboPreset;
 // --- COMBO PRESET LOGIC (Ambient Presets) ---
 // Combines binaural frequency presets with atmospheric soundscapes
 export async function applyComboPreset(comboId, btnElement) {
-    const now = Date.now();
-    if (now - lastPresetClickTime < 300) {
-        console.log('[Controls] Preset click debounced');
-        return;
-    }
-    lastPresetClickTime = now;
-
     const combo = PRESET_COMBOS.find(c => c.id === comboId);
     if (!combo) {
         console.warn('[Controls] Unknown combo preset:', comboId);
@@ -3633,8 +3582,7 @@ export async function applyComboPreset(comboId, btnElement) {
         cancelFadeOut();
         state.isStopping = false;
 
-        // With the new 60ms micro-fade architecture, nodes are cleared almost instantly.
-        // A minimal 50ms await ensures the JS event loop processes the disconnects before rebuilding.
+        // Wait a moment for audio to fade out
         await new Promise(resolve => setTimeout(resolve, 50));
     }
 
@@ -3892,7 +3840,7 @@ export function initThemeModal() {
         { id: 'sun', name: 'Sun', icon: '☀️' },
         { id: 'moon', name: 'Moon', icon: '🌙' },
         { id: 'heart', name: 'Heart', icon: '❤️' },
-        { id: 'mindwave', name: 'MindWave', icon: '<img src="./mindwave-cursor.png" width="56" height="56" style="display:inline-block;object-fit:contain;">' },
+        { id: 'mindwave', name: 'MindWave', icon: '🧠' },
         { id: 'sun2', name: 'Sun 2', icon: '🌞' },
         { id: 'default', name: 'Default', icon: '🖱️' }
     ];
@@ -3906,32 +3854,16 @@ export function initThemeModal() {
             </div>
             <div>
                 <h3 class="text-sm font-bold tracking-tight">CUSTOM CURSOR</h3>
-                <div class="text-xs text-[var(--text-muted)]">Choose shape and color</div>
+                <div class="text-xs opacity-70">Choose shape and color</div>
             </div>
         </div>
-        <div class="mb-4 p-3 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20">
-            <div class="flex items-center gap-3 mb-3">
-                <span class="text-xs font-medium">Color:</span>
-                <div id="cursorColorPreview" class="w-8 h-8 rounded-full border-2 border-[var(--accent)]/40 shadow-lg" style="background-color: ${effectiveColor};"></div>
-                <button id="resetCursorColor" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 transition-all border border-[var(--accent)]/30">Reset</button>
+        <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20">
+            <span class="text-xs font-medium">Color:</span>
+            <div class="relative group">
+                <div id="cursorColorPreview" class="w-8 h-8 rounded-full border-2 border-[var(--accent)]/40 cursor-pointer shadow-lg transition-transform hover:scale-110" style="background-color: ${effectiveColor};"></div>
+                <input type="color" id="cursorColorPicker" value="${savedColor || '#60a9ff'}" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
             </div>
-            <div class="mb-2">
-                <label class="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] block mb-1">Hue</label>
-                <input type="range" id="cursorHueSlider" min="0" max="360" value="180"
-                    style="width:100%;height:12px;-webkit-appearance:none;appearance:none;border-radius:6px;outline:none;cursor:pointer;
-                    background:linear-gradient(to right,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%));">
-            </div>
-            <div class="mb-2">
-                <label class="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] block mb-1">Brightness</label>
-                <input type="range" id="cursorBrightnessSlider" min="20" max="100" value="60"
-                    style="width:100%;height:12px;-webkit-appearance:none;appearance:none;border-radius:6px;outline:none;cursor:pointer;
-                    background:linear-gradient(to right,hsl(180,100%,20%),hsl(180,100%,50%),hsl(180,100%,100%));">
-            </div>
-            <div class="flex gap-1.5 flex-wrap mt-2" id="cursorSwatches">
-                ${['#2dd4bf', '#60a5fa', '#a855f7', '#f472b6', '#facc15', '#f97316', '#ef4444', '#10b981', '#6366f1', '#ffffff'].map(c =>
-        `<div class="w-6 h-6 rounded-full cursor-pointer border border-white/20 hover:scale-110 transition-transform" style="background:${c};" data-color="${c}"></div>`
-    ).join('')}
-            </div>
+            <button id="resetCursorColor" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 transition-all border border-[var(--accent)]/30">Reset</button>
         </div>
         <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="cursorShapeGrid">
             ${CURSOR_SHAPES_DATA.map(s => `
@@ -3956,59 +3888,14 @@ export function initThemeModal() {
         });
     });
 
-    // --- Real-time color picker via hue/brightness sliders ---
-    const hueSlider = section.querySelector('#cursorHueSlider');
-    const brightSlider = section.querySelector('#cursorBrightnessSlider');
-    const preview = section.querySelector('#cursorColorPreview');
-    const swatches = section.querySelector('#cursorSwatches');
-
-    const hslToHex = (h, s, l) => {
-        s /= 100; l /= 100;
-        const a = s * Math.min(l, 1 - l);
-        const f = n => { const k = (n + h / 30) % 12; const c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * c).toString(16).padStart(2, '0'); };
-        return `#${f(0)}${f(8)}${f(4)}`;
-    };
-
-    const applyCursorColor = (hex) => {
-        if (preview) preview.style.backgroundColor = hex;
-        if (typeof window.setCursorColor === 'function') window.setCursorColor(hex);
-    };
-
-    const updateFromSliders = () => {
-        const h = parseInt(hueSlider.value);
-        const l = parseInt(brightSlider.value);
-        const hex = hslToHex(h, 100, l);
-        applyCursorColor(hex);
-        // Update brightness slider gradient to match current hue
-        brightSlider.style.background = `linear-gradient(to right,hsl(${h},100%,20%),hsl(${h},100%,50%),hsl(${h},100%,100%))`;
-    };
-
-    // Initialize sliders from saved color
-    if (savedColor) {
-        // Parse saved hex to set slider positions
-        const r = parseInt(savedColor.slice(1, 3), 16) / 255, g = parseInt(savedColor.slice(3, 5), 16) / 255, b = parseInt(savedColor.slice(5, 7), 16) / 255;
-        const max = Math.max(r, g, b), min = Math.min(r, g, b);
-        let h = 0; const l = (max + min) / 2;
-        if (max !== min) {
-            const d = max - min;
-            if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
-            else if (max === g) h = ((b - r) / d + 2) * 60;
-            else h = ((r - g) / d + 4) * 60;
-        }
-        hueSlider.value = Math.round(h);
-        brightSlider.value = Math.round(l * 100);
-        brightSlider.style.background = `linear-gradient(to right,hsl(${Math.round(h)},100%,20%),hsl(${Math.round(h)},100%,50%),hsl(${Math.round(h)},100%,100%))`;
-    }
-
-    if (hueSlider) hueSlider.addEventListener('input', updateFromSliders);
-    if (brightSlider) brightSlider.addEventListener('input', updateFromSliders);
-
-    // Preset swatches
-    if (swatches) {
-        swatches.querySelectorAll('[data-color]').forEach(swatch => {
-            swatch.addEventListener('click', () => {
-                applyCursorColor(swatch.dataset.color);
-            });
+    const cp = section.querySelector('#cursorColorPicker');
+    if (cp) {
+        cp.addEventListener('input', (e) => {
+            if (typeof window.setCursorColor === 'function') {
+                window.setCursorColor(e.target.value);
+                const prev = section.querySelector('#cursorColorPreview');
+                if (prev) prev.style.backgroundColor = e.target.value;
+            }
         });
     }
 
@@ -4018,8 +3905,6 @@ export function initThemeModal() {
             if (typeof window.resetCursorColor === 'function') {
                 window.resetCursorColor();
             }
-            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-            if (preview) preview.style.backgroundColor = accent;
         });
     }
 }
@@ -4033,7 +3918,7 @@ function getThemeDesc(key) {
         case 'abyss': return "Total Darkness";
         case 'cyberpunk': return "Neon & High-Contrast";
         case 'nebula': return "Cosmic Depth";
-        case 'quantum': return "Cyber Grid";
+        case 'quantum': return "Matrix Grid";
         case 'sunset': return "Synthwave Glow";
 
         // Ambassador Themes
@@ -4118,14 +4003,14 @@ export function updatePresetButtons(activeType) {
     if (!els.presetButtons) return;
 
     els.presetButtons.forEach(b => {
-        b.classList.remove('active', 'bg-white/10', 'border-white/20');
+        b.classList.remove('bg-white/10', 'border-white/20');
         b.classList.add('bg-white/5', 'border-white/10');
 
         // Check if this button matches the active type
         // Note: onclick string matching is fragile, but consistent with existing app structure
         if (activeType && b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${activeType}'`)) {
             b.classList.remove('bg-white/5', 'border-white/10');
-            b.classList.add('active', 'bg-white/10', 'border-white/20');
+            b.classList.add('bg-white/10', 'border-white/20');
         }
     });
 }
@@ -4314,10 +4199,6 @@ function getCategoryColor(cat) {
         return {
             name: 'red',
             text: 'text-red-400',
-            hex: '#ef4444',
-            hexBg: 'rgba(239,68,68,0.2)',
-            hexBorder: 'rgba(239,68,68,0.4)',
-            hexGlow: '0 0 12px rgba(239,68,68,0.3)',
             bg: 'bg-red-500/20',
             border: 'border-red-500/30',
             from: 'from-red-500',
@@ -4328,10 +4209,6 @@ function getCategoryColor(cat) {
         return {
             name: 'blue',
             text: 'text-blue-400',
-            hex: '#3b82f6',
-            hexBg: 'rgba(59,130,246,0.2)',
-            hexBorder: 'rgba(59,130,246,0.4)',
-            hexGlow: '0 0 12px rgba(59,130,246,0.3)',
             bg: 'bg-blue-500/20',
             border: 'border-blue-500/30',
             from: 'from-blue-500',
@@ -4342,10 +4219,6 @@ function getCategoryColor(cat) {
         return {
             name: 'gold',
             text: 'text-amber-500',
-            hex: '#f59e0b',
-            hexBg: 'rgba(245,158,11,0.2)',
-            hexBorder: 'rgba(245,158,11,0.4)',
-            hexGlow: '0 0 12px rgba(245,158,11,0.3)',
             bg: 'bg-amber-500/20',
             border: 'border-amber-500/30',
             from: 'from-amber-400',
@@ -4356,10 +4229,6 @@ function getCategoryColor(cat) {
         return {
             name: 'emerald',
             text: 'text-emerald-400',
-            hex: '#10b981',
-            hexBg: 'rgba(16,185,129,0.2)',
-            hexBorder: 'rgba(16,185,129,0.4)',
-            hexGlow: '0 0 12px rgba(16,185,129,0.3)',
             bg: 'bg-emerald-500/20',
             border: 'border-emerald-500/30',
             from: 'from-emerald-500',
@@ -4370,10 +4239,6 @@ function getCategoryColor(cat) {
         return {
             name: 'purple',
             text: 'text-purple-400',
-            hex: '#a855f7',
-            hexBg: 'rgba(168,85,247,0.2)',
-            hexBorder: 'rgba(168,85,247,0.4)',
-            hexGlow: '0 0 12px rgba(168,85,247,0.3)',
             bg: 'bg-purple-500/20',
             border: 'border-purple-500/30',
             from: 'from-purple-500',
@@ -4384,25 +4249,17 @@ function getCategoryColor(cat) {
         return {
             name: 'indigo',
             text: 'text-indigo-400',
-            hex: '#6366f1',
-            hexBg: 'rgba(99,102,241,0.2)',
-            hexBorder: 'rgba(99,102,241,0.4)',
-            hexGlow: '0 0 12px rgba(99,102,241,0.3)',
             bg: 'bg-indigo-500/20',
             border: 'border-indigo-500/30',
             from: 'from-indigo-500',
             to: 'to-blue-600',
-            glow: 'shadow-blue-500/30'
+            glow: 'shadow-indigo-500/30'
         };
     }
     // Default
     return {
         name: 'gray',
         text: 'text-[var(--text-muted)]',
-        hex: '#94a3b8',
-        hexBg: 'rgba(255,255,255,0.05)',
-        hexBorder: 'rgba(255,255,255,0.15)',
-        hexGlow: 'none',
         bg: 'bg-white/5',
         border: 'border-white/10',
         from: 'from-gray-500',
@@ -4543,11 +4400,26 @@ function renderDJPads(category) {
         }
 
         const pad = document.createElement('button');
-        if (isActive) {
-            pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-[var(--accent)] hover:bg-white/10 transition-all group py-3`;
-            pad.style.boxShadow = `0 0 12px var(--accent-glow)`;
-        } else {
-            pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3`;
+        pad.className = `dj-pad group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 active:scale-95
+            ${isActive
+                ? `bg-gradient-to-br ${gradientFrom}/30 ${gradientTo}/20 ${borderColor} shadow-lg ${glowColor}`
+                : inactiveClasses}`;
+
+        pad.dataset.soundId = id;
+        pad.dataset.canLoop = canLoop;
+
+        // Force inline colors for Light Mode Inactive
+        if (!isActive && isLight) {
+            pad.style.borderColor = textColor.replace('text-', 'var(--color-').replace('-400', '-500'); // Approximate or use standard var if possible? 
+            // Better: use the hex colors from getCategoryColor logic/map if we had access, 
+            // OR just use the computed color of the text class.
+            // Simpler: Use the text class for the element, and set border-color: currentColor
+            pad.style.borderColor = 'currentColor';
+            pad.style.color = 'currentColor';
+            // Wait, we need to SET the color first. 
+            // The class `textColor` (e.g. text-blue-400) is NOT applied to the pad container, it's inside on the icon/label?
+            // Actually, usually `text-blue-400` is applied to inner, but we want the Whole Pad to have this text color so border matches.
+            pad.classList.add(textColor);
         }
 
         // Add loop indicator if looping
@@ -4706,11 +4578,21 @@ renderAllDJPads = function () {
             }
 
             const pad = document.createElement('button');
-            if (isActive) {
-                pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-[var(--accent)] hover:bg-white/10 transition-all group py-3`;
-                pad.style.boxShadow = `0 0 12px var(--accent-glow)`;
-            } else {
-                pad.className = `dj-pad group relative flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3`;
+            pad.className = `dj-pad group relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 active:scale-95
+                ${isActive
+                    ? `bg-gradient-to-br ${gradientFrom}/30 ${gradientTo}/20 ${borderColor} shadow-lg ${glowColor}`
+                    : inactiveClasses}`;
+
+            pad.dataset.soundId = id;
+            pad.dataset.canLoop = canLoop;
+
+            // Force inline colors for Light Mode Inactive
+            if (!isActive && isLight) {
+                // Approximate valid text color class usage or fallback
+                // We use currentColor approach which is safest
+                pad.style.borderColor = 'currentColor';
+                pad.style.color = 'currentColor';
+                pad.classList.add(headerColor); // headerColor is e.g. 'text-blue-400'
             }
 
             const loopIndicator = isActive ? `<div class="absolute top-1 right-1 w-2 h-2 rounded-full bg-gradient-to-r ${gradientFrom} ${gradientTo} animate-pulse"></div>` : '';
@@ -5096,63 +4978,7 @@ const INFO_CONTENT = {
     }
 };
 
-// --- GALAXY SUN STYLE TOGGLE ---
-let currentGalaxySunStyle = 'sun'; // 'sun' (flat geometric) or 'sun2' (tribal cone)
-window.toggleGalaxySun = function () {
-    currentGalaxySunStyle = currentGalaxySunStyle === 'sun' ? 'sun2' : 'sun';
-    const viz = getVisualizer();
-    if (viz && viz.setGalaxySunStyle) {
-        viz.setGalaxySunStyle(currentGalaxySunStyle);
-    }
-    const label = currentGalaxySunStyle === 'sun' ? 'Sun ☀️' : 'Tribal Sun 🌞';
-    showToast(`Galaxy Sun: ${label}`, 'info');
-};
 
-// --- CYBER SETTINGS CONTROL (UNIFIED) ---
-window.toggleCyberSettings = function (btn) {
-    const panel = document.getElementById('cyberSettingsPanel');
-    if (!panel) return;
-
-    // Toggle state
-    if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = false;
-    state.cyberPanelOpen = !state.cyberPanelOpen;
-
-    // Update UI
-    if (state.cyberPanelOpen) {
-        panel.classList.remove('hidden');
-        panel.classList.add('flex', 'items-center');
-
-        // Ensure panel's toggle matches current rainbow state
-        const viz = getVisualizer();
-        const rainbowToggle = document.getElementById('cyberRainbowToggle');
-        if (viz && viz.cyberMaterial && viz.cyberMaterial.uniforms && rainbowToggle) {
-            rainbowToggle.checked = (viz.cyberMaterial.uniforms.uRainbow.value > 0.5);
-            // Also update labels
-            if (window.updateRainbowLabels) window.updateRainbowLabels();
-        }
-    } else {
-        panel.classList.add('hidden');
-        panel.classList.remove('flex', 'items-center');
-    }
-};
-
-window.toggleGalaxySettings = function (btn) {
-    const panel = document.getElementById('galaxySettingsPanel');
-    if (!panel) return;
-
-    // Toggle state
-    if (typeof state.galaxyPanelOpen === 'undefined') state.galaxyPanelOpen = false;
-    state.galaxyPanelOpen = !state.galaxyPanelOpen;
-
-    // Update UI
-    if (state.galaxyPanelOpen) {
-        panel.classList.remove('hidden');
-        panel.classList.add('flex', 'items-center');
-    } else {
-        panel.classList.add('hidden');
-        panel.classList.remove('flex', 'items-center');
-    }
-};
 
 window.showInfoModal = function (key) {
     const data = INFO_CONTENT[key];
@@ -5315,21 +5141,20 @@ window.addEventListener('resize', () => {
 window.adjustActiveModal = adjustModalLayout;
 
 
-// --- CYBER SETTINGS CONTROL ---
+// --- MATRIX SETTINGS CONTROL ---
 // DELETED: Moved to unified definition above
 
-function setupCyberControls() {
-    console.log('[Controls] setupCyberControls (Main) CALLED');
-    const closeBtn = document.getElementById('cyberCloseBtn');
-    const resetBtn = document.getElementById('cyberResetBtn');
+
+function setupMatrixControls() {
+    console.log('[Controls] setupMatrixControls (Main) CALLED');
+    const closeBtn = document.getElementById('matrixCloseBtn');
+    const resetBtn = document.getElementById('matrixResetBtn');
 
     if (closeBtn) {
-        // Clone to replace any existing listeners to be safe, or just add new one
-        // A simple addEventListener is fine usually.
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            state.cyberPanelOpen = false;
-            const panel = document.getElementById('cyberSettingsPanel');
+            state.matrixPanelOpen = false;
+            const panel = document.getElementById('matrixSettingsPanel');
             if (panel) {
                 panel.classList.add('hidden');
                 panel.classList.remove('flex', 'items-center');
@@ -5340,374 +5165,174 @@ function setupCyberControls() {
     if (resetBtn) {
         resetBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            // Reset logic
             const viz = getVisualizer();
             if (viz) {
-                viz.setCyberColor('#00FF41');
-                viz.setCyberRainbow(false);
-                viz.setCyberSpeed(1.0);
-                viz.setCyberLength(1.0);
-                viz.setCyberAngle(0);
+                if (viz.setMatrixColor) viz.setMatrixColor('#00FF41');
+                if (viz.setMatrixRainbow) viz.setMatrixRainbow(false);
+                if (viz.setMatrixSpeed) viz.setMatrixSpeed(1.0);
+                if (viz.setMatrixLength) viz.setMatrixLength(1.0);
+                if (viz.setMatrixAngle) viz.setMatrixAngle(0);
 
-                // Reset sliders/inputs if they exist
-                const colorPicker = document.getElementById('cyberColorPicker');
+                const colorPicker = document.getElementById('matrixColorPicker');
                 if (colorPicker) colorPicker.value = '#00FF41';
-
-                const rainbowToggle = document.getElementById('cyberRainbowToggle');
+                const rainbowToggle = document.getElementById('matrixRainbowToggle');
                 if (rainbowToggle) rainbowToggle.checked = false;
-
-                const speedSlider = document.getElementById('cyberSpeedSlider');
-                if (speedSlider) { speedSlider.value = 1.0; document.getElementById('cyberSpeedVal').textContent = '1.0x'; }
-
-                const lengthSlider = document.getElementById('cyberLengthSlider');
-                if (lengthSlider) { lengthSlider.value = 1.0; document.getElementById('cyberLengthVal').textContent = '1.0x'; }
-
-                const angleSlider = document.getElementById('cyberAngleSlider');
-                if (angleSlider) { angleSlider.value = 0; document.getElementById('cyberAngleVal').textContent = '0°'; }
+                const speedSlider = document.getElementById('matrixSpeedSlider');
+                if (speedSlider) { speedSlider.value = 1.0; document.getElementById('matrixSpeedVal').textContent = '1.0x'; }
+                const lengthSlider = document.getElementById('matrixLengthSlider');
+                if (lengthSlider) { lengthSlider.value = 1.0; document.getElementById('matrixLengthVal').textContent = '1.0x'; }
+                const angleSlider = document.getElementById('matrixAngleSlider');
+                if (angleSlider) { angleSlider.value = 0; document.getElementById('matrixAngleVal').textContent = '0°'; }
+                const brightnessSlider = document.getElementById('matrixBrightnessSlider');
+                if (brightnessSlider) { brightnessSlider.value = 1.0; document.getElementById('matrixBrightnessVal').textContent = '1.0'; }
             }
         });
     }
 
-    // --- NEW: Color & Rainbow Listeners ---
-    const updateSwatch = (hex) => {
-        const swatch = document.getElementById('cyberColorSwatch');
-        if (swatch) swatch.style.backgroundColor = hex;
-    };
-
-    const colorPicker = document.getElementById('cyberColorPicker');
-    if (colorPicker) {
-        // Init sync
-        const swatch = document.getElementById('cyberColorSwatch');
-        if (swatch) swatch.style.backgroundColor = colorPicker.value;
-
-        colorPicker.addEventListener('input', (e) => {
+    const matrixColorPicker = document.getElementById('matrixColorPicker');
+    if (matrixColorPicker) {
+        matrixColorPicker.addEventListener('input', (e) => {
             const val = e.target.value;
-            updateSwatch(val);
-
             const viz = getVisualizer();
-            if (viz) {
-                if (viz.setCyberColor) viz.setCyberColor(val);
-                localStorage.setItem('mindwave_cyber_color', val);
-
-                // Switch off rainbow mode automatically if color is changed
-                const rainbowToggle = document.getElementById('cyberRainbowToggle');
+            if (viz && viz.setMatrixColor) {
+                window._matrixPrevColor = matrixColorPicker.value;
+                viz.setMatrixColor(val);
+                const rainbowToggle = document.getElementById('matrixRainbowToggle');
                 if (rainbowToggle && rainbowToggle.checked) {
                     rainbowToggle.checked = false;
-                    localStorage.setItem('mindwave_cyber_rainbow', 'false');
-                    if (viz.setCyberRainbow) viz.setCyberRainbow(false);
-                    setupUI.updateRainbowLabels();
+                    if (viz.setMatrixRainbow) viz.setMatrixRainbow(false);
                 }
             }
         });
     }
 
-    // --- RAINBOW LABELS HELPER ---
-    setupUI.updateRainbowLabels = () => {
-        const rainbowToggle = document.getElementById('cyberRainbowToggle');
-        if (!rainbowToggle) return;
-        const labelRGB = document.getElementById('labelRGB');
-        const labelRainbow = document.getElementById('labelRainbow');
-        if (rainbowToggle.checked) {
-            // Rainbow mode active - highlight RAINBOW teal
-            if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
-            if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold';
-        } else {
-            // RGB mode active - highlight RGB teal
-            if (labelRGB) labelRGB.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold';
-            if (labelRainbow) labelRainbow.className = 'text-[9px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)]';
-        }
-    };
+    // Random Color
+    const matrixRandomColorBtn = document.getElementById('matrixRandomColorBtn');
+    if (matrixRandomColorBtn) {
+        matrixRandomColorBtn.addEventListener('click', () => {
+            const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            const colorPicker = document.getElementById('matrixColorPicker');
+            if (colorPicker) {
+                window._matrixPrevColor = colorPicker.value;
+                colorPicker.value = randomHex;
+            }
+            const viz = getVisualizer();
+            if (viz && viz.setMatrixColor) viz.setMatrixColor(randomHex);
+        });
+    }
 
-    const rainbowToggle = document.getElementById('cyberRainbowToggle');
-    const labelRGB = document.getElementById('labelRGB');
-    const labelRainbow = document.getElementById('labelRainbow');
+    // Previous Color (Back)
+    const matrixPrevColorBtn = document.getElementById('matrixPrevColorBtn');
+    if (matrixPrevColorBtn) {
+        matrixPrevColorBtn.addEventListener('click', () => {
+            if (window._matrixPrevColor) {
+                const colorPicker = document.getElementById('matrixColorPicker');
+                const prev = window._matrixPrevColor;
+                if (colorPicker) {
+                    window._matrixPrevColor = colorPicker.value;
+                    colorPicker.value = prev;
+                }
+                const viz = getVisualizer();
+                if (viz && viz.setMatrixColor) viz.setMatrixColor(prev);
+            }
+        });
+    }
 
+    // Vibration Toggle
+    const matrixVibrationToggle = document.getElementById('matrixVibrationToggle');
+    if (matrixVibrationToggle) {
+        matrixVibrationToggle.addEventListener('click', () => {
+            const viz = getVisualizer();
+            if (viz && viz.setVibrationEnabled) {
+                const newState = !viz.vibrationEnabled;
+                viz.setVibrationEnabled(newState);
+                matrixVibrationToggle.style.color = newState ? 'var(--accent)' : 'var(--text-muted)';
+            }
+        });
+    }
+
+    const rainbowToggle = document.getElementById('matrixRainbowToggle');
     if (rainbowToggle) {
-        // Update on change
         rainbowToggle.addEventListener('change', (e) => {
             const viz = getVisualizer();
-            if (viz && viz.setCyberRainbow) {
-                viz.setCyberRainbow(e.target.checked);
-            }
-            localStorage.setItem('mindwave_cyber_rainbow', e.target.checked ? 'true' : 'false');
-            setupUI.updateRainbowLabels();
+            if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(e.target.checked);
         });
+    }
 
-        // Make labels interactive toggles
-        if (labelRGB) {
-            labelRGB.addEventListener('click', () => {
-                if (rainbowToggle.checked) {
-                    rainbowToggle.checked = false;
-                    const viz = getVisualizer();
-                    if (viz && viz.setCyberRainbow) viz.setCyberRainbow(false);
-                    localStorage.setItem('mindwave_cyber_rainbow', 'false');
-                    setupUI.updateRainbowLabels();
+    const sliders = [
+        { id: 'matrixSpeed', method: 'setMatrixSpeed' },
+        { id: 'matrixLength', method: 'setMatrixLength' },
+        { id: 'matrixAngle', method: 'setMatrixAngle' },
+        { id: 'matrixBrightness', method: 'setGlobalBrightness' }
+    ];
+
+    sliders.forEach(s => {
+        const slider = document.getElementById(`${s.id}Slider`);
+        const valDisp = document.getElementById(`${s.id}Val`);
+        if (slider) {
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (valDisp) {
+                    if (s.id.includes('Angle')) valDisp.textContent = `${val}°`;
+                    else if (s.id.includes('Brightness')) valDisp.textContent = val.toFixed(1);
+                    else valDisp.textContent = `${val.toFixed(1)}x`;
                 }
+                const viz = getVisualizer();
+                if (viz && viz[s.method]) viz[s.method](val);
             });
         }
-        if (labelRainbow) {
-            labelRainbow.addEventListener('click', () => {
-                if (!rainbowToggle.checked) {
-                    rainbowToggle.checked = true;
-                    const viz = getVisualizer();
-                    if (viz && viz.setCyberRainbow) viz.setCyberRainbow(true);
-                    localStorage.setItem('mindwave_cyber_rainbow', 'true');
-                    setupUI.updateRainbowLabels();
-                }
-            });
-        }
+    });
 
-        // Set initial state
-        setupUI.updateRainbowLabels();
-    }
+    const modeBtns = document.querySelectorAll('[data-matrix-mode]');
+    const textInput = document.getElementById('matrixTextInput');
 
-    // --- NEW: Slider Listeners ---
-    const speedSlider = document.getElementById('cyberSpeedSlider');
-    const speedVal = document.getElementById('cyberSpeedVal');
-    if (speedSlider && speedVal) {
-        speedSlider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            speedVal.textContent = val.toFixed(1) + 'x';
+    if (textInput) {
+        textInput.addEventListener('input', (e) => {
             const viz = getVisualizer();
-            if (viz && viz.setCyberSpeed) viz.setCyberSpeed(val);
-        });
-    }
-
-    const lengthSlider = document.getElementById('cyberLengthSlider');
-    const lengthVal = document.getElementById('cyberLengthVal');
-    if (lengthSlider && lengthVal) {
-        lengthSlider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            lengthVal.textContent = val.toFixed(1) + 'x';
-            const viz = getVisualizer();
-            if (viz && viz.setCyberLength) viz.setCyberLength(val);
-        });
-    }
-
-    const angleSlider = document.getElementById('cyberAngleSlider');
-    const angleVal = document.getElementById('cyberAngleVal');
-    if (angleSlider && angleVal) {
-        angleSlider.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            angleVal.textContent = val + '°';
-            const viz = getVisualizer();
-            if (viz && viz.setCyberAngle) viz.setCyberAngle(val);
-        });
-    }
-
-    // --- NEW: Galaxy Rotation Listeners ---
-    const rx = document.getElementById('galaxySunRX');
-    const ry = document.getElementById('galaxySunRY');
-    const rz = document.getElementById('galaxySunRZ');
-
-    if (rx) {
-        rx.addEventListener('input', (e) => {
-            const viz = getVisualizer();
-            if (viz && viz.setGalaxySunRotation) viz.setGalaxySunRotation('x', e.target.value);
-        });
-    }
-    if (ry) {
-        ry.addEventListener('input', (e) => {
-            const viz = getVisualizer();
-            if (viz && viz.setGalaxySunRotation) viz.setGalaxySunRotation('y', e.target.value);
-        });
-    }
-    if (rz) {
-        rz.addEventListener('input', (e) => {
-            const viz = getVisualizer();
-            if (viz && viz.setGalaxySunRotation) viz.setGalaxySunRotation('z', e.target.value);
-        });
-    }
-
-    // === CYBER MODE SELECTOR (4 buttons: RND / MW / TXT / INT) ===
-    const modeBtns = document.querySelectorAll('[data-cyber-mode]');
-    const textInput = document.getElementById('cyberTextInput');
-    const textInputWrapper = document.getElementById('cyberCustomTextInput');
-    const modeToggle = document.getElementById('cyberModeToggle'); // legacy compat
-
-    let saveTimeout;
-    let currentCyberMode = 'mindwave'; // default
-
-    // Helper: highlight active button, dim others
-    const setActiveMode = (mode) => {
-        currentCyberMode = mode;
-        modeBtns.forEach(btn => {
-            if (btn.dataset.cyberMode === mode) {
-                btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
-                btn.classList.remove('text-[var(--text-muted)]');
-            } else {
-                btn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
-                btn.classList.add('text-[var(--text-muted)]');
+            if (viz && viz.setMatrixLogicMode) {
+                // Find active mode from buttons
+                let activeMode = 'random';
+                modeBtns.forEach(b => {
+                    if (b.classList.contains('bg-[var(--accent)]')) activeMode = b.dataset.matrixMode;
+                });
+                viz.setMatrixLogicMode(activeMode, e.target.value);
             }
         });
+    }
 
-        // Focus text input when switching to custom
-        if (mode === 'custom' && textInput) {
-            textInput.focus();
-        }
-
-        // Sync legacy checkbox
-        if (modeToggle) modeToggle.checked = (mode !== 'random');
-
-        // Save mode
-        localStorage.setItem('mindwave_cyber_mode', mode);
-    };
-
-    // Wire up mode buttons
     modeBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const mode = btn.dataset.cyberMode;
-            setActiveMode(mode);
-
+            const mode = btn.dataset.matrixMode;
             const viz = getVisualizer();
-            if (viz && viz.setCyberLogicMode) {
-                if (mode === 'random') {
-                    viz.setCyberLogicMode('random', '');
-                } else if (mode === 'mindwave') {
-                    viz.setCyberLogicMode('mindwave', 'WELCOME');
-                } else if (mode === 'interstellar') {
-                    viz.setCyberLogicMode('interstellar', '');
-                } else if (mode === 'custom') {
-                    const customText = (textInput && textInput.value) ? textInput.value.toUpperCase() : 'WELCOME';
-                    if (customText.length > 0) {
-                        viz.setCyberLogicMode('custom', customText);
-                    } else {
-                        viz.setCyberLogicMode('mindwave', 'WELCOME');
-                    }
-                }
+            if (viz && viz.setMatrixLogicMode) {
+                const text = textInput ? textInput.value : '';
+                viz.setMatrixLogicMode(mode, text);
+                modeBtns.forEach(b => {
+                    b.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
+                });
+                btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
             }
         });
     });
-
-    // Text input: live update custom text
-    if (textInput) {
-        textInput.addEventListener('input', (e) => {
-            const text = e.target.value.toUpperCase();
-
-            // Auto-switch to custom mode if typing
-            if (currentCyberMode !== 'custom') {
-                setActiveMode('custom');
-            }
-
-            const viz = getVisualizer();
-            if (viz && viz.setCyberLogicMode) {
-                if (text.length > 0) {
-                    viz.setCyberLogicMode('custom', text);
-                } else {
-                    viz.setCyberLogicMode('mindwave', 'WELCOME');
-                }
-            }
-
-            // Debounce save
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                localStorage.setItem('mindwave_cyber_text', text);
-            }, 1000);
-        });
-
-        textInput.addEventListener('focus', () => {
-            if (currentCyberMode !== 'custom') {
-                setActiveMode('custom');
-                const viz = getVisualizer();
-                if (viz && viz.setCyberLogicMode) {
-                    const text = textInput.value.toUpperCase();
-                    if (text.length > 0) viz.setCyberLogicMode('custom', text);
-                    else viz.setCyberLogicMode('mindwave', 'WELCOME');
-                }
-            }
-        });
-    }
-
-    // === Initialize State on Load ===
-    let savedMode = localStorage.getItem('mindwave_cyber_mode') || 'mindwave';
-    let savedText = localStorage.getItem('mindwave_cyber_text');
-    const savedRainbow = localStorage.getItem('mindwave_cyber_rainbow');
-    const savedColor = localStorage.getItem('mindwave_cyber_color');
-    const CYBER_DEFAULT_TEXT = 'WELCOME';
-
-    // Sanitize saved text to prevent "WELCOMEFINAL..." issue
-    if (savedText && (savedText.includes('WELCOMEFINAL') || savedText.includes('TEJETSKI'))) {
-        console.log('[Cyber] sanitizing problematic text');
-        savedText = CYBER_DEFAULT_TEXT;
-        localStorage.setItem('mindwave_cyber_text', CYBER_DEFAULT_TEXT);
-    }
-
-    if (textInput) {
-        // Only use saved text if user explicitly set it and it's not the problematic string
-        if (savedText && savedText.length > 0) {
-            textInput.value = savedText;
-        } else {
-            textInput.value = CYBER_DEFAULT_TEXT;
-            localStorage.setItem('mindwave_cyber_text', CYBER_DEFAULT_TEXT);
-        }
-    }
-
-    if (rainbowToggle) {
-        // Always load in rainbow mode per user request
-        rainbowToggle.checked = true;
-        setupUI.updateRainbowLabels();
-        const viz = getVisualizer();
-        if (viz && viz.setCyberRainbow) viz.setCyberRainbow(true);
-    }
-
-    if (colorPicker && savedColor) {
-        colorPicker.value = savedColor;
-        updateSwatch(savedColor);
-        const viz = getVisualizer();
-        if (viz && viz.setCyberColor) viz.setCyberColor(savedColor);
-    }
-
-    // Set initial mode and sync visualizer
-    setActiveMode(savedMode);
-
-    // Cyber sub-mode logic is also triggered in applyVisualDefaults, 
-    // but we ensure it's set here for immediate UI consistency.
-    const syncCyberWithVisualizer = () => {
-        const viz = getVisualizer();
-        if (viz && viz.setCyberLogicMode) {
-            if (savedMode === 'random') {
-                viz.setCyberLogicMode('random', '');
-            } else if (savedMode === 'mindwave') {
-                viz.setCyberLogicMode('mindwave', 'WELCOME');
-            } else if (savedMode === 'custom') {
-                const text = (textInput && textInput.value) ? textInput.value.toUpperCase() : 'WELCOME';
-                viz.setCyberLogicMode('custom', text);
-            }
-            console.log(`[Controls] Initial Cyber mode synced: ${savedMode}`);
-        }
-    };
-
-    // Try immediately and also via applyVisualDefaults trigger
-    syncCyberWithVisualizer();
-    window.addEventListener('visualizerReady', syncCyberWithVisualizer);
 }
 
 // --- GHOST MODE (Idle UI Fade-out) ---
 
 function setupIdleTimer() {
     const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
-
     activityEvents.forEach(evt => {
         window.addEventListener(evt, resetIdleTimer, { passive: true });
     });
-
-    // Initial start
     resetIdleTimer();
 }
 
 function resetIdleTimer() {
     if (state.idleTimeout) clearTimeout(state.idleTimeout);
-
-    // Always show UI on activity
     showUI();
-
-    // If locked, don't set the fade-out timeout
     if (state.uiLocked) return;
-
     state.idleTimeout = setTimeout(() => {
         hideUI();
-    }, 8000); // 8 seconds
+    }, 8000);
 }
 
 function showUI() {
@@ -5715,61 +5340,329 @@ function showUI() {
     targets.forEach(el => {
         el.classList.remove('idle-hidden');
     });
-    // Fade OUT logo when UI is visible (Keep faint watermark)
-    const logoImg = document.querySelector('#leftPanel img');
-    if (logoImg) logoImg.style.opacity = '1'; // Keep solid since it's a brand asset now
     import('../visuals/visualizer_nuclear_v4.js').then(m => {
         if (m.setVisualLogoOpacity) m.setVisualLogoOpacity(0.1);
     });
 }
 
 function hideUI() {
-    // Check if we should actually hide (extra safety)
     if (state.uiLocked) return;
-
-    // Don't hide if a modal is open
     if (document.querySelector('.modal.active')) return;
-
     const targets = document.querySelectorAll('.ui-fade-target');
     targets.forEach(el => {
         el.classList.add('idle-hidden');
     });
-    // Fade IN logo when UI is hidden (Ghost Mode watermark)
     import('../visuals/visualizer_nuclear_v4.js').then(m => {
-        if (m.setVisualLogoOpacity) m.setVisualLogoOpacity(0.5); // 50% opacity
+        if (m.setVisualLogoOpacity) m.setVisualLogoOpacity(0.5);
     });
 }
 
 function updateLockUI() {
     if (!els.lockIcon || !els.unlockIcon) return;
-
     if (state.uiLocked) {
-        // LOCKED STATE (UI is fixed visible)
         els.lockIcon.classList.remove('hidden');
         els.unlockIcon.classList.add('hidden');
         if (els.lockUIBtn) {
             els.lockUIBtn.title = "Unlock Menus (Enable auto-fade)";
-            els.lockUIBtn.style.color = ''; // Let CSS handle colors
             els.lockUIBtn.classList.add('toggle-active');
-            els.lockUIBtn.classList.remove('hover:bg-[var(--accent)]/20');
         }
-        // Ensure UI is visible
         showUI();
     } else {
-        // UNLOCKED STATE (Auto-fade enabled)
         els.lockIcon.classList.add('hidden');
         els.unlockIcon.classList.remove('hidden');
         if (els.lockUIBtn) {
             els.lockUIBtn.title = "Lock Menus (Keep visible)";
-            els.lockUIBtn.style.color = ''; // Let CSS handle colors
             els.lockUIBtn.classList.remove('toggle-active');
-            els.lockUIBtn.classList.add('hover:bg-[var(--accent)]/20');
         }
-        // Start timer if not already running
         resetIdleTimer();
     }
 }
 
+function setupCyberControls() {
+    console.log('[Controls] setupCyberControls CALLED');
+    const panel = document.getElementById('cyberSettingsPanel');
+    if (!panel) return;
 
+    // Mode Buttons
+    const modes = ['Random', 'Mindwave', 'Custom', 'Interstellar'];
+    modes.forEach(m => {
+        const btn = document.getElementById(`cyberMode${m}`);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const viz = getVisualizer();
+                const modeStr = btn.dataset.cyberMode;
+                if (viz && viz.setCyberLogicMode) {
+                    const text = document.getElementById('cyberTextInput')?.value || '';
+                    viz.setCyberLogicMode(modeStr, text);
+                    // Update UI state
+                    modes.forEach(mx => {
+                        const b = document.getElementById(`cyberMode${mx}`);
+                        if (b) {
+                            b.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
+                        }
+                    });
+                    btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
+                }
+            });
+        }
+    });
 
+    // Custom Text
+    const textInput = document.getElementById('cyberTextInput');
+    if (textInput) {
+        textInput.addEventListener('input', (e) => {
+            const viz = getVisualizer();
+            if (viz && viz.setCyberLogicMode) {
+                viz.setCyberLogicMode(viz.cyberLogicMode || 'custom', e.target.value);
+            }
+        });
+    }
 
+    // Color Picker
+    const cyberColorPicker = document.getElementById('cyberColorPicker');
+    if (cyberColorPicker) {
+        cyberColorPicker.addEventListener('input', (e) => {
+            const viz = getVisualizer();
+            if (viz) {
+                window._cyberPrevColor = cyberColorPicker.value;
+                if (viz.setCyberColor) viz.setCyberColor(e.target.value);
+                const rainbow = document.getElementById('cyberRainbowToggle');
+                if (rainbow) rainbow.checked = false;
+            }
+        });
+    }
+
+    // Random Color
+    const cyberRandomColorBtn = document.getElementById('cyberRandomColorBtn');
+    if (cyberRandomColorBtn) {
+        cyberRandomColorBtn.addEventListener('click', () => {
+            const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            const colorPicker = document.getElementById('cyberColorPicker');
+            if (colorPicker) {
+                window._cyberPrevColor = colorPicker.value;
+                colorPicker.value = randomHex;
+            }
+            const viz = getVisualizer();
+            if (viz && viz.setCyberColor) viz.setCyberColor(randomHex);
+        });
+    }
+
+    // Previous Color (Back)
+    const cyberPrevColorBtn = document.getElementById('cyberPrevColorBtn');
+    if (cyberPrevColorBtn) {
+        cyberPrevColorBtn.addEventListener('click', () => {
+            if (window._cyberPrevColor) {
+                const colorPicker = document.getElementById('cyberColorPicker');
+                const prev = window._cyberPrevColor;
+                if (colorPicker) {
+                    window._cyberPrevColor = colorPicker.value;
+                    colorPicker.value = prev;
+                }
+                const viz = getVisualizer();
+                if (viz && viz.setCyberColor) viz.setCyberColor(prev);
+            }
+        });
+    }
+
+    // Vibration Toggle
+    const cyberVibrationToggle = document.getElementById('cyberVibrationToggle');
+    if (cyberVibrationToggle) {
+        cyberVibrationToggle.addEventListener('click', () => {
+            const viz = getVisualizer();
+            if (viz && viz.setVibrationEnabled) {
+                const newState = !viz.vibrationEnabled;
+                viz.setVibrationEnabled(newState);
+                cyberVibrationToggle.style.color = newState ? 'var(--accent)' : 'var(--text-muted)';
+            }
+        });
+    }
+
+    // Rainbow Toggle
+    const rainbowToggle = document.getElementById('cyberRainbowToggle');
+    if (rainbowToggle) {
+        rainbowToggle.addEventListener('change', (e) => {
+            const viz = getVisualizer();
+            if (viz && viz.setCyberRainbow) viz.setCyberRainbow(e.target.checked);
+        });
+    }
+
+    // Sliders
+    const sliders = [
+        { id: 'cyberSpeed', method: 'setCyberSpeed' },
+        { id: 'cyberLength', method: 'setCyberLength' },
+        { id: 'cyberAngle', method: 'setCyberAngle' },
+        { id: 'cyberBrightness', method: 'setGlobalBrightness' }
+    ];
+
+    sliders.forEach(s => {
+        const slider = document.getElementById(`${s.id}Slider`);
+        const valDisp = document.getElementById(`${s.id}Val`);
+        if (slider) {
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (valDisp) {
+                    if (s.id.includes('Angle')) valDisp.textContent = `${val}°`;
+                    else if (s.id.includes('Brightness')) valDisp.textContent = val.toFixed(1);
+                    else valDisp.textContent = `${val.toFixed(1)}x`;
+                }
+                const viz = getVisualizer();
+                if (viz && viz[s.method]) viz[s.method](val);
+            });
+        }
+    });
+}
+
+// Ensure init calls them
+setTimeout(() => {
+    if (typeof setupMatrixControls === 'function') setupMatrixControls();
+    if (typeof setupCyberControls === 'function') setupCyberControls();
+    if (typeof setupMasterVisualControls === 'function') setupMasterVisualControls();
+}, 2000);
+
+window.addEventListener('resize', () => {
+    if (typeof updateDockScaling === 'function') updateDockScaling();
+    if (typeof resetIdleTimer === 'function') resetIdleTimer();
+});
+
+// --- PER-VISUAL COLOR PICKERS ---
+export function initVisualColorPickers() {
+    console.log('[Controls] Initializing 13 Per-Visual RGB Pickers');
+    const colorInputs = document.querySelectorAll('input[data-visual-color]');
+    
+    colorInputs.forEach(input => {
+        const mode = input.getAttribute('data-visual-color');
+        
+        // Load saved color or use default
+        if (state.visualColors && state.visualColors[mode]) {
+            input.value = state.visualColors[mode];
+        }
+
+        // Apply color instantly on change
+        input.addEventListener('input', (e) => {
+            const newColor = e.target.value;
+            // Stop propagation so it doesn't trigger the button underneath
+            e.stopPropagation(); 
+            
+            if (state.visualColors) {
+                state.visualColors[mode] = newColor;
+            }
+            
+            // If this is the active mode, apply it to the visualizer immediately
+            const viz = getVisualizer();
+            if (viz && viz.activeModes && viz.activeModes.has(mode)) {
+                setVisualColor(newColor, mode);
+            }
+        });
+        
+        // Prevent click from bubbling up to the mode toggle button
+        input.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    });
+}
+
+// --- MASTER VISUAL CONTROLS ---
+export function setupMasterVisualControls() {
+    console.log('[Controls] Initializing Master Visual Controls');
+    
+    const masterColorPicker = document.getElementById('masterColorPicker');
+    const masterColorPreview = document.getElementById('masterColorPreview');
+    const masterRandomBtn = document.getElementById('masterRandomBtn');
+    const masterPrevColorBtn = document.getElementById('masterPrevColorBtn');
+    const masterVibrationToggle = document.getElementById('masterVibrationToggle');
+    
+    // Master Color Picker
+    if (masterColorPicker && masterColorPreview) {
+        masterColorPicker.addEventListener('input', (e) => {
+            const hex = e.target.value;
+            masterColorPreview.style.backgroundColor = hex;
+            
+            if (state.masterVisualColor && state.masterVisualColor !== hex) {
+                state.previousVisualColor = state.masterVisualColor;
+            } else if (!state.masterVisualColor) {
+                state.previousVisualColor = '#60a9ff';
+            }
+
+            state.masterVisualColor = hex;
+            
+            const viz = getVisualizer();
+            if (viz && viz.setVisualColor) {
+                viz.setVisualColor(hex);
+            }
+        });
+    }
+
+    // Master Random Color
+    if (masterRandomBtn) {
+        masterRandomBtn.addEventListener('click', () => {
+            const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            
+            if (masterColorPicker) masterColorPicker.value = randomHex;
+            if (masterColorPreview) masterColorPreview.style.backgroundColor = randomHex;
+            
+            if (state.masterVisualColor) {
+                state.previousVisualColor = state.masterVisualColor;
+            } else if (!state.masterVisualColor) {
+                state.previousVisualColor = '#60a9ff';
+            }
+            
+            state.masterVisualColor = randomHex;
+
+            const viz = getVisualizer();
+            if (viz && viz.setVisualColor) {
+                viz.setVisualColor(randomHex);
+            }
+        });
+    }
+
+    // Master Previous Color
+    if (masterPrevColorBtn) {
+        masterPrevColorBtn.addEventListener('click', () => {
+            if (state.previousVisualColor) {
+                const prev = state.previousVisualColor;
+                
+                state.previousVisualColor = state.masterVisualColor;
+                state.masterVisualColor = prev;
+
+                if (masterColorPicker) masterColorPicker.value = prev;
+                if (masterColorPreview) masterColorPreview.style.backgroundColor = prev;
+
+                const viz = getVisualizer();
+                if (viz && viz.setVisualColor) {
+                    viz.setVisualColor(prev);
+                }
+            }
+        });
+    }
+
+    // Master Vibration Toggle
+    if (masterVibrationToggle) {
+        // Helper function for UI states (Quad Edition)
+        const updateVibeUI = (isOn) => {
+            const svg = masterVibrationToggle.querySelector('svg');
+            
+            if (isOn) {
+                masterVibrationToggle.classList.add('border-[var(--accent)]/50', 'bg-[var(--accent)]/10', 'text-[var(--accent)]', 'shadow-[0_0_10px_rgba(45,212,191,0.2)]');
+                masterVibrationToggle.classList.remove('border-white/5', 'text-white/40');
+                if (svg) svg.classList.add('text-[var(--accent)]');
+            } else {
+                masterVibrationToggle.classList.remove('border-[var(--accent)]/50', 'bg-[var(--accent)]/10', 'text-[var(--accent)]', 'shadow-[0_0_10px_rgba(45,212,191,0.2)]');
+                masterVibrationToggle.classList.add('border-white/5', 'text-white/40');
+                if (svg) svg.classList.remove('text-[var(--accent)]');
+            }
+        };
+
+        // Set initial UI state
+        updateVibeUI(state.visualVibration || false);
+
+        masterVibrationToggle.addEventListener('click', () => {
+            state.visualVibration = !state.visualVibration;
+            updateVibeUI(state.visualVibration);
+
+            const viz = getVisualizer();
+            if (viz && viz.setVibrationEnabled) {
+                viz.setVibrationEnabled(state.visualVibration);
+            }
+        });
+    }
+}

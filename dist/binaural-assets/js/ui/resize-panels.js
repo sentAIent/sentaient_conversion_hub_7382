@@ -293,13 +293,13 @@ export function updateBottomBarWidth() {
     const rightWidth = rightOpen ? Math.max(0, windowWidth - rightRect.left) : 0;
     const availableWidth = windowWidth - leftWidth - rightWidth;
 
-    // Keep footer at full viewport width — content is centered via CSS flex
-    // Pointer events pass through to allow sidebar interaction
+    // Keep footer at full viewport width BUT push its internal padding to avoid sidebars
+    // This allows the centered UI container to organically flex-wrap when space shrinks
     bottomBar.style.left = '0';
     bottomBar.style.right = '0';
     bottomBar.style.width = '100%';
-    bottomBar.style.marginLeft = '0';
-    bottomBar.style.marginRight = '0';
+    bottomBar.style.paddingLeft = `calc(1rem + ${leftWidth}px)`;
+    bottomBar.style.paddingRight = `calc(1rem + ${rightWidth}px)`;
     bottomBar.style.pointerEvents = 'none';
 
     // Re-enable pointer events on direct children only
@@ -312,15 +312,44 @@ export function updateBottomBarWidth() {
     bottomBar.style.setProperty('--left-sidebar-width', `${leftWidth}px`);
     bottomBar.style.setProperty('--right-sidebar-width', `${rightWidth}px`);
 
-    // Manage responsive classes for footer content
-    if (availableWidth < 600 || windowWidth < 768) {
-        bottomBar.classList.add('footer-compact');
-        bottomBar.classList.remove('footer-medium');
-    } else if (availableWidth < 900) {
-        bottomBar.classList.add('footer-medium');
-        bottomBar.classList.remove('footer-compact');
+    // Manage responsive classes and CSS variables for footer content
+    // We use availableWidth logic to determine precise vertical padding thinning
+    if (availableWidth <= 550) {
+        bottomBar.classList.add('footer-ultra');
+        bottomBar.classList.remove('footer-slim', 'footer-normal');
+        bottomBar.style.setProperty('--footer-gap', '4px');
+        bottomBar.style.setProperty('--footer-px', '0.5rem');
+        bottomBar.style.setProperty('--dock-gap', '4px');
+        bottomBar.style.setProperty('--dock-btn-p', '0.25rem');
+        bottomBar.style.setProperty('--footer-py', '0.2rem');
+        bottomBar.style.setProperty('--dock-py', '0.2rem');
+    } else if (availableWidth <= 1000) {
+        bottomBar.classList.add('footer-slim');
+        bottomBar.classList.remove('footer-ultra', 'footer-normal');
+        bottomBar.style.setProperty('--footer-gap', '6px');
+        bottomBar.style.setProperty('--footer-px', '0.75rem');
+        bottomBar.style.setProperty('--dock-gap', '4px');
+        bottomBar.style.setProperty('--dock-btn-p', '0.3rem');
+        bottomBar.style.setProperty('--footer-py', '0.4rem');
+        bottomBar.style.setProperty('--dock-py', '0.4rem');
+    } else if (availableWidth <= 1400) {
+        bottomBar.classList.add('footer-normal');
+        bottomBar.classList.remove('footer-ultra', 'footer-slim');
+        bottomBar.style.setProperty('--footer-gap', '10px');
+        bottomBar.style.setProperty('--footer-px', '1rem');
+        bottomBar.style.setProperty('--dock-gap', '6px');
+        bottomBar.style.setProperty('--dock-btn-p', '0.4rem');
+        bottomBar.style.setProperty('--footer-py', '0.6rem');
+        bottomBar.style.setProperty('--dock-py', '0.5rem');
     } else {
-        bottomBar.classList.remove('footer-compact', 'footer-medium');
+        // Breathe state
+        bottomBar.classList.remove('footer-ultra', 'footer-slim', 'footer-normal');
+        bottomBar.style.setProperty('--footer-gap', '16px');
+        bottomBar.style.setProperty('--footer-px', '1.5rem');
+        bottomBar.style.setProperty('--dock-gap', '8px');
+        bottomBar.style.setProperty('--dock-btn-p', '0.5rem');
+        bottomBar.style.setProperty('--footer-py', '0.8rem');
+        bottomBar.style.setProperty('--dock-py', '0.6rem');
     }
 }
 

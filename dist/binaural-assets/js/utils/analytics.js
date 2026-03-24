@@ -7,7 +7,15 @@
 const ENV = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {};
 
 // Google Analytics Measurement ID
-const GA_MEASUREMENT_ID = ENV.VITE_GOOGLE_ANALYTICS_ID || null;
+let GA_MEASUREMENT_ID = ENV.VITE_GOOGLE_ANALYTICS_ID || null;
+
+// Fallback search
+if (!GA_MEASUREMENT_ID && typeof window !== 'undefined') {
+    try {
+        const config = JSON.parse(window.__firebase_config || '{}');
+        GA_MEASUREMENT_ID = config.measurementId || null;
+    } catch (e) {}
+}
 
 /**
  * Initialize Google Analytics
