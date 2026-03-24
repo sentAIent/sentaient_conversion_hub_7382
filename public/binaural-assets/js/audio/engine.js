@@ -90,7 +90,7 @@ export async function startAudio() {
         }
 
         await setupWorklet();
-        state.destStreamNode = state.audioCtx.createMediaStreamDestination();
+        // Removed MediaStreamDestination here to prevent Safari Muting Bug
 
         // Create Nodes
         state.oscLeft = state.audioCtx.createOscillator();
@@ -160,7 +160,7 @@ export async function startAudio() {
         state.videoCaptureGain = state.audioCtx.createGain();
         state.videoCaptureGain.gain.value = 1;
         state.limiter.connect(state.videoCaptureGain);
-        state.videoCaptureGain.connect(state.destStreamNode);
+        // We do NOT create or connect `destStreamNode` here. It is lazily hooked in recorder.js!
 
         // Compressor Settings
         state.masterCompressor.threshold.value = -3;
@@ -226,7 +226,7 @@ export async function startAudio() {
         console.log(`[Audio Diagnostics] Ctx State: ${state.audioCtx.state}`);
         console.log(`[Audio Diagnostics] Master Gain: ${state.masterGain.gain.value}`);
         console.log(`[Audio Diagnostics] Beats Gain Target: ${state.beatsGain.gain.value}`);
-        console.log(`[Audio Diagnostics] Dest Node:`, state.destStreamNode);
+        console.log(`[Audio Diagnostics] Lazy Dest Node Deferred Successfully.`);
 
         // Start Soundscapes
         if (state.soundscapeSettings) {
