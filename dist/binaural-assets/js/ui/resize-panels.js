@@ -312,15 +312,32 @@ export function updateBottomBarWidth() {
     bottomBar.style.setProperty('--left-sidebar-width', `${leftWidth}px`);
     bottomBar.style.setProperty('--right-sidebar-width', `${rightWidth}px`);
 
-    // Manage responsive classes for footer content
-    if (availableWidth < 600 || windowWidth < 768) {
-        bottomBar.classList.add('footer-compact');
-        bottomBar.classList.remove('footer-medium');
-    } else if (availableWidth < 900) {
-        bottomBar.classList.add('footer-medium');
-        bottomBar.classList.remove('footer-compact');
+    // Manage responsive classes and CSS variables for footer content
+    // We use availableWidth logic to determine precise vertical padding thinning
+    if (availableWidth <= 450) {
+        bottomBar.classList.add('footer-ultra');
+        bottomBar.classList.remove('footer-slim', 'footer-normal');
+        bottomBar.style.setProperty('--footer-gap', '4px');
+        bottomBar.style.setProperty('--footer-py', '0.5rem');
+        bottomBar.style.setProperty('--dock-py', '0.25rem');
+    } else if (availableWidth <= 800) {
+        bottomBar.classList.add('footer-slim');
+        bottomBar.classList.remove('footer-ultra', 'footer-normal');
+        bottomBar.style.setProperty('--footer-gap', '12px');
+        bottomBar.style.setProperty('--footer-py', '1rem');
+        bottomBar.style.setProperty('--dock-py', '0.5rem');
+    } else if (availableWidth <= 1200) {
+        bottomBar.classList.add('footer-normal');
+        bottomBar.classList.remove('footer-ultra', 'footer-slim');
+        bottomBar.style.setProperty('--footer-gap', '24px');
+        bottomBar.style.setProperty('--footer-py', '1.5rem');
+        bottomBar.style.setProperty('--dock-py', '1rem');
     } else {
-        bottomBar.classList.remove('footer-compact', 'footer-medium');
+        // Breathe state
+        bottomBar.classList.remove('footer-ultra', 'footer-slim', 'footer-normal');
+        bottomBar.style.setProperty('--footer-gap', '32px');
+        bottomBar.style.setProperty('--footer-py', '2rem');
+        bottomBar.style.setProperty('--dock-py', '1.5rem');
     }
 }
 

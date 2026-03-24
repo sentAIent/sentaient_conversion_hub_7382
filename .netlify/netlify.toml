@@ -1,15 +1,15 @@
+functionsDirectory = "/Users/ute/Dev/sentaient_conversion_hub_7382-Website/netlify/functions"
+functionsDirectoryOrigin = "config"
+redirectsOrigin = "config"
 plugins = []
 headers = []
 
-[functions]
-
-[functions."*"]
-
 [build]
 publish = "/Users/ute/Dev/sentaient_conversion_hub_7382-Website/dist"
-publishOrigin = "ui"
-commandOrigin = "ui"
+publishOrigin = "config"
+commandOrigin = "config"
 command = "npm run build"
+functions = "/Users/ute/Dev/sentaient_conversion_hub_7382-Website/netlify/functions"
 
 [build.environment]
 
@@ -25,9 +25,25 @@ command = "npm run build"
 
 [build.services]
 
+[functions]
+
+[functions."*"]
+
 [[redirects]]
 from = "/*"
 to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/api/stripe-webhook"
+to = "/.netlify/functions/stripe-webhook"
 status = 200.0
 force = false
 

@@ -82,7 +82,7 @@ export const PRESET_COMBOS = [
         icon: '⚔️',
         preset: 'beta',
         soundscapes: ['strings', 'brass'],
-        visuals: ['dragon', 'cyber', 'particles'],
+        visuals: ['dragon', 'matrix', 'particles'],
         atmosVolume: 0.4,
         color: '#b45309'
     },
@@ -104,7 +104,7 @@ export const PRESET_COMBOS = [
         icon: '⛈️',
         preset: 'gamma',
         soundscapes: ['rain', 'wind'],
-        visuals: ['rainforest', 'cyber', 'matrix'],
+        visuals: ['rainforest', 'matrix', 'interstellar'],
         atmosVolume: 0.5,
         color: '#4b5563'
     },
@@ -159,7 +159,7 @@ export const PRESET_COMBOS = [
         icon: '🛶',
         preset: 'theta',
         soundscapes: ['river', 'forest_birds'],
-        visuals: ['particles', 'ocean', 'matrix'],
+        visuals: ['particles', 'ocean', 'interstellar'],
         atmosVolume: 0.7,
         color: '#38bdf8'
     },
@@ -170,7 +170,7 @@ export const PRESET_COMBOS = [
         icon: '🌌',
         preset: 'gamma',
         soundscapes: ['strings', 'white'],
-        visuals: ['galaxy', 'dragon', 'cyber'],
+        visuals: ['galaxy', 'dragon', 'matrix'],
         atmosVolume: 0.45,
         color: '#8b5cf6'
     },
@@ -192,10 +192,10 @@ export const BRAINWAVE_VISUALS = {
     delta: ['ocean', 'zengarden'],
     theta: ['particles', 'ocean'],
     alpha: ['zengarden', 'sphere'],
-    beta: ['cyber', 'dragon'],
-    gamma: ['galaxy', 'dragon', 'cyber'],
+    beta: ['matrix', 'dragon'],
+    gamma: ['galaxy', 'dragon', 'matrix'],
     mu: ['sphere', 'particles'],
-    'hyper-gamma': ['dragon', 'cyber', 'matrix']
+    'hyper-gamma': ['dragon', 'matrix', 'interstellar']
 };
 
 export const HEALING_VISUALS = {
@@ -205,10 +205,10 @@ export const HEALING_VISUALS = {
     'heal-417': ['lava', 'particles'],      // Change
     'heal-432': ['zengarden', 'ocean'],       // Nature
     'heal-528': ['galaxy', 'sphere', 'particles'],  // DNA Repair
-    'heal-639': ['sphere', 'particles', 'matrix'],    // Connection
-    'heal-741': ['cyber', 'matrix', 'galaxy'],  // Intuition
+    'heal-639': ['sphere', 'particles', 'interstellar'],    // Connection
+    'heal-741': ['matrix', 'interstellar', 'galaxy'],  // Intuition
     'heal-852': ['galaxy', 'dragon', 'lava'],  // Spirit
-    'heal-963': ['dragon', 'matrix', 'cyber'] // Oneness
+    'heal-963': ['dragon', 'interstellar', 'matrix'] // Oneness
 };
 
 export const STATE_INSIGHTS = {
@@ -237,7 +237,7 @@ export const state = {
     mediaRecorder: null, recordedChunks: [], destStreamNode: null,
     activeSoundscapes: {},
     soundscapeSettings: {},
-    matrixPanelOpen: true, // Default open when Cyber/Matrix active
+    matrixPanelOpen: true, // Default open when Matrix/Interstellar active
     currentSessions: [],
     currentModalBlob: null,
     currentModalIsVideo: false,
@@ -251,15 +251,15 @@ export const state = {
     cleanRecordedBuffers: [],
     currentRecordingDuration: 0,
     currentUser: null,
-    userTier: 'free', // ✅ FIX: Default to free tier, check actual subscription
-    isLifetime: false, // NEW: Restricted to Lifetime members for PWA install
-    visualVibration: false, // Default OFF — toggle synesthetic vibrations
-    visualSpeedAuto: true, // Default to Hz sync
-    aiVisualsLocked: false, // NEW: Prevent manual overrides when AI set the mood
+    userTier: 'pro', // Reverted to Pro for everyone as per Perfect criteria
+    isLifetime: true,
+    visualVibration: false,
+    visualSpeedAuto: true,
+    aiVisualsLocked: false,
 
     // Preset tracking
-    activePresetType: null, // Tracks active healing frequency preset (alpha, theta, etc.)
-    activeComboPreset: null, // Tracks active combo preset (epic-focus, ocean-drift, etc.)
+    activePresetType: null,
+    activeComboPreset: null,
 
     // Session Timer State
     sessionActive: false,
@@ -268,7 +268,7 @@ export const state = {
 
     // UI Refs that were global
     immersiveTimeout: null,
-    fadeTimeout: null, // For cancellable fade-out
+    fadeTimeout: null,
 
     // Safety
     disclaimerAccepted: false,
@@ -284,9 +284,9 @@ export const state = {
     sweepActive: false,
     sweepStartFreq: 10,
     sweepEndFreq: 40,
-    sweepDuration: 60, // seconds
+    sweepDuration: 60,
     sweepInterval: null,
-    preSweepBeatFreq: null, // Original beat frequency before sweep started
+    preSweepBeatFreq: null,
 
     // NEW: Extended Hyper-Gamma unlock
     hyperGammaUnlocked: false,
@@ -303,10 +303,17 @@ export const state = {
     idleTimeout: null,
 
     // NEW (Lotus State Options)
-    lotusState: 'full' // 'auto', 'full', 'faded', 'heartbeat'
+    lotusState: 'full',
+
+    // NEW (Per-Visual RGB Memory)
+    visualColors: {
+        sphere: '#60a9ff', particles: '#60a9ff', cube: '#60a9ff', dragon: '#60a9ff',
+        galaxy: '#60a9ff', mandala: '#60a9ff', lava: '#60a9ff', fireplace: '#60a9ff',
+        rainforest: '#60a9ff', zengarden: '#60a9ff', ocean: '#60a9ff', cyber: '#00FF41', matrix: '#00FF41'
+    }
 };
 
-export const VISUALIZER_VERSION = 'MATRIX_RENAME_V111';
+export const VISUALIZER_VERSION = 'PERFECT_V11';
 
 // Global Elements Container
 export const els = {
@@ -318,7 +325,7 @@ export const els = {
     recordBtn: null, videoToggleBtn: null,
 
     // Visuals
-    sphereBtn: null, cubeBtn: null, dragonBtn: null, galaxyBtn: null, mandalaBtn: null, themeBtn: null,
+    sphereBtn: null, cubeBtn: null, dragonBtn: null, galaxyBtn: null, themeBtn: null,
     galleryBtn: null,
     visualSpeedSlider: null,
     speedValue: null,
@@ -335,7 +342,6 @@ export const els = {
     statusIndicator: null, aiPrompt: null,
 
     // Mixer
-    baseSlider: null, beatSlider: null, volSlider: null,
     baseSlider: null, beatSlider: null, volSlider: null,
     masterVolSlider: null, atmosMasterSlider: null, balanceSlider: null,
     baseValue: null, beatValue: null, volValue: null,
@@ -364,27 +370,30 @@ export const els = {
     performanceMonitor: {
         fpsThreshold: 15,
         lowPerformanceCount: 0,
-        lowPerformanceLimit: 120, // ~2 seconds at 60fps drops
+        lowPerformanceLimit: 120,
         isSafeModeActive: false,
         triggerSafeMode: function () {
             if (this.isSafeModeActive) return;
             this.isSafeModeActive = true;
-            console.warn("⚠️ Memory Guard: Low performance detected. Triggering Safe Mode.");
+            console.warn("⚠️ Memory Guard: High System Load or Low Performance detected.");
 
-            // Dispatch event for UI/Visualizers to react
             window.dispatchEvent(new CustomEvent('mindwave:safe-mode-start'));
 
-            // Auto-cleanup: If more than 2 high-intensity modes are active, close the last one
             if (window.state && window.state.visualizer && window.state.visualizer.activeModes) {
                 const viz = window.state.visualizer;
                 const modes = Array.from(viz.activeModes);
-                const complexModes = ['dragon', 'galaxy', 'mandala', 'cyber'];
+                // Aggressively disable complex modes if in Safe Mode
+                const complexModes = ['dragon', 'galaxy', 'matrix', 'interstellar', 'lava', 'ocean'];
                 const activeComplex = modes.filter(m => complexModes.includes(m));
 
-                if (activeComplex.length > 1) {
-                    const toRemove = activeComplex[activeComplex.length - 1];
-                    console.log(`Memory Guard: Closing complex mode '${toRemove}' to preserve memory.`);
-                    viz.toggleMode(toRemove);
+                if (activeComplex.length > 0) {
+                    activeComplex.forEach(m => viz.toggleMode(m));
+                    console.log("Memory Guard: Disabled complex visual modes.");
+                }
+                
+                // Also halve particle count or similar if possible (implementation specific)
+                if (viz.particles) {
+                    viz.particles.visible = false;
                 }
             }
         },

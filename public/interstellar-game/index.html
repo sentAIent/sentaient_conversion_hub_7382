@@ -299,6 +299,14 @@
                     data-tooltip="Upgrade Your Ship" style="display:none">🛠️ UPGRADES</button>
                 <button class="btn game-btn" id="missionsBtn" onclick="window.game.toggleMissionBoard()"
                     data-tooltip="View Available Missions">📋 MISSIONS</button>
+                <button class="btn game-btn" id="mobile-toggle-btn" onclick="app.toggleMobileControls()"
+                    data-tooltip="Toggle Mobile Joystick Controls">🎮 JOYSTICK</button>
+                <div class="divider" style="display:inline-block; width:1px; height:24px; background:rgba(255,255,255,0.2); margin:0 8px; vertical-align:middle;"></div>
+                <button class="btn game-btn" id="layoutHorizBtn" onclick="window.game.setLayout('horizontal')"
+                    data-tooltip="Horizontal HUD Layout">↔️ WIDE HUD</button>
+                <button class="btn game-btn" id="layoutVertBtn" onclick="window.game.setLayout('vertical')"
+                    data-tooltip="Vertical HUD Layout">↕️ TALL HUD</button>
+                <div class="divider" style="display:inline-block; width:1px; height:24px; background:rgba(255,255,255,0.2); margin:0 8px; vertical-align:middle;"></div>
                 <button class="btn game-btn" id="audioMuteBtn"
                     onclick="gameAudio.init(); const m = gameAudio.toggleMute(); this.textContent = m ? '🔇 MUTED' : '🔊 AUDIO';"
                     data-tooltip="Toggle Audio">🔊 AUDIO</button>
@@ -431,8 +439,10 @@
                     </div>
                 </div>
                 <div class="cockpit-content">
+                    <!-- MOVEMENT -->
+                    <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">MOVEMENT</div>
                     <div class="controls-grid"
-                        style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:15px;">
+                        style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:8px;">
                         <kbd data-key="W" data-cmd="Thrust Forward"
                             data-desc="Accelerate in the direction you're facing">W</kbd>
                         <kbd data-key="S" data-cmd="Thrust Backward" data-desc="Decelerate or reverse thrust">S</kbd>
@@ -442,8 +452,40 @@
                             data-desc="Move upward without changing direction">Q</kbd>
                         <kbd data-key="E" data-cmd="Strafe Down"
                             data-desc="Move downward without changing direction">E</kbd>
+                        <kbd data-key="Shift" data-cmd="Boost" data-desc="Hold to double your speed"
+                            style="grid-column: span 2; font-size:9px;">⇧ BOOST</kbd>
+                    </div>
+
+                    <!-- COMBAT -->
+                    <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">COMBAT</div>
+                    <div style="display:grid; grid-template-columns: 1fr; gap:5px; margin-bottom:8px;">
+                        <kbd data-key=" " data-cmd="Fire Weapons"
+                            data-desc="Fire your ship's photon cannons at enemies"
+                            style="text-align:center; padding:6px; background:rgba(255,50,50,0.15); border-color:rgba(255,100,100,0.4); color:#ff6b6b; font-weight:bold;">
+                            ␣ SPACE — FIRE WEAPONS
+                        </kbd>
+                    </div>
+
+                    <!-- 3D ROTATION -->
+                    <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">3D ROTATION</div>
+                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:8px;">
                         <kbd data-key="R" data-cmd="Pitch Up" data-desc="Tilt nose upward (3D rotation)">R</kbd>
                         <kbd data-key="F" data-cmd="Pitch Down" data-desc="Tilt nose downward (3D rotation)">F</kbd>
+                        <kbd data-key="Z" data-cmd="Bank Left" data-desc="3D barrel roll left">Z</kbd>
+                        <kbd data-key="X" data-cmd="Bank Right" data-desc="3D barrel roll right">X</kbd>
+                    </div>
+
+                    <!-- SYSTEM -->
+                    <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">SYSTEM</div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:5px; margin-bottom:10px;">
+                        <kbd data-key="Escape" data-cmd="Exit Flight" data-desc="Return to drawing mode"
+                            style="font-size:9px;">ESC</kbd>
+                        <kbd data-key="M" data-cmd="Toggle Map" data-desc="Open the full-screen galaxy map"
+                            style="font-size:9px;">M MAP</kbd>
+                    </div>
+
+                    <div style="font-size:8px; color:#445; text-align:center; margin-bottom:8px; line-height:1.4;">
+                        💡 Fly near gems to auto-collect · Use radar to track enemies
                     </div>
 
                     <!-- Leftover core features in Flight Control -->
@@ -621,6 +663,18 @@
                     <div style="font-size:9px; color:#888; margin-top:4px;">Click for full map</div>
                 </div>
             </div>
+
+            <!-- MISSION TRACKER (Left Side, Below Map) -->
+            <div id="sectionMission" class="cockpit-section" style="top:290px; left:15px; width:220px; min-height:80px; display:none;">
+                <div class="cockpit-header">
+                    <h4 style="color: #00ffcc;">📋 Mission</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionMission')">−</button>
+                </div>
+                <div class="cockpit-content" id="missionContent" style="display:flex; flex-direction:column; gap:6px; font-size:11px; padding: 10px;">
+                    No Active Mission.
+                </div>
+            </div>
+
 
             <!-- GEMS - Bottom Right (Pos 4 - Constrained) -->
             <div id="sectionGems" class="cockpit-section gems-section"
@@ -855,15 +909,8 @@
         </div>
     </div>
 
-    <!-- Mobile Toggle Button (Visible only on small screens or by default) -->
-    <!-- Mobile Toggle Button (Visible always now via CSS) -->
-    <button id="mobile-toggle" onclick="app.toggleMobileControls()"
-        style="position: fixed; bottom: 85px; right: 30px; z-index: 1000; background: rgba(0,0,0,0.6); color: #0ff; border: 1px solid #0ff; padding: 12px; border-radius: 50%; font-size: 24px; cursor: pointer;">
-        🎮
-    </button>
-
     <!-- Style for Mobile Visibility & UI Polish -->
-    <script type="module" src="./script.js?v=nuclear_v11"></script>
+    <script type="module" src="./script.js?v=nuclear_v12"></script>
 </body>
 
 </html>

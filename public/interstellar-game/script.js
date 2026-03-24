@@ -945,6 +945,10 @@ class InterstellarEngine {
         this.makeResizable('sectionControls');
         this.makeResizable('sectionRadar');
         this.makeResizable('sectionVelocity');
+        this.makeResizable('sectionMission');
+
+        // Apply saved HUD layout 
+        setTimeout(() => this.setLayout(localStorage.getItem('hudLayout') || 'horizontal'), 500);
 
         // Initialize kbd tooltips for flight controls
         this.initKbdTooltips();
@@ -1646,12 +1650,14 @@ class InterstellarEngine {
         // Toggle HUD overlay
         const hud = document.getElementById('flightHUD');
         const floatingLeaders = document.getElementById('floatingLeaders');
+        const missionSection = document.getElementById('sectionMission');
 
         if (this.flightMode) {
             if (hud) hud.classList.remove('hidden');
-            // floatingMap is removed - we use inline sectionMap now
             if (floatingLeaders) floatingLeaders.classList.remove('hidden');
             this.updateFloatingLeaderboard();
+            this.showToast('Flight Mode: ON - Use WASD/QE/Shift');
+            this.updateMissionHUD(); // Call the new mission HUD update
             // Audio: start engine hum + ambient music
             gameAudio.startEngineHum();
             gameAudio.startAmbientMusic();
@@ -1687,6 +1693,119 @@ class InterstellarEngine {
         if (layoutPresets) layoutPresets.style.display = this.flightMode ? 'flex' : 'none';
 
         this.draw();
+    }
+
+    setLayout(type) {
+        localStorage.setItem('hudLayout', type);
+
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        
+        // Calculate optimal scale factor to prevent overlap on small screens
+        // Horizontally, we need ~1600px of safe space. Vertically we need ~1060px for the towering arrays.
+        const widthScale = W / 1600;
+        const heightScale = H / 1060;
+        const scale = Math.min(1.0, Math.max(0.40, Math.min(widthScale, heightScale))); 
+        
+        const setCoords = (id, cssMap, origin = 'top left') => {
+            const el = document.getElementById(id);
+            if (el) {
+                // Clear any manual sizing locks
+                el.style.top = 'auto';
+                el.style.bottom = 'auto';
+                el.style.left = 'auto';
+                el.style.right = 'auto';
+
+                for (const prop in cssMap) {
+                    el.style[prop] = cssMap[prop];
+                }
+                
+                el.style.transform = `scale(${scale})`;
+                el.style.transformOrigin = origin;
+                
+                if (el.classList.contains('minimized-to-taskbar')) {
+                    this.restoreFromTaskbar(id);
+                }
+            }
+        };
+
+        const topY = 72;
+        const gemsH = 180;
+        const gap = 8 * scale; // Tight, scaled positioning gap
+
+        if (type === 'horizontal') {
+            // THE NATIVE LOAD LAYOUT (Single Massive Top Row)
+            let currentX = 15;
+            setCoords('sectionMap', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (220 * scale) + gap;
+
+            setCoords('sectionRadar', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (180 * scale) + gap;
+
+            setCoords('sectionVelocity', { top: `${topY}px`, left: `${currentX}px`, display: 'flex' });
+            currentX += (220 * scale) + gap;
+
+            setCoords('sectionShipStatus', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (230 * scale) + gap;
+            
+            setCoords('sectionControls', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (210 * scale) + gap;
+
+            setCoords('sectionShipDesign', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (230 * scale) + gap;
+            
+            setCoords('floatingLeaders', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (260 * scale) + gap;
+            
+            // Second row left (Below Map natively)
+            setCoords('sectionMission', { top: `${topY + (220 * scale)}px`, left: '15px' });
+
+            // BOTTOM EDGE
+            setCoords('sectionGems', { bottom: '15px', left: '15px', right: '15px', minWidth: '800px', height: `${gemsH}px` }, 'bottom center');
+
+        } else if (type === 'vertical') {
+            // LEFT COLUMN (Dynamically Stacking Heights to prevent any overlap)
+            let leftY = topY;
+            setCoords('sectionMap', { top: `${leftY}px`, left: '15px' });
+            leftY += (200 * scale) + gap;
+
+            setCoords('sectionRadar', { top: `${leftY}px`, left: '15px' });
+            leftY += (180 * scale) + gap;
+
+            // Moved Velocity squarely under Radar precisely as requested!
+            setCoords('sectionVelocity', { top: `${leftY}px`, left: '15px', display: 'flex' });
+            leftY += (200 * scale) + gap;
+
+            setCoords('sectionControls', { top: `${leftY}px`, left: '15px' });
+
+            // RIGHT COLUMN (Dynamically Stacking Heights)
+            let rightY = topY;
+            setCoords('floatingLeaders', { top: `${rightY}px`, right: '15px' }, 'top right');
+            rightY += (260 * scale) + gap;
+
+            setCoords('sectionShipStatus', { top: `${rightY}px`, right: '15px' }, 'top right');
+            rightY += (160 * scale) + gap;
+
+            // Moved Ship Design directly below Ship Status
+            setCoords('sectionShipDesign', { top: `${rightY}px`, right: '15px' }, 'top right');
+            rightY += (230 * scale) + gap; // Uses original Ship Design height geometry
+            
+            // Mission Tracker trails below Design
+            setCoords('sectionMission', { top: `${rightY}px`, right: '15px' }, 'top right');
+
+            // BOTTOM EDGE (Gems span uniformly like Wide HUD)
+            setCoords('sectionGems', { bottom: '15px', left: '15px', right: '15px', minWidth: '800px', height: `${gemsH}px` }, 'bottom center');
+        }
+
+        // Attach resize listener dynamically to enforce strictly on resize limits
+        if (!this.resizeListenerAdded) {
+            window.addEventListener('resize', () => {
+                if (localStorage.getItem('hudLayout')) {
+                    this.setLayout(localStorage.getItem('hudLayout'));
+                }
+            });
+            this.resizeListenerAdded = true;
+        }
     }
 
     // Toggle cockpit section - now minimizes to taskbar
@@ -2390,6 +2509,51 @@ class InterstellarEngine {
                 ctx.fill();
             }
         });
+
+        // Draw Mission Targets (high visibility orange crosshairs)
+        if (this.activeMission) {
+            const m = this.activeMission;
+            const targetColor = '#ff8800';
+
+            let targets = [];
+            if (m.type === 'kill' || m.type === 'kill_any') {
+                targets = this.enemyShips.filter(e => m.type === 'kill_any' || e.type === m.targetType);
+            } else if (m.type === 'mine') {
+                targets = this.minerals;
+            }
+
+            targets.forEach(t => {
+                const dx = t.x - this.playerShip.x;
+                const dy = t.y - this.playerShip.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Show mission targets way farther out on radar
+                const effectiveRange = Math.max(radarRange, 10000); 
+                const rx = cx + (dx / effectiveRange) * 35;
+                const ry = cy + (dy / effectiveRange) * 35;
+                
+                // Clamp to edge of radar
+                const rdx = rx - cx, rdy = ry - cy;
+                const rDist = Math.sqrt(rdx * rdx + rdy * rdy);
+                let finalX = rx, finalY = ry;
+                if (rDist > 34) {
+                    finalX = cx + (rdx / rDist) * 34;
+                    finalY = cy + (rdy / rDist) * 34;
+                }
+
+                // Pulsing crosshair
+                const pulse = 1 + Math.sin(Date.now() * 0.008) * 0.3;
+                const sz = 3 * pulse;
+                ctx.strokeStyle = targetColor;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(finalX - sz, finalY);
+                ctx.lineTo(finalX + sz, finalY);
+                ctx.moveTo(finalX, finalY - sz);
+                ctx.lineTo(finalX, finalY + sz);
+                ctx.stroke();
+            });
+        }
 
         // Draw training gates (cyan diamonds) — essential for Lesson 6 radar navigation
         if (this.trainingActive && this.trainingLesson && this.trainingLesson.gates) {
@@ -3557,6 +3721,12 @@ class InterstellarEngine {
         const mine = this.spaceMines[index];
         this.createExplosion(mine.x, mine.y, 'destruction');
 
+        // Award gems
+        const reward = 10;
+        this.playerGems += reward;
+        localStorage.setItem('playerGems', this.playerGems);
+        this.showToast(`💥 Space Mine destroyed! +${reward} Gems`, 2000);
+
         // Loot
         this.spawnLoot(mine.x, mine.y, 'uranium', 5);
 
@@ -3566,6 +3736,12 @@ class InterstellarEngine {
     destroyMissileBase(index) {
         const base = this.missileBases[index];
         this.createExplosion(base.x, base.y, 'destruction');
+
+        // Award gems
+        const reward = 25;
+        this.playerGems += reward;
+        localStorage.setItem('playerGems', this.playerGems);
+        this.showToast(`💥 Missile Base destroyed! +${reward} Gems`, 2000);
 
         // Loot
         this.spawnLoot(base.x, base.y, 'plutonium', 10);
@@ -3581,10 +3757,10 @@ class InterstellarEngine {
             health: 50,
             maxSpeed: 3.0,
             acceleration: 0.08,
-            fireRate: 2000,
+            fireRate: 1200, // Faster firing
             aggroRange: 600,
             attackRange: 400,
-            bulletSpeed: 8,
+            bulletSpeed: 12, // Faster bullets
             bulletDamage: 10,
             gemDrop: 5,
             color: '#ff4444',
@@ -3596,10 +3772,10 @@ class InterstellarEngine {
             health: 100,
             maxSpeed: 2.5,
             acceleration: 0.06,
-            fireRate: 1500,
+            fireRate: 1000, // Faster firing
             aggroRange: 800,
             attackRange: 500,
-            bulletSpeed: 10,
+            bulletSpeed: 14, // Faster bullets
             bulletDamage: 15,
             gemDrop: 15,
             color: '#ff8800',
@@ -3611,10 +3787,10 @@ class InterstellarEngine {
             health: 200,
             maxSpeed: 1.5,
             acceleration: 0.03,
-            fireRate: 3000,
+            fireRate: 2000, // Faster firing
             aggroRange: 1000,
             attackRange: 600,
-            bulletSpeed: 7,
+            bulletSpeed: 10, // Faster bullets
             bulletDamage: 25,
             gemDrop: 40,
             burstCount: 3,
@@ -3674,6 +3850,7 @@ class InterstellarEngine {
                 burstRemaining: 0,
                 burstTimer: 0,
                 hitFlash: 0,
+                isStalking: false, // New stalking state
                 spawnTime: Date.now()
             });
         }
@@ -3691,6 +3868,15 @@ class InterstellarEngine {
             const distToPlayer = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
             const angleToPlayer = Math.atan2(ship.y - enemy.y, ship.x - enemy.x);
 
+            // STALKING HYSTERESIS: Once aggroed, stay aggroed until player is far away
+            // Reasonable distance to stop stalking is ~3x the initial aggro range
+            const stalkStopDist = typeDef.aggroRange * 3.0;
+            if (distToPlayer < typeDef.aggroRange) {
+                enemy.isStalking = true;
+            } else if (distToPlayer > stalkStopDist) {
+                enemy.isStalking = false;
+            }
+
             // Determine AI state
             if (enemy.health < typeDef.health * 0.2) {
                 enemy.state = 'flee';
@@ -3698,8 +3884,9 @@ class InterstellarEngine {
                 enemy.state = 'patrol';
             } else if (distToPlayer < typeDef.attackRange) {
                 enemy.state = 'attack';
-            } else if (distToPlayer < typeDef.aggroRange) {
-                enemy.state = 'chase';
+            } else if (enemy.isStalking) {
+                // Stay in chase/attack mode if stalking, even if outside aggroRange
+                enemy.state = (distToPlayer < typeDef.attackRange + 100) ? 'attack' : 'chase';
             } else {
                 enemy.state = 'patrol';
             }
@@ -3861,9 +4048,11 @@ class InterstellarEngine {
         if (this.activeMission) {
             if (this.activeMission.type === 'kill' && this.activeMission.targetType === enemy.type) {
                 this.activeMission.progress++;
+                this.updateMissionHUD();
                 this.checkMissionComplete();
             } else if (this.activeMission.type === 'kill_any') {
                 this.activeMission.progress++;
+                this.updateMissionHUD();
                 this.checkMissionComplete();
             }
         }
@@ -4173,6 +4362,7 @@ class InterstellarEngine {
         // Track mission
         if (this.activeMission && this.activeMission.type === 'boss') {
             this.activeMission.progress++;
+            this.updateMissionHUD();
             this.checkMissionComplete();
         }
 
@@ -4182,21 +4372,125 @@ class InterstellarEngine {
     // === MISSION SYSTEM ===
 
     static MISSION_TEMPLATES = [
-        { type: 'kill', name: 'Scout Sweep', desc: 'Destroy {goal} Scouts', targetType: 'scout', goal: 5, reward: 30 },
-        { type: 'kill', name: 'Fighter Patrol', desc: 'Destroy {goal} Fighters', targetType: 'fighter', goal: 3, reward: 50 },
-        { type: 'kill_any', name: 'Space Cleaner', desc: 'Destroy {goal} enemy ships', goal: 8, reward: 60 },
-        { type: 'boss', name: 'Boss Hunt: Dreadnought', desc: 'Defeat the Dreadnought', bossType: 'dreadnought', goal: 1, reward: 100 },
-        { type: 'boss', name: 'Boss Hunt: Hive Queen', desc: 'Defeat the Hive Queen', bossType: 'hivequeen', goal: 1, reward: 150 },
-        { type: 'boss', name: 'Boss Hunt: Void Reaper', desc: 'Defeat the Void Reaper', bossType: 'voidreaper', goal: 1, reward: 200 },
-        { type: 'survive', name: 'Endurance Trial', desc: 'Survive for {goal}s', goal: 60, reward: 40 },
-        { type: 'collect', name: 'Mining Run', desc: 'Collect {goal} minerals', goal: 20, reward: 35 }
+        // TIER 1: BASICS — Teach the player how to exist in the game
+        {
+            type: 'collect', name: 'First Steps', tier: 1,
+            desc: 'Fly into {goal} glowing gems floating nearby',
+            briefing: 'See those colorful crystals floating around you? Those are gems! Just fly your ship into them to pick them up — no buttons needed, just touch them. Use W to go forward, A/D to turn, SHIFT to go faster.',
+            hint: '💡 Just fly INTO the gems • W = forward • A/D = turn • SHIFT = fast',
+            goal: 5, reward: 15
+        },
+        {
+            type: 'collect', name: 'Resource Expedition', tier: 1,
+            desc: 'Pick up {goal} gems — fly further out for rarer ones',
+            briefing: 'Gems come in different types: common ones are dull, rare ones glow brighter and are worth more. Fly away from where you started to find better gems. Check your Radar (circle in top-left) to see gem dots nearby.',
+            hint: '💡 Fly further from start = better gems • Radar shows nearby gems',
+            goal: 15, reward: 30
+        },
+        {
+            type: 'survive', name: 'Stay Alive', tier: 1,
+            desc: 'Fly around for {goal} seconds without dying',
+            briefing: 'Your ship can be destroyed! Red triangles on your radar are space mines — avoid them. If you see red dots moving toward you, those are enemies — fly away for now. Your health bar is in the Ship Status window. Timer starts when you accept this mission.',
+            hint: '🛡️ Red triangles = mines (avoid!) • Red dots = enemies • SHIFT = escape fast',
+            goal: 30, reward: 25
+        },
+
+        // TIER 2: COMBAT — Teach the player how to fight
+        {
+            type: 'kill', name: 'Weapons Training', tier: 2, targetType: 'scout',
+            desc: 'Press SPACE to shoot and destroy {goal} Scout ships',
+            briefing: 'Your ship has guns! Hold SPACE to fire lasers. When you accept this mission, Scout ships will spawn nearby — look for red dots on your radar. Fly toward them and hold SPACE to shoot. Scouts are weak and die in a few hits.',
+            hint: '⚔️ Hold SPACE to shoot! • Red dots on radar = enemies • Fly toward them',
+            goal: 3, reward: 40
+        },
+        {
+            type: 'kill', name: 'Fighter Patrol', tier: 2, targetType: 'fighter',
+            desc: 'Destroy {goal} Fighters — they shoot back!',
+            briefing: 'Fighters are tougher than Scouts and will fire at you! Keep your ship moving while shooting (hold W + SPACE together). If your health drops low, fly away with SHIFT to boost. Destroyed enemies drop bonus gems!',
+            hint: '⚔️ W + SPACE = fly and shoot • SHIFT = escape if low health',
+            goal: 3, reward: 50
+        },
+        {
+            type: 'kill_any', name: 'Space Cleaner', tier: 2,
+            desc: 'Destroy {goal} enemies of any kind (SPACE to fire)',
+            briefing: 'Kill any enemies you find — Scouts, Fighters, anything counts. Enemies appear as red dots on your radar. After killing enemies, spend your gems on upgrades! Click the 🛠️ UPGRADES button in the menu bar to make your ship stronger.',
+            hint: '⚔️ Any enemy counts • SPACE = fire • 🛠️ UPGRADES button = power up your ship',
+            goal: 8, reward: 60
+        },
+
+        // TIER 3: ADVANCED — Challenge the player
+        {
+            type: 'collect', name: 'Deep Mining', tier: 3,
+            desc: 'Collect {goal} gems — explore far from spawn',
+            briefing: 'You need a lot of gems for this one. Press M to open your Galaxy Map and see the full universe. Fly far from center to find richer gem fields. Pro tip: the Hauler ship (in Hangar 🚀) has a Tractor Beam that magnetically pulls gems toward you!',
+            hint: '💎 M = Galaxy Map • Hauler ship = magnet for gems • Fly far out',
+            goal: 30, reward: 50
+        },
+        {
+            type: 'survive', name: 'Endurance Run', tier: 3,
+            desc: 'Stay alive for {goal} seconds — things get dangerous',
+            briefing: 'The further you fly from where you started, the more dangerous space gets — more mines, turrets, and enemies appear. For this mission, just survive! You can dodge with R/F (pitch up/down) and Z/X (barrel roll). Timer runs from when you accept.',
+            hint: '🛡️ R/F = pitch • Z/X = barrel roll • Fly away from danger • Stay alive!',
+            goal: 60, reward: 60
+        },
+
+        // TIER 4: BOSS FIGHTS — The ultimate challenge
+        {
+            type: 'boss', name: 'Boss: Dreadnought', tier: 4, bossType: 'dreadnought',
+            desc: 'A massive warship spawns — destroy it! (SPACE to fire)',
+            briefing: 'When you accept, a Dreadnought boss will spawn near you. It has front shields — fly BEHIND it to deal damage! Hold SPACE to fire. Use SHIFT to boost past its missiles. This is a real fight — make sure your ship is upgraded first!',
+            hint: '👑 Fly BEHIND it! • Front shields block shots • SHIFT dodges missiles',
+            goal: 1, reward: 100
+        },
+        {
+            type: 'boss', name: 'Boss: Hive Queen', tier: 4, bossType: 'hivequeen',
+            desc: 'A giant alien queen spawns — destroy it!',
+            briefing: 'The Hive Queen spawns swarms of small drones. Kill the drones first (SPACE to fire), then focus on the Queen. She moves unpredictably so be patient. Reward: 150 gems — the biggest payout yet!',
+            hint: '👑 Kill drones first • Then focus the Queen • Be patient!',
+            goal: 1, reward: 150
+        },
+        {
+            type: 'boss', name: 'Boss: Void Reaper', tier: 4, bossType: 'voidreaper',
+            desc: 'The deadliest boss in the game — can you beat it?',
+            briefing: 'The Void Reaper teleports and fires devastating energy beams. Keep your distance and only attack during its cooldown windows. This is the hardest fight in the game. Reward: 200 gems!',
+            hint: '👑 It teleports! • Attack during cooldowns only • Hardest boss!',
+            goal: 1, reward: 200
+        },
+        {
+            type: 'kill_any', name: 'Legendary Rampage', tier: 4,
+            desc: 'Destroy {goal} enemies — try different ships from the Hangar!',
+            briefing: 'All-out war. Destroy everything. Each ship in the Hangar (🚀 SHIP button) has a unique special ability — try them all! The Viper has speed boost, the Titan has armor, the Flux can phase through damage. Pick your favorite and dominate!',
+            hint: '⚔️ 🚀 SHIP button = switch ships • Each ship has a unique ability!',
+            goal: 15, reward: 100
+        }
     ];
 
     generateMissionBoard() {
-        // Return 3 random missions
+        // Progressive mission board: show one from each available tier
+        // Tier unlocking: Tier 1 always, Tier 2 after 2 missions, Tier 3 after 5, Tier 4 after 8
+        const completed = this.missionsCompleted || 0;
         const templates = InterstellarEngine.MISSION_TEMPLATES;
-        const shuffled = [...templates].sort(() => Math.random() - 0.5);
-        return shuffled.slice(0, 3);
+
+        let maxTier = 1;
+        if (completed >= 2) maxTier = 2;
+        if (completed >= 5) maxTier = 3;
+        if (completed >= 8) maxTier = 4;
+
+        // Group by tier
+        const available = templates.filter(t => t.tier <= maxTier);
+        const shuffled = [...available].sort(() => Math.random() - 0.5);
+
+        // Pick 3, trying to get variety across tiers
+        const picked = [];
+        const usedTiers = new Set();
+        for (const m of shuffled) {
+            if (picked.length >= 3) break;
+            if (!usedTiers.has(m.tier) || picked.length < 3) {
+                picked.push(m);
+                usedTiers.add(m.tier);
+            }
+        }
+        return picked.slice(0, 3);
     }
 
     acceptMission(missionTemplate) {
@@ -4219,7 +4513,53 @@ class InterstellarEngine {
             setTimeout(() => this.spawnBoss(missionTemplate.bossType), 2000);
         }
 
-        this.missionBoardOpen = false;
+        // Spawn mission targets dynamically so the player doesn't wander blindly
+        if (missionTemplate.type === 'kill') {
+            const spawnCount = missionTemplate.goal + 2; // Extra to be safe
+            for (let i = 0; i < spawnCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 2000 + Math.random() * 3000; // 2k to 5k range
+                this.enemyShips.push({
+                    x: this.playerShip.x + Math.cos(angle) * dist,
+                    y: this.playerShip.y + Math.sin(angle) * dist,
+                    vx: 0,
+                    vy: 0,
+                    type: missionTemplate.targetType,
+                    health: InterstellarEngine.ENEMY_TYPES[missionTemplate.targetType]?.maxHealth || 100,
+                    lastFire: 0
+                });
+            }
+            this.showToast('⚠️ Mission Targets detected on radar!', 5000);
+        } else if (missionTemplate.type === 'mine') {
+            for (let i = 0; i < missionTemplate.goal + 5; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 1500 + Math.random() * 2000;
+                this.minerals.push({
+                    x: this.playerShip.x + Math.cos(angle) * dist,
+                    y: this.playerShip.y + Math.sin(angle) * dist,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    type: 'diamond',
+                    color: '#00ffff',
+                    value: 50,
+                    size: 8
+                });
+            }
+            this.showToast('📡 Mineral clusters marked on radar!', 5000);
+        }
+
+        this.hideMissionBoardUI();
+
+        // If the player is in the hangar, seamlessly enter flight mode!
+        if (!this.flightMode) {
+            if (typeof this.hideShipModal === 'function') this.hideShipModal();
+            this.flightMode = true; // Force ON safely
+            const hud = document.getElementById('flightHUD');
+            const floatingLeaders = document.getElementById('floatingLeaders');
+            if (hud) hud.classList.remove('hidden');
+            if (floatingLeaders) floatingLeaders.classList.remove('hidden');
+        }
+        this.updateMissionHUD();
     }
 
     abandonMission() {
@@ -4229,6 +4569,7 @@ class InterstellarEngine {
             this.activeBoss = null; // Remove boss
         }
         this.activeMission = null;
+        this.updateMissionHUD();
     }
 
     checkMissionComplete() {
@@ -4250,9 +4591,317 @@ class InterstellarEngine {
             localStorage.setItem('missionsCompleted', this.missionsCompleted);
             if (this.updateGemsUI) this.updateGemsUI();
 
-            this.showToast(`✅ MISSION COMPLETE: ${m.name}! +${m.reward} Gems! ✅`, 4000);
+            // Launch the cinematic achievement overlay
+            this.showMissionCompleteOverlay(m);
             gameAudio.playMissionComplete();
             this.activeMission = null;
+            this.updateMissionHUD();
+        }
+    }
+
+    showMissionCompleteOverlay(mission) {
+        // Remove any existing overlay
+        const existing = document.getElementById('missionCompleteOverlay');
+        if (existing) existing.remove();
+
+        // Determine performance rank
+        const elapsed = (Date.now() - mission.startTime) / 1000;
+        let rank, rankColor, rankGlow;
+        if (elapsed < 30) { rank = 'S'; rankColor = '#ffd700'; rankGlow = 'rgba(255,215,0,0.8)'; }
+        else if (elapsed < 60) { rank = 'A'; rankColor = '#00ff88'; rankGlow = 'rgba(0,255,136,0.6)'; }
+        else if (elapsed < 120) { rank = 'B'; rankColor = '#00ccff'; rankGlow = 'rgba(0,204,255,0.5)'; }
+        else { rank = 'C'; rankColor = '#aaaaaa'; rankGlow = 'rgba(170,170,170,0.4)'; }
+
+        // Build the overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'missionCompleteOverlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 99999; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 70%);
+            animation: mco-fadein 0.3s ease-out;
+        `;
+
+        // Particle canvas for celebration effects
+        const particleCanvas = document.createElement('canvas');
+        particleCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+        overlay.appendChild(particleCanvas);
+
+        // Central achievement card
+        const card = document.createElement('div');
+        card.style.cssText = `
+            position: relative; z-index: 2;
+            background: linear-gradient(145deg, rgba(10,20,40,0.95), rgba(5,10,25,0.98));
+            border: 2px solid ${rankColor};
+            border-radius: 16px; padding: 40px 60px;
+            text-align: center; font-family: 'Orbitron', 'Exo 2', monospace;
+            box-shadow: 0 0 60px ${rankGlow}, 0 0 120px ${rankGlow}, inset 0 0 40px rgba(0,0,0,0.5);
+            animation: mco-card-enter 0.6s cubic-bezier(0.2,0.8,0.2,1.2);
+            max-width: 480px; min-width: 360px;
+        `;
+
+        // Mission type icon
+        let typeIcon = '🎯';
+        if (mission.type === 'kill' || mission.type === 'kill_any') typeIcon = '⚔️';
+        else if (mission.type === 'boss') typeIcon = '👑';
+        else if (mission.type === 'collect') typeIcon = '💎';
+        else if (mission.type === 'survive') typeIcon = '🛡️';
+
+        card.innerHTML = `
+            <div style="font-size: 12px; color: #555; letter-spacing: 6px; margin-bottom: 8px; text-transform: uppercase;">Mission Complete</div>
+            <div style="font-size: 48px; margin-bottom: 4px; filter: drop-shadow(0 0 10px ${rankGlow});">${typeIcon}</div>
+            <div style="font-size: 22px; color: #fff; font-weight: 900; letter-spacing: 2px; margin-bottom: 4px;
+                text-shadow: 0 0 20px rgba(255,255,255,0.3);">${mission.name}</div>
+            <div style="font-size: 13px; color: #aaa; margin-bottom: 20px; font-style: italic;">${mission.desc}</div>
+
+            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;">
+                <div>
+                    <div style="font-size: 10px; color: #556; letter-spacing: 3px; margin-bottom: 4px;">RANK</div>
+                    <div id="mco-rank" style="font-size: 42px; font-weight: 900; color: ${rankColor};
+                        text-shadow: 0 0 30px ${rankGlow}, 0 0 60px ${rankGlow};
+                        animation: mco-rank-pulse 1s ease-in-out infinite alternate;
+                        opacity: 0; transform: scale(3);">${rank}</div>
+                </div>
+                <div>
+                    <div style="font-size: 10px; color: #556; letter-spacing: 3px; margin-bottom: 4px;">REWARD</div>
+                    <div style="font-size: 32px; color: #ffd700; font-weight: bold;
+                        text-shadow: 0 0 20px rgba(255,215,0,0.5);">
+                        💎 <span id="mco-gem-counter">0</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 10px; color: #556; letter-spacing: 3px; margin-bottom: 4px;">TIME</div>
+                    <div style="font-size: 22px; color: #8af; font-weight: bold;">${elapsed.toFixed(1)}s</div>
+                </div>
+            </div>
+
+            <div style="height: 3px; background: linear-gradient(90deg, transparent, ${rankColor}, transparent);
+                margin: 15px auto; width: 80%; border-radius: 2px;"></div>
+
+            <div style="font-size: 11px; color: #667; letter-spacing: 2px; margin-top: 8px;">
+                TOTAL MISSIONS: ${this.missionsCompleted}
+            </div>
+        `;
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+
+        // Inject keyframe animations
+        if (!document.getElementById('mco-styles')) {
+            const style = document.createElement('style');
+            style.id = 'mco-styles';
+            style.textContent = `
+                @keyframes mco-fadein { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes mco-fadeout { from { opacity: 1; } to { opacity: 0; } }
+                @keyframes mco-card-enter {
+                    0% { opacity: 0; transform: scale(0.5) translateY(40px); }
+                    60% { opacity: 1; transform: scale(1.05) translateY(-5px); }
+                    100% { transform: scale(1) translateY(0); }
+                }
+                @keyframes mco-rank-pulse {
+                    from { text-shadow: 0 0 20px currentColor; }
+                    to { text-shadow: 0 0 40px currentColor, 0 0 80px currentColor; }
+                }
+                @keyframes mco-rank-slam {
+                    0% { opacity: 0; transform: scale(3); }
+                    50% { opacity: 1; transform: scale(0.8); }
+                    70% { transform: scale(1.15); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Animate rank letter slam-in after 0.5s
+        setTimeout(() => {
+            const rankEl = document.getElementById('mco-rank');
+            if (rankEl) {
+                rankEl.style.animation = 'mco-rank-slam 0.5s cubic-bezier(0.2,0.8,0.2,1) forwards, mco-rank-pulse 1s ease-in-out infinite alternate 0.5s';
+            }
+        }, 500);
+
+        // Animate gem counter tick-up
+        const gemTarget = mission.reward;
+        let gemCurrent = 0;
+        const gemInterval = setInterval(() => {
+            gemCurrent += Math.ceil(gemTarget / 30);
+            if (gemCurrent >= gemTarget) {
+                gemCurrent = gemTarget;
+                clearInterval(gemInterval);
+            }
+            const counter = document.getElementById('mco-gem-counter');
+            if (counter) counter.textContent = gemCurrent;
+        }, 40);
+
+        // Particle celebration system on canvas
+        const resizeCanvas = () => {
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+        };
+        resizeCanvas();
+
+        const particles = [];
+        const pCtx = particleCanvas.getContext('2d');
+        const sparkColors = ['#ffd700', '#ff6b9d', '#00ff88', '#00ccff', '#ff44ff', '#ffaa00'];
+
+        // Burst particles from center
+        for (let i = 0; i < 120; i++) {
+            const angle = (Math.PI * 2 * i) / 120 + (Math.random() - 0.5) * 0.5;
+            const speed = 3 + Math.random() * 8;
+            particles.push({
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 2,
+                size: 2 + Math.random() * 4,
+                color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
+                life: 1.0,
+                decay: 0.008 + Math.random() * 0.012,
+                gravity: 0.05 + Math.random() * 0.05,
+                type: Math.random() > 0.5 ? 'spark' : 'star'
+            });
+        }
+
+        // Side confetti streams
+        for (let i = 0; i < 60; i++) {
+            const side = Math.random() > 0.5 ? 0 : window.innerWidth;
+            particles.push({
+                x: side,
+                y: window.innerHeight * Math.random() * 0.6,
+                vx: (side === 0 ? 1 : -1) * (2 + Math.random() * 4),
+                vy: -1 + Math.random() * 3,
+                size: 3 + Math.random() * 5,
+                color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
+                life: 1.0,
+                decay: 0.006 + Math.random() * 0.008,
+                gravity: 0.08,
+                type: 'confetti',
+                rotation: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 0.3
+            });
+        }
+
+        let animFrame;
+        const animateParticles = () => {
+            pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.vy += p.gravity;
+                p.y += p.vy;
+                p.life -= p.decay;
+                if (p.rotation !== undefined) p.rotation += p.rotSpeed;
+
+                if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+                pCtx.globalAlpha = p.life;
+
+                if (p.type === 'spark') {
+                    pCtx.beginPath();
+                    pCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    pCtx.fillStyle = p.color;
+                    pCtx.shadowBlur = 15;
+                    pCtx.shadowColor = p.color;
+                    pCtx.fill();
+                    pCtx.shadowBlur = 0;
+                } else if (p.type === 'star') {
+                    pCtx.save();
+                    pCtx.translate(p.x, p.y);
+                    pCtx.fillStyle = p.color;
+                    pCtx.shadowBlur = 10;
+                    pCtx.shadowColor = p.color;
+                    pCtx.font = `${p.size * 3}px serif`;
+                    pCtx.fillText('✦', 0, 0);
+                    pCtx.restore();
+                    pCtx.shadowBlur = 0;
+                } else if (p.type === 'confetti') {
+                    pCtx.save();
+                    pCtx.translate(p.x, p.y);
+                    pCtx.rotate(p.rotation);
+                    pCtx.fillStyle = p.color;
+                    pCtx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+                    pCtx.restore();
+                }
+            }
+            pCtx.globalAlpha = 1;
+
+            if (particles.length > 0) {
+                animFrame = requestAnimationFrame(animateParticles);
+            }
+        };
+        animateParticles();
+
+        // Auto-dismiss after 5 seconds with fade-out
+        setTimeout(() => {
+            if (overlay.parentNode) {
+                overlay.style.animation = 'mco-fadeout 0.8s ease-in forwards';
+                setTimeout(() => {
+                    cancelAnimationFrame(animFrame);
+                    overlay.remove();
+                }, 800);
+            }
+        }, 5000);
+    }
+
+    updateMissionHUD() {
+        const section = document.getElementById('sectionMission');
+        const content = document.getElementById('missionContent');
+        if (!section || !content) return;
+
+        if (this.activeMission && this.flightMode) {
+            section.style.display = 'flex';
+            // Make mission window VERY prominent with pulsing glow
+            section.style.border = '2px solid #00ffcc';
+            section.style.boxShadow = '0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.2), inset 0 0 15px rgba(0,255,204,0.1)';
+            section.style.animation = 'missionPulse 2s ease-in-out infinite';
+            section.style.zIndex = '50';
+            // Inject keyframe if not present
+            if (!document.getElementById('missionPulseStyle')) {
+                const style = document.createElement('style');
+                style.id = 'missionPulseStyle';
+                style.textContent = `
+                    @keyframes missionPulse {
+                        0%, 100% { box-shadow: 0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.2); border-color: #00ffcc; }
+                        50% { box-shadow: 0 0 30px rgba(0,255,204,0.8), 0 0 60px rgba(0,255,204,0.4); border-color: #66ffdd; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            const m = this.activeMission;
+            const pct = Math.min(100, Math.round((m.progress / m.goal) * 100));
+            
+            // Use the mission-specific hint if available, fall back to generic
+            let tip = '';
+            if (m.hint) {
+                tip = `<div style="color: #00eaff; font-size: 11px; margin-top: 8px; font-style: italic; font-weight: bold; line-height: 1.4; background: rgba(0,234,255,0.08); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #00eaff;">${m.hint}</div>`;
+            } else if (m.type === 'kill' || m.type === 'kill_any' || m.type === 'boss') {
+                tip = '<div style="color: #ff6b6b; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(255,50,50,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #ff6b6b;">🎯 Hold [SPACE] to Fire Weapons</div>';
+            } else if (m.type === 'collect') {
+                tip = '<div style="color: #f17eff; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(241,126,255,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #f17eff;">💎 Fly over glowing gems to collect</div>';
+            } else if (m.type === 'survive') {
+                tip = '<div style="color: #ffaa00; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(255,170,0,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #ffaa00;">⚠️ Dodge hazards — stay alive!</div>';
+            }
+            
+            content.innerHTML = `
+                <div style="color: #00ffcc; font-weight: bold; font-size: 14px; margin-bottom: 4px; text-shadow: 0 0 8px rgba(0,255,204,0.4);">${m.name}</div>
+                <div style="color: #ddd; margin-bottom: 8px; font-size: 12px; line-height: 1.4;">${m.desc}</div>
+                <div style="background: rgba(0,0,0,0.4); border-radius: 6px; padding: 8px; margin-bottom: 4px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                        <span>PROGRESS</span>
+                        <span style="color: #00ff88; font-weight: bold;">${m.progress} / ${m.goal}</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 3px; height: 8px; overflow: hidden;">
+                        <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #00ff88, #00ffcc); border-radius: 3px; transition: width 0.3s ease; box-shadow: 0 0 8px rgba(0,255,136,0.5);"></div>
+                    </div>
+                </div>
+                ${tip}
+            `;
+        } else {
+            section.style.display = 'none';
+            section.style.border = '';
+            section.style.boxShadow = '';
+            section.style.animation = '';
         }
     }
 
@@ -4290,19 +4939,30 @@ class InterstellarEngine {
             html += `<div style="background: rgba(255,170,0,0.15); border: 1px solid #ffaa00; border-radius: 8px; padding: 12px; margin-bottom: 10px;">`;
             html += `<div style="color: #ffaa00; font-size: 14px; font-weight: bold;">ACTIVE: ${this.activeMission.name}</div>`;
             html += `<div style="color: #ccc; font-size: 12px; margin: 4px 0;">${this.activeMission.desc}</div>`;
+            if (this.activeMission.hint) {
+                html += `<div style="color: #00eaff; font-size: 10px; margin: 4px 0; font-style: italic;">${this.activeMission.hint}</div>`;
+            }
             html += `<div style="color: #00ff88; font-size: 12px;">Progress: ${this.activeMission.progress}/${this.activeMission.goal}</div>`;
             html += `<button onclick="window.game.abandonMission(); window.game.hideMissionBoardUI();" style="
                 margin-top: 8px; padding: 6px 16px; background: rgba(255,50,50,0.3); color: #ff4444;
                 border: 1px solid #ff4444; border-radius: 6px; cursor: pointer; font-size: 11px;
             ">ABANDON</button></div>`;
         } else {
+            const tierColors = { 1: '#00ff88', 2: '#ffaa00', 3: '#ff6b9d', 4: '#ff44ff' };
+            const tierLabels = { 1: 'BASICS', 2: 'COMBAT', 3: 'ADVANCED', 4: 'ELITE' };
             missions.forEach((m, i) => {
                 const desc = m.desc.replace('{goal}', m.goal);
+                const tierCol = tierColors[m.tier] || '#00ffcc';
+                const tierLabel = tierLabels[m.tier] || 'MISSION';
                 html += `<div style="background: rgba(0,255,204,0.08); border: 1px solid rgba(0,255,204,0.3); border-radius: 8px; padding: 12px; margin-bottom: 8px;">`;
-                html += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
-                html += `<div><div style="color: #00ffcc; font-size: 13px; font-weight: bold;">${m.name}</div>`;
-                html += `<div style="color: #aaa; font-size: 11px; margin-top: 2px;">${desc}</div></div>`;
-                html += `<div style="text-align: right;"><div style="color: #ffdd44; font-size: 12px;">💎 ${m.reward}</div>`;
+                html += `<div style="display: flex; justify-content: space-between; align-items: flex-start;">`;
+                html += `<div style="flex:1;"><div style="display:flex; align-items:center; gap:6px;"><span style="font-size:9px; color:${tierCol}; background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:3px; border:1px solid ${tierCol}; letter-spacing:1px;">${tierLabel}</span><span style="color: #00ffcc; font-size: 13px; font-weight: bold;">${m.name}</span></div>`;
+                html += `<div style="color: #aaa; font-size: 11px; margin-top: 3px;">${desc}</div>`;
+                if (m.briefing) {
+                    html += `<div style="color: #7ab; font-size: 10px; margin-top: 6px; line-height: 1.4; border-left: 2px solid rgba(0,255,204,0.3); padding-left: 8px;">${m.briefing}</div>`;
+                }
+                html += `</div>`;
+                html += `<div style="text-align: right; min-width: 80px;"><div style="font-size: 9px; color: #667; letter-spacing: 1px; margin-bottom: 2px;">REWARD</div><div style="color: #ffd700; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px rgba(255,215,0,0.4);">💎 ${m.reward}</div>`;
                 html += `<button onclick="window.game.acceptMission(window.game._boardMissions[${i}])" style="
                     margin-top: 4px; padding: 4px 12px; background: rgba(0,255,204,0.2); color: #00ffcc;
                     border: 1px solid #00ffcc; border-radius: 6px; cursor: pointer; font-size: 11px;
@@ -5574,8 +6234,8 @@ class InterstellarEngine {
                 rotationPhase: Math.random() * Math.PI * 2,
                 health: 100,
                 lastFireTime: 0,
-                fireRate: 2000 + Math.random() * 1000, // 2-3 seconds between shots
-                detectionRange: 800 + Math.random() * 400, // How far it can detect the player
+                fireRate: 800 + Math.random() * 800, // Faster firing (1-1.6s)
+                detectionRange: 1200 + Math.random() * 600, // Much wider detection
                 turretAngle: 0, // Current aim angle
                 alertLevel: 0, // 0-1, increases when player is detected
                 color: '#4488ff'
@@ -5690,15 +6350,17 @@ class InterstellarEngine {
             // SPECTRE: Cloak - Enemies ignore you if cloaked (passive for Spectre)
             const isSpectre = ship.type === 'spectre';
             if (distToPlayer < base.detectionRange && !ship.isCloaked && !isSpectre) {
-                base.alertLevel = Math.min(1, base.alertLevel + 0.02);
+                // AGGRESSIVE ALERT: Scales faster
+                base.alertLevel = Math.min(1, base.alertLevel + 0.05);
 
                 // Fire missile if ready and player in range
-                if (now - base.lastFireTime > base.fireRate && base.alertLevel > 0.5) {
+                if (now - base.lastFireTime > base.fireRate && base.alertLevel > 0.4) {
                     this.fireMissile(base);
                     base.lastFireTime = now;
                 }
             } else {
-                base.alertLevel = Math.max(0, base.alertLevel - 0.01);
+                // PERSISTENT ALERT: Slow decay (takes ~16s to drop from 1 to 0 at 60fps)
+                base.alertLevel = Math.max(0, base.alertLevel - 0.001);
             }
         }
 
@@ -5716,19 +6378,21 @@ class InterstellarEngine {
                 while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
                 // Turn rate decreases over time (fuel running out)
-                const turnRate = 0.08 * (missile.life / missile.maxLife);
+                const turnRate = 0.12 * (missile.life / missile.maxLife);
                 missile.angle += angleDiff * turnRate;
             }
 
             // Accelerate missile
-            const speed = missile.speed * (0.8 + 0.4 * (missile.life / missile.maxLife));
+            // AGGRESSIVE MISSILES: Faster base speed and better acceleration
+            const speed = missile.speed * (1.2 + 0.6 * (missile.life / missile.maxLife));
             missile.vx = Math.cos(missile.angle) * speed;
             missile.vy = Math.sin(missile.angle) * speed;
             missile.x += missile.vx;
             missile.y += missile.vy;
 
             // Decrease life
-            missile.life -= 16; // ~60 fps
+            // AGGRESSIVE MISSILES: Longer lived (less decay per frame)
+            missile.life -= 10; // ~60 fps (lasts ~8 seconds instead of 5)
 
             // Add trail particle
             if (Math.random() < 0.5) {
@@ -8162,6 +8826,12 @@ class InterstellarEngine {
 
             this.showToast('🚀 Respawned! Shields restored.');
             effect.hasRespawned = true;
+
+            // BOSS RESPAWN: If in a boss mission and boss is dead/cleared, respawn it near the new location
+            if (this.activeMission && this.activeMission.type === 'boss' && !this.activeBoss) {
+                console.log('[Boss Debug] Respawning mission boss after player death');
+                setTimeout(() => this.spawnBoss(this.activeMission.bossType), 2000);
+            }
         }
     }
 
@@ -8935,18 +9605,29 @@ class InterstellarEngine {
     /* --- Utility Methods --- */
 
     getStarColor(s) {
-        return s.color || '#e0faff'; // Fallback to default if somehow color is missing
+        const c = s && s.color;
+        // Validate it looks like a hex color
+        if (c && typeof c === 'string' && /^#?[0-9a-f]{3,6}$/i.test(c)) {
+            return c.startsWith('#') ? c : '#' + c;
+        }
+        return '#e0faff'; // Fallback to default
     }
 
     hexToRgb(hex) {
+        // Defensive: ensure hex is a valid string
+        if (!hex || typeof hex !== 'string') return [224, 240, 255];
+        hex = hex.trim();
         const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
         hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? [
-            parseInt(result[1], 16),
-            parseInt(result[2], 16),
-            parseInt(result[3], 16)
-        ] : [224, 240, 255]; // Default blue/white
+        if (result) {
+            const r = parseInt(result[1], 16);
+            const g = parseInt(result[2], 16);
+            const b = parseInt(result[3], 16);
+            // Final NaN guard
+            return [isNaN(r) ? 224 : r, isNaN(g) ? 240 : g, isNaN(b) ? 255 : b];
+        }
+        return [224, 240, 255]; // Default blue/white
     }
 
 
@@ -9819,8 +10500,11 @@ class InterstellarEngine {
             if (this.activeMission && this.activeMission.type === 'collect') {
                 // Track mineral collection progress
                 const totalMinerals = Object.values(this.playerInventory).reduce((a, b) => a + b, 0);
-                this.activeMission.progress = totalMinerals;
-                this.checkMissionComplete();
+                if (this.activeMission.progress !== totalMinerals) {
+                    this.activeMission.progress = totalMinerals;
+                    this.updateMissionHUD();
+                    this.checkMissionComplete();
+                }
             }
             this.updateFlightHUD();
         }
@@ -10130,7 +10814,22 @@ class InterstellarEngine {
             }
         }
 
-        this.draw(time);
+        try {
+            this.draw(time);
+        } catch (e) {
+            console.error('FATAL RENDER ERROR:', e);
+            if (this.showToast) this.showToast("⚠️ FATAL ENGINE ERROR: " + e.message, 10000);
+            if (this.ctx && this.canvas) {
+                this.ctx.save();
+                this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                this.ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+                this.ctx.fillRect(0, 0, this.canvas.width, 50);
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '16px monospace';
+                this.ctx.fillText("CRASH LOG: " + e.message, 20, 30);
+                this.ctx.restore();
+            }
+        }
         requestAnimationFrame(this.animate);
     }
 
@@ -12474,26 +13173,8 @@ class InterstellarEngine {
             ctx.textAlign = 'left';
         }
 
-        // === MISSION OBJECTIVE HUD ===
-        if (this.activeMission && this.flightMode) {
-            const m = this.activeMission;
-            const mx = 15;
-            const my = 80;
+        // Mission tracking is now handled via HTML floating window updateMissionHUD()
 
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(mx, my, 220, 50);
-            ctx.strokeStyle = 'rgba(0,255,204,0.5)';
-            ctx.strokeRect(mx, my, 220, 50);
-
-            ctx.fillStyle = '#00ffcc';
-            ctx.font = '11px Orbitron, monospace';
-            ctx.fillText(`📋 ${m.name}`, mx + 8, my + 16);
-            ctx.fillStyle = '#aaaaaa';
-            ctx.font = '10px monospace';
-            ctx.fillText(m.desc, mx + 8, my + 30);
-            ctx.fillStyle = '#00ff88';
-            ctx.fillText(`Progress: ${m.progress}/${m.goal}`, mx + 8, my + 43);
-        }
     }
 
     // Helper to draw a missile base structure
@@ -15688,7 +16369,7 @@ class InterstellarEngine {
         // THEME UPDATE: Update GLOBAL CSS Variables
         // This ensures ALL UI elements (buttons, borders, text, shadows) update instantly
         const root = document.documentElement;
-        const rgb = this.hexToRgb(color);
+        const rgb = this.hexToRgbString(color);
 
         root.style.setProperty('--accent', color);
         root.style.setProperty('--accent-glow', `rgba(${rgb}, 0.5)`);
@@ -15700,9 +16381,9 @@ class InterstellarEngine {
         }
     }
 
-    // Helper for RGBA conversion
-    hexToRgb(hex) {
-        // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+    // Helper for RGBA CSS string conversion (returns "r, g, b" string for CSS)
+    hexToRgbString(hex) {
+        if (!hex || typeof hex !== 'string') return '0, 243, 255';
         var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
         hex = hex.replace(shorthandRegex, function (m, r, g, b) {
             return r + r + g + g + b + b;

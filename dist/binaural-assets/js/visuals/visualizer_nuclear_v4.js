@@ -6,15 +6,34 @@ let viz3D = null;
 export class Visualizer3D {
     constructor(canvas, initialState = {}) {
         this.canvas = canvas;
-        this.activeModes = initialState.activeModes || new Set(['particles', 'cyber']); // Default to Flow + Cyber
-        this.mode = initialState.mode || 'cyber'; // Legacy support
+        this.activeModes = initialState.activeModes || new Set(); // Start empty to match UI
+        this.mode = initialState.mode || 'none'; // Legacy support
 
         // Default settings - MUST be set before init methods
         this.mindWaveMode = initialState.mindWaveMode !== undefined ? initialState.mindWaveMode : true;
-        this.cyberLogicMode = initialState.cyberLogicMode || 'mindwave';
-        this.cyberCustomText = initialState.cyberCustomText || "WELCOME";
-        this.currentCyberAngle = initialState.currentCyberAngle || 0;
-        this.cyberSpeedMultiplier = initialState.cyberSpeedMultiplier || 1.0;
+        
+        // Cyber (2D Overlay) Configuration
+        this.cyberConfig = {
+            logicMode: initialState.cyberLogicMode || 'matrix', // Default to Japanese characters
+            customText: initialState.cyberCustomText || "WELCOME",
+            angle: initialState.cyberAngle || 0,
+            speed: initialState.cyberSpeedMultiplier || 1.0,
+            length: 1.0,
+            color: '#00FF41',
+            rainbow: false
+        };
+
+        // Matrix (3D Portal) Configuration
+        this.matrixConfig = {
+            logicMode: initialState.matrixLogicMode || 'interstellar', // Default to Interstellar style
+            customText: initialState.matrixCustomText || "MINDWAVE",
+            angle: 0,
+            speed: 1.0,
+            length: 1.0,
+            color: '#00FF41',
+            rainbow: false
+        };
+
         this.initialized = false;
         this._rainbowEnabled = initialState.rainbowEnabled || false;
         this.isVisualizer3D = true;
@@ -28,11 +47,8 @@ export class Visualizer3D {
         }
 
         this.matrixCyberStreams = [];
-        this.cyberLengthMultiplier = 1.0;
+        this.currentCyberAngle = initialState.cyberAngle !== undefined ? initialState.cyberAngle : 0;
         this.cyberColorCustomized = false;
-        this.cyberColor = '#00FF41';
-        this.cyberRainbowMode = false;
-        this.cyberAngle = 0;
 
         try {
             const savedHistory = localStorage.getItem('cyberThemeHistory');
@@ -372,9 +388,8 @@ export class Visualizer3D {
     }
 
     renderCyberCyber() {
-        // Guard: render 2D overlay for matrix mode, or cyber mode with matrix sub-mode
-        const shouldRender = this.activeModes.has('matrix') ||
-            (this.activeModes.has('cyber') && this.cyberLogicMode === 'matrix');
+        // Guard: render 2D overlay for cyber mode
+        const shouldRender = this.activeModes.has('cyber');
         if (!this.overlayCtx || !this.matrixCyberStreams || !shouldRender) return;
 
         const ctx = this.overlayCtx;
@@ -390,12 +405,13 @@ export class Visualizer3D {
         ctx.save();
         ctx.textAlign = 'center';
 
-        const speedMult = this.cyberSpeedMultiplier || 1.0;
-        const lengthMult = this.cyberLengthMultiplier || 1.0;
+        const config = this.cyberConfig;
+        const speedMult = config.speed || 1.0;
+        const lengthMult = config.length || 1.0;
 
-        if (this.cyberAngle !== 0) {
+        if (config.angle !== 0) {
             ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate((this.cyberAngle * Math.PI) / 180);
+            ctx.rotate((config.angle * Math.PI) / 180);
             ctx.translate(-canvas.width / 2, -canvas.height / 2);
         }
 
@@ -1332,7 +1348,7 @@ export class Visualizer3D {
 
 
 
-    createCyberTexture() {
+    createCyberTexture(config = this.matrixConfig) {
         const size = 1024; // Doubled for HD crispness
         const canvas = document.createElement('canvas');
         canvas.width = size;
@@ -1361,15 +1377,17 @@ export class Visualizer3D {
         const cellH = size / rows;
 
         let textToSpell = "MINDWAVE";
-        if ((this.cyberLogicMode === 'custom' || this.cyberLogicMode === 'txt') && this.cyberCustomText && this.cyberCustomText.length > 0) {
-            textToSpell = "🪷" + this.cyberCustomText;
-        } else if (this.cyberLogicMode === 'random' || this.cyberLogicMode === 'rnd' || this.cyberLogicMode === 'matrix' || this.cyberLogicMode === 'int') {
+        const logicMode = config.logicMode;
+        const customText = config.customText;
+
+        if ((logicMode === 'custom' || logicMode === 'txt') && customText && customText.length > 0) {
+            textToSpell = "🪷" + customText;
+        } else if (logicMode === 'random' || logicMode === 'rnd' || logicMode === 'matrix' || logicMode === 'int' || logicMode === 'interstellar') {
             textToSpell = "";
         }
-        console.log(`[DEBUG] createCyberTexture textToSpell: "${textToSpell}", logicMode: "${this.cyberLogicMode}", customText: "${this.cyberCustomText}"`);
-
-        // 3D Cyber Style: Mixture of Logo/Text and Random Rain
-        const manualSequence = (this.cyberLogicMode === 'matrix' || this.cyberLogicMode === 'int') ? [] : [
+        
+        // 3D Matrix Style: Mixture of Logo/Text and Random Rain
+        const manualSequence = (logicMode === 'matrix' || logicMode === 'int' || logicMode === 'interstellar') ? [] : [
             "LOGO",
             ...([...textToSpell])
         ];
@@ -1492,16 +1510,16 @@ export class Visualizer3D {
         return texture;
     }
 
-    createCyberShader(texture) {
+    createCyberShader(texture, config = this.matrixConfig) {
         return new THREE.ShaderMaterial({
             uniforms: {
                 uTexture: { value: texture },
-                uColor: { value: new THREE.Color(this.cyberColor || 0x00FF41) },
+                uColor: { value: new THREE.Color(config.color || 0x00FF41) },
                 uHeadColor: { value: new THREE.Color(0xF0FFF0) },
                 uTime: { value: 0 },
-                uSpeed: { value: this.cyberSpeedMultiplier || 1.0 },
-                uTailLength: { value: this.cyberLengthMultiplier || 1.0 },
-                uRainbow: { value: this._rainbowEnabled ? 1.0 : 0.0 },
+                uSpeed: { value: config.speed || 1.0 },
+                uTailLength: { value: config.length || 1.0 },
+                uRainbow: { value: config.rainbow ? 1.0 : 0.0 },
                 uBrightness: { value: this.brightnessMultiplier || 1.0 }
             },
             vertexShader: `
@@ -1671,9 +1689,10 @@ export class Visualizer3D {
             const z = -(depthLayer * 5) - (Math.random() * 2);
             const speed = 0.5 + Math.random() * 0.5;
 
-            const isSpecial = (this.cyberLogicMode === 'mindwave' || this.cyberLogicMode === 'mw' || this.cyberLogicMode === 'custom' || this.cyberLogicMode === 'txt');
-            const isCyber = (this.cyberLogicMode === 'matrix' || this.cyberLogicMode === 'int');
-            const specialText = ((this.cyberLogicMode === 'custom' || this.cyberLogicMode === 'txt') && this.cyberCustomText) ? "🪷" + this.cyberCustomText : "MINDWAVE";
+            const config = this.matrixConfig;
+            const isSpecial = (config.logicMode === 'mindwave' || config.logicMode === 'mw' || config.logicMode === 'custom' || config.logicMode === 'txt');
+            const isCyber = (config.logicMode === 'matrix' || config.logicMode === 'int' || config.logicMode === 'interstellar');
+            const specialText = ((config.logicMode === 'custom' || config.logicMode === 'txt') && config.customText) ? "🪷" + config.customText : "MINDWAVE";
             const specialLen = specialText.length;
             // In matrix mode, streams are less uniform
             const streamOffset = isCyber ? Math.random() * 100 : 0;
@@ -1708,8 +1727,8 @@ export class Visualizer3D {
         geometry.setAttribute('aSpeed', new THREE.Float32BufferAttribute(speeds, 1));
 
         this.cyberGeometry = geometry;
-        const texture = this.createCyberTexture();
-        this.cyberMaterial = this.createCyberShader(texture);
+        const texture = this.createCyberTexture(this.matrixConfig);
+        this.cyberMaterial = this.createCyberShader(texture, this.matrixConfig);
         this.cyberRain = new THREE.Points(geometry, this.cyberMaterial);
         this.cyberRain.frustumCulled = false;
 
@@ -1744,21 +1763,40 @@ export class Visualizer3D {
     }
 
     setMode(mode) {
+        const target = this.mapMode(mode);
         this.activeModes.clear();
-        this.activeModes.add(mode);
-        this.mode = mode;
+        this.activeModes.add(target);
+        this.mode = target;
         this.updateVisibility();
-        this.updateLabel(mode);
+        this.updateLabel(target);
+    }
+
+    mapMode(mode) {
+        if (mode === 'interstellar') return 'matrix'; // UI "Matrix" -> Internal 3D Matrix
+        if (mode === 'cube') return 'box';
+        return mode;
     }
 
     toggleMode(mode) {
-        if (this.activeModes.has(mode)) {
-            this.activeModes.delete(mode);
-        } else {
-            this.activeModes.add(mode);
+        const target = this.mapMode(mode);
+        
+        // If activating Matrix (3D), ensure it starts in interstellar mode if not set
+        if (target === 'matrix' && !this.activeModes.has('matrix')) {
+            if (!this.matrixConfig.logicMode) this.matrixConfig.logicMode = 'interstellar';
         }
-        this.mode = mode;
+        // If activating Cyber (2D), ensure it starts in matrix logic if not set
+        if (target === 'cyber' && !this.activeModes.has('cyber')) {
+            if (!this.cyberConfig.logicMode) this.cyberConfig.logicMode = 'matrix';
+        }
+
+        if (this.activeModes.has(target)) {
+            this.activeModes.delete(target);
+        } else {
+            this.activeModes.add(target);
+        }
+        this.mode = target;
         this.updateVisibility();
+        
         if (this.activeModes.size === 1) {
             this.updateLabel(Array.from(this.activeModes)[0]);
         } else if (this.activeModes.size > 1) {
@@ -1766,17 +1804,12 @@ export class Visualizer3D {
         } else {
             this.updateLabel('none');
         }
+        
+        // Ensure strings are regenerated if mode changed
+        if (this.updateCyberStrings) this.updateCyberStrings();
     }
 
     updateVisibility() {
-        if (this.activeModes.has('matrix')) {
-            // Only force matrix logic mode if no other cyber sub-mode is selected
-            if (!['custom', 'mindwave', 'random', 'txt', 'mw', 'rnd', 'interstellar', 'int'].includes(this.cyberLogicMode)) {
-                this.cyberLogicMode = 'matrix';
-            }
-        }
-
-
         this.activeModes.forEach(mode => this.ensureInitialized(mode));
 
         if (this.sphereGroup) this.sphereGroup.visible = this.activeModes.has('sphere');
@@ -1788,19 +1821,23 @@ export class Visualizer3D {
         if (this.zenGardenGroup) this.zenGardenGroup.visible = this.activeModes.has('zengarden');
         if (this.oceanGroup) this.oceanGroup.visible = this.activeModes.has('ocean');
 
-        // Show 2D Cyber Overlay if active or selected as logic mode
-        const showCyber = this.activeModes.has('matrix') ||
-            (this.activeModes.has('cyber') && this.cyberLogicMode === 'matrix');
-
-        // Ensure 3D cyber is hidden when 2D is showing
+        // Independently show 3D Matrix (Portal)
         if (this.cyberGroup) {
-            this.cyberGroup.visible = this.activeModes.has('cyber') && !showCyber;
+            this.cyberGroup.visible = this.activeModes.has('matrix');
         }
 
-        // Toggle the 2D Canvas visibility
+        // Independently show 2D Cyber (Overlay)
         if (this.overlayCanvas) {
-            if (showCyber) {
+            if (this.activeModes.has('cyber')) {
                 this.overlayCanvas.classList.remove('hidden');
+                // Dim 3D scene significantly to let Cyber shine, UNLESS Matrix is active
+                if (this.activeModes.has('matrix')) {
+                    this.renderer.domElement.style.opacity = '1.0';
+                } else if (this.activeModes.size > 1) {
+                    this.renderer.domElement.style.opacity = '0.3'; 
+                } else {
+                    this.renderer.domElement.style.opacity = '1.0';
+                }
                 if (!this.matrixCyberStreams || this.matrixCyberStreams.length === 0) {
                     this.generateCyberStyle();
                 }
@@ -1808,9 +1845,6 @@ export class Visualizer3D {
                 this.overlayCanvas.classList.add('hidden');
             }
         }
-
-        // The actual 2D render loop (this.renderCyberCyber) is called in our main loop 
-        // based on activeModes.has('matrix'), or if cyber is active and mode is matrix.
 
         if (this.boxGroup) this.boxGroup.visible = this.activeModes.has('box');
         if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
@@ -1829,7 +1863,8 @@ export class Visualizer3D {
             else if (mode === 'rainforest') label.textContent = "RAINFOREST";
             else if (mode === 'zengarden') label.textContent = "ZEN GARDEN";
             else if (mode === 'ocean') label.textContent = "WAVES";
-            else if (mode === 'cyber') label.textContent = "THE CYBER";
+            else if (mode === 'cyber') label.textContent = "CYBER";
+            else if (mode === 'matrix') label.textContent = "MATRIX";
             else if (mode === 'multi') label.textContent = "MULTI-SENSORY";
             else label.textContent = "";
         }
@@ -2334,19 +2369,14 @@ export class Visualizer3D {
             // GALAXY
             if (this.activeModes.has('galaxy') && this.galaxyStars) {
                 this.galaxyGroup.rotation.y += 0.002 * multiplier + vNormBass * 0.003;
-                this.galaxyGroup.rotation.x = Math.sin(now * 0.08) * 0.25; // gentle tilt
+                // REMOVED gentle tilt for absolute control
                 this.galaxyStars.material.size = 0.2 + vNormBass * 0.1 + vBeatPulse * 0.08;
 
-                // Tribal sun - slow steady 3D rotation, no pulsing
+                // Tribal sun - absolute 3D rotation controlled by sliders
                 if (this.galaxySunMesh) {
-                    this.galaxySunMesh.rotation.x += this.sunRotationSpeedX * multiplier;
-                    this.galaxySunMesh.rotation.y += this.sunRotationSpeedY * multiplier;
-                    this.galaxySunMesh.rotation.z += this.sunRotationSpeedZ * multiplier;
-
-                    // If no manual rotation is set, keep a very subtle gentle tilt for "life"
-                    if (this.sunRotationSpeedX === 0 && this.sunRotationSpeedY === 0 && this.sunRotationSpeedZ === 0) {
-                        this.galaxySunMesh.rotation.x = Math.sin(now * 0.1) * 0.2;
-                    }
+                    this.galaxySunMesh.rotation.x += this.sunRotationSpeedX;
+                    this.galaxySunMesh.rotation.y += this.sunRotationSpeedY;
+                    this.galaxySunMesh.rotation.z += this.sunRotationSpeedZ;
                 }
             }
 
@@ -2367,19 +2397,17 @@ export class Visualizer3D {
                 }
             }
 
-            const isCyberMode = this.activeModes.has('matrix');
-            const isCyberCyber = this.activeModes.has('cyber') && this.cyberLogicMode === 'matrix';
-
-            if (isCyberMode || isCyberCyber) {
+            if (this.activeModes.has('cyber')) {
                 this.renderCyberCyber();
             }
 
-            if (this.activeModes.has('cyber')) {
+            if (this.activeModes.has('matrix')) {
                 if (this.cyberMaterial) {
-                    // FIXED: Only apply multipliers once here; uTime in shader handles the rest.
-                    this.cyberMaterial.uniforms.uTime.value += dt * multiplier * (this.cyberSpeedMultiplier || 1.0);
-                    // Normalize beat pulse influence separately
-                    this.cyberMaterial.uniforms.uSpeed.value = 1.0 + vBeatPulse * 0.2;
+                    const config = this.matrixConfig;
+                    // Multiply dt by config.speed to drive shader animation
+                    this.cyberMaterial.uniforms.uTime.value += dt * multiplier * (config.speed || 1.0);
+                    // Modulate base speed uniform with beat pulse for reactive rain
+                    this.cyberMaterial.uniforms.uSpeed.value = (config.speed || 1.0) * (1.0 + vBeatPulse * 0.2);
                 }
             }
 
@@ -2541,25 +2569,25 @@ export class Visualizer3D {
     }
 
     setCyberColor(hexColor) {
-        this.cyberColor = hexColor;
+        this.cyberConfig.color = hexColor;
+        this.cyberConfig.rainbow = false;
         this.cyberColorCustomized = true;
-
-        // Instantly force this color to override all currently falling Cyber 2D streams
         if (this.matrixCyberStreams) {
-            this.matrixCyberStreams.forEach(stream => {
-                stream.color = hexColor;
-            });
+            this.matrixCyberStreams.forEach(stream => { stream.color = hexColor; });
         }
+    }
 
+    setMatrixColor(hexColor) {
+        this.matrixConfig.color = hexColor;
+        this.matrixConfig.rainbow = false;
         if (this.cyberMaterial && this.cyberMaterial.uniforms.uColor) {
             this.cyberMaterial.uniforms.uColor.value.set(hexColor);
-            // Compute lightened head color without allocating any new objects
             this._tempColor.set(hexColor);
-            // Manual lerp towards white by 80%: c + (1-c)*0.8
             this._tempColor.r += (1 - this._tempColor.r) * 0.8;
             this._tempColor.g += (1 - this._tempColor.g) * 0.8;
             this._tempColor.b += (1 - this._tempColor.b) * 0.8;
             this.cyberMaterial.uniforms.uHeadColor.value.copy(this._tempColor);
+            if (this.cyberMaterial.uniforms.uRainbow) this.cyberMaterial.uniforms.uRainbow.value = 0.0;
         }
     }
 
@@ -2592,21 +2620,42 @@ export class Visualizer3D {
             this.cyberMaterial.uniforms.uBrightness.value = brightness;
     }
 
+    // --- CYBER (UI) -> Internal Cyber (2D Overlay) ---
     setCyberSpeed(speed) {
-        this.cyberSpeedMultiplier = speed;
+        this.cyberConfig.speed = speed;
+    }
+    setCyberLength(length) {
+        this.cyberConfig.length = length;
+    }
+
+    // --- MATRIX (UI) -> Internal Matrix (3D Rain) ---
+    setMatrixSpeed(speed) {
+        this.matrixConfig.speed = speed;
         if (this.cyberMaterial && this.cyberMaterial.uniforms.uSpeed) {
             this.cyberMaterial.uniforms.uSpeed.value = speed;
         }
     }
-    setCyberLength(length) {
-        this.cyberLengthMultiplier = length;
+    setMatrixLength(length) {
+        this.matrixConfig.length = length;
         if (this.cyberMaterial && this.cyberMaterial.uniforms.uTailLength) {
             this.cyberMaterial.uniforms.uTailLength.value = length;
         }
     }
     setCyberRainbow(isRainbow) {
-        this.cyberRainbowMode = isRainbow;
-        this._rainbowEnabled = isRainbow;
+        this.cyberConfig.rainbow = isRainbow;
+        if (!isRainbow) {
+            const hex = this.cyberConfig.color || '#00FF41';
+            if (this.matrixCyberStreams) {
+                this.matrixCyberStreams.forEach(stream => { stream.color = hex; });
+            }
+        }
+    }
+    setMatrixRainbow(isRainbow) {
+        this.matrixConfig.rainbow = isRainbow;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
+            this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
+        }
+    }
         if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
             this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
         }
@@ -2644,11 +2693,12 @@ export class Visualizer3D {
 
         let isTextMode = false;
         let textToSpell = "MINDWAVE🪷";
+        const config = this.cyberConfig;
 
-        if (this.cyberLogicMode === 'custom' || this.cyberLogicMode === 'txt') {
+        if (config.logicMode === 'custom' || config.logicMode === 'txt') {
             isTextMode = true;
-            textToSpell = "🪷" + (this.cyberCustomText || "WELCOME");
-        } else if (this.cyberLogicMode === 'mindwave' || this.cyberLogicMode === 'mw') {
+            textToSpell = "🪷" + (config.customText || "WELCOME");
+        } else if (config.logicMode === 'mindwave' || config.logicMode === 'mw') {
             isTextMode = true;
             textToSpell = "MINDWAVE🪷";
         }
@@ -2671,7 +2721,7 @@ export class Visualizer3D {
                 for (let c = 0; c < MAX_BUFFER; c++) {
                     stream.chars.push(wordChars[c % wordChars.length]);
                 }
-            } else if (this.cyberLogicMode === 'matrix' || this.cyberLogicMode === 'interstellar' || this.cyberLogicMode === 'int') {
+            } else if (config.logicMode === 'matrix' || config.logicMode === 'interstellar' || config.logicMode === 'int') {
                 for (let c = 0; c < MAX_BUFFER; c++) {
                     stream.chars.push(matrixDataMix.charAt(Math.floor(Math.random() * matrixDataMix.length)));
                 }
@@ -2684,38 +2734,53 @@ export class Visualizer3D {
     }
 
     setCyberLogicMode(mode, text) {
-        // Debug
         console.log(`[Visualizer] setCyberLogicMode(mode="${mode}", text="${text}")`);
+        this.cyberConfig.logicMode = mode;
+        if (text !== undefined) this.cyberConfig.customText = text;
+        this.updateCyberStrings(); // Needs to update based on cyberConfig
+    }
 
-        this.cyberLogicMode = mode;
-        if (text !== undefined) {
-            this.cyberCustomText = text;
-            console.log(`[Visualizer] cyberCustomText set to: "${text}"`);
-        }
+    setMatrixLogicMode(mode, text) {
+        console.log(`[Visualizer] setMatrixLogicMode(mode="${mode}", text="${text}") -> 3D config`);
+        this.matrixConfig.logicMode = mode;
+        if (text !== undefined) this.matrixConfig.customText = text;
 
-        // Dispose old texture before creating new one to prevent GPU leak
-        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uTexture && this.cyberMaterial.uniforms.uTexture.value) {
-            this.cyberMaterial.uniforms.uTexture.value.dispose();
-        }
-
-        const newTexture = this.createCyberTexture();
         if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uTexture) {
+            const oldTex = this.cyberMaterial.uniforms.uTexture.value;
+            const newTexture = this.createCyberTexture(this.matrixConfig);
             this.cyberMaterial.uniforms.uTexture.value = newTexture;
             this.cyberMaterial.needsUpdate = true;
+            if (oldTex) oldTex.dispose();
         }
-
         this.initCyber();
+    }
 
-        // CRITICAL: Always update the 2D Cyber Cyber strings dynamically
-        this.updateCyberStrings();
+    setCyberColor(hex) {
+        this.cyberConfig.color = hex;
+        // 2D Overlay update logic
+        if (this.matrixCyberStreams) {
+            this.matrixCyberStreams.forEach(stream => { stream.color = hex; });
+        }
+    }
+
+    setMatrixColor(hex) {
+        this.matrixConfig.color = hex;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uColor) {
+            this.cyberMaterial.uniforms.uColor.value.set(hex);
+        }
     }
 
     setCyberAngle(degrees) {
-        this.cyberAngle = degrees;
-        this.currentCyberAngle = degrees;
-        // Sync 3D rotation
-        if (this.cyberRotationGroup) this.cyberRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
-        // Sync 2D orientation is handled in renderCyberCyber via this.cyberAngle
+        this.cyberConfig.angle = degrees;
+        // 2D Rotation handled in render loop
+    }
+
+    setMatrixAngle(degrees) {
+        this.matrixConfig.angle = degrees;
+        this.currentCyberAngle = degrees; // Persistence for initCyber
+        if (this.cyberRotationGroup) {
+            this.cyberRotationGroup.rotation.z = THREE.MathUtils.degToRad(-degrees);
+        }
     }
 
     setVibrationEnabled(enabled) {
@@ -2964,7 +3029,9 @@ export function pauseVisuals() {
 }
 
 export function resumeVisuals() {
+    console.log('[Visualizer] resumeVisuals CALLED. viz3D:', !!viz3D, 'animId:', state.animationId);
     if (viz3D && !state.animationId) {
+        viz3D.active = true;
         viz3D.render(state.analyserLeft, state.analyserRight);
         visualsPaused = false;
     }

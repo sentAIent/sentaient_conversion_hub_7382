@@ -522,14 +522,14 @@
 
         /* Hangar UI Elements (The Specs) */
         .ship-specs {
-            width: 550px;
+            width: 700px;
             background: rgba(0, 20, 40, 0.6);
             backdrop-filter: blur(10px);
             border-left: 4px solid var(--accent);
             padding: 40px;
             border-radius: 4px;
             pointer-events: auto;
-            transform: translateX(-500px) translateY(-60px);
+            transform: translateX(-300px) translateY(-60px);
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
         }
 

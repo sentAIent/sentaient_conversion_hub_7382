@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-cache-v41';
+const CACHE_NAME = 'mindwave-cache-v42-restored';
 
 // Essential assets to cache immediately upon installation
 const PRECACHE_URLS = [
@@ -9,12 +9,12 @@ const PRECACHE_URLS = [
     // CSS & Fonts
     '/binaural-assets/css/style.css',
     '/binaural-assets/css/tailwind-compiled.css',
-    '/binaural-assets/font/Geist-Variable.woff2',
-    '/binaural-assets/font/Outfit-Variable.woff2',
-    '/binaural-assets/font/SpaceGrotesk-Variable.woff2',
+    '/binaural-assets/fonts/inter/Inter-VariableFont_slnt,wght.ttf',
+    '/binaural-assets/fonts/orbitron/Orbitron-VariableFont_wght.ttf',
 
     // Core Dependencies
-    '/binaural-assets/js/vendor/three.module.js',
+    '/binaural-assets/js/lib/howler.min.js',
+    '/binaural-assets/js/lib/three.min.js',
 
     // Core App Logic
     '/binaural-assets/js/main_vFINAL.js',
@@ -38,10 +38,9 @@ const PRECACHE_URLS = [
     '/binaural-assets/js/visuals/visualizer_nuclear_v4.js',
 
     // Assets
-    '/mindwave-logo-icon.png',
-    '/tribal-sun.png',
-    '/binaural-assets/images/mindwave-logo.png',
-    '/binaural-assets/images/japan_spring.png',
+    '/binaural-assets/mindwave-logo-icon.png',
+    '/binaural-assets/images/tribal-sun.svg',
+    '/binaural-assets/images/lotus-logo-color.svg',
 
     // Utilities
     '/binaural-assets/js/utils/audio-offline-manager.js',
@@ -51,7 +50,7 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', event => {
-    console.log('[ServiceWorker] Install v7');
+    console.log('[ServiceWorker] Install v4');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -64,7 +63,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-    console.log('[ServiceWorker] Activate v7');
+    console.log('[ServiceWorker] Activate v4');
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
@@ -83,19 +82,16 @@ self.addEventListener('activate', event => {
 
 // Helper: Is this a mutable resource that should always be fresh?
 function isCodeOrMarkup(url) {
-    // Strip query parameters for extension check
-    const cleanUrl = url.split('?')[0];
-    return cleanUrl.endsWith('.js') || cleanUrl.endsWith('.css') || cleanUrl.endsWith('.html');
+    return url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.html');
 }
 
 self.addEventListener('fetch', event => {
     // We only want to handle GET requests
     if (event.request.method !== 'GET') return;
 
-    // Ignore chrome extension requests and auth/analytics/storage APIs
+    // Ignore chrome extension requests and auth/analytics APIs
     if (event.request.url.startsWith('chrome-extension') ||
         event.request.url.includes('firestore.googleapis.com') ||
-        event.request.url.includes('firebasestorage.googleapis.com') ||
         event.request.url.includes('google-analytics.com')) {
         return;
     }
