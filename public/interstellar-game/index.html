@@ -694,6 +694,17 @@
                 </div>
             </div>
 
+            <!-- FACTION WARS TRACKER (Left Side, Below Missions) -->
+            <div id="sectionFactions" class="cockpit-section" style="top:410px; left:15px; width:220px; min-height:100px; display:none;">
+                <div class="cockpit-header">
+                    <h4 style="color: #ffaa00;">⚔️ Faction Rep</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionFactions')">−</button>
+                </div>
+                <div class="cockpit-content" id="factionsContent" style="display:flex; flex-direction:column; gap:4px; font-size:11px; padding: 10px;">
+                    <!-- Faction bars injected here -->
+                </div>
+            </div>
+
 
             <!-- GEMS - Bottom Right (Pos 4 - Constrained) -->
             <div id="sectionGems" class="cockpit-section gems-section"
@@ -930,6 +941,47 @@
 
     <!-- Style for Mobile Visibility & UI Polish -->
     <script type="module" src="./script.js?v=lotus_fix_final_v3"></script>
+    <!-- BASE BUILDER MODAL -->
+    <div class="modal-overlay" id="baseBuilderModal">
+        <div class="modal-content" style="width: 800px; max-width: 95vw; background: rgba(10, 20, 30, 0.95); border: 2px solid #228B22; box-shadow: 0 0 30px rgba(34, 139, 34, 0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #5fd466; font-size: 24px;">🌍 Terrestrial Outpost Command</h2>
+                <button class="menu-btn" onclick="app.closeBaseBuilder()" style="padding: 5px 15px;">LEAVE ORBIT</button>
+            </div>
+            
+            <div style="display: flex; gap: 20px;">
+                <!-- Tools / Inventory -->
+                <div style="flex: 1; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px;">
+                    <h3 style="color: #ccc; font-size: 16px; margin-top: 0; margin-bottom: 15px;">Construct Options</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="upgrade-btn selected" id="baseTool_hab" onclick="app.selectBaseTool('hab')" style="text-align: left; padding: 10px;">
+                            🏠 Habitat (Population)
+                        </button>
+                        <button class="upgrade-btn" id="baseTool_mine" onclick="app.selectBaseTool('mine')" style="text-align: left; padding: 10px;">
+                            ⛏️ Collector (Passive Gems)
+                        </button>
+                        <button class="upgrade-btn" id="baseTool_def" onclick="app.selectBaseTool('def')" style="text-align: left; padding: 10px;">
+                            🔫 Defense Turret
+                        </button>
+                        <button class="upgrade-btn" id="baseTool_erase" onclick="app.selectBaseTool('erase')" style="text-align: left; padding: 10px; border-color: #ff4444; color: #ffadad;">
+                            ❌ Demolish Structure
+                        </button>
+                    </div>
+                    <div style="margin-top: 20px; font-size: 11px; color: #888;">
+                        Select a tool and click on the planetary grid to construct. Construction requires credits or gems.
+                    </div>
+                </div>
+                
+                <!-- Grid -->
+                <div style="flex: 2; display: flex; justify-content: center; align-items: center; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAACVJREFUKFNjZCASMDKgAnv37v3PwsLCAOUjGwKTMvE6ikgA1A0AyjQIC2d3AksAAAAASUVORK5CYII=') repeat; border: 1px solid rgba(34,139,34,0.3); padding: 20px; border-radius: 8px;">
+                    <div id="baseGrid" style="display: grid; grid-template-columns: repeat(8, 40px); grid-template-rows: repeat(8, 40px); gap: 2px;">
+                        <!-- JS injected -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

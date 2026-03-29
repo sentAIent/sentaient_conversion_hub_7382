@@ -553,6 +553,22 @@ class InterstellarEngine {
             isCloaked: false,
             lastPulseTime: 0
         };
+        // Ability / Skill Tree State
+        this.playerSkills = JSON.parse(localStorage.getItem('playerSkills')) || {
+            emp: 0,
+            afterburner: 0,
+            quantum: 0
+        };
+        this.skillCooldowns = { emp: 0, afterburner: 0, quantum: 0 };
+        this.globalAbilityActive = { afterburner: false };
+
+        // Faction Reputation State
+        this.factionRep = JSON.parse(localStorage.getItem('factionRep')) || {
+            xenon: -50,
+            mauler: -50,
+            terran: 50
+        };
+
         this.maulerDebris = []; // Visual debris trails for Mauler
         this.speedLines = [];  // Visual speed indicators
         this.showGemValues = false; // Toggle for showing gem values
@@ -965,6 +981,8 @@ class InterstellarEngine {
                     } else {
                         this.showToast('⚠️ Get closer to base to deposit!');
                     }
+                } else if (key === 'k') {
+                    this.toggleSkillTree();
                 } else if (key === 'v') {
                     this.triggerViperBoost();
                 } else if (key === 'c') {
@@ -975,6 +993,12 @@ class InterstellarEngine {
                     this.triggerApexOverclock();
                 } else if (key === 'g') {
                     this.fireDecoyFlare();
+                } else if (key === '1') {
+                    this.triggerGlobalEMP();
+                } else if (key === '2') {
+                    this.triggerGlobalAfterburner();
+                } else if (key === '3') {
+                    this.triggerGlobalQuantumJump();
                 }
                 e.preventDefault();
             }
@@ -1705,12 +1729,14 @@ class InterstellarEngine {
             this.updateFloatingLeaderboard();
             this.showToast('Flight Mode: ON - Use WASD/QE/Shift');
             this.updateMissionHUD(); // Call the new mission HUD update
+            this.updateFactionHUD(); // Boot Faction HUD
             // Audio: start engine hum + ambient music
             gameAudio.startEngineHum();
             gameAudio.startAmbientMusic();
         } else {
             if (hud) hud.classList.add('hidden');
             if (floatingLeaders) floatingLeaders.classList.add('hidden');
+            this.updateFactionHUD(); // Hide HUD
             // Audio: stop engine + music
             gameAudio.stopEngineHum();
             gameAudio.stopAmbientMusic();
@@ -3504,9 +3530,11 @@ class InterstellarEngine {
         if (keys['q']) ship.vz += ship.acceleration;
         if (keys['e']) ship.vz -= ship.acceleration;
 
-        // Boost
-        // Boost (Shift only)
-        const boost = keys['shift'] ? 2.0 : 1.0;
+        // Global Ability: Afterburner
+        let boost = keys['shift'] ? 2.0 : 1.0;
+        if (this.globalAbilityActive && this.globalAbilityActive.afterburner) {
+            boost = 3.0 + (this.playerSkills.afterburner * 0.5); // Level 1 is 3.5x, Level 3 is 4.5x
+        }
 
         ship.x += ship.vx * boost;
         ship.y += ship.vy * boost;
@@ -3724,9 +3752,19 @@ class InterstellarEngine {
 
                 if (dist < typeDef.size + p.width) {
                     this.createExplosion(p.x, p.y, 'hit');
-                    enemy.health -= 25;
+                    enemy.health -= (p.damage || 25);
                     enemy.hitFlash = 10;
                     hit = true;
+
+                    // Faction Wars: Reputation Adjustments
+                    if (enemy.faction) {
+                        this.factionRep[enemy.faction] = Math.max(-100, (this.factionRep[enemy.faction] || 0) - 2);
+                        // Friendly boost to rivals
+                        Object.keys(this.factionRep).forEach(f => {
+                            if (f !== enemy.faction) this.factionRep[f] = Math.min(100, (this.factionRep[f] || 0) + 1);
+                        });
+                        localStorage.setItem('factionRep', JSON.stringify(this.factionRep));
+                    }
 
                     if (enemy.health <= 0) {
                         this.destroyEnemyShip(e);
@@ -3930,6 +3968,15 @@ class InterstellarEngine {
 
             const typeDef = InterstellarEngine.ENEMY_TYPES[type];
 
+            // Assign Faction dynamically
+            const factions = ['xenon', 'mauler', 'terran'];
+            let chosenFaction = factions[Math.floor(Math.random() * factions.length)];
+            // Bias spawn to hostile factions (rep < -10)
+            if (Math.random() > 0.4) {
+                const hostiles = factions.filter(f => (this.factionRep[f] || 0) < -10);
+                if (hostiles.length > 0) chosenFaction = hostiles[Math.floor(Math.random() * hostiles.length)];
+            }
+
             this.enemyShips.push({
                 x: ship.x + Math.cos(angle) * dist,
                 y: ship.y + Math.sin(angle) * dist,
@@ -3937,6 +3984,7 @@ class InterstellarEngine {
                 vy: 0,
                 rotation: Math.random() * Math.PI * 2,
                 type: type,
+                faction: chosenFaction, // Faction integration
                 health: typeDef.health,
                 maxHealth: typeDef.health,
                 state: 'patrol', // patrol, chase, attack, flee
@@ -3961,32 +4009,60 @@ class InterstellarEngine {
 
         for (const enemy of this.enemyShips) {
             const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
-            // ECM: Reduce effective aggro range (10% per level)
+            let targetX = ship.x;
+            let targetY = ship.y;
+            let targetShip = ship;
+            let distToTarget = Infinity;
+            let isTargetingPlayer = false;
+
+            // 1. Evaluate player as target
             const ecmFactor = 1 - (this.playerShip.ecmStrength || 0) * 0.1;
             const effectiveAggroRange = typeDef.aggroRange * ecmFactor;
-            
-            const distToPlayer = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
-            const angleToPlayer = Math.atan2(ship.y - enemy.y, ship.x - enemy.x);
+            const isHostileToPlayer = (this.factionRep[enemy.faction] || 0) < 0;
 
-            // STALKING HYSTERESIS: Once aggroed, stay aggroed until player is far away
-            // Reasonable distance to stop stalking is ~3x the initial aggro range
+            if (isHostileToPlayer && !isPlayerCloaked) {
+                distToTarget = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
+                targetShip = ship;
+                isTargetingPlayer = true;
+            }
+
+            // 2. Evaluate other procedural enemy factions as targets
+            for (const other of this.enemyShips) {
+                if (!other.faction || other.faction === enemy.faction || other === enemy) continue;
+                const d = Math.hypot(enemy.x - other.x, enemy.y - other.y);
+                if (d < distToTarget) {
+                    distToTarget = d;
+                    targetX = other.x;
+                    targetY = other.y;
+                    targetShip = other;
+                    isTargetingPlayer = false;
+                }
+            }
+
+            if (distToTarget === Infinity) {
+                // No hostile targets found, force patrol
+                distToTarget = 10000;
+            }
+
+            const angleToTarget = Math.atan2(targetY - enemy.y, targetX - enemy.x);
+
+            // STALKING HYSTERESIS: Once aggroed, stay aggroed until target is far away
             const stalkStopDist = effectiveAggroRange * 3.0;
-            if (distToPlayer < effectiveAggroRange) {
+            if (distToTarget < effectiveAggroRange) {
                 enemy.isStalking = true;
-            } else if (distToPlayer > stalkStopDist) {
+            } else if (distToTarget > stalkStopDist) {
                 enemy.isStalking = false;
             }
 
             // Determine AI state
             if (enemy.health < typeDef.health * 0.2) {
                 enemy.state = 'flee';
-            } else if (isPlayerCloaked) {
+            } else if (distToTarget === 10000 || (!isTargetingPlayer && isPlayerCloaked && distToTarget > 2000)) {
                 enemy.state = 'patrol';
-            } else if (distToPlayer < typeDef.attackRange) {
+            } else if (distToTarget < typeDef.attackRange) {
                 enemy.state = 'attack';
             } else if (enemy.isStalking) {
-                // Stay in chase/attack mode if stalking, even if outside aggroRange
-                enemy.state = (distToPlayer < typeDef.attackRange + 100) ? 'attack' : 'chase';
+                enemy.state = (distToTarget < typeDef.attackRange + 100) ? 'attack' : 'chase';
             } else {
                 enemy.state = 'patrol';
             }
@@ -4007,18 +4083,18 @@ class InterstellarEngine {
                     break;
 
                 case 'chase':
-                    targetAngle = angleToPlayer;
+                    targetAngle = angleToTarget;
                     thrust = typeDef.maxSpeed;
                     break;
 
                 case 'attack':
-                    targetAngle = angleToPlayer;
+                    targetAngle = angleToTarget;
                     thrust = typeDef.maxSpeed * 0.3; // Slow approach during attack
 
                     // Fire weapons
                     if (enemy.burstRemaining > 0) {
                         if (now - enemy.burstTimer > (typeDef.burstDelay || 0)) {
-                            this.fireEnemyBullet(enemy, typeDef);
+                            this.fireEnemyBullet(enemy, typeDef, targetShip);
                             enemy.burstRemaining--;
                             enemy.burstTimer = now;
                         }
@@ -4027,14 +4103,14 @@ class InterstellarEngine {
                             enemy.burstRemaining = typeDef.burstCount;
                             enemy.burstTimer = now;
                         } else {
-                            this.fireEnemyBullet(enemy, typeDef);
+                            this.fireEnemyBullet(enemy, typeDef, targetShip);
                         }
                         enemy.lastFireTime = now;
                     }
                     break;
 
                 case 'flee':
-                    targetAngle = angleToPlayer + Math.PI; // Run away
+                    targetAngle = angleToTarget + Math.PI; // Run away
                     thrust = typeDef.maxSpeed;
                     break;
             }
@@ -4120,12 +4196,40 @@ class InterstellarEngine {
                 continue;
             }
 
+            let bulletDestroyed = false;
+
             // Check collision with player
-            const dist = Math.hypot(b.x - ship.x, b.y - ship.y);
-            if (dist < 30) {
-                this.createExplosion(b.x, b.y, 'hit');
-                this.damagePlayer(b.damage);
-                this.enemyBullets.splice(i, 1);
+            const isHostileToPlayer = (this.factionRep[b.faction] || 0) < 0;
+            if (isHostileToPlayer) {
+                const dist = Math.hypot(b.x - ship.x, b.y - ship.y);
+                if (dist < 30) {
+                    this.createExplosion(b.x, b.y, 'hit');
+                    this.damagePlayer(b.damage);
+                    this.enemyBullets.splice(i, 1);
+                    bulletDestroyed = true;
+                    continue;
+                }
+            }
+
+            // Check collision with other factions
+            for (let j = this.enemyShips.length - 1; j >= 0; j--) {
+                const enemy = this.enemyShips[j];
+                if (b.faction && enemy.faction && b.faction !== enemy.faction) {
+                    const eDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+                    const distEnemy = Math.hypot(b.x - enemy.x, b.y - enemy.y);
+                    if (distEnemy < (eDef.size || 20) + 5) {
+                        this.createExplosion(b.x, b.y, 'hit');
+                        enemy.health -= b.damage;
+                        if (enemy.health <= 0) {
+                            this.destroyEnemyShip(j);
+                        } else {
+                            enemy.hitFlash = 10;
+                        }
+                        this.enemyBullets.splice(i, 1);
+                        bulletDestroyed = true;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -6564,8 +6668,17 @@ class InterstellarEngine {
 
                 const dist = Math.hypot(planet.x - ship.x, planet.y - ship.y);
                 if (dist < effectiveRadius + collisionRadius) {
-                    this.triggerPlanetImpactEffect(planet);
-                    return; // Planet survives but player crashes into it
+                    const speed = Math.hypot(ship.vx, ship.vy);
+                    if (planet.type === 'terrestrial' && speed < 5) {
+                        // Planetary Landing Sequence
+                        this.vx = 0;
+                        this.vy = 0;
+                        this.openBaseBuilder(planet);
+                        return;
+                    } else {
+                        this.triggerPlanetImpactEffect(planet);
+                        return; // High speed crash into planet
+                    }
                 }
             }
         }
@@ -6830,6 +6943,142 @@ class InterstellarEngine {
         }
 
         this.damagePlayer(25);
+    }
+
+    // --- GLOBAL SKILL ABILITIES ---
+    toggleSkillTree() {
+        let modal = document.getElementById('skillTreeModal');
+        if (modal) {
+            modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+        } else {
+            this.showToast('🚀 Skill Tree Interface Loading...', 2000);
+            this._injectSkillTreeUI();
+        }
+    }
+
+    _injectSkillTreeUI() {
+        const modal = document.createElement('div');
+        modal.id = 'skillTreeModal';
+        modal.className = 'modal-overlay hangar-overlay';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="hangar-container" style="max-width: 600px;">
+                <h2 style="color: #ffd700; text-align: center; margin-bottom: 20px;">⚡ PILOT NEURAL LINK (Skill Tree)</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                    <!-- EMP -->
+                    <div style="background: rgba(0,0,0,0.5); padding: 15px; border: 1px solid #00f3ff; border-radius: 8px; text-align: center;">
+                        <h3 style="color: #00f3ff; font-size: 16px;">EMP Burst</h3>
+                        <div style="font-size: 10px; color: #aaa; height: 40px;">Disables enemy fleet and destroys missiles in wide radius.</div>
+                        <div style="color: #fff; margin: 10px 0;">Level: <span id="skillLvl_emp">${this.playerSkills.emp}/3</span></div>
+                        <button class="btn-small" style="width: 100%; border-color:#00f3ff;" onclick="app.upgradeSkill('emp', 200)">Upgrade 💎200</button>
+                    </div>
+                    <!-- Afterburner -->
+                    <div style="background: rgba(0,0,0,0.5); padding: 15px; border: 1px solid #ff5500; border-radius: 8px; text-align: center;">
+                        <h3 style="color: #ff5500; font-size: 16px;">Afterburner</h3>
+                        <div style="font-size: 10px; color: #aaa; height: 40px;">Bypasses engine limits for extreme velocity.</div>
+                        <div style="color: #fff; margin: 10px 0;">Level: <span id="skillLvl_afterburner">${this.playerSkills.afterburner}/3</span></div>
+                        <button class="btn-small" style="width: 100%; border-color:#ff5500;" onclick="app.upgradeSkill('afterburner', 150)">Upgrade 💎150</button>
+                    </div>
+                    <!-- Quantum Jump -->
+                    <div style="background: rgba(0,0,0,0.5); padding: 15px; border: 1px solid #ff00ff; border-radius: 8px; text-align: center;">
+                        <h3 style="color: #ff00ff; font-size: 16px;">Quantum Dash</h3>
+                        <div style="font-size: 10px; color: #aaa; height: 40px;">Instant spacetime translation forward.</div>
+                        <div style="color: #fff; margin: 10px 0;">Level: <span id="skillLvl_quantum">${this.playerSkills.quantum}/3</span></div>
+                        <button class="btn-small" style="width: 100%; border-color:#ff00ff;" onclick="app.upgradeSkill('quantum', 300)">Upgrade 💎300</button>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <div style="color: #00ffaa; font-weight: bold; margin-bottom: 10px;">Available Gems: 💎<span id="skillGems">${this.playerGems}</span></div>
+                    <button class="btn-secondary" onclick="document.getElementById('skillTreeModal').style.display='none'">Close Terminal</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    upgradeSkill(skillKey, cost) {
+        if (this.playerSkills[skillKey] >= 3) {
+            return this.showToast('📈 Skill already at Max Level!');
+        }
+        if (this.playerGems >= cost) {
+            this.playerGems -= cost;
+            this.playerSkills[skillKey] += 1;
+            localStorage.setItem('playerGems', this.playerGems);
+            localStorage.setItem('playerSkills', JSON.stringify(this.playerSkills));
+            
+            // Update UI
+            document.getElementById('skillGems').innerText = this.playerGems;
+            document.getElementById(`skillLvl_${skillKey}`).innerText = `${this.playerSkills[skillKey]}/3`;
+            this.showToast(`✨ Skill Upgraded! Level ${this.playerSkills[skillKey]}`);
+            if (window.gameAudio) window.gameAudio.playCollect();
+        } else {
+            this.showToast('⚠️ Insufficient Gems for Upgrade.');
+        }
+    }
+
+    triggerGlobalEMP() {
+        const lvl = this.playerSkills.emp;
+        if (lvl === 0) return this.showToast('🔒 EMP Locked. Upgrade in Skill Tree (K).', 2000);
+        const now = Date.now();
+        const cooldown = 30000 - (lvl * 5000); // 30s base, faster with levels
+        if (now - this.skillCooldowns.emp < cooldown) return this.showToast('⏳ EMP Recharging...', 1000);
+
+        this.skillCooldowns.emp = now;
+        this.showToast('⚡ SYSTEM: EMP BURST DEPLOYED!', 2000);
+        
+        if (window.gameAudio) window.gameAudio.playExplosionBig();
+        this.hazardEffect = { type: 'emp', startTime: now, duration: 1500 };
+
+        const radius = 500 + (lvl * 250);
+        const pX = this.playerShip.x; const pY = this.playerShip.y;
+        this.enemyShips.forEach(e => {
+            if (Math.hypot(e.x - pX, e.y - pY) < radius) {
+                e.disabled = true;
+                e.disabledUntil = now + 4000 + (lvl * 1500); // 5.5 to 8.5 seconds freeze
+            }
+        });
+        this.enemyMissiles.forEach(m => {
+            if (Math.hypot(m.x - pX, m.y - pY) < radius) m.dead = true;
+        });
+    }
+
+    triggerGlobalAfterburner() {
+        const lvl = this.playerSkills.afterburner;
+        if (lvl === 0) return this.showToast('🔒 Afterburner Locked. Upgrade in Skill Tree (K).', 2000);
+        const now = Date.now();
+        const cooldown = 20000 - (lvl * 3000); 
+        if (now - this.skillCooldowns.afterburner < cooldown) return this.showToast('⏳ Afterburner Recharging...', 1000);
+
+        this.skillCooldowns.afterburner = now;
+        this.globalAbilityActive.afterburner = true;
+        this.showToast('🔥 SYSTEM: AFTERBURNER ENGAGED!', 2000);
+        if (window.gameAudio) window.gameAudio.playShieldHit();
+        
+        // Push ship slightly instantly
+        this.playerShip.vx += Math.cos(this.playerShip.rotation) * 20;
+        this.playerShip.vy += Math.sin(this.playerShip.rotation) * 20;
+
+        setTimeout(() => {
+            this.globalAbilityActive.afterburner = false;
+        }, 3000 + (lvl * 1000)); // 4-6s duration
+    }
+
+    triggerGlobalQuantumJump() {
+        const lvl = this.playerSkills.quantum;
+        if (lvl === 0) return this.showToast('🔒 Quantum Dash Locked. Upgrade in Skill Tree (K).', 2000);
+        const now = Date.now();
+        const cooldown = 45000 - (lvl * 5000); 
+        if (now - this.skillCooldowns.quantum < cooldown) return this.showToast('⏳ Quantum Drive Spooling...', 1000);
+
+        this.skillCooldowns.quantum = now;
+        this.showToast('🌌 SYSTEM: QUANTUM JUMP SUCCESSFUL', 2000);
+        if (window.gameAudio) window.gameAudio.playBossAlert();
+
+        const jumpDist = 1200 + (lvl * 400); // 1600 - 2400 units
+        this.playerShip.x += Math.cos(this.playerShip.rotation) * jumpDist;
+        this.playerShip.y += Math.sin(this.playerShip.rotation) * jumpDist;
+
+        this.hazardEffect = { type: 'quantum', startTime: now, duration: 800 };
     }
 
     // --- ACTIVE SHIP ABILITIES ---
@@ -13629,8 +13878,17 @@ class InterstellarEngine {
             ctx.translate(rx, ry);
             ctx.rotate(enemy.rotation);
 
+            // === Faction Visuals ===
+            const factionTypes = {
+                xenon: { color: '#ff0000', glowColor: 'rgba(255, 0, 0, 0.6)' },
+                mauler: { color: '#ffaa00', glowColor: 'rgba(255, 170, 0, 0.6)' },
+                terran: { color: '#0088ff', glowColor: 'rgba(0, 136, 255, 0.6)' }
+            };
+            const activeColor = (enemy.faction && factionTypes[enemy.faction]) ? factionTypes[enemy.faction].color : typeDef.color;
+            const activeGlow = (enemy.faction && factionTypes[enemy.faction]) ? factionTypes[enemy.faction].glowColor : typeDef.glowColor;
+
             // Hit flash effect
-            const baseColor = enemy.hitFlash > 0 ? '#ffffff' : typeDef.color;
+            const baseColor = enemy.hitFlash > 0 ? '#ffffff' : activeColor;
 
             // Engine glow
             const glowSize = size * 1.5;
@@ -13639,7 +13897,7 @@ class InterstellarEngine {
                 return;
             }
             const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
-            glow.addColorStop(0, typeDef.glowColor);
+            glow.addColorStop(0, activeGlow);
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
             ctx.beginPath();
@@ -13648,7 +13906,7 @@ class InterstellarEngine {
 
             // Ship body — aggressive triangle
             ctx.fillStyle = baseColor;
-            ctx.shadowColor = typeDef.color;
+            ctx.shadowColor = activeColor;
             ctx.shadowBlur = 15;
             ctx.beginPath();
             ctx.moveTo(size * 1.5, 0);           // Nose
@@ -14098,6 +14356,10 @@ class InterstellarEngine {
                 this.renderMissileHitEffect(ctx, time);
             } else if (this.hazardEffect.type === 'player_death') {
                 this.renderPlayerDeathEffect(ctx, time);
+            } else if (this.hazardEffect.type === 'emp') {
+                this.renderEMPEffect(ctx, time);
+            } else if (this.hazardEffect.type === 'quantum') {
+                this.renderQuantumEffect(ctx, time);
             }
         } catch (e) {
             console.error('[Hazard] Critical error during effect rendering:', e);
@@ -14106,6 +14368,84 @@ class InterstellarEngine {
     }
 
     // Render dramatic player death sequence
+    // --- ACTIVE ABILITY EFFECTS ---
+
+    renderEMPEffect(ctx, time) {
+        if (!this.hazardEffect || this.hazardEffect.type !== 'emp') return;
+        const h = this.hazardEffect;
+        let progress = (Date.now() - h.startTime) / h.duration;
+        if (progress > 1) progress = 1;
+
+        ctx.save();
+        ctx.translate(this.playerShip.x, this.playerShip.y);
+
+        // Core EMP blast
+        const lvl = this.playerSkills.emp;
+        const maxRadius = 500 + (lvl * 250);
+        const currentRadius = maxRadius * Math.pow(progress, 0.5); // Pop fast, slow down
+
+        const alpha = 1 - Math.pow(progress, 2);
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, currentRadius, 0, Math.PI * 2);
+        const grad = ctx.createRadialGradient(0, 0, currentRadius * 0.8, 0, 0, currentRadius);
+        grad.addColorStop(0, `rgba(0, 243, 255, 0)`);
+        grad.addColorStop(0.8, `rgba(0, 243, 255, ${alpha * 0.5})`);
+        grad.addColorStop(1, `rgba(255, 255, 255, ${alpha})`);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.lineWidth = 4 * alpha;
+        ctx.strokeStyle = `rgba(0, 243, 255, ${alpha})`;
+        ctx.stroke();
+        
+        // Glitch lines inside
+        for(let i=0; i<10; i++) {
+            ctx.beginPath();
+            ctx.moveTo(Math.random() * currentRadius * 0.8, 0);
+            ctx.lineTo((Math.random() * currentRadius) + 20, 0);
+            ctx.rotate(Math.random() * Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+            ctx.lineWidth = Math.random() * 3 + 1;
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    renderQuantumEffect(ctx, time) {
+        if (!this.hazardEffect || this.hazardEffect.type !== 'quantum') return;
+        const h = this.hazardEffect;
+        let progress = (Date.now() - h.startTime) / h.duration;
+        if (progress > 1) return;
+
+        ctx.save();
+        ctx.translate(this.playerShip.x, this.playerShip.y);
+
+        // Implosion / Explosion warp effect
+        const alpha = 1 - progress;
+        
+        // Draw expanding geometric tunnels
+        const maxRadius = 400;
+        const currentRadius = maxRadius * (1 - Math.pow(1 - progress, 3)); 
+
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.arc(0, 0, currentRadius + (i * 20), 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 0, 255, ${(alpha * 0.5) / (i + 1)})`;
+            ctx.lineWidth = 10;
+            ctx.stroke();
+        }
+
+        // Draw blinding core flash
+        ctx.beginPath();
+        ctx.arc(0, 0, 150 * alpha, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.fill();
+
+        ctx.restore();
+    }
+
     renderPlayerDeathEffect(ctx, time) {
         const effect = this.hazardEffect;
         if (!effect) return;
@@ -17119,6 +17459,117 @@ class InterstellarEngine {
         return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 243, 255';
     }
 
+    // === PLANETARY LANDING & BASE BUILDING ===
+    openBaseBuilder(planet) {
+        if (!planet || planet.type !== 'terrestrial') return;
+        this.flightMode = false;
+        
+        // Safety lock out game engine
+        if (this.animationId) cancelAnimationFrame(this.animationId);
+        
+        const modal = document.getElementById('baseBuilderModal');
+        if (modal) modal.style.display = 'flex';
+        
+        this.activeBasePlanet = planet;
+        this.baseTool = 'hab';
+
+        // Load or initialize base map (8x8 grid)
+        this.spaceBase = JSON.parse(localStorage.getItem('spaceBase')) || {};
+        
+        this.drawBaseGrid();
+        
+        gameAudio.playMenuHover();
+    }
+
+    closeBaseBuilder() {
+        const modal = document.getElementById('baseBuilderModal');
+        if (modal) modal.style.display = 'none';
+        
+        this.activeBasePlanet = null;
+        
+        // Bounce player out of orbit so they don't immediately trigger it again
+        if (this.playerShip) {
+            this.playerShip.x -= 200;
+            this.playerShip.vx = 0;
+            this.playerShip.vy = 0;
+        }
+
+        // Restart loop
+        this.toggleFlightMode();
+        this.gameLoop();
+        gameAudio.playMenuSelect();
+    }
+
+    selectBaseTool(tool) {
+        this.baseTool = tool;
+        ['hab', 'mine', 'def', 'erase'].forEach(t => {
+            const el = document.getElementById('baseTool_' + t);
+            if (el) el.classList.toggle('selected', t === tool);
+        });
+        gameAudio.playMenuHover();
+    }
+
+    drawBaseGrid() {
+        const grid = document.getElementById('baseGrid');
+        if (!grid) return;
+        
+        grid.innerHTML = '';
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                const cellId = `cell_${x}_${y}`;
+                const blockType = this.spaceBase[cellId];
+                
+                const cell = document.createElement('div');
+                cell.className = 'base-cell';
+                cell.style.cssText = `
+                    width: 100%; height: 100%;
+                    border: 1px dashed rgba(34,139,34,0.3);
+                    background: ${blockType ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.2)'};
+                    cursor: pointer; display: flex; align-items: center; justify-content: center;
+                    font-size: 18px; transition: all 0.2s;
+                `;
+                
+                if (blockType === 'hab') cell.innerHTML = '🏠';
+                else if (blockType === 'mine') cell.innerHTML = '⛏️';
+                else if (blockType === 'def') cell.innerHTML = '🔫';
+                
+                cell.onmouseover = () => { cell.style.background = 'rgba(34,139,34,0.5)'; };
+                cell.onmouseout = () => { cell.style.background = blockType ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.2)'; };
+                cell.onclick = () => this.buildBaseBlock(cellId);
+                
+                grid.appendChild(cell);
+            }
+        }
+    }
+
+    buildBaseBlock(cellId) {
+        const current = this.spaceBase[cellId];
+        
+        if (this.baseTool === 'erase') {
+            if (current) {
+                delete this.spaceBase[cellId];
+                this.showToast("Structure demolished.");
+                gameAudio.playMenuSelect();
+            }
+        } else {
+            // Check costs
+            if (this.playerCredits < 500) {
+                this.showToast("Cannot Afford! Need 500 Credits.", 2000, true);
+                return;
+            }
+            this.playerCredits -= 500;
+            localStorage.setItem('playerCredits', this.playerCredits);
+            this.updateInventoryUI();
+            
+            this.spaceBase[cellId] = this.baseTool;
+            this.showToast("Structure constructed");
+            gameAudio.playUpgrade();
+        }
+        
+        localStorage.setItem('spaceBase', JSON.stringify(this.spaceBase));
+        this.drawBaseGrid();
+    }
+
     // --- SAVE DATA SYSTEM ---
     exportSaveData() {
         const data = {};
@@ -17128,7 +17579,7 @@ class InterstellarEngine {
             if (['audioMuted', 'audioVolume', 'playerGems', 'unlockedShips', 'playerShipType', 
                  'playerShipColor', 'missionsCompleted', 'bossesDefeated', 'isPro', 'hudLayout',
                  'shipRotation', 'playerInventory', 'playerCredits', 'playerUpgrades', 
-                 'carriedResources', 'spaceBase', 'trainingProgress', 'loginData'].includes(k) || k.startsWith('windowLayout')) {
+                 'carriedResources', 'spaceBase', 'trainingProgress', 'loginData', 'playerSkills', 'factionRep'].includes(k) || k.startsWith('windowLayout')) {
                  data[k] = localStorage.getItem(k);
             }
         }
