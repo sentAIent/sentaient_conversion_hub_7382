@@ -56,6 +56,9 @@
                 onchange="app.setFixedColor(this.value)">
             <button class="btn-small" id="rainbowBtn" onclick="app.setRainbowMode()">🌈</button>
             <div class="divider"></div>
+            <button class="btn-small" title="Export Save Data" onclick="app.exportSaveData()" style="color: #00ffaa; border-color: rgba(0,255,170,0.3);">💾 Save</button>
+            <button class="btn-small" title="Import Save Data" onclick="app.triggerImportSaveData()" style="color: #ffaa00; border-color: rgba(255,170,0,0.3);">📂 Load</button>
+            <div class="divider"></div>
             <button class="btn-small" id="hangarBtn" onclick="app.showShipModal()">🚀 Hangar</button>
             <button class="btn-small" id="rotationToggle" onclick="app.toggleRotationPanel()">3D</button>
             <div class="divider"></div>
@@ -294,11 +297,11 @@
                 <button class="btn game-btn" onclick="window.game.toggleFlightMode()"
                     data-tooltip="Enter Flight Mode - Use WASD to fly!">🚀 FLY</button>
                 <button class="btn game-btn" id="selectShipBtn" onclick="window.game.showShipModal()"
-                    data-tooltip="Choose Your Spaceship" style="display:none">🛸 SHIP</button>
+                    data-tooltip="Choose Your Spaceship" style="display:none">🛸 <span class="hide-mobile">SHIP</span></button>
                 <button class="btn game-btn" id="dockBtn" onclick="window.game.toggleUpgradePanel()"
-                    data-tooltip="Upgrade Your Ship" style="display:none">🛠️ UPGRADES</button>
+                    data-tooltip="Upgrade Your Ship" style="display:none">🛠️ <span class="hide-mobile">UPGRADES</span></button>
                 <button class="btn game-btn" id="missionsBtn" onclick="window.game.toggleMissionBoard()"
-                    data-tooltip="View Available Missions">📋 MISSIONS</button>
+                    data-tooltip="View Available Missions">📋 <span class="hide-mobile">MISSIONS</span></button>
                 <button class="btn game-btn" id="mobile-toggle-btn" onclick="app.toggleMobileControls()"
                     data-tooltip="Toggle Mobile Joystick Controls">🎮 JOYSTICK</button>
                 <div class="divider" style="display:inline-block; width:1px; height:24px; background:rgba(255,255,255,0.2); margin:0 8px; vertical-align:middle;"></div>
@@ -418,7 +421,23 @@
 
         <!-- LEFT COLUMN: Now empty, Leaders floats separately -->
         <div class="hud-column hud-left">
-            <!-- Leaders window floats in top-left independently -->
+            <!-- Vitals & Cargo - Top Left -->
+            <div id="sectionVitals" class="cockpit-section" style="top:72px; left:15px; width:220px;">
+                <div class="cockpit-header">
+                    <h4>📊 Status Monitor</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionVitals')">−</button>
+                </div>
+                <div class="cockpit-content">
+                    <div style="margin-bottom: 8px;">
+                        <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">CREDITS</div>
+                        <div style="font-size: 20px; color: #ffd700; font-weight: bold;" id="walletValue">$0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">CARGO CAPACITY</div>
+                        <div style="font-size: 20px; color: #00ff88; font-weight: bold;" id="cargoStatus">📦 0/1000</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- CENTER COLUMN (Spacer) -->
@@ -543,7 +562,7 @@
 
                         <div style="margin-bottom: 6px;">
                             <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
-                                <span>Roll (Y)</span>
+                                 <span>Roll (Y)</span>
                                 <span id="rollValue">0°</span>
                             </div>
                             <input type="range" id="rollSlider" min="-180" max="180" value="0" style="width: 100%; cursor: pointer;" oninput="app.setShipRotation('roll', this.value)">
@@ -910,7 +929,7 @@
     </div>
 
     <!-- Style for Mobile Visibility & UI Polish -->
-    <script type="module" src="./script.js?v=nuclear_v12"></script>
+    <script type="module" src="./script.js?v=lotus_fix_final_v3"></script>
 </body>
 
 </html>

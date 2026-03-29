@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-cache-v42-restored';
+const CACHE_NAME = 'mindwave-cache-v44-economy-overhaul';
 
 // Essential assets to cache immediately upon installation
 const PRECACHE_URLS = [

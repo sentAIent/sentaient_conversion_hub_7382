@@ -78,6 +78,43 @@ class AudioEngine {
         return this.muted;
     }
 
+    // --- BINAURAL SYSTEM ---
+    
+    _createBinauralPair(type, freqBase, freqBeat, t, targetFreqTarget=null, rampDuration=null, rampType='exponential') {
+        const oscL = this.ctx.createOscillator();
+        const oscR = this.ctx.createOscillator();
+        const merger = this.ctx.createChannelMerger(2);
+        
+        oscL.type = type;
+        oscR.type = type;
+        
+        // Left Ear Base
+        oscL.frequency.setValueAtTime(freqBase, t);
+        // Right Ear + Binaural Beat offset
+        oscR.frequency.setValueAtTime(freqBase + freqBeat, t);
+        
+        if (targetFreqTarget && rampDuration) {
+            if (rampType === 'exponential') {
+                oscL.frequency.exponentialRampToValueAtTime(targetFreqTarget, t + rampDuration);
+                oscR.frequency.exponentialRampToValueAtTime(targetFreqTarget + freqBeat, t + rampDuration);
+            } else {
+                oscL.frequency.linearRampToValueAtTime(targetFreqTarget, t + rampDuration);
+                oscR.frequency.linearRampToValueAtTime(targetFreqTarget + freqBeat, t + rampDuration);
+            }
+        }
+        
+        oscL.connect(merger, 0, 0); // Left channel
+        oscR.connect(merger, 0, 1); // Right channel
+        
+        return {
+            start: (time) => { oscL.start(time); oscR.start(time); },
+            stop: (time) => { oscL.stop(time); oscR.stop(time); },
+            connect: (destination) => merger.connect(destination),
+            nodeL: oscL,
+            nodeR: oscR
+        };
+    }
+
     // --- SOUND EFFECTS ---
 
     playLaser() {
@@ -85,17 +122,15 @@ class AudioEngine {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
+        // High Gamma Beat for focus/energy (40Hz difference)
+        const pair = this._createBinauralPair('sawtooth', 880, 40, t, 220, 0.15);
         const gain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(880, t);
-        osc.frequency.exponentialRampToValueAtTime(220, t + 0.15);
         gain.gain.setValueAtTime(0.15, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        osc.connect(gain);
+        pair.connect(gain);
         gain.connect(this.sfxGain);
-        osc.start(t);
-        osc.stop(t + 0.15);
+        pair.start(t);
+        pair.stop(t + 0.15);
     }
 
     playEnemyLaser() {
@@ -103,17 +138,15 @@ class AudioEngine {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
+        // High Beta beat for alertness (20Hz)
+        const pair = this._createBinauralPair('square', 440, 20, t, 110, 0.1);
         const gain = this.ctx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(440, t);
-        osc.frequency.exponentialRampToValueAtTime(110, t + 0.1);
         gain.gain.setValueAtTime(0.08, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        osc.connect(gain);
+        pair.connect(gain);
         gain.connect(this.sfxGain);
-        osc.start(t);
-        osc.stop(t + 0.1);
+        pair.start(t);
+        pair.stop(t + 0.1);
     }
 
     playExplosionSmall() {
@@ -121,7 +154,17 @@ class AudioEngine {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        // Noise burst for explosion
+        
+        // Minor Delta rumble underneath the noise
+        const pair = this._createBinauralPair('sine', 150, 4, t, 40, 0.3);
+        const oscGain = this.ctx.createGain();
+        oscGain.gain.setValueAtTime(0.1, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        pair.connect(oscGain);
+        oscGain.connect(this.sfxGain);
+        pair.start(t);
+        pair.stop(t + 0.3);
+
         const bufferSize = this.ctx.sampleRate * 0.3;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -152,11 +195,16 @@ class AudioEngine {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        // Low rumble + noise
-        const osc = this.ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(80, t);
-        osc.frequency.exponentialRampToValueAtTime(20, t + 0.8);
+        
+        // Deep Delta rumble for massive explosions (2Hz diff)
+        const pair = this._createBinauralPair('sine', 80, 2, t, 20, 0.8);
+        const oscGain = this.ctx.createGain();
+        oscGain.gain.setValueAtTime(0.3, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+        pair.connect(oscGain);
+        oscGain.connect(this.sfxGain);
+        pair.start(t);
+        pair.stop(t + 0.8);
 
         const bufferSize = this.ctx.sampleRate * 0.8;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -176,17 +224,9 @@ class AudioEngine {
         gain.gain.setValueAtTime(0.35, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
 
-        const oscGain = this.ctx.createGain();
-        oscGain.gain.setValueAtTime(0.3, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-
-        osc.connect(oscGain);
-        oscGain.connect(this.sfxGain);
         noise.connect(filter);
         filter.connect(gain);
         gain.connect(this.sfxGain);
-        osc.start(t);
-        osc.stop(t + 0.8);
         noise.start(t);
         noise.stop(t + 0.8);
     }
@@ -196,17 +236,15 @@ class AudioEngine {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
+        // High frequency alpha hit
+        const pair = this._createBinauralPair('sine', 1200, 10, t, 400, 0.2);
         const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1200, t);
-        osc.frequency.exponentialRampToValueAtTime(400, t + 0.2);
         gain.gain.setValueAtTime(0.12, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        osc.connect(gain);
+        pair.connect(gain);
         gain.connect(this.sfxGain);
-        osc.start(t);
-        osc.stop(t + 0.2);
+        pair.start(t);
+        pair.stop(t + 0.2);
     }
 
     playHullHit() {
@@ -214,55 +252,50 @@ class AudioEngine {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        // Metallic clang
-        const osc = this.ctx.createOscillator();
+        // Metallic clang Beta (15Hz)
+        const pair = this._createBinauralPair('triangle', 300, 15, t, 80, 0.15);
         const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(300, t);
-        osc.frequency.exponentialRampToValueAtTime(80, t + 0.15);
         gain.gain.setValueAtTime(0.15, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        osc.connect(gain);
+        pair.connect(gain);
         gain.connect(this.sfxGain);
-        osc.start(t);
-        osc.stop(t + 0.15);
+        pair.start(t);
+        pair.stop(t + 0.15);
     }
 
     playUIClick() {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
+        const pair = this._createBinauralPair('sine', 660, 12, t);
+        // Custom linear sweep up
+        pair.nodeL.frequency.linearRampToValueAtTime(880, t + 0.03);
+        pair.nodeR.frequency.linearRampToValueAtTime(892, t + 0.03);
         const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(660, t);
-        osc.frequency.setValueAtTime(880, t + 0.03);
         gain.gain.setValueAtTime(0.08, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        osc.connect(gain);
+        pair.connect(gain);
         gain.connect(this.sfxGain);
-        osc.start(t);
-        osc.stop(t + 0.08);
+        pair.start(t);
+        pair.stop(t + 0.08);
     }
 
     playMissionComplete() {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        // Victory fanfare — ascending tones
+        // Victory fanfare — ascending tones with Alpha/Theta blend
         const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
         notes.forEach((freq, i) => {
-            const osc = this.ctx.createOscillator();
+            const pair = this._createBinauralPair('sine', freq, 8, t + i * 0.15); // Alpha 8Hz
             const gain = this.ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = freq;
             gain.gain.setValueAtTime(0, t + i * 0.15);
             gain.gain.linearRampToValueAtTime(0.12, t + i * 0.15 + 0.05);
             gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.3);
-            osc.connect(gain);
+            pair.connect(gain);
             gain.connect(this.sfxGain);
-            osc.start(t + i * 0.15);
-            osc.stop(t + i * 0.15 + 0.3);
+            pair.start(t + i * 0.15);
+            pair.stop(t + i * 0.15 + 0.3);
         });
     }
 
@@ -270,21 +303,23 @@ class AudioEngine {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        // Warning siren
+        // Warning siren (Intense Gamma 35Hz)
         for (let i = 0; i < 3; i++) {
-            const osc = this.ctx.createOscillator();
+            const pair = this._createBinauralPair('sawtooth', 200, 35, t + i * 0.4);
+            // Custom linear ramps up and down
+            pair.nodeL.frequency.linearRampToValueAtTime(600, t + i * 0.4 + 0.2);
+            pair.nodeR.frequency.linearRampToValueAtTime(635, t + i * 0.4 + 0.2);
+            pair.nodeL.frequency.linearRampToValueAtTime(200, t + i * 0.4 + 0.4);
+            pair.nodeR.frequency.linearRampToValueAtTime(235, t + i * 0.4 + 0.4);
+            
             const gain = this.ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(200, t + i * 0.4);
-            osc.frequency.linearRampToValueAtTime(600, t + i * 0.4 + 0.2);
-            osc.frequency.linearRampToValueAtTime(200, t + i * 0.4 + 0.4);
             gain.gain.setValueAtTime(0.1, t + i * 0.4);
             gain.gain.setValueAtTime(0.1, t + i * 0.4 + 0.35);
             gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.4 + 0.4);
-            osc.connect(gain);
+            pair.connect(gain);
             gain.connect(this.sfxGain);
-            osc.start(t + i * 0.4);
-            osc.stop(t + i * 0.4 + 0.4);
+            pair.start(t + i * 0.4);
+            pair.stop(t + i * 0.4 + 0.4);
         }
     }
 
@@ -293,54 +328,52 @@ class AudioEngine {
         this.ensureContext();
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
+        // High frequency Beta burst
+        const pair = this._createBinauralPair('sine', 600, 16, t, 1200, 0.1);
         const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, t);
-        osc.frequency.exponentialRampToValueAtTime(1200, t + 0.1);
         gain.gain.setValueAtTime(0.08, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-        osc.connect(gain);
+        pair.connect(gain);
         gain.connect(this.sfxGain);
-        osc.start(t);
-        osc.stop(t + 0.12);
+        pair.start(t);
+        pair.stop(t + 0.12);
     }
 
     // --- ENGINE HUM ---
 
     startEngineHum() {
         this.ensureContext();
-        if (!this.ctx || this.engineNode) return;
+        if (!this.ctx || this.enginePair) return;
 
-        this.engineNode = this.ctx.createOscillator();
+        // Steady Theta wave for focus during sustained flight (6Hz diff)
+        this.enginePair = this._createBinauralPair('sawtooth', 40, 6, this.ctx.currentTime);
         this.engineGain = this.ctx.createGain();
         const filter = this.ctx.createBiquadFilter();
 
-        this.engineNode.type = 'sawtooth';
-        this.engineNode.frequency.value = 40;
         filter.type = 'lowpass';
         filter.frequency.value = 150;
         filter.Q.value = 2;
         this.engineGain.gain.value = 0.04;
 
-        this.engineNode.connect(filter);
+        this.enginePair.connect(filter);
         filter.connect(this.engineGain);
         this.engineGain.connect(this.sfxGain);
-        this.engineNode.start();
+        this.enginePair.start(this.ctx.currentTime);
     }
 
     updateEngineHum(speed) {
-        if (!this.engineNode || !this.ctx) return;
+        if (!this.enginePair || !this.ctx) return;
         const freq = 40 + speed * 8; // Pitch up with speed
-        this.engineNode.frequency.setTargetAtTime(Math.min(freq, 200), this.ctx.currentTime, 0.1);
+        this.enginePair.nodeL.frequency.setTargetAtTime(Math.min(freq, 200), this.ctx.currentTime, 0.1);
+        this.enginePair.nodeR.frequency.setTargetAtTime(Math.min(freq + 6, 206), this.ctx.currentTime, 0.1); // Keep 6Hz difference
         const vol = 0.02 + Math.min(speed * 0.005, 0.08);
         this.engineGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
     }
 
     stopEngineHum() {
-        if (this.engineNode) {
-            try { this.engineNode.stop(); } catch (e) { }
-            this.engineNode = null;
+        if (this.enginePair) {
+            try { this.enginePair.stop(this.ctx.currentTime); } catch (e) { }
+            this.enginePair = null;
             this.engineGain = null;
         }
     }
@@ -358,54 +391,51 @@ class AudioEngine {
         if (!this.musicPlaying || !this.ctx) return;
 
         const t = this.ctx.currentTime;
-        // Ethereal pad: layers of detuned sine waves with slow modulation
+        // Ethereal pad: Deep Alpha entrainment for relaxing backdrop (10Hz spread)
         const baseFreqs = [65, 98, 131, 196]; // C2, G2, C3, G3
         const duration = 8;
+        const BINAURAL_SPREAD = 10; 
 
         baseFreqs.forEach((freq, i) => {
-            const osc = this.ctx.createOscillator();
+            const pair = this._createBinauralPair(i % 2 === 0 ? 'sine' : 'triangle', freq, BINAURAL_SPREAD, t);
+            // Slow pitch drift
+            pair.nodeL.frequency.linearRampToValueAtTime(freq * (1 + (Math.random() - 0.5) * 0.02), t + duration);
+            pair.nodeR.frequency.linearRampToValueAtTime((freq + BINAURAL_SPREAD) * (1 + (Math.random() - 0.5) * 0.02), t + duration);
+
             const gain = this.ctx.createGain();
             const filter = this.ctx.createBiquadFilter();
-
-            osc.type = i % 2 === 0 ? 'sine' : 'triangle';
-            osc.frequency.value = freq + (Math.random() - 0.5) * 2; // Slight detune
-            // Slow pitch drift
-            osc.frequency.setValueAtTime(freq, t);
-            osc.frequency.linearRampToValueAtTime(freq * (1 + (Math.random() - 0.5) * 0.02), t + duration);
 
             filter.type = 'lowpass';
             filter.frequency.value = 400 + Math.random() * 200;
 
-            // Fade in and out
             gain.gain.setValueAtTime(0, t);
             gain.gain.linearRampToValueAtTime(0.06, t + duration * 0.3);
             gain.gain.setValueAtTime(0.06, t + duration * 0.7);
             gain.gain.linearRampToValueAtTime(0, t + duration);
 
-            osc.connect(filter);
+            pair.connect(filter);
             filter.connect(gain);
             gain.connect(this.musicGain);
-            osc.start(t);
-            osc.stop(t + duration);
+            pair.start(t);
+            pair.stop(t + duration);
         });
 
-        // Add a high shimmering note occasionally
+        // Occasional high shimmering note (Gamma 40Hz)
         if (Math.random() < 0.5) {
-            const shimmer = this.ctx.createOscillator();
-            const shimGain = this.ctx.createGain();
-            shimmer.type = 'sine';
             const shimFreqs = [523, 659, 784, 880, 1047];
-            shimmer.frequency.value = shimFreqs[Math.floor(Math.random() * shimFreqs.length)];
+            const baseShim = shimFreqs[Math.floor(Math.random() * shimFreqs.length)];
+            const shimmerPair = this._createBinauralPair('sine', baseShim, 40, t + 2);
+
+            const shimGain = this.ctx.createGain();
             shimGain.gain.setValueAtTime(0, t + 2);
             shimGain.gain.linearRampToValueAtTime(0.02, t + 3);
             shimGain.gain.exponentialRampToValueAtTime(0.001, t + 6);
-            shimmer.connect(shimGain);
+            shimmerPair.connect(shimGain);
             shimGain.connect(this.musicGain);
-            shimmer.start(t + 2);
-            shimmer.stop(t + 6);
+            shimmerPair.start(t + 2);
+            shimmerPair.stop(t + 6);
         }
 
-        // Schedule next loop with slight overlap
         setTimeout(() => this._playAmbientLoop(), (duration - 1) * 1000);
     }
 
@@ -17087,6 +17117,69 @@ class InterstellarEngine {
 
         var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 243, 255';
+    }
+
+    // --- SAVE DATA SYSTEM ---
+    exportSaveData() {
+        const data = {};
+        for(let i = 0; i < localStorage.length; i++){
+            const k = localStorage.key(i);
+            // Export game-relevant variables only
+            if (['audioMuted', 'audioVolume', 'playerGems', 'unlockedShips', 'playerShipType', 
+                 'playerShipColor', 'missionsCompleted', 'bossesDefeated', 'isPro', 'hudLayout',
+                 'shipRotation', 'playerInventory', 'playerCredits', 'playerUpgrades', 
+                 'carriedResources', 'spaceBase', 'trainingProgress', 'loginData'].includes(k) || k.startsWith('windowLayout')) {
+                 data[k] = localStorage.getItem(k);
+            }
+        }
+        
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `interstellar_save_${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        if (this.showToast) this.showToast("🚀 Save Data Exported");
+    }
+
+    triggerImportSaveData() {
+        let input = document.getElementById('saveDataInput');
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'file';
+            input.id = 'saveDataInput';
+            input.accept = '.json';
+            input.style.display = 'none';
+            input.addEventListener('change', (e) => this.importDataFromFile(e));
+            document.body.appendChild(input);
+        }
+        input.click();
+    }
+
+    importDataFromFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                Object.keys(data).forEach(k => {
+                    localStorage.setItem(k, data[k]);
+                });
+                if (this.showToast) this.showToast("✅ Save Imported! Reloading...");
+                setTimeout(() => location.reload(), 1500);
+            } catch (err) {
+                console.error("Failed to import save data", err);
+                if (this.showToast) this.showToast("❌ Error: Invalid save file.");
+            }
+        };
+        reader.readAsText(file);
     }
 }
 
