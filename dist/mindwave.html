@@ -282,6 +282,9 @@
     </div>
 
     <!-- FULL-SCREEN 3D BACKGROUND -->
+
+    <!-- Global Dimmer Overlay -->
+    <div id="dimmerOverlay" class="fixed inset-0 bg-black pointer-events-none z-0" style="opacity: 0;"></div>
     <canvas id="visualizer" class="fixed inset-0 w-full h-full z-0"></canvas>
     <canvas id="cyber-overlay-canvas" class="fixed inset-0 w-full h-full z-[1] pointer-events-none hidden"></canvas>
 
@@ -326,54 +329,43 @@
                 <!-- Generator Sliders - Standardized Premium -->
                 <div class="flex items-center gap-6 flex-wrap justify-center ml-2">
                     <!-- Base Pitch -->
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center w-full px-0.5">
-                            <label class="premium-label">PITCH</label>
-                            <span id="baseValue" class="premium-value ml-2">200Hz</span>
-                        </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[9px] uppercase tracking-tighter text-white/40">Pitch</span>
                         <input type="range" id="baseSlider" min="50" max="1000" value="200"
                             class="premium-slider w-20 sm:w-28">
+                        <span id="baseValue" class="premium-value text-[9px]">200Hz</span>
                     </div>
 
                     <!-- Beat Freq -->
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center w-full px-0.5">
-                            <label class="premium-label">BEAT</label>
-                            <span id="beatValue" class="premium-value ml-2">10Hz</span>
-                        </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[9px] uppercase tracking-tighter text-white/40">Beat</span>
                         <input type="range" id="beatSlider" min="0.5" max="100" step="0.1" value="10"
                             class="premium-slider w-16 sm:w-20">
+                        <span id="beatValue" class="premium-value text-[9px]">10Hz</span>
                     </div>
 
                     <!-- Volume -->
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center w-full px-0.5">
-                            <label class="premium-label">BINAURAL</label>
-                            <span id="volValue" class="premium-value ml-2">50%</span>
-                        </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[9px] uppercase tracking-tighter text-white/40">Binaural</span>
                         <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.5"
                             class="premium-slider w-14 sm:w-18">
+                        <span id="volValue" class="premium-value text-[9px]">50%</span>
                     </div>
 
                     <!-- Separator -->
                     <div class="w-[1px] h-6 bg-white/20 mx-1"></div>
 
                     <!-- Master Volume -->
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center w-full px-0.5">
-                            <label class="premium-label">MAIN OUT</label>
-                            <span id="masterVolValue" class="premium-value ml-2">100%</span>
-                        </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[9px] uppercase tracking-tighter text-white/40">Main Out</span>
                         <input type="range" id="masterVolSlider" min="0" max="1" step="0.01" value="1.0"
                             class="premium-slider w-14 sm:w-18">
+                        <span id="masterVolValue" class="premium-value text-[9px]">100%</span>
                     </div>
 
                     <!-- L/R Balance -->
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center w-full px-0.5">
-                            <label class="premium-label">L/R FADER</label>
-                            <span id="balanceValue" class="premium-value ml-2">0</span>
-                        </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[9px] uppercase tracking-tighter text-white/40">L/R Fader</span>
                         <div class="flex items-center gap-1">
                             <span class="premium-label text-[8px] opacity-60">L</span>
                             <div class="relative flex-1 flex items-center justify-center w-14 sm:w-16">
@@ -383,6 +375,7 @@
                             </div>
                             <span class="premium-label text-[8px] opacity-60">R</span>
                         </div>
+                        <span id="balanceValue" class="premium-value text-[9px]">0</span>
                     </div>
                 </div>
 
@@ -967,8 +960,8 @@
 
                 <!-- Custom Text Input (always visible) -->
                 <div id="cyberCustomTextInput">
-                    <input type="text" id="cyberTextInput" placeholder="Welcome" maxlength="20" autocomplete="off"
-                        class="w-24 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
+                    <input type="text" id="cyberTextInput" placeholder="WELCOME TO MINDWAVE" maxlength="32" autocomplete="off"
+                        class="w-20 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
                 </div>
 
                 <!-- Hidden checkbox for legacy JS compat -->
@@ -1041,7 +1034,7 @@
                 <!-- Sliders Group -->
                 <div class="flex items-center gap-3">
                     <!-- Speed -->
-                    <div class="flex flex-col gap-0.5 w-24">
+                    <div class="flex flex-col gap-0.5 w-20">
                         <div class="flex justify-between items-center px-0.5">
                             <label class="premium-label">SPD</label>
                             <span id="cyberSpeedVal" class="premium-value">1.0</span>
@@ -1051,7 +1044,7 @@
                     </div>
 
                     <!-- Length -->
-                    <div class="flex flex-col gap-0.5 w-24">
+                    <div class="flex flex-col gap-0.5 w-20">
                         <div class="flex justify-between items-center px-0.5">
                             <label class="premium-label">LEN</label>
                             <span id="cyberLengthVal" class="premium-value">1.0</span>
@@ -1061,7 +1054,7 @@
                     </div>
 
                     <!-- Angle -->
-                    <div class="flex flex-col gap-0.5 w-24">
+                    <div class="flex flex-col gap-0.5 w-20">
                         <div class="flex justify-between items-center px-0.5">
                             <label class="premium-label">ANG</label>
                             <span id="cyberAngleVal" class="premium-value">0°</span>
@@ -1260,12 +1253,7 @@
 
             <!-- AI GOAL INPUT SECTION -->
             <div id="aiGoalSection" class="w-full px-2 animate-[fade-in_0.5s_ease]">
-                <div
-                    class="text-[10px] font-bold text-[var(--accent)] tracking-widest mb-2 px-1 flex items-center gap-2">
-                    <span>ASK MINDWAVE</span>
-                    <div class="h-px flex-1 bg-gradient-to-r from-[var(--accent)]/30 to-transparent"></div>
-                </div>
-                <div class="flex flex-col gap-2">
+                <div class="w-full space-y-2 px-2 animate-[fade-in_0.5s_ease]">
                     <input type="text" id="aiGoalInput" placeholder="Try 'Focus for 20 mins'..."
                         class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[var(--accent)] transition-all">
                     <button id="aiGenerateBtn"

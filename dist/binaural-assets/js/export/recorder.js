@@ -11,12 +11,24 @@ export function startRecording() {
     els.recordBtn.innerHTML = `<div class="w-6 h-6 rounded-sm bg-red-500 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.8)]"></div>`;
 
     // Check audio is playing
-    if (!state.destStreamNode || !state.isPlaying) {
-        console.error('[Recording] Audio not ready');
+    if (!state.isPlaying) {
+        console.error('[Recording] Audio not ready (isPlaying: false)');
         alert("Start audio first!");
         state.isRecording = false;
         els.recordBtn.classList.remove('recording-active');
         els.recordBtn.innerHTML = `<div class="w-6 h-6 rounded-full bg-red-500 transition-all group-hover:scale-110 shadow-[0_0_15px_rgba(239,68,68,0.5)]"></div>`;
+        return;
+    }
+
+    // Lazily instantiate the destination stream to avoid Safari auto-mute bugs on startup
+    if (!state.destStreamNode && state.audioCtx && state.videoCaptureGain) {
+        console.log('[Recording] Lazily instantiating MediaStreamDestination...');
+        state.destStreamNode = state.audioCtx.createMediaStreamDestination();
+        state.videoCaptureGain.connect(state.destStreamNode);
+    } else if (!state.destStreamNode) {
+        console.error('[Recording] AudioContext or videoCaptureGain missing!');
+        alert("Audio engine failed to initialize the recording stream.");
+        stopRecording();
         return;
     }
 

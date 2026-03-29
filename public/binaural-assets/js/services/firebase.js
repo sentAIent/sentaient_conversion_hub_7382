@@ -158,6 +158,7 @@ export async function initFirebase() {
         }
 
         console.log("Firebase initialized successfully");
+        window.__firebase_initialized = true;
 
         // Auth Listener
         onAuthStateChanged(auth, async (user) => {

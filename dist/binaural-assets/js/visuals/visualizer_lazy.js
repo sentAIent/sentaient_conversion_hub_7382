@@ -79,12 +79,12 @@ export function setVisualSpeed(speed) {
 /**
  * Set visual color
  */
-export function setVisualColor(color) {
+export function setVisualColor(color, mode = null) {
     if (!visualizerModule) {
-        pendingActions.push(() => visualizerModule.setVisualColor(color));
+        pendingActions.push(() => visualizerModule.setVisualColor(color, mode));
         return;
     }
-    return visualizerModule.setVisualColor(color);
+    return visualizerModule.setVisualColor(color, mode);
 }
 
 /**

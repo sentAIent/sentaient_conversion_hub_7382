@@ -65,6 +65,35 @@
             box.innerHTML += `<div>PROMISE REJECT: ${event.reason}</div>`;
             document.body.appendChild(box);
         });
+
+        // GLOBAL UI TOGGLES (Proxies to controls_v3.js)
+        window.toggleGalaxySettings = function(btn) {
+            console.log('[HTML] toggleGalaxySettings clicked');
+            if (window.controls && window.controls.toggleGalaxySettings) {
+                window.controls.toggleGalaxySettings(btn);
+            } else {
+                const panel = document.getElementById('galaxySettingsPanel');
+                if (panel) panel.classList.toggle('hidden');
+            }
+        };
+        window.toggleMatrixSettings = function(btn) {
+            console.log('[HTML] toggleMatrixSettings clicked');
+            if (window.controls && window.controls.toggleMatrixSettings) {
+                window.controls.toggleMatrixSettings(btn);
+            } else {
+                const panel = document.getElementById('matrixSettingsPanel');
+                if (panel) panel.classList.toggle('hidden');
+            }
+        };
+        window.toggleCyberSettings = function(btn) {
+            console.log('[HTML] toggleCyberSettings clicked');
+            if (window.controls && window.controls.toggleCyberSettings) {
+                window.controls.toggleCyberSettings(btn);
+            } else {
+                const panel = document.getElementById('cyberSettingsPanel');
+                if (panel) panel.classList.toggle('hidden');
+            }
+        };
     </script>
     <title>MindWave - Binaural Beats Studio</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
@@ -303,6 +332,7 @@
                         </div>
                         <input type="range" id="baseSlider" min="50" max="1000" value="200"
                             class="premium-slider w-20 sm:w-28">
+                        <span id="baseValue" class="premium-value text-[9px]">200Hz</span>
                     </div>
 
                     <!-- Beat Freq -->
@@ -313,37 +343,31 @@
                         </div>
                         <input type="range" id="beatSlider" min="0.5" max="100" step="0.1" value="10"
                             class="premium-slider w-16 sm:w-20">
+                        <span id="beatValue" class="premium-value text-[9px]">10Hz</span>
                     </div>
 
                     <!-- Volume -->
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center w-full px-0.5">
-                            <label class="premium-label">BINAURAL</label>
-                            <span id="volValue" class="premium-value ml-2">50%</span>
-                        </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[9px] uppercase tracking-tighter text-white/40">Binaural</span>
                         <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.5"
                             class="premium-slider w-14 sm:w-18">
+                        <span id="volValue" class="premium-value text-[9px]">50%</span>
                     </div>
 
                     <!-- Separator -->
                     <div class="w-[1px] h-6 bg-white/20 mx-1"></div>
 
                     <!-- Master Volume -->
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center w-full px-0.5">
-                            <label class="premium-label">MAIN OUT</label>
-                            <span id="masterVolValue" class="premium-value ml-2">100%</span>
-                        </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[9px] uppercase tracking-tighter text-white/40">Main Out</span>
                         <input type="range" id="masterVolSlider" min="0" max="1" step="0.01" value="1.0"
                             class="premium-slider w-14 sm:w-18">
+                        <span id="masterVolValue" class="premium-value text-[9px]">100%</span>
                     </div>
 
                     <!-- L/R Balance -->
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center w-full px-0.5">
-                            <label class="premium-label">L/R FADER</label>
-                            <span id="balanceValue" class="premium-value ml-2">0</span>
-                        </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[9px] uppercase tracking-tighter text-white/40">L/R Fader</span>
                         <div class="flex items-center gap-1">
                             <span class="premium-label text-[8px] opacity-60">L</span>
                             <div class="relative flex-1 flex items-center justify-center w-14 sm:w-16">
@@ -353,6 +377,7 @@
                             </div>
                             <span class="premium-label text-[8px] opacity-60">R</span>
                         </div>
+                        <span id="balanceValue" class="premium-value text-[9px]">0</span>
                     </div>
                 </div>
 
@@ -2501,7 +2526,7 @@
     </div>
 
     <!-- Stats Modal -->
-    <div id="statsModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 hidden">
+    <div id="statsModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
 
         <div class="glass-card p-6 rounded-2xl shadow-2xl max-w-md w-full mx-4 flex flex-col gap-4">
             <div class="flex justify-between items-center">

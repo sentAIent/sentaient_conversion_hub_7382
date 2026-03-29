@@ -233,7 +233,7 @@ export const state = {
     beatsGain: null, masterAtmosGain: null, masterGain: null, masterPanner: null,
     masterCompressor: null, analyserLeft: null, analyserRight: null,
     isPlaying: false, isRecording: false, isStopping: false, isAudioStopping: false, videoEnabled: false,
-    animationId: null, visualMode: 'particles',
+    animationId: null, visualMode: 'cyber',
     mediaRecorder: null, recordedChunks: [], destStreamNode: null,
     activeSoundscapes: {},
     soundscapeSettings: {},
@@ -313,7 +313,7 @@ export const state = {
     }
 };
 
-export const VISUALIZER_VERSION = 'PERFECT_V11';
+export const VISUALIZER_VERSION = 'PERFECT_V16';
 
 // Global Elements Container
 export const els = {

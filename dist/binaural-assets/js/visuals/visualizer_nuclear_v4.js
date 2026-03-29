@@ -39,7 +39,7 @@ export class Visualizer3D {
         this.isVisualizer3D = true;
 
         // Cyber 2D Overlay State (Cyber Mode)
-        this.overlayCanvas = document.getElementById('cyber-overlay-canvas');
+        this.overlayCanvas = document.getElementById('cyberCanvas');
         this.overlayCtx = this.overlayCanvas ? this.overlayCanvas.getContext('2d', { alpha: true }) : null;
         if (this.overlayCanvas) {
             this.resizeOverlayCanvas();
@@ -92,7 +92,12 @@ export class Visualizer3D {
         try {
             this.scene = new THREE.Scene();
             this.camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
-            this.renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            this.renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas, 
+                alpha: true, 
+                antialias: true,
+                preserveDrawingBuffer: true
+            });
             this.renderer.autoClear = false; // Prevent black flash on frame drops
             this.renderer.setClearColor(0x000000, 0); // Transparent background
             this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -106,6 +111,9 @@ export class Visualizer3D {
 
             this.particleGroup = new THREE.Group();
             this.scene.add(this.particleGroup);
+
+            this.lightspeedGroup = new THREE.Group();
+            this.scene.add(this.lightspeedGroup);
 
             this.lavaGroup = new THREE.Group();
             this.scene.add(this.lavaGroup);
@@ -284,8 +292,8 @@ export class Visualizer3D {
         // every time we re-trigger Cyber style (which was causing massive Chrome lock-ups).
         this.matrixCyberStreams = [];
 
-        // Dynamic density based on screen size - reduced for stability on high-res Macs
-        const fontSize = Math.max(14, Math.min(26, Math.floor(canvas.width / 40)));
+        // Dynamic density based on screen size - reduced by ~20% per user request
+        const fontSize = Math.max(11, Math.min(21, Math.floor(canvas.width / 50)));
         this.isLowPower = localStorage.getItem('mindwave_battery_saver') === 'true' ||
             document.body.classList.contains('system-stability-mode');
 
@@ -350,8 +358,9 @@ export class Visualizer3D {
             // Only sync if the toggle doesn't match the theme AND we aren't in a custom state
             // Actually, simpler: just don't touch this.cyberRainbowMode here if it's already defined
             if (this.cyberRainbowMode === undefined) {
-                this.cyberRainbowMode = (currentTheme.color === 'rainbow');
-                rainbowToggle.checked = this.cyberRainbowMode;
+                this.cyberRainbowMode = true;
+                this.cyberConfig.rainbow = true;
+                rainbowToggle.checked = true;
             }
         }
 
@@ -364,7 +373,8 @@ export class Visualizer3D {
 
         for (let i = 0; i < columns; i++) {
             const depth = Math.random();
-            const size = Math.floor(10 + depth * 14);
+            // NORMALLY 10-24px. 20% reduction target is 8-19px.
+            const size = Math.floor(8 + depth * 11); 
             const speed = (2 + depth * 8 + Math.random() * 2) * this.cyberSpeedMultiplier;
 
             this.matrixCyberStreams.push({
@@ -502,10 +512,30 @@ export class Visualizer3D {
         this.sphereGroup.add(this.core);
         this.sphereGroup.visible = false;
 
-        if (this.customColor) {
-            this.sphere.material.color.copy(this.customColor);
-            this.core.material.color.copy(this.customColor);
+        const sphInitCol = this.customColors?.["sphere"] || this.customColor;
+        if (sphInitCol) {
+            this.sphere.material.color.copy(sphInitCol);
+            this.core.material.color.copy(sphInitCol);
         }
+    }
+
+    initLightspeed() {
+        const particleCount = 2000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        for(let i=0; i<particleCount*3; i++) {
+            positions[i] = (Math.random() - 0.5) * 80;
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const material = new THREE.PointsMaterial({
+            color: 0x2dd4bf,
+            size: 0.15,
+            transparent: true,
+            opacity: 0.8,
+            map: this.createCircleTexture()
+        });
+        this.lightspeed = new THREE.Points(geometry, material);
+        this.lightspeedGroup.add(this.lightspeed);
     }
 
     initParticles() {
@@ -550,8 +580,9 @@ export class Visualizer3D {
         this.particleGroup.add(this.particles);
         this.particleGroup.visible = false;
 
-        if (this.customColor) {
-            this.particles.material.color.copy(this.customColor);
+        const parColor = this.customColors?.["particles"] || this.customColor;
+        if (parColor) {
+            this.particles.material.color.copy(parColor);
         }
     }
 
@@ -595,10 +626,11 @@ export class Visualizer3D {
         this.boxGroup.add(this.boxEdges);
         this.boxGroup.visible = false;
 
-        if (this.customColor) {
-            this.boxOuter.children.forEach(c => c.material.color.copy(this.customColor));
-            this.boxInner.children.forEach(c => c.material.color.copy(this.customColor));
-            if (this.boxEdges && this.boxEdges.material) this.boxEdges.material.color.copy(this.customColor);
+        const boxInitCol = this.customColors?.["box"] || this.customColor;
+        if (boxInitCol) {
+            this.boxOuter.children.forEach(c => c.material.color.copy(boxInitCol));
+            this.boxInner.children.forEach(c => c.material.color.copy(boxInitCol));
+            if (this.boxEdges && this.boxEdges.material) this.boxEdges.material.color.copy(boxInitCol);
         }
     }
 
@@ -662,8 +694,9 @@ export class Visualizer3D {
 
         this.dragonGroup.visible = false;
 
-        if (this.customColor) {
-            this.updateDragonColor(this.customColor);
+        const dragInitCol = this.customColors?.["dragon"] || this.customColor;
+        if (dragInitCol) {
+            this.updateDragonColor(dragInitCol);
         }
     }
 
@@ -773,9 +806,10 @@ export class Visualizer3D {
         this.galaxyGroup.visible = false;
 
         // Apply custom color if already set
-        if (this.customColor) {
-            this.updateGalaxyColor(this.customColor);
-        }
+        // This block is removed as color updates are now handled in the render loop
+        // if (this.customColor) {
+        //     this.updateGalaxyColor(this.customColor);
+        // }
     }
 
     createGalaxySun(style) {
@@ -945,7 +979,7 @@ export class Visualizer3D {
     initMandala() {
         // Sacred geometry: concentric rotating rings
         this.mandalaRings = [];
-        const ringColors = [0xf59e0b, 0xfbbf24, 0xf97316, 0xfb923c, 0xef4444];
+        const ringColors = [0x2563eb, 0xea580c, 0x3b82f6, 0xf97316, 0xbfdbfe];
 
         for (let i = 0; i < 5; i++) {
             const radius = 1.2 + i * 0.8;
@@ -967,7 +1001,7 @@ export class Visualizer3D {
         // Center dot
         const dotGeo = new THREE.CircleGeometry(0.3, 32);
         const dotMat = new THREE.MeshBasicMaterial({
-            color: 0xfbbf24,
+            color: 0xf97316,
             transparent: true,
             opacity: 0.6,
             blending: THREE.AdditiveBlending
@@ -976,9 +1010,10 @@ export class Visualizer3D {
         this.mandalaGroup.add(this.mandalaCenter);
         this.mandalaGroup.visible = false;
 
-        if (this.customColor) {
-            this.mandalaRings.forEach(r => r.material.color.copy(this.customColor));
-            this.mandalaCenter.material.color.copy(this.customColor);
+        const manInitCol = this.customColors?.["mandala"];
+        if (manInitCol) {
+            this.mandalaRings.forEach(r => r.material.color.copy(manInitCol));
+            this.mandalaCenter.material.color.copy(manInitCol);
         }
     }
 
@@ -1256,8 +1291,9 @@ export class Visualizer3D {
         this.rainforestGroup.add(this.raindrops);
         this.rainforestGroup.visible = false;
 
-        if (this.customColor) {
-            this.raindrops.material.color.copy(this.customColor);
+        const rainCol = this.customColors?.["rain"] || this.customColor;
+        if (rainCol) {
+            this.raindrops.material.color.copy(rainCol);
         }
         console.log('[Visualizer] Rainforest initialized');
     }
@@ -1293,8 +1329,9 @@ export class Visualizer3D {
         this.zenGardenGroup.add(this.petals);
         this.zenGardenGroup.visible = false;
 
-        if (this.customColor) {
-            this.petals.material.color.copy(this.customColor);
+        const sakuraCol = this.customColors?.["sakura"] || this.customColor;
+        if (sakuraCol) {
+            this.petals.material.color.copy(sakuraCol);
         }
         console.log('[Visualizer] Zen Garden initialized');
     }
@@ -1338,9 +1375,10 @@ export class Visualizer3D {
 
         this.oceanGroup.visible = false;
 
-        if (this.customColor) {
-            if (this.oceanWave) this.oceanWave.material.color.copy(this.customColor);
-            if (this.oceanFoam) this.oceanFoam.material.color.copy(this.customColor);
+        const oceanCol = this.customColors?.["ocean"] || this.customColor;
+        if (oceanCol) {
+            if (this.oceanWave) this.oceanWave.material.color.copy(oceanCol);
+            if (this.oceanFoam) this.oceanFoam.material.color.copy(oceanCol);
         }
         console.log('[Visualizer] Original Ocean (Wireframe) restored');
     }
@@ -1366,7 +1404,7 @@ export class Visualizer3D {
         ctx.shadowBlur = 12; // Adjusted for 1024
         ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
 
-        ctx.font = 'bold 100px "Courier New", "MS Gothic", "Hiragino Kaku Gothic ProN", monospace';
+        ctx.font = 'bold 80px "Courier New", "MS Gothic", "Hiragino Kaku Gothic ProN", monospace';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -1427,7 +1465,7 @@ export class Visualizer3D {
                     ctx.save();
                     ctx.scale(-1, 1);
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 100px monospace';
+                    ctx.font = 'bold 80px monospace';
                     ctx.fillText(char, 0, 0);
                     ctx.restore();
                     char = '';
@@ -1436,7 +1474,7 @@ export class Visualizer3D {
 
             if (char || isLogo) {
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 100px monospace';
+                ctx.font = 'bold 80px monospace';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.shadowBlur = 16;
@@ -1444,9 +1482,9 @@ export class Visualizer3D {
 
                 if (isLogo) {
                     if (this.logoImage) {
-                        // Base size 100 (Increased for better 128px cell fill)
-                        const charBaseSize = 100;
-                        const logoRenderSize = 125; // Maintaining 25% larger ratio
+                        // Base size 80 (Reduced 20% to avoid overflow and match scaling)
+                        const charBaseSize = 80;
+                        const logoRenderSize = 100; // Maintaining 25% larger ratio relative to 80px baseline
 
                         const offset = -logoRenderSize / 2;
 
@@ -1496,7 +1534,9 @@ export class Visualizer3D {
                                 this.logoLoading = false;
                             });
                         }
-                        ctx.fillText("MW", 0, 0);
+                        ctx.font = 'bold 80px monospace'; // Adjusted size
+                        ctx.fillStyle = '#2dd4bf'; // teal-400
+                        ctx.fillText('🪷', 0, 0); // Replaced weird giant H with Lotus
                     }
                 } else {
                     ctx.fillText(char, 0, 0);
@@ -1553,8 +1593,7 @@ export class Visualizer3D {
                     }
                     gl_Position = projectionMatrix * mvPosition;
                     gl_Position.z -= 0.01; // Avoid flickering
-                    gl_PointSize = 480.0 / -mvPosition.z;
-                    if (abs(aCharIndex - 0.0) < 0.1) gl_PointSize *= 1.6;
+                    gl_PointSize = 384.0 / -mvPosition.z; // Reduced from 480.0 to match 20% shrink
                 }
 
             `,
@@ -1640,6 +1679,7 @@ export class Visualizer3D {
         console.time(tLabel);
         if (mode === 'sphere' && this.sphereGroup && this.sphereGroup.children.length === 0) this.initSphere();
         if (mode === 'particles' && this.particleGroup && this.particleGroup.children.length === 0) this.initParticles();
+        if (mode === 'lightspeed' && this.lightspeedGroup && this.lightspeedGroup.children.length === 0) this.initLightspeed();
         if (mode === 'waves' && this.wavesGroup && this.wavesGroup.children.length === 0) this.initWaves();
         if (mode === 'lava' && this.lavaGroup && this.lavaGroup.children.length === 0) this.initLava();
         if (mode === 'fireplace' && this.fireplaceGroup && this.fireplaceGroup.children.length === 0) this.initFireplace();
@@ -1743,8 +1783,6 @@ export class Visualizer3D {
         if (this.currentCyberAngle !== undefined) {
             this.cyberRotationGroup.rotation.z = THREE.MathUtils.degToRad(-this.currentCyberAngle);
         }
-
-        this.updateVisibility();
     }
 
     setCyberMode(enabled) {
@@ -1814,6 +1852,7 @@ export class Visualizer3D {
 
         if (this.sphereGroup) this.sphereGroup.visible = this.activeModes.has('sphere');
         if (this.particleGroup) this.particleGroup.visible = this.activeModes.has('particles');
+        if (this.lightspeedGroup) this.lightspeedGroup.visible = this.activeModes.has('lightspeed');
         if (this.wavesGroup) this.wavesGroup.visible = this.activeModes.has('waves');
         if (this.lavaGroup) this.lavaGroup.visible = this.activeModes.has('lava');
         if (this.fireplaceGroup) this.fireplaceGroup.visible = this.activeModes.has('fireplace');
@@ -1843,6 +1882,12 @@ export class Visualizer3D {
                 }
             } else {
                 this.overlayCanvas.classList.add('hidden');
+                // Automatically restore full illumination when Cyber overlay closes
+                // only if it was forcefully dimmed by the engine.
+                if (this.wasAutoDimmed) {
+                    window.dispatchEvent(new CustomEvent('mindwave:set-dimmer', { detail: { value: 0.0 } }));
+                    this.wasAutoDimmed = false;
+                }
             }
         }
 
@@ -1857,6 +1902,7 @@ export class Visualizer3D {
         if (label) {
             if (mode === 'sphere') label.textContent = "BIO-RESONANCE";
             else if (mode === 'particles') label.textContent = "NEURAL FLOW";
+            else if (mode === 'lightspeed') label.textContent = "WARP";
             else if (mode === 'waves') label.textContent = "FREQUENCY WAVES";
             else if (mode === 'lava') label.textContent = "LAVA LAMP";
             else if (mode === 'fireplace') label.textContent = "FIREPLACE";
@@ -1896,8 +1942,9 @@ export class Visualizer3D {
         this.wavesMesh.rotation.x = -Math.PI / 2;
         this.wavesGroup.add(this.wavesMesh);
 
-        if (this.customColor && this.wavesMesh) {
-            this.wavesMesh.material.color.copy(this.customColor);
+        const warpCol = this.customColors?.["warp"] || this.customColor;
+        if (warpCol && this.wavesMesh) {
+            this.wavesMesh.material.color.copy(warpCol);
         }
     }
 
@@ -1937,12 +1984,29 @@ export class Visualizer3D {
         this.renderSingleFrame();
     }
 
-    setColor(hex) {
-        this.customColor = new THREE.Color(hex);
+    setColor(hex, mode = null) {
+        if (!this.customColors) this.customColors = {};
+        if (!mode || mode === "all") {
+            this.customColors = {};
+            this.customColor = new THREE.Color(hex);
+        } else {
+            this.customColors[mode] = new THREE.Color(hex);
+        }
+        
         if (this.particles && this.particles.material) this.particles.material.color.set(hex);
+        if (this.lightspeed && this.lightspeed.material) this.lightspeed.material.color.set(hex);
         if (this.sphere && this.sphere.material) {
             this.sphere.material.color.set(hex);
             this.core.material.color.set(hex);
+        }
+        if (mode === 'box' || !mode || mode === 'all') {
+            if (this.boxOuter) this.boxOuter.children.forEach(c => c.material.color.set(hex));
+            if (this.boxInner) this.boxInner.children.forEach(c => c.material.color.set(hex));
+            if (this.boxEdges && this.boxEdges.material) this.boxEdges.material.color.set(hex);
+        }
+        if (mode === 'mandala') {
+            if (this.mandalaRings) this.mandalaRings.forEach(r => r.material.color.set(hex));
+            if (this.mandalaCenter && this.mandalaCenter.material) this.mandalaCenter.material.color.set(hex);
         }
         if (this.wavesMesh && this.wavesMesh.material) this.wavesMesh.material.color.set(hex);
         if (this.lavaBlobs) this.lavaBlobs.forEach(blob => blob.material.color.set(hex));
@@ -1963,11 +2027,11 @@ export class Visualizer3D {
             this.updateLogoTexture();
         }
         if (this.dragonGroup && this.updateDragonColor) {
-            this.updateDragonColor(this.customColor);
+            this.updateDragonColor(new THREE.Color(hex));
         }
         // Galaxy: sun = picked color, stars = complementary
         if (this.galaxyStars || this.galaxySunMesh) {
-            this.updateGalaxyColor(this.customColor);
+            this.updateGalaxyColor(new THREE.Color(hex));
         }
         this.renderSingleFrame();
     }
@@ -2085,9 +2149,10 @@ export class Visualizer3D {
                 const g = 212 / 255 - (vNormHighs * 0.1);
                 const b = 191 / 255 + (vNormMids * 0.2);
 
-                if (this.customColor) {
-                    this.sphere.material.color.copy(this.customColor);
-                    this.core.material.color.copy(this.customColor);
+                const sphColor = (this.customColors && this.customColors['sphere']) ? this.customColors['sphere'] : this.customColor;
+                if (sphColor) {
+                    this.sphere.material.color.copy(sphColor);
+                    this.core.material.color.copy(sphColor);
                 } else {
                     this.sphere.material.color.setRGB(r, g, b);
                     this.core.material.color.setRGB(r, g, b);
@@ -2104,6 +2169,15 @@ export class Visualizer3D {
                 }
                 this.particles.geometry.attributes.position.needsUpdate = true;
                 this.particleGroup.rotation.z += (0.001 * multiplier) + (vNormMids * 0.005);
+            }
+
+            if (this.activeModes.has('lightspeed') && this.lightspeed) {
+                const pos = this.lightspeed.geometry.attributes.position.array;
+                for (let i = 2; i < pos.length; i += 3) {
+                    pos[i] += 0.02 * multiplier;
+                    if (pos[i] > 40) pos[i] = -40;
+                }
+                this.lightspeed.geometry.attributes.position.needsUpdate = true;
             }
 
             if (this.activeModes.has('lava') && this.lavaBlobs) {
@@ -2289,7 +2363,13 @@ export class Visualizer3D {
                 this.boxOuter.scale.setScalar(cubeScale);
                 this.boxEdges.scale.setScalar(cubeScale);
                 this.boxInner.scale.setScalar(cubeScale * 0.95);
-                if (!this.customColor) {
+
+                const boxColor = (this.customColors && this.customColors['box']) ? this.customColors['box'] : this.customColor;
+                if (boxColor) {
+                    this.boxOuter.children.forEach(c => c.material.color.copy(boxColor));
+                    this.boxInner.children.forEach(c => c.material.color.copy(boxColor));
+                    if (this.boxEdges && this.boxEdges.material) this.boxEdges.material.color.copy(boxColor);
+                } else {
                     const b = 0.48 + vNormHighs * 0.3;
                     this.boxOuter.children.forEach(c => c.material.color.setRGB(0.23, 0.51, b));
                 }
@@ -2356,8 +2436,10 @@ export class Visualizer3D {
                 this.dragonPearlGroup.rotation.x += 0.08 * multiplier;
                 this.dragonPearlGroup.rotation.y += 0.12 * multiplier;
 
-                // Color pulsing
-                if (!this.customColor) {
+                const dragColor = (this.customColors && this.customColors['dragon']) ? this.customColors['dragon'] : this.customColor;
+                if (dragColor) {
+                    this.updateDragonColor(dragColor);
+                } else {
                     // Flash body Crimson/Gold based on audio
                     this.dragonBodyInstanced.material.color.setRGB(0.9 + vNormBass * 0.1, 0.2 + vNormMids * 0.1, 0.1);
                     // Flash pearl Cyan/White
@@ -2552,6 +2634,24 @@ export class Visualizer3D {
             }
 
             if (timeSinceLastFrame >= frameInterval) {
+                // If Warp is the ONLY active mode, it leaves trails. We need a fade plane to gradually clear them.
+                if (this.activeModes.has('lightspeed') && this.activeModes.size === 1) {
+                    if (!this.fadePlane) {
+                        this.fadePlane = new THREE.Mesh(
+                            new THREE.PlaneGeometry(200, 200),
+                            new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.05, depthWrite: false })
+                        );
+                        this.fadePlane.position.z = this.camera.position.z - 2;
+                        this.scene.add(this.fadePlane);
+                    }
+                    this.fadePlane.visible = true;
+                    this.renderer.autoClear = false;
+                } else {
+                    if (this.fadePlane) this.fadePlane.visible = false;
+                    this.renderer.autoClear = !this.activeModes.has('lightspeed');
+                    if (!this.activeModes.has('lightspeed')) this.renderer.clear();
+                }
+                
                 this.renderer.render(this.scene, this.camera);
                 this.lastFrameRenderTime = performance.now();
             }
@@ -2610,14 +2710,16 @@ export class Visualizer3D {
 
     setGlobalSpeed(speed) {
         this.speedMultiplier = speed;
-        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uSpeed)
-            this.cyberMaterial.uniforms.uSpeed.value = 1.0 + (speed - 1.0) * 0.5; // Scale gently
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uSpeed) {
+            this.cyberMaterial.uniforms.uSpeed.value = 1.0 + (speed - 1.0) * 0.5;
+        }
     }
 
     setGlobalBrightness(brightness) {
         this.brightnessMultiplier = brightness;
-        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness)
+        if (this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
             this.cyberMaterial.uniforms.uBrightness.value = brightness;
+        }
     }
 
     // --- CYBER (UI) -> Internal Cyber (2D Overlay) ---
@@ -2808,7 +2910,8 @@ export class Visualizer3D {
         const currentTheme = THEMES[themeName] || THEMES.default;
         const secondaryHex = currentTheme.secondary || currentTheme.accent || '#ffffff';
 
-        const accentHex = this.customColor ? this.customColor.getHex() : parseInt(currentTheme.accent.replace('#', ''), 16);
+        const manColor = (this.customColors && this.customColors['mandala']) ? this.customColors['mandala'] : this.customColor;
+        const accentHex = manColor ? manColor.getHex() : parseInt(currentTheme.accent.replace('#', ''), 16);
         const secondaryInt = parseInt(secondaryHex.replace('#', ''), 16);
 
         const accentR = (accentHex >> 16) & 255;
@@ -2935,7 +3038,7 @@ export class Visualizer3D {
         };
 
         const groups = [
-            this.sphereGroup, this.particleGroup, this.lavaGroup,
+            this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup,
             this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup,
             this.oceanGroup, this.cyberGroup, this.boxGroup,
             this.dragonGroup, this.galaxyGroup, this.mandalaGroup,
@@ -3015,7 +3118,6 @@ export function initVisualizer() {
 }
 
 export function getVisualizer() {
-    if (!viz3D) console.warn('[Visualizer] getVisualizer() called but viz3D is null');
     return viz3D;
 }
 let visualsPaused = false;
@@ -3040,6 +3142,6 @@ export function resumeVisuals() {
 export function isVisualsPaused() { return visualsPaused; }
 export function toggleVisual(mode) { if (viz3D) viz3D.toggleMode(mode); }
 export function setVisualSpeed(speed) { if (viz3D) { viz3D.setGlobalSpeed(speed); if (viz3D.setCyberSpeed) viz3D.setCyberSpeed(speed); } }
-export function setVisualColor(hex) { if (viz3D) { viz3D.setColor(hex); if (viz3D.setCyberColor) viz3D.setCyberColor(hex); } }
+export function setVisualColor(hex, mode = null) { if (viz3D) { viz3D.setColor(hex, mode); if (viz3D.setCyberColor && (!mode || mode == "cyber")) viz3D.setCyberColor(hex); } }
 export function setVisualBrightness(brightness) { if (viz3D && viz3D.setGlobalBrightness) viz3D.setGlobalBrightness(brightness); }
 export function setVisualLogoOpacity(opacity) { if (viz3D) viz3D.setLogoOpacity(opacity); }

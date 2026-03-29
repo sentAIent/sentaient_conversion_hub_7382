@@ -293,13 +293,13 @@ export function updateBottomBarWidth() {
     const rightWidth = rightOpen ? Math.max(0, windowWidth - rightRect.left) : 0;
     const availableWidth = windowWidth - leftWidth - rightWidth;
 
-    // Keep footer at full viewport width — content is centered via CSS flex
-    // Pointer events pass through to allow sidebar interaction
+    // Keep footer at full viewport width BUT push its internal padding to avoid sidebars
+    // This allows the centered UI container to organically flex-wrap when space shrinks
     bottomBar.style.left = '0';
     bottomBar.style.right = '0';
     bottomBar.style.width = '100%';
-    bottomBar.style.marginLeft = '0';
-    bottomBar.style.marginRight = '0';
+    bottomBar.style.paddingLeft = `calc(1rem + ${leftWidth}px)`;
+    bottomBar.style.paddingRight = `calc(1rem + ${rightWidth}px)`;
     bottomBar.style.pointerEvents = 'none';
 
     // Re-enable pointer events on direct children only
