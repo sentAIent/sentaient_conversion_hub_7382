@@ -1,5 +1,20 @@
+// Interstellar Game Engine
+// Restored Mindwave Lotus Features
+(function() {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,100,200,0.8);color:white;padding:10px 20px;border-radius:20px;z-index:10000;font-weight:bold;font-family:Orbitron, sans-serif;pointer-events:none;transition:opacity 2s;box-shadow:0 0 20px rgba(255,100,200,0.5);';
+    banner.innerText = '🌸 MINDWAVE LOTUS ENGINE V3.1 ACTIVE 🌸';
+    document.body.appendChild(banner);
+    setTimeout(() => { if(banner) banner.style.opacity = '0'; }, 3000);
+    setTimeout(() => { if(banner) banner.remove(); }, 5000);
+})();
+
+console.log("🚀 INTERSTELLAR ENGINE V3.1 - Mindwave Lotus Restoration Active");
+console.log("🌸 Lotus Rendering: Tribal Sun + Petals enabled.");
+
 /**
- * Interstellar Map Engine v5.0 - Pre-Placement Color Model
+ * InterstellarEngine - Core Game Class
+v5.0 - Pre-Placement Color Model
  */
 
 // === PROCEDURAL AUDIO ENGINE ===
@@ -413,6 +428,11 @@ class InterstellarEngine {
         }
         this.ctx = this.canvas.getContext('2d', { alpha: false });
         console.log("✅ Canvas context initialized");
+        document.title = "INTERSTELLAR v3.1 - Mindwave Lotus Restoration";
+        
+        // Load Mindwave Lotus image
+        this.lotusImage = new Image();
+        this.lotusImage.src = '../mindwave-cursor.png';
 
         // Configuration
         this.config = {
@@ -493,6 +513,8 @@ class InterstellarEngine {
             maxShield: 50 * (1 + (savedUpgrades.shield || 0) * 0.2),
             radarRange: 2000 * (1 + (savedUpgrades.radar || 0) * 0.3),
             tractorRadius: 25 * (1 + (savedUpgrades.tractor || 0) * 0.5),
+            maxCargo: 1000 * (1 + (savedUpgrades.cargo || 0) * 1.0), // Scale cargo with upgrade
+            cargoCount: Object.values(this.carriedResources || {}).reduce((a, b) => a + (Number(b) || 0), 0),
             upgrades: savedUpgrades,
             // Ability State
             lastDamageTime: 0,
@@ -512,6 +534,7 @@ class InterstellarEngine {
         this.hazardBlackHoles = [];      // Hazard black hole objects (separate from background blackHoles)
         this.missileBases = [];    // Enemy bases that shoot heat-seeking missiles
         this.enemyMissiles = [];   // Active heat-seeking missiles
+        this.decoyFlares = [];     // Player defensive flares
         this.enemyShips = [];      // Hostile AI ships
         this.enemyBullets = [];    // Enemy laser projectiles
         this.enemyKills = 0;       // Kill counter
@@ -609,7 +632,8 @@ class InterstellarEngine {
             neodymium: { name: 'Neodymium', value: 25000, color: '#FF6EC7', rarity: 'legendary', size: 30, zone: 'exotic', use: 'Magnet tech' },
             lanthanum: { name: 'Lanthanum', value: 30000, color: '#9D00FF', rarity: 'legendary', size: 32, zone: 'exotic', use: 'Hybrid engines' },
             darkmatter: { name: 'Dark Matter', value: 100000, color: '#1a0033', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Warp drives' },
-            antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' }
+            antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' },
+            lotus: { name: 'Mindwave Lotus', value: 500000, color: '#ff69b4', rarity: 'transcendental', size: 40, zone: 'all', use: 'Ultimate Enlightenment' }
         };
 
         // Galaxy zone configuration - determines element distribution
@@ -919,6 +943,8 @@ class InterstellarEngine {
                     this.triggerPulsePing();
                 } else if (key === 'o') {
                     this.triggerApexOverclock();
+                } else if (key === 'g') {
+                    this.fireDecoyFlare();
                 }
                 e.preventDefault();
             }
@@ -927,6 +953,11 @@ class InterstellarEngine {
         window.addEventListener('keyup', e => {
             const key = e.key.toLowerCase();
             this.keysPressed[key] = false;
+
+            // CLEAR ENGINE DISABLE on key release (Requires re-press to re-engage)
+            if (key === 'w' || key === 's' || key === 'arrowup' || key === 'arrowdown') {
+                if (this.playerShip) this.playerShip.enginesDisabled = false;
+            }
         });
         // Initial mode setup
         this.setMode('draw');
@@ -1153,23 +1184,9 @@ class InterstellarEngine {
     }
 
     resizeHangar() {
-        const viewport = document.querySelector('.hangar-viewport');
-        if (!viewport) return;
-
-        // Base dimensions of the designed 3D scene inner width
-        const baseW = 1200;
-        const baseH = 800;
-
-        // The container is 90vw width and 85vh height in CSS
-        const availW = window.innerWidth * 0.9;
-        const availH = window.innerHeight * 0.85;
-
-        // Scale down to fit, but don't scale up past 1x to avoid blurriness
-        let scale = Math.min(availW / baseW, availH / baseH);
-        scale = Math.max(0.3, Math.min(scale, 1.0));
-
-        // Apply uniform scale transform to the viewport
-        viewport.style.transform = `scale(${scale})`;
+        // With the new responsive CSS, we don't need the manual scale() transform.
+        // However, we should ensure the track position is updated if needed.
+        this.updateHangarUI();
     }
 
     /**
@@ -1688,9 +1705,24 @@ class InterstellarEngine {
         const shipBtn = document.getElementById('selectShipBtn');
         const dockBtn = document.getElementById('dockBtn');
         const layoutPresets = document.getElementById('layoutPresets');
-        if (shipBtn) shipBtn.style.display = this.flightMode ? 'inline-flex' : 'none';
-        if (dockBtn) dockBtn.style.display = this.flightMode ? 'inline-flex' : 'none';
-        if (layoutPresets) layoutPresets.style.display = this.flightMode ? 'flex' : 'none';
+        
+        console.log(`[HUD] toggleFlightMode: flightMode=${this.flightMode}, shipBtn=${!!shipBtn}, dockBtn=${!!dockBtn}`);
+        
+        if (shipBtn) {
+            shipBtn.style.setProperty('display', this.flightMode ? 'inline-flex' : 'none', 'important');
+        }
+        if (dockBtn) {
+            dockBtn.style.setProperty('display', this.flightMode ? 'inline-flex' : 'none', 'important');
+        }
+
+        // Toggle Vitals HUD
+        const vitalsEl = document.getElementById('sectionVitals');
+        if (vitalsEl) {
+            vitalsEl.style.setProperty('display', this.flightMode ? 'block' : 'none', 'important');
+        }
+        if (layoutPresets) {
+            layoutPresets.style.setProperty('display', this.flightMode ? 'flex' : 'none', 'important');
+        }
 
         this.draw();
     }
@@ -3420,11 +3452,13 @@ class InterstellarEngine {
             abilityAccelMult = 2.0;
         }
 
-        if (keys['w'] || keys['arrowup']) {
+        const enginesActive = !ship.enginesDisabled;
+
+        if ((keys['w'] || keys['arrowup']) && enginesActive) {
             ship.vx += cos * ship.acceleration * abilityAccelMult;
             ship.vy += sin * ship.acceleration * abilityAccelMult;
         }
-        if (keys['s'] || keys['arrowdown']) {
+        if ((keys['s'] || keys['arrowdown']) && enginesActive) {
             ship.vx -= cos * ship.acceleration * 0.5 * abilityAccelMult;
             ship.vy -= sin * ship.acceleration * 0.5 * abilityAccelMult;
         }
@@ -3538,8 +3572,10 @@ class InterstellarEngine {
         const ship = this.playerShip;
         if (!ship) return;
 
-        // Cooldown (e.g., 150ms)
-        if (ship.lastShot && now - ship.lastShot < 150) return;
+        // Cooldown scales with weapon level (e.g., base 200ms, -33% per level)
+        const weaponLevel = ship.upgrades.weapons || 0;
+        const cooldown = 200 / (1 + weaponLevel * 0.5);
+        if (ship.lastShot && now - ship.lastShot < cooldown) return;
         ship.lastShot = now;
 
         // Audio: player laser
@@ -3562,16 +3598,22 @@ class InterstellarEngine {
         const pVx = ship.vx * 0.5 + Math.cos(angle) * speed;
         const pVy = ship.vy * 0.5 + Math.sin(angle) * speed;
 
+        // Visual scaling based on weapon level
+        const pWidth = (4 + weaponLevel * 2) / this.camera.zoom;
+        const pLength = (40 + weaponLevel * 20) / this.camera.zoom;
+        const pColor = weaponLevel >= 3 ? '#ff3300' : (weaponLevel >= 1 ? '#ffff00' : '#00ffcc');
+
         this.projectiles.push({
             x: startX,
             y: startY,
             vx: pVx,
             vy: pVy,
             rotation: angle,
-            color: '#00ffcc', // Default laser color
+            color: pColor, 
             life: 60, // Frames (1 second at 60fps)
-            width: 4 / this.camera.zoom,
-            length: 40 / this.camera.zoom
+            width: pWidth,
+            length: pLength,
+            damage: 25 * (1 + weaponLevel * 0.5) // Attach damage to projectile
         });
     }
 
@@ -3599,7 +3641,7 @@ class InterstellarEngine {
                 if (dist < mine.size + p.width) {
                     // HIT!
                     this.createExplosion(p.x, p.y, 'hit');
-                    mine.health -= 25; // Laser damage
+                    mine.health -= (p.damage || 25); // Use projectile damage
                     hit = true;
 
                     if (mine.health <= 0) {
@@ -3624,7 +3666,7 @@ class InterstellarEngine {
                 if (dist < base.size * 1.5 + p.width) { // Base hitbox is generous
                     // HIT!
                     this.createExplosion(p.x, p.y, 'hit');
-                    base.health -= 25;
+                    base.health -= (p.damage || 25);
                     hit = true;
 
                     // Flash base red
@@ -3687,6 +3729,23 @@ class InterstellarEngine {
                 this.projectiles.splice(i, 1);
                 continue;
             }
+
+            // CHECK COLLISIONS WITH BLACK HOLES (Sucked in)
+            for (let b = 0; b < this.hazardBlackHoles.length; b++) {
+                const bh = this.hazardBlackHoles[b];
+                const dx = p.x - bh.x;
+                const dy = p.y - bh.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                // If projectile enters the black hole horizon region, it vanishes
+                if (dist < bh.size * 1.8) {
+                    this.projectiles.splice(i, 1);
+                    hit = true;
+                    break;
+                }
+            }
+
+            if (hit) continue;
         }
     }
 
@@ -3726,6 +3785,13 @@ class InterstellarEngine {
         this.playerGems += reward;
         localStorage.setItem('playerGems', this.playerGems);
         this.showToast(`💥 Space Mine destroyed! +${reward} Gems`, 2000);
+
+        // TRACK MISSION PROGRESS (ONLY ON WEAPON DESTRUCTION)
+        if (this.activeMission && this.activeMission.type === 'sabotage') {
+            this.activeMission.progress++;
+            this.updateMissionHUD();
+            this.checkMissionComplete();
+        }
 
         // Loot
         this.spawnLoot(mine.x, mine.y, 'uranium', 5);
@@ -3865,13 +3931,17 @@ class InterstellarEngine {
 
         for (const enemy of this.enemyShips) {
             const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+            // ECM: Reduce effective aggro range (10% per level)
+            const ecmFactor = 1 - (this.playerShip.ecmStrength || 0) * 0.1;
+            const effectiveAggroRange = typeDef.aggroRange * ecmFactor;
+            
             const distToPlayer = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
             const angleToPlayer = Math.atan2(ship.y - enemy.y, ship.x - enemy.x);
 
             // STALKING HYSTERESIS: Once aggroed, stay aggroed until player is far away
             // Reasonable distance to stop stalking is ~3x the initial aggro range
-            const stalkStopDist = typeDef.aggroRange * 3.0;
-            if (distToPlayer < typeDef.aggroRange) {
+            const stalkStopDist = effectiveAggroRange * 3.0;
+            if (distToPlayer < effectiveAggroRange) {
                 enemy.isStalking = true;
             } else if (distToPlayer > stalkStopDist) {
                 enemy.isStalking = false;
@@ -4378,21 +4448,21 @@ class InterstellarEngine {
             desc: 'Fly into {goal} glowing gems floating nearby',
             briefing: 'See those colorful crystals floating around you? Those are gems! Just fly your ship into them to pick them up — no buttons needed, just touch them. Use W to go forward, A/D to turn, SHIFT to go faster.',
             hint: '💡 Just fly INTO the gems • W = forward • A/D = turn • SHIFT = fast',
-            goal: 5, reward: 15
+            goal: 5, reward: 300
         },
         {
             type: 'collect', name: 'Resource Expedition', tier: 1,
             desc: 'Pick up {goal} gems — fly further out for rarer ones',
             briefing: 'Gems come in different types: common ones are dull, rare ones glow brighter and are worth more. Fly away from where you started to find better gems. Check your Radar (circle in top-left) to see gem dots nearby.',
             hint: '💡 Fly further from start = better gems • Radar shows nearby gems',
-            goal: 15, reward: 30
+            goal: 15, reward: 400
         },
         {
             type: 'survive', name: 'Stay Alive', tier: 1,
             desc: 'Fly around for {goal} seconds without dying',
             briefing: 'Your ship can be destroyed! Red triangles on your radar are space mines — avoid them. If you see red dots moving toward you, those are enemies — fly away for now. Your health bar is in the Ship Status window. Timer starts when you accept this mission.',
             hint: '🛡️ Red triangles = mines (avoid!) • Red dots = enemies • SHIFT = escape fast',
-            goal: 30, reward: 25
+            goal: 30, reward: 350
         },
 
         // TIER 2: COMBAT — Teach the player how to fight
@@ -4401,21 +4471,28 @@ class InterstellarEngine {
             desc: 'Press SPACE to shoot and destroy {goal} Scout ships',
             briefing: 'Your ship has guns! Hold SPACE to fire lasers. When you accept this mission, Scout ships will spawn nearby — look for red dots on your radar. Fly toward them and hold SPACE to shoot. Scouts are weak and die in a few hits.',
             hint: '⚔️ Hold SPACE to shoot! • Red dots on radar = enemies • Fly toward them',
-            goal: 3, reward: 40
+            goal: 3, reward: 800
         },
         {
             type: 'kill', name: 'Fighter Patrol', tier: 2, targetType: 'fighter',
             desc: 'Destroy {goal} Fighters — they shoot back!',
             briefing: 'Fighters are tougher than Scouts and will fire at you! Keep your ship moving while shooting (hold W + SPACE together). If your health drops low, fly away with SHIFT to boost. Destroyed enemies drop bonus gems!',
             hint: '⚔️ W + SPACE = fly and shoot • SHIFT = escape if low health',
-            goal: 3, reward: 50
+            goal: 3, reward: 1000
         },
         {
             type: 'kill_any', name: 'Space Cleaner', tier: 2,
             desc: 'Destroy {goal} enemies of any kind (SPACE to fire)',
             briefing: 'Kill any enemies you find — Scouts, Fighters, anything counts. Enemies appear as red dots on your radar. After killing enemies, spend your gems on upgrades! Click the 🛠️ UPGRADES button in the menu bar to make your ship stronger.',
             hint: '⚔️ Any enemy counts • SPACE = fire • 🛠️ UPGRADES button = power up your ship',
-            goal: 8, reward: 60
+            goal: 8, reward: 1200
+        },
+        {
+            type: 'sabotage', name: 'Operation: Sabotage', tier: 2,
+            desc: 'Clear {goal} Space Mines from the sector',
+            briefing: 'Space mines (red triangles) are drifting everywhere. Use your lasers (SPACE) to detonate them from a safe distance. This clears the way for our freighters. Be careful: their explosion radius is large!',
+            hint: '💣 Shoot red triangles • Stay back! • Large explosion radius',
+            goal: 10, reward: 1000
         },
 
         // TIER 3: ADVANCED — Challenge the player
@@ -4424,14 +4501,21 @@ class InterstellarEngine {
             desc: 'Collect {goal} gems — explore far from spawn',
             briefing: 'You need a lot of gems for this one. Press M to open your Galaxy Map and see the full universe. Fly far from center to find richer gem fields. Pro tip: the Hauler ship (in Hangar 🚀) has a Tractor Beam that magnetically pulls gems toward you!',
             hint: '💎 M = Galaxy Map • Hauler ship = magnet for gems • Fly far out',
-            goal: 30, reward: 50
+            goal: 30, reward: 2500
         },
         {
             type: 'survive', name: 'Endurance Run', tier: 3,
             desc: 'Stay alive for {goal} seconds — things get dangerous',
             briefing: 'The further you fly from where you started, the more dangerous space gets — more mines, turrets, and enemies appear. For this mission, just survive! You can dodge with R/F (pitch up/down) and Z/X (barrel roll). Timer runs from when you accept.',
             hint: '🛡️ R/F = pitch • Z/X = barrel roll • Fly away from danger • Stay alive!',
-            goal: 60, reward: 60
+            goal: 60, reward: 3000
+        },
+        {
+            type: 'siege', name: 'Operation: Fortress Siege', tier: 3,
+            desc: 'Destroy {goal} Missile Launch Bases',
+            briefing: 'Standard enemy patrols are one thing, but their stationary Missile Bases are the real threat. They fire long-range heat-seeking missiles. Destroy the bases to weaken their hold on this sector. Use SHIFT to outrun the missiles!',
+            hint: '🛡️ Destroy red circular bases • Outrun missiles with SHIFT • High reward',
+            goal: 2, reward: 4000
         },
 
         // TIER 4: BOSS FIGHTS — The ultimate challenge
@@ -4440,28 +4524,28 @@ class InterstellarEngine {
             desc: 'A massive warship spawns — destroy it! (SPACE to fire)',
             briefing: 'When you accept, a Dreadnought boss will spawn near you. It has front shields — fly BEHIND it to deal damage! Hold SPACE to fire. Use SHIFT to boost past its missiles. This is a real fight — make sure your ship is upgraded first!',
             hint: '👑 Fly BEHIND it! • Front shields block shots • SHIFT dodges missiles',
-            goal: 1, reward: 100
+            goal: 1, reward: 8000
         },
         {
             type: 'boss', name: 'Boss: Hive Queen', tier: 4, bossType: 'hivequeen',
             desc: 'A giant alien queen spawns — destroy it!',
             briefing: 'The Hive Queen spawns swarms of small drones. Kill the drones first (SPACE to fire), then focus on the Queen. She moves unpredictably so be patient. Reward: 150 gems — the biggest payout yet!',
             hint: '👑 Kill drones first • Then focus the Queen • Be patient!',
-            goal: 1, reward: 150
+            goal: 1, reward: 10000
         },
         {
             type: 'boss', name: 'Boss: Void Reaper', tier: 4, bossType: 'voidreaper',
             desc: 'The deadliest boss in the game — can you beat it?',
             briefing: 'The Void Reaper teleports and fires devastating energy beams. Keep your distance and only attack during its cooldown windows. This is the hardest fight in the game. Reward: 200 gems!',
             hint: '👑 It teleports! • Attack during cooldowns only • Hardest boss!',
-            goal: 1, reward: 200
+            goal: 1, reward: 12000
         },
         {
             type: 'kill_any', name: 'Legendary Rampage', tier: 4,
             desc: 'Destroy {goal} enemies — try different ships from the Hangar!',
             briefing: 'All-out war. Destroy everything. Each ship in the Hangar (🚀 SHIP button) has a unique special ability — try them all! The Viper has speed boost, the Titan has armor, the Flux can phase through damage. Pick your favorite and dominate!',
             hint: '⚔️ 🚀 SHIP button = switch ships • Each ship has a unique ability!',
-            goal: 15, reward: 100
+            goal: 15, reward: 8000
         }
     ];
 
@@ -5183,9 +5267,9 @@ class InterstellarEngine {
 
     loadUpgrades() {
         try {
-            return JSON.parse(localStorage.getItem('playerUpgrades')) || { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0 };
+            return JSON.parse(localStorage.getItem('playerUpgrades')) || { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0, ecm: 0, flares: 0 };
         } catch (e) {
-            return { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0 };
+            return { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0, ecm: 0, flares: 0 };
         }
     }
 
@@ -5532,10 +5616,17 @@ class InterstellarEngine {
         }
 
         if (totalDeposited > 0) {
+            this.playerShip.cargoCount = 0; // Reset total count
             this.saveCarriedResources();
             this.saveSpaceBase();
             this.showToast(`📦 Deposited: ${deposited.slice(0, 3).join(', ')}${deposited.length > 3 ? '...' : ''}`);
             console.log('[Base] Deposited all:', deposited);
+
+            // Recharge Flares on deposit
+            if (this.playerShip && this.playerShip.maxFlares > 0) {
+                this.playerShip.flares = this.playerShip.maxFlares;
+                this.showToast('🔥 Flares Recharged!');
+            }
         } else {
             this.showToast('⚠️ No resources to deposit!');
         }
@@ -5639,6 +5730,21 @@ class InterstellarEngine {
         if (hangarGemsEl) {
             hangarGemsEl.textContent = this.playerGems.toLocaleString();
         }
+
+        // Update Top Bar Cargo Display
+        const cargoEl = document.getElementById('cargoStatus');
+        if (cargoEl && this.playerShip) {
+            const count = this.playerShip.cargoCount || 0;
+            const max = Math.round(this.playerShip.maxCargo || 1000);
+            cargoEl.textContent = `📦 ${count}/${max}`;
+            if (count >= max) {
+                cargoEl.style.color = '#ff3300';
+                cargoEl.style.fontWeight = 'bold';
+            } else {
+                cargoEl.style.color = '#00ff88';
+                cargoEl.style.fontWeight = 'normal';
+            }
+        }
     }
 
     updateWalletUI() {
@@ -5726,6 +5832,16 @@ class InterstellarEngine {
                 this.playerShip.radarRange = 2000 * (1 + lvl * 0.3);
             } else if (type === 'tractor') {
                 this.playerShip.tractorRadius = 25 * (1 + lvl * 0.5);
+            } else if (type === 'ecm') {
+                this.playerShip.ecmStrength = lvl; // 0-5
+            } else if (type === 'flares') {
+                this.playerShip.maxFlares = lvl * 2;
+                this.playerShip.flares = this.playerShip.maxFlares;
+            } else if (type === 'cargo') {
+                this.playerShip.maxCargo = 1000 * (1 + lvl * 1.0);
+            } else if (type === 'weapons') {
+                // No immediate ship stat change, used in shoot() and updateProjectiles()
+                console.log(`[Upgrades] Photon Cannons upgraded to level ${lvl}`);
             }
 
             this.showToast(`${type.toUpperCase()} Upgraded to Level ${lvl + 1} !`);
@@ -5930,6 +6046,17 @@ class InterstellarEngine {
         }
 
         if (dist < collectionRange) {
+            // Check Cargo Capacity
+            const currentCargo = this.playerShip.cargoCount || 0;
+            const maxCargo = this.playerShip.maxCargo || 1000;
+            if (currentCargo >= maxCargo) {
+                if (!this.lastCargoFullToast || Date.now() - this.lastCargoFullToast > 3000) {
+                    this.showToast('🛑 CARGO FULL! Deposit at base (Z)');
+                    this.lastCargoFullToast = Date.now();
+                }
+                return;
+            }
+
             // Add value to wallet
             this.credits += mineral.value;
             this.updateWalletUI();
@@ -5945,21 +6072,45 @@ class InterstellarEngine {
                 this.playerInventory[mineral.type] = 0;
             }
             this.playerInventory[mineral.type]++;
+            this.carriedResources[mineral.type] = (this.carriedResources[mineral.type] || 0) + 1;
+            this.playerShip.cargoCount = (this.playerShip.cargoCount || 0) + 1;
             this.saveInventory();
+            this.saveCarriedResources();
 
             // Award permanent gems (1 gem per mineral collected)
             this.playerGems += 1;
             localStorage.setItem('playerGems', this.playerGems);
 
             // Audio: collect jingle
-            gameAudio.playCollect();
+            if (typeof gameAudio !== 'undefined' && gameAudio.playCollect) {
+                gameAudio.playCollect();
+            }
 
-            // Show notification
-            this.collectionNotifications.push({
-                text: `+ ${mineral.name} ($${mineral.value})`,
-                color: mineral.color,
-                time: Date.now()
-            });
+            // SPECIAL CASE: Mindwave Lotus - Restoration Power-up
+            if (mineral.type === 'lotus') {
+                const hpRestore = Math.floor(this.playerShip.maxHull * 0.25);
+                const shRestore = Math.floor(this.playerShip.maxShield * 0.50);
+                
+                this.playerShip.hullHealth = Math.min(this.playerShip.hullHealth + hpRestore, this.playerShip.maxHull);
+                this.playerShip.shield = Math.min(this.playerShip.shield + shRestore, this.playerShip.maxShield);
+                
+                if (this.updateShipStatus) this.updateShipStatus();
+                this.showToast(`🌸 Mindwave Lotus: +${hpRestore} HP | +${shRestore} Shield!`);
+                
+                // Notification (No $ amount for lotus)
+                this.collectionNotifications.push({
+                    text: `+ ${hpRestore} HP | + ${shRestore} SHIELD`,
+                    color: '#ff69b4',
+                    time: Date.now()
+                });
+            } else {
+                // Show standard notification
+                this.collectionNotifications.push({
+                    text: `+ ${mineral.name} ($${mineral.value})`,
+                    color: mineral.color,
+                    time: Date.now()
+                });
+            }
 
             // Remove mineral
             const index = this.minerals.indexOf(mineral);
@@ -5988,6 +6139,58 @@ class InterstellarEngine {
         }
     }
 
+    spawnMindwaveLotuses() {
+        console.log("🌸 Spawning Mindwave Lotuses...");
+        for (let i = 0; i < 20; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 500 + Math.random() * 2000;
+            this.minerals.push({
+                id: 'lotus-' + Date.now() + '-' + i,
+                x: this.playerShip.x + Math.cos(angle) * dist,
+                y: this.playerShip.y + Math.sin(angle) * dist,
+                z: (Math.random() - 0.5) * 200,
+                type: 'lotus',
+                name: 'Mindwave Lotus', // ADDED: Critical for collection name
+                size: 25,
+                color: '#ff69b4', // ADDED: Critical for notification color
+                value: 1000,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    renderLotus(ctx, lotus) {
+        ctx.save();
+        ctx.translate(lotus.x, lotus.y);
+        const glowPhase = (Date.now() * 0.002 + lotus.phase) % (Math.PI * 2);
+        const glow = 0.5 + Math.sin(glowPhase) * 0.5;
+
+        // Outer Glow (Keeping existing glow for presence)
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, lotus.size * 2);
+        grad.addColorStop(0, `rgba(255, 105, 180, ${0.4 * glow})`);
+        grad.addColorStop(1, 'rgba(255, 105, 180, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, 0, lotus.size * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Mindwave Lotus Image
+        if (this.lotusImage.complete) {
+            const drawSize = lotus.size * 2.5; // Slightly larger for visual clarity
+            ctx.drawImage(this.lotusImage, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+        } else {
+            // Fallback: Inner Core Glow if image not loaded yet
+            ctx.fillStyle = '#fff';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#ffb6c1';
+            ctx.beginPath();
+            ctx.arc(0, 0, lotus.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+
     // Update minerals (check collection, spawn new ones)
     updateMinerals() {
         if (!this.flightMode) return;
@@ -6002,6 +6205,11 @@ class InterstellarEngine {
 
         // Spawn new minerals
         this.spawnMinerals();
+
+        // One-time check: If no lotuses exist, spawn some (Initial session recovery)
+        if (!this.minerals.some(m => m.type === 'lotus')) {
+            this.spawnMindwaveLotuses();
+        }
 
         // Update notifications (fade out after 2 seconds)
         const now = Date.now();
@@ -6348,8 +6556,12 @@ class InterstellarEngine {
 
             // Update alert level based on player proximity
             // SPECTRE: Cloak - Enemies ignore you if cloaked (passive for Spectre)
+            // ECM: Reduce effective detection range (10% per level)
+            const ecmFactor = 1 - (this.playerShip.ecmStrength || 0) * 0.1;
+            const effectiveDetectionRange = base.detectionRange * ecmFactor;
+            
             const isSpectre = ship.type === 'spectre';
-            if (distToPlayer < base.detectionRange && !ship.isCloaked && !isSpectre) {
+            if (distToPlayer < effectiveDetectionRange && !ship.isCloaked && !isSpectre) {
                 // AGGRESSIVE ALERT: Scales faster
                 base.alertLevel = Math.min(1, base.alertLevel + 0.05);
 
@@ -6367,13 +6579,36 @@ class InterstellarEngine {
         // === UPDATE HEAT-SEEKING MISSILES ===
         for (const missile of this.enemyMissiles) {
             const isSpectre = ship.type === 'spectre';
+            
+            // TARGET ACQUISITION: Check for flare distraction first
+            let targetX = ship.x;
+            let targetY = ship.y;
+            let isDistracted = false;
 
-            if (!ship.isCloaked && !isSpectre) {
-                // Calculate angle to player
-                const angleToPlayer = Math.atan2(ship.y - missile.y, ship.x - missile.x);
+            if (this.decoyFlares.length > 0) {
+                // Find closest flare within distraction radius
+                let closestFlare = null;
+                let minDist = 800; // Flare attraction radius
+                for (const flare of this.decoyFlares) {
+                    const d = Math.hypot(flare.x - missile.x, flare.y - missile.y);
+                    if (d < minDist) {
+                        minDist = d;
+                        closestFlare = flare;
+                    }
+                }
+                if (closestFlare) {
+                    targetX = closestFlare.x;
+                    targetY = closestFlare.y;
+                    isDistracted = true;
+                }
+            }
+
+            if ((!ship.isCloaked && !isSpectre) || isDistracted) {
+                // Calculate angle to target (player or flare)
+                const angleToTarget = Math.atan2(targetY - missile.y, targetX - missile.x);
 
                 // Smooth turning (heat-seeking behavior)
-                let angleDiff = angleToPlayer - missile.angle;
+                let angleDiff = angleToTarget - missile.angle;
                 while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
                 while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
@@ -6423,8 +6658,66 @@ class InterstellarEngine {
         // Remove dead missiles
         this.enemyMissiles = this.enemyMissiles.filter(m => m.life > 0);
 
+        // === UPDATE DECOY FLARES ===
+        for (let i = this.decoyFlares.length - 1; i >= 0; i--) {
+            const flare = this.decoyFlares[i];
+            flare.x += flare.vx;
+            flare.y += flare.vy;
+            flare.vx *= 0.95; // Drag
+            flare.vy *= 0.95;
+            flare.life--;
+            if (flare.life <= 0) {
+                this.decoyFlares.splice(i, 1);
+            }
+        }
+
         // Spawn new hazards
         this.spawnHazards();
+    }
+
+    fireDecoyFlare() {
+        if (!this.flightMode) return;
+        
+        const ship = this.playerShip;
+        const upgradeLvl = this.playerShip.upgrades.flares || 0;
+        if (upgradeLvl === 0) {
+            this.showToast('⚠️ Decoy Flares not installed! Upgrade in Dock.');
+            return;
+        }
+
+        // Initialize flares if needed
+        if (ship.flares === undefined) ship.flares = upgradeLvl * 2;
+
+        if (ship.flares <= 0) {
+            this.showToast('⚠️ Out of flares! (Recharge at base or wait)');
+            return;
+        }
+
+        // Fire 2 flares in slightly different directions
+        for (let i = 0; i < 2; i++) {
+            const angle = ship.angle + Math.PI + (Math.random() - 0.5) * 1.0; // Behind ship
+            const speed = 5 + Math.random() * 5;
+            this.decoyFlares.push({
+                x: ship.x,
+                y: ship.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 180, // 3 seconds at 60fps
+                color: '#ffaa44'
+            });
+        }
+
+        ship.flares--;
+        this.showToast(`🔥 Flare Deployed! (${ship.flares} left)`);
+
+        // BREAK STALKING: Breaking line of sight/distracting
+        for (const enemy of this.enemyShips) {
+            const d = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
+            if (d < 1000) {
+                enemy.isStalking = false; // Temporarily break stalking
+                enemy.stalkCooldown = 180; // 3 second grace period
+            }
+        }
     }
 
     // Fire a heat-seeking missile from a base
@@ -6499,6 +6792,12 @@ class InterstellarEngine {
             y: missile.y,
             flashIntensity: 1.0
         };
+
+        // ENGINE CUT: Require re-press of W/S to re-engage
+        if (this.playerShip) {
+            this.playerShip.enginesDisabled = true;
+            this.showToast('⚠️ ENGINE FAILURE: RE-ENGAGE THRUSTERS (W/S)', 3000);
+        }
 
         this.damagePlayer(25);
     }
@@ -6594,7 +6893,8 @@ class InterstellarEngine {
         this.showToast('💀 Critical Failure! Ejecting...');
 
         // Clean up boss on death (prevents ghost boss after respawn)
-        if (this.activeBoss) {
+        // EXCEPT if we are on a boss mission, in which case we want the boss to persist
+        if (this.activeBoss && (!this.activeMission || this.activeMission.type !== 'boss')) {
             this.activeBoss = null;
         }
 
@@ -6772,10 +7072,33 @@ class InterstellarEngine {
     }
 
     triggerSupernovaEffect(mine) {
+        // Award reward
+        if (this.flightMode) {
+            this.playerGems += 5;
+            localStorage.setItem('playerGems', this.playerGems);
+            if (this.updateGemsUI) this.updateGemsUI();
+            this.showToast('💥 Mine Defused! +5 Gems', 1500);
+
+            // REMOVED: Mission progress increment (Only weapons count now)
+        }
         this.triggerNuclearEvent(mine.x, mine.y, 'supernova');
     }
 
     triggerMissileBaseDestructionEffect(base) {
+        // Award reward
+        if (this.flightMode) {
+            this.playerGems += 25; // More for a base!
+            localStorage.setItem('playerGems', this.playerGems);
+            if (this.updateGemsUI) this.updateGemsUI();
+            this.showToast('💥 Missile Base Destroyed! +25 Gems', 2000);
+
+            // Track mission progress
+            if (this.activeMission && this.activeMission.type === 'siege') {
+                this.activeMission.progress++;
+                this.updateMissionHUD();
+                this.checkMissionComplete();
+            }
+        }
         this.triggerNuclearEvent(base.x, base.y, 'missile_base_destruction');
     }
 
@@ -7048,6 +7371,9 @@ class InterstellarEngine {
                     this.playerShip.shield = this.playerShip.maxShield;
                     this.playerShip.hullHealth = this.playerShip.maxHull;
 
+                    // RESTORE ENGINE AUDIO AFTER RESPAWN
+                    if (window.gameAudio) window.gameAudio.startEngineHum();
+
                     // If it wasn't a player_death or blackhole (which handle their own spatial relocation), safely teleport them
                     if (finishedHazardType !== 'player_death' && finishedHazardType !== 'blackhole') {
                         const teleportDist = 2000 + Math.random() * 3000;
@@ -7123,7 +7449,7 @@ class InterstellarEngine {
                 gems: [],
                 showArrow: true,
                 medals: { gold: 8, silver: 14, bronze: 22 },
-                reward: { gold: 300, silver: 200, bronze: 100 }
+                reward: { gold: 1200, silver: 800, bronze: 500 }
             },
             {
                 id: 'steering',
@@ -7149,7 +7475,7 @@ class InterstellarEngine {
                 gems: [],
                 showArrow: true,
                 medals: { gold: 15, silver: 25, bronze: 40 },
-                reward: { gold: 400, silver: 250, bronze: 150 }
+                reward: { gold: 1800, silver: 1200, bronze: 800 }
             },
             {
                 id: 'boost',
@@ -7169,7 +7495,7 @@ class InterstellarEngine {
                 gems: [],
                 showArrow: true,
                 medals: { gold: 12, silver: 20, bronze: 35 },
-                reward: { gold: 500, silver: 300, bronze: 200 }
+                reward: { gold: 2200, silver: 1500, bronze: 1000 }
             },
             {
                 id: 'precision',
@@ -7194,7 +7520,7 @@ class InterstellarEngine {
                 gems: [],
                 showArrow: true,
                 medals: { gold: 18, silver: 30, bronze: 45 },
-                reward: { gold: 600, silver: 400, bronze: 250 }
+                reward: { gold: 3000, silver: 2000, bronze: 1200 }
             },
             {
                 id: 'collection',
@@ -7224,7 +7550,7 @@ class InterstellarEngine {
                 showArrow: false,
                 collectTarget: 8,
                 medals: { gold: 20, silver: 35, bronze: 50 },
-                reward: { gold: 700, silver: 450, bronze: 300 }
+                reward: { gold: 4000, silver: 2500, bronze: 1500 }
             },
             {
                 id: 'radar',
@@ -7243,7 +7569,7 @@ class InterstellarEngine {
                 gems: [],
                 showArrow: false, // No HUD arrow — must use radar!
                 medals: { gold: 25, silver: 40, bronze: 60 },
-                reward: { gold: 800, silver: 500, bronze: 350 }
+                reward: { gold: 5000, silver: 3500, bronze: 2000 }
             },
             {
                 id: 'final',
@@ -7291,7 +7617,74 @@ class InterstellarEngine {
                 })(),
                 showArrow: true,
                 medals: { gold: 30, silver: 50, bronze: 75 },
-                reward: { gold: 1500, silver: 1000, bronze: 500 }
+                reward: { gold: 8000, silver: 5000, bronze: 2500 }
+            },
+            {
+                id: 'weaponry',
+                name: 'Weapon Systems',
+                icon: '⚔️',
+                subtitle: 'Learn to use your ship lasers',
+                briefing: 'Hold SPACE to fire your primary lasers.\nDestroy the target mines to clear a path!\nGates will only open when the nearby mine is destroyed.',
+                keys: [{ key: 'SPACE', action: 'Fire Lasers' }, { key: 'W/A/D', action: 'Flight' }],
+                gates: (() => {
+                    const g = [];
+                    for (let i = 0; i < 4; i++) {
+                        g.push({ x: (i + 1) * 800, y: 0, size: 200, reached: false, targetDestroyed: false });
+                    }
+                    return g;
+                })(),
+                targets: (() => {
+                    const t = [];
+                    for (let i = 0; i < 4; i++) {
+                        t.push({ x: (i + 1) * 800, y: (Math.random() - 0.5) * 100, type: 'training_mine', id: i });
+                    }
+                    return t;
+                })(),
+                showArrow: true,
+                medals: { gold: 15, silver: 25, bronze: 40 },
+                reward: { gold: 1800, silver: 1200, bronze: 600 }
+            },
+            {
+                id: 'shielding',
+                name: 'Defense & Shields',
+                icon: '🛡️',
+                subtitle: 'Learn to manage your ship integrity',
+                briefing: 'Your blue bar is your SHIELD. It absorbs damage first.\nThe red bar is your HULL. If it reaches zero, you die!\nFly through the damage zone and watch your shield deplete.',
+                keys: [{ key: 'W/A/D', action: 'Maneuver' }],
+                gates: (() => {
+                    const g = [];
+                    for (let i = 0; i < 3; i++) {
+                        g.push({ x: (i + 1) * 1000, y: Math.sin(i) * 300, size: 250, reached: false });
+                    }
+                    return g;
+                })(),
+                hazardZone: { x: 1500, y: 0, radius: 1000, damage: 0.2 },
+                showArrow: true,
+                medals: { gold: 20, silver: 35, bronze: 55 },
+                reward: { gold: 2200, silver: 1500, bronze: 1000 }
+            },
+            {
+                id: 'hazards',
+                name: 'Hazard Navigation',
+                icon: '🌀',
+                subtitle: 'Evasive maneuvers near anomalies',
+                briefing: 'Black Holes pull you in! Stay away from the event horizon.\nSpace Mines have a large blast radius.\nNavigate the hazard-filled course safely.',
+                keys: [{ key: 'SHIFT', action: 'Boost to escape pull' }],
+                gates: (() => {
+                    const g = [];
+                    for (let i = 0; i < 4; i++) {
+                        g.push({ x: (i + 1) * 1200, y: (i % 2 === 0 ? 400 : -400), size: 180, reached: false });
+                    }
+                    return g;
+                })(),
+                hazards: [
+                    { x: 1200, y: 0, type: 'blackhole', radius: 400 },
+                    { x: 2400, y: 0, type: 'mine', radius: 150 },
+                    { x: 3600, y: 0, type: 'blackhole', radius: 500 }
+                ],
+                showArrow: true,
+                medals: { gold: 25, silver: 45, bronze: 70 },
+                reward: { gold: 3000, silver: 1800, bronze: 1200 }
             }
         ];
     }
@@ -7410,6 +7803,60 @@ class InterstellarEngine {
             }
         }
 
+        // --- Check weaponry targets ---
+        if (lesson.id === 'weaponry' && lesson.targets) {
+            this.bullets.forEach(bullet => {
+                lesson.targets.forEach(target => {
+                    if (target.destroyed) return;
+                    const dx = bullet.x - target.x;
+                    const dy = bullet.y - target.y;
+                    if (Math.hypot(dx, dy) < 40) {
+                        target.destroyed = true;
+                        bullet.life = 0;
+                        this.showToast('💥 Target Destroyed!');
+                        // Mark associated gate as targetDestroyed
+                        if (lesson.gates[target.id]) {
+                            lesson.gates[target.id].targetDestroyed = true;
+                        }
+                    }
+                });
+            });
+        }
+
+        // --- Check shielding hazard zone ---
+        if (lesson.id === 'shielding' && lesson.hazardZone) {
+            const hz = lesson.hazardZone;
+            const dist = Math.hypot(ship.x - hz.x, ship.y - hz.y);
+            if (dist < hz.radius) {
+                // Apply damage to shield
+                const dmg = hz.damage || 0.1;
+                this.playerShip.shield = Math.max(0, this.playerShip.shield - dmg);
+                this.updateShipStatus();
+            }
+        }
+
+        // --- Check hazard navigation ---
+        if (lesson.id === 'hazards' && lesson.hazards) {
+            lesson.hazards.forEach(h => {
+                const dist = Math.hypot(ship.x - h.x, ship.y - h.y);
+                if (h.type === 'blackhole' && dist < h.radius) {
+                    const pull = (1 - dist / h.radius) * 1.5;
+                    const angle = Math.atan2(h.y - ship.y, h.x - ship.x);
+                    ship.vx += Math.cos(angle) * pull;
+                    ship.vy += Math.sin(angle) * pull;
+                    if (dist < 50) {
+                        this.showToast('🌀 Sucked into the void! Restarting...');
+                        this.startTraining(this.trainingLessonIndex);
+                    }
+                } else if (h.type === 'mine' && dist < h.radius) {
+                    this.showToast('💣 MINE DETONATED!');
+                    this.playerShip.hullHealth -= 20;
+                    this.updateShipStatus();
+                    h.x = -99999; // Move away
+                }
+            });
+        }
+
         // --- Check gate progression ---
         if (lesson.id === 'collection') {
             // Collection lesson: need all gems first, then fly to finish gate
@@ -7426,18 +7873,23 @@ class InterstellarEngine {
             // Standard gate progression
             const gate = lesson.gates[this.trainingGateIndex];
             if (gate) {
-                const dx = ship.x - gate.x;
-                const dy = ship.y - gate.y;
-                const dist = Math.hypot(dx, dy);
-                if (dist < gate.size * 1.2) {
-                    gate.reached = true;
-                    this.trainingGateIndex++;
-                    if (this.trainingGateIndex >= lesson.gates.length) {
-                        this.completeTrainingLesson();
-                    } else {
-                        const total = lesson.gates.length;
-                        const current = this.trainingGateIndex;
-                        this.showToast(`✅ Gate ${current}/${total} — Keep going!`);
+                // For weaponry, must destroy target first
+                if (lesson.id === 'weaponry' && !gate.targetDestroyed) {
+                    // Do nothing, wait for target
+                } else {
+                    const dx = ship.x - gate.x;
+                    const dy = ship.y - gate.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < gate.size * 1.2) {
+                        gate.reached = true;
+                        this.trainingGateIndex++;
+                        if (this.trainingGateIndex >= lesson.gates.length) {
+                            this.completeTrainingLesson();
+                        } else {
+                            const total = lesson.gates.length;
+                            const current = this.trainingGateIndex;
+                            this.showToast(`✅ Gate ${current}/${total} — Keep going!`);
+                        }
                     }
                 }
             }
@@ -7466,13 +7918,16 @@ class InterstellarEngine {
 
         // --- Precious Element Rewards per lesson ---
         const lessonGemRewards = {
-            throttle: { gems: { iron: 5, copper: 3 }, bonus: { gold: { silver: 2 }, silver: { titanium: 1 }, bronze: {} } },
-            steering: { gems: { copper: 5, titanium: 2 }, bonus: { gold: { silicon: 3 }, silver: { copper: 2 }, bronze: {} } },
-            boost: { gems: { titanium: 3, silicon: 3 }, bonus: { gold: { silver: 2 }, silver: { titanium: 2 }, bronze: {} } },
-            precision: { gems: { silver: 3, gold: 1 }, bonus: { gold: { platinum: 1 }, silver: { gold: 1 }, bronze: {} } },
-            collection: { gems: { gold: 2, platinum: 1 }, bonus: { gold: { palladium: 1 }, silver: { platinum: 1 }, bronze: {} } },
-            radar: { gems: { platinum: 2, palladium: 1 }, bonus: { gold: { quartz: 1 }, silver: { palladium: 1 }, bronze: {} } },
-            final: { gems: { gold: 3, platinum: 2, diamond: 1 }, bonus: { gold: { emerald: 1, ruby: 1 }, silver: { diamond: 1 }, bronze: { quartz: 1 } } }
+            throttle: { gems: { iron: 10, copper: 5 }, bonus: { gold: { silver: 4 }, silver: { titanium: 2 }, bronze: {} } },
+            steering: { gems: { copper: 10, titanium: 4 }, bonus: { gold: { silicon: 6 }, silver: { copper: 4 }, bronze: {} } },
+            boost: { gems: { titanium: 6, silicon: 6 }, bonus: { gold: { silver: 4 }, silver: { titanium: 4 }, bronze: {} } },
+            precision: { gems: { silver: 6, gold: 2 }, bonus: { gold: { platinum: 2 }, silver: { gold: 2 }, bronze: {} } },
+            collection: { gems: { gold: 4, platinum: 2 }, bonus: { gold: { palladium: 2 }, silver: { platinum: 2 }, bronze: {} } },
+            radar: { gems: { platinum: 4, palladium: 2 }, bonus: { gold: { quartz: 2 }, silver: { palladium: 2 }, bronze: {} } },
+            final: { gems: { gold: 6, platinum: 4, diamond: 2 }, bonus: { gold: { emerald: 2, ruby: 2 }, silver: { diamond: 2 }, bronze: { quartz: 2 } } },
+            weaponry: { gems: { titanium: 10, gold: 4 }, bonus: { gold: { platinum: 2 }, silver: { gold: 2 }, bronze: {} } },
+            shielding: { gems: { iron: 20, copper: 20 }, bonus: { gold: { titanium: 6 }, silver: { copper: 10 }, bronze: {} } },
+            hazards: { gems: { palladium: 6, quartz: 4 }, bonus: { gold: { emerald: 2 }, silver: { quartz: 2 }, bronze: {} } }
         };
 
         const gemReward = lessonGemRewards[lesson.id];
@@ -7585,6 +8040,15 @@ class InterstellarEngine {
 
     // Welcome overlay for new users — rendered on canvas
     renderWelcomeOverlay(ctx) {
+        // Version Indicator (Proof of Life)
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 105, 180, 0.9)';
+        ctx.font = 'bold 14px Orbitron, sans-serif';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ff69b4';
+        ctx.fillText('🌸 LOTUS ENGINE V3.1 ACTIVE 🌸', 30, 40);
+        ctx.restore();
+
         if (!this.showWelcomeOverlay) return;
 
         const w = ctx.canvas.width;
@@ -7712,7 +8176,7 @@ class InterstellarEngine {
         }
     }
 
-    // Check if all 7 lessons are complete — award graduation bonus
+    // Check if all 10 lessons are complete — award graduation bonus
     checkAllLessonsComplete() {
         const lessons = this.getTrainingLessons();
         const progress = this.trainingProgress || {};
@@ -7732,7 +8196,7 @@ class InterstellarEngine {
             this.saveTrainingProgress();
 
             this.showToast('🎓🏆 FLIGHT ACADEMY GRADUATED! +$2,000 +1 Sapphire +1 Uranium!');
-            console.log('[Training] All 7 lessons complete — graduation bonus awarded!');
+            console.log('[Training] All 10 lessons complete — graduation bonus awarded!');
         }
     }
 
@@ -7936,6 +8400,144 @@ class InterstellarEngine {
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
+                ctx.restore();
+            });
+        }
+
+        // Render training targets
+        if (lesson.targets) {
+            lesson.targets.forEach(target => {
+                if (target.destroyed) return;
+                ctx.save();
+                ctx.translate(target.x, target.y);
+                
+                // Orange pulsing training mine
+                const targetPulse = 1 + Math.sin(time * 5 + target.id) * 0.1;
+                const r = 25 * targetPulse;
+                
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ff6600';
+                
+                // Outer ring
+                ctx.beginPath();
+                ctx.strokeStyle = '#ff6600';
+                ctx.lineWidth = 2;
+                ctx.arc(0, 0, r + 10, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Inner core
+                ctx.beginPath();
+                ctx.fillStyle = '#ffaa00';
+                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Target crosshair
+                ctx.beginPath();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.moveTo(-r - 15, 0); ctx.lineTo(r + 15, 0);
+                ctx.moveTo(0, -r - 15); ctx.lineTo(0, r + 15);
+                ctx.stroke();
+                
+                ctx.restore();
+            });
+        }
+        
+        // Render training hazard zone (Shielding)
+        if (lesson.hazardZone) {
+            const hz = lesson.hazardZone;
+            ctx.save();
+            ctx.translate(hz.x, hz.y);
+            
+            // Pulsing red danger zone
+            const zonePulse = 1 + Math.sin(time * 2) * 0.05;
+            const r = hz.radius * zonePulse;
+            
+            ctx.beginPath();
+            const grad = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r);
+            grad.addColorStop(0, 'rgba(255, 0, 0, 0.0)');
+            grad.addColorStop(0.8, 'rgba(255, 0, 0, 0.2)');
+            grad.addColorStop(1, 'rgba(255, 0, 0, 0.5)');
+            ctx.fillStyle = grad;
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Warning border
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
+            ctx.setLineDash([20, 15]);
+            ctx.lineDashOffset = -time * 20;
+            ctx.lineWidth = 3;
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // WARNING text rotating around edge
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff0000';
+            ctx.font = 'bold 16px "Exo 2", monospace';
+            ctx.fillStyle = '#ff5555';
+            ctx.textAlign = 'center';
+            for (let i = 0; i < 4; i++) {
+                ctx.save();
+                ctx.rotate(time * 0.5 + i * Math.PI / 2);
+                ctx.translate(0, -r - 10);
+                ctx.fillText('WARNING: RADIATION ZONE', 0, 0);
+                ctx.restore();
+            }
+            
+            ctx.restore();
+        }
+        
+        // Render training hazards (Black holes, mines)
+        if (lesson.hazards) {
+            lesson.hazards.forEach(h => {
+                if (h.x === -99999) return; // Destroyed
+                ctx.save();
+                ctx.translate(h.x, h.y);
+                
+                if (h.type === 'blackhole') {
+                    // Mini training blackhole
+                    ctx.beginPath();
+                    ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                    ctx.fill();
+                    
+                    // Event horizon glow
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#aa00ff';
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#df80ff';
+                    ctx.lineWidth = 4;
+                    ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Swirl lines
+                    ctx.strokeStyle = '#aa00ff';
+                    ctx.lineWidth = 2;
+                    ctx.globalAlpha = 0.6;
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, h.radius * (0.2 + (i/5) + Math.sin(time*2)/10), time + i, time + i + Math.PI);
+                        ctx.stroke();
+                    }
+                } else if (h.type === 'mine') {
+                    // Training mine blast radius
+                    ctx.beginPath();
+                    ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255,0,0,0.1)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,0,0,0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Mine core
+                    ctx.beginPath();
+                    ctx.fillStyle = '#ff0000';
+                    ctx.arc(0, 0, 20 + Math.sin(time*8)*5, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                
                 ctx.restore();
             });
         }
@@ -8827,10 +9429,25 @@ class InterstellarEngine {
             this.showToast('🚀 Respawned! Shields restored.');
             effect.hasRespawned = true;
 
-            // BOSS RESPAWN: If in a boss mission and boss is dead/cleared, respawn it near the new location
-            if (this.activeMission && this.activeMission.type === 'boss' && !this.activeBoss) {
-                console.log('[Boss Debug] Respawning mission boss after player death');
-                setTimeout(() => this.spawnBoss(this.activeMission.bossType), 2000);
+            // BOSS PERSISTENCE: If in a boss mission, ensure boss is near the new location
+            if (this.activeMission && this.activeMission.type === 'boss') {
+                if (this.activeBoss) {
+                    console.log('[Boss Debug] Teleporting existing mission boss near player');
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 1200;
+                    this.activeBoss.x = this.playerShip.x + Math.cos(angle) * dist;
+                    this.activeBoss.y = this.playerShip.y + Math.sin(angle) * dist;
+                    // Reset boss health slightly (e.g. 20% heal) to prevent easy cheese? 
+                    // No, let's keep it as is for now for difficulty.
+                } else {
+                    console.log('[Boss Debug] Respawning mission boss after player death');
+                    setTimeout(() => this.spawnBoss(this.activeMission.bossType), 2000);
+                }
+            }
+
+            // REFILL FLARES ON RESPAWN
+            if (this.playerShip && this.playerShip.maxFlares > 0) {
+                this.playerShip.flares = this.playerShip.maxFlares;
             }
         }
     }
@@ -8880,12 +9497,15 @@ class InterstellarEngine {
     }
 
     toggleUpgradePanel() {
+        console.log("[HUD] Toggle Upgrade Panel triggered");
         const panel = document.getElementById('upgradePanel');
         if (panel) {
             panel.classList.toggle('hidden');
             if (!panel.classList.contains('hidden')) {
                 this.updateUpgradeUI();
             }
+        } else {
+            console.error("[HUD] upgradePanel NOT found in DOM!");
         }
     }
 
@@ -8903,7 +9523,9 @@ class InterstellarEngine {
             { id: 'shield', name: 'Energy Shield', desc: 'Increases shield capacity' },
             { id: 'cargo', name: 'Quantum Hold', desc: 'Increases gem capacity (Coming Soon)' },
             { id: 'radar', name: 'Deep Scan Radar', desc: 'Increases detection range' },
-            { id: 'tractor', name: 'Tractor Beam', desc: 'Increases gem pull radius (Mauler)' }
+            { id: 'tractor', name: 'Tractor Beam', desc: 'Increases gem pull radius (Mauler)' },
+            { id: 'ecm', name: 'ECM Scrambler', desc: 'Reduces enemy aggro range & breaks stalking' },
+            { id: 'flares', name: 'Decoy Flares', desc: 'Distracts heat-seeking missiles (Press G)' }
         ];
 
         const costs = [1000, 2500, 5000, 10000, 25000];
@@ -10507,6 +11129,17 @@ class InterstellarEngine {
                 }
             }
             this.updateFlightHUD();
+
+            // PASSIVE FLARE RECHARGE: 1 flare every 30 seconds
+            const now = Date.now();
+            if (this.playerShip.maxFlares > 0 && this.playerShip.flares < this.playerShip.maxFlares) {
+                if (!this.playerShip.lastFlareRefill) this.playerShip.lastFlareRefill = now;
+                if (now - this.playerShip.lastFlareRefill > 30000) {
+                    this.playerShip.flares++;
+                    this.playerShip.lastFlareRefill = now;
+                    this.showToast('🔥 Flare Recharged (Passive)');
+                }
+            }
         }
 
         // Update spacecraft positions
@@ -12384,6 +13017,11 @@ class InterstellarEngine {
 
     renderMinerals(ctx, time) {
         this.minerals.forEach(mineral => {
+            // Special: Mindwave Lotus Rendering
+            if (mineral.type === 'lotus') {
+                this.renderLotus(ctx, mineral);
+                return;
+            }
             ctx.save();
             // Use world coordinates (ctx already transformed)
             ctx.translate(mineral.x, mineral.y);
@@ -12840,6 +13478,8 @@ class InterstellarEngine {
                     const trailRot = this.rotate3D(p.x, p.y, trailSZ, rotCenterX, rotCenterY);
                     const trailAlpha = (p.life / 20) * 0.8;
                     const trailSize = p.size * trailRot.scale / safeZoom;
+                    
+                    if (!Number.isFinite(trailRot.x) || !Number.isFinite(trailRot.y) || !Number.isFinite(trailSize) || trailSize <= 0) return;
 
                     const trailGrad = ctx.createRadialGradient(trailRot.x, trailRot.y, 0, trailRot.x, trailRot.y, trailSize);
                     trailGrad.addColorStop(0, `rgba(255, 150, 50, ${trailAlpha})`);
@@ -12913,6 +13553,36 @@ class InterstellarEngine {
             ctx.restore();
         });
 
+        // === RENDER DECOY FLARES ===
+        this.decoyFlares.forEach(flare => {
+            const sz = flare.z || 0;
+            const rotated = this.rotate3D(flare.x, flare.y, sz, rotCenterX, rotCenterY);
+            const rx = rotated.x;
+            const ry = rotated.y;
+            const rScale = rotated.scale;
+            const safeZoom = Math.max(0.01, this.camera.zoom || 1);
+            const size = (8 + Math.random() * 4) * rScale / safeZoom;
+            const alpha = Math.min(1, flare.life / 30);
+
+            if (!Number.isFinite(rx) || !Number.isFinite(ry) || !Number.isFinite(size) || size <= 0) return;
+
+            // Inner core
+            ctx.fillStyle = `rgba(255, 255, 200, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(rx, ry, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Outer glow
+            const glow = ctx.createRadialGradient(rx, ry, 0, rx, ry, size * 2);
+            glow.addColorStop(0, `rgba(255, 150, 50, ${alpha * 0.8})`);
+            glow.addColorStop(0.5, `rgba(255, 80, 0, ${alpha * 0.4})`);
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(rx, ry, size * 2, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
         // === RENDER ENEMY SHIPS ===
         this.enemyShips.forEach(enemy => {
             const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
@@ -12922,7 +13592,7 @@ class InterstellarEngine {
             const ry = rotated.y;
             const rScale = rotated.scale;
 
-            ctx.save();
+            if (!Number.isFinite(rx) || !Number.isFinite(ry) || !Number.isFinite(rScale) || rScale <= 0) return; ctx.save();
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
             const size = typeDef.size * rScale / safeZoom;
 
@@ -12934,6 +13604,10 @@ class InterstellarEngine {
 
             // Engine glow
             const glowSize = size * 1.5;
+            if (!Number.isFinite(glowSize) || glowSize <= 0) {
+                ctx.restore();
+                return;
+            }
             const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
             glow.addColorStop(0, typeDef.glowColor);
             glow.addColorStop(1, 'transparent');
@@ -13010,6 +13684,8 @@ class InterstellarEngine {
         this.enemyBullets.forEach(b => {
             const sz = b.z || 0;
             const rotated = this.rotate3D(b.x, b.y, sz, rotCenterX, rotCenterY);
+            const rScale = rotated.scale;
+            if (!Number.isFinite(rotated.x) || !Number.isFinite(rotated.y) || !Number.isFinite(rScale) || rScale <= 0) return;
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
 
             ctx.save();
@@ -13052,7 +13728,7 @@ class InterstellarEngine {
             const ry = rotated.y;
             const rScale = rotated.scale;
 
-            ctx.save();
+            if (!Number.isFinite(rx) || !Number.isFinite(ry) || !Number.isFinite(rScale) || rScale <= 0) return; ctx.save();
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
             const size = typeDef.size * rScale / safeZoom;
             const baseColor = boss.hitFlash > 0 ? '#ffffff' : typeDef.color;
@@ -15497,7 +16173,8 @@ class InterstellarEngine {
 
         // Simple perspective projection (optional depth effect)
         const fov = 800;
-        const scale = fov / (fov + pz);
+        const den = fov + pz;
+        const scale = (Math.abs(den) < 0.001) ? 1000 : fov / den;
 
         // Translate back
         return {
@@ -15633,7 +16310,8 @@ class InterstellarEngine {
     showShipModal() {
         const modal = document.getElementById('shipModal');
         if (modal) {
-            modal.classList.add('active');
+            modal.style.display = 'flex';
+            modal.classList.add('active'); 
             this.initHangar(); // Generate bays
             this.updateHangarUI(); // Set initial position
             if (this.resizeHangar) this.resizeHangar(); // Apply responsive sizing
@@ -15644,6 +16322,24 @@ class InterstellarEngine {
                 this._hangarLoopRunning = true;
                 this.renderHangarPreviews();
             }
+
+            // Update gem balance
+            const gemEl = document.getElementById('hangarGemBalance');
+            if (gemEl) gemEl.textContent = this.playerGems ? this.playerGems.toLocaleString() : '0';
+        }
+    }
+
+    hideShipModal() {
+        const modal = document.getElementById('shipModal');
+        if (modal) {
+            modal.classList.remove('active');
+            this._hangarActive = false;
+            // Delay hidding display to allow transition
+            setTimeout(() => {
+                if (!modal.classList.contains('active')) {
+                    modal.style.display = 'none';
+                }
+            }, 500);
         }
     }
 
