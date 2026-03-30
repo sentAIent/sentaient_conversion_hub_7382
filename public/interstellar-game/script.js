@@ -2386,10 +2386,50 @@ class InterstellarEngine {
         // Every 12 frames (~5 FPS)
         if (this.frameCounter % 12 === 0) {
             this.updateMap();
+            this.updateFactionHUD();
         }
     }
 
+    updateFactionHUD() {
+        const panel = document.getElementById('sectionFactions');
+        if (!panel) return;
+
+        if (!this.flightMode) {
+            panel.style.display = 'none';
+            return;
+        }
+
+        panel.style.display = 'block';
+
+        const content = document.getElementById('factionsContent');
+        if (!content) return;
+
+        const factions = [
+            { key: 'xenon',  label: 'Xenon Hive',      color: '#ff4444' },
+            { key: 'mauler', label: 'Mauler Cartel',    color: '#ff9900' },
+            { key: 'terran', label: 'Terran Defense',   color: '#44aaff' },
+        ];
+
+        content.innerHTML = factions.map(f => {
+            const rep = this.factionRep[f.key] || 0;
+            const pct = ((rep + 100) / 200) * 100; // -100..100 => 0..100%
+            const status = rep > 30 ? 'Friendly' : rep < -30 ? 'Hostile' : 'Neutral';
+            const statusColor = rep > 30 ? '#44ff88' : rep < -30 ? '#ff4444' : '#ffdd44';
+            return `<div style="margin-bottom:6px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+                    <span style="color:${f.color};font-weight:bold;">${f.label}</span>
+                    <span style="color:${statusColor};font-size:10px;">${status}</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.1);border-radius:3px;height:6px;overflow:hidden;">
+                    <div style="width:${pct.toFixed(1)}%;height:100%;background:${f.color};transition:width 0.3s;"></div>
+                </div>
+                <div style="text-align:right;font-size:9px;color:#888;margin-top:1px;">${rep > 0 ? '+' : ''}${rep}</div>
+            </div>`;
+        }).join('');
+    }
+
     updateShipStatus() {
+
         const ship = this.playerShip;
         if (!ship) return;
 
@@ -2842,6 +2882,7 @@ class InterstellarEngine {
 
             // Draw Minerals (gems) - FILTERED
             // Only draw minerals if zoomed in or if they are high value to reduce noise
+            ctx.globalAlpha = 0.5;
             this.minerals.forEach(mineral => {
                 const dx = (mineral.x + offsetX) * scale;
                 const dy = (mineral.y + offsetY) * scale;
@@ -2853,10 +2894,7 @@ class InterstellarEngine {
                 if (scale < 0.0005 && ['quartz', 'iron'].includes(mineral.type)) return;
 
                 ctx.fillStyle = mineral.color;
-                ctx.globalAlpha = 0.5;
-                ctx.beginPath();
-                ctx.arc(cx + dx, cy + dy, 2, 0, Math.PI * 2); // Smaller dots
-                ctx.fill();
+                ctx.fillRect(cx + dx - 1, cy + dy - 1, 2, 2); // fillRect is 100x faster than arc()
             });
             ctx.globalAlpha = 1;
 
@@ -3216,7 +3254,13 @@ class InterstellarEngine {
 
         // --- 6.5. MINERALS/GEMS (Navigation Aid) ---
         // Show minerals on the map with proper color coding
+        const viewW = w / zoom;
+        const viewH = h / zoom;
         this.minerals.forEach(mineral => {
+            // Viewport Cull to ensure map is blazingly fast even with 3000 gems!
+            if (Math.abs(mineral.x + this.expandedMapOffset.x) > viewW/2 + 100) return;
+            if (Math.abs(mineral.y + this.expandedMapOffset.y) > viewH/2 + 100) return;
+
             const mineralInfo = this.mineralTypes[mineral.type];
             if (!mineralInfo) return;
 
@@ -3308,17 +3352,22 @@ class InterstellarEngine {
 
     // Helper for infinite starfield in map
     renderMapStars(ctx, opacity, parallax, spacing, modX, color) {
+        let zoom = this.expandedMapZoom || 1;
+        // Stop the loop from running 300,000 times when zoomed out!
+        let effectiveSpacing = spacing;
+        if (zoom < 0.5) effectiveSpacing = spacing * (0.5 / zoom);
+
         const worldCx = -this.expandedMapOffset.x * parallax;
         const worldCy = -this.expandedMapOffset.y * parallax;
-        const w = ctx.canvas.width / this.expandedMapZoom;
-        const h = ctx.canvas.height / this.expandedMapZoom;
+        const w = ctx.canvas.width / zoom;
+        const h = ctx.canvas.height / zoom;
 
         // Simple deterministic "hash" for visuals without storing millions of stars
         // We assume stars are on a grid with jitter
-        const startX = Math.floor((worldCx - w) / spacing);
-        const endX = Math.floor((worldCx + w) / spacing);
-        const startY = Math.floor((worldCy - h) / spacing);
-        const endY = Math.floor((worldCy + h) / spacing);
+        const startX = Math.floor((worldCx - w) / effectiveSpacing);
+        const endX = Math.floor((worldCx + w) / effectiveSpacing);
+        const startY = Math.floor((worldCy - h) / effectiveSpacing);
+        const endY = Math.floor((worldCy + h) / effectiveSpacing);
 
         ctx.fillStyle = color;
 
@@ -3326,14 +3375,16 @@ class InterstellarEngine {
             for (let y = startY; y <= endY; y++) {
                 // Deterministic random
                 const seed = x * 34234 + y * 23123;
-                const rx = Math.sin(seed) * spacing;
-                const ry = Math.cos(seed * 0.5) * spacing;
-                const size = (Math.sin(seed * 1.5) + 1.5);
+                const rx = Math.sin(seed) * effectiveSpacing;
+                const ry = Math.cos(seed * 0.5) * effectiveSpacing;
+                
+                // If severely zoomed out, skip smaller/dimmer stars to improve performance
+                if (zoom < 0.2 && Math.sin(seed * 2) < 0.5) continue;
+
+                const size = (Math.sin(seed * 1.5) + 1.5) * (effectiveSpacing / spacing);
 
                 ctx.globalAlpha = opacity * (0.5 + Math.sin(seed * 0.1) * 0.5);
-                ctx.beginPath();
-                ctx.arc(x * spacing + rx, y * spacing + ry, size, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.fillRect(x * effectiveSpacing + rx - size, y * effectiveSpacing + ry - size, size * 2, size * 2);
             }
         }
         ctx.globalAlpha = 1.0;
@@ -3530,28 +3581,40 @@ class InterstellarEngine {
         if (keys['q']) ship.vz += ship.acceleration;
         if (keys['e']) ship.vz -= ship.acceleration;
 
-        // Global Ability: Afterburner
-        let boost = keys['shift'] ? 2.0 : 1.0;
-        if (this.globalAbilityActive && this.globalAbilityActive.afterburner) {
-            boost = 3.0 + (this.playerSkills.afterburner * 0.5); // Level 1 is 3.5x, Level 3 is 4.5x
+        // --- PHYSICS & SPEED CLAMPING ---
+        let effectiveMaxSpeed = ship.maxSpeed;
+
+        // Shift = manual speed boost (increases effective max speed, not position multiplier)
+        if (keys['shift']) {
+            effectiveMaxSpeed *= 1.8;
         }
 
-        ship.x += ship.vx * boost;
-        ship.y += ship.vy * boost;
-        ship.z += ship.vz * boost;
-
-        ship.speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy + ship.vz * ship.vz);
-
-        let effectiveMaxSpeed = ship.maxSpeed;
+        // Skill: Viper Boost (Ship Specific)
         if (ship.type === 'viper' && ship.boostActive) {
             effectiveMaxSpeed *= 2.0;
-        } else if (ship.type === 'apex' && ship.overclockActive) {
-            effectiveMaxSpeed *= 1.5; // Apex gets 1.5x speed boost during overclock
+        } 
+        // Skill: Apex Overclock (Ship Specific)
+        else if (ship.type === 'apex' && ship.overclockActive) {
+            effectiveMaxSpeed *= 1.5;
         }
 
+        // Skill: Global Afterburner (raises the speed cap)
+        if (this.globalAbilityActive && this.globalAbilityActive.afterburner) {
+            effectiveMaxSpeed *= 3.0 + (this.playerSkills.afterburner * 0.5);
+        }
+
+        // Penalty: Towing base reduces max speed
         if (this.spaceBase && this.spaceBase.isTowing) {
             effectiveMaxSpeed *= 0.5;
         }
+
+        ship.x += ship.vx;
+        ship.y += ship.vy;
+        ship.z += ship.vz;
+
+        ship.speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy + ship.vz * ship.vz);
+
+
 
         if (ship.speed > effectiveMaxSpeed) {
             const ratio = effectiveMaxSpeed / ship.speed;
@@ -4009,24 +4072,45 @@ class InterstellarEngine {
 
         for (const enemy of this.enemyShips) {
             const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
-            let targetX = ship.x;
-            let targetY = ship.y;
+
+            // EMP FREEZE CHECK: Skip all AI logic while disabled
+            if (enemy.disabled) {
+                if (now >= enemy.disabledUntil) {
+                    enemy.disabled = false; // Auto-unfreeze when timer expires
+                } else {
+                    // Apply friction to gradually stop the ship while frozen
+                    enemy.vx *= 0.9;
+                    enemy.vy *= 0.9;
+                    enemy.x += enemy.vx;
+                    enemy.y += enemy.vy;
+                    continue; // Skip remaining AI logic
+                }
+            }
+
+            // Default patrol target is in front of current patrol angle (not player)
+            let targetX = enemy.x + Math.cos(enemy.patrolAngle || 0) * 500;
+            let targetY = enemy.y + Math.sin(enemy.patrolAngle || 0) * 500;
             let targetShip = ship;
             let distToTarget = Infinity;
             let isTargetingPlayer = false;
 
-            // 1. Evaluate player as target
+            // 1. Check player as target only when faction is hostile
             const ecmFactor = 1 - (this.playerShip.ecmStrength || 0) * 0.1;
             const effectiveAggroRange = typeDef.aggroRange * ecmFactor;
             const isHostileToPlayer = (this.factionRep[enemy.faction] || 0) < 0;
 
             if (isHostileToPlayer && !isPlayerCloaked) {
-                distToTarget = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
-                targetShip = ship;
-                isTargetingPlayer = true;
+                const dToPlayer = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
+                if (dToPlayer < effectiveAggroRange) {
+                    distToTarget = dToPlayer;
+                    targetX = ship.x;
+                    targetY = ship.y;
+                    targetShip = ship;
+                    isTargetingPlayer = true;
+                }
             }
 
-            // 2. Evaluate other procedural enemy factions as targets
+            // 2. Evaluate rival factions as targets (only if closer than current)
             for (const other of this.enemyShips) {
                 if (!other.faction || other.faction === enemy.faction || other === enemy) continue;
                 const d = Math.hypot(enemy.x - other.x, enemy.y - other.y);
@@ -4039,30 +4123,27 @@ class InterstellarEngine {
                 }
             }
 
-            if (distToTarget === Infinity) {
-                // No hostile targets found, force patrol
-                distToTarget = 10000;
-            }
-
-            const angleToTarget = Math.atan2(targetY - enemy.y, targetX - enemy.x);
+            const angleToTarget = (distToTarget < Infinity)
+                ? Math.atan2(targetY - enemy.y, targetX - enemy.x)
+                : (enemy.patrolAngle || 0);
 
             // STALKING HYSTERESIS: Once aggroed, stay aggroed until target is far away
             const stalkStopDist = effectiveAggroRange * 3.0;
-            if (distToTarget < effectiveAggroRange) {
+            if (distToTarget < effectiveAggroRange && distToTarget < Infinity) {
                 enemy.isStalking = true;
-            } else if (distToTarget > stalkStopDist) {
+            } else if (distToTarget > stalkStopDist || distToTarget === Infinity) {
                 enemy.isStalking = false;
             }
 
             // Determine AI state
             if (enemy.health < typeDef.health * 0.2) {
                 enemy.state = 'flee';
-            } else if (distToTarget === 10000 || (!isTargetingPlayer && isPlayerCloaked && distToTarget > 2000)) {
+            } else if (distToTarget === Infinity) {
                 enemy.state = 'patrol';
             } else if (distToTarget < typeDef.attackRange) {
                 enemy.state = 'attack';
             } else if (enemy.isStalking) {
-                enemy.state = (distToTarget < typeDef.attackRange + 100) ? 'attack' : 'chase';
+                enemy.state = 'chase';
             } else {
                 enemy.state = 'patrol';
             }
@@ -4089,7 +4170,10 @@ class InterstellarEngine {
 
                 case 'attack':
                     targetAngle = angleToTarget;
-                    thrust = typeDef.maxSpeed * 0.3; // Slow approach during attack
+                    // Stop thrusting if already within close range to prevent perpetual orbit
+                    thrust = distToTarget > typeDef.attackRange * 0.5
+                        ? typeDef.maxSpeed * 0.3
+                        : 0; // Hover in place and shoot, don't spiral
 
                     // Fire weapons
                     if (enemy.burstRemaining > 0) {
@@ -4149,18 +4233,16 @@ class InterstellarEngine {
         this.spawnEnemyShips();
     }
 
-    fireEnemyBullet(enemy, typeDef) {
+    fireEnemyBullet(enemy, typeDef, targetShip) {
+        // targetShip defaults to player if not provided
+        const target = targetShip || this.playerShip;
         gameAudio.playEnemyLaser();
-        const angleToPlayer = Math.atan2(
-            this.playerShip.y - enemy.y,
-            this.playerShip.x - enemy.x
-        );
 
-        // Lead the player's movement for smarter aiming
-        const dist = Math.hypot(this.playerShip.x - enemy.x, this.playerShip.y - enemy.y);
+        // Lead the target's movement for smarter aiming
+        const dist = Math.hypot(target.x - enemy.x, target.y - enemy.y);
         const timeToHit = dist / typeDef.bulletSpeed;
-        const leadX = this.playerShip.x + (this.playerShip.vx || 0) * timeToHit * 0.3;
-        const leadY = this.playerShip.y + (this.playerShip.vy || 0) * timeToHit * 0.3;
+        const leadX = target.x + (target.vx || 0) * timeToHit * 0.3;
+        const leadY = target.y + (target.vy || 0) * timeToHit * 0.3;
         const leadAngle = Math.atan2(leadY - enemy.y, leadX - enemy.x);
 
         // Add slight inaccuracy
@@ -4175,6 +4257,7 @@ class InterstellarEngine {
             damage: typeDef.bulletDamage,
             life: 80, // ~1.3 seconds
             color: typeDef.color,
+            faction: enemy.faction, // Track which faction fired this bullet
             width: 3,
             length: 25
         });
@@ -4198,9 +4281,10 @@ class InterstellarEngine {
 
             let bulletDestroyed = false;
 
-            // Check collision with player
-            const isHostileToPlayer = (this.factionRep[b.faction] || 0) < 0;
-            if (isHostileToPlayer) {
+            // Bullets from FRIENDLY factions should not damage the player (rep > 0)
+            // Only damage player if the faction is hostile (rep < 0) or has no faction tag
+            const bulletFactionRep = b.faction ? (this.factionRep[b.faction] || 0) : -1;
+            if (bulletFactionRep < 0) {
                 const dist = Math.hypot(b.x - ship.x, b.y - ship.y);
                 if (dist < 30) {
                     this.createExplosion(b.x, b.y, 'hit');
@@ -4397,6 +4481,7 @@ class InterstellarEngine {
                             vx: 0, vy: 0,
                             rotation: sAngle,
                             type: 'scout',
+                            faction: 'xenon', // Boss scouts are Xenon — always hostile to player
                             health: scoutDef.health,
                             maxHealth: scoutDef.health,
                             state: 'chase',
@@ -4406,10 +4491,12 @@ class InterstellarEngine {
                             burstRemaining: 0,
                             burstTimer: 0,
                             hitFlash: 0,
+                            isStalking: true, // Immediately aggressive — skip patrol phase
                             spawnTime: now
                         });
                     }
                     boss.lastSpawnTime = now;
+
                     this.showToast('🐛 Hive Queen spawned reinforcements!', 1500);
                 }
                 if (!isPlayerCloaked) {
@@ -5207,22 +5294,18 @@ class InterstellarEngine {
     }
 
     spawnLoot(x, y, type, amount) {
-        // Create a floating resource gem
-        // Reuse existing gem logic if accessible, or create temp visual
-        // For now, simpler to just add to inventory with a notification
         this.playerInventory[type] = (this.playerInventory[type] || 0) + amount;
+        // Use the same {text, color, time} shape as renderCollectionNotifications expects
         this.collectionNotifications.push({
             text: `+${amount} ${type.toUpperCase()}`,
-            x: x,
-            y: y,
-            life: 60,
-            vy: -1
+            color: '#ffd700',
+            time: Date.now()
         });
     }
 
     renderProjectiles(ctx) {
-        ctx.save();
         this.projectiles.forEach(p => {
+            ctx.save();
             ctx.translate(p.x, p.y);
             ctx.rotate(p.rotation);
 
@@ -5244,10 +5327,8 @@ class InterstellarEngine {
             ctx.fill();
 
             ctx.globalAlpha = 1;
-            ctx.rotate(-p.rotation);
-            ctx.translate(-p.x, -p.y);
+            ctx.restore();
         });
-        ctx.restore();
     }
 
     updateDamageParticles() {
@@ -5988,9 +6069,19 @@ class InterstellarEngine {
     // Spawn minerals around the player - ADDICTIVE GAMEPLAY DESIGN
     spawnMinerals() {
         const ship = this.playerShip;
-        const spawnRadius = 1500; // Medium range - always gems visible
-        let targetDensity = 200; // Base: Always 200 gems nearby
-
+        
+        // Dynamically compute spawn radius to cover the ENTIRE zoomed out screen!
+        const canvasW = this.canvas ? this.canvas.width : 1600;
+        const canvasH = this.canvas ? this.canvas.height : 900;
+        const curZoom = this.camera ? Math.max(0.05, this.camera.zoom) : 1;
+        const worldViewportRadius = Math.hypot(canvasW / 2, canvasH / 2) / curZoom;
+        
+        const spawnRadius = Math.max(1500, worldViewportRadius + 200);
+        
+        // Scale density dynamically (but cap at 3000 to prevent crashing the canvas)
+        const densityMultiplier = spawnRadius / 1500;
+        let targetDensity = Math.min(3000, 200 * densityMultiplier);
+        
         // Check hotspot proximity for MASSIVE density boost
         let hotspotBonus = 1.0;
         let activeHotspot = null;
@@ -6169,13 +6260,22 @@ class InterstellarEngine {
 
         const dx = this.playerShip.x - mineral.x;
         const dy = this.playerShip.y - mineral.y;
-        const dz = (this.playerShip.z || 0) - (mineral.z || 0); // 3D support
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        // For lotus: use 2D only - it lives in screen space, not 3D space
+        // For all others: include Z so deep-space gems don't erroneously collect
+        let dist;
+        if (mineral.type === 'lotus') {
+            dist = Math.sqrt(dx * dx + dy * dy);
+        } else {
+            const dz = (this.playerShip.z || 0) - (mineral.z || 0);
+            dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        }
 
         // Standard collection range is 35 (size + ship size roughly)
         // PROSPECTOR: Gem Magnet - 20% wider pickup range
         let collectionRange = 35;
-        if (this.playerShip.type === 'prospector') {
+        if (mineral.type === 'lotus') {
+            collectionRange = 70; // Lotus is visually very large (size 25 drawn at 2.5x = ~63px), match its footprint
+        } else if (this.playerShip.type === 'prospector') {
             collectionRange = 45; // +30% Gem Magnet Range
         }
 
@@ -6282,7 +6382,7 @@ class InterstellarEngine {
                 id: 'lotus-' + Date.now() + '-' + i,
                 x: this.playerShip.x + Math.cos(angle) * dist,
                 y: this.playerShip.y + Math.sin(angle) * dist,
-                z: (Math.random() - 0.5) * 200,
+                z: this.playerShip.z || 0, // Always spawn at player's Z so 3D distance check doesn't break collection
                 type: 'lotus',
                 name: 'Mindwave Lotus', // ADDED: Critical for collection name
                 size: 25,
@@ -6340,13 +6440,34 @@ class InterstellarEngine {
         // Spawn new minerals
         this.spawnMinerals();
 
-        // One-time check: If no lotuses exist, spawn some (Initial session recovery)
-        if (!this.minerals.some(m => m.type === 'lotus')) {
-            this.spawnMindwaveLotuses();
+        // Lotus respawn: max 5 at a time, with a 20s cooldown to avoid burst-spawning
+        const lotusCount = this.minerals.filter(m => m.type === 'lotus').length;
+        const now = Date.now();
+        if (lotusCount < 5) {
+            if (!this.lastLotusRespawn || now - this.lastLotusRespawn > 20000) {
+                this.lastLotusRespawn = now;
+                // Spawn just enough to bring count up to 5
+                const toSpawn = 5 - lotusCount;
+                for (let i = 0; i < toSpawn; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 600 + Math.random() * 1800;
+                    this.minerals.push({
+                        id: 'lotus-' + now + '-' + i,
+                        x: this.playerShip.x + Math.cos(angle) * dist,
+                        y: this.playerShip.y + Math.sin(angle) * dist,
+                        z: this.playerShip.z || 0,
+                        type: 'lotus',
+                        name: 'Mindwave Lotus',
+                        size: 25,
+                        color: '#ff69b4',
+                        value: 1000,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
         }
 
         // Update notifications (fade out after 2 seconds)
-        const now = Date.now();
         this.collectionNotifications = this.collectionNotifications.filter(n => now - n.time < 2000);
 
         // Update Mauler Debris
@@ -6502,11 +6623,12 @@ class InterstellarEngine {
 
     // Spawn hazards around the player
     spawnHazards() {
-        if (!this.flightMode || this.hazardEffect) return;
+        // Never spawn hazards during training - mines would kill students mid-lesson!
+        if (!this.flightMode || this.hazardEffect || this.trainingActive) return;
 
         const ship = this.playerShip;
         const spawnRadius = 3000;
-        const minSpawnDist = 800;
+        const minSpawnDist = 1800; // INCREASED: Must be well outside visual detection range
 
         // Target density: fewer hazards than minerals for balance
         const targetMines = 3;
@@ -6522,9 +6644,24 @@ class InterstellarEngine {
             return dist < spawnRadius * 2;
         });
 
-        // Spawn new mines
+        // Helper: pick a safe spawn angle that avoids the player's current heading
+        // Avoids 60° cone directly ahead so hazards never spawn where you're flying
+        const safeAngle = () => {
+            const heading = Math.atan2(ship.vy || 0, ship.vx || 0);
+            let angle;
+            let attempts = 0;
+            do {
+                angle = Math.random() * Math.PI * 2;
+                const diff = Math.abs(((angle - heading) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+                attempts++;
+                if (diff > Math.PI / 3) break; // Outside 60° cone ahead
+            } while (attempts < 10);
+            return angle;
+        };
+
+        // Spawn new mines — min 1800 units away so player has time to react
         while (this.spaceMines.length < targetMines) {
-            const angle = Math.random() * Math.PI * 2;
+            const angle = safeAngle();
             const dist = minSpawnDist + Math.random() * (spawnRadius - minSpawnDist);
             this.spaceMines.push({
                 x: ship.x + Math.cos(angle) * dist,
@@ -6537,9 +6674,9 @@ class InterstellarEngine {
             });
         }
 
-        // Spawn new black holes (rarer)
+        // Spawn new black holes (rarer) — extra far, they're inescapable
         while (this.hazardBlackHoles.length < targetBlackHoles) {
-            const angle = Math.random() * Math.PI * 2;
+            const angle = safeAngle();
             const dist = minSpawnDist * 1.5 + Math.random() * (spawnRadius - minSpawnDist);
             this.hazardBlackHoles.push({
                 x: ship.x + Math.cos(angle) * dist,
@@ -6565,10 +6702,11 @@ class InterstellarEngine {
             return dist < spawnRadius * 2 && missile.life > 0;
         });
 
-        // Spawn new missile bases
+        // Spawn new missile bases — min 2000 units, detection range is 1200-1800 so player must cross 200+ units before being targeted
+        const missileBaseMinDist = 2000;
         while (this.missileBases.length < targetBases) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = minSpawnDist * 1.2 + Math.random() * (spawnRadius - minSpawnDist);
+            const angle = safeAngle();
+            const dist = missileBaseMinDist + Math.random() * (spawnRadius - missileBaseMinDist);
             this.missileBases.push({
                 x: ship.x + Math.cos(angle) * dist,
                 y: ship.y + Math.sin(angle) * dist,
@@ -6670,9 +6808,9 @@ class InterstellarEngine {
                 if (dist < effectiveRadius + collisionRadius) {
                     const speed = Math.hypot(ship.vx, ship.vy);
                     if (planet.type === 'terrestrial' && speed < 5) {
-                        // Planetary Landing Sequence
-                        this.vx = 0;
-                        this.vy = 0;
+                        // Planetary Landing Sequence - zero out playerShip velocity
+                        this.playerShip.vx = 0;
+                        this.playerShip.vy = 0;
                         this.openBaseBuilder(planet);
                         return;
                     } else {
@@ -6798,8 +6936,8 @@ class InterstellarEngine {
             }
         }
 
-        // Remove dead missiles
-        this.enemyMissiles = this.enemyMissiles.filter(m => m.life > 0);
+        // Remove dead missiles (from life running out OR EMP kill)
+        this.enemyMissiles = this.enemyMissiles.filter(m => m.life > 0 && !m.dead);
 
         // === UPDATE DECOY FLARES ===
         for (let i = this.decoyFlares.length - 1; i >= 0; i--) {
@@ -11391,6 +11529,7 @@ class InterstellarEngine {
             this.updateDamageParticles();
             this.updateMinerals();
             this.updateHazards();
+            this.updateSpaceBase();
             this.updateEnemyShips();
             this.updateEnemyBullets();
             this.updateBoss();
@@ -11399,10 +11538,16 @@ class InterstellarEngine {
             gameAudio.updateEngineHum(shipSpeed);
             if (this.activeMission && this.activeMission.type === 'survive') this.checkMissionComplete();
             if (this.activeMission && this.activeMission.type === 'collect') {
-                // Track mineral collection progress
-                const totalMinerals = Object.values(this.playerInventory).reduce((a, b) => a + b, 0);
-                if (this.activeMission.progress !== totalMinerals) {
-                    this.activeMission.progress = totalMinerals;
+                // Track delta from when mission started, not total lifetime inventory
+                // Store baseline at mission start, count only newly collected items
+                if (this.activeMission.baselineInventory === undefined) {
+                    // First frame of collect mission - snapshot current inventory total
+                    this.activeMission.baselineInventory = Object.values(this.playerInventory).reduce((a, b) => a + b, 0);
+                }
+                const totalNow = Object.values(this.playerInventory).reduce((a, b) => a + b, 0);
+                const delta = totalNow - this.activeMission.baselineInventory;
+                if (this.activeMission.progress !== delta) {
+                    this.activeMission.progress = Math.max(0, delta);
                     this.updateMissionHUD();
                     this.checkMissionComplete();
                 }
@@ -13301,12 +13446,20 @@ class InterstellarEngine {
                 this.renderLotus(ctx, mineral);
                 return;
             }
+
+            // Viewport Culling Optimization!
+            const safeZoom = Math.max(0.01, this.camera ? this.camera.zoom : 1);
+            const viewHalfW = (this.canvas.width / safeZoom) / 2 + 100; // 100px pad
+            const viewHalfH = (this.canvas.height / safeZoom) / 2 + 100;
+            // The camera center in world space is the negative offset divided by zoom
+            const camX = (this.camera && typeof this.camera.x === 'number') ? (-this.camera.x / safeZoom) : this.playerShip.x;
+            const camY = (this.camera && typeof this.camera.y === 'number') ? (-this.camera.y / safeZoom) : this.playerShip.y;
+            
+            if (Math.abs(mineral.x - camX) > viewHalfW || Math.abs(mineral.y - camY) > viewHalfH) return;
+
             ctx.save();
             // Use world coordinates (ctx already transformed)
             ctx.translate(mineral.x, mineral.y);
-
-            // Safeguard against invalid zoom
-            const safeZoom = Math.max(0.01, this.camera.zoom || 1);
 
             // Pulsing glow animation
             const pulse = Math.sin(time * 0.003 + mineral.phase) * 0.3 + 0.7;
@@ -17507,6 +17660,94 @@ class InterstellarEngine {
             if (el) el.classList.toggle('selected', t === tool);
         });
         gameAudio.playMenuHover();
+    }
+
+    // =====================================================
+    // BASE PHASE 2: Collector + Defense Turret Mechanics
+    // =====================================================
+    updateSpaceBase() {
+        if (!this.spaceBase || !this.spaceBase.isDeployed || this.spaceBase.isTowing) return;
+
+        const now = Date.now();
+
+        // --- COLLECTOR (⛏️ 'mine' tiles): Passive credit generation ---
+        // Counts how many collector tiles are placed
+        const collectorCount = Object.values(this.spaceBase)
+            .filter(v => v === 'mine').length;
+
+        if (collectorCount > 0) {
+            if (!this.spaceBase.lastCollectorTick) this.spaceBase.lastCollectorTick = now;
+            const collectorInterval = 30000; // 30 seconds per tick
+            if (now - this.spaceBase.lastCollectorTick >= collectorInterval) {
+                const earned = collectorCount * 50; // 50 credits per collector per tick
+                this.credits += earned;
+                this.updateWalletUI();
+                this.collectionNotifications.push({
+                    text: `⛏️ Base Collectors: +${earned} Credits`,
+                    color: '#ffd700',
+                    time: now
+                });
+                this.spaceBase.lastCollectorTick = now;
+            }
+        }
+
+        // --- DEFENSE TURRET (🔫 'def' tiles): Auto-shoot nearby hostile ships ---
+        const turretCount = Object.values(this.spaceBase)
+            .filter(v => v === 'def').length;
+
+        if (turretCount > 0 && this.enemyShips.length > 0) {
+            if (!this.spaceBase.lastTurretFire) this.spaceBase.lastTurretFire = now;
+            const turretFireRate = Math.max(500, 2000 / turretCount); // More turrets = faster fire
+
+            if (now - this.spaceBase.lastTurretFire >= turretFireRate) {
+                const baseX = this.spaceBase.x;
+                const baseY = this.spaceBase.y;
+                const turretRange = 800 + (turretCount * 100);
+
+                // Find closest hostile enemy within range
+                let closestEnemy = null;
+                let closestDist = Infinity;
+                for (const enemy of this.enemyShips) {
+                    const isHostile = (this.factionRep[enemy.faction] || 0) < 0;
+                    if (!isHostile) continue;
+                    const d = Math.hypot(enemy.x - baseX, enemy.y - baseY);
+                    if (d < turretRange && d < closestDist) {
+                        closestDist = d;
+                        closestEnemy = enemy;
+                    }
+                }
+
+                if (closestEnemy) {
+                    // Fire a turret bullet toward the enemy
+                    const angle = Math.atan2(closestEnemy.y - baseY, closestEnemy.x - baseX);
+                    const bulletSpeed = 10;
+                    this.enemyBullets.push({
+                        // Turret bullets use enemyBullets array but faction = 'terran' (friendly to player)
+                        // They hit enemies via the existing faction cross-fire check
+                        x: baseX + Math.cos(angle) * 30,
+                        y: baseY + Math.sin(angle) * 30,
+                        vx: Math.cos(angle) * bulletSpeed,
+                        vy: Math.sin(angle) * bulletSpeed,
+                        rotation: angle,
+                        damage: 15 * turretCount,
+                        life: Math.ceil(turretRange / bulletSpeed) + 5,
+                        color: '#00ff88',
+                        faction: 'terran', // Terran-friendly bullets won't damage player
+                        width: 3,
+                        length: 18,
+                        fromTurret: true // Tag for rendering distinction
+                    });
+                    this.spaceBase.lastTurretFire = now;
+
+                    // Visual flash on base
+                    this.collectionNotifications.push({
+                        text: `🔫 Base Turret fired!`,
+                        color: '#00ff88',
+                        time: now
+                    });
+                }
+            }
+        }
     }
 
     drawBaseGrid() {
