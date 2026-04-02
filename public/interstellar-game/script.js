@@ -319,7 +319,7 @@ class InterstellarEngine {
 
         } catch (e) {
             console.error("Template loading failed:", e);
-            this.showToast("Failed to load templates");
+            this.hudManager.showToast("Failed to load templates");
         }
     }
 
@@ -419,7 +419,7 @@ class InterstellarEngine {
 
         // Close panel
         document.getElementById('templatePanel').style.display = 'none';
-        this.showToast(`Loaded ${key} template`);
+        this.hudManager.showToast(`Loaded ${key} template`);
         this.draw();
     }
 
@@ -553,15 +553,16 @@ class InterstellarEngine {
 
         // Init Mobile Controls
         this.inputManager = new window.InputManager(this);
+        this.hudManager = new window.HUDManager(this);
 
         // Trigger initial background generation
         this.resize();
 
         // Initial UI population
-        this.updateWalletUI();
-        this.updateInventoryUI();
+        this.hudManager.updateWalletUI();
+        this.hudManager.updateInventoryUI();
         if (this.updateGemsUI) this.updateGemsUI();
-        this.updateShipStatus();
+        this.hudManager.updateShipStatus();
         this.updateMap();
 
         // First-login tracking & onboarding
@@ -750,13 +751,13 @@ class InterstellarEngine {
         this.activeColor = hexColor;
         this.colorMode = 'fixed';
         this.updateColorModeUI();
-        this.showToast(`Active color set to ${hexColor} `);
+        this.hudManager.showToast(`Active color set to ${hexColor} `);
     }
 
     setRainbowMode() {
         this.colorMode = 'rainbow';
         this.updateColorModeUI();
-        this.showToast("Active color set to Rainbow Mode 🌈");
+        this.hudManager.showToast("Active color set to Rainbow Mode 🌈");
     }
 
     // ===== PROCEDURAL UNIVERSE GENERATION =====
@@ -1104,16 +1105,16 @@ class InterstellarEngine {
             if (hud) hud.classList.remove('hidden');
             if (floatingLeaders) floatingLeaders.classList.remove('hidden');
             this.updateFloatingLeaderboard();
-            this.showToast('Flight Mode: ON - Use WASD/QE/Shift');
-            this.updateMissionHUD(); // Call the new mission HUD update
-            this.updateFactionHUD(); // Boot Faction HUD
+            this.hudManager.showToast('Flight Mode: ON - Use WASD/QE/Shift');
+            this.hudManager.updateMissionHUD(); // Call the new mission HUD update
+            this.hudManager.updateFactionHUD(); // Boot Faction HUD
             // Audio: start engine hum + ambient music
             gameAudio.startEngineHum();
             gameAudio.startAmbientMusic();
         } else {
             if (hud) hud.classList.add('hidden');
             if (floatingLeaders) floatingLeaders.classList.add('hidden');
-            this.updateFactionHUD(); // Hide HUD
+            this.hudManager.updateFactionHUD(); // Hide HUD
             // Audio: stop engine + music
             gameAudio.stopEngineHum();
             gameAudio.stopAmbientMusic();
@@ -1124,7 +1125,7 @@ class InterstellarEngine {
             this.toggleBgStyle('deep-space');
         }
 
-        this.showToast(this.flightMode ? 'Flight Mode: ON - Use WASD/QE/Shift' : 'Flight Mode: OFF');
+        this.hudManager.showToast(this.flightMode ? 'Flight Mode: ON - Use WASD/QE/Shift' : 'Flight Mode: OFF');
 
         // Reset keys to prevent runaway ship
         this.keysPressed = {};
@@ -1434,14 +1435,14 @@ class InterstellarEngine {
 
         localStorage.setItem('windowLayout' + slot, JSON.stringify(layout));
         document.getElementById('layout' + slot + 'Btn')?.classList.add('active');
-        this.showToast('Layout ' + slot + ' saved!');
+        this.hudManager.showToast('Layout ' + slot + ' saved!');
     }
 
     // Load layout from a slot
     loadLayout(slot) {
         const layoutStr = localStorage.getItem('windowLayout' + slot);
         if (!layoutStr) {
-            this.showToast('No layout saved in slot ' + slot);
+            this.hudManager.showToast('No layout saved in slot ' + slot);
             return;
         }
 
@@ -1479,7 +1480,7 @@ class InterstellarEngine {
                 document.getElementById('layout' + s + 'Btn')?.classList.toggle('active', s === String(slot));
             });
 
-            this.showToast('Layout ' + slot + ' loaded!');
+            this.hudManager.showToast('Layout ' + slot + ' loaded!');
         } catch (e) {
             console.error('Error loading layout:', e);
         }
@@ -1598,7 +1599,7 @@ class InterstellarEngine {
         this.playerShip.color = defaultColor;
         localStorage.setItem('playerShipColor', defaultColor); // Fixed Key
         document.getElementById('shipColorPicker').value = defaultColor;
-        this.showToast('Ship color reset to default');
+        this.hudManager.showToast('Ship color reset to default');
     }
 
     // 3D Rotation controls
@@ -1641,7 +1642,7 @@ class InterstellarEngine {
         document.getElementById('rollValue').textContent = '0°';
 
         localStorage.removeItem('shipRotation');
-        this.showToast('Ship rotation reset');
+        this.hudManager.showToast('Ship rotation reset');
     }
 
     // adjustColor defined at line ~781 (removed duplicate)
@@ -1711,11 +1712,11 @@ class InterstellarEngine {
             }
 
             // Update gems grid with proper emojis
-            this.updateWalletUI();
-            this.updateInventoryUI();
+            this.hudManager.updateWalletUI();
+            this.hudManager.updateInventoryUI();
 
             // Update ship status (shield/hull bars)
-            this.updateShipStatus();
+            this.hudManager.updateShipStatus();
         }
 
         // Every 3 frames (~20 FPS)
@@ -1726,116 +1727,11 @@ class InterstellarEngine {
         // Every 12 frames (~5 FPS)
         if (this.frameCounter % 12 === 0) {
             this.updateMap();
-            this.updateFactionHUD();
+            this.hudManager.updateFactionHUD();
         }
     }
 
-    updateFactionHUD() {
-        const panel = document.getElementById('sectionFactions');
-        if (!panel) return;
 
-        if (!this.flightMode) {
-            panel.style.display = 'none';
-            return;
-        }
-
-        panel.style.display = 'block';
-
-        const content = document.getElementById('factionsContent');
-        if (!content) return;
-
-        const factions = [
-            { key: 'xenon',  label: 'Xenon Hive',      color: '#ff4444' },
-            { key: 'mauler', label: 'Mauler Cartel',    color: '#ff9900' },
-            { key: 'terran', label: 'Terran Defense',   color: '#44aaff' },
-        ];
-
-        content.innerHTML = factions.map(f => {
-            const rep = this.factionRep[f.key] || 0;
-            const pct = ((rep + 100) / 200) * 100; // -100..100 => 0..100%
-            const status = rep > 30 ? 'Friendly' : rep < -30 ? 'Hostile' : 'Neutral';
-            const statusColor = rep > 30 ? '#44ff88' : rep < -30 ? '#ff4444' : '#ffdd44';
-            return `<div style="margin-bottom:6px;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-                    <span style="color:${f.color};font-weight:bold;">${f.label}</span>
-                    <span style="color:${statusColor};font-size:10px;">${status}</span>
-                </div>
-                <div style="background:rgba(255,255,255,0.1);border-radius:3px;height:6px;overflow:hidden;">
-                    <div style="width:${pct.toFixed(1)}%;height:100%;background:${f.color};transition:width 0.3s;"></div>
-                </div>
-                <div style="text-align:right;font-size:9px;color:#888;margin-top:1px;">${rep > 0 ? '+' : ''}${rep}</div>
-            </div>`;
-        }).join('');
-    }
-
-    updateShipStatus() {
-
-        const ship = this.playerShip;
-        if (!ship) return;
-
-        // Update shield bar
-        const shieldBar = document.getElementById('shieldBar');
-        const shieldText = document.getElementById('shieldText');
-
-        if (shieldBar && shieldText) {
-            const shieldPercent = (ship.shield / ship.maxShield) * 100;
-            shieldBar.style.width = shieldPercent + '%';
-            shieldText.textContent = `${Math.round(ship.shield)} / ${Math.round(ship.maxShield)}`;
-
-            // Change color based on shield level
-            if (shieldPercent < 25) {
-                shieldBar.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)';
-                shieldBar.style.boxShadow = '0 0 15px rgba(255, 50, 50, 0.8)';
-            } else if (shieldPercent < 50) {
-                shieldBar.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)';
-                shieldBar.style.boxShadow = '0 0 10px rgba(255, 170, 0, 0.6)';
-            } else {
-                shieldBar.style.background = 'linear-gradient(90deg, #00aaff, #00ffff)';
-                shieldBar.style.boxShadow = '0 0 10px rgba(0, 255, 255, 0.5)';
-            }
-        }
-
-        // Update health bar (reflects actual hull health)
-        const hullBar = document.getElementById('hullBar');
-        const hullText = document.getElementById('hullText');
-
-        if (hullBar && hullText) {
-            const hullPercent = Math.max(0, Math.min(100, (this.playerShip.hullHealth / this.playerShip.maxHull) * 100));
-            hullBar.style.width = `${hullPercent}%`;
-            hullText.textContent = `${Math.round(hullPercent)}%`;
-
-            // Color feedback based on health
-            if (hullPercent <= 25) {
-                hullBar.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)';
-                hullBar.style.boxShadow = '0 0 15px rgba(255, 0, 0, 0.8)';
-            } else if (hullPercent <= 50) {
-                hullBar.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)';
-                hullBar.style.boxShadow = '0 0 10px rgba(255, 170, 0, 0.6)';
-            } else {
-                hullBar.style.background = 'linear-gradient(90deg, #00cc55, #00ff88)';
-                hullBar.style.boxShadow = '0 0 10px rgba(0, 255, 100, 0.5)';
-            }
-        }
-
-        // Show/hide damage warning
-        const damageWarning = document.getElementById('damageWarning');
-        if (damageWarning) {
-            const isTakingDamage = this.hazardEffect && (this.hazardEffect.type === 'missile_hit' || this.hazardEffect.type === 'planet_impact');
-            damageWarning.style.display = isTakingDamage ? 'block' : 'none';
-        }
-
-        // Quick Repair Button visibility (Monetization Hook)
-        const repairBtn = document.getElementById('quickRepairBtn');
-        if (repairBtn) {
-            const hullPercent = (this.playerShip.hullHealth / this.playerShip.maxHull) * 100;
-            // Show if hull is < 30% and player has enough credits
-            if (hullPercent < 30 && this.credits >= 2000) {
-                repairBtn.style.display = 'block';
-            } else {
-                repairBtn.style.display = 'none';
-            }
-        }
-    }
 
     updateRadar() {
         const canvas = document.getElementById('radarCanvas');
@@ -2890,7 +2786,7 @@ class InterstellarEngine {
         // Apex Overclock Timeout Logic
         if (ship.overclockActive && Date.now() - (ship.overclockStartTime || 0) > 5000) {
             ship.overclockActive = false;
-            this.showToast('Overclock Disengaged.');
+            this.hudManager.showToast('Overclock Disengaged.');
         }
 
         if (ship.type === 'viper' && ship.boostActive) {
@@ -3254,12 +3150,12 @@ class InterstellarEngine {
         const reward = 10;
         this.playerGems += reward;
         localStorage.setItem('playerGems', this.playerGems);
-        this.showToast(`💥 Space Mine destroyed! +${reward} Gems`, 2000);
+        this.hudManager.showToast(`💥 Space Mine destroyed! +${reward} Gems`, 2000);
 
         // TRACK MISSION PROGRESS (ONLY ON WEAPON DESTRUCTION)
         if (this.activeMission && this.activeMission.type === 'sabotage') {
             this.activeMission.progress++;
-            this.updateMissionHUD();
+            this.hudManager.updateMissionHUD();
             this.checkMissionComplete();
         }
 
@@ -3277,7 +3173,7 @@ class InterstellarEngine {
         const reward = 25;
         this.playerGems += reward;
         localStorage.setItem('playerGems', this.playerGems);
-        this.showToast(`💥 Missile Base destroyed! +${reward} Gems`, 2000);
+        this.hudManager.showToast(`💥 Missile Base destroyed! +${reward} Gems`, 2000);
 
         // Loot
         this.spawnLoot(base.x, base.y, 'plutonium', 10);
@@ -3646,11 +3542,11 @@ class InterstellarEngine {
         if (this.activeMission) {
             if (this.activeMission.type === 'kill' && this.activeMission.targetType === enemy.type) {
                 this.activeMission.progress++;
-                this.updateMissionHUD();
+                this.hudManager.updateMissionHUD();
                 this.checkMissionComplete();
             } else if (this.activeMission.type === 'kill_any') {
                 this.activeMission.progress++;
-                this.updateMissionHUD();
+                this.hudManager.updateMissionHUD();
                 this.checkMissionComplete();
             }
         }
@@ -3660,7 +3556,7 @@ class InterstellarEngine {
         const lootType = lootTypes[Math.floor(Math.random() * lootTypes.length)];
         this.spawnLoot(enemy.x, enemy.y, lootType, Math.ceil(typeDef.gemDrop / 3));
 
-        this.showToast(`💥 ${typeDef.name} destroyed! +${typeDef.gemDrop} Gems`, 2000);
+        this.hudManager.showToast(`💥 ${typeDef.name} destroyed! +${typeDef.gemDrop} Gems`, 2000);
 
         this.enemyShips.splice(index, 1);
     }
@@ -3696,7 +3592,7 @@ class InterstellarEngine {
             phase: 1 // 1 = full power, 2 = enraged at 50% HP
         };
 
-        this.showToast(`⚠️ BOSS INCOMING: ${typeDef.name}! ⚠️`, 4000);
+        this.hudManager.showToast(`⚠️ BOSS INCOMING: ${typeDef.name}! ⚠️`, 4000);
         gameAudio.playBossAlert();
     }
 
@@ -3764,7 +3660,7 @@ class InterstellarEngine {
                     }
                     boss.lastSpawnTime = now;
 
-                    this.showToast('🐛 Hive Queen spawned reinforcements!', 1500);
+                    this.hudManager.showToast('🐛 Hive Queen spawned reinforcements!', 1500);
                 }
                 if (!isPlayerCloaked) {
                     let aDiff = angleToPlayer - boss.rotation;
@@ -3863,7 +3759,7 @@ class InterstellarEngine {
             while (shieldDiff < -Math.PI) shieldDiff += Math.PI * 2;
             // Shield covers front 120 degrees
             if (Math.abs(shieldDiff) < Math.PI / 3) {
-                this.showToast('🛡️ Shield blocked!', 1000);
+                this.hudManager.showToast('🛡️ Shield blocked!', 1000);
                 return;
             }
         }
@@ -3915,12 +3811,12 @@ class InterstellarEngine {
         const lootType = rareLoots[Math.floor(Math.random() * rareLoots.length)];
         this.spawnLoot(boss.x, boss.y, lootType, 20);
 
-        this.showToast(`🏆 BOSS DEFEATED: ${typeDef.name}! +${typeDef.gemReward} Gems! 🏆`, 5000);
+        this.hudManager.showToast(`🏆 BOSS DEFEATED: ${typeDef.name}! +${typeDef.gemReward} Gems! 🏆`, 5000);
 
         // Track mission
         if (this.activeMission && this.activeMission.type === 'boss') {
             this.activeMission.progress++;
-            this.updateMissionHUD();
+            this.hudManager.updateMissionHUD();
             this.checkMissionComplete();
         }
 
@@ -3961,7 +3857,7 @@ class InterstellarEngine {
 
     acceptMission(missionTemplate) {
         if (this.activeMission) {
-            this.showToast('⚠️ Complete or abandon current mission first!', 2000);
+            this.hudManager.showToast('⚠️ Complete or abandon current mission first!', 2000);
             return;
         }
 
@@ -3972,7 +3868,7 @@ class InterstellarEngine {
             desc: missionTemplate.desc.replace('{goal}', missionTemplate.goal)
         };
 
-        this.showToast(`📋 Mission Accepted: ${this.activeMission.name}`, 3000);
+        this.hudManager.showToast(`📋 Mission Accepted: ${this.activeMission.name}`, 3000);
 
         // Spawn boss for boss missions
         if (missionTemplate.type === 'boss' && missionTemplate.bossType) {
@@ -3995,7 +3891,7 @@ class InterstellarEngine {
                     lastFire: 0
                 });
             }
-            this.showToast('⚠️ Mission Targets detected on radar!', 5000);
+            this.hudManager.showToast('⚠️ Mission Targets detected on radar!', 5000);
         } else if (missionTemplate.type === 'mine') {
             for (let i = 0; i < missionTemplate.goal + 5; i++) {
                 const angle = Math.random() * Math.PI * 2;
@@ -4011,7 +3907,7 @@ class InterstellarEngine {
                     size: 8
                 });
             }
-            this.showToast('📡 Mineral clusters marked on radar!', 5000);
+            this.hudManager.showToast('📡 Mineral clusters marked on radar!', 5000);
         } else if (missionTemplate.type === 'defense') {
             // Defense mission spawns targets near the player's BASE
             const baseX = this.spaceBase?.x || 0;
@@ -4033,7 +3929,7 @@ class InterstellarEngine {
                     state: 'chase' // Make them aggressive
                 });
             }
-            this.showToast('🚨 BASE UNDER ATTACK! Strategic defenses required.', 5000);
+            this.hudManager.showToast('🚨 BASE UNDER ATTACK! Strategic defenses required.', 5000);
         }
 
         this.hideMissionBoardUI();
@@ -4047,17 +3943,17 @@ class InterstellarEngine {
             if (hud) hud.classList.remove('hidden');
             if (floatingLeaders) floatingLeaders.classList.remove('hidden');
         }
-        this.updateMissionHUD();
+        this.hudManager.updateMissionHUD();
     }
 
     abandonMission() {
         if (!this.activeMission) return;
-        this.showToast(`❌ Mission abandoned: ${this.activeMission.name}`, 2000);
+        this.hudManager.showToast(`❌ Mission abandoned: ${this.activeMission.name}`, 2000);
         if (this.activeBoss && this.activeMission.type === 'boss') {
             this.activeBoss = null; // Remove boss
         }
         this.activeMission = null;
-        this.updateMissionHUD();
+        this.hudManager.updateMissionHUD();
     }
 
     checkMissionComplete() {
@@ -4083,7 +3979,7 @@ class InterstellarEngine {
             this.showMissionCompleteOverlay(m);
             gameAudio.playMissionComplete();
             this.activeMission = null;
-            this.updateMissionHUD();
+            this.hudManager.updateMissionHUD();
         }
     }
 
@@ -4332,66 +4228,6 @@ class InterstellarEngine {
         }, 5000);
     }
 
-    updateMissionHUD() {
-        const section = document.getElementById('sectionMission');
-        const content = document.getElementById('missionContent');
-        if (!section || !content) return;
-
-        if (this.activeMission && this.flightMode) {
-            section.style.display = 'flex';
-            // Make mission window VERY prominent with pulsing glow
-            section.style.border = '2px solid #00ffcc';
-            section.style.boxShadow = '0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.2), inset 0 0 15px rgba(0,255,204,0.1)';
-            section.style.animation = 'missionPulse 2s ease-in-out infinite';
-            section.style.zIndex = '50';
-            // Inject keyframe if not present
-            if (!document.getElementById('missionPulseStyle')) {
-                const style = document.createElement('style');
-                style.id = 'missionPulseStyle';
-                style.textContent = `
-                    @keyframes missionPulse {
-                        0%, 100% { box-shadow: 0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.2); border-color: #00ffcc; }
-                        50% { box-shadow: 0 0 30px rgba(0,255,204,0.8), 0 0 60px rgba(0,255,204,0.4); border-color: #66ffdd; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            const m = this.activeMission;
-            const pct = Math.min(100, Math.round((m.progress / m.goal) * 100));
-            
-            // Use the mission-specific hint if available, fall back to generic
-            let tip = '';
-            if (m.hint) {
-                tip = `<div style="color: #00eaff; font-size: 11px; margin-top: 8px; font-style: italic; font-weight: bold; line-height: 1.4; background: rgba(0,234,255,0.08); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #00eaff;">${m.hint}</div>`;
-            } else if (m.type === 'kill' || m.type === 'kill_any' || m.type === 'boss') {
-                tip = '<div style="color: #ff6b6b; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(255,50,50,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #ff6b6b;">🎯 Hold [SPACE] to Fire Weapons</div>';
-            } else if (m.type === 'collect') {
-                tip = '<div style="color: #f17eff; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(241,126,255,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #f17eff;">💎 Fly over glowing gems to collect</div>';
-            } else if (m.type === 'survive') {
-                tip = '<div style="color: #ffaa00; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(255,170,0,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #ffaa00;">⚠️ Dodge hazards — stay alive!</div>';
-            }
-            
-            content.innerHTML = `
-                <div style="color: #00ffcc; font-weight: bold; font-size: 14px; margin-bottom: 4px; text-shadow: 0 0 8px rgba(0,255,204,0.4);">${m.name}</div>
-                <div style="color: #ddd; margin-bottom: 8px; font-size: 12px; line-height: 1.4;">${m.desc}</div>
-                <div style="background: rgba(0,0,0,0.4); border-radius: 6px; padding: 8px; margin-bottom: 4px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
-                        <span>PROGRESS</span>
-                        <span style="color: #00ff88; font-weight: bold;">${m.progress} / ${m.goal}</span>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.1); border-radius: 3px; height: 8px; overflow: hidden;">
-                        <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #00ff88, #00ffcc); border-radius: 3px; transition: width 0.3s ease; box-shadow: 0 0 8px rgba(0,255,136,0.5);"></div>
-                    </div>
-                </div>
-                ${tip}
-            `;
-        } else {
-            section.style.display = 'none';
-            section.style.border = '';
-            section.style.boxShadow = '';
-            section.style.animation = '';
-        }
-    }
 
     toggleMissionBoard() {
         this.missionBoardOpen = !this.missionBoardOpen;
@@ -4663,15 +4499,15 @@ class InterstellarEngine {
     repairHull() {
         const cost = 2000;
         if (this.credits < cost) {
-            this.showToast("❌ Insufficient credits for repair!");
+            this.hudManager.showToast("❌ Insufficient credits for repair!");
             return;
         }
 
         this.credits -= cost;
         this.playerShip.hullHealth = this.playerShip.maxHull; // Full restore
         this.saveCredits();
-        this.updateShipStatus();
-        this.showToast("🔧 HULL REPAIRED! Systems back online.");
+        this.hudManager.updateShipStatus();
+        this.hudManager.showToast("🔧 HULL REPAIRED! Systems back online.");
 
         // Play a sound effect if available
         console.log('[Repair] Hull restored for 2000 credits');
@@ -4749,7 +4585,7 @@ class InterstellarEngine {
             const lostNames = Object.entries(lostResources)
                 .map(([type, qty]) => `${qty} ${MINERAL_TYPES[type]?.name || type}`)
                 .join(', ');
-            this.showToast(`💀 Lost 25% cargo: ${lostNames}`);
+            this.hudManager.showToast(`💀 Lost 25% cargo: ${lostNames}`);
             console.log('[Death Penalty] Lost resources:', lostResources);
         }
 
@@ -4759,7 +4595,7 @@ class InterstellarEngine {
     // Deposit resources from ship to base vault
     depositResources(resourceType, amount) {
         if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Deploy your base first!');
+            this.hudManager.showToast('⚠️ Deploy your base first!');
             return false;
         }
 
@@ -4767,7 +4603,7 @@ class InterstellarEngine {
         const toDeposit = Math.min(amount, available);
 
         if (toDeposit <= 0) {
-            this.showToast('⚠️ No resources to deposit!');
+            this.hudManager.showToast('⚠️ No resources to deposit!');
             return false;
         }
 
@@ -4777,14 +4613,14 @@ class InterstellarEngine {
         this.saveCarriedResources();
         this.saveSpaceBase();
 
-        this.showToast(`📦 Deposited ${toDeposit} ${MINERAL_TYPES[resourceType]?.name || resourceType}`);
+        this.hudManager.showToast(`📦 Deposited ${toDeposit} ${MINERAL_TYPES[resourceType]?.name || resourceType}`);
         return true;
     }
 
     // Withdraw resources from base to ship
     withdrawResources(resourceType, amount) {
         if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Deploy your base first!');
+            this.hudManager.showToast('⚠️ Deploy your base first!');
             return false;
         }
 
@@ -4792,7 +4628,7 @@ class InterstellarEngine {
         const toWithdraw = Math.min(amount, available);
 
         if (toWithdraw <= 0) {
-            this.showToast('⚠️ No resources in vault!');
+            this.hudManager.showToast('⚠️ No resources in vault!');
             return false;
         }
 
@@ -4802,7 +4638,7 @@ class InterstellarEngine {
         this.saveCarriedResources();
         this.saveSpaceBase();
 
-        this.showToast(`📤 Withdrew ${toWithdraw} ${MINERAL_TYPES[resourceType]?.name || resourceType}`);
+        this.hudManager.showToast(`📤 Withdrew ${toWithdraw} ${MINERAL_TYPES[resourceType]?.name || resourceType}`);
         return true;
     }
 
@@ -4811,7 +4647,7 @@ class InterstellarEngine {
     // Deploy base at current location
     deployBase() {
         if (this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Base already deployed! Toggle towing to move it.');
+            this.hudManager.showToast('⚠️ Base already deployed! Toggle towing to move it.');
             return false;
         }
 
@@ -4822,9 +4658,9 @@ class InterstellarEngine {
                 this.credits -= 1000;
                 this.saveCredits();
                 this.spaceBase.modules.push({ type: 'command', level: 1, builtAt: Date.now() });
-                this.showToast('🏛️ Command Center built!');
+                this.hudManager.showToast('🏛️ Command Center built!');
             } else {
-                this.showToast('⚠️ Need 1,000 credits to build Command Center!');
+                this.hudManager.showToast('⚠️ Need 1,000 credits to build Command Center!');
                 return false;
             }
         }
@@ -4835,14 +4671,14 @@ class InterstellarEngine {
         this.spaceBase.isTowing = false;
         this.saveSpaceBase();
 
-        this.showToast('🏠 Base deployed at current location!');
+        this.hudManager.showToast('🏠 Base deployed at current location!');
         return true;
     }
 
     // Toggle towing mode (pick up base to move it)
     toggleTowing() {
         if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ No base deployed yet!');
+            this.hudManager.showToast('⚠️ No base deployed yet!');
             return false;
         }
 
@@ -4853,7 +4689,7 @@ class InterstellarEngine {
                 this.playerShip.y - this.spaceBase.y
             );
             if (dist > 500) {
-                this.showToast('⚠️ Too far from base! Get closer to tow.');
+                this.hudManager.showToast('⚠️ Too far from base! Get closer to tow.');
                 return false;
             }
         }
@@ -4862,11 +4698,11 @@ class InterstellarEngine {
         this.saveSpaceBase();
 
         if (this.spaceBase.isTowing) {
-            this.showToast('🔗 Towing base! Speed reduced 50%.');
+            this.hudManager.showToast('🔗 Towing base! Speed reduced 50%.');
         } else {
             this.spaceBase.x = this.playerShip.x;
             this.spaceBase.y = this.playerShip.y;
-            this.showToast('📍 Base anchored at new location!');
+            this.hudManager.showToast('📍 Base anchored at new location!');
         }
         return true;
     }
@@ -4880,24 +4716,24 @@ class InterstellarEngine {
     buildModule(moduleType) {
         const moduleDef = this.baseModules[moduleType];
         if (!moduleDef) {
-            this.showToast('⚠️ Unknown module type!');
+            this.hudManager.showToast('⚠️ Unknown module type!');
             return false;
         }
 
         if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Deploy your base first!');
+            this.hudManager.showToast('⚠️ Deploy your base first!');
             return false;
         }
 
         // Check prerequisite
         if (moduleDef.required && !this.hasModule(moduleDef.required)) {
-            this.showToast(`⚠️ Requires ${this.baseModules[moduleDef.required].name} first!`);
+            this.hudManager.showToast(`⚠️ Requires ${this.baseModules[moduleDef.required].name} first!`);
             return false;
         }
 
         // Check credits
         if (this.credits < moduleDef.cost) {
-            this.showToast(`⚠️ Need ${moduleDef.cost} credits!`);
+            this.hudManager.showToast(`⚠️ Need ${moduleDef.cost} credits!`);
             return false;
         }
 
@@ -4906,7 +4742,7 @@ class InterstellarEngine {
             for (const [res, amount] of Object.entries(moduleDef.resourceCost)) {
                 const available = (this.spaceBase.resources[res] || 0) + (this.carriedResources[res] || 0);
                 if (available < amount) {
-                    this.showToast(`⚠️ Need ${amount} ${MINERAL_TYPES[res]?.name || res}!`);
+                    this.hudManager.showToast(`⚠️ Need ${amount} ${MINERAL_TYPES[res]?.name || res}!`);
                     return false;
                 }
             }
@@ -4934,7 +4770,7 @@ class InterstellarEngine {
         this.spaceBase.modules.push({ type: moduleType, level: 1, builtAt: Date.now() });
         this.saveSpaceBase();
 
-        this.showToast(`${moduleDef.icon} ${moduleDef.name} built!`);
+        this.hudManager.showToast(`${moduleDef.icon} ${moduleDef.name} built!`);
         return true;
     }
 
@@ -4973,7 +4809,7 @@ class InterstellarEngine {
                 this.updateBasePanelUI();
             }
         } else {
-            this.showToast('🏠 Base Menu: ' + this.spaceBase.modules.length + ' modules built');
+            this.hudManager.showToast('🏠 Base Menu: ' + this.spaceBase.modules.length + ' modules built');
             // Log available modules for debugging
             console.log('[Base] Status:', this.getBaseStatus());
         }
@@ -5006,12 +4842,12 @@ class InterstellarEngine {
     // Deposit all carried resources to base vault
     depositAllResources() {
         if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Deploy base first!');
+            this.hudManager.showToast('⚠️ Deploy base first!');
             return false;
         }
 
         if (!this.isNearBase()) {
-            this.showToast('⚠️ Get closer to base!');
+            this.hudManager.showToast('⚠️ Get closer to base!');
             return false;
         }
 
@@ -5031,16 +4867,16 @@ class InterstellarEngine {
             this.playerShip.cargoCount = 0; // Reset total count
             this.saveCarriedResources();
             this.saveSpaceBase();
-            this.showToast(`📦 Deposited: ${deposited.slice(0, 3).join(', ')}${deposited.length > 3 ? '...' : ''}`);
+            this.hudManager.showToast(`📦 Deposited: ${deposited.slice(0, 3).join(', ')}${deposited.length > 3 ? '...' : ''}`);
             console.log('[Base] Deposited all:', deposited);
 
             // Recharge Flares on deposit
             if (this.playerShip && this.playerShip.maxFlares > 0) {
                 this.playerShip.flares = this.playerShip.maxFlares;
-                this.showToast('🔥 Flares Recharged!');
+                this.hudManager.showToast('🔥 Flares Recharged!');
             }
         } else {
-            this.showToast('⚠️ No resources to deposit!');
+            this.hudManager.showToast('⚠️ No resources to deposit!');
         }
 
         return totalDeposited > 0;
@@ -5087,7 +4923,7 @@ class InterstellarEngine {
                 this.isPro = !!data.subscription.isProPilot;
                 console.log('[Bridge] Subscription status updated. Pro Pilot:', this.isPro);
                 if (this.isPro) {
-                    this.showToast("🚀 Nirvana Pilot Active - 20% Bonus gems enabled!", 5000);
+                    this.hudManager.showToast("🚀 Nirvana Pilot Active - 20% Bonus gems enabled!", 5000);
                 }
             }
         }
@@ -5123,15 +4959,15 @@ class InterstellarEngine {
 
             this.saveCredits();
             this.saveInventory();
-            this.showToast(`Sold ${count} ores for $${totalValue.toLocaleString()} and earned ${gemsAwarded} Gems!`);
+            this.hudManager.showToast(`Sold ${count} ores for $${totalValue.toLocaleString()} and earned ${gemsAwarded} Gems!`);
             console.log('[Sell All] Success:', count, 'gems for $', totalValue, 'Gems:', gemsAwarded);
 
             // Update UI immediately
-            this.updateWalletUI();
-            this.updateInventoryUI();
+            this.hudManager.updateWalletUI();
+            this.hudManager.updateInventoryUI();
             if (this.updateGemsUI) this.updateGemsUI();
         } else {
-            this.showToast('No ores to sell');
+            this.hudManager.showToast('No ores to sell');
             console.log('[Sell All] No gems in inventory');
         }
     }
@@ -5159,66 +4995,13 @@ class InterstellarEngine {
         }
     }
 
-    updateWalletUI() {
-        const creditsEl = document.getElementById('walletValue');
-        if (creditsEl) {
-            creditsEl.textContent = this.credits.toLocaleString();
-        }
-        const creditsDisplay = document.getElementById('creditsDisplay'); // Legacy support
-        if (creditsDisplay) {
-            creditsDisplay.textContent = '$' + this.credits.toLocaleString();
-        }
-    }
-
-    updateInventoryUI() {
-        const gemsGrid = document.getElementById('gemsGrid');
-        const gemsTotalEl = document.getElementById('gemsTotal');
-
-        if (!gemsGrid) return;
-
-        let totalValue = 0;
-        let html = '';
-
-        // Calculate total value
-        Object.entries(this.playerInventory || {}).forEach(([type, count]) => {
-            const info = MINERAL_TYPES[type];
-            if (info) totalValue += count * info.value;
-        });
-
-        // Display ALL types
-        Object.keys(MINERAL_TYPES).forEach(type => {
-            const info = MINERAL_TYPES[type];
-            const count = (this.playerInventory && this.playerInventory[type]) || 0;
-
-            const itemValue = count * info.value;
-            const valueDisplay = this.showGemValues ? `<span style="color:${info.color}; font-weight:bold; margin-left:6px;">$${Math.round(itemValue).toLocaleString()}</span>` : '';
-
-            const opacity = count > 0 ? 1 : 0.5;
-            const bgAlpha = count > 0 ? 0.6 : 0.2;
-
-            html += `
-                        <div class="gem-item" style="border:1px solid ${info.color}44; background: rgba(0,0,0,${bgAlpha}); opacity: ${opacity};">
-                            <div style="${this.styleGem(type)}"></div>
-                            <span style="color:${info.color}">${info.name}</span>
-                            <span class="gem-count">×${count}</span>
-                            ${valueDisplay}
-                        </div>
-                    `;
-        });
-
-        gemsGrid.innerHTML = html;
-
-        if (gemsTotalEl) {
-            gemsTotalEl.textContent = `$${totalValue.toLocaleString()}`;
-        }
-    }
 
     upgradeShip(type) {
         const upgradeCosts = [1000, 2500, 5000, 10000, 25000]; // Function of level maybe?
         const currentLevel = this.playerShip.upgrades[type] || 0;
 
         if (currentLevel >= 5) {
-            this.showToast('Max level reached!');
+            this.hudManager.showToast('Max level reached!');
             return;
         }
 
@@ -5256,10 +5039,10 @@ class InterstellarEngine {
                 console.log(`[Upgrades] Photon Cannons upgraded to level ${lvl}`);
             }
 
-            this.showToast(`${type.toUpperCase()} Upgraded to Level ${lvl + 1} !`);
+            this.hudManager.showToast(`${type.toUpperCase()} Upgraded to Level ${lvl + 1} !`);
             this.updateUpgradeUI(); // Assuming we'll create this method
         } else {
-            this.showToast(`Not enough credits! Need $${cost.toLocaleString()} `);
+            this.hudManager.showToast(`Not enough credits! Need $${cost.toLocaleString()} `);
         }
     }
 
@@ -5487,7 +5270,7 @@ class InterstellarEngine {
             const maxCargo = this.playerShip.maxCargo || 1000;
             if (currentCargo >= maxCargo) {
                 if (!this.lastCargoFullToast || Date.now() - this.lastCargoFullToast > 3000) {
-                    this.showToast('🛑 CARGO FULL! Deposit at base (Z)');
+                    this.hudManager.showToast('🛑 CARGO FULL! Deposit at base (Z)');
                     this.lastCargoFullToast = Date.now();
                 }
                 return;
@@ -5498,19 +5281,19 @@ class InterstellarEngine {
                 this.playerShip.hullHealth = this.playerShip.maxHull;
                 this.playerShip.shield = this.playerShip.maxShield;
                 this.playerShip.zenBuffer = Date.now() + 5000; // 5 seconds of peace
-                this.updateShipStatus();
-                this.showToast('🪷 Mindwave Lotus: INTEGRITY RESTORED / ZEN BUFFER ACTIVE', 3000);
+                this.hudManager.updateShipStatus();
+                this.hudManager.showToast('🪷 Mindwave Lotus: INTEGRITY RESTORED / ZEN BUFFER ACTIVE', 3000);
                 gameAudio.playUpgrade(); // Special sound
             } else {
                 // Standard Gem: Add value to wallet
                 this.credits += (mineral.value || 0);
-                this.updateWalletUI();
+                this.hudManager.updateWalletUI();
             }
 
             // Siphon Ability: Restore 1% Shield
             if (this.playerShip.type === 'siphon' && this.playerShip.shield < this.playerShip.maxShield) {
                 this.playerShip.shield = Math.min(this.playerShip.shield + (this.playerShip.maxShield * 0.01), this.playerShip.maxShield);
-                this.updateShipStatus();
+                this.hudManager.updateShipStatus();
             }
 
             // Track for inventory logic
@@ -5540,8 +5323,8 @@ class InterstellarEngine {
                 this.playerShip.hullHealth = Math.min(this.playerShip.hullHealth + hpRestore, this.playerShip.maxHull);
                 this.playerShip.shield = Math.min(this.playerShip.shield + shRestore, this.playerShip.maxShield);
                 
-                if (this.updateShipStatus) this.updateShipStatus();
-                this.showToast(`🌸 Mindwave Lotus: +${hpRestore} HP | +${shRestore} Shield!`);
+                if (this.updateShipStatus) this.hudManager.updateShipStatus();
+                this.hudManager.showToast(`🌸 Mindwave Lotus: +${hpRestore} HP | +${shRestore} Shield!`);
                 
                 // Notification (No $ amount for lotus)
                 this.collectionNotifications.push({
@@ -5806,7 +5589,7 @@ class InterstellarEngine {
                 if (this.frameCounter % 60 === 0 && this.playerShip.shield < this.playerShip.maxShield) {
                     const regenAmount = this.playerShip.maxShield * 0.02;
                     this.playerShip.shield = Math.min(this.playerShip.shield + regenAmount, this.playerShip.maxShield);
-                    this.updateShipStatus();
+                    this.hudManager.updateShipStatus();
                 }
             }
         }
@@ -6174,7 +5957,7 @@ class InterstellarEngine {
         const ship = this.playerShip;
         const upgradeLvl = this.playerShip.upgrades.flares || 0;
         if (upgradeLvl === 0) {
-            this.showToast('⚠️ Decoy Flares not installed! Upgrade in Dock.');
+            this.hudManager.showToast('⚠️ Decoy Flares not installed! Upgrade in Dock.');
             return;
         }
 
@@ -6182,7 +5965,7 @@ class InterstellarEngine {
         if (ship.flares === undefined) ship.flares = upgradeLvl * 2;
 
         if (ship.flares <= 0) {
-            this.showToast('⚠️ Out of flares! (Recharge at base or wait)');
+            this.hudManager.showToast('⚠️ Out of flares! (Recharge at base or wait)');
             return;
         }
 
@@ -6201,7 +5984,7 @@ class InterstellarEngine {
         }
 
         ship.flares--;
-        this.showToast(`🔥 Flare Deployed! (${ship.flares} left)`);
+        this.hudManager.showToast(`🔥 Flare Deployed! (${ship.flares} left)`);
 
         // BREAK STALKING: Breaking line of sight/distracting
         for (const enemy of this.enemyShips) {
@@ -6243,7 +6026,7 @@ class InterstellarEngine {
 
         // 9. FLUX: Phase Shift (20% dodge chance)
         if (this.playerShip.type === 'flux' && Math.random() < 0.2) {
-            this.showToast('✨ Phase Shift Evaded Attack!', 1500);
+            this.hudManager.showToast('✨ Phase Shift Evaded Attack!', 1500);
             return; // Completely dodge
         }
 
@@ -6273,7 +6056,7 @@ class InterstellarEngine {
             gameAudio.playHullHit();
         }
 
-        this.updateShipStatus();
+        this.hudManager.updateShipStatus();
 
         if (this.playerShip.hullHealth <= 0) {
             this.handlePlayerDeath();
@@ -6295,7 +6078,7 @@ class InterstellarEngine {
         // ENGINE CUT: Require re-press of W/S to re-engage
         if (this.playerShip) {
             this.playerShip.enginesDisabled = true;
-            this.showToast('⚠️ ENGINE FAILURE: RE-ENGAGE THRUSTERS (W/S)', 3000);
+            this.hudManager.showToast('⚠️ ENGINE FAILURE: RE-ENGAGE THRUSTERS (W/S)', 3000);
         }
 
         this.damagePlayer(25);
@@ -6307,7 +6090,7 @@ class InterstellarEngine {
         if (modal) {
             modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
         } else {
-            this.showToast('🚀 Skill Tree Interface Loading...', 2000);
+            this.hudManager.showToast('🚀 Skill Tree Interface Loading...', 2000);
             this._injectSkillTreeUI();
         }
     }
@@ -6354,7 +6137,7 @@ class InterstellarEngine {
 
     upgradeSkill(skillKey, cost) {
         if (this.playerSkills[skillKey] >= 3) {
-            return this.showToast('📈 Skill already at Max Level!');
+            return this.hudManager.showToast('📈 Skill already at Max Level!');
         }
         if (this.playerGems >= cost) {
             this.playerGems -= cost;
@@ -6365,22 +6148,22 @@ class InterstellarEngine {
             // Update UI
             document.getElementById('skillGems').innerText = this.playerGems;
             document.getElementById(`skillLvl_${skillKey}`).innerText = `${this.playerSkills[skillKey]}/3`;
-            this.showToast(`✨ Skill Upgraded! Level ${this.playerSkills[skillKey]}`);
+            this.hudManager.showToast(`✨ Skill Upgraded! Level ${this.playerSkills[skillKey]}`);
             if (window.gameAudio) window.gameAudio.playCollect();
         } else {
-            this.showToast('⚠️ Insufficient Gems for Upgrade.');
+            this.hudManager.showToast('⚠️ Insufficient Gems for Upgrade.');
         }
     }
 
     triggerGlobalEMP() {
         const lvl = this.playerSkills.emp;
-        if (lvl === 0) return this.showToast('🔒 EMP Locked. Upgrade in Skill Tree (K).', 2000);
+        if (lvl === 0) return this.hudManager.showToast('🔒 EMP Locked. Upgrade in Skill Tree (K).', 2000);
         const now = Date.now();
         const cooldown = 30000 - (lvl * 5000); // 30s base, faster with levels
-        if (now - this.skillCooldowns.emp < cooldown) return this.showToast('⏳ EMP Recharging...', 1000);
+        if (now - this.skillCooldowns.emp < cooldown) return this.hudManager.showToast('⏳ EMP Recharging...', 1000);
 
         this.skillCooldowns.emp = now;
-        this.showToast('⚡ SYSTEM: EMP BURST DEPLOYED!', 2000);
+        this.hudManager.showToast('⚡ SYSTEM: EMP BURST DEPLOYED!', 2000);
         
         if (window.gameAudio) window.gameAudio.playExplosionBig();
         this.hazardEffect = { type: 'emp', startTime: now, duration: 1500 };
@@ -6400,14 +6183,14 @@ class InterstellarEngine {
 
     triggerGlobalAfterburner() {
         const lvl = this.playerSkills.afterburner;
-        if (lvl === 0) return this.showToast('🔒 Afterburner Locked. Upgrade in Skill Tree (K).', 2000);
+        if (lvl === 0) return this.hudManager.showToast('🔒 Afterburner Locked. Upgrade in Skill Tree (K).', 2000);
         const now = Date.now();
         const cooldown = 20000 - (lvl * 3000); 
-        if (now - this.skillCooldowns.afterburner < cooldown) return this.showToast('⏳ Afterburner Recharging...', 1000);
+        if (now - this.skillCooldowns.afterburner < cooldown) return this.hudManager.showToast('⏳ Afterburner Recharging...', 1000);
 
         this.skillCooldowns.afterburner = now;
         this.globalAbilityActive.afterburner = true;
-        this.showToast('🔥 SYSTEM: AFTERBURNER ENGAGED!', 2000);
+        this.hudManager.showToast('🔥 SYSTEM: AFTERBURNER ENGAGED!', 2000);
         if (window.gameAudio) window.gameAudio.playShieldHit();
         
         // Push ship slightly instantly
@@ -6421,13 +6204,13 @@ class InterstellarEngine {
 
     triggerGlobalQuantumJump() {
         const lvl = this.playerSkills.quantum;
-        if (lvl === 0) return this.showToast('🔒 Quantum Dash Locked. Upgrade in Skill Tree (K).', 2000);
+        if (lvl === 0) return this.hudManager.showToast('🔒 Quantum Dash Locked. Upgrade in Skill Tree (K).', 2000);
         const now = Date.now();
         const cooldown = 45000 - (lvl * 5000); 
-        if (now - this.skillCooldowns.quantum < cooldown) return this.showToast('⏳ Quantum Drive Spooling...', 1000);
+        if (now - this.skillCooldowns.quantum < cooldown) return this.hudManager.showToast('⏳ Quantum Drive Spooling...', 1000);
 
         this.skillCooldowns.quantum = now;
-        this.showToast('🌌 SYSTEM: QUANTUM JUMP SUCCESSFUL', 2000);
+        this.hudManager.showToast('🌌 SYSTEM: QUANTUM JUMP SUCCESSFUL', 2000);
         if (window.gameAudio) window.gameAudio.playBossAlert();
 
         const jumpDist = 1200 + (lvl * 400); // 1600 - 2400 units
@@ -6445,14 +6228,14 @@ class InterstellarEngine {
         const now = Date.now();
         const cooldown = 10000; // 10s cooldown
         if (now - (this.playerShip.lastBoostTime || 0) < cooldown) {
-            this.showToast('⚠️ Boost Recharging...');
+            this.hudManager.showToast('⚠️ Boost Recharging...');
             return;
         }
 
         this.playerShip.boostActive = true;
         this.playerShip.boostStartTime = now;
         this.playerShip.lastBoostTime = now;
-        this.showToast('🚀 VIPER BOOST INITIALIZED!');
+        this.hudManager.showToast('🚀 VIPER BOOST INITIALIZED!');
 
         // Visual effect
         this.hazardEffect = {
@@ -6468,21 +6251,21 @@ class InterstellarEngine {
         const now = Date.now();
         const cooldown = 15000; // 15s cooldown
         if (now - (this.playerShip.lastOverclockTime || 0) < cooldown) {
-            this.showToast('⚠️ Overclock Cooling Down...');
+            this.hudManager.showToast('⚠️ Overclock Cooling Down...');
             return;
         }
 
         this.playerShip.overclockActive = true;
         this.playerShip.overclockStartTime = now;
         this.playerShip.lastOverclockTime = now;
-        this.showToast('🔥 OVERCLOCK ENGAGED!');
+        this.hudManager.showToast('🔥 OVERCLOCK ENGAGED!');
     }
 
     toggleSpectreCloak() {
         if (this.playerShip.type !== 'spectre') return;
 
         this.playerShip.isCloaked = !this.playerShip.isCloaked;
-        this.showToast(this.playerShip.isCloaked ? '👻 CLOAK ENABLED' : '👻 CLOAK DISABLED');
+        this.hudManager.showToast(this.playerShip.isCloaked ? '👻 CLOAK ENABLED' : '👻 CLOAK DISABLED');
 
         if (this.playerShip.isCloaked) {
             // Visual ripple
@@ -6502,7 +6285,7 @@ class InterstellarEngine {
         if (now - (this.playerShip.lastPulseTime || 0) < cooldown) return;
 
         this.playerShip.lastPulseTime = now;
-        this.showToast('📡 RADAR PULSE SENT');
+        this.hudManager.showToast('📡 RADAR PULSE SENT');
 
         // Trigger a visual expanding ring effect
         this.activePulsePing = {
@@ -6525,7 +6308,7 @@ class InterstellarEngine {
         this.applyDeathPenalty();
 
         // Show death message
-        this.showToast('💀 Critical Failure! Ejecting...');
+        this.hudManager.showToast('💀 Critical Failure! Ejecting...');
 
         // Clean up boss on death (prevents ghost boss after respawn)
         // EXCEPT if we are on a boss mission, in which case we want the boss to persist
@@ -6538,7 +6321,7 @@ class InterstellarEngine {
 
         // NOVA: Volatile Core (AoE explosion on death)
         if (this.playerShip.type === 'nova') {
-            this.showToast('⚠️ VOLATILE CORE DETONATED', 3000);
+            this.hudManager.showToast('⚠️ VOLATILE CORE DETONATED', 3000);
             const explosionRadius = 800;
 
             // Destroy nearby space mines
@@ -6712,7 +6495,7 @@ class InterstellarEngine {
             this.playerGems += 5;
             localStorage.setItem('playerGems', this.playerGems);
             if (this.updateGemsUI) this.updateGemsUI();
-            this.showToast('💥 Mine Defused! +5 Gems', 1500);
+            this.hudManager.showToast('💥 Mine Defused! +5 Gems', 1500);
 
             // REMOVED: Mission progress increment (Only weapons count now)
         }
@@ -6725,12 +6508,12 @@ class InterstellarEngine {
             this.playerGems += 25; // More for a base!
             localStorage.setItem('playerGems', this.playerGems);
             if (this.updateGemsUI) this.updateGemsUI();
-            this.showToast('💥 Missile Base Destroyed! +25 Gems', 2000);
+            this.hudManager.showToast('💥 Missile Base Destroyed! +25 Gems', 2000);
 
             // Track mission progress
             if (this.activeMission && this.activeMission.type === 'siege') {
                 this.activeMission.progress++;
-                this.updateMissionHUD();
+                this.hudManager.updateMissionHUD();
                 this.checkMissionComplete();
             }
         }
@@ -6823,7 +6606,7 @@ class InterstellarEngine {
         // NOTE: We do NOT call handlePlayerDeath() here because it overwrites the hazardEffect
         // with 'player_death'. We want the 'planet_impact' to play first.
         this.damagePlayer(Infinity);
-        this.showToast('💀 CRITICAL IMPACT! HULL INTEGRITY LOST...');
+        this.hudManager.showToast('💀 CRITICAL IMPACT! HULL INTEGRITY LOST...');
 
         console.log('[Hazard] Ship crashed into planet - impact sequence initiated!');
     }
@@ -7015,7 +6798,7 @@ class InterstellarEngine {
                         const teleportAngle = Math.random() * Math.PI * 2;
                         this.playerShip.x += Math.cos(teleportAngle) * teleportDist;
                         this.playerShip.y += Math.sin(teleportAngle) * teleportDist;
-                        this.showToast('🚀 Systems restored after critical impact.');
+                        this.hudManager.showToast('🚀 Systems restored after critical impact.');
                     }
                 }
 
@@ -7047,7 +6830,7 @@ class InterstellarEngine {
                 }
 
                 // Show toast so user knows they can move again
-                this.showToast('Controls restored - use WASD to move!');
+                this.hudManager.showToast('Controls restored - use WASD to move!');
 
                 console.log('[Hazard] Effect complete - ALL CONTROLS RE-ENABLED');
                 return;
@@ -7339,7 +7122,7 @@ class InterstellarEngine {
     // Start a specific training lesson
     startTraining(lessonIndex) {
         if (this.hazardEffect) {
-            this.showToast('⚠️ Wait for the current event to finish!');
+            this.hudManager.showToast('⚠️ Wait for the current event to finish!');
             return;
         }
 
@@ -7448,7 +7231,7 @@ class InterstellarEngine {
                     if (Math.hypot(dx, dy) < 40) {
                         target.destroyed = true;
                         bullet.life = 0;
-                        this.showToast('💥 Target Destroyed!');
+                        this.hudManager.showToast('💥 Target Destroyed!');
                         // Mark associated gate as targetDestroyed
                         if (lesson.gates[target.id]) {
                             lesson.gates[target.id].targetDestroyed = true;
@@ -7479,11 +7262,11 @@ class InterstellarEngine {
                     ship.vx += Math.cos(angle) * pull;
                     ship.vy += Math.sin(angle) * pull;
                     if (dist < 50) {
-                        this.showToast('🌀 Sucked into the void! Restarting...');
+                        this.hudManager.showToast('🌀 Sucked into the void! Restarting...');
                         this.startTraining(this.trainingLessonIndex);
                     }
                 } else if (h.type === 'mine' && dist < h.radius) {
-                    this.showToast('💣 MINE DETONATED!');
+                    this.hudManager.showToast('💣 MINE DETONATED!');
                     this.damagePlayer(20);
                     h.x = -99999; // Move away
                 }
@@ -7521,7 +7304,7 @@ class InterstellarEngine {
                         } else {
                             const total = lesson.gates.length;
                             const current = this.trainingGateIndex;
-                            this.showToast(`✅ Gate ${current}/${total} — Keep going!`);
+                            this.hudManager.showToast(`✅ Gate ${current}/${total} — Keep going!`);
                         }
                     }
                 }
@@ -7581,7 +7364,7 @@ class InterstellarEngine {
                 }
             }
             this.saveInventory();
-            this.updateInventoryUI();
+            this.hudManager.updateInventoryUI();
         }
 
         // Store gem summary for the completion overlay
@@ -7609,7 +7392,7 @@ class InterstellarEngine {
 
         const medalEmoji = medal === 'gold' ? '🥇' : medal === 'silver' ? '🥈' : medal === 'bronze' ? '🥉' : '✅';
         const gemText = gemSummary.length > 0 ? ` | ${gemSummary.join(', ')}` : '';
-        this.showToast(`${medalEmoji} ${lesson.name} Complete! Time: ${time.toFixed(1)}s — $${reward}${gemText}`);
+        this.hudManager.showToast(`${medalEmoji} ${lesson.name} Complete! Time: ${time.toFixed(1)}s — $${reward}${gemText}`);
         console.log(`[Training] Lesson "${lesson.name}" completed in ${time.toFixed(1)}s — Medal: ${medal || 'none'} — Gems: ${gemSummary.join(', ')}`);
     }
 
@@ -7619,7 +7402,7 @@ class InterstellarEngine {
         this.trainingBriefing = false;
         this.trainingComplete = false;
         this.trainingLesson = null;
-        this.showToast('Training cancelled.');
+        this.hudManager.showToast('Training cancelled.');
     }
 
     // --- FIRST-LOGIN TRACKING & ONBOARDING ---
@@ -7652,7 +7435,7 @@ class InterstellarEngine {
             const completedCount = Object.values(progress).filter(p => p && p.completed).length;
             if (completedCount === 0 && !loginData.academyPrompted) {
                 setTimeout(() => {
-                    this.showToast('🎓 Tip: Try the Flight Academy to earn credits and precious elements!');
+                    this.hudManager.showToast('🎓 Tip: Try the Flight Academy to earn credits and precious elements!');
                 }, 3000);
             }
 
@@ -7805,7 +7588,7 @@ class InterstellarEngine {
         if (startAcademy) {
             setTimeout(() => this.openFlightAcademy(), 300);
         } else {
-            this.showToast('🎓 You can access Flight Academy anytime from the Flight Control panel!');
+            this.hudManager.showToast('🎓 You can access Flight Academy anytime from the Flight Control panel!');
         }
     }
 
@@ -7822,13 +7605,13 @@ class InterstellarEngine {
             this.playerInventory['uranium'] = (this.playerInventory['uranium'] || 0) + 1;
             this.saveCredits();
             this.saveInventory();
-            this.updateInventoryUI();
+            this.hudManager.updateInventoryUI();
 
             // Mark as awarded
             progress._graduationBonusAwarded = true;
             this.saveTrainingProgress();
 
-            this.showToast('🎓🏆 FLIGHT ACADEMY GRADUATED! +$2,000 +1 Sapphire +1 Uranium!');
+            this.hudManager.showToast('🎓🏆 FLIGHT ACADEMY GRADUATED! +$2,000 +1 Sapphire +1 Uranium!');
             console.log('[Training] All 10 lessons complete — graduation bonus awarded!');
         }
     }
@@ -9059,7 +8842,7 @@ class InterstellarEngine {
             this.playerShip.vx = 0;
             this.playerShip.vy = 0;
 
-            this.showToast('🚀 Respawned! Shields restored.');
+            this.hudManager.showToast('🚀 Respawned! Shields restored.');
             effect.hasRespawned = true;
 
             // BOSS PERSISTENCE: If in a boss mission, ensure boss is near the new location
@@ -9099,7 +8882,7 @@ class InterstellarEngine {
             const c3 = document.getElementById('starColor3')?.value || '#ffddaa';
             this.starColors = [c1, c2, c3];
             this.generateStaticStars();
-            this.showToast('Star colors updated');
+            this.hudManager.showToast('Star colors updated');
         } catch (e) {
             console.error('[BG Error] updateStarColors failed:', e);
         }
@@ -9121,11 +8904,11 @@ class InterstellarEngine {
 
             // Regenerate stars with proper velocities
             this.generateStaticStars();
-            this.showToast(this.bgDriftMode ? 'Star Drift ON' : 'Star Drift OFF');
+            this.hudManager.showToast(this.bgDriftMode ? 'Star Drift ON' : 'Star Drift OFF');
         } catch (e) {
             console.error('[BG Error] toggleBgDrift failed:', e);
             this.bgDriftMode = false;
-            this.showToast('Drift mode error - please try again');
+            this.hudManager.showToast('Drift mode error - please try again');
         }
     }
 
@@ -9205,7 +8988,7 @@ class InterstellarEngine {
 
             // If currently disengaging, ignore button presses
             if (this.warpDisengaging) {
-                this.showToast('Warp still decelerating...');
+                this.hudManager.showToast('Warp still decelerating...');
                 return;
             }
 
@@ -9215,7 +8998,7 @@ class InterstellarEngine {
                 this.disengageStartTime = performance.now(); // Track when disengage started
                 this.disengageDuration = 4500; // 4.5 seconds total animation
                 if (btn) btn.classList.remove('active');
-                this.showToast('Warp Disengaged - Decelerating...');
+                this.hudManager.showToast('Warp Disengaged - Decelerating...');
 
                 // Cancel any existing engage animation
                 if (this.warpSliderAnimation) {
@@ -9299,7 +9082,7 @@ class InterstellarEngine {
                             slider.value = 0;
                             this.setWarpSpeedMultiplier(0);
 
-                            this.showToast('Arrived at new destination');
+                            this.hudManager.showToast('Arrived at new destination');
                             return;
                         }
 
@@ -9322,7 +9105,7 @@ class InterstellarEngine {
             // Reset warp speed for smooth ramp-up
             this.warpSpeed = 0;
 
-            this.showToast('WARP ENGAGED!');
+            this.hudManager.showToast('WARP ENGAGED!');
 
             // Store original positions for all objects
             const storeOriginalPosition = (obj) => {
@@ -9406,7 +9189,7 @@ class InterstellarEngine {
             console.error('[BG Error] toggleBgWarp failed:', e);
             this.bgWarpMode = false;
             this.warpDisengaging = false;
-            this.showToast('Warp mode error - please try again');
+            this.hudManager.showToast('Warp mode error - please try again');
         }
     }
 
@@ -9433,7 +9216,7 @@ class InterstellarEngine {
                     this.warpSpeed = 0; // Force speed to 0 immediately
                     const btn = document.getElementById('bgWarpBtn');
                     if (btn) btn.classList.remove('active');
-                    this.showToast('Engines Stopped');
+                    this.hudManager.showToast('Engines Stopped');
                 } else if (this.bgWarpMode && !this.warpDisengaging) {
                     // Slowing down but not 0: Trigger disengage visual (stars fading)
                     this.warpDisengaging = true;
@@ -9745,7 +9528,7 @@ class InterstellarEngine {
             // Delete the star
             this.saveState(); // Save for undo
             this.stars.splice(clickedStarIndex, 1);
-            this.showToast(`Deleted star`);
+            this.hudManager.showToast(`Deleted star`);
             this.draw();
             return;
         }
@@ -9775,7 +9558,7 @@ class InterstellarEngine {
                     const indices = [i, j].sort((a, b) => b - a); // Remove in reverse order
                     this.stars.splice(indices[0], 1);
                     this.stars.splice(indices[1], 1);
-                    this.showToast(`Deleted connection`);
+                    this.hudManager.showToast(`Deleted connection`);
                     this.draw();
                     return;
                 }
@@ -9905,7 +9688,7 @@ class InterstellarEngine {
     undo() {
         console.log('[UNDO] undo() called, history length:', this.history.length);
         if (this.history.length === 0) {
-            this.showToast("Nothing to undo");
+            this.hudManager.showToast("Nothing to undo");
             return;
         }
         // Pop the last saved state and restore it
@@ -9918,7 +9701,7 @@ class InterstellarEngine {
         }
 
         this.draw();
-        this.showToast(`Undone(${this.history.length} remaining)`);
+        this.hudManager.showToast(`Undone(${this.history.length} remaining)`);
     }
 
     requestClear() {
@@ -9935,7 +9718,7 @@ class InterstellarEngine {
         this.resetCamera();
         this.closeModal();
         this.draw();
-        this.showToast("Universe Imploded");
+        this.hudManager.showToast("Universe Imploded");
     }
 
     resetView() {
@@ -10108,7 +9891,7 @@ class InterstellarEngine {
             }
         } catch (e) {
             console.error('[BG Error] generateBackground failed critically:', e);
-            this.showToast('Background generation failed - using minimal mode');
+            this.hudManager.showToast('Background generation failed - using minimal mode');
             // Ensure arrays exist to prevent cascade failures
             this.staticStars = this.staticStars || [];
             this.galaxies = this.galaxies || [];
@@ -10682,7 +10465,7 @@ class InterstellarEngine {
         const selectedSpeed = speedLevels[Math.floor(Math.random() * speedLevels.length)];
         this.matrixSpeedMultiplier = selectedSpeed.value;
 
-        this.showToast(`Cyber Theme: ${theme.name} (Speed: ${selectedSpeed.name}) [v14]`);
+        this.hudManager.showToast(`Cyber Theme: ${theme.name} (Speed: ${selectedSpeed.name}) [v14]`);
 
         // Update UI Display
         const displayEl = document.getElementById('matrixThemeDisplay');
@@ -10768,7 +10551,7 @@ class InterstellarEngine {
                     const delta = totalNow - this.activeMission.baselineInventory;
                     if (this.activeMission.progress !== delta) {
                         this.activeMission.progress = Math.max(0, delta);
-                        this.updateMissionHUD();
+                        this.hudManager.updateMissionHUD();
                         this.checkMissionComplete();
                     }
                 }
@@ -10786,7 +10569,7 @@ class InterstellarEngine {
                     if (now - this.playerShip.lastFlareRefill > 30000) {
                         this.playerShip.flares++;
                         this.playerShip.lastFlareRefill = now;
-                        this.showToast('🔥 Flare Recharged (Passive)');
+                        this.hudManager.showToast('🔥 Flare Recharged (Passive)');
                     }
                 }
             } catch (e) {
@@ -11103,7 +10886,7 @@ class InterstellarEngine {
             this.draw(time);
         } catch (e) {
             console.error('FATAL RENDER ERROR:', e);
-            if (this.showToast) this.showToast("⚠️ FATAL ENGINE ERROR: " + e.message, 10000);
+            if (this.showToast) this.hudManager.showToast("⚠️ FATAL ENGINE ERROR: " + e.message, 10000);
             if (this.ctx && this.canvas) {
                 this.ctx.save();
                 this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -16041,21 +15824,6 @@ class InterstellarEngine {
         return { lines, clusters };
     }
 
-    showToast(msg) {
-        console.log('[Toast]', msg);
-        // Create a toast element if needed
-        let toast = document.getElementById('toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'toast';
-            toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:10px 20px;border-radius:8px;z-index:9999;transition:opacity 0.3s';
-            document.body.appendChild(toast);
-        }
-        toast.textContent = msg;
-        toast.style.opacity = '1';
-        clearTimeout(this._toastTimeout);
-        this._toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
-    }
 
     // Ship Selection Methods
     showShipModal() {
@@ -16313,7 +16081,7 @@ class InterstellarEngine {
 
     captureConstellation() {
         if (this.stars.length < 3) {
-            this.showToast("Draw at least 3 stars first!");
+            this.hudManager.showToast("Draw at least 3 stars first!");
             return;
         }
 
@@ -16365,7 +16133,7 @@ class InterstellarEngine {
         this.playerShip.type = 'orion';
         localStorage.setItem('playerShipType', 'orion');
 
-        this.showToast("Constellation SAVED as Spacecraft!");
+        this.hudManager.showToast("Constellation SAVED as Spacecraft!");
     }
 
     selectShip(shipType) {
@@ -16393,7 +16161,7 @@ class InterstellarEngine {
 
         // Ensure player owns the ship before selecting
         if (ship && ship.premium && !this.unlockedShips.includes(shipType)) {
-            this.showToast(`🔒 ${ship.name} requires unlocking!`, 3000);
+            this.hudManager.showToast(`🔒 ${ship.name} requires unlocking!`, 3000);
             return;
         }
 
@@ -16406,7 +16174,7 @@ class InterstellarEngine {
             localStorage.setItem('playerShipType', shipType);
             console.log(`[Hangar] Selected ${shipType}`);
 
-            this.showToast(`SYSTEMS ONLINE: ${ship.name.toUpperCase()} CLASS`, 2000);
+            this.hudManager.showToast(`SYSTEMS ONLINE: ${ship.name.toUpperCase()} CLASS`, 2000);
 
             // Force camera to recenter on ship to prevent disappearing off screen
             if (this.flightMode && this.camera) {
@@ -16428,7 +16196,7 @@ class InterstellarEngine {
             localStorage.setItem('playerGems', this.playerGems);
             localStorage.setItem('unlockedShips', JSON.stringify(this.unlockedShips));
 
-            this.showToast(`✨ UNLOCKED ${shipId.toUpperCase()}! ✨`, 3000);
+            this.hudManager.showToast(`✨ UNLOCKED ${shipId.toUpperCase()}! ✨`, 3000);
 
             // Refresh Hangar UI to reflect the unlocked state
             this.initHangar();
@@ -16437,7 +16205,7 @@ class InterstellarEngine {
             this.selectShip(shipId);
             if (this.updateGemsUI) this.updateGemsUI();
         } else {
-            this.showToast("Insufficient Gems!", 2000);
+            this.hudManager.showToast("Insufficient Gems!", 2000);
         }
     }
 
@@ -16448,7 +16216,7 @@ class InterstellarEngine {
             btn.classList.toggle('active', this.autopilot);
             btn.style.color = this.autopilot ? '#00f3ff' : '#5c7a8a';
         }
-        this.showToast(this.autopilot ? "Autopilot ENGAGED" : "Autopilot DISENGAGED");
+        this.hudManager.showToast(this.autopilot ? "Autopilot ENGAGED" : "Autopilot DISENGAGED");
     }
 
     // Legacy support for gems resize if needed
@@ -16477,7 +16245,7 @@ class InterstellarEngine {
 
     downloadSVG() {
         if (this.stars.length === 0) {
-            this.showToast("Universe is empty!");
+            this.hudManager.showToast("Universe is empty!");
             return;
         }
 
@@ -16541,7 +16309,7 @@ class InterstellarEngine {
         // Try using msSaveBlob for IE/Edge compatibility
         if (typeof window.navigator.msSaveBlob !== 'undefined') {
             window.navigator.msSaveBlob(blob, filename);
-            this.showToast("Map Exported");
+            this.hudManager.showToast("Map Exported");
             return;
         }
 
@@ -16563,7 +16331,7 @@ class InterstellarEngine {
             window.URL.revokeObjectURL(url);
         }, 1000);
 
-        this.showToast("Map Exported");
+        this.hudManager.showToast("Map Exported");
     }
 
     // Download canvas as PNG image
@@ -16581,7 +16349,7 @@ class InterstellarEngine {
         });
         link.dispatchEvent(event);
 
-        this.showToast("Image saved as " + filename);
+        this.hudManager.showToast("Image saved as " + filename);
     }
 
     // Trigger the hidden file input for loading SVG
@@ -16605,7 +16373,7 @@ class InterstellarEngine {
                 const pathElements = doc.querySelectorAll('path[fill][opacity]');
 
                 if (pathElements.length === 0) {
-                    this.showToast("No stars found in SVG");
+                    this.hudManager.showToast("No stars found in SVG");
                     return;
                 }
 
@@ -16638,11 +16406,11 @@ class InterstellarEngine {
                 });
 
                 event.target.value = '';
-                this.showToast(`Loaded ${this.stars.length} stars`);
+                this.hudManager.showToast(`Loaded ${this.stars.length} stars`);
                 this.draw();
             } catch (err) {
                 console.error('Error parsing SVG:', err);
-                this.showToast("Error loading SVG file");
+                this.hudManager.showToast("Error loading SVG file");
             }
         };
         reader.readAsText(file);
@@ -16651,7 +16419,7 @@ class InterstellarEngine {
     // Export canvas animation as video
     exportVideo() {
         if (this._isRecording) {
-            this.showToast("Already recording...");
+            this.hudManager.showToast("Already recording...");
             return;
         }
 
@@ -16664,7 +16432,7 @@ class InterstellarEngine {
         const btn = document.getElementById('exportVideoBtn');
         if (btn) btn.classList.add('active');
 
-        this.showToast(`Recording ${durationSec} seconds...`);
+        this.hudManager.showToast(`Recording ${durationSec} seconds...`);
 
         const stream = this.canvas.captureStream(30);
         const chunks = [];
@@ -16703,14 +16471,14 @@ class InterstellarEngine {
                 window.URL.revokeObjectURL(url);
             }, 1000);
 
-            this.showToast("Video exported!");
+            this.hudManager.showToast("Video exported!");
         };
 
         recorder.onerror = (e) => {
             this._isRecording = false;
             if (btn) btn.classList.remove('active');
             console.error('Recording error:', e);
-            this.showToast("Recording failed");
+            this.hudManager.showToast("Recording failed");
         };
 
         recorder.start();
@@ -16739,7 +16507,7 @@ class InterstellarEngine {
             premiumToggle.addEventListener('change', (e) => {
                 this.isPro = e.target.checked;
                 localStorage.setItem('isPro', this.isPro);
-                this.showToast(this.isPro ? "PREMIUM MODE ENABLED" : "PREMIUM MODE DISABLED");
+                this.hudManager.showToast(this.isPro ? "PREMIUM MODE ENABLED" : "PREMIUM MODE DISABLED");
                 this.updateAdminDebugInfo();
             });
         }
@@ -16747,8 +16515,8 @@ class InterstellarEngine {
         // Add Credits
         document.getElementById('adminAddCreditsBtn')?.addEventListener('click', () => {
             this.credits += 10000;
-            this.updateWalletUI();
-            this.showToast("ADDED $10,000 CREDITS");
+            this.hudManager.updateWalletUI();
+            this.hudManager.showToast("ADDED $10,000 CREDITS");
         });
 
         // Add Minerals
@@ -16756,7 +16524,7 @@ class InterstellarEngine {
             this.playerGems += 5000;
             localStorage.setItem('playerGems', this.playerGems);
             if (this.updateGemsUI) this.updateGemsUI();
-            this.showToast(`ADDED 5000 GEMS (Total: ${this.playerGems})`);
+            this.hudManager.showToast(`ADDED 5000 GEMS (Total: ${this.playerGems})`);
         });
 
         // Unlock Ships
@@ -16771,7 +16539,7 @@ class InterstellarEngine {
             this.isPro = true;
             localStorage.setItem('isPro', 'true');
             if (premiumToggle) premiumToggle.checked = true;
-            this.showToast("ALL SHIPS UNLOCKED!");
+            this.hudManager.showToast("ALL SHIPS UNLOCKED!");
         });
 
         // Close Button
@@ -16916,7 +16684,7 @@ class InterstellarEngine {
             if (now - this.spaceBase.lastCollectorTick >= collectorInterval) {
                 const earned = collectorCount * 50; // 50 credits per collector per tick
                 this.credits += earned;
-                this.updateWalletUI();
+                this.hudManager.updateWalletUI();
                 this.collectionNotifications.push({
                     text: `⛏️ Base Collectors: +${earned} Credits`,
                     color: '#ffd700',
@@ -17024,7 +16792,7 @@ class InterstellarEngine {
             if (current) {
                 delete this.spaceBase[cellId];
                 this.saveSpaceBase();
-                this.showToast("Structure demolished.");
+                this.hudManager.showToast("Structure demolished.");
                 gameAudio.playMenuSelect();
             }
         } else {
@@ -17039,17 +16807,17 @@ class InterstellarEngine {
             
             // Check costs (Standardize to this.credits)
             if (this.credits < cost) {
-                this.showToast(`Cannot Afford! Need ${cost.toLocaleString()} Credits.`, 2000, true);
+                this.hudManager.showToast(`Cannot Afford! Need ${cost.toLocaleString()} Credits.`, 2000, true);
                 return;
             }
             
             this.credits -= cost;
             this.saveCredits();
             this.saveSpaceBase();
-            this.updateWalletUI();
+            this.hudManager.updateWalletUI();
             
             this.spaceBase[cellId] = this.baseTool;
-            this.showToast(`${this.baseTool.toUpperCase()} constructed ($${cost})`);
+            this.hudManager.showToast(`${this.baseTool.toUpperCase()} constructed ($${cost})`);
             gameAudio.playUpgrade();
         }
         
@@ -17081,7 +16849,7 @@ class InterstellarEngine {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        if (this.showToast) this.showToast("🚀 Save Data Exported");
+        if (this.showToast) this.hudManager.showToast("🚀 Save Data Exported");
     }
 
     triggerImportSaveData() {
@@ -17109,11 +16877,11 @@ class InterstellarEngine {
                 Object.keys(data).forEach(k => {
                     localStorage.setItem(k, data[k]);
                 });
-                if (this.showToast) this.showToast("✅ Save Imported! Reloading...");
+                if (this.showToast) this.hudManager.showToast("✅ Save Imported! Reloading...");
                 setTimeout(() => location.reload(), 1500);
             } catch (err) {
                 console.error("Failed to import save data", err);
-                if (this.showToast) this.showToast("❌ Error: Invalid save file.");
+                if (this.showToast) this.hudManager.showToast("❌ Error: Invalid save file.");
             }
         };
         reader.readAsText(file);
