@@ -555,6 +555,7 @@ class InterstellarEngine {
         this.inputManager = new window.InputManager(this);
         this.combatManager = new window.CombatManager(this);
         this.proceduralManager = new window.ProceduralManager(this);
+        this.physicsManager = new window.PhysicsManager(this);
         this.hudManager = new window.HUDManager(this);
 
         // Trigger initial background generation
@@ -8645,7 +8646,7 @@ class InterstellarEngine {
                     this._cachedRotationCenter = { x: center.x, y: center.y, z: center.z };
 
                     // Inverse rotate using the same center that rendering uses
-                    const pos3D = this.inverseRotate3D(world.x, world.y, center.x, center.y);
+                    const pos3D = this.physicsManager.inverseRotate3D(world.x, world.y, center.x, center.y);
 
                     this.createStar(pos3D.x, pos3D.y, pos3D.z);
 
@@ -8757,7 +8758,7 @@ class InterstellarEngine {
      * Guarantees that s.clusterId is always a string (either the constellation name or the star's unique string ID).
      */
     refreshClusterAssignments() {
-        const { lines, clusters } = this.calculateGeometry();
+        const { lines, clusters } = this.physicsManager.calculateGeometry();
 
         // Map to hold assignments: { starId: clusterName/starId }
         const assignmentMap = new Map();
@@ -9641,8 +9642,8 @@ class InterstellarEngine {
                 // Apply 3D rotation
                 const s1z = l.s1.z || 0;
                 const s2z = l.s2.z || 0;
-                const p1 = this.rotate3D(l.s1.x, l.s1.y, s1z, rotCenterX, rotCenterY);
-                const p2 = this.rotate3D(l.s2.x, l.s2.y, s2z, rotCenterX, rotCenterY);
+                const p1 = this.physicsManager.rotate3D(l.s1.x, l.s1.y, s1z, rotCenterX, rotCenterY);
+                const p2 = this.physicsManager.rotate3D(l.s2.x, l.s2.y, s2z, rotCenterX, rotCenterY);
 
                 ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
                 ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.3})`;
@@ -9661,8 +9662,8 @@ class InterstellarEngine {
                 // Apply 3D rotation
                 const s1z = l.s1.z || 0;
                 const s2z = l.s2.z || 0;
-                const p1 = this.rotate3D(l.s1.x, l.s1.y, s1z, rotCenterX, rotCenterY);
-                const p2 = this.rotate3D(l.s2.x, l.s2.y, s2z, rotCenterX, rotCenterY);
+                const p1 = this.physicsManager.rotate3D(l.s1.x, l.s1.y, s1z, rotCenterX, rotCenterY);
+                const p2 = this.physicsManager.rotate3D(l.s2.x, l.s2.y, s2z, rotCenterX, rotCenterY);
 
                 ctx.strokeStyle = starColor;
                 ctx.globalAlpha = alpha * 0.8;
@@ -9729,7 +9730,7 @@ class InterstellarEngine {
 
             // Apply 3D rotation
             const sz = s.z || 0;
-            const rotated = this.rotate3D(s.x, s.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(s.x, s.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
             const ry = rotated.y;
             const rScale = rotated.scale;
@@ -10955,7 +10956,7 @@ class InterstellarEngine {
             if (mine.hitFlash > 0) {
                 mine.hitFlash--;
                 const sz = mine.z || 0;
-                const rotated = this.rotate3D(mine.x, mine.y, sz, rotCenterX, rotCenterY);
+                const rotated = this.physicsManager.rotate3D(mine.x, mine.y, sz, rotCenterX, rotCenterY);
 
                 ctx.save();
                 ctx.translate(rotated.x, rotated.y);
@@ -10973,7 +10974,7 @@ class InterstellarEngine {
             }
 
             const sz = mine.z || 0;
-            const rotated = this.rotate3D(mine.x, mine.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(mine.x, mine.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
             const ry = rotated.y;
             const rScale = rotated.scale;
@@ -11149,7 +11150,7 @@ class InterstellarEngine {
             if (bh.flownOut) return;
 
             const sz = bh.z || 0;
-            const rotated = this.rotate3D(bh.x, bh.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(bh.x, bh.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
             const ry = rotated.y;
             const rScale = rotated.scale;
@@ -11320,7 +11321,7 @@ class InterstellarEngine {
         this.missileBases.forEach(base => {
             if (base.flownOut) return;
             const sz = base.z || 0;
-            const rotated = this.rotate3D(base.x, base.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(base.x, base.y, sz, rotCenterX, rotCenterY);
 
             this.drawMissileBase(ctx, base, time, false, 0, rotated.x, rotated.y, rotated.scale);
         });
@@ -11330,7 +11331,7 @@ class InterstellarEngine {
             if (missile.flownOut) return;
 
             const sz = missile.z || 0;
-            const rotated = this.rotate3D(missile.x, missile.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(missile.x, missile.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
             const ry = rotated.y;
             const rScale = rotated.scale;
@@ -11343,7 +11344,7 @@ class InterstellarEngine {
             if (missile.trail) {
                 missile.trail.forEach(p => {
                     const trailSZ = p.z || 0;
-                    const trailRot = this.rotate3D(p.x, p.y, trailSZ, rotCenterX, rotCenterY);
+                    const trailRot = this.physicsManager.rotate3D(p.x, p.y, trailSZ, rotCenterX, rotCenterY);
                     const trailAlpha = (p.life / 20) * 0.8;
                     const trailSize = p.size * trailRot.scale / safeZoom;
                     
@@ -11424,7 +11425,7 @@ class InterstellarEngine {
         // === RENDER DECOY FLARES ===
         this.decoyFlares.forEach(flare => {
             const sz = flare.z || 0;
-            const rotated = this.rotate3D(flare.x, flare.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(flare.x, flare.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
             const ry = rotated.y;
             const rScale = rotated.scale;
@@ -11455,7 +11456,7 @@ class InterstellarEngine {
         this.enemyShips.forEach(enemy => {
             const typeDef = ENEMY_TYPES[enemy.type];
             const sz = enemy.z || 0;
-            const rotated = this.rotate3D(enemy.x, enemy.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(enemy.x, enemy.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
             const ry = rotated.y;
             const rScale = rotated.scale;
@@ -11560,7 +11561,7 @@ class InterstellarEngine {
         // === RENDER ENEMY BULLETS ===
         this.enemyBullets.forEach(b => {
             const sz = b.z || 0;
-            const rotated = this.rotate3D(b.x, b.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(b.x, b.y, sz, rotCenterX, rotCenterY);
             const rScale = rotated.scale;
             if (!Number.isFinite(rotated.x) || !Number.isFinite(rotated.y) || !Number.isFinite(rScale) || rScale <= 0) return;
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
@@ -11600,7 +11601,7 @@ class InterstellarEngine {
             const boss = this.activeBoss;
             const typeDef = BOSS_TYPES[boss.type];
             const sz = boss.z || 0;
-            const rotated = this.rotate3D(boss.x, boss.y, sz, rotCenterX, rotCenterY);
+            const rotated = this.physicsManager.rotate3D(boss.x, boss.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
             const ry = rotated.y;
             const rScale = rotated.scale;
@@ -14101,153 +14102,13 @@ class InterstellarEngine {
     }
 
     // 3D Rotation: Rotate a point around a given center
-    rotate3D(x, y, z, centerX, centerY) {
-        // Convert degrees to radians
-        const radX = this.rotationX * Math.PI / 180;
-        const radY = this.rotationY * Math.PI / 180;
-        const radZ = this.rotationZ * Math.PI / 180;
 
-        // Translate to origin (center of view)
-        let px = x - centerX;
-        let py = y - centerY;
-        let pz = z;
-
-        // Rotation around X axis
-        let y1 = py * Math.cos(radX) - pz * Math.sin(radX);
-        let z1 = py * Math.sin(radX) + pz * Math.cos(radX);
-        py = y1;
-        pz = z1;
-
-        // Rotation around Y axis
-        let x1 = px * Math.cos(radY) + pz * Math.sin(radY);
-        z1 = -px * Math.sin(radY) + pz * Math.cos(radY);
-        px = x1;
-        pz = z1;
-
-        // Rotation around Z axis
-        x1 = px * Math.cos(radZ) - py * Math.sin(radZ);
-        y1 = px * Math.sin(radZ) + py * Math.cos(radZ);
-        px = x1;
-        py = y1;
-
-        // Simple perspective projection (optional depth effect)
-        const fov = 800;
-        const den = fov + pz;
-        const scale = (Math.abs(den) < 0.001) ? 1000 : fov / den;
-
-        // Translate back
-        return {
-            x: px * scale + centerX,
-            y: py * scale + centerY,
-            scale: scale
-        };
-    }
 
     // Inverse 3D Rotation: Project screen point back to 3D world (at Z=0 plane relative to rotation)
-    inverseRotate3D(x, y, centerX, centerY) {
-        // Negate angles for inverse rotation
-        const radX = -this.rotationX * Math.PI / 180;
-        const radY = -this.rotationY * Math.PI / 180;
-        const radZ = -this.rotationZ * Math.PI / 180;
 
-        // Translate to origin
-        let px = x - centerX;
-        let py = y - centerY;
-        let pz = 0; // Assume we are clicking on the plane passing through center
-
-        // Inverse Order: X^-1( Y^-1( Z^-1( P ) ) )
-        // Note: Forward was RotZ(RotY(RotX(P))). Inverse is RotXinv(RotYinv(RotZinv(P))).
-
-        // 1. Inverse Z Rotation
-        let x1 = px * Math.cos(radZ) - py * Math.sin(radZ);
-        let y1 = px * Math.sin(radZ) + py * Math.cos(radZ);
-        px = x1;
-        py = y1;
-
-        // 2. Inverse Y Rotation
-        x1 = px * Math.cos(radY) + pz * Math.sin(radY);
-        let z1 = -px * Math.sin(radY) + pz * Math.cos(radY);
-        px = x1;
-        pz = z1;
-
-        // 3. Inverse X Rotation
-        y1 = py * Math.cos(radX) - pz * Math.sin(radX);
-        z1 = py * Math.sin(radX) + pz * Math.cos(radX);
-        py = y1;
-        pz = z1;
-
-        // Translate back
-        return {
-            x: px + centerX,
-            y: py + centerY,
-            z: pz
-        };
-    }
 
     // Reset rotation sliders and values
-    resetRotation() {
-        this.rotationX = 0;
-        this.rotationY = 0;
-        this.rotationZ = 0;
 
-        const xSlider = document.getElementById('rotXSlider');
-        const ySlider = document.getElementById('rotYSlider');
-        const zSlider = document.getElementById('rotZSlider');
-
-        if (xSlider) { xSlider.value = 0; document.getElementById('rotXValue').textContent = '0°'; }
-        if (ySlider) { ySlider.value = 0; document.getElementById('rotYValue').textContent = '0°'; }
-        if (zSlider) { zSlider.value = 0; document.getElementById('rotZValue').textContent = '0°'; }
-    }
-
-    calculateGeometry() {
-        const lines = [];
-        const adj = {};
-        // Performance fix: use Map for O(1) star lookups
-        const starMap = new Map();
-        this.stars.forEach(s => {
-            adj[s.id] = [];
-            starMap.set(s.id, s);
-        });
-
-        for (let i = 0; i < this.stars.length; i++) {
-            for (let j = i + 1; j < this.stars.length; j++) {
-                const s1 = this.stars[i];
-                const s2 = this.stars[j];
-                const dist = Math.hypot(s1.x - s2.x, s1.y - s2.y);
-
-                if (dist < this.config.maxConnectDist) {
-                    lines.push({ s1, s2, dist });
-                    adj[s1.id].push(s2.id);
-                    adj[s2.id].push(s1.id);
-                }
-            }
-        }
-
-        // BFS for clusters
-        const clusters = [];
-        const visited = new Set();
-        this.stars.forEach(star => {
-            if (!visited.has(star.id)) {
-                const cluster = [];
-                const queue = [star.id];
-                visited.add(star.id);
-                while (queue.length) {
-                    const id = queue.shift();
-                    const s = starMap.get(id); // O(1) lookup
-                    if (s) cluster.push(s);
-                    adj[id].forEach(nid => {
-                        if (!visited.has(nid)) {
-                            visited.add(nid);
-                            queue.push(nid);
-                        }
-                    });
-                }
-                if (cluster.length > 0) clusters.push(cluster);
-            }
-        });
-
-        return { lines, clusters };
-    }
 
 
     // Ship Selection Methods
@@ -14536,7 +14397,7 @@ class InterstellarEngine {
         this.stars.forEach((s, i) => starIdToIndex[s.id] = i);
 
         const validLines = [];
-        const lines = this.calculateGeometry().lines; // Get current lines
+        const lines = this.physicsManager.calculateGeometry().lines; // Get current lines
         lines.forEach(l => {
             const idx1 = starIdToIndex[l.from];
             const idx2 = starIdToIndex[l.to];
@@ -14689,7 +14550,7 @@ class InterstellarEngine {
         const vbX = minX - pad;
         const vbY = minY - pad;
 
-        const { lines, clusters } = this.calculateGeometry();
+        const { lines, clusters } = this.physicsManager.calculateGeometry();
 
         let svg = `< svg xmlns = "http://www.w3.org/2000/svg" viewBox = "${vbX} ${vbY} ${w} ${h}" style = "background:#020205" >
             <rect x="${vbX}" y="${vbY}" width="${w}" height="${h}" fill="#020205" />`;
