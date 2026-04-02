@@ -185,88 +185,6 @@ class InterstellarEngine {
 
         // Mineral system
         this.minerals = [];
-        this.mineralTypes = {
-            // ============ INDUSTRIAL ZONE (50% spawn rate in industrial galaxies) ============
-            iron: { name: 'Iron', value: 10, color: '#8B8680', rarity: 'common', size: 15, zone: 'industrial', use: 'Basic construction' },
-            copper: { name: 'Copper', value: 25, color: '#B87333', rarity: 'common', size: 15, zone: 'industrial', use: 'Wiring, conductors' },
-            coal: { name: 'Coal', value: 15, color: '#36454F', rarity: 'common', size: 12, zone: 'industrial', use: 'Fuel source' },
-            titanium: { name: 'Titanium', value: 80, color: '#878681', rarity: 'common', size: 16, zone: 'industrial', use: 'Armor plating' },
-            silicon: { name: 'Silicon', value: 45, color: '#A0A0A0', rarity: 'common', size: 14, zone: 'industrial', use: 'Electronics, circuits' },
-
-            // ============ PRECIOUS ZONE (25% spawn rate in precious galaxies) ============
-            silver: { name: 'Silver', value: 150, color: '#C0C0C0', rarity: 'uncommon', size: 18, zone: 'precious', use: 'Currency, conductors' },
-            gold: { name: 'Gold', value: 400, color: '#FFD700', rarity: 'uncommon', size: 20, zone: 'precious', use: 'Electronics, currency' },
-            platinum: { name: 'Platinum', value: 500, color: '#E5E4E2', rarity: 'uncommon', size: 20, zone: 'precious', use: 'Catalysts, jewelry' },
-            palladium: { name: 'Palladium', value: 600, color: '#CED0DD', rarity: 'uncommon', size: 19, zone: 'precious', use: 'Fuel cells, catalysts' },
-
-            // ============ CRYSTAL ZONE (15% spawn rate in crystal galaxies) ============
-            quartz: { name: 'Quartz', value: 800, color: '#F5F5F5', rarity: 'rare', size: 22, zone: 'crystal', use: 'Optics, sensors' },
-            diamond: { name: 'Diamond', value: 2500, color: '#B9F2FF', rarity: 'rare', size: 25, zone: 'crystal', use: 'Cutting tools, lasers' },
-            emerald: { name: 'Emerald', value: 3000, color: '#50C878', rarity: 'rare', size: 25, zone: 'crystal', use: 'Energy focusing' },
-            ruby: { name: 'Ruby', value: 2800, color: '#E0115F', rarity: 'rare', size: 25, zone: 'crystal', use: 'Laser amplification' },
-            sapphire: { name: 'Sapphire', value: 3200, color: '#0F52BA', rarity: 'rare', size: 25, zone: 'crystal', use: 'Shield technology' },
-
-            // ============ NUCLEAR ZONE (7% spawn rate near black holes) ============
-            uranium: { name: 'Uranium', value: 8000, color: '#4AFF00', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Nuclear reactors' },
-            plutonium: { name: 'Plutonium', value: 12000, color: '#00FF7F', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Advanced power' },
-            helium3: { name: 'Helium-3', value: 15000, color: '#87CEEB', rarity: 'epic', size: 26, zone: 'nuclear', use: 'Fusion reactors' },
-
-            // ============ EXOTIC ZONE (3% spawn rate - edge of space) ============
-            neodymium: { name: 'Neodymium', value: 25000, color: '#FF6EC7', rarity: 'legendary', size: 30, zone: 'exotic', use: 'Magnet tech' },
-            lanthanum: { name: 'Lanthanum', value: 30000, color: '#9D00FF', rarity: 'legendary', size: 32, zone: 'exotic', use: 'Hybrid engines' },
-            darkmatter: { name: 'Dark Matter', value: 100000, color: '#1a0033', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Warp drives' },
-            antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' },
-            lotus: { name: 'Mindwave Lotus', value: 500000, color: '#ff69b4', rarity: 'transcendental', size: 40, zone: 'all', use: 'Ultimate Enlightenment' }
-        };
-
-        // Galaxy zone configuration - determines element distribution
-        this.galaxyZones = {
-            industrial: {
-                name: 'Industrial Sector',
-                color: '#8B8680',
-                glowColor: 'rgba(139, 134, 128, 0.3)',
-                elements: ['iron', 'copper', 'coal', 'titanium', 'silicon'],
-                concentrationBonus: 3.0,
-                defenseLevel: 1,
-                distanceRange: { min: 100, max: 800 }
-            },
-            precious: {
-                name: 'Precious Nebula',
-                color: '#FFD700',
-                glowColor: 'rgba(255, 215, 0, 0.3)',
-                elements: ['silver', 'gold', 'platinum', 'palladium'],
-                concentrationBonus: 2.5,
-                defenseLevel: 2,
-                distanceRange: { min: 800, max: 2000 }
-            },
-            crystal: {
-                name: 'Crystal Fields',
-                color: '#50C878',
-                glowColor: 'rgba(80, 200, 120, 0.3)',
-                elements: ['quartz', 'diamond', 'emerald', 'ruby', 'sapphire'],
-                concentrationBonus: 2.0,
-                defenseLevel: 3,
-                distanceRange: { min: 2000, max: 4000 }
-            },
-            nuclear: {
-                name: 'Radiation Belt',
-                color: '#4AFF00',
-                glowColor: 'rgba(74, 255, 0, 0.4)',
-                elements: ['uranium', 'plutonium', 'helium3'],
-                concentrationBonus: 1.5,
-                defenseLevel: 4,
-                distanceRange: { min: 3500, max: 5000 }
-            },
-            exotic: {
-                name: 'Dark Frontier',
-                color: '#9D00FF',
-                glowColor: 'rgba(157, 0, 255, 0.4)',
-                elements: ['neodymium', 'lanthanum', 'darkmatter', 'antimatter'],
-                concentrationBonus: 1.0,
-                defenseLevel: 5,
-                distanceRange: { min: 5000, max: 8000 }
-            }
-        };
 
         // Resource deposits - persistent locations with finite resources
         this.resourceDeposits = [];
@@ -1065,7 +983,7 @@ class InterstellarEngine {
             else if (dist < 10000) type = ['uranium', 'plutonium', 'helium3'][Math.floor(r * 3)];
             else type = ['neodymium', 'lanthanum', 'darkmatter', 'antimatter'][Math.floor(r * 4)];
 
-            const info = this.mineralTypes[type];
+            const info = MINERAL_TYPES[type];
             if (!info) continue;
 
             const mineral = { x, y, type, color: info.color, size: info.size, value: info.value };
@@ -1162,7 +1080,7 @@ class InterstellarEngine {
             const richness = 0.3 + this.seededRandom(s + 2) * 0.7;
             const deposit = {
                 x, y, zone,
-                name: `${this.galaxyZones[zone]?.name || zone} Deposit`,
+                name: `${GALAXY_ZONES[zone]?.name || zone} Deposit`,
                 richness,
                 tier: Math.floor(richness * 3) + 1
             };
@@ -1898,7 +1816,7 @@ class InterstellarEngine {
     }
 
     styleGem(type) {
-        const info = this.mineralTypes[type];
+        const info = MINERAL_TYPES[type];
         if (!info) return '';
         // Create a glowing orb effect matching in-game rendering
         return `background: radial-gradient(circle at 30% 30%, #fff 10%, ${info.color} 60%);
@@ -2427,7 +2345,7 @@ class InterstellarEngine {
             const offsetY = -this.playerShip.y;
 
             // Draw Zones (centered at origin) - REDUCED OPACITY
-            Object.values(this.galaxyZones).forEach(zone => {
+            Object.values(GALAXY_ZONES).forEach(zone => {
                 const r = zone.distanceRange.min * scale;
                 ctx.beginPath();
                 ctx.arc(cx + offsetX * scale, cy + offsetY * scale, r, 0, Math.PI * 2);
@@ -2698,7 +2616,7 @@ class InterstellarEngine {
 
         // --- 3. ZONE ATMOSPHERICS ---
         // Draw large, soft radial glows for each zone to give "territory" feel
-        Object.values(this.galaxyZones).forEach(zone => {
+        Object.values(GALAXY_ZONES).forEach(zone => {
             const dist = zone.distanceRange.min;
             // Skip if way off screen
             // Simple cull: check distance from center of screen in world space to zone center (0,0)
@@ -2771,8 +2689,8 @@ class InterstellarEngine {
             const pulse = 1 + Math.sin(time * 3 + dep.x * 0.01) * 0.2;
 
             // Deposit Glow
-            const zoneColor = this.galaxyZones[dep.zone] ? this.galaxyZones[dep.zone].color : '#fff';
-            const glowColor = this.galaxyZones[dep.zone] ? (this.galaxyZones[dep.zone].glowColor || zoneColor) : '#fff';
+            const zoneColor = GALAXY_ZONES[dep.zone] ? GALAXY_ZONES[dep.zone].color : '#fff';
+            const glowColor = GALAXY_ZONES[dep.zone] ? (GALAXY_ZONES[dep.zone].glowColor || zoneColor) : '#fff';
 
             // Draw outer glow
             const grad = ctx.createRadialGradient(dep.x, dep.y, 5 * pulse, dep.x, dep.y, 30 * pulse);
@@ -2818,7 +2736,7 @@ class InterstellarEngine {
             if (Math.abs(mineral.x + this.expandedMapOffset.x) > viewW/2 + 100) return;
             if (Math.abs(mineral.y + this.expandedMapOffset.y) > viewH/2 + 100) return;
 
-            const mineralInfo = this.mineralTypes[mineral.type];
+            const mineralInfo = MINERAL_TYPES[mineral.type];
             if (!mineralInfo) return;
 
             // Glow effect for visibility
@@ -2982,7 +2900,7 @@ class InterstellarEngine {
     calculateTotalWealth() {
         let total = 0;
         for (const [type, count] of Object.entries(this.playerInventory)) {
-            const mineralInfo = this.mineralTypes[type];
+            const mineralInfo = MINERAL_TYPES[type];
             if (mineralInfo) total += mineralInfo.value * count;
         }
         return total;
@@ -3364,7 +3282,7 @@ class InterstellarEngine {
             // Check collisions with Enemy Ships
             for (let e = this.enemyShips.length - 1; e >= 0; e--) {
                 const enemy = this.enemyShips[e];
-                const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+                const typeDef = ENEMY_TYPES[enemy.type];
                 const dx = p.x - enemy.x;
                 const dy = p.y - enemy.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -3400,7 +3318,7 @@ class InterstellarEngine {
             // Check collision with Boss
             if (this.activeBoss) {
                 const boss = this.activeBoss;
-                const bTypeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+                const bTypeDef = BOSS_TYPES[boss.type];
                 const dx = p.x - boss.x;
                 const dy = p.y - boss.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -3504,55 +3422,7 @@ class InterstellarEngine {
 
     // === ENEMY SHIP COMBAT SYSTEM ===
 
-    static ENEMY_TYPES = {
-        scout: {
-            name: 'Scout',
-            health: 50,
-            maxSpeed: 3.0,
-            acceleration: 0.08,
-            fireRate: 1200, // Faster firing
-            aggroRange: 600,
-            attackRange: 400,
-            bulletSpeed: 12, // Faster bullets
-            bulletDamage: 10,
-            gemDrop: 5,
-            color: '#ff4444',
-            glowColor: 'rgba(255, 68, 68, 0.6)',
-            size: 18
-        },
-        fighter: {
-            name: 'Fighter',
-            health: 100,
-            maxSpeed: 2.5,
-            acceleration: 0.06,
-            fireRate: 1000, // Faster firing
-            aggroRange: 800,
-            attackRange: 500,
-            bulletSpeed: 14, // Faster bullets
-            bulletDamage: 15,
-            gemDrop: 15,
-            color: '#ff8800',
-            glowColor: 'rgba(255, 136, 0, 0.6)',
-            size: 24
-        },
-        cruiser: {
-            name: 'Cruiser',
-            health: 200,
-            maxSpeed: 1.5,
-            acceleration: 0.03,
-            fireRate: 2000, // Faster firing
-            aggroRange: 1000,
-            attackRange: 600,
-            bulletSpeed: 10, // Faster bullets
-            bulletDamage: 25,
-            gemDrop: 40,
-            burstCount: 3,
-            burstDelay: 200,
-            color: '#aa44ff',
-            glowColor: 'rgba(170, 68, 255, 0.6)',
-            size: 32
-        }
-    };
+    // ENEMY_TYPES moved to game-config.js (Phase 8)
 
     spawnEnemyShips() {
         if (!this.flightMode || !this.playerShip) return;
@@ -3585,7 +3455,7 @@ class InterstellarEngine {
             if (roll > 0.85) type = 'cruiser';
             else if (roll > 0.5) type = 'fighter';
 
-            const typeDef = InterstellarEngine.ENEMY_TYPES[type];
+            const typeDef = ENEMY_TYPES[type];
 
             // Assign Faction dynamically
             const factions = ['xenon', 'mauler', 'terran'];
@@ -3627,7 +3497,7 @@ class InterstellarEngine {
         const isPlayerCloaked = ship.isCloaked || ship.type === 'spectre';
 
         for (const enemy of this.enemyShips) {
-            const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+            const typeDef = ENEMY_TYPES[enemy.type];
 
             // EMP FREEZE CHECK: Skip all AI logic while disabled
             if (enemy.disabled) {
@@ -3856,7 +3726,7 @@ class InterstellarEngine {
                 const enemy = this.enemyShips[j];
                 // Faction check: Terran bullets hit non-terran, Enemy bullets hit different factions
                 if (b.faction && enemy.faction && b.faction !== enemy.faction) {
-                    const eDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+                    const eDef = ENEMY_TYPES[enemy.type];
                     const distEnemy = Math.hypot(b.x - enemy.x, b.y - enemy.y);
                     if (distEnemy < (eDef.size || 20) + 5) {
                         this.createExplosion(b.x, b.y, 'hit');
@@ -3878,7 +3748,7 @@ class InterstellarEngine {
             // Check collision with Boss
             if (this.activeBoss && b.faction === 'terran') {
                 const boss = this.activeBoss;
-                const bDef = InterstellarEngine.BOSS_TYPES[boss.type];
+                const bDef = BOSS_TYPES[boss.type];
                 const distBoss = Math.hypot(b.x - boss.x, b.y - boss.y);
                 if (distBoss < bDef.size + 10) {
                     this.createExplosion(b.x, b.y, 'hit');
@@ -3894,7 +3764,7 @@ class InterstellarEngine {
 
     destroyEnemyShip(index) {
         const enemy = this.enemyShips[index];
-        const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+        const typeDef = ENEMY_TYPES[enemy.type];
 
         // Big explosion
         this.createExplosion(enemy.x, enemy.y, 'destruction');
@@ -3932,55 +3802,12 @@ class InterstellarEngine {
 
     // === BOSS FIGHT SYSTEM ===
 
-    static BOSS_TYPES = {
-        dreadnought: {
-            name: 'Dreadnought',
-            health: 500,
-            size: 50,
-            speed: 1.2,
-            acceleration: 0.02,
-            fireRate: 1500,
-            bulletSpeed: 6,
-            bulletDamage: 20,
-            gemReward: 100,
-            color: '#ff2222',
-            glowColor: 'rgba(255, 34, 34, 0.7)',
-            mechanic: 'shield_arc' // Frontal shield, attack from behind
-        },
-        hivequeen: {
-            name: 'Hive Queen',
-            health: 400,
-            size: 45,
-            speed: 1.0,
-            acceleration: 0.015,
-            fireRate: 2500,
-            bulletSpeed: 5,
-            bulletDamage: 15,
-            gemReward: 150,
-            color: '#44ff44',
-            glowColor: 'rgba(68, 255, 68, 0.7)',
-            mechanic: 'spawn_swarm' // Spawns scouts every 5s
-        },
-        voidreaper: {
-            name: 'Void Reaper',
-            health: 600,
-            size: 55,
-            speed: 2.0,
-            acceleration: 0.04,
-            fireRate: 2000,
-            bulletSpeed: 5,
-            bulletDamage: 30,
-            gemReward: 200,
-            color: '#9944ff',
-            glowColor: 'rgba(153, 68, 255, 0.7)',
-            mechanic: 'teleport' // Teleports when hit, fires homing bolts
-        }
-    };
+    // BOSS_TYPES moved to game-config.js (Phase 8)
 
     spawnBoss(bossType) {
         if (this.activeBoss) return; // Only one boss at a time
 
-        const typeDef = InterstellarEngine.BOSS_TYPES[bossType];
+        const typeDef = BOSS_TYPES[bossType];
         if (!typeDef) return;
 
         const ship = this.playerShip;
@@ -4013,7 +3840,7 @@ class InterstellarEngine {
 
         const boss = this.activeBoss;
         const ship = this.playerShip;
-        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+        const typeDef = BOSS_TYPES[boss.type];
         const now = Date.now();
         const distToPlayer = Math.hypot(boss.x - ship.x, boss.y - ship.y);
         const angleToPlayer = Math.atan2(ship.y - boss.y, ship.x - boss.x);
@@ -4049,7 +3876,7 @@ class InterstellarEngine {
                     for (let i = 0; i < spawnCount; i++) {
                         const sAngle = boss.rotation + (Math.random() - 0.5) * Math.PI;
                         const sDist = typeDef.size * 2;
-                        const scoutDef = InterstellarEngine.ENEMY_TYPES.scout;
+                        const scoutDef = ENEMY_TYPES.scout;
                         this.enemyShips.push({
                             x: boss.x + Math.cos(sAngle) * sDist,
                             y: boss.y + Math.sin(sAngle) * sDist,
@@ -4161,7 +3988,7 @@ class InterstellarEngine {
         if (!this.activeBoss) return;
 
         const boss = this.activeBoss;
-        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+        const typeDef = BOSS_TYPES[boss.type];
 
         // Dreadnought shield check — blocks frontal damage
         if (boss.type === 'dreadnought') {
@@ -4196,7 +4023,7 @@ class InterstellarEngine {
         if (!this.activeBoss) return;
 
         const boss = this.activeBoss;
-        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+        const typeDef = BOSS_TYPES[boss.type];
 
         // Massive explosion
         for (let i = 0; i < 5; i++) {
@@ -4237,126 +4064,13 @@ class InterstellarEngine {
 
     // === MISSION SYSTEM ===
 
-    static MISSION_TEMPLATES = [
-        // TIER 1: BASICS — Teach the player how to exist in the game
-        {
-            type: 'collect', name: 'First Steps', tier: 1,
-            desc: 'Fly into {goal} glowing gems floating nearby',
-            briefing: 'See those colorful crystals floating around you? Those are gems! Just fly your ship into them to pick them up — no buttons needed, just touch them. Use W to go forward, A/D to turn, SHIFT to go faster.',
-            hint: '💡 Just fly INTO the gems • W = forward • A/D = turn • SHIFT = fast',
-            goal: 5, reward: 500
-        },
-        {
-            type: 'collect', name: 'Resource Expedition', tier: 1,
-            desc: 'Pick up {goal} gems — fly further out for rarer ones',
-            briefing: 'Gems come in different types: common ones are dull, rare ones glow brighter and are worth more. Fly away from where you started to find better gems. Check your Radar (circle in top-left) to see gem dots nearby.',
-            hint: '💡 Fly further from start = better gems • Radar shows nearby gems',
-            goal: 15, reward: 750
-        },
-        {
-            type: 'survive', name: 'Stay Alive', tier: 1,
-            desc: 'Fly around for {goal} seconds without dying',
-            briefing: 'Your ship can be destroyed! Red triangles on your radar are space mines — avoid them. If you see red dots moving toward you, those are enemies — fly away for now. Your health bar is in the Ship Status window. Timer starts when you accept this mission.',
-            hint: '🛡️ Red triangles = mines (avoid!) • Red dots = enemies • SHIFT = escape fast',
-            goal: 30, reward: 600
-        },
-
-        // TIER 2: COMBAT — Teach the player how to fight
-        {
-            type: 'kill', name: 'Weapons Training', tier: 2, targetType: 'scout',
-            desc: 'Press SPACE to shoot and destroy {goal} Scout ships',
-            briefing: 'Your ship has guns! Hold SPACE to fire lasers. When you accept this mission, Scout ships will spawn nearby — look for red dots on your radar. Fly toward them and hold SPACE to shoot. Scouts are weak and die in a few hits.',
-            hint: '⚔️ Hold SPACE to shoot! • Red dots on radar = enemies • Fly toward them',
-            goal: 3, reward: 1500
-        },
-        {
-            type: 'kill', name: 'Fighter Patrol', tier: 2, targetType: 'fighter',
-            desc: 'Destroy {goal} Fighters — they shoot back!',
-            briefing: 'Fighters are tougher than Scouts and will fire at you! Keep your ship moving while shooting (hold W + SPACE together). If your health drops low, fly away with SHIFT to boost. Destroyed enemies drop bonus gems!',
-            hint: '⚔️ W + SPACE = fly and shoot • SHIFT = escape if low health',
-            goal: 3, reward: 2000
-        },
-        {
-            type: 'kill_any', name: 'Space Cleaner', tier: 2,
-            desc: 'Destroy {goal} enemies of any kind (SPACE to fire)',
-            briefing: 'Kill any enemies you find — Scouts, Fighters, anything counts. Enemies appear as red dots on your radar. After killing enemies, spend your gems on upgrades! Click the 🛠️ UPGRADES button in the menu bar to make your ship stronger.',
-            hint: '⚔️ Any enemy counts • SPACE = fire • 🛠️ UPGRADES button = power up your ship',
-            goal: 8, reward: 2500
-        },
-        {
-            type: 'sabotage', name: 'Operation: Sabotage', tier: 2,
-            desc: 'Clear {goal} Space Mines from the sector',
-            briefing: 'Space mines (red triangles) are drifting everywhere. Use your lasers (SPACE) to detonate them from a safe distance. This clears the way for our freighters. Be careful: their explosion radius is large!',
-            hint: '💣 Shoot red triangles • Stay back! • Large explosion radius',
-            goal: 10, reward: 1800
-        },
-
-        // TIER 3: ADVANCED — Challenge the player
-        {
-            type: 'collect', name: 'Deep Mining', tier: 3,
-            desc: 'Collect {goal} gems — explore far from spawn',
-            briefing: 'You need a lot of gems for this one. Press M to open your Galaxy Map and see the full universe. Fly far from center to find richer gem fields. Pro tip: the Hauler ship (in Hangar 🚀) has a Tractor Beam that magnetically pulls gems toward you!',
-            hint: '💎 M = Galaxy Map • Hauler ship = magnet for gems • Fly far out',
-            goal: 30, reward: 5000
-        },
-        {
-            type: 'survive', name: 'Endurance Run', tier: 3,
-            desc: 'Stay alive for {goal} seconds — things get dangerous',
-            briefing: 'The further you fly from where you started, the more dangerous space gets — more mines, turrets, and enemies appear. For this mission, just survive! You can dodge with R/F (pitch up/down) and Z/X (barrel roll). Timer runs from when you accept.',
-            hint: '🛡️ R/F = pitch • Z/X = barrel roll • Fly away from danger • Stay alive!',
-            goal: 60, reward: 6000
-        },
-        {
-            type: 'siege', name: 'Operation: Fortress Siege', tier: 3,
-            desc: 'Destroy {goal} Missile Launch Bases',
-            briefing: 'Standard enemy patrols are one thing, but their stationary Missile Bases are the real threat. They fire long-range heat-seeking missiles. Destroy the bases to weaken their hold on this sector. Use SHIFT to outrun the missiles!',
-            hint: '🛡️ Destroy red circular bases • Outrun missiles with SHIFT • High reward',
-            goal: 2, reward: 8000
-        },
-        {
-            type: 'defense', name: 'Operation: Citadel Guard', tier: 3,
-            desc: 'Protect your Planetary Base from Mauler Siege Fleet',
-            briefing: 'Enemy forces have located your base! A squadron of armored Maulers is moving in to dismantle your structures. Return to your base coordinates immediately and hold the line. Use your base turrets for support!',
-            hint: '🛡️ Defend your Base • Maulers are slow but tough • Look for base icon on radar',
-            goal: 4, reward: 7500
-        },
-
-        // TIER 4: BOSS FIGHTS — The ultimate challenge
-        {
-            type: 'boss', name: 'Boss: Dreadnought', tier: 4, bossType: 'dreadnought',
-            desc: 'A massive warship spawns — destroy it! (SPACE to fire)',
-            briefing: 'When you accept, a Dreadnought boss will spawn near you. It has front shields — fly BEHIND it to deal damage! Hold SPACE to fire. Use SHIFT to boost past its missiles. This is a real fight — make sure your ship is upgraded first!',
-            hint: '👑 Fly BEHIND it! • Front shields block shots • SHIFT dodges missiles',
-            goal: 1, reward: 18000
-        },
-        {
-            type: 'boss', name: 'Boss: Hive Queen', tier: 4, bossType: 'hivequeen',
-            desc: 'A giant alien queen spawns — destroy it!',
-            briefing: 'The Hive Queen spawns swarms of small drones. Kill the drones first (SPACE to fire), then focus on the Queen. She moves unpredictably so be patient. Reward: 150 gems — the biggest payout yet!',
-            hint: '👑 Kill drones first • Then focus the Queen • Be patient!',
-            goal: 1, reward: 22000
-        },
-        {
-            type: 'boss', name: 'Boss: Void Reaper', tier: 4, bossType: 'voidreaper',
-            desc: 'The deadliest boss in the game — can you beat it?',
-            briefing: 'The Void Reaper teleports and fires devastating energy beams. Keep your distance and only attack during its cooldown windows. This is the hardest fight in the game. Reward: 200 gems!',
-            hint: '👑 It teleports! • Attack during cooldowns only • Hardest boss!',
-            goal: 1, reward: 30000
-        },
-        {
-            type: 'kill_any', name: 'Legendary Rampage', tier: 4,
-            desc: 'Destroy {goal} enemies — try different ships from the Hangar!',
-            briefing: 'All-out war. Destroy everything. Each ship in the Hangar (🚀 SHIP button) has a unique special ability — try them all! The Viper has speed boost, the Titan has armor, the Flux can phase through damage. Pick your favorite and dominate!',
-            hint: '⚔️ 🚀 SHIP button = switch ships • Each ship has a unique ability!',
-            goal: 15, reward: 15000
-        }
-    ];
+    // MISSION_TEMPLATES moved to game-config.js (Phase 8)
 
     generateMissionBoard() {
         // Progressive mission board: show one from each available tier
         // Tier unlocking: Tier 1 always, Tier 2 after 2 missions, Tier 3 after 5, Tier 4 after 8
         const completed = this.missionsCompleted || 0;
-        const templates = InterstellarEngine.MISSION_TEMPLATES;
+        const templates = MISSION_TEMPLATES;
 
         let maxTier = 1;
         if (completed >= 2) maxTier = 2;
@@ -4412,7 +4126,7 @@ class InterstellarEngine {
                     vx: 0,
                     vy: 0,
                     type: missionTemplate.targetType,
-                    health: InterstellarEngine.ENEMY_TYPES[missionTemplate.targetType]?.maxHealth || 100,
+                    health: ENEMY_TYPES[missionTemplate.targetType]?.maxHealth || 100,
                     lastFire: 0
                 });
             }
@@ -5168,7 +4882,7 @@ class InterstellarEngine {
             this.saveCarriedResources();
             // Build loss message
             const lostNames = Object.entries(lostResources)
-                .map(([type, qty]) => `${qty} ${this.mineralTypes[type]?.name || type}`)
+                .map(([type, qty]) => `${qty} ${MINERAL_TYPES[type]?.name || type}`)
                 .join(', ');
             this.showToast(`💀 Lost 25% cargo: ${lostNames}`);
             console.log('[Death Penalty] Lost resources:', lostResources);
@@ -5198,7 +4912,7 @@ class InterstellarEngine {
         this.saveCarriedResources();
         this.saveSpaceBase();
 
-        this.showToast(`📦 Deposited ${toDeposit} ${this.mineralTypes[resourceType]?.name || resourceType}`);
+        this.showToast(`📦 Deposited ${toDeposit} ${MINERAL_TYPES[resourceType]?.name || resourceType}`);
         return true;
     }
 
@@ -5223,7 +4937,7 @@ class InterstellarEngine {
         this.saveCarriedResources();
         this.saveSpaceBase();
 
-        this.showToast(`📤 Withdrew ${toWithdraw} ${this.mineralTypes[resourceType]?.name || resourceType}`);
+        this.showToast(`📤 Withdrew ${toWithdraw} ${MINERAL_TYPES[resourceType]?.name || resourceType}`);
         return true;
     }
 
@@ -5327,7 +5041,7 @@ class InterstellarEngine {
             for (const [res, amount] of Object.entries(moduleDef.resourceCost)) {
                 const available = (this.spaceBase.resources[res] || 0) + (this.carriedResources[res] || 0);
                 if (available < amount) {
-                    this.showToast(`⚠️ Need ${amount} ${this.mineralTypes[res]?.name || res}!`);
+                    this.showToast(`⚠️ Need ${amount} ${MINERAL_TYPES[res]?.name || res}!`);
                     return false;
                 }
             }
@@ -5416,7 +5130,7 @@ class InterstellarEngine {
             const resources = Object.entries(this.spaceBase.resources)
                 .filter(([_, qty]) => qty > 0);
             vaultList.innerHTML = resources.map(([type, qty]) => {
-                const def = this.mineralTypes[type];
+                const def = MINERAL_TYPES[type];
                 return `<div class="vault-item" style="color:${def?.color || '#fff'}">
                     ${def?.name || type}: ${qty}
                 </div>`;
@@ -5442,7 +5156,7 @@ class InterstellarEngine {
         for (const [type, qty] of Object.entries(this.carriedResources)) {
             if (qty > 0) {
                 this.spaceBase.resources[type] = (this.spaceBase.resources[type] || 0) + qty;
-                deposited.push(`${qty} ${this.mineralTypes[type]?.name || type}`);
+                deposited.push(`${qty} ${MINERAL_TYPES[type]?.name || type}`);
                 totalDeposited += qty;
                 this.carriedResources[type] = 0;
             }
@@ -5520,7 +5234,7 @@ class InterstellarEngine {
         let count = 0;
         for (const [type, qty] of Object.entries(this.playerInventory)) {
             if (qty > 0) {
-                const val = this.mineralTypes[type].value;
+                const val = MINERAL_TYPES[type].value;
                 totalValue += val * qty;
                 count += qty;
                 this.playerInventory[type] = 0;
@@ -5602,13 +5316,13 @@ class InterstellarEngine {
 
         // Calculate total value
         Object.entries(this.playerInventory || {}).forEach(([type, count]) => {
-            const info = this.mineralTypes[type];
+            const info = MINERAL_TYPES[type];
             if (info) totalValue += count * info.value;
         });
 
         // Display ALL types
-        Object.keys(this.mineralTypes).forEach(type => {
-            const info = this.mineralTypes[type];
+        Object.keys(MINERAL_TYPES).forEach(type => {
+            const info = MINERAL_TYPES[type];
             const count = (this.playerInventory && this.playerInventory[type]) || 0;
 
             const itemValue = count * info.value;
@@ -5738,7 +5452,7 @@ class InterstellarEngine {
         while (this.minerals.length < targetDensity) {
             const currentZone = this.getZoneAtDistance(playerDistFromOrigin);
             const mineralKey = this.selectElementForZone(currentZone, playerDistFromOrigin, hotspotBonus);
-            const type = this.mineralTypes[mineralKey];
+            const type = MINERAL_TYPES[mineralKey];
             if (!type) continue;
 
             // Dense, even distribution around player
@@ -5777,7 +5491,7 @@ class InterstellarEngine {
 
     // Get the zone type at a given distance from origin
     getZoneAtDistance(distance) {
-        for (const [zoneKey, zone] of Object.entries(this.galaxyZones)) {
+        for (const [zoneKey, zone] of Object.entries(GALAXY_ZONES)) {
             if (distance >= zone.distanceRange.min && distance < zone.distanceRange.max) {
                 return zoneKey;
             }
@@ -5791,15 +5505,15 @@ class InterstellarEngine {
     // Select an element to spawn based on current zone and probability
     // ADDICTIVE DESIGN: Clear risk/reward progression
     selectElementForZone(currentZone, distance, bonusMultiplier = 1) {
-        const zones = this.galaxyZones;
-        const allElements = Object.keys(this.mineralTypes);
+        const zones = GALAXY_ZONES;
+        const allElements = Object.keys(MINERAL_TYPES);
 
         // Build probability weights with ZONE-BASED PROGRESSION
         const weights = [];
         let totalWeight = 0;
 
         for (const elementKey of allElements) {
-            const element = this.mineralTypes[elementKey];
+            const element = MINERAL_TYPES[elementKey];
             let weight = 1;
 
             // ADDICTIVE RARITY DISTRIBUTION BY ZONE
@@ -7851,8 +7565,8 @@ class InterstellarEngine {
                     this.playerInventory[gem.type]++;
                     this.saveInventory();
                     this.collectionNotifications.push({
-                        text: `+ ${this.mineralTypes[gem.type]?.name || gem.type}`,
-                        color: this.mineralTypes[gem.type]?.color || '#fff',
+                        text: `+ ${MINERAL_TYPES[gem.type]?.name || gem.type}`,
+                        color: MINERAL_TYPES[gem.type]?.color || '#fff',
                         time: Date.now()
                     });
                 }
@@ -7990,14 +7704,14 @@ class InterstellarEngine {
             // Base gems (always awarded)
             for (const [type, qty] of Object.entries(gemReward.gems)) {
                 this.playerInventory[type] = (this.playerInventory[type] || 0) + qty;
-                const name = this.mineralTypes[type]?.name || type;
+                const name = MINERAL_TYPES[type]?.name || type;
                 gemSummary.push(`+${qty} ${name}`);
             }
             // Medal bonus gems
             if (medal && gemReward.bonus[medal]) {
                 for (const [type, qty] of Object.entries(gemReward.bonus[medal])) {
                     this.playerInventory[type] = (this.playerInventory[type] || 0) + qty;
-                    const name = this.mineralTypes[type]?.name || type;
+                    const name = MINERAL_TYPES[type]?.name || type;
                     gemSummary.push(`+${qty} ${name} ⭐`);
                 }
             }
@@ -8429,7 +8143,7 @@ class InterstellarEngine {
                 ctx.save();
                 ctx.translate(gem.x, gem.y);
 
-                const gemColor = this.mineralTypes[gem.type]?.color || '#ffffff';
+                const gemColor = MINERAL_TYPES[gem.type]?.color || '#ffffff';
                 const gemSize = 14;
                 const pulse = 1 + Math.sin(time * 3 + gem.x * 0.01) * 0.15;
 
@@ -13666,7 +13380,7 @@ class InterstellarEngine {
 
         // === RENDER ENEMY SHIPS ===
         this.enemyShips.forEach(enemy => {
-            const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
+            const typeDef = ENEMY_TYPES[enemy.type];
             const sz = enemy.z || 0;
             const rotated = this.rotate3D(enemy.x, enemy.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
@@ -13811,7 +13525,7 @@ class InterstellarEngine {
         // === RENDER BOSS ===
         if (this.activeBoss) {
             const boss = this.activeBoss;
-            const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
+            const typeDef = BOSS_TYPES[boss.type];
             const sz = boss.z || 0;
             const rotated = this.rotate3D(boss.x, boss.y, sz, rotCenterX, rotCenterY);
             const rx = rotated.x;
