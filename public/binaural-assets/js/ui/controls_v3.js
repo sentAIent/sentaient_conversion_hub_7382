@@ -54,85 +54,50 @@ window.toggleLeftMenuSection = toggleLeftMenuSection;
 
 // NEW: Interface for mindwave.html proxies
 window.controls = {
-    toggleGalaxySettings: function(btn) {
-        state.galaxyPanelOpen = !state.galaxyPanelOpen;
-        const panel = document.getElementById('galaxySettingsPanel');
+    // Contextual Sync: Open Right Sidebar Visuals Tab and specific panel
+    syncSidebar: function(panelId) {
+        // Open Right Sidebar
+        const rightPanel = document.getElementById('rightPanel');
+        if (rightPanel) rightPanel.classList.remove('translate-x-full');
+
+        // Switch to Visuals Tab
+        const visualsTabBtn = document.querySelector('.studio-tab-btn[data-tab="visuals"]');
+        if (visualsTabBtn) visualsTabBtn.click();
+
+        // Update panel visibility in Visualizer3D if already active
         const viz = getVisualizer();
-        const isActive = viz && viz.activeModes && viz.activeModes.has('galaxy');
-        if (panel && isActive) {
-            if (state.galaxyPanelOpen) {
-                panel.classList.remove('hidden');
-                panel.classList.add('flex', 'items-center');
-            } else {
-                panel.classList.add('hidden');
-                panel.classList.remove('flex', 'items-center');
-            }
-        } else if (panel) {
-            panel.classList.toggle('hidden');
-            panel.classList.toggle('flex');
-            panel.classList.toggle('items-center');
+        if (viz && viz.updateUIPanels) {
+            viz.updateUIPanels();
         }
+    },
+    toggleGalaxySettings: function(btn) {
+        this.syncSidebar('galaxyPanel');
     },
     toggleCyberSettings: function(btn) {
-        state.cyberPanelOpen = !state.cyberPanelOpen;
-        const panel = document.getElementById('cyberSettingsPanel');
-        const viz = getVisualizer();
-        const isActive = viz && viz.activeModes && viz.activeModes.has('cyber');
-        if (panel && isActive) {
-            if (state.cyberPanelOpen) {
-                panel.classList.remove('hidden');
-                panel.classList.add('flex', 'items-center');
-            } else {
-                panel.classList.add('hidden');
-                panel.classList.remove('flex', 'items-center');
-            }
-        } else if (panel) {
-            panel.classList.toggle('hidden');
-            panel.classList.toggle('flex');
-            panel.classList.toggle('items-center');
-        }
+        this.syncSidebar('matrixPanel');
     },
     toggleMatrixSettings: function(btn) {
-        state.matrixPanelOpen = !state.matrixPanelOpen;
-        const panel = document.getElementById('matrixSettingsPanel');
-        const viz = getVisualizer();
-        const active = viz && viz.activeModes && viz.activeModes.has('matrix');
-        if (panel && active) {
-            if (state.matrixPanelOpen) {
-                panel.classList.remove('hidden');
-                panel.classList.add('flex', 'items-center');
-            } else {
-                panel.classList.add('hidden');
-                panel.classList.remove('flex', 'items-center');
-            }
-        } else if (panel) {
-            panel.classList.toggle('hidden');
-            panel.classList.toggle('flex');
-            panel.classList.toggle('items-center');
-        }
+        this.syncSidebar('matrixPanel');
     },
-    toggleGalaxySun: function() {
-        const viz = getVisualizer();
-        if (viz && viz.setGalaxySunStyle) {
-            const current = viz.galaxySunStyle || 'sun';
-            const next = current === 'sun' ? 'sun2' : 'sun';
-            viz.setGalaxySunStyle(next);
-        }
+    toggleSnowflakeSettings: function(btn) {
+        this.syncSidebar('cymaticsPanel');
     },
-    resetGalaxySettings: function() {
-        const rx = document.getElementById('galaxySunRX');
-        const ry = document.getElementById('galaxySunRY');
-        const rz = document.getElementById('galaxySunRZ');
-        if (rx) rx.value = 0;
-        if (ry) ry.value = 0.5;
-        if (rz) rz.value = 0;
-        
+    setMatrixMode: function(mode) {
         const viz = getVisualizer();
-        // If galaxy is active or was recently active, reset its rotation speeds
         if (viz) {
-            viz.sunRotationSpeedX = 0;
-            viz.sunRotationSpeedY = 0.5;
-            viz.sunRotationSpeedZ = 0;
+            viz.matrixConfig.logicMode = mode;
+            showToast(`Matrix Mode: ${mode.toUpperCase()}`, 'info');
+            // Save state
+            saveUserPreferences({ matrixLogicMode: mode });
+        }
+    },
+    toggleGalaxySun: function(style) {
+        const viz = getVisualizer();
+        if (viz) {
+            viz.galaxySunStyle = style;
+            if (viz.initGalaxy) viz.initGalaxy(); // Re-init to apply style
+            showToast(`Sun Style: ${style.toUpperCase()}`, 'info');
+            saveUserPreferences({ galaxySunStyle: style });
         }
     }
 };
@@ -248,6 +213,36 @@ export function setupUI() {
     els.closeLeftBtn = document.getElementById('closeLeftBtn');
     els.disclaimerBackBtn = document.getElementById('disclaimerBackBtn'); // NEW Back Button
     els.closeRightBtn = document.getElementById('closeRightBtn');
+
+    // Visual Mode Buttons
+    els.sphereBtn = document.getElementById('sphereBtn');
+    els.cubeBtn = document.getElementById('cubeBtn');
+    els.dragonBtn = document.getElementById('dragonBtn');
+    els.galaxyBtn = document.getElementById('galaxyBtn');
+    els.flowBtn = document.getElementById('flowBtn');
+    els.lightspeedBtn = document.getElementById('lightspeedBtn');
+    els.lavaBtn = document.getElementById('lavaBtn');
+    els.fireplaceBtn = document.getElementById('fireplaceBtn');
+    els.rainBtn = document.getElementById('rainBtn');
+    els.zenBtn = document.getElementById('zenBtn');
+    els.oceanBtn = document.getElementById('oceanBtn');
+    els.mandalaBtn = document.getElementById('mandalaBtn');
+    els.cyberBtn = document.getElementById('cyberBtn');
+    els.matrixBtn = document.getElementById('matrixBtn');
+    els.snowflakeBtn = document.getElementById('snowflakeBtn');
+
+    // Cymatics / Galaxy / Matrix Controls
+    els.cymaticTimerSlider = document.getElementById('cymaticTimerSlider');
+    els.cymaticTimerLabel = document.getElementById('cymaticTimerLabel');
+    els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
+    els.cymaticNextBtn = document.getElementById('cymaticNextBtn');
+
+    els.matrixTextInput = document.getElementById('matrixTextInput');
+    els.matrixVibrationToggle = document.getElementById('matrixVibrationToggle');
+
+    els.galaxySunRX = document.getElementById('galaxySunRX');
+    els.galaxySunRY = document.getElementById('galaxySunRY');
+    els.galaxySunRZ = document.getElementById('galaxySunRZ');
     els.statusIndicator = document.getElementById('statusIndicator');
     els.aiPrompt = document.getElementById('aiPrompt');
     els.lockUIBtn = document.getElementById('lockUIBtn');
@@ -976,7 +971,10 @@ export function setupUI() {
     // Matrix Controls
 
     console.log('[Controls] Calling setupMatrixControls()...');
-    setTimeout(() => setupMatrixControls(), 50);
+    setTimeout(() => {
+        setupMatrixControls();
+        setupVisualPanelControls();
+    }, 50);
 
     // Mobile Bottom Navigation Handlers
     if (els.mobilePresetsBtn) {
@@ -2625,6 +2623,18 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         }
         activeModes = viz.activeModes;
 
+        // Contextual Sync: Reveal corresponding Sidebar panel if mode is active
+        const contextualMap = {
+            'galaxy': 'galaxyPanel',
+            'cyber': 'matrixPanel',
+            'matrix': 'matrixPanel',
+            'snowflake': 'cymaticsPanel'
+        };
+        
+        if (isManual && contextualMap[mode] && activeModes.has(mode)) {
+            window.controls.syncSidebar(contextualMap[mode]);
+        }
+
         // Update button states with theme-aware styling
         const buttons = [
             { el: els.sphereBtn, mode: 'sphere' },
@@ -2639,8 +2649,9 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             { el: els.zenBtn, mode: 'zengarden' },
             { el: els.oceanBtn, mode: 'ocean' },
             { el: els.mandalaBtn, mode: 'mandala' },
-            { el: els.cyberBtn, mode: 'cyber' }, // UI "Cyber" -> Internal 2D
-            { el: els.matrixBtn, mode: 'matrix' } // UI "Matrix" -> Internal 3D
+            { el: els.cyberBtn, mode: 'cyber' },
+            { el: els.matrixBtn, mode: 'matrix' },
+            { el: els.snowflakeBtn, mode: 'snowflake' }
         ];
 
         buttons.forEach(({ el, mode: btnMode }) => {
@@ -5665,4 +5676,81 @@ export function setupMasterVisualControls() {
             }
         });
     }
+}
+
+function setupVisualPanelControls() {
+    // CYMATICS
+    if (els.cymaticTimerSlider) {
+        els.cymaticTimerSlider.addEventListener('input', () => {
+            const val = parseInt(els.cymaticTimerSlider.value);
+            const viz = getVisualizer();
+            if (viz && viz.setCymaticTimer) {
+                viz.setCymaticTimer(val);
+                if (els.cymaticTimerLabel) {
+                    if (val > 300) els.cymaticTimerLabel.textContent = "INFINITE";
+                    else if (val === 0) els.cymaticTimerLabel.textContent = "OFF";
+                    else els.cymaticTimerLabel.textContent = val + "s";
+                }
+            }
+        });
+    }
+
+    if (els.cymaticPrevBtn) {
+        els.cymaticPrevBtn.addEventListener('click', () => {
+            const viz = getVisualizer();
+            if (viz && viz.prevCymatic) viz.prevCymatic();
+        });
+    }
+
+    if (els.cymaticNextBtn) {
+        els.cymaticNextBtn.addEventListener('click', () => {
+            const viz = getVisualizer();
+            if (viz && viz.nextCymatic) viz.nextCymatic();
+        });
+    }
+
+    // MATRIX
+    if (els.matrixTextInput) {
+        els.matrixTextInput.addEventListener('input', () => {
+            const viz = getVisualizer();
+            if (viz) {
+                viz.matrixConfig.customText = els.matrixTextInput.value;
+                viz.cyberConfig.customText = els.matrixTextInput.value;
+            }
+        });
+        // Initial sync
+        setTimeout(() => {
+            const viz = getVisualizer();
+            if (viz) {
+                 els.matrixTextInput.value = viz.matrixConfig.customText || "MINDWAVE";
+            }
+        }, 1000);
+    }
+
+    if (els.matrixVibrationToggle) {
+        els.matrixVibrationToggle.addEventListener('click', () => {
+            state.visualVibration = !state.visualVibration;
+            const viz = getVisualizer();
+            if (viz) viz.vibrationEnabled = state.visualVibration;
+            
+            els.matrixVibrationToggle.classList.toggle('bg-[var(--accent)]', state.visualVibration);
+            els.matrixVibrationToggle.classList.toggle('text-[var(--bg-main)]', state.visualVibration);
+            els.matrixVibrationToggle.classList.toggle('bg-white/10', !state.visualVibration);
+            els.matrixVibrationToggle.classList.toggle('text-white/50', !state.visualVibration);
+        });
+    }
+
+    // GALAXY
+    const updateGalaxyRotation = () => {
+        const viz = getVisualizer();
+        if (viz && els.galaxySunRX) {
+            viz.sunRotationSpeedX = (parseFloat(els.galaxySunRX.value) - 0.5) * 0.05;
+            viz.sunRotationSpeedY = (parseFloat(els.galaxySunRY.value) - 0.5) * 0.05;
+            viz.sunRotationSpeedZ = (parseFloat(els.galaxySunRZ.value) - 0.5) * 0.05;
+        }
+    };
+
+    if (els.galaxySunRX) els.galaxySunRX.addEventListener('input', updateGalaxyRotation);
+    if (els.galaxySunRY) els.galaxySunRY.addEventListener('input', updateGalaxyRotation);
+    if (els.galaxySunRZ) els.galaxySunRZ.addEventListener('input', updateGalaxyRotation);
 }

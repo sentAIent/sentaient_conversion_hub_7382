@@ -151,6 +151,16 @@ export class Visualizer3D {
             this.mandalaGroup = new THREE.Group();
             this.scene.add(this.mandalaGroup);
 
+            this.cymaticsGroup = new THREE.Group();
+            this.scene.add(this.cymaticsGroup);
+
+            // Cymatics Engine State
+            this.cymaticsHistory = [];
+            this.cymaticsHistoryIndex = -1;
+            this.cymaticsTimer = 60; // default 60s
+            this.lastCymaticRotation = performance.now();
+            this.currentCymaticData = { n: 2, m: 3 }; 
+
             this.textures = {};
 
             // Cached frequency data buffer — avoids allocating new Uint8Array every frame
@@ -1017,6 +1027,126 @@ export class Visualizer3D {
         }
     }
 
+    initCymatics() {
+        while(this.cymaticsGroup.children.length > 0) {
+            const child = this.cymaticsGroup.children[0];
+            this.cymaticsGroup.remove(child);
+            if(child.geometry) child.geometry.dispose();
+            if(child.material) child.material.dispose();
+        }
+
+        const geometry = new THREE.PlaneGeometry(16, 16, 2, 2);
+        this.cymaticMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uN: { value: this.currentCymaticData.n },
+                uM: { value: this.currentCymaticData.m },
+                uTime: { value: 0 },
+                uIntensity: { value: 0 },
+                uColor: { value: new THREE.Color(this.customColor || '#2dd4bf') }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float uN;
+                uniform float uM;
+                uniform float uTime;
+                uniform float uIntensity;
+                uniform vec3 uColor;
+
+                void main() {
+                    float x = vUv.x - 0.5;
+                    float y = vUv.y - 0.5;
+                    float pi = 3.14159265;
+                    
+                    // Chladni Formula: cos(uN*pi*x)*cos(uM*pi*y) - cos(uM*pi*x)*cos(uN*pi*y)
+                    float val = cos(uN * pi * x) * cos(uM * pi * y) - cos(uM * pi * x) * cos(uN * pi * y);
+                    
+                    // Reactivity
+                    float thickness = 0.01 + uIntensity * 0.05;
+                    float pattern = smoothstep(thickness, 0.0, abs(val));
+                    
+                    // Add some inner glow
+                    float glow = smoothstep(0.15, 0.0, abs(val)) * 0.3;
+                    
+                    vec3 finalColor = uColor * (pattern + glow);
+                    gl_FragColor = vec4(finalColor, (pattern + glow) * 0.9);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const mesh = new THREE.Mesh(geometry, this.cymaticMaterial);
+        this.cymaticsGroup.add(mesh);
+
+        // Initial pattern
+        if (this.cymaticsHistory.length === 0) {
+            this.nextCymatic();
+        }
+    }
+
+    nextCymatic() {
+        const patterns = [
+            { n: 2, m: 3 }, { n: 1, m: 4 }, { n: 3, m: 3 }, { n: 5, m: 2 }, 
+            { n: 4, m: 5 }, { n: 6, m: 1 }, { n: 2, m: 7 }, { n: 8, m: 3 },
+            { n: 6, m: 6 }, { n: 4, m: 9 }, { n: 3, m: 11 }, { n: 9, m: 2 }
+        ];
+
+        // Move history pointer
+        if (this.cymaticsHistoryIndex < this.cymaticsHistory.length - 1) {
+            this.cymaticsHistoryIndex++;
+            this.applyCymatic(this.cymaticsHistory[this.cymaticsHistoryIndex]);
+        } else {
+            // Generate new
+            const current = this.currentCymaticData;
+            let next;
+            do {
+                next = patterns[Math.floor(Math.random() * patterns.length)];
+            } while (next && (next.n === current.n && next.m === current.m));
+
+            this.cymaticsHistory.push(next);
+            if (this.cymaticsHistory.length > 20) this.cymaticsHistory.shift();
+            this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
+            this.applyCymatic(next);
+        }
+        this.lastCymaticRotation = performance.now();
+    }
+
+    prevCymatic() {
+        if (this.cymaticsHistoryIndex > 0) {
+            this.cymaticsHistoryIndex--;
+            this.applyCymatic(this.cymaticsHistory[this.cymaticsHistoryIndex]);
+            this.lastCymaticRotation = performance.now();
+        }
+    }
+
+    applyCymatic(data) {
+        if (!data) return;
+        this.currentCymaticData = data;
+        if (this.cymaticMaterial) {
+            this.cymaticMaterial.uniforms.uN.value = data.n;
+            this.cymaticMaterial.uniforms.uM.value = data.m;
+        }
+    }
+
+    setCymaticTimer(seconds) {
+        this.cymaticsTimer = seconds;
+        const label = document.getElementById('cymaticTimerLabel');
+        if (label) {
+            if (seconds > 300) label.textContent = "INFINITE";
+            else if (seconds === 0) label.textContent = "OFF";
+            else label.textContent = seconds + "s";
+        }
+    }
+
     initLava() {
         // Redesigned: Cleaner, smoother, fewer but larger blobs
         this.lavaBlobs = [];
@@ -1691,6 +1821,7 @@ export class Visualizer3D {
         if (mode === 'dragon' && this.dragonGroup && this.dragonGroup.children.length === 0) this.initDragon();
         if (mode === 'galaxy' && this.galaxyGroup && this.galaxyGroup.children.length === 0) this.initGalaxy();
         if (mode === 'mandala' && this.mandalaGroup && this.mandalaGroup.children.length === 0) this.initMandala();
+        if (mode === 'snowflake' && this.cymaticsGroup && this.cymaticsGroup.children.length === 0) this.initCymatics();
         console.timeEnd(tLabel);
     }
 
@@ -1911,6 +2042,22 @@ export class Visualizer3D {
         if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
         if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
         if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
+        if (this.cymaticsGroup) this.cymaticsGroup.visible = this.activeModes.has('snowflake'); // Mapping snowflake to Cymatics
+
+        this.updateUIPanels();
+    }
+
+    // New helper to update Sidebar VISUALS tab
+    updateUIPanels() {
+        const panels = ['galaxyPanel', 'matrixPanel', 'cymaticsPanel'];
+        panels.forEach(p => {
+            const el = document.getElementById(p);
+            if (el) el.classList.add('hidden');
+        });
+
+        if (this.activeModes.has('galaxy')) document.getElementById('galaxyPanel')?.classList.remove('hidden');
+        if (this.activeModes.has('interstellar') || this.activeModes.has('matrix')) document.getElementById('matrixPanel')?.classList.remove('hidden');
+        if (this.activeModes.has('snowflake')) document.getElementById('cymaticsPanel')?.classList.remove('hidden');
     }
 
     updateLabel(mode) {
@@ -2492,6 +2639,20 @@ export class Visualizer3D {
                     this.mandalaCenter.material.opacity = 0.4 + vBeatPulse * 0.3;
                     const cScale = 1 + vNormBass * 0.3;
                     this.mandalaCenter.scale.setScalar(cScale);
+                }
+            }
+
+            // CYMATICS / SNOWFLAKE
+            if (this.activeModes.has('snowflake') && this.cymaticMaterial) {
+                this.cymaticMaterial.uniforms.uTime.value += dt * multiplier;
+                this.cymaticMaterial.uniforms.uIntensity.value = vNormBass;
+                
+                // Auto-rotation timer logic
+                if (this.cymaticsTimer > 0 && this.cymaticsTimer <= 300) {
+                    const elapsed = (performance.now() - this.lastCymaticRotation) / 1000;
+                    if (elapsed > this.cymaticsTimer) {
+                        this.nextCymatic();
+                    }
                 }
             }
 

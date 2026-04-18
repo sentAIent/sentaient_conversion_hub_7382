@@ -365,317 +365,11 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4" /></svg>
         </button>
 
-            <div id="galaxySettingsPanel"
-                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full">
-                <!-- Back Button -->
-                <button onclick="document.getElementById('galaxySettingsPanel').classList.add('hidden')"
-                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                    Back
-                </button>
-                <button onclick="resetGalaxySettings()"
-                    class="px-2 py-1 rounded bg-white/5 hover:bg-[var(--accent)]/20 hover:text-[var(--accent)] text-[9px] font-bold uppercase tracking-widest text-[var(--accent)]/70 transition-all border border-[var(--accent)]/30 mr-1 flex items-center gap-1">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
-                        <path d="M21 3v5h-5"></path>
-                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
-                        <path d="M8 16H3v5"></path>
-                    </svg>
-                    Reset
-                </button>
-                <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Sun
-                    Rotation</span>
-                <div class="flex items-center gap-4">
-                    <div class="flex flex-col gap-0.5">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RX</label>
-                        <input type="range" id="galaxySunRX" min="-2.0" max="2.0" step="0.1" value="0"
-                            class="premium-slider w-16">
-                    </div>
-                    <div class="flex flex-col gap-0.5">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RY</label>
-                        <input type="range" id="galaxySunRY" min="-2.0" max="2.0" step="0.1" value="0.5"
-                            class="premium-slider w-16">
-                    </div>
-                    <div class="flex flex-col gap-0.5">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RZ</label>
-                        <input type="range" id="galaxySunRZ" min="-2.0" max="2.0" step="0.1" value="0"
-                            class="premium-slider w-16">
-                    </div>
-                </div>
-            </div>
+            <!-- CONSOLIDATED VISUALS: Moved to Studio Visuals Tab -->
 
-            <div id="cyberSettingsPanel"
-                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full">
 
-                <!-- Back Button -->
-                <button onclick="document.getElementById('cyberSettingsPanel').classList.add('hidden')"
-                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                    Back
-                </button>
 
-                <span
-                    class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Cyber</span>
 
-                <!-- Mode Selector (4 buttons) -->
-                <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
-                    <button id="cyberModeRandom" data-cyber-mode="random"
-                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                        title="Random characters">RND</button>
-                    <button id="cyberModeMindwave" data-cyber-mode="mindwave"
-                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                        title="MINDWAVE text">MW</button>
-                    <button id="cyberModeCustom" data-cyber-mode="custom"
-                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                        title="Custom text">TXT</button>
-                </div>
-
-                <!-- Custom Text Input (always visible) -->
-                <div id="cyberCustomTextInput">
-                    <input type="text" id="cyberTextInput" placeholder="WELCOME TO MINDWAVE" maxlength="32" autocomplete="off"
-                        class="w-20 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
-                </div>
-
-                <!-- Hidden checkbox for legacy JS compat -->
-                <input type="checkbox" id="cyberModeToggle" class="hidden" checked>
-
-                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                <!-- Color Area -->
-                <div class="flex items-center gap-3">
-                    <!-- Color -->
-                    <div class="flex flex-col gap-0.5 items-center">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
-                        <input type="color" id="cyberColorPicker" value="#00FF41"
-                            class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
-                    </div>
-
-                    <!-- Cyber Panel Specific Color Controls -->
-                    <div class="flex items-center gap-1">
-                        <!-- Random Color -->
-                        <button id="cyberRandomColorBtn"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                            title="Random Cyber Color">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="16 3 21 3 21 8"></polyline>
-                                <line x1="4" y1="20" x2="21" y2="3"></line>
-                                <polyline points="21 16 21 21 16 21"></polyline>
-                                <line x1="15" y1="15" x2="21" y2="21"></line>
-                                <line x1="4" y1="4" x2="9" y2="9"></line>
-                            </svg>
-                        </button>
-                        <!-- Previous Color (Back) -->
-                        <button id="cyberPrevColorBtn"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                            title="Previous Cyber Color">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-                        <!-- Vibration Toggle -->
-                        <button id="cyberVibrationToggle"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
-                            title="Toggle Cyber Vibration">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Rainbow -->
-                    <div class="flex flex-col gap-0.5 items-center ml-2">
-                        <div class="flex gap-1 items-center">
-                            <span id="labelCyberRGB"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
-                            <span class="text-[8px] text-white/20 select-none">/</span>
-                            <span id="labelCyberRainbow"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
-                        </div>
-                        <label class="premium-toggle">
-                            <input type="checkbox" id="cyberRainbowToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                <!-- Sliders Group -->
-                <div class="flex items-center gap-3">
-                    <!-- Speed -->
-                    <div class="flex flex-col gap-0.5 w-20">
-                        <div class="flex justify-between items-center px-0.5">
-                            <label class="premium-label">SPD</label>
-                            <span id="cyberSpeedVal" class="premium-value">1.0</span>
-                        </div>
-                        <input type="range" id="cyberSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
-                            class="premium-slider">
-                    </div>
-
-                    <!-- Length -->
-                    <div class="flex flex-col gap-0.5 w-20">
-                        <div class="flex justify-between items-center px-0.5">
-                            <label class="premium-label">LEN</label>
-                            <span id="cyberLengthVal" class="premium-value">1.0</span>
-                        </div>
-                        <input type="range" id="cyberLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                            class="premium-slider">
-                    </div>
-
-                    <!-- Angle -->
-                    <div class="flex flex-col gap-0.5 w-20">
-                        <div class="flex justify-between items-center px-0.5">
-                            <label class="premium-label">ANG</label>
-                            <span id="cyberAngleVal" class="premium-value">0°</span>
-                        </div>
-                        <input type="range" id="cyberAngleSlider" min="0" max="360" step="15" value="0"
-                            class="premium-slider">
-                    </div>
-                </div>
-            </div>
-
-            <div id="matrixSettingsPanel"
-                    class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full">
-                    
-                    <!-- Back Button -->
-                    <button onclick="document.getElementById('matrixSettingsPanel').classList.add('hidden')"
-                        class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                        Back
-                    </button>
-
-                    <span
-                        class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Matrix</span>
-
-                    <!-- Mode Selector (4 buttons) -->
-                    <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
-                        <button id="matrixModeRandom" data-matrix-mode="random"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Random characters">RND</button>
-                        <button id="matrixModeMindwave" data-matrix-mode="mindwave"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="MINDWAVE text">MW</button>
-                        <button id="matrixModeCustom" data-matrix-mode="custom"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Custom text">TXT</button>
-                    </div>
-
-                    <!-- Custom Text Input (always visible) -->
-                    <div id="matrixCustomTextInput">
-                        <input type="text" id="matrixTextInput" placeholder="WELCOME TO MINDWAVE" maxlength="32" autocomplete="off"
-                            class="w-20 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
-                    </div>
-
-                    <!-- Hidden checkbox for legacy JS compat -->
-                    <input type="checkbox" id="matrixModeToggle" class="hidden" checked>
-
-                    <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                <!-- Color Area -->
-                <div class="flex items-center gap-3">
-                    <!-- Color -->
-                    <div class="flex flex-col gap-0.5 items-center">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
-                        <input type="color" id="matrixColorPicker" value="#00FF41"
-                            class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
-                    </div>
-
-                    <!-- Matrix Panel Specific Color Controls -->
-                    <div class="flex items-center gap-1">
-                        <!-- Random Color -->
-                        <button id="matrixRandomColorBtn"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                            title="Random Matrix Color">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="16 3 21 3 21 8"></polyline>
-                                <line x1="4" y1="20" x2="21" y2="3"></line>
-                                <polyline points="21 16 21 21 16 21"></polyline>
-                                <line x1="15" y1="15" x2="21" y2="21"></line>
-                                <line x1="4" y1="4" x2="9" y2="9"></line>
-                            </svg>
-                        </button>
-                        <!-- Previous Color (Back) -->
-                        <button id="matrixPrevColorBtn"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                            title="Previous Matrix Color">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-                        <!-- Vibration Toggle -->
-                        <button id="matrixVibrationToggle"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
-                            title="Toggle Matrix Vibration">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Rainbow -->
-                    <div class="flex flex-col gap-0.5 items-center ml-2">
-                        <div class="flex gap-1 items-center">
-                            <span id="labelRGB"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
-                            <span class="text-[8px] text-white/20 select-none">/</span>
-                            <span id="labelRainbow"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
-                        </div>
-                        <label class="premium-toggle">
-                            <input type="checkbox" id="matrixRainbowToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                    <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                    <!-- Sliders Group -->
-                    <div class="flex items-center gap-3">
-                        <!-- Speed -->
-                        <div class="flex flex-col gap-0.5 w-20">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">SPD</label>
-                                <span id="matrixSpeedVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="matrixSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Length -->
-                        <div class="flex flex-col gap-0.5 w-20">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">LEN</label>
-                                <span id="matrixLengthVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="matrixLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Angle -->
-                        <div class="flex flex-col gap-0.5 w-20">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">ANG</label>
-                                <span id="matrixAngleVal" class="premium-value">0°</span>
-                            </div>
-                            <input type="range" id="matrixAngleSlider" min="0" max="360" step="15" value="0"
-                                class="premium-slider">
-                        </div>
-                    </div>
-
-                </div>
             </div>
 
             <!-- RIGHT: Recording & Mixer Toggle -->
@@ -817,7 +511,7 @@
         <!-- Tab Headers -->
         <div class="flex border-b border-white/10 shrink-0">
             <button data-tab="mixer" class="studio-tab-btn active flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] border-b-2 border-[var(--accent)] transition-all">Mixer</button>
-            <button data-tab="studio" class="studio-tab-btn flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">Studio</button>
+            <button data-tab="visuals" class="studio-tab-btn flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">Visuals</button>
             <button data-tab="config" class="studio-tab-btn flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">Config</button>
         </div>
 
@@ -852,56 +546,90 @@
                 </section>
             </div>
 
-            <!-- [TAB: STUDIO] -->
-            <div id="tab-studio" class="studio-tab-content hidden p-6 space-y-8">
+            <!-- [TAB: VISUALS] - Consolidated Settings -->
+            <div id="tab-visuals" class="studio-tab-content hidden p-6 space-y-8">
                 <section class="mixer-section">
-                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-6">Generator Engine</h3>
-                    
-                    <div class="space-y-8">
-                        <!-- Pitch -->
+                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-6">Global Render</h3>
+                    <div class="space-y-6">
+                        <!-- Brightness -->
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Base Pitch</span>
-                                <span id="baseValue" class="text-xs font-mono text-[var(--accent)]">200Hz</span>
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Luminance</span>
+                                <span id="dimmerValue" class="text-xs font-mono text-[var(--accent)]">0%</span>
                             </div>
-                            <input type="range" id="baseSlider" min="50" max="1000" value="200" class="premium-slider">
+                            <input type="range" id="globalDimmerSlider" min="0" max="0.9" step="0.01" value="0" class="premium-slider">
                         </div>
-
-                        <!-- Beat -->
+                        <!-- Speed -->
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Beat Frequency</span>
-                                <span id="beatValue" class="text-xs font-mono text-[var(--accent)]">10Hz</span>
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Warp Speed</span>
+                                <span id="speedValue" class="text-xs font-mono text-[var(--accent)]">1.0x</span>
                             </div>
-                            <input type="range" id="beatSlider" min="0.5" max="100" step="0.1" value="10" class="premium-slider">
-                        </div>
-
-                        <!-- Binaural Vol -->
-                        <div class="flex flex-col gap-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Binaural Level</span>
-                                <span id="volValue" class="text-xs font-mono text-[var(--accent)]">50%</span>
+                            <div class="flex gap-2">
+                                <input type="range" id="visualSpeedSlider" min="0" max="1" step="0.01" value="0.25" class="premium-slider flex-1">
+                                <button id="visualSyncBtn" class="p-2 rounded-lg bg-white/5 border border-white/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 transition-all" title="Sync to BPM">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H7M17 19H7M2 12h20"/></svg>
+                                </button>
                             </div>
-                            <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.5" class="premium-slider">
-                        </div>
-
-                        <!-- Balance -->
-                        <div class="flex flex-col gap-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">L/R Balance</span>
-                                <span id="balanceValue" class="text-xs font-mono text-[var(--accent)]">0</span>
-                            </div>
-                            <input type="range" id="balanceSlider" min="-1" max="1" step="0.1" value="0" class="premium-slider">
                         </div>
                     </div>
                 </section>
-                
-                <section class="mixer-section">
-                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4">Mode Selection</h3>
-                    <div id="modeToggle" class="grid grid-cols-1 gap-2 p-1 bg-black/40 rounded-xl border border-white/10">
-                        <button data-mode="binaural" class="mode-btn px-4 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">Binaural Beats</button>
-                        <button data-mode="isochronic" class="mode-btn px-4 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">Isochronic Tones</button>
-                        <button data-mode="monaural" class="mode-btn px-4 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">Monaural Beats</button>
+
+                <!-- CONTEXTUAL PANEL: CYMATICS (Hidden until active) -->
+                <section id="cymaticsPanel" class="mixer-section hidden active-only animate-fade-in">
+                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4">Cymatic Control</h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-2">
+                            <button id="cymaticBackBtn" onclick="getVisualizer().prevCymatic()" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all text-[9px] font-bold uppercase tracking-widest">Back</button>
+                            <button id="cymaticNextBtn" onclick="getVisualizer().nextCymatic()" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all text-[9px] font-bold uppercase tracking-widest">Random</button>
+                        </div>
+                        <div class="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[9px] uppercase tracking-widest text-white/40">Rotation Timer</span>
+                                <span id="cymaticTimerLabel" class="text-[var(--accent)] font-mono text-[10px]">60s</span>
+                            </div>
+                            <input type="range" id="cymaticTimerSlider" min="0" max="301" step="1" value="60" class="premium-slider">
+                            <div class="flex justify-between text-[8px] text-white/20 font-mono">
+                                <span>OFF</span>
+                                <span>INF</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CONTEXTUAL PANEL: GALAXY -->
+                <section id="galaxyPanel" class="mixer-section hidden active-only animate-fade-in">
+                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4">Celestial Engine</h3>
+                    <div class="space-y-4">
+                        <button onclick="window.controls.toggleGalaxySun()" class="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-widest hover:border-[var(--accent)] transition-all">Switch Sun Style</button>
+                        <div class="space-y-3">
+                            <label class="text-[8px] text-[var(--text-muted)] uppercase tracking-widest">Sun Rotation (X/Y/Z)</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <input type="range" id="galaxySunRX" min="-2.0" max="2.0" step="0.1" value="0" class="premium-slider">
+                                <input type="range" id="galaxySunRY" min="-2.0" max="2.0" step="0.1" value="0.5" class="premium-slider">
+                                <input type="range" id="galaxySunRZ" min="-2.0" max="2.0" step="0.1" value="0" class="premium-slider">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CONTEXTUAL PANEL: MATRIX/CYBER -->
+                <section id="matrixPanel" class="mixer-section hidden active-only animate-fade-in">
+                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4">Neural Override</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-3 gap-1 bg-black/40 p-1 rounded-xl">
+                            <button onclick="setMatrixMode('random')" class="py-2 rounded-lg text-[8px] font-bold uppercase hover:bg-white/10 transition-all">RND</button>
+                            <button onclick="setMatrixMode('mindwave')" class="py-2 rounded-lg text-[8px] font-bold uppercase hover:bg-white/10 transition-all">MW</button>
+                            <button onclick="setMatrixMode('custom')" class="py-2 rounded-lg text-[8px] font-bold uppercase hover:bg-white/10 transition-all">TXT</button>
+                        </div>
+                        <input type="text" id="matrixTextInput" placeholder="ENTER TEXT..." maxlength="20" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] text-white outline-none focus:border-[var(--accent)] transition-all">
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                            <span class="text-[9px] font-bold text-white/40 uppercase">Vibration</span>
+                            <label class="premium-toggle">
+                                <input type="checkbox" id="matrixVibrationToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </section>
             </div>
