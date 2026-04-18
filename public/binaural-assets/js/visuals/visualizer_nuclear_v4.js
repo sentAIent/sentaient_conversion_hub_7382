@@ -2751,22 +2751,13 @@ export class Visualizer3D {
                         lotusTargetOpacity = 1.0;
                         break;
 
-                    case 'heartbeat': {
-                        // Smooth sinusoidal fade: full→dim→full at 20 BPM (3s cycle)
-                        // 20 BPM = 20/60 = 0.333 Hz
-                        const heartbeatFreq = 20 / 60; // 0.333 Hz
-                        const fade = (Math.sin(now * Math.PI * 2 * heartbeatFreq) + 1) / 2; // 0→1
-                        lotusTargetOpacity = 0.15 + 0.85 * fade; // 0.15→1.0
+                    case 'heartbeat':
+                        lotusTargetOpacity = 0.15 + 0.85 * ((Math.sin(now * Math.PI * 2 * (20/60)) + 1) / 2);
                         doScaleHeartbeat = true;
-
-                        // Sync cyber brightness with lotus heartbeat
-                        if (this.activeModes.has('cyber') && this.cyberMaterial) {
-                            if (this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
-                                this.cyberMaterial.uniforms.uBrightness.value = 0.3 + 0.7 * fade;
-                            }
+                        if (this.activeModes.has('cyber') && this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
+                            this.cyberMaterial.uniforms.uBrightness.value = lotusTargetOpacity;
                         }
                         break;
-                    }
 
                     case 'auto':
                     default: {
