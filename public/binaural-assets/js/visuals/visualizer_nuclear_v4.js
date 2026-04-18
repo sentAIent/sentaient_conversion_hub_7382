@@ -2742,41 +2742,25 @@ export class Visualizer3D {
                 let lotusTargetOpacity = 0.8; // default
                 let doScaleHeartbeat = false;
 
-                switch (lotusMode) {
-                    case 'faded': // DIM mode
-                        lotusTargetOpacity = 0.15;
-                        break;
-
-                    case 'full': // FULL mode
-                        lotusTargetOpacity = 1.0;
-                        break;
-
-                    case 'heartbeat':
-                        lotusTargetOpacity = 0.15 + 0.85 * ((Math.sin(now * Math.PI * 2 * (20/60)) + 1) / 2);
-                        doScaleHeartbeat = true;
-                        if (this.activeModes.has('cyber') && this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
-                            this.cyberMaterial.uniforms.uBrightness.value = lotusTargetOpacity;
-                        }
-                        break;
-
-                    case 'auto':
-                    default: {
-                        // Dynamic: lotus opacity reacts to audio energy
-                        const audioEnergy = vNormBass * 0.5 + vNormMids * 0.3 + vNormHighs * 0.2;
-                        lotusTargetOpacity = 0.25 + audioEnergy * 0.75; // 0.25→1.0
-                        // Occasional beat sync: brighter on beat peaks
-                        lotusTargetOpacity = Math.min(1.0, lotusTargetOpacity + beatPulse * 0.15);
-                        doScaleHeartbeat = true; // Gentle scale pulse in auto
-
-                        // Sync cyber with lotus in auto mode
-                        if (this.activeModes.has('cyber') && this.cyberMaterial) {
-                            if (this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
-                                // Cyber syncs with lotus but with slight delay/smoothing
-                                const cyberSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
-                                this.cyberMaterial.uniforms.uBrightness.value = Math.min(1.0, cyberSync);
-                            }
-                        }
-                        break;
+                if (lotusMode === 'faded') {
+                    lotusTargetOpacity = 0.15;
+                } else if (lotusMode === 'full') {
+                    lotusTargetOpacity = 1.0;
+                } else if (lotusMode === 'heartbeat') {
+                    lotusTargetOpacity = 0.15 + 0.85 * ((Math.sin(now * Math.PI * 2 * (20/60)) + 1) / 2);
+                    doScaleHeartbeat = true;
+                    if (this.activeModes.has('cyber') && this.cyberMaterial?.uniforms?.uBrightness) {
+                        this.cyberMaterial.uniforms.uBrightness.value = lotusTargetOpacity;
+                    }
+                } else {
+                    // Default / Auto
+                    const audioEnergy = vNormBass * 0.5 + vNormMids * 0.3 + vNormHighs * 0.2;
+                    lotusTargetOpacity = 0.25 + audioEnergy * 0.75;
+                    lotusTargetOpacity = Math.min(1.0, lotusTargetOpacity + beatPulse * 0.15);
+                    doScaleHeartbeat = true;
+                    if (this.activeModes.has('cyber') && this.cyberMaterial?.uniforms?.uBrightness) {
+                        const cyberSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
+                        this.cyberMaterial.uniforms.uBrightness.value = Math.min(1.0, cyberSync);
                     }
                 }
 

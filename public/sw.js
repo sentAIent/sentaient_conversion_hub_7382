@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-cache-v44-economy-overhaul';
+const CACHE_NAME = 'mindwave-cache-v45-nuclear-fix';
 
 // Essential assets to cache immediately upon installation
 const PRECACHE_URLS = [
@@ -50,7 +50,7 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', event => {
-    console.log('[ServiceWorker] Install v4');
+    console.log('[ServiceWorker] Install v45');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
