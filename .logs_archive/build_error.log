@@ -1,0 +1,26 @@
+
+> sentaient-conversion-hub@0.1.0 build
+> vite build --sourcemap
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+vite v5.4.21 building for production...
+<script src="capacitor.js"> in "/index.html" can't be bundled without type="module" attribute
+<script src="cordova.js"> in "/index.html" can't be bundled without type="module" attribute
+<script src="binaural-assets/config.js"> in "/index.html" can't be bundled without type="module" attribute
+transforming...
+✓ 32 modules transformed.
+x Build failed in 2m 9s
+error during build:
+[vite]: Rollup failed to resolve import "@capacitor/haptics" from "/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/binaural-assets/js/ui/controls_v3.js?v=NUCLEAR_FIX_V2".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+    at viteWarn (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:65855:17)
+    at onwarn (/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/@vitejs/plugin-react/dist/index.cjs:290:9)
+    at onRollupWarning (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:65885:5)
+    at onwarn (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:65550:7)
+    at file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/rollup/dist/es/shared/node-entry.js:21095:13
+    at Object.logger [as onLog] (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/rollup/dist/es/shared/node-entry.js:22968:9)
+    at ModuleLoader.handleInvalidResolvedId (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/rollup/dist/es/shared/node-entry.js:21712:26)
+    at ModuleLoader.resolveDynamicImport (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/rollup/dist/es/shared/node-entry.js:21770:58)
+    at async file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/rollup/dist/es/shared/node-entry.js:21654:32

@@ -1,0 +1,19 @@
+2026-03-26 17:21:26.278 xcodebuild[63311:1769658] Writing error result bundle to /var/folders/0z/_rgxnfds68ldjhr1fs5072800000gn/T/ResultBundle_2026-26-03_17-21-0026.xcresult
+xcodebuild: error: Unable to find a destination matching the provided destination specifier:
+		{ platform:iOS Simulator, OS:latest, name:iPhone 13 }
+
+	The requested device could not be found because no available devices matched the request.
+
+	Available destinations for the "App" scheme:
+		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
+		{ platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
+		{ platform:iOS Simulator, id:32B1D5F9-CC00-4357-92EE-6A586466890C, OS:16.2, name:iPad (10th generation) }
+		{ platform:iOS Simulator, id:6FD2D25B-86A0-4C1E-BA94-60ABDE154C03, OS:16.2, name:iPad Air (5th generation) }
+		{ platform:iOS Simulator, id:0B1FBAC8-4CA9-4369-BFD8-ECEDC36DCB97, OS:16.2, name:iPad Pro (11-inch) (4th generation) }
+		{ platform:iOS Simulator, id:3CD11594-71F7-4C75-A426-5C3B8E5CE223, OS:16.2, name:iPad Pro (12.9-inch) (6th generation) }
+		{ platform:iOS Simulator, id:BAEBEAA5-194A-472A-B1A2-70C3D24480A3, OS:16.2, name:iPad mini (6th generation) }
+		{ platform:iOS Simulator, id:8EF46B08-C635-4732-AC4D-397BEAFBF43D, OS:16.2, name:iPhone 14 }
+		{ platform:iOS Simulator, id:04F1DD1A-0751-4C39-A45C-BEAD9BFCD00D, OS:16.2, name:iPhone 14 Plus }
+		{ platform:iOS Simulator, id:413FFD70-62EB-464D-8A7C-0808C414CC0E, OS:16.2, name:iPhone 14 Pro }
+		{ platform:iOS Simulator, id:02F55708-C82C-4FAF-9710-9BA7573EC4EA, OS:16.2, name:iPhone 14 Pro Max }
+		{ platform:iOS Simulator, id:50C89996-BB14-495F-B385-C5CFCB1F872A, OS:16.2, name:iPhone SE (3rd generation) }

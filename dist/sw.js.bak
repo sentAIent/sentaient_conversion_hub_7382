@@ -1,0 +1,88 @@
+const CACHE_NAME = 'mindwave-cache-v46-stable';
+
+const PRECACHE_URLS = [
+    '/',
+    '/mindwave-beta.html',
+    '/manifest.json',
+    '/binaural-assets/css/style.css',
+    '/binaural-assets/css/tailwind-compiled.css',
+    '/binaural-assets/js/main_vFINAL.js',
+    '/binaural-assets/js/state.js',
+    '/binaural-assets/js/ui/controls_v3.js',
+    '/binaural-assets/js/ui/cursor.js',
+    '/binaural-assets/js/utils/analytics.js',
+    '/binaural-assets/js/audio/engine.js',
+    '/binaural-assets/js/visuals/visualizer_lazy.js',
+    '/binaural-assets/js/visuals/visualizer_nuclear_v4.js',
+    '/binaural-assets/mindwave-logo-icon.png'
+];
+
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(PRECACHE_URLS))
+            .then(() => self.skipWaiting())
+            .catch(err => console.error('[SW] Install error:', err))
+    );
+});
+
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(keys => Promise.all(
+            keys.map(k => { if (k !== CACHE_NAME) return caches.delete(k); })
+        )).then(() => self.clients.claim())
+    );
+});
+
+function isCodeResource(url) {
+    try {
+        const u = new URL(url, self.location.origin);
+        return u.pathname.endsWith('.js') || u.pathname.endsWith('.css') || u.pathname.endsWith('.html') || u.pathname === '/';
+    } catch (e) { return false; }
+}
+
+self.addEventListener('fetch', event => {
+    if (event.request.method !== 'GET') return;
+
+    const url = event.request.url;
+    if (url.includes('google-analytics.com') || url.includes('firestore.googleapis.com') || url.startsWith('chrome-extension')) return;
+
+    // NETWORK-FIRST for Code/Markup
+    if (isCodeResource(url)) {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
+                    if (response && response.status === 200) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    }
+                    return response;
+                })
+                .catch(() => {
+                    return caches.match(event.request).then(cached => {
+                        return cached || new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+                    });
+                })
+        );
+        return;
+    }
+
+    // CACHE-FIRST for Static Assets
+    event.respondWith(
+        caches.match(event.request).then(cached => {
+            if (cached) return cached;
+
+            return fetch(event.request).then(response => {
+                if (response && response.status === 200) {
+                    if (url.match(/\.(png|jpg|jpeg|gif|svg|woff2?|ttf|mp3|ogg|wav)$/)) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    }
+                }
+                return response;
+            }).catch(() => {
+                return new Response('Asset not available offline', { status: 404 });
+            });
+        })
+    );
+});

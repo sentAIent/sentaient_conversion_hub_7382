@@ -1,0 +1,19 @@
+{
+  "appId": "com.sentaient.mindwave",
+  "appName": "MindWave",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "hostname": "localhost",
+    "androidScheme": "https",
+    "iosScheme": "capacitor",
+    "allowNavigation": ["*"]
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#000000"
+  }
+}
