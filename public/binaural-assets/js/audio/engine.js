@@ -535,9 +535,13 @@ export function getAudioMode() {
  * Sync device vibration with current beat frequency
  */
 export function startHapticSync() {
-    stopHapticSync(); // Clear existing
-
     if (!isHapticsEnabled()) return;
+
+    // CRITICAL: Clear existing interval first to prevent memory leak/UI hang (Fix for "Crashing" bug)
+    if (state.hapticInterval) {
+        clearInterval(state.hapticInterval);
+        state.hapticInterval = null;
+    }
 
     console.log('[Haptics] Starting Beat Sync...');
 
@@ -929,6 +933,7 @@ export function playCompletionChime() {
 
 
 export function updateFrequencies() {
+    if (!els.baseSlider || !els.beatSlider) return;
     const base = parseFloat(els.baseSlider.value);
     const beat = parseFloat(els.beatSlider.value);
 
@@ -1037,12 +1042,14 @@ export function updateFrequencies() {
 }
 
 export function updateBeatsVolume() {
+    if (!els.volSlider) return;
     const vol = parseFloat(els.volSlider.value);
     if (els.volValue) els.volValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.beatsGain && state.isPlaying) state.beatsGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
 }
 
 export function updateMasterVolume() {
+    if (!els.masterVolSlider) return;
     const vol = parseFloat(els.masterVolSlider.value);
     if (els.masterVolValue) els.masterVolValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.masterGain && state.isPlaying) state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
@@ -1080,6 +1087,7 @@ export function updateMasterBalance() {
 }
 
 export function updateAtmosMaster() {
+    if (!els.atmosMasterSlider) return;
     const vol = parseFloat(els.atmosMasterSlider.value);
     if (els.atmosMasterValue) els.atmosMasterValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.masterAtmosGain && state.isPlaying) { state.masterAtmosGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1); }

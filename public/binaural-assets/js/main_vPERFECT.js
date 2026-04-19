@@ -6,7 +6,7 @@
 
 import { setupUI } from './ui/controls_v3_vPERFECT.js';
 import { initVisualizer } from './visuals/visualizer_nuclear_vPERFECT.js';
-import { state } from './state_vPERFECT.js';
+import { state } from './state.js';
 
 // Application State Tracking
 window.MINDWAVE_LOADED = true;

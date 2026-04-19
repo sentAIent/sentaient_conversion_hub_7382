@@ -44,6 +44,13 @@ async function loadVisualizerModule() {
  * Initialize the visualizer (lazy loads if needed)
  */
 export async function initVisualizer() {
+    // Check if already initialized to prevent double render loops (Crucial fix for "Crashing" bug)
+    const existingViz = getVisualizer();
+    if (existingViz && existingViz.initialized) {
+        console.log('[LazyViz] Visualizer already initialized, skipping duplicate init.');
+        return existingViz;
+    }
+
     const module = await loadVisualizerModule();
     return module.initVisualizer();
 }
@@ -53,6 +60,10 @@ export async function initVisualizer() {
  * Returns null if not yet initialized (non-blocking)
  */
 export function getVisualizer() {
+    // First check global state if available
+    const canvas = document.getElementById('visualizer');
+    if (canvas && canvas.activeVisualizer) return canvas.activeVisualizer;
+
     if (!visualizerModule) return null;
     return visualizerModule.getVisualizer();
 }

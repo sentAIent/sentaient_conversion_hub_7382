@@ -535,9 +535,13 @@ export function getAudioMode() {
  * Sync device vibration with current beat frequency
  */
 export function startHapticSync() {
-    stopHapticSync(); // Clear existing
-
     if (!isHapticsEnabled()) return;
+
+    // CRITICAL: Clear existing interval first to prevent memory leak/UI hang (Fix for "Crashing" bug)
+    if (state.hapticInterval) {
+        clearInterval(state.hapticInterval);
+        state.hapticInterval = null;
+    }
 
     console.log('[Haptics] Starting Beat Sync...');
 

@@ -8,7 +8,7 @@
  * Based on nuclear_v4 with custom compatibility mapping.
  */
 
-import { state, els, THEMES } from '../state_vPERFECT.js';
+import { state, els, THEMES } from '../state.js';
 
 let viz3D = null;
 
@@ -108,6 +108,7 @@ export class Visualizer3D {
 
             this.initEnvironment();
             this.initialized = true;
+            this.updateVisibility(); // Ensure initial modes are loaded
 
             window.addEventListener('resize', () => this.resize());
             console.log('[Visualizer] PERFECT Engine Ready');
@@ -635,11 +636,11 @@ export class Visualizer3D {
             const vBeatPulse = beatPulse * vFactor, vNormBass = normBass * vFactor;
 
             // Update visible modes
-            if(this.activeModes.has('sphere')) {
+            if(this.activeModes.has('sphere') && this.sphere) {
                 this.sphere.rotation.y += 0.005 * multiplier; this.sphere.rotation.z += 0.006 * multiplier;
                 this.core.rotation.y -= 0.015 * multiplier; this.sphere.scale.setScalar(1 + vNormBass*0.15);
             }
-            if(this.activeModes.has('particles')) {
+            if(this.activeModes.has('particles') && this.particles) {
                 const pos = this.particles.geometry.attributes.position.array;
                 for(let i=2; i<pos.length; i+=3) { pos[i] += 0.02*multiplier; if(pos[i]>40) pos[i]=-40; }
                 this.particles.geometry.attributes.position.needsUpdate = true;
@@ -651,7 +652,7 @@ export class Visualizer3D {
                     else { blob.position.y -= c.fallSpeed*multiplier; if(blob.position.y<c.floatMin) c.state='rising'; }
                 });
             }
-            if(this.activeModes.has('ocean')) {
+            if(this.activeModes.has('ocean') && this.oceanWave) {
                 const pos = this.oceanWave.geometry.attributes.position.array;
                 for(let i=0; i<pos.length; i+=3) {
                     const d = Math.sqrt(pos[i]*pos[i]+pos[i+1]*pos[i+1]);
@@ -751,9 +752,9 @@ export class Visualizer3D {
 }
 
 export function initVisualizer() {
-    if (els.canvas) {
-        viz3D = new Visualizer3D(els.canvas);
-        els.canvas.activeVisualizer = viz3D;
+    if (els.visualizer) {
+        viz3D = new Visualizer3D(els.visualizer);
+        els.visualizer.activeVisualizer = viz3D;
         resumeVisuals();
     }
 }

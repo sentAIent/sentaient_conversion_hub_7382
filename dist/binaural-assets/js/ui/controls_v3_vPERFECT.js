@@ -6,7 +6,7 @@
  * - Restored internal naming convention (Matrix/Interstellar)
  */
 
-import { state, els, THEMES } from '../state_vPERFECT.js';
+import { state, els, THEMES } from '../state.js';
 import { 
     updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, 
     updateAtmosMaster, updateSoundscape, startAudio, stopAudio 
@@ -18,6 +18,9 @@ import {
 
 export function setupUI() {
     console.log('[Controls] Initializing PERFECT UI Logic...');
+
+    // Core Elements
+    els.visualizer = document.getElementById('visualizer');
 
     // Sliders
     els.baseSlider = document.getElementById('baseSlider');

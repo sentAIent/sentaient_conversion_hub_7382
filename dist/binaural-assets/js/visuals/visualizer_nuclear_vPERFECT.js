@@ -8,7 +8,7 @@
  * Based on nuclear_v4 with custom compatibility mapping.
  */
 
-import { state, els, THEMES } from '../state_vPERFECT.js';
+import { state, els, THEMES } from '../state.js';
 
 let viz3D = null;
 
@@ -751,9 +751,9 @@ export class Visualizer3D {
 }
 
 export function initVisualizer() {
-    if (els.canvas) {
-        viz3D = new Visualizer3D(els.canvas);
-        els.canvas.activeVisualizer = viz3D;
+    if (els.visualizer) {
+        viz3D = new Visualizer3D(els.visualizer);
+        els.visualizer.activeVisualizer = viz3D;
         resumeVisuals();
     }
 }
