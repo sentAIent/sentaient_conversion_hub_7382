@@ -28,6 +28,19 @@
     </script>
 
     <script>
+        // EMERGENCY CACHE BREAKER & SW KILL-SWITCH
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('[PWA] Force unregistering old Service Worker to clear cache.');
+                }
+            });
+        }
+        // Force reload state if needed
+        window.FORCE_REFRESH_TIMESTAMP = Date.now();
+    </script>
+    <script>
         // VISUAL ERROR LOGGER
         window.onerror = function (msg, url, lineNo, columnNo, error) {
             // Filter out expected errors
@@ -68,15 +81,15 @@
     </script>
     <title>MindWave - Binaural Beats Studio</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
-    <link rel="stylesheet" href="binaural-assets/css/tailwind-compiled.css?v=PERFECT_1">
-    <link rel="stylesheet" href="binaural-assets/css/style.css?v=PERFECT_1">
-    <link rel="stylesheet" href="binaural-assets/css/visual-active.css?v=PERFECT_1">
+    <link rel="stylesheet" href="binaural-assets/css/tailwind-compiled.css?v=PERFECT_RESTORED">
+    <link rel="stylesheet" href="binaural-assets/css/style.css?v=PERFECT_RESTORED">
+    <link rel="stylesheet" href="binaural-assets/css/visual-active.css?v=PERFECT_RESTORED">
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="binaural-assets/js/main_vPERFECT.js?v=PERFECT_1">
+    <link rel="modulepreload" href="binaural-assets/js/main_vPERFECT.js?v=PERFECT_RESTORED">
     <!-- Visualizer modulepreload removed to unblock critical path -->
-    <script src="binaural-assets/config.js?v=PERFECT_1" defer
+    <script src="binaural-assets/config.js?v=PERFECT_RESTORED" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="binaural-assets/js/main_vPERFECT.js?v=PERFECT_1"
+    <script type="module" src="binaural-assets/js/main_vPERFECT.js?v=PERFECT_RESTORED"
         onerror="console.error('Failed to load main_vPERFECT.js')"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
@@ -395,7 +408,7 @@
         </div>
 
         <!-- FOOTER - Moved outside #appOverlay for stable fixed positioning -->
-        <footer id="bottomControlBar"
+        <footer id="bottomControlBar" style="opacity: 0"
             class="fixed bottom-0 left-0 right-0 z-[200] p-4 sm:p-6 px-6 sm:px-12 pointer-events-auto flex justify-between items-end pb-6 sm:pb-8 transition-[left,right,opacity,transform] duration-300 ease-in-out no-transition ui-fade-target">
 
             <!-- LEFT: Visual Controls & Toggle -->
@@ -417,16 +430,9 @@
 
             <!-- 3. New Horizontal Visual Dock -->
             <div id="visualDock"
-                style="display: flex !important; flex-flow: row nowrap !important; width: max-content !important; max-width: none !important; align-items: center !important; gap: 0.5rem !important; padding: 0.75rem 1.25rem !important; overflow-x: visible !important;"
-                class="order-3 glass-lux rounded-2xl border !border-[var(--accent)]/20 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] mx-auto z-50 relative tooltip-container ui-fade-target">
+                class="order-3 flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border !border-[var(--accent)]/20 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
 
                 <style>
-                    #visualDock .visual-btn {
-                        flex: 0 0 auto !important;
-                        width: 3.25rem !important;
-                        min-width: 3.25rem !important;
-                        padding: 0.5rem !important;
-                    }
                     .visual-btn .custom-tooltip {
                         top: -40px;
                         bottom: auto;
