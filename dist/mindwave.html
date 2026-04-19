@@ -28,6 +28,19 @@
     </script>
 
     <script>
+        // EMERGENCY CACHE BREAKER & SW KILL-SWITCH
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('[PWA] Force unregistering old Service Worker to clear cache.');
+                }
+            });
+        }
+        // Force reload state if needed
+        window.FORCE_REFRESH_TIMESTAMP = Date.now();
+    </script>
+    <script>
         // VISUAL ERROR LOGGER
         window.onerror = function (msg, url, lineNo, columnNo, error) {
             // Filter out expected errors
@@ -72,17 +85,7 @@
             if (window.controls && window.controls.toggleGalaxySettings) {
                 window.controls.toggleGalaxySettings(btn);
             } else {
-                // Fallback: Just toggle visibility manually if controls aren't ready
                 const panel = document.getElementById('galaxySettingsPanel');
-                if (panel) panel.classList.toggle('hidden');
-            }
-        };
-        window.toggleCyberSettings = function(btn) {
-            console.log('[HTML] toggleCyberSettings clicked');
-            if (window.controls && window.controls.toggleCyberSettings) {
-                window.controls.toggleCyberSettings(btn);
-            } else {
-                const panel = document.getElementById('cyberSettingsPanel');
                 if (panel) panel.classList.toggle('hidden');
             }
         };
@@ -95,6 +98,15 @@
                 if (panel) panel.classList.toggle('hidden');
             }
         };
+        window.toggleCyberSettings = function(btn) {
+            console.log('[HTML] toggleCyberSettings clicked');
+            if (window.controls && window.controls.toggleCyberSettings) {
+                window.controls.toggleCyberSettings(btn);
+            } else {
+                const panel = document.getElementById('cyberSettingsPanel');
+                if (panel) panel.classList.toggle('hidden');
+            }
+        };
     </script>
     <title>MindWave - Binaural Beats Studio</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
@@ -102,11 +114,11 @@
     <link rel="stylesheet" href="./binaural-assets/css/style.css?v=25">
     <link rel="stylesheet" href="./binaural-assets/css/visual-active.css?v=1">
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V42">
+    <link rel="modulepreload" href="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V45">
     <!-- Visualizer modulepreload removed to unblock critical path -->
     <script src="./binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V42"
+    <script type="module" src="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V45"
         onerror="console.error('Failed to load main_vFINAL.js')"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
@@ -197,11 +209,11 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Tabbed Studio Styles */
-        .studio-tab-content.hidden {
+        /* Tabbed Hub Styles (Left & Right) */
+        .l-tab-content.hidden, .studio-tab-content.hidden {
             display: none !important;
         }
-        .studio-tab-btn.active {
+        .l-tab-btn.active, .studio-tab-btn.active {
             color: var(--accent);
             border-bottom-color: var(--accent);
             opacity: 1;
@@ -209,97 +221,27 @@
 
         /* Subtle Floating Toggles */
         #leftToggle, #rightToggle {
-            opacity: 0.3;
-            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0.5;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #leftToggle:hover, #rightToggle:hover {
             opacity: 1;
             transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(96, 169, 255, 0.2);
         }
 
         /* Glass Pill for Buttons */
         .glass-pill {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        /* Visual Dock Custom Scroll (for mobile/small screens) */
+        #visualDock::-webkit-scrollbar {
+            display: none;
+        }
     </style>
-
-    <script>
-        // Tab Switching Logic
-        document.addEventListener('DOMContentLoaded', () => {
-            const tabs = document.querySelectorAll('.studio-tab-btn');
-            const contents = document.querySelectorAll('.studio-tab-content');
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const target = tab.dataset.tab;
-                    
-                    // Update buttons
-                    tabs.forEach(t => {
-                        t.classList.remove('active', 'text-[var(--accent)]', 'border-b-2', 'border-[var(--accent)]');
-                        t.classList.add('text-white/40');
-                    });
-                    tab.classList.add('active', 'text-[var(--accent)]', 'border-b-2', 'border-[var(--accent)]');
-                    tab.classList.remove('text-white/40');
-
-                    // Update content
-        // Sidebar Toggles
-        document.addEventListener('DOMContentLoaded', () => {
-            const leftToggle = document.getElementById('leftToggle');
-            const rightToggle = document.getElementById('rightToggle');
-            const leftPanel = document.getElementById('leftPanel');
-            const rightPanel = document.getElementById('rightPanel');
-            const closeLeft = document.getElementById('closeLeftBtn');
-            const closeRight = document.getElementById('closeRightBtn');
-
-            const toggleLeft = () => {
-                leftPanel.classList.toggle('-translate-x-full');
-                leftToggle.classList.toggle('opacity-100');
-            };
-            const toggleRight = () => {
-                rightPanel.classList.toggle('translate-x-full');
-                rightToggle.classList.toggle('opacity-100');
-            };
-
-            if (leftToggle) leftToggle.addEventListener('click', toggleLeft);
-            if (rightToggle) rightToggle.addEventListener('click', toggleRight);
-            if (closeLeft) closeLeft.addEventListener('click', toggleLeft);
-            if (closeRight) closeRight.addEventListener('click', toggleRight);
-
-            // Left Tab Logic
-            const lTabs = document.querySelectorAll('.l-tab-btn');
-            const lContents = document.querySelectorAll('.l-tab-content');
-
-            lTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const target = tab.dataset.ltab;
-                    lTabs.forEach(t => {
-                        t.classList.remove('active', 'text-[var(--accent)]', 'border-b-2', 'border-[var(--accent)]');
-                        t.classList.add('text-white/40');
-                    });
-                    tab.classList.add('active', 'text-[var(--accent)]', 'border-b-2', 'border-[var(--accent)]');
-                    tab.classList.remove('text-white/40');
-
-                    lContents.forEach(c => {
-                        if (c.id === `ltab-${target}`) {
-                            c.classList.remove('hidden');
-                        } else {
-                            c.classList.add('hidden');
-                        }
-                    });
-                });
-            });
-
-            // Close on outside click (optional but premium)
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    leftPanel.classList.add('-translate-x-full');
-                    rightPanel.classList.add('translate-x-full');
-                }
-            });
-        });
-    </script>
 
     <!-- PWA Manifest -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -350,7 +292,8 @@
     <!-- Global Dimmer Overlay -->
     <div id="dimmerOverlay" class="fixed inset-0 bg-black pointer-events-none z-0" style="opacity: 0;"></div>
     <canvas id="visualizer" class="fixed inset-0 w-full h-full z-0"></canvas>
-    <canvas id="cyber-overlay-canvas" class="fixed inset-0 w-full h-full z-[1] pointer-events-none hidden"></canvas>
+    <!-- 2D Cyber Canvas Overlay -->
+    <canvas id="cyberCanvas" class="fixed inset-0 w-full h-full pointer-events-none z-0 hidden mix-blend-screen opacity-70"></canvas>
 
 
     <!-- IMMERSIVE OVERLAY CONTAINER -->
@@ -361,859 +304,85 @@
         <main class="flex-1 flex items-center justify-center pointer-events-auto" id="tapZone">
         </main>
 
-<<<<<<< HEAD
-        <style>
-            /* Footer left/right control groups compress */
-            .footer-slim #bottomControlBar > div:first-child,
-            .footer-slim #bottomControlBar > div:last-child,
-            .footer-ultra #bottomControlBar > div:first-child,
-            .footer-ultra #bottomControlBar > div:last-child {
-                gap: 0.25rem !important;
-            }
-
-            /* ─── WIDTH CONTAINMENT ────────────────────────────────────────── */
-            /* Prevent the center column from stretching across ultra-wide     */
-            /* viewports. Responds to --footer-width set by sidebar changes.   */
-            #bottomControlCenter {
-                max-width: min(900px, var(--footer-width, 900px)) !important;
-                transition: max-width 0.35s cubic-bezier(0.4,0,0.2,1),
-                            gap 0.35s cubic-bezier(0.4,0,0.2,1) !important;
-            }
-
-            /* Play row */
-            #bottomControlCenter > .order-1 {
-                max-width: min(800px, var(--footer-width, 800px)) !important;
-            }
-
-            /* Dock — prevent single-row stretch */
-            #visualDock {
-                max-width: min(850px, var(--footer-width, 850px)) !important;
-            }
-        </style>
-
-        <!-- FOOTER -->
-        <footer id="bottomControlBar" style="opacity: 0"
-            class="fixed bottom-0 left-0 right-0 z-[100] p-6 px-12 pointer-events-auto flex justify-between items-end pb-8 transition-[left,right,opacity,transform] duration-300 ease-in-out no-transition ui-fade-target">
-
-            <!-- LEFT: Visual Controls & Toggle -->
-            <div class="flex flex-col gap-4 items-center">
-                <!-- New Presets Toggle Button (Use old ID 'leftToggle' for logic compat) -->
-                <button id="leftToggle"
-                    class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all"
-                    title="Presets">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="9" y1="3" x2="9" y2="21"></line>
-                    </svg>
-                </button>
-                <!-- Visual Mode Grid Toggle - 2 Rows -->
-                <!-- Visual Grid Moved to Center Dock -->
-
-
-                <!-- Speed controls moved to center play row -->
-
-                <!-- Color Controls -->
-                <div class="flex items-center gap-2 mt-1">
-                    <!-- Color Picker -->
-                    <div class="relative group" title="Particle Color">
-                        <div id="colorPreview"
-                            class="w-6 h-6 rounded-full border border-white/20 cursor-pointer shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-transform active:scale-95"
-                            style="background-color: #60a9ff;"></div>
-                        <input type="color" id="visualColorPicker" value="#60a9ff"
-                            class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                    </div>
-
-                    <!-- Random Color Button -->
-                    <button id="randomColorBtn"
-                        class="glass-pill p-1.5 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                        title="Random Color">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="16 3 21 3 21 8"></polyline>
-                            <line x1="4" y1="20" x2="21" y2="3"></line>
-                            <polyline points="21 16 21 21 16 21"></polyline>
-                            <line x1="15" y1="15" x2="21" y2="21"></line>
-                            <line x1="4" y1="4" x2="9" y2="9"></line>
-                        </svg>
-                    </button>
-
-                    <!-- Toggle Visual Vibration -->
-                    <button id="vibrationToggleBtn"
-                        class="glass-pill p-1.5 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
-                        title="Toggle Visual Vibration">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                        </svg>
-                    </button>
-
-
-                    <!-- Previous Color Back Button -->
-                    <button id="prevColorBtn"
-                        class="glass-pill p-1.5 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white hidden"
-                        title="Previous Color">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- CENTER: Main Play with Session Timer -->
-            <div id="bottomControlCenter" class="flex-1 flex flex-col items-center justify-end gap-6 pb-0 max-w-4xl">
-
-                <!-- 1. Play & Timer Controls (Horizontal Row) -->
-                <div
-                    class="order-1 flex flex-wrap justify-center items-center gap-4 sm:gap-6 bg-[#0a0a12]/50 backdrop-blur-xl px-4 sm:px-6 py-2 rounded-2xl border border-[var(--accent)]/30 max-w-[95vw]">
-                    <!-- Audio Play/Pause Button -->
-                    <div class="flex flex-col items-center gap-1">
-                        <button id="audioPlayBtn"
-                            class="glass-card w-9 h-9 rounded-full flex items-center justify-center shadow-[0_0_20px_var(--accent-glow)] hover:scale-105 active:scale-95 transition-all bg-white/5 border border-[var(--accent)]/30 backdrop-blur-xl group shrink-0"
-                            style="width: 36px; height: 36px;" title="Toggle Audio">
-                            <svg id="audioPlayIcon"
-                                class="w-3.5 h-3.5 text-[var(--accent)] group-hover:text-white transition-colors ml-0.5"
-                                style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                            <svg id="audioPauseIcon"
-                                class="hidden w-3.5 h-3.5 text-[var(--accent)] group-hover:text-white transition-colors"
-                                style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="currentColor">
-                                <rect x="6" y="4" width="4" height="16"></rect>
-                                <rect x="14" y="4" width="4" height="16"></rect>
-                            </svg>
-                        </button>
-                        <span id="audioLabel" class="text-[8px] font-bold uppercase tracking-widest"
-                            style="color: #60a9ff;">Audio</span>
-                    </div>
-
-                    <!-- Main Play Button -->
-                    <div class="flex flex-col items-center gap-1">
-                        <div class="relative">
-                            <!-- Progress Ring -->
-                            <svg id="timerRing"
-                                class="absolute inset-0 w-[66px] h-[66px] -m-[5px] rotate-[-90deg] opacity-0 transition-opacity pointer-events-none"
-                                viewBox="0 0 120 120" style="width: 66px; height: 66px;">
-                                <circle cx="60" cy="60" r="54" fill="none" stroke="var(--border)" stroke-width="4"
-                                    opacity="0.3" />
-                                <circle id="timerProgress" cx="60" cy="60" r="54" fill="none" stroke="var(--accent)"
-                                    stroke-width="4" stroke-linecap="round" stroke-dasharray="339.292"
-                                    stroke-dashoffset="339.292" />
-                            </svg>
-
-                            <button id="playBtn"
-                                class="glass-card w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_50px_var(--accent-glow)] hover:scale-105 active:scale-95 transition-all bg-white/5 border border-[var(--accent)]/30 backdrop-blur-xl group relative z-10 shrink-0">
-                                <svg id="playIcon"
-                                    class="w-6 h-6 text-[var(--accent)] group-hover:text-white transition-colors ml-1"
-                                    viewBox="0 0 24 24" fill="currentColor">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
-                                <svg id="pauseIcon"
-                                    class="hidden w-6 h-6 text-[var(--accent)] group-hover:text-white transition-colors"
-                                    viewBox="0 0 24 24" fill="currentColor">
-                                    <rect x="6" y="4" width="4" height="16"></rect>
-                                    <rect x="14" y="4" width="4" height="16"></rect>
-                                </svg>
-                            </button>
-                        </div>
-                        <span id="sessionLabel" class="text-[8px] font-bold uppercase tracking-widest"
-                            style="color: #60a9ff;">Session</span>
-                    </div>
-
-                    <!-- Visual Play/Pause -->
-                    <div class="flex flex-col items-center gap-1">
-                        <button id="visualPlayBtn"
-                            class="glass-card w-9 h-9 rounded-full flex items-center justify-center shadow-[0_0_20px_var(--accent-glow)] hover:scale-105 active:scale-95 transition-all bg-white/5 border border-[var(--accent)]/30 backdrop-blur-xl group shrink-0"
-                            style="width: 36px; height: 36px;" title="Toggle Visuals">
-                            <svg id="visualPlayIcon"
-                                class="w-3.5 h-3.5 text-[var(--accent)] group-hover:text-white transition-colors ml-0.5"
-                                style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                            <svg id="visualPauseIcon"
-                                class="hidden w-3.5 h-3.5 text-[var(--accent)] group-hover:text-white transition-colors"
-                                style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="currentColor">
-                                <rect x="6" y="4" width="4" height="16"></rect>
-                                <rect x="14" y="4" width="4" height="16"></rect>
-                            </svg>
-                        </button>
-                        <span id="visualsLabel" class="text-[8px] font-bold uppercase tracking-widest"
-                            style="color: #60a9ff;">Visuals</span>
-                    </div>
-
-                    <!-- Timer & Duration (Integrated) -->
-                    <div
-                        class="flex items-center gap-3 bg-white/5 rounded-full px-4 py-1.5 border border-white/10 ml-2">
-                        <!-- Timer Display -->
-                        <div id="timerDisplay"
-                            class="text-sm font-mono text-[var(--accent)] opacity-0 transition-opacity tabular-nums">
-                            --:--
-                        </div>
-
-                        <div class="w-px h-4 bg-white/10"></div>
-
-                        <!-- Duration Selector -->
-                        <div id="durationSelector" class="flex items-center gap-2 text-[10px]">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" class="text-[var(--text-muted)]">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            <select id="sessionDuration"
-                                class="bg-transparent text-[var(--accent)] font-bold cursor-pointer outline-none hover:text-white transition-colors">
-                                <option value="0">∞ Free</option>
-                                <option value="5">5 min</option>
-                                <option value="15">15 min</option>
-                                <option value="30">30 min</option>
-                                <option value="60">1 hour</option>
-                                <option value="90">90 min</option>
-                                <option value="120">2 hours</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Divider (Hidden on small screens where wrapping happens) -->
-                    <div class="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
-
-                    <!-- Speed Controls in Center -->
-                    <div class="flex items-center gap-2">
-                        <div class="w-24 flex flex-col gap-0.5 opacity-50 hover:opacity-100 transition-opacity"
-                            id="speedSliderContainer" title="Manual Speed (Disabled in Auto Mode)">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label" style="font-size: 8px;">SPEED</label>
-                                <span id="speedValue" class="premium-value" style="font-size: 9px;">1.0x</span>
-                            </div>
-                            <input type="range" id="visualSpeedSlider" min="0" max="1" step="0.001" value="0.15"
-                                class="premium-slider">
-                        </div>
-                        <button id="visualSyncBtn"
-                            class="p-1.5 rounded-md bg-[var(--accent)] text-[var(--bg-main)] hover:opacity-90 transition-all"
-                            title="Lock Speed to Hz (Auto)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Divider (Hidden on small screens) -->
-                    <div class="hidden lg:block w-px h-6 bg-white/10 mx-2"></div>
-
-                    <!-- Record Controls in Center -->
-                    <div class="flex items-center gap-2">
-                        <button id="videoToggleBtn"
-                            class="glass-pill p-2 rounded-full hover:bg-white/10 transition-all text-[var(--text-muted)]"
-                            title="Toggle Video Recording">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M23 7l-7 5 7 5V7z"></path>
-                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                            </svg>
-                        </button>
-                        <button id="recordBtn"
-                            class="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:border-red-500 transition-colors group bg-black/20 backdrop-blur-sm"
-                            title="Record">
-                            <div
-                                class="w-4 h-4 rounded-full bg-red-500 transition-all group-hover:scale-110 shadow-[0_0_15px_rgba(239,68,68,0.5)]">
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-
-
-
-                <!-- 3. New Horizontal Visual Dock -->
-                <div id="visualDock"
-                    class="order-3 flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border !border-[var(--accent)]/30 shadow-2xl overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
-
-                    <style>
-                        .visual-btn .custom-tooltip {
-                            top: -40px;
-                            bottom: auto;
-                            transform: translateX(-50%);
-                        }
-                    </style>
-
-                    <!-- SPHERE -->
-                    <button id="sphereBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🔮</span>
-                        <input type="color" data-visual-color="sphere" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
-                    </button>
-
-                    <!-- CUBE -->
-                    <button id="cubeBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">📦</span>
-                        <input type="color" data-visual-color="cube" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cube</span>
-                    </button>
-
-                    <!-- DRAGON -->
-                    <button id="dragonBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🐉</span>
-                        <input type="color" data-visual-color="dragon" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Dragon</span>
-                    </button>
-
-                    <!-- GALAXY -->
-                    <button id="galaxyBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌌</span>
-                        <input type="color" data-visual-color="galaxy" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Galaxy</span>
-
-                        <!-- Galaxy Settings Toggle -->
-                        <div id="galaxySettingsToggle"
-                            class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
-                            title="Galaxy Settings" onclick="event.stopPropagation(); toggleGalaxySettings(this);">
-                            <span class="text-[8px] leading-none text-white">⚙️</span>
-                        </div>
-                    </button>
-
-                    <!-- MANDALA -->
-                    <button id="mandalaBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🕉️</span>
-                        <input type="color" data-visual-color="mandala" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Mandala</span>
-                    </button>
-
-                    <!-- FLOW -->
-                    <button id="flowBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌀</span>
-                        <input type="color" data-visual-color="particles" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
-                    </button>
-
-                    <!-- LAVA -->
-                    <button id="lavaBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌋</span>
-                        <input type="color" data-visual-color="lava" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
-                    </button>
-
-                    <!-- FIRE -->
-                    <button id="fireplaceBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🔥</span>
-                        <input type="color" data-visual-color="fireplace" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
-                    </button>
-
-                    <!-- RAIN -->
-                    <button id="rainBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌿</span>
-                        <input type="color" data-visual-color="rainforest" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
-                    </button>
-
-                    <!-- ZEN -->
-                    <button id="zenBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🌸</span>
-                        <input type="color" data-visual-color="zengarden" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
-                    </button>
-
-                    <!-- OCEAN -->
-                    <button id="oceanBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🏝️</span>
-                        <input type="color" data-visual-color="ocean" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Waves</span>
-                    </button>
-
-                    <!-- CYBER -->
-                    <button id="cyberBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">⚡</span>
-                        <input type="color" data-visual-color="cyber" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#00FF41">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cyber</span>
-                        
-                        <!-- Toggle Icon -->
-                        <div id="cyberSettingsToggle"
-                            class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
-                            title="Settings" onclick="event.stopPropagation(); toggleCyberSettings(this);">
-                            <span class="text-[8px] leading-none text-white">⚙️</span>
-                        </div>
-                    </button>
-
-                    <!-- MATRIX -->
-                    <button id="matrixBtn"
-                        class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
-                        <span class="text-2xl filter drop-shadow-lg">🚀</span>
-                        <input type="color" data-visual-color="matrix" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#00FF41">
-                        <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Matrix</span>
-
-                        <!-- Toggle Icon -->
-                        <div id="matrixSettingsToggle"
-                            class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
-                            title="Settings" onclick="event.stopPropagation(); toggleMatrixSettings(this);">
-                            <span class="text-[8px] leading-none text-white">⚙️</span>
-                        </div>
-                    </button>
-
-                    <!-- DIVIDER -->
-                    <div class="w-px h-10 bg-gradient-to-b from-transparent via-white/20 to-transparent mx-2 hidden sm:block"></div>
-
-                    <!-- GLOBAL FX QUAD BUTTON -->
-                    <div class="visual-btn p-1.5 rounded-xl glass-pill border border-white/10 hover:border-[var(--accent)]/50 transition-all group relative flex flex-col items-center justify-center h-16 w-16 bg-[#050510]/60 shadow-[0_0_20px_rgba(45,212,191,0.1)]">
-                        <div class="grid grid-cols-2 grid-rows-2 gap-1 w-full h-full">
-                            <!-- Quad 1: Master Color -->
-                            <div class="relative rounded-md border border-white/5 hover:border-[var(--accent)]/50 bg-white/5 flex items-center justify-center cursor-pointer transition-all hover:bg-white/10 overflow-hidden group/color" onclick="document.getElementById('masterColorPicker').click()">
-                                <input type="color" id="masterColorPicker" class="absolute inset-0 opacity-0 cursor-pointer z-10" value="#60a9ff">
-                                <div id="masterColorPreview" class="w-2.5 h-2.5 rounded-full bg-[#60a9ff] shadow-[0_0_8px_rgba(96,169,255,0.5)] transition-transform group-hover/color:scale-125"></div>
-                            </div>
-                            
-                            <!-- Quad 2: Random -->
-                            <button id="masterRandomBtn" class="rounded-md border border-white/5 hover:border-[var(--accent)]/50 bg-white/5 flex items-center justify-center transition-all hover:bg-[var(--accent)]/10 text-white/40 hover:text-[var(--accent)] active:scale-90" title="Random Color">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line>
-                                </svg>
-                            </button>
-
-                            <!-- Quad 3: Undo -->
-                            <button id="masterPrevColorBtn" class="rounded-md border border-white/5 hover:border-[var(--accent)]/50 bg-white/5 flex items-center justify-center transition-all hover:bg-white/10 text-white/40 hover:text-white active:scale-90" title="Undo Color">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
-                            </button>
-
-                            <!-- Quad 4: Vibration Toggle -->
-                            <button id="masterVibrationToggle" class="rounded-md border border-white/5 hover:border-[var(--accent)]/50 bg-white/5 flex items-center justify-center transition-all hover:bg-[var(--accent)]/10 text-white/40 hover:text-[var(--accent)] active:scale-90" title="Global Vibration">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-=======
-        <!-- 12-BUTTON VISUAL DOCK (FLOATING) -->
+        <!-- 12-BUTTON VISUALIZER DOCK -->
         <div id="visualDock"
             class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-wrap justify-center items-center gap-3 px-6 py-4 glass-lux rounded-2xl border border-[var(--accent)]/30 shadow-2xl pointer-events-auto transition-opacity duration-500 ui-fade-target">
             
             <!-- SPHERE -->
-            <button id="sphereBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="sphereBtn" onclick="setVisualMode('sphere')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🔮</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Sphere</span>
             </button>
             <!-- CUBE -->
-            <button id="cubeBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="cubeBtn" onclick="setVisualMode('cube')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">📦</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Cube</span>
             </button>
             <!-- DRAGON -->
-            <button id="dragonBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="dragonBtn" onclick="setVisualMode('dragon')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🐉</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Dragon</span>
             </button>
             <!-- GALAXY -->
-            <button id="galaxyBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="galaxyBtn" onclick="setVisualMode('galaxy')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🌌</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Galaxy</span>
             </button>
             <!-- MANDALA -->
-            <button id="mandalaBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="mandalaBtn" onclick="setVisualMode('mandala')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🕉️</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Mandala</span>
             </button>
             <!-- FLOW -->
-            <button id="flowBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="flowBtn" onclick="setVisualMode('particles')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🌀</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Flow</span>
             </button>
             <!-- LAVA -->
-            <button id="lavaBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="lavaBtn" onclick="setVisualMode('lava')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🌋</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Lava</span>
             </button>
             <!-- FIRE -->
-            <button id="fireplaceBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="fireplaceBtn" onclick="setVisualMode('fireplace')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🔥</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Fire</span>
             </button>
             <!-- RAIN -->
-            <button id="rainBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="rainBtn" onclick="setVisualMode('rainforest')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🌿</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Rain</span>
             </button>
             <!-- ZEN -->
-            <button id="zenBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="zenBtn" onclick="setVisualMode('zengarden')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🌸</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Zen</span>
             </button>
             <!-- OCEAN -->
-            <button id="oceanBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="oceanBtn" onclick="setVisualMode('ocean')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">🏝️</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Waves</span>
             </button>
             <!-- SNOWFLAKE -->
-            <button id="snowflakeBtn" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+            <button id="snowflakeBtn" onclick="setVisualMode('snowflake')" class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/20 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                 <span class="text-2xl">❄️</span>
                 <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)]">Snowflake</span>
             </button>
         </div>
 
-        <!-- SIDEBAR TOGGLES (FLOATING) -->
+        <!-- SIDEBAR TOGGLES (FIXED) -->
         <button id="leftToggle" class="fixed bottom-6 left-6 z-[110] p-4 rounded-full glass-lux border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all pointer-events-auto shadow-2xl">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
         </button>
         <button id="rightToggle" class="fixed bottom-6 right-6 z-[110] p-4 rounded-full glass-lux border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all pointer-events-auto shadow-2xl">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4" /></svg>
         </button>
->>>>>>> aad67a5 (Restore Perfect UI architecture: Immersive Dual-Sidebar, 12-button Dock with Snowflake, and Tabbed Navigation Foundation)
+
+            <!-- CONSOLIDATED VISUALS: Moved to Studio Visuals Tab -->
 
 
-                <div id="galaxySettingsPanel"
-                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
-                <!-- Back Button -->
-                <button onclick="document.getElementById('galaxySettingsPanel').classList.add('hidden')"
-                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                    Back
-                </button>
-                <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Sun Rotation</span>
-                <div class="flex items-center gap-4">
-                    <div class="flex flex-col gap-0.5">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RX</label>
-                        <input type="range" id="galaxySunRX" min="-2.0" max="2.0" step="0.1" value="0"
-                            class="premium-slider w-16">
-                    </div>
-                    <div class="flex flex-col gap-0.5">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RY</label>
-                        <input type="range" id="galaxySunRY" min="-2.0" max="2.0" step="0.1" value="0.5"
-                            class="premium-slider w-16">
-                    </div>
-                    <div class="flex flex-col gap-0.5">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RZ</label>
-                        <input type="range" id="galaxySunRZ" min="-2.0" max="2.0" step="0.1" value="0"
-                            class="premium-slider w-16">
-                    </div>
-                </div>
-            </div>
 
-            <div id="cyberSettingsPanel"
-                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30_px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
 
-                <!-- Back Button -->
-                <button onclick="document.getElementById('cyberSettingsPanel').classList.add('hidden')"
-                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                    Back
-                </button>
-
-                <span
-                    class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Cyber</span>
-
-                <!-- Mode Selector (4 buttons) -->
-                <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
-                    <button id="cyberModeRandom" data-cyber-mode="random"
-                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                        title="Random characters">RND</button>
-                    <button id="cyberModeMindwave" data-cyber-mode="mindwave"
-                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                        title="MINDWAVE text">MW</button>
-                    <button id="cyberModeCustom" data-cyber-mode="custom"
-                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                        title="Custom text">TXT</button>
-                    <button id="cyberModeInterstellar" data-cyber-mode="interstellar"
-                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                        title="Interstellar NavData">INT</button>
-                </div>
-
-                <!-- Custom Text Input (always visible) -->
-                <div id="cyberCustomTextInput">
-                    <input type="text" id="cyberTextInput" placeholder="WELCOME TO MINDWAVE" maxlength="32" autocomplete="off"
-                        class="w-20 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
-                </div>
-
-                <!-- Hidden checkbox for legacy JS compat -->
-                <input type="checkbox" id="cyberModeToggle" class="hidden" checked>
-
-                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                <!-- Color Area -->
-                <div class="flex items-center gap-3">
-                    <!-- Color -->
-                    <div class="flex flex-col gap-0.5 items-center">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
-                        <input type="color" id="cyberColorPicker" value="#00FF41"
-                            class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
-                    </div>
-
-                    <!-- Cyber Panel Specific Color Controls -->
-                    <div class="flex items-center gap-1 mt-2">
-                        <!-- Random Color -->
-                        <button id="cyberRandomColorBtn"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                            title="Random Cyber Color">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="16 3 21 3 21 8"></polyline>
-                                <line x1="4" y1="20" x2="21" y2="3"></line>
-                                <polyline points="21 16 21 21 16 21"></polyline>
-                                <line x1="15" y1="15" x2="21" y2="21"></line>
-                                <line x1="4" y1="4" x2="9" y2="9"></line>
-                            </svg>
-                        </button>
-                        <!-- Previous Color (Back) -->
-                        <button id="cyberPrevColorBtn"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                            title="Previous Cyber Color">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-                        <!-- Vibration Toggle -->
-                        <button id="cyberVibrationToggle"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
-                            title="Toggle Cyber Vibration">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Rainbow -->
-                    <div class="flex flex-col gap-0.5 items-center ml-2">
-                        <div class="flex gap-1 items-center">
-                            <span id="labelCyberRGB"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
-                            <span class="text-[8px] text-white/20 select-none">/</span>
-                            <span id="labelCyberRainbow"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
-                        </div>
-                        <label class="premium-toggle">
-                            <input type="checkbox" id="cyberRainbowToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                <!-- Sliders Group -->
-                <div class="flex items-center gap-3">
-                    <!-- Speed -->
-                    <div class="flex flex-col gap-0.5 w-20">
-                        <div class="flex justify-between items-center px-0.5">
-                            <label class="premium-label">SPD</label>
-                            <span id="cyberSpeedVal" class="premium-value">1.0</span>
-                        </div>
-                        <input type="range" id="cyberSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
-                            class="premium-slider">
-                    </div>
-
-                    <!-- Length -->
-                    <div class="flex flex-col gap-0.5 w-20">
-                        <div class="flex justify-between items-center px-0.5">
-                            <label class="premium-label">LEN</label>
-                            <span id="cyberLengthVal" class="premium-value">1.0</span>
-                        </div>
-                        <input type="range" id="cyberLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                            class="premium-slider">
-                    </div>
-
-                    <!-- Angle -->
-                    <div class="flex flex-col gap-0.5 w-20">
-                        <div class="flex justify-between items-center px-0.5">
-                            <label class="premium-label">ANG</label>
-                            <span id="cyberAngleVal" class="premium-value">0°</span>
-                        </div>
-                        <input type="range" id="cyberAngleSlider" min="0" max="360" step="15" value="0"
-                            class="premium-slider">
-                    </div>
-
-                    <!-- Brightness (LUM) -->
-                    <div class="flex flex-col gap-0.5 w-24">
-                        <div class="flex justify-between items-center px-0.5">
-                            <label class="premium-label">LUM</label>
-                            <span id="cyberBrightnessVal" class="premium-value">1.0</span>
-                        </div>
-                        <input type="range" id="cyberBrightnessSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                            class="premium-slider">
-                    </div>
-                </div>
-            </div>
-
-            <div id="matrixSettingsPanel"
-                    class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
-                    
-                    <!-- Back Button -->
-                    <button onclick="document.getElementById('matrixSettingsPanel').classList.add('hidden')"
-                        class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                        Back
-                    </button>
-
-                    <span
-                        class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Matrix</span>
-
-                    <!-- Mode Selector (4 buttons) -->
-                    <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
-                        <button id="matrixModeRandom" data-matrix-mode="random"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Random characters">RND</button>
-                        <button id="matrixModeMindwave" data-matrix-mode="mindwave"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="MINDWAVE text">MW</button>
-                        <button id="matrixModeCustom" data-matrix-mode="custom"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Custom text">TXT</button>
-                        <button id="matrixModeInterstellar" data-matrix-mode="interstellar"
-                            class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
-                            title="Interstellar NavData">INT</button>
-                    </div>
-
-                    <!-- Custom Text Input (always visible) -->
-                    <div id="matrixCustomTextInput">
-                        <input type="text" id="matrixTextInput" placeholder="Welcome" maxlength="20" autocomplete="off"
-                            class="w-24 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
-                    </div>
-
-                    <!-- Hidden checkbox for legacy JS compat -->
-                    <input type="checkbox" id="matrixModeToggle" class="hidden" checked>
-
-                    <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                <!-- Color Area -->
-                <div class="flex items-center gap-3">
-                    <!-- Color -->
-                    <div class="flex flex-col gap-0.5 items-center">
-                        <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
-                        <input type="color" id="matrixColorPicker" value="#00FF41"
-                            class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
-                    </div>
-
-                    <!-- Matrix Panel Specific Color Controls -->
-                    <div class="flex items-center gap-1 mt-2">
-                        <!-- Random Color -->
-                        <button id="matrixRandomColorBtn"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                            title="Random Matrix Color">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="16 3 21 3 21 8"></polyline>
-                                <line x1="4" y1="20" x2="21" y2="3"></line>
-                                <polyline points="21 16 21 21 16 21"></polyline>
-                                <line x1="15" y1="15" x2="21" y2="21"></line>
-                                <line x1="4" y1="4" x2="9" y2="9"></line>
-                            </svg>
-                        </button>
-                        <!-- Previous Color (Back) -->
-                        <button id="matrixPrevColorBtn"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
-                            title="Previous Matrix Color">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-                        <!-- Vibration Toggle -->
-                        <button id="matrixVibrationToggle"
-                            class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]"
-                            title="Toggle Matrix Vibration">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Rainbow -->
-                    <div class="flex flex-col gap-0.5 items-center ml-2">
-                        <div class="flex gap-1 items-center">
-                            <span id="labelRGB"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
-                            <span class="text-[8px] text-white/20 select-none">/</span>
-                            <span id="labelRainbow"
-                                class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
-                        </div>
-                        <label class="premium-toggle">
-                            <input type="checkbox" id="matrixRainbowToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                    <div class="w-px h-6 bg-white/10 mx-0.5"></div>
-
-                    <!-- Sliders Group -->
-                    <div class="flex items-center gap-3">
-                        <!-- Speed -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">SPD</label>
-                                <span id="matrixSpeedVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="matrixSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Length -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">LEN</label>
-                                <span id="matrixLengthVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="matrixLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Angle -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">ANG</label>
-                                <span id="matrixAngleVal" class="premium-value">0°</span>
-                            </div>
-                            <input type="range" id="matrixAngleSlider" min="0" max="360" step="15" value="0"
-                                class="premium-slider">
-                        </div>
-
-                        <!-- Brightness (LUM) -->
-                        <div class="flex flex-col gap-0.5 w-24">
-                            <div class="flex justify-between items-center px-0.5">
-                                <label class="premium-label">LUM</label>
-                                <span id="matrixBrightnessVal" class="premium-value">1.0</span>
-                            </div>
-                            <input type="range" id="matrixBrightnessSlider" min="0.1" max="2.0" step="0.1" value="1.0"
-                                class="premium-slider">
-                        </div>
-                    </div>
-
-                </div>
             </div>
 
             <!-- RIGHT: Recording & Mixer Toggle -->
@@ -1232,579 +401,151 @@
 
     </div>
 
-       <!-- LEFT SIDEBAR: HUB TUESDAY -->
+    <!-- LEFT SIDEBAR: HUB -->
     <aside id="leftPanel"
-<<<<<<< HEAD
-        class="fixed top-0 left-0 h-full w-64 glass-lux border-r border-white/10 transform -translate-x-full transition-transform duration-500 z-40 flex flex-col pointer-events-auto ui-fade-target">
-        <div
-            class="relative w-full p-6 border-b border-white/10 flex flex-col justify-center items-center bg-[var(--bg-panel)] shrink-0 min-h-[140px] gap-4">
-            <a href="#" onclick="window.location.reload()" class="hover:opacity-80 transition-opacity block">
-                <img src="./mindwave-logo.png" alt="MindWave Logo"
-                    class="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.3)] rounded-xl relative z-10 vibrant-logo">
-            </a>
-
-            <!-- AI GOAL INPUT SECTION -->
-            <div id="aiGoalSection" class="w-full px-2 animate-[fade-in_0.5s_ease]">
-                <div class="w-full space-y-2 px-2 animate-[fade-in_0.5s_ease]">
-                    <input type="text" id="aiGoalInput" placeholder="Try 'Focus for 20 mins'..."
-                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[var(--accent)] transition-all">
-                    <button id="aiGenerateBtn"
-                        class="w-full py-2.5 bg-[var(--accent)] text-[var(--bg-main)] rounded-xl text-[10px] font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all flex items-center justify-center shadow-[0_4px_15px_rgba(45,212,191,0.2)]">
-                        <span id="aiBtnText">GO</span>
-                        <div id="aiBtnSpinner"
-                            class="hidden w-3 h-3 border-2 border-[var(--bg-main)] border-t-transparent rounded-full animate-spin">
-                        </div>
-                    </button>
-                </div>
-                <div id="aiInsight"
-                    class="hidden mt-2 text-[9px] text-[var(--accent)] italic leading-relaxed px-1 opacity-80"></div>
+        class="fixed top-0 left-0 h-full w-80 glass-lux border-r border-white/10 transform -translate-x-full transition-transform duration-500 z-40 flex flex-col pointer-events-auto ui-fade-target shadow-[20px_0_60px_-15px_rgba(0,0,0,0.5)]">
+        
+        <!-- AI Goal Input (Sticky Top) -->
+        <div class="p-6 border-b border-white/10 shrink-0">
+            <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-[0.2em] mb-3">Set Your Intention</h3>
+            <div class="relative group">
+                <input type="text" id="aiGoalInput" 
+                    placeholder="'focus' or 'sleep'"
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-white/20 focus:border-[var(--accent)]/50 focus:bg-white/10 transition-all outline-none">
+                <button id="aiGenerateBtn" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-[var(--accent)]/20 text-[var(--accent)] hover:bg-[var(--accent)]/30 transition-all">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
             </div>
-            <button id="closeLeftBtn" class="absolute top-4 right-4 opacity-50 hover:opacity-100 z-20"><svg width="20"
-                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg></button>
         </div>
 
-        <!-- MAIN CONTAINER FOR BUTTONS - Scrollable -->
-        <div class="flex-1 flex flex-col p-2 gap-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
-            <!-- Brain Waves Group -->
-            <section class="mixer-section" data-section="brain_waves">
-                <div class="py-2 flex items-center justify-between shrink-0 cursor-pointer section-header"
-                    onclick="toggleLeftMenuSection('brain_waves')">
-                    <div class="flex items-center gap-2">
-                        <svg class="section-arrow transition-transform duration-200" width="12" height="12"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                        <h3 class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase">Brain Waves</h3>
-                        <button class="ml-2 transition-colors relative" aria-label="Info"
-                            onclick="event.stopPropagation(); showInfoModal('brain_waves')"
-                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="h-px flex-1 bg-white/10 ml-2"></div>
-                </div>
-                <div class="section-content mt-2">
-                    <!-- 2-Column Grid for Brain Waves -->
-                    <div class="grid grid-cols-2 gap-1.5 w-full">
-                        <button title="Deep restorative sleep (0.5-4Hz)" onclick="applyPreset('delta', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3">
-                            <span
-                                class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Delta</span>
-                            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Sleep</span>
-                        </button>
-                        <button title="Deep meditation and dreaming (4-8Hz)" onclick="applyPreset('theta', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3 relative">
-                            <span class="absolute top-1 right-1 text-[9px] opacity-70">🔒</span>
-                            <span
-                                class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Theta</span>
-                            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Meditation</span>
-                        </button>
-                        <button title="Relaxed focus and creativity (8-14Hz)" onclick="applyPreset('alpha', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3 relative">
-                            <span class="absolute top-1 right-1 text-[9px] opacity-70">🔒</span>
-                            <span
-                                class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Alpha</span>
-                            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Relaxation</span>
-                        </button>
-                        <!-- Mu Waves (8-13Hz, between Alpha and Beta) -->
-                        <button title="Sensorimotor rhythm for body syncing (9-11Hz)" onclick="applyPreset('mu', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3 relative">
-                            <span class="absolute top-1 right-1 text-[9px] opacity-70">🔒</span>
-                            <span
-                                class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Mu</span>
-                            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Body Sync</span>
-                        </button>
-                        <button title="Active focus and alertness (14-30Hz)" onclick="applyPreset('beta', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3">
-                            <span
-                                class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Beta</span>
-                            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Focus</span>
-                        </button>
-                        <button title="Peak awareness and cognition (30-100Hz)" onclick="applyPreset('gamma', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-3 relative">
-                            <span class="absolute top-1 right-1 text-[9px] opacity-70">🔒</span>
-                            <span
-                                class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Gamma</span>
-                            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Awareness</span>
-                        </button>
-                        <!-- Hyper-Gamma (Locked by default) - Full width spanning both columns -->
-                        <button id="hyperGammaBtn" title="Advanced high-frequency states (40-100Hz)"
-                            onclick="handleHyperGammaClick(this)"
-                            class="preset-btn col-span-2 flex flex-col items-center justify-center glass-pill border border-amber-500/30 hover:bg-white/10 hover:border-amber-500/50 transition-all group relative py-3">
-                            <span id="hyperGammaLock" class="absolute top-1 right-1 text-[10px]">🔒</span>
-                            <span
-                                class="text-sm font-bold text-amber-400 text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Hyper-Γ</span>
-                            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">40-100Hz • Advanced</span>
-                        </button>
-                    </div>
-                </div>
-            </section>
+        <!-- Tab Headers -->
+        <div class="flex border-b border-white/10 shrink-0">
+            <button data-ltab="modes" class="l-tab-btn active flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] border-b-2 border-[var(--accent)] transition-all">Modes</button>
+            <button data-ltab="library" class="l-tab-btn flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">Library</button>
+            <button data-ltab="freq" class="l-tab-btn flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">Freq</button>
+        </div>
 
-            <!-- Healing Group -->
-            <section class="mixer-section" data-section="healing">
-                <div class="py-2 flex items-center justify-between shrink-0 cursor-pointer section-header"
-                    onclick="toggleLeftMenuSection('healing')">
-                    <div class="flex items-center gap-2">
-                        <svg class="section-arrow transition-transform duration-200" width="12" height="12"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                        <h3 class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase">Healing</h3>
-                        <button class="ml-2 transition-colors relative" aria-label="Info"
-                            onclick="event.stopPropagation(); showInfoModal('healing')"
-                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+            
+            <!-- [TAB: MODES] - Healing & Beats -->
+            <div id="ltab-modes" class="l-tab-content p-6 space-y-6">
+                <section>
+                    <h4 class="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-4">Solfeggio Healing</h4>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button onclick="applyPreset('heal-174', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">174Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">Pain</span>
+                        </button>
+                        <button onclick="applyPreset('heal-285', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">285Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">Repair</span>
+                        </button>
+                        <button onclick="applyPreset('heal-396', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">396Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">Fear</span>
+                        </button>
+                        <button onclick="applyPreset('heal-417', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">417Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">Change</span>
+                        </button>
+                        <button onclick="applyPreset('heal-528', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">528Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">DNA</span>
+                        </button>
+                        <button onclick="applyPreset('heal-639', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">639Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">Connect</span>
+                        </button>
+                        <button onclick="applyPreset('heal-741', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">741Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">Solve</span>
+                        </button>
+                        <button onclick="applyPreset('heal-852', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">852Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">Intuition</span>
+                        </button>
+                        <button onclick="applyPreset('heal-963', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">963Hz</span>
+                            <span class="text-[7px] text-white/30 uppercase tracking-tighter">Spirit</span>
+                        </button>
+                        <!-- Nature Sync -->
+                        <button onclick="applyPreset('heal-432', this)" class="preset-btn p-2 rounded-lg bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all flex flex-col items-center col-span-3 gap-0.5 group">
+                            <span class="text-[10px] font-bold text-[var(--accent)] group-hover:scale-110 transition-transform">432Hz Nature Harmony</span>
                         </button>
                     </div>
-                    <div class="h-px flex-1 bg-white/10 ml-2"></div>
-                </div>
-                <div class="section-content mt-2">
-                    <div class="grid grid-cols-2 gap-1.5 shrink-0">
-                        <button title="Pain relief and security" onclick="applyPreset('heal-174', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">174
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Pain Relief</span>
+                </section>
+                
+                <section>
+                    <h4 class="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-4">Wave Architecture</h4>
+                    <div id="modeToggle" class="space-y-2">
+                        <button data-mode="binaural" class="mode-btn w-full p-4 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 hover:text-[var(--accent)] hover:border-[var(--accent)]/50 transition-all text-left flex justify-between items-center">
+                            <span>Binaural Beats</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-white/20"></span>
                         </button>
-                        <button title="Tissue regeneration" onclick="applyPreset('heal-285', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">285
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Tissue</span>
-                        </button>
-                        <button title="Liberation from fear" onclick="applyPreset('heal-396', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">396
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Liberation</span>
-                        </button>
-                        <button title="Facilitating change" onclick="applyPreset('heal-417', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">417
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Change</span>
-                        </button>
-                        <button title="Nature's balance" onclick="applyPreset('heal-432', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">432
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Nature</span>
-                        </button>
-                        <button title="DNA repair and miracles" onclick="applyPreset('heal-528', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">528
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Repair</span>
-                        </button>
-                        <button title="Connecting relationships" onclick="applyPreset('heal-639', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">639
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Connection</span>
-                        </button>
-                        <button title="Awakening intuition" onclick="applyPreset('heal-741', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">741
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Intuition</span>
-                        </button>
-                        <button title="Returning to spiritual order" onclick="applyPreset('heal-852', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">852
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Spirit</span>
-                        </button>
-                        <button title="Divine consciousness" onclick="applyPreset('heal-963', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">963
-                                Hz</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Oneness</span>
+                        <button data-mode="isochronic" class="mode-btn w-full p-4 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 hover:text-[var(--accent)] hover:border-[var(--accent)]/50 transition-all text-left flex justify-between items-center">
+                            <span>Isochronic Tones</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-white/20"></span>
                         </button>
                     </div>
-                </div>
-            </section>
-
-            <!-- Ambience Group -->
-            <section class="mixer-section" data-section="ambience">
-                <div class="py-2 flex items-center justify-between shrink-0 cursor-pointer section-header"
-                    onclick="toggleLeftMenuSection('ambience')">
-                    <div class="flex items-center gap-2">
-                        <svg class="section-arrow transition-transform duration-200" width="12" height="12"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                        <h3 class="text-[10px] font-bold text-[var(--accent)] tracking-widest uppercase">Ambience</h3>
-                        <button class="ml-2 transition-colors relative" aria-label="Info"
-                            onclick="event.stopPropagation(); showInfoModal('ambience')"
-                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="h-px flex-1 bg-white/10 ml-2"></div>
-                </div>
-                <div class="section-content mt-2">
-                    <div class="grid grid-cols-2 gap-1.5 shrink-0">
-                        <button title="Cozy rain with chill beats" onclick="applyComboPreset('lofi-rain', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🌧️</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Lofi
-                                Rain</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Chill + Rain</span>
-                        </button>
-                        <button title="Peaceful night atmosphere" onclick="applyComboPreset('night-ambient', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🌙</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Night</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Peaceful Sleep</span>
-                        </button>
-                        <button title="Dramatic focus music" onclick="applyComboPreset('epic-focus', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">⚔️</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Epic</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Focus Mode</span>
-                        </button>
-                        <button title="Calming waves" onclick="applyComboPreset('ocean-drift', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🌊</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Ocean</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Wave Drift</span>
-                        </button>
-                        <button title="Intense thunderstorm" onclick="applyComboPreset('storm-focus', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">⛈️</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Storm</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Intense Work</span>
-                        </button>
-                        <button title="Spiritual bells and chants" onclick="applyComboPreset('temple-zen', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🔔</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Temple</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Spiritual Zen</span>
-                        </button>
-                        <button title="Crackling fire warmth" onclick="applyComboPreset('cozy-fireplace', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🔥</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Fireplace</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Cozy Warmth</span>
-                        </button>
-                        <button title="Birds and nature sounds" onclick="applyComboPreset('forest-retreat', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🌲</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Forest</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Nature Immersion</span>
-                        </button>
-                        <button title="Space drone ambience" onclick="applyComboPreset('cosmic-journey', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🌌</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Cosmic</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Exploration</span>
-                        </button>
-                        <button title="Alpine wind and zen mountains" onclick="applyComboPreset('mountain-zen', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🏔️</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Zen
-                                Mountain</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Alpine + Zen</span>
-                        </button>
-                        <button title="Mountain river flow" onclick="applyComboPreset('river-flow', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">🛶</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">River
-                                Flow</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">River + Nature</span>
-                        </button>
-                        <button title="Gentle sunrise vibes" onclick="applyComboPreset('morning-clarity', this)"
-                            class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                            <span class="text-sm">☀️</span>
-                            <span
-                                class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Morning</span>
-                            <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Gentle Clarity</span>
-                        </button>
-                    </div>
-                </div>
-            </section>
-=======
-            <div class="py-2 flex items-center justify-center shrink-0">
-                <div class="h-px w-full bg-white/10"></div>
-                <span
-                    class="px-2 text-[10px] font-bold text-[var(--accent)] tracking-widest bg-[#0f172a]/0">HEALING</span>
-                <button class="mr-2 transition-colors relative" aria-label="Info" onclick="showInfoModal('healing')"
-                    style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                </button>
-                <div class="h-px w-full bg-white/10"></div>
+                </section>
             </div>
 
-            <!-- Healing Group - 2 Column Grid -->
-            <div class="grid grid-cols-2 gap-1.5 shrink-0">
-
-                <button title="Pain relief and security" onclick="applyPreset('heal-174', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">174
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Pain Relief</span>
-                </button>
-                <button title="Tissue regeneration" onclick="applyPreset('heal-285', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">285
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Tissue</span>
-                </button>
-                <button title="Liberation from fear" onclick="applyPreset('heal-396', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">396
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Liberation</span>
-                </button>
-                <button title="Facilitating change" onclick="applyPreset('heal-417', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">417
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Change</span>
-                </button>
-                <button title="Nature's balance" onclick="applyPreset('heal-432', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">432
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Nature</span>
-                </button>
-                <button title="DNA repair and miracles" onclick="applyPreset('heal-528', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">528
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Repair</span>
-                </button>
-                <button title="Connecting relationships" onclick="applyPreset('heal-639', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">639
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Connection</span>
-                </button>
-                <button title="Awakening intuition" onclick="applyPreset('heal-741', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">741
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Intuition</span>
-                </button>
-                <button title="Returning to spiritual order" onclick="applyPreset('heal-852', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">852
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Spirit</span>
-                </button>
-                <button title="Divine consciousness" onclick="applyPreset('heal-963', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">963
-                        Hz</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Oneness</span>
-                </button>
+            <!-- [TAB: LIBRARY] - Presets -->
+            <div id="ltab-library" class="l-tab-content hidden p-6 space-y-6">
+                <section>
+                    <h4 class="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-4">Brainwave Presets</h4>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="applyPreset('alpha', this)" class="preset-btn p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all flex justify-between items-center group">
+                            <div class="flex flex-col items-start gap-0.5">
+                                <span class="text-xs font-bold text-white/80 group-hover:text-[var(--accent)] transition-colors">Alpha Focus</span>
+                                <span class="text-[9px] text-white/30 uppercase tracking-tighter">8Hz - 12Hz</span>
+                            </div>
+                            <span class="text-lg">🧘</span>
+                        </button>
+                        <button onclick="applyPreset('delta', this)" class="preset-btn p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all flex justify-between items-center group">
+                            <div class="flex flex-col items-start gap-0.5">
+                                <span class="text-xs font-bold text-white/80 group-hover:text-[var(--accent)] transition-colors">Deep Sleep</span>
+                                <span class="text-[9px] text-white/30 uppercase tracking-tighter">1Hz - 4Hz</span>
+                            </div>
+                            <span class="text-lg">💤</span>
+                        </button>
+                    </div>
+                </section>
             </div>
 
-            <div class="py-2 flex items-center justify-center shrink-0">
-                <div class="h-px w-full bg-white/10"></div>
-                <span
-                    class="px-2 text-[10px] font-bold text-[var(--accent)] tracking-widest bg-[#0f172a]/0">AMBIENCE</span>
-                <button class="mr-2 transition-colors relative" aria-label="Info" onclick="showInfoModal('ambience')"
-                    style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                </button>
-                <div class="h-px w-full bg-white/10"></div>
+            <!-- [TAB: FREQ] - Manual Controls -->
+            <div id="ltab-freq" class="l-tab-content hidden p-6 space-y-8">
+                <section class="space-y-6">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-white/40">Base Tone</span>
+                            <span id="baseValueDisplay" class="text-xs font-mono text-[var(--accent)]">200Hz</span>
+                        </div>
+                        <input type="range" id="baseSlider" min="50" max="1000" value="200" class="premium-slider">
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-white/40">Entrainment</span>
+                            <span id="beatValueDisplay" class="text-xs font-mono text-[var(--accent)]">10Hz</span>
+                        </div>
+                        <input type="range" id="beatSlider" min="0.5" max="100" step="0.1" value="10" class="premium-slider">
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-white/40">Stereo Balance</span>
+                            <span id="balanceValue" class="text-xs font-mono text-[var(--accent)]">0</span>
+                        </div>
+                        <input type="range" id="balanceSlider" min="-1" max="1" step="0.01" value="0" class="premium-slider">
+                    </div>
+                </section>
             </div>
 
-            <!-- Ambience Combos - 2 Column Grid -->
-            <div class="grid grid-cols-2 gap-1.5 shrink-0">
-                <button title="Cozy rain with chill beats" onclick="applyComboPreset('lofi-rain', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🌧️</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Lofi
-                        Rain</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Chill + Rain</span>
-                </button>
-                <button title="Peaceful night atmosphere" onclick="applyComboPreset('night-ambient', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🌙</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Night</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Peaceful Sleep</span>
-                </button>
-                <button title="Dramatic focus music" onclick="applyComboPreset('epic-focus', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">⚔️</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Epic</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Focus Mode</span>
-                </button>
-                <button title="Calming waves" onclick="applyComboPreset('ocean-drift', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🌊</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Ocean</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Wave Drift</span>
-                </button>
-                <button title="Intense thunderstorm" onclick="applyComboPreset('storm-focus', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">⛈️</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Storm</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Intense Work</span>
-                </button>
-                <button title="Spiritual bells and chants" onclick="applyComboPreset('temple-zen', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🔔</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Temple</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Spiritual Zen</span>
-                </button>
-                <button title="Crackling fire warmth" onclick="applyComboPreset('cozy-fireplace', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🔥</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Fireplace</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Cozy Warmth</span>
-                </button>
-                <button title="Birds and nature sounds" onclick="applyComboPreset('forest-retreat', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🌲</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Forest</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Nature Immersion</span>
-                </button>
-                <button title="Space drone ambience" onclick="applyComboPreset('cosmic-journey', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🌌</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Cosmic</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Exploration</span>
-                </button>
-                <button title="Alpine wind and zen mountains" onclick="applyComboPreset('mountain-zen', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🏔️</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Zen
-                        Mountain</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Alpine + Zen</span>
-                </button>
-                <button title="Mountain river flow" onclick="applyComboPreset('river-flow', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">🛶</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">River
-                        Flow</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">River + Nature</span>
-                </button>
-                <button title="Gentle sunrise vibes" onclick="applyComboPreset('morning-clarity', this)"
-                    class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group py-2">
-                    <span class="text-sm">☀️</span>
-                    <span
-                        class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">Morning</span>
-                    <span class="text-[8px] text-[var(--text-muted)] mt-0.5">Gentle Clarity</span>
-                </button>
-            </div>
->>>>>>> aad67a5 (Restore Perfect UI architecture: Immersive Dual-Sidebar, 12-button Dock with Snowflake, and Tabbed Navigation Foundation)
-            <!-- Saved Mixes Link -->
-            <div class="p-4 border-t border-white/10 flex flex-col gap-2">
-                <!-- Journey Program Button -->
-                <button id="journeyBtn"
-                    class="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--accent)]/50 text-xs font-bold flex items-center gap-3 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-                        <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-                    </svg>
-                    <span class="flex-1 text-left">My Journey</span>
-                    <span class="px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[8px] uppercase">21
-                        Days</span>
-                </button>
-                <button id="historyBtn"
-                    class="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--accent)]/50 text-xs font-bold flex items-center gap-3 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                    </svg>
-                    <span class="flex-1 text-left">My Library</span>
-                </button>
-                <!-- Stats Button -->
-                <button id="statsBtn"
-                    class="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--accent)]/50 text-xs font-bold flex items-center gap-3 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 20V10"></path>
-                        <path d="M12 20V4"></path>
-                        <path d="M6 20v-6"></path>
-                    </svg>
-                    <span class="flex-1 text-left">My Stats</span>
-                </button>
+        </div>
 
-                <!-- Download App Button (PWA Install) -->
-                <button id="downloadAppBtn"
-                    class="w-full py-2.5 px-4 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/30 hover:bg-[var(--accent)]/20 hover:border-[var(--accent)] text-xs font-bold flex items-center gap-3 text-[var(--accent)] hover:text-white transition-all">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span class="flex-1 text-left">Download App</span>
-                </button>
-            </div>
-
+        <!-- Utility Footer -->
+        <div class="p-4 border-t border-white/10 flex flex-col gap-2 shrink-0">
+            <button id="closeLeftBtn" class="w-full py-3 rounded-xl bg-white/5 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-white/40">Minimize Presets</button>
+        </div>
     </aside>
 
     <!-- RIGHT SIDEBAR: STUDIO HUB -->
@@ -1814,7 +555,7 @@
         <!-- Tab Headers -->
         <div class="flex border-b border-white/10 shrink-0">
             <button data-tab="mixer" class="studio-tab-btn active flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] border-b-2 border-[var(--accent)] transition-all">Mixer</button>
-            <button data-tab="studio" class="studio-tab-btn flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">Studio</button>
+            <button data-tab="visuals" class="studio-tab-btn flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">Visuals</button>
             <button data-tab="config" class="studio-tab-btn flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">Config</button>
         </div>
 
@@ -1837,68 +578,117 @@
                 </section>
 
                 <!-- Soundscapes / Atmosphere -->
+                <!-- Session / Recording -->
+                <section class="mixer-section">
+                    <h3 class="text-[9px] font-bold text-white/60 uppercase tracking-widest mb-4">Session Control</h3>
+                    <div class="flex gap-2">
+                        <button id="recordBtn" class="flex-1 py-4 rounded-xl bg-white/5 border border-white/10 hover:border-[var(--secondary)] transition-all flex flex-col items-center gap-2 group">
+                            <span class="w-2.5 h-2.5 rounded-full bg-white/20 group-hover:bg-red-500 transition-colors"></span>
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white">Record</span>
+                        </button>
+                        <button id="videoToggleBtn" class="flex-1 py-4 rounded-xl bg-white/5 border border-white/10 hover:border-[var(--accent)] transition-all flex flex-col items-center gap-2 group">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/20 group-hover:text-[var(--accent)]"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white">Video</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Soundscapes / Atmosphere -->
                 <section class="mixer-section" data-section="atmosphere">
                     <div class="flex justify-between items-center mb-4 cursor-pointer section-header" onclick="toggleMixerSection('atmosphere')">
                         <h3 class="text-[9px] font-bold text-white/60 uppercase tracking-widest">Atmosphere</h3>
                         <svg class="section-arrow transition-transform duration-200" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
                     </div>
                     <div class="section-content space-y-4">
-                        <!-- Placeholder for existing sliders in controls_v3.js -->
                         <div id="soundscapeControls" class="space-y-4"></div>
                     </div>
                 </section>
             </div>
 
-            <!-- [TAB: STUDIO] -->
-            <div id="tab-studio" class="studio-tab-content hidden p-6 space-y-8">
+            <!-- [TAB: VISUALS] - Consolidated Settings -->
+            <div id="tab-visuals" class="studio-tab-content hidden p-6 space-y-8">
                 <section class="mixer-section">
-                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-6">Generator Engine</h3>
-                    
-                    <div class="space-y-8">
-                        <!-- Pitch -->
+                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-6">Global Render</h3>
+                    <div class="space-y-6">
+                        <!-- Brightness -->
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Base Pitch</span>
-                                <span id="baseValue" class="text-xs font-mono text-[var(--accent)]">200Hz</span>
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Luminance</span>
+                                <span id="dimmerValue" class="text-xs font-mono text-[var(--accent)]">0%</span>
                             </div>
-                            <input type="range" id="baseSlider" min="50" max="1000" value="200" class="premium-slider">
+                            <input type="range" id="globalDimmerSlider" min="0" max="0.9" step="0.01" value="0" class="premium-slider">
                         </div>
-
-                        <!-- Beat -->
+                        <!-- Speed -->
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Beat Frequency</span>
-                                <span id="beatValue" class="text-xs font-mono text-[var(--accent)]">10Hz</span>
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Warp Speed</span>
+                                <span id="speedValue" class="text-xs font-mono text-[var(--accent)]">1.0x</span>
                             </div>
-                            <input type="range" id="beatSlider" min="0.5" max="100" step="0.1" value="10" class="premium-slider">
-                        </div>
-
-                        <!-- Binaural Vol -->
-                        <div class="flex flex-col gap-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">Binaural Level</span>
-                                <span id="volValue" class="text-xs font-mono text-[var(--accent)]">50%</span>
+                            <div class="flex gap-2">
+                                <input type="range" id="visualSpeedSlider" min="0" max="1" step="0.01" value="0.25" class="premium-slider flex-1">
+                                <button id="visualSyncBtn" class="p-2 rounded-lg bg-white/5 border border-white/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 transition-all" title="Sync to BPM">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H7M17 19H7M2 12h20"/></svg>
+                                </button>
                             </div>
-                            <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.5" class="premium-slider">
-                        </div>
-
-                        <!-- Balance -->
-                        <div class="flex flex-col gap-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-white/60">L/R Balance</span>
-                                <span id="balanceValue" class="text-xs font-mono text-[var(--accent)]">0</span>
-                            </div>
-                            <input type="range" id="balanceSlider" min="-1" max="1" step="0.1" value="0" class="premium-slider">
                         </div>
                     </div>
                 </section>
-                
-                <section class="mixer-section">
-                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4">Mode Selection</h3>
-                    <div id="modeToggle" class="grid grid-cols-1 gap-2 p-1 bg-black/40 rounded-xl border border-white/10">
-                        <button data-mode="binaural" class="mode-btn px-4 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">Binaural Beats</button>
-                        <button data-mode="isochronic" class="mode-btn px-4 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">Isochronic Tones</button>
-                        <button data-mode="monaural" class="mode-btn px-4 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">Monaural Beats</button>
+
+                <!-- CONTEXTUAL PANEL: CYMATICS (Hidden until active) -->
+                <section id="cymaticsPanel" class="mixer-section hidden active-only animate-fade-in">
+                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4">Cymatic Control</h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-2">
+                            <button id="cymaticBackBtn" onclick="getVisualizer().prevCymatic()" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all text-[9px] font-bold uppercase tracking-widest">Back</button>
+                            <button id="cymaticNextBtn" onclick="getVisualizer().nextCymatic()" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/5 hover:border-[var(--accent)] transition-all text-[9px] font-bold uppercase tracking-widest">Random</button>
+                        </div>
+                        <div class="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[9px] uppercase tracking-widest text-white/40">Rotation Timer</span>
+                                <span id="cymaticTimerLabel" class="text-[var(--accent)] font-mono text-[10px]">60s</span>
+                            </div>
+                            <input type="range" id="cymaticTimerSlider" min="0" max="301" step="1" value="60" class="premium-slider">
+                            <div class="flex justify-between text-[8px] text-white/20 font-mono">
+                                <span>OFF</span>
+                                <span>INF</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CONTEXTUAL PANEL: GALAXY -->
+                <section id="galaxyPanel" class="mixer-section hidden active-only animate-fade-in">
+                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4">Celestial Engine</h3>
+                    <div class="space-y-4">
+                        <button onclick="window.controls.toggleGalaxySun()" class="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-widest hover:border-[var(--accent)] transition-all">Switch Sun Style</button>
+                        <div class="space-y-3">
+                            <label class="text-[8px] text-[var(--text-muted)] uppercase tracking-widest">Sun Rotation (X/Y/Z)</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <input type="range" id="galaxySunRX" min="-2.0" max="2.0" step="0.1" value="0" class="premium-slider">
+                                <input type="range" id="galaxySunRY" min="-2.0" max="2.0" step="0.1" value="0.5" class="premium-slider">
+                                <input type="range" id="galaxySunRZ" min="-2.0" max="2.0" step="0.1" value="0" class="premium-slider">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CONTEXTUAL PANEL: MATRIX/CYBER -->
+                <section id="matrixPanel" class="mixer-section hidden active-only animate-fade-in">
+                    <h3 class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4">Neural Override</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-3 gap-1 bg-black/40 p-1 rounded-xl">
+                            <button onclick="setMatrixMode('random')" class="py-2 rounded-lg text-[8px] font-bold uppercase hover:bg-white/10 transition-all">RND</button>
+                            <button onclick="setMatrixMode('mindwave')" class="py-2 rounded-lg text-[8px] font-bold uppercase hover:bg-white/10 transition-all">MW</button>
+                            <button onclick="setMatrixMode('custom')" class="py-2 rounded-lg text-[8px] font-bold uppercase hover:bg-white/10 transition-all">TXT</button>
+                        </div>
+                        <input type="text" id="matrixTextInput" placeholder="ENTER TEXT..." maxlength="20" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] text-white outline-none focus:border-[var(--accent)] transition-all">
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                            <span class="text-[9px] font-bold text-white/40 uppercase">Vibration</span>
+                            <label class="premium-toggle">
+                                <input type="checkbox" id="matrixVibrationToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -2672,7 +1462,7 @@
     </div>
 
     <!-- Stats Modal -->
-    <div id="statsModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 hidden">
+    <div id="statsModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
 
         <div class="glass-card p-6 rounded-2xl shadow-2xl max-w-md w-full mx-4 flex flex-col gap-4">
             <div class="flex justify-between items-center">
@@ -2930,89 +1720,98 @@
             opacity: 0;
         }
 
-        .mixer-section.collapsed .section-arrow {
-            transform: rotate(-90deg);
-        }
-    </style>
-    <script>
-        // Toggle mixer sections collapse/expand
+        .    <script>
+        /**
+         * MINDWAVE MASTER SIDEBAR MANAGEMENT
+         * Restores the "Perfect" April 14 tabbed architecture.
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            const leftPanel = document.getElementById('leftPanel');
+            const rightPanel = document.getElementById('rightPanel');
+            const leftToggle = document.getElementById('leftToggle');
+            const rightToggle = document.getElementById('rightToggle');
+            const closeLeft = document.getElementById('closeLeftBtn');
+            const closeRight = document.getElementById('closeRightBtn');
+
+            // --- [1] SIDEBAR VISIBILITY ---
+            const toggleLeft = () => {
+                leftPanel.classList.toggle('-translate-x-full');
+                leftToggle.classList.toggle('opacity-50');
+            };
+            const toggleRight = () => {
+                rightPanel.classList.toggle('translate-x-full');
+                rightToggle.classList.toggle('opacity-50');
+            };
+
+            if (leftToggle) leftToggle.addEventListener('click', toggleLeft);
+            if (rightToggle) rightToggle.addEventListener('click', toggleRight);
+            if (closeLeft) closeLeft.addEventListener('click', toggleLeft);
+            if (closeRight) closeRight.addEventListener('click', toggleRight);
+
+            // --- [2] LEFT SIDEBAR TABS ---
+            const lTabs = document.querySelectorAll('.l-tab-btn');
+            const lContents = document.querySelectorAll('.l-tab-content');
+
+            lTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.ltab;
+                    // Update header styling
+                    lTabs.forEach(t => {
+                        t.classList.remove('active', 'text-[var(--accent)]', 'border-b-2', 'border-[var(--accent)]');
+                        t.classList.add('text-white/40');
+                    });
+                    tab.classList.add('active', 'text-[var(--accent)]', 'border-b-2', 'border-[var(--accent)]');
+                    tab.classList.remove('text-white/40');
+
+                    // Switch content
+                    lContents.forEach(c => {
+                        c.classList.toggle('hidden', c.id !== `ltab-${target}`);
+                    });
+                });
+            });
+
+            // --- [3] RIGHT SIDEBAR TABS ---
+            const rTabs = document.querySelectorAll('.studio-tab-btn');
+            const rContents = document.querySelectorAll('.studio-tab-content');
+
+            rTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.tab;
+                    // Update header styling
+                    rTabs.forEach(t => {
+                        t.classList.remove('active', 'text-[var(--accent)]', 'border-b-2', 'border-[var(--accent)]');
+                        t.classList.add('text-white/40');
+                    });
+                    tab.classList.add('active', 'text-[var(--accent)]', 'border-b-2', 'border-[var(--accent)]');
+                    tab.classList.remove('text-white/40');
+
+                    // Switch content
+                    rContents.forEach(c => {
+                        c.classList.toggle('hidden', c.id !== `tab-${target}`);
+                    });
+                });
+            });
+
+            // --- [4] HOTKEYS & ESCAPE ---
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    leftPanel.classList.add('-translate-x-full');
+                    rightPanel.classList.add('translate-x-full');
+                }
+            });
+        });
+
+        // Global function for mixer sections (legacy compat)
         function toggleMixerSection(sectionName) {
             const section = document.querySelector(`[data-section="${sectionName}"]`);
             if (section) {
-                section.classList.toggle('collapsed');
-                // Save state to localStorage
-                const collapsed = section.classList.contains('collapsed');
-                const states = JSON.parse(localStorage.getItem('mixerSectionStates') || '{}');
-                states[sectionName] = collapsed;
-                localStorage.setItem('mixerSectionStates', JSON.stringify(states));
+                const arrow = section.querySelector('.section-arrow');
+                const content = section.querySelector('.section-content');
+                const isCollapsed = section.classList.toggle('collapsed');
+                if (arrow) arrow.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+                if (content) content.classList.toggle('hidden', isCollapsed);
             }
         }
-
-        // Restore section states on load
-        document.addEventListener('DOMContentLoaded', () => {
-            const states = JSON.parse(localStorage.getItem('mixerSectionStates') || '{}');
-            Object.keys(states).forEach(sectionName => {
-                if (states[sectionName]) {
-                    const section = document.querySelector(`[data-section="${sectionName}"]`);
-                    if (section) section.classList.add('collapsed');
-                }
-            });
-
-            // Collapse All / Expand All functionality
-            const collapseAllBtn = document.getElementById('collapseAllBtn');
-
-            collapseAllBtn.addEventListener('click', () => {
-                const sections = document.querySelectorAll('.mixer-section');
-
-                // Check current state: are ANY sections expanded?
-                const anyExpanded = Array.from(sections).some(section => !section.classList.contains('collapsed'));
-
-                const states = {};
-
-                sections.forEach(section => {
-                    const sectionName = section.getAttribute('data-section');
-                    if (anyExpanded) {
-                        // If any are expanded, collapse ALL
-                        section.classList.add('collapsed');
-                        states[sectionName] = true;
-                    } else {
-                        // If all are collapsed, expand ALL
-                        section.classList.remove('collapsed');
-                        states[sectionName] = false;
-
-                        // Reset DJ Studio to "Show All Categories" when expanding
-                        if (sectionName === 'djpads') {
-                            // Use setTimeout to ensure module has loaded
-                            setTimeout(() => {
-                                if (typeof window.resetDJStudioToShowAll === 'function') {
-                                    window.resetDJStudioToShowAll();
-                                }
-                            }, 0);
-                        }
-                    }
-                });
-
-                localStorage.setItem('mixerSectionStates', JSON.stringify(states));
-
-                // Update button based on NEW state (after action)
-                const allCollapsedNow = anyExpanded; // If we had expanded ones, they're all collapsed now
-
-                // Update icon
-                collapseAllBtn.innerHTML = allCollapsedNow ?
-                    // Expand All icon (chevrons up)
-                    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="18 15 12 9 6 15"></polyline>
-                        <polyline points="18 21 12 15 6 21"></polyline>
-                    </svg>` :
-                    // Collapse All icon (chevrons down)
-                    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                        <polyline points="6 3 12 9 18 3"></polyline>
-                    </svg>`;
-
-                collapseAllBtn.title = allCollapsedNow ? 'Expand All Sections' : 'Collapse All Sections';
-            });
-        });
     </script>
 
 

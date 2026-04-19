@@ -20,7 +20,7 @@ export class Visualizer3D {
             speed: initialState.cyberSpeedMultiplier || 1.0,
             length: 1.0,
             color: '#00FF41',
-            rainbow: false
+            rainbow: true
         };
 
         // Matrix (3D Portal) Configuration
@@ -150,6 +150,16 @@ export class Visualizer3D {
 
             this.mandalaGroup = new THREE.Group();
             this.scene.add(this.mandalaGroup);
+
+            this.cymaticsGroup = new THREE.Group();
+            this.scene.add(this.cymaticsGroup);
+
+            // Cymatics Engine State
+            this.cymaticsHistory = [];
+            this.cymaticsHistoryIndex = -1;
+            this.cymaticsTimer = 60; // default 60s
+            this.lastCymaticRotation = performance.now();
+            this.currentCymaticData = { n: 2, m: 3 }; 
 
             this.textures = {};
 
@@ -1017,6 +1027,126 @@ export class Visualizer3D {
         }
     }
 
+    initCymatics() {
+        while(this.cymaticsGroup.children.length > 0) {
+            const child = this.cymaticsGroup.children[0];
+            this.cymaticsGroup.remove(child);
+            if(child.geometry) child.geometry.dispose();
+            if(child.material) child.material.dispose();
+        }
+
+        const geometry = new THREE.PlaneGeometry(16, 16, 2, 2);
+        this.cymaticMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uN: { value: this.currentCymaticData.n },
+                uM: { value: this.currentCymaticData.m },
+                uTime: { value: 0 },
+                uIntensity: { value: 0 },
+                uColor: { value: new THREE.Color(this.customColor || '#2dd4bf') }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float uN;
+                uniform float uM;
+                uniform float uTime;
+                uniform float uIntensity;
+                uniform vec3 uColor;
+
+                void main() {
+                    float x = vUv.x - 0.5;
+                    float y = vUv.y - 0.5;
+                    float pi = 3.14159265;
+                    
+                    // Chladni Formula: cos(uN*pi*x)*cos(uM*pi*y) - cos(uM*pi*x)*cos(uN*pi*y)
+                    float val = cos(uN * pi * x) * cos(uM * pi * y) - cos(uM * pi * x) * cos(uN * pi * y);
+                    
+                    // Reactivity
+                    float thickness = 0.01 + uIntensity * 0.05;
+                    float pattern = smoothstep(thickness, 0.0, abs(val));
+                    
+                    // Add some inner glow
+                    float glow = smoothstep(0.15, 0.0, abs(val)) * 0.3;
+                    
+                    vec3 finalColor = uColor * (pattern + glow);
+                    gl_FragColor = vec4(finalColor, (pattern + glow) * 0.9);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const mesh = new THREE.Mesh(geometry, this.cymaticMaterial);
+        this.cymaticsGroup.add(mesh);
+
+        // Initial pattern
+        if (this.cymaticsHistory.length === 0) {
+            this.nextCymatic();
+        }
+    }
+
+    nextCymatic() {
+        const patterns = [
+            { n: 2, m: 3 }, { n: 1, m: 4 }, { n: 3, m: 3 }, { n: 5, m: 2 }, 
+            { n: 4, m: 5 }, { n: 6, m: 1 }, { n: 2, m: 7 }, { n: 8, m: 3 },
+            { n: 6, m: 6 }, { n: 4, m: 9 }, { n: 3, m: 11 }, { n: 9, m: 2 }
+        ];
+
+        // Move history pointer
+        if (this.cymaticsHistoryIndex < this.cymaticsHistory.length - 1) {
+            this.cymaticsHistoryIndex++;
+            this.applyCymatic(this.cymaticsHistory[this.cymaticsHistoryIndex]);
+        } else {
+            // Generate new
+            const current = this.currentCymaticData;
+            let next;
+            do {
+                next = patterns[Math.floor(Math.random() * patterns.length)];
+            } while (next && (next.n === current.n && next.m === current.m));
+
+            this.cymaticsHistory.push(next);
+            if (this.cymaticsHistory.length > 20) this.cymaticsHistory.shift();
+            this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
+            this.applyCymatic(next);
+        }
+        this.lastCymaticRotation = performance.now();
+    }
+
+    prevCymatic() {
+        if (this.cymaticsHistoryIndex > 0) {
+            this.cymaticsHistoryIndex--;
+            this.applyCymatic(this.cymaticsHistory[this.cymaticsHistoryIndex]);
+            this.lastCymaticRotation = performance.now();
+        }
+    }
+
+    applyCymatic(data) {
+        if (!data) return;
+        this.currentCymaticData = data;
+        if (this.cymaticMaterial) {
+            this.cymaticMaterial.uniforms.uN.value = data.n;
+            this.cymaticMaterial.uniforms.uM.value = data.m;
+        }
+    }
+
+    setCymaticTimer(seconds) {
+        this.cymaticsTimer = seconds;
+        const label = document.getElementById('cymaticTimerLabel');
+        if (label) {
+            if (seconds > 300) label.textContent = "INFINITE";
+            else if (seconds === 0) label.textContent = "OFF";
+            else label.textContent = seconds + "s";
+        }
+    }
+
     initLava() {
         // Redesigned: Cleaner, smoother, fewer but larger blobs
         this.lavaBlobs = [];
@@ -1414,12 +1544,12 @@ export class Visualizer3D {
         const cellW = size / cols;
         const cellH = size / rows;
 
-        let textToSpell = "MINDWAVE";
+        let textToSpell = "🪷MINDWAVE";
         const logicMode = config.logicMode;
         const customText = config.customText;
 
-        if ((logicMode === 'custom' || logicMode === 'txt') && customText && customText.length > 0) {
-            textToSpell = "🪷" + customText;
+        if ((logicMode === 'custom' || logicMode === 'txt')) {
+            textToSpell = "🪷" + (customText && customText.length > 0 ? customText : "WELCOME TO MINDWAVE");
         } else if (logicMode === 'random' || logicMode === 'rnd' || logicMode === 'matrix' || logicMode === 'int' || logicMode === 'interstellar') {
             textToSpell = "";
         }
@@ -1691,6 +1821,7 @@ export class Visualizer3D {
         if (mode === 'dragon' && this.dragonGroup && this.dragonGroup.children.length === 0) this.initDragon();
         if (mode === 'galaxy' && this.galaxyGroup && this.galaxyGroup.children.length === 0) this.initGalaxy();
         if (mode === 'mandala' && this.mandalaGroup && this.mandalaGroup.children.length === 0) this.initMandala();
+        if (mode === 'snowflake' && this.cymaticsGroup && this.cymaticsGroup.children.length === 0) this.initCymatics();
         console.timeEnd(tLabel);
     }
 
@@ -1827,13 +1958,26 @@ export class Visualizer3D {
             if (!this.cyberConfig.logicMode) this.cyberConfig.logicMode = 'matrix';
         }
 
+        const showCyber2D = this.activeModes.has('cyber'); // Check before modifying activeModes
+
         if (this.activeModes.has(target)) {
             this.activeModes.delete(target);
         } else {
             this.activeModes.add(target);
         }
+
         this.mode = target;
         this.updateVisibility();
+        
+        if (this.activeModes.size === 0 && !showCyber2D) {
+            this.active = false;
+            // IMMEDIATELY CLEAR BUFFER to remove any frozen trailing effects from Warp/Lightspeed modes
+            if (this.renderer) {
+                this.renderer.autoClearColor = true;
+                this.renderer.clear();
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
         
         if (this.activeModes.size === 1) {
             this.updateLabel(Array.from(this.activeModes)[0]);
@@ -1871,11 +2015,14 @@ export class Visualizer3D {
                 this.overlayCanvas.classList.remove('hidden');
                 // Dim 3D scene significantly to let Cyber shine, UNLESS Matrix is active
                 if (this.activeModes.has('matrix')) {
-                    this.renderer.domElement.style.opacity = '1.0';
+                    window.dispatchEvent(new CustomEvent('mindwave:set-dimmer', { detail: { value: 0.0 } }));
+                    this.wasAutoDimmed = false;
                 } else if (this.activeModes.size > 1) {
-                    this.renderer.domElement.style.opacity = '0.3'; 
+                    window.dispatchEvent(new CustomEvent('mindwave:set-dimmer', { detail: { value: 0.7 } })); // 70% dim = 30% visibility
+                    this.wasAutoDimmed = true;
                 } else {
-                    this.renderer.domElement.style.opacity = '1.0';
+                    window.dispatchEvent(new CustomEvent('mindwave:set-dimmer', { detail: { value: 0.0 } }));
+                    this.wasAutoDimmed = false;
                 }
                 if (!this.matrixCyberStreams || this.matrixCyberStreams.length === 0) {
                     this.generateCyberStyle();
@@ -1895,6 +2042,22 @@ export class Visualizer3D {
         if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
         if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
         if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
+        if (this.cymaticsGroup) this.cymaticsGroup.visible = this.activeModes.has('snowflake'); // Mapping snowflake to Cymatics
+
+        this.updateUIPanels();
+    }
+
+    // New helper to update Sidebar VISUALS tab
+    updateUIPanels() {
+        const panels = ['galaxyPanel', 'matrixPanel', 'cymaticsPanel'];
+        panels.forEach(p => {
+            const el = document.getElementById(p);
+            if (el) el.classList.add('hidden');
+        });
+
+        if (this.activeModes.has('galaxy')) document.getElementById('galaxyPanel')?.classList.remove('hidden');
+        if (this.activeModes.has('interstellar') || this.activeModes.has('matrix')) document.getElementById('matrixPanel')?.classList.remove('hidden');
+        if (this.activeModes.has('snowflake')) document.getElementById('cymaticsPanel')?.classList.remove('hidden');
     }
 
     updateLabel(mode) {
@@ -2479,6 +2642,20 @@ export class Visualizer3D {
                 }
             }
 
+            // CYMATICS / SNOWFLAKE
+            if (this.activeModes.has('snowflake') && this.cymaticMaterial) {
+                this.cymaticMaterial.uniforms.uTime.value += dt * multiplier;
+                this.cymaticMaterial.uniforms.uIntensity.value = vNormBass;
+                
+                // Auto-rotation timer logic
+                if (this.cymaticsTimer > 0 && this.cymaticsTimer <= 300) {
+                    const elapsed = (performance.now() - this.lastCymaticRotation) / 1000;
+                    if (elapsed > this.cymaticsTimer) {
+                        this.nextCymatic();
+                    }
+                }
+            }
+
             if (this.activeModes.has('cyber')) {
                 this.renderCyberCyber();
             }
@@ -2565,50 +2742,25 @@ export class Visualizer3D {
                 let lotusTargetOpacity = 0.8; // default
                 let doScaleHeartbeat = false;
 
-                switch (lotusMode) {
-                    case 'faded': // DIM mode
-                        lotusTargetOpacity = 0.15;
-                        break;
-
-                    case 'full': // FULL mode
-                        lotusTargetOpacity = 1.0;
-                        break;
-
-                    case 'heartbeat': {
-                        // Smooth sinusoidal fade: full→dim→full at 20 BPM (3s cycle)
-                        // 20 BPM = 20/60 = 0.333 Hz
-                        const heartbeatFreq = 20 / 60; // 0.333 Hz
-                        const fade = (Math.sin(now * Math.PI * 2 * heartbeatFreq) + 1) / 2; // 0→1
-                        lotusTargetOpacity = 0.15 + 0.85 * fade; // 0.15→1.0
-                        doScaleHeartbeat = true;
-
-                        // Sync cyber brightness with lotus heartbeat
-                        if (this.activeModes.has('cyber') && this.cyberMaterial) {
-                            if (this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
-                                this.cyberMaterial.uniforms.uBrightness.value = 0.3 + 0.7 * fade;
-                            }
-                        }
-                        break;
+                if (lotusMode === 'faded') {
+                    lotusTargetOpacity = 0.15;
+                } else if (lotusMode === 'full') {
+                    lotusTargetOpacity = 1.0;
+                } else if (lotusMode === 'heartbeat') {
+                    lotusTargetOpacity = 0.15 + 0.85 * ((Math.sin(now * Math.PI * 2 * (20/60)) + 1) / 2);
+                    doScaleHeartbeat = true;
+                    if (this.activeModes.has('cyber') && this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
+                        this.cyberMaterial.uniforms.uBrightness.value = lotusTargetOpacity;
                     }
-
-                    case 'auto':
-                    default: {
-                        // Dynamic: lotus opacity reacts to audio energy
-                        const audioEnergy = vNormBass * 0.5 + vNormMids * 0.3 + vNormHighs * 0.2;
-                        lotusTargetOpacity = 0.25 + audioEnergy * 0.75; // 0.25→1.0
-                        // Occasional beat sync: brighter on beat peaks
-                        lotusTargetOpacity = Math.min(1.0, lotusTargetOpacity + beatPulse * 0.15);
-                        doScaleHeartbeat = true; // Gentle scale pulse in auto
-
-                        // Sync cyber with lotus in auto mode
-                        if (this.activeModes.has('cyber') && this.cyberMaterial) {
-                            if (this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
-                                // Cyber syncs with lotus but with slight delay/smoothing
-                                const cyberSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
-                                this.cyberMaterial.uniforms.uBrightness.value = Math.min(1.0, cyberSync);
-                            }
-                        }
-                        break;
+                } else {
+                    // Default / Auto
+                    const audioEnergy = vNormBass * 0.5 + vNormMids * 0.3 + vNormHighs * 0.2;
+                    lotusTargetOpacity = 0.25 + audioEnergy * 0.75;
+                    lotusTargetOpacity = Math.min(1.0, lotusTargetOpacity + beatPulse * 0.15);
+                    doScaleHeartbeat = true;
+                    if (this.activeModes.has('cyber') && this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
+                        const cyberSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
+                        this.cyberMaterial.uniforms.uBrightness.value = Math.min(1.0, cyberSync);
                     }
                 }
 
@@ -2722,6 +2874,17 @@ export class Visualizer3D {
         }
     }
 
+    setCyberBrightness(brightness) {
+        this.cyberConfig.brightness = brightness;
+    }
+
+    setMatrixBrightness(brightness) {
+        this.matrixConfig.brightness = brightness;
+        if (this.cyberMaterial && this.cyberMaterial.uniforms.uBrightness) {
+            this.cyberMaterial.uniforms.uBrightness.value = brightness;
+        }
+    }
+
     // --- CYBER (UI) -> Internal Cyber (2D Overlay) ---
     setCyberSpeed(speed) {
         this.cyberConfig.speed = speed;
@@ -2745,8 +2908,9 @@ export class Visualizer3D {
     }
     setCyberRainbow(isRainbow) {
         this.cyberConfig.rainbow = isRainbow;
+        this.cyberRainbowMode = isRainbow;
         if (!isRainbow) {
-            const hex = this.cyberConfig.color || '#00FF41';
+            const hex = this.cyberConfig.color || this.cyberColor || '#00FF41';
             if (this.matrixCyberStreams) {
                 this.matrixCyberStreams.forEach(stream => { stream.color = hex; });
             }
@@ -2754,10 +2918,6 @@ export class Visualizer3D {
     }
     setMatrixRainbow(isRainbow) {
         this.matrixConfig.rainbow = isRainbow;
-        if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
-            this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
-        }
-    }
         if (this.cyberMaterial && this.cyberMaterial.uniforms.uRainbow) {
             this.cyberMaterial.uniforms.uRainbow.value = isRainbow ? 1.0 : 0.0;
         }
@@ -2799,7 +2959,7 @@ export class Visualizer3D {
 
         if (config.logicMode === 'custom' || config.logicMode === 'txt') {
             isTextMode = true;
-            textToSpell = "🪷" + (config.customText || "WELCOME");
+            textToSpell = "🪷" + (config.customText || "WELCOME TO MINDWAVE");
         } else if (config.logicMode === 'mindwave' || config.logicMode === 'mw') {
             isTextMode = true;
             textToSpell = "MINDWAVE🪷";

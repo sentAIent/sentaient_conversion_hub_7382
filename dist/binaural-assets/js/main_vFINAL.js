@@ -1,5 +1,6 @@
 // Mindwave Studio Core
-window.NUCLEAR_MAIN_LOADED = true;
+window.NUCLEAR_MAIN_LOADED = "V45_CONFIRMED";
+console.log("[Main] LOADED VERSION: V45_CONFIRMED");
 // Core Modules for boot
 import { setupUI, applyAIIntent, showDisclaimerModal } from './ui/controls_v3.js?v=NUCLEAR_FIX_V2';
 import { initFirebase, registerAuthCallback } from './services/firebase.js';

@@ -2749,7 +2749,7 @@ export class Visualizer3D {
                 } else if (lotusMode === 'heartbeat') {
                     lotusTargetOpacity = 0.15 + 0.85 * ((Math.sin(now * Math.PI * 2 * (20/60)) + 1) / 2);
                     doScaleHeartbeat = true;
-                    if (this.activeModes.has('cyber') && this.cyberMaterial?.uniforms?.uBrightness) {
+                    if (this.activeModes.has('cyber') && this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
                         this.cyberMaterial.uniforms.uBrightness.value = lotusTargetOpacity;
                     }
                 } else {
@@ -2758,7 +2758,7 @@ export class Visualizer3D {
                     lotusTargetOpacity = 0.25 + audioEnergy * 0.75;
                     lotusTargetOpacity = Math.min(1.0, lotusTargetOpacity + beatPulse * 0.15);
                     doScaleHeartbeat = true;
-                    if (this.activeModes.has('cyber') && this.cyberMaterial?.uniforms?.uBrightness) {
+                    if (this.activeModes.has('cyber') && this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
                         const cyberSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
                         this.cyberMaterial.uniforms.uBrightness.value = Math.min(1.0, cyberSync);
                     }

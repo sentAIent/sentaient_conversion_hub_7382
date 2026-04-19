@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-cache-v45-nuclear-fix';
+const CACHE_NAME = 'mindwave-cache-v46-universal-fix';
 
 // Essential assets to cache immediately upon installation
 const PRECACHE_URLS = [
@@ -50,7 +50,7 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', event => {
-    console.log('[ServiceWorker] Install v45');
+    console.log('[ServiceWorker] Install v46');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -82,7 +82,8 @@ self.addEventListener('activate', event => {
 
 // Helper: Is this a mutable resource that should always be fresh?
 function isCodeOrMarkup(url) {
-    return url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.html');
+    const cleanUrl = url.split('?')[0];
+    return cleanUrl.endsWith('.js') || cleanUrl.endsWith('.css') || cleanUrl.endsWith('.html');
 }
 
 self.addEventListener('fetch', event => {

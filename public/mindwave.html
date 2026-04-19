@@ -28,6 +28,19 @@
     </script>
 
     <script>
+        // EMERGENCY CACHE BREAKER & SW KILL-SWITCH
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('[PWA] Force unregistering old Service Worker to clear cache.');
+                }
+            });
+        }
+        // Force reload state if needed
+        window.FORCE_REFRESH_TIMESTAMP = Date.now();
+    </script>
+    <script>
         // VISUAL ERROR LOGGER
         window.onerror = function (msg, url, lineNo, columnNo, error) {
             // Filter out expected errors
@@ -101,11 +114,11 @@
     <link rel="stylesheet" href="./binaural-assets/css/style.css?v=25">
     <link rel="stylesheet" href="./binaural-assets/css/visual-active.css?v=1">
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V43">
+    <link rel="modulepreload" href="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V45">
     <!-- Visualizer modulepreload removed to unblock critical path -->
     <script src="./binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V43"
+    <script type="module" src="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V45"
         onerror="console.error('Failed to load main_vFINAL.js')"></script>
     <style>
         /* Fallback Styles if Tailwind fails */

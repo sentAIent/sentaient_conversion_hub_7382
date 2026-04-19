@@ -101,11 +101,11 @@
     <link rel="stylesheet" href="./binaural-assets/css/style.css?v=25">
     <link rel="stylesheet" href="./binaural-assets/css/visual-active.css?v=1">
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V42">
+    <link rel="modulepreload" href="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V45">
     <!-- Visualizer modulepreload removed to unblock critical path -->
     <script src="./binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V42"
+    <script type="module" src="./binaural-assets/js/main_vFINAL.js?v=NUCLEAR_FIX_V45"
         onerror="console.error('Failed to load main_vFINAL.js')"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
@@ -257,7 +257,19 @@
 
 <body
     class="w-full relative min-h-screen bg-slate-900 text-slate-200 antialiased selection:bg-cyan-500 selection:text-white">
-    <!-- UNIFIED COMMAND CENTER (Moved to root for z-index) -->
+    <!-- DIAGNOSTIC BANNER -->
+    <div id="diag-banner" style="position:fixed; top:0; left:0; right:0; background:#f43f5e; color:white; font-size:10px; text-align:center; z-index:999999; padding:2px; font-weight:bold; letter-spacing:1px;">
+        MINDWAVE BETA V45 CONFIRMED - CACHE BUSTED
+    </div>
+    <script>
+        setTimeout(() => {
+            const banner = document.getElementById('diag-banner');
+            if (banner) {
+                console.log('[Diag] Banner confirmed, hiding in 3s');
+                setTimeout(() => banner.style.display = 'none', 3000);
+            }
+        }, 100);
+    </script>
 
     <div id="visualLabelContainer"
         class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] pointer-events-none select-none flex flex-col items-center gap-1 opacity-80 group/vlabel hover:opacity-100 transition-all duration-700">
