@@ -1,7 +1,7 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=2';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=SNOW_V1';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -80,7 +80,8 @@ window.controls = {
         this.syncSidebar('matrixPanel');
     },
     toggleSnowflakeSettings: function(btn) {
-        this.syncSidebar('cymaticsPanel');
+        const panel = document.getElementById('snowflakeSettingsPanel');
+        if (panel) panel.classList.toggle('hidden');
     },
     setMatrixMode: function(mode) {
         const viz = getVisualizer();
@@ -108,6 +109,7 @@ window.toggleCyberSettings = window.controls.toggleCyberSettings;
 window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
 window.toggleGalaxySun = window.controls.toggleGalaxySun;
 window.resetGalaxySettings = window.controls.resetGalaxySettings;
+window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
 
 export function updateDockScaling() {
     const width = window.innerWidth;
@@ -944,6 +946,29 @@ export function setupUI() {
         if (e.target.closest('#matrixSettingsToggle')) return;
         setVisualMode('matrix', null, true);
     });
+    if (els.snowflakeBtn) els.snowflakeBtn.addEventListener('click', () => setVisualMode('snowflake', null, true));
+
+    // Snow customization sliders
+    const snowSizeSlider = document.getElementById('snowSizeSlider');
+    const snowSizeVal   = document.getElementById('snowSizeVal');
+    const snowGlowSlider = document.getElementById('snowGlowSlider');
+    const snowGlowVal   = document.getElementById('snowGlowVal');
+    if (snowSizeSlider) {
+        snowSizeSlider.addEventListener('input', () => {
+            const v = parseFloat(snowSizeSlider.value);
+            if (snowSizeVal) snowSizeVal.textContent = v.toFixed(1) + 'x';
+            const viz = getVisualizer();
+            if (viz?.setSnowSize) viz.setSnowSize(v);
+        });
+    }
+    if (snowGlowSlider) {
+        snowGlowSlider.addEventListener('input', () => {
+            const v = parseFloat(snowGlowSlider.value);
+            if (snowGlowVal) snowGlowVal.textContent = Math.round(v * 100) + '%';
+            const viz = getVisualizer();
+            if (viz?.setSnowGlow) viz.setSnowGlow(v);
+        });
+    }
 
     // Matrix Mini-Toggle Logic
     const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');

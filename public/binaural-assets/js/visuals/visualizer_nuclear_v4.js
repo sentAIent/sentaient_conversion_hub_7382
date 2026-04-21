@@ -159,7 +159,12 @@ export class Visualizer3D {
             this.cymaticsHistoryIndex = -1;
             this.cymaticsTimer = 60; // default 60s
             this.lastCymaticRotation = performance.now();
-            this.currentCymaticData = { n: 2, m: 3 }; 
+            this.currentCymaticData = { n: 2, m: 3 };
+
+            // Snowflake (real snow) Group — separate from cymatics
+            this.snowflakeGroup = new THREE.Group();
+            this.scene.add(this.snowflakeGroup);
+            this._snowData = null; // {positions, phases, speeds, drifts, rotations}
 
             this.textures = {};
 
@@ -1027,6 +1032,186 @@ export class Visualizer3D {
         }
     }
 
+    // ─────────────────────────────────────────────────────────
+    //  REAL SNOWFALL — 6-pointed crystal particles with drift
+    // ─────────────────────────────────────────────────────────
+    createSnowflakeTexture() {
+        if (this.textures.snowflake) return this.textures.snowflake;
+        const size = 128;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const cx = size / 2, cy = size / 2;
+
+        ctx.clearRect(0, 0, size, size);
+
+        // Soft radial glow halo behind the crystal
+        const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);
+        glow.addColorStop(0, 'rgba(200,230,255,0.5)');
+        glow.addColorStop(0.4, 'rgba(180,220,255,0.15)');
+        glow.addColorStop(1, 'rgba(150,200,255,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, size, size);
+
+        // Draw 6 arms of the snowflake crystal
+        ctx.strokeStyle = 'rgba(220,240,255,1.0)';
+        ctx.lineCap = 'round';
+
+        for (let arm = 0; arm < 6; arm++) {
+            const angle = (arm / 6) * Math.PI * 2;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+
+            // Main arm
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -52);
+            ctx.stroke();
+
+            // 3 pairs of branches along the arm
+            const branchDefs = [
+                { d: 18, len: 14, angle: Math.PI / 4 },
+                { d: 32, len: 20, angle: Math.PI / 4 },
+                { d: 46, len: 10, angle: Math.PI / 5 },
+            ];
+            ctx.lineWidth = 1.5;
+            branchDefs.forEach(({ d, len, angle: ba }) => {
+                [1, -1].forEach(side => {
+                    ctx.beginPath();
+                    ctx.moveTo(0, -d);
+                    ctx.lineTo(side * len * Math.cos(Math.PI / 2 - ba), -d - len * Math.sin(Math.PI / 2 - ba));
+                    ctx.stroke();
+                });
+            });
+
+            ctx.restore();
+        }
+
+        // Bright center hexagon
+        ctx.beginPath();
+        for (let h = 0; h < 6; h++) {
+            const ha = (h / 6) * Math.PI * 2 - Math.PI / 6;
+            const hx = cx + Math.cos(ha) * 4;
+            const hy = cy + Math.sin(ha) * 4;
+            h === 0 ? ctx.moveTo(hx, hy) : ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.fill();
+
+        this.textures.snowflake = new THREE.CanvasTexture(canvas);
+        return this.textures.snowflake;
+    }
+
+    initSnowflake() {
+        // Clear group
+        while (this.snowflakeGroup.children.length > 0) {
+            const c = this.snowflakeGroup.children[0];
+            this.snowflakeGroup.remove(c);
+            if (c.geometry) c.geometry.dispose();
+            if (c.material) c.material.dispose();
+        }
+        this._snowData = null;
+
+        const count = 700;
+        const positions  = new Float32Array(count * 3);
+        const sizes      = new Float32Array(count);
+        const opacities  = new Float32Array(count);
+        const phases     = new Float32Array(count);
+        const speeds     = new Float32Array(count);
+        const drifts     = new Float32Array(count);
+        const driftFreqs = new Float32Array(count);
+
+        for (let i = 0; i < count; i++) {
+            const i3 = i * 3;
+            // Scatter across a wide area, full depth range for parallax
+            positions[i3]     = (Math.random() - 0.5) * 70;
+            positions[i3 + 1] = (Math.random() - 0.5) * 44;   // start anywhere vertically
+            positions[i3 + 2] = -20 + Math.random() * 30;      // deep to near (z parallax)
+
+            // Snowflakes further back are smaller and dimmer
+            const depth = (positions[i3 + 2] + 20) / 30; // 0=far, 1=near
+            sizes[i]    = 2 + depth * 10;                  // 2..12
+            opacities[i] = 0.25 + depth * 0.65;           // 0.25..0.9
+
+            phases[i]     = Math.random() * Math.PI * 2;
+            speeds[i]     = 0.012 + Math.random() * 0.035 + depth * 0.02; // near=faster
+            drifts[i]     = 0.008 + Math.random() * 0.016;
+            driftFreqs[i] = 0.3 + Math.random() * 0.7;
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('aSize',    new THREE.BufferAttribute(sizes, 1));
+        geo.setAttribute('aOpacity', new THREE.BufferAttribute(opacities, 1));
+
+        const sfTex = this.createSnowflakeTexture();
+
+        const mat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTexture:        { value: sfTex },
+                uIntensity:      { value: 0 },
+                uSizeMultiplier: { value: 1.0 },
+                uGlowAmount:     { value: 0.5 },
+            },
+            vertexShader: `
+                attribute float aSize;
+                attribute float aOpacity;
+                uniform float uSizeMultiplier;
+                varying float vOpacity;
+                void main() {
+                    vOpacity = aOpacity;
+                    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = aSize * uSizeMultiplier * (300.0 / -mv.z);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D uTexture;
+                uniform float uIntensity;
+                uniform float uGlowAmount;
+                varying float vOpacity;
+                void main() {
+                    vec4 tex = texture2D(uTexture, gl_PointCoord);
+                    if (tex.a < 0.02) discard;
+                    // Base icy blue tint, white on audio hit
+                    vec3 baseCol = mix(vec3(0.75, 0.90, 1.0), vec3(1.0, 1.0, 1.0), uIntensity * 2.0);
+                    // Glow: boost brightness and spread alpha based on uGlowAmount
+                    float glowAlpha = tex.a * vOpacity * (0.5 + uGlowAmount * 1.2);
+                    vec3 finalCol = baseCol * (1.0 + uGlowAmount * uIntensity * 1.5);
+                    gl_FragColor = vec4(finalCol, clamp(glowAlpha, 0.0, 1.0));
+                }
+            `,
+            transparent: true,
+            depthWrite:  false,
+            blending:    THREE.AdditiveBlending,
+        });
+
+        const points = new THREE.Points(geo, mat);
+        this.snowflakeGroup.add(points);
+
+        // Store animation data on the group so the render loop can access it
+        this._snowData = {
+            count, positions, phases, speeds, drifts, driftFreqs,
+            points, material: mat,
+            spinMeshes: [], spinSpeeds: [],
+        };
+
+        console.log('[Viz] ❄️ Real snowfall initialized —', count, 'crystals');
+    }
+
+    setSnowSize(mult) {
+        if (this._snowData?.material)
+            this._snowData.material.uniforms.uSizeMultiplier.value = Math.max(0.2, Math.min(4.0, mult));
+    }
+
+    setSnowGlow(amount) {
+        if (this._snowData?.material)
+            this._snowData.material.uniforms.uGlowAmount.value = Math.max(0.0, Math.min(1.0, amount));
+    }
+
     initCymatics() {
         while(this.cymaticsGroup.children.length > 0) {
             const child = this.cymaticsGroup.children[0];
@@ -1821,7 +2006,7 @@ export class Visualizer3D {
         if (mode === 'dragon' && this.dragonGroup && this.dragonGroup.children.length === 0) this.initDragon();
         if (mode === 'galaxy' && this.galaxyGroup && this.galaxyGroup.children.length === 0) this.initGalaxy();
         if (mode === 'mandala' && this.mandalaGroup && this.mandalaGroup.children.length === 0) this.initMandala();
-        if (mode === 'snowflake' && this.cymaticsGroup && this.cymaticsGroup.children.length === 0) this.initCymatics();
+        if (mode === 'snowflake' && this.snowflakeGroup && this.snowflakeGroup.children.length === 0) this.initSnowflake();
         console.timeEnd(tLabel);
     }
 
@@ -2042,7 +2227,8 @@ export class Visualizer3D {
         if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
         if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
         if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
-        if (this.cymaticsGroup) this.cymaticsGroup.visible = this.activeModes.has('snowflake'); // Mapping snowflake to Cymatics
+        if (this.cymaticsGroup) this.cymaticsGroup.visible = false; // cymatics shown separately in Phase 2
+        if (this.snowflakeGroup) this.snowflakeGroup.visible = this.activeModes.has('snowflake');
 
         this.updateUIPanels();
     }
@@ -2642,17 +2828,37 @@ export class Visualizer3D {
                 }
             }
 
-            // CYMATICS / SNOWFLAKE
-            if (this.activeModes.has('snowflake') && this.cymaticMaterial) {
-                this.cymaticMaterial.uniforms.uTime.value += dt * multiplier;
-                this.cymaticMaterial.uniforms.uIntensity.value = vNormBass;
-                
-                // Auto-rotation timer logic
-                if (this.cymaticsTimer > 0 && this.cymaticsTimer <= 300) {
-                    const elapsed = (performance.now() - this.lastCymaticRotation) / 1000;
-                    if (elapsed > this.cymaticsTimer) {
-                        this.nextCymatic();
+            // REAL SNOWFLAKE SYSTEM
+            if (this.activeModes.has('snowflake') && this._snowData) {
+                const sd = this._snowData;
+                const pos = sd.positions;
+                const t = performance.now() * 0.001;
+                const count = sd.count;
+                for (let i = 0; i < count; i++) {
+                    const i3 = i * 3;
+                    // Fall
+                    pos[i3 + 1] -= sd.speeds[i] * multiplier * (1 + vNormBass * 0.8);
+                    // Drift side-to-side (sine wave with individual phase)
+                    pos[i3] += Math.sin(t * sd.driftFreqs[i] + sd.phases[i]) * sd.drifts[i] * multiplier;
+                    // Subtle depth breathing
+                    pos[i3 + 2] += Math.sin(t * 0.3 + sd.phases[i] * 0.7) * 0.005 * multiplier;
+                    // Wrap: reset snowflake to top when it falls below view
+                    if (pos[i3 + 1] < -22) {
+                        pos[i3 + 1] = 22 + Math.random() * 5;
+                        pos[i3] = (Math.random() - 0.5) * 70;
                     }
+                    // Wrap x edges
+                    if (pos[i3] > 36) pos[i3] = -36;
+                    if (pos[i3] < -36) pos[i3] = 36;
+                }
+                sd.points.geometry.attributes.position.needsUpdate = true;
+                // Update audio reactivity uniform
+                if (sd.material) sd.material.uniforms.uIntensity.value += (vNormBass - sd.material.uniforms.uIntensity.value) * 0.1;
+                // Spin individual hero snowflakes
+                if (sd.spinMeshes) {
+                    sd.spinMeshes.forEach((m, idx) => {
+                        m.rotation.z += sd.spinSpeeds[idx] * multiplier;
+                    });
                 }
             }
 
