@@ -1212,6 +1212,40 @@ export class Visualizer3D {
             this._snowData.material.uniforms.uGlowAmount.value = Math.max(0.0, Math.min(1.0, amount));
     }
 
+    // 28 named Chladni patterns — used by the panel grid
+    static get CYMATIC_PATTERNS() {
+        return [
+            { n:1, m:2,  name:'Cross',     cat:'basic'    },
+            { n:2, m:1,  name:'Diamond',   cat:'basic'    },
+            { n:2, m:2,  name:'Square',    cat:'basic'    },
+            { n:1, m:3,  name:'Delta',     cat:'brainwave'},
+            { n:2, m:3,  name:'Butterfly', cat:'organic'  },
+            { n:1, m:4,  name:'Clover',    cat:'organic'  },
+            { n:3, m:3,  name:'Lattice',   cat:'geometric'},
+            { n:2, m:5,  name:'Theta',     cat:'brainwave'},
+            { n:5, m:2,  name:'Pentagon',  cat:'geometric'},
+            { n:4, m:5,  name:'Flower',    cat:'organic'  },
+            { n:3, m:5,  name:'Alpha',     cat:'brainwave'},
+            { n:6, m:1,  name:'Sunburst',  cat:'radial'   },
+            { n:3, m:7,  name:'Trident',   cat:'geometric'},
+            { n:2, m:7,  name:'Web',       cat:'complex'  },
+            { n:4, m:6,  name:'Eclipse',   cat:'radial'   },
+            { n:8, m:3,  name:'Compass',   cat:'geometric'},
+            { n:6, m:4,  name:'Hexagram',  cat:'radial'   },
+            { n:5, m:7,  name:'Mandala',   cat:'complex'  },
+            { n:6, m:6,  name:'Vortex',    cat:'radial'   },
+            { n:5, m:8,  name:'Beta',      cat:'brainwave'},
+            { n:7, m:4,  name:'Galaxy',    cat:'complex'  },
+            { n:4, m:9,  name:'Lotus',     cat:'organic'  },
+            { n:6, m:8,  name:'Prism',     cat:'complex'  },
+            { n:10, m:2, name:'Ripple',    cat:'radial'   },
+            { n:3, m:11, name:'Crystal',   cat:'complex'  },
+            { n:9, m:2,  name:'Spiral',    cat:'organic'  },
+            { n:8, m:13, name:'Gamma',     cat:'brainwave'},
+            { n:7, m:11, name:'Fractal',   cat:'complex'  },
+        ];
+    }
+
     initCymatics() {
         while(this.cymaticsGroup.children.length > 0) {
             const child = this.cymaticsGroup.children[0];
@@ -1220,14 +1254,16 @@ export class Visualizer3D {
             if(child.material) child.material.dispose();
         }
 
-        const geometry = new THREE.PlaneGeometry(16, 16, 2, 2);
+        const geometry = new THREE.PlaneGeometry(18, 18, 2, 2);
         this.cymaticMaterial = new THREE.ShaderMaterial({
             uniforms: {
-                uN: { value: this.currentCymaticData.n },
-                uM: { value: this.currentCymaticData.m },
-                uTime: { value: 0 },
+                uN:         { value: this.currentCymaticData.n },
+                uM:         { value: this.currentCymaticData.m },
+                uTime:      { value: 0 },
                 uIntensity: { value: 0 },
-                uColor: { value: new THREE.Color(this.customColor || '#2dd4bf') }
+                uFreq:      { value: 10.0 },  // binaural beat Hz (0-80)
+                uMids:      { value: 0.0 },
+                uColor:     { value: new THREE.Color(this.currentCymaticColor || '#2dd4bf') }
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -1242,25 +1278,41 @@ export class Visualizer3D {
                 uniform float uM;
                 uniform float uTime;
                 uniform float uIntensity;
-                uniform vec3 uColor;
+                uniform float uFreq;
+                uniform float uMids;
+                uniform vec3  uColor;
 
                 void main() {
                     float x = vUv.x - 0.5;
                     float y = vUv.y - 0.5;
                     float pi = 3.14159265;
-                    
-                    // Chladni Formula: cos(uN*pi*x)*cos(uM*pi*y) - cos(uM*pi*x)*cos(uN*pi*y)
-                    float val = cos(uN * pi * x) * cos(uM * pi * y) - cos(uM * pi * x) * cos(uN * pi * y);
-                    
-                    // Reactivity
-                    float thickness = 0.01 + uIntensity * 0.05;
+
+                    // Frequency-scaled density: higher Hz = tighter nodes
+                    float freqScale = 1.0 + uFreq * 0.006;
+                    float nx = x * freqScale;
+                    float ny = y * freqScale;
+
+                    // Chladni standing wave formula
+                    float val = cos(uN * pi * nx) * cos(uM * pi * ny)
+                              - cos(uM * pi * nx) * cos(uN * pi * ny);
+
+                    // Time-animated shimmer driven by mids
+                    float shimmer = cos(uN * pi * nx + uTime * 0.4) * cos(uM * pi * ny + uTime * 0.3)
+                                  - cos(uM * pi * nx + uTime * 0.3) * cos(uN * pi * ny + uTime * 0.4);
+                    val = mix(val, shimmer, uMids * 0.35);
+
+                    // Audio-reactive line thickness
+                    float thickness = 0.008 + uIntensity * 0.06;
                     float pattern = smoothstep(thickness, 0.0, abs(val));
-                    
-                    // Add some inner glow
-                    float glow = smoothstep(0.15, 0.0, abs(val)) * 0.3;
-                    
-                    vec3 finalColor = uColor * (pattern + glow);
-                    gl_FragColor = vec4(finalColor, (pattern + glow) * 0.9);
+
+                    // Layered glow
+                    float glow1 = smoothstep(0.12, 0.0, abs(val)) * 0.4;
+                    float glow2 = smoothstep(0.25, 0.0, abs(val)) * 0.15;
+
+                    float alpha = clamp(pattern + glow1 + glow2, 0.0, 1.0);
+                    // Color: base tint brightens on intensity hit
+                    vec3 col = uColor * (1.0 + uIntensity * 0.8);
+                    gl_FragColor = vec4(col, alpha * 0.95);
                 }
             `,
             transparent: true,
@@ -1272,33 +1324,24 @@ export class Visualizer3D {
         const mesh = new THREE.Mesh(geometry, this.cymaticMaterial);
         this.cymaticsGroup.add(mesh);
 
-        // Initial pattern
         if (this.cymaticsHistory.length === 0) {
             this.nextCymatic();
         }
     }
 
     nextCymatic() {
-        const patterns = [
-            { n: 2, m: 3 }, { n: 1, m: 4 }, { n: 3, m: 3 }, { n: 5, m: 2 }, 
-            { n: 4, m: 5 }, { n: 6, m: 1 }, { n: 2, m: 7 }, { n: 8, m: 3 },
-            { n: 6, m: 6 }, { n: 4, m: 9 }, { n: 3, m: 11 }, { n: 9, m: 2 }
-        ];
-
-        // Move history pointer
+        const patterns = Visualizer3D.CYMATIC_PATTERNS;
         if (this.cymaticsHistoryIndex < this.cymaticsHistory.length - 1) {
             this.cymaticsHistoryIndex++;
             this.applyCymatic(this.cymaticsHistory[this.cymaticsHistoryIndex]);
         } else {
-            // Generate new
             const current = this.currentCymaticData;
             let next;
             do {
                 next = patterns[Math.floor(Math.random() * patterns.length)];
-            } while (next && (next.n === current.n && next.m === current.m));
-
+            } while (next && next.n === current.n && next.m === current.m);
             this.cymaticsHistory.push(next);
-            if (this.cymaticsHistory.length > 20) this.cymaticsHistory.shift();
+            if (this.cymaticsHistory.length > 28) this.cymaticsHistory.shift();
             this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
             this.applyCymatic(next);
         }
@@ -1320,6 +1363,32 @@ export class Visualizer3D {
             this.cymaticMaterial.uniforms.uN.value = data.n;
             this.cymaticMaterial.uniforms.uM.value = data.m;
         }
+        // Update panel active state if visible
+        document.querySelectorAll('.cymatics-pattern-btn').forEach((btn, i) => {
+            const p = Visualizer3D.CYMATIC_PATTERNS[i];
+            btn.classList.toggle('cymatics-pattern-active', p && p.n === data.n && p.m === data.m);
+        });
+    }
+
+    setCymaticPatternByIndex(idx) {
+        const p = Visualizer3D.CYMATIC_PATTERNS[idx];
+        if (p) {
+            this.cymaticsHistory.push(p);
+            this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
+            this.applyCymatic(p);
+            this.lastCymaticRotation = performance.now();
+        }
+    }
+
+    setCymaticColor(hex) {
+        this.currentCymaticColor = hex;
+        if (this.cymaticMaterial)
+            this.cymaticMaterial.uniforms.uColor.value.set(hex);
+    }
+
+    setCymaticFreq(hz) {
+        if (this.cymaticMaterial)
+            this.cymaticMaterial.uniforms.uFreq.value = Math.max(0, Math.min(80, hz));
     }
 
     setCymaticTimer(seconds) {
@@ -2007,6 +2076,7 @@ export class Visualizer3D {
         if (mode === 'galaxy' && this.galaxyGroup && this.galaxyGroup.children.length === 0) this.initGalaxy();
         if (mode === 'mandala' && this.mandalaGroup && this.mandalaGroup.children.length === 0) this.initMandala();
         if (mode === 'snowflake' && this.snowflakeGroup && this.snowflakeGroup.children.length === 0) this.initSnowflake();
+        if (mode === 'cymatics' && this.cymaticsGroup && this.cymaticsGroup.children.length === 0) this.initCymatics();
         console.timeEnd(tLabel);
     }
 
@@ -2227,7 +2297,7 @@ export class Visualizer3D {
         if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
         if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
         if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
-        if (this.cymaticsGroup) this.cymaticsGroup.visible = false; // cymatics shown separately in Phase 2
+        if (this.cymaticsGroup) this.cymaticsGroup.visible = this.activeModes.has('cymatics');
         if (this.snowflakeGroup) this.snowflakeGroup.visible = this.activeModes.has('snowflake');
 
         this.updateUIPanels();
@@ -2243,7 +2313,7 @@ export class Visualizer3D {
 
         if (this.activeModes.has('galaxy')) document.getElementById('galaxyPanel')?.classList.remove('hidden');
         if (this.activeModes.has('interstellar') || this.activeModes.has('matrix')) document.getElementById('matrixPanel')?.classList.remove('hidden');
-        if (this.activeModes.has('snowflake')) document.getElementById('cymaticsPanel')?.classList.remove('hidden');
+        if (this.activeModes.has('cymatics')) document.getElementById('cymaticsPanel')?.classList.remove('hidden');
     }
 
     updateLabel(mode) {
@@ -2825,6 +2895,23 @@ export class Visualizer3D {
                     this.mandalaCenter.material.opacity = 0.4 + vBeatPulse * 0.3;
                     const cScale = 1 + vNormBass * 0.3;
                     this.mandalaCenter.scale.setScalar(cScale);
+                }
+            }
+
+            // ── CYMATICS ──────────────────────────────────────────
+            if (this.activeModes.has('cymatics') && this.cymaticMaterial) {
+                this.cymaticMaterial.uniforms.uTime.value += dt * multiplier * 0.5;
+                // Bass/mids — respect manual override from panel slider
+                const targetIntensity = (this._cymaticIntensityOverride != null)
+                    ? this._cymaticIntensityOverride
+                    : vNormBass;
+                this.cymaticMaterial.uniforms.uIntensity.value +=
+                    (targetIntensity - this.cymaticMaterial.uniforms.uIntensity.value) * 0.08;
+                this.cymaticMaterial.uniforms.uMids.value +=
+                    (vNormMids - this.cymaticMaterial.uniforms.uMids.value) * 0.06;
+                if (this.cymaticsTimer > 0 && this.cymaticsTimer <= 300) {
+                    const elapsed = (performance.now() - this.lastCymaticRotation) / 1000;
+                    if (elapsed > this.cymaticsTimer) this.nextCymatic();
                 }
             }
 

@@ -232,6 +232,7 @@ export function setupUI() {
     els.cyberBtn = document.getElementById('cyberBtn');
     els.matrixBtn = document.getElementById('matrixBtn');
     els.snowflakeBtn = document.getElementById('snowflakeBtn');
+    els.cymaticsBtn = document.getElementById('cymaticsBtn');
 
     // Cymatics / Galaxy / Matrix Controls
     els.cymaticTimerSlider = document.getElementById('cymaticTimerSlider');
@@ -660,7 +661,13 @@ export function setupUI() {
 
     // Sliders
     if (els.baseSlider) els.baseSlider.addEventListener('input', () => { updateFrequencies(); saveStateToLocal(); });
-    if (els.beatSlider) els.beatSlider.addEventListener('input', () => { updateFrequencies(); saveStateToLocal(); });
+    if (els.beatSlider) els.beatSlider.addEventListener('input', () => {
+        updateFrequencies();
+        saveStateToLocal();
+        // Sync binaural beat Hz to cymatics shader
+        const viz = getVisualizer();
+        if (viz?.setCymaticFreq) viz.setCymaticFreq(parseFloat(els.beatSlider.value));
+    });
     if (els.volSlider) els.volSlider.addEventListener('input', () => { updateBeatsVolume(); saveStateToLocal(); });
     if (els.masterVolSlider) els.masterVolSlider.addEventListener('input', () => {
         updateMasterVolume();
@@ -947,6 +954,58 @@ export function setupUI() {
         setVisualMode('matrix', null, true);
     });
     if (els.snowflakeBtn) els.snowflakeBtn.addEventListener('click', () => setVisualMode('snowflake', null, true));
+    if (els.cymaticsBtn) els.cymaticsBtn.addEventListener('click', (e) => {
+        if (e.target.closest('#cymaticsSettingsToggle')) return;
+        setVisualMode('cymatics', null, true);
+    });
+
+    // ── Cymatics panel controls ────────────────────────────────────
+    window.toggleCymaticsPanel = function() {
+        const panel = document.getElementById('cymaticsPanel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+            panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
+        }
+    };
+    window.selectCymaticPattern = function(idx) {
+        const viz = getVisualizer();
+        if (viz?.setCymaticPatternByIndex) viz.setCymaticPatternByIndex(idx);
+    };
+
+    const cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
+    const cymaticNextBtn = document.getElementById('cymaticNextBtn');
+    if (cymaticPrevBtn) cymaticPrevBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.prevCymatic) viz.prevCymatic(); });
+    if (cymaticNextBtn) cymaticNextBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.nextCymatic) viz.nextCymatic(); });
+
+    const cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
+    if (cymaticsAutoRotate) {
+        cymaticsAutoRotate.addEventListener('change', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticTimer) viz.setCymaticTimer(parseInt(cymaticsAutoRotate.value));
+        });
+    }
+
+    const cymaticsColorPicker = document.getElementById('cymaticsColorPicker');
+    if (cymaticsColorPicker) {
+        cymaticsColorPicker.addEventListener('input', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsColorPicker.value);
+        });
+    }
+
+    const cymaticsIntensitySlider = document.getElementById('cymaticsIntensitySlider');
+    const cymaticsIntensityVal   = document.getElementById('cymaticsIntensityVal');
+    if (cymaticsIntensitySlider) {
+        cymaticsIntensitySlider.addEventListener('input', () => {
+            const v = parseFloat(cymaticsIntensitySlider.value);
+            if (cymaticsIntensityVal) cymaticsIntensityVal.textContent = v === 0 ? 'Auto' : Math.round(v * 100) + '%';
+            const viz = getVisualizer();
+            if (viz?.cymaticMaterial) {
+                // Manual override: clamp auto-update in render loop
+                viz._cymaticIntensityOverride = v > 0 ? v : null;
+            }
+        });
+    }
 
     // Snow customization sliders
     const snowSizeSlider = document.getElementById('snowSizeSlider');
