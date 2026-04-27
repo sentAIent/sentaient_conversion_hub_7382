@@ -1,0 +1,17 @@
+
+> sentaient-conversion-hub@0.1.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 359 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+1:26:05 PM [vite] page reload index.html
+1:26:10 PM [vite] page reload public/index.html
+1:35:53 PM [vite] page reload mindwave.html
+1:36:23 PM [vite] page reload mindwave.html
+1:57:52 PM [vite] page reload index.html
+1:57:52 PM [vite] page reload public/index.html
+1:58:27 PM [vite] page reload index.html
+1:58:27 PM [vite] page reload public/index.html

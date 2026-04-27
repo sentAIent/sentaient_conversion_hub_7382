@@ -1,5 +1,5 @@
 import { state, els, SOUNDSCAPES, STATE_INSIGHTS, SOUND_INSIGHTS, VISUALIZER_VERSION } from '../state.js';
-import { getVisualizer, initVisualizer, pauseVisuals } from '../visuals/visualizer_lazy.js?v=4';
+import { getVisualizer, initVisualizer, pauseVisuals, setVisualSpeed } from '../visuals/visualizer_lazy.js';
 import { stopRecording } from '../export/recorder.js';
 import { DailyLimitService } from '../services/daily-limit.js';
 import { showPricingModal } from '../ui/pricing-3tier.js';
@@ -116,6 +116,14 @@ export async function startAudio() {
         state.masterAtmosGain = state.audioCtx.createGain();
         state.masterGain = state.audioCtx.createGain();
 
+        // HARMONICS: Add support for overtones
+        state.oscLeft2 = state.audioCtx.createOscillator();
+        state.oscRight2 = state.audioCtx.createOscillator();
+        state.oscLeft3 = state.audioCtx.createOscillator();
+        state.oscRight3 = state.audioCtx.createOscillator();
+        state.harmonicsGain = state.audioCtx.createGain();
+        state.harmonicsGain.gain.value = state.harmonicsLevel || 0;
+
         // Master Balance Panner
         if (state.audioCtx.createStereoPanner) {
             state.masterPanner = state.audioCtx.createStereoPanner();
@@ -134,12 +142,22 @@ export async function startAudio() {
         // Connections
         state.oscLeft.connect(state.panLeft);
         state.oscRight.connect(state.panRight);
-        state.panLeft.connect(state.analyserLeft);
+
+        // HARMONICS: Route through their gain node into the main panners
+        state.oscLeft2.connect(state.harmonicsGain).connect(state.panLeft);
+        state.oscRight2.connect(state.harmonicsGain).connect(state.panRight);
+        state.oscLeft3.connect(state.harmonicsGain).connect(state.panLeft);
+        state.oscRight3.connect(state.harmonicsGain).connect(state.panRight);
+
         state.panLeft.connect(state.beatsGain);
-        state.panRight.connect(state.analyserRight);
         state.panRight.connect(state.beatsGain);
         state.beatsGain.connect(state.masterGain);
         state.masterAtmosGain.connect(state.masterGain);
+
+        // SYNC FIX: Connect analysers to MASTER gain instead of just oscillators
+        // This ensures visuals react to ALL sounds (Nature, Music, Binaural)
+        state.masterGain.connect(state.analyserLeft);
+        state.masterGain.connect(state.analyserRight);
 
         // Output Chain: Gain -> Panner -> Compressor -> Limiter -> Dest
         state.masterGain.connect(state.masterPanner);
@@ -217,6 +235,10 @@ export async function startAudio() {
 
         state.oscLeft.start(now);
         state.oscRight.start(now);
+        state.oscLeft2.start(now);
+        state.oscRight2.start(now);
+        state.oscLeft3.start(now);
+        state.oscRight3.start(now);
         state.isPlaying = true;
 
         // Setup Media Session for lock screen controls
@@ -401,6 +423,17 @@ export function stopAudio(immediate = false) {
         if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); }
         state.oscLeft = null;
         state.oscRight = null;
+
+        // Cleanup isochronic nodes
+        if (state.isochronicLFO) { try { state.isochronicLFO.stop(); } catch (e) { } state.isochronicLFO.disconnect(); state.isochronicLFO = null; }
+        if (state.isochronicGain) { state.isochronicGain.disconnect(); state.isochronicGain = null; }
+
+        // Cleanup noise nodes
+        if (state.brownNoiseNode) { try { state.brownNoiseNode.stop(); } catch (e) { } state.brownNoiseNode.disconnect(); state.brownNoiseNode = null; }
+        if (state.pinkNoiseNode) { try { state.pinkNoiseNode.stop(); } catch (e) { } state.pinkNoiseNode.disconnect(); state.pinkNoiseNode = null; }
+        if (state.brownNoiseGain) { state.brownNoiseGain.disconnect(); state.brownNoiseGain = null; }
+        if (state.pinkNoiseGain) { state.pinkNoiseGain.disconnect(); state.pinkNoiseGain = null; }
+
         Object.keys(state.activeSoundscapes).forEach(id => stopSingleSoundscape(id));
     } else {
         // NORMAL STOP: Fade out gracefully
@@ -415,6 +448,17 @@ export function stopAudio(immediate = false) {
             if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); }
             if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); }
             state.oscLeft = null; state.oscRight = null;
+
+            // Cleanup isochronic nodes
+            if (state.isochronicLFO) { try { state.isochronicLFO.stop(); } catch (e) { } state.isochronicLFO.disconnect(); state.isochronicLFO = null; }
+            if (state.isochronicGain) { state.isochronicGain.disconnect(); state.isochronicGain = null; }
+
+            // Cleanup noise nodes
+            if (state.brownNoiseNode) { try { state.brownNoiseNode.stop(); } catch (e) { } state.brownNoiseNode.disconnect(); state.brownNoiseNode = null; }
+            if (state.pinkNoiseNode) { try { state.pinkNoiseNode.stop(); } catch (e) { } state.pinkNoiseNode.disconnect(); state.pinkNoiseNode = null; }
+            if (state.brownNoiseGain) { state.brownNoiseGain.disconnect(); state.brownNoiseGain = null; }
+            if (state.pinkNoiseGain) { state.pinkNoiseGain.disconnect(); state.pinkNoiseGain = null; }
+
             Object.keys(state.activeSoundscapes).forEach(id => stopSingleSoundscape(id));
             state.stopTimeout = null;
         }, 60);
@@ -535,13 +579,9 @@ export function getAudioMode() {
  * Sync device vibration with current beat frequency
  */
 export function startHapticSync() {
-    if (!isHapticsEnabled()) return;
+    stopHapticSync(); // Clear existing
 
-    // CRITICAL: Clear existing interval first to prevent memory leak/UI hang (Fix for "Crashing" bug)
-    if (state.hapticInterval) {
-        clearInterval(state.hapticInterval);
-        state.hapticInterval = null;
-    }
+    if (!isHapticsEnabled()) return;
 
     console.log('[Haptics] Starting Beat Sync...');
 
@@ -758,10 +798,13 @@ const noiseBufferCache = {};
 let _cacheSampleRate = 0;
 
 function createPinkNoiseBuffer() {
-    if (noiseBufferCache.pink && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.pink;
-    _cacheSampleRate = state.audioCtx.sampleRate;
-    const bs = 2 * state.audioCtx.sampleRate;
-    const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
+    if (!state.audioCtx) return null;
+    const currentSR = state.audioCtx.sampleRate;
+    if (noiseBufferCache.pink && _cacheSampleRate === currentSR) return noiseBufferCache.pink;
+    
+    _cacheSampleRate = currentSR;
+    const bs = 2 * currentSR;
+    const b = state.audioCtx.createBuffer(1, bs, currentSR);
     const o = b.getChannelData(0);
     let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
     for (let i = 0; i < bs; i++) {
@@ -784,10 +827,13 @@ function createPinkNoiseBuffer() {
 }
 
 function createWhiteNoiseBuffer() {
-    if (noiseBufferCache.white && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.white;
-    _cacheSampleRate = state.audioCtx.sampleRate;
-    const bs = 2 * state.audioCtx.sampleRate;
-    const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
+    if (!state.audioCtx) return null;
+    const currentSR = state.audioCtx.sampleRate;
+    if (noiseBufferCache.white && _cacheSampleRate === currentSR) return noiseBufferCache.white;
+    
+    _cacheSampleRate = currentSR;
+    const bs = 2 * currentSR;
+    const b = state.audioCtx.createBuffer(1, bs, currentSR);
     const o = b.getChannelData(0);
     for (let i = 0; i < bs; i++) {
         o[i] = Math.random() * 2 - 1;
@@ -797,9 +843,12 @@ function createWhiteNoiseBuffer() {
 }
 
 function createBrownNoiseBuffer() {
-    if (noiseBufferCache.brown && _cacheSampleRate === state.audioCtx.sampleRate) return noiseBufferCache.brown;
-    _cacheSampleRate = state.audioCtx.sampleRate;
-    const bs = 2 * state.audioCtx.sampleRate;
+    if (!state.audioCtx) return null;
+    const currentSR = state.audioCtx.sampleRate;
+    if (noiseBufferCache.brown && _cacheSampleRate === currentSR) return noiseBufferCache.brown;
+    
+    _cacheSampleRate = currentSR;
+    const bs = 2 * currentSR;
     const b = state.audioCtx.createBuffer(1, bs, state.audioCtx.sampleRate);
     const o = b.getChannelData(0);
     let lastOut = 0;
@@ -932,8 +981,18 @@ export function playCompletionChime() {
 }
 
 
+export function updateHarmonicsLevel(val) {
+    const level = parseFloat(val);
+    state.harmonicsLevel = level;
+    if (state.harmonicsGain && state.audioCtx) {
+        const now = state.audioCtx.currentTime;
+        state.harmonicsGain.gain.cancelScheduledValues(now);
+        // Max level 0.15 to keep it as a subtle "color" overtone
+        state.harmonicsGain.gain.linearRampToValueAtTime(level * 0.15, now + 0.1);
+    }
+}
+
 export function updateFrequencies() {
-    if (!els.baseSlider || !els.beatSlider) return;
     const base = parseFloat(els.baseSlider.value);
     const beat = parseFloat(els.beatSlider.value);
 
@@ -944,8 +1003,14 @@ export function updateFrequencies() {
     console.log(`[Freq] Update: Base=${base}Hz, Beat=${beat}Hz`);
     if (els.baseValue) els.baseValue.textContent = `${base} Hz`;
     if (els.beatValue) els.beatValue.textContent = `${beat} Hz`;
-    if (state.oscLeft && state.isPlaying) { state.oscLeft.frequency.setValueAtTime(base, state.audioCtx.currentTime); }
-    if (state.oscRight && state.isPlaying) { state.oscRight.frequency.setValueAtTime(base + beat, state.audioCtx.currentTime); }
+    if (state.oscLeft && state.isPlaying) state.oscLeft.frequency.setValueAtTime(base, state.audioCtx.currentTime);
+    if (state.oscRight && state.isPlaying) state.oscRight.frequency.setValueAtTime(base + beat, state.audioCtx.currentTime);
+
+    // Update Harmonics
+    if (state.oscLeft2 && state.isPlaying) state.oscLeft2.frequency.setValueAtTime(base * 2, state.audioCtx.currentTime);
+    if (state.oscRight2 && state.isPlaying) state.oscRight2.frequency.setValueAtTime((base + beat) * 2, state.audioCtx.currentTime);
+    if (state.oscLeft3 && state.isPlaying) state.oscLeft3.frequency.setValueAtTime(base * 3, state.audioCtx.currentTime);
+    if (state.oscRight3 && state.isPlaying) state.oscRight3.frequency.setValueAtTime((base + beat) * 3, state.audioCtx.currentTime);
 
     // Auto Visual Speed Calculation
     if (state.visualSpeedAuto) {
@@ -985,10 +1050,7 @@ export function updateFrequencies() {
         if (compactValue) compactValue.textContent = targetSpeed.toFixed(1) + 'x';
 
         // Update Visualizer
-        import(`../visuals/visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`).then(m => {
-            const viz = m.getVisualizer();
-            if (viz) viz.setSpeed(targetSpeed);
-        });
+        setVisualSpeed(targetSpeed);
 
     }
 
@@ -1042,14 +1104,12 @@ export function updateFrequencies() {
 }
 
 export function updateBeatsVolume() {
-    if (!els.volSlider) return;
     const vol = parseFloat(els.volSlider.value);
     if (els.volValue) els.volValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.beatsGain && state.isPlaying) state.beatsGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
 }
 
 export function updateMasterVolume() {
-    if (!els.masterVolSlider) return;
     const vol = parseFloat(els.masterVolSlider.value);
     if (els.masterVolValue) els.masterVolValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.masterGain && state.isPlaying) state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
@@ -1577,19 +1637,7 @@ export function resetAllSoundscapes() {
 
     // 2. Aggressively clear state
     Object.keys(state.activeSoundscapes).forEach(id => {
-        const sc = state.activeSoundscapes[id];
-        if (sc) {
-            if (sc.stopTimer) clearTimeout(sc.stopTimer);
-            try {
-                if (sc.gainNode) sc.gainNode.disconnect();
-                if (sc.nodes) sc.nodes.forEach(n => {
-                    try {
-                        if (n.stop) { try { n.stop(); } catch (e) { } }
-                        n.disconnect();
-                    } catch (e) { }
-                });
-            } catch (e) { }
-        }
+        stopSingleSoundscape(id, true);
     });
     state.activeSoundscapes = {};
 

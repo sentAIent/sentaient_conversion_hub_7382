@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Logo Comparison</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            gap: 40px;
+            padding: 40px;
+            align-items: flex-start;
+        }
+
+        .box {
+            text-align: center;
+        }
+
+        .box h3 {
+            margin-bottom: 10px;
+        }
+
+        img {
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <h3>Reference (Original PNG)</h3>
+        <img src="https://raw.githubusercontent.com/user/repo/main/mindwave-logo.png" width="256" height="256" />
+        <br><br>
+        <img id="ref" width="256" height="256" style="background: #e5e7eb;" />
+    </div>
+    <div class="box">
+        <h3>New Icon SVG (Dark BG)</h3>
+        <img src="./mindwave-logo-icon.svg" width="256" height="256" />
+    </div>
+    <div class="box">
+        <h3>New Crisp SVG (Dark BG)</h3>
+        <img src="./mindwave-logo-crisp.svg" width="256" height="256" />
+    </div>
+    <div class="box">
+        <h3>Old mindwave-logo.svg</h3>
+        <img src="./mindwave-logo.svg" width="256" height="256" />
+    </div>
+</body>
+
+</html>

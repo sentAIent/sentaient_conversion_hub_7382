@@ -1,0 +1,111 @@
+import React, { useEffect } from 'react';
+import { Helmet } from 'react-helmet';
+import Header from '../../components/ui/Header';
+import HeroSection from './components/HeroSection';
+import OriginStorySection from './components/OriginStorySection';
+import TeamExpertiseSection from './components/TeamExpertiseSection';
+import AIPhilosophySection from './components/AIPhilosophySection';
+import MethodologySection from './components/MethodologySection';
+import CompanyCultureSection from './components/CompanyCultureSection';
+import TrustIndicatorsSection from './components/TrustIndicatorsSection';
+
+const AboutOurApproachIntelligenceCenter = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>About Our Approach - Intelligence Center | sentAIent Conversion Hub</title>
+        <meta 
+          name="description" 
+          content="Discover sentAIent's methodology, team expertise, and AI philosophy. Learn about our human-centered approach to AI transformation and the principles that guide every implementation." 
+        />
+        <meta name="keywords" content="AI methodology, AI team, AI philosophy, AI consultancy approach, ethical AI, human-centered AI" />
+        <meta property="og:title" content="About Our Approach - Intelligence Center | sentAIent" />
+        <meta property="og:description" content="Meet our expert team and discover the methodology that drives successful AI transformations with measurable business results." />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="/about-our-approach-intelligence-center" />
+      </Helmet>
+      <Header />
+      <main className="pt-16">
+        <HeroSection />
+        <OriginStorySection />
+        <TeamExpertiseSection />
+        <AIPhilosophySection />
+        <MethodologySection />
+        <CompanyCultureSection />
+        <TrustIndicatorsSection />
+      </main>
+      {/* Footer */}
+      <footer className="bg-primary text-white py-16">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            {/* Company Info */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                  <span className="text-primary font-bold text-lg">S</span>
+                </div>
+                <div>
+                  <div className="font-bold text-lg">sentAIent</div>
+                  <div className="text-white/80 text-sm">Conversion Hub</div>
+                </div>
+              </div>
+              <p className="text-white/80 text-sm leading-relaxed">
+                Transforming businesses through intelligent AI solutions that amplify human potential and deliver measurable results.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold text-lg mb-4">Solutions</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="/ai-solutions-experience-center" className="text-white/80 hover:text-white transition-colors">AI Solutions</a></li>
+                <li><a href="/free-ai-assessment-portal" className="text-white/80 hover:text-white transition-colors">Free Assessment</a></li>
+                <li><a href="/knowledge-nexus-resource-library" className="text-white/80 hover:text-white transition-colors">Resource Library</a></li>
+                <li><a href="/trust-transparency-hub" className="text-white/80 hover:text-white transition-colors">Trust & Security</a></li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="font-semibold text-lg mb-4">Company</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="/about-our-approach-intelligence-center" className="text-white/80 hover:text-white transition-colors">About Us</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Press</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Contact</a></li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-semibold text-lg mb-4">Get Started</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Schedule Consultation</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Request Demo</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Support</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Documentation</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <div className="text-white/80 text-sm mb-4 md:mb-0">
+              © {new Date()?.getFullYear()} sentAIent Conversion Hub. All rights reserved.
+            </div>
+            <div className="flex space-x-6 text-sm">
+              <a href="#" className="text-white/80 hover:text-white transition-colors">Privacy Policy</a>
+              <a href="#" className="text-white/80 hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="text-white/80 hover:text-white transition-colors">Cookie Policy</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default AboutOurApproachIntelligenceCenter;

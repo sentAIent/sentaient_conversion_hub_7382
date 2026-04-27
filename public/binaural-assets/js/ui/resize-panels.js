@@ -44,9 +44,13 @@ export function initResizablePanels() {
     });
 
     window.addEventListener('resize', () => {
-        updateTopBarWidth();
-        updateBottomBarWidth();
-        updateAtmosphereColumns();
+        // Debounced: only run layout recalc after user stops dragging
+        clearTimeout(window._rpResizeTimer);
+        window._rpResizeTimer = setTimeout(() => {
+            updateTopBarWidth();
+            updateBottomBarWidth();
+            updateAtmosphereColumns();
+        }, 80);
     });
 
     // Restore saved widths - this will now trigger the layout-change listener
@@ -206,6 +210,23 @@ function handleMouseUp() {
  */
 export function updateTopBarWidth() {
     const topBar = document.getElementById('topControlBar');
+    const topHeader = document.getElementById('topHeader');
+    const tapZone = document.getElementById('tapZone');
+
+    if (window.innerWidth < 1024) {
+        if (topHeader) {
+            topHeader.style.left = '';
+            topHeader.style.right = '';
+        }
+        if (tapZone) {
+            tapZone.style.marginLeft = '';
+            tapZone.style.marginRight = '';
+            tapZone.style.width = '';
+        }
+        if (topBar) topBar.style.maxWidth = '';
+        return;
+    }
+
     if (!topBar) return;
 
     const leftPanel = document.getElementById('leftPanel');
@@ -226,9 +247,6 @@ export function updateTopBarWidth() {
     const rightWidth = rightOpen ? Math.max(0, window.innerWidth - rightRect.left) : 0;
 
     // Update the header container's left/right bounds to match the gap
-    const topHeader = document.getElementById('topHeader');
-    const tapZone = document.getElementById('tapZone');
-
     if (topHeader) {
         topHeader.style.left = `${leftWidth}px`;
         topHeader.style.right = `${rightWidth}px`;
@@ -276,8 +294,22 @@ export function updateTopBarWidth() {
  * Update bottom control bar width/position based on open panels
  */
 export function updateBottomBarWidth() {
-    const bottomBar = document.getElementById('bottomControlBar');
-    if (!bottomBar) return;
+    let bottomBar = document.getElementById('bottomControlBar');
+    if (!bottomBar) bottomBar = document.getElementById('unifiedBottomDock');
+
+    if (window.innerWidth < 1024) {
+        if (bottomBar) {
+            bottomBar.style.left = '';
+            bottomBar.style.right = '';
+            bottomBar.style.width = '';
+            bottomBar.style.paddingLeft = '';
+            bottomBar.style.paddingRight = '';
+        }
+        return;
+    }
+    
+    // If it's the new unified dock, it's always full-width — no sidebar offset needed
+    if (!bottomBar || bottomBar.id === 'unifiedBottomDock') return;
 
     const leftPanel = document.getElementById('leftPanel');
     const rightPanel = document.getElementById('rightPanel');

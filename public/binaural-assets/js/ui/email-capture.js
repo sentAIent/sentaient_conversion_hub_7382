@@ -16,7 +16,7 @@ export function initEmailCapture() {
     setTimeout(async () => {
         try {
             // Dynamically import Firebase auth to avoid race condition
-            const { getAuth } = await import('firebase/auth');
+            const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js');
             const auth = getAuth();
 
             // Don't show if user is logged in
@@ -188,7 +188,7 @@ async function handleEmailSubmit(e) {
 
     try {
         // Dynamically import Firestore
-        const { getFirestore, doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+        const { getFirestore, doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
 
         // Save to Firestore
         const db = getFirestore();

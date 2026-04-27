@@ -8,7 +8,8 @@
  * Based on nuclear_v4 with custom compatibility mapping.
  */
 
-import { state, els, THEMES } from '../state.js';
+import * as THREE from '../vendor/three.module.js';
+import { state, els, THEMES } from '../state_vPERFECT.js';
 
 let viz3D = null;
 
@@ -108,7 +109,6 @@ export class Visualizer3D {
 
             this.initEnvironment();
             this.initialized = true;
-            this.updateVisibility(); // Ensure initial modes are loaded
 
             window.addEventListener('resize', () => this.resize());
             console.log('[Visualizer] PERFECT Engine Ready');
@@ -122,6 +122,14 @@ export class Visualizer3D {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        // Sync the 2D cyber overlay canvas size
+        const cyberCanvas = document.getElementById('cyberCanvas');
+        if (cyberCanvas) {
+            cyberCanvas.width = window.innerWidth;
+            cyberCanvas.height = window.innerHeight;
+            // Reset streams so they regenerate at new size
+            this.matrixCyberStreams = null;
+        }
     }
 
     // Key Mapping Helper
@@ -131,6 +139,17 @@ export class Visualizer3D {
         return mode;
     }
 
+    // Exclusive mode switch — clears all others, activates the one selected
+    setMode(mode) {
+        const target = this.mapMode(mode);
+        this.activeModes.clear();
+        this.activeModes.add(target);
+        this.mode = target;
+        this.updateVisibility();
+        this.updateLabel(target);
+    }
+
+    // Legacy toggle kept for preset multi-mode use
     toggleMode(mode) {
         const target = this.mapMode(mode);
         if (this.activeModes.has(target)) {
@@ -140,8 +159,6 @@ export class Visualizer3D {
         }
         this.mode = target;
         this.updateVisibility();
-        
-        // Update UI label if possible
         this.updateLabel(target);
     }
 
@@ -636,11 +653,11 @@ export class Visualizer3D {
             const vBeatPulse = beatPulse * vFactor, vNormBass = normBass * vFactor;
 
             // Update visible modes
-            if(this.activeModes.has('sphere') && this.sphere) {
+            if(this.activeModes.has('sphere')) {
                 this.sphere.rotation.y += 0.005 * multiplier; this.sphere.rotation.z += 0.006 * multiplier;
                 this.core.rotation.y -= 0.015 * multiplier; this.sphere.scale.setScalar(1 + vNormBass*0.15);
             }
-            if(this.activeModes.has('particles') && this.particles) {
+            if(this.activeModes.has('particles')) {
                 const pos = this.particles.geometry.attributes.position.array;
                 for(let i=2; i<pos.length; i+=3) { pos[i] += 0.02*multiplier; if(pos[i]>40) pos[i]=-40; }
                 this.particles.geometry.attributes.position.needsUpdate = true;
@@ -652,7 +669,7 @@ export class Visualizer3D {
                     else { blob.position.y -= c.fallSpeed*multiplier; if(blob.position.y<c.floatMin) c.state='rising'; }
                 });
             }
-            if(this.activeModes.has('ocean') && this.oceanWave) {
+            if(this.activeModes.has('ocean')) {
                 const pos = this.oceanWave.geometry.attributes.position.array;
                 for(let i=0; i<pos.length; i+=3) {
                     const d = Math.sqrt(pos[i]*pos[i]+pos[i+1]*pos[i+1]);
@@ -752,14 +769,28 @@ export class Visualizer3D {
 }
 
 export function initVisualizer() {
-    if (els.visualizer) {
-        viz3D = new Visualizer3D(els.visualizer);
-        els.visualizer.activeVisualizer = viz3D;
+    // Ensure canvas is resolved even if controls_vPERFECT didn't set it yet
+    if (!els.canvas) {
+        els.canvas = document.getElementById('visualizer');
+    }
+    // Init cyberCanvas dimensions
+    const cyberCanvas = document.getElementById('cyberCanvas');
+    if (cyberCanvas) {
+        cyberCanvas.width = window.innerWidth;
+        cyberCanvas.height = window.innerHeight;
+    }
+    if (els.canvas) {
+        viz3D = new Visualizer3D(els.canvas);
+        els.canvas.activeVisualizer = viz3D;
+        // Start with a clean default — particles (Neural Flow)
+        viz3D.setMode('particles');
         resumeVisuals();
+    } else {
+        console.error('[Visualizer] No canvas element found with id="visualizer"');
     }
 }
 export function getVisualizer() { return viz3D; }
-export function pauseVisuals() { if(viz3D) viz3D.active = false; }
+export function pauseVisuals() { if(viz3D) { viz3D.active = false; } }
 export function resumeVisuals() { 
     if(viz3D) { 
         viz3D.active = true; 
@@ -769,6 +800,9 @@ export function resumeVisuals() {
         }
     } 
 }
+/** Exclusive mode switch — clears other modes, only activates the given one */
+export function setVisualMode(m) { if(viz3D) viz3D.setMode(m); }
+/** Legacy toggle — for presets that layer multiple modes */
 export function toggleVisual(m) { if(viz3D) viz3D.toggleMode(m); }
 export function setVisualSpeed(s) { if(viz3D) viz3D.setGlobalSpeed(s); }
 export function setVisualColor(c) { if(viz3D) viz3D.setColor(c); }

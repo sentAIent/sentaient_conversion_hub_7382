@@ -3,7 +3,7 @@
  * Handles all client-side Stripe operations
  */
 
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js';
 
 const functions = getFunctions();
 
@@ -99,7 +99,7 @@ export async function validateCoupon(code) {
  * Get user's subscription status
  */
 export async function getSubscriptionStatus(userId) {
-    const { getFirestore, doc, getDoc } = await import('firebase/firestore');
+    const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
     const db = getFirestore();
 
     try {

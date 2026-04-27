@@ -26,6 +26,41 @@
         }
     }
     </script>
+    <!-- SUPER CACHE KILLER: Force fresh load of the new 3600-line fractal engine -->
+    <script>
+        /**
+         * Mindwave Resilient Bootloader (V119)
+         * Ensures fresh assets but prevents infinite refresh loops.
+         */
+        (function() {
+            const CURRENT_VERSION = 'V119';
+            const lastVersion = localStorage.getItem('mw_boot_version');
+            
+            if (lastVersion !== CURRENT_VERSION) {
+                console.log(`[Boot] Version Shift (${lastVersion || 'NONE'} -> ${CURRENT_VERSION}). Purging caches...`);
+                
+                // Clear Service Workers
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(regs => {
+                        for(let r of regs) r.unregister();
+                    });
+                }
+                
+                // Clear Asset Caches
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        for (let name of names) caches.delete(name);
+                    });
+                }
+                
+                localStorage.setItem('mw_boot_version', CURRENT_VERSION);
+                console.log('[Boot] Purge complete. Refreshing for clean state...');
+                setTimeout(() => window.location.reload(true), 500);
+            } else {
+                console.log(`[Boot] Version ${CURRENT_VERSION} confirmed. Procedural load active.`);
+            }
+        })();
+    </script>
 
     <script>
         // VISUAL ERROR LOGGER
@@ -95,18 +130,18 @@
             }
         };
     </script>
-    <title>MindWave - Binaural Beats Studio</title>
+    <title>MindWave Beta - RESILIENT_V119</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
     <link rel="stylesheet" href="./binaural-assets/css/tailwind-compiled.css">
-    <link rel="stylesheet" href="./binaural-assets/css/style.css?v=25">
-    <link rel="stylesheet" href="./binaural-assets/css/visual-active.css?v=1">
+    <link rel="stylesheet" href="./binaural-assets/css/style.css?v=ULTRASYNC_V111">
+    <link rel="stylesheet" href="./binaural-assets/css/visual-active.css?v=ULTRASYNC_V111">
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="./binaural-assets/js/main_vFINAL.js?v=CYMATICS_SQUARE_V5">
+    <link rel="modulepreload" href="./binaural-assets/js/main_vGOLD_SYNC.js?v=ULTRASYNC_V111">
     <!-- Visualizer modulepreload removed to unblock critical path -->
     <script src="./binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="./binaural-assets/js/main_vFINAL.js?v=CYMATICS_SQUARE_V5"
-        onerror="console.error('Failed to load main_vFINAL.js')"></script>
+    <script type="module" src="./binaural-assets/js/main_vGOLD_SYNC.js?v=ULTRASYNC_V111"
+        onerror="console.error('Failed to load main_vGOLD_SYNC.js')"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -830,13 +865,12 @@
                             class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
                     </button>
 
-                    <!-- OCEAN -->
                     <button id="oceanBtn"
                         class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
                     <input type="color" data-visual-color="ocean" class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" value="#60a9ff">
                         <span class="text-2xl filter drop-shadow-lg">🏝️</span>
                         <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Waves</span>
+                            class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Ocean</span>
                     </button>
 
                     <!-- CYBER -->
@@ -886,12 +920,12 @@
                         </div>
                     </button>
 
-                    <!-- CYMATICS 〜 Wave physics sandbox -->
+                    <!-- CYMATICS 〜 Sacred geometry engine -->
                     <button id="cymaticsBtn"
                         class="visual-btn p-2 rounded-xl transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]"
                         style="background: linear-gradient(135deg, rgba(180,120,255,0.1) 0%, rgba(120,80,220,0.05) 100%); border: 1px solid rgba(180,120,255,0.35); box-shadow: 0 0 18px rgba(180,120,255,0.12);">
                         <span class="text-2xl" style="filter: drop-shadow(0 0 10px rgba(180,120,255,0.9));">〜</span>
-                        <span class="text-[9px] font-bold uppercase tracking-wider transition-colors" style="color: rgba(180,120,255,0.8);">Waves</span>
+                        <span class="text-[9px] font-bold uppercase tracking-wider transition-colors" style="color: rgba(180,120,255,0.8);">Cymatics</span>
                         <div id="cymaticsSettingsToggle"
                             class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-purple-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
                             title="Cymatics Settings" onclick="event.stopPropagation(); toggleCymaticsPanel();">
@@ -948,6 +982,11 @@
                     <button id="cymaticPrevBtn" class="px-3 py-1 rounded-lg bg-white/5 hover:bg-purple-400/20 border border-purple-400/20 text-purple-300 text-[11px] font-bold transition-all">◀</button>
                     <button id="cymaticNextBtn" class="px-3 py-1 rounded-lg bg-white/5 hover:bg-purple-400/20 border border-purple-400/20 text-purple-300 text-[11px] font-bold transition-all">▶</button>
                     <div class="w-px h-5 bg-white/10"></div>
+                    <!-- AI Sync -->
+                    <button id="cymaticAiBtn" class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 hover:bg-cyan-400/20 border border-cyan-400/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider transition-all group">
+                        <span class="group-hover:scale-125 transition-transform">✨</span> AI SYNC
+                    </button>
+                    <div class="w-px h-5 bg-white/10"></div>
                     <!-- Auto-rotate -->
                     <div class="flex flex-col gap-0.5 items-center">
                         <label class="text-[8px] text-purple-300/50 uppercase font-mono">AUTO</label>
@@ -978,92 +1017,64 @@
                     </div>
                 </div>
 
-                <!-- Pattern grid (28 patterns) -->
+                <!-- Pattern grid (28 fractal patterns) -->
                 <div class="flex flex-wrap gap-1.5 max-w-[520px]">
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(150,200,255,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(0)">Cross</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(0)">Sri Yantra</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(150,200,255,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(1)">Diamond</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(1)">Flower Life</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(150,200,255,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(2)">Square</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(2)">Metatron</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(140,255,180,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(3)">Delta</button>
+                        style="color:rgba(34,211,238,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(3)">Vector Eq</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,200,120,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(4)">Butterfly</button>
+                        style="color:rgba(34,211,238,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(4)">Fibonacci</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,200,120,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(5)">Clover</button>
+                        style="color:rgba(34,211,238,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(5)">Torus Fld</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(200,150,255,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(6)">Lattice</button>
+                        style="color:rgba(232,121,249,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(6)">Mandelbrot</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(140,255,180,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(7)">Theta</button>
+                        style="color:rgba(232,121,249,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(7)">Julia Loop</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(200,150,255,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(8)">Pentagon</button>
+                        style="color:rgba(232,121,249,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(8)">Recursive</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,200,120,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(9)">Flower</button>
+                        style="color:rgba(251,191,36,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(9)">Polygon</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(140,255,180,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(10)">Alpha</button>
+                        style="color:rgba(251,191,36,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(10)">Lattice</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,150,200,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(11)">Sunburst</button>
+                        style="color:rgba(251,191,36,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(11)">Star Gate</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(200,150,255,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(12)">Trident</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(12)">Neural Web</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,140,140,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(13)">Web</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(13)">Quantum</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,150,200,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(14)">Eclipse</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(14)">Golden Rat</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(200,150,255,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(15)">Compass</button>
+                        style="color:rgba(34,211,238,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(15)">Celestial</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,150,200,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(16)">Hexagram</button>
+                        style="color:rgba(34,211,238,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(16)">Void Geo</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,140,140,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(17)">Mandala</button>
+                        style="color:rgba(34,211,238,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(17)">Infinite</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,150,200,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(18)">Vortex</button>
+                        style="color:rgba(232,121,249,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(18)">Prism Fold</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(140,255,180,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(19)">Beta</button>
+                        style="color:rgba(232,121,249,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(19)">Cosmic Knot</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,140,140,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(20)">Galaxy</button>
+                        style="color:rgba(232,121,249,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(20)">Zen Man</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,200,120,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(21)">Lotus</button>
+                        style="color:rgba(251,191,36,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(21)">Astral</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,140,140,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(22)">Prism</button>
+                        style="color:rgba(251,191,36,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(22)">Etheric</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,150,200,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(23)">Ripple</button>
+                        style="color:rgba(251,191,36,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(23)">Plasma Blo</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,140,140,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(24)">Crystal</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(24)">Synchro</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,200,120,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(25)">Spiral</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(25)">Unified</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(140,255,180,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(26)">Gamma</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(26)">Omega</button>
                     <button class="cymatics-pattern-btn px-2 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider transition-all border border-white/10 hover:border-purple-400/60 hover:bg-purple-400/10 leading-tight text-center" 
-                        style="color:rgba(255,140,140,0.9); min-width:3.5rem;"
-                        onclick="selectCymaticPattern(27)">Fractal</button>
+                        style="color:rgba(180,120,255,0.9); min-width:3.5rem;" onclick="selectCymaticPattern(27)">Source</button>
                 </div>
             </div>
 

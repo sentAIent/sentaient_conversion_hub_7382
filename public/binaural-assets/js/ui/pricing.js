@@ -4,7 +4,7 @@
  */
 
 import { goToCheckout, PRICING, formatPrice, openCustomerPortal } from '../services/stripe-simple.js';
-import { getAuth } from 'firebase/auth';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 
 export async function showPricingModal() {
     // Check if user is logged in

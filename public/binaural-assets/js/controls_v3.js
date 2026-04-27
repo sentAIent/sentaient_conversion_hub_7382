@@ -572,6 +572,7 @@ export function setupUI() {
     els.mandalaBtn = document.getElementById('mandalaBtn');
     els.cyberBtn = document.getElementById('cyberBtn');
     els.matrixBtn = document.getElementById('matrixBtn');
+    els.snowflakeBtn = document.getElementById('snowflakeBtn');
     els.interstellarBtn = els.matrixBtn; // Legacy alias for some internal functions
 
     // Session Timer Elements
@@ -812,12 +813,12 @@ export function setupUI() {
             if (els.lockUIBtn) {
                 if (state.aiVisualsLocked) {
                     els.lockUIBtn.classList.add('locked');
-                    els.lockIcon.style.display = 'block';
-                    els.unlockIcon.style.display = 'none';
+                    if (els.lockIcon) els.lockIcon.style.display = 'block';
+                    if (els.unlockIcon) els.unlockIcon.style.display = 'none';
                 } else {
                     els.lockUIBtn.classList.remove('locked');
-                    els.lockIcon.style.display = 'none';
-                    els.unlockIcon.style.display = 'block';
+                    if (els.lockIcon) els.lockIcon.style.display = 'none';
+                    if (els.unlockIcon) els.unlockIcon.style.display = 'block';
                 }
             }
 
@@ -838,9 +839,12 @@ export function setupUI() {
         // Attach Auto-Save Listeners
     const saveTriggers = [
         els.masterVolSlider, els.beatSlider, els.atmosMasterSlider,
-        els.visualSpeedSlider, els.lockUIBtn, els.lowPowerToggle,
-        els.miniMasterSlider
+        els.visualSpeedSlider, els.lockUIBtn, els.lowPowerToggle
     ];
+    // Add all mini master sliders to triggers if they exist
+    if (els.miniMasterSliders) {
+        els.miniMasterSliders.forEach(s => saveTriggers.push(s));
+    }
     saveTriggers.forEach(el => {
         if (el) el.addEventListener('input', saveUserPreferences); // For sliders
         if (el) el.addEventListener('click', saveUserPreferences); // For buttons
@@ -1434,6 +1438,11 @@ export function setupUI() {
 
     // Auto-open mixer on first load for desktop? Maybe not, keep immersive.
 
+    // --- GLOBAL LISTENER GUARD ---
+    // Prevent stacking listeners if setupUI is called multiple times
+    if (window._MW_LISTENERS) return; 
+    window._MW_LISTENERS = true;
+
     // Tap Zone Removed (per user request)
 
     // Immersive Mode
@@ -1507,6 +1516,7 @@ export function setupUI() {
         if (e.target.closest('#matrixSettingsToggle')) return;
         setVisualMode('matrix', null, true);
     });
+    if (els.snowflakeBtn) els.snowflakeBtn.addEventListener('click', () => setVisualMode('cymatics', null, true));
 
     // Matrix Mini-Toggle Logic
     const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
@@ -3090,7 +3100,7 @@ function showVolumeWarning() {
 
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
-    toast.className = `fixed top - 4 left - 1 / 2 - translate - x - 1 / 2 px - 4 py - 2 rounded - lg text - sm font - medium z - [200] transition - all duration - 300 opacity - 0 transform - translate - y - 2`;
+    toast.className = `fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-medium z-[200] transition-all duration-300 opacity-0 -translate-y-2`;
 
     if (type === 'success') {
         toast.style.backgroundColor = 'rgba(16, 185, 129, 0.95)';
@@ -3181,11 +3191,17 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         if (isManual) { showToast('Initializing Visualizer...', 'info'); }
 
         // Queue the click action instead of silently dropping it!
+        let attempts = 0;
         const checkViz = setInterval(() => {
+            attempts++;
             const v = getVisualizer();
             if (v && v.initialized) {
                 clearInterval(checkViz);
                 setVisualMode(mode, forceState, false); // Re-execute silently
+            } else if (attempts > 20) { // Limit to 10 seconds (20 * 500ms)
+                clearInterval(checkViz);
+                console.error('[Controls] Visualizer failed to initialize in time.');
+                showToast('Visualizer load failed. Check connection.', 'warning');
             }
         }, 500);
 
@@ -3246,7 +3262,8 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             { el: els.oceanBtn, mode: 'ocean' },
             { el: els.mandalaBtn, mode: 'mandala' },
             { el: els.cyberBtn, mode: 'cyber' }, // UI "Cyber" -> Internal 2D
-            { el: els.matrixBtn, mode: 'matrix' } // UI "Matrix" -> Internal 3D
+            { el: els.matrixBtn, mode: 'matrix' }, // UI "Matrix" -> Internal 3D
+            { el: els.snowflakeBtn, mode: 'cymatics' } // UI "Cymatics" -> Internal Engine
         ];
 
         buttons.forEach(({ el, mode: btnMode }) => {
@@ -3314,6 +3331,20 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         } else {
             galaxyPanel.classList.add('hidden');
             galaxyPanel.classList.remove('flex', 'items-center');
+        }
+    }
+
+    // Cymatics Pro Panel Toggle
+    const cymaticsPanel = document.getElementById('cymaticsPanel');
+    if (cymaticsPanel) {
+        const cymaticsActive = activeModes.has('cymatics');
+        if (cymaticsActive) {
+            cymaticsPanel.classList.remove('hidden');
+            cymaticsPanel.classList.add('flex');
+            if (window.renderCymaticProPatterns) window.renderCymaticProPatterns();
+        } else {
+            cymaticsPanel.classList.add('hidden');
+            cymaticsPanel.classList.remove('flex');
         }
     }
 }
@@ -3500,24 +3531,28 @@ function enforceLightThemeStyles() {
     const rightPanel = document.getElementById('rightPanel');
 
     // Apply light backgrounds
-    if (leftPanel) leftPanel.style.backgroundColor = t.panel;
-    if (rightPanel) rightPanel.style.backgroundColor = t.panel;
+    if (leftPanel) leftPanel.style.backgroundColor = t.panel || '#ffffff';
+    if (rightPanel) rightPanel.style.backgroundColor = t.panel || '#ffffff';
+    if (document.getElementById('topControlBar')) document.getElementById('topControlBar').style.backgroundColor = t.panel || '#ffffff';
 
     // Fix preset button text - make it DARK
     document.querySelectorAll('.preset-btn').forEach(btn => {
+        if (!btn) return;
         btn.style.backgroundColor = 'rgba(255,255,255,0.8)';
-        btn.style.borderColor = t.border;
+        btn.style.borderColor = t.border || '#dddddd';
         btn.querySelectorAll('*').forEach(child => {
-            child.style.color = t.text;
+            if (child) child.style.color = t.text || '#000000';
         });
     });
 
     // Fix all text labels in sidebars
     const textElements = document.querySelectorAll('#leftPanel span, #leftPanel label, #rightPanel span, #rightPanel label');
     textElements.forEach(el => {
+        if (!el || !el.style) return;
         // Don't override accent-colored headers
-        if (!el.style.color.includes('var(--accent)') && !el.classList.contains('text-\\[var\\(--accent\\)\\]')) {
-            el.style.color = t.text;
+        const elColor = el.style.color || '';
+        if (!elColor.includes('var(--accent)') && !el.classList.contains('text-\\[var\\(--accent\\)\\]')) {
+            el.style.color = t.text || '#000000';
         }
     });
 }
@@ -6488,11 +6523,10 @@ export function setupGlobalMenuSystem() {
     });
 
     // Handle Mixer Tab initial state
-    // Handle Mixer Tab initial state
     if (tabContainer) {
-        const activeTab = tabContainer.querySelector('.active');
+        const activeTab = tabContainer.querySelector('.global-tab-btn.bg-\[var\(--accent\)\]');
         if (!activeTab) {
-             const first = tabContainer.querySelector('button');
+             const first = tabContainer.querySelector('.global-tab-btn');
              if (first) first.click();
         }
     }

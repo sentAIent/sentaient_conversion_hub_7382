@@ -20,11 +20,11 @@ async function loadVisualizerModule() {
 
     if (loadPromise) return loadPromise;
 
-    console.log(`[LazyViz] Loading visualizer module from ./visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`);
+    console.log(`[LazyViz] Loading visualizer module from ./visualizer_vGOLD_SYNC.js?v=${VISUALIZER_VERSION}`);
     // Added version tracking
     const startTime = performance.now();
 
-    loadPromise = import(`./visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`).then(module => {
+    loadPromise = import(`./visualizer_nuclear_v5.js?v=${VISUALIZER_VERSION}`).then(module => {
         visualizerModule = module;
         const loadTime = (performance.now() - startTime).toFixed(0);
         console.log(`[LazyViz] Visualizer loaded in ${loadTime}ms`);
@@ -44,13 +44,6 @@ async function loadVisualizerModule() {
  * Initialize the visualizer (lazy loads if needed)
  */
 export async function initVisualizer() {
-    // Check if already initialized to prevent double render loops (Crucial fix for "Crashing" bug)
-    const existingViz = getVisualizer();
-    if (existingViz && existingViz.initialized) {
-        console.log('[LazyViz] Visualizer already initialized, skipping duplicate init.');
-        return existingViz;
-    }
-
     const module = await loadVisualizerModule();
     return module.initVisualizer();
 }
@@ -60,10 +53,6 @@ export async function initVisualizer() {
  * Returns null if not yet initialized (non-blocking)
  */
 export function getVisualizer() {
-    // First check global state if available
-    const canvas = document.getElementById('visualizer');
-    if (canvas && canvas.activeVisualizer) return canvas.activeVisualizer;
-
     if (!visualizerModule) return null;
     return visualizerModule.getVisualizer();
 }

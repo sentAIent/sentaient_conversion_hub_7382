@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-cache-v46-universal-fix';
+const CACHE_NAME = 'mindwave-cache-v999-ULTIMATE';
 
 // Essential assets to cache immediately upon installation
 const PRECACHE_URLS = [
@@ -36,11 +36,13 @@ const PRECACHE_URLS = [
     // Visualizers
     '/binaural-assets/js/visuals/visualizer_lazy.js',
     '/binaural-assets/js/visuals/visualizer_nuclear_v4.js',
+    '/binaural-assets/js/visuals/visualizer_nuclear_v5.js',
 
     // Assets
     '/binaural-assets/mindwave-logo-icon.png',
     '/binaural-assets/images/tribal-sun.svg',
     '/binaural-assets/images/lotus-logo-color.svg',
+    '/binaural-assets/images/lotus-logo-white.svg',
 
     // Utilities
     '/binaural-assets/js/utils/audio-offline-manager.js',
@@ -50,7 +52,7 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', event => {
-    console.log('[ServiceWorker] Install v46');
+    console.log('[ServiceWorker] Install v4');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -82,16 +84,17 @@ self.addEventListener('activate', event => {
 
 // Helper: Is this a mutable resource that should always be fresh?
 function isCodeOrMarkup(url) {
-    const cleanUrl = url.split('?')[0];
-    return cleanUrl.endsWith('.js') || cleanUrl.endsWith('.css') || cleanUrl.endsWith('.html');
+    return url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.html');
 }
 
 self.addEventListener('fetch', event => {
     // We only want to handle GET requests
     if (event.request.method !== 'GET') return;
 
-    // Ignore chrome extension requests and auth/analytics APIs
+    // Ignore chrome extension requests, Vite HMR, and auth/analytics APIs
     if (event.request.url.startsWith('chrome-extension') ||
+        event.request.url.includes('/@vite/') ||
+        event.request.url.includes('/@react-refresh') ||
         event.request.url.includes('firestore.googleapis.com') ||
         event.request.url.includes('google-analytics.com')) {
         return;
@@ -139,6 +142,12 @@ self.addEventListener('fetch', event => {
                     return response;
                 }).catch(err => {
                     console.error('[ServiceWorker] Fetch failed; offline and not cached', err);
+                    // Return a valid error response to prevent "Failed to convert value to Response"
+                    return new Response('Offline: Resource not found in cache.', {
+                        status: 503,
+                        statusText: 'Service Unavailable',
+                        headers: new Headers({ 'Content-Type': 'text/plain' })
+                    });
                 });
             })
     );

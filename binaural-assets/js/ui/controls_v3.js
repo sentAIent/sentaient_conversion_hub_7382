@@ -1,7 +1,7 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=2';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=PHASE2_CYMATICS_V1';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -23,48 +23,6 @@ import { loadUserPreferences, saveUserPreferences } from '../services/persistenc
 
 // Global reference for restored prefs to be used during initialization
 let restoredPrefs = null;
-
-let heartInterval = null;
-let syncCheckInterval = null;
-
-// --- MULTI-DOCK PROXY POLYFILL ---
-const _originalGetElementById = document.getElementById.bind(document);
-document.getElementById = function(id) {
-    const els = document.querySelectorAll('#' + id);
-    if (els.length <= 1) return _originalGetElementById(id);
-    
-    return new Proxy(els[0], {
-        get(target, prop) {
-            if (prop === 'addEventListener') {
-                return (type, listener, options) => els.forEach(el => el.addEventListener(type, listener, options));
-            }
-            if (prop === 'classList') {
-                return {
-                    add: (...args) => els.forEach(el => el.classList.add(...args)),
-                    remove: (...args) => els.forEach(el => el.classList.remove(...args)),
-                    toggle: (...args) => { els.forEach(el => el.classList.toggle(...args)); },
-                    contains: (...args) => els[0].classList.contains(...args)
-                };
-            }
-            if (prop === 'style') {
-                return new Proxy(target.style, {
-                    set(styleTarget, styleProp, value) {
-                        els.forEach(el => el.style[styleProp] = value);
-                        return true;
-                    }
-                });
-            }
-            const val = target[prop];
-            if (typeof val === 'function') return val.bind(target);
-            return val;
-        },
-        set(target, prop, value) {
-            els.forEach(el => el[prop] = value);
-            return true;
-        }
-    });
-};
-// ---------------------------------
 
 // Use MultiReplace for multiple chunks? No, I'll use multi_replace tool.
 // This block is just for thought process.
@@ -96,69 +54,112 @@ window.toggleLeftMenuSection = toggleLeftMenuSection;
 
 // NEW: Interface for mindwave.html proxies
 window.controls = {
-    toggleGalaxySettings: function(btn) {
-        state.galaxyPanelOpen = !state.galaxyPanelOpen;
-        const panel = document.getElementById('galaxySettingsPanel');
+    // Contextual Sync: Open Right Sidebar Visuals Tab and specific panel
+    syncSidebar: function(panelId) {
+        // Open Right Sidebar
+        const rightPanel = document.getElementById('rightPanel');
+        if (rightPanel) rightPanel.classList.remove('translate-x-full');
+
+        // Switch to Visuals Tab
+        const visualsTabBtn = document.querySelector('.studio-tab-btn[data-tab="visuals"]');
+        if (visualsTabBtn) visualsTabBtn.click();
+
+        // Update panel visibility in Visualizer3D if already active
         const viz = getVisualizer();
-        const isActive = viz && viz.activeModes && viz.activeModes.has('galaxy');
-        if (panel && isActive) {
-            if (state.galaxyPanelOpen) {
-                panel.classList.remove('hidden');
-                panel.classList.add('flex', 'items-center');
-            } else {
-                panel.classList.add('hidden');
-                panel.classList.remove('flex', 'items-center');
-            }
-        } else if (panel) {
-            panel.classList.toggle('hidden');
-            panel.classList.toggle('flex');
-            panel.classList.toggle('items-center');
+        if (viz && viz.updateUIPanels) {
+            viz.updateUIPanels();
         }
+    },
+    toggleGalaxySettings: function(btn) {
+        this.syncSidebar('galaxyPanel');
     },
     toggleCyberSettings: function(btn) {
-        state.cyberPanelOpen = !state.cyberPanelOpen;
-        const panel = document.getElementById('cyberSettingsPanel');
-        const viz = getVisualizer();
-        const isActive = viz && viz.activeModes && viz.activeModes.has('cyber');
-        if (panel && isActive) {
-            if (state.cyberPanelOpen) {
-                panel.classList.remove('hidden');
-                panel.classList.add('flex', 'items-center');
-            } else {
-                panel.classList.add('hidden');
-                panel.classList.remove('flex', 'items-center');
-            }
-        } else if (panel) {
-            panel.classList.toggle('hidden');
-            panel.classList.toggle('flex');
-            panel.classList.toggle('items-center');
-        }
+        this.syncSidebar('matrixPanel');
     },
     toggleMatrixSettings: function(btn) {
-        state.matrixPanelOpen = !state.matrixPanelOpen;
-        const panel = document.getElementById('matrixSettingsPanel');
+        this.syncSidebar('matrixPanel');
+    },
+    toggleSnowflakeSettings: function(btn) {
+        const panel = document.getElementById('snowflakeSettingsPanel');
+        if (panel) panel.classList.toggle('hidden');
+    },
+    setMatrixMode: function(mode) {
         const viz = getVisualizer();
-        const active = viz && viz.activeModes && viz.activeModes.has('matrix');
-        if (panel && active) {
-            if (state.matrixPanelOpen) {
-                panel.classList.remove('hidden');
-                panel.classList.add('flex', 'items-center');
-            } else {
-                panel.classList.add('hidden');
-                panel.classList.remove('flex', 'items-center');
-            }
-        } else if (panel) {
-            panel.classList.toggle('hidden');
-            panel.classList.toggle('flex');
-            panel.classList.toggle('items-center');
+        if (viz) {
+            viz.matrixConfig.logicMode = mode;
+            showToast(`Matrix Mode: ${mode.toUpperCase()}`, 'info');
+            // Save state
+            saveUserPreferences({ matrixLogicMode: mode });
+        }
+    },
+    toggleGalaxySun: function() {
+        const viz = getVisualizer();
+        if (viz && viz.toggleGalaxySunStyle) {
+            const next = viz.toggleGalaxySunStyle();
+            if (typeof showToast === 'function') showToast(`Sun Style: ${next.toUpperCase()}`, 'info');
+            saveUserPreferences({ galaxySunStyle: next });
+        }
+    },
+    resetGalaxySettings: function() {
+        const viz = getVisualizer();
+        const rx = document.getElementById('galaxySunRX');
+        const ry = document.getElementById('galaxySunRY');
+        const rz = document.getElementById('galaxySunRZ');
+        if (rx) rx.value = 0;
+        if (ry) ry.value = 0.5;
+        if (rz) rz.value = 0;
+        if (viz) {
+            viz.sunRotationSpeedX = 0;
+            viz.sunRotationSpeedY = 0.5;
+            viz.sunRotationSpeedZ = 0;
+            if (typeof showToast === 'function') showToast('Galaxy Sun Reset', 'info');
         }
     }
 };
 
-// Legacy support
+// Global Interface Assignments
 window.toggleGalaxySettings = window.controls.toggleGalaxySettings;
 window.toggleCyberSettings = window.controls.toggleCyberSettings;
 window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
+window.toggleGalaxySun = window.controls.toggleGalaxySun;
+window.resetGalaxySettings = window.controls.resetGalaxySettings;
+window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
+
+// NEW: Global UI Sync Listener for Visual Modes (Root Asset Version)
+window.addEventListener('mindwave:visual-mode-sync', (e) => {
+    if (!e.detail || !e.detail.activeModes) return;
+    const activeModes = new Set(e.detail.activeModes);
+    const buttons = [
+        { id: 'sphereBtn', mode: 'sphere' },
+        { id: 'cubeBtn', mode: 'box' },
+        { id: 'dragonBtn', mode: 'dragon' },
+        { id: 'galaxyBtn', mode: 'galaxy' },
+        { id: 'flowBtn', mode: 'particles' },
+        { id: 'lightspeedBtn', mode: 'lightspeed' },
+        { id: 'lavaBtn', mode: 'lava' },
+        { id: 'fireplaceBtn', mode: 'fireplace' },
+        { id: 'rainBtn', mode: 'rainforest' },
+        { id: 'zenBtn', mode: 'zengarden' },
+        { id: 'oceanBtn', mode: 'ocean' },
+        { id: 'mandalaBtn', mode: 'mandala' },
+        { id: 'cyberBtn', mode: 'cyber' },
+        { id: 'matrixBtn', mode: 'matrix' },
+        { id: 'snowflakeBtn', mode: 'snowflake' },
+        { id: 'cymaticsBtn', mode: 'cymatics' }
+    ];
+
+    buttons.forEach(({ id, mode }) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        if (activeModes.has(mode)) {
+            btn.classList.add('active', 'toggle-active');
+            btn.classList.remove('toggle-inactive');
+        } else {
+            btn.classList.remove('active', 'toggle-active');
+            btn.classList.add('toggle-inactive');
+        }
+    });
+});
 
 export function updateDockScaling() {
     const width = window.innerWidth;
@@ -226,6 +227,9 @@ export function setupUI() {
     els.themeBtn = document.getElementById('themeBtn');
     els.galleryBtn = document.getElementById('galleryBtn');
     els.visualSpeedSlider = document.getElementById('visualSpeedSlider');
+    els.globalDimmerSlider = document.getElementById('globalDimmerSlider');
+    els.dimmerValue = document.getElementById('dimmerValue');
+    els.dimmerOverlay = document.getElementById('dimmerOverlay');
     els.speedValue = document.getElementById('speedValue');
     els.speedSliderContainer = document.getElementById('speedSliderContainer'); // Container for opacity
     els.visualSyncBtn = document.getElementById('visualSyncBtn');
@@ -261,6 +265,37 @@ export function setupUI() {
     els.closeLeftBtn = document.getElementById('closeLeftBtn');
     els.disclaimerBackBtn = document.getElementById('disclaimerBackBtn'); // NEW Back Button
     els.closeRightBtn = document.getElementById('closeRightBtn');
+
+    // Visual Mode Buttons
+    els.sphereBtn = document.getElementById('sphereBtn');
+    els.cubeBtn = document.getElementById('cubeBtn');
+    els.dragonBtn = document.getElementById('dragonBtn');
+    els.galaxyBtn = document.getElementById('galaxyBtn');
+    els.flowBtn = document.getElementById('flowBtn');
+    els.lightspeedBtn = document.getElementById('lightspeedBtn');
+    els.lavaBtn = document.getElementById('lavaBtn');
+    els.fireplaceBtn = document.getElementById('fireplaceBtn');
+    els.rainBtn = document.getElementById('rainBtn');
+    els.zenBtn = document.getElementById('zenBtn');
+    els.oceanBtn = document.getElementById('oceanBtn');
+    els.mandalaBtn = document.getElementById('mandalaBtn');
+    els.cyberBtn = document.getElementById('cyberBtn');
+    els.matrixBtn = document.getElementById('matrixBtn');
+    els.snowflakeBtn = document.getElementById('snowflakeBtn');
+    els.oceanBtn = document.getElementById('oceanBtn'); // New ID for island/waves
+    els.cymaticsBtn = document.getElementById('cymaticsBtn'); // Now Fractal Patterns
+
+    // Cymatics / Galaxy / Matrix Controls
+    els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
+    els.cymaticNextBtn = document.getElementById('cymaticNextBtn');
+    els.cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
+
+    els.matrixTextInput = document.getElementById('matrixTextInput');
+    els.matrixVibrationToggle = document.getElementById('matrixVibrationToggle');
+
+    els.galaxySunRX = document.getElementById('galaxySunRX');
+    els.galaxySunRY = document.getElementById('galaxySunRY');
+    els.galaxySunRZ = document.getElementById('galaxySunRZ');
     els.statusIndicator = document.getElementById('statusIndicator');
     els.aiPrompt = document.getElementById('aiPrompt');
     els.lockUIBtn = document.getElementById('lockUIBtn');
@@ -297,7 +332,6 @@ export function setupUI() {
 
 
     console.log('[Controls] Initial layout synchronized');
-    setupGlobalMenuSystem();
     els.playbackAudio = document.getElementById('playbackAudio');
     els.profileModal = document.getElementById('profileModal');
     els.profileNameInput = document.getElementById('profileNameInput');
@@ -327,6 +361,7 @@ export function setupUI() {
     els.dragonBtn = document.getElementById('dragonBtn');
     els.galaxyBtn = document.getElementById('galaxyBtn');
     els.flowBtn = document.getElementById('flowBtn');
+    els.lightspeedBtn = document.getElementById('lightspeedBtn');
     els.lavaBtn = document.getElementById('lavaBtn');
     els.fireplaceBtn = document.getElementById('fireplaceBtn');
     els.rainBtn = document.getElementById('rainBtn');
@@ -676,7 +711,13 @@ export function setupUI() {
 
     // Sliders
     if (els.baseSlider) els.baseSlider.addEventListener('input', () => { updateFrequencies(); saveStateToLocal(); });
-    if (els.beatSlider) els.beatSlider.addEventListener('input', () => { updateFrequencies(); saveStateToLocal(); });
+    if (els.beatSlider) els.beatSlider.addEventListener('input', () => {
+        updateFrequencies();
+        saveStateToLocal();
+        // Sync binaural beat Hz to cymatics shader
+        const viz = getVisualizer();
+        if (viz?.setCymaticFreq) viz.setCymaticFreq(parseFloat(els.beatSlider.value));
+    });
     if (els.volSlider) els.volSlider.addEventListener('input', () => { updateBeatsVolume(); saveStateToLocal(); });
     if (els.masterVolSlider) els.masterVolSlider.addEventListener('input', () => {
         updateMasterVolume();
@@ -701,6 +742,33 @@ export function setupUI() {
         // p = sqrt((v - 0.1) / 14.9)
         return Math.sqrt(Math.max(0, v - 0.1) / 14.9);
     };
+
+    // Global Dimmer
+    const updateDimmerUI = (val) => {
+        if (els.globalDimmerSlider) els.globalDimmerSlider.value = val;
+        if (els.dimmerValue) els.dimmerValue.textContent = `${Math.round(val * 100)}%`;
+        if (els.dimmerOverlay) els.dimmerOverlay.style.opacity = val.toString();
+        
+        // Also dim the physical WebGL scene behind it
+        const vizCanvas = document.getElementById('visualizerCanvas') || document.getElementById('visualizer');
+        if (vizCanvas) {
+            vizCanvas.style.opacity = Math.max(0, 1.0 - val).toString();
+        }
+    };
+
+    if (els.globalDimmerSlider) {
+        els.globalDimmerSlider.addEventListener('input', () => {
+            const val = parseFloat(els.globalDimmerSlider.value);
+            updateDimmerUI(val);
+        });
+    }
+
+    // Allow Visualizer Engine to forcefully update the Dimmer slider position
+    window.addEventListener('mindwave:set-dimmer', (e) => {
+        if (e.detail && typeof e.detail.value === 'number') {
+            updateDimmerUI(e.detail.value);
+        }
+    });
 
     // Visual Speed & Sync Controls
     if (els.visualSpeedSlider) els.visualSpeedSlider.addEventListener('input', () => {
@@ -923,6 +991,7 @@ export function setupUI() {
     if (els.dragonBtn) els.dragonBtn.addEventListener('click', () => setVisualMode('dragon', null, true));
     if (els.galaxyBtn) els.galaxyBtn.addEventListener('click', () => setVisualMode('galaxy', null, true));
     if (els.flowBtn) els.flowBtn.addEventListener('click', () => setVisualMode('particles', null, true));
+    if (els.lightspeedBtn) els.lightspeedBtn.addEventListener('click', () => setVisualMode('lightspeed', null, true));
     if (els.lavaBtn) els.lavaBtn.addEventListener('click', () => setVisualMode('lava', null, true));
     if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace', null, true));
     if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest', null, true));
@@ -934,6 +1003,92 @@ export function setupUI() {
         if (e.target.closest('#matrixSettingsToggle')) return;
         setVisualMode('matrix', null, true);
     });
+    if (els.snowflakeBtn) els.snowflakeBtn.addEventListener('click', () => setVisualMode('snowflake', null, true));
+    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean', null, true));
+    if (els.cymaticsBtn) els.cymaticsBtn.addEventListener('click', (e) => {
+        if (e.target.closest('#cymaticsSettingsToggle')) return;
+        setVisualMode('cymatics', null, true);
+    });
+
+    // ── Cymatics panel controls ────────────────────────────────────
+    window.toggleCymaticsPanel = function() {
+        const panel = document.getElementById('cymaticsPanel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+            panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
+        }
+    };
+    window.selectCymaticPattern = function(idx) {
+        const viz = getVisualizer();
+        if (viz?.setCymaticPatternByIndex) viz.setCymaticPatternByIndex(idx);
+    };
+
+    const cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
+    const cymaticNextBtn = document.getElementById('cymaticNextBtn');
+    if (cymaticPrevBtn) cymaticPrevBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.prevCymatic) viz.prevCymatic(); });
+    if (cymaticNextBtn) cymaticNextBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.nextCymatic) viz.nextCymatic(); });
+
+    const cymaticAiBtn = document.getElementById('cymaticAiBtn');
+    if (cymaticAiBtn) {
+        cymaticAiBtn.addEventListener('click', () => {
+            state.aiVisualsLocked = !state.aiVisualsLocked;
+            cymaticAiBtn.style.backgroundColor = state.aiVisualsLocked ? 'rgba(34, 211, 238, 0.4)' : 'rgba(255, 255, 255, 0.05)';
+            cymaticAiBtn.style.borderColor = state.aiVisualsLocked ? '#22d3ee' : 'rgba(34, 211, 238, 0.2)';
+            showToast(state.aiVisualsLocked ? 'Cymatic AI Sync Active ✨' : 'AI Sync Disabled', 'info');
+        });
+    }
+
+    const cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
+    if (cymaticsAutoRotate) {
+        cymaticsAutoRotate.addEventListener('change', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticTimer) viz.setCymaticTimer(parseInt(cymaticsAutoRotate.value));
+        });
+    }
+
+    const cymaticsColorPicker = document.getElementById('cymaticsColorPicker');
+    if (cymaticsColorPicker) {
+        cymaticsColorPicker.addEventListener('input', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsColorPicker.value);
+        });
+    }
+
+    const cymaticsIntensitySlider = document.getElementById('cymaticsIntensitySlider');
+    const cymaticsIntensityVal   = document.getElementById('cymaticsIntensityVal');
+    if (cymaticsIntensitySlider) {
+        cymaticsIntensitySlider.addEventListener('input', () => {
+            const v = parseFloat(cymaticsIntensitySlider.value);
+            if (cymaticsIntensityVal) cymaticsIntensityVal.textContent = v === 0 ? 'Auto' : Math.round(v * 100) + '%';
+            const viz = getVisualizer();
+            if (viz?.cymaticMaterial) {
+                // Manual override: clamp auto-update in render loop
+                viz._cymaticIntensityOverride = v > 0 ? v : null;
+            }
+        });
+    }
+
+    // Snow customization sliders
+    const snowSizeSlider = document.getElementById('snowSizeSlider');
+    const snowSizeVal   = document.getElementById('snowSizeVal');
+    const snowGlowSlider = document.getElementById('snowGlowSlider');
+    const snowGlowVal   = document.getElementById('snowGlowVal');
+    if (snowSizeSlider) {
+        snowSizeSlider.addEventListener('input', () => {
+            const v = parseFloat(snowSizeSlider.value);
+            if (snowSizeVal) snowSizeVal.textContent = v.toFixed(1) + 'x';
+            const viz = getVisualizer();
+            if (viz?.setSnowSize) viz.setSnowSize(v);
+        });
+    }
+    if (snowGlowSlider) {
+        snowGlowSlider.addEventListener('input', () => {
+            const v = parseFloat(snowGlowSlider.value);
+            if (snowGlowVal) snowGlowVal.textContent = Math.round(v * 100) + '%';
+            const viz = getVisualizer();
+            if (viz?.setSnowGlow) viz.setSnowGlow(v);
+        });
+    }
 
     // Matrix Mini-Toggle Logic
     const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
@@ -961,7 +1116,9 @@ export function setupUI() {
     // Matrix Controls
 
     console.log('[Controls] Calling setupMatrixControls()...');
-    setTimeout(() => setupMatrixControls(), 50);
+    setTimeout(() => {
+        setupMatrixControls();
+    }, 50);
 
     // Mobile Bottom Navigation Handlers
     if (els.mobilePresetsBtn) {
@@ -1238,16 +1395,25 @@ export function setupUI() {
         }
 
         try {
-            // Ensure Flow (particles) and Matrix are BOTH active on load
-            if (!viz.activeModes.has('particles')) {
-                viz.toggleMode('particles');
+            // Default only Cyber active on load
+            if (!viz.activeModes.has('cyber')) {
+                viz.toggleMode('cyber');
             }
-            if (!viz.activeModes.has('matrix')) {
-                viz.toggleMode('matrix');
-            }
+            
+            // Deactivate others if they were on (e.g., matrix/particles)
+            ['particles', 'matrix'].forEach(mode => {
+                if (viz.activeModes.has(mode)) viz.toggleMode(mode);
+            });
 
-            // Force Mindwave logic mode (MW) for Matrix
-            if (viz.setMatrixMode) viz.setMatrixMode(true);
+            // Set both Cyber and Matrix to TXT (custom) mode by default
+            const cText = document.getElementById('cyberTextInput')?.value || "";
+            const mText = document.getElementById('matrixTextInput')?.value || "";
+
+            if (viz.setCyberLogicMode) viz.setCyberLogicMode('custom', cText);
+            if (viz.setMatrixLogicMode) viz.setMatrixLogicMode('custom', mText);
+
+            // Force Mindwave logic mode (MW) for Matrix? No, user wants TXT.
+            if (viz.setMatrixMode) viz.setMatrixMode(false); 
 
             // Matrix Rainbow mode is forced to true on load per user request
             const isRainbowEnabled = true;
@@ -1266,6 +1432,7 @@ export function setupUI() {
                 { el: els.dragonBtn, mode: 'dragon' },
                 { el: els.galaxyBtn, mode: 'galaxy' },
                 { el: els.flowBtn, mode: 'particles' },
+                { el: els.lightspeedBtn, mode: 'lightspeed' },
                 { el: els.lavaBtn, mode: 'lava' },
                 { el: els.fireplaceBtn, mode: 'fireplace' },
                 { el: els.rainBtn, mode: 'rainforest' },
@@ -1293,6 +1460,16 @@ export function setupUI() {
                 if (state.matrixPanelOpen) {
                     matrixPanel.classList.remove('hidden');
                     matrixPanel.classList.add('flex', 'items-center');
+                }
+            }
+
+            // Show cyber panel if cyber is active
+            const cyberPanel = document.getElementById('cyberSettingsPanel');
+            if (cyberPanel && viz.activeModes.has('cyber')) {
+                if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = true;
+                if (state.cyberPanelOpen) {
+                    cyberPanel.classList.remove('hidden');
+                    cyberPanel.classList.add('flex', 'items-center');
                 }
             }
 
@@ -1340,12 +1517,16 @@ export function setupUI() {
         }, { once: true });
     }
 
-    // Defer visualizer loading slightly to prioritize UI paint (500ms delay)
-    // Removed requestIdleCallback as it was too slow on some devices
+    // Defer visualizer loading until after UI is fully settled
     setTimeout(() => {
-        console.log('[Controls] Starting visualizer preload...');
-        preloadVisualizer();
-    }, 500);
+        console.log('[Controls] Deferring visualizer preload to unblock boot path...');
+        // Only preload on idle or first interaction to prevent the "Stall"
+        if (window.requestIdleCallback) {
+            window.requestIdleCallback(() => preloadVisualizer());
+        } else {
+            setTimeout(() => preloadVisualizer(), 2000); // 2s delay fallback
+        }
+    }, 2000);
 
     // WATCHDOG: Force reveal visualizer if it hasn't loaded after 10 seconds
     setTimeout(() => {
@@ -2243,12 +2424,7 @@ function openStatsModal() {
 }
 
 function closeStatsModal() {
-    if (els.statsModal) {
-        console.log('[UI] Closing Stats Modal');
-        els.statsModal.classList.remove('active');
-        els.statsModal.classList.add('hidden');
-        els.statsModal.style.display = 'none';
-    }
+    if (els.statsModal) els.statsModal.classList.remove('active');
 }
 
 
@@ -2525,8 +2701,10 @@ export function resetImmersiveTimer() {
 }
 
 export function setVisualMode(mode, forceState = null, isManual = false) {
+    if (mode === 'cymatics') console.log('%c[Visuals] CYMATICS MODE ACTIVATED', 'color: #a855f7; font-weight: bold; font-size: 14px;');
     let viz = getVisualizer();
     let activeModes = new Set();
+    const state = window.MindWaveState || {};
 
     // 1. Manual Override Check (Unlock AI Lock)
     if (isManual && state.aiVisualsLocked) {
@@ -2544,11 +2722,18 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     if (!viz) {
         console.warn('[Controls] Visualizer not ready for setVisualMode. Triggering load...');
         preloadVisualizer();
-        // If it was a manual click, give feedback
-        if (isManual) {
-            showToast('Initializing Visualizer...', 'info');
-        }
-        return; // EXIT EARLY to avoid resetting highlights
+        if (isManual) { showToast('Initializing Visualizer...', 'info'); }
+
+        // Queue the click action instead of silently dropping it!
+        const checkViz = setInterval(() => {
+            const v = getVisualizer();
+            if (v && v.initialized) {
+                clearInterval(checkViz);
+                setVisualMode(mode, forceState, false); // Re-execute silently
+            }
+        }, 500);
+
+        return; // EXIT EARLY
     }
 
     if (viz) {
@@ -2573,12 +2758,31 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
                     viz.toggleMode(m);
                 }
             }
+
+            // RESTORE ISOLATED COLOR: If the mode just became active, ensure it uses its specific saved color if one exists
+            if (viz.activeModes.has(m) && state.visualColors && state.visualColors[m]) {
+                const col = state.visualColors[m];
+                // Apply to the 3D engine specifically for this mode
+                if (viz.setColor) viz.setColor(col, m);
+            }
         });
         // Render a single frame so the mode is visible even when paused
         if (isVisualsPaused()) {
             viz.renderSingleFrame();
         }
         activeModes = viz.activeModes;
+
+        // Contextual Sync: Reveal corresponding Sidebar panel if mode is active
+        const contextualMap = {
+            'galaxy': 'galaxyPanel',
+            'cyber': 'matrixPanel',
+            'matrix': 'matrixPanel',
+            'snowflake': 'cymaticsPanel'
+        };
+        
+        if (isManual && contextualMap[mode] && activeModes.has(mode)) {
+            window.controls.syncSidebar(contextualMap[mode]);
+        }
 
         // Update button states with theme-aware styling
         const buttons = [
@@ -2587,14 +2791,18 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             { el: els.dragonBtn, mode: 'dragon' },
             { el: els.galaxyBtn, mode: 'galaxy' },
             { el: els.flowBtn, mode: 'particles' },
+            { el: els.lightspeedBtn, mode: 'lightspeed' },
             { el: els.lavaBtn, mode: 'lava' },
             { el: els.fireplaceBtn, mode: 'fireplace' },
             { el: els.rainBtn, mode: 'rainforest' },
             { el: els.zenBtn, mode: 'zengarden' },
             { el: els.oceanBtn, mode: 'ocean' },
             { el: els.mandalaBtn, mode: 'mandala' },
-            { el: els.cyberBtn, mode: 'cyber' }, // UI "Cyber" -> Internal 2D
-            { el: els.matrixBtn, mode: 'matrix' } // UI "Matrix" -> Internal 3D
+            { el: els.cyberBtn, mode: 'cyber' },
+            { el: els.matrixBtn, mode: 'matrix' },
+            { el: els.snowflakeBtn, mode: 'snowflake' },
+            { el: els.oceanBtn, mode: 'ocean' },
+            { el: els.cymaticsBtn, mode: 'cymatics' }
         ];
 
         buttons.forEach(({ el, mode: btnMode }) => {
@@ -3793,12 +4001,9 @@ export function initThemeModal() {
     const CURSOR_SHAPES_DATA = [
         { id: 'sun', name: 'Sun', icon: '☀️' },
         { id: 'moon', name: 'Moon', icon: '🌙' },
-        { id: 'plus', name: 'Plus', icon: '✚' },
-        { id: 'lotus', name: 'Lotus', icon: '🪷' },
         { id: 'heart', name: 'Heart', icon: '❤️' },
         { id: 'mindwave', name: 'MindWave', icon: '🧠' },
-        { id: 'ring', name: 'Ring', icon: '⭕' },
-        { id: 'target', name: 'Target', icon: '🎯' },
+        { id: 'sun2', name: 'Sun 2', icon: '🌞' },
         { id: 'default', name: 'Default', icon: '🖱️' }
     ];
 
@@ -5262,7 +5467,7 @@ function setupMatrixControls() {
             const mode = btn.dataset.matrixMode;
             const viz = getVisualizer();
             if (viz && viz.setMatrixLogicMode) {
-                const text = textInput ? textInput.value : 'WELCOME';
+                const text = textInput ? textInput.value : '';
                 viz.setMatrixLogicMode(mode, text);
                 modeBtns.forEach(b => {
                     b.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
@@ -5349,7 +5554,7 @@ function setupCyberControls() {
                 const viz = getVisualizer();
                 const modeStr = btn.dataset.cyberMode;
                 if (viz && viz.setCyberLogicMode) {
-                    const text = document.getElementById('cyberTextInput')?.value || 'WELCOME';
+                    const text = document.getElementById('cyberTextInput')?.value || '';
                     viz.setCyberLogicMode(modeStr, text);
                     // Update UI state
                     modes.forEach(mx => {
@@ -5507,7 +5712,7 @@ export function initVisualColorPickers() {
             // If this is the active mode, apply it to the visualizer immediately
             const viz = getVisualizer();
             if (viz && viz.activeModes && viz.activeModes.has(mode)) {
-                setVisualColor(newColor);
+                setVisualColor(newColor, mode);
             }
         });
         
@@ -5624,120 +5829,4 @@ export function setupMasterVisualControls() {
     }
 }
 
-// =============================================================================
-// GLOBAL MENU SYSTEM (The "Perfected" Web App Menu)
-// =============================================================================
-window.toggleGlobalMenu = function(forceClose = false) {
-    if (!els.rightPanel) {
-        console.error('[Menu] rightPanel element not found in els');
-        els.rightPanel = document.getElementById('rightPanel');
-        if (!els.rightPanel) return;
-    }
-    
-    const isClosed = els.rightPanel.classList.contains('translate-x-full');
-    const overlay = document.getElementById('mobileMenuOverlay');
-    
-    // If we want to force close, or if it's currently open
-    if (forceClose || !isClosed) {
-        console.log('[Menu] Closing Global Menu...');
-        els.rightPanel.classList.add('translate-x-full');
-        if (overlay) overlay.classList.remove('active');
-    } else {
-        console.log('[Menu] Opening Global Menu...');
-        els.rightPanel.classList.remove('translate-x-full');
-        if (overlay) overlay.classList.add('active');
-        
-        // Ensure the default tab is active if none selected
-        const activeTab = document.querySelector('.global-tab-btn.bg-\\[var\\(--accent\\)\\]');
-        if (!activeTab) {
-            const firstTab = document.querySelector('.global-tab-btn');
-            if (firstTab) firstTab.click();
-        }
-    }
-};
 
-function setupGlobalMenuSystem() {
-    console.log('[Controls] Initializing Robust Tab System...');
-    
-    const tabContainer = document.getElementById('globalMenuTabs');
-    const contentContainer = document.getElementById('globalMenuContent');
-    
-    if (!tabContainer || !contentContainer) {
-        console.warn('[Menu] UI containers missing, retrying in 500ms...');
-        setTimeout(setupGlobalMenuSystem, 500);
-        return;
-    }
-
-    // Tab Switching via Delegation
-    tabContainer.onclick = (e) => {
-        const btn = e.target.closest('.global-tab-btn');
-        if (!btn) return;
-        
-        const targetId = btn.dataset.target;
-        console.log('[Menu] Switching to Tab:', targetId);
-        
-        // 1. Update Tab Buttons UI
-        tabContainer.querySelectorAll('.global-tab-btn').forEach(b => {
-            b.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'shadow-[0_0_15px_rgba(45,212,191,0.3)]');
-            b.classList.add('bg-white/5', 'text-[var(--text-muted)]');
-            b.style.border = '1px solid rgba(255,255,255,0.1)';
-        });
-        
-        btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'shadow-[0_0_15px_rgba(45,212,191,0.3)]');
-        btn.classList.remove('bg-white/5', 'text-[var(--text-muted)]');
-        btn.style.border = '1px solid transparent';
-        
-        // 2. Switch Panels
-        const allPanels = contentContainer.querySelectorAll('.global-panel');
-        allPanels.forEach(p => {
-            p.classList.add('hidden');
-            p.classList.remove('flex');
-        });
-        
-        const targetPane = document.getElementById(targetId);
-        if (targetPane) {
-            targetPane.classList.remove('hidden');
-            targetPane.classList.add('flex');
-            console.log('[Menu] Activated Panel:', targetId);
-            
-            // Auto-scroll to top of content
-            contentContainer.scrollTop = 0;
-        } else {
-            console.error('[Menu] Target panel not found:', targetId);
-        }
-    };
-
-    // Global Toggle Logic (window.toggleGlobalMenu is defined in main_vwebapp or locally)
-    const floatingBtn = document.getElementById('floatingMenuBtn');
-    if (floatingBtn) {
-        floatingBtn.onclick = (e) => {
-            e.stopPropagation();
-            if (window.toggleGlobalMenu) window.toggleGlobalMenu();
-            else if (els.rightPanel) {
-                const isClosed = els.rightPanel.classList.contains('translate-x-full');
-                if (isClosed) {
-                    els.rightPanel.classList.remove('translate-x-full');
-                    if (els.mobileOverlay) els.mobileOverlay.classList.remove('hidden');
-                } else {
-                    els.rightPanel.classList.add('translate-x-full');
-                    if (els.mobileOverlay) els.mobileOverlay.classList.add('hidden');
-                }
-            }
-        };
-    }
-
-    // Dedicated Close Buttons
-    const closeBtns = ['#closeGlobalMenuBtn', '#closeRightBtn', '#mobileMenuOverlay'];
-    closeBtns.forEach(sel => {
-        const el = document.querySelector(sel);
-        if (el) {
-            el.onclick = () => {
-                if (window.toggleGlobalMenu) window.toggleGlobalMenu(true);
-                else if (els.rightPanel) {
-                    els.rightPanel.classList.add('translate-x-full');
-                    if (els.mobileOverlay) els.mobileOverlay.classList.add('hidden');
-                }
-            };
-        }
-    });
-}

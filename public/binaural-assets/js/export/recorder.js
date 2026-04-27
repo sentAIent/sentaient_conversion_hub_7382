@@ -249,6 +249,35 @@ function downloadInstantly() {
     }, 100);
 }
 
+/**
+ * PURGE: Deep cleanup of recording resources to prevent memory leaks
+ */
+export function cleanupRecording() {
+    console.log('[Recording] 🧹 Performing deep resource cleanup...');
+    
+    // 1. Revoke Object URLs
+    if (els.playbackAudio && els.playbackAudio.src && els.playbackAudio.src.startsWith('blob:')) {
+        URL.revokeObjectURL(els.playbackAudio.src);
+        els.playbackAudio.src = "";
+    }
+    if (els.playbackVideo && els.playbackVideo.src && els.playbackVideo.src.startsWith('blob:')) {
+        URL.revokeObjectURL(els.playbackVideo.src);
+        els.playbackVideo.src = "";
+    }
+
+    // 2. Clear Blobs
+    state.currentModalBlob = null;
+    state.recordedChunks = [];
+    
+    // 3. Reset MediaRecorder if active
+    if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+        try { state.mediaRecorder.stop(); } catch (e) {}
+    }
+    state.mediaRecorder = null;
+
+    console.log('[Recording] ✅ Cleanup complete.');
+}
+
 // Worker path: process with loops and format conversion
 async function processWithWorker(loopCount) {
     console.log('[Export Worker] Initializing for', loopCount, 'loops...');
@@ -312,19 +341,13 @@ async function processWithWorker(loopCount) {
             console.log('[Export Worker] No silence detected - audio is clean');
         }
 
-        // Split into chunks for worker (send smaller chunks)
-        const chunkSize = 44100; // 1 second chunks
-        const chunks = [];
-        for (let i = 0; i < leftChannel.length; i += chunkSize) {
-            const end = Math.min(i + chunkSize, leftChannel.length);
-            chunks.push([
-                Array.from(leftChannel.subarray(i, end)),
-                Array.from(rightChannel.subarray(i, end))
-            ]);
-        }
-
-        console.log('[Export Worker] Created', chunks.length, 'chunks');
+        // Using Transferables for SPEED (zero-copy)
+        console.log('[Export Worker] Preparing Transferable buffers...');
         updateProgress('Processing', 'Initializing worker...', 5);
+        
+        // We transform the Float32Arrays into their underlying buffers for transfer
+        const leftBuffer = (leftChannel.slice()).buffer;
+        const rightBuffer = (rightChannel.slice()).buffer;
 
         // Initialize worker
         const worker = new Worker('js/export/export-worker.js');
@@ -386,14 +409,15 @@ async function processWithWorker(loopCount) {
         // Send to worker
         const format = els.formatSelect?.value || 'wav-16';
         worker.postMessage({
-            type: 'export',
-            chunks: chunks,
+            type: 'export-direct',
+            leftChannel: leftBuffer,
+            rightChannel: rightBuffer,
             format: format,
             loopCount: loopCount,
             sampleRate: audioBuffer.sampleRate
-        });
+        }, [leftBuffer, rightBuffer]);
 
-        console.log('[Export Worker] ✅ Job sent to worker');
+        console.log('[Export Worker] ✅ Job sent to worker (direct buffer transfer)');
 
     } catch (error) {
         console.error('[Export Worker] ❌ Setup error:', error);

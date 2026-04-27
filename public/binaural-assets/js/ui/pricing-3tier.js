@@ -4,7 +4,7 @@
  */
 
 import { goToCheckout, getUserTier, getActiveTierPricing } from '../services/stripe-simple.js';
-import { getAuth } from 'firebase/auth';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 import { shareReferral } from '../services/referral.js';
 import { getVariant, trackConversion } from '../utils/ab-testing.js';
 import { trackGlobalEvent } from '../services/analytics-service.js';

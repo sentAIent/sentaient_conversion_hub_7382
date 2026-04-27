@@ -62,6 +62,7 @@ export const PRESET_COMBOS = [
         soundscapes: ['rain'],
         visuals: ['rainforest', 'ocean', 'zengarden'],
         atmosVolume: 0.6,
+        harmonicsLevel: 0.15,
         color: '#6b7280'
     },
     {
@@ -73,6 +74,7 @@ export const PRESET_COMBOS = [
         soundscapes: ['wind'],
         visuals: ['galaxy', 'ocean', 'zengarden'],
         atmosVolume: 0.5,
+        harmonicsLevel: 0.05,
         color: '#1e3a5f'
     },
     {
@@ -84,6 +86,7 @@ export const PRESET_COMBOS = [
         soundscapes: ['strings', 'brass'],
         visuals: ['dragon', 'matrix', 'particles'],
         atmosVolume: 0.4,
+        harmonicsLevel: 0.4,
         color: '#b45309'
     },
     {
@@ -95,6 +98,7 @@ export const PRESET_COMBOS = [
         soundscapes: ['ocean'],
         visuals: ['ocean', 'particles', 'flow'],
         atmosVolume: 0.7,
+        harmonicsLevel: 0.2,
         color: '#0891b2'
     },
     {
@@ -106,6 +110,7 @@ export const PRESET_COMBOS = [
         soundscapes: ['rain', 'wind'],
         visuals: ['rainforest', 'matrix', 'interstellar'],
         atmosVolume: 0.5,
+        harmonicsLevel: 0.6,
         color: '#4b5563'
     },
     {
@@ -117,6 +122,7 @@ export const PRESET_COMBOS = [
         soundscapes: ['bells'],
         visuals: ['zengarden', 'sphere', 'particles'],
         atmosVolume: 0.4,
+        harmonicsLevel: 0.8,
         color: '#a855f7'
     },
     {
@@ -128,6 +134,7 @@ export const PRESET_COMBOS = [
         soundscapes: ['fireplace'],
         visuals: ['fireplace', 'lava', 'particles'],
         atmosVolume: 0.6,
+        harmonicsLevel: 0.3,
         color: '#f97316'
     },
     {
@@ -139,6 +146,7 @@ export const PRESET_COMBOS = [
         soundscapes: ['winds', 'brown', 'forest_birds'],
         visuals: ['rainforest', 'zengarden', 'particles'],
         atmosVolume: 0.5,
+        harmonicsLevel: 0.25,
         color: '#10b981'
     },
     {
@@ -189,14 +197,15 @@ export const PRESET_COMBOS = [
 
 // Brainwave-to-Visual mapping for standard presets
 export const BRAINWAVE_VISUALS = {
-    delta: ['ocean', 'zengarden'],
-    theta: ['particles', 'ocean'],
-    alpha: ['zengarden', 'sphere'],
-    beta: ['matrix', 'dragon'],
-    gamma: ['galaxy', 'dragon', 'matrix'],
-    mu: ['sphere', 'particles'],
-    'hyper-gamma': ['dragon', 'matrix', 'interstellar']
+    delta: ['ocean', 'snowflake', 'zengarden'],
+    theta: ['zengarden', 'sphere', 'galaxy'],
+    alpha: ['particles', 'ocean', 'sphere'],
+    beta: ['matrix', 'cyber', 'box'],
+    gamma: ['lightspeed', 'dragon', 'galaxy'],
+    mu: ['lava', 'sphere', 'particles'],
+    'hyper-gamma': ['lightspeed', 'matrix', 'dragon']
 };
+
 
 export const HEALING_VISUALS = {
     'heal-174': ['ocean', 'zengarden'],      // Pain Relief
@@ -310,10 +319,15 @@ export const state = {
         sphere: '#60a9ff', particles: '#60a9ff', cube: '#60a9ff', dragon: '#60a9ff',
         galaxy: '#60a9ff', mandala: '#60a9ff', lava: '#60a9ff', fireplace: '#60a9ff',
         rainforest: '#60a9ff', zengarden: '#60a9ff', ocean: '#60a9ff', cyber: '#00FF41', matrix: '#00FF41'
-    }
+    },
+    harmonicsLevel: 0.0,        // NEW: Harmonics complexity (0.0 to 1.0)
+    cymaticResonance: 1.0,      // Pattern density multiplier
+    cymaticEntropy: 1.0,        // Math noise / warp intensity
+    cymaticFlow: 1.0,           // Ambient field speed
+    cymaticMedium: 0.0          // 0: Water, 1: Sand, 2: Ether, 3: Ice
 };
 
-export const VISUALIZER_VERSION = 'PERFECT_V44';
+export const VISUALIZER_VERSION = 'ULTRASYNC_V131';
 
 // Global Elements Container
 export const els = {
@@ -349,6 +363,8 @@ export const els = {
     soundscapeContainer: null,
     presetButtons: null,
     hapticSyncToggle: null,
+    harmonicsSlider: null,
+    harmonicsValue: null,
 
     // Modals & Panels
     libraryPanel: null, libraryList: null,

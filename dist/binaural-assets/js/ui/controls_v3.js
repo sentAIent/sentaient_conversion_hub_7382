@@ -1,7 +1,7 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=2';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=PHASE2_CYMATICS_V1';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
 import { saveMixToCloud } from '../services/firebase.js';
@@ -80,7 +80,8 @@ window.controls = {
         this.syncSidebar('matrixPanel');
     },
     toggleSnowflakeSettings: function(btn) {
-        this.syncSidebar('cymaticsPanel');
+        const panel = document.getElementById('snowflakeSettingsPanel');
+        if (panel) panel.classList.toggle('hidden');
     },
     setMatrixMode: function(mode) {
         const viz = getVisualizer();
@@ -108,6 +109,7 @@ window.toggleCyberSettings = window.controls.toggleCyberSettings;
 window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
 window.toggleGalaxySun = window.controls.toggleGalaxySun;
 window.resetGalaxySettings = window.controls.resetGalaxySettings;
+window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
 
 export function updateDockScaling() {
     const width = window.innerWidth;
@@ -230,12 +232,12 @@ export function setupUI() {
     els.cyberBtn = document.getElementById('cyberBtn');
     els.matrixBtn = document.getElementById('matrixBtn');
     els.snowflakeBtn = document.getElementById('snowflakeBtn');
+    els.cymaticsBtn = document.getElementById('cymaticsBtn');
 
     // Cymatics / Galaxy / Matrix Controls
-    els.cymaticTimerSlider = document.getElementById('cymaticTimerSlider');
-    els.cymaticTimerLabel = document.getElementById('cymaticTimerLabel');
     els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
     els.cymaticNextBtn = document.getElementById('cymaticNextBtn');
+    els.cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
 
     els.matrixTextInput = document.getElementById('matrixTextInput');
     els.matrixVibrationToggle = document.getElementById('matrixVibrationToggle');
@@ -658,7 +660,13 @@ export function setupUI() {
 
     // Sliders
     if (els.baseSlider) els.baseSlider.addEventListener('input', () => { updateFrequencies(); saveStateToLocal(); });
-    if (els.beatSlider) els.beatSlider.addEventListener('input', () => { updateFrequencies(); saveStateToLocal(); });
+    if (els.beatSlider) els.beatSlider.addEventListener('input', () => {
+        updateFrequencies();
+        saveStateToLocal();
+        // Sync binaural beat Hz to cymatics shader
+        const viz = getVisualizer();
+        if (viz?.setCymaticFreq) viz.setCymaticFreq(parseFloat(els.beatSlider.value));
+    });
     if (els.volSlider) els.volSlider.addEventListener('input', () => { updateBeatsVolume(); saveStateToLocal(); });
     if (els.masterVolSlider) els.masterVolSlider.addEventListener('input', () => {
         updateMasterVolume();
@@ -944,6 +952,91 @@ export function setupUI() {
         if (e.target.closest('#matrixSettingsToggle')) return;
         setVisualMode('matrix', null, true);
     });
+    if (els.snowflakeBtn) els.snowflakeBtn.addEventListener('click', () => setVisualMode('snowflake', null, true));
+    if (els.cymaticsBtn) els.cymaticsBtn.addEventListener('click', (e) => {
+        if (e.target.closest('#cymaticsSettingsToggle')) return;
+        setVisualMode('cymatics', null, true);
+    });
+
+    // ── Cymatics panel controls ────────────────────────────────────
+    window.toggleCymaticsPanel = function() {
+        const panel = document.getElementById('cymaticsPanel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+            panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
+        }
+    };
+    window.selectCymaticPattern = function(idx) {
+        const viz = getVisualizer();
+        if (viz?.setCymaticPatternByIndex) viz.setCymaticPatternByIndex(idx);
+    };
+
+    const cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
+    const cymaticNextBtn = document.getElementById('cymaticNextBtn');
+    if (cymaticPrevBtn) cymaticPrevBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.prevCymatic) viz.prevCymatic(); });
+    if (cymaticNextBtn) cymaticNextBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.nextCymatic) viz.nextCymatic(); });
+
+    const cymaticAiBtn = document.getElementById('cymaticAiBtn');
+    if (cymaticAiBtn) {
+        cymaticAiBtn.addEventListener('click', () => {
+            state.aiVisualsLocked = !state.aiVisualsLocked;
+            cymaticAiBtn.style.backgroundColor = state.aiVisualsLocked ? 'rgba(34, 211, 238, 0.4)' : 'rgba(255, 255, 255, 0.05)';
+            cymaticAiBtn.style.borderColor = state.aiVisualsLocked ? '#22d3ee' : 'rgba(34, 211, 238, 0.2)';
+            showToast(state.aiVisualsLocked ? 'Cymatic AI Sync Active ✨' : 'AI Sync Disabled', 'info');
+        });
+    }
+
+    const cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
+    if (cymaticsAutoRotate) {
+        cymaticsAutoRotate.addEventListener('change', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticTimer) viz.setCymaticTimer(parseInt(cymaticsAutoRotate.value));
+        });
+    }
+
+    const cymaticsColorPicker = document.getElementById('cymaticsColorPicker');
+    if (cymaticsColorPicker) {
+        cymaticsColorPicker.addEventListener('input', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsColorPicker.value);
+        });
+    }
+
+    const cymaticsIntensitySlider = document.getElementById('cymaticsIntensitySlider');
+    const cymaticsIntensityVal   = document.getElementById('cymaticsIntensityVal');
+    if (cymaticsIntensitySlider) {
+        cymaticsIntensitySlider.addEventListener('input', () => {
+            const v = parseFloat(cymaticsIntensitySlider.value);
+            if (cymaticsIntensityVal) cymaticsIntensityVal.textContent = v === 0 ? 'Auto' : Math.round(v * 100) + '%';
+            const viz = getVisualizer();
+            if (viz?.cymaticMaterial) {
+                // Manual override: clamp auto-update in render loop
+                viz._cymaticIntensityOverride = v > 0 ? v : null;
+            }
+        });
+    }
+
+    // Snow customization sliders
+    const snowSizeSlider = document.getElementById('snowSizeSlider');
+    const snowSizeVal   = document.getElementById('snowSizeVal');
+    const snowGlowSlider = document.getElementById('snowGlowSlider');
+    const snowGlowVal   = document.getElementById('snowGlowVal');
+    if (snowSizeSlider) {
+        snowSizeSlider.addEventListener('input', () => {
+            const v = parseFloat(snowSizeSlider.value);
+            if (snowSizeVal) snowSizeVal.textContent = v.toFixed(1) + 'x';
+            const viz = getVisualizer();
+            if (viz?.setSnowSize) viz.setSnowSize(v);
+        });
+    }
+    if (snowGlowSlider) {
+        snowGlowSlider.addEventListener('input', () => {
+            const v = parseFloat(snowGlowSlider.value);
+            if (snowGlowVal) snowGlowVal.textContent = Math.round(v * 100) + '%';
+            const viz = getVisualizer();
+            if (viz?.setSnowGlow) viz.setSnowGlow(v);
+        });
+    }
 
     // Matrix Mini-Toggle Logic
     const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
@@ -973,7 +1066,6 @@ export function setupUI() {
     console.log('[Controls] Calling setupMatrixControls()...');
     setTimeout(() => {
         setupMatrixControls();
-        setupVisualPanelControls();
     }, 50);
 
     // Mobile Bottom Navigation Handlers
@@ -1373,12 +1465,16 @@ export function setupUI() {
         }, { once: true });
     }
 
-    // Defer visualizer loading slightly to prioritize UI paint (500ms delay)
-    // Removed requestIdleCallback as it was too slow on some devices
+    // Defer visualizer loading until after UI is fully settled
     setTimeout(() => {
-        console.log('[Controls] Starting visualizer preload...');
-        preloadVisualizer();
-    }, 500);
+        console.log('[Controls] Deferring visualizer preload to unblock boot path...');
+        // Only preload on idle or first interaction to prevent the "Stall"
+        if (window.requestIdleCallback) {
+            window.requestIdleCallback(() => preloadVisualizer());
+        } else {
+            setTimeout(() => preloadVisualizer(), 2000); // 2s delay fallback
+        }
+    }, 2000);
 
     // WATCHDOG: Force reveal visualizer if it hasn't loaded after 10 seconds
     setTimeout(() => {
@@ -2553,6 +2649,7 @@ export function resetImmersiveTimer() {
 }
 
 export function setVisualMode(mode, forceState = null, isManual = false) {
+    if (mode === 'cymatics') console.log('%c[Visuals] CYMATICS MODE ACTIVATED', 'color: #a855f7; font-weight: bold; font-size: 14px;');
     let viz = getVisualizer();
     let activeModes = new Set();
     const state = window.MindWaveState || {};
@@ -5678,79 +5775,4 @@ export function setupMasterVisualControls() {
     }
 }
 
-function setupVisualPanelControls() {
-    // CYMATICS
-    if (els.cymaticTimerSlider) {
-        els.cymaticTimerSlider.addEventListener('input', () => {
-            const val = parseInt(els.cymaticTimerSlider.value);
-            const viz = getVisualizer();
-            if (viz && viz.setCymaticTimer) {
-                viz.setCymaticTimer(val);
-                if (els.cymaticTimerLabel) {
-                    if (val > 300) els.cymaticTimerLabel.textContent = "INFINITE";
-                    else if (val === 0) els.cymaticTimerLabel.textContent = "OFF";
-                    else els.cymaticTimerLabel.textContent = val + "s";
-                }
-            }
-        });
-    }
 
-    if (els.cymaticPrevBtn) {
-        els.cymaticPrevBtn.addEventListener('click', () => {
-            const viz = getVisualizer();
-            if (viz && viz.prevCymatic) viz.prevCymatic();
-        });
-    }
-
-    if (els.cymaticNextBtn) {
-        els.cymaticNextBtn.addEventListener('click', () => {
-            const viz = getVisualizer();
-            if (viz && viz.nextCymatic) viz.nextCymatic();
-        });
-    }
-
-    // MATRIX
-    if (els.matrixTextInput) {
-        els.matrixTextInput.addEventListener('input', () => {
-            const viz = getVisualizer();
-            if (viz) {
-                viz.matrixConfig.customText = els.matrixTextInput.value;
-                viz.cyberConfig.customText = els.matrixTextInput.value;
-            }
-        });
-        // Initial sync
-        setTimeout(() => {
-            const viz = getVisualizer();
-            if (viz) {
-                 els.matrixTextInput.value = viz.matrixConfig.customText || "MINDWAVE";
-            }
-        }, 1000);
-    }
-
-    if (els.matrixVibrationToggle) {
-        els.matrixVibrationToggle.addEventListener('click', () => {
-            state.visualVibration = !state.visualVibration;
-            const viz = getVisualizer();
-            if (viz) viz.vibrationEnabled = state.visualVibration;
-            
-            els.matrixVibrationToggle.classList.toggle('bg-[var(--accent)]', state.visualVibration);
-            els.matrixVibrationToggle.classList.toggle('text-[var(--bg-main)]', state.visualVibration);
-            els.matrixVibrationToggle.classList.toggle('bg-white/10', !state.visualVibration);
-            els.matrixVibrationToggle.classList.toggle('text-white/50', !state.visualVibration);
-        });
-    }
-
-    // GALAXY
-    const updateGalaxyRotation = () => {
-        const viz = getVisualizer();
-        if (viz && els.galaxySunRX) {
-            viz.sunRotationSpeedX = (parseFloat(els.galaxySunRX.value) - 0.5) * 0.05;
-            viz.sunRotationSpeedY = (parseFloat(els.galaxySunRY.value) - 0.5) * 0.05;
-            viz.sunRotationSpeedZ = (parseFloat(els.galaxySunRZ.value) - 0.5) * 0.05;
-        }
-    };
-
-    if (els.galaxySunRX) els.galaxySunRX.addEventListener('input', updateGalaxyRotation);
-    if (els.galaxySunRY) els.galaxySunRY.addEventListener('input', updateGalaxyRotation);
-    if (els.galaxySunRZ) els.galaxySunRZ.addEventListener('input', updateGalaxyRotation);
-}

@@ -1,63 +1,85 @@
 /**
  * Mindwave Controls V3 - Restored "PERFECT" Version (March 12th Afternoon)
  * ──────────────────────────────────────────────────────────────────────────
- * - 5-Slider Header (Pitch, Beat, Binaural, Main Out, L/R Fader)
- * - 12-Button Visual Dock (No Mandala)
- * - Restored internal naming convention (Matrix/Interstellar)
+ * FIXED:
+ *  1. els.canvas now set so initVisualizer() can find the canvas element
+ *  2. Visual buttons now use exclusive setVisualMode() (not a toggle)
+ *  3. .active class is applied/removed immediately on click (no 2nd-click lag)
+ *  4. Duplicate slider IDs resolved by always taking the first match
  */
 
-import { state, els, THEMES } from '../state.js';
-import { 
-    updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, 
-    updateAtmosMaster, updateSoundscape, startAudio, stopAudio 
+import { state, els, THEMES } from '../state_vPERFECT.js';
+import {
+    updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance,
+    updateAtmosMaster, updateSoundscape, startAudio, stopAudio
 } from '../audio/engine.js';
-import { 
-    toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, 
-    getVisualizer, pauseVisuals, resumeVisuals 
+import {
+    setVisualMode, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness,
+    getVisualizer, pauseVisuals, resumeVisuals
 } from '../visuals/visualizer_nuclear_vPERFECT.js';
+
+// Map: button ID → { elementKey, internalMode }
+// "internalMode" is what activeModes uses after mapMode() inside the visualizer
+const VISUAL_BUTTON_MAP = [
+    { btnId: 'sphereBtn',    elKey: 'sphereBtn',    displayMode: 'sphere',       internalMode: 'sphere'      },
+    { btnId: 'cubeBtn',      elKey: 'cubeBtn',      displayMode: 'box',          internalMode: 'box'         },
+    { btnId: 'dragonBtn',    elKey: 'dragonBtn',    displayMode: 'dragon',       internalMode: 'dragon'      },
+    { btnId: 'galaxyBtn',    elKey: 'galaxyBtn',    displayMode: 'galaxy',       internalMode: 'galaxy'      },
+    { btnId: 'flowBtn',      elKey: 'flowBtn',      displayMode: 'particles',    internalMode: 'particles'   },
+    { btnId: 'lavaBtn',      elKey: 'lavaBtn',      displayMode: 'lava',         internalMode: 'lava'        },
+    { btnId: 'fireplaceBtn', elKey: 'fireplaceBtn', displayMode: 'fireplace',    internalMode: 'fireplace'   },
+    { btnId: 'rainBtn',      elKey: 'rainBtn',      displayMode: 'rainforest',   internalMode: 'rainforest'  },
+    { btnId: 'zenBtn',       elKey: 'zenBtn',       displayMode: 'zengarden',    internalMode: 'zengarden'   },
+    { btnId: 'oceanBtn',     elKey: 'oceanBtn',     displayMode: 'ocean',        internalMode: 'ocean'       },
+    // PERFECT mapping: UI "Cyber" → internal 'matrix' (2D overlay)
+    { btnId: 'cyberBtn',     elKey: 'cyberBtn',     displayMode: 'matrix',       internalMode: 'matrix'      },
+    // PERFECT mapping: UI "Matrix" → internal 'cyber' (3D rain)
+    { btnId: 'matrixBtn',    elKey: 'matrixBtn',    displayMode: 'interstellar', internalMode: 'cyber'       },
+];
 
 export function setupUI() {
     console.log('[Controls] Initializing PERFECT UI Logic...');
 
-    // Core Elements
-    els.visualizer = document.getElementById('visualizer');
+    // ── Canvas (CRITICAL – must be set before initVisualizer runs) ──
+    els.canvas = document.getElementById('visualizer');
 
-    // Sliders
-    els.baseSlider = document.getElementById('baseSlider');
-    els.beatSlider = document.getElementById('beatSlider');
-    els.volSlider = document.getElementById('volSlider');
-    els.masterVolSlider = document.getElementById('masterVolSlider');
-    els.balanceSlider = document.getElementById('balanceSlider');
-    
-    // Labels/Values
-    els.baseValue = document.getElementById('baseValue');
-    els.beatValue = document.getElementById('beatValue');
-    els.volValue = document.getElementById('volValue');
+    // ── Sliders (always grab first match in case of duplicate IDs) ──
+    els.baseSlider      = document.querySelector('#baseSlider');
+    els.beatSlider      = document.querySelector('#beatSlider');
+    els.volSlider       = document.querySelector('#volSlider');
+    els.masterVolSlider = document.querySelector('#masterVolSlider');
+    els.balanceSlider   = document.querySelector('#balanceSlider');
+
+    // ── Value display spans ──
+    els.baseValue      = document.getElementById('baseValue');
+    els.beatValue      = document.getElementById('beatValue');
+    els.volValue       = document.getElementById('volValue');
     els.masterVolValue = document.getElementById('masterVolValue');
-    els.balanceValue = document.getElementById('balanceValue');
+    els.balanceValue   = document.getElementById('balanceValue');
 
-    // Visual Dock Buttons
-    els.sphereBtn = document.getElementById('sphereBtn');
-    els.cubeBtn = document.getElementById('cubeBtn');
-    els.dragonBtn = document.getElementById('dragonBtn');
-    els.galaxyBtn = document.getElementById('galaxyBtn');
-    els.flowBtn = document.getElementById('flowBtn');
-    els.lavaBtn = document.getElementById('lavaBtn');
-    els.fireplaceBtn = document.getElementById('fireplaceBtn');
-    els.rainBtn = document.getElementById('rainBtn');
-    els.zenBtn = document.getElementById('zenBtn');
-    els.oceanBtn = document.getElementById('oceanBtn');
-    els.cyberBtn = document.getElementById('cyberBtn');   // Maps to internal 'matrix'
-    els.matrixBtn = document.getElementById('matrixBtn'); // Maps to internal 'interstellar'
+    // ── Visual Dock Buttons ──
+    VISUAL_BUTTON_MAP.forEach(({ btnId, elKey }) => {
+        els[elKey] = document.getElementById(btnId);
+    });
 
-    // Controls Logic
+    // ── Misc UI ──
+    els.leftPanel   = document.getElementById('leftPanel');
+    els.rightPanel  = document.getElementById('rightPanel');
+    els.leftToggle  = document.getElementById('leftToggle');
+    els.rightToggle = document.getElementById('rightToggle');
+
+    // ── Wire up everything ──
     setupSliderListeners();
     setupVisualListeners();
     setupGalaxyControls();
+    setupPanelToggles();
 
     console.log('[Controls] PERFECT UI Ready');
 }
 
+// ─────────────────────────────────────────────
+// SLIDERS
+// ─────────────────────────────────────────────
 function setupSliderListeners() {
     if (els.baseSlider) {
         els.baseSlider.addEventListener('input', () => {
@@ -102,27 +124,39 @@ function setupSliderListeners() {
     }
 }
 
-function setupVisualListeners() {
-    const bind = (el, mode) => {
-        if (el) el.addEventListener('click', () => toggleVisual(mode));
-    };
-
-    bind(els.sphereBtn, 'sphere');
-    bind(els.cubeBtn, 'box');
-    bind(els.dragonBtn, 'dragon');
-    bind(els.galaxyBtn, 'galaxy');
-    bind(els.flowBtn, 'particles');
-    bind(els.lavaBtn, 'lava');
-    bind(els.fireplaceBtn, 'fireplace');
-    bind(els.rainBtn, 'rainforest');
-    bind(els.zenBtn, 'zengarden');
-    bind(els.oceanBtn, 'ocean');
-    
-    // PERFECT Key Mappings
-    bind(els.cyberBtn, 'matrix');         // UI "Cyber" -> Internal 2D matrix
-    bind(els.matrixBtn, 'interstellar');  // UI "Matrix" -> Internal 3D cyber
+// ─────────────────────────────────────────────
+// VISUAL BUTTONS – exclusive switch + active class
+// ─────────────────────────────────────────────
+function updateVisualActiveStates() {
+    const viz = getVisualizer();
+    VISUAL_BUTTON_MAP.forEach(({ elKey, internalMode }) => {
+        const btn = els[elKey];
+        if (!btn) return;
+        if (viz && viz.activeModes.has(internalMode)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 }
 
+function setupVisualListeners() {
+    VISUAL_BUTTON_MAP.forEach(({ elKey, displayMode }) => {
+        const btn = els[elKey];
+        if (!btn) return;
+
+        btn.addEventListener('click', () => {
+            // Switch to this mode exclusively
+            setVisualMode(displayMode);
+            // Immediately reflect the new state in the UI
+            updateVisualActiveStates();
+        });
+    });
+}
+
+// ─────────────────────────────────────────────
+// GALAXY SETTINGS PANEL
+// ─────────────────────────────────────────────
 function setupGalaxyControls() {
     const rx = document.getElementById('galaxySunRX');
     const ry = document.getElementById('galaxySunRY');
@@ -141,3 +175,40 @@ function setupGalaxyControls() {
         if (el) el.addEventListener('input', updateSun);
     });
 }
+
+// ─────────────────────────────────────────────
+// PANEL TOGGLES (left/right drawer)
+// ─────────────────────────────────────────────
+function setupPanelToggles() {
+    const leftPanel  = document.getElementById('leftPanel');
+    const rightPanel = document.getElementById('rightPanel');
+    const leftToggle = document.getElementById('leftToggle');
+    const rightToggle = document.getElementById('rightToggle');
+    const closeLeft  = document.getElementById('closeLeftBtn');
+    const closeRight = document.getElementById('closeRightBtn');
+
+    const openPanel = (panel) => {
+        if (panel) panel.classList.remove('-translate-x-full', 'translate-x-full');
+    };
+    const closePanel = (panel, dir) => {
+        if (panel) panel.classList.add(dir === 'left' ? '-translate-x-full' : 'translate-x-full');
+    };
+
+    if (leftToggle && leftPanel) {
+        leftToggle.addEventListener('click', () => openPanel(leftPanel));
+    }
+    if (rightToggle && rightPanel) {
+        rightToggle.addEventListener('click', () => openPanel(rightPanel));
+    }
+    if (closeLeft && leftPanel) {
+        closeLeft.addEventListener('click', () => closePanel(leftPanel, 'left'));
+    }
+    if (closeRight && rightPanel) {
+        closeRight.addEventListener('click', () => closePanel(rightPanel, 'right'));
+    }
+}
+
+// ─────────────────────────────────────────────
+// Expose updateVisualActiveStates for external callers (e.g. presets)
+// ─────────────────────────────────────────────
+export { updateVisualActiveStates };

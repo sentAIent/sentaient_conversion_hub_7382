@@ -6,8 +6,8 @@
 
 import { state } from '../state.js';
 import { trackGlobalEvent } from './analytics-service.js';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 
 // Stripe Payment Links - with fallbacks for static file serving
 // Note: Files in public/ don't get Vite env processing, so we need fallbacks

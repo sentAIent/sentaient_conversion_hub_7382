@@ -779,7 +779,7 @@ window.startLessonAction = async (lessonId) => {
         const [sessionTimer, { startAudio, fadeIn, fadeOut, stopAudio }, { toggleVisual }, { syncAllButtons }] = await Promise.all([
             import('../audio/session-timer.js'),
             import('../audio/engine.js'),
-            import(`../visuals/visualizer_nuclear_v4.js?v=${VISUALIZER_VERSION}`),
+            import('../visuals/visualizer_nuclear_v4.js'),
             import('../ui/controls_v3.js')
         ]);
 

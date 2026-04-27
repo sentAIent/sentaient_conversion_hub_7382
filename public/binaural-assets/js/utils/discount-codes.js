@@ -143,8 +143,8 @@ export function trackDiscountUsage(code, tier) {
     }
 
     // Store in Firestore for analytics
-    import('firebase/auth').then(({ getAuth }) => {
-        import('firebase/firestore').then(({ getFirestore, collection, addDoc, serverTimestamp }) => {
+    import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js').then(({ getAuth }) => {
+        import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js').then(({ getFirestore, collection, addDoc, serverTimestamp }) => {
             try {
                 const auth = getAuth();
                 const db = getFirestore();

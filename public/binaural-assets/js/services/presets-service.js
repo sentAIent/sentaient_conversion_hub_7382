@@ -15,8 +15,8 @@ import {
     addDoc,
     limit,
     serverTimestamp
-} from 'firebase/firestore';
-import { getApps } from 'firebase/app';
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { getApps } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
 import { PRESET_COMBOS, SOUNDSCAPES } from '../state.js';
 
 const PRESETS_COLLECTION = 'global_presets';

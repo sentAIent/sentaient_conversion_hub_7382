@@ -1,21 +1,34 @@
 // Web Worker for audio export processing
 /* eslint-disable no-restricted-globals */
 self.onmessage = async function (e) {
-    const { type, chunks, format, loopCount, sampleRate } = e.data;
+    const { type, chunks, leftChannel, rightChannel, format, loopCount, sampleRate } = e.data;
 
-    console.log('[Export Worker] Received message:', { type, chunksCount: chunks?.length, format, loopCount, sampleRate });
+    console.log('[Export Worker] Received message:', { 
+        type, 
+        chunksCount: chunks?.length, 
+        hasDirectBuffers: !!leftChannel,
+        format, 
+        loopCount, 
+        sampleRate 
+    });
 
-    if (type === 'export') {
+    if (type === 'export' || type === 'export-direct') {
         try {
             const startTime = performance.now();
 
-            // Convert plain arrays back to Float32Arrays if needed
-            const processedChunks = chunks.map(chunk => [
-                chunk[0] instanceof Float32Array ? chunk[0] : new Float32Array(chunk[0]),
-                chunk[1] instanceof Float32Array ? chunk[1] : new Float32Array(chunk[1])
-            ]);
+            // Handle both legacy chunked format and new direct-buffer format
+            let processedChunks;
+            if (type === 'export-direct') {
+                processedChunks = [[new Float32Array(leftChannel), new Float32Array(rightChannel)]];
+            } else {
+                // Convert plain arrays back to Float32Arrays if needed (legacy fallback)
+                processedChunks = chunks.map(chunk => [
+                    chunk[0] instanceof Float32Array ? chunk[0] : new Float32Array(chunk[0]),
+                    chunk[1] instanceof Float32Array ? chunk[1] : new Float32Array(chunk[1])
+                ]);
+            }
 
-            console.log('[Export Worker] Processing', processedChunks.length, 'chunks');
+            console.log('[Export Worker] Processing', processedChunks.length, 'chunks (Type: ' + type + ')');
 
             // Step 1: Calculate total samples
             self.postMessage({ type: 'progress', step: 'Analyzing audio', detail: 'Calculating buffer size', percent: 5 });
@@ -30,7 +43,7 @@ self.onmessage = async function (e) {
             self.postMessage({ type: 'progress', step: 'Building audio', detail: 'Assembling ' + loopCount + 'x loop', percent: 15 });
 
             let singleLoopLen = 0;
-            for (const chunk of chunks) {
+            for (const chunk of processedChunks) {
                 singleLoopLen += chunk[0].length;
             }
 

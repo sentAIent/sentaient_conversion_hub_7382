@@ -73,8 +73,12 @@ export async function saveMedia(type, blob, metadata = {}) {
     record.syncStatus = 'local';
     await updateAssetSync(record.id, { syncStatus: 'local' });
 
-    // Check storage health
-    checkStorageHealth();
+    // Check storage health (deferred to idle time to prevent UI hitching)
+    if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => checkStorageHealth());
+    } else {
+        setTimeout(() => checkStorageHealth(), 1000);
+    }
 
     return record;
 }

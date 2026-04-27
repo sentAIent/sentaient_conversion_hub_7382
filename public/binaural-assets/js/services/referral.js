@@ -3,8 +3,8 @@
  * Handle referral links and tracking
  */
 
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 
 const REFERRAL_PARAM = 'ref';
 const STORAGE_KEY = 'mindwave_referrer';
