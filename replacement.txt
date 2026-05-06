@@ -1,0 +1,472 @@
+        <header class="fixed top-0 left-0 right-0 z-[100] p-2 pointer-events-none flex justify-center">
+
+
+
+            <!-- Main Control Panel - Responsive & Centered -->
+            <!-- STUDIO TOOLBAR (EXPERT REDESIGN) -->
+            
+<div id="topControlBar" class="flex items-center justify-center space-x-6 py-2 px-8 bg-black/40 backdrop-blur-md border-b border-white/10">
+    <div class="flex flex-col items-center">
+        <span class="text-[9px] uppercase tracking-tighter text-white/40">Pitch</span>
+        <input type="range" id="baseSlider" min="100" max="1000" step="1" value="200" class="w-24 h-1 appearance-none bg-white/10 rounded-full cursor-pointer">
+    </div>
+    <div class="flex flex-col items-center">
+        <span class="text-[9px] uppercase tracking-tighter text-white/40">Beat</span>
+        <input type="range" id="beatSlider" min="0" max="60" step="0.1" value="40" class="w-24 h-1 appearance-none bg-white/10 rounded-full cursor-pointer">
+    </div>
+    <div class="flex flex-col items-center">
+        <span class="text-[9px] uppercase tracking-tighter text-white/40">Binaural</span>
+        <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.5" class="w-24 h-1 appearance-none bg-white/10 rounded-full cursor-pointer">
+    </div>
+    <div class="flex flex-col items-center">
+        <span class="text-[9px] uppercase tracking-tighter text-white/40">Main Out</span>
+        <input type="range" id="masterVolSlider" min="0" max="1" step="0.01" value="0.8" class="w-24 h-1 appearance-none bg-white/10 rounded-full cursor-pointer">
+    </div>
+    <div class="flex flex-col items-center">
+        <span class="text-[9px] uppercase tracking-tighter text-white/40">L/R Fader</span>
+        <input type="range" id="balanceSlider" min="-1" max="1" step="0.01" value="0" class="w-24 h-1 appearance-none bg-white/10 rounded-full cursor-pointer">
+    </div>
+</div>
+
+
+                    <button id="visualPlayBtn"
+                        class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 text-[var(--accent)] transition-all"
+                        title="Visuals Only">
+                        <svg id="visualPlayIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <svg id="visualPauseIcon" class="hidden" width="14" height="14" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <rect x="6" y="4" width="3" height="16"></rect>
+                            <rect x="15" y="4" width="3" height="16"></rect>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- [2] LEVELS HUB -->
+                <div class="flex-1 flex items-center justify-center gap-10 px-4">
+                    <!-- Master Volume -->
+                    <div class="flex flex-col gap-1.5 min-w-[120px]">
+                        <div
+                            class="flex justify-between items-center text-[9px] font-bold tracking-widest text-white/40 uppercase">
+                            <span>Master</span>
+                            <span id="masterVolValue" class="text-[var(--accent)]">100%</span>
+                        </div>
+                        <input type="range" id="masterVolSlider" min="0" max="1" step="0.01" value="1.0"
+                            class="premium-slider">
+                    </div>
+
+                    <!-- Beats Volume -->
+                    <div class="flex flex-col gap-1.5 min-w-[100px]">
+                        <div
+                            class="flex justify-between items-center text-[9px] font-bold tracking-widest text-white/40 uppercase">
+                            <span>Beats</span>
+                            <span id="volValue" class="text-[var(--accent)]">50%</span>
+                        </div>
+                        <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.5"
+                            class="premium-slider">
+                    </div>
+
+                    <!-- Frequency (Compact) -->
+                    <div class="flex flex-col gap-1.5 min-w-[80px]">
+                        <div
+                            class="flex justify-between items-center text-[9px] font-bold tracking-widest text-white/40 uppercase">
+                            <span>Base</span>
+                            <span id="baseValue" class="text-[var(--accent)]">200Hz</span>
+                        </div>
+                        <input type="range" id="baseSlider" min="50" max="1000" value="200" class="premium-slider">
+                    </div>
+                </div>
+
+                <!-- [3] SESSION HUB -->
+                <div class="flex items-center gap-4 bg-white/5 rounded-xl px-4 py-1.5 border border-white/5">
+                    <div class="flex flex-col items-center">
+                        <span id="timerDisplay"
+                            class="text-[12px] font-mono font-bold text-[var(--accent)] tabular-nums tracking-wider">00:00</span>
+                    </div>
+                    <div class="w-px h-6 bg-white/10"></div>
+                    <select id="sessionDuration"
+                        class="bg-transparent text-[10px] font-bold text-white/60 outline-none cursor-pointer hover:text-[var(--accent)] transition-colors appearance-none text-center uppercase tracking-tighter">
+                        <option value="0">Continuous</option>
+                        <option value="5">5 Min</option>
+                        <option value="15">15 Min</option>
+                        <option value="30">30 Min</option>
+                        <option value="60">1 Hour</option>
+                    </select>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-0.5 border-l border-white/10 pl-2 ml-1">
+                        <button id="lockUIBtn" class="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-[var(--accent)] transition-all" title="Lock UI">
+                            <svg id="lockIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <svg id="unlockIcon" class="hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                        </button>
+                        <button id="tutorialBtn" onclick="window.startOnboarding(true)" class="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-[var(--accent)] transition-all" title="Tutorial">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </button>
+                        <button id="feedbackBtn" onclick="window.showFeedbackSurvey()" class="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-[var(--accent)] transition-all" title="Feedback">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </button>
+                        <button id="profileBtn" class="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-[var(--accent)] transition-all" title="Account">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </button>
+                        <button id="themeBtn" class="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-[var(--accent)] transition-all" title="Theme">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </header>
+
+        <!-- Hidden elements required by controls_v3.js -->
+        <input type="range" id="beatSlider" min="0.5" max="100" step="0.1" value="10" class="hidden">
+        <span id="beatValue" class="hidden">10Hz</span>
+        <input type="range" id="balanceSlider" min="-1" max="1" step="0.1" value="0" class="hidden">
+        <span id="balanceValue" class="hidden">0</span>
+        <div id="statusIndicator" class="hidden"></div>
+
+
+    <!-- CENTER (Visualizer Interaction) -->
+    <main class="flex-1 flex items-center justify-center pointer-events-auto" id="tapZone">
+        </div>
+
+        <!-- FOOTER - Moved outside #appOverlay for stable fixed positioning -->
+        <footer id="bottomControlBar" style="opacity: 0"
+            class="fixed bottom-0 left-0 right-0 z-[200] p-4 sm:p-6 px-6 sm:px-12 pointer-events-auto flex justify-between items-end pb-6 sm:pb-8 transition-[left,right,opacity,transform] duration-300 ease-in-out no-transition ui-fade-target">
+
+            <!-- LEFT: Visual Controls & Toggle -->
+            <div class="flex flex-col gap-4 items-center">
+                <!-- New Presets Toggle Button (Use old ID 'leftToggle') -->
+                <button id="leftToggle"
+                    class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all"
+                    title="Presets">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="3" x2="9" y2="21"></line>
+                    </svg>
+                </button>
+            </div>
+
+
+
+
+
+            <!-- 3. New Horizontal Visual Dock -->
+            <div id="visualDock"
+                class="order-3 flex flex-wrap justify-center items-center gap-3 mt-0 px-6 py-4 glass-lux rounded-2xl border !border-[var(--accent)]/20 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] overflow-visible max-w-[90vw] mx-auto z-50 relative tooltip-container ui-fade-target">
+
+                <style>
+                    .visual-btn .custom-tooltip {
+                        top: -40px;
+                        bottom: auto;
+                        transform: translateX(-50%);
+                    }
+                </style>
+
+                <!-- Color Controls (Integrated into Dock) -->
+                <div class="flex items-center gap-2 px-3 border-r border-white/10 mr-1 shrink-0">
+                    <!-- Color Picker -->
+                    <div class="relative group" title="Visual Color">
+                        <div id="colorPreview"
+                            class="w-6 h-6 rounded-full border border-white/20 cursor-pointer shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-transform active:scale-95"
+                            style="background-color: #60a9ff;"></div>
+                        <input type="color" id="visualColorPicker" value="#60a9ff"
+                            class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                    </div>
+
+                    <!-- Random Color Button -->
+                    <button id="randomColorBtn"
+                        class="glass-pill p-1.5 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--text-muted)] hover:text-white"
+                        title="Random Color">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8"></polyline>
+                            <line x1="4" y1="20" x2="21" y2="3"></line>
+                            <polyline points="21 16 21 21 16 21"></polyline>
+                            <line x1="15" y1="15" x2="21" y2="21"></line>
+                            <line x1="4" y1="4" x2="9" y2="9"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- SPHERE -->
+                <button id="sphereBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">🔮</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
+                </button>
+
+                <!-- CUBE -->
+                <button id="cubeBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">📦</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cube</span>
+                </button>
+
+                <!-- DRAGON -->
+                <button id="dragonBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">🐉</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Dragon</span>
+                </button>
+
+                <!-- GALAXY -->
+                <button id="galaxyBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">✨</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Galaxy</span>
+
+                    <!-- Sun Style Toggle (Left) -->
+                    <div id="galaxySunToggle"
+                        class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
+                        title="Toggle Sun Style" onclick="event.stopPropagation(); toggleGalaxySun();">
+                        <span class="text-[8px] leading-none text-white">☀️</span>
+                    </div>
+
+                    <!-- Settings Toggle (Right) -->
+                    <div id="galaxySettingsToggle"
+                        class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
+                        title="Galaxy Settings" onclick="event.stopPropagation(); toggleGalaxySettings(this);">
+                        <span class="text-[8px] leading-none text-white">⚙️</span>
+                    </div>
+                </button>
+
+
+                <!-- FLOW -->
+                <button id="flowBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">🌀</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
+                </button>
+
+                <!-- LAVA -->
+                <button id="lavaBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">🌋</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
+                </button>
+
+                <!-- FIRE -->
+                <button id="fireplaceBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">🔥</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
+                </button>
+
+                <!-- RAIN -->
+                <button id="rainBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">🌿</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
+                </button>
+
+                <!-- ZEN -->
+                <button id="zenBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">🌸</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
+                </button>
+
+                <!-- OCEAN -->
+                <button id="oceanBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">🏝️</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Waves</span>
+                </button>
+
+                <!-- CYBER -->
+                <button id="cyberBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]">
+                    <span class="text-2xl">💻</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cyber</span>
+
+                    <!-- Toggle Icon (Optional now since panel is auto-shown or accessed via global UI) -->
+                    <div id="cyberSettingsToggle"
+                        class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg"
+                        title="Settings" onclick="event.stopPropagation(); toggleCyberSettings(this);">
+                        <span class="text-[8px] leading-none text-white">⚙️</span>
+                    </div>
+                </button>
+
+                <!-- MATRIX -->
+                <button id="matrixBtn"
+                    class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[3.5rem] px-1">
+                    <span class="text-2xl">🚀</span>
+                    <span
+                        class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Matrix</span>
+                </button>
+            </div>
+
+            <div id="galaxySettingsPanel"
+                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+                <!-- Back Button -->
+                <button onclick="document.getElementById('galaxySettingsPanel').classList.add('hidden')"
+                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Back
+                </button>
+                <span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Sun
+                    Rotation</span>
+                <div class="flex items-center gap-4">
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RX</label>
+                        <input type="range" id="galaxySunRX" min="-2.0" max="2.0" step="0.1" value="0"
+                            class="premium-slider w-16">
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RY</label>
+                        <input type="range" id="galaxySunRY" min="-2.0" max="2.0" step="0.1" value="0.5"
+                            class="premium-slider w-16">
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <label class="text-[8px] text-[var(--text-muted)] uppercase font-mono">RZ</label>
+                        <input type="range" id="galaxySunRZ" min="-2.0" max="2.0" step="0.1" value="0"
+                            class="premium-slider w-16">
+                    </div>
+                </div>
+            </div>
+
+            <div id="cyberSettingsPanel"
+                class="order-2 hidden flex flex-wrap justify-center items-center gap-3 px-4 py-2 bg-[#0a0a0f]/80 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] transition-all animate-fade-in-up w-auto max-w-4xl">
+
+                <!-- Back Button -->
+                <button onclick="document.getElementById('cyberSettingsPanel').classList.add('hidden')"
+                    class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:text-white transition-all border border-white/10 mr-1 flex items-center gap-1">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Back
+                </button>
+
+                <span
+                    class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mr-1 shrink-0">Cyber</span>
+
+                <!-- Mode Selector (4 buttons) -->
+                <div class="flex items-center bg-white/5 rounded-lg p-0.5 gap-0.5">
+                    <button id="cyberModeRandom" data-cyber-mode="random"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="Random characters">RND</button>
+                    <button id="cyberModeMindwave" data-cyber-mode="mindwave"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="MINDWAVE text">MW</button>
+                    <button id="cyberModeCustom" data-cyber-mode="custom"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="Custom text">TXT</button>
+                    <button id="cyberModeInterstellar" data-cyber-mode="interstellar"
+                        class="px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider transition-all text-[var(--text-muted)] hover:text-white/70"
+                        title="Interstellar NavData">INT</button>
+                </div>
+
+                <!-- Custom Text Input (always visible) -->
+                <div id="cyberCustomTextInput">
+                    <input type="text" id="cyberTextInput" placeholder="Welcome" maxlength="20" autocomplete="off"
+                        class="w-24 bg-white/5 border border-white/10 rounded text-[10px] text-white px-2 py-1 outline-none focus:border-[var(--accent)] uppercase font-mono transition-colors">
+                </div>
+
+                <!-- Hidden checkbox for legacy JS compat -->
+                <input type="checkbox" id="cyberModeToggle" class="hidden" checked>
+
+                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
+
+                <!-- Color -->
+                <div class="flex flex-col gap-0.5 items-center">
+                    <label class="text-[8px] text-[var(--text-muted)] uppercase">Color</label>
+                    <input type="color" id="cyberColorPicker" value="#00FF41"
+                        class="w-8 h-4 rounded cursor-pointer bg-transparent border-none">
+                </div>
+
+                <!-- Rainbow -->
+                <div class="flex flex-col gap-0.5 items-center">
+                    <div class="flex gap-1 items-center">
+                        <span id="labelRGB"
+                            class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none">RGB</span>
+                        <span class="text-[8px] text-white/20 select-none">/</span>
+                        <span id="labelRainbow"
+                            class="text-[8px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none">Rainbow</span>
+                    </div>
+                    <label class="premium-toggle">
+                        <input type="checkbox" id="cyberRainbowToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="w-px h-6 bg-white/10 mx-0.5"></div>
+
+                <!-- Sliders Group -->
+                <div class="flex items-center gap-3">
+                    <!-- Speed -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">SPD</label>
+                            <span id="cyberSpeedVal" class="premium-value">1.0</span>
+                        </div>
+                        <input type="range" id="cyberSpeedSlider" min="0.1" max="5.0" step="0.1" value="1.0"
+                            class="premium-slider">
+                    </div>
+
+                    <!-- Length -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">LEN</label>
+                            <span id="cyberLengthVal" class="premium-value">1.0</span>
+                        </div>
+                        <input type="range" id="cyberLengthSlider" min="0.1" max="2.0" step="0.1" value="1.0"
+                            class="premium-slider">
+                    </div>
+
+                    <!-- Angle -->
+                    <div class="flex flex-col gap-0.5 w-24">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">ANG</label>
+                            <span id="cyberAngleVal" class="premium-value">0°</span>
+                        </div>
+                        <input type="range" id="cyberAngleSlider" min="0" max="360" step="15" value="0"
+                            class="premium-slider">
+                    </div>
+                </div>
+
+                <!-- GLOW MODES -->
+                <div class="flex items-center gap-1">
+                    <span
+                        class="text-[8px] font-bold uppercase tracking-wider text-[var(--text-muted)] mr-0.5">Glow</span>
+                    <button id="glowAutoBtn" data-glow-mode="auto"
+                        class="glow-btn px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all bg-[var(--accent)]/15 border border-[var(--accent)]/40 text-[var(--accent)] active shadow-[0_0_12px_var(--accent-glow)]">AUTO</button>
+                    <button id="glowDimBtn" data-glow-mode="faded"
+                        class="glow-btn px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-white/70">DIM</button>
+                    <button id="glowFullBtn" data-glow-mode="full"
+                        class="glow-btn px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-white/70">FULL</button>
+                    <button id="glowHeartbeatBtn" data-glow-mode="heartbeat"
+                        class="glow-btn px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)]"
+                        title="Lotus Heartbeat">❤️</button>
+                </div>
+
+            </div>
+            </div>
+
+            <!-- RIGHT: Recording & Mixer Toggle -->
+            <div class="flex flex-col gap-3 items-center pb-2">
+                <!-- New Mixer Toggle Button (Use old ID 'rightToggle') -->
+                <button id="rightToggle"
+                    class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all order-first"
+                    title="Mixer">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20v-6M6 20V10M18 20V4" />
+                    </svg>
+                </button>
+                <!-- Record controls moved to center play row -->
+            </div>
+        </footer>
+

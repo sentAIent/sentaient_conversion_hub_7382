@@ -1,0 +1,98 @@
+
+> sentaient-conversion-hub@0.1.0 dev
+> vite --port 3000 --host
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+  VITE v5.4.21  ready in 1353 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: http://192.168.1.217:3000/
+5:19:44 AM [vite] page reload public/mindwave.html
+5:20:03 AM [vite] page reload public/mindwave.html
+5:21:23 AM [vite] page reload public/mindwave.html
+5:21:38 AM [vite] page reload public/mindwave.html
+5:22:06 AM [vite] page reload public/mindwave.html
+5:23:52 AM [vite] page reload public/mindwave.html
+5:25:51 AM [vite] page reload public/mindwave.html
+5:27:14 AM [vite] page reload public/mindwave.html
+5:27:26 AM [vite] page reload public/mindwave.html
+5:34:11 AM [vite] page reload public/mindwave.html
+5:34:45 AM [vite] page reload public/mindwave.html
+5:35:18 AM [vite] page reload public/mindwave.html
+5:36:51 AM [vite] page reload public/mindwave.html
+6:23:26 AM [vite] page reload public/mindwave.html
+6:24:16 AM [vite] page reload public/mindwave.html
+6:24:43 AM [vite] page reload public/mindwave.html
+6:25:35 AM [vite] page reload public/mindwave.html
+6:31:19 AM [vite] page reload public/mindwave.html
+11:04:45 AM [vite] page reload public/mindwave.html
+11:10:38 AM [vite] page reload public/mindwave.html
+11:48:26 AM [vite] page reload public/mindwave.html
+11:50:58 AM [vite] page reload public/mindwave.html
+11:51:46 AM [vite] page reload public/mindwave.html
+11:53:52 AM [vite] page reload public/mindwave.html
+12:09:01 PM [vite] page reload public/mindwave.html
+12:11:50 PM [vite] page reload public/mindwave.html
+12:13:29 PM [vite] page reload public/mindwave.html
+12:14:41 PM [vite] page reload public/mindwave.html
+1:16:25 PM [vite] page reload public/mindwave.html
+1:45:49 PM [vite] page reload public/mindwave.html
+1:46:32 PM [vite] page reload public/mindwave.html
+2:30:06 PM [vite] page reload public/mindwave.html
+2:33:38 PM [vite] page reload public/mindwave.html
+2:34:26 PM [vite] page reload public/mindwave.html
+3:37:55 PM [vite] page reload public/.!61459!mindwave.html
+3:37:55 PM [vite] page reload public/.!61459!mindwave.html
+3:37:55 PM [vite] page reload public/mindwave.html
+3:37:55 PM [vite] page reload public/.!61459!mindwave.html
+3:37:55 PM [vite] page reload public/mindwave.html
+3:38:02 PM [vite] page reload public/mindwave.html
+3:46:17 PM [vite] page reload public/mindwave.html
+3:47:43 PM [vite] page reload public/mindwave.html
+4:30:26 PM [vite] page reload public/mindwave.html
+4:32:20 PM [vite] page reload public/mindwave.html
+4:33:08 PM [vite] page reload public/mindwave.html
+5:38:17 PM [vite] page reload public/mindwave.html
+5:50:44 PM [vite] Internal server error: Failed to resolve import "../state.js" from "binaural-assets/js/controls_v3.js?v=ULTRASYNC_V137". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/binaural-assets/js/controls_v3.js?v=ULTRASYNC_V137:2:65
+  1  |  console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
+  2  |  import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
+     |                                                                  ^
+  3  |  import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
+  4  |  import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=2';
+      at TransformPluginContext._formatError (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at async file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+5:50:44 PM [vite] Pre-transform error: Failed to resolve import "../state.js" from "binaural-assets/js/gallery-modal.js". Does the file exist?
+5:50:44 PM [vite] Pre-transform error: Failed to resolve import "../state.js" from "binaural-assets/js/auth-controller.js". Does the file exist?
+5:50:44 PM [vite] Internal server error: Failed to resolve import "../state.js" from "binaural-assets/js/controls_v3.js?v=ULTRASYNC_V137". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/binaural-assets/js/controls_v3.js?v=ULTRASYNC_V137:2:65
+  1  |  console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
+  2  |  import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
+     |                                                                  ^
+  3  |  import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
+  4  |  import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=2';
+      at TransformPluginContext._formatError (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at async file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+5:50:44 PM [vite] Pre-transform error: Failed to resolve import "../state.js" from "binaural-assets/js/gallery-modal.js". Does the file exist?
+5:50:44 PM [vite] Pre-transform error: Failed to resolve import "../state.js" from "binaural-assets/js/auth-controller.js". Does the file exist?
+6:11:27 PM [vite] page reload mindwave.html
+6:17:10 PM [vite] page reload mindwave.html
+6:18:12 PM [vite] page reload public/mindwave.html
+9:28:48 PM [vite] vite.config.js changed, restarting server...
+9:28:49 PM [vite] server restarted.

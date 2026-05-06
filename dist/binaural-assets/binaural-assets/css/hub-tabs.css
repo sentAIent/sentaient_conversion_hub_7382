@@ -1,0 +1,110 @@
+/* Hub Tabs UI System */
+:root {
+    --tab-inactive: rgba(255, 255, 255, 0.05);
+    --tab-active: var(--accent);
+    --tab-text-inactive: var(--text-muted);
+    --tab-text-active: var(--bg-main);
+}
+
+#globalMenuTabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+}
+
+.global-tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: 0.75rem;
+    background: var(--tab-inactive);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--tab-text-inactive);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.global-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent);
+    color: white;
+}
+
+.global-tab-btn.active, 
+.global-tab-btn[class*="bg-[var(--accent)]"] {
+    background: var(--tab-active) !important;
+    color: var(--tab-text-active) !important;
+    border-color: transparent !important;
+    box-shadow: 0 0 15px rgba(45, 212, 191, 0.3);
+}
+
+.global-tab-btn .tab-icon {
+    font-size: 1.25rem;
+}
+
+.global-tab-btn .tab-label {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Panel Containers */
+#globalMenuContent {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.global-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    animation: fade-in-up 0.4s ease-out;
+}
+
+.global-panel.hidden {
+    display: none !important;
+}
+
+/* Specific Pane Styles */
+.pane-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1rem;
+}
+
+.pane-section-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Animations */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
