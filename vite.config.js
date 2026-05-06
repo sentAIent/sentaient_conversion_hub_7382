@@ -17,6 +17,7 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'index.html'),
         mindwave: path.resolve(__dirname, 'mindwave.html'),
+        'mindwave-beta': path.resolve(__dirname, 'mindwave-beta.html'),
       },
     },
   },

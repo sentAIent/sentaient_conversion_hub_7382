@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-cache-v430-STABILITY-FIX';
+const CACHE_NAME = 'mindwave-cache-v431-STABILITY-FIX';
 self.addEventListener('install', (event) => {
     self.skipWaiting();
 });

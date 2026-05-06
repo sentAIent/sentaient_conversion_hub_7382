@@ -11,12 +11,6 @@
     <meta name="theme-color" content="#0f172a">
 
     <!-- Preload Firebase SDKs to prevent waterfall -->
-    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js">
-    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js">
-    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js">
-    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js">
-
-    <!-- Import Map for ES6 Module Resolution -->
     <script type="importmap">
     {
         "imports": {
@@ -26,6 +20,13 @@
         }
     }
     </script>
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js">
+
+    <!-- Import Map for ES6 Module Resolution -->
+
     <!-- SUPER CACHE KILLER: Force fresh load of the new 3600-line fractal engine -->
     <script>
         /**
@@ -132,16 +133,11 @@
     </script>
     <title>MindWave Beta - RESILIENT_V119</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
-    <link rel="stylesheet" href="./binaural-assets/css/tailwind-compiled.css">
-    <link rel="stylesheet" href="./binaural-assets/css/style.css?v=ULTRASYNC_V111">
-    <link rel="stylesheet" href="./binaural-assets/css/visual-active.css?v=ULTRASYNC_V111">
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="./binaural-assets/js/main_vGOLD_SYNC.js?v=ULTRASYNC_V111">
+    <link rel="modulepreload" href="data:text/javascript;base64,LyoqCiAqIE1pbmR3YXZlIFN0dWRpbyBDb3JlIC0gUmVzdG9yZWQgIlBFUkZFQ1QiIFZlcnNpb24gKE1hcmNoIDEydGggQWZ0ZXJub29uKQogKiDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIAKICogTWFpbiBFbnRyeSBQb2ludCBmb3IgdGhlIEFmdGVybm9vbiBNYXJjaCAxMnRoIFJlc3RvcmF0aW9uLgogKi8KCmltcG9ydCB7IHNldHVwVUkgfSBmcm9tICcuL3VpL2NvbnRyb2xzX3YzLmpzJzsKaW1wb3J0IHsgcHJlbG9hZFZpc3VhbGl6ZXIsIGdldFZpc3VhbGl6ZXIgfSBmcm9tICcuL3Zpc3VhbHMvdmlzdWFsaXplcl9sYXp5LmpzJzsKaW1wb3J0IHsgc3RhdGUgfSBmcm9tICcuL3N0YXRlLmpzJzsKCi8vIEFwcGxpY2F0aW9uIFN0YXRlIFRyYWNraW5nCndpbmRvdy5OVUNMRUFSX01BSU5fTE9BREVEID0gIlVMVFJBU1lOQ19WMTM1X1NUQUJMRSI7CmNvbnNvbGUubG9nKCJbTWFpbl0gTE9BREVEIFZFUlNJT046IFVMVFJBU1lOQ19WMTM1X1NUQUJMRSIpOwoKY29uc3QgaW5pdEFwcCA9ICgpID0+IHsKICAgIGNvbnNvbGUubG9nKCdbTWFpbl0gSW5pdGlhbGl6aW5nIFVMVFJBU1lOQyBWZXJzaW9uIEJvb3QgU2VxdWVuY2UuLi4nKTsKCiAgICB0cnkgewogICAgICAgIC8vIDEuIEluaXRpYWxpemUgVUkgQ29udHJvbHMKICAgICAgICBzZXR1cFVJKCk7CiAgICAgICAgaW1wb3J0KCcuL3VpL3Jlc2l6ZS1wYW5lbHMuanMnKS50aGVuKG1vZHVsZSA9PiB7CiAgICAgICAgICAgIG1vZHVsZS5pbml0UmVzaXphYmxlUGFuZWxzKCk7CiAgICAgICAgfSkuY2F0Y2goZXJyID0+IGNvbnNvbGUuZXJyb3IoJ1tNYWluXSBGYWlsZWQgdG8gbG9hZCByZXNpemUtcGFuZWxzOicsIGVycikpOwoKICAgICAgICAvLyAyLiBQcmVsb2FkICYgSW5pdCAzRCBFbmdpbmUKICAgICAgICBwcmVsb2FkVmlzdWFsaXplcigpOwoKICAgICAgICAvLyAzLiBSZW1vdmUgTG9hZGluZyBTY3JlZW4gd2l0aCBGYWRlCiAgICAgICAgY29uc3QgbG9hZGVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2xvYWRpbmdTY3JlZW4nKTsKICAgICAgICBpZiAobG9hZGVyKSB7CiAgICAgICAgICAgIGxvYWRlci5jbGFzc0xpc3QuYWRkKCdmYWRlLW91dCcpOwogICAgICAgICAgICBzZXRUaW1lb3V0KCgpID0+IHsKICAgICAgICAgICAgICAgIGxvYWRlci5zdHlsZS5kaXNwbGF5ID0gJ25vbmUnOwogICAgICAgICAgICAgICAgbG9hZGVyLnJlbW92ZSgpOyAvLyBDb21wbGV0ZWx5IGRpc3Bvc2Ugb2YgdGhlIGVsZW1lbnQKICAgICAgICAgICAgICAgIGNvbnNvbGUubG9nKCdbTWFpbl0gQm9vdCBTZXF1ZW5jZSBDb21wbGV0ZS4gV2VsY29tZSB0byBNaW5kd2F2ZS4nKTsKICAgICAgICAgICAgfSwgODAwKTsKICAgICAgICB9CgogICAgICAgIC8vIDQuIEluaXRpYWwgVGhlbWUgQ2hlY2sKICAgICAgICBkb2N1bWVudC5ib2R5LmNsYXNzTGlzdC5hZGQoJ3RoZW1lLXNsYXRlJyk7IC8vIERlZmF1bHQgdGhlbWUKCiAgICB9IGNhdGNoIChlcnIpIHsKICAgICAgICBjb25zb2xlLmVycm9yKCdbTWFpbl0gSW5pdGlhbGl6YXRpb24gZXJyb3I6JywgZXJyKTsKICAgIH0KfTsKCi8vIFN0YXJ0IHdoZW4gRE9NIGlzIHJlYWR5CmlmIChkb2N1bWVudC5yZWFkeVN0YXRlID09PSAnbG9hZGluZycpIHsKICAgIGRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoJ0RPTUNvbnRlbnRMb2FkZWQnLCBpbml0QXBwKTsKfSBlbHNlIHsKICAgIGluaXRBcHAoKTsKfQoKLy8gR2xvYmFsIEhlbHAgRnVuY3Rpb25zIChSZXN0b3JlZCkKd2luZG93LnN0YXJ0T25ib2FyZGluZyA9IChmb3JjZSA9IGZhbHNlKSA9PiB7CiAgICBjb25zb2xlLmxvZygnW01haW5dIE9uYm9hcmRpbmcgcmVxdWVzdGVkIChMZWdhY3kgTW9jayknKTsKICAgIGFsZXJ0KCJNaW5kd2F2ZSBUdXRvcmlhbDogVXNlIHRoZSB0b3Agc2xpZGVycyB0byBhZGp1c3QgZnJlcXVlbmNpZXMgYW5kIHRoZSBib3R0b20gaWNvbnMgdG8gY2hhbmdlIHZpc3VhbHMuIik7Cn07Cg==">
     <!-- Visualizer modulepreload removed to unblock critical path -->
     <script src="./binaural-assets/config.js" defer
         onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="./binaural-assets/js/main_vGOLD_SYNC.js?v=ULTRASYNC_V111"
-        onerror="console.error('Failed to load main_vGOLD_SYNC.js')"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -291,6 +287,11 @@
         }
     </script>
     <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
+  <script type="module" crossorigin src="/assets/mindwave-beta-Bdg_lYLY.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/controls_v3-BAbIU8QP.js">
+  <link rel="stylesheet" crossorigin href="/assets/controls_v3-Ch8n8-hj.css">
+  <link rel="stylesheet" crossorigin href="/assets/mindwave-beta-CCBZJVXs.css">
 </head>
 
 <body
@@ -1505,7 +1506,7 @@
         <div
             class="relative w-full p-6 border-b border-white/10 flex flex-col justify-center items-center bg-[var(--bg-panel)] shrink-0 min-h-[140px] gap-4">
             <a href="#" onclick="window.location.reload()" class="hover:opacity-80 transition-opacity block">
-                <img src="./mindwave-logo.png" alt="MindWave Logo"
+                <img src="/assets/mindwave-logo-Ssdhve8k.png" alt="MindWave Logo"
                     class="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.3)] rounded-xl relative z-10 vibrant-logo">
             </a>
 
