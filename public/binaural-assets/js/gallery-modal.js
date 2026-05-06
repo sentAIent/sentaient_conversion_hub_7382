@@ -3,8 +3,8 @@
  * Handles browsing community-shared presets.
  */
 
-import { els, state } from '../state.js';
-import { getPublicGallery } from '../services/presets-service.js';
+import { els, state } from '/binaural-assets/js/state.js';
+import { getPublicGallery } from '/binaural-assets/js/services/presets-service.js';
 
 export function initGallery() {
     console.log('[Gallery] Initializing community gallery...');

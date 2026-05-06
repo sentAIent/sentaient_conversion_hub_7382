@@ -4,7 +4,7 @@
  * Integrates with A/B testing for variant offers
  */
 
-import { getVariant, trackConversion } from '../utils/ab-testing.js';
+import { getVariant, trackConversion } from '/binaural-assets/js/utils/ab-testing.js';
 
 const EXIT_INTENT_KEY = 'mindwave_exit_intent_shown';
 const SESSION_KEY = 'mindwave_session_id';

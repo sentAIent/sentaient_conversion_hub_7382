@@ -3,7 +3,7 @@
  * Handles real-time Social Pulse by tracking active sessions in Firestore.
  */
 
-import { state } from '../state.js';
+import { state } from '/binaural-assets/js/state.js';
 import { db, doc, setDoc, deleteDoc, collection, onSnapshot, query, where, serverTimestamp } from './firebase.js';
 
 let heartbeatInterval = null;

@@ -3,7 +3,7 @@
  * Displays subscription plans and handles checkout
  */
 
-import { goToCheckout, PRICING, formatPrice, openCustomerPortal } from '../services/stripe-simple.js';
+import { goToCheckout, PRICING, formatPrice, openCustomerPortal } from '/binaural-assets/js/services/stripe-simple.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 
 export async function showPricingModal() {

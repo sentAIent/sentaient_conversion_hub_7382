@@ -1,4 +1,4 @@
-import { THEMES, state } from '../state.js';
+import { THEMES, state } from '/binaural-assets/js/state.js';
 
 // Available cursor shapes - more choices including user-requested shapes
 const CURSOR_SHAPES = {

@@ -8,15 +8,15 @@
  *  4. Duplicate slider IDs resolved by always taking the first match
  */
 
-import { state, els, THEMES } from '../state_vPERFECT.js';
+import { state, els, THEMES } from '/binaural-assets/js/state_vPERFECT.js';
 import {
     updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance,
     updateAtmosMaster, updateSoundscape, startAudio, stopAudio
-} from '../audio/engine.js';
+} from '/binaural-assets/js/audio/engine.js';
 import {
     setVisualMode, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness,
     getVisualizer, pauseVisuals, resumeVisuals
-} from '../visuals/visualizer_nuclear_vPERFECT.js';
+} from '/binaural-assets/js/visuals/visualizer_nuclear_vPERFECT.js';
 
 // Map: button ID → { elementKey, internalMode }
 // "internalMode" is what activeModes uses after mapMode() inside the visualizer

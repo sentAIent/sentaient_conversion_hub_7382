@@ -3,7 +3,7 @@
  * Limits session duration for non-premium users
  */
 
-import { isPremiumUser } from '../services/stripe-simple.js';
+import { isPremiumUser } from '/binaural-assets/js/services/stripe-simple.js';
 
 // Configuration
 const FREE_SESSION_LIMIT_MINUTES = 30; // 30 minute limit for free users

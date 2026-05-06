@@ -1183,7 +1183,10 @@ export function setupUI() {
     if (els.closeModalBtn) els.closeModalBtn.addEventListener('click', () => {
         els.videoModal.classList.remove('active');
         if (els.playbackVideo) { els.playbackVideo.pause(); els.playbackVideo.src = ""; }
-        if (els.playbackAudio) { els.playbackAudio.pause(); }
+        if (els.playbackAudio) { els.playbackAudio.pause(); els.playbackAudio.src = ""; }
+        
+        // Deep cleanup of recording resources (blobs, object URLs)
+        import('./export/recorder.js').then(m => m.cleanupRecording());
     });
 
     if (els.videoToggleBtn) {

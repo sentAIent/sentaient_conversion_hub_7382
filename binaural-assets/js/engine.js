@@ -1,10 +1,10 @@
-import { state, els, SOUNDSCAPES, STATE_INSIGHTS, SOUND_INSIGHTS, VISUALIZER_VERSION } from '../state.js';
-import { getVisualizer, initVisualizer, pauseVisuals } from '../visuals/visualizer_lazy.js?v=4';
-import { stopRecording } from '../export/recorder.js';
-import { DailyLimitService } from '../services/daily-limit.js';
-import { showPricingModal } from '../ui/pricing-3tier.js';
-import { isPremiumUser } from '../services/stripe-simple.js';
-import { isHapticsEnabled, hapticPulse } from '../utils/haptics.js';
+import { state, els, SOUNDSCAPES, STATE_INSIGHTS, SOUND_INSIGHTS, VISUALIZER_VERSION } from '/binaural-assets/js/state.js';
+import { getVisualizer, initVisualizer, pauseVisuals } from '/binaural-assets/js/visuals/visualizer_lazy.js?v=4';
+import { stopRecording } from '/binaural-assets/js/export/recorder.js';
+import { DailyLimitService } from '/binaural-assets/js/services/daily-limit.js';
+import { showPricingModal } from '/binaural-assets/js/ui/pricing-3tier.js';
+import { isPremiumUser } from '/binaural-assets/js/services/stripe-simple.js';
+import { isHapticsEnabled, hapticPulse } from '/binaural-assets/js/utils/haptics.js';
 
 let uiCallback = null;
 
@@ -979,11 +979,8 @@ export function updateFrequencies() {
         if (compactSlider) compactSlider.value = p;
         if (compactValue) compactValue.textContent = targetSpeed.toFixed(1) + 'x';
 
-        // Update Visualizer
-        import('../visuals/visualizer_nuclear_v4.js').then(m => {
-            const viz = m.getVisualizer();
-            if (viz) viz.setSpeed(targetSpeed);
-        });
+        const viz = getVisualizer();
+        if (viz) viz.setSpeed(targetSpeed);
 
     }
 

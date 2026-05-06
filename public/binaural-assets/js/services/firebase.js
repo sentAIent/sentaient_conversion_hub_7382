@@ -2,7 +2,7 @@
 // import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
 // ... imports removed ...
 
-import { state } from '../state.js';
+import { state } from '/binaural-assets/js/state.js';
 
 // Module-level variables (populated after init)
 let app, auth, db, storage;

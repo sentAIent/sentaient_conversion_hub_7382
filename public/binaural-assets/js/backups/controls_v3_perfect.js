@@ -1,10 +1,10 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
-import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
-import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
-import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=2';
-import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
+import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '/binaural-assets/js/state.js';
+import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '/binaural-assets/js/audio/engine.js';
+import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '/binaural-assets/js/visuals/visualizer_lazy.js?v=2';
+import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '/binaural-assets/js/export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
-import { saveMixToCloud, saveUserPreferences } from '../services/firebase.js';
+import { saveMixToCloud, saveUserPreferences } from '/binaural-assets/js/services/firebase.js';
 
 // Debounce Utility (if not available globally)
 function debounce(func, wait) {
@@ -18,22 +18,22 @@ function debounce(func, wait) {
 // ... existing code ...
 
 // Logic moved to setupMatrixControls
-import { auth, db, registerAuthCallback } from '../services/firebase.js';
-import { startSession, stopSession, pauseSession, resumeSession, isSessionPaused, formatTime, getProgress, isSessionActive, DURATION_PRESETS } from '../audio/session-timer.js';
-import { startSessionTracking, endSessionTracking, getStats, getWeeklyData, getImpactStats } from '../services/analytics.js';
-import { setStoryVolume, playStory, stopStory as stopCurrentStory, storyState } from '../content/stories.js';
-import { setCustomAudioVolume } from '../content/audio-library.js';
-import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '../content/classical.js';
-import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '../audio/dj-synth.js';
-import { goToCheckout, hasPurchasedApp, getUserTier, openCustomerPortal } from '../services/stripe-simple.js';
-import { getLeaderboard } from '../services/leaderboard-service.js';
+import { auth, db, registerAuthCallback } from '/binaural-assets/js/services/firebase.js';
+import { startSession, stopSession, pauseSession, resumeSession, isSessionPaused, formatTime, getProgress, isSessionActive, DURATION_PRESETS } from '/binaural-assets/js/audio/session-timer.js';
+import { startSessionTracking, endSessionTracking, getStats, getWeeklyData, getImpactStats } from '/binaural-assets/js/services/analytics.js';
+import { setStoryVolume, playStory, stopStory as stopCurrentStory, storyState } from '/binaural-assets/js/content/stories.js';
+import { setCustomAudioVolume } from '/binaural-assets/js/content/audio-library.js';
+import { initClassical, isClassicalPlaying, stopClassical, onClassicalStateChange } from '/binaural-assets/js/content/classical.js';
+import { initDJAudio, setDJVolume, setDJPitch, setDJTone, setDJSpeed, triggerOneShot, startLoop, stopLoop, isLoopActive, stopAllLoops, getActiveLoopCount, DJ_SOUNDS } from '/binaural-assets/js/audio/dj-synth.js';
+import { goToCheckout, hasPurchasedApp, getUserTier, openCustomerPortal } from '/binaural-assets/js/services/stripe-simple.js';
+import { getLeaderboard } from '/binaural-assets/js/services/leaderboard-service.js';
 import { initGallery } from './gallery-modal.js';
-import { getReferralCount, shareReferral } from '../services/referral.js';
-import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
-import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence, setPresencePhase } from '../services/presence-service.js';
+import { getReferralCount, shareReferral } from '/binaural-assets/js/services/referral.js';
+import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '/binaural-assets/js/services/ai-intent-service.js';
+import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence, setPresencePhase } from '/binaural-assets/js/services/presence-service.js';
 // ... (existing code)
 import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
-import { loadUserPreferences, saveUserPreferences } from '../services/persistence.js?v=NUCLEAR_FIX_V2';
+import { loadUserPreferences, saveUserPreferences } from '/binaural-assets/js/services/persistence.js?v=NUCLEAR_FIX_V2';
 
 // Global reference for restored prefs to be used during initialization
 let restoredPrefs = null;

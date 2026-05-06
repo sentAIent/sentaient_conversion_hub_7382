@@ -7,7 +7,7 @@ The **Visualizer3D** engine (v208+) is a high-performance, modular Three.js rend
 | Mode | Class Group | Shader Characteristics |
 | :--- | :--- | :--- |
 | **Ocean** | `wavesGroup` | Interference-based wave physics. Dual-channel sync. |
-| **Cymatics** | `cymaticsGroup` | **Kinematic Liquefaction Engine**. Domain-warped fractal folding with Chladni resonance. Simulates high-viscosity liquid geometry with specular highlights and temporal flow vectors. |
+| **Cymatics** | `cymaticsGroup` | Fractal folding. Modal resonance (n, m) with liquid morphing. |
 | **Snow** | `snowflakeGroup` | Shader-driven particle system. Dynamic tinting. |
 | **Galaxy** | `galaxyGroup` | Procedural volumetric stars. Orthographic projection. |
 | **Cyber** | `cyberGroup` | 3D Matrix rain. Direct buffer geometry injection. |

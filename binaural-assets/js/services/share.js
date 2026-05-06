@@ -1,7 +1,7 @@
 // MindWave Preset Sharing
 // Share presets via URL parameters and QR codes
 
-import { state } from '../state.js';
+import { state } from '/binaural-assets/js/state.js';
 
 // Generate a shareable URL for current settings
 export function generateShareableURL() {

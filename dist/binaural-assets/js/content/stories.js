@@ -1,11 +1,11 @@
 // Sleep Stories Module
 // Plays narrated stories layered with binaural frequencies
 
-import { state, els } from '../state.js';
-import { db, doc, setDoc, getDoc, serverTimestamp } from '../services/firebase.js';
-import { isPremiumUser } from '../services/stripe-simple.js';
-import { showPricingModal } from '../ui/pricing-3tier.js';
-import { getCachedAudioUrl } from '../utils/audio-offline-manager.js';
+import { state, els } from '/binaural-assets/js/state.js';
+import { db, doc, setDoc, getDoc, serverTimestamp } from '/binaural-assets/js/services/firebase.js';
+import { isPremiumUser } from '/binaural-assets/js/services/stripe-simple.js';
+import { showPricingModal } from '/binaural-assets/js/ui/pricing-3tier.js';
+import { getCachedAudioUrl } from '/binaural-assets/js/utils/audio-offline-manager.js';
 
 // Built-in sleep stories with recommended soundscapes
 export const SLEEP_STORIES = [

@@ -207,8 +207,8 @@ export async function startAudio() {
         const baseFreq = parseFloat(els.baseSlider ? els.baseSlider.value : 200) || 200;
         const beatFreq = parseFloat(els.beatSlider ? els.beatSlider.value : 10) || 10;
         console.log(`[Audio] startAudio reading sliders: Base=${baseFreq}Hz, Beat=${beatFreq}Hz`);
-        state.oscLeft.frequency.value = baseFreq;
-        state.oscRight.frequency.value = baseFreq + beatFreq;
+        if (state.oscLeft) state.oscLeft.frequency.value = baseFreq;
+        if (state.oscRight) state.oscRight.frequency.value = baseFreq + beatFreq;
 
         const volVal = parseFloat(els.volSlider ? els.volSlider.value : 0.5);
         const safeVol = isNaN(volVal) ? 0.5 : volVal;
@@ -254,6 +254,7 @@ export async function startAudio() {
         if (state.soundscapeSettings) {
             Object.keys(state.soundscapeSettings).forEach(id => {
                 const s = state.soundscapeSettings[id];
+                const canvas = els.canvas || document.getElementById('visualizer');
                 if (s && s.vol > 0) {
                     startSingleSoundscape(id, s.vol, s.tone, s.speed);
                 }
@@ -993,6 +994,7 @@ export function updateHarmonicsLevel(val) {
 }
 
 export function updateFrequencies() {
+    if (!els.baseSlider || !els.beatSlider) return;
     const base = parseFloat(els.baseSlider.value);
     const beat = parseFloat(els.beatSlider.value);
 
@@ -1001,8 +1003,8 @@ export function updateFrequencies() {
     state.beatFrequency = beat;
 
     console.log(`[Freq] Update: Base=${base}Hz, Beat=${beat}Hz`);
-    if (els.baseValue) els.baseValue.textContent = `${base} Hz`;
-    if (els.beatValue) els.beatValue.textContent = `${beat} Hz`;
+    if (els.baseValue) els.baseValue.textContent = `${base.toFixed(1)} Hz`;
+    if (els.beatValue) els.beatValue.textContent = `${beat.toFixed(1)} Hz`;
     if (state.oscLeft && state.isPlaying) state.oscLeft.frequency.setValueAtTime(base, state.audioCtx.currentTime);
     if (state.oscRight && state.isPlaying) state.oscRight.frequency.setValueAtTime(base + beat, state.audioCtx.currentTime);
 
@@ -1104,12 +1106,14 @@ export function updateFrequencies() {
 }
 
 export function updateBeatsVolume() {
+    if (!els.volSlider) return;
     const vol = parseFloat(els.volSlider.value);
     if (els.volValue) els.volValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.beatsGain && state.isPlaying) state.beatsGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
 }
 
 export function updateMasterVolume() {
+    if (!els.masterVolSlider) return;
     const vol = parseFloat(els.masterVolSlider.value);
     if (els.masterVolValue) els.masterVolValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.masterGain && state.isPlaying) state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);

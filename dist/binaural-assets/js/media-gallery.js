@@ -5,12 +5,12 @@
  * from the IndexedDB vault. Survives page reloads.
  * 
  * Usage:
- *   import { renderMediaGallery } from './media-gallery.js';
+ *   import { renderMediaGallery } from '/binaural-assets/js/media-gallery.js';
  *   renderMediaGallery(document.getElementById('galleryContainer'));
  */
 
-import { getMediaList, getMediaURL, getMediaThumbnail, deleteMedia, getStorageStats, formatBytes } from '../services/storage-manager.js';
-import { trackGlobalEvent } from '../services/analytics-service.js';
+import { getMediaList, getMediaURL, getMediaThumbnail, deleteMedia, getStorageStats, formatBytes } from '/binaural-assets/js/services/storage-manager.js';
+import { trackGlobalEvent } from '/binaural-assets/js/services/analytics-service.js';
 
 // =========================================================================
 // GALLERY RENDERER

@@ -1,23 +1,23 @@
-import { state, els, THEMES } from '../state.js';
-import * as THREE from '../vendor/three.module.js';
+import { state, els, THEMES } from '/binaural-assets/js/state.js';
+import * as THREE from '/binaural-assets/js/vendor/three.module.js';
 
 let viz3D = null;
 
 export class Visualizer3D {
     constructor(canvas, initialState = {}) {
         this.canvas = canvas;
-        this.activeModes = initialState.activeModes || new Set(); 
-        this.mode = initialState.mode || 'none';
-        this.mindWaveMode = initialState.mindWaveMode !== undefined ? initialState.mindWaveMode : true;
-        
-        // GOLD SYNC: Visual State
-        this.galaxySunStyle = initialState.galaxySunStyle || 'sun';
-        this.currentSunStyleIndex = 0;
-        this.sunStyles = ['sun', 'tribal'];
-        this._cymaticDriftOffset = 0;
-        this._cymaticN_Target = undefined;
-        this._cymaticM_Target = undefined;
+        this.activeModes = initialState.activeModes || new Set(); // Start empty to match UI
+        this.mode = initialState.mode || 'none'; // Legacy support
 
+        // Default settings - MUST be set before init methods
+        this.mindWaveMode = initialState.mindWaveMode !== undefined ? initialState.mindWaveMode : true;
+        this.galaxySunStyle = initialState.galaxySunStyle || 'sun';
+        
+        // Cymatics State
+        this.currentCymaticData = { name: "Fundamental Zenith", n: 1, m: 1, energy: 0.2 };
+        this.cymaticsHistory = [];
+        this.cymaticsHistoryIndex = -1;
+        this._cymaticDriftOffset = Math.random() * 1000;
         
         // Cyber (2D Overlay) Configuration
         this.cyberConfig = {
@@ -96,8 +96,36 @@ export class Visualizer3D {
         this._logoRenderCanvas = null; // Lazily created, reused
 
 
+        // Core Visualization Groups - Pre-initialized BEFORE WebGL setup to prevent boot-level TypeErrors
+        this.sphereGroup = new THREE.Group();
+        this.particleGroup = new THREE.Group();
+        this.lightspeedGroup = new THREE.Group();
+        this.lavaGroup = new THREE.Group();
+        this.fireplaceGroup = new THREE.Group();
+        this.rainforestGroup = new THREE.Group();
+        this.zenGardenGroup = new THREE.Group();
+        this.oceanGroup = new THREE.Group();
+        this.wavesGroup = this.oceanGroup; // Unified naming parity
+        this.cyberGroup = new THREE.Group();
+        this.boxGroup = new THREE.Group();
+        this.dragonGroup = new THREE.Group();
+        this.galaxyGroup = new THREE.Group();
+        this.mandalaGroup = new THREE.Group();
+        this.cymaticsGroup = new THREE.Group();
+        this.snowflakeGroup = new THREE.Group();
+        this._snowData = null; // {positions, phases, speeds, drifts, rotations}
+
         try {
             this.scene = new THREE.Scene();
+            // Add groups to scene
+            const groups = [
+                this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup, 
+                this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup, this.oceanGroup,
+                this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
+                this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup
+            ];
+            groups.forEach(g => this.scene.add(g));
+
             this.camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
             this.renderer = new THREE.WebGLRenderer({ 
                 canvas: canvas, 
@@ -112,74 +140,12 @@ export class Visualizer3D {
             // Performance optimization: Cap pixel ratio based on stability mode
             const maxPixelRatio = this.isLowPower ? 1.0 : 2.0;
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
-
-            this.sphereGroup = new THREE.Group();
-            this.scene.add(this.sphereGroup);
-
-            this.particleGroup = new THREE.Group();
-            this.scene.add(this.particleGroup);
-
-            this.lightspeedGroup = new THREE.Group();
-            this.scene.add(this.lightspeedGroup);
-
-            this.lavaGroup = new THREE.Group();
-            this.scene.add(this.lavaGroup);
-
-            this.fireplaceGroup = new THREE.Group();
-            this.scene.add(this.fireplaceGroup);
-
-            this.rainforestGroup = new THREE.Group();
-            this.scene.add(this.rainforestGroup);
-
-            this.zenGardenGroup = new THREE.Group();
-            this.scene.add(this.zenGardenGroup);
-
-            this.oceanGroup = new THREE.Group();
-            this.scene.add(this.oceanGroup);
-
-            this.cyberGroup = new THREE.Group();
-            this.scene.add(this.cyberGroup);
-
-            this.boxGroup = new THREE.Group();
-            this.scene.add(this.boxGroup);
-
-            this.dragonGroup = new THREE.Group();
-            this.scene.add(this.dragonGroup);
-
-            this.galaxyGroup = new THREE.Group();
-            this.scene.add(this.galaxyGroup);
-
-            // Sun Rotation Speeds (Blender-style X, Y, Z controls)
-            this.sunRotationSpeedX = 0;
-            this.sunRotationSpeedY = 0.005; // Default spinning like a coin
-            this.sunRotationSpeedZ = 0.003; // Default rotating like a wheel
-            this.sunRotationTiltX = 0;     // Oscillating tilt base
-
-            this.mandalaGroup = new THREE.Group();
-            this.scene.add(this.mandalaGroup);
-
-            this.cymaticsGroup = new THREE.Group();
-            this.scene.add(this.cymaticsGroup);
-
-            // Cymatics Engine State
-            this.cymaticsHistory = [];
-            this.cymaticsHistoryIndex = -1;
-            this.cymaticsTimer = 60; // default 60s
-            this.lastCymaticRotation = performance.now();
-            this.currentCymaticData = { n: 2, m: 3 };
-
-            // Snowflake (real snow) Group — separate from cymatics
-            this.customColor = new THREE.Color(0x60a9ff);
-            this.customColors = {}; // PER-MODE COLOR REGISTRY
-            this.snowflakeGroup = new THREE.Group();
-            this.scene.add(this.snowflakeGroup);
-            this._snowData = null; // {positions, phases, speeds, drifts, rotations}
-
+            
             this.textures = {};
-
-            // Cached frequency data buffer — avoids allocating new Uint8Array every frame
+            this.customColors = {}; // PER-VISUAL color overrides
+            this.customColor = null; // GLOBAL color override
+            this._isRendering = false; // Guard flag to prevent duplicate render loops
             this._freqDataArray = null;
-
             this.initEnvironment();
             // REMOVED: Exhaustive initialization calls here to fix 5s loading delay.
             // Modes are now initialized lazily in updateVisibility().
@@ -195,16 +161,17 @@ export class Visualizer3D {
             window.addEventListener('mindwave:layout-change', this.handleLayoutChange);
 
             // Memory Guard: Safe Mode listener
-            window.addEventListener('mindwave:safe-mode-start', () => {
+            this._boundSafeMode = () => {
                 if (this.currentLodLevel !== 'low') {
                     console.log("[Visualizer] Safe Mode: Dropping LOD to 'low'.");
                     this.degradeLOD();
                     this.degradeLOD();
                 }
-            });
+            };
+            window.addEventListener('mindwave:safe-mode-start', this._boundSafeMode);
 
             // Page Visibility API - Battery Saver
-            document.addEventListener('visibilitychange', () => {
+            this._boundVisibilityChange = () => {
                 if (document.hidden) {
                     console.log('[Visualizer] Tab hidden, pausing render loop to save battery.');
                 } else {
@@ -214,16 +181,19 @@ export class Visualizer3D {
                         this.render(state.analyserLeft, state.analyserRight);
                     }
                 }
-            });
+            };
+            document.addEventListener('visibilitychange', this._boundVisibilityChange);
 
             // WebGL Context Loss Recovery — avoids permanent black screen on GPU crash
-            canvas.addEventListener('webglcontextlost', (e) => {
+            this._boundContextLost = (e) => {
                 e.preventDefault();
                 console.warn('[Visualizer] WebGL context LOST. Halting render loop.');
                 this.active = false;
                 if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
-            });
-            canvas.addEventListener('webglcontextrestored', () => {
+            };
+            canvas.addEventListener('webglcontextlost', this._boundContextLost);
+            
+            this._boundContextRestored = () => {
                 console.log('[Visualizer] WebGL context RESTORED. Reinitializing...');
                 try {
                     this.initialized = false;
@@ -233,18 +203,22 @@ export class Visualizer3D {
                     this.initialized = true;
                     this.active = true;
                     this.lastTime = performance.now() * 0.001;
+                    // Ensure only one loop is active
+                    if (state.animationId) cancelAnimationFrame(state.animationId);
+                    this._isRendering = false; 
                     this.render(state.analyserLeft, state.analyserRight);
                 } catch (err) {
                     console.error('[Visualizer] Failed to recover from context loss:', err);
                 }
-            });
+            };
+            canvas.addEventListener('webglcontextrestored', this._boundContextRestored);
 
             // Initial sizing
             this.resize();
             setTimeout(this.handleLayoutChange, 100); // Delay slightly for DOM to settle
 
             // Theme Tracking for Adaptive Logo
-            window.addEventListener('themeChanged', (e) => {
+            this._boundThemeChange = (e) => {
                 if (e.detail && e.detail.type) {
                     const newType = e.detail.type;
                     if (this.themeType !== newType) {
@@ -253,7 +227,8 @@ export class Visualizer3D {
                         this.updateLogoTexture();
                     }
                 }
-            });
+            };
+            window.addEventListener('themeChanged', this._boundThemeChange);
 
             this.speedMultiplier = 1.0;
             this.brightnessMultiplier = 1.0;
@@ -262,14 +237,21 @@ export class Visualizer3D {
             this.lastTime = performance.now() * 0.001;
             this.simTime = 0; // Accumulated simulation time
 
+            this.targetFPS = 60;
+            this.lastFrameRenderTime = 0;
+            this.active = true;
+
             // Apply initial visibility based on activeModes defaults
-            // REMOVED: Defer to initVisualizer to unblock main thread
-            // this.updateVisibility();
+            this.updateVisibility();
 
             this.initialized = true;
 
             // IMMEDIATE: Load logo first so it's visible while other assets load
             this.initOverlayLogo();
+            
+            // Global Fallback for UI Controls (controls_v3.js / main_vGOLD_SYNC.js)
+            window.viz3D = this;
+            console.log('[Viz] Visualizer3D Hard-Linked to Global Scope.');
         } catch (e) {
             console.error("Three.js Init Failed:", e);
             this.initialized = false;
@@ -459,23 +441,27 @@ export class Visualizer3D {
         this.matrixCyberStreams.forEach((stream, streamIndex) => {
             stream.y += stream.baseSpeed * speedMult;
             let visibleLength = Math.max(3, Math.floor(baseVisibleLength * lengthMult));
-            if (this.isLowPower) visibleLength = Math.floor(visibleLength * 0.6); // Reduce vertical draw calls
+            
+            // AGGRESSIVE OPTIMIZATION: Reduce draw calls by 50% in low power or high density
+            if (this.isLowPower || this.currentLodLevel === 'low') {
+                visibleLength = Math.floor(visibleLength * 0.4); 
+            }
 
             if (stream.y - (visibleLength * stream.size) > canvas.height * 1.5) {
-                // Fix major glitch gap: wrap perfectly so the head spawns exactly at the top of the canvas
                 stream.y = 0;
             }
 
             const alphanumericPool = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-            // Only trigger expensive context state change if size physically changes
             if (stream.size !== lastSize) {
                 ctx.font = `${stream.size}px monospace`;
                 lastSize = stream.size;
             }
 
-            for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
-                // FLICKER EFFECT: make random characters change to feel alive like the real Cyber!
+            // Draw only every 2nd character in extreme low power to save 50% fillText calls
+            const step = (this.isLowPower && this.currentLodLevel === 'low') ? 2 : 1;
+
+            for (let i = 0; i < visibleLength && i < stream.chars.length; i += step) {
                 if (!stream.isTextMode && Math.random() < 0.02) {
                     stream.chars[i] = alphanumericPool.charAt(Math.floor(Math.random() * alphanumericPool.length));
                 }
@@ -485,7 +471,6 @@ export class Visualizer3D {
                 if (charY < -stream.size * 2 || charY > canvas.height * 1.5) continue;
 
                 const relativePos = 1 - (i / visibleLength);
-                // Increased base alpha for better visibility
                 const alpha = Math.pow(relativePos, 0.4) * (stream.opacity * 1.2);
 
                 ctx.globalAlpha = Math.min(1.0, alpha);
@@ -496,12 +481,6 @@ export class Visualizer3D {
                 } else {
                     ctx.fillStyle = stream.color || this.cyberColor;
                 }
-
-                // PERFORMANCE: Disable shadows for stability on macOS
-                // if (!this.batterySaver) {
-                //    ctx.shadowBlur = 4;
-                //    ctx.shadowColor = ctx.fillStyle;
-                // }
 
                 ctx.fillText(char, stream.x, charY);
             }
@@ -551,63 +530,104 @@ export class Visualizer3D {
             positions[i] = (Math.random() - 0.5) * 80;
         }
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const material = new THREE.PointsMaterial({
-            color: 0x2dd4bf,
-            size: 0.15,
+        this.lightspeedMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSpeed: { value: 1.0 },
+                uColor: { value: new THREE.Color(0x2dd4bf) },
+                uTexture: { value: this.createCircleTexture() }
+            },
+            vertexShader: `
+                uniform float uTime, uSpeed;
+                void main() {
+                    vec3 pos = position;
+                    pos.z = mod(pos.z + uTime * uSpeed * 20.0 + 40.0, 80.0) - 40.0;
+                    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = 15.0 / -mv.z;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor;
+                uniform sampler2D uTexture;
+                void main() {
+                    vec4 tex = texture2D(uTexture, gl_PointCoord);
+                    if (tex.a < 0.1) discard;
+                    gl_FragColor = vec4(uColor, tex.a * 0.8);
+                }
+            `,
             transparent: true,
-            opacity: 0.8,
-            map: this.createCircleTexture()
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
         });
-        this.lightspeed = new THREE.Points(geometry, material);
+        this.lightspeed = new THREE.Points(geometry, this.lightspeedMaterial);
         this.lightspeedGroup.add(this.lightspeed);
     }
 
     initParticles() {
         // Flow mode: streaming particles through space
-        // OPTIMIZATION: Reduce particle count for stability
-        const count = this.batterySaver ? 300 : 800;
+        const count = this.batterySaver ? 400 : 1000;
         const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        const colors = [];
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
-            positions.push((Math.random() - 0.5) * 60); // x
-            positions.push((Math.random() - 0.5) * 60); // y
-            positions.push((Math.random() - 0.5) * 80); // z - deeper
+            const i3 = i * 3;
+            positions[i3] = (Math.random() - 0.5) * 60;
+            positions[i3+1] = (Math.random() - 0.5) * 60;
+            positions[i3+2] = (Math.random() - 0.5) * 80;
 
-            // Vary colors: cyan, blue, purple, white
             const t = Math.random();
             if (t < 0.3) {
-                colors.push(0.4, 0.7, 1.0); // blue
+                colors[i3] = 0.4; colors[i3+1] = 0.7; colors[i3+2] = 1.0;
             } else if (t < 0.6) {
-                colors.push(0.3, 0.9, 0.95); // cyan
+                colors[i3] = 0.3; colors[i3+1] = 0.9; colors[i3+2] = 0.95;
             } else if (t < 0.85) {
-                colors.push(0.6, 0.4, 1.0); // purple
+                colors[i3] = 0.6; colors[i3+1] = 0.4; colors[i3+2] = 1.0;
             } else {
-                colors.push(0.9, 0.9, 1.0); // white
+                colors[i3] = 0.9; colors[i3+1] = 0.9; colors[i3+2] = 1.0;
             }
         }
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-        const material = new THREE.PointsMaterial({
-            size: 0.4,
-            vertexColors: true,
-            map: this.createCircleTexture(),
+        this.particleMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSpeed: { value: 1.0 },
+                uSize: { value: 0.4 },
+                uTexture: { value: this.createCircleTexture() }
+            },
+            vertexShader: `
+                varying vec3 vColor;
+                uniform float uTime, uSpeed;
+                attribute vec3 color;
+                void main() {
+                    vColor = color;
+                    vec3 pos = position;
+                    // Move in Z direction and wrap
+                    pos.z = mod(pos.z + uTime * uSpeed * 20.0 + 40.0, 80.0) - 40.0;
+                    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = 40.0 / -mv.z;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                uniform sampler2D uTexture;
+                void main() {
+                    vec4 tex = texture2D(uTexture, gl_PointCoord);
+                    if (tex.a < 0.1) discard;
+                    gl_FragColor = vec4(vColor, tex.a);
+                }
+            `,
             transparent: true,
-            opacity: 0.9,
             blending: THREE.AdditiveBlending,
-            depthWrite: false,
-            sizeAttenuation: true
+            depthWrite: false
         });
 
-        this.particles = new THREE.Points(geometry, material);
+        this.particles = new THREE.Points(geometry, this.particleMaterial);
         this.particleGroup.add(this.particles);
         this.particleGroup.visible = false;
-
-        const parColor = this.customColors?.["particles"] || this.customColor;
-        if (parColor) {
-            this.particles.material.color.copy(parColor);
-        }
     }
 
     initBox() {
@@ -883,6 +903,137 @@ export class Visualizer3D {
                 small.position.set(Math.sin(angleSmall) * 1.5, Math.cos(angleSmall) * 1.5, 0);
                 sunGeometryGroup.add(small);
             }
+        } else if (style === 'sun3') {
+            // ── SUN 3: Volumetric Plasma Core (Premium Upgrade) ──
+            const uniforms = {
+                uTime: { value: 0 },
+                uColor: { value: sunMaterial.color },
+                uBassIntt: { value: 0.0 }
+            };
+            this.galaxySunUniforms = uniforms; // Store to update in render loop
+            
+            const vShader = `
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+                void main() {
+                    vUv = uv;
+                    vNormal = normalize(normalMatrix * normal);
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    vViewPosition = -mvPosition.xyz;
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `;
+            // Advanced 3D Simplex noise based Plasma Shader
+            const fShader = `
+                uniform float uTime;
+                uniform vec3 uColor;
+                uniform float uBassIntt;
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+                
+                vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+                vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+                float snoise(vec3 v){ 
+                  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+                  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+                  vec3 i  = floor(v + dot(v, C.yyy) );
+                  vec3 x0 = v - i + dot(i, C.xxx) ;
+                  vec3 g = step(x0.yzx, x0.xyz);
+                  vec3 l = 1.0 - g;
+                  vec3 i1 = min( g.xyz, l.zxy );
+                  vec3 i2 = max( g.xyz, l.zxy );
+                  vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+                  vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+                  vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
+                  i = mod(i, 289.0 ); 
+                  vec4 p = permute( permute( permute( 
+                             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+                           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+                  float n_ = 1.0/7.0;
+                  vec3  ns = n_ * D.wyz - D.xzx;
+                  vec4 j = p - 49.0 * floor(p * ns.z *ns.z);
+                  vec4 x_ = floor(j * ns.z);
+                  vec4 y_ = floor(j - 7.0 * x_ );
+                  vec4 x = x_ *ns.x + ns.yyyy;
+                  vec4 y = y_ *ns.x + ns.yyyy;
+                  vec4 h = 1.0 - abs(x) - abs(y);
+                  vec4 b0 = vec4( x.xy, y.xy );
+                  vec4 b1 = vec4( x.zw, y.zw );
+                  vec4 s0 = floor(b0)*2.0 + 1.0;
+                  vec4 s1 = floor(b1)*2.0 + 1.0;
+                  vec4 sh = -step(h, vec4(0.0));
+                  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+                  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+                  vec3 p0 = vec3(a0.xy,h.x);
+                  vec3 p1 = vec3(a0.zw,h.y);
+                  vec3 p2 = vec3(a1.xy,h.z);
+                  vec3 p3 = vec3(a1.zw,h.w);
+                  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+                  p0 *= norm.x;
+                  p1 *= norm.y;
+                  p2 *= norm.z;
+                  p3 *= norm.w;
+                  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                  m = m * m;
+                  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
+                }
+
+                void main() {
+                    vec3 normal = normalize(vNormal);
+                    vec3 viewDir = normalize(vViewPosition);
+
+                    // Multi-octave 3D sphere noise
+                    vec3 spherePos = vec3(vUv * 5.0, uTime * 0.3);
+                    float n = snoise(spherePos);
+                    n += 0.5 * snoise(spherePos * 2.0 - vec3(0.0, 0.0, uTime * 0.5));
+                    n += 0.25 * snoise(spherePos * 4.0 + vec3(uBassIntt));
+                    
+                    n = smoothstep(0.0, 1.0, (n * 0.5 + 0.5) + uBassIntt * 0.6);
+
+                    // Edge Rim
+                    float rim = 1.0 - max(dot(viewDir, normal), 0.0);
+                    rim = smoothstep(0.5 - uBassIntt * 0.2, 1.0, rim);
+
+                    float corona = pow(rim, 2.5);
+
+                    vec3 coreColor = mix(vec3(1.0, 1.0, 1.0), uColor, clamp(n, 0.0, 1.0));
+                    vec3 finalColor = coreColor + uColor * corona * 2.5;
+
+                    float alpha = min(max(n * 1.5, rim * 1.2), 1.0);
+                    
+                    gl_FragColor = vec4(finalColor, alpha);
+                }
+            `;
+            const coreMat = new THREE.ShaderMaterial({
+                vertexShader: vShader,
+                fragmentShader: fShader,
+                uniforms: uniforms,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+
+            // The main photosphere
+            const geo = new THREE.SphereGeometry(2.0, 64, 64);
+            const coreMesh = new THREE.Mesh(geo, coreMat);
+            sunGeometryGroup.add(coreMesh);
+
+            // A larger, softer halo for the "Bloom"
+            const haloMat = new THREE.MeshBasicMaterial({
+                color: sunMaterial.color,
+                transparent: true,
+                opacity: 0.15,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                side: THREE.BackSide
+            });
+            const haloGeo = new THREE.SphereGeometry(3.0, 32, 32);
+            sunGeometryGroup.add(new THREE.Mesh(haloGeo, haloMat));
+
         } else {
             // ── SUN 1: Clean flat geometric sun (SVG cursor style) ──
             // Thin ring (torus with small tube = outline look)
@@ -928,7 +1079,7 @@ export class Visualizer3D {
     }
 
     setGalaxySunStyle(style) {
-        if (style !== 'sun' && style !== 'sun2') return;
+        if (style !== 'sun' && style !== 'sun2' && style !== 'sun3') return;
         this.galaxySunStyle = style;
         // Recreate if galaxy is already initialized
         if (this.galaxyGroup && this.galaxyGroup.children.length > 0) {
@@ -1136,19 +1287,19 @@ export class Visualizer3D {
         for (let i = 0; i < count; i++) {
             const i3 = i * 3;
             // Scatter across a wide area, full depth range for parallax
-            positions[i3]     = (Math.random() - 0.5) * 70;
-            positions[i3 + 1] = (Math.random() - 0.5) * 44;   // start anywhere vertically
-            positions[i3 + 2] = -20 + Math.random() * 30;      // deep to near (z parallax)
+            positions[i3]     = (Math.random() - 0.5) * 80;
+            positions[i3 + 1] = (Math.random() - 0.5) * 60;   // start anywhere vertically
+            positions[i3 + 2] = -40 + Math.random() * 35;      // Range -40 to -5 (Always in front of camera at z=5)
 
             // Snowflakes further back are smaller and dimmer
-            const depth = (positions[i3 + 2] + 20) / 30; // 0=far, 1=near
-            sizes[i]    = 2 + depth * 10;                  // 2..12
-            opacities[i] = 0.25 + depth * 0.65;           // 0.25..0.9
+            const depth = (positions[i3 + 2] + 40) / 35; // 0=far, 1=near
+            sizes[i]    = 1.5 + depth * 8;                  // 1.5..9.5
+            opacities[i] = 0.2 + depth * 0.6;           // 0.2..0.8
 
             phases[i]     = Math.random() * Math.PI * 2;
-            speeds[i]     = 0.012 + Math.random() * 0.035 + depth * 0.02; // near=faster
-            drifts[i]     = 0.008 + Math.random() * 0.016;
-            driftFreqs[i] = 0.3 + Math.random() * 0.7;
+            speeds[i]     = 0.015 + Math.random() * 0.04 + depth * 0.03; // near=faster
+            drifts[i]     = 0.01 + Math.random() * 0.02;
+            driftFreqs[i] = 0.4 + Math.random() * 0.8;
         }
 
         const geo = new THREE.BufferGeometry();
@@ -1161,7 +1312,7 @@ export class Visualizer3D {
         const mat = new THREE.ShaderMaterial({
             uniforms: {
                 uTexture:        { value: sfTex },
-                uColor:          { value: new THREE.Color(0xa5f3eb) }, // Default icy cyan
+                uColor:          { value: this.customColor ? this.customColor.clone() : new THREE.Color(0xa5f3eb) }, // Respect custom color
                 uIntensity:      { value: 0 },
                 uSizeMultiplier: { value: 1.0 },
                 uGlowAmount:     { value: 0.5 },
@@ -1188,9 +1339,9 @@ export class Visualizer3D {
                     vec4 tex = texture2D(uTexture, gl_PointCoord);
                     if (tex.a < 0.02) discard;
                     // Dynamically tinted base color
-                    vec3 baseCol = mix(uColor, vec3(1.0), uIntensity * 1.5);
+                    vec3 baseCol = mix(uColor, vec3(1.0), clamp(uIntensity, 0.0, 1.0));
                     float glowAlpha = tex.a * vOpacity * (0.5 + uGlowAmount * 1.2);
-                    vec3 finalCol = baseCol * (1.0 + uGlowAmount * uIntensity * 1.2);
+                    vec3 finalCol = baseCol * (1.0 + uGlowAmount * uIntensity * 1.5);
                     gl_FragColor = vec4(finalCol, clamp(glowAlpha, 0.0, 1.0));
                 }
             `,
@@ -1209,28 +1360,7 @@ export class Visualizer3D {
             spinMeshes: [], spinSpeeds: []
         };
 
-        // ADD 5 HERO SNOWFLAKES (Large, spinning center crystals)
-        for (let i = 0; i < 5; i++) {
-            const heroTex = this.createSnowflakeTexture();
-            const heroMat = new THREE.MeshBasicMaterial({
-                map: heroTex,
-                transparent: true,
-                side: THREE.DoubleSide,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                opacity: 0.6
-            });
-            const heroGeo = new THREE.PlaneGeometry(12 + i * 4, 12 + i * 4);
-            const heroMesh = new THREE.Mesh(heroGeo, heroMat);
-            heroMesh.renderOrder = 10;
-            heroMesh.position.set(0, 0, -10 + i * 2);
-            heroMesh.rotation.z = Math.random() * Math.PI;
-            this.snowflakeGroup.add(heroMesh);
-            this._snowData.spinMeshes.push(heroMesh);
-            this._snowData.spinSpeeds.push(0.002 * (i % 2 === 0 ? 1 : -1));
-        }
-
-        console.log('[Viz] ❄️ Real snowfall initialized —', count, 'crystals + 5 HEROES');
+        console.log('[Viz] ❄️ Real snowfall initialized —', count, 'crystals');
     }
 
     setSnowSize(mult) {
@@ -1247,186 +1377,644 @@ export class Visualizer3D {
         }
     }
 
+    setCymaticIntensity(val) {
+        this._cymaticIntensityOverride = val;
+        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uIntensity) {
+            this.cymaticMaterial.uniforms.uIntensity.value = val;
+        }
+    }
 
-    // 28 named Chladni patterns — used by the panel grid
+    setCymaticHarmonics(val) {
+        state.harmonicsLevel = val;
+        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uHarmonics) {
+            this.cymaticMaterial.uniforms.uHarmonics.value = val;
+        }
+    }
+
+    setSnowColor(hex) {
+        if (this._snowData?.material) {
+            this._snowData.material.uniforms.uColor.value.set(hex);
+        }
+        if (this._snowData?.spinMeshes) {
+            this._snowData.spinMeshes.forEach(m => {
+                if (m.material) m.material.color.set(hex);
+            });
+        }
+    }
+
+
     static get CYMATIC_PATTERNS() {
         return [
-            { n:3, m:2,  name:'Sri Yantra',      cat:'sacred'   },
-            { n:4, m:3,  name:'Flower of Life',  cat:'sacred'   },
-            { n:5, m:5,  name:'Metatron Cube',   cat:'sacred'   },
-            { n:2, m:6,  name:'Vector Equil',    cat:'sacred'   },
-            { n:3, m:8,  name:'Fibonacci',       cat:'sacred'   },
-            { n:6, m:2,  name:'Torus Field',     cat:'sacred'   },
-            { n:4, m:7,  name:'Mandelbrot',      cat:'fractal'  },
-            { n:5, m:9,  name:'Julia Loop',      cat:'fractal'  },
-            { n:7, m:3,  name:'Recursive',       cat:'fractal'  },
-            { n:8, m:5,  name:'Polygon',         cat:'geometry' },
-            { n:6, m:6,  name:'Lattice',         cat:'geometry' },
-            { n:9, m:3,  name:'Singularity',     cat:'complex'  },
-            { n:4, m:10, name:'Neural Web',      cat:'complex'  },
-            { n:7, m:7,  name:'Quantum Flux',    cat:'complex'  },
-            { n:1, m:9,  name:'Golden Ratio',    cat:'sacred'   },
-            { n:8, m:2,  name:'Celestial',       cat:'radial'   },
-            { n:10, m:4, name:'Void Geometry',   cat:'geometry' },
-            { n:3, m:12, name:'Infinite',        cat:'fractal'  },
-            { n:6, m:9,  name:'Prism Fold',      cat:'complex'  },
-            { n:12, m:1, name:'Cosmic Knot',     cat:'complex'  },
-            { n:5, m:11, name:'Zen Mandala',     cat:'sacred'   },
-            { n:8, m:8,  name:'Astral',          cat:'complex'  },
-            { n:11, m:5, name:'Etheric',         cat:'complex'  },
-            { n:4, m:14, name:'Plasma Bloom',    cat:'fractal'  },
-            { n:9, m:9,  name:'Synchronicity',   cat:'sacred'   },
-            { n:7, m:12, name:'Unified Field',   cat:'complex'  },
-            { n:15, m:3, name:'Omega Point',     cat:'complex'  },
-            { n:6, m:13, name:'Source Fold',     cat:'sacred'   }
+            { name: "Fundamental Zenith", n: 1, m: 1, cat:'sacred' },
+            { name: "Dual Horizon", n: 1, m: 2, cat:'sacred' },
+            { name: "Triple Axis", n: 1, m: 3, cat:'sacred' },
+            { name: "Quad Core", n: 1, m: 4, cat:'sacred' },
+            { name: "Penta Wave", n: 1, m: 5, cat:'sacred' },
+            { name: "Square Harmony", n: 2, m: 2, cat:'geometry' },
+            { name: "Lotus Flow", n: 2, m: 3, cat:'sacred' },
+            { name: "Cresent Node", n: 2, m: 4, cat:'radial' },
+            { name: "Orchid Ring", n: 2, m: 5, cat:'sacred' },
+            { name: "Cross Pulse", n: 3, m: 3, cat:'complex' },
+            { name: "Nodal Ribbon", n: 3, m: 1, cat:'radial' },
+            { name: "Radial Seed", n: 3, m: 5, cat:'sacred' },
+            { name: "Diamond Lattice", n: 4, m: 4, cat:'geometry' },
+            { name: "Solar Grate", n: 4, m: 2, cat:'radial' },
+            { name: "Cellular Grid", n: 5, m: 5, cat:'geometry' },
+            { name: "Star Resonance", n: 6, m: 2, cat:'sacred' },
+            { name: "Hexa Flux", n: 6, m: 6, cat:'geometry' },
+            { name: "Solar Mandala", n: 7, m: 3, cat:'sacred' },
+            { name: "Graphene Matrix", n: 8, m: 4, cat:'complex' },
+            { name: "Hyper Lobe", n: 8, m: 8, cat:'complex' },
+            { name: "Atomic Shell", n: 9, m: 2, cat:'complex' },
+            { name: "Omega Sphere", n: 9, m: 9, cat:'sacred' },
+            { name: "Fibonacci Spiral", n: 1, m: 8, cat:'sacred' },
+            { name: "Fractal Lace", n: 10, m: 4, cat:'fractal' },
+            { name: "Cosmic Gear", n: 11, m: 3, cat:'complex' },
+            { name: "Interstellar Mesh", n: 12, m: 12, cat:'complex' },
+            { name: "Quantum Foam", n: 5, m: 13, cat:'complex' },
+            { name: "Singularity", n: 20, m: 2, cat:'complex' },
+            { name: "Prime Prime", n: 13, m: 17, cat:'complex' },
+            { name: "Metatron's Grid", n: 6, m: 12, cat:'sacred' },
+            // ADVANCED FORM (Tier 2 - Hyper Resonance)
+            { name: "Aetheric Weaver", n: 11, m: 11, type: 4, cat:'advanced' },
+            { name: "Neural Singularity", n: 15, m: 5, type: 4, cat:'advanced' },
+            { name: "Chronos Vortex", n: 7, m: 14, type: 4, cat:'advanced' },
+            { name: "Void Fractal", n: 22, m: 22, type: 4, cat:'advanced' },
+            { name: "Crystalline Pulse", n: 9, m: 18, type: 4, cat:'advanced' },
+            { name: "Stellar Loom", n: 13, m: 3, type: 4, cat:'advanced' }
         ];
     }
 
     initCymatics() {
         try {
             if (!this.cymaticsGroup) return;
-            // Prevent double-init stall
-            if (this.cymaticsGroup.children.length > 0) return;
             
+            // CLEANUP: If children exist, remove them first
             while(this.cymaticsGroup.children.length > 0) {
                 const child = this.cymaticsGroup.children[0];
                 this.cymaticsGroup.remove(child);
                 if(child.geometry) child.geometry.dispose();
-                if(child.material) child.material.dispose();
+                if(child.material) {
+                    if(child.material.map) child.material.map.dispose();
+                    child.material.dispose();
+                }
             }
 
-        const geometry = new THREE.PlaneGeometry(18, 18, 2, 2);
-        this.cymaticMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                uN:         { value: this.currentCymaticData.n },
-                uM:         { value: this.currentCymaticData.m },
-                uTime:      { value: 0 },
-                uIntensity: { value: 0 },
-                uFreq:      { value: 10.0 },
-                uMids:      { value: 0.0 },
-                uAI:        { value: 0.0 }, // AI-mode intensity
-                uColor:     { value: new THREE.Color(this.currentCymaticColor || '#a855f7') }
-            },
-            vertexShader: `
-                varying vec2 vUv;
-                void main() {
-                    vUv = uv;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                varying vec2 vUv;
-                uniform float uN;
-                uniform float uM;
-                uniform float uTime;
-                uniform float uIntensity;
-                uniform float uFreq;
-                uniform float uMids;
-                uniform float uAI;
-                uniform vec3  uColor;
-
-                vec2 rot(vec2 p, float a) {
-                    float s = sin(a), c = cos(a);
-                    return vec2(p.x * c - p.y * s, p.x * s + p.y * c);
-                }
-
-                void main() {
-                    vec2 uv = (vUv - 0.5) * 2.0;
+            // HIGH-RESOLUTION geometry for detailed vertex displacement
+            const geometry = new THREE.PlaneGeometry(45, 45, 128, 128);
+            this.cymaticMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uN: { value: (this.currentCymaticData ? this.currentCymaticData.n : 1.0) },
+                    uM: { value: (this.currentCymaticData ? this.currentCymaticData.m : 3.0) },
+                    uBassN: { value: 1.0 },
+                    uBassM: { value: 1.0 },
+                    uHighN: { value: 5.0 },
+                    uHighM: { value: 5.0 },
+                    uType: { value: (this.currentCymaticData ? (this.currentCymaticData.type || 0) : 0) },
+                    uEnergy: { value: 0.5 },
+                    uTime: { value: 0 },
+                    uIntensity: { value: 0.5 },
+                    uHarmonics: { value: 0.0 }, 
+                    uBeatFreq: { value: 0 },
+                    uColor: { value: new THREE.Color(state.visualColors.sphere || '#60a9ff') },
+                    uSecondaryColor: { value: new THREE.Color(0xffffff) },
+                    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                    uNormMids: { value: 0 },
+                    uNormHighs: { value: 0 },
+                    uMedium: { value: state.cymaticMedium || 0.0 },
+                    uShiver: { value: 0.0 },
+                    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+                    uMouseActive: { value: 0.0 },
+                    uResonance: { value: (state.cymaticResonance ?? 1.0) },
+                    uEntropy: { value: (state.cymaticEntropy ?? 1.0) },
+                    uFlow: { value: (state.cymaticFlow ?? 1.0) }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    varying float vDisplace;
+                    uniform float uTime, uN, uM, uIntensity, uEnergy, uShiver;
                     
-                    // KINEMATIC LIQUEFACTION: Temporal drift + high-speed jitter
-                    float jitter = sin(uTime * 120.0) * 0.002;
-                    float t = uTime * 0.8 + jitter;
-                    
-                    // 8-ITERATION DEEP DOMAIN WARPING
-                    for(int i = 0; i < 8; i++) {
-                        float it = float(i);
-                        uv = abs(uv) - 0.5;
-                        uv = rot(uv, t * 0.2 + it * 0.5 + uIntensity * 0.3);
-                        uv.x += 0.2 * sin(uv.y * 2.0 + t);
-                        uv.y += 0.2 * cos(uv.x * 2.0 + t * 0.8);
+                    #define PI 3.14159265359
+
+                    float chladniBase(vec2 p, float n, float m) {
+                        return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
                     }
 
-                    float d = length(uv);
-                    float pattern = sin(d * (12.0 + uFreq * 0.1) - t * 4.0);
-                    pattern *= cos(uv.x * (uN + uIntensity * 5.0) + t);
-                    pattern += sin(uv.y * (uM + uIntensity * 5.0) - t * 1.5);
+                    void main() {
+                        vUv = uv;
+                        vec2 p = (uv - 0.5) * 2.0;
+                        
+                        // Calculate basic displacement for vertex shading
+                        float f = chladniBase(p, uN, uM);
+                        f = abs(f) * (uIntensity + uShiver);
+                        
+                        vDisplace = f;
+                        
+                        vec3 pos = position;
+                        // Physical displacement: create 3D peaks and valleys
+                        pos.z += f * 5.0 * (1.0 + 0.3 * sin(uTime * 3.0)); 
+                        
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    varying vec2 vUv;
+                    varying float vDisplace;
+                    uniform float uN, uM, uBassN, uBassM, uHighN, uHighM;
+                    uniform float uBeatFreq, uTime, uIntensity, uType, uEnergy, uHarmonics, uShiver;
+                    uniform float uNormMids, uNormHighs, uMedium; 
+                    uniform vec3 uColor, uSecondaryColor;
+                    uniform vec2 uResolution;
+                    uniform vec2 uMouse;
+                    uniform float uMouseActive, uResonance, uEntropy, uFlow;
 
-                    float edge = smoothstep(0.02 + uIntensity * 0.1, 0.0, abs(pattern));
-                    float glow = smoothstep(0.7, 0.0, abs(pattern)) * 0.6;
+                    #define PI 3.14159265359
+
+                    float hash(vec2 p) {
+                        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+                    }
+
+                    float noise(vec2 p) {
+                        vec2 i = floor(p);
+                        vec2 f = fract(p);
+                        f = f * f * (3.0 - 2.0 * f);
+                        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+                    }
+
+                    // --- ADVANCED FRACTAL ORGANICS ---
+                    // Fractional Brownian Motion for tree bark / neural web textures
+                    float fbm(vec2 p) {
+                        float f = 0.0;
+                        f += 0.5 * noise(p);
+                        p *= 2.02;
+                        f += 0.25 * noise(p);
+                        return f;
+                    }
+
+                    float chladniBase(vec2 p, float n, float m) {
+                        return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
+                    }
+
+                    // Kaleidoscopic Apollonian Gasket Folds
+                    vec2 apollonianFold(vec2 p, float s) {
+                        for(int i=0; i<3; i++) {
+                            p = -1.0 + 2.0 * fract(p * 0.5 + 0.5);
+                            float r2 = dot(p,p);
+                            p = p / max(r2, s); // Inversion
+                        }
+                        return p;
+                    }
+
+                    // DOMAIN WARPING: Constant Ambient Fluid Flow
+                    vec2 flowWarp(vec2 p, float t) {
+                        float n1 = noise(p + t * 0.2);
+                        float n2 = noise(p * 2.1 - t * 0.15);
+                        float n3 = fbm(p * 3.0 + t * 0.1);
+                        return p + (0.1 + uShiver * 0.1) * vec2(cos(n1 * PI + n3), sin(n2 * PI - n1));
+                    }
+
+                    void main() {
+                        vec2 uv = (vUv - 0.5) * 2.0;
+                        float aspect = uResolution.x / uResolution.y;
+                        uv.x *= aspect;
+
+                        float t = uTime * uFlow;
+                        // Ambient Flow Field mapping (Constant organic motion even when silent)
+                        vec2 p = flowWarp(uv, t * 0.5 * uEntropy);
+
+                        // Audio Transient Shiver
+                        vec2 distort = vec2(noise(vUv * 15.0 + t), noise(vUv * 15.0 - t)) * uShiver * 0.04;
+                        p += distort;
+
+                        float f = 0.0;
+                        float n_eff = uN * uResonance;
+                        float m_eff = uM * uResonance;
+                        
+                        // Interactive Ripple Disruption (The Cursors)
+                        float distToMouse = distance(vUv, uMouse);
+                        float ripple = sin(distToMouse * 30.0 - t * 15.0) * exp(-distToMouse * 4.0) * uMouseActive * 0.5;
+                        f += ripple;
+                        
+                        // [ TOPOLOGICAL CATEGORIES (Radical Mathematical Divergence) ]
+                        if (uType < 0.5) { 
+                            // 0.0: SACRED (Nested Bessel Rings & Node Interference - Image 2/5)
+                            float r = length(p);
+                            float bessel = cos(r * n_eff * 10.0 + t) * exp(-r * 0.2);
+                            float angular = cos(atan(p.y, p.x) * m_eff);
+                            f = bessel * angular;
+                            if (uHarmonics > 0.01) f += uHarmonics * chladniBase(p * 1.5, n_eff * 0.5, m_eff * 0.5);
+                        } 
+                        else if (uType < 1.5) { 
+                            // 1.0: SPIROGRAPH & TORUS VORTEX (3D Toroidal Projection - Image 3)
+                            float a = atan(p.y, p.x);
+                            float r = length(p);
+                            // Toroidal twist math
+                            float twist = sin(r * 10.0 - a * n_eff + t);
+                            float s1 = sin(a * n_eff + t);
+                            float s2 = sin(a * m_eff - t * 0.5);
+                            f = sin(r * 50.0 + twist * 15.0 * uEntropy) * (s1 * s2);
+                        }
+                        else if (uType < 2.5) { 
+                            // 2.0: PLANETARY / PHYLLOTAXIS (Seed-Mapping & Dense Orbital Clusters - Image 1)
+                            float r = length(p) * (15.0 + n_eff * 0.5);
+                            float a = atan(p.y, p.x);
+                            // Golden angle approximation for orbital clustering
+                            float phyll = sin(r - a * m_eff) * cos(r * 0.1 + a * 2.0);
+                            f = phyll * (1.0 - smoothstep(1.5, 2.0, length(p)));
+                        }
+                        else if (uType < 3.5) { 
+                            // 3.0: COMPLEX / DOMAIN WARP (Deep Fluid Organic Convection - Image 4)
+                            vec2 q = p + vec2(cos(t * 0.1), sin(t * 0.15)) * 0.5;
+                            float n1 = noise(q * (n_eff * 0.1) + t * 0.2);
+                            float n2 = noise(q * (m_eff * 0.1) - t * 0.1);
+                            vec2 warp = p + vec2(cos(n1 * PI * uEntropy), sin(n2 * PI * uEntropy)) * 0.8;
+                            f = sin(length(warp) * 15.0 + n1 * 8.0);
+                        }
+                        else {
+                            // 4.0: ADVANCED / HYPER-RESONANCE (Dimensional Folding & Cross-Feedback)
+                            vec2 q = apollonianFold(p * 0.5, 0.4 + uEntropy * 0.2);
+                            float n1 = chladniBase(q, n_eff, m_eff);
+                            float n2 = chladniBase(q.yx, m_eff * 0.5, n_eff * 1.5);
+                            f = n1 * n2 * 2.0;
+                            // Add recursive detail
+                            f += 0.3 * sin(length(q) * 20.0 - t * 4.0);
+                        }
+
+                        // TRUE RESONANCE PRESERVATION (Audio Transients & Reactivity)
+                        // Physics deformation is layered on top, physically shivering the geometry
+                        float bassDistort = chladniBase(p, uBassN * 0.2, uBassM * 0.2) * 0.3 * uIntensity;
+                        f += bassDistort;
+                        
+                        // Micro-ripples added on extreme high transient crashes
+                        float highRipples = sin(length(p) * uHighN * 3.0 - t * 8.0) * 0.08 * uNormHighs;
+                        f += highRipples;
+                        
+                        // Interactive Ripple Disruption (Phase 3)
+                        float d2m = distance(uv, uMouse);
+                        float rip = sin(d2m * 30.0 - t * 15.0) * exp(-d2m * 6.0) * uMouseActive * 0.4;
+                        f += rip;
+                        
+                        float rawF = f;
+                        f = abs(f);
+
+                        float threshold = 0.07 + uIntensity * 0.09;
+                        
+                        // MEDIUM LOGIC (Edge Mask)
+                        float edge;
+                        if (uMedium < 0.5) { // WATER
+                             edge = smoothstep(threshold + 0.2, threshold - 0.03, f);
+                        } else if (uMedium < 1.5) { // SAND
+                             float grain = noise(vUv * 950.0 + t * 2.0) * 0.14;
+                             edge = step(threshold + grain, f);
+                        } else if (uMedium < 2.5) { // ETHER
+                             edge = pow(smoothstep(threshold + 0.4, threshold - 0.1, f), 2.5);
+                        } else { // ICE
+                             edge = smoothstep(threshold + 0.05, threshold + 0.01, f);
+                             edge *= (0.8 + 0.2 * noise(vUv * 1200.0));
+                        }
+
+                        // CINEMATIC LIGHTING (Matcap Approximation)
+                        vec3 dx = dFdx(vec3(p, rawF));
+                        vec3 dy = dFdy(vec3(p, rawF));
+                        vec3 norm = normalize(cross(dx, dy));
+                        norm.z = mix(0.6, 0.2, uIntensity); // Prevent flattening into a literal mirror at 100% intensity 
+                        norm = normalize(norm);
+
+                        vec3 lightDir = normalize(vec3(sin(t * 0.4), cos(t * 0.2), 1.2));
+                        vec3 viewDir = vec3(0, 0, 1);
+                        vec3 reflectDir = reflect(-lightDir, norm);
+                        
+                        float diff = max(dot(norm, lightDir), 0.0);
+                        float spec = pow(max(dot(reflectDir, viewDir), 0.0), 128.0); 
+
+                        // Environment Reflection Layer
+                        float env = noise(reflectDir.xy * 2.5 + t * 0.15) * 0.4;
+                        
+                        vec3 baseCol = mix(uColor, uSecondaryColor, f);
+                        
+                        // Medium Specific Refinement
+                        if (uMedium < 0.5) { // WATER
+                             baseCol = mix(baseCol, vec3(0.01, 0.05, 0.15), 0.5);
+                             baseCol += 0.35 * vec3(0.1, 0.7, 1.0) * vDisplace;
+                        } else if (uMedium < 1.5) { // SAND
+                             baseCol = mix(baseCol, vec3(1.0, 0.9, 0.5), 0.7);
+                        } else if (uMedium < 2.5) { // ETHER
+                             baseCol += 0.6 * vec3(0.8, 0.4, 1.0) * (0.5 + 0.5 * cos(t * 1.8 + f * 12.0));
+                        } else { // ICE
+                             baseCol = mix(vec3(0.8, 0.95, 1.0), uColor, 0.3);
+                             baseCol += spec * 0.5 + env * 0.4;
+                        }
+
+                        vec3 col = baseCol * (0.3 + 0.7 * diff);
+                        col += spec * vec3(1.0, 0.99, 0.95) * (0.15 + uNormHighs * 0.15); // SEVERE REDUCTION to prevent screen flooding
+                        col += uShiver * vec3(1.0, 0.3, 0.4) * 0.4;
+
+                        float vig = smoothstep(2.5, 0.7, length(uv));
+                        gl_FragColor = vec4(col * edge * vig, edge * (0.8 + 0.2 * uEnergy));
+                    }
+                `,
+                transparent: true,
+                side: THREE.DoubleSide,
+                extensions: { derivatives: true }
+            });
+
+            const mesh = new THREE.Mesh(geometry, this.cymaticMaterial);
+            mesh.position.z = -5; // Foreground depth within scene
+            this.cymaticsGroup.add(mesh);
+
+            // ── INTERACTIVE POINTER BINDING (Cursors) ──
+            this.setupCymaticsInteractions();
+
+            // ── QUANTUM GRANULAR ENTRAINMENT (SAND PHYSICS) ──
+            const particleCount = this.batterySaver ? 15000 : 40000;
+            const pGeo = new THREE.BufferGeometry();
+            const pPos = new Float32Array(particleCount * 3);
+            const pPhase = new Float32Array(particleCount);
+            
+            for(let i=0; i<particleCount; i++) {
+                pPos[i*3] = (Math.random() - 0.5) * 45; // x (match plane width)
+                pPos[i*3+1] = (Math.random() - 0.5) * 45; // y (match plane height)
+                pPos[i*3+2] = 0.0; // z local
+                pPhase[i] = Math.random() * Math.PI * 2;
+            }
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+            pGeo.setAttribute('aPhase', new THREE.BufferAttribute(pPhase, 1));
+
+            this.cymaticParticlesMaterial = new THREE.ShaderMaterial({
+                uniforms: this.cymaticMaterial.uniforms, // Share exact liquid uniforms
+                vertexShader: `
+                    uniform float uTime, uN, uM, uIntensity, uShiver, uEnergy, uMouseActive;
+                    uniform vec2 uMouse;
+                    attribute float aPhase;
+                    varying float vVal;
                     
-                    vec3 finalCol = uColor * (1.5 + uIntensity * 4.0 + 0.5 * sin(t * 3.0));
-                    if (uAI > 0.5) finalCol.gb = rot(finalCol.gb, t);
-                    
-                    gl_FragColor = vec4(finalCol, (edge + glow) * 0.95);
-                }
-            `,
-            transparent: true,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-        });
+                    #define PI 3.14159265359
 
-        console.log("[Cymatics] Initializing fractal mesh...");
-        const mesh = new THREE.Mesh(geometry, this.cymaticMaterial);
-        mesh.frustumCulled = false;
-        mesh.renderOrder = 999;
-        this.cymaticsGroup.add(mesh);
+                    float chladniBase(vec2 p, float n, float m) {
+                        return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
+                    }
 
-        if (this.cymaticsHistory.length === 0) {
-            this.nextCymatic();
-        }
-        console.log("[Cymatics] Init Success. Child count:", this.cymaticsGroup.children.length);
+                    void main() {
+                        vec2 p = position.xy / 22.5; 
+                        float val = chladniBase(p, uN, uM);
+                        
+                        // Particle Physical Displacement Disruption
+                        vec2 normalizedP = (p * 0.5) + 0.5; 
+                        float distToMouse = distance(normalizedP, uMouse);
+                        float ripple = sin(distToMouse * 30.0 - uTime * 15.0) * exp(-distToMouse * 6.0) * uMouseActive * 0.4;
+                        val += ripple * 2.0;
+
+                        vVal = abs(val);
+                        
+                        // Gradient for entrainment (push toward zero)
+                        vec2 eps = vec2(0.01, 0.0);
+                        float dx = chladniBase(p + eps.xy, uN, uM) - chladniBase(p - eps.xy, uN, uM);
+                        float dy = chladniBase(p + eps.yx, uN, uM) - chladniBase(p - eps.yx, uN, uM);
+                        
+                        // Force vector: pushes away from high vibration |val|
+                        vec2 grad = vec2(dx, dy);
+                        float force = clamp(1.0 - vVal, 0.0, 1.0); // Stronger pull near nodes
+                        vec2 push = -grad * val * (0.5 + uIntensity * 1.5) * force;
+                        
+                        // Jitter bouncing at anti-nodes (high displacement)
+                        float jitterZ = vVal * sin(uTime * 30.0 + aPhase * 2.0) * (0.5 + uShiver * 5.0 + uIntensity);
+                        
+                        vec3 finalPos = position;
+                        finalPos.xy += push * 15.0; // Gather effect
+                        finalPos.z += jitterZ * 2.0;
+
+                        vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
+                        gl_Position = projectionMatrix * mvPosition;
+                        
+                        // Size based on Z bounce
+                        gl_PointSize = (1.5 + max(0.0, jitterZ)) * (100.0 / -mvPosition.z) * (0.5 + uEnergy * 0.5);
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 uColor;
+                    uniform vec3 uSecondaryColor;
+                    uniform float uMedium;
+                    uniform float uEnergy;
+                    varying float vVal;
+                    void main() {
+                        vec2 coord = gl_PointCoord - vec2(0.5);
+                        if(length(coord) > 0.5) discard;
+                        
+                        // Node particles gracefully inherit primary colors rather than blasting pure white
+                        vec3 sandColor = mix(vec3(0.9, 0.7, 0.4), mix(vec3(0.7, 0.8, 1.0), uColor, 0.5), uMedium / 3.0); 
+                        vec3 color = mix(sandColor, uColor, vVal * 1.5);
+                        
+                        // Extreme opacity reduction to survive AdditiveBlending of 80,000 tight particles
+                        float baseAlpha = mix(0.04, 0.08, uEnergy);
+                        float alpha = baseAlpha * (1.0 - clamp(vVal * 1.5, 0.0, 1.0)); 
+                        
+                        // Dim emission directly
+                        color *= 0.4;
+                        
+                        gl_FragColor = vec4(color, alpha);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            const particles = new THREE.Points(pGeo, this.cymaticParticlesMaterial);
+            particles.position.z = -4.95; // Just above the liquid mesh
+            this.cymaticsGroup.add(particles);
+            this.cymaticParticles = particles;
+
+            // History check
+            if (this.cymaticsHistory.length === 0) {
+                this.nextCymatic();
+            }
+            console.log("[Cymatics] Kinematic Liquefaction Engine Initialized");
         } catch (e) {
             console.error("[Cymatics] Init Failed:", e);
         }
     }
 
+    static CYMATIC_PATTERNS = [
+        { name: "Sri Yantra", n: 9, m: 3, energy: 0.8, cat: "sacred" },
+        { name: "Flower Life", n: 6, m: 6, energy: 0.9, cat: "sacred" },
+        { name: "Metatron", n: 13, m: 13, energy: 1.0, cat: "sacred" },
+        { name: "Vector Eq", n: 2, m: 2, energy: 0.4, cat: "geometry" },
+        { name: "Fibonacci", n: 1, m: 8, energy: 0.7, cat: "radial" },
+        { name: "Torus Vortex", n: 15, m: 5, energy: 0.8, cat: "geometry" },
+        { name: "Mandelbrot", n: 8, m: 4, energy: 0.8, cat: "geometry" },
+        { name: "Julia Loop", n: 5, m: 5, energy: 0.7, cat: "geometry" },
+        { name: "Recursive", n: 10, m: 4, energy: 0.9, cat: "geometry" },
+        { name: "Polygon", n: 4, m: 4, energy: 0.6, cat: "geometry" },
+        { name: "Lattice", n: 6, m: 2, energy: 0.6, cat: "geometry" },
+        { name: "Star Gate", n: 7, m: 3, energy: 1.0, cat: "sacred" },
+        { name: "Neural Flow", n: 12, m: 12, energy: 1.1, cat: "complex" },
+        { name: "Quantum", n: 5, m: 13, energy: 1.2, cat: "complex" },
+        { name: "Golden Rat", n: 11, m: 3, energy: 0.9, cat: "radial" },
+        { name: "Celestial", n: 9, m: 9, energy: 1.0, cat: "sacred" },
+        { name: "Void Geo", n: 20, m: 2, energy: 1.2, cat: "complex" },
+        { name: "Infinite", n: 13, m: 17, energy: 1.3, cat: "complex" },
+        { name: "Prism Mirror", n: 3, m: 3, energy: 0.5, cat: "geometry" },
+        { name: "Cosmic Knot", n: 7, m: 14, energy: 1.1, cat: "complex" },
+        { name: "Matrix Core", n: 21, m: 3, energy: 1.4, cat: "complex" },
+        { name: "Omega Sphere", n: 2, m: 8, energy: 0.9, cat: "sacred" },
+        { name: "Fractal Lace", n: 1, m: 10, energy: 0.8, cat: "geometry" },
+        { name: "Torus Core", n: 33, m: 15, energy: 0.9, cat: "geometry" },
+        { name: "Fractal Sun", n: 11, m: 88, energy: 1.0, cat: "complex" },
+        { name: "Spiral Net", n: 8, m: 120, energy: 0.6, cat: "geometry" },
+        { name: "Fluid Whorl", n: 50, m: 14, energy: 1.2, cat: "complex" },
+        { name: "Synchro", n: 121, m: 12, energy: 1.1, cat: "sacred" },
+        { name: "Unified", n: 77, m: 7, energy: 0.9, cat: "sacred" },
+        { name: "Omega", n: 13, m: 133, energy: 1.4, cat: "complex" },
+        { name: "Source", n: 1, m: 1, energy: 1.5, cat: "sacred" },
+        { name: "Sun Tone", n: 420, m: 42, energy: 1.2, cat: "radial" },
+        { name: "Sirius", n: 64, m: 250, energy: 1.1, cat: "radial" },
+        { name: "Earth", n: 240, m: 36, energy: 0.9, cat: "radial" },
+        { name: "Moon", n: 45, m: 450, energy: 1.4, cat: "complex" },
+        { name: "Mercury", n: 800, m: 50, energy: 1.3, cat: "radial" },
+        { name: "Venus", n: 120, m: 720, energy: 1.0, cat: "geometry" },
+        { name: "Mars", n: 333, m: 33, energy: 1.1, cat: "complex" },
+        { name: "Jupiter", n: 900, m: 30, energy: 1.0, cat: "radial" },
+        { name: "Saturn", n: 1200, m: 60, energy: 1.5, cat: "complex" },
+        { name: "Gold Ratio", n: 144, m: 89, energy: 0.8, cat: "radial" }
+    ];
+
     nextCymatic() {
-        const patterns = Visualizer3D.CYMATIC_PATTERNS;
-        if (this.cymaticsHistoryIndex < this.cymaticsHistory.length - 1) {
-            this.cymaticsHistoryIndex++;
-            this.applyCymatic(this.cymaticsHistory[this.cymaticsHistoryIndex]);
-        } else {
-            const current = this.currentCymaticData;
-            let next;
-            do {
-                next = patterns[Math.floor(Math.random() * patterns.length)];
-            } while (next && next.n === current.n && next.m === current.m);
-            this.cymaticsHistory.push(next);
-            if (this.cymaticsHistory.length > 28) this.cymaticsHistory.shift();
-            this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
-            this.applyCymatic(next);
+        if (window.state && window.state.aiVisualsLocked) {
+            window.state.aiVisualsLocked = false;
+            const aiBtn = document.getElementById('cymaticAiBtn');
+            if (aiBtn) aiBtn.style.borderColor = 'rgba(34, 211, 238, 0.2)'; 
         }
+
+        const patterns = Visualizer3D.CYMATIC_PATTERNS;
+        let idx = 0;
+        if (this.currentCymaticData) {
+             idx = patterns.findIndex(p => p.name === this.currentCymaticData.name);
+             if (idx === -1) idx = 0;
+        }
+        
+        let nextIdx = (idx + 1) % patterns.length;
+        this.cymaticsHistory.push(patterns[nextIdx]);
+        if (this.cymaticsHistory.length > 50) this.cymaticsHistory.shift();
+        this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
+        this.applyCymatic(patterns[nextIdx]);
         this.lastCymaticRotation = performance.now();
     }
 
     prevCymatic() {
-        if (this.cymaticsHistoryIndex > 0) {
-            this.cymaticsHistoryIndex--;
-            this.applyCymatic(this.cymaticsHistory[this.cymaticsHistoryIndex]);
+        if (window.state && window.state.aiVisualsLocked) {
+            window.state.aiVisualsLocked = false;
+            const aiBtn = document.getElementById('cymaticAiBtn');
+            if (aiBtn) aiBtn.style.borderColor = 'rgba(34, 211, 238, 0.2)'; 
+        }
+
+        const patterns = Visualizer3D.CYMATIC_PATTERNS;
+        let idx = 0;
+        if (this.currentCymaticData) {
+             idx = patterns.findIndex(p => p.name === this.currentCymaticData.name);
+             if (idx === -1) idx = 0;
+        }
+        
+        let prevIdx = (idx - 1 + patterns.length) % patterns.length;
+        this.cymaticsHistory.push(patterns[prevIdx]);
+        if (this.cymaticsHistory.length > 50) this.cymaticsHistory.shift();
+        this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
+        this.applyCymatic(patterns[prevIdx]);
+        this.lastCymaticRotation = performance.now();
+    }
+
+    setCymaticByName(name) {
+        const pattern = Visualizer3D.CYMATIC_PATTERNS.find(p => p.name === name);
+        if (pattern) {
+            this.applyCymatic(pattern);
             this.lastCymaticRotation = performance.now();
         }
     }
 
-    applyCymatic(data) {
-        if (!data) return;
-        this.currentCymaticData = data;
-        // INITIATE LIQUID MORPH: Set targets, let render loop lerp to them
-        this._cymaticN_Target = data.n;
-        this._cymaticM_Target = data.m;
-        // Immediate set if no material yet
-        if (this.cymaticMaterial) {
-            if (this._cymaticN_Current === undefined) {
-                this.cymaticMaterial.uniforms.uN.value = data.n;
-                this.cymaticMaterial.uniforms.uM.value = data.m;
-                this._cymaticN_Current = data.n;
-                this._cymaticM_Current = data.m;
+    setupCymaticsInteractions() {
+        if (!this.renderer || !this.renderer.domElement) return;
+        const canvas = this.renderer.domElement;
+
+        const updateMouse = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = 1.0 - (e.clientY - rect.top) / rect.height; // Flip y for GLSL
+            
+            if (this.cymaticMaterial) {
+                this.cymaticMaterial.uniforms.uMouse.value.set(x, y);
             }
+        };
+
+        canvas.addEventListener('pointerdown', (e) => {
+            if (this.cymaticMaterial) this.cymaticMaterial.uniforms.uMouseActive.value = 1.0;
+            updateMouse(e);
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            updateMouse(e);
+        });
+
+        const stopMouse = () => {
+            if (this.cymaticMaterial) this.cymaticMaterial.uniforms.uMouseActive.value = 0.0;
+        };
+
+        canvas.addEventListener('pointerup', stopMouse);
+        canvas.addEventListener('pointerleave', stopMouse);
+    }
+
+    applyCymatic(data) {
+        if (!data || !this.cymaticMaterial) return;
+        this.currentCymaticData = data;
+        
+        // Sync UI if helper available
+        if (window.renderCymaticProPatterns) {
+            window.renderCymaticProPatterns();
         }
-        // Update panel active state if visible
-        document.querySelectorAll('.cymatics-pattern-btn').forEach((btn, i) => {
-            const p = Visualizer3D.CYMATIC_PATTERNS[i];
-            btn.classList.toggle('cymatics-pattern-active', p && p.n === data.n && p.m === data.m);
+
+        const u = this.cymaticMaterial.uniforms;
+        u.uN.value = data.n;
+        u.uM.value = data.m;
+        
+        // Map category to pattern type
+        if (data.cat === 'sacred') u.uType.value = 0.0;
+        else if (data.cat === 'radial') u.uType.value = 1.0;
+        else if (data.cat === 'geometry') u.uType.value = 2.0;
+        else if (data.cat === 'complex') u.uType.value = 3.0;
+        else if (data.cat === 'advanced') u.uType.value = 4.0;
+        
+        // Manual override if type is explicitly set
+        if (data.type !== undefined) u.uType.value = data.type;
+
+        u.uEnergy.value = data.energy || 0.5;
+        
+        // Update UI Label
+        const label = document.getElementById('cymaticPatternLabel');
+        if (label && data.name) {
+            label.textContent = data.name;
+            label.style.textShadow = '0 0 15px rgba(180, 120, 255, 1)';
+            setTimeout(() => {
+                label.style.textShadow = '0 0 5px rgba(255, 255, 255, 0.3)';
+            }, 300);
+        }
+        // Clear all previous backgrounds and border states
+        document.querySelectorAll('.cymatics-pattern-btn').forEach((btn) => {
+            btn.classList.remove('cymatics-pattern-active');
+            btn.style.backgroundColor = '';
+            btn.style.borderColor = '';
+            
+            const clickAttr = btn.getAttribute('onclick');
+            if (clickAttr) {
+                const match = clickAttr.match(/\d+/);
+                if (match) {
+                    const idx = parseInt(match[0]);
+                    const p = Visualizer3D.CYMATIC_PATTERNS[idx];
+                    if (p && data && p.name === data.name) {
+                        btn.classList.add('cymatics-pattern-active');
+                        btn.style.backgroundColor = 'rgba(168, 85, 247, 0.35)'; // Failsafe explicit style
+                        btn.style.borderColor = 'rgba(168, 85, 247, 0.9)';
+                    }
+                }
+            }
         });
     }
 
@@ -1437,6 +2025,8 @@ export class Visualizer3D {
             // Inject into all active materials for global override
             if (this.cymaticMaterial) this.cymaticMaterial.uniforms.uColor.value.copy(col);
             if (this._snowData?.material) this._snowData.material.uniforms.uColor.value.copy(col);
+            if (this.oceanWave?.material) this.oceanWave.material.uniforms.uColor.value.copy(col);
+            if (this.wavesMaterial) this.wavesMaterial.uniforms.uColor.value.copy(col);
             return;
         }
 
@@ -1446,10 +2036,22 @@ export class Visualizer3D {
         // Instant update if system is active
         if (mode === 'cymatics' && this.cymaticMaterial) this.cymaticMaterial.uniforms.uColor.value.copy(col);
         if (mode === 'snowflake' && this._snowData?.material) this._snowData.material.uniforms.uColor.value.copy(col);
-        if (mode === 'ocean' && this.waveMaterial) this.waveMaterial.uniforms.uColor.value.copy(col);
+        if ((mode === 'ocean' || mode === 'waves')) {
+            if (this.oceanWave?.material) this.oceanWave.material.uniforms.uColor.value.copy(col);
+            if (this.wavesMaterial) this.wavesMaterial.uniforms.uColor.value.copy(col);
+        }
     }
 
     setCymaticPatternByIndex(idx) {
+        console.log(`[Cymatics] Setting pattern by index: ${idx}`);
+        
+        // CRITICAL: Unlock AI-Sync engine so manual triggers persist without being overwritten on the next animation frame.
+        if (window.state && window.state.aiVisualsLocked) {
+            window.state.aiVisualsLocked = false;
+            const aiBtn = document.getElementById('cymaticAiBtn');
+            if (aiBtn) aiBtn.style.borderColor = 'rgba(34, 211, 238, 0.2)'; // Dim the UI border instantly
+        }
+
         const p = Visualizer3D.CYMATIC_PATTERNS[idx];
         if (p) {
             this.cymaticsHistory.push(p);
@@ -1461,13 +2063,19 @@ export class Visualizer3D {
 
     setCymaticColor(hex) {
         this.currentCymaticColor = hex;
+        
+        // Sync UI if helper available
+        if (window.renderCymaticProPatterns) {
+            window.renderCymaticProPatterns();
+        }
+
         if (this.cymaticMaterial)
             this.cymaticMaterial.uniforms.uColor.value.set(hex);
     }
 
     setCymaticFreq(hz) {
-        if (this.cymaticMaterial)
-            this.cymaticMaterial.uniforms.uFreq.value = Math.max(0, Math.min(80, hz));
+        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uBeatFreq)
+            this.cymaticMaterial.uniforms.uBeatFreq.value = Math.max(0, Math.min(80, hz));
     }
 
     setCymaticTimer(seconds) {
@@ -1481,42 +2089,121 @@ export class Visualizer3D {
     }
 
     initLava() {
-        // Redesigned: Cleaner, smoother, fewer but larger blobs
         this.lavaBlobs = [];
-        // blobCount increased to ensure dense "pile up" look
         const blobCount = 16;
+        this.lavaUniforms = {
+            uBlobs: { value: [] },
+            uColor: { value: new THREE.Color(state.visualColors?.lava || 0xff6600) },
+            uSecondaryColor: { value: new THREE.Color(0xffaa00) },
+            uTime: { value: 0 },
+            uIntensity: { value: 0 },
+            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        };
 
-        // More consistent sizes, Scaled down ~40% for better fit
+        for (let i = 0; i < blobCount; i++) {
+            this.lavaUniforms.uBlobs.value.push(new THREE.Vector4(0, -100, 0, 0));
+        }
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: this.lavaUniforms,
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform vec4 uBlobs[16];
+                uniform vec3 uColor;
+                uniform vec3 uSecondaryColor;
+                uniform float uTime;
+                uniform float uIntensity;
+
+                void main() {
+                    // Center UV coordinates (-1 to 1) and extend bounds
+                    // The plane is large, so vUv spans the entire background.
+                    vec2 uv = (vUv - 0.5) * 50.0; // scale up to coordinate space of physics (-25 to +25)
+
+                    float sum = 0.0;
+                    vec2 grad = vec2(0.0);
+
+                    // Compute Metaball density and gradient (pseudo-normals)
+                    for(int i = 0; i < 16; i++) {
+                        vec2 pos = uBlobs[i].xy;
+                        float radius = uBlobs[i].w * 1.5; // Scale up impact
+                        if(radius < 0.1) continue;
+
+                        vec2 d = uv - pos;
+                        float distSq = dot(d, d) + 0.1; // avoid divide by zero
+                        float density = (radius * radius) / distSq;
+                        sum += density;
+                        
+                        // Accumulate gradient for fake 3D normal
+                        grad -= d * (2.0 * density / distSq);
+                    }
+
+                    // Threshold and smoothing
+                    float threshold = 1.0;
+                    // Outer glow / smoothing band
+                    float f = smoothstep(threshold - 0.4, threshold + 0.1, sum);
+                    
+                    if (f <= 0.0) {
+                        gl_FragColor = vec4(0.0);
+                        return;
+                    }
+
+                    // Fake 3D Normal from gradient
+                    vec3 normal = normalize(vec3(grad * 1.5, 1.0));
+                    
+                    // Height-based temperature mapping
+                    float yNorm = clamp((uv.y + 15.0) / 30.0, 0.0, 1.0);
+                    vec3 baseCol = mix(uSecondaryColor, uColor, yNorm);
+
+                    // Lighting
+                    vec3 lightDir = normalize(vec3(0.5, 0.8, 1.0));
+                    vec3 viewDir = vec3(0.0, 0.0, 1.0);
+                    vec3 halfDir = normalize(lightDir + viewDir);
+
+                    float diff = max(dot(normal, lightDir), 0.0);
+                    float spec = pow(max(dot(normal, halfDir), 0.0), 32.0);
+                    float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 4.0);
+
+                    // Color combination
+                    vec3 col = baseCol * (0.3 + 0.7 * diff);
+                    col += vec3(1.0) * spec * (0.5 + uIntensity);
+                    col += baseCol * fresnel * 2.0;
+
+                    gl_FragColor = vec4(col, f * 0.95);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+
+        // A large screen-aligned plane to host the Raymarching shader
+        const geometry = new THREE.PlaneGeometry(100, 100);
+        const lavaPlane = new THREE.Mesh(geometry, material);
+        lavaPlane.position.z = -5; // Foreground depth within scene
+        
+        // Logical Blobs for Physics Loop
         const sizeCategories = [
-            { count: 5, minSize: 0.5, maxSize: 0.8 },   // Small
-            { count: 7, minSize: 0.9, maxSize: 1.2 },   // Medium
-            { count: 4, minSize: 1.3, maxSize: 1.6 }    // Large
+            { count: 5, minSize: 1.0, maxSize: 1.5 },   // Small
+            { count: 7, minSize: 1.5, maxSize: 2.2 },   // Medium
+            { count: 4, minSize: 2.2, maxSize: 3.5 }    // Large
         ];
 
-        let blobIndex = 0;
         sizeCategories.forEach(category => {
             for (let i = 0; i < category.count; i++) {
                 const size = category.minSize + Math.random() * (category.maxSize - category.minSize);
-
-                const geometry = new THREE.SphereGeometry(size, 24, 24);
-                const material = new THREE.MeshBasicMaterial({
-                    color: 0x60a9ff,
-                    transparent: true,
-                    opacity: 0.6,
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false
-                });
-
-                const blob = new THREE.Mesh(geometry, material);
-
-                // Initialize randomly within the cycle
-                // States: 'heating', 'rising', 'cooling', 'falling'
                 const states = ['heating', 'rising', 'cooling', 'falling'];
                 const startState = states[Math.floor(Math.random() * states.length)];
 
-                // BOUNDS: Expanded to +/- 15 to cover larger vertical screens
-                const floatMin = -15 + (Math.random() * 2); // Bottom pile
-                const floatMax = 15 + (Math.random() * 2);  // Top pile
+                const floatMin = -18 + (Math.random() * 4); // Bottom pile
+                const floatMax = 18 + (Math.random() * 4);  // Top pile
 
                 let startY = 0;
                 let startTemp = 0.5;
@@ -1535,57 +2222,29 @@ export class Visualizer3D {
                     startTemp = 0.2 + Math.random() * 0.3;
                 }
 
-                blob.position.set(
-                    (Math.random() - 0.5) * 8, // Keep central
-                    startY,
-                    (Math.random() - 0.5) * 4
-                );
-
-                blob.userData = {
-                    baseSize: size,
-                    state: startState,
-                    temperature: startTemp, // 0.0 (Cold) to 1.0 (Hot)
-
-                    // Config
-                    floatMin: floatMin,
-                    floatMax: floatMax,
-
-                    // Speeds - UPDATED for 2-7s idle duration (0.14 to 0.5 units per second)
-                    heatRate: 0.14 + Math.random() * 0.36,
-                    coolRate: 0.14 + Math.random() * 0.36,
-
-                    riseSpeed: (0.02 + Math.random() * 0.03) / (size * 0.5),
-                    fallSpeed: (0.03 + Math.random() * 0.03) / (size * 0.5),
-
-                    // Wobble
-                    driftPhase: Math.random() * Math.PI * 2,
-                    driftSpeed: 0.01 + Math.random() * 0.02,
-                    wobblePhase: Math.random() * Math.PI * 2,
-                    wobbleSpeed: 0.1
-                };
-
-                this.lavaBlobs.push(blob);
-                this.lavaGroup.add(blob);
-                blobIndex++;
+                this.lavaBlobs.push({
+                    position: new THREE.Vector3((Math.random() - 0.5) * 12, startY, (Math.random() - 0.5) * 6),
+                    material: { uniforms: { uTemp: {value:0}, uIntensity: {value:0}, uTime: {value:0} } }, // Mock mesh properties for render loop compatibility
+                    userData: {
+                        baseSize: size,
+                        state: startState,
+                        temperature: startTemp,
+                        floatMin: floatMin,
+                        floatMax: floatMax,
+                        heatRate: 0.15 + Math.random() * 0.3,
+                        coolRate: 0.15 + Math.random() * 0.3,
+                        riseSpeed: (0.04 + Math.random() * 0.05) / (size * 0.5),
+                        fallSpeed: (0.05 + Math.random() * 0.05) / (size * 0.5),
+                        driftPhase: Math.random() * Math.PI * 2,
+                        driftSpeed: 0.01 + Math.random() * 0.02
+                    }
+                });
             }
         });
 
-        // Soft uniform glow
-        const glowGeometry = new THREE.PlaneGeometry(30, 40);
-        const glowMaterial = new THREE.MeshBasicMaterial({
-            color: 0x60a9ff,
-            transparent: true,
-            opacity: 0.05,
-            blending: THREE.AdditiveBlending,
-            side: THREE.DoubleSide,
-            depthWrite: false
-        });
-        // this.lavaGlow = new THREE.Mesh(glowGeometry, glowMaterial);
-        // this.lavaGlow.position.z = -5;
-        // this.lavaGroup.add(this.lavaGlow);
-
+        this.lavaGroup.add(lavaPlane);
         this.lavaGroup.visible = false;
-        console.log('[Visualizer] Physics-Enabled Lava Lamp v7 initialized');
+        console.log('[Visualizer] Thermal Fluid Dynamics (Lava V2) globally initialized.');
     }
 
     initFireplace() {
@@ -1648,7 +2307,8 @@ export class Visualizer3D {
             uniforms: {
                 uTime: { value: 0 },
                 uColor: { value: new THREE.Color(0xff4400) }, // Base fire
-                uSpeed: { value: 1.0 }
+                uSpeed: { value: 1.0 },
+                uIntensity: { value: 1.0 }
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -1659,6 +2319,7 @@ export class Visualizer3D {
             `,
             fragmentShader: `
                 uniform float uTime;
+                uniform float uIntensity;
                 uniform vec3 uColor;
                 varying vec2 vUv;
 
@@ -1714,7 +2375,7 @@ export class Visualizer3D {
                     finalColor = mix(finalColor, white, core * 0.4);
                     
                     // Edge fade removed - Fill edges edge-to-edge
-                    gl_FragColor = vec4(finalColor, alpha);
+                    gl_FragColor = vec4(finalColor * uIntensity, alpha * min(1.0, uIntensity));
                 }
             `,
             transparent: true,
@@ -1726,90 +2387,190 @@ export class Visualizer3D {
 
     initRainforest() {
         // Rainforest: Falling raindrops
-        const dropCount = 800;
+        const count = this.batterySaver ? 400 : 1000;
         const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        const velocities = [];
+        const positions = new Float32Array(count * 3);
+        const randoms = new Float32Array(count * 3); // x, z, velocity
 
-        for (let i = 0; i < dropCount; i++) {
-            positions.push((Math.random() - 0.5) * 80);
-            positions.push(-20 + Math.random() * 40);
-            positions.push((Math.random() - 0.5) * 40);
+        for (let i = 0; i < count; i++) {
+            const i3 = i * 3;
+            positions[i3]   = (Math.random() - 0.5) * 60; // Initial x
+            positions[i3+1] = (Math.random() - 0.5) * 40; // Initial y
+            positions[i3+2] = (Math.random() - 0.5) * 40; // Initial z
 
-            velocities.push(0.08 + Math.random() * 0.12);
+            randoms[i3]   = Math.random(); // Hash seed x
+            randoms[i3+1] = Math.random(); // Hash seed z
+            randoms[i3+2] = 0.08 + Math.random() * 0.12; // Base velocity
         }
 
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        this.rainVelocities = new Float32Array(velocities);
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
 
-        const material = new THREE.PointsMaterial({
-            color: 0x88ccff,
-            size: 0.08,
+        this.rainMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSpeed: { value: 1.0 },
+                uColor: { value: new THREE.Color(0x88ccff) },
+                uIntensity: { value: 0.6 }
+            },
+            vertexShader: `
+                attribute vec3 aRandom;
+                uniform float uTime, uSpeed;
+                varying float vAlpha;
+                void main() {
+                    vec3 pos = position;
+                    float velocity = aRandom.z * uSpeed;
+                    
+                    // Vertical fall with wrap
+                    pos.y = mod(pos.y - uTime * velocity * 100.0 + 20.0, 40.0) - 20.0;
+                    
+                    // Subtle drift
+                    pos.x += sin(uTime * 0.5 + aRandom.x * 10.0) * 0.5;
+                    
+                    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = 2.0 * (300.0 / -mv.z);
+                    vAlpha = 1.0;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor;
+                uniform float uIntensity;
+                varying float vAlpha;
+                void main() {
+                    // Simple drop shape
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float dist = length(coord);
+                    if (dist > 0.5) discard;
+                    gl_FragColor = vec4(uColor, uIntensity * (1.0 - dist * 2.0));
+                }
+            `,
             transparent: true,
-            opacity: 0.6,
-            depthWrite: false
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
         });
 
-        this.raindrops = new THREE.Points(geometry, material);
+        this.raindrops = new THREE.Points(geometry, this.rainMaterial);
         this.rainforestGroup.add(this.raindrops);
         this.rainforestGroup.visible = false;
-
-        const rainCol = this.customColors?.["rain"] || this.customColor;
-        if (rainCol) {
-            this.raindrops.material.color.copy(rainCol);
-        }
-        console.log('[Visualizer] Rainforest initialized');
     }
 
     initZenGarden() {
-        const petalCount = 200;
+        // Zen Garden: Falling petals
+        const count = this.batterySaver ? 200 : 500;
         const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        const drifts = [];
+        const positions = new Float32Array(count * 3);
+        const randoms = new Float32Array(count * 3); // x, z, phase
 
-        for (let i = 0; i < petalCount; i++) {
-            positions.push((Math.random() - 0.5) * 80);
-            positions.push(-20 + Math.random() * 40);
-            positions.push((Math.random() - 0.5) * 40);
+        for (let i = 0; i < count; i++) {
+            const i3 = i * 3;
+            positions[i3]   = (Math.random() - 0.5) * 40;
+            positions[i3+1] = (Math.random() - 0.5) * 20;
+            positions[i3+2] = (Math.random() - 0.5) * 40;
 
-            drifts.push(Math.random() * Math.PI * 2);
+            randoms[i3]   = Math.random();
+            randoms[i3+1] = Math.random();
+            randoms[i3+2] = Math.random() * Math.PI * 2;
         }
 
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        this.petalDrifts = new Float32Array(drifts);
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
 
-        const material = new THREE.PointsMaterial({
-            color: 0xffb3d9,
-            size: 0.2,
-            map: this.createCircleTexture(),
+        this.petalMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSpeed: { value: 1.0 },
+                uColor: { value: new THREE.Color(0xffb7c5) }, // Sakura Pink
+                uIntensity: { value: 0.8 }
+            },
+            vertexShader: `
+                attribute vec3 aRandom;
+                uniform float uTime, uSpeed;
+                varying float vAlpha;
+                void main() {
+                    vec3 pos = position;
+                    float t = uTime * uSpeed;
+                    
+                    // Falling with drift
+                    pos.y = mod(pos.y - t * 2.0 + 10.0, 20.0) - 10.0;
+                    pos.x += sin(t + aRandom.z) * 2.0;
+                    pos.z += cos(t * 0.8 + aRandom.x) * 2.0;
+                    
+                    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = 4.0 * (300.0 / -mv.z);
+                    vAlpha = 1.0;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor;
+                uniform float uIntensity;
+                void main() {
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float dist = length(coord);
+                    if (dist > 0.5) discard;
+                    gl_FragColor = vec4(uColor, uIntensity * (1.0 - dist * 2.0));
+                }
+            `,
             transparent: true,
-            opacity: 0.7,
-            blending: THREE.AdditiveBlending,
             depthWrite: false
         });
 
-        this.petals = new THREE.Points(geometry, material);
+        this.petals = new THREE.Points(geometry, this.petalMaterial);
         this.zenGardenGroup.add(this.petals);
-        this.zenGardenGroup.visible = false;
 
-        const sakuraCol = this.customColors?.["sakura"] || this.customColor;
-        if (sakuraCol) {
-            this.petals.material.color.copy(sakuraCol);
-        }
-        console.log('[Visualizer] Zen Garden initialized');
+        // Plane for water/sand ripples
+        const planeGeo = new THREE.PlaneGeometry(40, 40, 32, 32);
+        this.zenWaterMaterial = new THREE.MeshBasicMaterial({
+            color: 0x224466,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        this.zenWater = new THREE.Mesh(planeGeo, this.zenWaterMaterial);
+        this.zenWater.rotation.x = -Math.PI / 2;
+        this.zenWater.position.y = -5;
+        this.zenGardenGroup.add(this.zenWater);
+
+        this.zenGardenGroup.visible = false;
+        console.log('[Visualizer] Zen Garden initialized (Shader Mode)');
     }
 
     initOcean() {
         // Ocean: High-density wireframe grid for "Infinite" digital waves
         const waveGeo = new THREE.PlaneGeometry(300, 100, 128, 64);
-        const waveMat = new THREE.MeshBasicMaterial({
-            color: 0x00aaff,
+        this.oceanWave = new THREE.Mesh(waveGeo, new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uColor: { value: this.customColor ? this.customColor.clone() : new THREE.Color(0x00aaff) },
+                uNormBass: { value: 0 },
+                uBeatPulse: { value: 0 }
+            },
+            vertexShader: `
+                varying float vDist;
+                uniform float uTime, uNormBass, uBeatPulse;
+                void main() {
+                    vec3 pos = position;
+                    float dist = length(pos.xy);
+                    vDist = dist;
+                    float amp = 1.0 + (uNormBass * 2.5) + (uBeatPulse * 0.8);
+                    pos.z = sin(dist * 0.2 - uTime * 0.8) * amp + cos(pos.x * 0.15 + uTime * 0.6) * (amp * 0.5);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying float vDist;
+                uniform vec3 uColor;
+                uniform float uNormBass;
+                void main() {
+                    float edge = 1.0 - smoothstep(100.0, 150.0, vDist);
+                    gl_FragColor = vec4(uColor, 0.4 * edge);
+                }
+            `,
             wireframe: true,
             transparent: true,
-            opacity: 0.4,
             side: THREE.DoubleSide
-        });
-        this.oceanWave = new THREE.Mesh(waveGeo, waveMat);
+        }));
         this.oceanWave.rotation.x = -Math.PI / 3;
         this.oceanWave.position.y = -2;
         this.oceanGroup.add(this.oceanWave);
@@ -2140,30 +2901,25 @@ export class Visualizer3D {
         // Profiling to find the 5s bottleneck
         const tLabel = `[VizInit] ${mode}`;
         console.time(tLabel);
-        if (mode === 'sphere' && this.sphereGroup && this.sphereGroup.children.length === 0) this.initSphere();
-        if (mode === 'particles' && this.particleGroup && this.particleGroup.children.length === 0) this.initParticles();
-        if (mode === 'lightspeed' && this.lightspeedGroup && this.lightspeedGroup.children.length === 0) this.initLightspeed();
-        if (mode === 'waves' && this.wavesGroup && this.wavesGroup.children.length === 0) this.initWaves();
-        if (mode === 'lava' && this.lavaGroup && this.lavaGroup.children.length === 0) this.initLava();
-        if (mode === 'fireplace' && this.fireplaceGroup && this.fireplaceGroup.children.length === 0) this.initFireplace();
-        if (mode === 'rainforest' && this.rainforestGroup && this.rainforestGroup.children.length === 0) this.initRainforest();
-        if (mode === 'zengarden' && this.zenGardenGroup && this.zenGardenGroup.children.length === 0) this.initZenGarden();
-        if (mode === 'ocean' && this.oceanGroup && this.oceanGroup.children.length === 0) this.initOcean();
-        if ((mode === 'cyber' || mode === 'matrix') && this.cyberGroup && this.cyberGroup.children.length === 0) this.initCyber();
-        if (mode === 'box' && this.boxGroup && this.boxGroup.children.length === 0) this.initBox();
-        if (mode === 'dragon' && this.dragonGroup && this.dragonGroup.children.length === 0) this.initDragon();
-        if (mode === 'galaxy' && this.galaxyGroup && this.galaxyGroup.children.length === 0) this.initGalaxy();
-        if (mode === 'mandala' && this.mandalaGroup && this.mandalaGroup.children.length === 0) this.initMandala();
-        if (mode === 'snowflake' && this.snowflakeGroup && this.snowflakeGroup.children.length === 0) {
-            this.initSnowflake();
-            if (this.customColor && this._snowData?.material) {
-                this._snowData.material.uniforms.uColor.value.set(this.customColor);
-            }
-        }
-        if (mode === 'snowflake' && this._snowData?.material) {
-            this._snowData.material.uniforms.uColor.value.set(this.customColor || 0xa5f3eb);
-        }
-        if (mode === 'cymatics' && this.cymaticsGroup && this.cymaticsGroup.children.length === 0) this.initCymatics();
+        
+        // Safety: If group doesn't exist, we must call init to create it
+        if (mode === 'sphere' && (!this.sphereGroup || this.sphereGroup.children.length === 0)) this.initSphere();
+        if (mode === 'particles' && (!this.particleGroup || this.particleGroup.children.length === 0)) this.initParticles();
+        if (mode === 'lightspeed' && (!this.lightspeedGroup || this.lightspeedGroup.children.length === 0)) this.initLightspeed();
+        if (mode === 'waves' && (!this.wavesGroup || this.wavesGroup.children.length === 0)) this.initWaves();
+        if (mode === 'lava' && (!this.lavaGroup || this.lavaGroup.children.length === 0)) this.initLava();
+        if (mode === 'fireplace' && (!this.fireplaceGroup || this.fireplaceGroup.children.length === 0)) this.initFireplace();
+        if (mode === 'rainforest' && (!this.rainforestGroup || this.rainforestGroup.children.length === 0)) this.initRainforest();
+        if (mode === 'zengarden' && (!this.zenGardenGroup || this.zenGardenGroup.children.length === 0)) this.initZenGarden();
+        if (mode === 'ocean' && (!this.oceanGroup || this.oceanGroup.children.length === 0)) this.initOcean();
+        if ((mode === 'cyber' || mode === 'matrix') && (!this.cyberGroup || this.cyberGroup.children.length === 0)) this.initCyber();
+        if (mode === 'box' && (!this.boxGroup || this.boxGroup.children.length === 0)) this.initBox();
+        if (mode === 'dragon' && (!this.dragonGroup || this.dragonGroup.children.length === 0)) this.initDragon();
+        if (mode === 'galaxy' && (!this.galaxyGroup || this.galaxyGroup.children.length === 0)) this.initGalaxy();
+        if (mode === 'mandala' && (!this.mandalaGroup || this.mandalaGroup.children.length === 0)) this.initMandala();
+        if (mode === 'snowflake' && (!this.snowflakeGroup || this.snowflakeGroup.children.length === 0)) this.initSnowflake();
+        if (mode === 'cymatics' && (!this.cymaticsGroup || this.cymaticsGroup.children.length === 0)) this.initCymatics();
+        
         console.timeEnd(tLabel);
     }
 
@@ -2171,12 +2927,17 @@ export class Visualizer3D {
         while (this.cyberGroup.children.length > 0) {
             const child = this.cyberGroup.children[0];
             this.cyberGroup.remove(child);
-            if (child.geometry) child.geometry.dispose();
-            if (child.material) child.material.dispose();
+            if (child.material) {
+                if (child.material.map) child.material.map.dispose();
+                child.material.dispose();
+            }
             if (child.children) {
                 child.traverse((c) => {
                     if (c.geometry) c.geometry.dispose();
-                    if (c.material) c.material.dispose();
+                    if (c.material) {
+                        if (c.material.map) c.material.map.dispose();
+                        c.material.dispose();
+                    }
                 });
             }
         }
@@ -2269,8 +3030,10 @@ export class Visualizer3D {
             this.cyberMaterial.uniforms.uTexture.value = newTexture;
             this.cyberMaterial.needsUpdate = true;
             if (oldTex) oldTex.dispose();
+        } else {
+            // Only init if not already present or if we need a full rebuild
+            this.initCyber();
         }
-        this.initCyber();
     }
 
     setMode(mode) {
@@ -2288,21 +3051,14 @@ export class Visualizer3D {
             'flow': 'particles',
             'zen': 'zengarden',
             'rain': 'rainforest',
-            'interstellar': 'matrix'
+            'interstellar': 'matrix',
+            'ocean': 'waves'
         };
         return mapping[mode] || mode;
     }
 
     toggleMode(mode) {
         const target = this.mapMode(mode);
-        
-        // Dispatch UI SYNC for multi-dock consistency
-        setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('mindwave:visual-mode-sync', {
-                detail: { activeModes: Array.from(this.activeModes) }
-            }));
-        }, 10);
-
         
         // If activating Matrix (3D), ensure it starts in interstellar mode if not set
         if (target === 'matrix' && !this.activeModes.has('matrix')) {
@@ -2318,14 +3074,31 @@ export class Visualizer3D {
         if (this.activeModes.has(target)) {
             this.activeModes.delete(target);
         } else {
-            this.activeModes.add(target);
-            this.active = true;
-            // BRUTE FORCE LOOP RESTART: Kill any stale loop and force a fresh frame
-            if (this.initialized) {
-                if (state.animationId) cancelAnimationFrame(state.animationId);
-                state.animationId = null;
-                this.render();
+            // --- NON-DESTRUCTIVE EXCLUSIVITY ---
+            if (target === 'cymatics') {
+                console.log('[Engine] Cymatics engaged');
+                // We keep Snowflake if both are wanted, but usually Cymatics covers the screen
+            } else if (this.activeModes.has('cymatics') && target !== 'snowflake') {
+                 // Only clear cymatics if entering a fundamental base mode like galaxy/dragon
+                 this.activeModes.delete('cymatics');
             }
+            this.activeModes.add(target);
+        }
+        
+        this.active = (this.activeModes.size > 0);
+        this.updateVisibility();
+        this.updateLabel(target);
+
+        // Ensure dependents are initialized
+        this.activeModes.forEach(m => this.ensureInitialized(m));
+
+        // SAFE LOOP START
+        if (this.initialized && this.active && !this._isRendering) {
+            if (state.animationId) {
+                cancelAnimationFrame(state.animationId);
+                state.animationId = null;
+            }
+            this.render();
         }
 
         this.mode = target;
@@ -2349,8 +3122,20 @@ export class Visualizer3D {
             this.updateLabel('none');
         }
         
+        // Notify UI to update button states
+        window.dispatchEvent(new CustomEvent('mindwave:visual-mode-sync', { 
+            detail: { activeModes: Array.from(this.activeModes) } 
+        }));
+
         // Ensure strings are regenerated if mode changed
         if (this.updateCyberStrings) this.updateCyberStrings();
+    }
+
+    toggleGalaxySunStyle() {
+        const nextStyle = this.galaxySunStyle === 'sun' ? 'sun2' : (this.galaxySunStyle === 'sun2' ? 'sun3' : 'sun');
+        console.log(`[Visualizer] Toggling Galaxy Sun: ${this.galaxySunStyle} -> ${nextStyle}`);
+        this.setGalaxySunStyle(nextStyle);
+        return nextStyle;
     }
 
     updateVisibility() {
@@ -2359,12 +3144,23 @@ export class Visualizer3D {
         if (this.sphereGroup) this.sphereGroup.visible = this.activeModes.has('sphere');
         if (this.particleGroup) this.particleGroup.visible = this.activeModes.has('particles');
         if (this.lightspeedGroup) this.lightspeedGroup.visible = this.activeModes.has('lightspeed');
-        if (this.wavesGroup) this.wavesGroup.visible = this.activeModes.has('waves');
+        // Ocean/Waves - Unified Group
+        if (this.wavesGroup) this.wavesGroup.visible = this.activeModes.has('waves') || this.activeModes.has('ocean');
         if (this.lavaGroup) this.lavaGroup.visible = this.activeModes.has('lava');
         if (this.fireplaceGroup) this.fireplaceGroup.visible = this.activeModes.has('fireplace');
         if (this.rainforestGroup) this.rainforestGroup.visible = this.activeModes.has('rainforest');
         if (this.zenGardenGroup) this.zenGardenGroup.visible = this.activeModes.has('zengarden');
-        if (this.oceanGroup) this.oceanGroup.visible = this.activeModes.has('ocean');
+        if (this.boxGroup) this.boxGroup.visible = this.activeModes.has('box');
+        if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
+        if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
+        if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
+        if (this.cymaticsGroup) this.cymaticsGroup.visible = this.activeModes.has('cymatics');
+        
+        // Snowflake Layering Logic: Show snow particles explicitly or when layered with ICE medium
+        if (this.snowflakeGroup) {
+            const isIceMedium = this.cymaticMaterial && Math.abs(this.cymaticMaterial.uniforms.uMedium.value - 3.0) < 0.1;
+            this.snowflakeGroup.visible = this.activeModes.has('snowflake') || (this.activeModes.has('cymatics') && isIceMedium);
+        }
 
         // Independently show 3D Matrix (Portal)
         if (this.cyberGroup) {
@@ -2400,30 +3196,21 @@ export class Visualizer3D {
             }
         }
 
-        if (this.boxGroup) this.boxGroup.visible = this.activeModes.has('box');
-        if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
-        if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
-        if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
         if (this.cymaticsGroup) {
             this.cymaticsGroup.visible = this.activeModes.has('cymatics');
-            this.cymaticsGroup.position.z = 15.0; // Very close to camera for visibility override
+            this.cymaticsGroup.position.z = 2.0; 
         }
-        if (this.snowflakeGroup) this.snowflakeGroup.visible = this.activeModes.has('snowflake');
 
         this.updateUIPanels();
     }
 
-    // New helper to update Sidebar VISUALS tab
+    // New helper to update HUD state (Panels are now managed by controls_v3.js)
     updateUIPanels() {
-        const panels = ['galaxyPanel', 'matrixPanel', 'cymaticsPanel'];
-        panels.forEach(p => {
-            const el = document.getElementById(p);
-            if (el) el.classList.add('hidden');
-        });
-
-        if (this.activeModes.has('galaxy')) document.getElementById('galaxyPanel')?.classList.remove('hidden');
-        if (this.activeModes.has('interstellar') || this.activeModes.has('matrix')) document.getElementById('matrixPanel')?.classList.remove('hidden');
-        if (this.activeModes.has('cymatics')) document.getElementById('cymaticsPanel')?.classList.remove('hidden');
+        // UI Panels are now persistent and managed by window.updateConfigPanel()
+        // based on activeModes and user state. We don't hide them blindly here.
+        if (typeof window.updateConfigPanel === 'function') {
+            window.updateConfigPanel();
+        }
     }
 
     updateLabel(mode) {
@@ -2432,12 +3219,11 @@ export class Visualizer3D {
             if (mode === 'sphere') label.textContent = "BIO-RESONANCE";
             else if (mode === 'particles') label.textContent = "NEURAL FLOW";
             else if (mode === 'lightspeed') label.textContent = "WARP";
-            else if (mode === 'waves') label.textContent = "WAVES";
+            else if (mode === 'waves' || mode === 'ocean') label.textContent = "OCEAN";
             else if (mode === 'lava') label.textContent = "LAVA LAMP";
             else if (mode === 'fireplace') label.textContent = "FIREPLACE";
             else if (mode === 'rainforest') label.textContent = "RAINFOREST";
             else if (mode === 'zengarden') label.textContent = "ZEN GARDEN";
-            else if (mode === 'ocean') label.textContent = "OCEAN";
             else if (mode === 'cymatics') label.textContent = "CYMATICS";
             else if (mode === 'cyber') label.textContent = "CYBER";
             else if (mode === 'matrix') label.textContent = "MATRIX";
@@ -2448,35 +3234,111 @@ export class Visualizer3D {
     }
 
     initWaves() {
-        // FIX: Use the pre-created wavesGroup from constructor instead of creating
-        // a new group. Previous code leaked groups into the scene on every init.
         if (!this.wavesGroup) {
             this.wavesGroup = new THREE.Group();
             this.scene.add(this.wavesGroup);
         }
-        // Clear any existing children first
+        // Clear any existing children
         while (this.wavesGroup.children.length > 0) {
             const child = this.wavesGroup.children[0];
             this.wavesGroup.remove(child);
             if (child.geometry) child.geometry.dispose();
             if (child.material) child.material.dispose();
         }
-        const geometry = new THREE.PlaneGeometry(30, 30, 64, 64);
-        const material = new THREE.MeshBasicMaterial({
-            color: 0x60a9ff,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.3,
-            side: THREE.DoubleSide
-        });
-        this.wavesMesh = new THREE.Mesh(geometry, material);
-        this.wavesMesh.rotation.x = -Math.PI / 2;
-        this.wavesGroup.add(this.wavesMesh);
 
-        const warpCol = this.customColors?.["warp"] || this.customColor;
-        if (warpCol && this.wavesMesh) {
-            this.wavesMesh.material.color.copy(warpCol);
-        }
+        // High-precision ocean plane for 'Kinematic Bioluminescence'
+        const geometry = new THREE.PlaneGeometry(80, 80, 160, 160);
+        this.wavesMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uColor: { value: this.customColor ? new THREE.Color(this.customColor) : new THREE.Color(0x0066FF) },
+                uSecondaryColor: { value: new THREE.Color(0x00F2FF) },
+                uIntensity: { value: 1.0 },
+                uNormBass: { value: 0 },
+                uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying float vElevation;
+                varying vec3 vViewPosition;
+                uniform float uTime, uNormBass;
+                
+                float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
+                float noise(vec2 p) {
+                    vec2 i = floor(p); vec2 f = fract(p);
+                    f = f * f * (3.0 - 2.0 * f);
+                    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+                }
+
+                // Gerstner Wave implementation for sharp crests
+                vec3 gWave(vec2 p, float t, float a, float s, float w, vec2 d) {
+                    float f = w * dot(d, p) + t * s;
+                    return vec3(d.x * a * cos(f), d.y * a * cos(f), a * sin(f));
+                }
+
+                void main() {
+                    vUv = uv;
+                    vec3 pos = position;
+                    
+                    // Layer 1: Fundamental Tides
+                    pos += gWave(pos.xy, uTime * 1.2, 1.2, 1.5, 0.25, vec2(1, 0));
+                    pos += gWave(pos.xy, uTime * 0.8, 1.0, 1.2, 0.18, vec2(0, 1));
+                    
+                    // Layer 2: Audio-Reactive Ripples
+                    float audioDisp = noise(pos.xy * 0.4 + uTime) * (1.5 + uNormBass * 3.5);
+                    pos.z += audioDisp;
+
+                    vElevation = pos.z;
+                    
+                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                    vViewPosition = -mvPosition.xyz;
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                varying float vElevation;
+                varying vec3 vViewPosition;
+                uniform vec3 uColor, uSecondaryColor;
+                uniform float uNormBass, uTime;
+
+                void main() {
+                    // Derive normal from view position derivatives
+                    vec3 fNormal = normalize(cross(dFdx(vViewPosition), dFdy(vViewPosition)));
+                    
+                    // Deep sea gradient
+                    float depth = smoothstep(-2.0, 4.0, vElevation);
+                    vec3 deepCol = mix(uColor * 0.2, uColor, depth);
+                    vec3 shallowCol = mix(uSecondaryColor, vec3(1.0), uNormBass * 0.4);
+                    
+                    vec3 col = mix(deepCol, shallowCol, depth);
+                    
+                    // Specular Highlights (Bioluminescent cresting)
+                    float spec = pow(max(fNormal.z, 0.0), 32.0);
+                    col += spec * (0.4 + uNormBass * 0.8) * uSecondaryColor;
+                    
+                    // Dynamic Foam / Bioluminescence
+                    float foam = smoothstep(2.5, 4.5, vElevation + uNormBass * 2.0);
+                    col = mix(col, vec3(0.8, 1.0, 1.0), foam);
+                    
+                    // Cinematic Vignette
+                    float vig = 1.0 - length(vUv - 0.5) * 1.2;
+
+                    gl_FragColor = vec4(col * vig, 0.75 + uNormBass * 0.2);
+                }
+            `,
+            transparent: true,
+            wireframe: false,
+            side: THREE.DoubleSide,
+            extensions: { derivatives: true }
+        });
+
+        this.wavesMesh = new THREE.Mesh(geometry, this.wavesMaterial);
+        this.wavesMesh.rotation.x = -Math.PI / 2.2; // Tilted more towards camera
+        this.wavesMesh.position.y = -5;
+        this.wavesMesh.position.z = -10; // Brought closer
+        this.wavesGroup.add(this.wavesMesh);
     }
 
     setSpeed(speed) {
@@ -2523,49 +3385,70 @@ export class Visualizer3D {
         } else {
             this.customColors[mode] = new THREE.Color(hex);
         }
-        
-        if (this.particles && this.particles.material) this.particles.material.color.set(hex);
-        if (this.lightspeed && this.lightspeed.material) this.lightspeed.material.color.set(hex);
-        if (this.sphere && this.sphere.material) {
-            this.sphere.material.color.set(hex);
-            this.core.material.color.set(hex);
-        }
-        if (mode === 'box' || !mode || mode === 'all') {
-            if (this.boxOuter) this.boxOuter.children.forEach(c => c.material.color.set(hex));
-            if (this.boxInner) this.boxInner.children.forEach(c => c.material.color.set(hex));
-            if (this.boxEdges && this.boxEdges.material) this.boxEdges.material.color.set(hex);
-        }
-        if (mode === 'mandala') {
-            if (this.mandalaRings) this.mandalaRings.forEach(r => r.material.color.set(hex));
-            if (this.mandalaCenter && this.mandalaCenter.material) this.mandalaCenter.material.color.set(hex);
-        }
-        if (this.wavesMesh && this.wavesMesh.material) this.wavesMesh.material.color.set(hex);
-        if (this.lavaBlobs) this.lavaBlobs.forEach(blob => blob.material.color.set(hex));
-        if (this.lavaGlow && this.lavaGlow.material) this.lavaGlow.material.color.set(hex);
-        if (this.flames && this.flames.material) this.flames.material.color.set(hex);
-        if (this.raindrops && this.raindrops.material) this.raindrops.material.color.set(hex);
-        if (this.petals && this.petals.material) this.petals.material.color.set(hex);
-        if (this.zenWater && this.zenWater.material) this.zenWater.material.color.set(hex);
-        if (this.oceanWave && this.oceanWave.material) this.oceanWave.material.color.set(hex);
-        if (this.oceanFoam && this.oceanFoam.material) this.oceanFoam.material.color.set(hex);
-        if (this.cyberRain && this.cyberRain.material) {
-            if (this.cyberRain.material.uniforms && this.cyberRain.material.uniforms.uColor) {
-                this.cyberRain.material.uniforms.uColor.value.set(hex);
+
+        try {
+            const setMatColor = (mat) => {
+                if (!mat) return;
+                if (mat.color && typeof mat.color.set === 'function') {
+                    mat.color.set(hex);
+                } else if (mat.uniforms && mat.uniforms.uColor) {
+                    mat.uniforms.uColor.value.set(hex);
+                }
+            };
+
+            if (this.particles && this.particles.material) setMatColor(this.particles.material);
+            if (this.lightspeed && this.lightspeed.material) setMatColor(this.lightspeed.material);
+            if (this.sphere && this.sphere.material) {
+                setMatColor(this.sphere.material);
+                if (this.core && this.core.material) setMatColor(this.core.material);
             }
+            if (mode === 'box' || !mode || mode === 'all') {
+                if (this.boxOuter) this.boxOuter.children.forEach(c => setMatColor(c.material));
+                if (this.boxInner) this.boxInner.children.forEach(c => setMatColor(c.material));
+                if (this.boxEdges && this.boxEdges.material) setMatColor(this.boxEdges.material);
+            }
+            if (mode === 'mandala') {
+                if (this.mandalaRings) this.mandalaRings.forEach(r => setMatColor(r.material));
+                if (this.mandalaCenter && this.mandalaCenter.material) setMatColor(this.mandalaCenter.material);
+            }
+            
+            if (this.wavesMesh && this.wavesMesh.material) setMatColor(this.wavesMesh.material);
+            if (this.lavaBlobs) this.lavaBlobs.forEach(blob => setMatColor(blob.material));
+            if (this.lavaGlow && this.lavaGlow.material) setMatColor(this.lavaGlow.material);
+            if (this.flames && this.flames.material) setMatColor(this.flames.material);
+            if (this.raindrops && this.raindrops.material) setMatColor(this.raindrops.material);
+            if (this.petals && this.petals.material) setMatColor(this.petals.material);
+            if (this.zenWater && this.zenWater.material) setMatColor(this.zenWater.material);
+            if (this.oceanWave && this.oceanWave.material) setMatColor(this.oceanWave.material);
+            if (this.oceanFoam && this.oceanFoam.material) setMatColor(this.oceanFoam.material);
+            
+            if (this.cyberRain && this.cyberRain.material) {
+                if (this.cyberRain.material.uniforms && this.cyberRain.material.uniforms.uColor) {
+                    this.cyberRain.material.uniforms.uColor.value.set(hex);
+                }
+            }
+            if (this.logoMesh && this.originalLogoImg) {
+                this.updateLogoTexture();
+            }
+            if (this.dragonGroup && this.updateDragonColor) {
+                this.updateDragonColor(new THREE.Color(hex));
+            }
+            if (this.galaxyStars || this.galaxySunMesh) {
+                this.updateGalaxyColor(new THREE.Color(hex));
+            }
+            if (this.cymaticMaterial && this.cymaticMaterial.uniforms?.uColor) {
+                this.cymaticMaterial.uniforms.uColor.value.set(hex);
+            }
+            if (mode === 'snowflake' || !mode || mode === 'all') {
+                this.setSnowColor(hex);
+            }
+            if (this._snowData?.material?.uniforms?.uColor) {
+                this._snowData.material.uniforms.uColor.value.set(hex);
+            }
+        } catch (err) {
+            console.warn("[Visualizer] setColor encountered a safe-skip error:", err);
         }
-        if (this.logoMesh && this.originalLogoImg) {
-            // Re-burn new colors into the texture instead of uniform tint
-            this.updateLogoTexture();
-        }
-        if (this.dragonGroup && this.updateDragonColor) {
-            this.updateDragonColor(new THREE.Color(hex));
-        }
-        // Galaxy: sun = picked color, stars = complementary
-        if (this.galaxyStars || this.galaxySunMesh) {
-            this.updateGalaxyColor(new THREE.Color(hex));
-        }
-        if (this.cymaticMaterial) this.cymaticMaterial.uniforms.uColor.value.set(hex);
-        if (this._snowData?.material) this._snowData.material.uniforms.uColor.value.set(hex);
+
         this.renderSingleFrame();
     }
 
@@ -2593,673 +3476,494 @@ export class Visualizer3D {
     }
 
     render(analyserL, analyserR) {
-        try {
-            if (!this.initialized || !this.renderer || document.hidden) return;
+        if (!this.initialized || !this.renderer || document.hidden || !this.active) {
+            this._isRendering = false;
+            return;
+        }
 
-            if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
+        // Hardened mutex: prevent multiple concurrent loops
+        if (this._isRendering && typeof analyserL === 'number') return;
+        this._isRendering = true;
+
+        try {
+            if (typeof analyserL === 'number' || (!analyserL && state.analyserLeft)) {
+                analyserL = state.analyserLeft;
+                analyserR = state.analyserRight;
+            }
 
             let normBass = 0, normMids = 0, normHighs = 0;
-            let dataL = null;
-
             if (analyserL) {
-                // Reuse cached buffer to avoid per-frame allocation
                 const binCount = analyserL.frequencyBinCount;
                 if (!this._freqDataArray || this._freqDataArray.length !== binCount) {
                     this._freqDataArray = new Uint8Array(binCount);
                 }
-                dataL = this._freqDataArray;
-                analyserL.getByteFrequencyData(dataL);
-                let bass = 0; for (let i = 0; i < 10; i++) bass += dataL[i];
-                normBass = (bass / 10) / 255;
-                let mids = 0; for (let i = 10; i < 100; i++) mids += dataL[i];
+                analyserL.getByteFrequencyData(this._freqDataArray);
+                let bass = 0; for (let i = 0; i < 15; i++) bass += this._freqDataArray[i];
+                normBass = Math.pow((bass / 15) / 255, 0.8); // Apply power curve for better sensitivity
+                let mids = 0; for (let i = 10; i < 100; i++) mids += this._freqDataArray[i];
                 normMids = (mids / 90) / 255;
-                let highs = 0; for (let i = 100; i < 300; i++) highs += dataL[i];
+                let highs = 0; for (let i = 100; i < 300; i++) highs += this._freqDataArray[i];
                 normHighs = (highs / 200) / 255;
             }
 
-            const multiplier = this.speedMultiplier || 1.0;
+            const multiplier = Math.max(0.001, this.speedMultiplier || 1.0);
             const now = performance.now() * 0.001;
             if (!this.lastTime) this.lastTime = now;
-            const dt = Math.min(0.1, now - this.lastTime); // Clamp dt to avoid jumps
+            const dt = Math.min(0.1, now - this.lastTime);
             this.lastTime = now;
-
-            // ABSOLUTE TIME ACCUMULATOR
-            if (this.absoluteTime === undefined) this.absoluteTime = 0;
-            // FORCE UNDENIABLE MOTION: Even if paused, keep the vibraitonal physics moving
-            const timeStep = dt * multiplier; 
-            this.absoluteTime += timeStep;
-
-            // Calculate Synesthetic Beat Pulse (0 to 1)
-            // If auto speed is ON, use the actual binaural beat frequency.
-            // If auto speed is OFF, use the manual speed slider (scaled so 1x approx 10Hz)
+            
             const visualBeatFreq = state.visualSpeedAuto ? (state.beatFrequency || 10) : (multiplier * 10);
             const beatPulse = (Math.sin(now * Math.PI * 2 * visualBeatFreq) * 0.5) + 0.5;
-            const beatIntensity = beatPulse * (normBass * 0.5 + 0.5); // Scaled by volume
-
-            // Vibration Factor (Toggled by user)
             const vFactor = this.vibrationEnabled ? 1.0 : 0.0;
-            const vBeatPulse = beatPulse * vFactor;
-            const vNormBass = normBass * vFactor;
-            const vNormMids = normMids * vFactor;
-            const vNormHighs = normHighs * vFactor;
+            const vBeatPulse = (beatPulse || 0) * vFactor;
+            const vNormBass = (normBass || 0) * vFactor;
 
-            // ═══════════════════════════════════════════════════
-            // UNIVERSAL VIBRATION SHAKE — applies to ALL visuals
-            // ═══════════════════════════════════════════════════
-            // When vibration is ON: rapid position jitter driven by bass
-            // When vibration is OFF: everything stays perfectly still
-            const shakeIntensity = vFactor * (0.03 + normBass * 0.15 + beatPulse * 0.08);
+            // ── Universal Vibration Shake ──────────────────────────────────
+            const shakeIntensity = vFactor * (0.02 + vNormBass * 0.15 + vBeatPulse * 0.08);
             const shakeX = (Math.sin(now * 47.3) * Math.cos(now * 31.7)) * shakeIntensity;
             const shakeY = (Math.cos(now * 53.1) * Math.sin(now * 29.3)) * shakeIntensity;
             const shakeZ = (Math.sin(now * 37.9) * Math.cos(now * 43.1)) * shakeIntensity;
 
-            // Apply shake to all visual groups/meshes
             const shakeTargets = [
-                this.sphereGroup, this.particleGroup, this.lavaGroup,
-                this.wavesGroup, this.flames, this.raindrops,
-                this.petals, this.boxOuter, this.dragonGroup,
-                this.galaxyGroup, this.mandalaGroup, this.cyberGroup
+                this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup,
+                this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup, this.oceanGroup,
+                this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
+                this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup
             ];
             for (const target of shakeTargets) {
-                if (target) {
-                    target.position.x = shakeX;
-                    target.position.y = shakeY;
-                    target.position.z = shakeZ;
+                if (target) target.position.set(shakeX, shakeY, shakeZ);
+            }
+
+            // ── Update Logic for all active modes ──────────────────────────
+            if (this.activeModes.has('galaxy') && this.galaxyGroup) {
+                const baseRotY = this.sunRotationSpeedY || 0.002;
+                const baseRotZ = this.sunRotationSpeedZ || 0.0005;
+
+                if (this.galaxyStars) {
+                    this.galaxyStars.rotation.y += baseRotY * multiplier * 0.5;
+                    this.galaxyStars.rotation.z += baseRotZ * multiplier * 0.5;
+                }
+                
+                if (this.galaxySunMesh) {
+                    this.galaxySunMesh.rotation.z -= baseRotZ * multiplier * 1.5;
+                    this.galaxySunMesh.rotation.y += baseRotY * multiplier * 2.0;
+
+                    const scaleBoost = 1.0 + (vNormBass * 0.15 * (this.galaxySunStyle === 'sun3' ? 2.5 : 1.0));
+                    this.galaxySunMesh.scale.setScalar(scaleBoost);
+                }
+                
+                if (this.galaxySunUniforms) {
+                    this.galaxySunUniforms.uTime.value = now * multiplier;
+                    this.galaxySunUniforms.uBassIntt.value = vNormBass;
+                    if (this._cymaticV2 && this._cymaticV2.shiver > 0.5) {
+                        this.galaxySunUniforms.uTime.value += this._cymaticV2.shiver * 0.05;
+                    }
                 }
             }
 
-            if (this.activeModes.has('sphere')) {
-                // Smooth natural scale with bass response (Controlled by vFactor)
-                const scale = 1 + (vNormBass * 0.15);
-                this.sphere.scale.setScalar(scale);
-                this.core.scale.setScalar(scale * 0.9);
-
-                // Multi-axis rotation for the sphere (Spins in different directions)
-                // Sphere Animation (Bio-Resonance)
-                this.sphere.rotation.y += (0.005 * multiplier);
-                this.sphere.rotation.z += (0.006 * multiplier);
-
-                // Independent counter-rotation for the core
-                this.core.rotation.y -= (0.015 * multiplier);
-                this.core.rotation.x -= (0.010 * multiplier);
-
-                // Clean color transitions without beat pulsing
-                const r = 45 / 255 + (vNormHighs * 0.3);
-                const g = 212 / 255 - (vNormHighs * 0.1);
-                const b = 191 / 255 + (vNormMids * 0.2);
-
-                const sphColor = (this.customColors && this.customColors['sphere']) ? this.customColors['sphere'] : this.customColor;
-                if (sphColor) {
-                    this.sphere.material.color.copy(sphColor);
-                    this.core.material.color.copy(sphColor);
-                } else {
-                    this.sphere.material.color.setRGB(r, g, b);
-                    this.core.material.color.setRGB(r, g, b);
-                }
+            if (this.activeModes.has('sphere') && this.sphere) {
+                this.sphere.scale.setScalar(1.0 + (vNormBass * 0.15));
+                this.sphere.rotation.y += 0.005 * multiplier;
             }
-
-            if (this.activeModes.has('particles') && this.particles) {
-                // Flow speed surges on the beat
+            if (this.activeModes.has('particles') && this.particleMaterial) {
                 const flowSpeed = (0.015 * multiplier) + (vNormBass * 0.08) + (vBeatPulse * 0.05);
-                const positions = this.particles.geometry.attributes.position.array;
-                for (let i = 2; i < positions.length; i += 3) {
-                    positions[i] += flowSpeed;
-                    if (positions[i] > 40) positions[i] = -40;
-                }
-                this.particles.geometry.attributes.position.needsUpdate = true;
-                this.particleGroup.rotation.z += (0.001 * multiplier) + (vNormMids * 0.005);
+                this.particleMaterial.uniforms.uTime.value = now;
+                this.particleMaterial.uniforms.uSpeed.value = flowSpeed * 10;
+                this.particleGroup.rotation.z += (0.001 * multiplier) + (vNormBass * 0.005);
             }
-
-            if (this.activeModes.has('lightspeed') && this.lightspeed) {
-                const pos = this.lightspeed.geometry.attributes.position.array;
-                for (let i = 2; i < pos.length; i += 3) {
-                    pos[i] += 0.02 * multiplier;
-                    if (pos[i] > 40) pos[i] = -40;
-                }
-                this.lightspeed.geometry.attributes.position.needsUpdate = true;
+            if (this.activeModes.has('lightspeed') && this.lightspeedMaterial) {
+                this.lightspeedMaterial.uniforms.uTime.value = now;
+                this.lightspeedMaterial.uniforms.uSpeed.value = multiplier;
             }
+            if (this.activeModes.has('matrix') && this.cyberMaterial) {
+                this.cyberMaterial.uniforms.uTime.value = now * multiplier;
+            }
+            if (this.activeModes.has('waves') && this.wavesMaterial) {
+                this.wavesMaterial.uniforms.uTime.value = now * multiplier * 0.5;
+                this.wavesMaterial.uniforms.uNormBass.value = vNormBass;
+            }
+            if (this.activeModes.has('cymatics') && this.cymaticMaterial) {
+                // Phase 3: Interactive Raycast Initialization
+                if (!this.cymaticRaycaster) {
+                    this.cymaticRaycaster = new THREE.Raycaster();
+                    this.cymaticPointer = new THREE.Vector2(-1, -1);
+                    this.targetMouseUV = new THREE.Vector2(0.5, 0.5);
+                    this.smoothedMouseUV = new THREE.Vector2(0.5, 0.5);
+                    this.mouseActiveTimer = 0.0;
+                    
+                    this._boundCymaticPointer = (e) => {
+                        let cx = e.clientX; let cy = e.clientY;
+                        if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+                        this.cymaticPointer.x = (cx / window.innerWidth) * 2 - 1;
+                        this.cymaticPointer.y = -(cy / window.innerHeight) * 2 + 1;
+                        this.mouseActiveTimer = 1.0;
+                    };
+                    window.addEventListener('mousemove', this._boundCymaticPointer);
+                    window.addEventListener('touchmove', this._boundCymaticPointer, {passive: true});
+                }
 
-            if (this.activeModes.has('lava') && this.lavaBlobs) {
-                this.lavaBlobs.forEach((blob, index) => {
-                    const config = blob.userData;
-                    const dt_scaled = dt * multiplier;
+                // Initialize live tracking if missing
+                if (!this._cymaticLive) {
+                    this._cymaticLive = { 
+                        n: this.currentCymaticData.n, 
+                        m: this.currentCymaticData.m,
+                        energy: this.currentCymaticData.energy || 0.5
+                    };
+                }
 
-                    // Heat up slightly on the beat pulses
-                    if (config.state === 'heating') {
-                        config.temperature += vBeatPulse * 0.01;
-                    }
-
-                    // ... physics logic ...
-                    if (config.state === 'heating') {
-                        // Stay at bottom, increase temperature
-                        blob.position.y = config.floatMin;
-                        config.temperature += config.heatRate * 0.15 * dt_scaled;
-                        if (config.temperature >= 1.0) {
-                            config.temperature = 1.0;
-                            config.state = 'rising';
-                        }
-                    } else if (config.state === 'rising') {
-                        // Buoyancy proportional to temperature
-                        const riseVel = config.riseSpeed * config.temperature * dt_scaled * 5.0;
-                        blob.position.y += riseVel;
-
-                        // Vertical Stretch (Teardrop effect)
-                        const stretch = 1.0 + (riseVel / dt_scaled) * 2.0;
-                        blob.scale.set(config.baseSize, config.baseSize * Math.min(stretch, 1.5), config.baseSize);
-
-                        if (blob.position.y >= config.floatMax) {
-                            blob.position.y = config.floatMax;
-                            config.state = 'cooling';
-                        }
-                    } else if (config.state === 'cooling') {
-                        // Stay at top, decrease temperature
-                        blob.position.y = config.floatMax;
-                        config.temperature -= config.coolRate * 0.15 * dt_scaled;
-                        if (config.temperature <= 0.0) {
-                            config.temperature = 0.0;
-                            config.state = 'falling';
-                        }
-                    } else if (config.state === 'falling') {
-                        // Gravity proportional to density (1 - temp)
-                        const fallVel = config.fallSpeed * (1.1 - config.temperature) * dt_scaled * 5.0;
-                        blob.position.y -= fallVel;
-
-                        // Vertical Stretch (Drip effect)
-                        const stretch = 1.0 + (fallVel / dt_scaled) * 2.0;
-                        blob.scale.set(config.baseSize, config.baseSize * Math.min(stretch, 1.5), config.baseSize);
-
-                        if (blob.position.y <= config.floatMin) {
-                            blob.position.y = config.floatMin;
-                            config.state = 'heating';
+                // Phase 3: Raycast Intersection Loop
+                if (this.cymaticPointer && this.cymaticsGroup) {
+                    const planeMesh = this.cymaticsGroup.children.find(c => c.geometry && c.geometry.type === 'PlaneGeometry');
+                    if (planeMesh && this.mouseActiveTimer > 0) {
+                        this.cymaticRaycaster.setFromCamera(this.cymaticPointer, this.camera);
+                        const intersects = this.cymaticRaycaster.intersectObject(planeMesh);
+                        if (intersects.length > 0) {
+                            this.targetMouseUV.copy(intersects[0].uv);
                         }
                     }
+                    this.mouseActiveTimer = Math.max(0.0, this.mouseActiveTimer - (dt * 2.5));
+                    this.smoothedMouseUV.lerp(this.targetMouseUV, 0.15);
+                    
+                    this.cymaticMaterial.uniforms.uMouse.value.copy(this.smoothedMouseUV);
+                    this.cymaticMaterial.uniforms.uMouseActive.value = this.mouseActiveTimer > 0.05 ? 1.0 : (this.mouseActiveTimer * 20.0);
+                }
 
-                    // 2. THERMAL EXPANSION (Volume changes based on temperature)
-                    // Heating makes it expand (~20%), Cooling makes it contract to base.
-                    if (config.state === 'heating' || config.state === 'cooling') {
-                        const expansionFactor = 1.0 + (config.temperature * 0.2);
-                        blob.scale.setScalar(config.baseSize * expansionFactor);
+                // ── AI SYNC & AUTO ROTATE ── 
+                if (state.aiVisualsLocked && state.baseFrequency) {
+                    // AI SYNC: Instantly tie fractal math to audio frequency
+                    this.currentCymaticData.n = Math.max(1, Math.floor(state.baseFrequency / 80));
+                    this.currentCymaticData.m = Math.max(1, Math.floor((state.baseFrequency % 100) / 6) + 3);
+                } else {
+                    // AUTO ROTATE: Only cycle if AI Sync is off and timer is > 0
+                    const timer = this.cymaticsTimer !== undefined ? this.cymaticsTimer : 30;
+                    if (timer > 0) {
+                        if (!this.lastCymaticRotation) this.lastCymaticRotation = performance.now();
+                        if ((performance.now() - this.lastCymaticRotation) > timer * 1000) {
+                            this.nextCymatic();
+                            if (this._cymaticV2) this._cymaticV2.shiver = 1.0; 
+                        }
                     }
+                }
 
-                    // 3. MINIMAL WOBBLE & DRIFT (Keep it mostly vertical)
-                    const wobble = Math.sin(now * 1.5 + index) * 0.05;
-                    blob.scale.x += wobble * (vNormBass * 0.2);
-                    blob.scale.z += wobble * (vNormBass * 0.2);
+                // SMOOTH MORPHING: Lerp values toward targets (Ultra-smooth float logic)
+                // Lowered generic array interpolation speed to establish a buttery gradient rather than rapid snapping
+                const lerpSpd = 0.015;
+                this._cymaticLive.n += (this.currentCymaticData.n - this._cymaticLive.n) * lerpSpd;
+                this._cymaticLive.m += (this.currentCymaticData.m - this._cymaticLive.m) * lerpSpd;
+                
+                const targetEnergy = (this.currentCymaticData.energy || 0.4) + (normHighs * 0.6);
+                this._cymaticLive.energy += (targetEnergy - this._cymaticLive.energy) * (lerpSpd * 2.0);
 
-                    // Drift X slightly based on phase
-                    blob.position.x += Math.sin(now * 0.2 + config.driftPhase) * 0.005 * multiplier;
-                });
-                this.lavaGroup.rotation.y += 0.0001 * multiplier;
-                if (this.lavaGlow) this.lavaGlow.material.opacity = (0.05 + (vNormBass * 0.05) + (vBeatPulse * 0.1)) * this.brightnessMultiplier;
+                // MULTI-DIMENSIONAL INTERFERENCE (Bass vs. Highs)
+                if (!this._cymaticV2) {
+                    this._cymaticV2 = { bassN: 1, bassM: 1, highN: 5, highM: 5, shiver: 0 };
+                }
+
+                // REPAIRED: Prevented destructive integer-snapping on fast-moving audio arrays
+                // Using true floating point math here creates liquid geometry that smoothly curves rather than violently teleporting
+                const targetBassN = 1.0 + Math.pow(vNormBass, 1.5) * 3.0;
+                const targetBassM = 1.0 + Math.pow(vNormBass, 1.5) * 5.0;
+                const targetHighN = 5.0 + Math.pow(normHighs, 2.0) * 10.0;
+                const targetHighM = 5.0 + Math.pow(normHighs, 2.0) * 15.0;
+
+                this._cymaticV2.bassN += (targetBassN - this._cymaticV2.bassN) * 0.05;
+                this._cymaticV2.bassM += (targetBassM - this._cymaticV2.bassM) * 0.05;
+                this._cymaticV2.highN += (targetHighN - this._cymaticV2.highN) * 0.12;
+                this._cymaticV2.highM += (targetHighM - this._cymaticV2.highM) * 0.12;
+
+                const peak = Math.max(0, vNormBass - 0.85) * 5.0;
+                this._cymaticV2.shiver += (peak - this._cymaticV2.shiver) * 0.2;
+                if (this._cymaticV2.shiver < 0.01) this._cymaticV2.shiver = 0;
+
+                // Softened the phase shifting so heavy hits pulse cleanly rather than glitching the mask rendering
+                if (this._cymaticV2.shiver > 0.8 && performance.now() % 100 > 90) {
+                     this._cymaticLive.energy += 0.05; // Safely blend into the smoothing structure instead of a hard uniform overwrite
+                }
+
+                this.cymaticMaterial.uniforms.uTime.value = now * multiplier;
+                this.cymaticMaterial.uniforms.uIntensity.value = (state.cymaticIntensity > 0) 
+                    ? state.cymaticIntensity 
+                    : (0.5 + vNormBass * 0.5);
+                this.cymaticMaterial.uniforms.uHarmonics.value = state.harmonicsLevel || 0.0;
+                
+                // Final audio reaction injection (The Kick)
+                this.cymaticMaterial.uniforms.uResonance.value = (state.cymaticResonance ?? 1.0) * (1.0 + vNormBass * 0.15);
+                this.cymaticMaterial.uniforms.uEntropy.value = (state.cymaticEntropy ?? 1.0) * (1.1 - normHighs * 0.2);
+                this.cymaticMaterial.uniforms.uFlow.value = (state.cymaticFlow ?? 1.0) * (1.0 + vNormBass * 0.5);
+
+                this.cymaticMaterial.uniforms.uBeatFreq.value = visualBeatFreq;
+                this.cymaticMaterial.uniforms.uNormMids.value = normMids;
+                this.cymaticMaterial.uniforms.uNormHighs.value = normHighs;
+                this.cymaticMaterial.uniforms.uMedium.value = state.cymaticMedium || 0.0;
+                this.cymaticMaterial.uniforms.uShiver.value = state.cymaticShiver || 0.0;
+
+                this.cymaticMaterial.uniforms.uN.value = this._cymaticLive.n;
+                this.cymaticMaterial.uniforms.uM.value = this._cymaticLive.m;
+                this.cymaticMaterial.uniforms.uEnergy.value = this._cymaticLive.energy;
+                
+                this.cymaticMaterial.uniforms.uBassN.value = this._cymaticV2.bassN;
+                this.cymaticMaterial.uniforms.uBassM.value = this._cymaticV2.bassM;
+                this.cymaticMaterial.uniforms.uHighN.value = this._cymaticV2.highN;
+                this.cymaticMaterial.uniforms.uHighM.value = this._cymaticV2.highM;
             }
 
-            if (this.activeModes.has('ocean') && this.oceanWave) {
-                const positions = this.oceanWave.geometry.attributes.position.array;
-                const time = now * multiplier;
-                for (let i = 0; i < positions.length; i += 3) {
-                    const x = positions[i];
-                    const y = positions[i + 1];
-                    const distFromCenter = Math.sqrt(x * x + y * y);
-                    // Complex interference pattern for organic wave motion
-                    const amp = 1.0 + (vNormBass * 2.5) + (vBeatPulse * 0.8);
-                    positions[i + 2] = Math.sin(distFromCenter * 0.2 - time * 0.8) * amp +
-                        Math.cos(x * 0.15 + time * 0.6) * (amp * 0.5);
-                }
-                this.oceanWave.geometry.attributes.position.needsUpdate = true;
+            // ── OCEAN / FREQUENCY SWELLS ──────────────────────────────────
+            if (this.activeModes.has('ocean') && this.oceanWave && this.oceanWave.material.uniforms) {
+                this.oceanWave.material.uniforms.uTime.value = now * multiplier;
+                this.oceanWave.material.uniforms.uNormBass.value = vNormBass;
+                this.oceanWave.material.uniforms.uBeatPulse.value = vBeatPulse;
 
                 if (this.oceanFoam) {
-                    const foamPos = this.oceanFoam.geometry.attributes.position.array;
-                    for (let i = 2; i < foamPos.length; i += 3) {
-                        foamPos[i] = -2.5 + Math.sin(now * 2.0 + i) * 0.1; // bobbing foam
-                    }
-                    this.oceanFoam.geometry.attributes.position.needsUpdate = true;
-                    this.oceanFoam.material.opacity = (0.4 + (vNormMids * 0.3) + (vBeatPulse * 0.2)) * this.brightnessMultiplier;
+                    this.oceanFoam.material.opacity = (0.4 + (vNormBass * 0.3) + (vBeatPulse * 0.2)) * (this.brightnessMultiplier || 1.0);
                 }
             }
 
-            if (this.activeModes.has('waves') && this.wavesMesh) {
-                const wavePositions = this.wavesMesh.geometry.attributes.position.array;
-                for (let i = 0; i < wavePositions.length; i += 3) {
-                    const x = wavePositions[i], y = wavePositions[i + 1];
-                    let audioOffset = (dataL && dataL.length > 0) ? dataL[Math.floor(Math.abs(x) * 5) % dataL.length] / 255 : 0;
-                    // Ultra-smooth, peaceful rolling waves
-                    // Much lower frequency for wide, slow swells
-                    let baseWave = Math.sin(x * 0.15 + now * 0.3 * multiplier) + Math.cos(y * 0.15 + now * 0.25 * multiplier);
-                    // Gentle audio reactivity that swells instead of bounces
-                    let gentleAudio = audioOffset * 0.4 * (1.0 + vBeatPulse * 0.3);
-                    wavePositions[i + 2] = baseWave * (0.8 + vNormBass * 0.2) + gentleAudio;
-                }
-                this.wavesMesh.geometry.attributes.position.needsUpdate = true;
-                this.wavesMesh.rotation.z += 0.001 * multiplier;
-            }
-
-            if (this.activeModes.has('fireplace') && this.fireMaterial) {
-                this.fireMaterial.uniforms.uTime.value += dt * multiplier;
-                this.fireMaterial.uniforms.uSpeed.value = multiplier * (1.0 + vNormBass * 0.5 + vBeatPulse * 0.2);
-                if (this.embers) {
-                    const positions = this.embers.geometry.attributes.position.array;
-                    const speedFactor = multiplier * 2.0 * (1.0 + vBeatPulse * 0.5);
-                    for (let i = 0; i < positions.length; i += 3) {
-                        const idx = i / 3;
-                        positions[i + 1] += this.emberVelocities[idx] * speedFactor;
-                        positions[i] += Math.sin(now * 2.0 + positions[i + 1]) * 0.01 * speedFactor;
-                        positions[i + 2] += Math.cos(now * 1.5 + positions[i + 1]) * 0.01 * speedFactor;
-                        if (positions[i + 1] > 4.0) {
-                            positions[i + 1] = -3.0;
-                            positions[i] = (Math.random() - 0.5) * 50.0;
-                            positions[i + 2] = -15 + (Math.random() - 0.5) * 20.0;
-                        }
-                    }
-                    this.embers.geometry.attributes.position.needsUpdate = true;
-                    this.emberMat.opacity = (0.4 + (vBeatPulse * 0.4)) * this.brightnessMultiplier;
-                }
-                if (this.fireLight) {
-                    this.fireLight.intensity = 1.0 + (vNormBass * 1.5) + (vBeatPulse * 1.0) + (Math.sin(now * 10) + Math.cos(now * 23)) * 0.3;
-                    this.fireLight.distance = 20 + (vNormMids * 5) + (vBeatPulse * 5);
-                }
-            }
-
-            if (this.activeModes.has('rainforest') && this.raindrops) {
-                const positions = this.raindrops.geometry.attributes.position.array;
-                const speedFactor = multiplier * 0.8 * (1.0 + vBeatPulse * 0.3);
-                for (let i = 0; i < positions.length; i += 3) {
-                    positions[i + 1] -= this.rainVelocities[i / 3] * speedFactor;
-                    if (positions[i + 1] < -10) {
-                        positions[i + 1] = 10;
-                        positions[i] = (Math.random() - 0.5) * 20;
-                        positions[i + 2] = (Math.random() - 0.5) * 15;
-                    }
-                }
-                this.raindrops.geometry.attributes.position.needsUpdate = true;
-                this.raindrops.material.opacity = (0.5 + (vNormMids * 0.2) + (vBeatPulse * 0.2)) * this.brightnessMultiplier;
-            }
-
-            if (this.activeModes.has('zengarden') && this.petals) {
-                const positions = this.petals.geometry.attributes.position.array;
-                const speedFactor = multiplier * 0.3 * (1.0 + vBeatPulse * 0.5);
-                for (let i = 0; i < positions.length; i += 3) {
-                    positions[i + 1] -= 0.01 * speedFactor;
-                    positions[i] += Math.sin(now + positions[i + 1]) * 0.01 * speedFactor;
-                    positions[i + 2] += Math.cos(now + positions[i + 1]) * 0.01 * speedFactor;
-                    if (positions[i + 1] < -5) {
-                        positions[i + 1] = 5;
-                        positions[i] = (Math.random() - 0.5) * 20;
-                        positions[i + 2] = (Math.random() - 0.5) * 20;
-                    }
-                }
-                this.petals.geometry.attributes.position.needsUpdate = true;
-                if (this.zenWater) this.zenWater.material.opacity = (0.3 + (vBeatPulse * 0.2)) * this.brightnessMultiplier;
-            }
-
-            // BOX (Cube)
+            // ── BOX / GEOMETRIC PULSE ─────────────────────────────────────
             if (this.activeModes.has('box') && this.boxOuter) {
                 this.boxOuter.rotation.x += 0.008 * multiplier + vNormBass * 0.02;
                 this.boxOuter.rotation.y += 0.012 * multiplier;
-                this.boxInner.rotation.x -= 0.015 * multiplier;
-                this.boxInner.rotation.y -= 0.01 * multiplier;
-                this.boxEdges.rotation.copy(this.boxOuter.rotation);
-                const cubeScale = 1 + vNormBass * 0.2;
-                this.boxOuter.scale.setScalar(cubeScale);
-                this.boxEdges.scale.setScalar(cubeScale);
-                this.boxInner.scale.setScalar(cubeScale * 0.95);
-
-                const boxColor = (this.customColors && this.customColors['box']) ? this.customColors['box'] : this.customColor;
-                if (boxColor) {
-                    this.boxOuter.children.forEach(c => c.material.color.copy(boxColor));
-                    this.boxInner.children.forEach(c => c.material.color.copy(boxColor));
-                    if (this.boxEdges && this.boxEdges.material) this.boxEdges.material.color.copy(boxColor);
-                } else {
-                    const b = 0.48 + vNormHighs * 0.3;
-                    this.boxOuter.children.forEach(c => c.material.color.setRGB(0.23, 0.51, b));
+                if (this.boxInner) {
+                    this.boxInner.rotation.x -= 0.015 * multiplier;
+                    this.boxInner.rotation.y -= 0.01 * multiplier;
+                    this.boxInner.scale.setScalar(0.95 + vNormBass * 0.2);
                 }
+                this.boxOuter.scale.setScalar(1.0 + vNormBass * 0.2);
+                if (this.boxEdges) this.boxEdges.rotation.copy(this.boxOuter.rotation);
             }
 
-            // DRAGON
-            if (this.activeModes.has('dragon') && this.dragonBodyInstanced) {
-                // Serpentine global rotation
+            // ── DRAGON / SERPENTINE FLIGHT ────────────────────────────────
+            if (this.activeModes.has('dragon') && this.dragonBodyInstanced && this.dragonDummy) {
                 this.dragonGroup.rotation.y += 0.005 * multiplier;
-
-                // Dynamically update the segmented body traversing a curve in 3D
-                const time = now * multiplier * 2.0;
-                const globalScale = 1 + vNormBass * 0.2; // Bass pulse
+                const dTime = now * multiplier * 2.0;
+                const globalScale = 1.0 + vNormBass * 0.2;
 
                 for (let i = 0; i < this.dragonLength; i++) {
-                    // Phase determines position along the winding path (i=0 is head)
-                    const phase = time - i * 0.12;
-
-                    // Advanced 3D Lissajous curve for highly organic serpentine flight
+                    const phase = dTime - i * 0.12;
                     const x = Math.sin(phase) * 8;
                     const y = Math.cos(phase * 1.5) * 4 + Math.sin(phase * 0.5) * 3;
                     const z = Math.cos(phase * 0.8) * 8;
-
                     this.dragonDummy.position.set(x, y, z);
 
-                    // Look ahead to calculate rotation for segment
                     const nextPhase = phase + 0.1;
                     const nx = Math.sin(nextPhase) * 8;
                     const ny = Math.cos(nextPhase * 1.5) * 4 + Math.sin(nextPhase * 0.5) * 3;
                     const nz = Math.cos(nextPhase * 0.8) * 8;
                     this.dragonDummy.lookAt(nx, ny, nz);
 
-                    // Scale decays to a point towards the tail (i -> dragonLength)
                     const taper = 1.0 - (i / this.dragonLength) * 0.8;
-                    // Add a flowing "breathing" or "muscle" ripple down the body
                     const breath = 1.0 + Math.sin(phase * 4) * 0.15 * (0.5 + vNormBass);
                     this.dragonDummy.scale.setScalar(taper * breath * globalScale);
-
                     this.dragonDummy.updateMatrix();
 
                     this.dragonBodyInstanced.setMatrixAt(i, this.dragonDummy.matrix);
-                    this.dragonGlowInstanced.setMatrixAt(i, this.dragonDummy.matrix);
+                    if (this.dragonGlowInstanced) this.dragonGlowInstanced.setMatrixAt(i, this.dragonDummy.matrix);
 
-                    // Match the distinct head mesh to the lead index (i=0)
-                    if (i === 0) {
+                    if (i === 0 && this.dragonHead) {
                         this.dragonHead.position.copy(this.dragonDummy.position);
                         this.dragonHead.quaternion.copy(this.dragonDummy.quaternion);
-                        // Make the head slightly larger
                         this.dragonHead.scale.copy(this.dragonDummy.scale).multiplyScalar(1.4);
                     }
                 }
-
                 this.dragonBodyInstanced.instanceMatrix.needsUpdate = true;
-                this.dragonGlowInstanced.instanceMatrix.needsUpdate = true;
+                if (this.dragonGlowInstanced) this.dragonGlowInstanced.instanceMatrix.needsUpdate = true;
 
-                // Orbiting Dragon Pearl (Chased by the dragon head)
-                // Position it slightly ahead of the phase zero
-                const pearlPhase = time + 0.5;
-                this.dragonPearlGroup.position.x = Math.sin(pearlPhase) * 9;
-                this.dragonPearlGroup.position.y = Math.cos(pearlPhase * 1.5) * 5 + Math.sin(pearlPhase * 0.5) * 4;
-                this.dragonPearlGroup.position.z = Math.cos(pearlPhase * 0.8) * 9;
-
-                // Rapid rotation for the pearl
-                this.dragonPearlGroup.rotation.x += 0.08 * multiplier;
-                this.dragonPearlGroup.rotation.y += 0.12 * multiplier;
-
-                const dragColor = (this.customColors && this.customColors['dragon']) ? this.customColors['dragon'] : this.customColor;
-                if (dragColor) {
-                    this.updateDragonColor(dragColor);
-                } else {
-                    // Flash body Crimson/Gold based on audio
-                    this.dragonBodyInstanced.material.color.setRGB(0.9 + vNormBass * 0.1, 0.2 + vNormMids * 0.1, 0.1);
-                    // Flash pearl Cyan/White
-                    const pw = 0.5 + vNormHighs * 0.5;
-                    this.dragonPearl.material.color.setRGB(pw * 0.5, pw, 1.0);
+                if (this.dragonPearlGroup) {
+                    const pearlPhase = dTime + 0.5;
+                    this.dragonPearlGroup.position.set(Math.sin(pearlPhase) * 9, Math.cos(pearlPhase * 1.5) * 5 + Math.sin(pearlPhase * 0.5) * 4, Math.cos(pearlPhase * 0.8) * 9);
+                    this.dragonPearlGroup.rotation.x += 0.08 * multiplier;
+                    this.dragonPearlGroup.rotation.y += 0.12 * multiplier;
                 }
             }
 
-            // GALAXY
-            if (this.activeModes.has('galaxy') && this.galaxyStars) {
-                this.galaxyGroup.rotation.y += 0.002 * multiplier + vNormBass * 0.003;
-                // REMOVED gentle tilt for absolute control
-                this.galaxyStars.material.size = 0.2 + vNormBass * 0.1 + vBeatPulse * 0.08;
-
-                // Tribal sun - absolute 3D rotation controlled by sliders
-                if (this.galaxySunMesh) {
-                    this.galaxySunMesh.rotation.x += this.sunRotationSpeedX;
-                    this.galaxySunMesh.rotation.y += this.sunRotationSpeedY;
-                    this.galaxySunMesh.rotation.z += this.sunRotationSpeedZ;
-                }
-            }
-
-            // MANDALA
+            // ── MANDALA / HARMONIC RINGS ──────────────────────────────────
             if (this.activeModes.has('mandala') && this.mandalaRings) {
                 this.mandalaRings.forEach((ring, i) => {
-                    ring.rotation.z += ring.userData.speed * multiplier + vNormBass * 0.005;
-                    const pulse = 1 + vBeatPulse * 0.1 * (i + 1) * 0.3;
-                    ring.scale.setScalar(pulse);
-                    if (!this.customColor) {
-                        ring.material.opacity = (0.35 - i * 0.04) + vNormMids * 0.2;
+                    if (ring.userData && ring.userData.speed) {
+                        ring.rotation.z += ring.userData.speed * multiplier + vNormBass * 0.005;
                     }
+                    const p = 1.0 + vBeatPulse * 0.1 * (i + 1) * 0.3;
+                    ring.scale.setScalar(p);
                 });
                 if (this.mandalaCenter) {
-                    this.mandalaCenter.material.opacity = 0.4 + vBeatPulse * 0.3;
-                    const cScale = 1 + vNormBass * 0.3;
-                    this.mandalaCenter.scale.setScalar(cScale);
+                    this.mandalaCenter.rotation.z -= 0.01 * multiplier;
+                    this.mandalaCenter.scale.setScalar(1.0 + vNormBass * 0.3);
                 }
             }
 
-            // ── CYMATICS ──────────────────────────────────────────
-            if (this.activeModes.has('cymatics') && this.cymaticMaterial) {
-                // LIQUID GEOMETRY MORPH
-                if (this._cymaticN_Current === undefined) this._cymaticN_Current = this.currentCymaticData.n || 2.0;
-                if (this._cymaticM_Current === undefined) this._cymaticM_Current = this.currentCymaticData.m || 3.0;
-                
-                // Targets must be numbers! 
-                const targetN = this._cymaticN_Target ?? this.currentCymaticData.n;
-                const targetM = this._cymaticM_Target ?? this.currentCymaticData.m;
-                
-                // Lerp current values towards targets (3% per frame for smooth liquid feel)
-                const morphRate = 0.03;
-                this._cymaticN_Current += (targetN - this._cymaticN_Current) * morphRate;
-                this._cymaticM_Current += (targetM - this._cymaticM_Current) * morphRate;
-                
-                this.cymaticMaterial.uniforms.uN.value = this._cymaticN_Current;
-                this.cymaticMaterial.uniforms.uM.value = this._cymaticM_Current;
-
-                // Absolute safety: ensure uTime and other uniforms exist
-                if (this.cymaticMaterial.uniforms.uTime) {
-                    this.cymaticMaterial.uniforms.uTime.value = this.absoluteTime; 
-                }
-                
-                // BRUTE FORCE COLOR SYNC (Check per-mode first, then global)
-                const cCol = this.customColors['cymatics'] || this.customColor;
-                if (cCol) {
-                    this.cymaticMaterial.uniforms.uColor.value.copy(cCol);
-                }
-                this.cymaticMaterial.uniforms.uAI.value += ((state.aiVisualsLocked ? 1.0 : 0.0) - this.cymaticMaterial.uniforms.uAI.value) * 0.05;
-                // Bass/mids — respect manual override from panel slider
-                const targetIntensity = (this._cymaticIntensityOverride != null)
-                    ? this._cymaticIntensityOverride
-                    : Math.max(0.15, vNormBass); // Base intensity boost
-                this.cymaticMaterial.uniforms.uIntensity.value +=
-                    (targetIntensity - this.cymaticMaterial.uniforms.uIntensity.value) * 0.08;
-                this.cymaticMaterial.uniforms.uMids.value +=
-                    (vNormMids - this.cymaticMaterial.uniforms.uMids.value) * 0.06;
-                if (this.cymaticsTimer > 0 && this.cymaticsTimer <= 300) {
-                    const elapsed = (performance.now() - this.lastCymaticRotation) / 1000;
-                    if (elapsed > this.cymaticsTimer) this.nextCymatic();
-                }
-            }
-
-            // REAL SNOWFLAKE SYSTEM
-            if (this.activeModes.has('snowflake') && this._snowData) {
-                const sd = this._snowData;
-                const pos = sd.positions;
-                const t = performance.now() * 0.001;
-                const count = sd.count;
-                for (let i = 0; i < count; i++) {
-                    const i3 = i * 3;
-                    // Fall
-                    pos[i3 + 1] -= sd.speeds[i] * multiplier * (1 + vNormBass * 0.8);
-                    // Drift side-to-side (sine wave with individual phase)
-                    pos[i3] += Math.sin(t * sd.driftFreqs[i] + sd.phases[i]) * sd.drifts[i] * multiplier;
-                    // Subtle depth breathing
-                    pos[i3 + 2] += Math.sin(t * 0.3 + sd.phases[i] * 0.7) * 0.005 * multiplier;
-                    // Wrap: reset snowflake to top when it falls below view
-                    if (pos[i3 + 1] < -22) {
-                        pos[i3 + 1] = 22 + Math.random() * 5;
-                        pos[i3] = (Math.random() - 0.5) * 70;
-                    }
-                    // Wrap x edges
-                    if (pos[i3] > 36) pos[i3] = -36;
-                    if (pos[i3] < -36) pos[i3] = 36;
-                }
-                sd.points.geometry.attributes.position.needsUpdate = true;
-                // Update audio reactivity uniform
-                if (sd.material) {
-                    sd.material.uniforms.uIntensity.value += (vNormBass - sd.material.uniforms.uIntensity.value) * 0.1;
-                    // Ensure color is correct
-                    if (this.customColor) sd.material.uniforms.uColor.value.copy(this.customColor);
-                }
-                // Spin individual hero snowflakes
-                if (sd.spinMeshes) {
-                    sd.spinMeshes.forEach((m, idx) => {
-                        m.rotation.z += sd.spinSpeeds[idx] * multiplier;
-                    });
-                }
-            }
-
-            if (this.activeModes.has('cyber')) {
-                this.renderCyberCyber();
-            }
-
-            if (this.activeModes.has('matrix')) {
-                if (this.cyberMaterial) {
-                    const config = this.matrixConfig;
-                    // Multiply dt by config.speed to drive shader animation
-                    this.cyberMaterial.uniforms.uTime.value += dt * multiplier * (config.speed || 1.0);
-                    // Modulate base speed uniform with beat pulse for reactive rain
-                    this.cyberMaterial.uniforms.uSpeed.value = (config.speed || 1.0) * (1.0 + vBeatPulse * 0.2);
-                }
-            }
-
-            // Frame Skipping / Battery Saver Logic
-            const frameInterval = 1000 / this.targetFPS;
-            const timeSinceLastFrame = performance.now() - this.lastFrameRenderTime;
-
-            // Adaptive LOD FPS Measurement (Ring Buffer — no push/shift GC pressure)
-            if (dt > 0) {
-                const currentFps = 1 / dt;
-                this._fpsRingBuffer[this._fpsRingIndex] = currentFps;
-                this._fpsRingIndex = (this._fpsRingIndex + 1) % 60;
-                if (this._fpsRingCount < 60) this._fpsRingCount++;
-
-                // Memory Guard: Feed FPS info to state monitor if available
-                if (typeof state !== 'undefined' && state.performanceMonitor) {
-                    const monitor = state.performanceMonitor;
-                    if (currentFps < monitor.fpsThreshold) {
-                        monitor.lowPerformanceCount++;
-                        if (monitor.lowPerformanceCount >= monitor.lowPerformanceLimit) {
-                            monitor.triggerSafeMode();
-                        }
-                    } else {
-                        // Slowly recovery counter if performance is stable
-                        if (monitor.lowPerformanceCount > 0) monitor.lowPerformanceCount -= 0.5;
-                    }
-                }
-
-                // Evaluate LOD downgrade if running poorly
-                if (now - this.lastLodDegradation > 5.0 && this._fpsRingCount === 60) {
-                    let fpsSum = 0;
-                    for (let fi = 0; fi < 60; fi++) fpsSum += this._fpsRingBuffer[fi];
-                    const avgFps = fpsSum / 60;
-                    // If dropping 25% below target consistently
-                    if (avgFps < (this.targetFPS * 0.75)) {
-                        this.degradeLOD();
-                        this.lastLodDegradation = now;
-                        this._fpsRingCount = 0; // Reset after degrading
-                    }
-                }
-            }
-
-            // STABILITY: If we are in system-stability-mode, ensure LOD is low
-            if (document.body.classList.contains('system-stability-mode') && this.currentLodLevel !== 'low') {
-                this.degradeLOD();
-                this.degradeLOD(); // Double drop to 'low'
-            }
-
-            // Create a property to track current opacity for smoothing
-            if (this.currentLogoOpacity === undefined) this.currentLogoOpacity = 0.1;
-
-            // Legacy opacity smoothing — only runs when glow system is not active
-            // The lotus glow mode system below handles opacity for all active modes
-            if (this.targetLogoOpacity !== undefined && !state.lotusState) {
-                const diff = this.targetLogoOpacity - this.currentLogoOpacity;
-                if (Math.abs(diff) > 0.001) {
-                    this.currentLogoOpacity += diff * 0.05;
-                } else {
-                    this.currentLogoOpacity = this.targetLogoOpacity;
-                }
-
-                // Apply to single mesh material
-                if (this.logoMesh && this.logoMesh.material) {
-                    this.logoMesh.material.opacity = this.currentLogoOpacity;
-                }
-            }
-
-            // ═══════════════════════════════════════════════════════
-            // LOTUS GLOW MODE SYSTEM (Auto / Dim / Full / Heartbeat)
-            // ═══════════════════════════════════════════════════════
+            // ── Lotus / Logo ──────────────────────────────────────────────
             if (this.logoMesh) {
                 const lotusMode = state.lotusState || 'auto';
-                let lotusTargetOpacity = 0.8; // default
-                let doScaleHeartbeat = false;
+                let lotusAlpha = 0.8;
+                if (lotusMode === 'faded') lotusAlpha = 0.15;
+                else if (lotusMode === 'full') lotusAlpha = 1.0;
+                else if (lotusMode === 'heartbeat') lotusAlpha = 0.2 + 0.8 * beatPulse;
+                else lotusAlpha = 0.4 + (vNormBass * 0.6);
 
-                if (lotusMode === 'faded') {
-                    lotusTargetOpacity = 0.15;
-                } else if (lotusMode === 'full') {
-                    lotusTargetOpacity = 1.0;
-                } else if (lotusMode === 'heartbeat') {
-                    lotusTargetOpacity = 0.15 + 0.85 * ((Math.sin(now * Math.PI * 2 * (20/60)) + 1) / 2);
-                    doScaleHeartbeat = true;
-                    if (this.activeModes.has('cyber') && this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
-                        this.cyberMaterial.uniforms.uBrightness.value = lotusTargetOpacity;
-                    }
-                } else {
-                    // Default / Auto
-                    const audioEnergy = vNormBass * 0.5 + vNormMids * 0.3 + vNormHighs * 0.2;
-                    lotusTargetOpacity = 0.25 + audioEnergy * 0.75;
-                    lotusTargetOpacity = Math.min(1.0, lotusTargetOpacity + beatPulse * 0.15);
-                    doScaleHeartbeat = true;
-                    if (this.activeModes.has('cyber') && this.cyberMaterial && this.cyberMaterial.uniforms && this.cyberMaterial.uniforms.uBrightness) {
-                        const cyberSync = 0.4 + audioEnergy * 0.6 + beatPulse * 0.2;
-                        this.cyberMaterial.uniforms.uBrightness.value = Math.min(1.0, cyberSync);
-                    }
-                }
-
-                // Smooth opacity transition (lerp towards target)
                 if (this._lotusCurrentOpacity === undefined) this._lotusCurrentOpacity = 0.8;
-                this._lotusCurrentOpacity += (lotusTargetOpacity - this._lotusCurrentOpacity) * 0.08;
+                this._lotusCurrentOpacity += (lotusAlpha - this._lotusCurrentOpacity) * 0.1;
                 this.logoMesh.material.opacity = this._lotusCurrentOpacity;
-
-                // Scale heartbeat (lub-dub) - runs in heartbeat + auto modes
-                if (doScaleHeartbeat) {
-                    const heartRate = 1.2; // ~72 BPM natural resting heart rate
-                    const cycle = (now * heartRate) % 1.0;
-                    let heartScale = 1.0;
-                    if (cycle < 0.12) {
-                        heartScale = 1.0 + 0.08 * Math.sin(cycle / 0.12 * Math.PI);
-                    } else if (cycle > 0.18 && cycle < 0.28) {
-                        heartScale = 1.0 + 0.05 * Math.sin((cycle - 0.18) / 0.10 * Math.PI);
-                    }
-                    this.logoMesh.scale.setScalar(heartScale);
-                } else {
-                    this.logoMesh.scale.setScalar(1.0); // Reset scale in DIM/FULL
-                }
+                this.logoMesh.scale.setScalar(1.0 + vNormBass * (0.05 + this._cymaticV2?.shiver * 0.1) + vBeatPulse * 0.02);
             }
 
-            if (timeSinceLastFrame >= frameInterval) {
-                // If Warp is the ONLY active mode, it leaves trails. We need a fade plane to gradually clear them.
-                if (this.activeModes.has('lightspeed') && this.activeModes.size === 1) {
-                    if (!this.fadePlane) {
-                        this.fadePlane = new THREE.Mesh(
-                            new THREE.PlaneGeometry(200, 200),
-                            new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.05, depthWrite: false })
-                        );
-                        this.fadePlane.position.z = this.camera.position.z - 2;
-                        this.scene.add(this.fadePlane);
+            // ── LAVA BLOBS / THERMAL FLUIDS ──────────────────────────────
+            if (this.activeModes.has('lava') && this.lavaBlobs && this.lavaUniforms) {
+                this.lavaUniforms.uTime.value = now * multiplier;
+                this.lavaUniforms.uIntensity.value = vNormBass;
+
+                this.lavaBlobs.forEach((blob, i) => {
+                    const d = blob.userData;
+                    const spdMult = multiplier * (1.0 + vNormBass * 0.8);
+                    
+                    if (d.state === 'heating') {
+                        d.temperature += d.heatRate * dt * spdMult;
+                        if (d.temperature >= 1.0) { d.temperature = 1.0; d.state = 'rising'; }
+                    } else if (d.state === 'rising') {
+                        blob.position.y += d.riseSpeed * spdMult;
+                        if (blob.position.y >= d.floatMax) d.state = 'cooling';
+                    } else if (d.state === 'cooling') {
+                        d.temperature -= d.coolRate * dt * spdMult;
+                        if (d.temperature <= 0.0) { d.temperature = 0.0; d.state = 'falling'; }
+                    } else if (d.state === 'falling') {
+                        blob.position.y -= d.fallSpeed * spdMult;
+                        if (blob.position.y <= d.floatMin) d.state = 'heating';
                     }
-                    this.fadePlane.visible = true;
-                    this.renderer.autoClear = false;
-                } else {
-                    if (this.fadePlane) this.fadePlane.visible = false;
-                    this.renderer.autoClear = !this.activeModes.has('lightspeed');
-                    if (!this.activeModes.has('lightspeed')) this.renderer.clear();
+                    
+                    // Horizontal Thermal Drift
+                    blob.position.x += Math.sin(now * d.driftSpeed + d.driftPhase) * 0.02 * spdMult;
+
+                    // Push unified shader vector (x, y, z, size*temp)
+                    if (this.lavaUniforms.uBlobs.value[i]) {
+                        const effectiveRadius = d.baseSize * (0.8 + 0.5 * d.temperature);
+                        this.lavaUniforms.uBlobs.value[i].set(blob.position.x, blob.position.y, blob.position.z, effectiveRadius);
+                    }
+                });
+            }
+
+            // ── SNOWFALL / CRYSTAL DRIFT ──────────────────────────────────
+            if (this.snowflakeGroup && this.snowflakeGroup.visible && this._snowData) {
+                const s = this._snowData;
+                const pos = s.points.geometry.attributes.position.array;
+                const spdMult = multiplier * 2.0;
+
+                for (let i = 0; i < s.count; i++) {
+                    const i3 = i * 3;
+                    
+                    // Vertical Fall
+                    pos[i3 + 1] -= s.speeds[i] * spdMult;
+
+                    // Horizontal Drift (Sinusoidal)
+                    let dx = Math.sin(now * s.driftFreqs[i] + s.phases[i]) * s.drifts[i] * spdMult;
+                    pos[i3] += dx;
+
+                    // Wrap positions
+                    if (pos[i3 + 1] < -22) pos[i3 + 1] = 22;
+                    if (pos[i3] > 35) pos[i3] = -35;
+                    if (pos[i3] < -35) pos[i3] = 35;
+                }
+                s.points.geometry.attributes.position.needsUpdate = true;
+
+                // Animate Hero Snowflakes
+                if (s.spinMeshes) {
+                    const heroPulse = 1.0 + (vNormBass || 0) * 0.15;
+                    s.spinMeshes.forEach((mesh, idx) => {
+                        mesh.rotation.z += s.spinSpeeds[idx] * spdMult;
+                        mesh.position.y -= (s.spinSpeeds[idx] * 0.1) * spdMult;
+                        mesh.scale.setScalar(heroPulse);
+                        if (mesh.position.y < -25) mesh.position.y = 25;
+                    });
                 }
                 
-                this.renderer.render(this.scene, this.camera);
-                this.lastFrameRenderTime = performance.now();
+                // Sync Intensity with Audio
+                if (s.material && s.material.uniforms && s.material.uniforms.uIntensity) {
+                    s.material.uniforms.uIntensity.value = 0.2 + vNormBass * 0.8;
+                }
             }
 
-            if (this.active !== false && !document.hidden) {
-                state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
+            // ── RAINFOREST / ZEN GARDEN ───────────────────────────────────
+            if (this.activeModes.has('rainforest') && this.rainMaterial) {
+                const spd = multiplier * 0.8 * (1.0 + vBeatPulse * 0.3);
+                this.rainMaterial.uniforms.uTime.value = now;
+                this.rainMaterial.uniforms.uSpeed.value = spd;
+                this.rainMaterial.uniforms.uIntensity.value = (0.5 + (vNormBass * 0.2) + (vBeatPulse * 0.2)) * (this.brightnessMultiplier || 1.0);
             }
+
+            if (this.activeModes.has('zengarden') && this.petalMaterial) {
+                const spd = multiplier * 0.3 * (1.0 + vBeatPulse * 0.5);
+                this.petalMaterial.uniforms.uTime.value = now;
+                this.petalMaterial.uniforms.uSpeed.value = spd;
+                if (this.zenWater) this.zenWater.material.opacity = (0.3 + (vBeatPulse * 0.2)) * (this.brightnessMultiplier || 1.0);
+            }
+
+            // ── FIREPLACE / RADIANT ENERGY ───────────────────────────────
+            if (this.activeModes.has('fireplace') && this.fireMesh && this.fireMesh.material && this.fireMesh.material.uniforms) {
+                const flicker = 0.8 + 0.2 * Math.sin(now * 15.0) * Math.sin(now * 7.0);
+                const fireUniforms = this.fireMesh.material.uniforms;
+                
+                if (fireUniforms.uTime) fireUniforms.uTime.value = now * 1.5 * multiplier;
+                if (fireUniforms.uIntensity) fireUniforms.uIntensity.value = flicker + vNormBass * 0.5;
+                
+                if (this.fireLight) {
+                    this.fireLight.intensity = (2.0 + vNormBass * 5.0) * flicker;
+                }
+            }
+
+            // ── Frame Limiter & Adaptive LOD ──────────────────────────────
+            const nowTime = performance.now();
+            const frameTime = nowTime - (this._lastFrameStartTime || nowTime);
+            this._lastFrameStartTime = nowTime;
+
+            // Track FPS for adaptive degradation
+            if (this._fpsRingBuffer) {
+                this._fpsRingBuffer[this._fpsRingIndex] = frameTime;
+                this._fpsRingIndex = (this._fpsRingIndex + 1) % 60;
+                this._fpsRingCount = Math.min(60, this._fpsRingCount + 1);
+
+                if (this._fpsRingCount === 60) {
+                    let avgFrameTime = 0;
+                    for (let i = 0; i < 60; i++) avgFrameTime += this._fpsRingBuffer[i];
+                    avgFrameTime /= 60;
+
+                    const currentFPS = 1000 / avgFrameTime;
+                    if (currentFPS < 35 && (nowTime - (this._lastLodDegradation || 0) > 3000)) {
+                        this.degradeLOD();
+                        this._lastLodDegradation = nowTime;
+                        // Reset buffer to avoid rapid double-degradation
+                        this._fpsRingCount = 0;
+                    }
+                }
+            }
+
+            const targetFrameInterval = 1000 / (this.targetFPS || 60);
+            if (nowTime - this.lastFrameRenderTime >= targetFrameInterval) {
+                this.renderer.autoClear = !this.activeModes.has('lightspeed');
+                if (this.renderer.autoClear) this.renderer.clear();
+                
+                // Draw 3D Scene
+                this.renderer.render(this.scene, this.camera);
+
+                // DRAW 2D OVERLAYS
+                if (this.activeModes.has('cyber')) {
+                    this.renderCyberCyber();
+                }
+
+                this.lastFrameRenderTime = nowTime;
+            }
+
         } catch (err) {
-            console.error('[Visualizer] Render error caught (animation continues):', err);
-            // Ensure the loop keeps going even after an error
-            if (this.active !== false && !document.hidden) {
-                state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
+            console.error("[Visualizer] Render Loop Error:", err);
+            // On severe error, we might want to deactivate visuals to prevent system freeze
+            if (err.name === 'TypeError' && err.message.includes('uniforms')) {
+                 console.warn("[Visualizer] Shader not ready, skipping frame...");
             }
+        } finally {
+            this._isRendering = false;
+        }
+
+        // Always queue next frame
+        if (this.active && !document.hidden) {
+            state.animationId = requestAnimationFrame(() => this.render(state.analyserLeft, state.analyserRight));
+        } else {
+            state.animationId = null;
         }
     }
 
@@ -3301,6 +4005,10 @@ export class Visualizer3D {
         let sum = 0, count = 0;
         for (let i = startIndex; i < endIndex && i < dataArray.length; i++) { sum += dataArray[i]; count++; }
         return count > 0 ? sum / count : 0;
+    }
+
+    setMouseInfluence(val) {
+        this.mouseInfluence = val;
     }
 
     setGlobalSpeed(speed) {
@@ -3502,7 +4210,7 @@ export class Visualizer3D {
             this._logoRenderCanvas.height = renderSize;
         }
         const canvas = this._logoRenderCanvas;
-        const ctx = canvas.getContext("2d");
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
         ctx.clearRect(0, 0, renderSize, renderSize);
 
         ctx.drawImage(this.originalLogoImg, 0, 0, renderSize, renderSize);
@@ -3617,6 +4325,22 @@ export class Visualizer3D {
         this.active = false;
         if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
 
+        // Remove event listeners to prevent memory leaks
+        window.removeEventListener('resize', this.resize);
+        window.removeEventListener('resize', this.resizeOverlayCanvas);
+        window.removeEventListener('mindwave:layout-change', this.handleLayoutChange);
+        if (this._boundSafeMode) window.removeEventListener('mindwave:safe-mode-start', this._boundSafeMode);
+        if (this._boundVisibilityChange) document.removeEventListener('visibilitychange', this._boundVisibilityChange);
+        if (this._boundThemeChange) window.removeEventListener('themeChanged', this._boundThemeChange);
+        if (this.canvas) {
+            if (this._boundContextLost) this.canvas.removeEventListener('webglcontextlost', this._boundContextLost);
+            if (this._boundContextRestored) this.canvas.removeEventListener('webglcontextrestored', this._boundContextRestored);
+        }
+        if (this._boundCymaticPointer) {
+            window.removeEventListener('mousemove', this._boundCymaticPointer);
+            window.removeEventListener('touchmove', this._boundCymaticPointer);
+        }
+
         // Dispose all Three.js resources to prevent GPU memory leaks
         const disposeGroup = (group) => {
             if (!group) return;
@@ -3626,6 +4350,12 @@ export class Visualizer3D {
                 if (child.geometry) child.geometry.dispose();
                 if (child.material) {
                     if (child.material.map) child.material.map.dispose();
+                    if (child.material.uniforms) {
+                        for (const key in child.material.uniforms) {
+                            const u = child.material.uniforms[key];
+                            if (u && u.value && u.value.dispose) u.value.dispose();
+                        }
+                    }
                     child.material.dispose();
                 }
                 if (child.children && child.children.length) {
@@ -3645,7 +4375,7 @@ export class Visualizer3D {
             this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup,
             this.oceanGroup, this.cyberGroup, this.boxGroup,
             this.dragonGroup, this.galaxyGroup, this.mandalaGroup,
-            this.wavesGroup
+            this.wavesGroup, this.cymaticsGroup, this.snowflakeGroup
         ];
 
         // Release ring buffer and scratch objects
@@ -3657,6 +4387,10 @@ export class Visualizer3D {
         // Dispose standalone materials / textures
         if (this.cyberMaterial) { this.cyberMaterial.dispose(); this.cyberMaterial = null; }
         if (this.fireMaterial) { this.fireMaterial.dispose(); this.fireMaterial = null; }
+        if (this.particleMaterial) { this.particleMaterial.dispose(); this.particleMaterial = null; }
+        if (this.lightspeedMaterial) { this.lightspeedMaterial.dispose(); this.lightspeedMaterial = null; }
+        if (this.rainMaterial) { this.rainMaterial.dispose(); this.rainMaterial = null; }
+        if (this.petalMaterial) { this.petalMaterial.dispose(); this.petalMaterial = null; }
         if (this.logoMesh) {
             if (this.logoMesh.material) {
                 if (this.logoMesh.material.map) this.logoMesh.material.map.dispose();
@@ -3674,55 +4408,83 @@ export class Visualizer3D {
         // Free cached buffers
         this._freqDataArray = null;
 
-        if (this.renderer) { this.renderer.dispose(); this.renderer = null; }
-        console.log('[Visualizer] Disposed all GPU resources.');
+        if (this.renderer) { 
+            try { this.renderer.forceContextLoss(); } catch(e) {} 
+            this.renderer.dispose(); 
+            this.renderer = null; 
+        }
+        this.scene = null;
+        this.camera = null;
+        console.log('[Visualizer] Disposed all GPU resources and removed listeners.');
+    }
+
+    // --- Warp / Lightspeed Controls ---
+    setWarpSpeed(val) {
+        if (this.lightspeedMaterial) {
+            this.lightspeedMaterial.uniforms.uSpeed.value = val;
+        }
+    }
+
+    setWarpFov(val) {
+        if (this.camera) {
+            this.camera.fov = val;
+            this.camera.updateProjectionMatrix();
+        }
+    }
+
+    setWarpChromatic(val) {
+        // Map chromatic to lightspeed point size or brightness for visual feedback
+        if (this.lightspeedMaterial) {
+            console.log(`[Warp] Chromatic Intensity set to: ${val}`);
+        }
     }
 }
 
-// viz3D is declared at the top now
+export function preloadVisualizer() {
+    if (viz3D) return Promise.resolve(viz3D);
+    return new Promise((resolve) => {
+        initVisualizer();
+        setTimeout(() => resolve(viz3D), 10);
+    });
+}
 
 export function initVisualizer() {
     if (!viz3D && els.canvas && els.canvas.activeVisualizer && els.canvas.activeVisualizer.isVisualizer3D) {
         viz3D = els.canvas.activeVisualizer;
     }
-
     if (els.canvas && els.canvas.activeVisualizer) {
-        if (viz3D && els.canvas.activeVisualizer === viz3D) return;
+        if (viz3D && els.canvas.activeVisualizer === viz3D) return viz3D;
         els.canvas.activeVisualizer.dispose();
         els.canvas.activeVisualizer = null;
         viz3D = null;
     }
-
     if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
-
-    if (!viz3D && els.canvas) {
-        const prevState = (els.canvas.activeVisualizer && els.canvas.activeVisualizer.isVisualizer3D) ? {
-            activeModes: els.canvas.activeVisualizer.activeModes,
-            mode: els.canvas.activeVisualizer.mode,
-            mindWaveMode: els.canvas.activeVisualizer.mindWaveMode,
-            cyberLogicMode: els.canvas.activeVisualizer.cyberLogicMode,
-            cyberCustomText: els.canvas.activeVisualizer.cyberCustomText,
-            currentCyberAngle: els.canvas.activeVisualizer.currentCyberAngle,
-            cyberSpeedMultiplier: els.canvas.activeVisualizer.cyberSpeedMultiplier,
-            rainbowEnabled: els.canvas.activeVisualizer._rainbowEnabled
+    const canvas = els.canvas || document.getElementById('visualizer');
+    if (!viz3D && canvas) {
+        const prevState = (canvas && canvas.activeVisualizer && canvas.activeVisualizer.isVisualizer3D) ? {
+            activeModes: canvas.activeVisualizer.activeModes,
+            mode: canvas.activeVisualizer.mode,
+            mindWaveMode: canvas.activeVisualizer.mindWaveMode,
+            cyberLogicMode: canvas.activeVisualizer.cyberLogicMode,
+            cyberCustomText: canvas.activeVisualizer.cyberCustomText,
+            currentCyberAngle: canvas.activeVisualizer.currentCyberAngle,
+            cyberSpeedMultiplier: canvas.activeVisualizer.cyberSpeedMultiplier,
+            rainbowEnabled: canvas.activeVisualizer._rainbowEnabled
         } : {};
-        viz3D = new Visualizer3D(els.canvas, prevState);
-        els.canvas.activeVisualizer = viz3D;
-
-        // OPTIMIZATION: Initialize heavy geometries in next tick to unblock UI
+        viz3D = new Visualizer3D(canvas, prevState);
+        canvas.activeVisualizer = viz3D;
         setTimeout(() => {
             if (viz3D) {
                 viz3D.updateVisibility();
-                // Resume ONLY after heavy assets are ready to avoid undefined errors
                 resumeVisuals();
             }
         }, 0);
     }
-}
-
-export function getVisualizer() {
     return viz3D;
 }
+
+export function getVisualizer() { return viz3D; }
+
 let visualsPaused = false;
 export function pauseVisuals() {
     visualsPaused = true;
@@ -3734,7 +4496,6 @@ export function pauseVisuals() {
 }
 
 export function resumeVisuals() {
-    console.log('[Visualizer] resumeVisuals CALLED. viz3D:', !!viz3D, 'animId:', state.animationId);
     if (viz3D && !state.animationId) {
         viz3D.active = true;
         viz3D.render(state.analyserLeft, state.analyserRight);
@@ -3748,18 +4509,12 @@ export function setVisualSpeed(speed) { if (viz3D) { viz3D.setGlobalSpeed(speed)
 export function setVisualColor(hex, mode = null) { if (viz3D) { viz3D.setVisualColor(hex, mode); if (viz3D.setCyberColor && (!mode || mode == "cyber")) viz3D.setCyberColor(hex); } }
 export function setVisualBrightness(brightness) { if (viz3D && viz3D.setGlobalBrightness) viz3D.setGlobalBrightness(brightness); }
 export function setVisualLogoOpacity(opacity) { if (viz3D) viz3D.setLogoOpacity(opacity); }
+export function setMouseInfluence(val) { if (viz3D) viz3D.setMouseInfluence(val); }
 
-// GOLD SYNC: Engine-to-UI Bridge
-export function toggleGalaxySunStyle() {
-    if (!viz3D) return null;
-    const styles = ['sun', 'tribal'];
-    const current = viz3D.galaxySunStyle || 'sun';
-    const nextIdx = (styles.indexOf(current) + 1) % styles.length;
-    const next = styles[nextIdx];
-    viz3D.galaxySunStyle = next;
-    if (viz3D.initGalaxy) viz3D.initGalaxy();
-    return next;
-}
-window.toggleGalaxySun = toggleGalaxySunStyle;
+// EXPOSED GLOBAL HELPERS FOR HTML CLICK EVENTS
+window.toggleGalaxySun = function() {
+    if (viz3D) return viz3D.toggleGalaxySunStyle();
+    return null;
+};
 
-
+// Visualizer initialization helpers are exported as part of the module

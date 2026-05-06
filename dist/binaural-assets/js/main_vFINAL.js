@@ -1,54 +1,52 @@
 /**
- * Mindwave Studio Core - Restored "PERFECT" Version (March 12th Afternoon)
+ * Mindwave Studio Core - ULTRASYNC_V138 DEFINITIVE
  * ──────────────────────────────────────────────────────────────────────────
- * Main Entry Point for the Afternoon March 12th Restoration.
+ * Main Entry Point for Mindwave Pro Production.
  */
 
 import { setupUI } from './ui/controls_v3.js';
-import { getVisualizer as initVisualizer } from './visuals/visualizer_lazy.js';
-import { state } from './state.js';
+import { preloadVisualizer } from './visuals/visualizer_lazy.js';
+import { initFirebase } from './services/firebase.js';
+import { initCursor } from './ui/cursor.js';
 
-// Application State Tracking
-window.NUCLEAR_MAIN_LOADED = "V100_GOLD_SYNC_FORCED";
-console.log("[Main] LOADED VERSION: V100_GOLD_SYNC_FORCED");
+window.NUCLEAR_MAIN_LOADED = "V138_STABLE";
 
-const initApp = () => {
-    console.log('[Main] Initializing ULTRASYNC Version Boot Sequence...');
+const initApp = async () => {
+    console.log('[Main] Starting V138 Definitive Boot Sequence...');
 
     try {
-        // 1. Initialize UI Controls
+        // 1. Initialize Firebase (Mock mode activates if config is missing)
+        await initFirebase();
+
+        // 2. Initialize UI Controls
         setupUI();
 
-        // 2. Initialize Visualizer 3D Engine
-        initVisualizer();
+        // 3. Preload 3D Engine
+        preloadVisualizer();
 
-        // 3. Remove Loading Screen with Fade
+        // 3.5. Initialize Cursors
+        initCursor();
+
+        // 4. Cleanup Loading State
         const loader = document.getElementById('loadingScreen');
         if (loader) {
-            loader.classList.add('fade-out');
+            loader.style.opacity = '0';
             setTimeout(() => {
-                loader.style.display = 'none';
-                console.log('[Main] Boot Sequence Complete. Welcome to Mindwave.');
+                loader.remove();
+                console.log('[Main] System Operational.');
             }, 800);
         }
 
-        // 4. Initial Theme Check
-        document.body.classList.add('theme-slate'); // Default theme
-
     } catch (err) {
-        console.error('[Main] Initialization error:', err);
+        console.error('[Main] Critical Boot Failure:', err);
+        // Failsafe: remove loader so user can see something
+        const loader = document.getElementById('loadingScreen');
+        if (loader) loader.remove();
     }
 };
 
-// Start when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
 } else {
     initApp();
 }
-
-// Global Help Functions (Restored)
-window.startOnboarding = (force = false) => {
-    console.log('[Main] Onboarding requested (Legacy Mock)');
-    alert("Mindwave Tutorial: Use the top sliders to adjust frequencies and the bottom icons to change visuals.");
-};

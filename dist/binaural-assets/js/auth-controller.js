@@ -1,4 +1,4 @@
-import { els, state } from '../state.js';
+import { els, state } from '/binaural-assets/js/state.js';
 import {
     initFirebase,
     loginUser,
@@ -10,11 +10,11 @@ import {
     saveMixToCloud,
     deleteMixFromCloud,
     auth as firebaseAuth
-} from '../services/firebase.js';
-import { showToast, applyMixState } from '../utils/helpers.js';
-import { trackReferralSignup } from '../services/referral.js';
-import { trackGlobalEvent } from '../services/analytics-service.js';
-import { publishPreset } from '../services/presets-service.js';
+} from '/binaural-assets/js/services/firebase.js';
+import { showToast, applyMixState } from '/binaural-assets/js/utils/helpers.js';
+import { trackReferralSignup } from '/binaural-assets/js/services/referral.js';
+import { trackGlobalEvent } from '/binaural-assets/js/services/analytics-service.js';
+import { publishPreset } from '/binaural-assets/js/services/presets-service.js';
 
 let isLoginMode = true;
 
@@ -534,132 +534,99 @@ function closeAuthModal() {
 
 export function renderLibraryList(mixes) {
     const list = document.getElementById('libraryList');
-    // ✅ FIX Issue #6: Add null check for timing issues
-    if (!list) {
-        console.warn('[Library] libraryList element not found, deferring render');
+    const sidebarList = document.getElementById('presetContainer');
+    
+    // Check if both are missing
+    if (!list && !sidebarList) {
+        console.warn('[Library] Target containers not found, deferring render');
         return;
     }
 
-    if (mixes.length === 0) {
-        list.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-64 text-center px-4">
-                <div class="w-20 h-20 mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center border border-purple-500/30">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#emptyGrad)" stroke-width="1.5">
-                        <defs>
-                            <linearGradient id="emptyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#a855f7"/>
-                                <stop offset="100%" stop-color="#ec4899"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                    </svg>
+    const renderTo = (container) => {
+        if (!container) return;
+        if (mixes.length === 0) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-64 text-center px-4">
+                    <div class="w-16 h-16 mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center border border-purple-500/30">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#emptyGrad)" stroke-width="1.5">
+                            <defs>
+                                <linearGradient id="emptyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#a855f7"/>
+                                    <stop offset="100%" stop-color="#ec4899"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xs font-bold text-white mb-1">No Saved Mixes</h3>
+                    <p class="text-[10px] text-[var(--text-muted)]">Save a mix to see it here.</p>
                 </div>
-                <h3 class="text-sm font-bold text-white mb-1">No Saved Mixes Yet</h3>
-                <p class="text-xs text-[var(--text-muted)] mb-4 max-w-[200px]">Create your perfect frequency blend and save it for easy access</p>
-                <div class="text-[10px] text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-full border border-purple-500/30">
-                    Tip: Use the button below to save
-                </div>
-            </div>
-        `;
-        return;
-    }
+            `;
+            return;
+        }
 
-    list.innerHTML = '';
-    mixes.forEach(mix => {
-        const div = document.createElement('div');
-        div.className = 'group p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/50 hover:bg-white/10 transition-all cursor-pointer';
+        container.innerHTML = '';
+        mixes.forEach(mix => {
+            const div = document.createElement('div');
+            div.className = 'group p-3 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/50 hover:bg-white/10 transition-all cursor-pointer';
 
-        // Parse data
-        const dateStr = mix.updatedAt ? new Date(mix.updatedAt.seconds * 1000).toLocaleDateString() : 'Just now';
-        const baseHz = mix.settings?.base || mix.baseValue || '?';
-        const beatHz = mix.settings?.beat || '?';
-        const category = mix.category || detectCategoryFromHz(parseFloat(beatHz)) || 'Custom';
-        const categoryIcon = getCategoryIcon(category);
+            const dateStr = mix.updatedAt ? new Date(mix.updatedAt.seconds * 1000).toLocaleDateString() : 'Just now';
+            const baseHz = mix.settings?.base || mix.baseValue || '?';
+            const beatHz = mix.settings?.beat || '?';
+            const category = mix.category || detectCategoryFromHz(parseFloat(beatHz)) || 'Custom';
+            const categoryIcon = getCategoryIcon(category);
 
-        div.innerHTML = `
-            <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-lg bg-gradient-to-br ${getCategoryGradient(category)} flex items-center justify-center text-lg shrink-0 shadow-md">
-                    ${categoryIcon}
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between gap-2">
-                        <h3 class="text-sm font-bold text-white truncate">${mix.name}</h3>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                            <button class="lib-del-btn p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors" title="Delete">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                            </button>
-                            <button class="lib-load-btn p-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-white transition-colors shadow-sm" title="Load">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
-                            </button>
-                            <button class="lib-share-btn p-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 transition-all" title="Share to Gallery">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                                    <polyline points="16 6 12 2 8 6"></polyline>
-                                    <line x1="12" y1="2" x2="12" y2="15"></line>
-                                </svg>
-                            </button>
+            div.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br ${getCategoryGradient(category)} flex items-center justify-center text-sm shrink-0 shadow-md">
+                        ${categoryIcon}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="text-[11px] font-bold text-white truncate">${mix.name}</h3>
+                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <button class="lib-del-btn p-1 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </button>
+                                <button class="lib-load-btn p-1 rounded-lg bg-purple-500 hover:bg-purple-400 text-white transition-colors shadow-sm">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 text-[8px] text-[var(--text-muted)]">
+                            <span class="px-1 py-0.2 rounded bg-white/5">${baseHz}Hz</span>
+                            <span>•</span>
+                            <span>${beatHz}Hz</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 mt-1.5 text-[10px] text-[var(--text-muted)]">
-                        <span class="px-1.5 py-0.5 rounded bg-white/5">${baseHz}Hz</span>
-                        <span>•</span>
-                        <span>${beatHz}Hz beat</span>
-                        <span class="ml-auto">${dateStr}</span>
-                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        // Load Action (click on card)
-        div.onclick = (e) => {
-            if (e.target.closest('button')) return;
-            loadMix(mix);
-        };
-        div.querySelector('.lib-load-btn').onclick = (e) => {
-            e.stopPropagation();
-            loadMix(mix);
-        };
-
-        // Delete Action
-        div.querySelector('.lib-del-btn').onclick = async (e) => {
-            e.stopPropagation();
-            if (confirm(`Delete "${mix.name}"?`)) {
-                await deleteMixFromCloud(mix.id);
-            }
-        };
-
-        // Share to Gallery Action
-        div.querySelector('.lib-share-btn').onclick = async (e) => {
-            e.stopPropagation();
-            if (confirm(`Share "${mix.name}" to the Public Gallery?`)) {
-                try {
-                    const btn = e.currentTarget;
-                    const originalHTML = btn.innerHTML;
-                    btn.innerHTML = '...';
-                    btn.disabled = true;
-
-                    await publishPreset(mix, state.currentUser);
-                    showToast(`"${mix.name}" is now live in the Gallery!`, "success");
-
-                    btn.innerHTML = '✅';
-                    setTimeout(() => {
-                        btn.innerHTML = originalHTML;
-                        btn.disabled = false;
-                    }, 3000);
-                } catch (err) {
-                    showToast("Failed to share: " + err.message, "error");
-                    btn.disabled = false;
+            div.onclick = (e) => {
+                if (e.target.closest('button')) return;
+                loadMix(mix);
+            };
+            div.querySelector('.lib-load-btn').onclick = (e) => {
+                e.stopPropagation();
+                loadMix(mix);
+            };
+            div.querySelector('.lib-del-btn').onclick = async (e) => {
+                e.stopPropagation();
+                if (confirm(`Delete "${mix.name}"?`)) {
+                    await deleteMixFromCloud(mix.id);
                 }
-            }
-        };
+            };
+            container.appendChild(div);
+        });
+    };
 
-        list.appendChild(div);
-    });
+    renderTo(list);
+    renderTo(sidebarList);
 }
 
 // Helper functions for category styling

@@ -1,5 +1,5 @@
 import { state, els, SOUNDSCAPES, STATE_INSIGHTS, SOUND_INSIGHTS, VISUALIZER_VERSION } from '../state.js';
-import { getVisualizer, initVisualizer, pauseVisuals, setVisualSpeed } from '../visuals/visualizer_lazy.js?v=4';
+import { getVisualizer, initVisualizer, pauseVisuals, setVisualSpeed } from '../visuals/visualizer_lazy.js';
 import { stopRecording } from '../export/recorder.js';
 import { DailyLimitService } from '../services/daily-limit.js';
 import { showPricingModal } from '../ui/pricing-3tier.js';
@@ -116,6 +116,14 @@ export async function startAudio() {
         state.masterAtmosGain = state.audioCtx.createGain();
         state.masterGain = state.audioCtx.createGain();
 
+        // HARMONICS: Add support for overtones
+        state.oscLeft2 = state.audioCtx.createOscillator();
+        state.oscRight2 = state.audioCtx.createOscillator();
+        state.oscLeft3 = state.audioCtx.createOscillator();
+        state.oscRight3 = state.audioCtx.createOscillator();
+        state.harmonicsGain = state.audioCtx.createGain();
+        state.harmonicsGain.gain.value = state.harmonicsLevel || 0;
+
         // Master Balance Panner
         if (state.audioCtx.createStereoPanner) {
             state.masterPanner = state.audioCtx.createStereoPanner();
@@ -134,12 +142,22 @@ export async function startAudio() {
         // Connections
         state.oscLeft.connect(state.panLeft);
         state.oscRight.connect(state.panRight);
-        state.panLeft.connect(state.analyserLeft);
+
+        // HARMONICS: Route through their gain node into the main panners
+        state.oscLeft2.connect(state.harmonicsGain).connect(state.panLeft);
+        state.oscRight2.connect(state.harmonicsGain).connect(state.panRight);
+        state.oscLeft3.connect(state.harmonicsGain).connect(state.panLeft);
+        state.oscRight3.connect(state.harmonicsGain).connect(state.panRight);
+
         state.panLeft.connect(state.beatsGain);
-        state.panRight.connect(state.analyserRight);
         state.panRight.connect(state.beatsGain);
         state.beatsGain.connect(state.masterGain);
         state.masterAtmosGain.connect(state.masterGain);
+
+        // SYNC FIX: Connect analysers to MASTER gain instead of just oscillators
+        // This ensures visuals react to ALL sounds (Nature, Music, Binaural)
+        state.masterGain.connect(state.analyserLeft);
+        state.masterGain.connect(state.analyserRight);
 
         // Output Chain: Gain -> Panner -> Compressor -> Limiter -> Dest
         state.masterGain.connect(state.masterPanner);
@@ -189,8 +207,8 @@ export async function startAudio() {
         const baseFreq = parseFloat(els.baseSlider ? els.baseSlider.value : 200) || 200;
         const beatFreq = parseFloat(els.beatSlider ? els.beatSlider.value : 10) || 10;
         console.log(`[Audio] startAudio reading sliders: Base=${baseFreq}Hz, Beat=${beatFreq}Hz`);
-        state.oscLeft.frequency.value = baseFreq;
-        state.oscRight.frequency.value = baseFreq + beatFreq;
+        if (state.oscLeft) state.oscLeft.frequency.value = baseFreq;
+        if (state.oscRight) state.oscRight.frequency.value = baseFreq + beatFreq;
 
         const volVal = parseFloat(els.volSlider ? els.volSlider.value : 0.5);
         const safeVol = isNaN(volVal) ? 0.5 : volVal;
@@ -217,6 +235,10 @@ export async function startAudio() {
 
         state.oscLeft.start(now);
         state.oscRight.start(now);
+        state.oscLeft2.start(now);
+        state.oscRight2.start(now);
+        state.oscLeft3.start(now);
+        state.oscRight3.start(now);
         state.isPlaying = true;
 
         // Setup Media Session for lock screen controls
@@ -232,6 +254,7 @@ export async function startAudio() {
         if (state.soundscapeSettings) {
             Object.keys(state.soundscapeSettings).forEach(id => {
                 const s = state.soundscapeSettings[id];
+                const canvas = els.canvas || document.getElementById('visualizer');
                 if (s && s.vol > 0) {
                     startSingleSoundscape(id, s.vol, s.tone, s.speed);
                 }
@@ -959,7 +982,19 @@ export function playCompletionChime() {
 }
 
 
+export function updateHarmonicsLevel(val) {
+    const level = parseFloat(val);
+    state.harmonicsLevel = level;
+    if (state.harmonicsGain && state.audioCtx) {
+        const now = state.audioCtx.currentTime;
+        state.harmonicsGain.gain.cancelScheduledValues(now);
+        // Max level 0.15 to keep it as a subtle "color" overtone
+        state.harmonicsGain.gain.linearRampToValueAtTime(level * 0.15, now + 0.1);
+    }
+}
+
 export function updateFrequencies() {
+    if (!els.baseSlider || !els.beatSlider) return;
     const base = parseFloat(els.baseSlider.value);
     const beat = parseFloat(els.beatSlider.value);
 
@@ -968,10 +1003,16 @@ export function updateFrequencies() {
     state.beatFrequency = beat;
 
     console.log(`[Freq] Update: Base=${base}Hz, Beat=${beat}Hz`);
-    if (els.baseValue) els.baseValue.textContent = `${base} Hz`;
-    if (els.beatValue) els.beatValue.textContent = `${beat} Hz`;
-    if (state.oscLeft && state.isPlaying) { state.oscLeft.frequency.setValueAtTime(base, state.audioCtx.currentTime); }
-    if (state.oscRight && state.isPlaying) { state.oscRight.frequency.setValueAtTime(base + beat, state.audioCtx.currentTime); }
+    if (els.baseValue) els.baseValue.textContent = `${base.toFixed(1)} Hz`;
+    if (els.beatValue) els.beatValue.textContent = `${beat.toFixed(1)} Hz`;
+    if (state.oscLeft && state.isPlaying) state.oscLeft.frequency.setValueAtTime(base, state.audioCtx.currentTime);
+    if (state.oscRight && state.isPlaying) state.oscRight.frequency.setValueAtTime(base + beat, state.audioCtx.currentTime);
+
+    // Update Harmonics
+    if (state.oscLeft2 && state.isPlaying) state.oscLeft2.frequency.setValueAtTime(base * 2, state.audioCtx.currentTime);
+    if (state.oscRight2 && state.isPlaying) state.oscRight2.frequency.setValueAtTime((base + beat) * 2, state.audioCtx.currentTime);
+    if (state.oscLeft3 && state.isPlaying) state.oscLeft3.frequency.setValueAtTime(base * 3, state.audioCtx.currentTime);
+    if (state.oscRight3 && state.isPlaying) state.oscRight3.frequency.setValueAtTime((base + beat) * 3, state.audioCtx.currentTime);
 
     // Auto Visual Speed Calculation
     if (state.visualSpeedAuto) {
@@ -1065,12 +1106,14 @@ export function updateFrequencies() {
 }
 
 export function updateBeatsVolume() {
+    if (!els.volSlider) return;
     const vol = parseFloat(els.volSlider.value);
     if (els.volValue) els.volValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.beatsGain && state.isPlaying) state.beatsGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
 }
 
 export function updateMasterVolume() {
+    if (!els.masterVolSlider) return;
     const vol = parseFloat(els.masterVolSlider.value);
     if (els.masterVolValue) els.masterVolValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.masterGain && state.isPlaying) state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);

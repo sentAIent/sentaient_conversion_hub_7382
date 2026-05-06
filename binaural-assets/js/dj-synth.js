@@ -4,7 +4,7 @@
  * Inspired by Pioneer XDJ equipment
  */
 
-import { state, els } from '../state.js';
+import { state, els } from '/binaural-assets/js/state.js';
 
 // Active sound instances for loop management
 const activeLoops = {};

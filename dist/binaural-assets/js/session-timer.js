@@ -4,7 +4,7 @@
  * including cyclic Pomodoro modes.
  */
 
-import { state, els } from '../state.js';
+import { state, els } from '/binaural-assets/js/state.js';
 
 let timerInterval = null;
 let sessionStartTime = null;

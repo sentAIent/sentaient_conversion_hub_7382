@@ -4,7 +4,7 @@
  * NO Cloud Functions required!
  */
 
-import { state } from '../state.js';
+import { state } from '/binaural-assets/js/state.js';
 import { trackGlobalEvent } from './analytics-service.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';

@@ -1,4 +1,4 @@
-import { els, state } from '../state.js';
+import { els, state } from '/binaural-assets/js/state.js';
 import {
     initFirebase,
     loginUser,
@@ -10,11 +10,11 @@ import {
     saveMixToCloud,
     deleteMixFromCloud,
     auth as firebaseAuth
-} from '../services/firebase.js';
-import { showToast, applyMixState } from '../utils/helpers.js';
-import { trackReferralSignup } from '../services/referral.js';
-import { trackGlobalEvent } from '../services/analytics-service.js';
-import { publishPreset } from '../services/presets-service.js';
+} from '/binaural-assets/js/services/firebase.js';
+import { showToast, applyMixState } from '/binaural-assets/js/utils/helpers.js';
+import { trackReferralSignup } from '/binaural-assets/js/services/referral.js';
+import { trackGlobalEvent } from '/binaural-assets/js/services/analytics-service.js';
+import { publishPreset } from '/binaural-assets/js/services/presets-service.js';
 
 let isLoginMode = true;
 

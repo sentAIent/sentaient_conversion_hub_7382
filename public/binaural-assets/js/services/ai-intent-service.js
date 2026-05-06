@@ -1,4 +1,4 @@
-import { SLEEP_STORIES } from '../content/stories.js';
+import { SLEEP_STORIES } from '/binaural-assets/js/content/stories.js';
 
 const MAPPING = {
     focus: {

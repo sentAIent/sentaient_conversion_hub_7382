@@ -8,7 +8,7 @@
  * 3. Uniform synchronization
  */
 
-import { getVisualizer } from '../visuals/visualizer_nuclear_v5.js';
+import { getVisualizer } from '/binaural-assets/js/visuals/visualizer_lazy.js';
 
 export async function runCymaticsTest() {
     console.log('🚀 INITIALIZING CYMATICS SMOKE TEST...');

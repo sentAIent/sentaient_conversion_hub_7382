@@ -204,6 +204,9 @@ export class Visualizer3D {
             this.mandalaGroup = new THREE.Group();
             this.scene.add(this.mandalaGroup);
 
+            this.snowflakeGroup = new THREE.Group();
+            this.scene.add(this.snowflakeGroup);
+
             this.cymaticsGroup = new THREE.Group();
             this.scene.add(this.cymaticsGroup);
             this.cymaticsGroup.visible = false;
@@ -244,10 +247,6 @@ export class Visualizer3D {
             // WebGL Context Loss Recovery — avoids permanent black screen on GPU crash
             canvas.addEventListener('webglcontextlost', this._onContextLost);
             canvas.addEventListener('webglcontextrestored', this._onContextRestored);
-                } catch (err) {
-                    console.error('[Visualizer] Failed to recover from context loss:', err);
-                }
-            });
 
             // Initial sizing
             this.resize();
@@ -1051,6 +1050,84 @@ export class Visualizer3D {
             this.mandalaRings.forEach(r => r.material.color.copy(manInitCol));
             this.mandalaCenter.material.color.copy(manInitCol);
         }
+    }
+
+    initSnowflake() {
+        console.log('[Visualizer] initSnowflake CALLED - Initializing Cryo-Particle Engine...');
+        const count = this.batterySaver ? 2000 : 5000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const randoms = new Float32Array(count * 3); // x=speed, y=sway, z=size
+
+        for (let i = 0; i < count; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 100;     // x
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 100; // y
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 60;  // z
+
+            randoms[i * 3] = 0.5 + Math.random() * 2.0;    // Falling speed
+            randoms[i * 3 + 1] = Math.random() * 6.28;     // Sway phase
+            randoms[i * 3 + 2] = 0.5 + Math.random() * 2.0; // Size mult
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
+
+        this.snowflakeMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uColor: { value: this.customColor ? new THREE.Color(this.customColor) : new THREE.Color(0xFFFFFF) },
+                uSize: { value: 2.0 },
+                uPixelRatio: { value: this.renderer.getPixelRatio() }
+            },
+            vertexShader: `
+                uniform float uTime;
+                uniform float uSize;
+                uniform float uPixelRatio;
+                attribute vec3 aRandom;
+                varying float vAlpha;
+
+                void main() {
+                    vec3 pos = position;
+                    float speed = aRandom.x;
+                    float phase = aRandom.y;
+                    float sizeMult = aRandom.z;
+
+                    // Vertical Fall
+                    pos.y -= uTime * speed * 2.0;
+                    pos.y = mod(pos.y + 50.0, 100.0) - 50.0;
+
+                    // Horizontal Sway
+                    pos.x += sin(uTime * 0.5 + phase) * 2.0;
+                    pos.z += cos(uTime * 0.3 + phase) * 1.5;
+
+                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                    gl_PointSize = uSize * sizeMult * (300.0 / -mvPosition.z) * uPixelRatio;
+                    gl_Position = projectionMatrix * mvPosition;
+
+                    // Distance fading
+                    vAlpha = smoothstep(-60.0, -10.0, mvPosition.z);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor;
+                varying float vAlpha;
+
+                void main() {
+                    // Circular point
+                    float dist = distance(gl_PointCoord, vec2(0.5));
+                    if (dist > 0.5) discard;
+
+                    float glow = 1.0 - smoothstep(0.0, 0.5, dist);
+                    gl_FragColor = vec4(uColor, glow * vAlpha * 0.8);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        this.snowflakePoints = new THREE.Points(geometry, this.snowflakeMaterial);
+        this.snowflakeGroup.add(this.snowflakePoints);
     }
 
     initCymatics() {
@@ -1996,6 +2073,7 @@ export class Visualizer3D {
         if (mode === 'dragon' && this.dragonGroup && this.dragonGroup.children.length === 0) this.initDragon();
         if (mode === 'galaxy' && this.galaxyGroup && this.galaxyGroup.children.length === 0) this.initGalaxy();
         if (mode === 'mandala' && this.mandalaGroup && this.mandalaGroup.children.length === 0) this.initMandala();
+        if (mode === 'snowflake' && this.snowflakeGroup && this.snowflakeGroup.children.length === 0) this.initSnowflake();
         if (mode === 'cymatics' && this.cymaticsGroup && this.cymaticsGroup.children.length === 0) this.initCymatics();
         console.timeEnd(tLabel);
     }
@@ -2118,6 +2196,7 @@ export class Visualizer3D {
     mapMode(mode) {
         if (mode === 'interstellar') return 'matrix'; // UI "Matrix" -> Internal 3D Matrix
         if (mode === 'cube') return 'box';
+        if (mode === 'snow') return 'snowflake';
         return mode;
     }
 
@@ -2178,6 +2257,7 @@ export class Visualizer3D {
         if (this.rainforestGroup) this.rainforestGroup.visible = this.activeModes.has('rainforest');
         if (this.zenGardenGroup) this.zenGardenGroup.visible = this.activeModes.has('zengarden');
         if (this.oceanGroup) this.oceanGroup.visible = this.activeModes.has('ocean');
+        if (this.snowflakeGroup) this.snowflakeGroup.visible = this.activeModes.has('snowflake');
 
         // Independently show 3D Matrix (Portal)
         if (this.cyberGroup) {
@@ -2457,7 +2537,8 @@ export class Visualizer3D {
                 this.sphereGroup, this.particleGroup, this.lavaGroup,
                 this.wavesGroup, this.flames, this.raindrops,
                 this.petals, this.boxOuter, this.dragonGroup,
-                this.galaxyGroup, this.mandalaGroup, this.cyberGroup
+                this.galaxyGroup, this.mandalaGroup, this.cyberGroup,
+                this.snowflakeGroup
             ];
             for (const target of shakeTargets) {
                 if (target) {
@@ -2507,6 +2588,11 @@ export class Visualizer3D {
                 }
                 this.particles.geometry.attributes.position.needsUpdate = true;
                 this.particleGroup.rotation.z += (0.001 * multiplier) + (vNormMids * 0.005);
+            }
+
+            if (this.activeModes.has('snowflake') && this.snowflakeMaterial) {
+                this.snowflakeMaterial.uniforms.uTime.value = now * multiplier;
+                if (this.customColor) this.snowflakeMaterial.uniforms.uColor.value.copy(this.customColor);
             }
 
             if (this.activeModes.has('lightspeed') && this.lightspeed) {
@@ -3436,7 +3522,7 @@ export class Visualizer3D {
             this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup,
             this.oceanGroup, this.cyberGroup, this.boxGroup,
             this.dragonGroup, this.galaxyGroup, this.mandalaGroup,
-            this.cymaticsGroup, this.wavesGroup
+            this.cymaticsGroup, this.wavesGroup, this.snowflakeGroup
         ];
 
         // Release ring buffer, scratch objects, and cached distance arrays
@@ -3465,6 +3551,8 @@ export class Visualizer3D {
         // Dispose standalone materials / textures
         if (this.cyberMaterial) { this.cyberMaterial.dispose(); this.cyberMaterial = null; }
         if (this.fireMaterial) { this.fireMaterial.dispose(); this.fireMaterial = null; }
+        if (this.cymaticMaterial) { this.cymaticMaterial.dispose(); this.cymaticMaterial = null; }
+        if (this.snowflakeMaterial) { this.snowflakeMaterial.dispose(); this.snowflakeMaterial = null; }
         if (this.logoMesh) {
             if (this.logoMesh.material) {
                 if (this.logoMesh.material.map) this.logoMesh.material.map.dispose();
@@ -3473,6 +3561,12 @@ export class Visualizer3D {
             if (this.logoMesh.geometry) this.logoMesh.geometry.dispose();
             if (this.scene) this.scene.remove(this.logoMesh);
             this.logoMesh = null;
+        }
+        if (this.fadePlane) {
+            if (this.fadePlane.geometry) this.fadePlane.geometry.dispose();
+            if (this.fadePlane.material) this.fadePlane.material.dispose();
+            if (this.scene) this.scene.remove(this.fadePlane);
+            this.fadePlane = null;
         }
 
         // Dispose Galaxy Sun Mesh (separate from galaxy group usually)
@@ -3535,6 +3629,7 @@ export function initVisualizer() {
         } : {};
         viz3D = new Visualizer3D(els.canvas, prevState);
         els.canvas.activeVisualizer = viz3D;
+        if (typeof state !== 'undefined') state.visualizer = viz3D;
 
         // OPTIMIZATION: Initialize heavy geometries in next tick to unblock UI
         setTimeout(() => {

@@ -9,8 +9,8 @@ import { preloadVisualizer, getVisualizer } from './visuals/visualizer_lazy.js';
 import { state } from './state.js';
 
 // Application State Tracking
-window.NUCLEAR_MAIN_LOADED = "V213_BOIL_REPAIRED";
-console.log("[Main] LOADED VERSION: V213_BOIL_REPAIRED");
+window.NUCLEAR_MAIN_LOADED = "ULTRASYNC_V135_STABLE";
+console.log("[Main] LOADED VERSION: ULTRASYNC_V135_STABLE");
 
 const initApp = () => {
     console.log('[Main] Initializing ULTRASYNC Version Boot Sequence...');
@@ -18,6 +18,9 @@ const initApp = () => {
     try {
         // 1. Initialize UI Controls
         setupUI();
+        import('./ui/resize-panels.js').then(module => {
+            module.initResizablePanels();
+        }).catch(err => console.error('[Main] Failed to load resize-panels:', err));
 
         // 2. Preload & Init 3D Engine
         preloadVisualizer();
@@ -28,6 +31,7 @@ const initApp = () => {
             loader.classList.add('fade-out');
             setTimeout(() => {
                 loader.style.display = 'none';
+                loader.remove(); // Completely dispose of the element
                 console.log('[Main] Boot Sequence Complete. Welcome to Mindwave.');
             }, 800);
         }

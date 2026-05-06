@@ -1,5 +1,5 @@
-import { state, els, THEMES } from '../state.js';
-import * as THREE from '../vendor/three.module.js';
+import { state, els, THEMES } from '/binaural-assets/js/state.js';
+import * as THREE from '/binaural-assets/js/vendor/three.module.js';
 
 let viz3D = null;
 
@@ -105,7 +105,7 @@ export class Visualizer3D {
         this.rainforestGroup = new THREE.Group();
         this.zenGardenGroup = new THREE.Group();
         this.oceanGroup = new THREE.Group();
-        this.wavesGroup = this.oceanGroup; // Unified naming parity
+        this.wavesGroup = new THREE.Group(); // Independent from oceanGroup
         this.cyberGroup = new THREE.Group();
         this.boxGroup = new THREE.Group();
         this.dragonGroup = new THREE.Group();
@@ -121,7 +121,7 @@ export class Visualizer3D {
             const groups = [
                 this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup, 
                 this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup, this.oceanGroup,
-                this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
+                this.wavesGroup, this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
                 this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup
             ];
             groups.forEach(g => this.scene.add(g));
@@ -142,6 +142,9 @@ export class Visualizer3D {
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
             
             this.textures = {};
+            this.customColors = {}; // PER-VISUAL color overrides
+            this.customColor = null; // GLOBAL color override
+            this._isRendering = false; // Guard flag to prevent duplicate render loops
             this._freqDataArray = null;
             this.initEnvironment();
             // REMOVED: Exhaustive initialization calls here to fix 5s loading delay.
@@ -158,16 +161,17 @@ export class Visualizer3D {
             window.addEventListener('mindwave:layout-change', this.handleLayoutChange);
 
             // Memory Guard: Safe Mode listener
-            window.addEventListener('mindwave:safe-mode-start', () => {
+            this._boundSafeMode = () => {
                 if (this.currentLodLevel !== 'low') {
                     console.log("[Visualizer] Safe Mode: Dropping LOD to 'low'.");
                     this.degradeLOD();
                     this.degradeLOD();
                 }
-            });
+            };
+            window.addEventListener('mindwave:safe-mode-start', this._boundSafeMode);
 
             // Page Visibility API - Battery Saver
-            document.addEventListener('visibilitychange', () => {
+            this._boundVisibilityChange = () => {
                 if (document.hidden) {
                     console.log('[Visualizer] Tab hidden, pausing render loop to save battery.');
                 } else {
@@ -177,16 +181,19 @@ export class Visualizer3D {
                         this.render(state.analyserLeft, state.analyserRight);
                     }
                 }
-            });
+            };
+            document.addEventListener('visibilitychange', this._boundVisibilityChange);
 
             // WebGL Context Loss Recovery — avoids permanent black screen on GPU crash
-            canvas.addEventListener('webglcontextlost', (e) => {
+            this._boundContextLost = (e) => {
                 e.preventDefault();
                 console.warn('[Visualizer] WebGL context LOST. Halting render loop.');
                 this.active = false;
                 if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
-            });
-            canvas.addEventListener('webglcontextrestored', () => {
+            };
+            canvas.addEventListener('webglcontextlost', this._boundContextLost);
+            
+            this._boundContextRestored = () => {
                 console.log('[Visualizer] WebGL context RESTORED. Reinitializing...');
                 try {
                     this.initialized = false;
@@ -196,18 +203,22 @@ export class Visualizer3D {
                     this.initialized = true;
                     this.active = true;
                     this.lastTime = performance.now() * 0.001;
+                    // Ensure only one loop is active
+                    if (state.animationId) cancelAnimationFrame(state.animationId);
+                    this._isRendering = false; 
                     this.render(state.analyserLeft, state.analyserRight);
                 } catch (err) {
                     console.error('[Visualizer] Failed to recover from context loss:', err);
                 }
-            });
+            };
+            canvas.addEventListener('webglcontextrestored', this._boundContextRestored);
 
             // Initial sizing
             this.resize();
             setTimeout(this.handleLayoutChange, 100); // Delay slightly for DOM to settle
 
             // Theme Tracking for Adaptive Logo
-            window.addEventListener('themeChanged', (e) => {
+            this._boundThemeChange = (e) => {
                 if (e.detail && e.detail.type) {
                     const newType = e.detail.type;
                     if (this.themeType !== newType) {
@@ -216,7 +227,8 @@ export class Visualizer3D {
                         this.updateLogoTexture();
                     }
                 }
-            });
+            };
+            window.addEventListener('themeChanged', this._boundThemeChange);
 
             this.speedMultiplier = 1.0;
             this.brightnessMultiplier = 1.0;
@@ -429,23 +441,27 @@ export class Visualizer3D {
         this.matrixCyberStreams.forEach((stream, streamIndex) => {
             stream.y += stream.baseSpeed * speedMult;
             let visibleLength = Math.max(3, Math.floor(baseVisibleLength * lengthMult));
-            if (this.isLowPower) visibleLength = Math.floor(visibleLength * 0.6); // Reduce vertical draw calls
+            
+            // AGGRESSIVE OPTIMIZATION: Reduce draw calls by 50% in low power or high density
+            if (this.isLowPower || this.currentLodLevel === 'low') {
+                visibleLength = Math.floor(visibleLength * 0.4); 
+            }
 
             if (stream.y - (visibleLength * stream.size) > canvas.height * 1.5) {
-                // Fix major glitch gap: wrap perfectly so the head spawns exactly at the top of the canvas
                 stream.y = 0;
             }
 
             const alphanumericPool = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-            // Only trigger expensive context state change if size physically changes
             if (stream.size !== lastSize) {
                 ctx.font = `${stream.size}px monospace`;
                 lastSize = stream.size;
             }
 
-            for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
-                // FLICKER EFFECT: make random characters change to feel alive like the real Cyber!
+            // Draw only every 2nd character in extreme low power to save 50% fillText calls
+            const step = (this.isLowPower && this.currentLodLevel === 'low') ? 2 : 1;
+
+            for (let i = 0; i < visibleLength && i < stream.chars.length; i += step) {
                 if (!stream.isTextMode && Math.random() < 0.02) {
                     stream.chars[i] = alphanumericPool.charAt(Math.floor(Math.random() * alphanumericPool.length));
                 }
@@ -455,7 +471,6 @@ export class Visualizer3D {
                 if (charY < -stream.size * 2 || charY > canvas.height * 1.5) continue;
 
                 const relativePos = 1 - (i / visibleLength);
-                // Increased base alpha for better visibility
                 const alpha = Math.pow(relativePos, 0.4) * (stream.opacity * 1.2);
 
                 ctx.globalAlpha = Math.min(1.0, alpha);
@@ -466,12 +481,6 @@ export class Visualizer3D {
                 } else {
                     ctx.fillStyle = stream.color || this.cyberColor;
                 }
-
-                // PERFORMANCE: Disable shadows for stability on macOS
-                // if (!this.batterySaver) {
-                //    ctx.shadowBlur = 4;
-                //    ctx.shadowColor = ctx.fillStyle;
-                // }
 
                 ctx.fillText(char, stream.x, charY);
             }
@@ -521,63 +530,104 @@ export class Visualizer3D {
             positions[i] = (Math.random() - 0.5) * 80;
         }
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const material = new THREE.PointsMaterial({
-            color: 0x2dd4bf,
-            size: 0.15,
+        this.lightspeedMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSpeed: { value: 1.0 },
+                uColor: { value: new THREE.Color(0x2dd4bf) },
+                uTexture: { value: this.createCircleTexture() }
+            },
+            vertexShader: `
+                uniform float uTime, uSpeed;
+                void main() {
+                    vec3 pos = position;
+                    pos.z = mod(pos.z + uTime * uSpeed * 20.0 + 40.0, 80.0) - 40.0;
+                    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = 15.0 / -mv.z;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor;
+                uniform sampler2D uTexture;
+                void main() {
+                    vec4 tex = texture2D(uTexture, gl_PointCoord);
+                    if (tex.a < 0.1) discard;
+                    gl_FragColor = vec4(uColor, tex.a * 0.8);
+                }
+            `,
             transparent: true,
-            opacity: 0.8,
-            map: this.createCircleTexture()
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
         });
-        this.lightspeed = new THREE.Points(geometry, material);
+        this.lightspeed = new THREE.Points(geometry, this.lightspeedMaterial);
         this.lightspeedGroup.add(this.lightspeed);
     }
 
     initParticles() {
         // Flow mode: streaming particles through space
-        // OPTIMIZATION: Reduce particle count for stability
-        const count = this.batterySaver ? 300 : 800;
+        const count = this.batterySaver ? 400 : 1000;
         const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        const colors = [];
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
-            positions.push((Math.random() - 0.5) * 60); // x
-            positions.push((Math.random() - 0.5) * 60); // y
-            positions.push((Math.random() - 0.5) * 80); // z - deeper
+            const i3 = i * 3;
+            positions[i3] = (Math.random() - 0.5) * 60;
+            positions[i3+1] = (Math.random() - 0.5) * 60;
+            positions[i3+2] = (Math.random() - 0.5) * 80;
 
-            // Vary colors: cyan, blue, purple, white
             const t = Math.random();
             if (t < 0.3) {
-                colors.push(0.4, 0.7, 1.0); // blue
+                colors[i3] = 0.4; colors[i3+1] = 0.7; colors[i3+2] = 1.0;
             } else if (t < 0.6) {
-                colors.push(0.3, 0.9, 0.95); // cyan
+                colors[i3] = 0.3; colors[i3+1] = 0.9; colors[i3+2] = 0.95;
             } else if (t < 0.85) {
-                colors.push(0.6, 0.4, 1.0); // purple
+                colors[i3] = 0.6; colors[i3+1] = 0.4; colors[i3+2] = 1.0;
             } else {
-                colors.push(0.9, 0.9, 1.0); // white
+                colors[i3] = 0.9; colors[i3+1] = 0.9; colors[i3+2] = 1.0;
             }
         }
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-        const material = new THREE.PointsMaterial({
-            size: 0.4,
-            vertexColors: true,
-            map: this.createCircleTexture(),
+        this.particleMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSpeed: { value: 1.0 },
+                uSize: { value: 0.4 },
+                uTexture: { value: this.createCircleTexture() }
+            },
+            vertexShader: `
+                varying vec3 vColor;
+                uniform float uTime, uSpeed;
+                attribute vec3 color;
+                void main() {
+                    vColor = color;
+                    vec3 pos = position;
+                    // Move in Z direction and wrap
+                    pos.z = mod(pos.z + uTime * uSpeed * 20.0 + 40.0, 80.0) - 40.0;
+                    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = 40.0 / -mv.z;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                uniform sampler2D uTexture;
+                void main() {
+                    vec4 tex = texture2D(uTexture, gl_PointCoord);
+                    if (tex.a < 0.1) discard;
+                    gl_FragColor = vec4(vColor, tex.a);
+                }
+            `,
             transparent: true,
-            opacity: 0.9,
             blending: THREE.AdditiveBlending,
-            depthWrite: false,
-            sizeAttenuation: true
+            depthWrite: false
         });
 
-        this.particles = new THREE.Points(geometry, material);
+        this.particles = new THREE.Points(geometry, this.particleMaterial);
         this.particleGroup.add(this.particles);
         this.particleGroup.visible = false;
-
-        const parColor = this.customColors?.["particles"] || this.customColor;
-        if (parColor) {
-            this.particles.material.color.copy(parColor);
-        }
     }
 
     initBox() {
@@ -1237,19 +1287,19 @@ export class Visualizer3D {
         for (let i = 0; i < count; i++) {
             const i3 = i * 3;
             // Scatter across a wide area, full depth range for parallax
-            positions[i3]     = (Math.random() - 0.5) * 70;
-            positions[i3 + 1] = (Math.random() - 0.5) * 44;   // start anywhere vertically
-            positions[i3 + 2] = -20 + Math.random() * 30;      // deep to near (z parallax)
+            positions[i3]     = (Math.random() - 0.5) * 80;
+            positions[i3 + 1] = (Math.random() - 0.5) * 60;   // start anywhere vertically
+            positions[i3 + 2] = -40 + Math.random() * 35;      // Range -40 to -5 (Always in front of camera at z=5)
 
             // Snowflakes further back are smaller and dimmer
-            const depth = (positions[i3 + 2] + 20) / 30; // 0=far, 1=near
-            sizes[i]    = 2 + depth * 10;                  // 2..12
-            opacities[i] = 0.25 + depth * 0.65;           // 0.25..0.9
+            const depth = (positions[i3 + 2] + 40) / 35; // 0=far, 1=near
+            sizes[i]    = 1.5 + depth * 8;                  // 1.5..9.5
+            opacities[i] = 0.2 + depth * 0.6;           // 0.2..0.8
 
             phases[i]     = Math.random() * Math.PI * 2;
-            speeds[i]     = 0.012 + Math.random() * 0.035 + depth * 0.02; // near=faster
-            drifts[i]     = 0.008 + Math.random() * 0.016;
-            driftFreqs[i] = 0.3 + Math.random() * 0.7;
+            speeds[i]     = 0.015 + Math.random() * 0.04 + depth * 0.03; // near=faster
+            drifts[i]     = 0.01 + Math.random() * 0.02;
+            driftFreqs[i] = 0.4 + Math.random() * 0.8;
         }
 
         const geo = new THREE.BufferGeometry();
@@ -1262,7 +1312,7 @@ export class Visualizer3D {
         const mat = new THREE.ShaderMaterial({
             uniforms: {
                 uTexture:        { value: sfTex },
-                uColor:          { value: new THREE.Color(0xa5f3eb) }, // Default icy cyan
+                uColor:          { value: this.customColor ? this.customColor.clone() : new THREE.Color(0xa5f3eb) }, // Respect custom color
                 uIntensity:      { value: 0 },
                 uSizeMultiplier: { value: 1.0 },
                 uGlowAmount:     { value: 0.5 },
@@ -1289,9 +1339,9 @@ export class Visualizer3D {
                     vec4 tex = texture2D(uTexture, gl_PointCoord);
                     if (tex.a < 0.02) discard;
                     // Dynamically tinted base color
-                    vec3 baseCol = mix(uColor, vec3(1.0), uIntensity * 1.5);
+                    vec3 baseCol = mix(uColor, vec3(1.0), clamp(uIntensity, 0.0, 1.0));
                     float glowAlpha = tex.a * vOpacity * (0.5 + uGlowAmount * 1.2);
-                    vec3 finalCol = baseCol * (1.0 + uGlowAmount * uIntensity * 1.2);
+                    vec3 finalCol = baseCol * (1.0 + uGlowAmount * uIntensity * 1.5);
                     gl_FragColor = vec4(finalCol, clamp(glowAlpha, 0.0, 1.0));
                 }
             `,
@@ -1310,28 +1360,7 @@ export class Visualizer3D {
             spinMeshes: [], spinSpeeds: []
         };
 
-        // ADD 5 HERO SNOWFLAKES (Large, spinning center crystals)
-        for (let i = 0; i < 5; i++) {
-            const heroTex = this.createSnowflakeTexture();
-            const heroMat = new THREE.MeshBasicMaterial({
-                map: heroTex,
-                transparent: true,
-                side: THREE.DoubleSide,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                opacity: 0.6
-            });
-            const heroGeo = new THREE.PlaneGeometry(12 + i * 4, 12 + i * 4);
-            const heroMesh = new THREE.Mesh(heroGeo, heroMat);
-            heroMesh.renderOrder = 10;
-            heroMesh.position.set(0, 0, -10 + i * 2);
-            heroMesh.rotation.z = Math.random() * Math.PI;
-            this.snowflakeGroup.add(heroMesh);
-            this._snowData.spinMeshes.push(heroMesh);
-            this._snowData.spinSpeeds.push(0.002 * (i % 2 === 0 ? 1 : -1));
-        }
-
-        console.log('[Viz] ❄️ Real snowfall initialized —', count, 'crystals + 5 HEROES');
+        console.log('[Viz] ❄️ Real snowfall initialized —', count, 'crystals');
     }
 
     setSnowSize(mult) {
@@ -1345,6 +1374,31 @@ export class Visualizer3D {
         if (this._snowData?.material) {
             this._snowData.material.uniforms.uGlowAmount.value = Math.max(0.0, Math.min(1.0, amount));
             console.log('[Viz] Snow Glow Override:', amount);
+        }
+    }
+
+    setCymaticIntensity(val) {
+        this._cymaticIntensityOverride = val;
+        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uIntensity) {
+            this.cymaticMaterial.uniforms.uIntensity.value = val;
+        }
+    }
+
+    setCymaticHarmonics(val) {
+        state.harmonicsLevel = val;
+        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uHarmonics) {
+            this.cymaticMaterial.uniforms.uHarmonics.value = val;
+        }
+    }
+
+    setSnowColor(hex) {
+        if (this._snowData?.material) {
+            this._snowData.material.uniforms.uColor.value.set(hex);
+        }
+        if (this._snowData?.spinMeshes) {
+            this._snowData.spinMeshes.forEach(m => {
+                if (m.material) m.material.color.set(hex);
+            });
         }
     }
 
@@ -1380,7 +1434,14 @@ export class Visualizer3D {
             { name: "Quantum Foam", n: 5, m: 13, cat:'complex' },
             { name: "Singularity", n: 20, m: 2, cat:'complex' },
             { name: "Prime Prime", n: 13, m: 17, cat:'complex' },
-            { name: "Metatron's Grid", n: 6, m: 12, cat:'sacred' }
+            { name: "Metatron's Grid", n: 6, m: 12, cat:'sacred' },
+            // ADVANCED FORM (Tier 2 - Hyper Resonance)
+            { name: "Aetheric Weaver", n: 11, m: 11, type: 4, cat:'advanced' },
+            { name: "Neural Singularity", n: 15, m: 5, type: 4, cat:'advanced' },
+            { name: "Chronos Vortex", n: 7, m: 14, type: 4, cat:'advanced' },
+            { name: "Void Fractal", n: 22, m: 22, type: 4, cat:'advanced' },
+            { name: "Crystalline Pulse", n: 9, m: 18, type: 4, cat:'advanced' },
+            { name: "Stellar Loom", n: 13, m: 3, type: 4, cat:'advanced' }
         ];
     }
 
@@ -1409,7 +1470,7 @@ export class Visualizer3D {
                     uBassM: { value: 1.0 },
                     uHighN: { value: 5.0 },
                     uHighM: { value: 5.0 },
-                    uType: { value: 0 },
+                    uType: { value: (this.currentCymaticData ? (this.currentCymaticData.type || 0) : 0) },
                     uEnergy: { value: 0.5 },
                     uTime: { value: 0 },
                     uIntensity: { value: 0.5 },
@@ -1426,7 +1487,7 @@ export class Visualizer3D {
                     uMouseActive: { value: 0.0 },
                     uResonance: { value: (state.cymaticResonance ?? 1.0) },
                     uEntropy: { value: (state.cymaticEntropy ?? 1.0) },
-                    uFlowSpeed: { value: (state.cymaticFlow ?? 1.0) }
+                    uFlow: { value: (state.cymaticFlow ?? 1.0) }
                 },
                 vertexShader: `
                     varying vec2 vUv;
@@ -1465,7 +1526,7 @@ export class Visualizer3D {
                     uniform vec3 uColor, uSecondaryColor;
                     uniform vec2 uResolution;
                     uniform vec2 uMouse;
-                    uniform float uMouseActive, uResonance, uEntropy, uFlowSpeed;
+                    uniform float uMouseActive, uResonance, uEntropy, uFlow;
 
                     #define PI 3.14159265359
 
@@ -1518,7 +1579,7 @@ export class Visualizer3D {
                         float aspect = uResolution.x / uResolution.y;
                         uv.x *= aspect;
 
-                        float t = uTime * uFlowSpeed;
+                        float t = uTime * uFlow;
                         // Ambient Flow Field mapping (Constant organic motion even when silent)
                         vec2 p = flowWarp(uv, t * 0.5 * uEntropy);
 
@@ -1562,13 +1623,22 @@ export class Visualizer3D {
                             float phyll = sin(r - a * m_eff) * cos(r * 0.1 + a * 2.0);
                             f = phyll * (1.0 - smoothstep(1.5, 2.0, length(p)));
                         }
-                        else { 
+                        else if (uType < 3.5) { 
                             // 3.0: COMPLEX / DOMAIN WARP (Deep Fluid Organic Convection - Image 4)
                             vec2 q = p + vec2(cos(t * 0.1), sin(t * 0.15)) * 0.5;
                             float n1 = noise(q * (n_eff * 0.1) + t * 0.2);
                             float n2 = noise(q * (m_eff * 0.1) - t * 0.1);
                             vec2 warp = p + vec2(cos(n1 * PI * uEntropy), sin(n2 * PI * uEntropy)) * 0.8;
                             f = sin(length(warp) * 15.0 + n1 * 8.0);
+                        }
+                        else {
+                            // 4.0: ADVANCED / HYPER-RESONANCE (Dimensional Folding & Cross-Feedback)
+                            vec2 q = apollonianFold(p * 0.5, 0.4 + uEntropy * 0.2);
+                            float n1 = chladniBase(q, n_eff, m_eff);
+                            float n2 = chladniBase(q.yx, m_eff * 0.5, n_eff * 1.5);
+                            f = n1 * n2 * 2.0;
+                            // Add recursive detail
+                            f += 0.3 * sin(length(q) * 20.0 - t * 4.0);
                         }
 
                         // TRUE RESONANCE PRESERVATION (Audio Transients & Reactivity)
@@ -1581,9 +1651,9 @@ export class Visualizer3D {
                         f += highRipples;
                         
                         // Interactive Ripple Disruption (Phase 3)
-                        float distToMouse = distance(uv, uMouse);
-                        float ripple = sin(distToMouse * 30.0 - t * 15.0) * exp(-distToMouse * 6.0) * uMouseActive * 0.4;
-                        f += ripple;
+                        float d2m = distance(uv, uMouse);
+                        float rip = sin(d2m * 30.0 - t * 15.0) * exp(-d2m * 6.0) * uMouseActive * 0.4;
+                        f += rip;
                         
                         float rawF = f;
                         f = abs(f);
@@ -1645,7 +1715,8 @@ export class Visualizer3D {
                     }
                 `,
                 transparent: true,
-                side: THREE.DoubleSide
+                side: THREE.DoubleSide,
+                extensions: { derivatives: true }
             });
 
             const mesh = new THREE.Mesh(geometry, this.cymaticMaterial);
@@ -1852,6 +1923,14 @@ export class Visualizer3D {
         this.lastCymaticRotation = performance.now();
     }
 
+    setCymaticByName(name) {
+        const pattern = Visualizer3D.CYMATIC_PATTERNS.find(p => p.name === name);
+        if (pattern) {
+            this.applyCymatic(pattern);
+            this.lastCymaticRotation = performance.now();
+        }
+    }
+
     setupCymaticsInteractions() {
         if (!this.renderer || !this.renderer.domElement) return;
         const canvas = this.renderer.domElement;
@@ -1886,15 +1965,25 @@ export class Visualizer3D {
     applyCymatic(data) {
         if (!data || !this.cymaticMaterial) return;
         this.currentCymaticData = data;
+        
+        // Sync UI if helper available
+        if (window.renderCymaticProPatterns) {
+            window.renderCymaticProPatterns();
+        }
+
         const u = this.cymaticMaterial.uniforms;
         u.uN.value = data.n;
         u.uM.value = data.m;
         
         // Map category to pattern type
         if (data.cat === 'sacred') u.uType.value = 0.0;
-        else if (data.cat === 'geometry') u.uType.value = 1.0;
-        else if (data.cat === 'radial') u.uType.value = 2.0;
-        else u.uType.value = 3.0; // complex
+        else if (data.cat === 'radial') u.uType.value = 1.0;
+        else if (data.cat === 'geometry') u.uType.value = 2.0;
+        else if (data.cat === 'complex') u.uType.value = 3.0;
+        else if (data.cat === 'advanced') u.uType.value = 4.0;
+        
+        // Manual override if type is explicitly set
+        if (data.type !== undefined) u.uType.value = data.type;
 
         u.uEnergy.value = data.energy || 0.5;
         
@@ -1936,6 +2025,8 @@ export class Visualizer3D {
             // Inject into all active materials for global override
             if (this.cymaticMaterial) this.cymaticMaterial.uniforms.uColor.value.copy(col);
             if (this._snowData?.material) this._snowData.material.uniforms.uColor.value.copy(col);
+            if (this.oceanWave?.material) this.oceanWave.material.uniforms.uColor.value.copy(col);
+            if (this.wavesMaterial) this.wavesMaterial.uniforms.uColor.value.copy(col);
             return;
         }
 
@@ -1945,7 +2036,10 @@ export class Visualizer3D {
         // Instant update if system is active
         if (mode === 'cymatics' && this.cymaticMaterial) this.cymaticMaterial.uniforms.uColor.value.copy(col);
         if (mode === 'snowflake' && this._snowData?.material) this._snowData.material.uniforms.uColor.value.copy(col);
-        if (mode === 'ocean' && this.waveMaterial) this.waveMaterial.uniforms.uColor.value.copy(col);
+        if ((mode === 'ocean' || mode === 'waves')) {
+            if (this.oceanWave?.material) this.oceanWave.material.uniforms.uColor.value.copy(col);
+            if (this.wavesMaterial) this.wavesMaterial.uniforms.uColor.value.copy(col);
+        }
     }
 
     setCymaticPatternByIndex(idx) {
@@ -1964,20 +2058,24 @@ export class Visualizer3D {
             this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
             this.applyCymatic(p);
             this.lastCymaticRotation = performance.now();
-        } else {
-            console.warn(`[Cymatics] Pattern at index ${idx} not found.`);
         }
     }
 
     setCymaticColor(hex) {
         this.currentCymaticColor = hex;
+        
+        // Sync UI if helper available
+        if (window.renderCymaticProPatterns) {
+            window.renderCymaticProPatterns();
+        }
+
         if (this.cymaticMaterial)
             this.cymaticMaterial.uniforms.uColor.value.set(hex);
     }
 
     setCymaticFreq(hz) {
-        if (this.cymaticMaterial)
-            this.cymaticMaterial.uniforms.uFreq.value = Math.max(0, Math.min(80, hz));
+        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uBeatFreq)
+            this.cymaticMaterial.uniforms.uBeatFreq.value = Math.max(0, Math.min(80, hz));
     }
 
     setCymaticTimer(seconds) {
@@ -2209,7 +2307,8 @@ export class Visualizer3D {
             uniforms: {
                 uTime: { value: 0 },
                 uColor: { value: new THREE.Color(0xff4400) }, // Base fire
-                uSpeed: { value: 1.0 }
+                uSpeed: { value: 1.0 },
+                uIntensity: { value: 1.0 }
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -2220,6 +2319,7 @@ export class Visualizer3D {
             `,
             fragmentShader: `
                 uniform float uTime;
+                uniform float uIntensity;
                 uniform vec3 uColor;
                 varying vec2 vUv;
 
@@ -2275,7 +2375,7 @@ export class Visualizer3D {
                     finalColor = mix(finalColor, white, core * 0.4);
                     
                     // Edge fade removed - Fill edges edge-to-edge
-                    gl_FragColor = vec4(finalColor, alpha);
+                    gl_FragColor = vec4(finalColor * uIntensity, alpha * min(1.0, uIntensity));
                 }
             `,
             transparent: true,
@@ -2287,90 +2387,190 @@ export class Visualizer3D {
 
     initRainforest() {
         // Rainforest: Falling raindrops
-        const dropCount = 800;
+        const count = this.batterySaver ? 400 : 1000;
         const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        const velocities = [];
+        const positions = new Float32Array(count * 3);
+        const randoms = new Float32Array(count * 3); // x, z, velocity
 
-        for (let i = 0; i < dropCount; i++) {
-            positions.push((Math.random() - 0.5) * 80);
-            positions.push(-20 + Math.random() * 40);
-            positions.push((Math.random() - 0.5) * 40);
+        for (let i = 0; i < count; i++) {
+            const i3 = i * 3;
+            positions[i3]   = (Math.random() - 0.5) * 60; // Initial x
+            positions[i3+1] = (Math.random() - 0.5) * 40; // Initial y
+            positions[i3+2] = (Math.random() - 0.5) * 40; // Initial z
 
-            velocities.push(0.08 + Math.random() * 0.12);
+            randoms[i3]   = Math.random(); // Hash seed x
+            randoms[i3+1] = Math.random(); // Hash seed z
+            randoms[i3+2] = 0.08 + Math.random() * 0.12; // Base velocity
         }
 
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        this.rainVelocities = new Float32Array(velocities);
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
 
-        const material = new THREE.PointsMaterial({
-            color: 0x88ccff,
-            size: 0.08,
+        this.rainMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSpeed: { value: 1.0 },
+                uColor: { value: new THREE.Color(0x88ccff) },
+                uIntensity: { value: 0.6 }
+            },
+            vertexShader: `
+                attribute vec3 aRandom;
+                uniform float uTime, uSpeed;
+                varying float vAlpha;
+                void main() {
+                    vec3 pos = position;
+                    float velocity = aRandom.z * uSpeed;
+                    
+                    // Vertical fall with wrap
+                    pos.y = mod(pos.y - uTime * velocity * 100.0 + 20.0, 40.0) - 20.0;
+                    
+                    // Subtle drift
+                    pos.x += sin(uTime * 0.5 + aRandom.x * 10.0) * 0.5;
+                    
+                    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = 2.0 * (300.0 / -mv.z);
+                    vAlpha = 1.0;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor;
+                uniform float uIntensity;
+                varying float vAlpha;
+                void main() {
+                    // Simple drop shape
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float dist = length(coord);
+                    if (dist > 0.5) discard;
+                    gl_FragColor = vec4(uColor, uIntensity * (1.0 - dist * 2.0));
+                }
+            `,
             transparent: true,
-            opacity: 0.6,
-            depthWrite: false
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
         });
 
-        this.raindrops = new THREE.Points(geometry, material);
+        this.raindrops = new THREE.Points(geometry, this.rainMaterial);
         this.rainforestGroup.add(this.raindrops);
         this.rainforestGroup.visible = false;
-
-        const rainCol = this.customColors?.["rain"] || this.customColor;
-        if (rainCol) {
-            this.raindrops.material.color.copy(rainCol);
-        }
-        console.log('[Visualizer] Rainforest initialized');
     }
 
     initZenGarden() {
-        const petalCount = 200;
+        // Zen Garden: Falling petals
+        const count = this.batterySaver ? 200 : 500;
         const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        const drifts = [];
+        const positions = new Float32Array(count * 3);
+        const randoms = new Float32Array(count * 3); // x, z, phase
 
-        for (let i = 0; i < petalCount; i++) {
-            positions.push((Math.random() - 0.5) * 80);
-            positions.push(-20 + Math.random() * 40);
-            positions.push((Math.random() - 0.5) * 40);
+        for (let i = 0; i < count; i++) {
+            const i3 = i * 3;
+            positions[i3]   = (Math.random() - 0.5) * 40;
+            positions[i3+1] = (Math.random() - 0.5) * 20;
+            positions[i3+2] = (Math.random() - 0.5) * 40;
 
-            drifts.push(Math.random() * Math.PI * 2);
+            randoms[i3]   = Math.random();
+            randoms[i3+1] = Math.random();
+            randoms[i3+2] = Math.random() * Math.PI * 2;
         }
 
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        this.petalDrifts = new Float32Array(drifts);
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
 
-        const material = new THREE.PointsMaterial({
-            color: 0xffb3d9,
-            size: 0.2,
-            map: this.createCircleTexture(),
+        this.petalMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSpeed: { value: 1.0 },
+                uColor: { value: new THREE.Color(0xffb7c5) }, // Sakura Pink
+                uIntensity: { value: 0.8 }
+            },
+            vertexShader: `
+                attribute vec3 aRandom;
+                uniform float uTime, uSpeed;
+                varying float vAlpha;
+                void main() {
+                    vec3 pos = position;
+                    float t = uTime * uSpeed;
+                    
+                    // Falling with drift
+                    pos.y = mod(pos.y - t * 2.0 + 10.0, 20.0) - 10.0;
+                    pos.x += sin(t + aRandom.z) * 2.0;
+                    pos.z += cos(t * 0.8 + aRandom.x) * 2.0;
+                    
+                    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    gl_PointSize = 4.0 * (300.0 / -mv.z);
+                    vAlpha = 1.0;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor;
+                uniform float uIntensity;
+                void main() {
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float dist = length(coord);
+                    if (dist > 0.5) discard;
+                    gl_FragColor = vec4(uColor, uIntensity * (1.0 - dist * 2.0));
+                }
+            `,
             transparent: true,
-            opacity: 0.7,
-            blending: THREE.AdditiveBlending,
             depthWrite: false
         });
 
-        this.petals = new THREE.Points(geometry, material);
+        this.petals = new THREE.Points(geometry, this.petalMaterial);
         this.zenGardenGroup.add(this.petals);
-        this.zenGardenGroup.visible = false;
 
-        const sakuraCol = this.customColors?.["sakura"] || this.customColor;
-        if (sakuraCol) {
-            this.petals.material.color.copy(sakuraCol);
-        }
-        console.log('[Visualizer] Zen Garden initialized');
+        // Plane for water/sand ripples
+        const planeGeo = new THREE.PlaneGeometry(40, 40, 32, 32);
+        this.zenWaterMaterial = new THREE.MeshBasicMaterial({
+            color: 0x224466,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        this.zenWater = new THREE.Mesh(planeGeo, this.zenWaterMaterial);
+        this.zenWater.rotation.x = -Math.PI / 2;
+        this.zenWater.position.y = -5;
+        this.zenGardenGroup.add(this.zenWater);
+
+        this.zenGardenGroup.visible = false;
+        console.log('[Visualizer] Zen Garden initialized (Shader Mode)');
     }
 
     initOcean() {
         // Ocean: High-density wireframe grid for "Infinite" digital waves
         const waveGeo = new THREE.PlaneGeometry(300, 100, 128, 64);
-        const waveMat = new THREE.MeshBasicMaterial({
-            color: 0x00aaff,
+        this.oceanWave = new THREE.Mesh(waveGeo, new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uColor: { value: this.customColor ? this.customColor.clone() : new THREE.Color(0x00aaff) },
+                uNormBass: { value: 0 },
+                uBeatPulse: { value: 0 }
+            },
+            vertexShader: `
+                varying float vDist;
+                uniform float uTime, uNormBass, uBeatPulse;
+                void main() {
+                    vec3 pos = position;
+                    float dist = length(pos.xy);
+                    vDist = dist;
+                    float amp = 1.0 + (uNormBass * 2.5) + (uBeatPulse * 0.8);
+                    pos.z = sin(dist * 0.2 - uTime * 0.8) * amp + cos(pos.x * 0.15 + uTime * 0.6) * (amp * 0.5);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying float vDist;
+                uniform vec3 uColor;
+                uniform float uNormBass;
+                void main() {
+                    float edge = 1.0 - smoothstep(100.0, 150.0, vDist);
+                    gl_FragColor = vec4(uColor, 0.4 * edge);
+                }
+            `,
             wireframe: true,
             transparent: true,
-            opacity: 0.4,
             side: THREE.DoubleSide
-        });
-        this.oceanWave = new THREE.Mesh(waveGeo, waveMat);
+        }));
         this.oceanWave.rotation.x = -Math.PI / 3;
         this.oceanWave.position.y = -2;
         this.oceanGroup.add(this.oceanWave);
@@ -2701,23 +2901,25 @@ export class Visualizer3D {
         // Profiling to find the 5s bottleneck
         const tLabel = `[VizInit] ${mode}`;
         console.time(tLabel);
-        if (mode === 'sphere' && this.sphereGroup && this.sphereGroup.children.length === 0) this.initSphere();
-        if (mode === 'particles' && this.particleGroup && this.particleGroup.children.length === 0) this.initParticles();
-        if (mode === 'lightspeed' && this.lightspeedGroup && this.lightspeedGroup.children.length === 0) this.initLightspeed();
-        if (mode === 'waves' && this.wavesGroup && this.wavesGroup.children.length === 0) this.initWaves();
-        if (mode === 'lava' && this.lavaGroup && this.lavaGroup.children.length === 0) this.initLava();
-        if (mode === 'fireplace' && this.fireplaceGroup && this.fireplaceGroup.children.length === 0) this.initFireplace();
-        if (mode === 'rainforest' && this.rainforestGroup && this.rainforestGroup.children.length === 0) this.initRainforest();
-        if (mode === 'zengarden' && this.zenGardenGroup && this.zenGardenGroup.children.length === 0) this.initZenGarden();
-        if (mode === 'ocean' && this.oceanGroup && this.oceanGroup.children.length === 0) this.initOcean();
-        if ((mode === 'cyber' || mode === 'matrix') && this.cyberGroup && this.cyberGroup.children.length === 0) this.initCyber();
-        if (mode === 'box' && this.boxGroup && this.boxGroup.children.length === 0) this.initBox();
-        if (mode === 'dragon' && this.dragonGroup && this.dragonGroup.children.length === 0) this.initDragon();
-        if (mode === 'galaxy' && this.galaxyGroup && this.galaxyGroup.children.length === 0) this.initGalaxy();
-        if (mode === 'mandala' && this.mandalaGroup && this.mandalaGroup.children.length === 0) this.initMandala();
-        if (mode === 'snowflake' && this.snowflakeGroup && this.snowflakeGroup.children.length === 0) this.initSnowflake();
-        if (mode === 'cymatics' && this.cymaticsGroup && this.cymaticsGroup.children.length === 0) this.initCymatics();
-        if (mode === 'waves' && this.wavesGroup && this.wavesGroup.children.length === 0) this.initWaves();
+        
+        // Safety: If group doesn't exist, we must call init to create it
+        if (mode === 'sphere' && (!this.sphereGroup || this.sphereGroup.children.length === 0)) this.initSphere();
+        if (mode === 'particles' && (!this.particleGroup || this.particleGroup.children.length === 0)) this.initParticles();
+        if (mode === 'lightspeed' && (!this.lightspeedGroup || this.lightspeedGroup.children.length === 0)) this.initLightspeed();
+        if (mode === 'waves' && (!this.wavesGroup || this.wavesGroup.children.length === 0)) this.initWaves();
+        if (mode === 'lava' && (!this.lavaGroup || this.lavaGroup.children.length === 0)) this.initLava();
+        if (mode === 'fireplace' && (!this.fireplaceGroup || this.fireplaceGroup.children.length === 0)) this.initFireplace();
+        if (mode === 'rainforest' && (!this.rainforestGroup || this.rainforestGroup.children.length === 0)) this.initRainforest();
+        if (mode === 'zengarden' && (!this.zenGardenGroup || this.zenGardenGroup.children.length === 0)) this.initZenGarden();
+        if (mode === 'ocean' && (!this.oceanGroup || this.oceanGroup.children.length === 0)) this.initOcean();
+        if ((mode === 'cyber' || mode === 'matrix') && (!this.cyberGroup || this.cyberGroup.children.length === 0)) this.initCyber();
+        if (mode === 'box' && (!this.boxGroup || this.boxGroup.children.length === 0)) this.initBox();
+        if (mode === 'dragon' && (!this.dragonGroup || this.dragonGroup.children.length === 0)) this.initDragon();
+        if (mode === 'galaxy' && (!this.galaxyGroup || this.galaxyGroup.children.length === 0)) this.initGalaxy();
+        if (mode === 'mandala' && (!this.mandalaGroup || this.mandalaGroup.children.length === 0)) this.initMandala();
+        if (mode === 'snowflake' && (!this.snowflakeGroup || this.snowflakeGroup.children.length === 0)) this.initSnowflake();
+        if (mode === 'cymatics' && (!this.cymaticsGroup || this.cymaticsGroup.children.length === 0)) this.initCymatics();
+        
         console.timeEnd(tLabel);
     }
 
@@ -2725,12 +2927,17 @@ export class Visualizer3D {
         while (this.cyberGroup.children.length > 0) {
             const child = this.cyberGroup.children[0];
             this.cyberGroup.remove(child);
-            if (child.geometry) child.geometry.dispose();
-            if (child.material) child.material.dispose();
+            if (child.material) {
+                if (child.material.map) child.material.map.dispose();
+                child.material.dispose();
+            }
             if (child.children) {
                 child.traverse((c) => {
                     if (c.geometry) c.geometry.dispose();
-                    if (c.material) c.material.dispose();
+                    if (c.material) {
+                        if (c.material.map) c.material.map.dispose();
+                        c.material.dispose();
+                    }
                 });
             }
         }
@@ -2823,8 +3030,10 @@ export class Visualizer3D {
             this.cyberMaterial.uniforms.uTexture.value = newTexture;
             this.cyberMaterial.needsUpdate = true;
             if (oldTex) oldTex.dispose();
+        } else {
+            // Only init if not already present or if we need a full rebuild
+            this.initCyber();
         }
-        this.initCyber();
     }
 
     setMode(mode) {
@@ -2865,12 +3074,12 @@ export class Visualizer3D {
         if (this.activeModes.has(target)) {
             this.activeModes.delete(target);
         } else {
-            // --- NON-DESTRUCTIVE EXCLUSIVITY ---
+            // --- EXCLUSIVITY ---
             if (target === 'cymatics') {
-                console.log('[Engine] Cymatics engaged');
-                // We keep Snowflake if both are wanted, but usually Cymatics covers the screen
-            } else if (this.activeModes.has('cymatics') && target !== 'snowflake') {
-                 // Only clear cymatics if entering a fundamental base mode like galaxy/dragon
+                console.log('[Engine] Cymatics engaged - clearing other modes');
+                this.activeModes.clear();
+            } else if (this.activeModes.has('cymatics')) {
+                 // Clear cymatics if entering any other mode
                  this.activeModes.delete('cymatics');
             }
             this.activeModes.add(target);
@@ -2883,10 +3092,12 @@ export class Visualizer3D {
         // Ensure dependents are initialized
         this.activeModes.forEach(m => this.ensureInitialized(m));
 
-        // BRUTE FORCE LOOP RESTART
-        if (this.initialized && this.active) {
-            if (state.animationId) cancelAnimationFrame(state.animationId);
-            state.animationId = null;
+        // SAFE LOOP START
+        if (this.initialized && this.active && !this._isRendering) {
+            if (state.animationId) {
+                cancelAnimationFrame(state.animationId);
+                state.animationId = null;
+            }
             this.render();
         }
 
@@ -2934,11 +3145,11 @@ export class Visualizer3D {
         if (this.particleGroup) this.particleGroup.visible = this.activeModes.has('particles');
         if (this.lightspeedGroup) this.lightspeedGroup.visible = this.activeModes.has('lightspeed');
         if (this.wavesGroup) this.wavesGroup.visible = this.activeModes.has('waves');
+        if (this.oceanGroup) this.oceanGroup.visible = this.activeModes.has('ocean');
         if (this.lavaGroup) this.lavaGroup.visible = this.activeModes.has('lava');
         if (this.fireplaceGroup) this.fireplaceGroup.visible = this.activeModes.has('fireplace');
         if (this.rainforestGroup) this.rainforestGroup.visible = this.activeModes.has('rainforest');
         if (this.zenGardenGroup) this.zenGardenGroup.visible = this.activeModes.has('zengarden');
-        if (this.oceanGroup) this.oceanGroup.visible = this.activeModes.has('ocean');
         if (this.boxGroup) this.boxGroup.visible = this.activeModes.has('box');
         if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
         if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
@@ -2985,30 +3196,21 @@ export class Visualizer3D {
             }
         }
 
-        if (this.boxGroup) this.boxGroup.visible = this.activeModes.has('box');
-        if (this.dragonGroup) this.dragonGroup.visible = this.activeModes.has('dragon');
-        if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
-        if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
         if (this.cymaticsGroup) {
             this.cymaticsGroup.visible = this.activeModes.has('cymatics');
-            this.cymaticsGroup.position.z = 2.0; // Bring closer to camera for dominance
+            this.cymaticsGroup.position.z = 2.0; 
         }
-        if (this.snowflakeGroup) this.snowflakeGroup.visible = this.activeModes.has('snowflake');
 
         this.updateUIPanels();
     }
 
-    // New helper to update Sidebar VISUALS tab
+    // New helper to update HUD state (Panels are now managed by controls_v3.js)
     updateUIPanels() {
-        const panels = ['galaxyPanel', 'matrixPanel', 'cymaticsPanel'];
-        panels.forEach(p => {
-            const el = document.getElementById(p);
-            if (el) el.classList.add('hidden');
-        });
-
-        if (this.activeModes.has('galaxy')) document.getElementById('galaxyPanel')?.classList.remove('hidden');
-        if (this.activeModes.has('interstellar') || this.activeModes.has('matrix')) document.getElementById('matrixPanel')?.classList.remove('hidden');
-        if (this.activeModes.has('cymatics')) document.getElementById('cymaticsPanel')?.classList.remove('hidden');
+        // UI Panels are now persistent and managed by window.updateConfigPanel()
+        // based on activeModes and user state. We don't hide them blindly here.
+        if (typeof window.updateConfigPanel === 'function') {
+            window.updateConfigPanel();
+        }
     }
 
     updateLabel(mode) {
@@ -3017,12 +3219,11 @@ export class Visualizer3D {
             if (mode === 'sphere') label.textContent = "BIO-RESONANCE";
             else if (mode === 'particles') label.textContent = "NEURAL FLOW";
             else if (mode === 'lightspeed') label.textContent = "WARP";
-            else if (mode === 'waves') label.textContent = "WAVES";
+            else if (mode === 'waves' || mode === 'ocean') label.textContent = "OCEAN";
             else if (mode === 'lava') label.textContent = "LAVA LAMP";
             else if (mode === 'fireplace') label.textContent = "FIREPLACE";
             else if (mode === 'rainforest') label.textContent = "RAINFOREST";
             else if (mode === 'zengarden') label.textContent = "ZEN GARDEN";
-            else if (mode === 'ocean') label.textContent = "OCEAN";
             else if (mode === 'cymatics') label.textContent = "CYMATICS";
             else if (mode === 'cyber') label.textContent = "CYBER";
             else if (mode === 'matrix') label.textContent = "MATRIX";
@@ -3059,7 +3260,7 @@ export class Visualizer3D {
             vertexShader: `
                 varying vec2 vUv;
                 varying float vElevation;
-                varying vec3 vNormal;
+                varying vec3 vViewPosition;
                 uniform float uTime, uNormBass;
                 
                 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
@@ -3089,20 +3290,23 @@ export class Visualizer3D {
                     pos.z += audioDisp;
 
                     vElevation = pos.z;
-                    // Approximate normal for lighting
-                    vNormal = normalize(vec3(-dFdx(pos.z), -dFdy(pos.z), 1.0));
                     
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                    vViewPosition = -mvPosition.xyz;
+                    gl_Position = projectionMatrix * mvPosition;
                 }
             `,
             fragmentShader: `
                 varying vec2 vUv;
                 varying float vElevation;
-                varying vec3 vNormal;
+                varying vec3 vViewPosition;
                 uniform vec3 uColor, uSecondaryColor;
                 uniform float uNormBass, uTime;
 
                 void main() {
+                    // Derive normal from view position derivatives
+                    vec3 fNormal = normalize(cross(dFdx(vViewPosition), dFdy(vViewPosition)));
+                    
                     // Deep sea gradient
                     float depth = smoothstep(-2.0, 4.0, vElevation);
                     vec3 deepCol = mix(uColor * 0.2, uColor, depth);
@@ -3111,7 +3315,7 @@ export class Visualizer3D {
                     vec3 col = mix(deepCol, shallowCol, depth);
                     
                     // Specular Highlights (Bioluminescent cresting)
-                    float spec = pow(max(vNormal.z, 0.0), 32.0);
+                    float spec = pow(max(fNormal.z, 0.0), 32.0);
                     col += spec * (0.4 + uNormBass * 0.8) * uSecondaryColor;
                     
                     // Dynamic Foam / Bioluminescence
@@ -3126,13 +3330,14 @@ export class Visualizer3D {
             `,
             transparent: true,
             wireframe: false,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            extensions: { derivatives: true }
         });
 
         this.wavesMesh = new THREE.Mesh(geometry, this.wavesMaterial);
-        this.wavesMesh.rotation.x = -Math.PI / 2.8;
-        this.wavesMesh.position.y = -8;
-        this.wavesMesh.position.z = -15;
+        this.wavesMesh.rotation.x = -Math.PI / 2.2; // Tilted more towards camera
+        this.wavesMesh.position.y = -5;
+        this.wavesMesh.position.z = -10; // Brought closer
         this.wavesGroup.add(this.wavesMesh);
     }
 
@@ -3234,6 +3439,9 @@ export class Visualizer3D {
             if (this.cymaticMaterial && this.cymaticMaterial.uniforms?.uColor) {
                 this.cymaticMaterial.uniforms.uColor.value.set(hex);
             }
+            if (mode === 'snowflake' || !mode || mode === 'all') {
+                this.setSnowColor(hex);
+            }
             if (this._snowData?.material?.uniforms?.uColor) {
                 this._snowData.material.uniforms.uColor.value.set(hex);
             }
@@ -3268,10 +3476,20 @@ export class Visualizer3D {
     }
 
     render(analyserL, analyserR) {
-        if (!this.initialized || !this.renderer || document.hidden) return;
+        if (!this.initialized || !this.renderer || document.hidden || !this.active) {
+            this._isRendering = false;
+            return;
+        }
+
+        // Hardened mutex: prevent multiple concurrent loops
+        if (this._isRendering && typeof analyserL === 'number') return;
+        this._isRendering = true;
 
         try {
-            if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
+            if (typeof analyserL === 'number' || (!analyserL && state.analyserLeft)) {
+                analyserL = state.analyserLeft;
+                analyserR = state.analyserRight;
+            }
 
             let normBass = 0, normMids = 0, normHighs = 0;
             if (analyserL) {
@@ -3288,7 +3506,7 @@ export class Visualizer3D {
                 normHighs = (highs / 200) / 255;
             }
 
-            const multiplier = this.speedMultiplier || 1.0;
+            const multiplier = Math.max(0.001, this.speedMultiplier || 1.0);
             const now = performance.now() * 0.001;
             if (!this.lastTime) this.lastTime = now;
             const dt = Math.min(0.1, now - this.lastTime);
@@ -3297,8 +3515,24 @@ export class Visualizer3D {
             const visualBeatFreq = state.visualSpeedAuto ? (state.beatFrequency || 10) : (multiplier * 10);
             const beatPulse = (Math.sin(now * Math.PI * 2 * visualBeatFreq) * 0.5) + 0.5;
             const vFactor = this.vibrationEnabled ? 1.0 : 0.0;
-            const vBeatPulse = beatPulse * vFactor;
-            const vNormBass = normBass * vFactor;
+            const vBeatPulse = (beatPulse || 0) * vFactor;
+            const vNormBass = (normBass || 0) * vFactor;
+
+            // ── Universal Vibration Shake ──────────────────────────────────
+            const shakeIntensity = vFactor * (0.02 + vNormBass * 0.15 + vBeatPulse * 0.08);
+            const shakeX = (Math.sin(now * 47.3) * Math.cos(now * 31.7)) * shakeIntensity;
+            const shakeY = (Math.cos(now * 53.1) * Math.sin(now * 29.3)) * shakeIntensity;
+            const shakeZ = (Math.sin(now * 37.9) * Math.cos(now * 43.1)) * shakeIntensity;
+
+            const shakeTargets = [
+                this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup,
+                this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup, this.oceanGroup,
+                this.wavesGroup, this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
+                this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup
+            ];
+            for (const target of shakeTargets) {
+                if (target) target.position.set(shakeX, shakeY, shakeZ);
+            }
 
             // ── Update Logic for all active modes ──────────────────────────
             if (this.activeModes.has('galaxy') && this.galaxyGroup) {
@@ -3331,18 +3565,27 @@ export class Visualizer3D {
                 this.sphere.scale.setScalar(1.0 + (vNormBass * 0.15));
                 this.sphere.rotation.y += 0.005 * multiplier;
             }
-            if (this.activeModes.has('particles') && this.particles) {
-                const flowSpeed = (0.015 * multiplier) + (vNormBass * 0.08);
-                const pos = this.particles.geometry.attributes.position.array;
-                for (let i = 2; i < pos.length; i += 3) {
-                    pos[i] += flowSpeed * 10;
-                    if (pos[i] > 40) pos[i] = -40;
-                }
-                this.particles.geometry.attributes.position.needsUpdate = true;
+            if (this.activeModes.has('particles') && this.particleMaterial) {
+                const envFlow = window.MindWaveState?.envIntensities?.flow ?? 1.0;
+                const flowSpeed = ((0.015 * multiplier) + (vNormBass * 0.08) + (vBeatPulse * 0.05)) * envFlow;
+                this.particleMaterial.uniforms.uTime.value = now;
+                this.particleMaterial.uniforms.uSpeed.value = flowSpeed * 10;
+                this.particleGroup.rotation.z += ((0.001 * multiplier) + (vNormBass * 0.005)) * envFlow;
+            }
+            if (this.activeModes.has('lightspeed') && this.lightspeedMaterial) {
+                this.lightspeedMaterial.uniforms.uTime.value = now;
+                this.lightspeedMaterial.uniforms.uSpeed.value = multiplier;
+            }
+            if (this.activeModes.has('matrix') && this.cyberMaterial) {
+                this.cyberMaterial.uniforms.uTime.value = now * multiplier;
             }
             if (this.activeModes.has('waves') && this.wavesMaterial) {
+                const envOcean = window.MindWaveState?.envIntensities?.ocean ?? 1.0;
                 this.wavesMaterial.uniforms.uTime.value = now * multiplier * 0.5;
-                this.wavesMaterial.uniforms.uNormBass.value = vNormBass;
+                this.wavesMaterial.uniforms.uNormBass.value = vNormBass * envOcean;
+                if (this.wavesMaterial.uniforms.uIntensity) {
+                    this.wavesMaterial.uniforms.uIntensity.value = envOcean;
+                }
             }
             if (this.activeModes.has('cymatics') && this.cymaticMaterial) {
                 // Phase 3: Interactive Raycast Initialization
@@ -3353,15 +3596,15 @@ export class Visualizer3D {
                     this.smoothedMouseUV = new THREE.Vector2(0.5, 0.5);
                     this.mouseActiveTimer = 0.0;
                     
-                    const handlePointer = (e) => {
+                    this._boundCymaticPointer = (e) => {
                         let cx = e.clientX; let cy = e.clientY;
                         if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
                         this.cymaticPointer.x = (cx / window.innerWidth) * 2 - 1;
                         this.cymaticPointer.y = -(cy / window.innerHeight) * 2 + 1;
                         this.mouseActiveTimer = 1.0;
                     };
-                    window.addEventListener('mousemove', handlePointer);
-                    window.addEventListener('touchmove', handlePointer, {passive: true});
+                    window.addEventListener('mousemove', this._boundCymaticPointer);
+                    window.addEventListener('touchmove', this._boundCymaticPointer, {passive: true});
                 }
 
                 // Initialize live tracking if missing
@@ -3443,15 +3686,21 @@ export class Visualizer3D {
                 }
 
                 this.cymaticMaterial.uniforms.uTime.value = now * multiplier;
-                this.cymaticMaterial.uniforms.uIntensity.value = (this._cymaticIntensityOverride !== undefined && this._cymaticIntensityOverride !== null) 
-                    ? this._cymaticIntensityOverride 
+                this.cymaticMaterial.uniforms.uIntensity.value = (state.cymaticIntensity > 0) 
+                    ? state.cymaticIntensity 
                     : (0.5 + vNormBass * 0.5);
                 this.cymaticMaterial.uniforms.uHarmonics.value = state.harmonicsLevel || 0.0;
+                
+                // Final audio reaction injection (The Kick)
+                this.cymaticMaterial.uniforms.uResonance.value = (state.cymaticResonance ?? 1.0) * (1.0 + vNormBass * 0.15);
+                this.cymaticMaterial.uniforms.uEntropy.value = (state.cymaticEntropy ?? 1.0) * (1.1 - normHighs * 0.2);
+                this.cymaticMaterial.uniforms.uFlow.value = (state.cymaticFlow ?? 1.0) * (1.0 + vNormBass * 0.5);
+
                 this.cymaticMaterial.uniforms.uBeatFreq.value = visualBeatFreq;
                 this.cymaticMaterial.uniforms.uNormMids.value = normMids;
                 this.cymaticMaterial.uniforms.uNormHighs.value = normHighs;
                 this.cymaticMaterial.uniforms.uMedium.value = state.cymaticMedium || 0.0;
-                this.cymaticMaterial.uniforms.uShiver.value = this._cymaticV2.shiver;
+                this.cymaticMaterial.uniforms.uShiver.value = state.cymaticShiver || 0.0;
 
                 this.cymaticMaterial.uniforms.uN.value = this._cymaticLive.n;
                 this.cymaticMaterial.uniforms.uM.value = this._cymaticLive.m;
@@ -3461,6 +3710,90 @@ export class Visualizer3D {
                 this.cymaticMaterial.uniforms.uBassM.value = this._cymaticV2.bassM;
                 this.cymaticMaterial.uniforms.uHighN.value = this._cymaticV2.highN;
                 this.cymaticMaterial.uniforms.uHighM.value = this._cymaticV2.highM;
+            }
+
+            // ── OCEAN / FREQUENCY SWELLS ──────────────────────────────────
+            if (this.activeModes.has('ocean') && this.oceanWave && this.oceanWave.material.uniforms) {
+                const envOcean = window.MindWaveState?.envIntensities?.ocean ?? 1.0;
+                this.oceanWave.material.uniforms.uTime.value = now * multiplier;
+                this.oceanWave.material.uniforms.uNormBass.value = vNormBass * envOcean;
+                this.oceanWave.material.uniforms.uBeatPulse.value = vBeatPulse * envOcean;
+
+                if (this.oceanFoam) {
+                    this.oceanFoam.material.opacity = (0.4 + (vNormBass * 0.3) + (vBeatPulse * 0.2)) * (this.brightnessMultiplier || 1.0) * envOcean;
+                }
+            }
+
+            // ── BOX / GEOMETRIC PULSE ─────────────────────────────────────
+            if (this.activeModes.has('box') && this.boxOuter) {
+                this.boxOuter.rotation.x += 0.008 * multiplier + vNormBass * 0.02;
+                this.boxOuter.rotation.y += 0.012 * multiplier;
+                if (this.boxInner) {
+                    this.boxInner.rotation.x -= 0.015 * multiplier;
+                    this.boxInner.rotation.y -= 0.01 * multiplier;
+                    this.boxInner.scale.setScalar(0.95 + vNormBass * 0.2);
+                }
+                this.boxOuter.scale.setScalar(1.0 + vNormBass * 0.2);
+                if (this.boxEdges) this.boxEdges.rotation.copy(this.boxOuter.rotation);
+            }
+
+            // ── DRAGON / SERPENTINE FLIGHT ────────────────────────────────
+            if (this.activeModes.has('dragon') && this.dragonBodyInstanced && this.dragonDummy) {
+                this.dragonGroup.rotation.y += 0.005 * multiplier;
+                const dTime = now * multiplier * 2.0;
+                const globalScale = 1.0 + vNormBass * 0.2;
+
+                for (let i = 0; i < this.dragonLength; i++) {
+                    const phase = dTime - i * 0.12;
+                    const x = Math.sin(phase) * 8;
+                    const y = Math.cos(phase * 1.5) * 4 + Math.sin(phase * 0.5) * 3;
+                    const z = Math.cos(phase * 0.8) * 8;
+                    this.dragonDummy.position.set(x, y, z);
+
+                    const nextPhase = phase + 0.1;
+                    const nx = Math.sin(nextPhase) * 8;
+                    const ny = Math.cos(nextPhase * 1.5) * 4 + Math.sin(nextPhase * 0.5) * 3;
+                    const nz = Math.cos(nextPhase * 0.8) * 8;
+                    this.dragonDummy.lookAt(nx, ny, nz);
+
+                    const taper = 1.0 - (i / this.dragonLength) * 0.8;
+                    const breath = 1.0 + Math.sin(phase * 4) * 0.15 * (0.5 + vNormBass);
+                    this.dragonDummy.scale.setScalar(taper * breath * globalScale);
+                    this.dragonDummy.updateMatrix();
+
+                    this.dragonBodyInstanced.setMatrixAt(i, this.dragonDummy.matrix);
+                    if (this.dragonGlowInstanced) this.dragonGlowInstanced.setMatrixAt(i, this.dragonDummy.matrix);
+
+                    if (i === 0 && this.dragonHead) {
+                        this.dragonHead.position.copy(this.dragonDummy.position);
+                        this.dragonHead.quaternion.copy(this.dragonDummy.quaternion);
+                        this.dragonHead.scale.copy(this.dragonDummy.scale).multiplyScalar(1.4);
+                    }
+                }
+                this.dragonBodyInstanced.instanceMatrix.needsUpdate = true;
+                if (this.dragonGlowInstanced) this.dragonGlowInstanced.instanceMatrix.needsUpdate = true;
+
+                if (this.dragonPearlGroup) {
+                    const pearlPhase = dTime + 0.5;
+                    this.dragonPearlGroup.position.set(Math.sin(pearlPhase) * 9, Math.cos(pearlPhase * 1.5) * 5 + Math.sin(pearlPhase * 0.5) * 4, Math.cos(pearlPhase * 0.8) * 9);
+                    this.dragonPearlGroup.rotation.x += 0.08 * multiplier;
+                    this.dragonPearlGroup.rotation.y += 0.12 * multiplier;
+                }
+            }
+
+            // ── MANDALA / HARMONIC RINGS ──────────────────────────────────
+            if (this.activeModes.has('mandala') && this.mandalaRings) {
+                this.mandalaRings.forEach((ring, i) => {
+                    if (ring.userData && ring.userData.speed) {
+                        ring.rotation.z += ring.userData.speed * multiplier + vNormBass * 0.005;
+                    }
+                    const p = 1.0 + vBeatPulse * 0.1 * (i + 1) * 0.3;
+                    ring.scale.setScalar(p);
+                });
+                if (this.mandalaCenter) {
+                    this.mandalaCenter.rotation.z -= 0.01 * multiplier;
+                    this.mandalaCenter.scale.setScalar(1.0 + vNormBass * 0.3);
+                }
             }
 
             // ── Lotus / Logo ──────────────────────────────────────────────
@@ -3480,8 +3813,9 @@ export class Visualizer3D {
 
             // ── LAVA BLOBS / THERMAL FLUIDS ──────────────────────────────
             if (this.activeModes.has('lava') && this.lavaBlobs && this.lavaUniforms) {
+                const envLava = window.MindWaveState?.envIntensities?.lava ?? 1.0;
                 this.lavaUniforms.uTime.value = now * multiplier;
-                this.lavaUniforms.uIntensity.value = vNormBass;
+                this.lavaUniforms.uIntensity.value = vNormBass * envLava;
 
                 this.lavaBlobs.forEach((blob, i) => {
                     const d = blob.userData;
@@ -3537,32 +3871,77 @@ export class Visualizer3D {
 
                 // Animate Hero Snowflakes
                 if (s.spinMeshes) {
+                    const heroPulse = 1.0 + (vNormBass || 0) * 0.15;
                     s.spinMeshes.forEach((mesh, idx) => {
                         mesh.rotation.z += s.spinSpeeds[idx] * spdMult;
                         mesh.position.y -= (s.spinSpeeds[idx] * 0.1) * spdMult;
+                        mesh.scale.setScalar(heroPulse);
                         if (mesh.position.y < -25) mesh.position.y = 25;
                     });
                 }
                 
                 // Sync Intensity with Audio
-                if (s.material.uniforms.uIntensity) {
+                if (s.material && s.material.uniforms && s.material.uniforms.uIntensity) {
                     s.material.uniforms.uIntensity.value = 0.2 + vNormBass * 0.8;
                 }
             }
 
+            // ── RAINFOREST / ZEN GARDEN ───────────────────────────────────
+            if (this.activeModes.has('rainforest') && this.rainMaterial) {
+                const spd = multiplier * 0.8 * (1.0 + vBeatPulse * 0.3);
+                this.rainMaterial.uniforms.uTime.value = now;
+                this.rainMaterial.uniforms.uSpeed.value = spd;
+                this.rainMaterial.uniforms.uIntensity.value = (0.5 + (vNormBass * 0.2) + (vBeatPulse * 0.2)) * (this.brightnessMultiplier || 1.0);
+            }
+
+            if (this.activeModes.has('zengarden') && this.petalMaterial) {
+                const spd = multiplier * 0.3 * (1.0 + vBeatPulse * 0.5);
+                this.petalMaterial.uniforms.uTime.value = now;
+                this.petalMaterial.uniforms.uSpeed.value = spd;
+                if (this.zenWater) this.zenWater.material.opacity = (0.3 + (vBeatPulse * 0.2)) * (this.brightnessMultiplier || 1.0);
+            }
+
             // ── FIREPLACE / RADIANT ENERGY ───────────────────────────────
-            if (this.activeModes.has('fireplace') && this.fireMesh) {
+            if (this.activeModes.has('fireplace') && this.fireMesh && this.fireMesh.material && this.fireMesh.material.uniforms) {
                 const flicker = 0.8 + 0.2 * Math.sin(now * 15.0) * Math.sin(now * 7.0);
-                this.fireMesh.material.uniforms.uTime.value = now * 1.5 * multiplier;
-                this.fireMesh.material.uniforms.uIntensity.value = flicker + vNormBass * 0.5;
+                const fireUniforms = this.fireMesh.material.uniforms;
+                
+                if (fireUniforms.uTime) fireUniforms.uTime.value = now * 1.5 * multiplier;
+                if (fireUniforms.uIntensity) fireUniforms.uIntensity.value = flicker + vNormBass * 0.5;
+                
                 if (this.fireLight) {
                     this.fireLight.intensity = (2.0 + vNormBass * 5.0) * flicker;
                 }
             }
 
-            // ── Frame Limiter & Renderer ──────────────────────────────────
+            // ── Frame Limiter & Adaptive LOD ──────────────────────────────
+            const nowTime = performance.now();
+            const frameTime = nowTime - (this._lastFrameStartTime || nowTime);
+            this._lastFrameStartTime = nowTime;
+
+            // Track FPS for adaptive degradation
+            if (this._fpsRingBuffer) {
+                this._fpsRingBuffer[this._fpsRingIndex] = frameTime;
+                this._fpsRingIndex = (this._fpsRingIndex + 1) % 60;
+                this._fpsRingCount = Math.min(60, this._fpsRingCount + 1);
+
+                if (this._fpsRingCount === 60) {
+                    let avgFrameTime = 0;
+                    for (let i = 0; i < 60; i++) avgFrameTime += this._fpsRingBuffer[i];
+                    avgFrameTime /= 60;
+
+                    const currentFPS = 1000 / avgFrameTime;
+                    if (currentFPS < 35 && (nowTime - (this._lastLodDegradation || 0) > 3000)) {
+                        this.degradeLOD();
+                        this._lastLodDegradation = nowTime;
+                        // Reset buffer to avoid rapid double-degradation
+                        this._fpsRingCount = 0;
+                    }
+                }
+            }
+
             const targetFrameInterval = 1000 / (this.targetFPS || 60);
-            if (performance.now() - this.lastFrameRenderTime >= targetFrameInterval) {
+            if (nowTime - this.lastFrameRenderTime >= targetFrameInterval) {
                 this.renderer.autoClear = !this.activeModes.has('lightspeed');
                 if (this.renderer.autoClear) this.renderer.clear();
                 
@@ -3574,16 +3953,24 @@ export class Visualizer3D {
                     this.renderCyberCyber();
                 }
 
-                this.lastFrameRenderTime = performance.now();
+                this.lastFrameRenderTime = nowTime;
             }
 
         } catch (err) {
             console.error("[Visualizer] Render Loop Error:", err);
+            // On severe error, we might want to deactivate visuals to prevent system freeze
+            if (err.name === 'TypeError' && err.message.includes('uniforms')) {
+                 console.warn("[Visualizer] Shader not ready, skipping frame...");
+            }
+        } finally {
+            this._isRendering = false;
         }
 
         // Always queue next frame
-        if (this.active !== false && !document.hidden) {
-            state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
+        if (this.active && !document.hidden) {
+            state.animationId = requestAnimationFrame(() => this.render(state.analyserLeft, state.analyserRight));
+        } else {
+            state.animationId = null;
         }
     }
 
@@ -3625,6 +4012,10 @@ export class Visualizer3D {
         let sum = 0, count = 0;
         for (let i = startIndex; i < endIndex && i < dataArray.length; i++) { sum += dataArray[i]; count++; }
         return count > 0 ? sum / count : 0;
+    }
+
+    setMouseInfluence(val) {
+        this.mouseInfluence = val;
     }
 
     setGlobalSpeed(speed) {
@@ -3941,6 +4332,22 @@ export class Visualizer3D {
         this.active = false;
         if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
 
+        // Remove event listeners to prevent memory leaks
+        window.removeEventListener('resize', this.resize);
+        window.removeEventListener('resize', this.resizeOverlayCanvas);
+        window.removeEventListener('mindwave:layout-change', this.handleLayoutChange);
+        if (this._boundSafeMode) window.removeEventListener('mindwave:safe-mode-start', this._boundSafeMode);
+        if (this._boundVisibilityChange) document.removeEventListener('visibilitychange', this._boundVisibilityChange);
+        if (this._boundThemeChange) window.removeEventListener('themeChanged', this._boundThemeChange);
+        if (this.canvas) {
+            if (this._boundContextLost) this.canvas.removeEventListener('webglcontextlost', this._boundContextLost);
+            if (this._boundContextRestored) this.canvas.removeEventListener('webglcontextrestored', this._boundContextRestored);
+        }
+        if (this._boundCymaticPointer) {
+            window.removeEventListener('mousemove', this._boundCymaticPointer);
+            window.removeEventListener('touchmove', this._boundCymaticPointer);
+        }
+
         // Dispose all Three.js resources to prevent GPU memory leaks
         const disposeGroup = (group) => {
             if (!group) return;
@@ -3950,6 +4357,12 @@ export class Visualizer3D {
                 if (child.geometry) child.geometry.dispose();
                 if (child.material) {
                     if (child.material.map) child.material.map.dispose();
+                    if (child.material.uniforms) {
+                        for (const key in child.material.uniforms) {
+                            const u = child.material.uniforms[key];
+                            if (u && u.value && u.value.dispose) u.value.dispose();
+                        }
+                    }
                     child.material.dispose();
                 }
                 if (child.children && child.children.length) {
@@ -3967,9 +4380,9 @@ export class Visualizer3D {
         const groups = [
             this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup,
             this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup,
-            this.oceanGroup, this.cyberGroup, this.boxGroup,
+            this.oceanGroup, this.wavesGroup, this.cyberGroup, this.boxGroup,
             this.dragonGroup, this.galaxyGroup, this.mandalaGroup,
-            this.wavesGroup, this.cymaticsGroup, this.snowflakeGroup
+            this.cymaticsGroup, this.snowflakeGroup
         ];
 
         // Release ring buffer and scratch objects
@@ -3981,6 +4394,10 @@ export class Visualizer3D {
         // Dispose standalone materials / textures
         if (this.cyberMaterial) { this.cyberMaterial.dispose(); this.cyberMaterial = null; }
         if (this.fireMaterial) { this.fireMaterial.dispose(); this.fireMaterial = null; }
+        if (this.particleMaterial) { this.particleMaterial.dispose(); this.particleMaterial = null; }
+        if (this.lightspeedMaterial) { this.lightspeedMaterial.dispose(); this.lightspeedMaterial = null; }
+        if (this.rainMaterial) { this.rainMaterial.dispose(); this.rainMaterial = null; }
+        if (this.petalMaterial) { this.petalMaterial.dispose(); this.petalMaterial = null; }
         if (this.logoMesh) {
             if (this.logoMesh.material) {
                 if (this.logoMesh.material.map) this.logoMesh.material.map.dispose();
@@ -3998,8 +4415,35 @@ export class Visualizer3D {
         // Free cached buffers
         this._freqDataArray = null;
 
-        if (this.renderer) { this.renderer.dispose(); this.renderer = null; }
-        console.log('[Visualizer] Disposed all GPU resources.');
+        if (this.renderer) { 
+            try { this.renderer.forceContextLoss(); } catch(e) {} 
+            this.renderer.dispose(); 
+            this.renderer = null; 
+        }
+        this.scene = null;
+        this.camera = null;
+        console.log('[Visualizer] Disposed all GPU resources and removed listeners.');
+    }
+
+    // --- Warp / Lightspeed Controls ---
+    setWarpSpeed(val) {
+        if (this.lightspeedMaterial) {
+            this.lightspeedMaterial.uniforms.uSpeed.value = val;
+        }
+    }
+
+    setWarpFov(val) {
+        if (this.camera) {
+            this.camera.fov = val;
+            this.camera.updateProjectionMatrix();
+        }
+    }
+
+    setWarpChromatic(val) {
+        // Map chromatic to lightspeed point size or brightness for visual feedback
+        if (this.lightspeedMaterial) {
+            console.log(`[Warp] Chromatic Intensity set to: ${val}`);
+        }
     }
 }
 
@@ -4022,19 +4466,20 @@ export function initVisualizer() {
         viz3D = null;
     }
     if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
-    if (!viz3D && els.canvas) {
-        const prevState = (els.canvas.activeVisualizer && els.canvas.activeVisualizer.isVisualizer3D) ? {
-            activeModes: els.canvas.activeVisualizer.activeModes,
-            mode: els.canvas.activeVisualizer.mode,
-            mindWaveMode: els.canvas.activeVisualizer.mindWaveMode,
-            cyberLogicMode: els.canvas.activeVisualizer.cyberLogicMode,
-            cyberCustomText: els.canvas.activeVisualizer.cyberCustomText,
-            currentCyberAngle: els.canvas.activeVisualizer.currentCyberAngle,
-            cyberSpeedMultiplier: els.canvas.activeVisualizer.cyberSpeedMultiplier,
-            rainbowEnabled: els.canvas.activeVisualizer._rainbowEnabled
+    const canvas = els.canvas || document.getElementById('visualizer');
+    if (!viz3D && canvas) {
+        const prevState = (canvas && canvas.activeVisualizer && canvas.activeVisualizer.isVisualizer3D) ? {
+            activeModes: canvas.activeVisualizer.activeModes,
+            mode: canvas.activeVisualizer.mode,
+            mindWaveMode: canvas.activeVisualizer.mindWaveMode,
+            cyberLogicMode: canvas.activeVisualizer.cyberLogicMode,
+            cyberCustomText: canvas.activeVisualizer.cyberCustomText,
+            currentCyberAngle: canvas.activeVisualizer.currentCyberAngle,
+            cyberSpeedMultiplier: canvas.activeVisualizer.cyberSpeedMultiplier,
+            rainbowEnabled: canvas.activeVisualizer._rainbowEnabled
         } : {};
-        viz3D = new Visualizer3D(els.canvas, prevState);
-        els.canvas.activeVisualizer = viz3D;
+        viz3D = new Visualizer3D(canvas, prevState);
+        canvas.activeVisualizer = viz3D;
         setTimeout(() => {
             if (viz3D) {
                 viz3D.updateVisibility();
@@ -4071,6 +4516,7 @@ export function setVisualSpeed(speed) { if (viz3D) { viz3D.setGlobalSpeed(speed)
 export function setVisualColor(hex, mode = null) { if (viz3D) { viz3D.setVisualColor(hex, mode); if (viz3D.setCyberColor && (!mode || mode == "cyber")) viz3D.setCyberColor(hex); } }
 export function setVisualBrightness(brightness) { if (viz3D && viz3D.setGlobalBrightness) viz3D.setGlobalBrightness(brightness); }
 export function setVisualLogoOpacity(opacity) { if (viz3D) viz3D.setLogoOpacity(opacity); }
+export function setMouseInfluence(val) { if (viz3D) viz3D.setMouseInfluence(val); }
 
 // EXPOSED GLOBAL HELPERS FOR HTML CLICK EVENTS
 window.toggleGalaxySun = function() {

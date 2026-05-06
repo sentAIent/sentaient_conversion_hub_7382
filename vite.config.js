@@ -16,6 +16,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),
+        mindwave: path.resolve(__dirname, 'mindwave.html'),
       },
     },
   },

@@ -3,7 +3,7 @@
  * Post-session check-in to capture insights and feelings.
  */
 
-import { FEELINGS, saveReflection } from '../services/journal-service.js';
+import { FEELINGS, saveReflection } from '/binaural-assets/js/services/journal-service.js';
 
 export function showReflectionPrompt(sessionData = {}) {
     const modal = document.createElement('div');

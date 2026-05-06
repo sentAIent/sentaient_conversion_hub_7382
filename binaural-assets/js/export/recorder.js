@@ -1,6 +1,6 @@
 // Simplified recorder using only MediaRecorder (no worklet complexity)
-import { state, els } from '../state.js';
-import { saveMedia } from '../services/storage-manager.js';
+import { state, els } from '/binaural-assets/js/state.js';
+import { saveMedia } from '/binaural-assets/js/services/storage-manager.js';
 
 export function startRecording() {
     console.log('[Recording] Starting (simplified MediaRecorder mode)');

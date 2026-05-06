@@ -1,6 +1,6 @@
 // Audio Library Module
 // Handles custom audio uploads, storage (IndexedDB), and Cloud Sync
-import { state, els } from '../state.js';
+import { state, els } from '/binaural-assets/js/state.js';
 
 import {
     uploadAudioToCloud,
@@ -11,9 +11,9 @@ import {
     db,
     doc,
     setDoc
-} from '../services/firebase.js';
-import { openAuthModal } from '../ui/auth-controller.js';
-import { getCachedAudioUrl } from '../utils/audio-offline-manager.js';
+} from '/binaural-assets/js/services/firebase.js';
+import { openAuthModal } from '/binaural-assets/js/ui/auth-controller.js';
+import { getCachedAudioUrl } from '/binaural-assets/js/utils/audio-offline-manager.js';
 
 // IndexedDB database name and store
 const DB_NAME = 'MindWaveAudioLibrary';

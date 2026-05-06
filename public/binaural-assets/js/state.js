@@ -60,9 +60,11 @@ export const PRESET_COMBOS = [
         icon: '🌧️',
         preset: 'alpha',
         soundscapes: ['rain'],
-        visuals: ['rainforest', 'ocean', 'zengarden'],
+        visuals: ['rainforest', 'ocean', 'zengarden', 'cymatics'],
         atmosVolume: 0.6,
         harmonicsLevel: 0.15,
+        cymaticPatternIndex: 4, // Temporal Liquid
+        cymaticArchetype: 2,
         color: '#6b7280'
     },
     {
@@ -72,9 +74,11 @@ export const PRESET_COMBOS = [
         icon: '🌙',
         preset: 'delta',
         soundscapes: ['wind'],
-        visuals: ['galaxy', 'ocean', 'zengarden'],
+        visuals: ['galaxy', 'ocean', 'zengarden', 'cymatics'],
         atmosVolume: 0.5,
         harmonicsLevel: 0.05,
+        cymaticPatternIndex: 0, // Sacred Symmetry
+        cymaticArchetype: 0,
         color: '#1e3a5f'
     },
     {
@@ -84,9 +88,11 @@ export const PRESET_COMBOS = [
         icon: '⚔️',
         preset: 'beta',
         soundscapes: ['strings', 'brass'],
-        visuals: ['dragon', 'matrix', 'particles'],
+        visuals: ['dragon', 'matrix', 'particles', 'cymatics'],
         atmosVolume: 0.4,
         harmonicsLevel: 0.4,
+        cymaticPatternIndex: 12, // Hex Prism / Focus
+        cymaticArchetype: 1,
         color: '#b45309'
     },
     {
@@ -96,9 +102,11 @@ export const PRESET_COMBOS = [
         icon: '🌊',
         preset: 'theta',
         soundscapes: ['ocean'],
-        visuals: ['ocean', 'particles', 'flow'],
+        visuals: ['ocean', 'particles', 'flow', 'cymatics'],
         atmosVolume: 0.7,
         harmonicsLevel: 0.2,
+        cymaticPatternIndex: 4, // Bessel Vortex
+        cymaticArchetype: 2,
         color: '#0891b2'
     },
     {
@@ -108,9 +116,11 @@ export const PRESET_COMBOS = [
         icon: '⛈️',
         preset: 'gamma',
         soundscapes: ['rain', 'wind'],
-        visuals: ['rainforest', 'matrix', 'interstellar'],
+        visuals: ['rainforest', 'matrix', 'interstellar', 'cymatics'],
         atmosVolume: 0.5,
         harmonicsLevel: 0.6,
+        cymaticPatternIndex: 11, // Matrix Convergence
+        cymaticArchetype: 3,
         color: '#4b5563'
     },
     {
@@ -120,9 +130,11 @@ export const PRESET_COMBOS = [
         icon: '🔔',
         preset: 'mu',
         soundscapes: ['bells'],
-        visuals: ['zengarden', 'sphere', 'particles'],
+        visuals: ['zengarden', 'sphere', 'particles', 'cymatics'],
         atmosVolume: 0.4,
         harmonicsLevel: 0.8,
+        cymaticPatternIndex: 0, // Sacred Lotus
+        cymaticArchetype: 0,
         color: '#a855f7'
     },
     {
@@ -132,9 +144,11 @@ export const PRESET_COMBOS = [
         icon: '🔥',
         preset: 'alpha',
         soundscapes: ['fireplace'],
-        visuals: ['fireplace', 'lava', 'particles'],
+        visuals: ['fireplace', 'lava', 'particles', 'cymatics'],
         atmosVolume: 0.6,
         harmonicsLevel: 0.3,
+        cymaticPatternIndex: 4, // Thermal Fluid Ripple
+        cymaticArchetype: 2,
         color: '#f97316'
     },
     {
@@ -144,9 +158,11 @@ export const PRESET_COMBOS = [
         icon: '🌲',
         preset: 'theta',
         soundscapes: ['winds', 'brown', 'forest_birds'],
-        visuals: ['rainforest', 'zengarden', 'particles'],
+        visuals: ['rainforest', 'zengarden', 'particles', 'cymatics'],
         atmosVolume: 0.5,
         harmonicsLevel: 0.25,
+        cymaticPatternIndex: 1, // Neural Flow
+        cymaticArchetype: 0,
         color: '#10b981'
     },
     {
@@ -324,10 +340,12 @@ export const state = {
     cymaticResonance: 1.0,      // Pattern density multiplier
     cymaticEntropy: 1.0,        // Math noise / warp intensity
     cymaticFlow: 1.0,           // Ambient field speed
-    cymaticMedium: 0.0          // 0: Water, 1: Sand, 2: Ether, 3: Ice
+    cymaticMedium: 0.0,         // 0: Water, 1: Sand, 2: Ether, 3: Ice
+    cymaticShiver: 0.0,         // High-frequency jitter
+    cymaticIntensity: 0.0       // 0: Auto, >0: Manual override
 };
 
-export const VISUALIZER_VERSION = 'ULTRASYNC_V131';
+export const VISUALIZER_VERSION = 'ULTRASYNC_V135';
 
 // Global Elements Container
 export const els = {
