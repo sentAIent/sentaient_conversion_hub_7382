@@ -236,6 +236,7 @@ export function createCursorUIInThemeModal() {
 }
 
 window.setCursorShape = setCursorShape;
+window._setCursorShape = setCursorShape; // Bridge for legacy controls_v3 failsafe
 window.setCursorColor = setCursorColor;
 window.setCursorOpacity = setCursorOpacity;
 window.resetCursorColor = resetCursorColor;

@@ -105,7 +105,7 @@ export class Visualizer3D {
         this.rainforestGroup = new THREE.Group();
         this.zenGardenGroup = new THREE.Group();
         this.oceanGroup = new THREE.Group();
-        this.wavesGroup = this.oceanGroup; // Unified naming parity
+        this.wavesGroup = new THREE.Group(); // Independent from oceanGroup
         this.cyberGroup = new THREE.Group();
         this.boxGroup = new THREE.Group();
         this.dragonGroup = new THREE.Group();
@@ -121,7 +121,7 @@ export class Visualizer3D {
             const groups = [
                 this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup, 
                 this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup, this.oceanGroup,
-                this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
+                this.wavesGroup, this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
                 this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup
             ];
             groups.forEach(g => this.scene.add(g));
@@ -3074,12 +3074,12 @@ export class Visualizer3D {
         if (this.activeModes.has(target)) {
             this.activeModes.delete(target);
         } else {
-            // --- NON-DESTRUCTIVE EXCLUSIVITY ---
+            // --- EXCLUSIVITY ---
             if (target === 'cymatics') {
-                console.log('[Engine] Cymatics engaged');
-                // We keep Snowflake if both are wanted, but usually Cymatics covers the screen
-            } else if (this.activeModes.has('cymatics') && target !== 'snowflake') {
-                 // Only clear cymatics if entering a fundamental base mode like galaxy/dragon
+                console.log('[Engine] Cymatics engaged - clearing other modes');
+                this.activeModes.clear();
+            } else if (this.activeModes.has('cymatics')) {
+                 // Clear cymatics if entering any other mode
                  this.activeModes.delete('cymatics');
             }
             this.activeModes.add(target);
@@ -3144,8 +3144,8 @@ export class Visualizer3D {
         if (this.sphereGroup) this.sphereGroup.visible = this.activeModes.has('sphere');
         if (this.particleGroup) this.particleGroup.visible = this.activeModes.has('particles');
         if (this.lightspeedGroup) this.lightspeedGroup.visible = this.activeModes.has('lightspeed');
-        // Ocean/Waves - Unified Group
-        if (this.wavesGroup) this.wavesGroup.visible = this.activeModes.has('waves') || this.activeModes.has('ocean');
+        if (this.wavesGroup) this.wavesGroup.visible = this.activeModes.has('waves');
+        if (this.oceanGroup) this.oceanGroup.visible = this.activeModes.has('ocean');
         if (this.lavaGroup) this.lavaGroup.visible = this.activeModes.has('lava');
         if (this.fireplaceGroup) this.fireplaceGroup.visible = this.activeModes.has('fireplace');
         if (this.rainforestGroup) this.rainforestGroup.visible = this.activeModes.has('rainforest');
@@ -3527,7 +3527,7 @@ export class Visualizer3D {
             const shakeTargets = [
                 this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup,
                 this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup, this.oceanGroup,
-                this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
+                this.wavesGroup, this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
                 this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup
             ];
             for (const target of shakeTargets) {
@@ -3566,10 +3566,11 @@ export class Visualizer3D {
                 this.sphere.rotation.y += 0.005 * multiplier;
             }
             if (this.activeModes.has('particles') && this.particleMaterial) {
-                const flowSpeed = (0.015 * multiplier) + (vNormBass * 0.08) + (vBeatPulse * 0.05);
+                const envFlow = window.MindWaveState?.envIntensities?.flow ?? 1.0;
+                const flowSpeed = ((0.015 * multiplier) + (vNormBass * 0.08) + (vBeatPulse * 0.05)) * envFlow;
                 this.particleMaterial.uniforms.uTime.value = now;
                 this.particleMaterial.uniforms.uSpeed.value = flowSpeed * 10;
-                this.particleGroup.rotation.z += (0.001 * multiplier) + (vNormBass * 0.005);
+                this.particleGroup.rotation.z += ((0.001 * multiplier) + (vNormBass * 0.005)) * envFlow;
             }
             if (this.activeModes.has('lightspeed') && this.lightspeedMaterial) {
                 this.lightspeedMaterial.uniforms.uTime.value = now;
@@ -3579,8 +3580,12 @@ export class Visualizer3D {
                 this.cyberMaterial.uniforms.uTime.value = now * multiplier;
             }
             if (this.activeModes.has('waves') && this.wavesMaterial) {
+                const envOcean = window.MindWaveState?.envIntensities?.ocean ?? 1.0;
                 this.wavesMaterial.uniforms.uTime.value = now * multiplier * 0.5;
-                this.wavesMaterial.uniforms.uNormBass.value = vNormBass;
+                this.wavesMaterial.uniforms.uNormBass.value = vNormBass * envOcean;
+                if (this.wavesMaterial.uniforms.uIntensity) {
+                    this.wavesMaterial.uniforms.uIntensity.value = envOcean;
+                }
             }
             if (this.activeModes.has('cymatics') && this.cymaticMaterial) {
                 // Phase 3: Interactive Raycast Initialization
@@ -3709,12 +3714,13 @@ export class Visualizer3D {
 
             // ── OCEAN / FREQUENCY SWELLS ──────────────────────────────────
             if (this.activeModes.has('ocean') && this.oceanWave && this.oceanWave.material.uniforms) {
+                const envOcean = window.MindWaveState?.envIntensities?.ocean ?? 1.0;
                 this.oceanWave.material.uniforms.uTime.value = now * multiplier;
-                this.oceanWave.material.uniforms.uNormBass.value = vNormBass;
-                this.oceanWave.material.uniforms.uBeatPulse.value = vBeatPulse;
+                this.oceanWave.material.uniforms.uNormBass.value = vNormBass * envOcean;
+                this.oceanWave.material.uniforms.uBeatPulse.value = vBeatPulse * envOcean;
 
                 if (this.oceanFoam) {
-                    this.oceanFoam.material.opacity = (0.4 + (vNormBass * 0.3) + (vBeatPulse * 0.2)) * (this.brightnessMultiplier || 1.0);
+                    this.oceanFoam.material.opacity = (0.4 + (vNormBass * 0.3) + (vBeatPulse * 0.2)) * (this.brightnessMultiplier || 1.0) * envOcean;
                 }
             }
 
@@ -3807,8 +3813,9 @@ export class Visualizer3D {
 
             // ── LAVA BLOBS / THERMAL FLUIDS ──────────────────────────────
             if (this.activeModes.has('lava') && this.lavaBlobs && this.lavaUniforms) {
+                const envLava = window.MindWaveState?.envIntensities?.lava ?? 1.0;
                 this.lavaUniforms.uTime.value = now * multiplier;
-                this.lavaUniforms.uIntensity.value = vNormBass;
+                this.lavaUniforms.uIntensity.value = vNormBass * envLava;
 
                 this.lavaBlobs.forEach((blob, i) => {
                     const d = blob.userData;
@@ -4373,9 +4380,9 @@ export class Visualizer3D {
         const groups = [
             this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup,
             this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup,
-            this.oceanGroup, this.cyberGroup, this.boxGroup,
+            this.oceanGroup, this.wavesGroup, this.cyberGroup, this.boxGroup,
             this.dragonGroup, this.galaxyGroup, this.mandalaGroup,
-            this.wavesGroup, this.cymaticsGroup, this.snowflakeGroup
+            this.cymaticsGroup, this.snowflakeGroup
         ];
 
         // Release ring buffer and scratch objects

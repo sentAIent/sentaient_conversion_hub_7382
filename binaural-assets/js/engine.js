@@ -713,7 +713,7 @@ export function stopSweep(restore = true) {
     if (els.beatSlider) {
         els.beatSlider.value = originalBeat;
         if (els.beatValue) {
-            els.beatValue.textContent = originalBeat + ' Hz';
+            els.beatValue.textContent = parseFloat(originalBeat).toFixed(1) + ' Hz';
         }
     }
 
@@ -937,8 +937,8 @@ export function updateFrequencies() {
     state.beatFrequency = beat;
 
     console.log(`[Freq] Update: Base=${base}Hz, Beat=${beat}Hz`);
-    if (els.baseValue) els.baseValue.textContent = `${base} Hz`;
-    if (els.beatValue) els.beatValue.textContent = `${beat} Hz`;
+    if (els.baseValue) els.baseValue.textContent = `${base.toFixed(1)} Hz`;
+    if (els.beatValue) els.beatValue.textContent = `${beat.toFixed(1)} Hz`;
     if (state.oscLeft && state.isPlaying) { state.oscLeft.frequency.setValueAtTime(base, state.audioCtx.currentTime); }
     if (state.oscRight && state.isPlaying) { state.oscRight.frequency.setValueAtTime(base + beat, state.audioCtx.currentTime); }
 

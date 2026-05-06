@@ -146,7 +146,7 @@ window.addEventListener('mindwave:visual-mode-sync', (e) => {
         { id: 'fireplaceBtn', mode: 'fireplace' },
         { id: 'rainBtn', mode: 'rainforest' },
         { id: 'zenBtn', mode: 'zengarden' },
-        { id: 'oceanBtn', mode: 'ocean' },
+        { id: 'oceanBtn', mode: 'waves' },
         { id: 'mandalaBtn', mode: 'mandala' },
         { id: 'cyberBtn', mode: 'cyber' },
         { id: 'matrixBtn', mode: 'matrix' },
@@ -1016,7 +1016,7 @@ export function setupUI() {
     if (els.fireplaceBtn) els.fireplaceBtn.addEventListener('click', () => setVisualMode('fireplace', null, true));
     if (els.rainBtn) els.rainBtn.addEventListener('click', () => setVisualMode('rainforest', null, true));
     if (els.zenBtn) els.zenBtn.addEventListener('click', () => setVisualMode('zengarden', null, true));
-    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean', null, true));
+    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('waves', null, true));
     if (els.mandalaBtn) els.mandalaBtn.addEventListener('click', () => setVisualMode('mandala', null, true));
     if (els.cyberBtn) els.cyberBtn.addEventListener('click', () => setVisualMode('cyber', null, true));
     if (els.matrixBtn) els.matrixBtn.addEventListener('click', (e) => {
@@ -1029,7 +1029,7 @@ export function setupUI() {
             if (window.setCymaticMedium) window.setCymaticMedium(3); // Auto-set to ICE medium
         });
     }
-    if (els.oceanBtn) els.oceanBtn.addEventListener('click', () => setVisualMode('ocean', null, true));
+    // Duplicate oceanBtn listener removed (was causing double-toggle ON→OFF)
     if (els.cymaticsBtn) els.cymaticsBtn.addEventListener('click', (e) => {
         if (e.target.closest('#cymaticsSettingsToggle')) return;
         setVisualMode('cymatics', null, true);
@@ -1218,6 +1218,33 @@ export function setupUI() {
             if (viz?.setSnowGlow) viz.setSnowGlow(v);
         });
     }
+
+    // Environmental intensity sliders (gallery + sidebar bidirectional sync)
+    if (!window.MindWaveState) window.MindWaveState = {};
+    if (!window.MindWaveState.envIntensities) window.MindWaveState.envIntensities = { flow: 1.0, lava: 1.0, rain: 1.0, zen: 1.0, ocean: 1.0 };
+    
+    ['flow', 'lava', 'rain', 'zen', 'ocean'].forEach(env => {
+        const gallerySlider = document.getElementById(env + 'IntensitySlider');
+        const galleryVal = document.getElementById(env + 'IntensityVal');
+        const sidebarSlider = document.getElementById(env + 'IntensitySidebarSlider');
+        const sidebarVal = document.getElementById(env + 'IntensitySidebarVal');
+
+        const syncAll = (v) => {
+            const pct = Math.round(v * 100) + '%';
+            window.MindWaveState.envIntensities[env] = v;
+            if (galleryVal) galleryVal.textContent = pct;
+            if (sidebarVal) sidebarVal.textContent = pct;
+            if (gallerySlider && gallerySlider.value !== String(v)) gallerySlider.value = v;
+            if (sidebarSlider && sidebarSlider.value !== String(v)) sidebarSlider.value = v;
+        };
+
+        if (gallerySlider) {
+            gallerySlider.addEventListener('input', () => syncAll(parseFloat(gallerySlider.value)));
+        }
+        if (sidebarSlider) {
+            sidebarSlider.addEventListener('input', () => syncAll(parseFloat(sidebarSlider.value)));
+        }
+    });
 
     // Matrix Mini-Toggle Logic
     const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');
@@ -1566,7 +1593,7 @@ export function setupUI() {
                 { el: els.fireplaceBtn, mode: 'fireplace' },
                 { el: els.rainBtn, mode: 'rainforest' },
                 { el: els.zenBtn, mode: 'zengarden' },
-                { el: els.oceanBtn, mode: 'ocean' },
+                { el: els.oceanBtn, mode: 'waves' },
                 { el: els.mandalaBtn, mode: 'mandala' },
                 { el: els.cyberBtn, mode: 'cyber' },
                 { el: els.matrixBtn, mode: 'matrix' }
@@ -2878,25 +2905,14 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
 
             // EXCLUSIVITY LOGIC:
             if (becomingActive) {
-                if (m === 'cymatics' || m === 'snowflake') {
-                    // Cymatics/Snow clear most modes but allow co-existence with each other
-                    console.log(`[Visuals] ${m.toUpperCase()} engaged - clearing non-organic modes`);
-                    
-                    const keepModes = new Set(['cymatics', 'snowflake', 'cyber']); 
-                    Array.from(viz.activeModes).forEach(activeMode => {
-                        if (!keepModes.has(activeMode)) {
-                            viz.activeModes.delete(activeMode);
-                        }
-                    });
+                if (m === 'cymatics') {
+                    console.log(`[Visuals] CYMATICS engaged - clearing other modes`);
+                    viz.activeModes.clear();
                 } else {
-                    // Any other mode clears Cymatics/Snow to allow co-existence
+                    // Any other mode clears Cymatics
                     if (viz.activeModes.has('cymatics')) {
                         console.log('[Visuals] Other mode engaged - exiting Cymatics');
                         viz.activeModes.delete('cymatics');
-                    }
-                    if (viz.activeModes.has('snowflake')) {
-                        console.log('[Visuals] Other mode engaged - exiting Snow');
-                        viz.activeModes.delete('snowflake');
                     }
                 }
             }
@@ -2934,12 +2950,21 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             'cyber': 'matrixPanel',
             'matrix': 'matrixPanel',
             'snowflake': 'cymaticsPanel',
-            'cymatics': 'cymaticsPanel'
+            'cymatics': 'cymaticsPanel',
+            'particles': 'visualsPanel',
+            'lava': 'visualsPanel',
+            'rainforest': 'visualsPanel',
+            'zengarden': 'visualsPanel',
+            'ocean': 'visualsPanel',
+            'waves': 'visualsPanel'
         };
         
         const target = (viz && viz.mapMode) ? viz.mapMode(mode) : mode;
-        if (isManual && contextualMap[mode] && activeModes.has(target)) {
-            window.controls.syncSidebar(contextualMap[mode]);
+        if (isManual && activeModes.has(target)) {
+            // Always open sidebar for any mode with settings
+            if (contextualMap[target]) {
+                window.controls.syncSidebar(contextualMap[target]);
+            }
         }
 
         // Update button states with theme-aware styling
@@ -2954,12 +2979,11 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             { el: els.fireplaceBtn, mode: 'fireplace' },
             { el: els.rainBtn, mode: 'rainforest' },
             { el: els.zenBtn, mode: 'zengarden' },
-            { el: els.oceanBtn, mode: 'ocean' },
+            { el: els.oceanBtn, mode: 'waves' },
             { el: els.mandalaBtn, mode: 'mandala' },
             { el: els.cyberBtn, mode: 'cyber' },
             { el: els.matrixBtn, mode: 'matrix' },
             { el: els.snowflakeBtn, mode: 'snowflake' },
-            { el: els.oceanBtn, mode: 'ocean' },
             { el: els.cymaticsBtn, mode: 'cymatics' }
         ];
 
@@ -3042,6 +3066,46 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         } else {
             snowflakePanel.classList.add('hidden');
         }
+    }
+
+    // Flow Panel Toggle
+    const flowPanel = document.getElementById('flowSettingsSidebar');
+    if (flowPanel) {
+        const shouldShow = activeModes.has('particles');
+        if (shouldShow) { flowPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { flowPanel.classList.add('hidden'); }
+    }
+
+    // Lava Panel Toggle
+    const lavaPanel = document.getElementById('lavaSettingsSidebar');
+    if (lavaPanel) {
+        const shouldShow = activeModes.has('lava');
+        if (shouldShow) { lavaPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { lavaPanel.classList.add('hidden'); }
+    }
+
+    // Rain Panel Toggle
+    const rainPanel = document.getElementById('rainSettingsSidebar');
+    if (rainPanel) {
+        const shouldShow = activeModes.has('rainforest');
+        if (shouldShow) { rainPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { rainPanel.classList.add('hidden'); }
+    }
+
+    // Zen Panel Toggle
+    const zenPanel = document.getElementById('zenSettingsSidebar');
+    if (zenPanel) {
+        const shouldShow = activeModes.has('zengarden');
+        if (shouldShow) { zenPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { zenPanel.classList.add('hidden'); }
+    }
+
+    // Ocean Panel Toggle
+    const oceanPanel = document.getElementById('oceanSettingsSidebar');
+    if (oceanPanel) {
+        const shouldShow = activeModes.has('ocean') || activeModes.has('waves');
+        if (shouldShow) { oceanPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { oceanPanel.classList.add('hidden'); }
     }
 
     // Contextual Wrapper Visibility
