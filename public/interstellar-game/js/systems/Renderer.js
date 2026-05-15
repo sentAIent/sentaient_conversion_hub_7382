@@ -1313,11 +1313,12 @@ class RenderManager {
                     if (this.game.matrixRainbowMode) {
                         const hue = (rainbowHueOffset + streamIndex * 15 + i * 5) % 360;
                         ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+                        ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
                     } else {
                         ctx.fillStyle = stream.color;
+                        ctx.shadowColor = stream.color;
                     }
                     ctx.shadowBlur = 4;
-                    ctx.shadowColor = stream.color;
 
                     ctx.fillText(char, stream.x, charY);
                 }
@@ -1890,421 +1891,261 @@ class RenderManager {
         if (!this.game.config.showBackground) return;
 
         const ctx = this.game.ctx;
+        const canvas = this.game.canvas;
+        const zoom = this.game.camera.zoom || 1;
+        const camX = this.game.camera.x || 0;
+        const camY = this.game.camera.y || 0;
 
-        // 1. Background Stars (from all active styles)
-        if (this.game.backgroundStars && this.game.backgroundStars.length > 0) {
-            this.game.backgroundStars.forEach(s => {
-                ctx.fillStyle = s.color || "white";
-                ctx.globalAlpha = s.alpha;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                ctx.fill();
+        // 1. Static Stars (Tiered Parallax + Wrapping)
+        if (this.game.staticStars && this.game.staticStars.length > 0) {
+            this.game.staticStars.forEach(s => {
+                const parallax = s.depth * 0.08 || 0.05;
+                const sx = (((s.x || 0) * zoom + (camX * parallax)) % canvas.width + canvas.width) % canvas.width;
+                const sy = (((s.y || 0) * zoom + (camY * parallax)) % canvas.height + canvas.height) % canvas.height;
+                const size = (s.size || 1) * (0.8 + zoom * 0.2);
+
+                if (Number.isFinite(sx) && Number.isFinite(sy)) {
+                    ctx.fillStyle = s.color || 'white';
+                    ctx.globalAlpha = s.alpha || 0.5;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             });
-            ctx.globalAlpha = 1;
         }
 
-        // 2. Nebulae (from nebula + deep-space styles)
-        if (this.game.nebulae && this.game.nebulae.length > 0) {
+        // 2. Galaxies (PHASE 18 RESTORED: SPIRAL + CORE)
+        if (this.game.activeStyles.has('deep-space') && this.game.galaxies && this.game.galaxies.length > 0) {
+            this.game.galaxies.forEach(g => {
+                const parallax = 0.02 + (g.z ? (g.z + 2000) / 40000 : 0);
+                const sx = (((g.x || 0) * zoom + (camX * parallax)) % canvas.width + canvas.width) % canvas.width;
+                const sy = (((g.y || 0) * zoom + (camY * parallax)) % canvas.height + canvas.height) % canvas.height;
+                const size = g.size * zoom;
+                
+                if (!Number.isFinite(sx) || !Number.isFinite(sy) || size <= 0) return;
+
+                ctx.save();
+                ctx.translate(sx, sy);
+                ctx.rotate(g.rotation + performance.now() * 0.0001);
+                
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+                grad.addColorStop(0, g.color + '66');
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.scale(1, 0.4); 
+                ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI * 2); ctx.fill();
+                
+                ctx.setTransform(1, 0, 0, 1, sx, sy);
+                const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.15);
+                coreGrad.addColorStop(0, '#ffffff');
+                coreGrad.addColorStop(0.5, g.color);
+                coreGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = coreGrad;
+                ctx.beginPath(); ctx.arc(0, 0, size * 0.15, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        // 3. Nebulae (PHASE 18 ENHANCED: LAYERED PULSE)
+        if (this.game.activeStyles.has('nebula') && this.game.nebulae && this.game.nebulae.length > 0) {
             ctx.globalCompositeOperation = 'screen';
+            const time = performance.now();
             this.game.nebulae.forEach(n => {
-                if (n.flownOut) return; // Skip if flown out during warp
+                const parallax = 0.05 + (n.z ? (n.z + 1500) / 30000 : 0.02);
+                const sx = (((n.x || 0) * zoom + (camX * parallax)) % canvas.width + canvas.width) % canvas.width;
+                const sy = (((n.y || 0) * zoom + (camY * parallax)) % canvas.height + canvas.height) % canvas.height;
+                const size = n.size * zoom;
+                
+                if (!Number.isFinite(sx) || !Number.isFinite(sy) || size <= 0) return;
 
-                // During disengage: use scale and alpha from flyObject
-                let scale = 1.0;
-                let alpha = 1.0;
-                if (this.game.warpDisengaging && n.warpScale !== undefined) {
-                    scale = n.warpScale || 0.01;
-                    alpha = n.warpAlpha || 0;
-                }
-
-                const scaledSize = Math.max(0.1, n.size * scale);
-                const scaledAlpha = n.alpha * alpha;
-
-                const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, scaledSize);
+                ctx.save();
+                ctx.translate(sx, sy);
+                const pulse1 = (Math.sin(time * 0.0008 + n.x) + 1) / 2;
+                const pulse2 = (Math.cos(time * 0.0012 + n.y) + 1) / 2;
+                const alpha = (n.opacity || 0.15) * (0.7 + pulse1 * 0.3);
+                
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
                 grad.addColorStop(0, n.color);
+                grad.addColorStop(0.4, n.color + '44');
                 grad.addColorStop(1, 'transparent');
 
-                ctx.globalAlpha = scaledAlpha;
+                ctx.globalAlpha = alpha;
                 ctx.fillStyle = grad;
                 ctx.beginPath();
-                ctx.arc(n.x, n.y, scaledSize, 0, Math.PI * 2);
+                ctx.scale(1.2 + pulse2 * 0.2, 0.8 + pulse1 * 0.2); 
+                ctx.arc(0, 0, size, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.restore();
             });
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 1;
         }
 
-        // 2.5 Moving Cosmic Stars (shooting stars with tails)
-        if (this.game.activeStyles.has('deep-space') && this.game.shootingStars && this.game.shootingStars.length > 0) {
-            this.game.shootingStars.forEach(s => {
+        // 4. Black Holes
+        if (this.game.activeStyles.has('deep-space') && this.game.blackHoles && this.game.blackHoles.length > 0) {
+            this.game.blackHoles.forEach(bh => {
+                const parallax = 0.1 + (bh.z ? (bh.z + 2000) / 20000 : 0.05);
+                const sx = (((bh.x || 0) * zoom + (camX * parallax)) % canvas.width + canvas.width) % canvas.width;
+                const sy = (((bh.y || 0) * zoom + (camY * parallax)) % canvas.height + canvas.height) % canvas.height;
+                const size = bh.size * zoom;
+
+                if (!Number.isFinite(sx) || !Number.isFinite(sy) || size <= 0) return;
+
                 ctx.save();
+                ctx.translate(sx, sy);
+                const lensGrad = ctx.createRadialGradient(0, 0, size * 0.8, 0, 0, size * 2);
+                lensGrad.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+                lensGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = lensGrad;
+                ctx.beginPath(); ctx.arc(0, 0, size * 2, 0, Math.PI * 2); ctx.fill();
 
-                // Draw tail (gradient line in opposite direction of movement)
-                const tailX = s.x - s.vx * s.tailLength;
-                const tailY = s.y - s.vy * s.tailLength;
-
-                const tailGrad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
-                tailGrad.addColorStop(0, 'transparent');
-                tailGrad.addColorStop(0.7, s.color + '40');
-                tailGrad.addColorStop(1, s.color);
-
-                ctx.strokeStyle = tailGrad;
-                ctx.lineWidth = s.size * 0.8;
-                ctx.lineCap = 'round';
-                ctx.globalAlpha = s.alpha;
-
-                ctx.beginPath();
-                ctx.moveTo(tailX, tailY);
-                ctx.lineTo(s.x, s.y);
-                ctx.stroke();
-
-                // Draw star head (bright point)
-                ctx.fillStyle = s.color;
-                ctx.globalAlpha = s.alpha + 0.3;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                ctx.fill();
-
+                ctx.fillStyle = '#000000';
+                ctx.beginPath(); ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
             });
-            ctx.globalAlpha = 1;
         }
+    }
 
-        // 3. Spacecraft (from alien style) - ENHANCED RENDERING
+        // 3. Spacecraft (ALIEN FLEET - HIGH FIDELITY WRAPPING)
         if (this.game.activeStyles.has('alien') && this.game.spacecraft && this.game.spacecraft.length > 0) {
-            const time = performance.now() * 0.001;
+            const time = performance.now();
             this.game.spacecraft.forEach(s => {
-                if (s.flownOut) return; // Skip if flown out during warp
+                const parallax = 0.12 + (s.z ? (s.z + 1500) / 15000 : 0.05);
+                const sx = (((s.x || 0) * zoom + (camX * parallax)) % canvas.width + canvas.width) % canvas.width;
+                const sy = (((s.y || 0) * zoom + (camY * parallax)) % canvas.height + canvas.height) % canvas.height;
+                const size = s.size * zoom;
+                
+                if (!Number.isFinite(sx) || !Number.isFinite(sy) || size <= 0) return;
+
                 ctx.save();
-
-                // Position comes from flyObject during disengage
-                ctx.translate(s.x, s.y);
-
-                // During disengage: use scale and alpha from flyObject
-                if (this.game.warpDisengaging && s.warpScale !== undefined) {
-                    ctx.scale(s.warpScale, s.warpScale);
-                    ctx.globalAlpha = s.warpAlpha || 0;
+                ctx.translate(sx, sy);
+                
+                // Directional rotation
+                if (s.shipClass !== 'saucer' && s.shipClass !== 'monolith') {
+                    ctx.rotate(Math.atan2(s.vy, s.vx));
+                } else if (s.rotation !== undefined) {
+                    ctx.rotate(s.rotation + (s.rotationSpeed || 0) * time * 0.01);
                 }
 
-                // Update rotation for saucers
-                if (s.rotationSpeed) s.rotation += s.rotationSpeed;
+                // --- DETAILED SHIP RENDERING ---
+                const h = s.hullColor || '#555';
+                const hl = s.hullHighlight || '#aaa';
+                const sh = s.hullShadow || '#222';
+                const ec = s.engineColor || '#00f3ff';
+                const t = time * 0.001;
 
-                const size = s.size;
-                const zoom = this.game.camera.zoom;
-                const angle = Math.atan2(s.vy, s.vx);
-
-                // Shield effect (drawn first, behind ship)
-                if (s.hasShield) {
-                    const shieldPulse = Math.sin(time * 2 + s.shieldPhase) * 0.3 + 0.4;
-                    ctx.globalAlpha = shieldPulse * 0.4;
-                    const shieldGrad = ctx.createRadialGradient(0, 0, size * 0.5, 0, 0, size * 1.5);
-                    shieldGrad.addColorStop(0, 'transparent');
-                    shieldGrad.addColorStop(0.7, s.shieldColor || 'rgba(100,200,255,0.3)');
-                    shieldGrad.addColorStop(1, 'transparent');
-                    ctx.fillStyle = shieldGrad;
+                // 1. Engine Glow (drawn behind)
+                if (s.shipClass !== 'monolith' && s.shipClass !== 'swarm-cluster') {
+                    const flicker = 0.8 + Math.sin(t * 20 + (s.detailSeed || 0)) * 0.2;
+                    ctx.save();
+                    ctx.shadowBlur = 15 * zoom;
+                    ctx.shadowColor = ec;
+                    ctx.fillStyle = ec;
                     ctx.beginPath();
-                    ctx.arc(0, 0, size * 1.5, 0, Math.PI * 2);
+                    ctx.arc(-size * 0.6, 0, size * 0.2 * flicker, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.globalAlpha = 1;
+                    ctx.restore();
                 }
 
-                // Tractor beam (for saucers)
-                if (s.beamActive && s.shipClass === 'saucer') {
-                    const beamPulse = Math.sin(time * 5) * 0.2 + 0.6;
-                    ctx.globalAlpha = beamPulse * 0.5;
-                    const beamGrad = ctx.createLinearGradient(0, size * 0.2, 0, size * 3);
-                    beamGrad.addColorStop(0, s.beamColor || '#88ff88');
-                    beamGrad.addColorStop(1, 'transparent');
-                    ctx.fillStyle = beamGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(-size * 0.3, size * 0.2);
-                    ctx.lineTo(-size * 0.8, size * 3);
-                    ctx.lineTo(size * 0.8, size * 3);
-                    ctx.lineTo(size * 0.3, size * 0.2);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.globalAlpha = 1;
-                }
+                // 2. Multi-Pass Hull Rendering
+                ctx.fillStyle = h;
+                ctx.strokeStyle = hl;
+                ctx.lineWidth = 1.5;
 
-                // Rotate for directional ships (not saucers)
-                if (s.shipClass !== 'saucer') {
-                    ctx.rotate(angle);
-                }
+                switch (s.shipClass) {
+                    case 'saucer':
+                        // Upper Dome
+                        ctx.fillStyle = s.domeColor || '#88ffff';
+                        ctx.beginPath(); ctx.ellipse(0, -size * 0.1, size * 0.4, size * 0.3, 0, Math.PI, 0); ctx.fill();
+                        // Main Chassis
+                        ctx.fillStyle = h;
+                        ctx.beginPath(); ctx.ellipse(0, 0, size, size * 0.25, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                        // Ring detail
+                        ctx.strokeStyle = ec;
+                        ctx.beginPath(); ctx.ellipse(0, 0, size * 0.8, size * 0.1, 0, 0, Math.PI * 2); ctx.stroke();
+                        break;
 
-                // Engine trails (for non-saucers)
-                if (s.shipClass !== 'saucer' && s.shipClass !== 'probe') {
-                    ctx.globalAlpha = 0.7;
-                    const trailLength = size * 2;
-                    const engineSpacing = size * 0.25;
-                    const engineCount = s.engineCount || 2;
-
-                    for (let i = 0; i < engineCount; i++) {
-                        const offsetY = (i - (engineCount - 1) / 2) * engineSpacing;
-                        const flicker = 0.7 + Math.sin(time * 15 + s.detailSeed + i) * 0.3;
-                        const trailGrad = ctx.createLinearGradient(-size * 0.7, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
-                        trailGrad.addColorStop(0, s.engineGlow || '#ffffff');
-                        trailGrad.addColorStop(0.15, s.engineColor || '#00aaff');
-                        trailGrad.addColorStop(1, 'transparent');
-
-                        ctx.fillStyle = trailGrad;
+                    case 'star-dreadnought':
+                        // Industrial Dagger
                         ctx.beginPath();
-                        ctx.moveTo(-size * 0.65, offsetY - 4);
-                        ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
-                        ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.65, offsetY + 4);
+                        ctx.moveTo(size * 1.5, 0);
+                        ctx.lineTo(-size * 0.4, -size * 0.6);
+                        ctx.lineTo(-size * 0.8, -size * 0.3);
+                        ctx.lineTo(-size * 1.0, 0);
+                        ctx.lineTo(-size * 0.8, size * 0.3);
+                        ctx.lineTo(-size * 0.4, size * 0.6);
                         ctx.closePath();
-                        ctx.fill();
-                    }
-                    ctx.globalAlpha = 1;
-                }
+                        ctx.fill(); ctx.stroke();
+                        // Command Bridge
+                        ctx.fillStyle = hl;
+                        ctx.fillRect(-size * 0.4, -size * 0.15, size * 0.3, size * 0.3);
+                        break;
 
-                // Hull gradient
-                const hullGrad = ctx.createLinearGradient(0, -size * 0.5, 0, size * 0.5);
-                hullGrad.addColorStop(0, s.hullHighlight || '#ccc');
-                hullGrad.addColorStop(0.3, s.hullColor || '#888');
-                hullGrad.addColorStop(1, s.hullShadow || '#333');
-                ctx.fillStyle = hullGrad;
-                ctx.strokeStyle = s.hullHighlight || '#ddd';
-                ctx.lineWidth = 1.5 / zoom;
-
-                // === SHIP RENDERING: 13 Star Wars-Quality Spacecraft ===
-                if (s.shipClass === 'saucer') {
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, size, size * 0.25, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    const domeGrad = ctx.createRadialGradient(-size * 0.1, -size * 0.15, 0, 0, -size * 0.05, size * 0.4);
-                    domeGrad.addColorStop(0, '#ffffff');
-                    domeGrad.addColorStop(0.3, s.domeColor || '#88ffff');
-                    domeGrad.addColorStop(1, 'rgba(0,50,50,0.8)');
-                    ctx.fillStyle = domeGrad;
-                    ctx.beginPath();
-                    ctx.ellipse(0, -size * 0.08, size * 0.35, size * 0.25, 0, Math.PI, 0);
-                    ctx.fill();
-                } else if (s.shipClass === 'star-dreadnought') {
-                    ctx.beginPath();
-                    ctx.moveTo(size * 1.2, 0);
-                    for (let i = 0; i < 6; i++) {
-                        const angle = (i / 6) * Math.PI * 2;
-                        ctx.lineTo(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.8);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                } else if (s.shipClass === 'quantum-scout') {
-                    for (let i = 0; i < 3; i++) {
-                        ctx.save();
-                        ctx.rotate(time * (2 + i) + i);
-                        ctx.strokeStyle = '#00aaff';
+                    case 'monolith':
+                        // Dark Obelisk
+                        ctx.fillStyle = '#050505';
+                        ctx.fillRect(-size * 0.2, -size * 1.5, size * 0.4, size * 3);
+                        ctx.strokeStyle = s.lightColor || '#00f3ff';
                         ctx.lineWidth = 2;
+                        for (let i = 0; i < 6; i++) {
+                            const y = -size * 1.2 + (i * size * 0.5) + Math.sin(t + i) * 10;
+                            ctx.beginPath(); ctx.moveTo(-size * 0.15, y); ctx.lineTo(size * 0.15, y); ctx.stroke();
+                        }
+                        break;
+
+                    case 'spire-fortress':
+                        // Vertical Platform
+                        ctx.rotate(t * 0.5);
+                        ctx.fillStyle = h;
+                        for (let i = 0; i < 4; i++) {
+                            ctx.rotate(Math.PI / 2);
+                            ctx.fillRect(size * 0.2, -size * 0.1, size * 0.8, size * 0.2);
+                        }
+                        ctx.fillStyle = sh;
+                        ctx.beginPath(); ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2); ctx.fill();
+                        break;
+
+                    case 'swarm-cluster':
+                        // Multiple small drones
+                        for (let i = 0; i < 5; i++) {
+                            const ox = Math.cos(t * 2 + i) * size * 0.5;
+                            const oy = Math.sin(t * 3 + i) * size * 0.5;
+                            ctx.fillStyle = s.lightColor || '#fff';
+                            ctx.beginPath(); ctx.arc(ox, oy, size * 0.15, 0, Math.PI * 2); ctx.fill();
+                        }
+                        break;
+
+                    case 'crystal-cutter':
+                        // Translucent geometric ship
+                        ctx.globalAlpha = 0.6;
+                        ctx.fillStyle = s.domeColor || '#88ffff';
                         ctx.beginPath();
-                        ctx.ellipse(0, 0, size * (0.6 + i * 0.3), size * 0.2, 0, 0, Math.PI * 2);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                } else if (s.shipClass === 'void-fighter') {
-                    ctx.beginPath();
-                    ctx.moveTo(size * 0.9, 0);
-                    ctx.lineTo(size * 0.2, -size * 0.5);
-                    ctx.lineTo(-size * 0.6, -size * 0.3);
-                    ctx.lineTo(-size * 0.6, size * 0.3);
-                    ctx.lineTo(size * 0.2, size * 0.5);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                } else if (s.shipClass === 'nebula-cruiser') {
-                    // Concorde-style supersonic jet
-                    const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                    hullGrad.addColorStop(0, '#606080');
-                    hullGrad.addColorStop(0.5, '#8080a0');
-                    hullGrad.addColorStop(1, '#505070');
-                    ctx.fillStyle = hullGrad;
-                    // Sleek fuselage with pointed nose
-                    ctx.beginPath();
-                    ctx.moveTo(size * 1.2, 0);
-                    ctx.lineTo(size * 0.7, -size * 0.08);
-                    ctx.lineTo(-size * 0.5, -size * 0.12);
-                    ctx.lineTo(-size * 0.8, 0);
-                    ctx.lineTo(-size * 0.5, size * 0.12);
-                    ctx.lineTo(size * 0.7, size * 0.08);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                    // Delta wings
-                    ctx.fillStyle = '#7070a0';
-                    ctx.beginPath();
-                    ctx.moveTo(size * 0.2, 0);
-                    ctx.lineTo(-size * 0.3, -size * 0.6);
-                    ctx.lineTo(-size * 0.6, -size * 0.4);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(size * 0.2, 0);
-                    ctx.lineTo(-size * 0.3, size * 0.6);
-                    ctx.lineTo(-size * 0.6, size * 0.4);
-                    ctx.closePath();
-                    ctx.fill();
-                } else if (s.shipClass === 'bio-corvette') {
-                    const bioGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                    bioGrad.addColorStop(0, '#4a0066');
-                    bioGrad.addColorStop(0.5, '#9900cc');
-                    bioGrad.addColorStop(1, '#660099');
-                    ctx.fillStyle = bioGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(size * 0.8, 0);
-                    ctx.bezierCurveTo(size * 0.6, -size * 0.4, size * 0.2, -size * 0.5, -size * 0.3, -size * 0.3);
-                    ctx.bezierCurveTo(-size * 0.7, 0, -size * 0.3, size * 0.3, size * 0.2, size * 0.5);
-                    ctx.bezierCurveTo(size * 0.6, size * 0.4, size * 0.8, 0, size * 0.8, 0);
-                    ctx.fill();
-                } else if (s.shipClass === 'warp-strider') {
-                    const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                    hullGrad.addColorStop(0, '#606060');
-                    hullGrad.addColorStop(0.5, '#a0a0a0');
-                    hullGrad.addColorStop(1, '#505050');
-                    ctx.fillStyle = hullGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(size * 0.8, 0);
-                    ctx.lineTo(size * 0.3, -size * 0.15);
-                    ctx.lineTo(-size * 0.6, -size * 0.15);
-                    ctx.lineTo(-size * 0.8, 0);
-                    ctx.lineTo(-size * 0.6, size * 0.15);
-                    ctx.lineTo(size * 0.3, size * 0.15);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#707070';
-                    ctx.fillRect(-size * 0.7, -size * 0.5, size * 0.4, size * 0.08);
-                    ctx.fillRect(-size * 0.7, size * 0.42, size * 0.4, size * 0.08);
-                } else if (s.shipClass === 'prism-destroyer') {
-                    const hullGrad = ctx.createLinearGradient(-size, -size, size, size);
-                    hullGrad.addColorStop(0, '#c0c0c0');
-                    hullGrad.addColorStop(0.5, '#e8e8e8');
-                    hullGrad.addColorStop(1, '#707070');
-                    ctx.fillStyle = hullGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(size, 0);
-                    ctx.lineTo(size * 0.3, -size * 0.6);
-                    ctx.lineTo(-size * 0.5, -size * 0.5);
-                    ctx.lineTo(-size * 0.8, 0);
-                    ctx.lineTo(-size * 0.5, size * 0.5);
-                    ctx.lineTo(size * 0.3, size * 0.6);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                } else if (s.shipClass === 'stellar-barge') {
-                    const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                    hullGrad.addColorStop(0, '#4a3820');
-                    hullGrad.addColorStop(0.5, '#8B6F47');
-                    hullGrad.addColorStop(1, '#3a2810');
-                    ctx.fillStyle = hullGrad;
-                    ctx.fillRect(-size * 0.7, -size * 0.35, size * 1.3, size * 0.7);
-                    ctx.fillStyle = '#5a4830';
-                    ctx.beginPath();
-                    ctx.moveTo(size * 0.7, -size * 0.25);
-                    ctx.lineTo(size, 0);
-                    ctx.lineTo(size * 0.7, size * 0.25);
-                    ctx.closePath();
-                    ctx.fill();
-                } else if (s.shipClass === 'cyber-sentry') {
-                    const eyeGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.4);
-                    eyeGrad.addColorStop(0, '#ff0000');
-                    eyeGrad.addColorStop(0.5, '#880000');
-                    eyeGrad.addColorStop(1, '#220000');
-                    ctx.fillStyle = eyeGrad;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
-                    ctx.fill();
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (i / 8) * Math.PI * 2 + time;
-                        ctx.strokeStyle = '#ff0000';
-                        ctx.lineWidth = 2;
+                        ctx.moveTo(size, 0);
+                        ctx.lineTo(0, -size * 0.4);
+                        ctx.lineTo(-size * 0.8, 0);
+                        ctx.lineTo(0, size * 0.4);
+                        ctx.closePath();
+                        ctx.fill(); ctx.stroke();
+                        ctx.globalAlpha = 1.0;
+                        break;
+
+                    default:
+                        // Generic Sleek Fighter
                         ctx.beginPath();
-                        ctx.moveTo(Math.cos(angle) * size * 0.4, Math.sin(angle) * size * 0.4);
-                        ctx.lineTo(Math.cos(angle) * size * 0.8, Math.sin(angle) * size * 0.8);
-                        ctx.stroke();
-                    }
-                } else if (s.shipClass === 'aether-wing') {
-                    const grad = ctx.createLinearGradient(-size, 0, size, 0);
-                    grad.addColorStop(0, 'rgba(0,100,255,0)');
-                    grad.addColorStop(0.5, 'rgba(100,200,255,0.6)');
-                    grad.addColorStop(1, 'rgba(0,100,255,0)');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.moveTo(-size * 0.8, -size * 0.6);
-                    ctx.lineTo(size * 0.8, 0);
-                    ctx.lineTo(-size * 0.8, size * 0.6);
-                    ctx.closePath();
-                    ctx.fill();
-                } else if (s.shipClass === 'death-sphere') {
-                    const sphereGrad = ctx.createRadialGradient(-size * 0.2, -size * 0.2, 0, 0, 0, size);
-                    sphereGrad.addColorStop(0, '#505050');
-                    sphereGrad.addColorStop(0.5, '#303030');
-                    sphereGrad.addColorStop(1, '#101010');
-                    ctx.fillStyle = sphereGrad;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, size, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    const laserGrad = ctx.createRadialGradient(size * 0.4, -size * 0.4, 0, size * 0.4, -size * 0.4, size * 0.12);
-                    laserGrad.addColorStop(0, '#00ff00');
-                    laserGrad.addColorStop(0.5, '#00aa00');
-                    laserGrad.addColorStop(1, 'rgba(0,170,0,0)');
-                    ctx.fillStyle = laserGrad;
-                    ctx.beginPath();
-                    ctx.arc(size * 0.4, -size * 0.4, size * 0.1, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (s.shipClass === 'tie-fighter') {
-                    const cockpitGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.3);
-                    cockpitGrad.addColorStop(0, '#606060');
-                    cockpitGrad.addColorStop(0.7, '#303030');
-                    cockpitGrad.addColorStop(1, '#101010');
-                    ctx.fillStyle = cockpitGrad;
-                    ctx.beginPath();
-                    for (let i = 0; i < 6; i++) {
-                        const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-                        const x = Math.cos(angle) * size * 0.25;
-                        const y = Math.sin(angle) * size * 0.25;
-                        if (i === 0) ctx.moveTo(x, y);
-                        else ctx.lineTo(x, y);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                    const panelGrad = ctx.createLinearGradient(-size, -size, size, size);
-                    panelGrad.addColorStop(0, '#404040');
-                    panelGrad.addColorStop(0.5, '#505050');
-                    panelGrad.addColorStop(1, '#303030');
-                    ctx.fillStyle = panelGrad;
-                    ctx.fillRect(-size * 1.2, -size * 0.8, size * 0.8, size * 1.6);
-                    ctx.strokeRect(-size * 1.2, -size * 0.8, size * 0.8, size * 1.6);
-                    ctx.fillRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
-                    ctx.strokeRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
-                } else {
-                    // Default fallback for any unrecognized ships
-                    ctx.beginPath();
-                    ctx.arc(0, 0, size * 0.5, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
+                        ctx.moveTo(size * 1.2, 0);
+                        ctx.lineTo(-size * 0.6, -size * 0.4);
+                        ctx.lineTo(-size * 0.3, 0);
+                        ctx.lineTo(-size * 0.6, size * 0.4);
+                        ctx.closePath();
+                        ctx.fill(); ctx.stroke();
                 }
 
-                // Navigation lights (for non-probes, non-saucers)
-                if (s.shipClass !== 'probe' && s.shipClass !== 'saucer') {
-                    const lightPulse = Math.sin(time * 3 + (s.lightPhase || 0)) * 0.5 + 0.5;
-                    ctx.fillStyle = s.lightColor || '#ff00ff';
-                    ctx.globalAlpha = lightPulse;
-                    ctx.beginPath();
-                    ctx.arc(size * 0.85, 0, 3 / zoom, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Wing tip lights
-                    ctx.fillStyle = '#00ff00';
-                    ctx.beginPath();
-                    ctx.arc(-size * 0.5, -size * 0.6, 2 / zoom, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#ff0000';
-                    ctx.beginPath();
-                    ctx.arc(-size * 0.5, size * 0.6, 2 / zoom, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.globalAlpha = 1;
-                }
+                // 3. Navigation Lights (Final Detail)
+                const lightPulse = (Math.sin(t * 8 + (s.detailSeed || 0)) + 1) / 2;
+                ctx.fillStyle = s.lightColor || '#ff00ff';
+                ctx.globalAlpha = 0.4 + lightPulse * 0.6;
+                ctx.beginPath(); ctx.arc(size * 0.8, 0, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = 1.0;
 
                 ctx.restore();
             });

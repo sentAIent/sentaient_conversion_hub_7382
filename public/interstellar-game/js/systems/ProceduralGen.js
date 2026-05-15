@@ -553,101 +553,46 @@ class ProceduralManager {
             this.game.matrixStreams = this.game.matrixStreams || [];
         }
     }
-
-
-
     generateStaticStars() {
-        // CLEAR existing stars first so color changes take effect
+        // CLEAR existing stars first
         this.game.staticStars = [];
-
-        // Use more stars for warp mode for a denser hyperspace field
         const count = this.game.bgWarpMode ? 600 : 400;
 
-        // ALWAYS read star colors directly from the DOM pickers
-        const c1 = document.getElementById('starColor1')?.value || '#ffffff';
-        const c2 = document.getElementById('starColor2')?.value || '#aaddff';
-        const c3 = document.getElementById('starColor3')?.value || '#ffddaa';
-        const activeColors = [c1, c2, c3];
-        // Also update the stored starColors array
-        this.game.starColors = activeColors;
-
-        // Generate stars across a much wider area using uniform distribution
         const w = this.game.canvas.width;
         const h = this.game.canvas.height;
         const centerX = w / 2;
         const centerY = h / 2;
-        const spreadX = w * 20;
-        const spreadY = h * 20;
+        const spreadX = w * 2.0; 
+        const spreadY = h * 2.0;
 
         for (let i = 0; i < count; i++) {
-            let x, y, vx = 0, vy = 0;
-
-            if (this.game.bgWarpMode) {
-                // Warp mode: Stars originate from center and move outward radially
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.random() * Math.max(w, h) * 0.8;
-                x = centerX + Math.cos(angle) * dist;
-                y = centerY + Math.sin(angle) * dist;
-                // Faster radial velocity for dramatic hyperspace effect
-                const speed = 4 + Math.random() * 16;
-                vx = Math.cos(angle) * speed;
-                vy = Math.sin(angle) * speed;
-            } else {
-                // Normal / Drift mode: Uniform distribution
-                x = Math.random() * spreadX - spreadX / 2 + centerX;
-                y = Math.random() * spreadY - spreadY / 2 + centerY;
-
-                if (this.game.bgDriftMode) {
-                    // Slow gentle drift in random direction
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = 0.1 + Math.random() * 0.3;
-                    vx = Math.cos(angle) * speed;
-                    vy = Math.sin(angle) * speed;
-                }
-            }
-
-            // Depth layer affects speed - creates parallax at high warp
-            const depthLayer = 0.3 + Math.random() * 0.7; // 0.3 to 1.0
+            const depthLayer = 0.2 + Math.random() * 0.8;
             this.game.staticStars.push({
-                x: x,
-                y: y,
-                vx: vx,
-                vy: vy,
-                size: (Math.random() * 1.5 + 0.5) * depthLayer, // Farther = smaller
+                x: Math.random() * spreadX,
+                y: Math.random() * spreadY,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                size: (Math.random() * 1.5 + 0.5) * depthLayer,
                 alpha: Math.random() * 0.5 + 0.1,
-                baseAlpha: Math.random() * 0.5 + 0.1,
-                color: activeColors[Math.floor(Math.random() * activeColors.length)],
-                depth: depthLayer // Used for speed variation
+                color: '#ffffff',
+                depth: depthLayer
             });
         }
     }
 
 
     generateDeepSpaceStyle() {
-        const range = this.game.worldSize;
-        const half = range / 2;
-        const zRange = 3000; // Increased Z-axis depth range
-
-        // Define zoom tiers: close, medium, far
-        // Close tier: objects within 400px of center (visible at max zoom ~5x)
-        // Medium tier: objects 400-2000px from center (visible at default zoom ~1x)
-        // Far tier: objects 2000-6000px from center (visible when zoomed out ~0.1x)
+        const zRange = 4000;
 
         // 1. Background Stars - distributed across all tiers
-        const starCount = 600; // +20%
+        const starCount = 600;
         for (let i = 0; i < starCount; i++) {
             const tier = Math.random();
             let dist, size;
-            if (tier < 0.2) { // Close tier - 20%
-                dist = Math.random() * 400;
-                size = 0.5 + Math.random() * 1.0;
-            } else if (tier < 0.5) { // Medium tier - 30%
-                dist = 400 + Math.random() * 1600;
-                size = 1.0 + Math.random() * 1.5;
-            } else { // Far tier - 50%
-                dist = 2000 + Math.random() * 4000;
-                size = 1.5 + Math.random() * 2.0;
-            }
+            if (tier < 0.2) { dist = Math.random() * 400; size = 0.5 + Math.random() * 1.0; }
+            else if (tier < 0.5) { dist = 400 + Math.random() * 1600; size = 1.0 + Math.random() * 1.5; }
+            else { dist = 2000 + Math.random() * 4000; size = 1.5 + Math.random() * 2.0; }
+            
             const angle = Math.random() * Math.PI * 2;
             this.game.backgroundStars.push({
                 x: Math.cos(angle) * dist,
@@ -658,46 +603,42 @@ class ProceduralManager {
             });
         }
 
-        // 2. Galaxies - distributed across tiers (12 total, +50%)
-        const galaxyConfigs = [
-            { count: 2, minDist: 100, maxDist: 400, minSize: 60, maxSize: 120 },   // Close
-            { count: 4, minDist: 400, maxDist: 2000, minSize: 100, maxSize: 250 }, // Medium
-            { count: 6, minDist: 2000, maxDist: 6000, minSize: 200, maxSize: 450 } // Far
-        ];
-        galaxyConfigs.forEach(cfg => {
-            for (let i = 0; i < cfg.count; i++) {
-                const dist = cfg.minDist + Math.random() * (cfg.maxDist - cfg.minDist);
-                const angle = Math.random() * Math.PI * 2;
-                this.game.galaxies.push({
-                    x: Math.cos(angle) * dist,
-                    y: Math.sin(angle) * dist,
-                    z: (Math.random() * zRange) - zRange / 2,
-                    // Expanded color palette
-                    color: ['#ff0055', '#5500ff', '#00aaff', '#ff00aa', '#00ff88', '#ffaa00', '#aa00ff', '#ffffff'][Math.floor(Math.random() * 8)],
-                    angle: Math.random() * Math.PI * 2,
-                    size: cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize)
-                });
-            }
-        });
-
-        // 3. Black Holes - 3 total (+50%), one per tier
-        const blackHoleConfigs = [
-            { minDist: 200, maxDist: 500, minSize: 20, maxSize: 40 },
-            { minDist: 800, maxDist: 2000, minSize: 40, maxSize: 80 },
-            { minDist: 2500, maxDist: 5000, minSize: 80, maxSize: 150 }
-        ];
-        blackHoleConfigs.forEach(cfg => {
-            const dist = cfg.minDist + Math.random() * (cfg.maxDist - cfg.minDist);
+        // 2. Galaxies (8 total - v18 standard)
+        for (let i = 0; i < 8; i++) {
             const angle = Math.random() * Math.PI * 2;
-            this.game.blackHoles.push({
+            const dist = 3000 + Math.random() * 5000;
+            this.game.galaxies.push({
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist,
-                z: (Math.random() * zRange) - zRange / 2,
-                size: cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize)
+                z: (Math.random() - 0.5) * 4000,
+                size: 200 + Math.random() * 400,
+                rotation: Math.random() * Math.PI * 2,
+                color: Math.random() > 0.5 ? '#9300ff' : '#00f3ff'
             });
+        }
+
+        // 3. Black Holes
+        this.game.blackHoles.push({
+            x: (Math.random() - 0.5) * 8000,
+            y: (Math.random() - 0.5) * 8000,
+            z: (Math.random() - 0.5) * 2000,
+            size: 150 + Math.random() * 100
         });
 
-        // 4. Nebulae - 18 total (+50%), distributed across tiers
+        // 4. Nebulae
+        for (let i = 0; i < 5; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 2000 + Math.random() * 4000;
+            this.game.nebulae.push({
+                x: Math.cos(angle) * dist,
+                y: Math.sin(angle) * dist,
+                z: (Math.random() - 0.5) * 3000,
+                size: 600 + Math.random() * 800,
+                color: Math.random() > 0.5 ? '#ff00ff' : '#00ffff',
+                opacity: 0.1 + Math.random() * 0.1
+            });
+        }
+        // 4. Nebulae - distributed across tiers
         const nebulaConfigs = [
             { count: 4, minDist: 50, maxDist: 500, minSize: 150, maxSize: 350 },
             { count: 6, minDist: 500, maxDist: 2500, minSize: 350, maxSize: 700 },
@@ -718,7 +659,7 @@ class ProceduralManager {
             }
         });
 
-        // 5. Planets - 15 total, distributed across tiers with spacing
+        // 5. Planets
         this.game.planets = [];
         const planetTypes = [
             { name: 'gas-giant', colors: ['#E8C273', '#C17B3A', '#8B5A2B'], hasAtmosphere: true },
@@ -938,18 +879,16 @@ class ProceduralManager {
         // Alien Spacecraft Fleet - distributed across zoom tiers (30 total, +50%)
         const shipClasses = [
             { name: 'saucer', baseSize: 50, complexity: 'high', weight: 4 },
-            { name: 'star-dreadnought', baseSize: 120, complexity: 'high', weight: 1 },
-            { name: 'quantum-scout', baseSize: 40, complexity: 'high', weight: 3 },
+            { name: 'star-dreadnought', baseSize: 150, complexity: 'ultra', weight: 1 },
+            { name: 'quantum-scout', baseSize: 35, complexity: 'high', weight: 3 },
             { name: 'void-fighter', baseSize: 30, complexity: 'medium', weight: 4 },
-            { name: 'nebula-cruiser', baseSize: 90, complexity: 'high', weight: 2 },
-            { name: 'bio-corvette', baseSize: 60, complexity: 'high', weight: 2 },
-            { name: 'warp-strider', baseSize: 100, complexity: 'medium', weight: 1 },
-            { name: 'prism-destroyer', baseSize: 80, complexity: 'low', weight: 2 },
-            { name: 'stellar-barge', baseSize: 110, complexity: 'medium', weight: 2 },
+            { name: 'nebula-cruiser', baseSize: 100, complexity: 'high', weight: 2 },
+            { name: 'monolith', baseSize: 200, complexity: 'ultra', weight: 1 },
+            { name: 'spire-fortress', baseSize: 120, complexity: 'ultra', weight: 1 },
+            { name: 'swarm-cluster', baseSize: 40, complexity: 'medium', weight: 3 },
+            { name: 'crystal-cutter', baseSize: 60, complexity: 'high', weight: 2 },
             { name: 'cyber-sentry', baseSize: 35, complexity: 'high', weight: 3 },
-            { name: 'aether-wing', baseSize: 50, complexity: 'high', weight: 2 },
-            { name: 'death-sphere', baseSize: 150, complexity: 'high', weight: 1 },
-            { name: 'tie-fighter', baseSize: 45, complexity: 'high', weight: 3 }
+            { name: 'death-sphere', baseSize: 180, complexity: 'ultra', weight: 1 }
         ];
 
         // Build weighted selection pool
@@ -1133,7 +1072,7 @@ class ProceduralManager {
             } else if (theme.name === 'Rainbow Surge') {
                 // Calculate hue based on column index (i) to cycle through the spectrum
                 const hue = (i * 360 / columns) % 360;
-                streamColor = `hsl(${hue}, 100 %, 50 %)`; // Full saturation, mid lightness
+                streamColor = `hsl(${hue}, 100%, 50%)`; // Full saturation, mid lightness
             }
 
             this.game.matrixStreams.push({
