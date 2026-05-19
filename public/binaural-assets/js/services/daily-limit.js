@@ -3,7 +3,7 @@
  * Enforces listening limits based on user tier (Free = 15m, Yogi = 2h, Pro = Unlimited)
  */
 
-import { getUserTier } from '/binaural-assets/js/services/stripe-simple.js';
+import { getUserTier } from '../services/stripe-simple.js';
 
 const KEY_USAGE = 'mindwave_daily_usage';
 const KEY_DATE = 'mindwave_daily_date';

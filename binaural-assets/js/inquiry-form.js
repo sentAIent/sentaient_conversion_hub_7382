@@ -8,7 +8,7 @@ import {
     collection,
     addDoc,
     serverTimestamp
-} from '/binaural-assets/js/services/firebase.js';
+} from '../services/firebase.js';
 
 /**
  * Show inquiry form modal

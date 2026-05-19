@@ -1,5 +1,5 @@
-import { els } from '/binaural-assets/js/state.js';
-import { updateTopBarWidth } from '/binaural-assets/js/resize-panels.js';
+import { els } from '../state.js';
+import { updateTopBarWidth } from './resize-panels.js';
 
 // Swipe gesture detection for mobile sidebar navigation
 let touchStartX = 0;

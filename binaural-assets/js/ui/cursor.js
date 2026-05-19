@@ -1,4 +1,4 @@
-import { THEMES, state } from '/binaural-assets/js/state.js';
+import { THEMES, state } from '../state.js';
 
 // Available cursor shapes - more choices including user-requested shapes
 const CURSOR_SHAPES = {
@@ -236,7 +236,6 @@ export function createCursorUIInThemeModal() {
 }
 
 window.setCursorShape = setCursorShape;
-window._setCursorShape = setCursorShape; // Bridge for legacy controls_v3 failsafe
 window.setCursorColor = setCursorColor;
 window.setCursorOpacity = setCursorOpacity;
 window.resetCursorColor = resetCursorColor;

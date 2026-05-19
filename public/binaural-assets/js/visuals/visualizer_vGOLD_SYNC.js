@@ -1835,49 +1835,6 @@ export class Visualizer3D {
         }
     }
 
-    static CYMATIC_PATTERNS = [
-        { name: "Sri Yantra", n: 9, m: 3, energy: 0.8, cat: "sacred" },
-        { name: "Flower Life", n: 6, m: 6, energy: 0.9, cat: "sacred" },
-        { name: "Metatron", n: 13, m: 13, energy: 1.0, cat: "sacred" },
-        { name: "Vector Eq", n: 2, m: 2, energy: 0.4, cat: "geometry" },
-        { name: "Fibonacci", n: 1, m: 8, energy: 0.7, cat: "radial" },
-        { name: "Torus Vortex", n: 15, m: 5, energy: 0.8, cat: "geometry" },
-        { name: "Mandelbrot", n: 8, m: 4, energy: 0.8, cat: "geometry" },
-        { name: "Julia Loop", n: 5, m: 5, energy: 0.7, cat: "geometry" },
-        { name: "Recursive", n: 10, m: 4, energy: 0.9, cat: "geometry" },
-        { name: "Polygon", n: 4, m: 4, energy: 0.6, cat: "geometry" },
-        { name: "Lattice", n: 6, m: 2, energy: 0.6, cat: "geometry" },
-        { name: "Star Gate", n: 7, m: 3, energy: 1.0, cat: "sacred" },
-        { name: "Neural Flow", n: 12, m: 12, energy: 1.1, cat: "complex" },
-        { name: "Quantum", n: 5, m: 13, energy: 1.2, cat: "complex" },
-        { name: "Golden Rat", n: 11, m: 3, energy: 0.9, cat: "radial" },
-        { name: "Celestial", n: 9, m: 9, energy: 1.0, cat: "sacred" },
-        { name: "Void Geo", n: 20, m: 2, energy: 1.2, cat: "complex" },
-        { name: "Infinite", n: 13, m: 17, energy: 1.3, cat: "complex" },
-        { name: "Prism Mirror", n: 3, m: 3, energy: 0.5, cat: "geometry" },
-        { name: "Cosmic Knot", n: 7, m: 14, energy: 1.1, cat: "complex" },
-        { name: "Matrix Core", n: 21, m: 3, energy: 1.4, cat: "complex" },
-        { name: "Omega Sphere", n: 2, m: 8, energy: 0.9, cat: "sacred" },
-        { name: "Fractal Lace", n: 1, m: 10, energy: 0.8, cat: "geometry" },
-        { name: "Torus Core", n: 33, m: 15, energy: 0.9, cat: "geometry" },
-        { name: "Fractal Sun", n: 11, m: 88, energy: 1.0, cat: "complex" },
-        { name: "Spiral Net", n: 8, m: 120, energy: 0.6, cat: "geometry" },
-        { name: "Fluid Whorl", n: 50, m: 14, energy: 1.2, cat: "complex" },
-        { name: "Synchro", n: 121, m: 12, energy: 1.1, cat: "sacred" },
-        { name: "Unified", n: 77, m: 7, energy: 0.9, cat: "sacred" },
-        { name: "Omega", n: 13, m: 133, energy: 1.4, cat: "complex" },
-        { name: "Source", n: 1, m: 1, energy: 1.5, cat: "sacred" },
-        { name: "Sun Tone", n: 420, m: 42, energy: 1.2, cat: "radial" },
-        { name: "Sirius", n: 64, m: 250, energy: 1.1, cat: "radial" },
-        { name: "Earth", n: 240, m: 36, energy: 0.9, cat: "radial" },
-        { name: "Moon", n: 45, m: 450, energy: 1.4, cat: "complex" },
-        { name: "Mercury", n: 800, m: 50, energy: 1.3, cat: "radial" },
-        { name: "Venus", n: 120, m: 720, energy: 1.0, cat: "geometry" },
-        { name: "Mars", n: 333, m: 33, energy: 1.1, cat: "complex" },
-        { name: "Jupiter", n: 900, m: 30, energy: 1.0, cat: "radial" },
-        { name: "Saturn", n: 1200, m: 60, energy: 1.5, cat: "complex" },
-        { name: "Gold Ratio", n: 144, m: 89, energy: 0.8, cat: "radial" }
-    ];
 
     nextCymatic() {
         if (window.state && window.state.aiVisualsLocked) {
