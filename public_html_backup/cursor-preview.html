@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Tribal Sun — Tattoo Match</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #111;
+            color: #fff;
+            font-family: -apple-system, sans-serif;
+        }
+
+        h2 {
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        .row {
+            display: flex;
+            gap: 60px;
+            align-items: flex-end;
+            margin-bottom: 40px;
+        }
+
+        .preview {
+            text-align: center;
+        }
+
+        .label {
+            margin-top: 10px;
+            font-size: 13px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Tribal Sun + MindWave Lotus</h2>
+
+    <div class="row">
+        <!-- 256px white on dark -->
+        <div class="preview">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="256" height="256">
+                <g>
+                    <!-- 8 LARGE spikes -->
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(0,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(45,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(90,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(135,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(180,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(225,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(270,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(315,50,50)" />
+                    <!-- 8 SMALL spikes -->
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(22.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(67.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(112.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(157.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(202.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(247.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(292.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(337.5,50,50)" />
+                    <!-- Center ring -->
+                    <circle cx="50" cy="50" r="15" fill="none" stroke="white" stroke-width="5" />
+
+                    <!-- MindWave Lotus - redrawn to fit 30x30 area centered at 50,50 -->
+                    <!-- The logo spans roughly 20-108 x-range and 24-108 y-range in 128 space -->
+                    <!-- Scale: 26/128 ≈ 0.203, then offset to center at (50,50) -->
+                    <!-- Center of logo art ≈ (64, 65), so after scale: (13, 13.2) -->
+                    <!-- Translate: 50-13=37, 50-13.2=36.8 -->
+                    <g transform="translate(37,36.5) scale(0.203)" stroke="white" stroke-width="4" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" />
+                        <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" />
+                        <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" />
+                        <path d="M44 72 C30 76 20 64 20 52 C20 40 36 30 36 30" />
+                        <path d="M84 72 C98 76 108 64 108 52 C108 40 92 30 92 30" />
+                        <path d="M48 96 L64 108 L80 96" />
+                    </g>
+                </g>
+            </svg>
+            <div class="label">White — 256px</div>
+        </div>
+
+        <!-- Black on white -->
+        <div class="preview" style="background: #fff; padding: 24px; border-radius: 16px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="256" height="256">
+                <g>
+                    <polygon points="46,35 54,35 50,8" fill="#111" transform="rotate(0,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#111" transform="rotate(45,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#111" transform="rotate(90,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#111" transform="rotate(135,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#111" transform="rotate(180,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#111" transform="rotate(225,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#111" transform="rotate(270,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#111" transform="rotate(315,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#111" transform="rotate(22.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#111" transform="rotate(67.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#111" transform="rotate(112.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#111" transform="rotate(157.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#111" transform="rotate(202.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#111" transform="rotate(247.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#111" transform="rotate(292.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#111" transform="rotate(337.5,50,50)" />
+                    <circle cx="50" cy="50" r="15" fill="none" stroke="#111" stroke-width="5" />
+                    <g transform="translate(37,36.5) scale(0.203)" stroke="#111" stroke-width="4" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" />
+                        <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" />
+                        <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" />
+                        <path d="M44 72 C30 76 20 64 20 52 C20 40 36 30 36 30" />
+                        <path d="M84 72 C98 76 108 64 108 52 C108 40 92 30 92 30" />
+                        <path d="M48 96 L64 108 L80 96" />
+                    </g>
+                </g>
+            </svg>
+            <div class="label" style="color:#333;">Black — 256px</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="preview">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
+                <g>
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(0,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(45,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(90,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(135,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(180,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(225,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(270,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="white" transform="rotate(315,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(22.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(67.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(112.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(157.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(202.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(247.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(292.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="white" transform="rotate(337.5,50,50)" />
+                    <circle cx="50" cy="50" r="15" fill="none" stroke="white" stroke-width="5" />
+                    <g transform="translate(37,36.5) scale(0.203)" stroke="white" stroke-width="4" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" />
+                        <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" />
+                        <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" />
+                        <path d="M44 72 C30 76 20 64 20 52 C20 40 36 30 36 30" />
+                        <path d="M84 72 C98 76 108 64 108 52 C108 40 92 30 92 30" />
+                        <path d="M48 96 L64 108 L80 96" />
+                    </g>
+                </g>
+            </svg>
+            <div class="label">32px (cursor)</div>
+        </div>
+
+        <div class="preview">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="128" height="128">
+                <g>
+                    <polygon points="46,35 54,35 50,8" fill="#60a9ff" transform="rotate(0,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#60a9ff" transform="rotate(45,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#60a9ff" transform="rotate(90,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#60a9ff" transform="rotate(135,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#60a9ff" transform="rotate(180,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#60a9ff" transform="rotate(225,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#60a9ff" transform="rotate(270,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#60a9ff" transform="rotate(315,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#60a9ff" transform="rotate(22.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#60a9ff" transform="rotate(67.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#60a9ff" transform="rotate(112.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#60a9ff" transform="rotate(157.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#60a9ff" transform="rotate(202.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#60a9ff" transform="rotate(247.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#60a9ff" transform="rotate(292.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#60a9ff" transform="rotate(337.5,50,50)" />
+                    <circle cx="50" cy="50" r="15" fill="none" stroke="#60a9ff" stroke-width="5" />
+                    <g transform="translate(37,36.5) scale(0.203)" stroke="#60a9ff" stroke-width="4" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" />
+                        <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" />
+                        <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" />
+                        <path d="M44 72 C30 76 20 64 20 52 C20 40 36 30 36 30" />
+                        <path d="M84 72 C98 76 108 64 108 52 C108 40 92 30 92 30" />
+                        <path d="M48 96 L64 108 L80 96" />
+                    </g>
+                </g>
+            </svg>
+            <div class="label">Blue — 128px</div>
+        </div>
+
+        <div class="preview">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="128" height="128">
+                <g>
+                    <polygon points="46,35 54,35 50,8" fill="#a855f7" transform="rotate(0,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#a855f7" transform="rotate(45,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#a855f7" transform="rotate(90,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#a855f7" transform="rotate(135,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#a855f7" transform="rotate(180,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#a855f7" transform="rotate(225,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#a855f7" transform="rotate(270,50,50)" />
+                    <polygon points="46,35 54,35 50,8" fill="#a855f7" transform="rotate(315,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#a855f7" transform="rotate(22.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#a855f7" transform="rotate(67.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#a855f7" transform="rotate(112.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#a855f7" transform="rotate(157.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#a855f7" transform="rotate(202.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#a855f7" transform="rotate(247.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#a855f7" transform="rotate(292.5,50,50)" />
+                    <polygon points="48,35 52,35 50,18" fill="#a855f7" transform="rotate(337.5,50,50)" />
+                    <circle cx="50" cy="50" r="15" fill="none" stroke="#a855f7" stroke-width="5" />
+                    <g transform="translate(37,36.5) scale(0.203)" stroke="#a855f7" stroke-width="4" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M64 24 C64 24 84 50 84 72 C84 85 75 92 64 92 C53 92 44 85 44 72 C44 50 64 24 64 24 Z" />
+                        <path d="M64 92 C54 92 36 84 36 68 C36 54 48 38 48 38" />
+                        <path d="M64 92 C74 92 92 84 92 68 C92 54 80 38 80 38" />
+                        <path d="M44 72 C30 76 20 64 20 52 C20 40 36 30 36 30" />
+                        <path d="M84 72 C98 76 108 64 108 52 C108 40 92 30 92 30" />
+                        <path d="M48 96 L64 108 L80 96" />
+                    </g>
+                </g>
+            </svg>
+            <div class="label">Purple — 128px</div>
+        </div>
+    </div>
+</body>
+
+</html>

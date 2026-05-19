@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viral Hub | AI Marketing Automation Engine</title>
+    <meta name="description"
+        content="Generate viral marketing content — videos, scripts, AI avatars, and more — from just a URL.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --accent: #2dd4bf;
+            --accent-glow: rgba(45, 212, 191, 0.25);
+            --bg-dark: #0a0f1e;
+            --bg-panel: rgba(15, 23, 42, 0.8);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: #e2e8f0;
+            font-family: 'Inter', system-ui, sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Ambient background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(45, 212, 191, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.03) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Glass panels */
+        .glass {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.5));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+
+        .glass-sm {
+            border-radius: 12px;
+        }
+
+        .glass:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Glow button */
+        .glow-btn {
+            background: linear-gradient(135deg, var(--accent), #06b6d4);
+            color: #0a0f1e;
+            font-weight: 800;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 0 20px var(--accent-glow), 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glow-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 35px var(--accent-glow);
+        }
+
+        .glow-btn:active {
+            transform: scale(0.97);
+        }
+
+        .glow-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Content type tabs */
+        .type-tab {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: center;
+        }
+
+        .type-tab:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .type-tab.active {
+            border-color: var(--accent);
+            background: rgba(45, 212, 191, 0.08);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .type-tab .icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+            transition: transform 0.2s;
+        }
+
+        .type-tab:hover .icon {
+            transform: scale(1.15);
+        }
+
+        .type-tab .label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+        }
+
+        .type-tab.active .label {
+            color: var(--accent);
+        }
+
+        /* Log feed */
+        .log-entry {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 10px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .log-entry.success {
+            color: var(--accent);
+        }
+
+        .log-entry.error {
+            color: #f87171;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Pulse dot */
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse-glow 2s ease infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+            }
+        }
+
+        /* Results card */
+        .result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .result-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Copy button */
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent);
+            color: #0a0f1e;
+            border-color: var(--accent);
+        }
+
+        /* Settings modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        /* Capture frame */
+        .capture-preview {
+            position: relative;
+            background: #0a0f1e;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            flex: 1;
+            height: auto;
+            min-height: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .capture-preview.is-fullscreen {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: none !important;
+            z-index: 9999 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .capture-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .capture-toolbar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+
+        .capture-toolbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .capture-toolbar button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            white-space: nowrap;
+        }
+
+        .capture-toolbar button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .capture-toolbar .rec-btn {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .capture-toolbar .rec-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .capture-toolbar .rec-btn.recording {
+            background: #ef4444;
+            color: white;
+            animation: pulse-glow 1s infinite;
+        }
+
+        .asset-thumb {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .asset-thumb:hover {
+            border-color: var(--accent);
+            transform: scale(1.02);
+        }
+
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        /* History panel slide-out */
+        .history-panel {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 400px;
+            max-width: 90vw;
+            height: 100vh;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-left: 1px solid var(--border);
+            z-index: 50;
+            transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .history-panel.open {
+            right: 0;
+        }
+
+        .history-panel .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .history-panel .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .history-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-1px);
+        }
+
+        .history-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 49;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .history-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Batch progress bar */
+        .batch-progress {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .batch-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #818cf8);
+            border-radius: 2px;
+            transition: width 0.4s ease;
+        }
+
+        /* Enriched product info pills */
+        .enriched-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .enriched-pill {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container w-full h-screen mx-auto px-4 md:px-6 py-4 flex flex-col overflow-hidden">
+
+        <!-- ================================================================= -->
+        <!-- HEADER -->
+        <!-- ================================================================= -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 shrink-0">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight text-white flex items-center gap-3">
+                    🚀 Viral Hub <span
+                        class="text-xs font-bold text-teal-400 bg-teal-400/10 px-2 py-1 rounded-full">v2.0</span>
+                </h1>
+                <p class="text-slate-500 text-sm mt-1">AI-Powered Marketing Automation Engine</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="apiStatus" class="flex items-center gap-2 px-3 py-1.5 glass glass-sm text-[10px]">
+                    <div class="pulse-dot"></div>
+                    <span class="font-bold text-emerald-400 uppercase tracking-wider">Engine Ready</span>
+                </div>
+                <button id="historyBtn"
+                    class="glass glass-sm px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2">
+                    📜 <span class="hidden md:inline">History</span>
+                    <span id="historyCount"
+                        class="text-[9px] font-bold bg-teal-400/15 text-teal-400 px-1.5 py-0.5 rounded-full hidden">0</span>
+                </button>
+                <button id="settingsBtn"
+                    class="glass glass-sm px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2">
+                    ⚙️ <span class="hidden md:inline">Settings</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ================================================================= -->
+        <!-- URL INPUT BAR -->
+        <!-- ================================================================= -->
+        <div class="glass p-4 mb-4 shrink-0 flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            <div class="flex-1 relative">
+                <input type="text" id="urlInput" placeholder="Enter a website URL or app name..." autocomplete="off"
+                    spellcheck="false" data-form-type="other"
+                    class="w-full bg-transparent text-white placeholder-slate-600 outline-none text-sm font-medium px-4 py-3 rounded-xl border border-white/5 focus:border-teal-400/50 transition-colors">
+                <div id="urlSpinner" class="hidden absolute right-3 top-1/2 -translate-y-1/2">
+                    <div class="spinner" style="width:20px;height:20px;border-width:2px;"></div>
+                </div>
+            </div>
+            <button id="analyzeBtn" class="glow-btn px-8 py-3 text-sm flex items-center gap-2 shrink-0">
+                🔍 <span>Analyze</span>
+            </button>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] text-slate-600 uppercase font-bold">or</span>
+                <select id="savedApps"
+                    class="bg-transparent text-slate-400 text-sm outline-none border border-white/5 rounded-xl px-3 py-2 cursor-pointer">
+                    <option value="">Saved Apps ▾</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- PRODUCT CONTEXT CARD (hidden until analyzed) -->
+        <!-- ================================================================= -->
+        <div id="productCard" class="glass p-6 mb-4 shrink-0 hidden fade-in">
+            <div class="flex items-start gap-4">
+                <img id="productLogo" src="" alt="" class="w-14 h-14 rounded-xl bg-white/5 object-contain p-1"
+                    onerror="this.style.display='none'">
+                <div class="flex-1 min-w-0">
+                    <h2 id="productName" class="text-xl font-bold text-white truncate"></h2>
+                    <p id="productTagline" class="text-sm text-slate-400 mt-0.5"></p>
+                    <div id="productTopics" class="flex flex-wrap gap-1.5 mt-3"></div>
+                </div>
+                <div id="productMeta" class="text-right shrink-0 space-y-1">
+                    <div class="text-[10px] text-slate-600 uppercase font-black">Audience</div>
+                    <div id="productAudience" class="text-xs text-slate-400"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- MAIN LAYOUT: Content Studio -->
+        <!-- ================================================================= -->
+        <div class="flex-1 min-h-0 flex flex-col w-full">
+
+            <!-- Content Studio -->
+            <div id="mainStudioCol" class="w-full flex flex-col min-h-0 h-full">
+
+                <!-- Content Type Tabs -->
+                <div class="flex flex-wrap gap-2 mb-4 shrink-0" id="typeTabs">
+                    <button class="type-tab flex-1 min-w-[100px] active" data-type="scripts">
+                        <div class="icon">✍️</div>
+                        <div class="label">Scripts</div>
+                    </button>
+                    <button class="type-tab flex-1 min-w-[100px]" data-type="images">
+                        <div class="icon">🖼️</div>
+                        <div class="label">Images</div>
+                    </button>
+                    <button class="type-tab flex-1 min-w-[100px]" data-type="avatars">
+                        <div class="icon">🎭</div>
+                        <div class="label">Avatars</div>
+                    </button>
+                    <button class="type-tab flex-1 min-w-[100px]" data-type="videos">
+                        <div class="icon">🎬</div>
+                        <div class="label">Videos</div>
+                    </button>
+                    <button class="type-tab flex-1 min-w-[100px]" data-type="text">
+                        <div class="icon">📝</div>
+                        <div class="label">Text</div>
+                    </button>
+                    <button class="type-tab flex-1 min-w-[100px]" data-type="demos">
+                        <div class="icon">🖥️</div>
+                        <div class="label">Demos</div>
+                    </button>
+                    <button class="type-tab flex-1 min-w-[100px]" data-type="capture">
+                        <div class="icon">📸</div>
+                        <div class="label">Capture</div>
+                    </button>
+                </div>
+
+                <!-- Generation Controls -->
+                <div class="glass p-6 flex-1 flex flex-col min-h-0">
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 shrink-0">
+                        <div>
+                            <h3 id="studioTitle" class="text-lg font-bold text-white">Ad Script Factory</h3>
+                            <p id="studioDesc" class="text-xs text-slate-500 mt-1">Generate high-converting UGC and ad
+                                copy</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <select id="studioOptions"
+                                class="bg-transparent text-sm text-slate-400 border border-white/5 rounded-xl px-3 py-2 outline-none cursor-pointer">
+                                <!-- Dynamic options per tab -->
+                            </select>
+                            <button id="generateBtn" class="glow-btn px-6 py-2.5 text-sm flex items-center gap-2">
+                                ⚡ <span>Generate</span>
+                            </button>
+                            <button id="batchBtn"
+                                class="glass glass-sm px-4 py-2 text-sm text-indigo-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
+                                title="Generate all content types at once">
+                                🔄 <span class="hidden md:inline">All</span>
+                            </button>
+                        </div>
+                        <div id="batchProgress" class="batch-progress hidden">
+                            <div class="batch-progress-fill" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Results Area -->
+                    <div id="resultsArea"
+                        class="flex-1 overflow-y-auto min-h-0 flex flex-col items-center justify-center p-2">
+                        <div class="text-center text-slate-700 my-auto">
+                            <div class="text-4xl mb-3 opacity-30">🎯</div>
+                            <p class="text-sm font-medium">Enter a URL above and click Generate</p>
+                            <p class="text-[10px] uppercase font-bold mt-1 tracking-wider">Ready to create</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- AUTOMATION LOG FLOAT (collapsible) -->
+    <!-- ================================================================= -->
+    <div id="logFloat"
+        class="fixed bottom-4 left-4 w-[320px] max-w-[calc(100vw-2rem)] glass z-40 flex flex-col max-h-[250px] opacity-70 hover:opacity-100 transition-all"
+        style="overflow:hidden;">
+        <div id="logToggle" class="flex items-center justify-between px-4 py-2 cursor-pointer select-none shrink-0"
+            style="min-height:32px;">
+            <h4 class="text-[10px] font-black uppercase text-indigo-400 tracking-widest">Automation Log</h4>
+            <span id="logToggleIcon" class="text-[10px] text-slate-600 font-bold">▼</span>
+        </div>
+        <div id="logBody" class="px-4 pb-3 hidden">
+            <div id="logFeed" class="space-y-1.5 overflow-y-auto max-h-[200px] text-[9px] pr-2">
+                <div class="log-entry">[boot] Engine initialized</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SETTINGS MODAL -->
+    <!-- ================================================================= -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="glass p-8 w-full max-w-lg mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-white">⚙️ API Configuration</h3>
+                <button id="closeSettings" class="text-slate-500 hover:text-white text-xl cursor-pointer">✕</button>
+            </div>
+            <div class="space-y-5">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-[10px] font-black uppercase text-teal-400 tracking-widest">Gemini API
+                            Key</label>
+                        <span id="geminiStatus"
+                            class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-500/10 text-red-400">No
+                            Key</span>
+                    </div>
+                    <input type="password" id="geminiKeyInput" placeholder="AIza..."
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-teal-400/50">
+                    <p class="text-[10px] text-slate-600 mt-1">Powers text generation, scripts, and AI analysis</p>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-[10px] font-black uppercase text-purple-400 tracking-widest">HeyGen API
+                            Key</label>
+                        <span id="heygenStatus"
+                            class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-500/10 text-red-400">No
+                            Key</span>
+                    </div>
+                    <input type="password" id="heygenKeyInput" placeholder="hg-..."
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-purple-400/50">
+                    <p class="text-[10px] text-slate-600 mt-1">AI avatar video generation</p>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-[10px] font-black uppercase text-blue-400 tracking-widest">Higgsfield API
+                            Key</label>
+                        <span id="higgsfieldStatus"
+                            class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-500/10 text-red-400">No
+                            Key</span>
+                    </div>
+                    <input type="password" id="higgsfieldKeyInput" placeholder="hf-..."
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-blue-400/50">
+                    <p class="text-[10px] text-slate-600 mt-1">Faceless video generation</p>
+                </div>
+                <button id="saveSettings" class="glow-btn w-full py-3 text-sm mt-2">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- HISTORY PANEL -->
+    <!-- ================================================================= -->
+    <div id="historyOverlay" class="history-overlay"></div>
+    <div id="historyPanel" class="history-panel">
+        <div class="panel-header">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">📜 Generation History</h3>
+                <button id="closeHistory" class="text-slate-500 hover:text-white text-xl cursor-pointer">✕</button>
+            </div>
+            <div class="flex items-center gap-2 mt-3">
+                <button id="exportAllBtn"
+                    class="text-[10px] font-bold uppercase px-3 py-1.5 rounded-lg bg-teal-400/10 text-teal-400 border border-teal-400/20 hover:bg-teal-400/20 transition-colors cursor-pointer">📦
+                    Export All</button>
+                <button id="clearHistoryBtn"
+                    class="text-[10px] font-bold uppercase px-3 py-1.5 rounded-lg bg-red-400/10 text-red-400 border border-red-400/20 hover:bg-red-400/20 transition-colors cursor-pointer">🗑️
+                    Clear</button>
+            </div>
+        </div>
+        <div id="historyList" class="panel-body">
+            <div class="text-center text-slate-600 mt-8">
+                <div class="text-3xl mb-2 opacity-30">📜</div>
+                <p class="text-xs">No generation history yet</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MAIN SCRIPT -->
+    <!-- ================================================================= -->
+    <script type="module">
+        import * as engine from '/binaural-assets/js/viral/viral-engine.js';
+        import { APPS_CONFIG } from '/binaural-assets/js/viral/apps-config.js';
+        import { AVATAR_PERSONAS, PLATFORMS } from '/binaural-assets/js/viral/templates/video-templates.js';
+        import * as capture from '/binaural-assets/js/viral/capture.js';
+        import { renderMediaGallery, destroyMediaGallery } from '/binaural-assets/js/ui/media-gallery.js';
+
+        // Type badge config for history & results
+        const TYPE_BADGES = {
+            scripts: { icon: '✍️', color: 'teal', label: 'Scripts' },
+            images: { icon: '🖼️', color: 'purple', label: 'Images' },
+            avatars: { icon: '🎭', color: 'purple', label: 'Avatar' },
+            videos: { icon: '🎬', color: 'blue', label: 'Video' },
+            text: { icon: '📝', color: 'amber', label: 'Text' },
+            demos: { icon: '🖥️', color: 'cyan', label: 'Demo' }
+        };
+
+        // =====================================================================
+        // DOM REFS
+        // =====================================================================
+        const $ = (id) => document.getElementById(id);
+        const els = {
+            urlInput: $('urlInput'), analyzeBtn: $('analyzeBtn'), urlSpinner: $('urlSpinner'),
+            savedApps: $('savedApps'), productCard: $('productCard'), productLogo: $('productLogo'),
+            productName: $('productName'), productTagline: $('productTagline'), productTopics: $('productTopics'),
+            productAudience: $('productAudience'), generateBtn: $('generateBtn'), batchBtn: $('batchBtn'),
+            batchProgress: $('batchProgress'),
+            studioTitle: $('studioTitle'), studioDesc: $('studioDesc'), studioOptions: $('studioOptions'),
+            resultsArea: $('resultsArea'), logFeed: $('logFeed'),
+            settingsBtn: $('settingsBtn'), settingsModal: $('settingsModal'), closeSettings: $('closeSettings'),
+            saveSettings: $('saveSettings'), geminiKeyInput: $('geminiKeyInput'),
+            heygenKeyInput: $('heygenKeyInput'), higgsfieldKeyInput: $('higgsfieldKeyInput'),
+            geminiStatus: $('geminiStatus'), heygenStatus: $('heygenStatus'), higgsfieldStatus: $('higgsfieldStatus'),
+            historyBtn: $('historyBtn'), historyCount: $('historyCount'),
+            historyPanel: $('historyPanel'), historyOverlay: $('historyOverlay'),
+            historyList: $('historyList'), closeHistory: $('closeHistory'),
+            exportAllBtn: $('exportAllBtn'), clearHistoryBtn: $('clearHistoryBtn')
+        };
+
+        let activeType = 'scripts';
+        let captureTabUserClicked = false; // Only load iframe when user explicitly clicks Capture tab
+
+        // =====================================================================
+        // TAB CONFIG
+        // =====================================================================
+        const TAB_CONFIG = {
+            scripts: {
+                title: 'Ad Script Factory',
+                desc: 'Generate high-converting UGC and ad copy',
+                options: [
+                    { value: 'ugc-tiktok', label: 'UGC — TikTok' },
+                    { value: 'ugc-reels', label: 'UGC — Instagram Reels' },
+                    { value: 'ugc-shorts', label: 'UGC — YouTube Shorts' },
+                    { value: 'direct', label: 'Direct Response' },
+                    { value: 'storytelling', label: 'Storytelling' }
+                ]
+            },
+            images: {
+                title: 'AI Image Generator',
+                desc: 'Create scroll-stopping marketing visuals',
+                options: [
+                    { value: 'modern', label: 'Modern/Minimal' },
+                    { value: 'cinematic', label: 'Cinematic' },
+                    { value: 'vibrant', label: 'Vibrant/Bold' }
+                ]
+            },
+            avatars: {
+                title: 'AI Avatar Studio',
+                desc: 'Script and generate UGC-style avatar videos via HeyGen',
+                options: AVATAR_PERSONAS.map(p => ({ value: p.id, label: `${p.avatar} ${p.name}` }))
+            },
+            videos: {
+                title: 'Faceless Video Builder',
+                desc: 'Auto-generate viral faceless content via Higgsfield',
+                options: [
+                    { value: 'motivational', label: 'Motivational' },
+                    { value: 'educational', label: 'Educational' },
+                    { value: 'testimonial', label: 'Testimonial' },
+                    { value: 'comparison', label: 'Before/After' }
+                ]
+            },
+            text: {
+                title: 'Text Content Generator',
+                desc: 'Social captions and email sequences',
+                options: [
+                    { value: 'captions', label: 'Social Captions' },
+                    { value: 'email', label: 'Email Sequence' }
+                ]
+            },
+            demos: {
+                title: 'Product Demo Script',
+                desc: 'Auto-generate demo walkthrough scripts',
+                options: [
+                    { value: 'quick', label: '60s Quick Demo' },
+                    { value: 'detailed', label: '90s Detailed' }
+                ]
+            },
+            capture: {
+                title: 'App Capture Studio',
+                desc: 'Screenshots & screen recordings from live app usage',
+                options: [
+                    { value: 'screenshot', label: '📸 Screenshot' },
+                    { value: 'record', label: '🔴 Screen Record' },
+                    { value: 'auto', label: '🤖 Auto-Capture Series' }
+                ]
+            }
+        };
+
+        // =====================================================================
+        // INIT
+        // =====================================================================
+        function init() {
+            // Log callback
+            engine.onLog((msg) => addLog(msg));
+
+            // Populate saved apps dropdown
+            Object.entries(APPS_CONFIG).forEach(([key, app]) => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = app.name;
+                els.savedApps.appendChild(opt);
+            });
+
+            // Tab click handlers
+            document.querySelectorAll('.type-tab').forEach(tab => {
+                tab.addEventListener('click', () => setActiveTab(tab.dataset.type));
+            });
+
+            // Analyze button
+            els.analyzeBtn.addEventListener('click', handleAnalyze);
+            els.urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAnalyze(); });
+
+            // Saved apps dropdown
+            els.savedApps.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    els.urlInput.value = APPS_CONFIG[e.target.value]?.name || '';
+                    handleAnalyze();
+                }
+            });
+
+            // Generate button
+            els.generateBtn.addEventListener('click', handleGenerate);
+
+            // Batch generate
+            els.batchBtn.addEventListener('click', handleBatchGenerate);
+            engine.onBatchProgress(({ completed, total, current }) => {
+                const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                els.batchProgress.querySelector('.batch-progress-fill').style.width = `${pct}%`;
+                if (current) addLog(`Batch: generating ${current}... (${completed}/${total})`);
+                if (!current) els.batchProgress.classList.add('hidden');
+            });
+
+            // History panel
+            els.historyBtn.addEventListener('click', openHistory);
+            els.closeHistory.addEventListener('click', closeHistory);
+            els.historyOverlay.addEventListener('click', closeHistory);
+            els.exportAllBtn.addEventListener('click', () => engine.exportAllJSON());
+            els.clearHistoryBtn.addEventListener('click', () => {
+                engine.clearHistory();
+                renderHistory();
+                updateHistoryBadge();
+            });
+
+            // Settings
+            els.settingsBtn.addEventListener('click', () => {
+                els.settingsModal.classList.add('active');
+                els.geminiKeyInput.value = localStorage.getItem('viral_gemini_key') || '';
+                els.heygenKeyInput.value = localStorage.getItem('viral_heygen_key') || '';
+                els.higgsfieldKeyInput.value = localStorage.getItem('viral_higgsfield_key') || '';
+            });
+            els.closeSettings.addEventListener('click', () => els.settingsModal.classList.remove('active'));
+            els.settingsModal.addEventListener('click', (e) => { if (e.target === els.settingsModal) els.settingsModal.classList.remove('active'); });
+            els.saveSettings.addEventListener('click', () => {
+                if (els.geminiKeyInput.value) engine.setApiKey('gemini', els.geminiKeyInput.value.trim());
+                if (els.heygenKeyInput.value) engine.setApiKey('heygen', els.heygenKeyInput.value.trim());
+                if (els.higgsfieldKeyInput.value) engine.setApiKey('higgsfield', els.higgsfieldKeyInput.value.trim());
+                updateApiStatus();
+                els.settingsModal.classList.remove('active');
+                addLog('API keys saved successfully.', 'success');
+            });
+
+            // Set initial tab
+            setActiveTab('scripts');
+            updateApiStatus();
+            updateHistoryBadge();
+
+            // Log toggle (starts collapsed)
+            const logToggle = document.getElementById('logToggle');
+            const logBody = document.getElementById('logBody');
+            const logIcon = document.getElementById('logToggleIcon');
+            if (logToggle) {
+                logToggle.addEventListener('click', () => {
+                    logBody.classList.toggle('hidden');
+                    logIcon.textContent = logBody.classList.contains('hidden') ? '▼' : '▲';
+                });
+            }
+
+            addLog('Viral Hub v2.0 initialized.', 'success');
+        }
+
+        // =====================================================================
+        // HANDLERS
+        // =====================================================================
+        async function handleAnalyze() {
+            const input = els.urlInput.value.trim();
+            if (!input) { els.urlInput.focus(); return; }
+
+            els.analyzeBtn.disabled = true;
+            els.urlSpinner.classList.remove('hidden');
+            els.analyzeBtn.innerHTML = '⏳ <span>Analyzing...</span>';
+
+            try {
+                const product = await engine.analyzeProduct(input);
+                showProductCard(product);
+            } catch (e) {
+                console.error('[Viral Hub] Analysis failed:', e);
+                addLog('Analysis failed: ' + e.message, 'error');
+            } finally {
+                els.analyzeBtn.disabled = false;
+                els.urlSpinner.classList.add('hidden');
+                els.analyzeBtn.innerHTML = '🔍 <span>Analyze</span>';
+            }
+        }
+
+        async function handleGenerate() {
+            // Capture tab uses its own handler
+            if (activeType === 'capture') {
+                const opt = els.studioOptions.value;
+                if (opt === 'screenshot' && window._captureScreenshot) {
+                    addLog('Quick capture initiated via main button.', 'info');
+                    window._captureScreenshot();
+                } else if (opt === 'video' && window._toggleRecording) {
+                    addLog('Screen recording toggled via main button.', 'info');
+                    window._toggleRecording();
+                } else if (opt === 'auto' && window._autoCapture) {
+                    addLog('Auto-capture series initiated via main button.', 'info');
+                    window._autoCapture();
+                }
+                return;
+            }
+
+            const product = engine.getProduct();
+            if (!product) {
+                addLog('Please analyze a product first.', 'error');
+                return;
+            }
+
+            els.generateBtn.disabled = true;
+            els.generateBtn.innerHTML = '⏳ <span>Generating...</span>';
+            els.resultsArea.innerHTML = `<div class="text-center"><div class="spinner mx-auto mb-3"></div><p class="text-sm text-teal-400 animate-pulse font-medium">AI is working...</p></div>`;
+
+            try {
+                const option = els.studioOptions.value;
+
+                // Build per-tab typed options
+                const optionsMap = {
+                    scripts: { style: option },
+                    images: { style: option },
+                    avatars: { persona: option, createVideo: true },
+                    videos: { format: option, createVideo: true },
+                    text: { textType: option },
+                    demos: { format: option }
+                };
+
+                const result = await engine.generateContent(activeType, optionsMap[activeType] || {});
+                renderResults(activeType, result);
+            } catch (e) {
+                console.error('[Viral Hub] Generation failed:', e);
+                addLog('Generation failed: ' + e.message, 'error');
+                els.resultsArea.innerHTML = `<div class="text-center text-red-400"><div class="text-3xl mb-2">⚠️</div><p class="text-sm">${e.message}</p></div>`;
+            } finally {
+                els.generateBtn.disabled = false;
+                els.generateBtn.innerHTML = '⚡ <span>Generate</span>';
+            }
+        }
+
+        // =====================================================================
+        // UI UPDATES
+        // =====================================================================
+        function setActiveTab(type) {
+            activeType = type;
+            captureTabUserClicked = (type === 'capture');
+            document.querySelectorAll('.type-tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
+
+            const config = TAB_CONFIG[type];
+            els.studioTitle.textContent = config.title;
+            els.studioDesc.textContent = config.desc;
+
+            // Update options dropdown
+            els.studioOptions.innerHTML = config.options.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+            // Toggle generate button label for capture tab
+            if (type === 'capture') {
+                els.generateBtn.innerHTML = '📸 <span>Capture Mode</span>';
+                els.generateBtn.title = 'Use the toolbar buttons below for screenshots and recording';
+                renderCapture();
+            } else {
+                els.generateBtn.innerHTML = '⚡ <span>Generate</span>';
+                els.generateBtn.title = 'Generate AI content';
+            }
+        }
+
+        function showProductCard(product) {
+            els.productCard.classList.remove('hidden');
+            els.productLogo.src = product.logo || product.ogImage || '';
+            els.productLogo.style.display = (product.logo || product.ogImage) ? 'block' : 'none';
+            els.productName.textContent = product.name || 'Unknown Product';
+            els.productTagline.textContent = product.tagline || product.description?.slice(0, 80) || '';
+            els.productTopics.innerHTML = (product.topics || product.keywords || []).slice(0, 6).map(t =>
+                `<span class="px-2 py-0.5 bg-white/5 rounded-full text-[10px] text-slate-300 border border-white/5 font-medium">${t}</span>`
+            ).join('');
+
+            // Enriched rows from enhanced scraper
+            let enrichedHTML = '';
+
+            // Pricing
+            if (product.pricing?.text) {
+                enrichedHTML += `<div class="enriched-pill">💲 ${product.pricing.text}${product.pricing.model ? ` <span class="text-slate-600">(${product.pricing.model})</span>` : ''}</div>`;
+            }
+
+            // Social links
+            if (product.socialLinks && Object.keys(product.socialLinks).length > 0) {
+                const SOCIAL_ICONS = { twitter: '𝕏', instagram: '📷', linkedin: '💼', youtube: '▶', tiktok: '🎵', github: '🐙', facebook: '👤', discord: '💬' };
+                for (const [platform, url] of Object.entries(product.socialLinks)) {
+                    enrichedHTML += `<a href="${url}" target="_blank" class="enriched-pill hover:border-teal-400/30 transition-colors" style="text-decoration:none">${SOCIAL_ICONS[platform] || '🔗'} ${platform}</a>`;
+                }
+            }
+
+            // CTAs found
+            if (product.ctas?.length) {
+                enrichedHTML += product.ctas.slice(0, 3).map(c => `<div class="enriched-pill text-teal-400 border-teal-400/20">🎯 ${c}</div>`).join('');
+            }
+
+            // Tech stack
+            if (product.techStack?.length) {
+                enrichedHTML += product.techStack.slice(0, 5).map(t => `<div class="enriched-pill text-indigo-400 border-indigo-400/20">⚙️ ${t}</div>`).join('');
+            }
+
+            // Features from scraper
+            if (product.features?.length) {
+                enrichedHTML += product.features.slice(0, 4).map(f => `<div class="enriched-pill">✦ ${f.slice(0, 40)}</div>`).join('');
+            }
+
+            els.productAudience.innerHTML = (product.targetAudience || []).slice(0, 3).map(a =>
+                `<div class="text-[10px] text-slate-500">${a}</div>`
+            ).join('');
+
+            // Insert enriched row after topics
+            if (enrichedHTML) {
+                els.productTopics.insertAdjacentHTML('afterend', `<div class="enriched-row mt-3">${enrichedHTML}</div>`);
+            }
+        }
+
+        function updateApiStatus() {
+            const status = engine.getApiStatus();
+            const setStatus = (el, active) => {
+                el.textContent = active ? 'Connected' : 'No Key';
+                el.className = `text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`;
+            };
+            setStatus(els.geminiStatus, status.gemini);
+            setStatus(els.heygenStatus, status.heygen);
+            setStatus(els.higgsfieldStatus, status.higgsfield);
+        }
+
+        function addLog(msg, type = '') {
+            const div = document.createElement('div');
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            div.className = `log-entry ${type}`;
+            div.textContent = `[${time}] ${msg}`;
+            els.logFeed.prepend(div);
+            // Keep max 50 entries
+            while (els.logFeed.children.length > 50) els.logFeed.lastChild.remove();
+        }
+
+        // =====================================================================
+        // RENDER RESULTS
+        // =====================================================================
+        function renderResults(type, data) {
+            if (!data) {
+                els.resultsArea.innerHTML = `<div class="text-center text-slate-600"><p class="text-sm">No results</p></div>`;
+                return;
+            }
+
+            switch (type) {
+                case 'scripts': renderScripts(data); break;
+                case 'images': renderImages(data); break;
+                case 'avatars': renderAvatars(data); break;
+                case 'videos': renderVideos(data); break;
+                case 'text': renderText(data); break;
+                case 'demos': renderDemos(data); break;
+                case 'capture': renderCapture(data); break;
+            }
+        }
+
+        function renderScripts(scripts) {
+            if (!Array.isArray(scripts)) scripts = [scripts];
+            els.resultsArea.innerHTML = `<div class="w-full space-y-4 fade-in">
+        ${scripts.map((s, i) => `
+            <div class="result-card p-5 border-l-2 border-teal-400">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-[10px] font-black text-teal-400 uppercase tracking-wider">${s.platform || 'Ad'} Script #${i + 1}</span>
+                    <span class="text-[10px] text-slate-600">${s.estimatedLength || '30s'}</span>
+                </div>
+                <div class="space-y-3 text-sm text-slate-300">
+                    <div><span class="text-teal-400 font-bold text-xs mr-2">[HOOK]</span>${s.hook}</div>
+                    <div><span class="text-teal-400 font-bold text-xs mr-2">[BODY]</span>${s.body}</div>
+                    <div><span class="text-teal-400 font-bold text-xs mr-2">[CTA]</span>${s.cta}</div>
+                </div>
+                ${s.hashtags ? `<div class="mt-3 flex flex-wrap gap-1">${s.hashtags.map(h => `<span class="text-[10px] text-indigo-400">${h}</span>`).join(' ')}</div>` : ''}
+                ${s.visualNotes ? `<div class="mt-3 text-[10px] text-slate-600 italic">🎬 ${s.visualNotes}</div>` : ''}
+                <div class="mt-3 flex gap-2">
+                    <button class="copy-btn" onclick="copyText(this, \`${escJs(s.hook)}\\n${escJs(s.body)}\\n${escJs(s.cta)}\`)">📋 Copy</button>
+                </div>
+            </div>
+        `).join('')}
+    </div>`;
+            updateHistoryBadge();
+        }
+
+        function renderImages(images) {
+            if (!Array.isArray(images)) images = [images];
+            els.resultsArea.innerHTML = `<div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
+        ${images.map(img => `
+            <div class="result-card p-4 group">
+                <div class="aspect-video rounded-xl mb-3 overflow-hidden border border-white/5 relative">
+                    ${img.imageDataUrl
+                    ? `<img src="${img.imageDataUrl}" alt="${img.title}" class="w-full h-full object-cover">`
+                    : `<div class="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center relative">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            <div class="text-center p-4 relative z-10">
+                                <div class="text-3xl mb-2 opacity-40">🖼️</div>
+                                <p class="text-[10px] text-slate-400">Add Gemini API key to generate images</p>
+                            </div>
+                           </div>`
+                }
+                    ${img.overlayText ? `<div class="absolute bottom-3 left-3 text-sm font-bold text-white drop-shadow-lg">${img.overlayText}</div>` : ''}
+                </div>
+                <h5 class="text-sm font-bold text-white mb-1">${img.title}</h5>
+                <p class="text-[10px] text-slate-500 mb-2 line-clamp-3">${img.prompt}</p>
+                <div class="flex gap-2">
+                    <button class="copy-btn" onclick="copyText(this, \`${escJs(img.prompt)}\`)">📋 Copy Prompt</button>
+                    ${img.imageDataUrl ? `<button class="copy-btn" onclick="window._downloadImage(\`${escJs(img.title)}\`, \`${escJs(img.imageDataUrl)}\`)">⬇️ Download</button>` : ''}
+                    <span class="text-[10px] text-slate-600 self-center">${img.aspectRatio || '1:1'}</span>
+                </div>
+            </div>
+        `).join('')}
+    </div>`;
+        }
+
+        function renderAvatars(data) {
+            const script = data.script || data;
+            els.resultsArea.innerHTML = `<div class="w-full space-y-4 fade-in">
+        <div class="result-card p-5 border-l-2 border-purple-400">
+            <div class="text-[10px] font-black text-purple-400 uppercase tracking-wider mb-3">${script.title || 'Avatar Video Script'}</div>
+            <div class="bg-white/3 rounded-xl p-4 text-sm text-slate-300 leading-relaxed font-mono">
+                ${(typeof script.script === 'string' ? script.script : JSON.stringify(script)).replace(/\[pause\]/g, '<span class="text-purple-400 text-xs">[pause]</span>')}
+            </div>
+            ${script.scenes ? `
+                <div class="mt-4 space-y-2">
+                    <div class="text-[10px] font-black text-slate-500 uppercase">Scene Breakdown</div>
+                    ${script.scenes.map(s => `
+                        <div class="flex gap-3 text-[10px] text-slate-500">
+                            <span class="font-mono text-purple-400 shrink-0">${s.timestamp}</span>
+                            <span>${s.action}</span>
+                            ${s.bRoll ? `<span class="text-slate-600 italic">B-roll: ${s.bRoll}</span>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            <div class="mt-4 flex gap-2">
+                <button class="copy-btn" onclick="copyText(this, \`${escJs(typeof script.script === 'string' ? script.script : '')}\`)">📋 Copy Script</button>
+                ${data.video ? `<span class="text-[10px] text-emerald-400 self-center">✅ Video Created</span>` : `<span class="text-[10px] text-slate-600 self-center">Add HeyGen key to render video</span>`}
+            </div>
+        </div>
+    </div>`;
+        }
+
+        function renderVideos(data) {
+            const script = data.script || data;
+            els.resultsArea.innerHTML = `<div class="w-full space-y-4 fade-in">
+        <div class="result-card p-5 border-l-2 border-blue-400">
+            <div class="flex justify-between items-start mb-3">
+                <span class="text-[10px] font-black text-blue-400 uppercase tracking-wider">${script.title || 'Faceless Video'}</span>
+                <span class="text-[10px] text-slate-600">${script.duration || '30s'}</span>
+            </div>
+            <div class="bg-white/3 rounded-xl p-4 text-sm text-slate-300 leading-relaxed mb-4">
+                <div class="text-[10px] font-black text-slate-500 uppercase mb-2">Voiceover</div>
+                ${script.voiceover || ''}
+            </div>
+            ${script.scenes ? `
+                <div class="space-y-2">
+                    <div class="text-[10px] font-black text-slate-500 uppercase">Scenes</div>
+                    ${script.scenes.map((s, i) => `
+                        <div class="result-card p-3 flex items-start gap-3">
+                            <span class="text-[10px] font-mono text-blue-400 shrink-0 mt-0.5">${s.duration}</span>
+                            <div class="flex-1">
+                                <div class="text-xs text-white font-medium">${s.text || ''}</div>
+                                <div class="text-[10px] text-slate-500">${s.visual || ''}</div>
+                            </div>
+                            <span class="text-[9px] text-slate-600 shrink-0">${s.transition || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            <div class="mt-4 flex gap-2">
+                <button class="copy-btn" onclick="copyText(this, \`${escJs(script.voiceover || '')}\`)">📋 Copy Script</button>
+                ${data.video ? `<span class="text-[10px] text-emerald-400 self-center">✅ Video Created</span>` : `<span class="text-[10px] text-slate-600 self-center">Add Higgsfield key to render video</span>`}
+            </div>
+        </div>
+    </div>`;
+        }
+
+        function renderText(data) {
+            if (!Array.isArray(data)) data = [data];
+            // Check if it's email or captions
+            const isEmail = data[0]?.subject;
+            if (isEmail) {
+                els.resultsArea.innerHTML = `<div class="w-full space-y-4 fade-in">
+            ${data.map((e, i) => `
+                <div class="result-card p-5 border-l-2 border-amber-400">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-black text-amber-400 uppercase tracking-wider">Email #${i + 1} — ${e.sendDelay || ''}</span>
+                    </div>
+                    <div class="text-sm font-bold text-white mb-1">📧 ${e.subject}</div>
+                    <div class="text-[10px] text-slate-500 mb-3">${e.preheader || ''}</div>
+                    <div class="bg-white/3 rounded-xl p-4 text-xs text-slate-300 leading-relaxed whitespace-pre-line">${e.body}</div>
+                    <div class="mt-3 flex gap-2">
+                        <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-1 rounded">${e.cta}</span>
+                        <button class="copy-btn ml-auto" onclick="copyText(this, \`${escJs(e.subject + '\\n' + e.body)}\`)">📋 Copy</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>`;
+            } else {
+                els.resultsArea.innerHTML = `<div class="w-full space-y-4 fade-in">
+            ${data.map(c => `
+                <div class="result-card p-5 border-l-2 border-emerald-400">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wider">${c.platform}</span>
+                        <span class="text-[10px] text-slate-600">Best: ${c.bestTimeToPost || ''}</span>
+                    </div>
+                    <div class="text-sm text-slate-300 leading-relaxed whitespace-pre-line mb-3">${c.caption}</div>
+                    ${c.hashtags ? `<div class="flex flex-wrap gap-1">${c.hashtags.map(h => `<span class="text-[10px] text-indigo-400">${h}</span>`).join(' ')}</div>` : ''}
+                    <div class="mt-3"><button class="copy-btn" onclick="copyText(this, \`${escJs(c.caption + '\\n' + (c.hashtags || []).join(' '))}\`)">📋 Copy</button></div>
+                </div>
+            `).join('')}
+        </div>`;
+            }
+        }
+
+        function renderDemos(data) {
+            els.resultsArea.innerHTML = `<div class="w-full space-y-4 fade-in">
+        <div class="result-card p-5 border-l-2 border-cyan-400">
+            <div class="flex justify-between items-start mb-3">
+                <span class="text-[10px] font-black text-cyan-400 uppercase tracking-wider">${data.title || 'Product Demo'}</span>
+                <span class="text-[10px] text-slate-600">${data.duration || '60s'}</span>
+            </div>
+            <div class="bg-white/3 rounded-xl p-4 text-sm text-slate-300 leading-relaxed mb-4">
+                <div class="text-[10px] font-black text-slate-500 uppercase mb-1">Intro</div>
+                ${data.intro || ''}
+            </div>
+            ${data.steps ? `
+                <div class="space-y-3">
+                    ${data.steps.map(s => `
+                        <div class="result-card p-3 flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-cyan-400/10 text-cyan-400 font-bold text-sm flex items-center justify-center shrink-0">${s.step}</div>
+                            <div class="flex-1">
+                                <div class="text-xs font-bold text-white">${s.highlight || s.action}</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">${s.narration}</div>
+                                <div class="text-[9px] text-slate-600 mt-0.5">Action: ${s.action} · ${s.duration}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            <div class="bg-white/3 rounded-xl p-4 text-sm text-slate-300 leading-relaxed mt-4">
+                <div class="text-[10px] font-black text-slate-500 uppercase mb-1">Outro</div>
+                ${data.outro || ''}
+            </div>
+            <div class="mt-3">
+                <button class="copy-btn" onclick="copyText(this, \`${escJs(JSON.stringify(data, null, 2))}\`)">📋 Copy Full Script</button>
+            </div>
+        </div>
+    </div>`;
+        }
+
+        // =====================================================================
+        // CAPTURE TAB
+        // =====================================================================
+        function renderCapture() {
+            const product = engine.getProduct();
+            const appUrl = product?.url || els.urlInput.value.trim() || '';
+            const assets = capture.getAllCaptures();
+            const isRec = capture.getRecordingState();
+
+            // Save the existing iframe reference BEFORE rebuilding DOM
+            const existingFrame = capture.getFrame();
+
+            els.resultsArea.innerHTML = `<div class="w-full h-full space-y-4 fade-in flex flex-col min-h-0">
+                <!-- Live App Preview -->
+                <div id="capturePreviewEl" class="capture-preview flex flex-col min-h-0 flex-1 w-full">
+                    <div id="captureFrameContainer" class="flex-1 min-h-0 relative">
+                        ${appUrl ? '' : '<div class="absolute inset-0 flex items-center justify-center text-slate-600 text-sm">Enter a URL above and click Analyze to load app preview</div>'}
+                    </div>
+                    <div class="capture-toolbar flex items-center flex-wrap gap-2 p-3 bg-black/40 border-t border-white/10 shrink-0">
+                        <button class="bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg text-xs" onclick="window._captureScreenshot()" title="Take Screenshot">📸 Screenshot</button>
+                        <button class="rec-btn bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg text-xs ${isRec ? 'recording' : ''}" onclick="window._toggleRecording()" title="${isRec ? 'Stop Recording' : 'Start Screen Recording'}">
+                            ${isRec ? '⬛ Stop Recording' : '🔴 Record Screen'}
+                        </button>
+                        <button class="bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg text-xs" onclick="window._autoCapture()" title="Auto-capture 6 screenshots">🤖 Auto-Capture</button>
+                        
+                        <div class="h-4 w-px bg-white/10 mx-1"></div>
+                        <a href="${appUrl}" target="_blank" class="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 rounded-lg text-xs transition-colors" title="Open app in a new tab to record it without the Viral Hub UI">↗️ Open App</a>
+                        
+                        <div class="flex-1"></div>
+                        <span class="text-[10px] text-slate-400 self-center mr-3">${assets.length} asset${assets.length !== 1 ? 's' : ''} captured this session</span>
+                        <button class="bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-colors" onclick="window._toggleFullscreen()" title="Toggle Fullscreen">⛶ Fullscreen</button>
+                    </div>
+                </div>
+
+                <!-- Persistent Media Library (IndexedDB vault) -->
+                <div id="mediaLibraryContainer"></div>
+            </div>`;
+
+            // Initialize the persistent media gallery
+            const galleryEl = document.getElementById('mediaLibraryContainer');
+            if (galleryEl) renderMediaGallery(galleryEl);
+
+            // Load app in preview frame — reuse existing iframe if same URL
+            if (appUrl && captureTabUserClicked) {
+                const container = document.getElementById('captureFrameContainer');
+                if (container) {
+                    if (existingFrame && existingFrame.src && existingFrame.src.includes(appUrl.replace(/^https?:\/\//, ''))) {
+                        // Re-insert the existing iframe (no reload)
+                        container.innerHTML = '';
+                        container.appendChild(existingFrame);
+                    } else {
+                        // Load fresh iframe
+                        capture.loadApp(appUrl, container);
+                    }
+                }
+            }
+        }
+
+        // Global capture handlers
+        capture.onLog((msg) => addLog(msg));
+
+        window._captureScreenshot = async () => {
+            try {
+                await capture.captureScreenshot();
+                renderCapture(); // Refresh gallery
+            } catch (e) {
+                addLog('Screenshot failed: ' + e.message, 'error');
+            }
+        };
+
+        window._toggleRecording = async () => {
+            if (capture.getRecordingState()) {
+                await capture.stopRecording();
+                renderCapture();
+            } else {
+                await capture.startRecording({ includeAudio: true });
+                renderCapture();
+            }
+        };
+
+        window._autoCapture = async () => {
+            const product = engine.getProduct();
+            const url = product?.url || els.urlInput.value.trim();
+            if (!url) { addLog('Enter a URL first.', 'error'); return; }
+            const container = document.getElementById('captureFrameContainer');
+            await capture.autoCaptureSeries(url, container);
+            renderCapture();
+        };
+
+        window._downloadAsset = (id) => {
+            const asset = capture.getAllCaptures().find(a => a.id === id);
+            if (asset) capture.downloadCapture(asset);
+        };
+
+        window._deleteAsset = (id) => {
+            capture.deleteCapture(id);
+            renderCapture();
+        };
+
+        window._toggleFullscreen = () => {
+            const el = document.getElementById('capturePreviewEl');
+            if (el) {
+                el.classList.toggle('is-fullscreen');
+            }
+        };
+
+        // =====================================================================
+        // BATCH GENERATION
+        // =====================================================================
+        async function handleBatchGenerate() {
+            const product = engine.getProduct();
+            if (!product) {
+                addLog('Please analyze a product first.', 'error');
+                return;
+            }
+
+            els.batchBtn.disabled = true;
+            els.generateBtn.disabled = true;
+            els.batchProgress.classList.remove('hidden');
+            els.resultsArea.innerHTML = `<div class="text-center"><div class="spinner mx-auto mb-3"></div><p class="text-sm text-indigo-400 animate-pulse font-medium">Batch generation in progress...</p><p id="batchStatusText" class="text-[10px] text-slate-600 mt-1"></p></div>`;
+
+            const types = ['scripts', 'images', 'text', 'demos'];
+            const optionsMap = {
+                scripts: { style: els.studioOptions.value || 'ugc-tiktok' },
+                images: { style: 'modern' },
+                text: { textType: 'captions' },
+                demos: { format: 'quick' }
+            };
+
+            try {
+                const results = await engine.generateBatch(types, optionsMap);
+
+                // Show all results in a stack
+                let html = '<div class="w-full space-y-6 fade-in">';
+                for (const [type, result] of Object.entries(results)) {
+                    if (result?.error) continue;
+                    const badge = TYPE_BADGES[type] || { icon: '📄', color: 'slate', label: type };
+                    html += `<div class="border-b border-white/5 pb-4">`;
+                    html += `<div class="text-[10px] font-black text-${badge.color}-400 uppercase tracking-wider mb-3">${badge.icon} ${badge.label}</div>`;
+                    html += `<div class="text-xs text-slate-400">✅ Generated successfully</div>`;
+                    html += `</div>`;
+                }
+                html += '</div>';
+                els.resultsArea.innerHTML = html;
+                addLog(`Batch complete: ${Object.keys(results).length} content types generated.`, 'success');
+            } catch (e) {
+                addLog('Batch generation failed: ' + e.message, 'error');
+            } finally {
+                els.batchBtn.disabled = false;
+                els.generateBtn.disabled = false;
+                els.batchProgress.classList.add('hidden');
+                updateHistoryBadge();
+            }
+        }
+
+        // =====================================================================
+        // HISTORY PANEL
+        // =====================================================================
+        function openHistory() {
+            renderHistory();
+            els.historyPanel.classList.add('open');
+            els.historyOverlay.classList.add('active');
+        }
+
+        function closeHistory() {
+            els.historyPanel.classList.remove('open');
+            els.historyOverlay.classList.remove('active');
+        }
+
+        function updateHistoryBadge() {
+            const history = engine.getHistory();
+            const count = history.length;
+            if (count > 0) {
+                els.historyCount.textContent = count;
+                els.historyCount.classList.remove('hidden');
+            } else {
+                els.historyCount.classList.add('hidden');
+            }
+        }
+
+        function renderHistory() {
+            const history = engine.getHistory();
+
+            if (history.length === 0) {
+                els.historyList.innerHTML = `<div class="text-center text-slate-600 mt-8"><div class="text-3xl mb-2 opacity-30">📜</div><p class="text-xs">No generation history yet</p></div>`;
+                return;
+            }
+
+            els.historyList.innerHTML = history.map(entry => {
+                const badge = TYPE_BADGES[entry.type] || { icon: '📄', color: 'slate', label: entry.type };
+                const time = new Date(entry.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                // Preview snippet
+                let preview = '';
+                const r = entry.result;
+                if (Array.isArray(r) && r[0]) {
+                    preview = r[0].hook || r[0].caption || r[0].subject || r[0].title || '';
+                } else if (r?.script) {
+                    preview = typeof r.script === 'string' ? r.script.slice(0, 60) : r.title || '';
+                } else if (r?.title) {
+                    preview = r.title;
+                } else if (r?.intro) {
+                    preview = r.intro;
+                }
+                preview = preview.slice(0, 60);
+
+                return `
+                    <div class="history-card" data-history-id="${entry.id}">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black text-${badge.color}-400 uppercase tracking-wider">${badge.icon} ${badge.label}</span>
+                            <span class="text-[9px] text-slate-600">${time}</span>
+                        </div>
+                        <div class="text-xs text-slate-400 mb-2 line-clamp-2">${preview || 'Generated content'}</div>
+                        <div class="text-[10px] text-slate-600 mb-2">Product: ${entry.product || '—'}</div>
+                        <div class="flex gap-2">
+                            <button class="copy-btn" onclick="event.stopPropagation(); window._reRenderHistoryEntry('${entry.id}')">👁️ View</button>
+                            <button class="copy-btn" onclick="event.stopPropagation(); window._exportHistoryJSON('${entry.id}')">📥 JSON</button>
+                            <button class="copy-btn" onclick="event.stopPropagation(); window._exportHistoryMD('${entry.id}')">📄 MD</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // History entry handlers
+        window._reRenderHistoryEntry = (id) => {
+            const entry = engine.getHistory().find(e => e.id === id);
+            if (!entry) return;
+            closeHistory();
+            setActiveTab(entry.type);
+            renderResults(entry.type, entry.result);
+        };
+
+        window._exportHistoryJSON = (id) => {
+            const entry = engine.getHistory().find(e => e.id === id);
+            if (entry) engine.exportResultJSON(entry);
+        };
+
+        window._exportHistoryMD = (id) => {
+            const entry = engine.getHistory().find(e => e.id === id);
+            if (entry) engine.exportResultMarkdown(entry);
+        };
+
+        // =====================================================================
+        // HELPERS
+        // =====================================================================
+        function escJs(str) {
+            if (!str) return '';
+            return String(str).replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        }
+
+        window.copyText = (btn, text) => {
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Copied!';
+                btn.classList.add('bg-teal-400/20');
+                setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('bg-teal-400/20'); }, 2000);
+            });
+        };
+
+        window._downloadImage = (title, dataUrl) => {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+
+        // Boot
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+
+</html>

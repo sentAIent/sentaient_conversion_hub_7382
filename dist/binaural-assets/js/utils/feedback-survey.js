@@ -9,7 +9,7 @@ import {
     collection,
     addDoc,
     serverTimestamp
-} from '/binaural-assets/js/services/firebase.js';
+} from '../services/firebase.js';
 
 // Survey trigger conditions
 const TRIGGER_CONDITIONS = {
