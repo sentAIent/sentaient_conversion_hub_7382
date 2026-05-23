@@ -58,38 +58,48 @@
     <!-- SUPER CACHE KILLER: Force fresh load of the new 3600-line fractal engine -->
     <script>
         /**
-         * Mindwave Resilient Bootloader (V119)
+         * Mindwave Resilient Bootloader (V132_RESET)
          * Ensures fresh assets but prevents infinite refresh loops.
          */
         (function() {
-            const CURRENT_VERSION = 'V122';
+            const CURRENT_VERSION = 'V132_RESET';
             const lastVersion = localStorage.getItem('mw_boot_version');
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
-            if (lastVersion !== CURRENT_VERSION) {
-                console.log(`[Boot] Version Shift (${lastVersion || 'NONE'} -> ${CURRENT_VERSION}). Purging caches...`);
+            if (lastVersion !== CURRENT_VERSION || isLocal) {
+                console.log(`[Boot] Version Shift/Local Dev detected. Purging SW and Caches...`);
                 
                 // Clear Service Workers
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.getRegistrations().then(regs => {
-                        for(let r of regs) r.unregister();
+                        for(let r of regs) {
+                            r.unregister().then(() => console.log('[Boot] Unregistered SW:', r));
+                        }
                     });
                 }
                 
                 // Clear Asset Caches
                 if ('caches' in window) {
                     caches.keys().then(names => {
-                        for (let name of names) caches.delete(name);
+                        for (let name of names) {
+                            caches.delete(name).then(() => console.log('[Boot] Deleted cache:', name));
+                        }
                     });
                 }
                 
-                localStorage.setItem('mw_boot_version', CURRENT_VERSION);
-                console.log('[Boot] Purge complete. Refreshing for clean state...');
-                setTimeout(() => window.location.reload(true), 500);
+                if (lastVersion !== CURRENT_VERSION) {
+                    localStorage.setItem('mw_boot_version', CURRENT_VERSION);
+                    if (!isLocal) {
+                        console.log('[Boot] Purge complete. Refreshing for clean state...');
+                        setTimeout(() => window.location.reload(true), 500);
+                    }
+                }
             } else {
                 console.log(`[Boot] Version ${CURRENT_VERSION} confirmed. Procedural load active.`);
             }
         })();
     </script>
+
 
     <script>
         // VISUAL ERROR LOGGER
@@ -190,7 +200,7 @@
     <title>MindWave - Binaural Beats Studio</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="data:text/javascript;base64,LyoqCiAqIE1pbmR3YXZlIFN0dWRpbyBDb3JlIC0gVUxUUkFTWU5DX1YxMzggREVGSU5JVElWRQogKiDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIAKICogTWFpbiBFbnRyeSBQb2ludCBmb3IgTWluZHdhdmUgUHJvIFByb2R1Y3Rpb24uCiAqLwoKaW1wb3J0IHsgc2V0dXBVSSB9IGZyb20gJy4vdWkvY29udHJvbHNfdjMuanMnOwppbXBvcnQgeyBwcmVsb2FkVmlzdWFsaXplciB9IGZyb20gJy4vdmlzdWFscy92aXN1YWxpemVyX2xhenkuanMnOwppbXBvcnQgeyBpbml0RmlyZWJhc2UgfSBmcm9tICcuL3NlcnZpY2VzL2ZpcmViYXNlLmpzJzsKaW1wb3J0IHsgaW5pdEN1cnNvciB9IGZyb20gJy4vdWkvY3Vyc29yLmpzJzsKCndpbmRvdy5OVUNMRUFSX01BSU5fTE9BREVEID0gIlYxMzhfU1RBQkxFIjsKCmNvbnN0IGluaXRBcHAgPSBhc3luYyAoKSA9PiB7CiAgICBjb25zb2xlLmxvZygnW01haW5dIFN0YXJ0aW5nIFYxMzggRGVmaW5pdGl2ZSBCb290IFNlcXVlbmNlLi4uJyk7CgogICAgdHJ5IHsKICAgICAgICAvLyAxLiBJbml0aWFsaXplIEZpcmViYXNlIChNb2NrIG1vZGUgYWN0aXZhdGVzIGlmIGNvbmZpZyBpcyBtaXNzaW5nKQogICAgICAgIGF3YWl0IGluaXRGaXJlYmFzZSgpOwoKICAgICAgICAvLyAyLiBJbml0aWFsaXplIFVJIENvbnRyb2xzCiAgICAgICAgc2V0dXBVSSgpOwoKICAgICAgICAvLyAzLiBQcmVsb2FkIDNEIEVuZ2luZQogICAgICAgIHByZWxvYWRWaXN1YWxpemVyKCk7CgogICAgICAgIC8vIDMuNS4gSW5pdGlhbGl6ZSBDdXJzb3JzCiAgICAgICAgaW5pdEN1cnNvcigpOwoKICAgICAgICAvLyA0LiBDbGVhbnVwIExvYWRpbmcgU3RhdGUKICAgICAgICBjb25zdCBsb2FkZXIgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnbG9hZGluZ1NjcmVlbicpOwogICAgICAgIGlmIChsb2FkZXIpIHsKICAgICAgICAgICAgbG9hZGVyLnN0eWxlLm9wYWNpdHkgPSAnMCc7CiAgICAgICAgICAgIHNldFRpbWVvdXQoKCkgPT4gewogICAgICAgICAgICAgICAgbG9hZGVyLnJlbW92ZSgpOwogICAgICAgICAgICAgICAgY29uc29sZS5sb2coJ1tNYWluXSBTeXN0ZW0gT3BlcmF0aW9uYWwuJyk7CiAgICAgICAgICAgIH0sIDgwMCk7CiAgICAgICAgfQoKICAgIH0gY2F0Y2ggKGVycikgewogICAgICAgIGNvbnNvbGUuZXJyb3IoJ1tNYWluXSBDcml0aWNhbCBCb290IEZhaWx1cmU6JywgZXJyKTsKICAgICAgICAvLyBGYWlsc2FmZTogcmVtb3ZlIGxvYWRlciBzbyB1c2VyIGNhbiBzZWUgc29tZXRoaW5nCiAgICAgICAgY29uc3QgbG9hZGVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2xvYWRpbmdTY3JlZW4nKTsKICAgICAgICBpZiAobG9hZGVyKSBsb2FkZXIucmVtb3ZlKCk7CiAgICB9Cn07CgppZiAoZG9jdW1lbnQucmVhZHlTdGF0ZSA9PT0gJ2xvYWRpbmcnKSB7CiAgICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCdET01Db250ZW50TG9hZGVkJywgaW5pdEFwcCk7Cn0gZWxzZSB7CiAgICBpbml0QXBwKCk7Cn0K">
+    <link rel="modulepreload" href="/assets/main_vFINAL-CHqCj-4F.js">
     <!-- Visualizer modulepreload removed to unblock critical path -->
     <style>
         /* Fallback Styles if Tailwind fails */
@@ -341,10 +351,10 @@
         }
     </script>
     <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
-  <script type="module" crossorigin src="/assets/mindwave-BDlK7_Zr.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
-  <link rel="modulepreload" crossorigin href="/assets/controls_v3-By9psPOH.js">
-  <link rel="stylesheet" crossorigin href="/assets/mindwave-DPGQW98U.css">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/persistence-Cq1PhTrl.js"></script>
+  <script type="module" crossorigin src="/assets/main_vFINAL-BNeKV9vJ.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/mindwave-beta-C5z5aL0p.css">
 </head>
 
 <body
@@ -1559,6 +1569,40 @@
                                 <input type="range" id="cymaticsIntensitySlider" min="0" max="1" step="0.05" value="0" class="mw-slider">
                             </div>
 
+                            <!-- Color Picker & Harmonics Grid -->
+                            <div class="grid grid-cols-2 gap-4 w-full mb-2">
+                                <!-- Color Picker -->
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-[10px] text-purple-300/50 uppercase font-mono">COLOR RESONANCE</label>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <input type="color" id="cymaticsColorPicker" value="#2dd4bf"
+                                            class="w-10 h-6 rounded cursor-pointer bg-transparent border border-purple-400/25">
+                                        <span class="text-[10px] text-purple-300/70 font-mono">Palette</span>
+                                    </div>
+                                </div>
+
+                                <!-- Harmonics Slider -->
+                                <div class="flex flex-col gap-0.5">
+                                    <div class="flex justify-between px-0.5">
+                                        <label class="text-[10px] text-purple-300/50 uppercase font-mono">HARMONICS</label>
+                                        <span id="cymaticsHarmonicsVal" class="text-[10px] text-purple-300 font-mono">0%</span>
+                                    </div>
+                                    <input type="range" id="cymaticsHarmonicsSlider" min="0" max="1" step="0.01" value="0"
+                                        class="mw-slider" style="accent-color: #60a9ff;">
+                                </div>
+                            </div>
+
+                            <!-- Medium Selection Buttons -->
+                            <div class="flex flex-col gap-1.5 w-full mb-4">
+                                <label class="text-[10px] text-purple-300/50 uppercase font-mono px-0.5">MEDIUM DENSITY</label>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button onclick="setCymaticMedium(0)" class="cym-medium-btn active px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-blue-300 hover:bg-blue-500/10 transition-all uppercase leading-none text-center">H2O</button>
+                                    <button onclick="setCymaticMedium(1)" class="cym-medium-btn px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-yellow-300 hover:bg-yellow-500/10 transition-all uppercase leading-none text-center">SiO2</button>
+                                    <button onclick="setCymaticMedium(2)" class="cym-medium-btn px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-purple-300 hover:bg-purple-500/10 transition-all uppercase leading-none text-center">Ether</button>
+                                    <button onclick="setCymaticMedium(3)" class="cym-medium-btn px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-sky-200 hover:bg-sky-500/10 transition-all uppercase leading-none text-center">Ice</button>
+                                </div>
+                            </div>
+
                             <!-- Master Tuning Grid -->
                             <div class="grid grid-cols-1 gap-5 p-3.5 rounded-xl bg-white/[0.02] border border-white/5 w-full">
                                 <div class="flex flex-col gap-1 w-full">
@@ -1615,6 +1659,104 @@
                             <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(25)">Unified</button>
                             <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(26)">Omega</button>
                             <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(27)">Source</button>
+                        </div>
+
+                        <!-- Advanced Cymatics (Hyper-Resonance Series) -->
+                        <div class="mt-6 border-t border-white/5 pt-4">
+                            <h4 class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse shadow-[0_0_8px_var(--accent)]"></span>
+                                Advanced Cymatics (Hyper-Resonance Series)
+                            </h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-indigo-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(99,102,241,0.3)] hover:shadow-[0_0_20px_rgba(99,102,241,0.6)] hover:bg-indigo-500/20 hover:border-indigo-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(28)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
+                                    <span class="relative z-10 group-hover:text-indigo-200 transition-colors tracking-wider">Prime Prime</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-indigo-600/0 via-indigo-500/10 to-indigo-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(29)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/metatrons_grid-CmJ1gwdw.png');"></div>
+                                    <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Metatron's Grid</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-teal-600/0 via-teal-500/10 to-teal-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-purple-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(168,85,247,0.3)] hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] hover:bg-purple-500/20 hover:border-purple-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(30)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/aetheric_weaver-B1_5McXL.png');"></div>
+                                    <span class="relative z-10 group-hover:text-purple-200 transition-colors tracking-wider">Aetheric Weaver</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-500/10 to-purple-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-cyan-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.6)] hover:bg-cyan-500/20 hover:border-cyan-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(31)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/neural_singularity-C8dCqfoM.png');"></div>
+                                    <span class="relative z-10 group-hover:text-cyan-200 transition-colors tracking-wider">Neural Singularity</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-cyan-600/0 via-cyan-500/10 to-cyan-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-pink-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(236,72,153,0.3)] hover:shadow-[0_0_20px_rgba(236,72,153,0.6)] hover:bg-pink-500/20 hover:border-pink-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(32)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/chronos_vortex-nWMdpdkV.png');"></div>
+                                    <span class="relative z-10 group-hover:text-pink-200 transition-colors tracking-wider">Chronos Vortex</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-pink-600/0 via-pink-500/10 to-pink-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-yellow-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(234,179,8,0.3)] hover:shadow-[0_0_20px_rgba(234,179,8,0.6)] hover:bg-yellow-500/20 hover:border-yellow-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(33)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/void_fractal-Bu9lUYXF.png');"></div>
+                                    <span class="relative z-10 group-hover:text-yellow-200 transition-colors tracking-wider">Void Fractal</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-yellow-600/0 via-yellow-500/10 to-yellow-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-emerald-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.6)] hover:bg-emerald-500/20 hover:border-emerald-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(34)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/crystalline_pulse-C5qEDqcV.png');"></div>
+                                    <span class="relative z-10 group-hover:text-emerald-200 transition-colors tracking-wider">Crystalline Pulse</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-600/0 via-emerald-500/10 to-emerald-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-rose-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(244,63,94,0.3)] hover:shadow-[0_0_20px_rgba(244,63,94,0.6)] hover:bg-rose-500/20 hover:border-rose-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(35)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/stellar_loom-Cnf33CQO.png');"></div>
+                                    <span class="relative z-10 group-hover:text-rose-200 transition-colors tracking-wider">Stellar Loom</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-rose-600/0 via-rose-500/10 to-rose-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-amber-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(245,158,11,0.3)] hover:shadow-[0_0_20px_rgba(245,158,11,0.6)] hover:bg-amber-500/20 hover:border-amber-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(64)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/aura_genesis-BBAKzGT4.png');"></div>
+                                    <span class="relative z-10 group-hover:text-amber-200 transition-colors tracking-wider">Aura Genesis</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-amber-600/0 via-amber-500/10 to-amber-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                                <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-blue-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] hover:bg-blue-500/20 hover:border-blue-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(65)">
+                                    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/cosmic_weaver-E-r2twsg.png');"></div>
+                                    <span class="relative z-10 group-hover:text-blue-200 transition-colors tracking-wider">Cosmic Weaver</span>
+                                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-blue-500/10 to-blue-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Classic Friday Cymatics (Vintage Collection) -->
+                        <div class="mt-6 border-t border-white/5 pt-4">
+                            <h4 class="text-[10px] font-bold text-cyan-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.5)]"></span>
+                                Classic Cymatics (Friday Original Series)
+                            </h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(36)">Zenith</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(37)">Horizon</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(38)">Triple Axis</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-cyan-300/80 hover:border-cyan-400/60 transition-all" onclick="selectCymaticPattern(39)">Quad Core</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-cyan-300/80 hover:border-cyan-400/60 transition-all" onclick="selectCymaticPattern(40)">Penta Wave</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-cyan-300/80 hover:border-cyan-400/60 transition-all" onclick="selectCymaticPattern(41)">Harmony</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-pink-300/80 hover:border-pink-400/60 transition-all" onclick="selectCymaticPattern(42)">Lotus Flow</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-pink-300/80 hover:border-pink-400/60 transition-all" onclick="selectCymaticPattern(43)">Cresent</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-pink-300/80 hover:border-pink-400/60 transition-all" onclick="selectCymaticPattern(44)">Orchid</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-yellow-300/80 hover:border-yellow-400/60 transition-all" onclick="selectCymaticPattern(45)">Cross Pulse</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-yellow-300/80 hover:border-yellow-400/60 transition-all" onclick="selectCymaticPattern(46)">Ribbon</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-yellow-300/80 hover:border-yellow-400/60 transition-all" onclick="selectCymaticPattern(47)">Rad Seed</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(48)">Lattice</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(49)">Solar Grate</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(50)">Cell Grid</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-cyan-300/80 hover:border-cyan-400/60 transition-all" onclick="selectCymaticPattern(51)">Star Res</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-cyan-300/80 hover:border-cyan-400/60 transition-all" onclick="selectCymaticPattern(52)">Hexa Flux</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-cyan-300/80 hover:border-cyan-400/60 transition-all" onclick="selectCymaticPattern(53)">Solar Mand</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-pink-300/80 hover:border-pink-400/60 transition-all" onclick="selectCymaticPattern(54)">Graphene</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-pink-300/80 hover:border-pink-400/60 transition-all" onclick="selectCymaticPattern(55)">Hyper Lobe</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-pink-300/80 hover:border-pink-400/60 transition-all" onclick="selectCymaticPattern(56)">Atom Shell</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-yellow-300/80 hover:border-yellow-400/60 transition-all" onclick="selectCymaticPattern(57)">Omega Sph</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-yellow-300/80 hover:border-yellow-400/60 transition-all" onclick="selectCymaticPattern(58)">Fibo Spiral</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-yellow-300/80 hover:border-yellow-400/60 transition-all" onclick="selectCymaticPattern(59)">Frac Lace</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(60)">Cosmic Gear</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(61)">I-Mesh</button>
+                                <button class="cymatics-pattern-btn p-1.5 rounded bg-white/5 border border-purple-300/80 hover:border-purple-400/60 transition-all" onclick="selectCymaticPattern(62)">Q-Foam</button>
+                                <button class="cymatics-pattern-btn col-span-3 p-1.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-white hover:border-cyan-400/60 transition-all" onclick="selectCymaticPattern(63)">Singularity</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2176,10 +2318,123 @@
                                     </div>
                                 </div>
                             </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="h-6 border-b border-white/5 mb-6"></div>
+
+            <section class="mixer-section mb-6 relative z-10" data-section="uploads">
+                <div class="flex justify-between items-center mb-4 cursor-pointer section-header"
+                    onclick="toggleMixerSection('uploads')">
+                    <div class="flex items-center gap-2">
+                        <svg class="section-arrow transition-transform duration-200" width="12" height="12"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                        <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Upload
+                            Audio</h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('uploads'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <label for="audioUploadInput" onclick="event.stopPropagation()"
+                        class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] text-[10px] font-bold uppercase tracking-wide cursor-pointer hover:bg-[var(--accent)]/20 transition-all">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Add Track
+                    </label>
+                    <input type="file" id="audioUploadInput" accept="audio/*" class="hidden" multiple
+                        onclick="event.stopPropagation()">
+                </div>
+                <div class="section-content">
+                    <div id="myAudioContainer" class="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                        <div class="text-xs text-center py-4 text-[var(--text-muted)] opacity-60">
+                            Upload MP3s (Classical, Nature, etc.) to layer with frequencies.
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-0.5 mt-4 pt-6">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">TRACK VOL</label>
+                            <span id="customAudioVolumeValue" class="premium-value">70%</span>
+                        </div>
+                        <input type="range" id="customAudioVolume" min="0" max="1" step="0.01" value="0.7"
+                            class="premium-slider">
+                    </div>
+                </div>
+            </section>
+
+            <div class="h-6 border-b border-white/5 mb-6"></div>
+
+            <section class="mixer-section" data-section="classical">
+                <div class="flex justify-between items-center mb-4 cursor-pointer section-header"
+                    onclick="toggleMixerSection('classical')">
+                    <div class="flex items-center gap-2">
+                        <svg class="section-arrow transition-transform duration-200" width="12" height="12"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                        <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Music
+                            Library</h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('classical'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <label for="classicalUploadInput" onclick="event.stopPropagation()"
+                        class="flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] text-[9px] font-bold uppercase tracking-wide cursor-pointer hover:bg-[var(--accent)]/20 transition-all">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Add
+                    </label>
+                    <input type="file" id="classicalUploadInput" accept="audio/*" class="hidden" multiple
+                        onclick="event.stopPropagation()">
+                </div>
+                <div class="section-content">
+                    <!-- Removed max-h-64 to ensure visibility -->
+                    <div id="classicalContainer" class="overflow-y-auto custom-scrollbar space-y-3 pr-1"
+                        style="min-height: 100px; max-height: 300px;">
+                        <!-- Classical items generated by JS -->
+                        <div class="text-xs text-center py-4 text-[var(--text-muted)] opacity-60">
+                            Loading Classical Music...
                         </div>
                     </div>
 
-                    <!-- Global Classical Player Controls (NEW) -->
+                    <!-- Classical Volume -->
+                    <div class="flex flex-col gap-0.5 mt-4 pt-6">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">CLASSICAL VOL</label>
+                            <span id="classicalVolumeValue" class="premium-value">70%</span>
+                        </div>
+                        <input type="range" id="classicalVolumeSlider" min="0" max="1" step="0.01" value="0.7"
+                            class="premium-slider">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Global Classical Player Controls (NEW) -->
                     <div id="classicalPlayerPanel"
                         class="hidden p-4 rounded-xl bg-[var(--accent)]/5 border border-[var(--accent)]/20 flex flex-col gap-4 mt-4 transition-all duration-500">
                         <div class="flex items-center gap-4">

@@ -77,11 +77,22 @@ window.controls = {
         this.syncSidebar('matrixPanel');
     },
     toggleMatrixSettings: function(btn) {
-        this.syncSidebar('matrixPanel');
+        const panel = document.getElementById('matrixSettingsPanel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+            panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
+        }
     },
     toggleSnowflakeSettings: function(btn) {
         const panel = document.getElementById('snowflakeSettingsPanel');
         if (panel) panel.classList.toggle('hidden');
+    },
+    toggleCymaticsSettings: function(btn) {
+        if (window.controls && typeof window.controls.switchRightTab === 'function') {
+            window.controls.switchRightTab('active');
+        }
+        const rightPanel = document.getElementById('rightPanel');
+        if (rightPanel) rightPanel.classList.remove('translate-x-full');
     },
     setMatrixMode: function(mode) {
         const viz = getVisualizer();
@@ -960,13 +971,20 @@ export function setupUI() {
         setVisualMode('cymatics', null, true);
     });
 
-    // ── Cymatics panel controls ────────────────────────────────────
-    window.toggleCymaticsPanel = function() {
-        const panel = document.getElementById('cymaticsPanel');
+    // ── Cymatics & Matrix panel controls ───────────────────────────
+    window.toggleMatrixSettings = function() {
+        const panel = document.getElementById('matrixSettingsPanel');
         if (panel) {
             panel.classList.toggle('hidden');
             panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
         }
+    };
+    window.toggleCymaticsSettings = function() {
+        if (window.controls && typeof window.controls.switchRightTab === 'function') {
+            window.controls.switchRightTab('active');
+        }
+        const rightPanel = document.getElementById('rightPanel');
+        if (rightPanel) rightPanel.classList.remove('translate-x-full');
     };
     window.selectCymaticPattern = function(idx) {
         const viz = getVisualizer();

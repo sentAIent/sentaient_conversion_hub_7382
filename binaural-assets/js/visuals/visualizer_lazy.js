@@ -20,24 +20,59 @@ async function loadVisualizerModule() {
 
     if (loadPromise) return loadPromise;
 
-    console.log(`[LazyViz] Loading visualizer module from ./visualizer_vGOLD_SYNC.js?v=${VISUALIZER_VERSION}`);
-    // Added version tracking
+    console.log(`[LazyViz] Loading visualizer module... Version: ${VISUALIZER_VERSION}`);
     const startTime = performance.now();
 
-    loadPromise = import('./visualizer_vGOLD_SYNC.js').then(module => {
-        visualizerModule = module;
-        const loadTime = (performance.now() - startTime).toFixed(0);
-        console.log(`[LazyViz] Visualizer loaded in ${loadTime}ms`);
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-        // Execute any pending actions
-        pendingActions.forEach(action => action());
-        pendingActions.length = 0;
+    if (isDev) {
+        // Dev: Bypasses browser dynamic import cache completely using dynamic timestamp
+        loadPromise = new Function(`return import('/binaural-assets/js/visuals/visualizer_vGOLD_SYNC.js?v=' + Date.now())`)().then(module => {
+            visualizerModule = module;
+            const loadTime = (performance.now() - startTime).toFixed(0);
+            console.log(`[LazyViz] Local Dev Visualizer loaded in ${loadTime}ms (forced cache-bust)`);
+            
+            pendingActions.forEach(action => action());
+            pendingActions.length = 0;
+            return module;
+        }).catch(err => {
+            console.error('[LazyViz] CRITICAL: Dev visualizer load failed!', err);
+            throw err;
+        });
+    } else {
+        // Production: First try Vite-hashed production chunk (with fallback retry)
+        // Note: Using standard import() allows Vite static analysis to hash/optimize production chunks.
+        loadPromise = import('./visualizer_vGOLD_SYNC.js')
+            .then(module => {
+                visualizerModule = module;
+                const loadTime = (performance.now() - startTime).toFixed(0);
+                console.log(`[LazyViz] Production Visualizer loaded in ${loadTime}ms (Vite chunk)`);
 
-        return module;
-    });
+                pendingActions.forEach(action => action());
+                pendingActions.length = 0;
+                return module;
+            })
+            .catch(err => {
+                console.warn('[LazyViz] Production Vite chunk import failed or cached. Retrying with cache-buster...', err);
+                // Fallback attempt: Force load the raw static file with cache-busting query parameter
+                return new Function(`return import('/binaural-assets/js/visuals/visualizer_vGOLD_SYNC.js?v=${VISUALIZER_VERSION}_' + Date.now())`)()
+                    .then(module => {
+                        visualizerModule = module;
+                        console.log('[LazyViz] Fallback cache-busted visualizer loaded successfully.');
+                        pendingActions.forEach(action => action());
+                        pendingActions.length = 0;
+                        return module;
+                    })
+                    .catch(fallbackErr => {
+                        console.error('[LazyViz] CRITICAL: Both primary and fallback imports failed!', fallbackErr);
+                        throw fallbackErr;
+                    });
+            });
+    }
 
     return loadPromise;
 }
+
 
 
 /**

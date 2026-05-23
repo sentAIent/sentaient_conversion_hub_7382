@@ -1405,43 +1405,72 @@ export class Visualizer3D {
 
     static get CYMATIC_PATTERNS() {
         return [
-            { name: "Fundamental Zenith", n: 1, m: 1, cat:'sacred' },
-            { name: "Dual Horizon", n: 1, m: 2, cat:'sacred' },
-            { name: "Triple Axis", n: 1, m: 3, cat:'sacred' },
-            { name: "Quad Core", n: 1, m: 4, cat:'sacred' },
-            { name: "Penta Wave", n: 1, m: 5, cat:'sacred' },
-            { name: "Square Harmony", n: 2, m: 2, cat:'geometry' },
-            { name: "Lotus Flow", n: 2, m: 3, cat:'sacred' },
-            { name: "Cresent Node", n: 2, m: 4, cat:'radial' },
-            { name: "Orchid Ring", n: 2, m: 5, cat:'sacred' },
-            { name: "Cross Pulse", n: 3, m: 3, cat:'complex' },
-            { name: "Nodal Ribbon", n: 3, m: 1, cat:'radial' },
-            { name: "Radial Seed", n: 3, m: 5, cat:'sacred' },
-            { name: "Diamond Lattice", n: 4, m: 4, cat:'geometry' },
-            { name: "Solar Grate", n: 4, m: 2, cat:'radial' },
-            { name: "Cellular Grid", n: 5, m: 5, cat:'geometry' },
-            { name: "Star Resonance", n: 6, m: 2, cat:'sacred' },
-            { name: "Hexa Flux", n: 6, m: 6, cat:'geometry' },
-            { name: "Solar Mandala", n: 7, m: 3, cat:'sacred' },
-            { name: "Graphene Matrix", n: 8, m: 4, cat:'complex' },
-            { name: "Hyper Lobe", n: 8, m: 8, cat:'complex' },
-            { name: "Atomic Shell", n: 9, m: 2, cat:'complex' },
-            { name: "Omega Sphere", n: 9, m: 9, cat:'sacred' },
-            { name: "Fibonacci Spiral", n: 1, m: 8, cat:'sacred' },
-            { name: "Fractal Lace", n: 10, m: 4, cat:'fractal' },
-            { name: "Cosmic Gear", n: 11, m: 3, cat:'complex' },
-            { name: "Interstellar Mesh", n: 12, m: 12, cat:'complex' },
-            { name: "Quantum Foam", n: 5, m: 13, cat:'complex' },
-            { name: "Singularity", n: 20, m: 2, cat:'complex' },
-            { name: "Prime Prime", n: 13, m: 17, cat:'complex' },
-            { name: "Metatron's Grid", n: 6, m: 12, cat:'sacred' },
-            // ADVANCED FORM (Tier 2 - Hyper Resonance)
-            { name: "Aetheric Weaver", n: 11, m: 11, type: 4, cat:'advanced' },
-            { name: "Neural Singularity", n: 15, m: 5, type: 4, cat:'advanced' },
-            { name: "Chronos Vortex", n: 7, m: 14, type: 4, cat:'advanced' },
-            { name: "Void Fractal", n: 22, m: 22, type: 4, cat:'advanced' },
-            { name: "Crystalline Pulse", n: 9, m: 18, type: 4, cat:'advanced' },
-            { name: "Stellar Loom", n: 13, m: 3, type: 4, cat:'advanced' }
+            { n: 3,  m: 2,  name: 'Sri Yantra',      cat: 'sacred'   },
+            { n: 4,  m: 3,  name: 'Flower of Life',  cat: 'sacred'   },
+            { n: 5,  m: 5,  name: 'Metatron Cube',   cat: 'sacred'   },
+            { n: 2,  m: 6,  name: 'Vector Equil',    cat: 'sacred'   },
+            { n: 3,  m: 8,  name: 'Fibonacci',       cat: 'sacred'   },
+            { n: 6,  m: 2,  name: 'Torus Field',     cat: 'sacred'   },
+            { n: 4,  m: 7,  name: 'Mandelbrot',      cat: 'fractal'  },
+            { n: 5,  m: 9,  name: 'Julia Loop',      cat: 'fractal'  },
+            { n: 7,  m: 3,  name: 'Recursive',       cat: 'fractal'  },
+            { n: 8,  m: 5,  name: 'Polygon',         cat: 'geometry' },
+            { n: 6,  m: 6,  name: 'Lattice',         cat: 'geometry' },
+            { n: 9,  m: 3,  name: 'Singularity',     cat: 'complex'  },
+            { n: 4,  m: 10, name: 'Neural Web',      cat: 'complex'  },
+            { n: 7,  m: 7,  name: 'Quantum Flux',    cat: 'complex'  },
+            { n: 1,  m: 9,  name: 'Golden Ratio',    cat: 'sacred'   },
+            { n: 8,  m: 2,  name: 'Celestial',       cat: 'radial'   },
+            { n: 10, m: 4,  name: 'Void Geometry',   cat: 'geometry' },
+            { n: 3,  m: 12, name: 'Infinite',        cat: 'fractal'  },
+            { n: 6,  m: 9,  name: 'Prism Fold',      cat: 'complex'  },
+            { n: 12, m: 1,  name: 'Cosmic Knot',     cat: 'complex'  },
+            { n: 5,  m: 11, name: 'Zen Mandala',     cat: 'sacred'   },
+            { n: 8,  m: 8,  name: 'Astral',          cat: 'complex'  },
+            { n: 11, m: 5,  name: 'Etheric',         cat: 'complex'  },
+            { n: 4,  m: 14, name: 'Plasma Bloom',    cat: 'fractal'  },
+            { n: 9,  m: 9,  name: 'Synchronicity',   cat: 'sacred'   },
+            { n: 7,  m: 12, name: 'Unified Field',   cat: 'complex'  },
+            { n: 15, m: 3,  name: 'Omega Point',     cat: 'complex'  },
+            { n: 6,  m: 13, name: 'Source Fold',     cat: 'sacred'   },
+            { name: "Prime Prime", n: 13, m: 17, type: 4, cat: 'advanced' },
+            { name: "Metatron's Grid", n: 6, m: 12, type: 4, cat: 'advanced' },
+            { name: "Aetheric Weaver", n: 11, m: 11, type: 4, cat: 'advanced' },
+            { name: "Neural Singularity", n: 15, m: 5, type: 4, cat: 'advanced' },
+            { name: "Chronos Vortex", n: 7, m: 14, type: 4, cat: 'advanced' },
+            { name: "Void Fractal", n: 22, m: 22, type: 4, cat: 'advanced' },
+            { name: "Crystalline Pulse", n: 9, m: 18, type: 4, cat: 'advanced' },
+            { name: "Stellar Loom", n: 13, m: 3, type: 4, cat: 'advanced' },
+            { n: 1,  m: 1,  name: "Fundamental Zenith", cat: 'classic' },
+            { n: 1,  m: 2,  name: "Dual Horizon",       cat: 'classic' },
+            { n: 1,  m: 3,  name: "Triple Axis",        cat: 'classic' },
+            { n: 1,  m: 4,  name: "Quad Core",          cat: 'classic' },
+            { n: 1,  m: 5,  name: "Penta Wave",         cat: 'classic' },
+            { n: 2,  m: 2,  name: "Square Harmony",     cat: 'classic' },
+            { n: 2,  m: 3,  name: "Lotus Flow",         cat: 'classic' },
+            { n: 2,  m: 4,  name: "Cresent Node",       cat: 'classic' },
+            { n: 2,  m: 5,  name: "Orchid Ring",        cat: 'classic' },
+            { n: 3,  m: 3,  name: "Cross Pulse",        cat: 'classic' },
+            { n: 3,  m: 1,  name: "Nodal Ribbon",       cat: 'classic' },
+            { n: 3,  m: 5,  name: "Radial Seed",        cat: 'classic' },
+            { n: 4,  m: 4,  name: "Diamond Lattice",    cat: 'classic' },
+            { n: 4,  m: 2,  name: "Solar Grate",        cat: 'classic' },
+            { n: 5,  m: 5,  name: "Cellular Grid",      cat: 'classic' },
+            { n: 6,  m: 2,  name: "Star Resonance",     cat: 'classic' },
+            { n: 6,  m: 6,  name: "Hexa Flux",          cat: 'classic' },
+            { n: 7,  m: 3,  name: "Solar Mandala",      cat: 'classic' },
+            { n: 8,  m: 4,  name: "Graphene Matrix",    cat: 'classic' },
+            { n: 8,  m: 8,  name: "Hyper Lobe",         cat: 'classic' },
+            { n: 9,  m: 2,  name: "Atomic Shell",       cat: 'classic' },
+            { n: 9,  m: 9,  name: "Omega Sphere",       cat: 'classic' },
+            { n: 1,  m: 8,  name: "Fibonacci Spiral",   cat: 'classic' },
+            { n: 10, m: 4,  name: "Fractal Lace",       cat: 'classic' },
+            { n: 11, m: 3,  name: "Cosmic Gear",        cat: 'classic' },
+            { n: 12, m: 12, name: "Interstellar Mesh",  cat: 'classic' },
+            { n: 5,  m: 13, name: "Quantum Foam",       cat: 'classic' },
+            { n: 20, m: 2,  name: "Singularity",        cat: 'classic' },
+            { name: "Aura Genesis", n: 8, m: 16, type: 4, cat: 'advanced' },
+            { name: "Cosmic Weaver", n: 14, m: 7, type: 4, cat: 'advanced' }
         ];
     }
 
@@ -1492,27 +1521,83 @@ export class Visualizer3D {
                 vertexShader: `
                     varying vec2 vUv;
                     varying float vDisplace;
-                    uniform float uTime, uN, uM, uIntensity, uEnergy, uShiver;
+                    uniform float uTime, uN, uM, uIntensity, uEnergy, uShiver, uType, uResonance, uEntropy, uFlow;
                     
                     #define PI 3.14159265359
 
+                    float hash(vec2 p) {
+                        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+                    }
+
+                    float noise(vec2 p) {
+                        vec2 i = floor(p);
+                        vec2 f = fract(p);
+                        f = f * f * (3.0 - 2.0 * f);
+                        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+                    }
+
                     float chladniBase(vec2 p, float n, float m) {
                         return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
+                    }
+
+                    float getDisplacementAt(vec2 uv, float t) {
+                        vec2 p = uv;
+                        
+                        // Mild shiver distortion
+                        float sh = noise(p * 8.0 + t) * uShiver * 0.04;
+                        p += sh;
+
+                        float f = 0.0;
+                        float n_eff = uN * uResonance;
+                        float m_eff = uM * uResonance;
+
+                        if (uType < 0.5) { // Sacred Resonance
+                            f = chladniBase(p, n_eff, m_eff);
+                        } else if (uType < 1.5) { // Spinning Torus
+                            float a = atan(p.y, p.x);
+                            float r = length(p);
+                            f = sin(r * 25.0 - a * n_eff + t) * cos(a * m_eff);
+                        } else if (uType < 2.5) { // Orbital Phyllotaxis
+                            float r = length(p) * (12.0 + n_eff * 0.3);
+                            float a = atan(p.y, p.x);
+                            f = sin(r - a * m_eff) * (1.0 - smoothstep(1.2, 1.7, length(p)));
+                        } else if (uType < 3.5) { // Convective Fluid Warp
+                            float n1 = noise(p * (n_eff * 0.1) + t * 0.2);
+                            float n2 = noise(p * (m_eff * 0.1) - t * 0.1);
+                            vec2 warp = p + vec2(cos(n1 * PI), sin(n2 * PI)) * 0.6;
+                            f = sin(length(warp) * 12.0);
+                        } else if (uType < 4.5) { // Apollonian Fold
+                            for(int i=0; i<3; i++) {
+                                p = -1.0 + 2.0 * fract(p * 0.5 + 0.5);
+                                float r2 = dot(p,p);
+                                p = p / max(r2, 0.4);
+                            }
+                            f = chladniBase(p * 0.5, n_eff, m_eff);
+                        } else { // Chaos Fractal
+                            vec2 fUv = p;
+                            for (int i = 0; i < 5; i++) {
+                                fUv = abs(fUv) - 0.4;
+                                float a = t * 0.2 + float(i) * 0.4;
+                                float s = sin(a), c = cos(a);
+                                fUv = vec2(fUv.x * c - fUv.y * s, fUv.x * s + fUv.y * c);
+                            }
+                            f = sin(length(fUv) * 15.0);
+                        }
+                        return f;
                     }
 
                     void main() {
                         vUv = uv;
                         vec2 p = (uv - 0.5) * 2.0;
                         
-                        // Calculate basic displacement for vertex shading
-                        float f = chladniBase(p, uN, uM);
-                        f = abs(f) * (uIntensity + uShiver);
-                        
-                        vDisplace = f;
+                        float t = uTime * uFlow;
+                        float f = getDisplacementAt(p, t);
+                        vDisplace = abs(f);
                         
                         vec3 pos = position;
-                        // Physical displacement: create 3D peaks and valleys
-                        pos.z += f * 5.0 * (1.0 + 0.3 * sin(uTime * 3.0)); 
+                        // Physical 3D displacement
+                        pos.z += f * 5.8 * (uIntensity + uShiver * 0.5) * (0.8 + 0.2 * sin(t * 2.5)); 
                         
                         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
                     }
@@ -1542,8 +1627,6 @@ export class Visualizer3D {
                                    mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
                     }
 
-                    // --- ADVANCED FRACTAL ORGANICS ---
-                    // Fractional Brownian Motion for tree bark / neural web textures
                     float fbm(vec2 p) {
                         float f = 0.0;
                         f += 0.5 * noise(p);
@@ -1556,22 +1639,120 @@ export class Visualizer3D {
                         return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
                     }
 
-                    // Kaleidoscopic Apollonian Gasket Folds
+                    // Multi-harmonic standing waves with acoustics damping
+                    float fractalResonance(vec2 uv, float n, float m, float beat, float t) {
+                        float pi = 3.14159265;
+                        float total = 0.0;
+                        vec2 p = uv;
+                        float currN = n;
+                        float currM = m;
+                        for(int i = 0; i < 3; i++) {
+                            float t_val = t * 0.4 + float(i) * 1.5;
+                            p.x += 0.18 * sin(p.y * 3.0 + t_val + beat * 0.012);
+                            p.y += 0.18 * cos(p.x * 3.0 - t_val * 0.7 + beat * 0.012);
+                            float ang = t_val * 0.08;
+                            mat2 rot = mat2(cos(ang), -sin(ang), sin(ang), cos(ang));
+                            p = rot * p;
+                            float val = cos(currN * pi * p.x) * cos(currM * pi * p.y) - 
+                                        cos(currM * pi * p.x) * cos(currN * pi * p.y);
+                            total += abs(val) * (1.0 / (float(i) + 1.0));
+                            currN *= 1.38; currM *= 1.38;
+                        }
+                        return total * 0.7;
+                    }
+
                     vec2 apollonianFold(vec2 p, float s) {
-                        for(int i=0; i<3; i++) {
+                        for(int i=0; i<4; i++) {
                             p = -1.0 + 2.0 * fract(p * 0.5 + 0.5);
                             float r2 = dot(p,p);
-                            p = p / max(r2, s); // Inversion
+                            p = p / max(r2, s);
                         }
                         return p;
                     }
 
-                    // DOMAIN WARPING: Constant Ambient Fluid Flow
+                    // Navier-Stokes approximation using double convective warping
                     vec2 flowWarp(vec2 p, float t) {
-                        float n1 = noise(p + t * 0.2);
-                        float n2 = noise(p * 2.1 - t * 0.15);
-                        float n3 = fbm(p * 3.0 + t * 0.1);
-                        return p + (0.1 + uShiver * 0.1) * vec2(cos(n1 * PI + n3), sin(n2 * PI - n1));
+                        float n1 = noise(p + t * 0.15);
+                        float n2 = noise(p * 2.3 - t * 0.12);
+                        float n3 = fbm(p * 3.5 + t * 0.08);
+                        vec2 force = vec2(cos(n1 * PI + n3), sin(n2 * PI - n1));
+                        return p + (0.08 + uShiver * 0.12) * force;
+                    }
+
+                    float getDisplacementAt(vec2 uv, float t) {
+                        vec2 p = flowWarp(uv, t * 0.5 * uEntropy);
+                        
+                        // Acoustic fluid transient shiver
+                        vec2 distort = vec2(noise(uv * 12.0 + t), noise(uv * 12.0 - t)) * uShiver * 0.05;
+                        p += distort;
+
+                        float f = 0.0;
+                        vec2 q = p;
+                        float n_eff = uN * uResonance;
+                        float m_eff = uM * uResonance;
+                        
+                        // Interactive pointer ripple
+                        float distToMouse = distance(uv, (uMouse - 0.5) * 2.0);
+                        float ripple = sin(distToMouse * 35.0 - t * 18.0) * exp(-distToMouse * 5.0) * uMouseActive * 0.6;
+                        f += ripple;
+                        
+                        // Topological mathematical formulas
+                        if (uType < 0.5) { // SACRED RESONANCE (Chladni standing waves)
+                            f = fractalResonance(p, n_eff, m_eff, uBeatFreq, t);
+                            if (uHarmonics > 0.01) f += uHarmonics * chladniBase(p * 1.5, n_eff * 0.5, m_eff * 0.5);
+                        } 
+                        else if (uType < 1.5) { // SPINNING TORUS VORTEX
+                            float a = atan(p.y, p.x);
+                            float r = length(p);
+                            float twist = sin(r * 12.0 - a * n_eff + t);
+                            float s1 = sin(a * n_eff + t);
+                            float s2 = sin(a * m_eff - t * 0.4);
+                            f = sin(r * 40.0 + twist * 12.0 * uEntropy) * (s1 * s2);
+                        }
+                        else if (uType < 2.5) { // ORBITAL PHYLLOTAXIS
+                            float r = length(p) * (18.0 + n_eff * 0.4);
+                            float a = atan(p.y, p.x);
+                            float phyll = sin(r - a * m_eff) * cos(r * 0.08 + a * 3.0);
+                            f = phyll * (1.0 - smoothstep(1.3, 1.8, length(p)));
+                        }
+                        else if (uType < 3.5) { // DEEP CONVECTIVE FLUID WARP
+                            q = p + vec2(cos(t * 0.08), sin(t * 0.12)) * 0.6;
+                            float n1 = noise(q * (n_eff * 0.12) + t * 0.18);
+                            float n2 = noise(q * (m_eff * 0.12) - t * 0.08);
+                            vec2 warp = p + vec2(cos(n1 * PI * uEntropy), sin(n2 * PI * uEntropy)) * 0.9;
+                            f = sin(length(warp) * 18.0 + n1 * 6.0);
+                        }
+                        else if (uType < 4.5) { // APOLLONIAN FRACTIONAL FOLDING
+                            q = apollonianFold(p * 0.6, 0.35 + uEntropy * 0.18);
+                            float n1 = chladniBase(q, n_eff, m_eff);
+                            float n2 = chladniBase(q.yx, m_eff * 0.6, n_eff * 1.4);
+                            f = n1 * n2 * 2.2;
+                            f += 0.35 * sin(length(q) * 25.0 - t * 5.0);
+                        }
+                        else { // DEEP CHAOS BUTTERFLY FRACTAL
+                            float zoom = 1.0 + (uIntensity * 0.4);
+                            vec2 fUv = uv * zoom;
+                            float jitter = sin(uTime * 110.0) * 0.004 + cos(uTime * 55.0) * 0.002;
+                            float time = uTime * 2.8 + jitter;
+                            for (int i = 0; i < 9; i++) {
+                                fUv = abs(fUv) - 0.42;
+                                float a = time * 0.28 + float(i) * 0.42;
+                                float s = sin(a), c = cos(a);
+                                fUv = vec2(fUv.x * c - fUv.y * s, fUv.x * s + fUv.y * c);
+                                fUv.x -= 0.18 * sin(time * 0.5 + float(i));
+                            }
+                            float d = length(fUv);
+                            float ripple = sin(d * 24.0 - time * 5.5);
+                            f = ripple * cos(fUv.x * 9.0 + time * 2.2);
+                        }
+
+                        // Layer audio transients
+                        float bassDistort = chladniBase(p, uBassN * 0.25, uBassM * 0.25) * 0.35 * uIntensity;
+                        f += bassDistort;
+                        float highRipples = sin(length(p) * uHighN * 3.5 - t * 9.0) * 0.09 * uNormHighs;
+                        f += highRipples;
+
+                        return f;
                     }
 
                     void main() {
@@ -1580,138 +1761,105 @@ export class Visualizer3D {
                         uv.x *= aspect;
 
                         float t = uTime * uFlow;
-                        // Ambient Flow Field mapping (Constant organic motion even when silent)
-                        vec2 p = flowWarp(uv, t * 0.5 * uEntropy);
 
-                        // Audio Transient Shiver
-                        vec2 distort = vec2(noise(vUv * 15.0 + t), noise(vUv * 15.0 - t)) * uShiver * 0.04;
-                        p += distort;
+                        // EVALUATE SUBPIXEL CHROMATIC ABERRATION
+                        // Calculate local gradients
+                        float eps = 0.006;
+                        float fCenter = getDisplacementAt(uv, t);
+                        float fDx = getDisplacementAt(uv + vec2(eps, 0.0), t) - fCenter;
+                        float fDy = getDisplacementAt(uv + vec2(0.0, eps), t) - fCenter;
+                        vec2 grad = normalize(vec2(fDx, fDy) + 0.0001);
 
-                        float f = 0.0;
-                        float n_eff = uN * uResonance;
-                        float m_eff = uM * uResonance;
-                        
-                        // Interactive Ripple Disruption (The Cursors)
-                        float distToMouse = distance(vUv, uMouse);
-                        float ripple = sin(distToMouse * 30.0 - t * 15.0) * exp(-distToMouse * 4.0) * uMouseActive * 0.5;
-                        f += ripple;
-                        
-                        // [ TOPOLOGICAL CATEGORIES (Radical Mathematical Divergence) ]
-                        if (uType < 0.5) { 
-                            // 0.0: SACRED (Nested Bessel Rings & Node Interference - Image 2/5)
-                            float r = length(p);
-                            float bessel = cos(r * n_eff * 10.0 + t) * exp(-r * 0.2);
-                            float angular = cos(atan(p.y, p.x) * m_eff);
-                            f = bessel * angular;
-                            if (uHarmonics > 0.01) f += uHarmonics * chladniBase(p * 1.5, n_eff * 0.5, m_eff * 0.5);
-                        } 
-                        else if (uType < 1.5) { 
-                            // 1.0: SPIROGRAPH & TORUS VORTEX (3D Toroidal Projection - Image 3)
-                            float a = atan(p.y, p.x);
-                            float r = length(p);
-                            // Toroidal twist math
-                            float twist = sin(r * 10.0 - a * n_eff + t);
-                            float s1 = sin(a * n_eff + t);
-                            float s2 = sin(a * m_eff - t * 0.5);
-                            f = sin(r * 50.0 + twist * 15.0 * uEntropy) * (s1 * s2);
-                        }
-                        else if (uType < 2.5) { 
-                            // 2.0: PLANETARY / PHYLLOTAXIS (Seed-Mapping & Dense Orbital Clusters - Image 1)
-                            float r = length(p) * (15.0 + n_eff * 0.5);
-                            float a = atan(p.y, p.x);
-                            // Golden angle approximation for orbital clustering
-                            float phyll = sin(r - a * m_eff) * cos(r * 0.1 + a * 2.0);
-                            f = phyll * (1.0 - smoothstep(1.5, 2.0, length(p)));
-                        }
-                        else if (uType < 3.5) { 
-                            // 3.0: COMPLEX / DOMAIN WARP (Deep Fluid Organic Convection - Image 4)
-                            vec2 q = p + vec2(cos(t * 0.1), sin(t * 0.15)) * 0.5;
-                            float n1 = noise(q * (n_eff * 0.1) + t * 0.2);
-                            float n2 = noise(q * (m_eff * 0.1) - t * 0.1);
-                            vec2 warp = p + vec2(cos(n1 * PI * uEntropy), sin(n2 * PI * uEntropy)) * 0.8;
-                            f = sin(length(warp) * 15.0 + n1 * 8.0);
-                        }
-                        else {
-                            // 4.0: ADVANCED / HYPER-RESONANCE (Dimensional Folding & Cross-Feedback)
-                            vec2 q = apollonianFold(p * 0.5, 0.4 + uEntropy * 0.2);
-                            float n1 = chladniBase(q, n_eff, m_eff);
-                            float n2 = chladniBase(q.yx, m_eff * 0.5, n_eff * 1.5);
-                            f = n1 * n2 * 2.0;
-                            // Add recursive detail
-                            f += 0.3 * sin(length(q) * 20.0 - t * 4.0);
-                        }
+                        // Offset RGB samples along gradient vector
+                        float shift = 0.02 * (1.0 + uShiver * 2.5) * uIntensity;
+                        float rVal = abs(getDisplacementAt(uv + grad * shift, t));
+                        float gVal = abs(getDisplacementAt(uv, t));
+                        float bVal = abs(getDisplacementAt(uv - grad * shift, t));
+                        vec3 spectralField = vec3(rVal, gVal, bVal);
 
-                        // TRUE RESONANCE PRESERVATION (Audio Transients & Reactivity)
-                        // Physics deformation is layered on top, physically shivering the geometry
-                        float bassDistort = chladniBase(p, uBassN * 0.2, uBassM * 0.2) * 0.3 * uIntensity;
-                        f += bassDistort;
-                        
-                        // Micro-ripples added on extreme high transient crashes
-                        float highRipples = sin(length(p) * uHighN * 3.0 - t * 8.0) * 0.08 * uNormHighs;
-                        f += highRipples;
-                        
-                        // Interactive Ripple Disruption (Phase 3)
-                        float d2m = distance(uv, uMouse);
-                        float rip = sin(d2m * 30.0 - t * 15.0) * exp(-d2m * 6.0) * uMouseActive * 0.4;
-                        f += rip;
-                        
-                        float rawF = f;
-                        f = abs(f);
+                        float f = abs(fCenter);
 
-                        float threshold = 0.07 + uIntensity * 0.09;
-                        
-                        // MEDIUM LOGIC (Edge Mask)
+                        // MEDIUM LIGHTING / DENSITY
+                        float threshold = 0.06 + uIntensity * 0.08;
                         float edge;
-                        if (uMedium < 0.5) { // WATER
-                             edge = smoothstep(threshold + 0.2, threshold - 0.03, f);
-                        } else if (uMedium < 1.5) { // SAND
-                             float grain = noise(vUv * 950.0 + t * 2.0) * 0.14;
-                             edge = step(threshold + grain, f);
-                        } else if (uMedium < 2.5) { // ETHER
-                             edge = pow(smoothstep(threshold + 0.4, threshold - 0.1, f), 2.5);
-                        } else { // ICE
-                             edge = smoothstep(threshold + 0.05, threshold + 0.01, f);
-                             edge *= (0.8 + 0.2 * noise(vUv * 1200.0));
+                        if (uMedium < 0.5) { // WATER (Glistening waves)
+                            edge = smoothstep(threshold + 0.25, threshold - 0.05, f);
+                        } else if (uMedium < 1.5) { // SAND (Sharp granular step)
+                            float grain = noise(vUv * 1050.0 + t * 2.5) * 0.16;
+                            edge = step(threshold + grain, f);
+                        } else if (uMedium < 2.5) { // ETHER (Volumetric plasma mist)
+                            edge = pow(smoothstep(threshold + 0.45, threshold - 0.12, f), 2.2);
+                        } else { // ICE (Structured crystalline glaze)
+                            edge = smoothstep(threshold + 0.06, threshold + 0.01, f);
+                            edge *= (0.75 + 0.25 * noise(vUv * 1350.0));
                         }
 
-                        // CINEMATIC LIGHTING (Matcap Approximation)
-                        vec3 dx = dFdx(vec3(p, rawF));
-                        vec3 dy = dFdy(vec3(p, rawF));
+                        // ADVANCED KINETIC LIGHTING & MATCAP
+                        vec3 dx = dFdx(vec3(uv, fCenter));
+                        vec3 dy = dFdy(vec3(uv, fCenter));
                         vec3 norm = normalize(cross(dx, dy));
-                        norm.z = mix(0.6, 0.2, uIntensity); // Prevent flattening into a literal mirror at 100% intensity 
+                        norm.z = mix(0.55, 0.15, uIntensity);
                         norm = normalize(norm);
 
-                        vec3 lightDir = normalize(vec3(sin(t * 0.4), cos(t * 0.2), 1.2));
-                        vec3 viewDir = vec3(0, 0, 1);
+                        vec3 lightDir = normalize(vec3(sin(t * 0.35), cos(t * 0.18), 1.3));
+                        vec3 viewDir = vec3(0.0, 0.0, 1.0);
                         vec3 reflectDir = reflect(-lightDir, norm);
                         
                         float diff = max(dot(norm, lightDir), 0.0);
-                        float spec = pow(max(dot(reflectDir, viewDir), 0.0), 128.0); 
+                        float spec = pow(max(dot(reflectDir, viewDir), 0.0), 128.0);
+                        float env = noise(reflectDir.xy * 2.8 + t * 0.12) * 0.45;
 
-                        // Environment Reflection Layer
-                        float env = noise(reflectDir.xy * 2.5 + t * 0.15) * 0.4;
+                        // COLLATING SYSTEM COLORS WITH DYNAMIC PRISMATIC SPLITTING
+                        vec3 mainTint = uColor;
+                        vec3 secondaryTint = uSecondaryColor;
                         
-                        vec3 baseCol = mix(uColor, uSecondaryColor, f);
-                        
-                        // Medium Specific Refinement
-                        if (uMedium < 0.5) { // WATER
-                             baseCol = mix(baseCol, vec3(0.01, 0.05, 0.15), 0.5);
-                             baseCol += 0.35 * vec3(0.1, 0.7, 1.0) * vDisplace;
-                        } else if (uMedium < 1.5) { // SAND
-                             baseCol = mix(baseCol, vec3(1.0, 0.9, 0.5), 0.7);
-                        } else if (uMedium < 2.5) { // ETHER
-                             baseCol += 0.6 * vec3(0.8, 0.4, 1.0) * (0.5 + 0.5 * cos(t * 1.8 + f * 12.0));
-                        } else { // ICE
-                             baseCol = mix(vec3(0.8, 0.95, 1.0), uColor, 0.3);
-                             baseCol += spec * 0.5 + env * 0.4;
+                        // Inject chromatic aberration into base color mapping
+                        vec3 baseCol = mix(mainTint, secondaryTint, spectralField);
+
+                        // VOLUMETRIC GLOW DECAY & BIOLUMINESCENT TRAILS
+                        if (uType > 3.5) {
+                            // Fold-based coordinate color shift (the "tons of colors" feedback loop)
+                            vec2 qFold = apollonianFold(uv * 0.5, 0.4);
+                            vec3 c1 = vec3(0.5 + 0.5 * cos(t * 0.6 + length(qFold) * 2.5 + vec3(0.0, 2.0, 4.0)));
+                            vec3 c2 = vec3(0.5 + 0.5 * sin(t * 0.4 - qFold.y * 3.5 + vec3(1.5, 3.5, 5.5)));
+                            vec3 c3 = vec3(0.5 + 0.5 * cos(t * 0.85 + qFold.x * 4.5 + vec3(4.0, 1.0, 2.0)));
+                            
+                            float blendVal = 0.5 + 0.5 * sin(length(qFold) * 6.0 - t);
+                            vec3 foldCol = mix(c1, mix(c2, c3, 0.5 + 0.5 * cos(qFold.x * qFold.y * 8.0)), blendVal);
+                            baseCol = mix(baseCol, foldCol * 1.6, 0.85);
                         }
 
-                        vec3 col = baseCol * (0.3 + 0.7 * diff);
-                        col += spec * vec3(1.0, 0.99, 0.95) * (0.15 + uNormHighs * 0.15); // SEVERE REDUCTION to prevent screen flooding
-                        col += uShiver * vec3(1.0, 0.3, 0.4) * 0.4;
+                        // PHYSICAL SIMULATION VISCOSITY COLORING
+                        if (uMedium < 0.5) { // WATER
+                            baseCol = mix(baseCol, vec3(0.005, 0.04, 0.12), 0.55);
+                            baseCol += 0.4 * vec3(0.08, 0.65, 0.95) * vDisplace;
+                        } else if (uMedium < 1.5) { // SAND
+                            baseCol = mix(baseCol, vec3(0.98, 0.88, 0.48), 0.75);
+                            
+                            // High-frequency volumetric sand-grain step mapping
+                            float sandP = smoothstep(threshold + 0.35, threshold - 0.05, f);
+                            vec2 fractP = fract(vUv * 980.0 * vec2(127.34, 451.21));
+                            fractP += dot(fractP, fractP + 43.32);
+                            float grainHash = fract(fractP.x * fractP.y);
+                            float finalSand = step(grainHash, sandP);
+                            
+                            vec3 sandCol = mix(mainTint, vec3(1.0, 0.95, 0.75), uIntensity);
+                            vec3 plateCol = vec3(0.005, 0.005, 0.015);
+                            baseCol = mix(plateCol, sandCol * 2.8, finalSand);
+                            baseCol += sandCol * smoothstep(0.25, 0.0, f) * 0.4;
+                        } else if (uMedium < 2.5) { // ETHER
+                            baseCol += 0.75 * vec3(0.85, 0.35, 1.0) * (0.5 + 0.5 * cos(t * 1.9 + f * 10.0));
+                        } else { // ICE
+                            baseCol = mix(vec3(0.78, 0.96, 1.0), mainTint, 0.35);
+                            baseCol += spec * 0.6 + env * 0.45;
+                        }
 
-                        float vig = smoothstep(2.5, 0.7, length(uv));
-                        gl_FragColor = vec4(col * edge * vig, edge * (0.8 + 0.2 * uEnergy));
+                        vec3 col = baseCol * (0.25 + 0.75 * diff);
+                        col += spec * vec3(1.0, 0.98, 0.92) * (0.18 + uNormHighs * 0.2); // Glistening highlights
+                        col += uShiver * vec3(1.0, 0.35, 0.45) * 0.45; // Energy transients
+
+                        float vig = smoothstep(2.3, 0.6, length(uv));
+                        gl_FragColor = vec4(col * edge * vig, edge * (0.82 + 0.18 * uEnergy));
                     }
                 `,
                 transparent: true,
@@ -1745,50 +1893,175 @@ export class Visualizer3D {
                 uniforms: this.cymaticMaterial.uniforms, // Share exact liquid uniforms
                 vertexShader: `
                     uniform float uTime, uN, uM, uIntensity, uShiver, uEnergy, uMouseActive;
+                    uniform float uBassN, uBassM, uHighN, uHighM;
+                    uniform float uBeatFreq, uType, uHarmonics, uNormHighs, uEntropy, uFlow, uResonance;
                     uniform vec2 uMouse;
                     attribute float aPhase;
                     varying float vVal;
                     
                     #define PI 3.14159265359
 
+                    float hash(vec2 p) {
+                        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+                    }
+
+                    float noise(vec2 p) {
+                        vec2 i = floor(p);
+                        vec2 f = fract(p);
+                        f = f * f * (3.0 - 2.0 * f);
+                        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+                    }
+
+                    float fbm(vec2 p) {
+                        float f = 0.0;
+                        f += 0.5 * noise(p);
+                        p *= 2.02;
+                        f += 0.25 * noise(p);
+                        return f;
+                    }
+
                     float chladniBase(vec2 p, float n, float m) {
                         return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
                     }
 
+                    // Multi-harmonic standing waves with acoustics damping
+                    float fractalResonance(vec2 uv, float n, float m, float beat, float t) {
+                        float pi = 3.14159265;
+                        float total = 0.0;
+                        vec2 p = uv;
+                        float currN = n;
+                        float currM = m;
+                        for(int i = 0; i < 3; i++) {
+                            float t_val = t * 0.4 + float(i) * 1.5;
+                            p.x += 0.18 * sin(p.y * 3.0 + t_val + beat * 0.012);
+                            p.y += 0.18 * cos(p.x * 3.0 - t_val * 0.7 + beat * 0.012);
+                            float ang = t_val * 0.08;
+                            mat2 rot = mat2(cos(ang), -sin(ang), sin(ang), cos(ang));
+                            p = rot * p;
+                            float val = cos(currN * pi * p.x) * cos(currM * pi * p.y) - 
+                                        cos(currM * pi * p.x) * cos(currN * pi * p.y);
+                            total += abs(val) * (1.0 / (float(i) + 1.0));
+                            currN *= 1.38; currM *= 1.38;
+                        }
+                        return total * 0.7;
+                    }
+
+                    vec2 apollonianFold(vec2 p, float s) {
+                        for(int i=0; i<4; i++) {
+                            p = -1.0 + 2.0 * fract(p * 0.5 + 0.5);
+                            float r2 = dot(p,p);
+                            p = p / max(r2, s);
+                        }
+                        return p;
+                    }
+
+                    vec2 flowWarp(vec2 p, float t) {
+                        float n1 = noise(p + t * 0.15);
+                        float n2 = noise(p * 2.3 - t * 0.12);
+                        float n3 = fbm(p * 3.5 + t * 0.08);
+                        vec2 force = vec2(cos(n1 * PI + n3), sin(n2 * PI - n1));
+                        return p + (0.08 + uShiver * 0.12) * force;
+                    }
+
+                    float getDisplacement(vec2 uv) {
+                        float t = uTime * uFlow;
+                        vec2 p = flowWarp(uv, t * 0.5 * uEntropy);
+                        
+                        vec2 distort = vec2(noise(uv * 12.0 + t), noise(uv * 12.0 - t)) * uShiver * 0.05;
+                        p += distort;
+
+                        float f = 0.0;
+                        vec2 q = p;
+                        float n_eff = uN * uResonance;
+                        float m_eff = uM * uResonance;
+
+                        if (uType < 0.5) {
+                            f = fractalResonance(p, n_eff, m_eff, uBeatFreq, t);
+                            if (uHarmonics > 0.01) f += uHarmonics * chladniBase(p * 1.5, n_eff * 0.5, m_eff * 0.5);
+                        } else if (uType < 1.5) {
+                            float a = atan(p.y, p.x);
+                            float r = length(p);
+                            float twist = sin(r * 12.0 - a * n_eff + t);
+                            float s1 = sin(a * n_eff + t);
+                            float s2 = sin(a * m_eff - t * 0.4);
+                            f = sin(r * 40.0 + twist * 12.0 * uEntropy) * (s1 * s2);
+                        } else if (uType < 2.5) {
+                            float r = length(p) * (18.0 + n_eff * 0.4);
+                            float a = atan(p.y, p.x);
+                            float phyll = sin(r - a * m_eff) * cos(r * 0.08 + a * 3.0);
+                            f = phyll * (1.0 - smoothstep(1.3, 1.8, length(p)));
+                        } else if (uType < 3.5) {
+                            q = p + vec2(cos(t * 0.08), sin(t * 0.12)) * 0.6;
+                            float n1 = noise(q * (n_eff * 0.12) + t * 0.18);
+                            float n2 = noise(q * (m_eff * 0.12) - t * 0.08);
+                            vec2 warp = p + vec2(cos(n1 * PI * uEntropy), sin(n2 * PI * uEntropy)) * 0.9;
+                            f = sin(length(warp) * 18.0 + n1 * 6.0);
+                        } else if (uType < 4.5) {
+                            q = apollonianFold(p * 0.6, 0.35 + uEntropy * 0.18);
+                            float n1 = chladniBase(q, n_eff, m_eff);
+                            float n2 = chladniBase(q.yx, m_eff * 0.6, n_eff * 1.4);
+                            f = n1 * n2 * 2.2;
+                            f += 0.35 * sin(length(q) * 25.0 - t * 4.0);
+                        } else {
+                            float zoom = 1.0 + (uIntensity * 0.4);
+                            vec2 fUv = uv * zoom;
+                            float jitter = sin(uTime * 110.0) * 0.004 + cos(uTime * 55.0) * 0.002;
+                            float time = uTime * 2.8 + jitter;
+                            for (int i = 0; i < 9; i++) {
+                                fUv = abs(fUv) - 0.42;
+                                float a = time * 0.28 + float(i) * 0.42;
+                                float s = sin(a), c = cos(a);
+                                fUv = vec2(fUv.x * c - fUv.y * s, fUv.x * s + fUv.y * c);
+                                fUv.x -= 0.18 * sin(time * 0.5 + float(i));
+                            }
+                            float d = length(fUv);
+                            float ripple = sin(d * 24.0 - time * 5.5);
+                            f = ripple * cos(fUv.x * 9.0 + time * 2.2);
+                        }
+
+                        float bassDistort = chladniBase(p, uBassN * 0.25, uBassM * 0.25) * 0.35 * uIntensity;
+                        f += bassDistort;
+                        float highRipples = sin(length(p) * uHighN * 3.5 - t * 9.0) * 0.09 * uNormHighs;
+                        f += highRipples;
+
+                        return f;
+                    }
+
                     void main() {
                         vec2 p = position.xy / 22.5; 
-                        float val = chladniBase(p, uN, uM);
+                        float val = getDisplacement(p);
                         
-                        // Particle Physical Displacement Disruption
+                        // Particle Physical Displacement Disruption (Pointer ripple influence)
                         vec2 normalizedP = (p * 0.5) + 0.5; 
                         float distToMouse = distance(normalizedP, uMouse);
-                        float ripple = sin(distToMouse * 30.0 - uTime * 15.0) * exp(-distToMouse * 6.0) * uMouseActive * 0.4;
-                        val += ripple * 2.0;
+                        float ripple = sin(distToMouse * 35.0 - uTime * 18.0) * exp(-distToMouse * 5.0) * uMouseActive * 0.5;
+                        val += ripple * 2.5;
 
                         vVal = abs(val);
                         
-                        // Gradient for entrainment (push toward zero)
-                        vec2 eps = vec2(0.01, 0.0);
-                        float dx = chladniBase(p + eps.xy, uN, uM) - chladniBase(p - eps.xy, uN, uM);
-                        float dy = chladniBase(p + eps.yx, uN, uM) - chladniBase(p - eps.yx, uN, uM);
+                        // Gradient evaluation for kinetic gathering force
+                        vec2 eps = vec2(0.008, 0.0);
+                        float dx = getDisplacement(p + eps.xy) - getDisplacement(p - eps.xy);
+                        float dy = getDisplacement(p + eps.yx) - getDisplacement(p - eps.yx);
                         
-                        // Force vector: pushes away from high vibration |val|
+                        // Gathering pull toward standing wave valleys (nodes)
                         vec2 grad = vec2(dx, dy);
-                        float force = clamp(1.0 - vVal, 0.0, 1.0); // Stronger pull near nodes
-                        vec2 push = -grad * val * (0.5 + uIntensity * 1.5) * force;
+                        float force = clamp(1.0 - vVal, 0.0, 1.0);
+                        vec2 push = -grad * val * (0.65 + uIntensity * 1.85) * force;
                         
-                        // Jitter bouncing at anti-nodes (high displacement)
-                        float jitterZ = vVal * sin(uTime * 30.0 + aPhase * 2.0) * (0.5 + uShiver * 5.0 + uIntensity);
+                        // Audio-induced micro-bouncing
+                        float jitterZ = vVal * sin(uTime * 35.0 + aPhase * 2.0) * (0.6 + uShiver * 6.5 + uIntensity * 1.5);
                         
                         vec3 finalPos = position;
-                        finalPos.xy += push * 15.0; // Gather effect
-                        finalPos.z += jitterZ * 2.0;
+                        finalPos.xy += push * 18.0; // Dynamic collection strength
+                        finalPos.z += jitterZ * 2.5;
 
                         vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
                         gl_Position = projectionMatrix * mvPosition;
                         
-                        // Size based on Z bounce
-                        gl_PointSize = (1.5 + max(0.0, jitterZ)) * (100.0 / -mvPosition.z) * (0.5 + uEnergy * 0.5);
+                        // Dynamic particle point size based on energy
+                        gl_PointSize = (1.8 + max(0.0, jitterZ * 1.2)) * (110.0 / -mvPosition.z) * (0.55 + uEnergy * 0.5);
                     }
                 `,
                 fragmentShader: `
@@ -1938,6 +2211,8 @@ export class Visualizer3D {
         else if (data.cat === 'geometry') u.uType.value = 2.0;
         else if (data.cat === 'complex') u.uType.value = 3.0;
         else if (data.cat === 'advanced') u.uType.value = 4.0;
+        else if (data.cat === 'fractal') u.uType.value = 5.0;
+        else if (data.cat === 'classic') u.uType.value = 0.0;
         
         // Manual override if type is explicitly set
         if (data.type !== undefined) u.uType.value = data.type;

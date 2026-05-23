@@ -60,9 +60,16 @@ window.controls = {
         const rightPanel = document.getElementById('rightPanel');
         if (rightPanel) rightPanel.classList.remove('translate-x-full');
 
-        // Switch to Visuals Tab
-        const visualsTabBtn = document.getElementById('tour-visuals-tab') || document.querySelector('.tab-pill[onclick*="visuals"]');
-        if (visualsTabBtn) visualsTabBtn.click();
+        // Switch to correct Tab depending on the panel requested
+        if (panelId === 'cymaticsPanel' || panelId === 'snowflakeSettingsPanel') {
+            const activeTabBtn = document.querySelector('.tab-pill[onclick*="active"]');
+            if (activeTabBtn) activeTabBtn.click();
+            else this.switchRightTab('active');
+        } else {
+            const visualsTabBtn = document.getElementById('tour-visuals-tab') || document.querySelector('.tab-pill[onclick*="visuals"]');
+            if (visualsTabBtn) visualsTabBtn.click();
+            else this.switchRightTab('visuals');
+        }
 
         // Update panel visibility in Visualizer3D if already active
         const viz = getVisualizer();
@@ -1166,10 +1173,6 @@ export function setupUI() {
             panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
         }
     };
-    window.selectCymaticPattern = function(idx) {
-        const viz = getVisualizer();
-        if (viz?.setCymaticPatternByIndex) viz.setCymaticPatternByIndex(idx);
-    };
 
     window.setCymaticMedium = function(mediumIdx) {
         state.cymaticMedium = mediumIdx;
@@ -1201,22 +1204,53 @@ export function setupUI() {
         
         // UI Highlighting Sync
         const btns = document.querySelectorAll('.cymatics-pattern-btn');
-        btns.forEach((btn, i) => {
-            if (i === idx) {
+        btns.forEach((btn) => {
+            const clickAttr = btn.getAttribute('onclick');
+            let btnIdx = -1;
+            if (clickAttr) {
+                const match = clickAttr.match(/selectCymaticPattern\((\d+)\)/);
+                if (match) {
+                    btnIdx = parseInt(match[1]);
+                }
+            }
+            
+            if (btnIdx === idx) {
                 btn.classList.add('active', 'border-purple-400/80', 'bg-purple-400/10');
                 btn.style.color = '#ffffff';
             } else {
                 btn.classList.remove('active', 'border-purple-400/80', 'bg-purple-400/10');
-                // Restore original color based on some heuristic or just reset
                 btn.style.color = ''; 
             }
         });
 
         const viz = getVisualizer();
-        if (viz && typeof viz.setCymaticPatternByIndex === 'function') {
-            viz.setCymaticPatternByIndex(idx);
+        if (viz) {
+            // AUTO-ACTIVATE cymatics mode if not already active
+            if (!viz.activeModes || !viz.activeModes.has('cymatics')) {
+                console.log('[Controls] Auto-activating Cymatics mode for pattern selection');
+                setVisualMode('cymatics', null, true);
+            }
+            // Small delay to ensure initCymatics completes before setting pattern
+            const applyPattern = () => {
+                if (viz.cymaticMaterial && typeof viz.setCymaticPatternByIndex === 'function') {
+                    viz.setCymaticPatternByIndex(idx);
+                } else {
+                    // Retry once after initialization
+                    setTimeout(() => {
+                        if (typeof viz.setCymaticPatternByIndex === 'function') {
+                            viz.setCymaticPatternByIndex(idx);
+                        }
+                    }, 200);
+                }
+            };
+            // If cymatics was just activated, wait for init; otherwise apply immediately
+            if (viz.cymaticMaterial) {
+                applyPattern();
+            } else {
+                setTimeout(applyPattern, 100);
+            }
         } else {
-            console.error("[Controls] Visualizer or setCymaticPatternByIndex not available", viz);
+            console.error("[Controls] Visualizer not available");
         }
     };
 
@@ -2996,7 +3030,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     if (mode === 'cymatics') console.log('%c[Visuals] CYMATICS MODE ACTIVATED', 'color: #a855f7; font-weight: bold; font-size: 14px;');
     let viz = getVisualizer();
     let activeModes = new Set();
-    const state = window.MindWaveState || {};
+
 
     // 1. Manual Override Check (Unlock AI Lock)
     if (isManual && state.aiVisualsLocked) {

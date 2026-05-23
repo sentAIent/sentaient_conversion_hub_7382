@@ -156,26 +156,24 @@ export function renderCymaticProPatterns() {
     const viz = getVisualizer();
     if (!viz || !viz.currentCymaticData) return;
 
-    const panel = document.getElementById('cymaticsPanel');
-    if (!panel) return;
+    // Non-destructive UI synchronization:
+    // 1. Find index of the current pattern in CYMATIC_PATTERNS
+    const patterns = viz.constructor.CYMATIC_PATTERNS || [];
+    const idx = patterns.findIndex(p => p.name === viz.currentCymaticData.name);
+    if (idx !== -1 && typeof window.selectCymaticPattern === 'function') {
+        // Temporarily clear reference to avoid infinite recursion loops
+        const tempRef = window.renderCymaticProPatterns;
+        window.renderCymaticProPatterns = null;
+        window.selectCymaticPattern(idx);
+        window.renderCymaticProPatterns = tempRef;
+    }
 
-    panel.innerHTML = `
-        <div class="flex items-center gap-4 bg-black/40 backdrop-blur-xl p-3 rounded-full border border-white/10 shadow-2xl">
-            <button onclick="getVisualizer().prevCymatic(); renderCymaticProPatterns()" class="p-2 hover:text-[var(--accent)] transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-            
-            <div class="text-center min-w-[140px]">
-                <div class="text-[8px] tracking-[0.2em] opacity-50 font-bold uppercase">RESONANCE MODE</div>
-                <div class="text-xs font-bold text-[var(--accent)]">${viz.currentCymaticData.name || 'Pattern'}</div>
-                <div class="text-[9px] opacity-40 font-mono">Modal (${viz.currentCymaticData.n}, ${viz.currentCymaticData.m})</div>
-            </div>
-
-            <button onclick="getVisualizer().nextCymatic(); renderCymaticProPatterns()" class="p-2 hover:text-[var(--accent)] transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-        </div>
-    `;
+    // 2. Safely synchronize active pattern name inside the header next to 'Cymatic Geometry'
+    const label = document.getElementById('currentCymaticPatternLabel');
+    if (label) {
+        label.textContent = viz.currentCymaticData.name || '';
+        label.classList.remove('hidden');
+    }
 }
 
 window.generateAiZen = async () => {

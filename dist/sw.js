@@ -1,15 +1,42 @@
-const CACHE_NAME = 'mindwave-cache-v301-TOTAL-RESET';
+/**
+ * Self-Destroying Service Worker (sw.js)
+ * Clears all asset caches, unregisters itself, and restores standard network fetch control.
+ */
+
 self.addEventListener('install', (event) => {
+    console.log('[SW] Installing self-destroying sw.js...');
     self.skipWaiting();
 });
+
 self.addEventListener('activate', (event) => {
+    console.log('[SW] Activating self-destroying sw.js...');
     event.waitUntil(
-        caches.keys().then((names) => {
-            return Promise.all(names.map((name) => caches.delete(name)));
-        }).then(() => self.clients.claim())
+        caches.keys().then((keys) => {
+            return Promise.all(keys.map((key) => {
+                console.log('[SW] Deleting cache:', key);
+                return caches.delete(key);
+            }));
+        }).then(() => {
+            console.log('[SW] Caches cleared. Unregistering self...');
+            return self.registration.unregister();
+        }).then(() => {
+            console.log('[SW] Unregistration complete. Claiming clients...');
+            return self.clients.claim();
+        }).then(() => {
+            // Force a reload on all controlled clients to pick up new assets
+            return self.clients.matchAll().then((clients) => {
+                clients.forEach((client) => {
+                    if (client.url) {
+                        console.log('[SW] Reloading client:', client.url);
+                        client.navigate(client.url);
+                    }
+                });
+            });
+        })
     );
 });
+
 self.addEventListener('fetch', (event) => {
-    // PASS-THROUGH: No caching, force network
+    // Pure pass-through: Force network retrieval
     event.respondWith(fetch(event.request));
 });
