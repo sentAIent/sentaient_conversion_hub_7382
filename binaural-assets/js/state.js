@@ -313,7 +313,7 @@ export const state = {
     }
 };
 
-export const VISUALIZER_VERSION = 'V132_RESET';
+export const VISUALIZER_VERSION = 'V133_RESET';
 
 // Global Elements Container
 export const els = {

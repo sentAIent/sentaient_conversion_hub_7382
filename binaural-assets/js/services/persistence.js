@@ -155,29 +155,6 @@ export function renderAmbassadorDashboard() {
     `;
 }
 
-export function renderCymaticProPatterns() {
-    const viz = getVisualizer();
-    if (!viz || !viz.currentCymaticData) return;
-
-    // Non-destructive UI synchronization:
-    // 1. Find index of the current pattern in CYMATIC_PATTERNS
-    const patterns = viz.constructor.CYMATIC_PATTERNS || [];
-    const idx = patterns.findIndex(p => p.name === viz.currentCymaticData.name);
-    if (idx !== -1 && typeof window.selectCymaticPattern === 'function') {
-        // Temporarily clear reference to avoid infinite recursion loops
-        const tempRef = window.renderCymaticProPatterns;
-        window.renderCymaticProPatterns = null;
-        window.selectCymaticPattern(idx);
-        window.renderCymaticProPatterns = tempRef;
-    }
-
-    // 2. Safely synchronize active pattern name inside the header next to 'Cymatic Geometry'
-    const label = document.getElementById('currentCymaticPatternLabel');
-    if (label) {
-        label.textContent = viz.currentCymaticData.name || '';
-        label.classList.remove('hidden');
-    }
-}
 
 window.generateAiZen = async () => {
     const input = document.getElementById('aiZenPrompt');

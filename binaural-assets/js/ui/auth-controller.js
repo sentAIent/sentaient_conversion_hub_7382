@@ -169,9 +169,6 @@ export function initAuthUI() {
         }
     });
 
-    // Setup profile modal handlers
-    setupProfileHandlers();
-
     // Global listeners exposed at top now
 }
 
@@ -280,24 +277,27 @@ function populateProfileStats() {
         const stats = getStats();
         const weeklyData = getWeeklyData();
 
-        // Update stats grid
-        const sessionsEl = document.getElementById('statTotalSessions');
-        const hoursEl = document.getElementById('statTotalHours');
-        const streakEl = document.getElementById('statStreak');
-        const avgEl = document.getElementById('statAvgSession');
-        const topPresetEl = document.getElementById('statTopPreset');
+        // Update stats grid (support both main UI and Modal)
+        const updateStats = (ids, value) => {
+            ids.forEach(id => {
+                const els = document.querySelectorAll(id);
+                els.forEach(el => {
+                    if (el) el.textContent = value;
+                });
+            });
+        };
 
-        if (sessionsEl) sessionsEl.textContent = stats.totalSessions;
-        if (hoursEl) hoursEl.textContent = stats.totalHours;
-        if (streakEl) streakEl.textContent = '🔥 ' + stats.currentStreak;
-        if (avgEl) avgEl.textContent = stats.avgMinutes;
-        if (topPresetEl) topPresetEl.textContent = stats.topPreset || 'None';
+        updateStats(['#statTotalSessions', '#statSessionsModal'], stats.totalSessions);
+        updateStats(['#statTotalHours', '#statHoursModal'], stats.totalHours);
+        updateStats(['#statStreak', '#statStreakModal'], '🔥 ' + stats.currentStreak);
+        updateStats(['#statAvgSession', '#statAvgSessionModal'], stats.avgMinutes);
+        updateStats(['#statTopPreset', '#statTopPresetModal'], stats.topPreset || 'None');
 
-        // Render weekly chart
-        const chartEl = document.getElementById('weeklyChart');
-        if (chartEl && weeklyData) {
+        // Render weekly chart (support both main UI and Modal)
+        const renderCharts = (ids, weeklyData) => {
+            if (!weeklyData) return;
             const maxMins = Math.max(...weeklyData.map(d => d.minutes), 1);
-            chartEl.innerHTML = weeklyData.map(day => {
+            const html = weeklyData.map(day => {
                 const heightPercent = Math.max((day.minutes / maxMins) * 100, 4);
                 const hasActivity = day.minutes > 0;
                 return `
@@ -307,7 +307,16 @@ function populateProfileStats() {
                     </div>
                 `;
             }).join('');
-        }
+            
+            ids.forEach(id => {
+                const els = document.querySelectorAll(id);
+                els.forEach(el => {
+                    if (el) el.innerHTML = html;
+                });
+            });
+        };
+        
+        renderCharts(['#weeklyChart', '#weeklyChartModal'], weeklyData);
 
         // Add daily usage display for free users
         updateDailyUsageDisplay();

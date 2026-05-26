@@ -1,7 +1,7 @@
 // Mindwave Studio Core
 window.NUCLEAR_MAIN_LOADED = true;
 // Core Modules for boot
-import { setupUI, applyAIIntent, showDisclaimerModal } from './ui/controls_v3.js?v=NUCLEAR_FIX_V2';
+import { setupUI, applyAIIntent, showDisclaimerModal } from './ui/controls_v3.js';
 import { initFirebase, registerAuthCallback } from './services/firebase.js';
 import { initAuthUI } from './ui/auth-controller.js';
 import { setupSwipeGestures } from './ui/layout.js';
