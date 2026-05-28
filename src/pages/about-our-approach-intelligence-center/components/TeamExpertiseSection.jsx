@@ -85,7 +85,7 @@ const TeamExpertiseSection = () => {
         </div>
 
         {/* Team Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 mb-16">
+        <div className="grid md:grid-cols-1 lg:grid-cols-1 gap-8 mb-16">
           {teamMembers?.map((member) => (
             <div
               key={member?.id}
