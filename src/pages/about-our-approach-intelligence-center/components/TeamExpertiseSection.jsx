@@ -75,7 +75,7 @@ const TeamExpertiseSection = () => {
           </div>
 
           <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
-            Meet the Minds Behind
+            Meet the Mind Behind
             <span className="block text-primary">AI Transformation</span>
           </h2>
 
