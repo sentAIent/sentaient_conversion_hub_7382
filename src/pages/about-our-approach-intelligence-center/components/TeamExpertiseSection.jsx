@@ -63,7 +63,7 @@ const TeamExpertiseSection = () => {
   ];
 
   return (
-    <section className="py-20 lg:py-32 bg-muted/30">
+    <section id="team" className="py-20 lg:py-32 bg-muted/30">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
