@@ -19,14 +19,16 @@ const HeroSection = () => {
           accelerate decision-making, and unlock hidden enterprise value.
         </p>
         <div className="mt-6">
-          <Button
-            vriant="default"
-            size="2xl"
-            iconName="Users"
-            iconPosition="center"
-            className="bg-accent hover:bg-accent/90 text-primary lg:text-1xl font-bold">
-            Meet Our Team
-          </Button>
+          <a href="#team">
+            <Button
+              vriant="default"
+              size="2xl"
+              iconName="Users"
+              iconPosition="center"
+              className="bg-accent hover:bg-accent/90 text-primary lg:text-1xl font-bold">
+              Meet Our Team
+            </Button>
+          </a>
         </div>
 
             {/* Stats * /}
