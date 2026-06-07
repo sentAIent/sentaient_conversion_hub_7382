@@ -1,0 +1,133 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBTZveJffu2Ed33hhU_G025FVMedIKyg28",
+    authDomain: "mindwave-binaural-beats.firebaseapp.com",
+    projectId: "mindwave-binaural-beats",
+    storageBucket: "mindwave-binaural-beats.firebasestorage.app",
+    messagingSenderId: "281133643186",
+    appId: "1:281133643186:web:f61fb74e2fcf4cc4e660ab",
+    measurementId: "G-TENPZ98XDX"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Keys we care about syncing to the cloud
+const SYNC_KEYS = ['playerGems', 'unlockedShips', 'playerShipType', 'playerCredits'];
+let currentUid = null;
+let isPumpingFromCloud = false;
+
+// 1. Intercept localStorage.setItem
+const originalSetItem = localStorage.setItem;
+localStorage.setItem = function(key, value) {
+    originalSetItem.apply(this, arguments);
+    
+    // Push to firebase if it's a tracked key and we aren't currently reading FROM the cloud
+    if (currentUid && !isPumpingFromCloud && SYNC_KEYS.includes(key)) {
+        try {
+            // Safe JSON parse if applicable
+            let parsedValue = value;
+            try { parsedValue = JSON.parse(value); } catch(e) {}
+            
+            const docRef = doc(db, "interstellar_saves", currentUid);
+            setDoc(docRef, { [key]: parsedValue }, { merge: true })
+                .catch(err => console.error("Firebase Sync Error:", err));
+        } catch(e) {}
+    }
+};
+
+// 2. Auth & Load logic
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUid = user.uid;
+        console.log("🚀 Firebase Sync: Authenticated as", currentUid);
+        
+        // Load cloud save
+        try {
+            const docRef = doc(db, "interstellar_saves", currentUid);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                isPumpingFromCloud = true; // prevent infinite loops
+                let needsUpdate = false;
+                
+                SYNC_KEYS.forEach(key => {
+                    if (data[key] !== undefined) {
+                        const valToSave = typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key].toString();
+                        originalSetItem.call(localStorage, key, valToSave);
+                        needsUpdate = true;
+                    }
+                });
+                isPumpingFromCloud = false;
+                
+                // If the game is already running, we need to poke it to refresh state
+                if (needsUpdate && window.game) {
+                    window.game.playerGems = parseInt(localStorage.getItem('playerGems')) || 0;
+                    window.game.credits = parseInt(localStorage.getItem('playerCredits')) || 0;
+                    window.game.unlockedShips = JSON.parse(localStorage.getItem('unlockedShips')) || ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
+                    window.game.playerShipType = localStorage.getItem('playerShipType') || 'interceptor';
+                    
+                    if (typeof window.game.updateGemsDisplay === 'function') {
+                        window.game.updateGemsDisplay();
+                    }
+                    
+                    const creditsEl = document.getElementById('walletValue');
+                    if (creditsEl) creditsEl.textContent = window.game.credits.toLocaleString();
+                    const creditsDisplay = document.getElementById('creditsDisplay');
+                    if (creditsDisplay) creditsDisplay.textContent = '$' + window.game.credits.toLocaleString();
+                    
+                    console.log("✅ Firebase Sync: Cloud state loaded into game.");
+                }
+            }
+        } catch (err) {
+            console.error("Firebase Load Error:", err);
+            isPumpingFromCloud = false;
+        }
+    } else {
+        // Sign in anonymously if not authenticated
+        signInAnonymously(auth).catch((error) => {
+            console.error("Auth failed:", error);
+        });
+    }
+});
+
+// 3. Leaderboards API
+window.firebaseSync = {
+    async submitHighScore(callsign, score) {
+        if (!currentUid) return false;
+        try {
+            const docRef = doc(db, "leaderboards", currentUid);
+            // Overwrite doc, updating timestamp
+            await setDoc(docRef, {
+                uid: currentUid,
+                callsign: callsign || "Anonymous",
+                highScore: score,
+                timestamp: Date.now()
+            }, { merge: true });
+            return true;
+        } catch (e) {
+            console.error("Leaderboard Submit Error:", e);
+            return false;
+        }
+    },
+    
+    async getTopScores(maxScores = 50) {
+        try {
+            const q = query(collection(db, "leaderboards"), orderBy("highScore", "desc"), limit(maxScores));
+            const querySnapshot = await getDocs(q);
+            const scores = [];
+            querySnapshot.forEach((d) => {
+                scores.push(d.data());
+            });
+            return scores;
+        } catch (e) {
+            console.error("Leaderboard Fetch Error:", e);
+            return [];
+        }
+    }
+};
