@@ -7,11 +7,10 @@
     <title>Interstellar Map | Pre-Placement Cartographer</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=hangar_polish">
+    <link rel="stylesheet" href="./styles.css?v=ray_fix_v10">
 </head>
 
 <body>
-
     <div id="toast" class="toast">Action Successful</div>
 
     <!-- === TOP BAR === -->
@@ -23,16 +22,17 @@
             <div class="star-colors-group">
                 <span class="star-colors-label">Star Colors</span>
                 <input type="color" id="starColor1" class="color-picker-mini star-color" value="#ffffff"
-                    title="Star Color 1" onchange="app.updateStarColors()">
+                    title="Star Color 1" oninput="app.updateStarColors()">
                 <input type="color" id="starColor2" class="color-picker-mini star-color" value="#aaddff"
-                    title="Star Color 2" onchange="app.updateStarColors()">
+                    title="Star Color 2" oninput="app.updateStarColors()">
                 <input type="color" id="starColor3" class="color-picker-mini star-color" value="#ffddaa"
-                    title="Star Color 3" onchange="app.updateStarColors()">
+                    title="Star Color 3" oninput="app.updateStarColors()">
             </div>
             <!-- Motion Group -->
             <div class="bar-group">
-                <button class="btn-small" id="bgDriftBtn" onclick="app.toggleBgDrift()">Drift</button>
-                <button class="btn-small" id="bgWarpBtn" onclick="app.toggleBgWarp()">Lightspeed</button>
+                <button class="btn-small" id="bgDriftBtn" onclick="app.toggleBgDrift()">Stardrift</button>
+                                <button class="btn-small" id="bgWarpBtn" onclick="app.toggleBgWarp()">Lightspeed</button>
+                <span id="warpSpeedValue" class="editable-value-span" style="font-size:10px; margin-left:5px;">10x</span>
                 <input type="range" id="warpSpeedSlider" min="0" max="100" step="1" value="10" style="width: 50px;"
                     title="Warp Speed" oninput="app.setWarpSpeedMultiplier(this.value)">
             </div>
@@ -52,8 +52,14 @@
         </div>
 
         <div class="top-bar-right">
+            <div style="display: flex; gap: 4px; align-items: center; margin-right: 5px;">
+                <button class="btn-small" onclick="app.prevTrack()" style="padding: 2px 6px; border-color: rgba(255,255,255,0.2);">⏮</button>
+                <button class="btn-small media-playpause-btn" onclick="app.togglePlayPause()" style="padding: 2px 8px; border-color: rgba(255,255,255,0.2);">▶</button>
+                <button class="btn-small" onclick="app.nextTrack()" style="padding: 2px 6px; border-color: rgba(255,255,255,0.2);">⏭</button>
+            </div>
+            <div class="divider"></div>
             <input type="color" id="colorInput" class="color-picker-mini" value="#00f3ff"
-                onchange="app.setFixedColor(this.value)">
+                oninput="app.setFixedColor(this.value)">
             <button class="btn-small" id="rainbowBtn" onclick="app.setRainbowMode()">🌈</button>
             <div class="divider"></div>
             <button class="btn-small" title="Export Save Data" onclick="app.exportSaveData()" style="color: #00ffaa; border-color: rgba(0,255,170,0.3);">💾 Save</button>
@@ -70,14 +76,14 @@
     <!-- === MATRIX CONTROLS POPUP === -->
     <div id="matrixPanel" class="popup-panel hidden">
         <h3>Matrix</h3>
-        <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
-        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+        <label style="font-size:10px">Speed: <span id="matrixSpeedValue" class="editable-value-span">1.0x</span></label>
+        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="0.1" style="width:100%">
 
         <label style="font-size:10px;margin-top:6px;display:block">Length: <span
-                id="matrixLengthValue">1.0x</span></label>
+                id="matrixLengthValue" class="editable-value-span">1.0x</span></label>
         <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
 
-        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
+        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue" class="editable-value-span">0°</span></label>
         <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
 
         <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
@@ -178,11 +184,11 @@
     <!-- === ROTATION CONTROLS POPUP === -->
     <div id="rotationPanel" class="popup-panel hidden">
         <h3>3D</h3>
-        <label style="font-size:10px">X: <span id="rotXValue">0°</span></label>
+        <label style="font-size:10px">X: <span id="rotXValue" class="editable-value-span">0°</span></label>
         <input type="range" id="rotXSlider" min="-180" max="180" step="1" value="0" style="width:100%">
-        <label style="font-size:10px;margin-top:6px;display:block">Y: <span id="rotYValue">0°</span></label>
+        <label style="font-size:10px;margin-top:6px;display:block">Y: <span id="rotYValue" class="editable-value-span">0°</span></label>
         <input type="range" id="rotYSlider" min="-180" max="180" step="1" value="0" style="width:100%">
-        <label style="font-size:10px;margin-top:6px;display:block">Z: <span id="rotZValue">0°</span></label>
+        <label style="font-size:10px;margin-top:6px;display:block">Z: <span id="rotZValue" class="editable-value-span">0°</span></label>
         <input type="range" id="rotZSlider" min="-180" max="180" step="1" value="0" style="width:100%">
         <button class="btn-small" onclick="app.resetRotation()"
             style="width:100%; margin-top:8px;font-size:10px;padding:6px">Reset</button>
@@ -300,8 +306,12 @@
                     data-tooltip="Choose Your Spaceship" style="display:none">🛸 <span class="hide-mobile">SHIP</span></button>
                 <button class="btn game-btn" id="dockBtn" onclick="window.game.toggleUpgradePanel()"
                     data-tooltip="Upgrade Your Ship" style="display:none">🛠️ <span class="hide-mobile">UPGRADES</span></button>
+                <button class="btn game-btn" id="pauseBtn" onclick="window.game.togglePause()"
+                    data-tooltip="Pause Game" style="display:none">⏸️ <span class="hide-mobile">PAUSE</span></button>
                 <button class="btn game-btn" id="missionsBtn" onclick="window.game.toggleMissionBoard()"
                     data-tooltip="View Available Missions">📋 <span class="hide-mobile">MISSIONS</span></button>
+                <button class="btn game-btn" id="musicSettingsBtn" onclick="if(window.app){app.openMusicSettings();}else{document.getElementById('musicSettingsModal').style.setProperty('display','flex','important');} event.stopPropagation(); event.preventDefault();"
+                    data-tooltip="Music & Settings" style="pointer-events: auto !important; z-index: 9999 !important;">🎵 <span class="hide-mobile">MUSIC</span></button>
                 <button class="btn game-btn" id="mobile-toggle-btn" onclick="app.toggleMobileControls()"
                     data-tooltip="Toggle Mobile Joystick Controls">🎮 JOYSTICK</button>
                 <div class="divider" style="display:inline-block; width:1px; height:24px; background:rgba(255,255,255,0.2); margin:0 8px; vertical-align:middle;"></div>
@@ -342,7 +352,6 @@
             <button class="zoom-btn" onclick="app.resetView()">⟲</button>
             <button class="zoom-btn" onclick="app.adjustZoom(0.1)">+</button>
         </div>
-    </div>
     </div>
 
     <!-- Template Selection Panel -->
@@ -388,12 +397,16 @@
             <div id="mythTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
         </div>
     </div>
-    </div>
 
     <!-- Hidden file input for loading SVG -->
     <input type="file" id="svgFileInput" accept=".svg" style="display: none;" onchange="app.loadSVG(event)">
 
-    <!-- Zoom controls now integrated in bottom-bar -->
+    <!-- Zoom Controls (Left) -->
+    <div class="zoom-controls" id="mainZoomControls">
+        <button class="zoom-btn" onclick="app.adjustZoom(0.1)" data-tooltip="Zoom In">+</button>
+        <button class="zoom-btn" onclick="app.resetView()" data-tooltip="Reset View">⟲</button>
+        <button class="zoom-btn" onclick="app.adjustZoom(-0.1)" data-tooltip="Zoom Out">-</button>
+    </div>
 
     <div class="stats" id="stats">
         Mode: Draw | Stars: 0 | Constellations: 0 | Zoom: 1.00x
@@ -422,7 +435,7 @@
         <!-- LEFT COLUMN: Now empty, Leaders floats separately -->
         <div class="hud-column hud-left">
             <!-- Vitals & Cargo - Top Left -->
-            <div id="sectionVitals" class="cockpit-section" style="top:72px; left:15px; width:220px;">
+            <div id="sectionVitals" class="cockpit-section" style="top:15px; left:15px; width:220px;">
                 <div class="cockpit-header">
                     <h4>📊 Status Monitor</h4>
                     <button class="window-btn" onclick="app.toggleCockpitSection('sectionVitals')">−</button>
@@ -430,11 +443,19 @@
                 <div class="cockpit-content">
                     <div style="margin-bottom: 8px;">
                         <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">CREDITS</div>
-                        <div style="font-size: 20px; color: #ffd700; font-weight: bold;" id="walletValue">$0</div>
+                        <div style="font-size: 20px; color: #ffd700; font-weight: bold;" id="walletValue" class="editable-value-span">$0</div>
                     </div>
                     <div>
                         <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">CARGO CAPACITY</div>
                         <div style="font-size: 20px; color: #00ff88; font-weight: bold;" id="cargoStatus">📦 0/1000</div>
+                    </div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px;" id="hudNowPlayingTitle">🎵 Audio Systems Offline</div>
+                        <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px;">
+                            <button class="btn-small" onclick="app.prevTrack()" style="padding: 2px 8px; font-size: 12px; border-color: rgba(255,255,255,0.3);">⏮</button>
+                            <button class="btn-small media-playpause-btn" onclick="app.togglePlayPause()" style="padding: 2px 10px; font-size: 12px; border-color: rgba(255,255,255,0.3);">▶</button>
+                            <button class="btn-small" onclick="app.nextTrack()" style="padding: 2px 8px; font-size: 12px; border-color: rgba(255,255,255,0.3);">⏭</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -448,7 +469,7 @@
         <!-- RIGHT COLUMN: Controls & Ship Config -->
         <div class="hud-column hud-right">
             <!-- CONTROLS - Top Right -->
-            <div id="sectionControls" class="cockpit-section" style="top:72px; left:875px; width:220px;">
+            <div id="sectionControls" class="cockpit-section" style="top:15px; right:15px; width:220px;">
                 <div class="cockpit-header">
                     <h4>🎮 Flight Control</h4>
                     <div style="display:flex; gap:4px;">
@@ -497,8 +518,8 @@
                     <!-- SYSTEM -->
                     <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">SYSTEM</div>
                     <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:5px; margin-bottom:10px;">
-                        <kbd data-key="Escape" data-cmd="Exit Flight" data-desc="Return to drawing mode"
-                            style="font-size:9px;">ESC</kbd>
+                        <kbd data-key="x" data-cmd="Exit Flight" data-desc="Return to drawing mode"
+                            style="font-size:9px;">X</kbd>
                         <kbd data-key="M" data-cmd="Toggle Map" data-desc="Open the full-screen galaxy map"
                             style="font-size:9px;">M MAP</kbd>
                     </div>
@@ -522,7 +543,7 @@
             </div>
 
             <!-- SHIP DESIGN - New Standalone Window -->
-            <div id="sectionShipDesign" class="cockpit-section" style="top:72px; left:1105px; width:220px;">
+            <div id="sectionShipDesign" class="cockpit-section" style="top:250px; right:15px; width:220px;">
                 <div class="cockpit-header">
                     <h4>🎨 Ship Design</h4>
                     <button class="window-btn" onclick="app.toggleCockpitSection('sectionShipDesign')">−</button>
@@ -547,7 +568,7 @@
                         <div style="margin-bottom: 6px;">
                             <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
                                 <span>Yaw (Z)</span>
-                                <span id="yawValue">0°</span>
+                                <span id="yawValue" class="editable-value-span">0°</span>
                             </div>
                             <input type="range" id="yawSlider" min="-180" max="180" value="0" style="width: 100%; cursor: pointer;" oninput="app.setShipRotation('yaw', this.value)">
                         </div>
@@ -555,7 +576,7 @@
                         <div style="margin-bottom: 6px;">
                             <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
                                 <span>Pitch (X)</span>
-                                <span id="pitchValue">0°</span>
+                                <span id="pitchValue" class="editable-value-span">0°</span>
                             </div>
                             <input type="range" id="pitchSlider" min="-90" max="90" value="0" style="width: 100%; cursor: pointer;" oninput="app.setShipRotation('pitch', this.value)">
                         </div>
@@ -563,7 +584,7 @@
                         <div style="margin-bottom: 6px;">
                             <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
                                  <span>Roll (Y)</span>
-                                <span id="rollValue">0°</span>
+                                <span id="rollValue" class="editable-value-span">0°</span>
                             </div>
                             <input type="range" id="rollSlider" min="-180" max="180" value="0" style="width: 100%; cursor: pointer;" oninput="app.setShipRotation('roll', this.value)">
                         </div>
@@ -572,7 +593,7 @@
             </div>
 
             <!-- SHIP STATUS - Below Flight Control -->
-            <div id="sectionShipStatus" class="cockpit-section" style="top:72px; left:645px; width:220px;">
+            <div id="sectionShipStatus" class="cockpit-section" style="top:530px; right:15px; width:220px;">
                 <div class="cockpit-header">
                     <h4>🛡️ Ship Status</h4>
                     <button class="window-btn" onclick="app.toggleCockpitSection('sectionShipStatus')">−</button>
@@ -626,7 +647,7 @@
         <!-- BOTTOM ROW: Radar, Engines, Map, Gems - horizontal layout -->
         <div class="hud-bottom">
             <!-- RADAR - Bottom Left-Center (Pos 2) -->
-            <div id="sectionRadar" class="cockpit-section" style="top:72px; left:245px; width:170px; height:200px;">
+            <div id="sectionRadar" class="cockpit-section" style="bottom:15px; left:15px; width:170px; height:200px;">
                 <div class="cockpit-header">
                     <h4>📡 Radar</h4>
                     <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')">−</button>
@@ -643,7 +664,7 @@
 
             <!-- ENGINES - Bottom Center (Pos 3) -->
             <div id="sectionVelocity" class="cockpit-section"
-                style="top:72px; left:425px; width:210px; height:200px;">
+                style="bottom:15px; left:200px; width:210px; height:200px;">
                 <div class="cockpit-header">
                     <h4>⚡ Engines</h4>
                 </div>
@@ -672,7 +693,7 @@
             </div>
 
             <!-- MAP - Bottom Far Left (Pos 1) -->
-            <div id="sectionMap" class="cockpit-section" style="top:72px; left:15px; width:220px; height:200px;">
+            <div id="sectionMap" class="cockpit-section" style="bottom:15px; left:425px; width:220px; height:200px;">
                 <div class="cockpit-header">
                     <h4>🗺️ Map</h4>
                     <button class="window-btn" onclick="app.toggleCockpitSection('sectionMap')">−</button>
@@ -684,7 +705,7 @@
             </div>
 
             <!-- MISSION TRACKER (Left Side, Below Map) -->
-            <div id="sectionMission" class="cockpit-section" style="top:290px; left:15px; width:220px; min-height:80px; display:none;">
+            <div id="sectionMission" class="cockpit-section" style="top:250px; left:15px; width:220px; min-height:80px; display:none;">
                 <div class="cockpit-header">
                     <h4 style="color: #00ffcc;">📋 Mission</h4>
                     <button class="window-btn" onclick="app.toggleCockpitSection('sectionMission')">−</button>
@@ -695,7 +716,7 @@
             </div>
 
             <!-- FACTION WARS TRACKER (Left Side, Below Missions) -->
-            <div id="sectionFactions" class="cockpit-section" style="top:410px; left:15px; width:220px; min-height:100px; display:none;">
+            <div id="sectionFactions" class="cockpit-section" style="top:370px; left:15px; width:220px; min-height:100px; display:none;">
                 <div class="cockpit-header">
                     <h4 style="color: #ffaa00;">⚔️ Faction Rep</h4>
                     <button class="window-btn" onclick="app.toggleCockpitSection('sectionFactions')">−</button>
@@ -708,15 +729,14 @@
 
             <!-- GEMS - Bottom Right (Pos 4 - Constrained) -->
             <div id="sectionGems" class="cockpit-section gems-section"
-                style="bottom:80px; left:15px; right:15px; min-width:800px; height:120px; z-index:30;">
+                style="bottom:15px; right:15px; width:600px; height:150px; z-index:30;">
                 <div class="cockpit-header" style="justify-content:space-between; padding-right:8px;">
                     <h4>💎 Precious Elements</h4>
                     <div style="display:flex; align-items:center; gap:12px;">
                         <div class="gems-total" style="font-size:11px; color:#aaa;">Est: <span id="gemsTotal"
                                 style="color:#0ff;">$0</span></div>
-                        <div style="font-size:11px; color:#aaa;">Credits: <span id="walletValue"
-                                style="color:#0f0;">0</span>
-                        </div>
+                        <div style="font-size:11px; color:#aaa;">Credits: <span id="walletValueShop" class="editable-value-span"
+                                style="color:#00f3ff;">$0</span></div>
 
                         <div style="width:1px; height:14px; background:rgba(255,255,255,0.1); margin:0 4px;"></div>
                         <div style="display:flex; gap:4px;">
@@ -914,7 +934,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="control-ref-item"><kbd>U</kbd><span><strong>Upgrade Dock</strong><br>Open the upgrade
                             station</span></div>
-                    <div class="control-ref-item"><kbd>ESC</kbd><span><strong>Exit Flight</strong><br>Return to drawing
+                    <div class="control-ref-item"><kbd>X</kbd><span><strong>Exit Flight</strong><br>Return to drawing
                             mode</span></div>
                 </div>
             </div>
@@ -940,7 +960,8 @@
     </div>
 
     <!-- Style for Mobile Visibility & UI Polish -->
-    <script type="module" src="./script.js?v=flight_fix_v4"></script>
+    <!-- Main Game Script -->
+    <script type="module" src="script.js?v=ray_fix_v33"></script>
     <!-- BASE BUILDER MODAL -->
     <div class="modal-overlay" id="baseBuilderModal">
         <div class="modal-content" style="width: 800px; max-width: 95vw; background: rgba(10, 20, 30, 0.95); border: 2px solid #228B22; box-shadow: 0 0 30px rgba(34, 139, 34, 0.4);">
@@ -981,6 +1002,200 @@
             </div>
         </div>
     </div>
+
+
+    <!-- MUSIC & SETTINGS MODAL -->
+    <div id="musicSettingsModal" class="modal-overlay" style="display: none; z-index: 10000; position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; opacity: 1; visibility: visible; pointer-events: auto;">
+        <div class="modal-content" style="width: 700px; max-width: 95vw; background: rgba(10, 20, 40, 0.95); border: 2px solid #00f3ff; box-shadow: 0 0 30px rgba(0, 243, 255, 0.4); border-radius: 10px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #00f3ff; font-size: 24px;">🎵 Music & Frequencies</h2>
+                <button class="menu-btn" onclick="if(window.app){app.closeMusicSettings();} document.getElementById('musicSettingsModal').style.setProperty('display','none','important');" style="padding: 5px 15px;">CLOSE</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button id="musicTabBtn_binaural" class="music-tab-btn active" onclick="app.switchMusicTab('binaural')" style="flex: 1; padding: 10px; background: rgba(0,243,255,0.2); border: 1px solid #00f3ff; color: white; cursor: pointer;">Binaural Beats</button>
+                <button id="musicTabBtn_classical" class="music-tab-btn" onclick="app.switchMusicTab('classical')" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #fff; color: white; cursor: pointer;">Classical</button>
+                <button id="musicTabBtn_jazz" class="music-tab-btn" onclick="app.switchMusicTab('jazz')" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #fff; color: white; cursor: pointer;">Jazz</button>
+                <button id="musicTabBtn_ai" class="music-tab-btn" onclick="app.switchMusicTab('ai')" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #fff; color: white; cursor: pointer;">AI-Created</button>
+            </div>
+
+            <!-- Now Playing Indicator -->
+            <div id="nowPlayingBanner" style="background: rgba(255, 100, 200, 0.1); border: 1px solid rgba(255, 100, 200, 0.3); border-radius: 8px; padding: 10px 15px; margin-bottom: 15px; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <span style="color: #ff64c8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 3px;">Now Playing</span>
+                    <span id="nowPlayingTrackName" style="color: white; font-weight: bold; font-size: 16px;">Track Name</span>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; align-items: center; flex: 2; margin: 10px 15px; min-width: 300px;">
+                    <!-- Controls -->
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <button class="btn-small" onclick="app.prevTrack()" style="padding: 2px 8px; border-color: rgba(255,255,255,0.3);" title="Previous Track">⏮</button>
+                        <button class="btn-small" onclick="app.seekAudio(-15)" style="padding: 2px 8px; border-color: rgba(255,255,255,0.3);" title="Rewind 15s">⏪</button>
+                        <button class="btn-small media-playpause-btn" onclick="app.togglePlayPause()" style="padding: 2px 10px; border-color: rgba(255,255,255,0.3);" title="Play/Pause">▶</button>
+                        <button class="btn-small" onclick="app.seekAudio(15)" style="padding: 2px 8px; border-color: rgba(255,255,255,0.3);" title="Fast Forward 15s">⏩</button>
+                        <button class="btn-small" onclick="app.nextTrack()" style="padding: 2px 8px; border-color: rgba(255,255,255,0.3);" title="Next Track">⏭</button>
+                    </div>
+                    
+                    <!-- Scrubber / Timer -->
+                    <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
+                        <span id="audioCurrentTime" style="color: #ccc; font-size: 12px; font-family: monospace; width: 45px; text-align: right;">0:00</span>
+                        <input type="range" id="audioScrubber" min="0" max="100" value="0" step="0.1" oninput="app.scrubberChanged(this.value)" onchange="app.scrubberReleased(this.value)" style="flex: 1; accent-color: #ff64c8;">
+                        <span id="audioDurationTime" style="color: #ccc; font-size: 12px; font-family: monospace; width: 45px;">0:00</span>
+                    </div>
+                </div>
+
+                <div class="audio-equalizer" style="display: flex; gap: 3px; height: 15px; align-items: flex-end; width: 40px; justify-content: flex-end;">
+                    <!-- Animated bars will go here via CSS -->
+                </div>
+            </div>
+
+            <!-- Volume Control -->
+            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px;">
+                <label style="color: #ccc;">Master Volume:</label>
+                <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="1.0" oninput="app.setMusicVolume(this.value)" style="flex: 1;">
+                <button class="btn-small" id="muteToggleBtn" onclick="app.toggleMute()" style="min-width: 100px;">Mute: OFF</button>
+                <button class="btn-small" onclick="app.stopAllMusic()" style="background: rgba(255,0,0,0.2); border-color: #ff3333; color: #ff3333;">Stop All Audio</button>
+            </div>
+
+            <!-- Binaural Beats Tab -->
+            <div id="musicTab_binaural" class="music-tab-content">
+                <h3 style="color: #00f3ff; margin-top: 0; font-size: 18px;">Brainwave Entrainment Presets</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn-secondary" onclick="app.setBinauralPreset(2, 80, this)">Deep Delta (2Hz) - Healing & Sleep</button>
+                    <button class="btn-secondary" onclick="app.setBinauralPreset(6, 110, this)">Theta (6Hz) - Meditation & Intuition</button>
+                    <button class="btn-secondary" onclick="app.setBinauralPreset(10, 130, this)">Alpha (10Hz) - Relaxation & Flow</button>
+                    <button class="btn-secondary" onclick="app.setBinauralPreset(20, 200, this)">Beta (20Hz) - Focus & Alertness</button>
+                    <button class="btn-secondary" onclick="app.setBinauralPreset(40, 300, this)">Gamma (40Hz) - Peak Performance</button>
+                </div>
+                <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; color: #aaa;">Custom Frequency Override</h4>
+                    <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 10px;">
+                        <label style="width: 120px; color: #ccc;">Base Frequency:</label>
+                        <input type="range" id="binauralBaseSlider" min="40" max="800" step="1" value="130" oninput="app.updateBinauralCustom()" style="flex: 1;">
+                        <span id="binauralBaseVal" style="color: #00f3ff; width: 60px;">130Hz</span>
+                    </div>
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <label style="width: 120px; color: #ccc;">Beat Difference:</label>
+                        <input type="range" id="binauralBeatSlider" min="0.5" max="50" step="0.5" value="10" oninput="app.updateBinauralCustom()" style="flex: 1;">
+                        <span id="binauralBeatVal" style="color: #00f3ff; width: 60px;">10Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classical Tab -->
+            <div id="musicTab_classical" class="music-tab-content" style="display: none; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                <h3 style="color: #00f3ff; margin-top: 0; font-size: 18px; position: sticky; top: 0; background: rgba(10, 20, 40, 0.95); padding: 5px 0; z-index: 2;">Classical Masterpieces</h3>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;" id="classicalTrackList">
+                    <!-- Populated by script.js -->
+                </div>
+            </div>
+
+            <!-- Jazz Tab -->
+            <div id="musicTab_jazz" class="music-tab-content" style="display: none; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                <h3 style="color: #00f3ff; margin-top: 0; font-size: 18px; position: sticky; top: 0; background: rgba(10, 20, 40, 0.95); padding: 5px 0; z-index: 2;">Jazz & Lounge</h3>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;" id="jazzTrackList">
+                    <!-- Populated by script.js -->
+                </div>
+            </div>
+
+            <!-- AI-Created Tab -->
+            <div id="musicTab_ai" class="music-tab-content" style="display: none; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                <h3 style="color: #00f3ff; margin-top: 0; font-size: 18px; position: sticky; top: 0; background: rgba(10, 20, 40, 0.95); padding: 5px 0; z-index: 2;">AI-Created Atmospheres</h3>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;" id="aiTrackList">
+                    <!-- Populated by script.js -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Slider Edit Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const initEditableSpans = () => {
+                const spans = document.querySelectorAll('.editable-value-span');
+                spans.forEach(span => {
+                    span.addEventListener('click', (e) => {
+                        // Prevent triggering multiple times if already editing
+                        if (span.querySelector('input')) return;
+                        
+                        // Extract numeric value
+                        const currentText = span.textContent;
+                        const suffix = currentText.replace(/[0-9.-]/g, '');
+                        const currentValue = parseFloat(currentText.replace(/[^0-9.-]/g, ''));
+                        
+                        // Find matching slider. Assume id ends with 'Value', replace with 'Slider'
+                        let sliderId = span.id.replace('Value', 'Slider');
+                        let slider = document.getElementById(sliderId);
+                        
+                        // If standard mapping fails, check nearest input[type=range]
+                        if (!slider) {
+                            slider = span.parentElement.parentElement.querySelector('input[type=range]');
+                        }
+
+                        const isWallet = span.id === 'walletValue' || span.id === 'walletValueShop';
+                        if (!slider && !isWallet) return;
+
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.className = 'editable-value-input';
+                        input.value = isNaN(currentValue) ? (slider ? slider.value : 0) : currentValue;
+                        if (slider && slider.min !== '') input.min = slider.min;
+                        if (slider && slider.max !== '') input.max = slider.max;
+                        if (slider && slider.step) input.step = slider.step;
+
+                        const finalize = () => {
+                            let newVal = parseFloat(input.value);
+                            if (isNaN(newVal)) newVal = slider ? parseFloat(slider.value) : 0;
+                            
+                            if (slider) {
+                                // Clamp
+                                if (slider.min !== '') newVal = Math.max(parseFloat(slider.min), newVal);
+                                if (slider.max !== '') newVal = Math.min(parseFloat(slider.max), newVal);
+                                
+                                // Update slider and trigger event
+                                slider.value = newVal;
+                                slider.dispatchEvent(new Event('input', { bubbles: true }));
+                                slider.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+
+                            if (isWallet && window.game) {
+                                window.game.credits = newVal;
+                            }
+                            
+                            // Update span text immediately to give fast feedback
+                            const prefix = isWallet ? '$' : '';
+                            span.textContent = prefix + newVal + suffix.replace('$', '');
+                            
+                            // Replace input back with the updated span text
+                            if (input.parentNode === span) {
+                                span.innerHTML = '';
+                                span.textContent = prefix + newVal + suffix.replace('$', '');
+                            }
+                        };
+
+                        input.addEventListener('blur', finalize);
+                        input.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                input.blur();
+                            } else if (e.key === 'Escape') {
+                                span.innerHTML = '';
+                                span.textContent = currentText; // Cancel edit
+                            }
+                        });
+
+                        span.innerHTML = '';
+                        span.appendChild(input);
+                        input.focus();
+                        input.select();
+                    });
+                });
+            };
+            
+            // Allow time for all UI to build
+            setTimeout(initEditableSpans, 1000);
+        });
+    </script>
 
 </body>
 

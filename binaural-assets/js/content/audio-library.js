@@ -142,32 +142,28 @@ export async function addTrack(file) {
     // Prompt login for better experience?
     // For now, let them save locally, but maybe show a tip?
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const track = {
-                id: 'local-' + Date.now(), // Different ID scheme
-                name: file.name.replace(/\.[^/.]+$/, ''),
-                fileName: file.name,
-                type: file.type,
-                size: file.size,
-                dateAdded: new Date().toISOString(),
-                audioData: reader.result, // Base64
-                isLocal: true // Flag
-            };
-
-            const transaction = audioLibraryState.db.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
-            const request = store.add(track);
-
-            request.onsuccess = () => {
-                audioLibraryState.tracks.push(track);
-                renderLibraryUI();
-                showToast(`✓ Saved locally (Sign in to sync)`, 'success');
-                resolve(track);
-            };
-            request.onerror = () => reject(request.error);
+        const track = {
+            id: 'local-' + Date.now(), // Different ID scheme
+            name: file.name.replace(/\.[^/.]+$/, ''),
+            fileName: file.name,
+            type: file.type,
+            size: file.size,
+            dateAdded: new Date().toISOString(),
+            audioData: file, // Store the File Blob directly in IndexedDB instead of base64
+            isLocal: true // Flag
         };
-        reader.readAsDataURL(file);
+
+        const transaction = audioLibraryState.db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.add(track);
+
+        request.onsuccess = () => {
+            audioLibraryState.tracks.push(track);
+            renderLibraryUI();
+            showToast(`✓ Saved locally (Sign in to sync)`, 'success');
+            resolve(track);
+        };
+        request.onerror = () => reject(request.error);
     });
 }
 
@@ -228,16 +224,31 @@ export async function playCustomAudio(trackId) {
     audioLibraryState.currentTrack = track;
 
     // Usage: Cloud uses downloadUrl, Local uses audioData
-    let src = track.downloadUrl || track.audioData;
+    let src;
+    let isObjectUrl = false;
+
+    if (track.downloadUrl) {
+        src = track.downloadUrl;
+    } else if (track.audioData) {
+        if (track.audioData instanceof Blob || track.audioData instanceof File) {
+            src = URL.createObjectURL(track.audioData);
+            isObjectUrl = true;
+        } else {
+            // Legacy Base64 support
+            src = track.audioData;
+        }
+    }
 
     // Offline Cache Intercept
     try {
-        const cachedUrl = await getCachedAudioUrl(src);
-        if (cachedUrl) {
-            console.log(`[AudioLibrary] Serving ${trackId} from Offline Cache`);
-            src = cachedUrl;
-        } else {
-            console.log(`[AudioLibrary] Serving ${trackId} from Network (${track.isLocal ? 'Local' : 'Cloud'})`);
+        if (!isObjectUrl) { // Don't try to cache local blob object URLs
+            const cachedUrl = await getCachedAudioUrl(src);
+            if (cachedUrl) {
+                console.log(`[AudioLibrary] Serving ${trackId} from Offline Cache`);
+                src = cachedUrl;
+            } else {
+                console.log(`[AudioLibrary] Serving ${trackId} from Network (${track.isLocal ? 'Local' : 'Cloud'})`);
+            }
         }
     } catch (e) {
         console.warn('[AudioLibrary] Failed to check offline cache, defaulting to network:', e);

@@ -45,12 +45,13 @@ const Interstellar = () => {
             {/* Fullscreen Game Iframe */}
             <div className="fixed top-0 left-0 w-full h-full" style={{ paddingTop: '60px' }}>
                 <iframe
-                    src="/interstellar-game/index.html"
+                    src={`/interstellar-game/index.html?v=${Date.now()}`}
                     title="Interstellar Game - Aether Map"
                     width="100%"
                     height="100%"
                     frameBorder="0"
                     className="w-full h-full"
+                    allow="autoplay"
                     style={{ border: 'none', display: 'block' }}
                 ></iframe>
             </div>

@@ -18,435 +18,10 @@ v5.0 - Pre-Placement Color Model
  */
 
 // === PROCEDURAL AUDIO ENGINE ===
-class AudioEngine {
-    constructor() {
-        this.ctx = null; // AudioContext (lazy init on user interaction)
-        this.masterGain = null;
-        this.musicGain = null;
-        this.sfxGain = null;
-        this.muted = localStorage.getItem('audioMuted') === 'true';
-        this.musicPlaying = false;
-        this.volume = parseFloat(localStorage.getItem('audioVolume')) || 0.3;
-        this.musicVolume = 0.15;
-        this.engineNode = null;
-        this.engineGain = null;
-        // Rate limiting: prevent audio node flooding during intense combat
-        this._lastPlay = {};
-    }
+import { AudioEngine } from './audio.js?v=ray_fix_v33';
+import * as Utils from './utils.js';
 
-    // Rate limiter: returns false if same sound played too recently
-    _canPlay(key, minIntervalMs = 50) {
-        const now = Date.now();
-        if (this._lastPlay[key] && now - this._lastPlay[key] < minIntervalMs) return false;
-        this._lastPlay[key] = now;
-        return true;
-    }
-
-    init() {
-        if (this.ctx) return;
-        try {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            this.masterGain = this.ctx.createGain();
-            this.masterGain.gain.value = this.muted ? 0 : this.volume;
-            this.masterGain.connect(this.ctx.destination);
-
-            this.sfxGain = this.ctx.createGain();
-            this.sfxGain.gain.value = 1.0;
-            this.sfxGain.connect(this.masterGain);
-
-            this.musicGain = this.ctx.createGain();
-            this.musicGain.gain.value = this.musicVolume;
-            this.musicGain.connect(this.masterGain);
-
-            console.log('[Audio] Engine initialized');
-        } catch (e) {
-            console.warn('[Audio] Web Audio not supported:', e);
-        }
-    }
-
-    ensureContext() {
-        if (!this.ctx) this.init();
-        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
-    }
-
-    toggleMute() {
-        this.muted = !this.muted;
-        localStorage.setItem('audioMuted', this.muted);
-        if (this.masterGain) {
-            this.masterGain.gain.setTargetAtTime(this.muted ? 0 : this.volume, this.ctx.currentTime, 0.05);
-        }
-        return this.muted;
-    }
-
-    // --- BINAURAL SYSTEM ---
-    
-    _createBinauralPair(type, freqBase, freqBeat, t, targetFreqTarget=null, rampDuration=null, rampType='exponential') {
-        const oscL = this.ctx.createOscillator();
-        const oscR = this.ctx.createOscillator();
-        const merger = this.ctx.createChannelMerger(2);
-        
-        oscL.type = type;
-        oscR.type = type;
-        
-        // Left Ear Base
-        oscL.frequency.setValueAtTime(freqBase, t);
-        // Right Ear + Binaural Beat offset
-        oscR.frequency.setValueAtTime(freqBase + freqBeat, t);
-        
-        if (targetFreqTarget && rampDuration) {
-            if (rampType === 'exponential') {
-                oscL.frequency.exponentialRampToValueAtTime(targetFreqTarget, t + rampDuration);
-                oscR.frequency.exponentialRampToValueAtTime(targetFreqTarget + freqBeat, t + rampDuration);
-            } else {
-                oscL.frequency.linearRampToValueAtTime(targetFreqTarget, t + rampDuration);
-                oscR.frequency.linearRampToValueAtTime(targetFreqTarget + freqBeat, t + rampDuration);
-            }
-        }
-        
-        oscL.connect(merger, 0, 0); // Left channel
-        oscR.connect(merger, 0, 1); // Right channel
-        
-        return {
-            start: (time) => { oscL.start(time); oscR.start(time); },
-            stop: (time) => { oscL.stop(time); oscR.stop(time); },
-            connect: (destination) => merger.connect(destination),
-            nodeL: oscL,
-            nodeR: oscR
-        };
-    }
-
-    // --- SOUND EFFECTS ---
-
-    playLaser() {
-        if (!this._canPlay('laser', 100)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // High Gamma Beat for focus/energy (40Hz difference)
-        const pair = this._createBinauralPair('sawtooth', 880, 40, t, 220, 0.15);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.15, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.15);
-    }
-
-    playEnemyLaser() {
-        if (!this._canPlay('enemyLaser', 80)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // High Beta beat for alertness (20Hz)
-        const pair = this._createBinauralPair('square', 440, 20, t, 110, 0.1);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.08, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.1);
-    }
-
-    playExplosionSmall() {
-        if (!this._canPlay('expSmall', 60)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        
-        // Minor Delta rumble underneath the noise
-        const pair = this._createBinauralPair('sine', 150, 4, t, 40, 0.3);
-        const oscGain = this.ctx.createGain();
-        oscGain.gain.setValueAtTime(0.1, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-        pair.connect(oscGain);
-        oscGain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.3);
-
-        const bufferSize = this.ctx.sampleRate * 0.3;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
-        }
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(2000, t);
-        filter.frequency.exponentialRampToValueAtTime(200, t + 0.3);
-
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.2, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.sfxGain);
-        noise.start(t);
-        noise.stop(t + 0.3);
-    }
-
-    playExplosionBig() {
-        if (!this._canPlay('expBig', 150)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        
-        // Deep Delta rumble for massive explosions (2Hz diff)
-        const pair = this._createBinauralPair('sine', 80, 2, t, 20, 0.8);
-        const oscGain = this.ctx.createGain();
-        oscGain.gain.setValueAtTime(0.3, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-        pair.connect(oscGain);
-        oscGain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.8);
-
-        const bufferSize = this.ctx.sampleRate * 0.8;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
-        }
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(3000, t);
-        filter.frequency.exponentialRampToValueAtTime(100, t + 0.8);
-
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.35, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.sfxGain);
-        noise.start(t);
-        noise.stop(t + 0.8);
-    }
-
-    playShieldHit() {
-        if (!this._canPlay('shield', 100)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // High frequency alpha hit
-        const pair = this._createBinauralPair('sine', 1200, 10, t, 400, 0.2);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.12, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.2);
-    }
-
-    playHullHit() {
-        if (!this._canPlay('hull', 100)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // Metallic clang Beta (15Hz)
-        const pair = this._createBinauralPair('triangle', 300, 15, t, 80, 0.15);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.15, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.15);
-    }
-
-    playUIClick() {
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const pair = this._createBinauralPair('sine', 660, 12, t);
-        // Custom linear sweep up
-        pair.nodeL.frequency.linearRampToValueAtTime(880, t + 0.03);
-        pair.nodeR.frequency.linearRampToValueAtTime(892, t + 0.03);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.08, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.08);
-    }
-
-    playMissionComplete() {
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // Victory fanfare — ascending tones with Alpha/Theta blend
-        const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
-        notes.forEach((freq, i) => {
-            const pair = this._createBinauralPair('sine', freq, 8, t + i * 0.15); // Alpha 8Hz
-            const gain = this.ctx.createGain();
-            gain.gain.setValueAtTime(0, t + i * 0.15);
-            gain.gain.linearRampToValueAtTime(0.12, t + i * 0.15 + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.3);
-            pair.connect(gain);
-            gain.connect(this.sfxGain);
-            pair.start(t + i * 0.15);
-            pair.stop(t + i * 0.15 + 0.3);
-        });
-    }
-
-    playBossAlert() {
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // Warning siren (Intense Gamma 35Hz)
-        for (let i = 0; i < 3; i++) {
-            const pair = this._createBinauralPair('sawtooth', 200, 35, t + i * 0.4);
-            // Custom linear ramps up and down
-            pair.nodeL.frequency.linearRampToValueAtTime(600, t + i * 0.4 + 0.2);
-            pair.nodeR.frequency.linearRampToValueAtTime(635, t + i * 0.4 + 0.2);
-            pair.nodeL.frequency.linearRampToValueAtTime(200, t + i * 0.4 + 0.4);
-            pair.nodeR.frequency.linearRampToValueAtTime(235, t + i * 0.4 + 0.4);
-            
-            const gain = this.ctx.createGain();
-            gain.gain.setValueAtTime(0.1, t + i * 0.4);
-            gain.gain.setValueAtTime(0.1, t + i * 0.4 + 0.35);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.4 + 0.4);
-            pair.connect(gain);
-            gain.connect(this.sfxGain);
-            pair.start(t + i * 0.4);
-            pair.stop(t + i * 0.4 + 0.4);
-        }
-    }
-
-    playCollect() {
-        if (!this._canPlay('collect', 100)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // High frequency Beta burst
-        const pair = this._createBinauralPair('sine', 600, 16, t, 1200, 0.1);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.08, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.12);
-    }
-
-    // --- ENGINE HUM ---
-
-    startEngineHum() {
-        this.ensureContext();
-        if (!this.ctx || this.enginePair) return;
-
-        // Steady Theta wave for focus during sustained flight (6Hz diff)
-        this.enginePair = this._createBinauralPair('sawtooth', 40, 6, this.ctx.currentTime);
-        this.engineGain = this.ctx.createGain();
-        const filter = this.ctx.createBiquadFilter();
-
-        filter.type = 'lowpass';
-        filter.frequency.value = 150;
-        filter.Q.value = 2;
-        this.engineGain.gain.value = 0.04;
-
-        this.enginePair.connect(filter);
-        filter.connect(this.engineGain);
-        this.engineGain.connect(this.sfxGain);
-        this.enginePair.start(this.ctx.currentTime);
-    }
-
-    updateEngineHum(speed) {
-        if (!this.enginePair || !this.ctx) return;
-        const freq = 40 + speed * 8; // Pitch up with speed
-        this.enginePair.nodeL.frequency.setTargetAtTime(Math.min(freq, 200), this.ctx.currentTime, 0.1);
-        this.enginePair.nodeR.frequency.setTargetAtTime(Math.min(freq + 6, 206), this.ctx.currentTime, 0.1); // Keep 6Hz difference
-        const vol = 0.02 + Math.min(speed * 0.005, 0.08);
-        this.engineGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
-    }
-
-    stopEngineHum() {
-        if (this.enginePair) {
-            try { this.enginePair.stop(this.ctx.currentTime); } catch (e) { }
-            this.enginePair = null;
-            this.engineGain = null;
-        }
-    }
-
-    // --- AMBIENT SPACE MUSIC ---
-
-    startAmbientMusic() {
-        this.ensureContext();
-        if (!this.ctx || this.musicPlaying) return;
-        this.musicPlaying = true;
-        this._playAmbientLoop();
-    }
-
-    _playAmbientLoop() {
-        if (!this.musicPlaying || !this.ctx) return;
-
-        const t = this.ctx.currentTime;
-        // Ethereal pad: Deep Alpha entrainment for relaxing backdrop (10Hz spread)
-        const baseFreqs = [65, 98, 131, 196]; // C2, G2, C3, G3
-        const duration = 8;
-        const BINAURAL_SPREAD = 10; 
-
-        baseFreqs.forEach((freq, i) => {
-            const pair = this._createBinauralPair(i % 2 === 0 ? 'sine' : 'triangle', freq, BINAURAL_SPREAD, t);
-            // Slow pitch drift
-            pair.nodeL.frequency.linearRampToValueAtTime(freq * (1 + (Math.random() - 0.5) * 0.02), t + duration);
-            pair.nodeR.frequency.linearRampToValueAtTime((freq + BINAURAL_SPREAD) * (1 + (Math.random() - 0.5) * 0.02), t + duration);
-
-            const gain = this.ctx.createGain();
-            const filter = this.ctx.createBiquadFilter();
-
-            filter.type = 'lowpass';
-            filter.frequency.value = 400 + Math.random() * 200;
-
-            gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.06, t + duration * 0.3);
-            gain.gain.setValueAtTime(0.06, t + duration * 0.7);
-            gain.gain.linearRampToValueAtTime(0, t + duration);
-
-            pair.connect(filter);
-            filter.connect(gain);
-            gain.connect(this.musicGain);
-            pair.start(t);
-            pair.stop(t + duration);
-        });
-
-        // Occasional high shimmering note (Gamma 40Hz)
-        if (Math.random() < 0.5) {
-            const shimFreqs = [523, 659, 784, 880, 1047];
-            const baseShim = shimFreqs[Math.floor(Math.random() * shimFreqs.length)];
-            const shimmerPair = this._createBinauralPair('sine', baseShim, 40, t + 2);
-
-            const shimGain = this.ctx.createGain();
-            shimGain.gain.setValueAtTime(0, t + 2);
-            shimGain.gain.linearRampToValueAtTime(0.02, t + 3);
-            shimGain.gain.exponentialRampToValueAtTime(0.001, t + 6);
-            shimmerPair.connect(shimGain);
-            shimGain.connect(this.musicGain);
-            shimmerPair.start(t + 2);
-            shimmerPair.stop(t + 6);
-        }
-
-        setTimeout(() => this._playAmbientLoop(), (duration - 1) * 1000);
-    }
-
-    stopAmbientMusic() {
-        this.musicPlaying = false;
-    }
-}
-
-// Global audio engine instance
-const gameAudio = new AudioEngine();
-window.gameAudio = gameAudio;
+window.gameAudio = new AudioEngine();
 class InterstellarEngine {
     constructor() {
         console.log("🚀 InterstellarEngine: Initializing...");
@@ -462,7 +37,7 @@ class InterstellarEngine {
         
         // Load Mindwave Lotus image
         this.lotusImage = new Image();
-        this.lotusImage.src = '../mindwave-cursor.png';
+        this.lotusImage.src = '../mindwave-logo-icon.png';
 
         // Configuration
         this.config = {
@@ -492,7 +67,7 @@ class InterstellarEngine {
         this.activeColor = '#00f3ff';
         this.colorMode = 'fixed'; // 'fixed' or 'rainbow'
         this.activeStyles = new Set(); // Start with no backgrounds active
-        this.matrixSpeedMultiplier = 1.0; // User-adjustable cyber speed
+        this.matrixSpeedMultiplier = 0.1; // User-adjustable cyber speed
         this.matrixLengthMultiplier = 1.0; // User-adjustable cyber stream length
         this.matrixColor = '#00ff00'; // User-adjustable matrix stream color
         this.matrixRainbowMode = false; // Rainbow color cycling for matrix
@@ -788,8 +363,15 @@ class InterstellarEngine {
             { id: 'siphon', name: 'SIPHON', model: 'Leech V1', speed: 85, armor: 'Energy', power: 'Energy Leech', desc: 'Drains energy from local anomalies to power its specialized systems.', premium: true },
             { id: 'titan', name: 'TITAN', model: 'Colossus', speed: 50, armor: 'Undeath', power: 'Hardened Hull', desc: 'A literal flying mountain. Slow, but effectively indestructible.', premium: true },
             { id: 'pulse', name: 'PULSE', model: 'Radar-Class', speed: 130, armor: 'Sensors', power: 'Pulse Ping', desc: 'Tactical specialist with long-range environmental mapping.', premium: true },
-            { id: 'flux', name: 'FLUX', model: 'Phase-Shift', speed: 115, armor: 'Quantum', power: 'Phase Shift', desc: 'Blinks in and out of existence to bypass physical obstacles.', premium: true },
-            { id: 'apex', name: 'APEX', model: 'Overclocker', speed: 100, armor: 'Cyber', power: 'Overclock', desc: 'Pushing boundaries of digital integration for peak performance.', premium: true }
+            { id: 'apex', name: 'APEX', model: 'Overclocker', speed: 100, armor: 'Cyber', power: 'Overclock', desc: 'Pushing boundaries of digital integration for peak performance.', premium: true },
+            { id: 'valkyrie', name: 'VALKYRIE', model: 'Strike Fighter', speed: 135, armor: 'Aero', power: 'Ion Trail', desc: 'Swept-wing fighter with twin trailing ion engines. Extremely fast.', premium: true },
+            { id: 'leviathan', name: 'LEVIATHAN', model: 'Dreadnought', speed: 45, armor: 'Titanium+', power: 'Broadside', desc: 'A massive, blocky heavy cruiser with glowing side-thrusters.', premium: true },
+            { id: 'wraith', name: 'WRAITH', model: 'Stealth Bomber', speed: 110, armor: 'Radar-Absorbent', power: 'Invisibility', desc: 'Pitch-black angular stealth craft with glowing red micro-thrusters.', premium: true },
+            { id: 'pulsar', name: 'PULSAR', model: 'Energy Frigate', speed: 100, armor: 'Plasma', power: 'EMP Blast', desc: 'A central glowing energy ring flanked by stabilizing nacelles.', premium: true },
+            { id: 'nomad', name: 'NOMAD', model: 'Deep Explorer', speed: 90, armor: 'Medium', power: 'Sensor Sweep', desc: 'Modular-looking vessel with distinct command bridge and rotating dishes.', premium: true },
+            { id: 'eclipse', name: 'ECLIPSE', model: 'Prototype', speed: 125, armor: 'Nano-Carbon', power: 'Dark Energy', desc: 'Highly curved saucer-like stealth ship with flowing neon light strips.', premium: true },
+            { id: 'hyperion', name: 'HYPERION', model: 'Assault Carrier', speed: 75, armor: 'Heavy', power: 'Drone Swarm', desc: 'Wide-bodied aggressive carrier with visible launch bays.', premium: true },
+            { id: 'archangel', name: 'ARCHANGEL', model: 'Apex Fighter', speed: 140, armor: 'Hard-Light', power: 'Holy Fire', desc: 'Pure white and gold vessel with sweeping angelic hard-light wings.', premium: true }
         ];
         this._hangarLoopRunning = false;
 
@@ -943,6 +525,7 @@ class InterstellarEngine {
         // Load Pro State
         this.isPro = localStorage.getItem('isPro') === 'true';
         this.initAdminPanel();
+        this.initMusicUI();
 
         // Pointer Events (CORRECT - these functions exist!)
         this.canvas.addEventListener('pointerdown', e => this.onPointerDown(e));
@@ -962,6 +545,16 @@ class InterstellarEngine {
             if ((e.ctrlKey || e.metaKey) && key === 'z') {
                 e.preventDefault();
                 this.undo();
+                return;
+            }
+
+            if (key === 'escape' || key === 'p') {
+                this.togglePause();
+                e.preventDefault();
+                return;
+            } else if (key === 'x') {
+                this.toggleFlightMode();
+                e.preventDefault();
                 return;
             }
 
@@ -1150,6 +743,32 @@ class InterstellarEngine {
         requestAnimationFrame(this.animate);
     }
 
+    togglePause() {
+        if (!this.flightMode) {
+            this.gamePaused = false;
+            const pb = document.getElementById('pauseBtn');
+            if (pb) pb.innerHTML = '⏸️ <span class="hide-mobile">PAUSE</span>';
+            return;
+        }
+        this.gamePaused = !this.gamePaused;
+        const pb = document.getElementById('pauseBtn');
+        if (this.gamePaused) {
+            this.showToast('⏸️ Game Paused');
+            this.pauseStartTime = Date.now();
+            if (pb) pb.innerHTML = '▶️ <span class="hide-mobile">RESUME</span>';
+        } else {
+            this.showToast('▶️ Game Resumed');
+            if (this.pauseStartTime) {
+                const delta = Date.now() - this.pauseStartTime;
+                if (this.hazardEffect && this.hazardEffect.startTime) this.hazardEffect.startTime += delta;
+                if (this.playerShip && this.playerShip.lastFlareRefill) this.playerShip.lastFlareRefill += delta;
+                if (this.empActive && this.empStartTime) this.empStartTime += delta;
+                if (this.quantumJump && this.quantumJump.startTime) this.quantumJump.startTime += delta;
+            }
+            if (pb) pb.innerHTML = '⏸️ <span class="hide-mobile">PAUSE</span>';
+        }
+    }
+
     // Mobile Controls
     toggleMobileControls() {
         const joy = document.getElementById('joystick-container');
@@ -1258,7 +877,10 @@ class InterstellarEngine {
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
                 size: Math.random() * 0.5 + 0.1,
-                alpha: Math.random() * 0.5 + 0.2
+                alpha: Math.random() * 0.5 + 0.2,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: (Math.random() - 0.5) * 1.5,
+                depth: 0.3 + Math.random() * 0.7
             });
         }
         return bgStars;
@@ -1296,6 +918,8 @@ class InterstellarEngine {
 
                 element.style.left = rect.left + 'px';
                 element.style.top = rect.top + 'px';
+                element.style.bottom = 'auto';
+                element.style.right = 'auto';
 
                 startX = e.clientX;
                 startY = e.clientY;
@@ -1327,8 +951,6 @@ class InterstellarEngine {
 
                 element.style.left = newX + 'px';
                 element.style.top = newY + 'px';
-                element.style.bottom = 'auto'; // Remove bottom positioning
-                element.style.right = 'auto'; // Remove right positioning
             });
 
             window.addEventListener('mouseup', () => {
@@ -1336,16 +958,10 @@ class InterstellarEngine {
                 header.style.cursor = 'grab';
             });
         };
-
-        // Make all windows draggable
-        makeDraggable('floatingMap');
-        makeDraggable('floatingLeaders');
-        makeDraggable('sectionControls');
-        makeDraggable('sectionRadar');
-        makeDraggable('sectionVelocity');
-        makeDraggable('sectionMap');
-        makeDraggable('sectionGems');
-        makeDraggable('sectionShipStatus');
+        // Make all UI windows dynamically draggable instead of hardcoding IDs
+        document.querySelectorAll('.cockpit-section, .floating-window, .popup-panel').forEach(el => {
+            if (el.id) makeDraggable(el.id);
+        });
     }
 
     setMode(newMode) {
@@ -1363,30 +979,7 @@ class InterstellarEngine {
     }
 
     /* --- NEW COLOR CONTROLS --- */
-
-    adjustColor(color, amount) {
-        if (!color) return '#ffffff';
-        let usePound = false;
-        if (color[0] === "#") {
-            color = color.slice(1);
-            usePound = true;
-        }
-        let num = parseInt(color, 16);
-        let r = (num >> 16) + amount;
-        if (r > 255) r = 255;
-        else if (r < 0) r = 0;
-        let b = ((num >> 8) & 0x00FF) + amount;
-        if (b > 255) b = 255;
-        else if (b < 0) b = 0;
-        let g = (num & 0x0000FF) + amount;
-        if (g > 255) g = 255;
-        else if (g < 0) g = 0;
-        return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
-    }
-
-    getRainbowHex() {
-        return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-    }
+    // Utilities moved to utils.js
 
     setFixedColor(hexColor) {
         this.activeColor = hexColor;
@@ -1402,11 +995,6 @@ class InterstellarEngine {
     }
 
     // ===== PROCEDURAL UNIVERSE GENERATION =====
-
-    seededRandom(seed) {
-        const x = Math.sin(seed) * 10000;
-        return x - Math.floor(x);
-    }
 
     getSectorCoords(worldX, worldY) {
         return {
@@ -1465,7 +1053,7 @@ class InterstellarEngine {
         const key = `${sectorX},${sectorY} `;
         if (this.loadedSectors.has(key)) return;
 
-        console.log(`[Universe] Generating sector(${sectorX}, ${sectorY})`);
+        // console.log(`[Universe] Generating sector(${sectorX}, ${sectorY})`);
 
         const seed = this.getSectorSeed(sectorX, sectorY);
         const sectorData = { x: sectorX, y: sectorY, minerals: [], deposits: [] };
@@ -1597,7 +1185,7 @@ class InterstellarEngine {
         }
 
         this.loadedSectors.set(key, sectorData);
-        console.log(`[Universe] Sector(${sectorX}, ${sectorY}): ${mineralCount} minerals, ${depositCount} deposits`);
+        // console.log(`[Universe] Sector(${sectorX}, ${sectorY}): ${mineralCount} minerals, ${depositCount} deposits`);
     }
 
     toggleBgStyle(style) {
@@ -1712,6 +1300,7 @@ class InterstellarEngine {
     }
 
     toggleFlightMode() {
+        if (this.hazardEffect && (this.hazardEffect.type === 'player_death' || this.hazardEffect.type === 'blackhole' || this.hazardEffect.type === 'planet_impact')) return;
         this.flightMode = !this.flightMode;
         this.mode = this.flightMode ? 'flight' : 'draw'; // Sync game mode to allow correct rendering
 
@@ -1722,7 +1311,7 @@ class InterstellarEngine {
 
         // Ensure ship is at valid coordinates (Fix NaN or undefined)
         if (!this.playerShip) {
-            this.playerShip = this.initPlayerShip(); // Should be initialized by now, but just in case
+            this.playerShip = { type: 'interceptor', x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, rotation: 0, pitch: 0, roll: 0, speed: 0, maxSpeed: 50, acceleration: 0.5, rotationSpeed: 0.08, size: 45, color: '#00f3ff', shield: 100, maxShield: 100, hull: 100, maxHull: 100, cargoCount: 0, cargoCapacity: 100 };
         }
         if (isNaN(this.playerShip.x)) this.playerShip.x = 0;
         if (isNaN(this.playerShip.y)) this.playerShip.y = 0;
@@ -1779,6 +1368,7 @@ class InterstellarEngine {
         // Toggle ship button, dock button, and layout presets visibility
         const shipBtn = document.getElementById('selectShipBtn');
         const dockBtn = document.getElementById('dockBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
         const layoutPresets = document.getElementById('layoutPresets');
         
         console.log(`[HUD] toggleFlightMode: flightMode=${this.flightMode}, shipBtn=${!!shipBtn}, dockBtn=${!!dockBtn}`);
@@ -1788,6 +1378,10 @@ class InterstellarEngine {
         }
         if (dockBtn) {
             dockBtn.style.setProperty('display', this.flightMode ? 'inline-flex' : 'none', 'important');
+        }
+        if (pauseBtn) {
+            pauseBtn.style.setProperty('display', this.flightMode ? 'inline-flex' : 'none', 'important');
+            if (!this.flightMode && this.gamePaused) this.togglePause(); // Reset pause state when exiting
         }
 
         // Toggle Vitals HUD
@@ -2031,8 +1625,14 @@ class InterstellarEngine {
         // Restore position
         if (this.savedWindowPositions && this.savedWindowPositions[windowId]) {
             const pos = this.savedWindowPositions[windowId];
-            if (pos.left) win.style.left = pos.left;
-            if (pos.top) win.style.top = pos.top;
+            if (pos.left) {
+                win.style.left = pos.left;
+                win.style.right = 'auto';
+            }
+            if (pos.top) {
+                win.style.top = pos.top;
+                win.style.bottom = 'auto';
+            }
             if (pos.width) win.style.width = pos.width;
             if (pos.height) win.style.height = pos.height;
         }
@@ -2100,8 +1700,14 @@ class InterstellarEngine {
                 }
 
                 // Apply position
-                if (pos.left) win.style.left = pos.left;
-                if (pos.top) win.style.top = pos.top;
+                if (pos.left) {
+                    win.style.left = pos.left;
+                    win.style.right = 'auto';
+                }
+                if (pos.top) {
+                    win.style.top = pos.top;
+                    win.style.bottom = 'auto';
+                }
                 if (pos.width) win.style.width = pos.width;
                 if (pos.height) win.style.height = pos.height;
 
@@ -3084,7 +2690,6 @@ class InterstellarEngine {
             return;
         }
 
-        console.log('[Map Debug] Rendering expanded map, zoom:', this.expandedMapZoom);
 
         // Resize if needed (handle dynamic window resizing)
         if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
@@ -3487,8 +3092,8 @@ class InterstellarEngine {
         const ship = this.playerShip;
         const keys = this.keysPressed;
 
-        // DISABLE ALL CONTROLS during hazard effects
-        if (this.hazardEffect) {
+        // DISABLE ALL CONTROLS during major hazard effects (not missile hits)
+        if (this.hazardEffect && this.hazardEffect.type !== 'missile_hit') {
             this.camera.x = -ship.x * this.camera.zoom;
             this.camera.y = -ship.y * this.camera.zoom;
             return;
@@ -3542,14 +3147,17 @@ class InterstellarEngine {
         }
 
         const enginesActive = !ship.enginesDisabled;
+        let currentThrust = 0;
 
         if ((keys['w'] || keys['arrowup']) && enginesActive) {
             ship.vx += cos * ship.acceleration * abilityAccelMult;
             ship.vy += sin * ship.acceleration * abilityAccelMult;
+            currentThrust += ship.acceleration * abilityAccelMult;
         }
         if ((keys['s'] || keys['arrowdown']) && enginesActive) {
             ship.vx -= cos * ship.acceleration * 0.5 * abilityAccelMult;
             ship.vy -= sin * ship.acceleration * 0.5 * abilityAccelMult;
+            currentThrust += ship.acceleration * 0.5 * abilityAccelMult;
         }
 
         // Joystick Thrust
@@ -3557,7 +3165,10 @@ class InterstellarEngine {
             const thrust = -this.joyInputY * ship.acceleration;
             ship.vx += cos * thrust;
             ship.vy += sin * thrust;
+            currentThrust += Math.abs(thrust);
         }
+
+        ship.currentThrust = currentThrust;
 
         // 3D movement (Q/E)
         if (keys['q']) ship.vz += ship.acceleration;
@@ -3822,6 +3433,60 @@ class InterstellarEngine {
                 continue;
             }
 
+            // Check collisions with Background Spacecraft
+            if (this.activeStyles.has('alien') && this.spacecraft && this.spacecraft.length > 0) {
+                const time = performance.now() / 1000;
+                const driftX = Math.sin(time / 5000) * 20;
+                const driftY = Math.cos(time / 7000) * 20;
+                const backgroundParallax = 0.98;
+                const zoomParallax = 0.3;
+                const pZoom = 1 + (this.camera.zoom - 1) * zoomParallax;
+
+                const pScreenX = this.canvas.width / 2 + (p.x - this.playerShip.x) * this.camera.zoom;
+                const pScreenY = this.canvas.height / 2 + (p.y - this.playerShip.y) * this.camera.zoom;
+
+                for (let sIdx = this.spacecraft.length - 1; sIdx >= 0; sIdx--) {
+                    const sc = this.spacecraft[sIdx];
+                    if (sc.flownOut) continue;
+
+                    const scScreenX = this.canvas.width / 2 + (sc.x - this.playerShip.x * backgroundParallax - driftX) * pZoom;
+                    const scScreenY = this.canvas.height / 2 + (sc.y - this.playerShip.y * backgroundParallax - driftY) * pZoom;
+
+                    const dx = pScreenX - scScreenX;
+                    const dy = pScreenY - scScreenY;
+                    const dist = Math.hypot(dx, dy);
+
+                    const scRadius = (sc.size || 20) * pZoom;
+
+                    if (dist < scRadius + 5) {
+                        const hitWorldX = this.playerShip.x + (pScreenX - this.canvas.width / 2) / this.camera.zoom;
+                        const hitWorldY = this.playerShip.y + (pScreenY - this.canvas.height / 2) / this.camera.zoom;
+
+                        this.createExplosion(hitWorldX, hitWorldY, 'hit');
+                        
+                        if (sc.health === undefined) {
+                            sc.health = sc.shipClass === 'mothership' ? 250 : (sc.shipClass === 'destroyer' ? 120 : (sc.shipClass === 'cruiser' ? 80 : 40));
+                            sc.maxHealth = sc.health;
+                        }
+
+                        sc.health -= (p.damage || 25);
+                        hit = true;
+
+                        if (sc.health <= 0) {
+                            this.createExplosion(hitWorldX, hitWorldY, 'destruction');
+                            this.spacecraft.splice(sIdx, 1);
+                            this.respawnSpacecraftBackground();
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (hit) {
+                this.projectiles.splice(i, 1);
+                continue;
+            }
+
             // Check collision with Boss
             if (this.activeBoss) {
                 const boss = this.activeBoss;
@@ -3976,6 +3641,51 @@ class InterstellarEngine {
             color: '#aa44ff',
             glowColor: 'rgba(170, 68, 255, 0.6)',
             size: 32
+        },
+        hauler: {
+            name: 'Hauler',
+            health: 150,
+            maxSpeed: 1.0,
+            acceleration: 0.02,
+            fireRate: 3000,
+            aggroRange: 800,
+            attackRange: 500,
+            bulletSpeed: 8,
+            bulletDamage: 15,
+            gemDrop: 50,
+            color: '#888888',
+            glowColor: 'rgba(136, 136, 136, 0.6)',
+            size: 40
+        },
+        alien_scythe: {
+            name: 'Alien Scythe', health: 120, maxSpeed: 3.5, acceleration: 0.1, fireRate: 800, aggroRange: 900, attackRange: 500, bulletSpeed: 15, bulletDamage: 20, gemDrop: 20, color: '#00ffcc', glowColor: 'rgba(0, 255, 204, 0.6)', size: 26
+        },
+        obsidian_shard: {
+            name: 'Obsidian Shard', health: 80, maxSpeed: 4.0, acceleration: 0.15, fireRate: 600, aggroRange: 700, attackRange: 400, bulletSpeed: 18, bulletDamage: 10, gemDrop: 15, color: '#8800ff', glowColor: 'rgba(136, 0, 255, 0.6)', size: 20
+        },
+        biomech_weaver: {
+            name: 'Biomech Weaver', health: 150, maxSpeed: 2.0, acceleration: 0.05, fireRate: 1500, aggroRange: 800, attackRange: 600, bulletSpeed: 10, bulletDamage: 25, gemDrop: 30, color: '#33ff33', glowColor: 'rgba(51, 255, 51, 0.6)', size: 28
+        },
+        plasma_sphere: {
+            name: 'Plasma Sphere', health: 250, maxSpeed: 1.2, acceleration: 0.02, fireRate: 2000, aggroRange: 1200, attackRange: 800, bulletSpeed: 8, bulletDamage: 40, gemDrop: 45, color: '#ff00aa', glowColor: 'rgba(255, 0, 170, 0.6)', size: 35
+        },
+        void_stalker: {
+            name: 'Void Stalker', health: 100, maxSpeed: 3.8, acceleration: 0.12, fireRate: 1000, aggroRange: 1000, attackRange: 700, bulletSpeed: 20, bulletDamage: 15, gemDrop: 25, color: '#111111', glowColor: 'rgba(255, 0, 0, 0.8)', size: 22
+        },
+        nexus_prism: {
+            name: 'Nexus Prism', health: 300, maxSpeed: 0.8, acceleration: 0.01, fireRate: 3000, aggroRange: 1500, attackRange: 1000, bulletSpeed: 12, bulletDamage: 50, gemDrop: 60, burstCount: 5, burstDelay: 100, color: '#00ffff', glowColor: 'rgba(0, 255, 255, 0.6)', size: 45
+        },
+        hive_carrier: {
+            name: 'Hive Carrier', health: 500, maxSpeed: 0.5, acceleration: 0.01, fireRate: 4000, aggroRange: 1200, attackRange: 900, bulletSpeed: 8, bulletDamage: 30, gemDrop: 100, color: '#ffaa00', glowColor: 'rgba(255, 170, 0, 0.6)', size: 60
+        },
+        arachnid_drone: {
+            name: 'Arachnid Drone', health: 60, maxSpeed: 3.2, acceleration: 0.09, fireRate: 500, aggroRange: 600, attackRange: 300, bulletSpeed: 14, bulletDamage: 8, gemDrop: 10, color: '#cc0000', glowColor: 'rgba(204, 0, 0, 0.6)', size: 16
+        },
+        nebula_phantom: {
+            name: 'Nebula Phantom', health: 180, maxSpeed: 2.2, acceleration: 0.04, fireRate: 1800, aggroRange: 900, attackRange: 600, bulletSpeed: 11, bulletDamage: 22, gemDrop: 35, color: '#6600cc', glowColor: 'rgba(102, 0, 204, 0.4)', size: 30
+        },
+        zenith_destroyer: {
+            name: 'Zenith Destroyer', health: 400, maxSpeed: 0.9, acceleration: 0.02, fireRate: 2500, aggroRange: 1400, attackRange: 800, bulletSpeed: 16, bulletDamage: 60, gemDrop: 80, color: '#ff3300', glowColor: 'rgba(255, 51, 0, 0.6)', size: 50
         }
     };
 
@@ -4004,11 +3714,8 @@ class InterstellarEngine {
             const angle = Math.random() * Math.PI * 2;
             const dist = minSpawnDist + Math.random() * (spawnRadius - minSpawnDist);
 
-            // Random type weighted: 50% scout, 35% fighter, 15% cruiser
-            const roll = Math.random();
-            let type = 'scout';
-            if (roll > 0.85) type = 'cruiser';
-            else if (roll > 0.5) type = 'fighter';
+            const enemyTypes = Object.keys(InterstellarEngine.ENEMY_TYPES);
+            const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
 
             const typeDef = InterstellarEngine.ENEMY_TYPES[type];
 
@@ -4871,6 +4578,8 @@ class InterstellarEngine {
                     y: baseY + Math.sin(angle) * dist,
                     vx: 0,
                     vy: 0,
+                    rotation: 0,
+                    patrolAngle: 0,
                     type: 'hauler', // Using hauler as a 'Mauler' reference for mission
                     health: 200,
                     maxHealth: 200,
@@ -6007,11 +5716,15 @@ class InterstellarEngine {
 
     updateWalletUI() {
         const creditsEl = document.getElementById('walletValue');
-        if (creditsEl) {
-            creditsEl.textContent = this.credits.toLocaleString();
+        if (creditsEl && !creditsEl.querySelector('input')) {
+            creditsEl.textContent = '$' + this.credits.toLocaleString();
+        }
+        const shopCreditsEl = document.getElementById('walletValueShop');
+        if (shopCreditsEl && !shopCreditsEl.querySelector('input')) {
+            shopCreditsEl.textContent = '$' + this.credits.toLocaleString();
         }
         const creditsDisplay = document.getElementById('creditsDisplay'); // Legacy support
-        if (creditsDisplay) {
+        if (creditsDisplay && !creditsDisplay.querySelector('input')) {
             creditsDisplay.textContent = '$' + this.credits.toLocaleString();
         }
     }
@@ -6322,16 +6035,16 @@ class InterstellarEngine {
         // PROSPECTOR: Gem Magnet - 20% wider pickup range
         let collectionRange = 35;
         if (mineral.type === 'lotus') {
-            collectionRange = 70; // Lotus is visually very large (size 25 drawn at 2.5x = ~63px), match its footprint
+            collectionRange = 100; // Very generous collection area for the giant lotus
         } else if (this.playerShip.type === 'prospector') {
             collectionRange = 45; // +30% Gem Magnet Range
         }
 
         if (dist < collectionRange) {
-            // Check Cargo Capacity
+            // Check Cargo Capacity (Mindwave Lotus bypasses cargo limits because it's a powerup)
             const currentCargo = this.playerShip.cargoCount || 0;
             const maxCargo = this.playerShip.maxCargo || 1000;
-            if (currentCargo >= maxCargo) {
+            if (currentCargo >= maxCargo && mineral.type !== 'lotus') {
                 if (!this.lastCargoFullToast || Date.now() - this.lastCargoFullToast > 3000) {
                     this.showToast('🛑 CARGO FULL! Deposit at base (Z)');
                     this.lastCargoFullToast = Date.now();
@@ -6346,11 +6059,43 @@ class InterstellarEngine {
                 this.playerShip.zenBuffer = Date.now() + 5000; // 5 seconds of peace
                 this.updateShipStatus();
                 this.showToast('🪷 Mindwave Lotus: INTEGRITY RESTORED / ZEN BUFFER ACTIVE', 3000);
-                gameAudio.playUpgrade(); // Special sound
+                if (typeof gameAudio !== 'undefined' && gameAudio.playUpgrade) gameAudio.playUpgrade(); // Special sound
+                
+                // Add value to wallet and register it
+                this.credits += (mineral.value || 1000);
+                this.updateWalletUI();
+                
+                // Track for inventory logic, but Lotus does NOT take cargo space!
+                if (!this.playerInventory[mineral.type]) this.playerInventory[mineral.type] = 0;
+                this.playerInventory[mineral.type]++;
+                this.carriedResources[mineral.type] = (this.carriedResources[mineral.type] || 0) + 1;
+                this.saveInventory();
+                this.saveCarriedResources();
+                
+                this.collectionNotifications.push({
+                    text: `+ 🌸 LOTUS ($${mineral.value || 1000}) | MAX RESTORE`,
+                    color: '#ff69b4',
+                    time: Date.now()
+                });
             } else {
                 // Standard Gem: Add value to wallet
                 this.credits += (mineral.value || 0);
                 this.updateWalletUI();
+                
+                // Track for inventory logic
+                if (!this.playerInventory[mineral.type]) this.playerInventory[mineral.type] = 0;
+                this.playerInventory[mineral.type]++;
+                this.carriedResources[mineral.type] = (this.carriedResources[mineral.type] || 0) + 1;
+                this.playerShip.cargoCount = (this.playerShip.cargoCount || 0) + 1;
+                this.saveInventory();
+                this.saveCarriedResources();
+
+                // Show standard notification
+                this.collectionNotifications.push({
+                    text: `+ ${mineral.name} ($${mineral.value})`,
+                    color: mineral.color,
+                    time: Date.now()
+                });
             }
 
             // Siphon Ability: Restore 1% Shield
@@ -6358,16 +6103,6 @@ class InterstellarEngine {
                 this.playerShip.shield = Math.min(this.playerShip.shield + (this.playerShip.maxShield * 0.01), this.playerShip.maxShield);
                 this.updateShipStatus();
             }
-
-            // Track for inventory logic
-            if (!this.playerInventory[mineral.type]) {
-                this.playerInventory[mineral.type] = 0;
-            }
-            this.playerInventory[mineral.type]++;
-            this.carriedResources[mineral.type] = (this.carriedResources[mineral.type] || 0) + 1;
-            this.playerShip.cargoCount = (this.playerShip.cargoCount || 0) + 1;
-            this.saveInventory();
-            this.saveCarriedResources();
 
             // Award permanent gems (1 gem per mineral collected)
             this.playerGems += 1;
@@ -6378,38 +6113,12 @@ class InterstellarEngine {
                 gameAudio.playCollect();
             }
 
-            // SPECIAL CASE: Mindwave Lotus - Restoration Power-up
-            if (mineral.type === 'lotus') {
-                const hpRestore = Math.floor(this.playerShip.maxHull * 0.25);
-                const shRestore = Math.floor(this.playerShip.maxShield * 0.50);
-                
-                this.playerShip.hullHealth = Math.min(this.playerShip.hullHealth + hpRestore, this.playerShip.maxHull);
-                this.playerShip.shield = Math.min(this.playerShip.shield + shRestore, this.playerShip.maxShield);
-                
-                if (this.updateShipStatus) this.updateShipStatus();
-                this.showToast(`🌸 Mindwave Lotus: +${hpRestore} HP | +${shRestore} Shield!`);
-                
-                // Notification (No $ amount for lotus)
-                this.collectionNotifications.push({
-                    text: `+ ${hpRestore} HP | + ${shRestore} SHIELD`,
-                    color: '#ff69b4',
-                    time: Date.now()
-                });
-            } else {
-                // Show standard notification
-                this.collectionNotifications.push({
-                    text: `+ ${mineral.name} ($${mineral.value})`,
-                    color: mineral.color,
-                    time: Date.now()
-                });
-            }
-
             // Remove mineral
             const index = this.minerals.indexOf(mineral);
             if (index > -1) this.minerals.splice(index, 1);
 
             // MAULER VISUALS: Spawn debris trail
-            if (this.playerShip.type === 'hauler') {
+            if (this.playerShip.type === 'hauler' && mineral.type !== 'lotus') {
                 if (!this.maulerDebris) this.maulerDebris = [];
                 // Add debris particle
                 this.maulerDebris.push({
@@ -6454,21 +6163,25 @@ class InterstellarEngine {
     renderLotus(ctx, lotus) {
         ctx.save();
         ctx.translate(lotus.x, lotus.y);
+        
+        const safeZoom = Math.max(0.01, this.camera ? this.camera.zoom : 1);
+        const effectiveSize = lotus.size / safeZoom;
+        
         const glowPhase = (Date.now() * 0.002 + lotus.phase) % (Math.PI * 2);
         const glow = 0.5 + Math.sin(glowPhase) * 0.5;
 
         // Outer Glow (Keeping existing glow for presence)
-        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, lotus.size * 2);
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, effectiveSize * 2);
         grad.addColorStop(0, `rgba(255, 105, 180, ${0.4 * glow})`);
         grad.addColorStop(1, 'rgba(255, 105, 180, 0)');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(0, 0, lotus.size * 2, 0, Math.PI * 2);
+        ctx.arc(0, 0, effectiveSize * 2, 0, Math.PI * 2);
         ctx.fill();
 
         // Draw Mindwave Lotus Image
-        if (this.lotusImage.complete) {
-            const drawSize = lotus.size * 2.5; // Slightly larger for visual clarity
+        if (this.lotusImage.complete && this.lotusImage.naturalWidth > 0) {
+            const drawSize = effectiveSize * 2.5; // Slightly larger for visual clarity
             ctx.drawImage(this.lotusImage, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
         } else {
             // Fallback: Inner Core Glow if image not loaded yet
@@ -6476,7 +6189,7 @@ class InterstellarEngine {
             ctx.shadowBlur = 15;
             ctx.shadowColor = '#ffb6c1';
             ctx.beginPath();
-            ctx.arc(0, 0, lotus.size * 0.4, 0, Math.PI * 2);
+            ctx.arc(0, 0, effectiveSize * 0.4, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -6498,17 +6211,17 @@ class InterstellarEngine {
         // Spawn new minerals
         this.spawnMinerals();
 
-        // Lotus respawn: max 5 at a time, with a 20s cooldown to avoid burst-spawning
+        // Lotus respawn: max 5 at a time, spawn them frequently to ensure they are found
         const lotusCount = this.minerals.filter(m => m.type === 'lotus').length;
         const now = Date.now();
         if (lotusCount < 5) {
-            if (!this.lastLotusRespawn || now - this.lastLotusRespawn > 20000) {
+            if (!this.lastLotusRespawn || now - this.lastLotusRespawn > 5000) {
                 this.lastLotusRespawn = now;
                 // Spawn just enough to bring count up to 5
                 const toSpawn = 5 - lotusCount;
                 for (let i = 0; i < toSpawn; i++) {
                     const angle = Math.random() * Math.PI * 2;
-                    const dist = 600 + Math.random() * 1800;
+                    const dist = 300 + Math.random() * 800; // Spawn much closer so player sees them
                     this.minerals.push({
                         id: 'lotus-' + now + '-' + i,
                         x: this.playerShip.x + Math.cos(angle) * dist,
@@ -6594,7 +6307,7 @@ class InterstellarEngine {
             const maxPullVelocity = 40;
 
             for (const mineral of this.minerals) {
-                if (mineral.type === 'coal' || mineral.type === 'darkmatter') continue;
+                if (mineral.type === 'coal' || mineral.type === 'darkmatter' || mineral.type === 'lotus') continue;
 
                 const dx = this.playerShip.x - mineral.x;
                 const dy = this.playerShip.y - mineral.y;
@@ -6628,6 +6341,8 @@ class InterstellarEngine {
             const maxMagnetPull = 12;
 
             for (const mineral of this.minerals) {
+                if (mineral.type === 'coal' || mineral.type === 'darkmatter' || mineral.type === 'lotus') continue;
+                
                 const dx = this.playerShip.x - mineral.x;
                 const dy = this.playerShip.y - mineral.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -6685,8 +6400,13 @@ class InterstellarEngine {
         if (!this.flightMode || this.hazardEffect || this.trainingActive) return;
 
         const ship = this.playerShip;
-        const spawnRadius = 3000;
-        const minSpawnDist = 1800; // INCREASED: Must be well outside visual detection range
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const maxDimension = Math.max(w, h);
+        
+        // Spawn objects completely off screen, taking zoom into account
+        const minSpawnDist = Math.max(1800, (maxDimension / (2 * this.camera.zoom)) + 1000);
+        const spawnRadius = minSpawnDist + 1500;
 
         // Target density: fewer hazards than minerals for balance
         const targetMines = 3;
@@ -6717,7 +6437,7 @@ class InterstellarEngine {
             return angle;
         };
 
-        // Spawn new mines — min 1800 units away so player has time to react
+        // Spawn new mines — minSpawnDist away so player has time to react
         while (this.spaceMines.length < targetMines) {
             const angle = safeAngle();
             const dist = minSpawnDist + Math.random() * (spawnRadius - minSpawnDist);
@@ -6760,8 +6480,8 @@ class InterstellarEngine {
             return dist < spawnRadius * 2 && missile.life > 0;
         });
 
-        // Spawn new missile bases — min 2000 units, detection range is 1200-1800 so player must cross 200+ units before being targeted
-        const missileBaseMinDist = 2000;
+        // Spawn new missile bases
+        const missileBaseMinDist = minSpawnDist + 200;
         while (this.missileBases.length < targetBases) {
             const angle = safeAngle();
             const dist = missileBaseMinDist + Math.random() * (spawnRadius - missileBaseMinDist);
@@ -6800,9 +6520,8 @@ class InterstellarEngine {
     updateHazards() {
         if (!this.flightMode) return;
 
-        // If an effect is active, update it and skip collision checks
+        // If an effect is active, skip collision checks
         if (this.hazardEffect) {
-            this.updateHazardEffect();
             return;
         }
 
@@ -6855,12 +6574,7 @@ class InterstellarEngine {
         // Only check if deep space style is active and planets exist
         if (this.planets && this.planets.length > 0) {
             for (const planet of this.planets) {
-                // Account for z-depth scaling (planets further away appear smaller)
-                const zFactor = 1 / (1 + Math.abs(planet.z) * 0.0005);
-                const effectiveRadius = planet.radius * zFactor;
-
-                // Only collide with planets that are "close enough" in z-space (not too far away)
-                if (Math.abs(planet.z) > 800) continue; // Skip very distant planets
+                const effectiveRadius = planet.radius;
 
                 const dist = Math.hypot(planet.x - ship.x, planet.y - ship.y);
                 if (dist < effectiveRadius + collisionRadius) {
@@ -7138,10 +6852,10 @@ class InterstellarEngine {
             flashIntensity: 1.0
         };
 
-        // ENGINE CUT: Require re-press of W/S to re-engage
+        // Momentum is preserved when hit by missile (engines are no longer disabled)
         if (this.playerShip) {
-            this.playerShip.enginesDisabled = true;
-            this.showToast('⚠️ ENGINE FAILURE: RE-ENGAGE THRUSTERS (W/S)', 3000);
+            // this.playerShip.enginesDisabled = true; // Intentionally removed
+            this.showToast('💥 Missile Hit! Hull damaged!', 2000);
         }
 
         this.damagePlayer(25);
@@ -7882,10 +7596,11 @@ class InterstellarEngine {
                 this.mouseLastX = undefined;
                 this.mouseLastY = undefined;
 
-                // Ensure ship can move again (velocities were set to 0 when effect started)
-                this.playerShip.vx = 0;
-                this.playerShip.vy = 0;
-                this.playerShip.vz = 0;
+                if (finishedHazardType === 'blackhole' || finishedHazardType === 'player_death') {
+                    this.playerShip.vx = 0;
+                    this.playerShip.vy = 0;
+                    this.playerShip.vz = 0;
+                }
 
                 // Focus canvas to ensure keyboard events are captured
                 if (this.canvas) {
@@ -9937,7 +9652,6 @@ class InterstellarEngine {
         if (btn) btn.classList.toggle('active', this.matrixRainbowMode);
     }
 
-    // Update star colors from the 3 color pickers
     updateStarColors() {
         try {
             const c1 = document.getElementById('starColor1')?.value || '#ffffff';
@@ -9945,7 +9659,6 @@ class InterstellarEngine {
             const c3 = document.getElementById('starColor3')?.value || '#ffddaa';
             this.starColors = [c1, c2, c3];
             this.generateStaticStars();
-            this.showToast('Star colors updated');
         } catch (e) {
             console.error('[BG Error] updateStarColors failed:', e);
         }
@@ -10360,6 +10073,13 @@ class InterstellarEngine {
 
         // Only track canvas interactions
         this.pointer.onCanvas = (e.target === this.canvas);
+
+        if (this.pointer.onCanvas && document.activeElement && document.activeElement.tagName === 'INPUT') {
+            document.activeElement.blur();
+            this.pointer.onCanvas = false;
+            return;
+        }
+
         this.pointer.isDown = true;
         this.pointer.startX = e.clientX;
         this.pointer.startY = e.clientY;
@@ -10968,67 +10688,56 @@ class InterstellarEngine {
     }
 
     generateStaticStars() {
-        // CLEAR existing stars first so color changes take effect
         this.staticStars = [];
+        const count = this.bgWarpMode ? 800 : 500;
 
-        // Use more stars for warp mode for a denser hyperspace field
-        const count = this.bgWarpMode ? 600 : 400;
-
-        // ALWAYS read star colors directly from the DOM pickers
         const c1 = document.getElementById('starColor1')?.value || '#ffffff';
         const c2 = document.getElementById('starColor2')?.value || '#aaddff';
         const c3 = document.getElementById('starColor3')?.value || '#ffddaa';
         const activeColors = [c1, c2, c3];
-        // Also update the stored starColors array
         this.starColors = activeColors;
 
-        // Generate stars across a much wider area using uniform distribution
-        const w = this.canvas.width;
-        const h = this.canvas.height;
+        const w = this.canvas?.width || window.innerWidth || 800;
+        const h = this.canvas?.height || window.innerHeight || 600;
         const centerX = w / 2;
         const centerY = h / 2;
-        const spreadX = w * 20;
-        const spreadY = h * 20;
+        const spreadX = w * 4;
+        const spreadY = h * 4;
 
         for (let i = 0; i < count; i++) {
             let x, y, vx = 0, vy = 0;
+            const depthLayer = 0.2 + Math.random() * 1.0;
 
             if (this.bgWarpMode) {
-                // Warp mode: Stars originate from center and move outward radially
                 const angle = Math.random() * Math.PI * 2;
                 const dist = Math.random() * Math.max(w, h) * 0.8;
                 x = centerX + Math.cos(angle) * dist;
                 y = centerY + Math.sin(angle) * dist;
-                // Faster radial velocity for dramatic hyperspace effect
-                const speed = 4 + Math.random() * 16;
+                const speed = (6 + Math.random() * 14) * depthLayer;
                 vx = Math.cos(angle) * speed;
                 vy = Math.sin(angle) * speed;
             } else {
-                // Normal / Drift mode: Uniform distribution
                 x = Math.random() * spreadX - spreadX / 2 + centerX;
                 y = Math.random() * spreadY - spreadY / 2 + centerY;
 
-                if (this.bgDriftMode) {
-                    // Slow gentle drift in random direction
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = 0.1 + Math.random() * 0.3;
-                    vx = Math.cos(angle) * speed;
-                    vy = Math.sin(angle) * speed;
-                }
+                const angle = Math.PI * 0.25;
+                const baseSpeed = 0.6 + Math.random() * 1.0;
+                vx = Math.cos(angle) * baseSpeed * depthLayer;
+                vy = Math.sin(angle) * baseSpeed * depthLayer;
             }
 
-            // Depth layer affects speed - creates parallax at high warp
-            const depthLayer = 0.3 + Math.random() * 0.7; // 0.3 to 1.0
             this.staticStars.push({
                 x: x,
                 y: y,
                 vx: vx,
                 vy: vy,
-                size: (Math.random() * 1.5 + 0.5) * depthLayer, // Farther = smaller
-                alpha: Math.random() * 0.5 + 0.1,
-                baseAlpha: Math.random() * 0.5 + 0.1,
+                size: (Math.random() * 1.2 + 0.3) * depthLayer,
+                alpha: Math.random() * 0.6 + 0.2,
+                baseAlpha: Math.random() * 0.6 + 0.2,
                 color: activeColors[Math.floor(Math.random() * activeColors.length)],
-                depth: depthLayer // Used for speed variation
+                depth: depthLayer,
+                twinklePhase: Math.random() * Math.PI * 2,
+                twinkleSpeed: 0.02 + Math.random() * 0.04
             });
         }
     }
@@ -11095,9 +10804,10 @@ class InterstellarEngine {
 
         // 2. Galaxies - distributed across tiers (12 total, +50%)
         const galaxyConfigs = [
-            { count: 2, minDist: 100, maxDist: 400, minSize: 60, maxSize: 120 },   // Close
-            { count: 4, minDist: 400, maxDist: 2000, minSize: 100, maxSize: 250 }, // Medium
-            { count: 6, minDist: 2000, maxDist: 6000, minSize: 200, maxSize: 450 } // Far
+            // Suns are spread across a massive distance to emulate real space density
+            { count: 30, minDist: 5000, maxDist: 20000, minSize: 100, maxSize: 300 },
+            { count: 60, minDist: 20000, maxDist: 50000, minSize: 200, maxSize: 600 },
+            { count: 150, minDist: 50000, maxDist: 200000, minSize: 400, maxSize: 1000 }
         ];
         galaxyConfigs.forEach(cfg => {
             for (let i = 0; i < cfg.count; i++) {
@@ -11518,14 +11228,14 @@ class InterstellarEngine {
 
         // Discrete Speed Levels: Crawl, Slow, Normal, Fast, Hyper, Ludicrous
         const speedLevels = [
-            { name: 'Crawl', value: 0.2 },
-            { name: 'Slow', value: 0.5 },
+            { name: 'Slow', value: 0.1 },
             { name: 'Normal', value: 1.0 },
             { name: 'Fast', value: 2.0 },
             { name: 'Hyper', value: 4.0 },
             { name: 'Ludicrous', value: 8.0 }
         ];
-        const selectedSpeed = speedLevels[Math.floor(Math.random() * speedLevels.length)];
+        // Ensure matrix starts at a slow speed
+        const selectedSpeed = speedLevels[0];
         this.matrixSpeedMultiplier = selectedSpeed.value;
 
         this.showToast(`Cyber Theme: ${theme.name} (Speed: ${selectedSpeed.name}) [v14]`);
@@ -11584,26 +11294,34 @@ class InterstellarEngine {
     animate(time) {
         this.frameCounter++;
 
+        // Always update active hazard effects (like supernova) even out of flight mode
+        if (this.hazardEffect) {
+            this.updateHazardEffect();
+        }
+
         // Update flight game physics (ALWAYS 60 FPS)
         if (this.flightMode) {
             try {
                 // Safety Check: Avoid crashes if critical objects are missing
                 if (!this.playerShip || !this.camera) return;
 
-                this.checkAndGenerateSectors();
-                this.updatePlayerShip();
-                this.updateProjectiles();
-                this.updateDamageParticles();
-                this.updateMinerals();
-                this.updateHazards();
-                this.updateSpaceBase();
-                this.updateEnemyShips();
-                this.updateEnemyBullets();
-                this.updateBoss();
+                if (!this.gamePaused) {
+                    this.checkAndGenerateSectors();
+                    this.updatePlayerShip();
+                    this.updateProjectiles();
+                    this.updateDamageParticles();
+                    this.updateMinerals();
+                    this.updateHazards();
+                    this.updateSpaceBase();
+                    this.updateEnemyShips();
+                    this.updateEnemyBullets();
+                    this.updateBoss();
+                }
 
-                // Update engine hum pitch based on ship speed
-                const shipSpeed = Math.hypot(this.playerShip.vx || 0, this.playerShip.vy || 0);
-                gameAudio.updateEngineHum(shipSpeed);
+                // Update engine hum pitch based on ship thrust instead of raw speed
+                // Multiply by a factor (e.g. 15) so that acceleration of ~1.0 gives ~15 equivalent speed for the audio math
+                const thrustInput = (this.playerShip.currentThrust || 0) * 15;
+                gameAudio.updateEngineHum(thrustInput);
 
                 if (this.activeMission && this.activeMission.type === 'survive') this.checkMissionComplete();
                 if (this.activeMission && this.activeMission.type === 'collect') {
@@ -11640,10 +11358,19 @@ class InterstellarEngine {
             }
         }
 
-        // Update spacecraft positions
+        // Update spacecraft positions & behaviors (Combat participation)
         if (this.spacecraft && this.spacecraft.length > 0) {
             const range = this.worldSize;
             const half = range / 2;
+            
+            const time = performance.now() / 1000;
+            const driftX = Math.sin(time / 5000) * 20;
+            const driftY = Math.cos(time / 7000) * 20;
+            
+            const backgroundParallax = 0.98;
+            const zoomParallax = 0.3;
+            const pZoom = 1 + (this.camera.zoom - 1) * zoomParallax;
+
             this.spacecraft.forEach(s => {
                 s.x += s.vx;
                 s.y += s.vy;
@@ -11652,6 +11379,48 @@ class InterstellarEngine {
                 if (s.x < -half) s.x = half;
                 if (s.y > half) s.y = -half;
                 if (s.y < -half) s.y = half;
+
+                // Firing/Combat behavior
+                if (this.flightMode && !this.gamePaused && !s.flownOut) {
+                    if (s.health === undefined) {
+                        s.health = s.shipClass === 'mothership' ? 250 : (s.shipClass === 'destroyer' ? 120 : (s.shipClass === 'cruiser' ? 80 : 40));
+                        s.maxHealth = s.health;
+                        s.fireTimer = Math.random() * 200;
+                    }
+
+                    const scScreenX = this.canvas.width / 2 + (s.x - this.playerShip.x * backgroundParallax - driftX) * pZoom;
+                    const scScreenY = this.canvas.height / 2 + (s.y - this.playerShip.y * backgroundParallax - driftY) * pZoom;
+
+                    if (scScreenX >= -100 && scScreenX <= this.canvas.width + 100 &&
+                        scScreenY >= -100 && scScreenY <= this.canvas.height + 100) {
+                        
+                        s.fireTimer++;
+                        const fireInterval = s.shipClass === 'mothership' ? 180 : (s.shipClass === 'scout' ? 90 : 120);
+                        if (s.fireTimer >= fireInterval) {
+                            s.fireTimer = 0;
+
+                            const worldX = this.playerShip.x + (scScreenX - this.canvas.width / 2) / this.camera.zoom;
+                            const worldY = this.playerShip.y + (scScreenY - this.canvas.height / 2) / this.camera.zoom;
+
+                            const angle = Math.atan2(this.playerShip.y - worldY, this.playerShip.x - worldX);
+                            const bulletSpeed = 5 + Math.random() * 3;
+                            
+                            this.enemyBullets.push({
+                                x: worldX + Math.cos(angle) * (s.size * 0.5),
+                                y: worldY + Math.sin(angle) * (s.size * 0.5),
+                                vx: Math.cos(angle) * bulletSpeed,
+                                vy: Math.sin(angle) * bulletSpeed,
+                                rotation: angle,
+                                damage: s.shipClass === 'mothership' ? 12 : 5,
+                                life: 120,
+                                color: s.engineColor || '#00ff88',
+                                width: 3,
+                                length: 20
+                            });
+                            gameAudio.playEnemyLaser();
+                        }
+                    }
+                }
             });
         }
 
@@ -11696,8 +11465,8 @@ class InterstellarEngine {
 
                 this.staticStars.forEach(s => {
                     // Safety: Ensure velocity properties exist
-                    if (typeof s.vx !== 'number') s.vx = 0;
-                    if (typeof s.vy !== 'number') s.vy = 0;
+                    if (typeof s.vx !== 'number') s.vx = (Math.random() - 0.5) * 1.5;
+                    if (typeof s.vy !== 'number') s.vy = (Math.random() - 0.5) * 1.5;
                     if (typeof s.baseAlpha !== 'number') s.baseAlpha = s.alpha || 0.5;
 
                     // Store original position if not yet stored (for warp start)
@@ -11761,15 +11530,22 @@ class InterstellarEngine {
                             s.alpha = Math.min(1, 0.15 + (dist / maxDist) * 0.85 * fadeRate);
                         }
                     } else if (this.bgDriftMode && !this.bgWarpMode) {
-                        // Drift: Subtle but noticeable movement
-                        s.x += s.vx * 0.03;
-                        s.y += s.vy * 0.03;
+                        // Drift: Multi-layered parallax drift speed (visible & smooth)
+                        const playerVx = this.playerShip ? (this.playerShip.vx || 0) : 0;
+                        const playerVy = this.playerShip ? (this.playerShip.vy || 0) : 0;
+                        
+                        const parallaxFactor = 0.01 * (s.depth || 0.5);
+                        
+                        s.x += s.vx - playerVx * parallaxFactor;
+                        s.y += s.vy - playerVy * parallaxFactor;
+
+                        s.twinklePhase = (s.twinklePhase || 0) + (s.twinkleSpeed || 0.03);
 
                         // Wrap around screen
-                        if (s.x < -w * 5) s.x += w * 10;
-                        if (s.x > w * 5) s.x -= w * 10;
-                        if (s.y < -h * 5) s.y += h * 10;
-                        if (s.y > h * 5) s.y -= h * 10;
+                        if (s.x < -w) s.x += w * 2;
+                        if (s.x > w * 3) s.x -= w * 2;
+                        if (s.y < -h) s.y += h * 2;
+                        if (s.y > h * 3) s.y -= h * 2;
                     }
                 });
             }
@@ -11984,6 +11760,8 @@ class InterstellarEngine {
                 const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
                 const time = performance.now() / 1000;
 
+                // STAR WARS HYPERTUNNEL GLOW (Swirling neon blue rings removed for realism)
+
                 this.staticStars.forEach(s => {
                     // Safety check for required properties
                     if (typeof s.x !== 'number' || typeof s.y !== 'number') return;
@@ -11999,104 +11777,102 @@ class InterstellarEngine {
                     const size = s.r || s.size || 1; // Use 'r' if available (matches generation)
                     const starColor = s.color || '#ffffff';
 
-                    // Parse star color for gradient manipulation
-                    let r = 255, g = 255, b = 255;
-                    try {
-                        if (starColor.startsWith('#')) {
-                            const hex = starColor.slice(1);
-                            // Use ?? instead of || to preserve 0 values (0 is valid for RGB!)
-                            const parsedR = parseInt(hex.substr(0, 2), 16);
-                            const parsedG = parseInt(hex.substr(2, 2), 16);
-                            const parsedB = parseInt(hex.substr(4, 2), 16);
-                            r = isNaN(parsedR) ? 255 : parsedR;
-                            g = isNaN(parsedG) ? 255 : parsedG;
-                            b = isNaN(parsedB) ? 255 : parsedB;
-                        }
-                    } catch (e) { /* use defaults */ }
-
                     if (this.bgWarpMode && !this.bgDriftMode) {
-                        // ====== LIGHTSPEED: Moving stars with trailing streaks ======
+                        // ====== STAR WARS LIGHTSPEED JUMP STREAKS ======
                         const dx = sx - centerX;
                         const dy = sy - centerY;
                         const distFromCenter = Math.sqrt(dx * dx + dy * dy);
 
-                        if (distFromCenter < 3) return; // Skip center stars
+                        if (distFromCenter < 3) return;
 
-                        // Warp intensity - already curved via setWarpSpeedMultiplier
                         const warpIntensity = this.warpSpeed || 0;
                         const sliderValue = this.warpSpeedMultiplier || 1;
 
-                        // Streak length varies by depth - deeper stars = longer streaks
-                        // Low slider = short rays, high slider = dramatic but not overwhelming
                         const perspFactor = distFromCenter / maxDist;
                         const depthFactor = s.depth || 0.5;
-                        // Use sqrt for diminishing returns, depth multiplier for parallax
-                        const lengthFactor = Math.sqrt(sliderValue) * 14 * depthFactor;
-                        const streakLength = 5 + lengthFactor * (2 + perspFactor * 12);
-                        // Cap max streak length - varies by depth
-                        const cappedStreak = Math.min(streakLength, 1680 * depthFactor);
+                        
+                        const lengthFactor = Math.sqrt(sliderValue) * 16 * depthFactor;
+                        const streakLength = 5 + lengthFactor * (2 + perspFactor * 24) * (warpIntensity / 8);
+                        
+                        // CRITICAL FIX: NEVER let the tail cross the black hole at the center (10px radius)
+                        const cappedStreak = Math.min(streakLength, distFromCenter - 10);
 
-                        // Direction OUTWARD from center (streak trails BEHIND moving star)
                         const dirOutX = dx / distFromCenter;
                         const dirOutY = dy / distFromCenter;
 
-                        // HEAD is at current position (leading edge, flying outward)
-                        // TAIL is behind (toward center, where star came from)
                         const headX = sx;
                         const headY = sy;
                         const tailX = sx - dirOutX * cappedStreak;
                         const tailY = sy - dirOutY * cappedStreak;
 
-                        // Alpha: cap to prevent white-out, scale with intensity
-                        // Lower alpha at high speeds = more visible individual rays
                         const baseAlpha = s.alpha || 0.2;
-                        const intensityBoost = Math.min(0.4, warpIntensity * 0.15);
-                        const alpha = Math.min(0.65, baseAlpha + intensityBoost);
+                        const intensityBoost = Math.min(0.5, warpIntensity * 0.2);
+                        const alpha = Math.min(0.85, baseAlpha + intensityBoost);
                         ctx.globalAlpha = alpha;
 
                         if (cappedStreak > 2) {
                             try {
-                                // === GRADIENT: Use star's actual color throughout ===
-                                const grad = ctx.createLinearGradient(tailX, tailY, headX, headY);
-                                grad.addColorStop(0, 'transparent'); // Tail fades
-                                grad.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, 0.2)`);
-                                grad.addColorStop(0.6, `rgba(${r}, ${g}, ${b}, 0.6)`);
-                                // Bright head - boost luminosity but keep the hue
-                                const brightR = Math.min(255, r + 40);
-                                const brightG = Math.min(255, g + 40);
-                                const brightB = Math.min(255, b + 40);
-                                grad.addColorStop(1, `rgba(${brightR}, ${brightG}, ${brightB}, 1)`);
+                                const dx_vec = headX - tailX;
+                                const dy_vec = headY - tailY;
+                                const dist_vec = Math.hypot(dx_vec, dy_vec);
+                                
+                                if (dist_vec > 0) {
+                                    const dirX = dx_vec / dist_vec;
+                                    const dirY = dy_vec / dist_vec;
+                                    const perpX = -dirY;
+                                    const perpY = dirX;
+                                    
+                                    const baseWidth = Math.max(0.1, size * 0.2 + warpIntensity * 0.01);
+                                    // Make the tail razor-thin at the center origin
+                                    const tailWidth = 0.01; 
+                                    // Keep the head very thin, barely expanding as it gets closer
+                                    const headWidth = Math.max(baseWidth, baseWidth * (1 + perspFactor * 0.2));
 
-                                // Main streak - line width matches star diameter (size * 2)
-                                ctx.strokeStyle = grad;
-                                // Base width should be diameter (size * 2). add intensity.
-                                const lineW = Math.max(0.6, Math.min(6, size * 2.0 + warpIntensity * 0.06));
-                                ctx.lineWidth = lineW;
-                                ctx.lineCap = 'round';
-                                ctx.beginPath();
-                                ctx.moveTo(tailX, tailY);
-                                ctx.lineTo(headX, headY);
-                                ctx.stroke();
+                                    // Extract RGB from hex to create dynamic glowing tails
+                                    let r = 255, g = 255, b = 255;
+                                    if (starColor.startsWith('#')) {
+                                        const hex = starColor.replace('#', '');
+                                        if (hex.length === 6) {
+                                            r = parseInt(hex.substring(0, 2), 16);
+                                            g = parseInt(hex.substring(2, 4), 16);
+                                            b = parseInt(hex.substring(4, 6), 16);
+                                        }
+                                    }
 
-                                // Bright core at head - USE STAR COLOR, not white!
-                                if (cappedStreak > 15) {
-                                    // Brighter version of star's color for the core
-                                    const coreR = Math.min(255, r + 80);
-                                    const coreG = Math.min(255, g + 80);
-                                    const coreB = Math.min(255, b + 80);
-                                    ctx.strokeStyle = `rgba(${coreR}, ${coreG}, ${coreB}, 0.85)`;
-                                    ctx.lineWidth = Math.max(0.4, size * 0.3);
-                                    ctx.globalAlpha = alpha * 0.9;
+                                    const grad = ctx.createLinearGradient(tailX, tailY, headX, headY);
+                                    // Faded tail at the black hole
+                                    grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
+                                    // Mid body softer
+                                    grad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.3)`);
+                                    // Brightest at the head, but slightly softer
+                                    const brightR = Math.min(255, r + 80);
+                                    const brightG = Math.min(255, g + 80);
+                                    const brightB = Math.min(255, b + 80);
+                                    grad.addColorStop(1, `rgba(${brightR}, ${brightG}, ${brightB}, 0.9)`);
+
+                                    ctx.fillStyle = grad;
                                     ctx.beginPath();
-                                    const coreLen = Math.min(cappedStreak * 0.12, 30);
-                                    const coreX = headX - dirOutX * coreLen;
-                                    const coreY = headY - dirOutY * coreLen;
-                                    ctx.moveTo(coreX, coreY);
-                                    ctx.lineTo(headX, headY);
-                                    ctx.stroke();
+                                    ctx.moveTo(tailX + perpX * tailWidth, tailY + perpY * tailWidth);
+                                    ctx.lineTo(tailX - perpX * tailWidth, tailY - perpY * tailWidth);
+                                    ctx.lineTo(headX - perpX * headWidth, headY - perpY * headWidth);
+                                    ctx.lineTo(headX + perpX * headWidth, headY + perpY * headWidth);
+                                    ctx.closePath();
+                                    ctx.fill();
+
+
+                                    if (cappedStreak > 15) {
+                                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                                        ctx.beginPath();
+                                        ctx.moveTo(tailX + perpX * (tailWidth * 0.4), tailY + perpY * (tailWidth * 0.4));
+                                        ctx.lineTo(tailX - perpX * (tailWidth * 0.4), tailY - perpY * (tailWidth * 0.4));
+                                        ctx.lineTo(headX - perpX * (headWidth * 0.4), headY - perpY * (headWidth * 0.4));
+                                        ctx.lineTo(headX + perpX * (headWidth * 0.4), headY + perpY * (headWidth * 0.4));
+                                        ctx.closePath();
+                                        ctx.fill();
+                                    }
                                 }
                             } catch (e) {
-                                ctx.strokeStyle = starColor;
+                                ctx.strokeStyle = 'rgba(200, 240, 255, 0.8)';
                                 ctx.lineWidth = size;
                                 ctx.beginPath();
                                 ctx.moveTo(tailX, tailY);
@@ -12105,38 +11881,37 @@ class InterstellarEngine {
                             }
                         }
 
-                        // Bright head point - smaller at high speeds - USE STAR COLOR
-                        ctx.globalAlpha = Math.min(0.9, alpha + 0.2);
-                        // Use bright version of star's color instead of white
-                        const headR = Math.min(255, r + 100);
-                        const headG = Math.min(255, g + 100);
-                        const headB = Math.min(255, b + 100);
-                        ctx.fillStyle = `rgb(${headR}, ${headG}, ${headB})`;
+                        ctx.globalAlpha = Math.min(1.0, alpha + 0.3);
+                        ctx.fillStyle = '#ffffff';
                         ctx.beginPath();
-                        const headSize = Math.max(0.5, Math.min(1.2, size * 0.4));
+                        const headSize = Math.min(3, Math.max(0.3, size * 0.3) * (1 + perspFactor * 0.2));
                         ctx.arc(headX, headY, headSize, 0, Math.PI * 2);
                         ctx.fill();
-
-
-                    } else if (this.bgDriftMode && !this.bgWarpMode) {
-                        // ====== SIMPLE DRIFT - Stars just float gently ======
-                        ctx.globalAlpha = s.alpha || 0.5;
-                        ctx.fillStyle = starColor;
-                        ctx.beginPath();
-                        ctx.arc(sx, sy, size, 0, Math.PI * 2);
-                        ctx.fill();
-
                     } else {
-                        // === NORMAL MODE: Simple colored dot ===
-                        ctx.globalAlpha = s.alpha || 0.5;
+                        // Twinkle effect for normal and drift modes
+                        s.twinklePhase = (s.twinklePhase || 0) + (s.twinkleSpeed || 0.03);
+                        const twinkle = Math.sin(s.twinklePhase) * 0.15;
+                        const finalAlpha = Math.min(1.0, Math.max(0.1, (s.baseAlpha || s.alpha || 0.5) + twinkle));
+                        const finalSize = Math.max(0.2, size + twinkle * 0.4);
+
+                        ctx.globalAlpha = finalAlpha;
                         ctx.fillStyle = starColor;
                         ctx.beginPath();
-                        ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                        ctx.arc(sx, sy, finalSize, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 });
             } catch (renderError) {
                 console.error('[BG Error] Star rendering failed:', renderError);
+            }
+
+            // Draw a tiny black circle at the vanishing point to represent a black hole or point of origin
+            if (this.bgWarpMode && !this.bgDriftMode) {
+                ctx.globalAlpha = 1.0;
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, 10, 0, Math.PI * 2);
+                ctx.fill();
             }
 
             // ====== SHOOTING STARS (Normal mode only) ======
@@ -12425,6 +12200,19 @@ class InterstellarEngine {
 
         ctx.restore(); // Close World Transform (Started at 8918)
 
+        if (this.gamePaused) {
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 48px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
+            ctx.restore();
+        }
+
         // Welcome overlay renders on top of everything, regardless of flight mode
         this.renderWelcomeOverlay(ctx);
 
@@ -12619,6 +12407,14 @@ class InterstellarEngine {
             case 'pulse': this.drawPulse(ctx, size, shipColor, pitchScale, time); break;
             case 'flux': this.drawFlux(ctx, size, shipColor, pitchScale, time); break;
             case 'apex': this.drawApex(ctx, size, shipColor, pitchScale, time); break;
+            case 'valkyrie': this.drawValkyrie(ctx, size, shipColor, pitchScale, time); break;
+            case 'leviathan': this.drawLeviathan(ctx, size, shipColor, pitchScale, time); break;
+            case 'wraith': this.drawWraith(ctx, size, shipColor, pitchScale, time); break;
+            case 'pulsar': this.drawPulsar(ctx, size, shipColor, pitchScale, time); break;
+            case 'nomad': this.drawNomad(ctx, size, shipColor, pitchScale, time); break;
+            case 'eclipse': this.drawEclipse(ctx, size, shipColor, pitchScale, time); break;
+            case 'hyperion': this.drawHyperion(ctx, size, shipColor, pitchScale, time); break;
+            case 'archangel': this.drawArchangel(ctx, size, shipColor, pitchScale, time); break;
             default:
                 this.drawInterceptor(ctx, size, shipColor, pitchScale);
                 break;
@@ -13513,6 +13309,600 @@ class InterstellarEngine {
         ctx.restore();
     }
 
+    drawValkyrie(ctx, size, shipColor, pitchScale, time) {
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        
+        // Base Hull Gradient
+        const grad = ctx.createLinearGradient(-size, 0, size * 1.5, 0);
+        grad.addColorStop(0, this.adjustColor(shipColor, -50));
+        grad.addColorStop(0.5, shipColor);
+        grad.addColorStop(1, '#ffffff');
+
+        // Main Body
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(size * 1.8, 0);
+        ctx.lineTo(size * 0.5, -size * 0.4);
+        ctx.lineTo(-size * 1.2, -size * 0.8);
+        ctx.lineTo(-size * 0.8, -size * 0.2);
+        ctx.lineTo(-size * 1.2, 0);
+        ctx.lineTo(-size * 0.8, size * 0.2);
+        ctx.lineTo(-size * 1.2, size * 0.8);
+        ctx.lineTo(size * 0.5, size * 0.4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Cockpit
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.moveTo(size * 0.8, 0);
+        ctx.lineTo(size * 0.2, -size * 0.15);
+        ctx.lineTo(size * 0.2, size * 0.15);
+        ctx.closePath();
+        ctx.fill();
+
+        // Engines
+        this.drawEngineFlame(ctx, -size * 1.0, -size * 0.4, size * 0.6, '#00ffff', time || Date.now());
+        this.drawEngineFlame(ctx, -size * 1.0, size * 0.4, size * 0.6, '#00ffff', time || Date.now());
+
+        ctx.restore();
+    }
+
+    drawLeviathan(ctx, size, shipColor, pitchScale, time) {
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        ctx.fillStyle = this.adjustColor(shipColor, -20);
+        ctx.strokeStyle = shipColor;
+        ctx.lineWidth = 2;
+
+        // Blocky Hull
+        ctx.beginPath();
+        ctx.rect(-size * 1.5, -size * 0.8, size * 2.8, size * 1.6);
+        ctx.fill();
+        ctx.stroke();
+
+        // Forward Armor Plating
+        ctx.fillStyle = '#444';
+        ctx.beginPath();
+        ctx.moveTo(size * 1.3, -size * 0.6);
+        ctx.lineTo(size * 1.8, -size * 0.3);
+        ctx.lineTo(size * 1.8, size * 0.3);
+        ctx.lineTo(size * 1.3, size * 0.6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Engines
+        this.drawEngineFlame(ctx, -size * 1.5, -size * 0.5, size * 0.8, '#ff3300', time || Date.now());
+        this.drawEngineFlame(ctx, -size * 1.5, size * 0.5, size * 0.8, '#ff3300', time || Date.now());
+
+        ctx.restore();
+    }
+
+    drawWraith(ctx, size, shipColor, pitchScale, time) {
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+
+        ctx.fillStyle = '#111';
+        ctx.strokeStyle = shipColor;
+        ctx.lineWidth = 1;
+        ctx.shadowColor = shipColor;
+        ctx.shadowBlur = 10;
+
+        ctx.beginPath();
+        ctx.moveTo(size * 1.5, 0);
+        ctx.lineTo(-size, -size);
+        ctx.lineTo(-size * 0.5, 0);
+        ctx.lineTo(-size, size);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+
+        // Red micro thrusters
+        this.drawEngineFlame(ctx, -size * 0.8, -size * 0.8, size * 0.4, '#ff0000', time || Date.now());
+        this.drawEngineFlame(ctx, -size * 0.8, size * 0.8, size * 0.4, '#ff0000', time || Date.now());
+
+        ctx.restore();
+    }
+
+    drawPulsar(ctx, size, shipColor, pitchScale, time) {
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+
+        // Energy Ring
+        const ringGlow = Math.sin((time || Date.now()) * 0.005) * 5 + 10;
+        ctx.strokeStyle = shipColor;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = shipColor;
+        ctx.shadowBlur = ringGlow;
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Nacelles
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.rect(-size * 1.2, -size * 1.2, size * 2.4, size * 0.4);
+        ctx.rect(-size * 1.2, size * 0.8, size * 2.4, size * 0.4);
+        ctx.fill();
+
+        // Engines
+        this.drawEngineFlame(ctx, -size * 1.2, -size * 1.0, size * 0.5, shipColor, time || Date.now());
+        this.drawEngineFlame(ctx, -size * 1.2, size * 1.0, size * 0.5, shipColor, time || Date.now());
+
+        ctx.restore();
+    }
+
+    drawNomad(ctx, size, shipColor, pitchScale, time) {
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        ctx.fillStyle = shipColor;
+
+        // Central Pod
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size, size * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Outriggers
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -size * 0.5);
+        ctx.lineTo(0, -size * 1.2);
+        ctx.moveTo(0, size * 0.5);
+        ctx.lineTo(0, size * 1.2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#666';
+        ctx.beginPath();
+        ctx.arc(0, -size * 1.2, size * 0.3, 0, Math.PI * 2);
+        ctx.arc(0, size * 1.2, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Engine
+        this.drawEngineFlame(ctx, -size, 0, size * 0.6, '#00aaff', time || Date.now());
+        ctx.restore();
+    }
+
+    drawEclipse(ctx, size, shipColor, pitchScale, time) {
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 1.2);
+        grad.addColorStop(0, '#222');
+        grad.addColorStop(1, shipColor);
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 1.2, Math.PI * 0.2, Math.PI * 1.8);
+        ctx.quadraticCurveTo(-size, 0, 0, size * 1.2);
+        ctx.fill();
+
+        // Neon Strips
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.8, Math.PI * 0.3, Math.PI * 1.7);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        this.drawEngineFlame(ctx, -size * 0.5, 0, size * 0.7, '#00ffff', time || Date.now());
+        ctx.restore();
+    }
+
+    drawHyperion(ctx, size, shipColor, pitchScale, time) {
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+        ctx.fillStyle = this.adjustColor(shipColor, -30);
+        
+        ctx.beginPath();
+        ctx.moveTo(size * 1.5, 0);
+        ctx.lineTo(size * 0.8, -size * 1.2);
+        ctx.lineTo(-size * 1.2, -size * 1.2);
+        ctx.lineTo(-size * 0.5, -size * 0.5);
+        ctx.lineTo(-size * 1.2, 0);
+        ctx.lineTo(-size * 0.5, size * 0.5);
+        ctx.lineTo(-size * 1.2, size * 1.2);
+        ctx.lineTo(size * 0.8, size * 1.2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Launch Bays
+        ctx.fillStyle = '#000';
+        ctx.fillRect(-size * 0.2, -size * 0.8, size * 0.8, size * 0.3);
+        ctx.fillRect(-size * 0.2, size * 0.5, size * 0.8, size * 0.3);
+
+        this.drawEngineFlame(ctx, -size * 1.2, -size * 0.9, size * 0.5, '#ffaa00', time || Date.now());
+        this.drawEngineFlame(ctx, -size * 1.2, size * 0.9, size * 0.5, '#ffaa00', time || Date.now());
+        this.drawEngineFlame(ctx, -size * 1.2, 0, size * 0.6, '#ffaa00', time || Date.now());
+
+        ctx.restore();
+    }
+
+    drawArchangel(ctx, size, shipColor, pitchScale, time) {
+        ctx.save();
+        ctx.scale(1, pitchScale || 1);
+
+        // Base hull
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(size * 1.8, 0);
+        ctx.lineTo(-size * 0.5, -size * 0.3);
+        ctx.lineTo(-size * 0.5, size * 0.3);
+        ctx.closePath();
+        ctx.fill();
+
+        // Hard-light wings
+        const wingGlow = 10 + Math.sin((time || Date.now()) * 0.005) * 5;
+        ctx.strokeStyle = shipColor;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = shipColor;
+        ctx.shadowBlur = wingGlow;
+        ctx.beginPath();
+        ctx.moveTo(size * 0.5, 0);
+        ctx.quadraticCurveTo(-size * 0.5, -size * 2, -size * 1.5, -size * 1.5);
+        ctx.moveTo(size * 0.5, 0);
+        ctx.quadraticCurveTo(-size * 0.5, size * 2, -size * 1.5, size * 1.5);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        this.drawEngineFlame(ctx, -size * 0.5, 0, size * 0.8, shipColor, time || Date.now());
+        ctx.restore();
+    }
+
+    // === ALIEN SHIPS ===
+
+    drawAlienScythe(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = '#111';
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 10;
+        
+        ctx.beginPath();
+        ctx.moveTo(size * 1.5, 0);
+        ctx.quadraticCurveTo(size * 0.5, size * 0.8, -size * 1.2, size * 1.5);
+        ctx.lineTo(-size * 0.8, 0);
+        ctx.lineTo(-size * 1.2, -size * 1.5);
+        ctx.quadraticCurveTo(size * 0.5, -size * 0.8, size * 1.5, 0);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Inner core
+        ctx.fillStyle = glowColor;
+        ctx.beginPath();
+        ctx.arc(size * 0.2, 0, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    drawObsidianShard(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = '#050505';
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 1.5;
+        
+        const pulse = Math.sin(time * 0.01) * 0.2 + 0.8;
+        
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 15 * pulse;
+        
+        ctx.beginPath();
+        ctx.moveTo(size * 1.8, 0);
+        ctx.lineTo(0, size * 0.6);
+        ctx.lineTo(-size * 1.2, 0);
+        ctx.lineTo(0, -size * 0.6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.fillStyle = glowColor;
+        ctx.beginPath();
+        ctx.moveTo(size * 0.8, 0);
+        ctx.lineTo(0, size * 0.2);
+        ctx.lineTo(-size * 0.5, 0);
+        ctx.lineTo(0, -size * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    drawBiomechWeaver(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = '#1a2b1a';
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 2;
+        
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size * 1.2, size * 0.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Legs/Appendages
+        const legWiggle = Math.sin(time * 0.01) * 0.2;
+        ctx.beginPath();
+        for (let i = -1; i <= 1; i += 2) {
+            ctx.moveTo(0, i * size * 0.6);
+            ctx.quadraticCurveTo(-size * 0.5, i * size * 1.5 + legWiggle * size, -size * 1.5, i * size * 1.2);
+            ctx.moveTo(size * 0.5, i * size * 0.5);
+            ctx.quadraticCurveTo(size * 1.2, i * size * 1.5 - legWiggle * size, size * 0.8, i * size * 1.8);
+        }
+        ctx.stroke();
+        
+        // Eyes
+        ctx.fillStyle = glowColor;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(size * 0.8, size * 0.3, size * 0.15, 0, Math.PI * 2);
+        ctx.arc(size * 0.8, -size * 0.3, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    drawPlasmaSphere(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        const pulse = Math.sin(time * 0.005) * 0.1 + 0.9;
+        const s = size * pulse;
+        
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 20;
+        
+        // Outer shell
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, s, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner plasma
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, s);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.3, glowColor);
+        grad.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, 0, s, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Orbiting rings
+        ctx.rotate(time * 0.002);
+        ctx.strokeStyle = glowColor;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, s * 1.5, s * 0.3, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+
+    drawVoidStalker(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        // Almost invisible base
+        ctx.fillStyle = 'rgba(10, 10, 10, 0.8)';
+        ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.lineWidth = 1;
+        
+        ctx.beginPath();
+        ctx.moveTo(size * 1.6, 0);
+        ctx.lineTo(-size * 1.2, size * 0.4);
+        ctx.lineTo(-size * 0.8, 0);
+        ctx.lineTo(-size * 1.2, -size * 0.4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Glowing red eyes/sensors
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 15;
+        const blink = Math.random() > 0.95 ? 0.2 : 1;
+        ctx.globalAlpha = blink;
+        
+        ctx.beginPath();
+        ctx.arc(size * 0.8, 0, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    drawNexusPrism(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.rotate(time * 0.001); // Slow spin
+        
+        ctx.fillStyle = 'rgba(20, 20, 40, 0.9)';
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 15;
+        
+        const sides = 6;
+        ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * Math.PI * 2;
+            const px = Math.cos(angle) * size * 1.5;
+            const py = Math.sin(angle) * size * 1.5;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Inner geometric lines
+        ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * Math.PI * 2;
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * size * 1.5, Math.sin(angle) * size * 1.5);
+        }
+        ctx.stroke();
+        
+        // Core
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    drawHiveCarrier(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = '#4a3000';
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 3;
+        
+        // Massive hull
+        ctx.beginPath();
+        ctx.moveTo(size * 1.2, 0);
+        ctx.lineTo(size * 0.5, size * 0.8);
+        ctx.lineTo(-size * 1.5, size * 1.2);
+        ctx.lineTo(-size * 1.2, 0);
+        ctx.lineTo(-size * 1.5, -size * 1.2);
+        ctx.lineTo(size * 0.5, -size * 0.8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Glowing hangar bays
+        ctx.fillStyle = glowColor;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 20;
+        
+        for (let i = -1; i <= 1; i += 2) {
+            ctx.fillRect(-size * 0.5, i * size * 0.6 - size * 0.15, size * 0.8, size * 0.3);
+            ctx.fillRect(size * 0.2, i * size * 0.4 - size * 0.1, size * 0.5, size * 0.2);
+        }
+        
+        ctx.restore();
+    }
+
+    drawArachnidDrone(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = '#330000';
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 1;
+        
+        // Core body
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // 8 Legs
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2 + Math.sin(time * 0.02 + i) * 0.2;
+            const px1 = Math.cos(angle) * size * 0.6;
+            const py1 = Math.sin(angle) * size * 0.6;
+            const px2 = Math.cos(angle) * size * 1.5;
+            const py2 = Math.sin(angle) * size * 1.5;
+            const px3 = Math.cos(angle - 0.2) * size * 1.8;
+            const py3 = Math.sin(angle - 0.2) * size * 1.8;
+            
+            ctx.moveTo(px1, py1);
+            ctx.lineTo(px2, py2);
+            ctx.lineTo(px3, py3);
+        }
+        ctx.stroke();
+        
+        // Glowing center
+        ctx.fillStyle = glowColor;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    drawNebulaPhantom(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        // Ethereal gradient
+        const grad = ctx.createLinearGradient(size, 0, -size, 0);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        grad.addColorStop(0.5, glowColor);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        ctx.fillStyle = grad;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 25;
+        
+        // Fluid, ghost-like shape
+        const wave = Math.sin(time * 0.005) * size * 0.2;
+        
+        ctx.beginPath();
+        ctx.moveTo(size * 1.5, 0);
+        ctx.bezierCurveTo(size * 0.5, size + wave, -size * 0.5, size * 0.5 - wave, -size * 1.5, size * 0.8);
+        ctx.quadraticCurveTo(-size, 0, -size * 1.5, -size * 0.8);
+        ctx.bezierCurveTo(-size * 0.5, -size * 0.5 + wave, size * 0.5, -size - wave, size * 1.5, 0);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    drawZenithDestroyer(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = '#222';
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 2;
+        
+        // Massive arrow-head hull
+        ctx.beginPath();
+        ctx.moveTo(size * 2, 0);
+        ctx.lineTo(-size * 1.5, size * 1.2);
+        ctx.lineTo(-size * 1.0, 0);
+        ctx.lineTo(-size * 1.5, -size * 1.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Heavy armor plating lines
+        ctx.beginPath();
+        ctx.moveTo(size * 1.5, 0);
+        ctx.lineTo(-size * 0.8, size * 0.8);
+        ctx.moveTo(size * 1.5, 0);
+        ctx.lineTo(-size * 0.8, -size * 0.8);
+        ctx.moveTo(-size * 0.5, size * 0.5);
+        ctx.lineTo(-size * 0.5, -size * 0.5);
+        ctx.stroke();
+        
+        // Twin devastating cannons
+        ctx.fillStyle = '#111';
+        ctx.strokeStyle = glowColor;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 15;
+        
+        ctx.fillRect(size * 0.2, size * 0.4, size * 1.2, size * 0.15);
+        ctx.strokeRect(size * 0.2, size * 0.4, size * 1.2, size * 0.15);
+        
+        ctx.fillRect(size * 0.2, -size * 0.55, size * 1.2, size * 0.15);
+        ctx.strokeRect(size * 0.2, -size * 0.55, size * 1.2, size * 0.15);
+        
+        // Cannon glow
+        ctx.fillStyle = glowColor;
+        ctx.fillRect(size * 1.2, size * 0.42, size * 0.3, size * 0.11);
+        ctx.fillRect(size * 1.2, -size * 0.53, size * 0.3, size * 0.11);
+        
+        // Engine
+        ctx.shadowBlur = 20;
+        this.drawEngineFlame(ctx, -size * 1.0, 0, size * 1.0, glowColor, time);
+        
+        ctx.restore();
+    }
+
     renderMinerals(ctx, time) {
         this.minerals.forEach(mineral => {
             // Special: Mindwave Lotus Rendering
@@ -13600,12 +13990,14 @@ class InterstellarEngine {
                 const safeZoom = Math.max(0.01, this.camera.zoom || 1);
                 const size = (mine.size || mine.radius || 30) * rotated.scale / safeZoom;
 
-                ctx.fillStyle = '#ffffff';
-                ctx.shadowColor = '#ffffff';
-                ctx.shadowBlur = 20;
-                ctx.beginPath();
-                ctx.arc(0, 0, size * 2, 0, Math.PI * 2);
-                ctx.fill();
+                if (size > 0) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = '#ffffff';
+                    ctx.shadowBlur = 20;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 ctx.restore();
                 return;
             }
@@ -13622,6 +14014,11 @@ class InterstellarEngine {
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
             const pulse = Math.sin(time * 0.003 + (mine.pulsePhase || mine.pulseOffset || 0)) * 0.15 + 0.85;
             const size = (mine.size || mine.radius || 30) * pulse * rScale / safeZoom;
+
+            if (size <= 0) {
+                ctx.restore();
+                return;
+            }
 
             // OUTER ELECTROMAGNETIC FIELD (pulsing energy barrier)
             const emPulse = (Math.sin(time * 0.006) + 1) * 0.5;
@@ -13797,6 +14194,11 @@ class InterstellarEngine {
 
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
             const size = (bh.size || 100) * rScale / safeZoom;
+
+            if (size <= 0) {
+                ctx.restore();
+                return;
+            }
 
             // OUTER GRAVITATIONAL DISTORTION (light being warped)
             const distortGrad = ctx.createRadialGradient(0, 0, size * 0.3, 0, 0, size * 2);
@@ -14002,6 +14404,10 @@ class InterstellarEngine {
             ctx.rotate(missile.angle);
 
             const size = (missile.size || 5) * rScale / safeZoom;
+            if (size <= 0) {
+                ctx.restore();
+                return;
+            }
             const lifeRatio = missile.life / missile.maxLife;
 
             // Missile body
@@ -14068,6 +14474,8 @@ class InterstellarEngine {
             const rScale = rotated.scale;
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
             const size = (8 + Math.random() * 4) * rScale / safeZoom;
+            
+            if (size <= 0) return;
             const alpha = Math.min(1, flare.life / 30);
 
             if (!Number.isFinite(rx) || !Number.isFinite(ry) || !Number.isFinite(size) || size <= 0) return;
@@ -14102,6 +14510,11 @@ class InterstellarEngine {
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
             const size = typeDef.size * rScale / safeZoom;
 
+            if (size <= 0) {
+                ctx.restore();
+                return;
+            }
+
             ctx.translate(rx, ry);
             ctx.rotate(enemy.rotation);
 
@@ -14131,37 +14544,51 @@ class InterstellarEngine {
             ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
             ctx.fill();
 
-            // Ship body — aggressive triangle
-            ctx.fillStyle = baseColor;
-            ctx.shadowColor = activeColor;
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.moveTo(size * 1.5, 0);           // Nose
-            ctx.lineTo(-size, -size * 0.8);       // Top wing
-            ctx.lineTo(-size * 0.4, 0);           // Indent
-            ctx.lineTo(-size, size * 0.8);        // Bottom wing
-            ctx.closePath();
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            switch (enemy.type) {
+                case 'alien_scythe': this.drawAlienScythe(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'obsidian_shard': this.drawObsidianShard(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'biomech_weaver': this.drawBiomechWeaver(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'plasma_sphere': this.drawPlasmaSphere(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'void_stalker': this.drawVoidStalker(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'nexus_prism': this.drawNexusPrism(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'hive_carrier': this.drawHiveCarrier(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'arachnid_drone': this.drawArachnidDrone(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'nebula_phantom': this.drawNebulaPhantom(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'zenith_destroyer': this.drawZenithDestroyer(ctx, size, baseColor, activeGlow, Date.now()); break;
+                default:
+                    // Ship body — aggressive triangle
+                    ctx.fillStyle = baseColor;
+                    ctx.shadowColor = activeColor;
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.moveTo(size * 1.5, 0);           // Nose
+                    ctx.lineTo(-size, -size * 0.8);       // Top wing
+                    ctx.lineTo(-size * 0.4, 0);           // Indent
+                    ctx.lineTo(-size, size * 0.8);        // Bottom wing
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
 
-            // Cockpit stripe
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.beginPath();
-            ctx.moveTo(size * 0.8, 0);
-            ctx.lineTo(size * 0.2, -size * 0.15);
-            ctx.lineTo(size * 0.2, size * 0.15);
-            ctx.closePath();
-            ctx.fill();
+                    // Cockpit stripe
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    ctx.beginPath();
+                    ctx.moveTo(size * 0.8, 0);
+                    ctx.lineTo(size * 0.2, -size * 0.15);
+                    ctx.lineTo(size * 0.2, size * 0.15);
+                    ctx.closePath();
+                    ctx.fill();
 
-            // Engine flame
-            const flameLen = (0.5 + Math.random() * 0.4) * size;
-            ctx.fillStyle = `rgba(255, 150, 50, 0.8)`;
-            ctx.beginPath();
-            ctx.moveTo(-size * 0.4, -size * 0.15);
-            ctx.lineTo(-size * 0.4 - flameLen, 0);
-            ctx.lineTo(-size * 0.4, size * 0.15);
-            ctx.closePath();
-            ctx.fill();
+                    // Engine flame
+                    const flameLen = (0.5 + Math.random() * 0.4) * size;
+                    ctx.fillStyle = `rgba(255, 150, 50, 0.8)`;
+                    ctx.beginPath();
+                    ctx.moveTo(-size * 0.4, -size * 0.15);
+                    ctx.lineTo(-size * 0.4 - flameLen, 0);
+                    ctx.lineTo(-size * 0.4, size * 0.15);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+            }
 
             ctx.restore();
 
@@ -14246,6 +14673,11 @@ class InterstellarEngine {
             if (!Number.isFinite(rx) || !Number.isFinite(ry) || !Number.isFinite(rScale) || rScale <= 0) return; ctx.save();
             const safeZoom = Math.max(0.01, this.camera.zoom || 1);
             const size = typeDef.size * rScale / safeZoom;
+            
+            if (size <= 0) {
+                ctx.restore();
+                return;
+            }
             const baseColor = boss.hitFlash > 0 ? '#ffffff' : typeDef.color;
 
             ctx.translate(rx, ry);
@@ -14380,6 +14812,12 @@ class InterstellarEngine {
 
         const safeZoom = Math.max(0.01, this.camera.zoom || 1);
         const size = (base.size || 40) * rScale / safeZoom;
+        
+        if (size <= 0) {
+            ctx.restore();
+            return;
+        }
+        
         const alertPulse = base.alertLevel > 0 ? Math.sin(time * 0.01) * 0.3 + 0.7 : 0.5;
 
         // Hit Flash Logic
@@ -16059,14 +16497,24 @@ class InterstellarEngine {
         if (!this.config.showBackground) return;
 
         const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const cx_offset = w / 2;
+        const cy_offset = h / 2;
 
         // 1. Background Stars (from all active styles)
         if (this.backgroundStars && this.backgroundStars.length > 0) {
             this.backgroundStars.forEach(s => {
+                const para = s.parallax || 0.1;
+                let sx = (s.x + this.camera.x * para) % w;
+                if (sx < 0) sx += w;
+                let sy = (s.y + this.camera.y * para) % h;
+                if (sy < 0) sy += h;
+
                 ctx.fillStyle = s.color || "white";
                 ctx.globalAlpha = s.alpha;
                 ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
                 ctx.fill();
             });
             ctx.globalAlpha = 1;
@@ -16076,9 +16524,8 @@ class InterstellarEngine {
         if (this.nebulae && this.nebulae.length > 0) {
             ctx.globalCompositeOperation = 'screen';
             this.nebulae.forEach(n => {
-                if (n.flownOut) return; // Skip if flown out during warp
+                if (n.flownOut) return;
 
-                // During disengage: use scale and alpha from flyObject
                 let scale = 1.0;
                 let alpha = 1.0;
                 if (this.warpDisengaging && n.warpScale !== undefined) {
@@ -16086,17 +16533,23 @@ class InterstellarEngine {
                     alpha = n.warpAlpha || 0;
                 }
 
+                const para = n.parallax || 0.2;
+                const cx = n.x + this.camera.x * para + cx_offset;
+                const cy = n.y + this.camera.y * para + cy_offset;
+
                 const scaledSize = Math.max(0.1, n.size * scale);
                 const scaledAlpha = n.alpha * alpha;
 
-                const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, scaledSize);
+                if (cx < -scaledSize || cx > w + scaledSize || cy < -scaledSize || cy > h + scaledSize) return;
+
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, scaledSize);
                 grad.addColorStop(0, n.color);
                 grad.addColorStop(1, 'transparent');
 
                 ctx.globalAlpha = scaledAlpha;
                 ctx.fillStyle = grad;
                 ctx.beginPath();
-                ctx.arc(n.x, n.y, scaledSize, 0, Math.PI * 2);
+                ctx.arc(cx, cy, scaledSize, 0, Math.PI * 2);
                 ctx.fill();
             });
             ctx.globalCompositeOperation = 'source-over';
@@ -16106,13 +16559,17 @@ class InterstellarEngine {
         // 2.5 Moving Cosmic Stars (shooting stars with tails)
         if (this.activeStyles.has('deep-space') && this.shootingStars && this.shootingStars.length > 0) {
             this.shootingStars.forEach(s => {
+                const para = s.parallax || 0.5;
+                const cx = s.x + this.camera.x * para + cx_offset;
+                const cy = s.y + this.camera.y * para + cy_offset;
+
+                if (cx < -100 || cx > w + 100 || cy < -100 || cy > h + 100) return;
+
                 ctx.save();
+                const tailX = cx - s.vx * s.tailLength;
+                const tailY = cy - s.vy * s.tailLength;
 
-                // Draw tail (gradient line in opposite direction of movement)
-                const tailX = s.x - s.vx * s.tailLength;
-                const tailY = s.y - s.vy * s.tailLength;
-
-                const tailGrad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
+                const tailGrad = ctx.createLinearGradient(tailX, tailY, cx, cy);
                 tailGrad.addColorStop(0, 'transparent');
                 tailGrad.addColorStop(0.7, s.color + '40');
                 tailGrad.addColorStop(1, s.color);
@@ -16124,16 +16581,14 @@ class InterstellarEngine {
 
                 ctx.beginPath();
                 ctx.moveTo(tailX, tailY);
-                ctx.lineTo(s.x, s.y);
+                ctx.lineTo(cx, cy);
                 ctx.stroke();
 
-                // Draw star head (bright point)
                 ctx.fillStyle = s.color;
                 ctx.globalAlpha = s.alpha + 0.3;
                 ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.arc(cx, cy, s.size, 0, Math.PI * 2);
                 ctx.fill();
-
                 ctx.restore();
             });
             ctx.globalAlpha = 1;
@@ -16143,26 +16598,28 @@ class InterstellarEngine {
         if (this.activeStyles.has('alien') && this.spacecraft && this.spacecraft.length > 0) {
             const time = performance.now() * 0.001;
             this.spacecraft.forEach(s => {
-                if (s.flownOut) return; // Skip if flown out during warp
+                if (s.flownOut) return;
+
+                const para = s.parallax || 0.4;
+                const cx = s.x + this.camera.x * para + cx_offset;
+                const cy = s.y + this.camera.y * para + cy_offset;
+
+                if (cx < -200 || cx > w + 200 || cy < -200 || cy > h + 200) return;
+
                 ctx.save();
+                ctx.translate(cx, cy);
 
-                // Position comes from flyObject during disengage
-                ctx.translate(s.x, s.y);
-
-                // During disengage: use scale and alpha from flyObject
                 if (this.warpDisengaging && s.warpScale !== undefined) {
                     ctx.scale(s.warpScale, s.warpScale);
                     ctx.globalAlpha = s.warpAlpha || 0;
                 }
 
-                // Update rotation for saucers
                 if (s.rotationSpeed) s.rotation += s.rotationSpeed;
 
                 const size = s.size;
                 const zoom = this.camera.zoom;
                 const angle = Math.atan2(s.vy, s.vx);
 
-                // Shield effect (drawn first, behind ship)
                 if (s.hasShield) {
                     const shieldPulse = Math.sin(time * 2 + s.shieldPhase) * 0.3 + 0.4;
                     ctx.globalAlpha = shieldPulse * 0.4;
@@ -16177,7 +16634,6 @@ class InterstellarEngine {
                     ctx.globalAlpha = 1;
                 }
 
-                // Tractor beam (for saucers)
                 if (s.beamActive && s.shipClass === 'saucer') {
                     const beamPulse = Math.sin(time * 5) * 0.2 + 0.6;
                     ctx.globalAlpha = beamPulse * 0.5;
@@ -16195,12 +16651,8 @@ class InterstellarEngine {
                     ctx.globalAlpha = 1;
                 }
 
-                // Rotate for directional ships (not saucers)
-                if (s.shipClass !== 'saucer') {
-                    ctx.rotate(angle);
-                }
+                if (s.shipClass !== 'saucer') ctx.rotate(angle);
 
-                // Engine trails (for non-saucers)
                 if (s.shipClass !== 'saucer' && s.shipClass !== 'probe') {
                     ctx.globalAlpha = 0.7;
                     const trailLength = size * 2;
@@ -16226,7 +16678,6 @@ class InterstellarEngine {
                     ctx.globalAlpha = 1;
                 }
 
-                // Hull gradient
                 const hullGrad = ctx.createLinearGradient(0, -size * 0.5, 0, size * 0.5);
                 hullGrad.addColorStop(0, s.hullHighlight || '#ccc');
                 hullGrad.addColorStop(0.3, s.hullColor || '#888');
@@ -16235,7 +16686,6 @@ class InterstellarEngine {
                 ctx.strokeStyle = s.hullHighlight || '#ddd';
                 ctx.lineWidth = 1.5 / zoom;
 
-                // === SHIP RENDERING: 13 Star Wars-Quality Spacecraft ===
                 if (s.shipClass === 'saucer') {
                     ctx.beginPath();
                     ctx.ellipse(0, 0, size, size * 0.25, 0, 0, Math.PI * 2);
@@ -16281,13 +16731,11 @@ class InterstellarEngine {
                     ctx.fill();
                     ctx.stroke();
                 } else if (s.shipClass === 'nebula-cruiser') {
-                    // Concorde-style supersonic jet
-                    const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                    hullGrad.addColorStop(0, '#606080');
-                    hullGrad.addColorStop(0.5, '#8080a0');
-                    hullGrad.addColorStop(1, '#505070');
-                    ctx.fillStyle = hullGrad;
-                    // Sleek fuselage with pointed nose
+                    const hullGrad2 = ctx.createLinearGradient(-size, 0, size, 0);
+                    hullGrad2.addColorStop(0, '#606080');
+                    hullGrad2.addColorStop(0.5, '#8080a0');
+                    hullGrad2.addColorStop(1, '#505070');
+                    ctx.fillStyle = hullGrad2;
                     ctx.beginPath();
                     ctx.moveTo(size * 1.2, 0);
                     ctx.lineTo(size * 0.7, -size * 0.08);
@@ -16298,7 +16746,6 @@ class InterstellarEngine {
                     ctx.closePath();
                     ctx.fill();
                     ctx.stroke();
-                    // Delta wings
                     ctx.fillStyle = '#7070a0';
                     ctx.beginPath();
                     ctx.moveTo(size * 0.2, 0);
@@ -16325,11 +16772,11 @@ class InterstellarEngine {
                     ctx.bezierCurveTo(size * 0.6, size * 0.4, size * 0.8, 0, size * 0.8, 0);
                     ctx.fill();
                 } else if (s.shipClass === 'warp-strider') {
-                    const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                    hullGrad.addColorStop(0, '#606060');
-                    hullGrad.addColorStop(0.5, '#a0a0a0');
-                    hullGrad.addColorStop(1, '#505050');
-                    ctx.fillStyle = hullGrad;
+                    const hullGrad2 = ctx.createLinearGradient(-size, 0, size, 0);
+                    hullGrad2.addColorStop(0, '#606060');
+                    hullGrad2.addColorStop(0.5, '#a0a0a0');
+                    hullGrad2.addColorStop(1, '#505050');
+                    ctx.fillStyle = hullGrad2;
                     ctx.beginPath();
                     ctx.moveTo(size * 0.8, 0);
                     ctx.lineTo(size * 0.3, -size * 0.15);
@@ -16343,11 +16790,11 @@ class InterstellarEngine {
                     ctx.fillRect(-size * 0.7, -size * 0.5, size * 0.4, size * 0.08);
                     ctx.fillRect(-size * 0.7, size * 0.42, size * 0.4, size * 0.08);
                 } else if (s.shipClass === 'prism-destroyer') {
-                    const hullGrad = ctx.createLinearGradient(-size, -size, size, size);
-                    hullGrad.addColorStop(0, '#c0c0c0');
-                    hullGrad.addColorStop(0.5, '#e8e8e8');
-                    hullGrad.addColorStop(1, '#707070');
-                    ctx.fillStyle = hullGrad;
+                    const hullGrad2 = ctx.createLinearGradient(-size, -size, size, size);
+                    hullGrad2.addColorStop(0, '#c0c0c0');
+                    hullGrad2.addColorStop(0.5, '#e8e8e8');
+                    hullGrad2.addColorStop(1, '#707070');
+                    ctx.fillStyle = hullGrad2;
                     ctx.beginPath();
                     ctx.moveTo(size, 0);
                     ctx.lineTo(size * 0.3, -size * 0.6);
@@ -16359,11 +16806,11 @@ class InterstellarEngine {
                     ctx.fill();
                     ctx.stroke();
                 } else if (s.shipClass === 'stellar-barge') {
-                    const hullGrad = ctx.createLinearGradient(-size, 0, size, 0);
-                    hullGrad.addColorStop(0, '#4a3820');
-                    hullGrad.addColorStop(0.5, '#8B6F47');
-                    hullGrad.addColorStop(1, '#3a2810');
-                    ctx.fillStyle = hullGrad;
+                    const hullGrad2 = ctx.createLinearGradient(-size, 0, size, 0);
+                    hullGrad2.addColorStop(0, '#4a3820');
+                    hullGrad2.addColorStop(0.5, '#8B6F47');
+                    hullGrad2.addColorStop(1, '#3a2810');
+                    ctx.fillStyle = hullGrad2;
                     ctx.fillRect(-size * 0.7, -size * 0.35, size * 1.3, size * 0.7);
                     ctx.fillStyle = '#5a4830';
                     ctx.beginPath();
@@ -16429,10 +16876,10 @@ class InterstellarEngine {
                     ctx.beginPath();
                     for (let i = 0; i < 6; i++) {
                         const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-                        const x = Math.cos(angle) * size * 0.25;
-                        const y = Math.sin(angle) * size * 0.25;
-                        if (i === 0) ctx.moveTo(x, y);
-                        else ctx.lineTo(x, y);
+                        const px = Math.cos(angle) * size * 0.25;
+                        const py = Math.sin(angle) * size * 0.25;
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
                     }
                     ctx.closePath();
                     ctx.fill();
@@ -16447,14 +16894,12 @@ class InterstellarEngine {
                     ctx.fillRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
                     ctx.strokeRect(size * 0.4, -size * 0.8, size * 0.8, size * 1.6);
                 } else {
-                    // Default fallback for any unrecognized ships
                     ctx.beginPath();
                     ctx.arc(0, 0, size * 0.5, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.stroke();
                 }
 
-                // Navigation lights (for non-probes, non-saucers)
                 if (s.shipClass !== 'probe' && s.shipClass !== 'saucer') {
                     const lightPulse = Math.sin(time * 3 + (s.lightPhase || 0)) * 0.5 + 0.5;
                     ctx.fillStyle = s.lightColor || '#ff00ff';
@@ -16462,8 +16907,6 @@ class InterstellarEngine {
                     ctx.beginPath();
                     ctx.arc(size * 0.85, 0, 3 / zoom, 0, Math.PI * 2);
                     ctx.fill();
-
-                    // Wing tip lights
                     ctx.fillStyle = '#00ff00';
                     ctx.beginPath();
                     ctx.arc(-size * 0.5, -size * 0.6, 2 / zoom, 0, Math.PI * 2);
@@ -16474,10 +16917,57 @@ class InterstellarEngine {
                     ctx.fill();
                     ctx.globalAlpha = 1;
                 }
-
                 ctx.restore();
             });
         }
+    }
+    drawMindwaveSun(ctx, color, radius, isBlackHole = false) {
+        ctx.save();
+        const scale = radius / 42;
+        ctx.scale(scale, scale);
+        ctx.fillStyle = color;
+        
+        for (let i = 0; i < 8; i++) {
+            ctx.save();
+            ctx.rotate(i * Math.PI / 4);
+            ctx.beginPath();
+            ctx.moveTo(-4, -15);
+            ctx.lineTo(4, -15);
+            ctx.lineTo(0, -42);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        for (let i = 0; i < 8; i++) {
+            ctx.save();
+            ctx.rotate(i * Math.PI / 4 + Math.PI / 8);
+            ctx.beginPath();
+            ctx.moveTo(-2, -15);
+            ctx.lineTo(2, -15);
+            ctx.lineTo(0, -32);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.beginPath();
+        if (isBlackHole) {
+            ctx.fillStyle = 'black';
+            ctx.arc(0, 0, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowColor = 'purple';
+            ctx.shadowBlur = 10;
+        } else {
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+        }
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 5;
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
     }
 
     drawDeepSpaceSpecific() {
@@ -16485,35 +16975,37 @@ class InterstellarEngine {
 
         const ctx = this.ctx;
         const time = performance.now() * 0.0005;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const zoom = this.camera.zoom;
 
         // 1. Galaxies
         if (this.galaxies && this.galaxies.length > 0) {
             this.galaxies.forEach(g => {
-                if (g.flownOut) return; // Skip if flown out during warp
-                ctx.save();
-                // Position comes from flyObject during disengage
-                ctx.translate(g.x, g.y);
+                if (g.flownOut) return;
 
-                // During disengage: use scale and alpha from flyObject
+                const para = 0.0; // 0.0 means it is a physical object pinned to the world coordinates
+                const cx = g.x + this.playerShip.x * para;
+                const cy = g.y + this.playerShip.y * para;
+
+                const screenX = w/2 + this.camera.x + cx * zoom;
+                const screenY = h/2 + this.camera.y + cy * zoom;
+                const screenRadius = g.size * zoom;
+                const buffer = Math.max(screenRadius * 5, 2000);
+                if (screenX < -buffer || screenX > w + buffer || screenY < -buffer || screenY > h + buffer) return;
+
+                ctx.save();
+                ctx.translate(cx, cy);
+
                 if (this.warpDisengaging && g.warpScale !== undefined) {
                     ctx.scale(g.warpScale, g.warpScale);
                     ctx.globalAlpha = g.warpAlpha || 0;
                 }
 
-                ctx.rotate(g.angle + time * 0.1);
+                ctx.rotate(g.angle); // Static rotation only, no time-based spinning
 
-                const spiralGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
-                spiralGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
-                spiralGradient.addColorStop(0.2, g.color);
-                spiralGradient.addColorStop(1, 'transparent');
-
-                ctx.fillStyle = spiralGradient;
-                ctx.beginPath();
-                for (let i = 0; i < 3; i++) {
-                    ctx.rotate(Math.PI * 2 / 3);
-                    ctx.ellipse(0, 0, g.size, g.size / 4, 0, 0, Math.PI * 2); // Corrected ellipse center
-                }
-                ctx.fill();
+                // Replace galaxy with SVG sun
+                this.drawMindwaveSun(ctx, g.color, g.size, false);
                 ctx.restore();
             });
         }
@@ -16521,36 +17013,28 @@ class InterstellarEngine {
         // 2. Black Holes
         if (this.blackHoles && this.blackHoles.length > 0) {
             this.blackHoles.forEach(bh => {
-                if (bh.flownOut) return; // Skip if flown out during warp
+                if (bh.flownOut) return;
+
+                const para = 0.0;
+                const cx = bh.x + this.playerShip.x * para;
+                const cy = bh.y + this.playerShip.y * para;
+
+                const screenX = w/2 + this.camera.x + cx * zoom;
+                const screenY = h/2 + this.camera.y + cy * zoom;
+                const screenRadius = bh.size * zoom;
+                const buffer = Math.max(screenRadius * 5, 2000);
+                if (screenX < -buffer || screenX > w + buffer || screenY < -buffer || screenY > h + buffer) return;
+
                 ctx.save();
+                ctx.translate(cx, cy);
 
-                // Position comes from flyObject during disengage
-                ctx.translate(bh.x, bh.y);
-
-                // During disengage: use scale and alpha from flyObject
                 if (this.warpDisengaging && bh.warpScale !== undefined) {
                     ctx.scale(bh.warpScale, bh.warpScale);
                     ctx.globalAlpha = bh.warpAlpha || 0;
                 }
 
-                // Accretion disk
-                ctx.beginPath();
-                ctx.strokeStyle = 'orange';
-                ctx.lineWidth = 2;
-                ctx.arc(0, 0, bh.size * 1.5, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // Event Horizon
-                ctx.beginPath();
-                ctx.fillStyle = 'black';
-                ctx.arc(0, 0, bh.size, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Glow
-                ctx.shadowColor = 'purple';
-                ctx.shadowBlur = 20;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
+                // Replace black hole with SVG sun (isBlackHole = true)
+                this.drawMindwaveSun(ctx, 'orange', bh.size * 1.5, true);
 
                 ctx.restore();
             });
@@ -16558,34 +17042,36 @@ class InterstellarEngine {
 
         // 3. Planets (with zoom-based detail and proper Saturn-style rings)
         if (this.planets && this.planets.length > 0) {
-            const zoom = this.camera.zoom;
             this.planets.forEach(p => {
-                if (p.flownOut) return; // Skip if flown out during warp
+                if (p.flownOut) return;
+
+                // Planets are interactive so they must NOT have parallax
+                const cx = p.x;
+                const cy = p.y;
+                
+                const screenX = w/2 + this.camera.x + cx * zoom;
+                const screenY = h/2 + this.camera.y + cy * zoom;
+                const screenRadius = p.radius * zoom;
+                const buffer = Math.max(screenRadius * 5, 2000);
+                if (screenX < -buffer || screenX > w + buffer || screenY < -buffer || screenY > h + buffer) return;
+
                 ctx.save();
+                ctx.translate(cx, cy);
 
-                // Position comes from flyObject during disengage
-                ctx.translate(p.x, p.y);
-
-                // During disengage: use scale and alpha from flyObject
                 if (this.warpDisengaging && p.warpScale !== undefined) {
                     ctx.scale(p.warpScale, p.warpScale);
                     ctx.globalAlpha = p.warpAlpha || 0;
                 }
 
-                // Axial rotation over time
                 const rotationSpeed = p.rotationSpeed || 0.05;
                 ctx.rotate(p.axialTilt + time * rotationSpeed);
 
-                // Size is handled by world scale, but we use effective screen radius for detail tiers
-                const screenRadius = p.radius * zoom;
-                const detailLevel = Math.min(3, Math.floor(screenRadius / 30)); // 0-3 detail levels
+                const detailLevel = Math.min(3, Math.floor(screenRadius / 30));
 
-                // === SATURN-STYLE RINGS: Draw back half first ===
                 if (p.hasRings) {
                     this.drawPlanetRingsHalf(ctx, p, 'back');
                 }
 
-                // Atmospheric glow (outer)
                 if (p.hasAtmosphere) {
                     const atmosGrad = ctx.createRadialGradient(0, 0, p.radius * 0.95, 0, 0, p.radius * 1.15);
                     const atmosAlpha = (0.5 + Math.sin(time * 2 + p.textureSeed) * 0.1).toFixed(2);
@@ -16598,7 +17084,6 @@ class InterstellarEngine {
                     ctx.fill();
                 }
 
-                // Planet body with 3D gradient
                 const bodyGrad = ctx.createRadialGradient(
                     -p.radius * 0.3, -p.radius * 0.3, 0,
                     0, 0, p.radius
@@ -16613,13 +17098,11 @@ class InterstellarEngine {
                 ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Surface texture (procedural bands/patterns based on zoom)
                 if (detailLevel >= 1) {
                     ctx.globalAlpha = 0.3;
                     ctx.strokeStyle = p.tertiaryColor;
                     ctx.lineWidth = 2 / zoom;
 
-                    // Draw bands for gas giants
                     if (p.type === 'gas-giant' || p.type === 'ice-giant') {
                         for (let i = -4; i <= 4; i++) {
                             const bandY = p.radius * (i * 0.15);
@@ -16632,23 +17115,21 @@ class InterstellarEngine {
                         }
                     }
 
-                    // Draw continents for terrestrial/ocean
                     if ((p.type === 'terrestrial' || p.type === 'ocean') && detailLevel >= 2) {
                         ctx.fillStyle = p.type === 'ocean' ? p.baseColor : p.secondaryColor;
                         const seed = p.textureSeed;
                         for (let j = 0; j < 5; j++) {
-                            const cx = Math.cos(seed + j * 1.2) * p.radius * 0.5;
-                            const cy = Math.sin(seed * 0.7 + j) * p.radius * 0.4;
+                            const scx = Math.cos(seed + j * 1.2) * p.radius * 0.5;
+                            const scy = Math.sin(seed * 0.7 + j) * p.radius * 0.4;
                             const cr = p.radius * (0.15 + Math.sin(seed + j) * 0.1);
                             ctx.beginPath();
-                            ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+                            ctx.arc(scx, scy, cr, 0, Math.PI * 2);
                             ctx.fill();
                         }
                     }
                     ctx.globalAlpha = 1;
                 }
 
-                // Shadow side
                 const shadowGrad = ctx.createLinearGradient(-p.radius, 0, p.radius, 0);
                 shadowGrad.addColorStop(0, 'transparent');
                 shadowGrad.addColorStop(0.6, 'transparent');
@@ -16658,7 +17139,6 @@ class InterstellarEngine {
                 ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // === SATURN-STYLE RINGS: Draw front half on top ===
                 if (p.hasRings) {
                     this.drawPlanetRingsHalf(ctx, p, 'front');
                 }
@@ -16667,7 +17147,6 @@ class InterstellarEngine {
             });
         }
     }
-
     // Helper method for drawing Saturn-style planet rings (half at a time)
     drawPlanetRingsHalf(ctx, planet, half) {
         const p = planet;
@@ -17147,6 +17626,14 @@ class InterstellarEngine {
             case 'pulse': this.drawPulse(ctx, size, shipColor, 1.0, Date.now()); break;
             case 'flux': this.drawFlux(ctx, size, shipColor, 1.0, Date.now()); break;
             case 'apex': this.drawApex(ctx, size, shipColor, 1.0, Date.now()); break;
+            case 'valkyrie': this.drawValkyrie(ctx, size, shipColor, 1.0, Date.now()); break;
+            case 'leviathan': this.drawLeviathan(ctx, size, shipColor, 1.0, Date.now()); break;
+            case 'wraith': this.drawWraith(ctx, size, shipColor, 1.0, Date.now()); break;
+            case 'pulsar': this.drawPulsar(ctx, size, shipColor, 1.0, Date.now()); break;
+            case 'nomad': this.drawNomad(ctx, size, shipColor, 1.0, Date.now()); break;
+            case 'eclipse': this.drawEclipse(ctx, size, shipColor, 1.0, Date.now()); break;
+            case 'hyperion': this.drawHyperion(ctx, size, shipColor, 1.0, Date.now()); break;
+            case 'archangel': this.drawArchangel(ctx, size, shipColor, 1.0, Date.now()); break;
             default:
                 this.drawInterceptor(ctx, size, shipColor, 1.0);
                 break;
@@ -17577,6 +18064,361 @@ class InterstellarEngine {
         }
     }
 
+    // --- MUSIC SETTINGS UI ---
+
+    openMusicSettings() {
+        console.log("[Music UI] Opening Music Settings Modal");
+        const modal = document.getElementById('musicSettingsModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.setProperty('display', 'flex', 'important');
+            modal.style.setProperty('visibility', 'visible', 'important');
+            modal.style.setProperty('opacity', '1', 'important');
+            modal.style.setProperty('pointer-events', 'auto', 'important');
+            modal.style.setProperty('z-index', '999999', 'important');
+        } else {
+            console.error("[Music UI] Error: musicSettingsModal not found in DOM");
+        }
+    }
+
+    closeMusicSettings() {
+        console.log("[Music UI] Closing Music Settings Modal");
+        const modal = document.getElementById('musicSettingsModal');
+        if (modal) {
+            modal.style.setProperty('display', 'none', 'important');
+        }
+    }
+
+    switchMusicTab(tab) {
+        const tabs = ['binaural', 'classical', 'jazz', 'ai'];
+        tabs.forEach(t => {
+            const btn = document.getElementById(`musicTabBtn_${t}`);
+            const content = document.getElementById(`musicTab_${t}`);
+            if (btn) {
+                btn.classList.remove('active');
+                btn.style.background = 'rgba(255,255,255,0.1)';
+                btn.style.borderColor = '#fff';
+            }
+            if (content) content.style.display = 'none';
+        });
+
+        const activeBtn = document.getElementById(`musicTabBtn_${tab}`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.style.background = 'rgba(0,243,255,0.2)';
+            activeBtn.style.borderColor = '#00f3ff';
+        }
+        const activeContent = document.getElementById(`musicTab_${tab}`);
+        if (activeContent) activeContent.style.display = 'block';
+    }
+
+    setMusicVolume(vol) {
+        const parsed = parseFloat(vol);
+        window.gameAudio.setMusicVolume(parsed);
+        localStorage.setItem('audioMusicVolume', parsed);
+    }
+
+    toggleMute() {
+        const isMuted = window.gameAudio.toggleMute();
+        const btn = document.getElementById('muteToggleBtn');
+        if (btn) btn.textContent = `Mute: ${isMuted ? 'ON' : 'OFF'}`;
+    }
+
+    stopAllMusic() {
+        window.gameAudio.stopAllMusic();
+        this._highlightMusicButton(null);
+    }
+
+    setBinauralPreset(beatFreq, baseFreq, btn) {
+        if (btn) this._highlightMusicButton(btn);
+        document.getElementById('binauralBaseSlider').value = baseFreq;
+        document.getElementById('binauralBaseVal').textContent = baseFreq + 'Hz';
+        document.getElementById('binauralBeatSlider').value = beatFreq;
+        document.getElementById('binauralBeatVal').textContent = beatFreq + 'Hz';
+        window.gameAudio.playBinauralLoop(baseFreq, beatFreq);
+        if (this.showToast) this.showToast(`Binaural Beats: ${beatFreq}Hz`, 2000);
+    }
+
+    updateBinauralCustom() {
+        const base = parseFloat(document.getElementById('binauralBaseSlider').value);
+        const beat = parseFloat(document.getElementById('binauralBeatSlider').value);
+        document.getElementById('binauralBaseVal').textContent = base + 'Hz';
+        document.getElementById('binauralBeatVal').textContent = beat + 'Hz';
+        
+        // Debounce audio node creation to prevent AudioContext crash while dragging
+        if (this.binauralDebounceTimer) clearTimeout(this.binauralDebounceTimer);
+        this.binauralDebounceTimer = setTimeout(() => {
+            window.gameAudio.playBinauralLoop(base, beat);
+        }, 300);
+    }
+
+    initMusicUI() {
+        // Load settings and forcibly fix old broken defaults (<= 0.15)
+        let savedVol = localStorage.getItem('audioMusicVolume');
+        if (savedVol && parseFloat(savedVol) <= 0.15) {
+            savedVol = "1.0"; // Force reset the volume if they were stuck on the old inaudible default
+            localStorage.setItem('audioMusicVolume', "1.0");
+        }
+        
+        if (savedVol) {
+            const slider = document.getElementById('musicVolumeSlider');
+            if (slider) slider.value = savedVol;
+            window.gameAudio.setMusicVolume(savedVol);
+        } else {
+            // Sync default volume to UI
+            const slider = document.getElementById('musicVolumeSlider');
+            if (slider) window.gameAudio.setMusicVolume(slider.value);
+        }
+
+        // Global Playlists (Using guaranteed direct .mp3 links for Mac/Safari compatibility)
+        this.playlists = {
+            classical: [
+                {name: "Mozart - Violin Concerto No. 3", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1775%20Mozart%20%2C%20Violin%20Concerto%20No.%203%20in%20G%2C%201st%20movement.mp3"},
+                {name: "Beethoven - Moonlight Sonata", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1801%20Beethoven-%20%27Moonlight%27%20Sonata%2C%201st%20movement.mp3"},
+                {name: "Chopin - Polonaise in A, Military", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1838%20Chopin%20-%20Polonaise%20in%20A%2C%20Op.40%20No.3%2C%20%27Military%27.mp3"},
+                {name: "Bach - Toccata in D minor", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1709%20Bach%20%2C%20Toccata%20in%20D%20minor.mp3"},
+                {name: "Vivaldi - Spring (The Four Seasons)", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1725%20Vivaldi%20%2C%20The%20Four%20Seasons%20-%20Spring.mp3"},
+                {name: "Beethoven - Symphony No. 5", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1808%20Beethoven-%20Symphony%20No.%205%2C%201st%20movement.mp3"},
+                {name: "Mozart - Symphony No. 40", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1788%20Mozart-%20Symphony%20No.%2040%2C%201st%20movement.mp3"},
+                {name: "Albinoni - Adagio", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1730%20Albinoni%20%2C%20Adagio.mp3"},
+                {name: "Purcell - Trumpet Tune and Air", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1685%20Purcell%20%2C%20Trumpet%20Tune%20and%20Air.mp3"},
+                {name: "Pachelbel - Canon in D", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1698%20Pachelbel%20%2C%20Canon%20in%20D.mp3"},
+                {name: "Handel - Water Music, Suite No. 2", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1717%20Handel%20%2C%20Water%20Music%2C%20Suite%20No.%202%20in%20D.mp3"},
+                {name: "Bach - Brandenburg Concerto No. 3", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1721%20Bach%20%2C%20Brandenburg%20Concerto%20No.%203%2C%201st%20movement.mp3"},
+                {name: "Bach - Minuet and Badinerie", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1721%20Bach%20%2C%20Minuet%20and%20Badinerie%20%28from%20Orchestral%20Suite%20No.%202%20inB%20Minor%29.mp3"},
+                {name: "Bach - Air (from Orchestral Suite No. 3)", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1727%20Bach%20%2C%20Air%20%28from%20Orchestral%20Suite%20No.%203%20in%20D%29.mp3"},
+                {name: "Vivaldi - Mandoline Concerto in C", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1729%20Vivaldi%20%2C%20Mandoline%20Concerto%20in%20C%2C%20RV%20425.mp3"},
+                {name: "Bach - Oboe Concerto in D minor", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1731%20Bach%20%2C%20Oboe%20Concerto%20in%20D%20minor%2C%202nd%20movement.mp3"},
+                {name: "Vivaldi - Flute Concerto 'La Notte'", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1731%20Vivaldi%20%2C%20Flute%20Concerto%20in%20G%20minor%20%27La%20Notte%27%2C%20VI.%20Allegro.mp3"},
+                {name: "Handel - Largo (from 'Xerxes')", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1734%20Handel%20%2C%20Largo%20%28from%20%27Xerxes%27%29.mp3"},
+                {name: "Handel - 'Hallelujah' (from 'Messiah')", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1742%20Handel%20%2C%20%27Hallelujah%27%20%28from%20%27Messiah%27%29.mp3"},
+                {name: "Handel - Arrival of the Queen of Sheba", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1749%20Handel%20%2C%20Arrival%20of%20the%20Queen%20of%20Sheba%20%28from%20%27Solomon%27%29.mp3"},
+                {name: "Gluck - Dance of the Blessed Spirits", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1762%20Gluck%20%2C%20Dance%20of%20the%20Blessed%20Spirtis%20%28from%20%27Orpheus%20and%20Eurydice%27%29.mp3"},
+                {name: "Mozart - Violin Concerto No. 5", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1775%20Mozart%20%2C%20Violin%20Concerto%20No.%205%20in%20A%2C%202nd%20Movement.mp3"},
+                {name: "Mozart - Clarinet Concerto", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1791%20Mozart-%20Clarinet%20Concerto%20in%20A%2C%202nd%20movement.mp3"},
+                {name: "Mozart - The Magic Flute Overture", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1791%20Mozart-%20The%20Magic%20Flute%20-%20Overture.mp3"},
+                {name: "Beethoven - Minuet in G", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1796%20Beethoven-%20Minuet%20in%20G.mp3"},
+                {name: "Beethoven - Fur Elise", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1810%20Beethoven-%20Fur%20Elise.mp3"},
+                {name: "Tchaikovsky - Piano Concerto No. 1", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1875%20Tchaikovsky-%20Piano%20Concerto%20No.%201%20in%20B%20flat%20minor%2C%201st%20movement%20%28excerpt%29.mp3"},
+                {name: "Tchaikovsky - Marche Slave", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1876%20Tchaikovsky-%20Marche%20Slave%2C%20Op.%2031.mp3"},
+                {name: "Tchaikovsky - Polonaise (Eugene Onegin)", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1878%20Tchaikovsky-%20Polonaise%2C%20from%20%27Eugene%20Onegin%27.mp3"},
+                {name: "Tchaikovsky - Sleeping Beauty Introduction", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1889%20Tchaikovsky-%20The%20Sleeping%20Beauty%20-%20Introduction.mp3"},
+                {name: "Tchaikovsky - Waltz of the Flowers", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1892%20Tchaikovsky-%20Waltz%20of%20the%20FLowers%2C%20from%20%27The%20Nutcracker%27.mp3"},
+                {name: "R. Strauss - Also sprach Zarathustra", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1896%20R.%20Strauss%20-%20Also%20sprach%20Zarathustra%20-%20Fanfare.mp3"},
+                {name: "Smetana - The Moldau", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1875%20Smetana-%20The%20Moldau.mp3"},
+                {name: "Grieg - Morning (Peer Gynt)", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1876%20Grieg-%20Morning%2C%20from%20%27Peer%20Gynt%27.mp3"},
+                {name: "Dvorak - Humoresque", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1894%20Dvorak%20-%20Humoresque.mp3"},
+                {name: "J. Strauss II - Emperor Waltz", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1889%20J.%20Strauss%20II-%20Emperor%20Waltz.mp3"},
+                {name: "Ravel - Bolero", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1928%20Ravel%20-%20Bolero.mp3"},
+                {name: "Sibelius - Valse Triste", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1903%20Sibelius%20-%20Valse%20Triste.mp3"},
+                {name: "Bizet - Les Toreadors (Carmen)", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1875%20Bizet-%20Les%20Toreadors%2C%20from%20%27Carmen%27.mp3"},
+                {name: "Dvorak - Symphony No. 9 (New World)", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1893%20Dvorak-%20Symphony%20No.%209%2C%20%27From%20the%20New%20World%27%2C%202nd%20Movement.mp3"},
+                {name: "Rimsky-Korsakov - Flight of the Bumblebee", url: "https://archive.org/download/100ClassicalMusicMasterpieces/1900%20Rimsky-Korsakov%20-%20Dance%20of%20the%20Bumble%20Bee.mp3"},
+                {name: "Tchaikovsky - Swan Lake (Act II Theme)", url: "https://archive.org/download/SwanLakeActIistokowskiNbcSymMembers-rca/SwanLakeActIistokowskiNbcSymMembers-rca_64kb.mp3"}
+            ],
+            jazz: [
+                {name: "Miles Davis & John Coltrane - So What", url: "https://archive.org/download/04-miles-davis-miles-davis-julian-cannonball-adderley-john-coltrane-bill-evans-w/01-Miles%20Davis%3B%20Miles%20Davis%2C%20Julian%20%27Cannonball%27%20Adderley%2C%20John%20Coltrane%2C%20Bill%20Evans%2C%20Wynton%20Kelly%2C%20Paul%20Chambers%2C%20Jimmy%20Cobb-So%20What.mp3"},
+                {name: "Miles Davis & John Coltrane - Freddie Freeloader", url: "https://archive.org/download/04-miles-davis-miles-davis-julian-cannonball-adderley-john-coltrane-bill-evans-w/02-Miles%20Davis%3B%20Miles%20Davis%2C%20Julian%20%27Cannonball%27%20Adderley%2C%20John%20Coltrane%2C%20Bill%20Evans%2C%20Wynton%20Kelly%2C%20Paul%20Chambers%2C%20Jimmy%20Cobb-Freddie%20Freeloader.mp3"},
+                {name: "Miles Davis & John Coltrane - Blue in Green", url: "https://archive.org/download/04-miles-davis-miles-davis-julian-cannonball-adderley-john-coltrane-bill-evans-w/03-Miles%20Davis%2C%20Bill%20Evans%3B%20Miles%20Davis%2C%20Julian%20%27Cannonball%27%20Adderley%2C%20John%20Coltrane%2C%20Bill%20Evans%2C%20Wynton%20Kelly%2C%20Paul%20Chambers%2C%20Jimmy%20Cobb-Blue%20in%20Green.mp3"},
+                {name: "Miles Davis & John Coltrane - All Blues", url: "https://archive.org/download/04-miles-davis-miles-davis-julian-cannonball-adderley-john-coltrane-bill-evans-w/04-Miles%20Davis%3B%20Miles%20Davis%2C%20Julian%20%27Cannonball%27%20Adderley%2C%20John%20Coltrane%2C%20Bill%20Evans%2C%20Wynton%20Kelly%2C%20Paul%20Chambers%2C%20Jimmy%20Cobb-All%20Blues.mp3"},
+                {name: "Miles Davis & John Coltrane - Flamenco Sketches", url: "https://archive.org/download/04-miles-davis-miles-davis-julian-cannonball-adderley-john-coltrane-bill-evans-w/05-Bronislau%20Kaper%2C%20Ned%20Washington%3B%20Miles%20Davis%2C%20Julian%20%27Cannonball%27%20Adderley%2C%20John%20Coltrane%2C%20Bill%20Evans%2C%20Wynton%20Kelly%2C%20Paul%20Chambers%2C%20Jimmy%20Cobb-Flamenco%20Sketches.mp3"},
+                {name: "Frank Sinatra - Come Fly With Me", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2010/Come%20Fly%20With%20Me.mp3"},
+                {name: "Frank Sinatra - Mack the Knife", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2020/Mack%20the%20Knife.mp3"},
+                {name: "Frank Sinatra - Fly Me to the Moon", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%208/Fly%20Me%20to%20the%20Moon%20%28In%20Other%20Words%29.mp3"},
+                {name: "Frank Sinatra - My Way", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2013/My%20Way.mp3"},
+                {name: "Frank Sinatra - Theme From “New York, New York”", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2018/Theme%20From%20%E2%80%9CNew%20York%2C%20New%20York%E2%80%9D.mp3"},
+                {name: "Frank Sinatra - Strangers in the Night", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2010/Strangers%20in%20the%20Night.mp3"},
+                {name: "Frank Sinatra - That’s Life", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2011/That%E2%80%99s%20Life.mp3"},
+                {name: "Frank Sinatra - I’ve Got You Under My Skin", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%206/I%E2%80%99ve%20Got%20You%20Under%20My%20Skin.mp3"},
+                {name: "Frank Sinatra - Summer Wind", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2010/Summer%20Wind.mp3"},
+                {name: "Frank Sinatra - Witchcraft", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%206/Witchcraft.mp3"},
+                {name: "Frank Sinatra - The Way You Look Tonight", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%207/The%20Way%20You%20Look%20Tonight.mp3"},
+                {name: "Frank Sinatra - Love and Marriage", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2010/Love%20and%20Marriage.mp3"},
+                {name: "Frank Sinatra - I Get a Kick Out of You", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%204/I%20Get%20a%20Kick%20Out%20of%20You.mp3"},
+                {name: "Frank Sinatra - Somethin’ Stupid", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2011/Somethin%E2%80%99%20Stupid.mp3"},
+                {name: "Frank Sinatra - It Was a Very Good Year", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%209/It%20Was%20a%20Very%20Good%20Year.mp3"},
+                {name: "Frank Sinatra - Luck Be a Lady", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%207/Luck%20Be%20a%20Lady.mp3"},
+                {name: "Frank Sinatra - Young at Heart", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%206/Young%20at%20Heart.mp3"},
+                {name: "Frank Sinatra - Night and Day", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2017/Night%20and%20Day.mp3"},
+                {name: "Frank Sinatra - Moon River", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%207/Moon%20River.mp3"},
+                {name: "Frank Sinatra - Let’s Face the Music and Dance", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2018/Let%E2%80%99s%20Face%20the%20Music%20and%20Dance.mp3"},
+                {name: "Frank Sinatra - All the Way", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%206/All%20the%20Way.mp3"},
+                {name: "Frank Sinatra - Just the Way You Are", url: "https://archive.org/download/Frank-Sinatra-Complete-Reprise-Studio-Recordings/Disc%2018/Just%20the%20Way%20You%20Are.mp3"},
+                {name: "Sonic Universe (Avant-Garde Jazz Stream)", url: "https://ice1.somafm.com/sonicuniverse-128-mp3"},
+                {name: "Illinois Street Lounge (Classic Jazz Stream)", url: "https://ice1.somafm.com/illstreet-128-mp3"},
+                {name: "Secret Agent (Lounge Jazz Stream)", url: "https://ice1.somafm.com/secretagent-128-mp3"}
+            ],
+            ai: [
+                {name: "Beat Blender", url: "https://ice1.somafm.com/beatblender-128-mp3"},
+                {name: "Dub Step Ambient", url: "https://ice1.somafm.com/dubstep-128-mp3"},
+                {name: "Cosmic Flow", url: "https://ice1.somafm.com/spacestation-128-mp3"},
+                {name: "Synphaera Audio", url: "https://ice1.somafm.com/synphaera-128-mp3"},
+                {name: "Lush Atmosphere", url: "https://ice1.somafm.com/lush-128-mp3"},
+                {name: "Groove Salad", url: "https://ice1.somafm.com/groovesalad-128-mp3"},
+                {name: "Dark Zone Ambient", url: "https://ice1.somafm.com/darkzone-128-mp3"},
+                {name: "Deep Space One", url: "https://ice1.somafm.com/deepspaceone-128-mp3"}
+            ]
+        };
+
+        // Premium Classical Tracks
+        const classicalList = document.getElementById('classicalTrackList');
+        if (classicalList) {
+            let html = '';
+            this.playlists.classical.forEach((track, index) => {
+                html += `<button class="btn-secondary" data-orig-bg="rgba(212, 175, 55, 0.1)" style="border-color:#d4af37; color: #fff; background: rgba(212, 175, 55, 0.1);" onclick="app.playPlaylist('classical', ${index}, this)">🎻 ${track.name}</button>`;
+            });
+            classicalList.innerHTML = html;
+        }
+
+        // Premium Jazz Tracks
+        const jazzList = document.getElementById('jazzTrackList');
+        if (jazzList) {
+            let html = '';
+            this.playlists.jazz.forEach((track, index) => {
+                html += `<button class="btn-secondary" data-orig-bg="rgba(181, 101, 29, 0.1)" style="border-color:#b5651d; color: #fff; background: rgba(181, 101, 29, 0.1);" onclick="app.playPlaylist('jazz', ${index}, this)">🎷 ${track.name}</button>`;
+            });
+            jazzList.innerHTML = html;
+        }
+
+        // AI-Created Tracks
+        const aiList = document.getElementById('aiTrackList');
+        if (aiList) {
+            let html = '';
+            this.playlists.ai.forEach((track, index) => {
+                html += `<button class="btn-secondary" data-orig-bg="rgba(255, 100, 200, 0.1)" style="border-color:#ff64c8; color: #fff; background: rgba(255, 100, 200, 0.1);" onclick="app.playPlaylist('ai', ${index}, this)">✨ ${track.name}</button>`;
+            });
+            aiList.innerHTML = html;
+        }
+    }
+
+    playProceduralAudio(btn, index, type) {
+        // Deprecated: Kept for backwards compatibility if needed elsewhere
+    }
+
+    playPlaylist(category, startIndex, btn) {
+        if (btn) this._highlightMusicButton(btn);
+        
+        const playlist = this.playlists[category];
+        if (!playlist || playlist.length === 0) return;
+        
+        // Extract just the URLs for the audio engine
+        const urls = playlist.map(t => t.url);
+        
+        if (this.showToast) this.showToast(`Loading: ${playlist[startIndex].name}`, 2000);
+        
+        this.currentPlaylistCategory = category;
+        window.gameAudio.playStreamingMusic(urls, startIndex);
+        
+        this.updateNowPlayingName(startIndex);
+    }
+
+    updateNowPlayingName(index) {
+        if (!this.currentPlaylistCategory || !this.playlists[this.currentPlaylistCategory]) return;
+        const track = this.playlists[this.currentPlaylistCategory][index];
+        if (!track) return;
+
+        // Show Now Playing Banner in modal
+        const banner = document.getElementById('nowPlayingBanner');
+        const trackTitle = document.getElementById('nowPlayingTrackName');
+        if (banner && trackTitle) {
+            banner.style.display = 'flex';
+            trackTitle.textContent = track.name;
+        }
+
+        // Show on flight HUD if it exists
+        const hudTitle = document.getElementById('hudNowPlayingTitle');
+        if (hudTitle) {
+            hudTitle.textContent = "🎵 " + track.name;
+        }
+    }
+
+    togglePlayPause() {
+        if (window.gameAudio.isStreamingPlaying) {
+            window.gameAudio.pauseStream();
+        } else {
+            window.gameAudio.resumeStream();
+        }
+    }
+
+    nextTrack() {
+        window.gameAudio.playNextTrack();
+    }
+
+    prevTrack() {
+        window.gameAudio.playPreviousTrack();
+    }
+
+    updateMediaControlsUI(isPlaying) {
+        const icon = isPlaying ? '⏸' : '▶';
+        document.querySelectorAll('.media-playpause-btn').forEach(btn => {
+            btn.textContent = icon;
+        });
+    }
+
+    seekAudio(offset) {
+        if (this.audio) {
+            this.audio.seekStream(offset);
+        }
+    }
+
+    scrubberChanged(val) {
+        this.isScrubbing = true;
+    }
+
+    scrubberReleased(val) {
+        if (this.audio) {
+            const pct = parseFloat(val) / 100;
+            if (this.audio.currentStreamingAudio && isFinite(this.audio.currentStreamingAudio.duration)) {
+                this.audio.setStreamTime(pct * this.audio.currentStreamingAudio.duration);
+            }
+        }
+        this.isScrubbing = false;
+    }
+
+    formatTime(seconds) {
+        if (!isFinite(seconds) || isNaN(seconds)) return "Live";
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    updateScrubber(currentTime, duration) {
+        if (this.isScrubbing) return;
+        
+        const curEl = document.getElementById('audioCurrentTime');
+        const durEl = document.getElementById('audioDurationTime');
+        const scrubEl = document.getElementById('audioScrubber');
+        
+        if (curEl) curEl.textContent = this.formatTime(currentTime);
+        if (durEl) durEl.textContent = this.formatTime(duration);
+        
+        if (scrubEl && isFinite(duration) && duration > 0) {
+            scrubEl.value = (currentTime / duration) * 100;
+        } else if (scrubEl) {
+            scrubEl.value = 0;
+        }
+    }
+
+    _highlightMusicButton(btn) {
+        // Remove active class from all music buttons
+        document.querySelectorAll('#musicSettingsModal .btn-secondary').forEach(b => {
+            if (b.textContent !== 'CLOSE GUIDE') {
+                b.classList.remove('active');
+                if (b.dataset.origBg) {
+                    b.style.background = b.dataset.origBg;
+                } else {
+                    b.style.background = '';
+                }
+                // Keep the border color if it was specifically set
+            }
+        });
+        // Add to current
+        if (btn) {
+            btn.classList.add('active');
+            btn.style.background = 'rgba(0,243,255,0.2)';
+        }
+    }
+
     initAdminPanel() {
         // Premium Toggle
         const premiumToggle = document.getElementById('adminPremiumToggle');
@@ -17964,8 +18806,75 @@ class InterstellarEngine {
         };
         reader.readAsText(file);
     }
+
+    respawnSpacecraftBackground() {
+        const zRange = 3000;
+        const shipClasses = [
+            { name: 'saucer', baseSize: 50, complexity: 'high', weight: 4 },
+            { name: 'star-dreadnought', baseSize: 120, complexity: 'high', weight: 1 },
+            { name: 'quantum-scout', baseSize: 40, complexity: 'high', weight: 3 },
+            { name: 'void-fighter', baseSize: 30, complexity: 'medium', weight: 4 },
+            { name: 'nebula-cruiser', baseSize: 90, complexity: 'high', weight: 2 },
+            { name: 'bio-corvette', baseSize: 60, complexity: 'high', weight: 2 },
+            { name: 'warp-strider', baseSize: 100, complexity: 'medium', weight: 1 },
+            { name: 'prism-destroyer', baseSize: 80, complexity: 'low', weight: 2 },
+            { name: 'stellar-barge', baseSize: 110, complexity: 'medium', weight: 2 },
+            { name: 'cyber-sentry', baseSize: 35, complexity: 'high', weight: 3 },
+            { name: 'aether-wing', baseSize: 50, complexity: 'high', weight: 2 },
+            { name: 'death-sphere', baseSize: 150, complexity: 'high', weight: 1 },
+            { name: 'tie-fighter', baseSize: 45, complexity: 'high', weight: 3 }
+        ];
+
+        const pool = [];
+        shipClasses.forEach(sc => {
+            for (let w = 0; w < sc.weight; w++) pool.push(sc);
+        });
+
+        const shipClass = pool[Math.floor(Math.random() * pool.length)];
+        const hue = Math.random() * 360;
+        const dist = 1500 + Math.random() * 2500;
+        const angle = Math.random() * Math.PI * 2;
+        const isSaucer = shipClass.name === 'saucer';
+        const size = shipClass.baseSize * 0.8 * (0.7 + Math.random() * 0.6);
+
+        this.spacecraft.push({
+            x: this.playerShip.x + Math.cos(angle) * dist,
+            y: this.playerShip.y + Math.sin(angle) * dist,
+            z: (Math.random() * zRange) - zRange / 2,
+            vx: (Math.random() - 0.5) * (isSaucer ? 2 : 3),
+            vy: (Math.random() - 0.5) * (isSaucer ? 2 : 3),
+            size: size,
+            shipClass: shipClass.name,
+            complexity: shipClass.complexity,
+            hullColor: isSaucer ? `hsl(${hue}, 10%, 50%)` : `hsl(${hue}, 30%, 40%)`,
+            hullHighlight: isSaucer ? `hsl(${hue}, 5%, 85%)` : `hsl(${hue}, 20%, 70%)`,
+            hullShadow: isSaucer ? `hsl(${hue}, 15%, 25%)` : `hsl(${hue}, 40%, 20%)`,
+            engineColor: `hsl(${(hue + 180) % 360}, 100%, 60%)`,
+            engineGlow: `hsl(${(hue + 180) % 360}, 100%, 85%)`,
+            lightColor: `hsl(${Math.random() * 60 + 300}, 100%, 55%)`,
+            lightColor2: `hsl(${Math.random() * 60}, 100%, 50%)`,
+            lightPhase: Math.random() * Math.PI * 2,
+            detailSeed: Math.random() * 1000,
+            wingAngle: 0.3 + Math.random() * 0.4,
+            engineCount: shipClass.name === 'mothership' ? 6 : (shipClass.name === 'destroyer' ? 4 : (shipClass.name === 'cruiser' ? 3 : 2)),
+            domeColor: `hsl(${Math.random() * 180 + 160}, 80%, 70%)`,
+            beamActive: Math.random() > 0.7,
+            beamColor: `hsl(${Math.random() * 60 + 80}, 100%, 70%)`,
+            ringCount: isSaucer ? Math.floor(Math.random() * 3) + 2 : 0,
+            rotationSpeed: (Math.random() - 0.5) * 0.02,
+            rotation: Math.random() * Math.PI * 2,
+            hasShield: Math.random() > 0.8,
+            shieldColor: `hsl(${Math.random() * 60 + 180}, 70%, 60%)`,
+            shieldPhase: Math.random() * Math.PI * 2,
+            health: shipClass.name === 'mothership' ? 250 : (shipClass.name === 'destroyer' ? 120 : (shipClass.name === 'cruiser' ? 80 : 40)),
+            maxHealth: shipClass.name === 'mothership' ? 250 : (shipClass.name === 'destroyer' ? 120 : (shipClass.name === 'cruiser' ? 80 : 40)),
+            fireTimer: 0
+        });
+    }
 }
 
+// Bind utilities to prototype so existing `this.method` calls still work
+Object.assign(InterstellarEngine.prototype, Utils);
 
 window.game = new InterstellarEngine();
 window.app = window.game; // Bridge for HTML handlers

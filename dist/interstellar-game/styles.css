@@ -66,6 +66,24 @@
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
+        .popup-panel {
+            position: fixed;
+            top: 25%;
+            left: 25%;
+            z-index: 400;
+            background: linear-gradient(135deg, rgba(15, 25, 45, 0.95) 0%, rgba(10, 15, 25, 0.98) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            border-radius: 12px;
+            padding: 20px;
+            color: #fff;
+            box-shadow:
+                0 0 40px rgba(0, 243, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+        }
+
         /* Top Left Info */
         .info-panel {
             align-self: flex-start;
@@ -1776,6 +1794,8 @@
         /* Floating Windows (Map & Leaders) - Glassmorphism */
         .floating-window {
             position: fixed;
+            top: 15%;
+            left: 15%;
             z-index: 310;
             background: linear-gradient(135deg, rgba(10, 20, 35, 0.92) 0%, rgba(5, 15, 30, 0.95) 100%);
             border: 1px solid rgba(0, 243, 255, 0.3);
@@ -1792,6 +1812,7 @@
             transition: all 0.3s ease;
             min-width: 180px;
             min-height: 100px;
+            pointer-events: auto;
         }
 
         .floating-window:hover {
