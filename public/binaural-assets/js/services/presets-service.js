@@ -17,7 +17,7 @@ import {
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 import { getApps } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
-import { PRESET_COMBOS, SOUNDSCAPES } from '/binaural-assets/js/state.js';
+import { PRESET_COMBOS, SOUNDSCAPES } from '../state.js';
 
 const PRESETS_COLLECTION = 'global_presets';
 const SOUNDSCAPES_COLLECTION = 'global_soundscapes';

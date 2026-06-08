@@ -60,9 +60,16 @@ window.controls = {
         const rightPanel = document.getElementById('rightPanel');
         if (rightPanel) rightPanel.classList.remove('translate-x-full');
 
-        // Switch to Visuals Tab
-        const visualsTabBtn = document.querySelector('.studio-tab-btn[data-tab="visuals"]');
-        if (visualsTabBtn) visualsTabBtn.click();
+        // Switch to correct Tab depending on the panel requested
+        if (panelId === 'cymaticsPanel' || panelId === 'snowflakeSettingsPanel') {
+            const activeTabBtn = document.querySelector('.tab-pill[onclick*="active"]');
+            if (activeTabBtn) activeTabBtn.click();
+            else this.switchRightTab('active');
+        } else {
+            const visualsTabBtn = document.getElementById('tour-visuals-tab') || document.querySelector('.tab-pill[onclick*="visuals"]');
+            if (visualsTabBtn) visualsTabBtn.click();
+            else this.switchRightTab('visuals');
+        }
 
         // Update panel visibility in Visualizer3D if already active
         const viz = getVisualizer();
@@ -80,8 +87,7 @@ window.controls = {
         this.syncSidebar('matrixPanel');
     },
     toggleSnowflakeSettings: function(btn) {
-        const panel = document.getElementById('snowflakeSettingsPanel');
-        if (panel) panel.classList.toggle('hidden');
+        this.syncSidebar('snowflakeSettingsPanel');
     },
     setMatrixMode: function(mode) {
         const viz = getVisualizer();
@@ -116,10 +122,115 @@ window.controls = {
             viz.sunRotationSpeedZ = 0;
             if (typeof showToast === 'function') showToast('Galaxy Sun Reset', 'info');
         }
+    },
+    switchRightTab: function(targetId, btn) {
+        const panel = document.getElementById('rightPanel');
+        if (!panel) return;
+        
+        // Find all buttons inside rightPanel's tabs container (both .tab-pill and .global-tab-btn)
+        const tabs = panel.querySelectorAll('.tab-pill, .global-tab-btn');
+        tabs.forEach(t => t.classList.remove('active'));
+        
+        if (btn) {
+            btn.classList.add('active');
+        } else {
+            // Find a button that matches targetId (case-insensitive and removing common prefixes/suffixes)
+            const cleanTarget = targetId.toLowerCase().replace('tab-', '').replace('right-', '');
+            const found = Array.from(tabs).find(t => {
+                const text = t.innerText.toLowerCase();
+                const onclickAttr = (t.getAttribute('onclick') || '').toLowerCase();
+                return text.includes(cleanTarget) || onclickAttr.includes(targetId.toLowerCase());
+            });
+            if (found) found.classList.add('active');
+        }
+        
+        // Clean targetId for comparison: strip any 'tab-' or 'right-' prefix
+        const cleanId = targetId.replace('right-', '').replace('tab-', '');
+        
+        // Update Panels
+        const panels = panel.querySelectorAll('.tab-panel');
+        panels.forEach(p => {
+            const cleanPanelId = p.id.replace('right-', '').replace('tab-', '');
+            // Support atmosphere vs atmos alias mapping
+            const isMatch = p.id === targetId || 
+                            cleanPanelId === cleanId || 
+                            (cleanId === 'atmos' && cleanPanelId === 'atmosphere') ||
+                            (cleanId === 'atmosphere' && cleanPanelId === 'atmos');
+            
+            if (isMatch) {
+                p.classList.remove('hidden');
+                p.classList.add('active');
+            } else {
+                p.classList.add('hidden');
+                p.classList.remove('active');
+            }
+        });
+        
+        // Special context hook
+        if ((cleanId === 'visuals' || cleanId === 'tab-visuals') && typeof window.updateActiveTabContext === 'function') {
+            window.updateActiveTabContext();
+        }
+        
+        // Persistence
+        try {
+            localStorage.setItem('mindwave_tab_right', targetId);
+        } catch (e) {}
+
+        // Re-bind or trigger resize for dynamic components if needed
+        window.dispatchEvent(new CustomEvent('mw-tab-switched', { detail: { side: 'right', tabId: targetId } }));
+        console.log(`[Sensory Hub] Switched to ${targetId.toUpperCase()} tab`);
+    },
+    switchLeftTab: function(targetId, btn) {
+        const panel = document.getElementById('leftPanel');
+        if (!panel) return;
+        
+        // Find all buttons inside leftPanel's tabs container (both .tab-pill and .global-tab-btn)
+        const tabs = panel.querySelectorAll('.tab-pill, .global-tab-btn');
+        tabs.forEach(t => t.classList.remove('active'));
+        
+        if (btn) {
+            btn.classList.add('active');
+        } else {
+            // Find a button that matches targetId (case-insensitive and removing common prefixes/suffixes)
+            const cleanTarget = targetId.toLowerCase().replace('tab-', '').replace('left-', '');
+            const found = Array.from(tabs).find(t => {
+                const text = t.innerText.toLowerCase();
+                const onclickAttr = (t.getAttribute('onclick') || '').toLowerCase();
+                return text.includes(cleanTarget) || onclickAttr.includes(targetId.toLowerCase());
+            });
+            if (found) found.classList.add('active');
+        }
+        
+        // Clean targetId for comparison: strip any 'tab-' or 'left-tab-' prefix
+        const cleanId = targetId.replace('left-tab-', '').replace('tab-', '');
+        
+        // Update Panels
+        const panels = panel.querySelectorAll('.tab-panel');
+        panels.forEach(p => {
+            const cleanPanelId = p.id.replace('left-tab-', '').replace('tab-', '');
+            if (p.id === targetId || cleanPanelId === cleanId) {
+                p.classList.remove('hidden');
+                p.classList.add('active');
+            } else {
+                p.classList.add('hidden');
+                p.classList.remove('active');
+            }
+        });
+        
+        // Persistence
+        try {
+            localStorage.setItem('mindwave_tab_left', targetId);
+        } catch (e) {}
+
+        // Re-bind or trigger resize for dynamic components if needed
+        window.dispatchEvent(new CustomEvent('mw-tab-switched', { detail: { side: 'left', tabId: targetId } }));
+        console.log(`[Left Panel] Switched to ${targetId.toUpperCase()}`);
     }
 };
 
 // Unified Global Registration for mindwave-beta.html integration
+window.switchLeftTab = window.controls.switchLeftTab;
+window.switchRightTab = window.controls.switchRightTab;
 window.toggleGalaxySettings = window.controls.toggleGalaxySettings;
 window.toggleCyberSettings = window.controls.toggleCyberSettings;
 window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
@@ -127,6 +238,20 @@ window.toggleGalaxySun = window.controls.toggleGalaxySun;
 window.resetGalaxySettings = window.controls.resetGalaxySettings;
 window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
 window.setMatrixMode = window.controls.setMatrixMode;
+
+// Activate any pending tabs queued before controls loaded
+setTimeout(() => {
+    if (window._pendingLeftTab) {
+        const btn = document.querySelector(`#leftPanel .tab-pill[onclick*="${window._pendingLeftTab}"]`);
+        window.controls.switchLeftTab(window._pendingLeftTab, btn);
+        delete window._pendingLeftTab;
+    }
+    if (window._pendingRightTab) {
+        const btn = document.querySelector(`#rightPanel .tab-pill[onclick*="${window._pendingRightTab}"]`);
+        window.controls.switchRightTab(window._pendingRightTab, btn);
+        delete window._pendingRightTab;
+    }
+}, 50);
 
 
 // NEW: Global UI Sync Listener for Visual Modes
@@ -151,8 +276,7 @@ window.addEventListener('mindwave:visual-mode-sync', (e) => {
         { id: 'cyberBtn', mode: 'cyber' },
         { id: 'matrixBtn', mode: 'matrix' },
         { id: 'snowflakeBtn', mode: 'snowflake' },
-        { id: 'cymaticsBtn', mode: 'cymatics' }
-    ];
+            ];
 
     buttons.forEach(({ id, mode }) => {
         const btn = document.getElementById(id);
@@ -294,12 +418,7 @@ export function setupUI() {
     els.matrixBtn = document.getElementById('matrixBtn');
     els.snowflakeBtn = document.getElementById('snowflakeBtn');
     els.oceanBtn = document.getElementById('oceanBtn'); // New ID for island/waves
-    els.cymaticsBtn = document.getElementById('cymaticsBtn'); // Now Fractal Patterns
-
-    // Cymatics / Galaxy / Matrix Controls
-    els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
-    els.cymaticNextBtn = document.getElementById('cymaticNextBtn');
-    els.cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
+    
 
     els.matrixTextInput = document.getElementById('matrixTextInput');
     els.matrixVibrationToggle = document.getElementById('matrixVibrationToggle');
@@ -1026,7 +1145,7 @@ export function setupUI() {
     if (els.snowflakeBtn) {
         els.snowflakeBtn.addEventListener('click', () => {
             setVisualMode('snowflake', null, true);
-            if (window.setCymaticMedium) window.setCymaticMedium(3); // Auto-set to ICE medium
+            
         });
     }
     // Duplicate oceanBtn listener removed (was causing double-toggle ON→OFF)
@@ -1036,67 +1155,9 @@ export function setupUI() {
     });
 
     // ── Cymatics panel controls ────────────────────────────────────
-    window.toggleCymaticsPanel = function() {
-        const panel = document.getElementById('cymaticsPanel');
-        if (panel) {
-            panel.classList.toggle('hidden');
-            panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
-        }
-    };
-    window.selectCymaticPattern = function(idx) {
-        const viz = getVisualizer();
-        if (viz?.setCymaticPatternByIndex) viz.setCymaticPatternByIndex(idx);
-    };
-
-    window.setCymaticMedium = function(mediumIdx) {
-        state.cymaticMedium = mediumIdx;
-        
-        // Update button UI
-        const buttons = document.querySelectorAll('.cym-medium-btn');
-        buttons.forEach((btn, idx) => {
-            if (idx === mediumIdx) {
-                btn.classList.add('active', 'border-purple-400');
-                btn.style.backgroundColor = 'rgba(168, 85, 247, 0.2)';
-            } else {
-                btn.classList.remove('active', 'border-purple-400');
-                btn.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-            }
-        });
-        
-        const mediumNames = ['Water', 'Sand', 'Ether', 'Ice/Crystal'];
-        showToast(`Simulation Medium: ${mediumNames[mediumIdx]}`, 'info');
-
-        // Instant Engine Update
-        const viz = getVisualizer();
-        if (viz && viz.cymaticMaterial) {
-            viz.cymaticMaterial.uniforms.uMedium.value = mediumIdx;
-        }
-    };
-
-    window.selectCymaticPattern = function(idx) {
-        console.log(`[Controls] Selecting Pattern: ${idx}`);
-        
-        // UI Highlighting Sync
-        const btns = document.querySelectorAll('.cymatics-pattern-btn');
-        btns.forEach((btn, i) => {
-            if (i === idx) {
-                btn.classList.add('active', 'border-purple-400/80', 'bg-purple-400/10');
-                btn.style.color = '#ffffff';
-            } else {
-                btn.classList.remove('active', 'border-purple-400/80', 'bg-purple-400/10');
-                // Restore original color based on some heuristic or just reset
-                btn.style.color = ''; 
-            }
-        });
-
-        const viz = getVisualizer();
-        if (viz && typeof viz.setCymaticPatternByIndex === 'function') {
-            viz.setCymaticPatternByIndex(idx);
-        } else {
-            console.error("[Controls] Visualizer or setCymaticPatternByIndex not available", viz);
-        }
-    };
-
+    
+    
+    
     const cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
     const cymaticNextBtn = document.getElementById('cymaticNextBtn');
     if (cymaticPrevBtn) cymaticPrevBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.prevCymatic) viz.prevCymatic(); });
@@ -1133,12 +1194,25 @@ export function setupUI() {
         updateCymaticLab('cymaticEntropy', 1.0);
         updateCymaticLab('cymaticFlow', 1.0);
         
-        document.getElementById('slider-cymaticResonance').value = 1.0;
-        document.getElementById('slider-cymaticEntropy').value = 1.0;
-        document.getElementById('slider-cymaticFlow').value = 1.0;
+        const r = document.getElementById('slider-cymaticResonance') || document.getElementById('cymaticsResonanceSlider');
+        const e = document.getElementById('slider-cymaticEntropy') || document.getElementById('cymaticsEntropySlider');
+        const f = document.getElementById('slider-cymaticFlow') || document.getElementById('cymaticsFlowSlider');
+        
+        if (r) r.value = 1.0;
+        if (e) e.value = 1.0;
+        if (f) f.value = 1.0;
         
         showToast("Cymatics Lab Reset", "info");
     };
+
+    // Advanced Cymatics Lab input listeners
+    const sliderRes = document.getElementById('slider-cymaticResonance') || document.getElementById('cymaticsResonanceSlider');
+    const sliderEnt = document.getElementById('slider-cymaticEntropy') || document.getElementById('cymaticsEntropySlider');
+    const sliderFlo = document.getElementById('slider-cymaticFlow') || document.getElementById('cymaticsFlowSlider');
+
+    if (sliderRes) sliderRes.addEventListener('input', (e) => updateCymaticLab('cymaticResonance', e.target.value));
+    if (sliderEnt) sliderEnt.addEventListener('input', (e) => updateCymaticLab('cymaticEntropy', e.target.value));
+    if (sliderFlo) sliderFlo.addEventListener('input', (e) => updateCymaticLab('cymaticFlow', e.target.value));
 
     const cymaticAiBtn = document.getElementById('cymaticAiBtn');
     if (cymaticAiBtn) {
@@ -1158,11 +1232,27 @@ export function setupUI() {
         });
     }
 
-    const cymaticsColorPicker = document.getElementById('cymaticsColorPicker');
-    if (cymaticsColorPicker) {
-        cymaticsColorPicker.addEventListener('input', () => {
+    const cymaticsCol1Picker = document.getElementById('cymaticsCol1Picker');
+    if (cymaticsCol1Picker) {
+        cymaticsCol1Picker.addEventListener('input', () => {
             const viz = getVisualizer();
-            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsColorPicker.value);
+            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsCol1Picker.value);
+        });
+    }
+
+    const cymaticsCol2Picker = document.getElementById('cymaticsCol2Picker');
+    if (cymaticsCol2Picker) {
+        cymaticsCol2Picker.addEventListener('input', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticColor2) viz.setCymaticColor2(cymaticsCol2Picker.value);
+        });
+    }
+
+    const cymaticsCol3Picker = document.getElementById('cymaticsCol3Picker');
+    if (cymaticsCol3Picker) {
+        cymaticsCol3Picker.addEventListener('input', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticColor3) viz.setCymaticColor3(cymaticsCol3Picker.value);
         });
     }
 
@@ -2860,7 +2950,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     if (mode === 'cymatics') console.log('%c[Visuals] CYMATICS MODE ACTIVATED', 'color: #a855f7; font-weight: bold; font-size: 14px;');
     let viz = getVisualizer();
     let activeModes = new Set();
-    const state = window.MindWaveState || {};
+
 
     // 1. Manual Override Check (Unlock AI Lock)
     if (isManual && state.aiVisualsLocked) {
@@ -6113,3 +6203,54 @@ export function setupMasterVisualControls() {
 }
 
 
+
+// ── Cymatics Engine v4 Native Routing ─────────────────────────────────────────
+
+window.setCymaticPattern = function(classId, variationId) {
+    console.log(`[Cymatics] Set Pattern - Class: ${classId}, Variation: ${variationId}`);
+    
+    // UI Highlighting Sync
+    const btns = document.querySelectorAll('.cymatics-pattern-btn');
+    btns.forEach(btn => btn.classList.remove('ring-2', 'ring-blue-400', 'scale-95'));
+    
+    // Find the correct button using classId and variationId
+    const clickStr = `window.setCymaticPattern(${classId}, ${variationId})`;
+    const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick') === clickStr);
+    if (activeBtn) {
+        activeBtn.classList.add('ring-2', 'ring-blue-400', 'scale-95');
+    }
+
+    const viz = getVisualizer();
+    if (viz && viz.applyCymaticClassAndVariation) {
+        viz.applyCymaticClassAndVariation(classId, variationId);
+    }
+};
+
+window.setCymaticColor = function(classId, colorIndex, hex) {
+    console.log(`[Cymatics] Set Color - Class: ${classId}, Index: ${colorIndex}, Hex: ${hex}`);
+    const viz = getVisualizer();
+    if (viz && viz.setCymaticColor) {
+        viz.setCymaticColor(classId, colorIndex, hex);
+    }
+};
+
+window.setCymaticParam = function(classId, paramName, value) {
+    const viz = getVisualizer();
+    if (viz && viz.setCymaticParam) {
+        viz.setCymaticParam(classId, paramName, parseFloat(value));
+    }
+};
+
+window.addEventListener('cymaticColorSync', function(e) {
+    const { classId, color1, color2 } = e.detail;
+    // Find the primary color picker for this class
+    const picker1 = document.querySelector(`input[oninput*="window.setCymaticColor(${classId}, 1"]`);
+    if (picker1 && picker1.value !== color1) {
+        picker1.value = color1;
+    }
+    // Find the secondary color picker for this class
+    const picker2 = document.querySelector(`input[oninput*="window.setCymaticColor(${classId}, 2"]`);
+    if (picker2 && picker2.value !== color2) {
+        picker2.value = color2;
+    }
+});

@@ -1,4 +1,4 @@
-import { getMediaList, getMediaURL, getMediaThumbnail, deleteMedia, formatBytes } from '/binaural-assets/js/services/storage-manager.js';
+import { getMediaList, getMediaURL, getMediaThumbnail, deleteMedia, formatBytes } from '../services/storage-manager.js';
 
 export function initVaultUI() {
     console.log('[MediaVaultUI] Initializing...');

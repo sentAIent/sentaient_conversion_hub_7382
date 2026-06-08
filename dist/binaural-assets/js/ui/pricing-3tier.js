@@ -3,11 +3,11 @@
  * Free (Seeker) vs Founders Club ($9.99/mo) vs Professional ($25/mo)
  */
 
-import { goToCheckout, getUserTier, getActiveTierPricing } from '/binaural-assets/js/services/stripe-simple.js';
+import { goToCheckout, getUserTier, getActiveTierPricing } from '../services/stripe-simple.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
-import { shareReferral } from '/binaural-assets/js/services/referral.js';
-import { getVariant, trackConversion } from '/binaural-assets/js/utils/ab-testing.js';
-import { trackGlobalEvent } from '/binaural-assets/js/services/analytics-service.js';
+import { shareReferral } from '../services/referral.js';
+import { getVariant, trackConversion } from '../utils/ab-testing.js';
+import { trackGlobalEvent } from '../services/analytics-service.js';
 import { showInquiryForm } from './inquiry-form.js';
 
 // PRICING CONFIGURATION

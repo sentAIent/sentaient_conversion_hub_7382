@@ -1,7 +1,7 @@
 // MindWave Preset Sharing
 // Share presets via URL parameters and QR codes
 
-import { state } from '/binaural-assets/js/state.js';
+import { state } from '../state.js';
 
 // Generate a shareable URL for current settings
 export function generateShareableURL() {
@@ -70,12 +70,12 @@ export function applySharedPreset(preset) {
 
     if (baseSlider) {
         baseSlider.value = preset.base;
-        if (baseValue) baseValue.textContent = parseFloat(preset.base).toFixed(1) + ' Hz';
+        if (baseValue) baseValue.textContent = preset.base + ' Hz';
     }
 
     if (beatSlider) {
         beatSlider.value = preset.beat;
-        if (beatValue) beatValue.textContent = parseFloat(preset.beat).toFixed(1) + ' Hz';
+        if (beatValue) beatValue.textContent = preset.beat + ' Hz';
     }
 
     if (preset.color && visualColorPicker) {

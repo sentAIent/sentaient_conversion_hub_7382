@@ -1,6 +1,6 @@
 // Structured learning path for meditation consistency
-import { state, VISUALIZER_VERSION } from '/binaural-assets/js/state.js';
-import { db, doc, setDoc, getDoc, serverTimestamp } from '/binaural-assets/js/services/firebase.js';
+import { state, VISUALIZER_VERSION } from '../state.js';
+import { db, doc, setDoc, getDoc, serverTimestamp } from '../services/firebase.js';
 
 // Journey stages and lessons
 export const JOURNEY_STAGES = [

@@ -1,5 +1,5 @@
-import { state } from '/binaural-assets/js/state.js';
-import { hasPurchasedApp } from '/binaural-assets/js/services/stripe-simple.js';
+import { state } from '../state.js';
+import { hasPurchasedApp } from '../services/stripe-simple.js';
 
 /**
  * PWA Install Prompt

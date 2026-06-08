@@ -1,5 +1,5 @@
-import { els } from '/binaural-assets/js/state.js';
-import { getCachedAudioUrl, cacheAudioOffline, isAudioCached } from '/binaural-assets/js/utils/audio-offline-manager.js';
+import { els } from '../state.js';
+import { getCachedAudioUrl, cacheAudioOffline, isAudioCached } from '../utils/audio-offline-manager.js';
 
 // Built-in classical pieces (can be hidden but not deleted from server)
 export const BUILTIN_CLASSICAL_PIECES = [

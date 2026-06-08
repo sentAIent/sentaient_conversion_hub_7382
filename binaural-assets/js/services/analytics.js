@@ -4,7 +4,7 @@
 const ANALYTICS_KEY = 'mindwave_analytics';
 
 // Integration Imports
-import * as ga from '/binaural-assets/js/utils/analytics.js';
+import * as ga from '../utils/analytics.js';
 import * as firestore from './analytics-service.js';
 import { getCurrentUser } from './firebase.js';
 

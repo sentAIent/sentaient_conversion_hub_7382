@@ -1,5 +1,6 @@
 import { state, els, THEMES } from '/binaural-assets/js/state.js';
 import * as THREE from '/binaural-assets/js/vendor/three.module.js';
+import { CymaticsCore } from './CymaticsCore.js';
 
 let viz3D = null;
 
@@ -117,6 +118,7 @@ export class Visualizer3D {
 
         try {
             this.scene = new THREE.Scene();
+            this.cymaticsCore = new CymaticsCore(this.cymaticsGroup);
             // Add groups to scene
             const groups = [
                 this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup, 
@@ -141,6 +143,11 @@ export class Visualizer3D {
             const maxPixelRatio = this.isLowPower ? 1.0 : 2.0;
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
             
+            // Initialize new Cymatics Engine
+            // cymaticsCore handles the meshes directly now
+            
+            // UI hooks moved to global scope
+
             this.textures = {};
             this.customColors = {}; // PER-VISUAL color overrides
             this.customColor = null; // GLOBAL color override
@@ -1377,716 +1384,27 @@ export class Visualizer3D {
         }
     }
 
-    setCymaticIntensity(val) {
-        this._cymaticIntensityOverride = val;
-        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uIntensity) {
-            this.cymaticMaterial.uniforms.uIntensity.value = val;
-        }
-    }
 
-    setCymaticHarmonics(val) {
-        state.harmonicsLevel = val;
-        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uHarmonics) {
-            this.cymaticMaterial.uniforms.uHarmonics.value = val;
-        }
-    }
-
-    setSnowColor(hex) {
-        if (this._snowData?.material) {
-            this._snowData.material.uniforms.uColor.value.set(hex);
-        }
-        if (this._snowData?.spinMeshes) {
-            this._snowData.spinMeshes.forEach(m => {
-                if (m.material) m.material.color.set(hex);
-            });
-        }
-    }
+    // ═══════════════════════════════════════════════════════════════
+    // CYMATICS ENGINE — GUTTED FOR COMPLETE REBUILD
+    // All old patterns, shaders, and methods have been deleted.
+    // ═══════════════════════════════════════════════════════════════
 
 
-    static get CYMATIC_PATTERNS() {
-        return [
-            { name: "Fundamental Zenith", n: 1, m: 1, cat:'sacred' },
-            { name: "Dual Horizon", n: 1, m: 2, cat:'sacred' },
-            { name: "Triple Axis", n: 1, m: 3, cat:'sacred' },
-            { name: "Quad Core", n: 1, m: 4, cat:'sacred' },
-            { name: "Penta Wave", n: 1, m: 5, cat:'sacred' },
-            { name: "Square Harmony", n: 2, m: 2, cat:'geometry' },
-            { name: "Lotus Flow", n: 2, m: 3, cat:'sacred' },
-            { name: "Cresent Node", n: 2, m: 4, cat:'radial' },
-            { name: "Orchid Ring", n: 2, m: 5, cat:'sacred' },
-            { name: "Cross Pulse", n: 3, m: 3, cat:'complex' },
-            { name: "Nodal Ribbon", n: 3, m: 1, cat:'radial' },
-            { name: "Radial Seed", n: 3, m: 5, cat:'sacred' },
-            { name: "Diamond Lattice", n: 4, m: 4, cat:'geometry' },
-            { name: "Solar Grate", n: 4, m: 2, cat:'radial' },
-            { name: "Cellular Grid", n: 5, m: 5, cat:'geometry' },
-            { name: "Star Resonance", n: 6, m: 2, cat:'sacred' },
-            { name: "Hexa Flux", n: 6, m: 6, cat:'geometry' },
-            { name: "Solar Mandala", n: 7, m: 3, cat:'sacred' },
-            { name: "Graphene Matrix", n: 8, m: 4, cat:'complex' },
-            { name: "Hyper Lobe", n: 8, m: 8, cat:'complex' },
-            { name: "Atomic Shell", n: 9, m: 2, cat:'complex' },
-            { name: "Omega Sphere", n: 9, m: 9, cat:'sacred' },
-            { name: "Fibonacci Spiral", n: 1, m: 8, cat:'sacred' },
-            { name: "Fractal Lace", n: 10, m: 4, cat:'fractal' },
-            { name: "Cosmic Gear", n: 11, m: 3, cat:'complex' },
-            { name: "Interstellar Mesh", n: 12, m: 12, cat:'complex' },
-            { name: "Quantum Foam", n: 5, m: 13, cat:'complex' },
-            { name: "Singularity", n: 20, m: 2, cat:'complex' },
-            { name: "Prime Prime", n: 13, m: 17, cat:'complex' },
-            { name: "Metatron's Grid", n: 6, m: 12, cat:'sacred' },
-            // ADVANCED FORM (Tier 2 - Hyper Resonance)
-            { name: "Aetheric Weaver", n: 11, m: 11, type: 4, cat:'advanced' },
-            { name: "Neural Singularity", n: 15, m: 5, type: 4, cat:'advanced' },
-            { name: "Chronos Vortex", n: 7, m: 14, type: 4, cat:'advanced' },
-            { name: "Void Fractal", n: 22, m: 22, type: 4, cat:'advanced' },
-            { name: "Crystalline Pulse", n: 9, m: 18, type: 4, cat:'advanced' },
-            { name: "Stellar Loom", n: 13, m: 3, type: 4, cat:'advanced' }
-        ];
-    }
 
-    initCymatics() {
-        try {
-            if (!this.cymaticsGroup) return;
-            
-            // CLEANUP: If children exist, remove them first
-            while(this.cymaticsGroup.children.length > 0) {
-                const child = this.cymaticsGroup.children[0];
-                this.cymaticsGroup.remove(child);
-                if(child.geometry) child.geometry.dispose();
-                if(child.material) {
-                    if(child.material.map) child.material.map.dispose();
-                    child.material.dispose();
-                }
-            }
 
-            // HIGH-RESOLUTION geometry for detailed vertex displacement
-            const geometry = new THREE.PlaneGeometry(45, 45, 128, 128);
-            this.cymaticMaterial = new THREE.ShaderMaterial({
-                uniforms: {
-                    uN: { value: (this.currentCymaticData ? this.currentCymaticData.n : 1.0) },
-                    uM: { value: (this.currentCymaticData ? this.currentCymaticData.m : 3.0) },
-                    uBassN: { value: 1.0 },
-                    uBassM: { value: 1.0 },
-                    uHighN: { value: 5.0 },
-                    uHighM: { value: 5.0 },
-                    uType: { value: (this.currentCymaticData ? (this.currentCymaticData.type || 0) : 0) },
-                    uEnergy: { value: 0.5 },
-                    uTime: { value: 0 },
-                    uIntensity: { value: 0.5 },
-                    uHarmonics: { value: 0.0 }, 
-                    uBeatFreq: { value: 0 },
-                    uColor: { value: new THREE.Color(state.visualColors.sphere || '#60a9ff') },
-                    uSecondaryColor: { value: new THREE.Color(0xffffff) },
-                    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-                    uNormMids: { value: 0 },
-                    uNormHighs: { value: 0 },
-                    uMedium: { value: state.cymaticMedium || 0.0 },
-                    uShiver: { value: 0.0 },
-                    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-                    uMouseActive: { value: 0.0 },
-                    uResonance: { value: (state.cymaticResonance ?? 1.0) },
-                    uEntropy: { value: (state.cymaticEntropy ?? 1.0) },
-                    uFlow: { value: (state.cymaticFlow ?? 1.0) }
-                },
-                vertexShader: `
-                    varying vec2 vUv;
-                    varying float vDisplace;
-                    uniform float uTime, uN, uM, uIntensity, uEnergy, uShiver;
-                    
-                    #define PI 3.14159265359
 
-                    float chladniBase(vec2 p, float n, float m) {
-                        return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
-                    }
 
-                    void main() {
-                        vUv = uv;
-                        vec2 p = (uv - 0.5) * 2.0;
-                        
-                        // Calculate basic displacement for vertex shading
-                        float f = chladniBase(p, uN, uM);
-                        f = abs(f) * (uIntensity + uShiver);
-                        
-                        vDisplace = f;
-                        
-                        vec3 pos = position;
-                        // Physical displacement: create 3D peaks and valleys
-                        pos.z += f * 5.0 * (1.0 + 0.3 * sin(uTime * 3.0)); 
-                        
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    varying vec2 vUv;
-                    varying float vDisplace;
-                    uniform float uN, uM, uBassN, uBassM, uHighN, uHighM;
-                    uniform float uBeatFreq, uTime, uIntensity, uType, uEnergy, uHarmonics, uShiver;
-                    uniform float uNormMids, uNormHighs, uMedium; 
-                    uniform vec3 uColor, uSecondaryColor;
-                    uniform vec2 uResolution;
-                    uniform vec2 uMouse;
-                    uniform float uMouseActive, uResonance, uEntropy, uFlow;
 
-                    #define PI 3.14159265359
 
-                    float hash(vec2 p) {
-                        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-                    }
 
-                    float noise(vec2 p) {
-                        vec2 i = floor(p);
-                        vec2 f = fract(p);
-                        f = f * f * (3.0 - 2.0 * f);
-                        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
-                                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
-                    }
 
-                    // --- ADVANCED FRACTAL ORGANICS ---
-                    // Fractional Brownian Motion for tree bark / neural web textures
-                    float fbm(vec2 p) {
-                        float f = 0.0;
-                        f += 0.5 * noise(p);
-                        p *= 2.02;
-                        f += 0.25 * noise(p);
-                        return f;
-                    }
 
-                    float chladniBase(vec2 p, float n, float m) {
-                        return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
-                    }
 
-                    // Kaleidoscopic Apollonian Gasket Folds
-                    vec2 apollonianFold(vec2 p, float s) {
-                        for(int i=0; i<3; i++) {
-                            p = -1.0 + 2.0 * fract(p * 0.5 + 0.5);
-                            float r2 = dot(p,p);
-                            p = p / max(r2, s); // Inversion
-                        }
-                        return p;
-                    }
 
-                    // DOMAIN WARPING: Constant Ambient Fluid Flow
-                    vec2 flowWarp(vec2 p, float t) {
-                        float n1 = noise(p + t * 0.2);
-                        float n2 = noise(p * 2.1 - t * 0.15);
-                        float n3 = fbm(p * 3.0 + t * 0.1);
-                        return p + (0.1 + uShiver * 0.1) * vec2(cos(n1 * PI + n3), sin(n2 * PI - n1));
-                    }
 
-                    void main() {
-                        vec2 uv = (vUv - 0.5) * 2.0;
-                        float aspect = uResolution.x / uResolution.y;
-                        uv.x *= aspect;
 
-                        float t = uTime * uFlow;
-                        // Ambient Flow Field mapping (Constant organic motion even when silent)
-                        vec2 p = flowWarp(uv, t * 0.5 * uEntropy);
 
-                        // Audio Transient Shiver
-                        vec2 distort = vec2(noise(vUv * 15.0 + t), noise(vUv * 15.0 - t)) * uShiver * 0.04;
-                        p += distort;
-
-                        float f = 0.0;
-                        float n_eff = uN * uResonance;
-                        float m_eff = uM * uResonance;
-                        
-                        // Interactive Ripple Disruption (The Cursors)
-                        float distToMouse = distance(vUv, uMouse);
-                        float ripple = sin(distToMouse * 30.0 - t * 15.0) * exp(-distToMouse * 4.0) * uMouseActive * 0.5;
-                        f += ripple;
-                        
-                        // [ TOPOLOGICAL CATEGORIES (Radical Mathematical Divergence) ]
-                        if (uType < 0.5) { 
-                            // 0.0: SACRED (Nested Bessel Rings & Node Interference - Image 2/5)
-                            float r = length(p);
-                            float bessel = cos(r * n_eff * 10.0 + t) * exp(-r * 0.2);
-                            float angular = cos(atan(p.y, p.x) * m_eff);
-                            f = bessel * angular;
-                            if (uHarmonics > 0.01) f += uHarmonics * chladniBase(p * 1.5, n_eff * 0.5, m_eff * 0.5);
-                        } 
-                        else if (uType < 1.5) { 
-                            // 1.0: SPIROGRAPH & TORUS VORTEX (3D Toroidal Projection - Image 3)
-                            float a = atan(p.y, p.x);
-                            float r = length(p);
-                            // Toroidal twist math
-                            float twist = sin(r * 10.0 - a * n_eff + t);
-                            float s1 = sin(a * n_eff + t);
-                            float s2 = sin(a * m_eff - t * 0.5);
-                            f = sin(r * 50.0 + twist * 15.0 * uEntropy) * (s1 * s2);
-                        }
-                        else if (uType < 2.5) { 
-                            // 2.0: PLANETARY / PHYLLOTAXIS (Seed-Mapping & Dense Orbital Clusters - Image 1)
-                            float r = length(p) * (15.0 + n_eff * 0.5);
-                            float a = atan(p.y, p.x);
-                            // Golden angle approximation for orbital clustering
-                            float phyll = sin(r - a * m_eff) * cos(r * 0.1 + a * 2.0);
-                            f = phyll * (1.0 - smoothstep(1.5, 2.0, length(p)));
-                        }
-                        else if (uType < 3.5) { 
-                            // 3.0: COMPLEX / DOMAIN WARP (Deep Fluid Organic Convection - Image 4)
-                            vec2 q = p + vec2(cos(t * 0.1), sin(t * 0.15)) * 0.5;
-                            float n1 = noise(q * (n_eff * 0.1) + t * 0.2);
-                            float n2 = noise(q * (m_eff * 0.1) - t * 0.1);
-                            vec2 warp = p + vec2(cos(n1 * PI * uEntropy), sin(n2 * PI * uEntropy)) * 0.8;
-                            f = sin(length(warp) * 15.0 + n1 * 8.0);
-                        }
-                        else {
-                            // 4.0: ADVANCED / HYPER-RESONANCE (Dimensional Folding & Cross-Feedback)
-                            vec2 q = apollonianFold(p * 0.5, 0.4 + uEntropy * 0.2);
-                            float n1 = chladniBase(q, n_eff, m_eff);
-                            float n2 = chladniBase(q.yx, m_eff * 0.5, n_eff * 1.5);
-                            f = n1 * n2 * 2.0;
-                            // Add recursive detail
-                            f += 0.3 * sin(length(q) * 20.0 - t * 4.0);
-                        }
-
-                        // TRUE RESONANCE PRESERVATION (Audio Transients & Reactivity)
-                        // Physics deformation is layered on top, physically shivering the geometry
-                        float bassDistort = chladniBase(p, uBassN * 0.2, uBassM * 0.2) * 0.3 * uIntensity;
-                        f += bassDistort;
-                        
-                        // Micro-ripples added on extreme high transient crashes
-                        float highRipples = sin(length(p) * uHighN * 3.0 - t * 8.0) * 0.08 * uNormHighs;
-                        f += highRipples;
-                        
-                        // Interactive Ripple Disruption (Phase 3)
-                        float d2m = distance(uv, uMouse);
-                        float rip = sin(d2m * 30.0 - t * 15.0) * exp(-d2m * 6.0) * uMouseActive * 0.4;
-                        f += rip;
-                        
-                        float rawF = f;
-                        f = abs(f);
-
-                        float threshold = 0.07 + uIntensity * 0.09;
-                        
-                        // MEDIUM LOGIC (Edge Mask)
-                        float edge;
-                        if (uMedium < 0.5) { // WATER
-                             edge = smoothstep(threshold + 0.2, threshold - 0.03, f);
-                        } else if (uMedium < 1.5) { // SAND
-                             float grain = noise(vUv * 950.0 + t * 2.0) * 0.14;
-                             edge = step(threshold + grain, f);
-                        } else if (uMedium < 2.5) { // ETHER
-                             edge = pow(smoothstep(threshold + 0.4, threshold - 0.1, f), 2.5);
-                        } else { // ICE
-                             edge = smoothstep(threshold + 0.05, threshold + 0.01, f);
-                             edge *= (0.8 + 0.2 * noise(vUv * 1200.0));
-                        }
-
-                        // CINEMATIC LIGHTING (Matcap Approximation)
-                        vec3 dx = dFdx(vec3(p, rawF));
-                        vec3 dy = dFdy(vec3(p, rawF));
-                        vec3 norm = normalize(cross(dx, dy));
-                        norm.z = mix(0.6, 0.2, uIntensity); // Prevent flattening into a literal mirror at 100% intensity 
-                        norm = normalize(norm);
-
-                        vec3 lightDir = normalize(vec3(sin(t * 0.4), cos(t * 0.2), 1.2));
-                        vec3 viewDir = vec3(0, 0, 1);
-                        vec3 reflectDir = reflect(-lightDir, norm);
-                        
-                        float diff = max(dot(norm, lightDir), 0.0);
-                        float spec = pow(max(dot(reflectDir, viewDir), 0.0), 128.0); 
-
-                        // Environment Reflection Layer
-                        float env = noise(reflectDir.xy * 2.5 + t * 0.15) * 0.4;
-                        
-                        vec3 baseCol = mix(uColor, uSecondaryColor, f);
-                        
-                        // Medium Specific Refinement
-                        if (uMedium < 0.5) { // WATER
-                             baseCol = mix(baseCol, vec3(0.01, 0.05, 0.15), 0.5);
-                             baseCol += 0.35 * vec3(0.1, 0.7, 1.0) * vDisplace;
-                        } else if (uMedium < 1.5) { // SAND
-                             baseCol = mix(baseCol, vec3(1.0, 0.9, 0.5), 0.7);
-                        } else if (uMedium < 2.5) { // ETHER
-                             baseCol += 0.6 * vec3(0.8, 0.4, 1.0) * (0.5 + 0.5 * cos(t * 1.8 + f * 12.0));
-                        } else { // ICE
-                             baseCol = mix(vec3(0.8, 0.95, 1.0), uColor, 0.3);
-                             baseCol += spec * 0.5 + env * 0.4;
-                        }
-
-                        vec3 col = baseCol * (0.3 + 0.7 * diff);
-                        col += spec * vec3(1.0, 0.99, 0.95) * (0.15 + uNormHighs * 0.15); // SEVERE REDUCTION to prevent screen flooding
-                        col += uShiver * vec3(1.0, 0.3, 0.4) * 0.4;
-
-                        float vig = smoothstep(2.5, 0.7, length(uv));
-                        gl_FragColor = vec4(col * edge * vig, edge * (0.8 + 0.2 * uEnergy));
-                    }
-                `,
-                transparent: true,
-                side: THREE.DoubleSide,
-                extensions: { derivatives: true }
-            });
-
-            const mesh = new THREE.Mesh(geometry, this.cymaticMaterial);
-            mesh.position.z = -5; // Foreground depth within scene
-            this.cymaticsGroup.add(mesh);
-
-            // ── INTERACTIVE POINTER BINDING (Cursors) ──
-            this.setupCymaticsInteractions();
-
-            // ── QUANTUM GRANULAR ENTRAINMENT (SAND PHYSICS) ──
-            const particleCount = this.batterySaver ? 15000 : 40000;
-            const pGeo = new THREE.BufferGeometry();
-            const pPos = new Float32Array(particleCount * 3);
-            const pPhase = new Float32Array(particleCount);
-            
-            for(let i=0; i<particleCount; i++) {
-                pPos[i*3] = (Math.random() - 0.5) * 45; // x (match plane width)
-                pPos[i*3+1] = (Math.random() - 0.5) * 45; // y (match plane height)
-                pPos[i*3+2] = 0.0; // z local
-                pPhase[i] = Math.random() * Math.PI * 2;
-            }
-            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-            pGeo.setAttribute('aPhase', new THREE.BufferAttribute(pPhase, 1));
-
-            this.cymaticParticlesMaterial = new THREE.ShaderMaterial({
-                uniforms: this.cymaticMaterial.uniforms, // Share exact liquid uniforms
-                vertexShader: `
-                    uniform float uTime, uN, uM, uIntensity, uShiver, uEnergy, uMouseActive;
-                    uniform vec2 uMouse;
-                    attribute float aPhase;
-                    varying float vVal;
-                    
-                    #define PI 3.14159265359
-
-                    float chladniBase(vec2 p, float n, float m) {
-                        return cos(n * PI * p.x) * cos(m * PI * p.y) - cos(m * PI * p.x) * cos(n * PI * p.y);
-                    }
-
-                    void main() {
-                        vec2 p = position.xy / 22.5; 
-                        float val = chladniBase(p, uN, uM);
-                        
-                        // Particle Physical Displacement Disruption
-                        vec2 normalizedP = (p * 0.5) + 0.5; 
-                        float distToMouse = distance(normalizedP, uMouse);
-                        float ripple = sin(distToMouse * 30.0 - uTime * 15.0) * exp(-distToMouse * 6.0) * uMouseActive * 0.4;
-                        val += ripple * 2.0;
-
-                        vVal = abs(val);
-                        
-                        // Gradient for entrainment (push toward zero)
-                        vec2 eps = vec2(0.01, 0.0);
-                        float dx = chladniBase(p + eps.xy, uN, uM) - chladniBase(p - eps.xy, uN, uM);
-                        float dy = chladniBase(p + eps.yx, uN, uM) - chladniBase(p - eps.yx, uN, uM);
-                        
-                        // Force vector: pushes away from high vibration |val|
-                        vec2 grad = vec2(dx, dy);
-                        float force = clamp(1.0 - vVal, 0.0, 1.0); // Stronger pull near nodes
-                        vec2 push = -grad * val * (0.5 + uIntensity * 1.5) * force;
-                        
-                        // Jitter bouncing at anti-nodes (high displacement)
-                        float jitterZ = vVal * sin(uTime * 30.0 + aPhase * 2.0) * (0.5 + uShiver * 5.0 + uIntensity);
-                        
-                        vec3 finalPos = position;
-                        finalPos.xy += push * 15.0; // Gather effect
-                        finalPos.z += jitterZ * 2.0;
-
-                        vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
-                        gl_Position = projectionMatrix * mvPosition;
-                        
-                        // Size based on Z bounce
-                        gl_PointSize = (1.5 + max(0.0, jitterZ)) * (100.0 / -mvPosition.z) * (0.5 + uEnergy * 0.5);
-                    }
-                `,
-                fragmentShader: `
-                    uniform vec3 uColor;
-                    uniform vec3 uSecondaryColor;
-                    uniform float uMedium;
-                    uniform float uEnergy;
-                    varying float vVal;
-                    void main() {
-                        vec2 coord = gl_PointCoord - vec2(0.5);
-                        if(length(coord) > 0.5) discard;
-                        
-                        // Node particles gracefully inherit primary colors rather than blasting pure white
-                        vec3 sandColor = mix(vec3(0.9, 0.7, 0.4), mix(vec3(0.7, 0.8, 1.0), uColor, 0.5), uMedium / 3.0); 
-                        vec3 color = mix(sandColor, uColor, vVal * 1.5);
-                        
-                        // Extreme opacity reduction to survive AdditiveBlending of 80,000 tight particles
-                        float baseAlpha = mix(0.04, 0.08, uEnergy);
-                        float alpha = baseAlpha * (1.0 - clamp(vVal * 1.5, 0.0, 1.0)); 
-                        
-                        // Dim emission directly
-                        color *= 0.4;
-                        
-                        gl_FragColor = vec4(color, alpha);
-                    }
-                `,
-                transparent: true,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
-            });
-
-            const particles = new THREE.Points(pGeo, this.cymaticParticlesMaterial);
-            particles.position.z = -4.95; // Just above the liquid mesh
-            this.cymaticsGroup.add(particles);
-            this.cymaticParticles = particles;
-
-            // History check
-            if (this.cymaticsHistory.length === 0) {
-                this.nextCymatic();
-            }
-            console.log("[Cymatics] Kinematic Liquefaction Engine Initialized");
-        } catch (e) {
-            console.error("[Cymatics] Init Failed:", e);
-        }
-    }
-
-    static CYMATIC_PATTERNS = [
-        { name: "Sri Yantra", n: 9, m: 3, energy: 0.8, cat: "sacred" },
-        { name: "Flower Life", n: 6, m: 6, energy: 0.9, cat: "sacred" },
-        { name: "Metatron", n: 13, m: 13, energy: 1.0, cat: "sacred" },
-        { name: "Vector Eq", n: 2, m: 2, energy: 0.4, cat: "geometry" },
-        { name: "Fibonacci", n: 1, m: 8, energy: 0.7, cat: "radial" },
-        { name: "Torus Vortex", n: 15, m: 5, energy: 0.8, cat: "geometry" },
-        { name: "Mandelbrot", n: 8, m: 4, energy: 0.8, cat: "geometry" },
-        { name: "Julia Loop", n: 5, m: 5, energy: 0.7, cat: "geometry" },
-        { name: "Recursive", n: 10, m: 4, energy: 0.9, cat: "geometry" },
-        { name: "Polygon", n: 4, m: 4, energy: 0.6, cat: "geometry" },
-        { name: "Lattice", n: 6, m: 2, energy: 0.6, cat: "geometry" },
-        { name: "Star Gate", n: 7, m: 3, energy: 1.0, cat: "sacred" },
-        { name: "Neural Flow", n: 12, m: 12, energy: 1.1, cat: "complex" },
-        { name: "Quantum", n: 5, m: 13, energy: 1.2, cat: "complex" },
-        { name: "Golden Rat", n: 11, m: 3, energy: 0.9, cat: "radial" },
-        { name: "Celestial", n: 9, m: 9, energy: 1.0, cat: "sacred" },
-        { name: "Void Geo", n: 20, m: 2, energy: 1.2, cat: "complex" },
-        { name: "Infinite", n: 13, m: 17, energy: 1.3, cat: "complex" },
-        { name: "Prism Mirror", n: 3, m: 3, energy: 0.5, cat: "geometry" },
-        { name: "Cosmic Knot", n: 7, m: 14, energy: 1.1, cat: "complex" },
-        { name: "Matrix Core", n: 21, m: 3, energy: 1.4, cat: "complex" },
-        { name: "Omega Sphere", n: 2, m: 8, energy: 0.9, cat: "sacred" },
-        { name: "Fractal Lace", n: 1, m: 10, energy: 0.8, cat: "geometry" },
-        { name: "Torus Core", n: 33, m: 15, energy: 0.9, cat: "geometry" },
-        { name: "Fractal Sun", n: 11, m: 88, energy: 1.0, cat: "complex" },
-        { name: "Spiral Net", n: 8, m: 120, energy: 0.6, cat: "geometry" },
-        { name: "Fluid Whorl", n: 50, m: 14, energy: 1.2, cat: "complex" },
-        { name: "Synchro", n: 121, m: 12, energy: 1.1, cat: "sacred" },
-        { name: "Unified", n: 77, m: 7, energy: 0.9, cat: "sacred" },
-        { name: "Omega", n: 13, m: 133, energy: 1.4, cat: "complex" },
-        { name: "Source", n: 1, m: 1, energy: 1.5, cat: "sacred" },
-        { name: "Sun Tone", n: 420, m: 42, energy: 1.2, cat: "radial" },
-        { name: "Sirius", n: 64, m: 250, energy: 1.1, cat: "radial" },
-        { name: "Earth", n: 240, m: 36, energy: 0.9, cat: "radial" },
-        { name: "Moon", n: 45, m: 450, energy: 1.4, cat: "complex" },
-        { name: "Mercury", n: 800, m: 50, energy: 1.3, cat: "radial" },
-        { name: "Venus", n: 120, m: 720, energy: 1.0, cat: "geometry" },
-        { name: "Mars", n: 333, m: 33, energy: 1.1, cat: "complex" },
-        { name: "Jupiter", n: 900, m: 30, energy: 1.0, cat: "radial" },
-        { name: "Saturn", n: 1200, m: 60, energy: 1.5, cat: "complex" },
-        { name: "Gold Ratio", n: 144, m: 89, energy: 0.8, cat: "radial" }
-    ];
-
-    nextCymatic() {
-        if (window.state && window.state.aiVisualsLocked) {
-            window.state.aiVisualsLocked = false;
-            const aiBtn = document.getElementById('cymaticAiBtn');
-            if (aiBtn) aiBtn.style.borderColor = 'rgba(34, 211, 238, 0.2)'; 
-        }
-
-        const patterns = Visualizer3D.CYMATIC_PATTERNS;
-        let idx = 0;
-        if (this.currentCymaticData) {
-             idx = patterns.findIndex(p => p.name === this.currentCymaticData.name);
-             if (idx === -1) idx = 0;
-        }
-        
-        let nextIdx = (idx + 1) % patterns.length;
-        this.cymaticsHistory.push(patterns[nextIdx]);
-        if (this.cymaticsHistory.length > 50) this.cymaticsHistory.shift();
-        this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
-        this.applyCymatic(patterns[nextIdx]);
-        this.lastCymaticRotation = performance.now();
-    }
-
-    prevCymatic() {
-        if (window.state && window.state.aiVisualsLocked) {
-            window.state.aiVisualsLocked = false;
-            const aiBtn = document.getElementById('cymaticAiBtn');
-            if (aiBtn) aiBtn.style.borderColor = 'rgba(34, 211, 238, 0.2)'; 
-        }
-
-        const patterns = Visualizer3D.CYMATIC_PATTERNS;
-        let idx = 0;
-        if (this.currentCymaticData) {
-             idx = patterns.findIndex(p => p.name === this.currentCymaticData.name);
-             if (idx === -1) idx = 0;
-        }
-        
-        let prevIdx = (idx - 1 + patterns.length) % patterns.length;
-        this.cymaticsHistory.push(patterns[prevIdx]);
-        if (this.cymaticsHistory.length > 50) this.cymaticsHistory.shift();
-        this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
-        this.applyCymatic(patterns[prevIdx]);
-        this.lastCymaticRotation = performance.now();
-    }
-
-    setCymaticByName(name) {
-        const pattern = Visualizer3D.CYMATIC_PATTERNS.find(p => p.name === name);
-        if (pattern) {
-            this.applyCymatic(pattern);
-            this.lastCymaticRotation = performance.now();
-        }
-    }
-
-    setupCymaticsInteractions() {
-        if (!this.renderer || !this.renderer.domElement) return;
-        const canvas = this.renderer.domElement;
-
-        const updateMouse = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / rect.width;
-            const y = 1.0 - (e.clientY - rect.top) / rect.height; // Flip y for GLSL
-            
-            if (this.cymaticMaterial) {
-                this.cymaticMaterial.uniforms.uMouse.value.set(x, y);
-            }
-        };
-
-        canvas.addEventListener('pointerdown', (e) => {
-            if (this.cymaticMaterial) this.cymaticMaterial.uniforms.uMouseActive.value = 1.0;
-            updateMouse(e);
-        });
-
-        canvas.addEventListener('pointermove', (e) => {
-            updateMouse(e);
-        });
-
-        const stopMouse = () => {
-            if (this.cymaticMaterial) this.cymaticMaterial.uniforms.uMouseActive.value = 0.0;
-        };
-
-        canvas.addEventListener('pointerup', stopMouse);
-        canvas.addEventListener('pointerleave', stopMouse);
-    }
-
-    applyCymatic(data) {
-        if (!data || !this.cymaticMaterial) return;
-        this.currentCymaticData = data;
-        
-        // Sync UI if helper available
-        if (window.renderCymaticProPatterns) {
-            window.renderCymaticProPatterns();
-        }
-
-        const u = this.cymaticMaterial.uniforms;
-        u.uN.value = data.n;
-        u.uM.value = data.m;
-        
-        // Map category to pattern type
-        if (data.cat === 'sacred') u.uType.value = 0.0;
-        else if (data.cat === 'radial') u.uType.value = 1.0;
-        else if (data.cat === 'geometry') u.uType.value = 2.0;
-        else if (data.cat === 'complex') u.uType.value = 3.0;
-        else if (data.cat === 'advanced') u.uType.value = 4.0;
-        
-        // Manual override if type is explicitly set
-        if (data.type !== undefined) u.uType.value = data.type;
-
-        u.uEnergy.value = data.energy || 0.5;
-        
-        // Update UI Label
-        const label = document.getElementById('cymaticPatternLabel');
-        if (label && data.name) {
-            label.textContent = data.name;
-            label.style.textShadow = '0 0 15px rgba(180, 120, 255, 1)';
-            setTimeout(() => {
-                label.style.textShadow = '0 0 5px rgba(255, 255, 255, 0.3)';
-            }, 300);
-        }
-        // Clear all previous backgrounds and border states
-        document.querySelectorAll('.cymatics-pattern-btn').forEach((btn) => {
-            btn.classList.remove('cymatics-pattern-active');
-            btn.style.backgroundColor = '';
-            btn.style.borderColor = '';
-            
-            const clickAttr = btn.getAttribute('onclick');
-            if (clickAttr) {
-                const match = clickAttr.match(/\d+/);
-                if (match) {
-                    const idx = parseInt(match[0]);
-                    const p = Visualizer3D.CYMATIC_PATTERNS[idx];
-                    if (p && data && p.name === data.name) {
-                        btn.classList.add('cymatics-pattern-active');
-                        btn.style.backgroundColor = 'rgba(168, 85, 247, 0.35)'; // Failsafe explicit style
-                        btn.style.borderColor = 'rgba(168, 85, 247, 0.9)';
-                    }
-                }
-            }
-        });
-    }
-
-    setVisualColor(hex, mode = null) {
-        const col = new THREE.Color(hex);
-        if (!mode || mode === 'all') {
-            this.customColor = col;
-            // Inject into all active materials for global override
-            if (this.cymaticMaterial) this.cymaticMaterial.uniforms.uColor.value.copy(col);
-            if (this._snowData?.material) this._snowData.material.uniforms.uColor.value.copy(col);
-            if (this.oceanWave?.material) this.oceanWave.material.uniforms.uColor.value.copy(col);
-            if (this.wavesMaterial) this.wavesMaterial.uniforms.uColor.value.copy(col);
-            return;
-        }
-
-        // Store per-mode color
-        this.customColors[mode] = col;
-        
-        // Instant update if system is active
-        if (mode === 'cymatics' && this.cymaticMaterial) this.cymaticMaterial.uniforms.uColor.value.copy(col);
-        if (mode === 'snowflake' && this._snowData?.material) this._snowData.material.uniforms.uColor.value.copy(col);
-        if ((mode === 'ocean' || mode === 'waves')) {
-            if (this.oceanWave?.material) this.oceanWave.material.uniforms.uColor.value.copy(col);
-            if (this.wavesMaterial) this.wavesMaterial.uniforms.uColor.value.copy(col);
-        }
-    }
-
-    setCymaticPatternByIndex(idx) {
-        console.log(`[Cymatics] Setting pattern by index: ${idx}`);
-        
-        // CRITICAL: Unlock AI-Sync engine so manual triggers persist without being overwritten on the next animation frame.
-        if (window.state && window.state.aiVisualsLocked) {
-            window.state.aiVisualsLocked = false;
-            const aiBtn = document.getElementById('cymaticAiBtn');
-            if (aiBtn) aiBtn.style.borderColor = 'rgba(34, 211, 238, 0.2)'; // Dim the UI border instantly
-        }
-
-        const p = Visualizer3D.CYMATIC_PATTERNS[idx];
-        if (p) {
-            this.cymaticsHistory.push(p);
-            this.cymaticsHistoryIndex = this.cymaticsHistory.length - 1;
-            this.applyCymatic(p);
-            this.lastCymaticRotation = performance.now();
-        }
-    }
-
-    setCymaticColor(hex) {
-        this.currentCymaticColor = hex;
-        
-        // Sync UI if helper available
-        if (window.renderCymaticProPatterns) {
-            window.renderCymaticProPatterns();
-        }
-
-        if (this.cymaticMaterial)
-            this.cymaticMaterial.uniforms.uColor.value.set(hex);
-    }
-
-    setCymaticFreq(hz) {
-        if (this.cymaticMaterial && this.cymaticMaterial.uniforms.uBeatFreq)
-            this.cymaticMaterial.uniforms.uBeatFreq.value = Math.max(0, Math.min(80, hz));
-    }
-
-    setCymaticTimer(seconds) {
-        this.cymaticsTimer = seconds;
-        const label = document.getElementById('cymaticTimerLabel');
-        if (label) {
-            if (seconds > 300) label.textContent = "INFINITE";
-            else if (seconds === 0) label.textContent = "OFF";
-            else label.textContent = seconds + "s";
-        }
-    }
 
     initLava() {
         this.lavaBlobs = [];
@@ -2918,7 +2236,6 @@ export class Visualizer3D {
         if (mode === 'galaxy' && (!this.galaxyGroup || this.galaxyGroup.children.length === 0)) this.initGalaxy();
         if (mode === 'mandala' && (!this.mandalaGroup || this.mandalaGroup.children.length === 0)) this.initMandala();
         if (mode === 'snowflake' && (!this.snowflakeGroup || this.snowflakeGroup.children.length === 0)) this.initSnowflake();
-        if (mode === 'cymatics' && (!this.cymaticsGroup || this.cymaticsGroup.children.length === 0)) this.initCymatics();
         
         console.timeEnd(tLabel);
     }
@@ -3508,6 +2825,9 @@ export class Visualizer3D {
 
             const multiplier = Math.max(0.001, this.speedMultiplier || 1.0);
             const now = performance.now() * 0.001;
+            if (this.activeModes.has('cymatics') && this.cymaticsCore) {
+                this.cymaticsCore.update(now * multiplier);
+            }
             if (!this.lastTime) this.lastTime = now;
             const dt = Math.min(0.1, now - this.lastTime);
             this.lastTime = now;
@@ -3587,130 +2907,7 @@ export class Visualizer3D {
                     this.wavesMaterial.uniforms.uIntensity.value = envOcean;
                 }
             }
-            if (this.activeModes.has('cymatics') && this.cymaticMaterial) {
-                // Phase 3: Interactive Raycast Initialization
-                if (!this.cymaticRaycaster) {
-                    this.cymaticRaycaster = new THREE.Raycaster();
-                    this.cymaticPointer = new THREE.Vector2(-1, -1);
-                    this.targetMouseUV = new THREE.Vector2(0.5, 0.5);
-                    this.smoothedMouseUV = new THREE.Vector2(0.5, 0.5);
-                    this.mouseActiveTimer = 0.0;
-                    
-                    this._boundCymaticPointer = (e) => {
-                        let cx = e.clientX; let cy = e.clientY;
-                        if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-                        this.cymaticPointer.x = (cx / window.innerWidth) * 2 - 1;
-                        this.cymaticPointer.y = -(cy / window.innerHeight) * 2 + 1;
-                        this.mouseActiveTimer = 1.0;
-                    };
-                    window.addEventListener('mousemove', this._boundCymaticPointer);
-                    window.addEventListener('touchmove', this._boundCymaticPointer, {passive: true});
-                }
 
-                // Initialize live tracking if missing
-                if (!this._cymaticLive) {
-                    this._cymaticLive = { 
-                        n: this.currentCymaticData.n, 
-                        m: this.currentCymaticData.m,
-                        energy: this.currentCymaticData.energy || 0.5
-                    };
-                }
-
-                // Phase 3: Raycast Intersection Loop
-                if (this.cymaticPointer && this.cymaticsGroup) {
-                    const planeMesh = this.cymaticsGroup.children.find(c => c.geometry && c.geometry.type === 'PlaneGeometry');
-                    if (planeMesh && this.mouseActiveTimer > 0) {
-                        this.cymaticRaycaster.setFromCamera(this.cymaticPointer, this.camera);
-                        const intersects = this.cymaticRaycaster.intersectObject(planeMesh);
-                        if (intersects.length > 0) {
-                            this.targetMouseUV.copy(intersects[0].uv);
-                        }
-                    }
-                    this.mouseActiveTimer = Math.max(0.0, this.mouseActiveTimer - (dt * 2.5));
-                    this.smoothedMouseUV.lerp(this.targetMouseUV, 0.15);
-                    
-                    this.cymaticMaterial.uniforms.uMouse.value.copy(this.smoothedMouseUV);
-                    this.cymaticMaterial.uniforms.uMouseActive.value = this.mouseActiveTimer > 0.05 ? 1.0 : (this.mouseActiveTimer * 20.0);
-                }
-
-                // ── AI SYNC & AUTO ROTATE ── 
-                if (state.aiVisualsLocked && state.baseFrequency) {
-                    // AI SYNC: Instantly tie fractal math to audio frequency
-                    this.currentCymaticData.n = Math.max(1, Math.floor(state.baseFrequency / 80));
-                    this.currentCymaticData.m = Math.max(1, Math.floor((state.baseFrequency % 100) / 6) + 3);
-                } else {
-                    // AUTO ROTATE: Only cycle if AI Sync is off and timer is > 0
-                    const timer = this.cymaticsTimer !== undefined ? this.cymaticsTimer : 30;
-                    if (timer > 0) {
-                        if (!this.lastCymaticRotation) this.lastCymaticRotation = performance.now();
-                        if ((performance.now() - this.lastCymaticRotation) > timer * 1000) {
-                            this.nextCymatic();
-                            if (this._cymaticV2) this._cymaticV2.shiver = 1.0; 
-                        }
-                    }
-                }
-
-                // SMOOTH MORPHING: Lerp values toward targets (Ultra-smooth float logic)
-                // Lowered generic array interpolation speed to establish a buttery gradient rather than rapid snapping
-                const lerpSpd = 0.015;
-                this._cymaticLive.n += (this.currentCymaticData.n - this._cymaticLive.n) * lerpSpd;
-                this._cymaticLive.m += (this.currentCymaticData.m - this._cymaticLive.m) * lerpSpd;
-                
-                const targetEnergy = (this.currentCymaticData.energy || 0.4) + (normHighs * 0.6);
-                this._cymaticLive.energy += (targetEnergy - this._cymaticLive.energy) * (lerpSpd * 2.0);
-
-                // MULTI-DIMENSIONAL INTERFERENCE (Bass vs. Highs)
-                if (!this._cymaticV2) {
-                    this._cymaticV2 = { bassN: 1, bassM: 1, highN: 5, highM: 5, shiver: 0 };
-                }
-
-                // REPAIRED: Prevented destructive integer-snapping on fast-moving audio arrays
-                // Using true floating point math here creates liquid geometry that smoothly curves rather than violently teleporting
-                const targetBassN = 1.0 + Math.pow(vNormBass, 1.5) * 3.0;
-                const targetBassM = 1.0 + Math.pow(vNormBass, 1.5) * 5.0;
-                const targetHighN = 5.0 + Math.pow(normHighs, 2.0) * 10.0;
-                const targetHighM = 5.0 + Math.pow(normHighs, 2.0) * 15.0;
-
-                this._cymaticV2.bassN += (targetBassN - this._cymaticV2.bassN) * 0.05;
-                this._cymaticV2.bassM += (targetBassM - this._cymaticV2.bassM) * 0.05;
-                this._cymaticV2.highN += (targetHighN - this._cymaticV2.highN) * 0.12;
-                this._cymaticV2.highM += (targetHighM - this._cymaticV2.highM) * 0.12;
-
-                const peak = Math.max(0, vNormBass - 0.85) * 5.0;
-                this._cymaticV2.shiver += (peak - this._cymaticV2.shiver) * 0.2;
-                if (this._cymaticV2.shiver < 0.01) this._cymaticV2.shiver = 0;
-
-                // Softened the phase shifting so heavy hits pulse cleanly rather than glitching the mask rendering
-                if (this._cymaticV2.shiver > 0.8 && performance.now() % 100 > 90) {
-                     this._cymaticLive.energy += 0.05; // Safely blend into the smoothing structure instead of a hard uniform overwrite
-                }
-
-                this.cymaticMaterial.uniforms.uTime.value = now * multiplier;
-                this.cymaticMaterial.uniforms.uIntensity.value = (state.cymaticIntensity > 0) 
-                    ? state.cymaticIntensity 
-                    : (0.5 + vNormBass * 0.5);
-                this.cymaticMaterial.uniforms.uHarmonics.value = state.harmonicsLevel || 0.0;
-                
-                // Final audio reaction injection (The Kick)
-                this.cymaticMaterial.uniforms.uResonance.value = (state.cymaticResonance ?? 1.0) * (1.0 + vNormBass * 0.15);
-                this.cymaticMaterial.uniforms.uEntropy.value = (state.cymaticEntropy ?? 1.0) * (1.1 - normHighs * 0.2);
-                this.cymaticMaterial.uniforms.uFlow.value = (state.cymaticFlow ?? 1.0) * (1.0 + vNormBass * 0.5);
-
-                this.cymaticMaterial.uniforms.uBeatFreq.value = visualBeatFreq;
-                this.cymaticMaterial.uniforms.uNormMids.value = normMids;
-                this.cymaticMaterial.uniforms.uNormHighs.value = normHighs;
-                this.cymaticMaterial.uniforms.uMedium.value = state.cymaticMedium || 0.0;
-                this.cymaticMaterial.uniforms.uShiver.value = state.cymaticShiver || 0.0;
-
-                this.cymaticMaterial.uniforms.uN.value = this._cymaticLive.n;
-                this.cymaticMaterial.uniforms.uM.value = this._cymaticLive.m;
-                this.cymaticMaterial.uniforms.uEnergy.value = this._cymaticLive.energy;
-                
-                this.cymaticMaterial.uniforms.uBassN.value = this._cymaticV2.bassN;
-                this.cymaticMaterial.uniforms.uBassM.value = this._cymaticV2.bassM;
-                this.cymaticMaterial.uniforms.uHighN.value = this._cymaticV2.highN;
-                this.cymaticMaterial.uniforms.uHighM.value = this._cymaticV2.highM;
-            }
 
             // ── OCEAN / FREQUENCY SWELLS ──────────────────────────────────
             if (this.activeModes.has('ocean') && this.oceanWave && this.oceanWave.material.uniforms) {
@@ -4328,6 +3525,25 @@ export class Visualizer3D {
         }
     }
 
+    
+    applyCymaticClassAndVariation(classId, variationId) {
+        if (!this.cymaticsCore) return;
+        this.cymaticsCore.setPattern(classId, variationId);
+        if (!this.activeModes.has('cymatics')) {
+            this.toggleMode('cymatics');
+        }
+    }
+
+    setCymaticColor(classId, colorIndex, hex) {
+        if (!this.cymaticsCore) return;
+        this.cymaticsCore.setColor(classId, colorIndex, new THREE.Color(hex));
+    }
+
+    setCymaticParam(classId, paramName, value) {
+        if (!this.cymaticsCore) return;
+        this.cymaticsCore.setParam(classId, paramName, value);
+    }
+
     dispose() {
         this.active = false;
         if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
@@ -4523,5 +3739,26 @@ window.toggleGalaxySun = function() {
     if (viz3D) return viz3D.toggleGalaxySunStyle();
     return null;
 };
+
+window.setCymaticPattern = function(classId, variationId) {
+    if (viz3D && viz3D.cymaticsCore) {
+        viz3D.cymaticsCore.setPattern(classId, variationId);
+        if (!viz3D.activeModes.has('cymatics')) {
+            if (window.switchRightTab) window.switchRightTab('active', document.querySelector('.tab-pill[title="Cymatics"]'));
+            viz3D.activeModes.add('cymatics');
+            viz3D.cymaticsGroup.visible = true;
+        }
+    } else {
+        console.warn("Visualizer not fully initialized. Forcing init and setting pattern.");
+        if (window.setVisualMode) window.setVisualMode('cymatics');
+        setTimeout(() => {
+            if (viz3D && viz3D.cymaticsCore) {
+                viz3D.cymaticsCore.setPattern(classId, variationId);
+            }
+        }, 500);
+    }
+};
+
+// Visualizer initialization helpers are exported as part of the module
 
 // Visualizer initialization helpers are exported as part of the module

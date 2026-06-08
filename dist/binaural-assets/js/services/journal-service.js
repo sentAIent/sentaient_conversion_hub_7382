@@ -3,7 +3,7 @@
  * Manages user reflections and session insights.
  */
 
-import { state } from '/binaural-assets/js/state.js';
+import { state } from '../state.js';
 import { db, doc, setDoc, getDoc, serverTimestamp } from './firebase.js';
 
 const JOURNAL_KEY = 'mindwave_reflections';

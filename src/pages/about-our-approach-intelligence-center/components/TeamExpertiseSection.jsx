@@ -31,27 +31,6 @@ const TeamExpertiseSection = () => {
       linkedin: "#",
       twitter: "#",
       shortBio: "Brian Leonard leads sentAIent's AI strategy and development with deep expertise in quantitative trading systems. Prior to founding sentAIent, Brian built Alpha Quant Analytics (AQA), a quantitative trading platform designed to automate all aspects asset allocation, trading, and risk management..."
-    },
-    {
-      id: 2,
-      name: "Greg Francis",
-      role: "Corporate Solutions",
-      avatar: "/assets/images/Greg Francis Bio Pic.png",
-      specializations: ["Executive Hospitality Operations", "Interpersonal Development", "Financial Statement Analysis"],
-      experience: "30+ years",
-      sector: "Hospitality",
-      education: "",
-      bio: `Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. At sentAIent, he specializes in transforming complex AI concepts into tangible operational excellence. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in advancing one of the country's most influential hospitality organizations. His diverse experience includes serving as Managing Partner at Smith & Wollensky.`,
-      achievements: [
-        "Sable was named one of Food & Wine Magazine's Top 5 Restaurants in the U.S.",
-        "Two establishments honored on Esquire Magazine's Best New Restaurants list.",
-        "Sommelier and Maître d' aboard an exclusive, steam-powered riverboat."
-      ],
-      publications: [
-      ],
-      linkedin: "#",
-      twitter: "#",
-      shortBio: "Greg is an accomplished hospitality executive with a strong foundation in technology and a track record of national recognition. At sentAIent, he specializes in transforming complex AI concepts into tangible operational excellence. As Senior Director of Restaurant Operations for Kimpton Hotels (East Coast), he played a key role in..."
     }
     /*},
     {
@@ -84,7 +63,7 @@ const TeamExpertiseSection = () => {
   ];
 
   return (
-    <section className="py-20 lg:py-32 bg-muted/30">
+    <section id="team" className="py-20 lg:py-32 bg-muted/30">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -96,7 +75,7 @@ const TeamExpertiseSection = () => {
           </div>
 
           <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
-            Meet the Minds Behind
+            Meet the Mind Behind
             <span className="block text-primary">AI Transformation</span>
           </h2>
 
@@ -106,7 +85,7 @@ const TeamExpertiseSection = () => {
         </div>
 
         {/* Team Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 mb-16">
+        <div className="grid md:grid-cols-1 lg:grid-cols-1 gap-8 mb-16">
           {teamMembers?.map((member) => (
             <div
               key={member?.id}

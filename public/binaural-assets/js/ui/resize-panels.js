@@ -295,7 +295,6 @@ export function updateTopBarWidth() {
  */
 export function updateBottomBarWidth() {
     let bottomBar = document.getElementById('bottomControlBar');
-    if (!bottomBar) bottomBar = document.getElementById('commandCenter');
     if (!bottomBar) bottomBar = document.getElementById('unifiedBottomDock');
 
     if (window.innerWidth < 1024) {

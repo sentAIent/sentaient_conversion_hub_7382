@@ -9,8 +9,8 @@
  *   - All captures are auto-persisted to IndexedDB via the MediaVault storage layer
  */
 
-import { saveMedia, getMediaList, deleteMedia, initStorage } from '/binaural-assets/js/services/storage-manager.js';
-import { trackGlobalEvent } from '/binaural-assets/js/services/analytics-service.js';
+import { saveMedia, getMediaList, deleteMedia, initStorage } from '../services/storage-manager.js';
+import { trackGlobalEvent } from '../services/analytics-service.js';
 
 // =========================================================================
 // STATE

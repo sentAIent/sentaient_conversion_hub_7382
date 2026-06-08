@@ -6,8 +6,7 @@
  * - mindwave_prefs: Main preferences object (volumes, theme, lock state)
  */
 
-import { state } from '/binaural-assets/js/state.js';
-import { getVisualizer } from '/binaural-assets/js/visuals/visualizer_lazy.js';
+import { state } from '../state.js';
 const STORAGE_KEY = 'mindwave_prefs_v1';
 const AUTOSAVE_DELAY = 1000; // 1 second debounce
 
@@ -25,7 +24,6 @@ const DEFAULTS = {
         aiLocked: false,
         speed: 1.0,
         brightness: 1.0,
-        harmonics: 0.0, // NEW: Default harmonics
         activeMode: 'particles' // Default mode
     },
     ui: {
@@ -47,7 +45,6 @@ export function loadUserPreferences() {
 
         // 1. Apply State
         state.aiVisualsLocked = prefs.visuals.aiLocked;
-        state.harmonicsLevel = prefs.visuals.harmonics || 0.0;
 
         // 2. Return for UI to handle slider Application
         // (Audio engine might not be ready yet, so we return values for controls.js to apply)
@@ -85,7 +82,6 @@ export function saveUserPreferences() {
                     aiLocked: state.aiVisualsLocked,
                     speed: state.visualSpeed || 1.0,
                     brightness: state.visualBrightness || 1.0,
-                    harmonics: state.harmonicsLevel || 0.0,
                     // activeMode: ... (We might need to ask visualizer for this)
                 },
                 ui: {
@@ -159,57 +155,6 @@ export function renderAmbassadorDashboard() {
     `;
 }
 
-export function renderCymaticProPatterns() {
-    const viz = getVisualizer();
-    if (!viz || !viz.currentCymaticData) return;
-
-    const panel = document.getElementById('cymaticPatternsContainer');
-    if (!panel) return;
-
-    // Split patterns into categories
-    const patterns = viz.constructor.CYMATIC_PATTERNS;
-    const basicPatterns = patterns.filter(p => p.cat !== 'advanced');
-    const advancedPatterns = patterns.filter(p => p.cat === 'advanced');
-
-    panel.innerHTML = `
-        <div class="flex flex-col gap-3 w-full max-w-[400px]">
-            <!-- ROW 1: TRADITIONAL HARMONICS -->
-            <div class="flex items-center justify-between bg-black/40 backdrop-blur-xl p-2 rounded-2xl border border-white/5">
-                <button onclick="getVisualizer().prevCymatic(); renderCymaticProPatterns()" class="p-2 hover:text-[var(--accent)] transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                
-                <div class="text-center px-4">
-                    <div class="text-[7px] tracking-[0.3em] opacity-40 font-bold uppercase mb-0.5">Harmonic Foundation</div>
-                    <div class="text-xs font-bold text-white/90 truncate max-w-[120px]">${viz.currentCymaticData.name || 'Pattern'}</div>
-                </div>
-
-                <button onclick="getVisualizer().nextCymatic(); renderCymaticProPatterns()" class="p-2 hover:text-[var(--accent)] transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-            </div>
-
-            <!-- ROW 2: ADVANCED HYPER-RESONANCE -->
-            <div class="bg-black/60 backdrop-blur-2xl p-3 rounded-2xl border border-[var(--accent)]/20 shadow-inner">
-                <div class="text-[7px] tracking-[0.3em] text-[var(--accent)] font-bold uppercase mb-3 text-center opacity-80">Advanced Hyper-Resonance</div>
-                <div class="grid grid-cols-3 gap-2">
-                    ${advancedPatterns.map(p => {
-                        const isActive = viz.currentCymaticData.name === p.name;
-                        return `
-                            <button onclick="getVisualizer().setCymaticByName('${p.name}'); renderCymaticProPatterns()" 
-                                    class="text-[9px] py-1.5 px-1 rounded-lg border transition-all duration-300
-                                    ${isActive ? 'bg-[var(--accent)]/20 border-[var(--accent)] text-[var(--accent)] shadow-[0_0_10px_rgba(var(--accent-rgb),0.3)]' 
-                                               : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60'}">
-                                ${p.name.split(' ')[0]}
-                            </button>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-        </div>
-    `;
-}
-window.renderCymaticProPatterns = renderCymaticProPatterns;
 
 window.generateAiZen = async () => {
     const input = document.getElementById('aiZenPrompt');
@@ -235,15 +180,12 @@ window.generateAiZen = async () => {
     if (prompt.includes('sleep') || prompt.includes('delta')) {
         setBeatFrequency(2.5); 
         setVisualMode('galaxy');
-        if (window.updateHarmonicsLevel) window.updateHarmonicsLevel(0.1);
     } else if (prompt.includes('focus') || prompt.includes('work')) {
         setBeatFrequency(14.0);
         setVisualMode('matrix');
-        if (window.updateHarmonicsLevel) window.updateHarmonicsLevel(0.4);
     } else {
         setBeatFrequency(7.83); // Schumann
         setVisualMode('mandala');
-        if (window.updateHarmonicsLevel) window.updateHarmonicsLevel(0.85);
     }
 
     if (btn) {
