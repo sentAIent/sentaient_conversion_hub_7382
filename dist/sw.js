@@ -17,21 +17,11 @@ self.addEventListener('activate', (event) => {
                 return caches.delete(key);
             }));
         }).then(() => {
-            console.log('[SW] Caches cleared. Unregistering self...');
-            return self.registration.unregister();
-        }).then(() => {
-            console.log('[SW] Unregistration complete. Claiming clients...');
+            console.log('[SW] Caches cleared. Claiming clients...');
             return self.clients.claim();
         }).then(() => {
-            // Force a reload on all controlled clients to pick up new assets
-            return self.clients.matchAll().then((clients) => {
-                clients.forEach((client) => {
-                    if (client.url) {
-                        console.log('[SW] Reloading client:', client.url);
-                        client.navigate(client.url);
-                    }
-                });
-            });
+            console.log('[SW] Claim complete. Unregistering self...');
+            return self.registration.unregister();
         })
     );
 });

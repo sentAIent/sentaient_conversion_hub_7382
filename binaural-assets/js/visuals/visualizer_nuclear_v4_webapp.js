@@ -129,6 +129,7 @@ export class Visualizer3D {
             canvas.addEventListener('webglcontextrestored', () => {
                 console.log('[Visualizer] WebGL context RESTORED. Reinitializing...');
                 try {
+                    for (const key in this.textures) { if (this.textures[key]) this.textures[key].needsUpdate = true; }
                     this.initialized = false;
                     this._freqDataArray = null;
                     this.initEnvironment();
@@ -184,14 +185,18 @@ export class Visualizer3D {
     resize() {
         if (!this.renderer || !this.canvas || !this.camera) return;
 
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        this.renderer.setSize(width, height);
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
+        if (this._resizeDebounce) return;
+        this._resizeDebounce = requestAnimationFrame(() => {
+            this._resizeDebounce = null;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            this.renderer.setSize(width, height);
+            this.camera.aspect = width / height;
+            this.camera.updateProjectionMatrix();
 
-        // Ensure layout is updated after standard resize
-        this.handleLayoutChange();
+            // Ensure layout is updated after standard resize
+            this.handleLayoutChange();
+        });
     }
 
     handleLayoutChange() {
@@ -1631,6 +1636,7 @@ export class Visualizer3D {
 
     render(analyserL, analyserR) {
         try {
+            if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
             if (!this.initialized || !this.renderer) return;
 
             if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
@@ -1657,7 +1663,8 @@ export class Visualizer3D {
             const multiplier = this.speedMultiplier || 1.0;
             const now = performance.now() * 0.001;
             if (!this.lastTime) this.lastTime = now;
-            const dt = now - this.lastTime;
+            let dt = now - this.lastTime;
+            if (dt < 0) dt = 0.016; // Clamp negative dt on modulo wraps
             this.lastTime = now;
 
             // Calculate Synesthetic Beat Pulse (0 to 1)
@@ -2385,20 +2392,20 @@ export class Visualizer3D {
             while (group.children.length > 0) {
                 const child = group.children[0];
                 group.remove(child);
-                if (child.geometry) child.geometry.dispose();
-                if (child.material) {
-                    if (child.material.map) child.material.map.dispose();
-                    child.material.dispose();
-                }
-                if (child.children && child.children.length) {
-                    child.traverse((c) => {
-                        if (c.geometry) c.geometry.dispose();
-                        if (c.material) {
-                            if (c.material.map) c.material.map.dispose();
-                            c.material.dispose();
+                child.traverse((c) => {
+                    if (c.geometry) c.geometry.dispose();
+                    if (c.material) {
+                        if (c.material.map) c.material.map.dispose();
+                        if (c.material.uniforms) {
+                            for (const key in c.material.uniforms) {
+                                if (c.material.uniforms[key] && c.material.uniforms[key].value && c.material.uniforms[key].value.dispose) {
+                                    c.material.uniforms[key].value.dispose();
+                                }
+                            }
                         }
-                    });
-                }
+                        c.material.dispose();
+                    }
+                });
             }
         };
 

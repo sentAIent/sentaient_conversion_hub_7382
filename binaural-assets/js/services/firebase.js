@@ -192,27 +192,50 @@ export async function initFirebase() {
                     console.warn('[StorageManager] Failed to load module:', err);
                 });
 
-                // 2. Background Refresh from Firestore
+                // 2. Background Refresh from Firestore (Subscriptions + Profile)
                 try {
+                    // Check subscriptions (Stripe)
                     const subDoc = await getDoc(doc(db, 'subscriptions', user.uid));
+                    let active = false;
+                    let lifetime = false;
+                    let plan = 'free';
+
                     if (subDoc.exists()) {
                         const data = subDoc.data();
-                        const active = data.status === 'active';
-                        const lifetime = data.plan === 'lifetime';
+                        active = data.status === 'active';
+                        lifetime = data.plan === 'lifetime';
+                        plan = data.plan || 'pro';
+                    }
 
+                    // Override with Profile Data (Promo Codes)
+                    const profileDoc = await getDoc(doc(db, 'users', user.uid, 'profile', 'data'));
+                    if (profileDoc.exists()) {
+                        const profileData = profileDoc.data();
+                        if (profileData.isPremium) {
+                            active = true;
+                            lifetime = profileData.isLifetime || lifetime;
+                            plan = profileData.tier || plan || 'pro';
+                        }
+                    }
+
+                    if (active) {
                         // Update state
-                        state.isLifetime = active && lifetime;
-                        state.userTier = active ? (data.plan || 'pro') : 'free';
+                        state.isLifetime = lifetime;
+                        state.userTier = plan;
 
                         // Sync localStorage
-                        localStorage.setItem('mindwave_premium', active ? 'true' : 'false');
+                        localStorage.setItem('mindwave_premium', 'true');
                         localStorage.setItem('mindwave_tier', state.userTier);
-                        localStorage.setItem('mindwave_lifetime', (active && lifetime) ? 'true' : 'false');
+                        localStorage.setItem('mindwave_lifetime', lifetime ? 'true' : 'false');
 
                         console.log('[Auth] Refreshed Tier:', state.userTier, 'Lifetime:', state.isLifetime);
                     }
                 } catch (err) {
-                    console.warn('[Auth] sub refresh failed:', err.message);
+                    if (err.message && err.message.includes('offline')) {
+                        console.log('[Auth] Offline mode. Skipped profile refresh.');
+                    } else {
+                        console.warn('[Auth] sub/profile refresh failed:', err.message);
+                    }
                 }
             } else {
                 state.userTier = 'free';
@@ -564,6 +587,36 @@ export async function fetchAudioLibrary() {
     });
     return tracks;
 }
+/**
+ * Update the user's profile document with premium status and codes used
+ * @param {string} uid - User ID
+ * @param {object} data - Data to merge into profile (e.g., {isPremium: true, usedPromoCodes: ['Yogananda']})
+ */
+export async function updateUserProfile(uid, data) {
+    if (isMock) {
+        console.log('[Firebase Mock] Updating user profile:', uid, data);
+        if (data.isPremium) {
+            localStorage.setItem('mindwave_premium', 'true');
+        }
+        return;
+    }
+
+    if (!db) {
+        console.warn("[Firebase] Cannot update user profile: DB not initialized");
+        return;
+    }
+
+    const docRef = doc(db, 'users', uid, 'profile', 'data');
+    
+    // Use setDoc with merge: true to avoid overwriting existing data
+    await setDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+    
+    console.log('[Firebase] User profile updated for:', uid);
+}
+
 export {
     auth,
     db,

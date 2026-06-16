@@ -321,7 +321,13 @@ export async function initJourney() {
 
 // Cloud Sync logic
 async function syncWithCloud() {
-    if (!db || !state.currentUser) return;
+    if (!state.currentUser) return;
+    
+    // Proactively skip cloud sync if device is offline
+    if (!navigator.onLine) {
+        console.log('[Journey] Device is offline. Operating strictly from local cache.');
+        return;
+    }
 
     try {
         const uid = state.currentUser.uid;
@@ -355,8 +361,12 @@ async function syncWithCloud() {
             console.log('[Journey] No cloud state, uploading local progress...');
             await saveToCloud();
         }
-    } catch (e) {
-        console.warn('[Journey] Cloud sync failed:', e);
+    } catch (err) {
+        if (err.message && err.message.includes('offline')) {
+            console.log('[Journey] Offline mode. Skipped cloud sync.');
+        } else {
+            console.warn('[Journey] Cloud sync failed:', err);
+        }
     }
 }
 
@@ -780,7 +790,7 @@ window.startLessonAction = async (lessonId) => {
             import('../audio/session-timer.js'),
             import('../audio/engine.js'),
             import('../visuals/visualizer_lazy.js'),
-            import('../ui/controls_v3.js')
+            import('../ui/controls_v4.js')
         ]);
 
         // Start audio playback and visuals

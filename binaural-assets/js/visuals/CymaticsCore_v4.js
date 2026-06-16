@@ -2622,7 +2622,7 @@ const getFragmentShader = (classId) => {
             
             vec3 baseTint = mix(activeColor1, activeColor2, luma);
             vec3 targetColor = baseTint * (luma * 2.5);
-            float blendFactor = clamp(uIntensity * 0.85, 0.0, 1.0);
+            float blendFactor = 0.85;
             vec3 tintedTex = mix(texColor.rgb, targetColor, blendFactor);
             vec3 finalColor = tintedTex * max(0.0, 1.0 - depletion * 0.5 * uIntensity);
             float antinode = smoothstep(0.0, 0.2, abs(ripples));
@@ -2653,7 +2653,7 @@ const getFragmentShader = (classId) => {
             
             vec3 baseTint = mix(activeColor1, activeColor2, luma);
             vec3 targetColor = baseTint * (luma * 2.5);
-            float blendFactor = clamp(uIntensity * 0.85, 0.0, 1.0);
+            float blendFactor = 0.85;
             vec3 tintedTex = mix(texColor.rgb, targetColor, blendFactor);
             vec3 finalColor = tintedTex * max(0.0, 1.0 + fluidAccumulation * 1.5 * uIntensity);
             vec3 glowCol = mix(activeColor1, activeColor2, speed * 10.0 + luma * 0.3);
@@ -2682,7 +2682,7 @@ const getFragmentShader = (classId) => {
             
             vec3 baseTint = mix(activeColor1, activeColor2, luma);
             vec3 targetColor = baseTint * (luma * 2.5);
-            float blendFactor = clamp(uIntensity * 0.85, 0.0, 1.0);
+            float blendFactor = 0.85;
             vec3 tintedTex = mix(texColor.rgb, targetColor, blendFactor);
             vec3 finalColor = tintedTex * max(0.0, 1.0 - swarmDepletion * 0.6 * uIntensity);
             customColor = mix(activeColor1, activeColor2, swarmAccumulation);
@@ -2710,7 +2710,7 @@ const getFragmentShader = (classId) => {
             customColor = mix(activeColor1, activeColor2, sin(luma * 5.0 + time)*0.5+0.5);
             vec3 glowCol = customColor * contour * 4.0 * (1.0 + midPulse);
             
-            vec3 finalColor = mix(texColor.rgb * 0.1, glowCol * 1.5, uIntensity);
+            vec3 finalColor = mix(texColor.rgb * 0.1, glowCol * 1.5, 0.85);
             finalColor += customColor * contour * midPulse * luma;
             gl_FragColor = vec4(finalColor, texColor.a * uAlpha);
 
@@ -3428,28 +3428,28 @@ export class CymaticsCore {
                     'binaural-assets/images/cymatics/ai_cymatic_16_1779566377245.png',
                     'binaural-assets/images/cymatics/cymatic_sacred_gold_obsidian.png',
                     'binaural-assets/images/cymatics/cymatic_biolum_abyssal.png',
-                    'binaural-assets/images/cymatics/cymatic_nebula_plasma.png',
-                    'binaural-assets/images/cymatics/cymatic_emerald_cyber_matrix.png',
-                    'binaural-assets/images/cymatics/cymatic_liquid_mercury_crimson.png',
-                    'binaural-assets/images/cymatics/cymatic_quantum_crystal_lattice.png',
-                    'binaural-assets/images/cymatics/cymatic_solar_flare_harmonics.png',
-                    'binaural-assets/images/cymatics/cymatic_amethyst_hyperdimensional.png',
-                    'binaural-assets/images/cymatics/cymatic_astral_lotus.png',
-                    'binaural-assets/images/cymatics/cymatic_celestial_mandala.png',
-                    'binaural-assets/images/cymatics/cymatic_quantum_flower.png',
-                    'binaural-assets/images/cymatics/cymatic_ethereal_nexus.png',
-                    'binaural-assets/images/cymatics/cymatic_neon_labyrinth.png',
-                    'binaural-assets/images/cymatics/cymatic_prismatic_core.png',
-                    'binaural-assets/images/cymatics/cymatic_obsidian_bloom.png',
-                    'binaural-assets/images/cymatics/cymatic_void_resonance.png',
-                    'binaural-assets/images/cymatics/cymatic_golden_ratio_spiral.png',
-                    'binaural-assets/images/cymatics/cymatic_sacred_sun_resonance.png',
-                    'binaural-assets/images/cymatics/cymatic_lunar_tides.png',
-                    'binaural-assets/images/cymatics/cymatic_cybernetic_lotus.png',
-                    'binaural-assets/images/cymatics/cymatic_bioluminescent_shroom.png',
-                    'binaural-assets/images/cymatics/cymatic_vortex_of_time.png',
-                    'binaural-assets/images/cymatics/cymatic_diamond_lattice.png',
-                    'binaural-assets/images/cymatics/cymatic_seraphim_wings.png'
+                    'binaural-assets/images/cymatics/ai_cymatic_0.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_1.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_2.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_3.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_4.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_5.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_6.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_7.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_8.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_9.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_10.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_11.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_12.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_13.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_14.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_15.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_16.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_0.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_1.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_2.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_3.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_4.png'
                 ];
                 
                 if (texUrls[variationId]) {
@@ -3473,10 +3473,10 @@ export class CymaticsCore {
                 }
             } else if (classId === 23) {
                 const texUrls23 = [
-                    'binaural-assets/images/cymatics/cymatic_sacred_sun_resonance.png',
-                    'binaural-assets/images/cymatics/cymatics_solar_flare.png',
-                    'binaural-assets/images/cymatics/cymatics_obsidian_gold.png',
-                    'binaural-assets/images/cymatics/cymatic_golden_ratio_spiral.png'
+                    'binaural-assets/images/cymatics/ai_cymatic_5.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_6.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_7.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_8.png'
                 ];
                 if (texUrls23[variationId]) {
                     if (!this.textureCache) this.textureCache = {};
@@ -3499,72 +3499,72 @@ export class CymaticsCore {
                 }
             } else if (classId === 24) {
                 const animals = [
-                    'binaural-assets/images/cymatics/constellations/aura_bear.webp', // 0
-                    'binaural-assets/images/cymatics/constellations/aura_lion.webp', // 1
-                    'binaural-assets/images/cymatics/constellations/aura_dragon.webp', // 2
-                    'binaural-assets/images/cymatics/constellations/aura_tiger.webp', // 3
-                    'binaural-assets/images/cymatics/constellations/aura_eagle.webp', // 4
-                    'binaural-assets/images/cymatics/constellations/aura_penguin_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_horse_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_dog_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_cat_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_elephant_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_9.png', // 0
+                    'binaural-assets/images/cymatics/ai_cymatic_10.png', // 1
+                    'binaural-assets/images/cymatics/ai_cymatic_11.png', // 2
+                    'binaural-assets/images/cymatics/ai_cymatic_12.png', // 3
+                    'binaural-assets/images/cymatics/ai_cymatic_13.png', // 4
+                    'binaural-assets/images/cymatics/ai_cymatic_14.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_15.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_16.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_0.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_1.png',
                     'binaural-assets/images/cymatics/constellations/aura_shark_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_whale_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_orca_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_swordfish_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_2.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_3.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_4.png',
                     'binaural-assets/images/cymatics/constellations/aura_salmon_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_turtle_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_alligator_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_5.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_6.png',
                     'binaural-assets/images/cymatics/constellations/aura_leopard_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_panther_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_cheetah_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_mongoose_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_7.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_8.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_9.png',
                     'binaural-assets/images/cymatics/constellations/aura_koala_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_kangaroo_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_panda_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_polarbear_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_10.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_11.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_12.png',
                     'binaural-assets/images/cymatics/constellations/aura_lizard_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_snake_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_rat_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_ox_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_rabbit_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_monkey_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_rooster_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/aura_pig_dummy.webp'
+                    'binaural-assets/images/cymatics/ai_cymatic_13.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_14.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_15.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_16.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_0.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_1.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_2.png'
                 ];
                 const bgs = [
-                    'binaural-assets/images/cymatics/constellations/background_nebula.webp',
-                    'binaural-assets/images/cymatics/constellations/background_galaxy.webp',
-                    'binaural-assets/images/cymatics/constellations/background_void.webp'
+                    'binaural-assets/images/cymatics/ai_cymatic_3.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_4.png',
+                    'binaural-assets/images/cymatics/ai_cymatic_5.png'
                 ];
                 const lineImages = [
-                    'binaural-assets/images/cymatics/constellations/bear_constellation.webp', // 0
-                    'binaural-assets/images/cymatics/constellations/lion_constellation.webp', // 1
-                    'binaural-assets/images/cymatics/constellations/dragon_constellation.webp', // 2
-                    'binaural-assets/images/cymatics/constellations/tiger_constellation.webp', // 3
-                    'binaural-assets/images/cymatics/constellations/eagle_constellation.webp', // 4
-                    'binaural-assets/images/cymatics/constellations/penguin_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_6.png', // 0
+                    'binaural-assets/images/cymatics/ai_cymatic_7.png', // 1
+                    'binaural-assets/images/cymatics/ai_cymatic_8.png', // 2
+                    'binaural-assets/images/cymatics/ai_cymatic_9.png', // 3
+                    'binaural-assets/images/cymatics/ai_cymatic_10.png', // 4
+                    'binaural-assets/images/cymatics/ai_cymatic_11.png',
                     'binaural-assets/images/cymatics/constellations/horse_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/dog_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_12.png',
                     'binaural-assets/images/cymatics/constellations/cat_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/elephant_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_13.png',
                     'binaural-assets/images/cymatics/constellations/shark_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/whale_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_14.png',
                     'binaural-assets/images/cymatics/constellations/orca_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/swordfish_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_15.png',
                     'binaural-assets/images/cymatics/constellations/salmon_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/turtle_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_16.png',
                     'binaural-assets/images/cymatics/constellations/alligator_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/leopard_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_0.png',
                     'binaural-assets/images/cymatics/constellations/panther_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/cheetah_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_1.png',
                     'binaural-assets/images/cymatics/constellations/mongoose_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/koala_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_2.png',
                     'binaural-assets/images/cymatics/constellations/panda_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/ox_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_3.png',
                     'binaural-assets/images/cymatics/constellations/monkey_constellation_dummy.webp',
-                    'binaural-assets/images/cymatics/constellations/kangaroo_constellation_dummy.webp',
+                    'binaural-assets/images/cymatics/ai_cymatic_4.png',
                     'binaural-assets/images/cymatics/constellations/dog_constellation_dummy.webp',
                 ];
 

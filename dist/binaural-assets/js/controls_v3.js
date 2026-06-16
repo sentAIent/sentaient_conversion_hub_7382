@@ -1609,6 +1609,38 @@ export function setupUI() {
         });
     }
 
+    // Advanced Palette Controls
+    const cColPickers = [
+        document.getElementById('cCol1Picker'),
+        document.getElementById('cCol2Picker'),
+        document.getElementById('cCol3Picker'),
+        document.getElementById('cCol4Picker')
+    ];
+    const cColPreviews = [
+        document.getElementById('cCol1Preview'),
+        document.getElementById('cCol2Preview'),
+        document.getElementById('cCol3Preview'),
+        document.getElementById('cCol4Preview')
+    ];
+    
+    cColPickers.forEach((picker, i) => {
+        if (picker) {
+            picker.addEventListener('input', (e) => {
+                const hex = e.target.value;
+                if (cColPreviews[i]) {
+                    cColPreviews[i].style.backgroundColor = hex;
+                }
+                const viz = getVisualizer();
+                if (viz && viz.cymaticMaterial) {
+                    const uniformName = 'uCymaticCol' + (i + 1);
+                    if (viz.cymaticMaterial.uniforms[uniformName]) {
+                        viz.cymaticMaterial.uniforms[uniformName].value.set(hex);
+                    }
+                }
+            });
+        }
+    });
+
     if (els.randomColorBtn) {
         els.randomColorBtn.addEventListener('click', () => {
             // Generate random vibrant color

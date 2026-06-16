@@ -1,12 +1,8 @@
 [build]
-  publish = "dist"
   command = "npm run build"
+  publish = "dist"
 
-[functions]
-  directory = "netlify/functions"
-
-# Stripe webhook endpoint
 [[redirects]]
-  from = "/api/stripe-webhook"
-  to = "/.netlify/functions/stripe-webhook"
+  from = "/*"
+  to = "/mindwave.html"
   status = 200

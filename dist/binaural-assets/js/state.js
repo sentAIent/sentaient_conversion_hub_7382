@@ -256,6 +256,8 @@ export const state = {
     visualVibration: false,
     visualSpeedAuto: true,
     aiVisualsLocked: false,
+    lotusState: 'auto',
+    lotusHeartbeatBpm: 11,
 
     // Preset tracking
     activePresetType: null,
@@ -313,7 +315,7 @@ export const state = {
     }
 };
 
-export const VISUALIZER_VERSION = 'V132_RESET';
+export const VISUALIZER_VERSION = 'V133_RESET';
 
 // Global Elements Container
 export const els = {

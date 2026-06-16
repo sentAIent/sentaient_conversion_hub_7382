@@ -35,7 +35,13 @@ export async function syncAnalyticsToCloud(uid) {
  * @param {string} uid The user's Firebase UID
  */
 export async function syncAnalyticsFromCloud(uid) {
-    if (!uid || !db) return;
+    if (!uid) return;
+    
+    // Proactively skip cloud sync if device is offline to prevent Firebase offline errors
+    if (!navigator.onLine) {
+        console.log('[Cloud Sync] Device is offline. Relying on local data.');
+        return;
+    }
 
     try {
         const docRef = doc(db, 'users', uid, 'analytics', 'stats');
@@ -84,6 +90,10 @@ export async function syncAnalyticsFromCloud(uid) {
             }
         }
     } catch (err) {
-        console.warn('[Cloud Sync] Failed to pull analytics from cloud:', err);
+        if (err.message && err.message.includes('offline')) {
+            console.log('[Cloud Sync] Offline mode. Skipped analytics sync.');
+        } else {
+            console.warn('[Cloud Sync] Failed to pull analytics from cloud:', err);
+        }
     }
 }

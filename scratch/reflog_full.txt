@@ -1,0 +1,228 @@
+58f82ea HEAD@{2026-05-19 15:14:37 -0700}: commit: Restore gorgeous Friday night double-sidebar tabbed menu system to root landing page (public/index.html) & recompiled production bundle
+8059a0b HEAD@{2026-05-19 13:07:30 -0700}: checkout: moving from deeceee54c4a0bea0d4c809b0045c5ec3c63da5e to main
+deeceee HEAD@{2026-05-19 12:01:56 -0700}: checkout: moving from b22509dac53f720bf050f204d737324b423e8b44 to stash@{0}
+b22509d HEAD@{2026-05-19 11:10:38 -0700}: checkout: moving from main to b22509d
+8059a0b HEAD@{2026-05-19 11:10:29 -0700}: reset: moving to HEAD
+8059a0b HEAD@{2026-05-19 11:00:30 -0700}: commit: Restore stable Friday May 15th configuration with dual sidebar tabs and fullscreen visuals gallery
+b22509d HEAD@{2026-05-18 16:08:14 -0700}: checkout: moving from 5bac7ca30a838b659d6bb19f8558d28ecbce7bed to main
+5bac7ca HEAD@{2026-05-18 16:04:20 -0700}: checkout: moving from restore-working-late-april-v2 to 5bac7ca
+c1ca5ec HEAD@{2026-05-18 16:01:36 -0700}: checkout: moving from main to restore-working-late-april-v2
+b22509d HEAD@{2026-05-18 16:00:30 -0700}: reset: moving to HEAD
+b22509d HEAD@{2026-05-06 08:44:29 -0700}: commit: Ultra-sync: Bumped versions to V123, included mindwave-beta.html in Vite build, and enforced clean production bundle deployment.
+c9140cc HEAD@{2026-05-06 07:45:49 -0700}: commit: Fix Vite build failure: removed query string from dynamic import in visualizer_lazy.js. Synced public/ assets to root for production parity.
+6684043 HEAD@{2026-05-05 23:31:11 -0700}: commit: Final push: Include all untracked assets, build artifacts, and synced beta pages to ensure full deployment parity
+7f29b21 HEAD@{2026-05-05 23:27:34 -0700}: commit: Deploy missing critical boot files and assets (main_vFINAL.js, main_vGOLD_SYNC.js, sophisticated-ui.css) and sync mindwave-beta.html
+8db48ec HEAD@{2026-05-05 22:34:35 -0700}: commit: Fix Ocean visualizer button (double-click bug), Upgrade Ocean to bioluminescent waves mode, Add contextual sidebar intensity controls, Global mode mapping for ocean->waves
+7468537 HEAD@{2026-04-26 17:55:45 -0700}: commit: Visualizer Stabilization: Ported Snowflake mode to v5 engine, refined Cymatics shader with multi-medium support, and decoupled UI from legacy v4 imports.
+df784a2 HEAD@{2026-04-20 18:15:01 -0700}: commit: feat: Phase 2 — Standalone Cymatics system (28 patterns, audio sync)
+b35c616 HEAD@{2026-04-20 17:10:47 -0700}: commit: feat: Add real snowfall visualizer (Phase 1)
+6b9a74f HEAD@{2026-04-20 13:13:38 -0700}: reset: moving to HEAD
+6b9a74f HEAD@{2026-04-19 00:29:28 -0700}: commit: Restore Mindwave V45: Dual-Sidebar architecture, Snowflake mode (❄️), and engine stability fixes.
+6c6594e HEAD@{2026-04-18 21:05:29 -0700}: commit: Restore stable Mindwave version (vPERFECT) and fix cache-busting
+c6d1774 HEAD@{2026-04-18 19:49:12 -0700}: reset: moving to HEAD~1
+1cd14de HEAD@{2026-04-18 18:52:54 -0700}: commit: UI: Thorough restoration of Dual-Sidebar layout in Mindwave Beta, removing top/bottom menus and adding tabbed Matrix controls.
+c6d1774 HEAD@{2026-04-18 17:18:29 -0700}: commit: Fix: Hardened Mindwave visualizer syntax, fixed SW cache-busting logic for versioned JS assets, and synchronized dist environment (V45 confirmed)
+0fd7112 HEAD@{2026-04-18 15:15:06 -0700}: commit: Emergency Fix v2: Final cache bust on main script and service worker
+e9acc9b HEAD@{2026-04-18 15:14:48 -0700}: commit: Emergency Fix: Force cache reload and refactor visualizer for stability
+18c8eb3 HEAD@{2026-04-18 15:10:39 -0700}: commit: Fix SyntaxError in lotus glow heartbeat rendering
+7311159 HEAD@{2026-04-18 14:53:31 -0700}: commit: UI Finalization: Completed Solfeggio grid, Sidebar organization, and Session controls
+4639001 HEAD@{2026-04-18 14:25:24 -0700}: rebase (continue) (finish): returning to refs/heads/main
+4639001 HEAD@{2026-04-18 14:25:24 -0700}: rebase (continue) (pick): UI Refactor: Implemented Tabbed Sidebar, Cymatics Engine, and Contextual Settings
+540d6fb HEAD@{2026-04-18 14:25:18 -0700}: rebase (continue): Restore Perfect UI architecture: Immersive Dual-Sidebar, 12-button Dock with Snowflake, and Tabbed Navigation Foundation
+f082414 HEAD@{2026-04-18 14:24:49 -0700}: pull --rebase (start): checkout f0824146530834cf2cb35487b7c6a0647512c09f
+2f9b760 HEAD@{2026-04-18 14:24:32 -0700}: commit: UI Refactor: Implemented Tabbed Sidebar, Cymatics Engine, and Contextual Settings
+aad67a5 HEAD@{2026-04-18 13:33:08 -0700}: commit: Restore Perfect UI architecture: Immersive Dual-Sidebar, 12-button Dock with Snowflake, and Tabbed Navigation Foundation
+b372989 HEAD@{2026-04-17 18:40:06 -0700}: checkout: moving from main-recovery to main
+3fd9c30 HEAD@{2026-04-17 18:39:51 -0700}: checkout: moving from main to main-recovery
+b372989 HEAD@{2026-04-17 18:39:50 -0700}: reset: moving to HEAD
+b372989 HEAD@{2026-03-24 11:10:49 -0700}: commit: Fix WebAudio Safari muting bug via lazy MediaStream destination loading
+d4707ed HEAD@{2026-03-24 10:36:04 -0700}: merge main-fixed: Fast-forward
+7d5c081 HEAD@{2026-03-24 10:36:01 -0700}: checkout: moving from main-fixed to main
+d4707ed HEAD@{2026-03-24 10:35:57 -0700}: commit: Update AI button labels and rebuild dist
+eeb0d81 HEAD@{2026-03-23 20:18:24 -0700}: commit: Move mindwave updates to beta route, revert base mindwave
+6488944 HEAD@{2026-03-23 19:41:54 -0700}: commit: Fix color pickers for Warp, Cube, Dragon, and Galaxy visualizers, refine Mandala gradient aesthetic and fix UI layouts
+bfe1a2d HEAD@{2026-03-22 20:00:59 -0700}: commit: fix: resolve visualizer load failure by passing correct text during init
+006407c HEAD@{2026-03-22 19:07:12 -0700}: commit: feat: add galaxy reset button and update default visual states (cyber only, txt mode)
+b3e86cd HEAD@{2026-03-22 17:50:45 -0700}: checkout: moving from b3e86cd37f7be5f0fceeb7a40fbd3480b49313ba to main-fixed
+b3e86cd HEAD@{2026-03-22 17:48:47 -0700}: commit: Fix Matrix TXT fallback, restore Lotus in MW mode, and normalize font scaling
+dce98dc HEAD@{2026-03-20 09:45:25 -0700}: commit: fix: silence getVisualizer warning and bump version for cache refresh
+481ccde HEAD@{2026-03-20 09:24:54 -0700}: commit: fix: resolve infinite recursion in visualizer, firebase timing, and missing GA ID
+1a564e1 HEAD@{2026-03-20 09:06:34 -0700}: commit: fix: resolve SyntaxError in visualizer_nuclear_v4.js
+51e4e5e HEAD@{2026-03-19 22:12:38 -0700}: commit: feat: restore angle sliders and fix luminace labels for cyber and matrix visualizers
+6b42ee1 HEAD@{2026-03-18 14:05:58 -0700}: commit: style(ui): refactor monolithic Global FX module into native dock buttons
+5bac7ca HEAD@{2026-03-18 13:53:16 -0700}: commit: style(ui): redesign Global FX module into an ultra-premium glassmorphic cluster
+714b4ce HEAD@{2026-03-18 13:34:27 -0700}: commit: feat(ui): append Global Master Color and Vibration controls cluster to visual dock
+c9af400 HEAD@{2026-03-18 13:18:26 -0700}: commit: fix(visuals): allow Cyber and Matrix modes to composite together without opacity destruction
+aa4719e HEAD@{2026-03-18 12:55:51 -0700}: commit: fix(ui): Correctly route visualizer color picker state to engine; finalize UI recover
+7d5c081 HEAD@{2026-03-18 12:05:42 -0700}: checkout: moving from main-recovery to 7d5c081
+3fd9c30 HEAD@{2026-03-18 12:05:42 -0700}: reset: moving to HEAD
+3fd9c30 HEAD@{2026-03-18 11:41:15 -0700}: checkout: moving from main to main-recovery
+7d5c081 HEAD@{2026-03-18 11:41:13 -0700}: reset: moving to HEAD
+7d5c081 HEAD@{2026-03-17 10:07:10 -0700}: commit: Fix Cyber and Matrix crossover settings and unhide 2D canvas
+b8543b7 HEAD@{2026-03-17 09:39:01 -0700}: commit: UI Refactor: Responsive bottom menu, removed visual mode exclusivity, moved mode toggles to left menu
+c4da247 HEAD@{2026-03-13 22:14:23 -0700}: reset: moving to HEAD
+c4da247 HEAD@{2026-03-13 22:12:57 -0700}: reset: moving to HEAD
+c4da247 HEAD@{2026-03-05 18:35:25 -0800}: commit: feat(pricing): change mid tier to 19.99 with 40% off warning and direct Download App to lifetime stripe checkout
+d4ea9ea HEAD@{2026-03-05 18:25:16 -0800}: commit: fix(viral): Stagger heavy visualizer init to prevent WebGL crash on load and fix bells volume forced to zero
+ac0d182 HEAD@{2026-03-05 17:58:35 -0800}: commit: feat(viral): Configure default load state with temple bells, relaxing binaural beats, and matrix rainbow galaxy visuals
+64e2fb5 HEAD@{2026-03-05 17:44:42 -0800}: commit: feat(viral): Implement Media Vault, Scraper v2, History, and UI fixes
+df2594f HEAD@{2026-03-03 23:11:29 -0800}: commit: fix: TypeError start is not a function - wrong export name from onboarding.js
+84030a7 HEAD@{2026-03-03 23:05:38 -0800}: commit: fix: DJ studio button borders, active state highlights, crash stability, SW caching
+3fd9c30 HEAD@{2026-03-02 11:22:44 -0800}: rebase finished: returning to refs/heads/main
+3fd9c30 HEAD@{2026-03-02 11:22:44 -0800}: pull --rebase origin main: feat(mindwave): redesign visual presets, v4 visualizer enhancements, controls & cursor fixes
+3c6f671 HEAD@{2026-03-02 11:22:43 -0800}: pull --rebase origin main: feat: integrate Cloud Sync Analytics & Offline Audio Caching for Stories/Library
+41222ee HEAD@{2026-03-02 11:22:42 -0800}: pull --rebase origin main: checkout 41222ee3b41ebf912e60b85b154adfc14044d95c
+656564e HEAD@{2026-03-02 11:22:01 -0800}: commit: feat(mindwave): redesign visual presets, v4 visualizer enhancements, controls & cursor fixes
+259f1be HEAD@{2026-02-27 08:07:35 -0800}: commit: feat: integrate Cloud Sync Analytics & Offline Audio Caching for Stories/Library
+e64945d HEAD@{2026-02-24 19:46:28 -0800}: commit: feat(visuals): enhance Matrix logo size, crispness, and internal detail. 2x scale and M/W visibility restoration.
+e8142c6 HEAD@{2026-02-24 12:25:28 -0800}: commit: Fix cursor text visibility on dark themes
+32895d9 HEAD@{2026-02-24 10:49:32 -0800}: commit: Final UI/UX refinements and logo sync
+508fb48 HEAD@{2026-02-24 10:48:25 -0800}: commit: Add cursor image asset and finalize UI improvements
+ffd1949 HEAD@{2026-02-24 10:44:29 -0800}: rebase finished: returning to refs/heads/main
+ffd1949 HEAD@{2026-02-24 10:44:29 -0800}: pull --rebase origin main: Cursor cleanup, real-time color picker, mode button accent colors
+a1ce06b HEAD@{2026-02-24 10:44:28 -0800}: pull --rebase origin main: checkout a1ce06b5d43109be865660dfb27e51a0ad9ebeec
+fa54439 HEAD@{2026-02-24 10:44:22 -0800}: reset: moving to HEAD
+fa54439 HEAD@{2026-02-24 10:42:46 -0800}: commit: Cursor cleanup, real-time color picker, mode button accent colors
+0d60e7a HEAD@{2026-02-23 09:15:20 -0800}: commit: deploy: sync tribal sun + lotus cursor to dist
+475510e HEAD@{2026-02-23 09:04:02 -0800}: commit: feat: tribal sun cursor (8 large + 8 small flares) + MindWave lotus cursor
+e3aeb9e HEAD@{2026-02-22 13:10:29 -0800}: commit: fix: Restore truncated main_vFINAL.js and correct cursor application logic
+64ed4dc HEAD@{2026-02-22 12:38:01 -0800}: commit: fix: Integrate Tribal Sun cursor SVG into native theme UI, remove redundant toggles
+4056851 HEAD@{2026-02-22 12:09:52 -0800}: commit: feat: Implement Custom Tribal Sun SVG Cursor and dynamic UI toggle
+2da53d6 HEAD@{2026-02-22 11:36:04 -0800}: rebase finished: returning to refs/heads/main
+2da53d6 HEAD@{2026-02-22 11:36:02 -0800}: rebase: feat: Add app-themed discount codes and fix Lifetime pricing exclusion
+064a27c HEAD@{2026-02-22 11:34:30 -0800}: pull origin main --rebase: Lock PWA Native Install behind Lifetime Paywall by dynamically injecting manifest.json
+65f744d HEAD@{2026-02-22 11:34:29 -0800}: pull origin main --rebase: Update Fireplace and Cosmic combo preset visuals
+1d20f9a HEAD@{2026-02-22 11:34:29 -0800}: pull origin main --rebase: Fix iOS ghost-click racing bug preventing preset toggle-off
+a716d78 HEAD@{2026-02-22 11:34:29 -0800}: pull origin main --rebase: Replace 1.5s volume fade with 60ms micro-fade to eliminate overlapping audio race conditions
+bea1290 HEAD@{2026-02-22 11:34:28 -0800}: pull origin main --rebase: Fix ambient bleed race condition by awaiting old node clearance before starting new combo
+01bb79c HEAD@{2026-02-22 11:34:28 -0800}: pull origin main --rebase: Fix critical audio dropouts caused by volume fade fast-resume and unhandled disconnect exceptions
+9460842 HEAD@{2026-02-22 11:34:28 -0800}: pull origin main --rebase: Optimize ambient sound buffer generation over the main thread with caching
+a4d2fa2 HEAD@{2026-02-22 11:34:28 -0800}: pull origin main --rebase: Fix Lofi Rain persistence on standard presets and refactor PWA paywall inline script
+422b2ee HEAD@{2026-02-22 11:34:22 -0800}: pull origin main --rebase: checkout 422b2eebf91b8b403c7428a5f77d523eda0d7b0c
+633cdfa HEAD@{2026-02-22 11:32:41 -0800}: commit: feat: Add app-themed discount codes and fix Lifetime pricing exclusion
+4326402 HEAD@{2026-02-21 20:07:17 -0800}: commit: Lock PWA Native Install behind Lifetime Paywall by dynamically injecting manifest.json
+e2d7961 HEAD@{2026-02-21 18:31:33 -0800}: commit: Update Fireplace and Cosmic combo preset visuals
+2aa77a0 HEAD@{2026-02-21 18:10:26 -0800}: commit: Fix iOS ghost-click racing bug preventing preset toggle-off
+031be22 HEAD@{2026-02-21 17:36:53 -0800}: commit: Replace 1.5s volume fade with 60ms micro-fade to eliminate overlapping audio race conditions
+078aadf HEAD@{2026-02-21 16:04:18 -0800}: commit: Fix ambient bleed race condition by awaiting old node clearance before starting new combo
+a805e45 HEAD@{2026-02-21 15:40:13 -0800}: commit: Fix critical audio dropouts caused by volume fade fast-resume and unhandled disconnect exceptions
+71aa8ab HEAD@{2026-02-21 14:45:00 -0800}: commit: Optimize ambient sound buffer generation over the main thread with caching
+e44082e HEAD@{2026-02-20 22:54:23 -0800}: commit: Fix Lofi Rain persistence on standard presets and refactor PWA paywall inline script
+b5f215f HEAD@{2026-02-20 22:30:17 -0800}: commit: Fix orphaned soundscape bug causing Lofi Rain loop to persist
+66f8b87 HEAD@{2026-02-20 21:16:49 -0800}: commit: fix: enforce strict paywall, update healing visuals, move master out sliders to top menu
+40fad94 HEAD@{2026-02-20 17:38:01 -0800}: commit: feat: secure app download behind lifetime deal paywall
+b749b85 HEAD@{2026-02-20 11:44:21 -0800}: commit (merge): Merge branch 'main' of github.com:sentAIent/sentaient_conversion_hub_7382 into main
+a88873c HEAD@{2026-02-20 09:50:08 -0800}: commit: feat: enhance visualizer with dynamic lotus color, fix matrix responsive layout, and default lock button to unlocked with theme color
+3472adb HEAD@{2026-02-17 21:32:08 -0800}: commit: feat: premium RGB/Rainbow toggle and default Mindwave + Flow visuals on load
+47f37df HEAD@{2026-02-17 16:55:23 -0800}: rebase finished: returning to refs/heads/main
+47f37df HEAD@{2026-02-17 16:55:23 -0800}: rebase: feat: restore Matrix mode controls, fix speed slider, optimize load
+371aff1 HEAD@{2026-02-17 16:54:29 -0800}: pull origin main --rebase: checkout 371aff1fb347aadfbf9b192dd6fc4bc182e1bdcd
+c5377b0 HEAD@{2026-02-17 16:48:59 -0800}: commit: feat: restore Matrix mode controls, fix speed slider, optimize load
+d54b7fd HEAD@{2026-02-15 21:12:27 -0800}: commit: Fix missing themeModalContent ID, repair corrupted Tailwind classes, and standardize script versions
+a18fb5e HEAD@{2026-02-15 20:35:20 -0800}: commit: Update mindwave-v101.html to latest
+0bfa9f8 HEAD@{2026-02-15 20:29:17 -0800}: commit: Update mindwave-beta.html to latest
+55a8c43 HEAD@{2026-02-15 20:28:59 -0800}: commit: Fix theme popup, standardize light theme handling, and sync resource versions
+475e563 HEAD@{2026-02-15 00:06:32 -0800}: commit: feat: Phase 4 Mobile Excellence & Performance optimizations
+fdede64 HEAD@{2026-02-14 20:49:27 -0800}: commit: Sync dist/ with public/ fixes for Firebase initialization
+1fc2c99 HEAD@{2026-02-14 20:09:59 -0800}: commit: Fix getAuth ReferenceError: export from firebase service and add missing imports
+0f82047 HEAD@{2026-02-14 19:42:27 -0800}: commit: Fix redundant intent survey modals and onboarding indexing
+d12aff5 HEAD@{2026-02-14 19:16:09 -0800}: commit: Restore mindwave-beta.html as a copy of v101 to fix 404
+4618e11 HEAD@{2026-02-14 18:54:25 -0800}: commit: Fix missing gallery exports in presets-service.js
+c288b33 HEAD@{2026-02-14 18:46:00 -0800}: commit: Phase 2: Product & Academy Integration + Mindwave studio bug fix
+efc2d7d HEAD@{2026-02-14 13:30:13 -0800}: commit: refactor: refine header navigation and fix nesting
+963c63f HEAD@{2026-02-14 13:10:58 -0800}: commit: feat: complete theme color update for alternate homepage
+c992cc5 HEAD@{2026-02-14 12:05:19 -0800}: commit: fix: resolve Footer import error and add reusable Footer component
+86ed372 HEAD@{2026-02-14 11:58:33 -0800}: commit: debug: add Home Alt link to header
+38d4025 HEAD@{2026-02-14 11:38:58 -0800}: commit: feat: implement alternate homepage at /home-alt
+e015c38 HEAD@{2026-02-14 10:29:42 -0800}: commit: restore: use AboutOurApproachIntelligenceCenter as root (contains bios)
+e2ed83a HEAD@{2026-02-14 10:07:39 -0800}: commit: restore: Sentaient services homepage as root landing page
+a4eb97e HEAD@{2026-02-13 13:35:52 -0800}: commit: NUCLEAR V101: Fix Lava Lamp Thermal Buoyancy, Rain/Fire Layering, and Cache Bypass
+2ff68f8 HEAD@{2026-02-10 20:10:45 -0800}: commit: UI: Centered top menu and tapZone dynamically between sidebars
+692feb1 HEAD@{2026-02-10 14:55:18 -0800}: commit: Fix Matrix UI, Rainbow Mode persistence, and Playback Stop issue for premium users
+9c43b48 HEAD@{2026-02-09 19:34:47 -0800}: commit: fix: Smooth visual loading - batch init + canvas fade-in
+77ac496 HEAD@{2026-02-09 19:25:58 -0800}: commit: fix: Rainbow mode persists across matrix toggle
+953a71f HEAD@{2026-02-09 19:19:58 -0800}: commit: fix: Rainbow mode + visual button highlights now work on load
+fe694e7 HEAD@{2026-02-09 19:00:32 -0800}: commit: fix: Matrix toggle clears text on switch, rainbow+mindwave default on
+a67e6e5 HEAD@{2026-02-09 13:32:38 -0800}: commit: fix: Visualizer not showing + Firebase race condition
+461308b HEAD@{2026-02-09 13:26:13 -0800}: commit: fix: Stats, journey, and 15-min limit indicator
+3f1c8f0 HEAD@{2026-02-09 11:50:39 -0800}: commit: feat: Phase 4 optimization features
+0b37213 HEAD@{2026-02-09 11:10:54 -0800}: commit: feat: Phase 3 retention features + footer positioning fix
+a60fa87 HEAD@{2026-02-09 10:17:36 -0800}: commit: fix: pricing modal z-index increased to z-[9999]
+c472e1b HEAD@{2026-02-09 00:44:21 -0800}: commit: fix: checkout flow resilience and pricing alignment
+0a7f2fc HEAD@{2026-02-08 23:49:08 -0800}: commit: Fix: Footer responsive layout with compact mode speed controls and dynamic resizing
+764b99c HEAD@{2026-02-06 17:18:29 -0800}: commit: Fix: Matrix UI Overhaul - Implemented Random/Mindwave Switch, fixed layout shift, V13
+f1ebf33 HEAD@{2026-02-06 17:11:53 -0800}: commit: Fix: Matrix Random Mode now forcefully clears custom text to prevent bleed V12
+001efb3 HEAD@{2026-02-06 17:06:56 -0800}: commit: Fix: Matrix Layout Stability - Input always visible but disabled in Mindwave mode V11
+30b80f8 HEAD@{2026-02-06 17:03:23 -0800}: commit: Fix: Matrix Settings UI padding & Rainbow/RGB toggle styling V10
+2ab84b6 HEAD@{2026-02-06 16:54:29 -0800}: commit: Fix: Matrix UI cleanup (duplicate toggle, input logic, labels) V9
+0fd3098 HEAD@{2026-02-06 16:43:30 -0800}: commit: debug: Add logging to matrix toggle to verify event listener attachment
+66bc75c HEAD@{2026-02-06 16:37:40 -0800}: commit: Fix: Matrix Random Mode logic was using text indices instead of random pool
+e55a689 HEAD@{2026-02-06 16:29:12 -0800}: commit: Fix: Matrix Random Mode invisible ink & canvas leak bugs
+7092306 HEAD@{2026-02-06 16:21:03 -0800}: commit: Fix: Change dynamic label from 'Mindwave Mode' to 'Mindwave'
+70aa9d4 HEAD@{2026-02-06 16:11:05 -0800}: commit: Fix: Update import versions to V4 to force cache clear for Visualizer
+5e63634 HEAD@{2026-02-06 15:40:46 -0800}: commit: Fix: Matrix Random Mode visibility & Update Label to Mindwave
+f0dbd46 HEAD@{2026-02-06 15:34:43 -0800}: commit: Fix: Initialize Matrix Logic Mode (Text/Random) on load
+fbb51ee HEAD@{2026-02-06 15:02:49 -0800}: commit: Feat: Add Matrix Text Mode Toggle (MindWave vs Random)
+2106aa5 HEAD@{2026-02-06 10:17:40 -0800}: commit: Refactor: Reduce Matrix Visualizer density by 50%
+1e30827 HEAD@{2026-02-06 10:04:23 -0800}: commit: Fix: Matrix Color Picker Glitch (Proxy Pattern with JS Sync)
+80c9e1a HEAD@{2026-02-05 23:33:31 -0800}: commit: Fix: Robust CSS for Matrix Color Picker & DOM-based Rainbow Toggle
+fdd1149 HEAD@{2026-02-05 23:17:28 -0800}: commit: Fix: Finalize Matrix UI (Pure Picker + Visible Toggle)
+a5a4ccf HEAD@{2026-02-05 23:14:48 -0800}: commit: Refactor: Redesign Matrix Rainbow Toggle & Clean Color Picker
+912c75b HEAD@{2026-02-05 23:08:18 -0800}: commit: Fix: Remove 'Tint' Label from Matrix Settings
+39d3836 HEAD@{2026-02-05 23:03:39 -0800}: commit: Fix: Matrix Color Picker Styling (Remove White BG)
+39802b6 HEAD@{2026-02-05 22:55:50 -0800}: commit: Fix: Sync Rainbow Toggle UI state on load
+5ee0df2 HEAD@{2026-02-05 22:49:53 -0800}: commit: Fix: Matrix Rainbow Mode & Color Picker Events (Missing Listeners)
+e223cb5 HEAD@{2026-02-05 21:38:39 -0800}: commit: Fix: WebGL Crash (Remove forceContextLoss, Guard Render, Reset state)
+083982b HEAD@{2026-02-05 21:31:50 -0800}: commit: Refactor: Refine Tour (Clean Title, Granular Right Panel Steps)
+ca9d306 HEAD@{2026-02-05 21:27:35 -0800}: commit: Feat: Implement Premium MindWave Tour (Driver.js + Tesla Theme)
+99a608f HEAD@{2026-02-05 21:11:41 -0800}: commit: Fix: Comprehensive Tutorial Overhaul (Dynamic Arrow Sliding, Responsive Sizing)
+b5e6754 HEAD@{2026-02-05 20:50:54 -0800}: commit: Fix: Tutorial readability (Solid BG) and collision detection (Smart Positioning)
+7e5c076 HEAD@{2026-02-05 20:25:19 -0800}: commit: UI: Complete Tutorial Redesign (Pulsing Highlights, Dark Tooltips)
+f44deaa HEAD@{2026-02-05 20:08:41 -0800}: commit: Fix: Revert Matrix Panel to horizontal layout, keep glassmorphism and toggle fix
+d4e5fb4 HEAD@{2026-02-05 19:53:55 -0800}: commit: Refactor: Matrix Settings redesign (Glassmorphism) and Rainbow Toggle fix
+906bf6a HEAD@{2026-02-05 19:41:05 -0800}: commit: Feat: Remake interactive tutorial with Deep Dive modal and new feature coverage
+db4a051 HEAD@{2026-02-05 15:42:11 -0800}: commit: Fix: Offset matrix characters by column to prevent horizontal repetition
+4d05b9f HEAD@{2026-02-05 15:32:32 -0800}: commit: Fix: Point index.html to correct main_vFINAL.js to fix build/deploy
+1a2efe2 HEAD@{2026-02-05 15:07:54 -0800}: commit: Fix: Resolve syntax error in visualizer and sync preload version
+6af21d8 HEAD@{2026-02-05 14:42:48 -0800}: commit: Fix: Expose toggleMatrixSettings to window scope for inline onclick handler
+35f1534 HEAD@{2026-02-05 14:24:37 -0800}: commit: Debug: Add BETA label and cache buster to visualizer import
+20d7439 HEAD@{2026-02-05 14:01:03 -0800}: commit: Fix: Add missing setMatrixMode and setMatrixRainbow methods to Visualizer3D
+11546b4 HEAD@{2026-02-05 13:45:01 -0800}: commit: Restore horizontal matrix menu version by replacing beta with stable mindwave.html
+2213629 HEAD@{2026-02-05 13:23:25 -0800}: commit (merge): Merge branch 'detached-f53255e' into main
+16bb3af HEAD@{2026-02-05 13:22:56 -0800}: checkout: moving from f53255e5c0f2d355ff66692cbd87be8f2bd7d635 to main
+f53255e HEAD@{2026-02-05 13:15:35 -0800}: commit: Upgrade to Visualizer Nuclear v4 and update core modules
+7d22541 HEAD@{2026-02-04 23:37:23 -0800}: commit: Fix audio syntax errors, responsive footer, and Matrix visualizer improvements
+32b7adb HEAD@{2026-02-04 11:30:39 -0800}: checkout: moving from main to 32b7adb
+16bb3af HEAD@{2026-02-04 11:30:39 -0800}: reset: moving to HEAD
+16bb3af HEAD@{2026-02-02 12:35:22 -0800}: commit: Fix Matrix Speed Error + Version Bump v=FIX_SPEED_FINAL
+32b7adb HEAD@{2026-02-02 12:19:43 -0800}: commit: Implement Matrix Mode Selector + Custom Text v=FIX_CUSTOM_FINAL
+97142af HEAD@{2026-02-02 12:08:26 -0800}: commit: FORCE MindWave Mode (Text) v=FIX_MINDWAVE_FINAL
+90d61be HEAD@{2026-02-01 21:01:25 -0800}: commit: Fix Matrix Angle Persistence & MindWave Safety v=FIX_CRISIS_2
+7edc3b1 HEAD@{2026-02-01 20:50:18 -0800}: commit: Force Cache Bust: Matrix Angle Fix v=FIX_ANGLE_1
+ec7ad57 HEAD@{2026-02-01 20:37:46 -0800}: commit: Fix Matrix Angle: Remove redundant radian conversion in controls
+d155fb8 HEAD@{2026-02-01 19:37:32 -0800}: commit: Fix Matrix Visualizer: Large Logo, Correct Sequence, UV Orientation, and Sticky Characters Fix
+ca72e32 HEAD@{2026-01-30 16:59:08 -0800}: commit: Create beta page at public/mindwave-beta.html
+b98ae69 HEAD@{2026-01-30 09:47:49 -0800}: commit: Sync public/mindwave.html with index.html to deploy missing features (Journeys button, Visualizer fix)
+dc213a4 HEAD@{2026-01-30 09:36:54 -0800}: pull origin main: Merge made by the 'recursive' strategy.
+451ce87 HEAD@{2026-01-30 09:34:37 -0800}: commit: Fix visualizer state, styling updates for info modals and icons, and comprehensive info content updates
+d10d177 HEAD@{2026-01-27 13:26:45 -0800}: commit: Configure Matrix Control and Default Visuals (Flow+Matrix only)
+0e5d9b1 HEAD@{2026-01-26 22:15:39 -0800}: commit: Fix visibility of default visuals on load
+1aec5b7 HEAD@{2026-01-26 22:10:27 -0800}: commit: Set default load screen to run Flow + Matrix + Ocean
+5b81ca8 HEAD@{2026-01-26 22:05:26 -0800}: commit: Implement Matrix MindWave Easter Egg and fix Flow default
+165e35f HEAD@{2026-01-26 21:24:01 -0800}: commit: Fix Matrix Menu Position & Infinite Ocean Horizon
+9a15d85 HEAD@{2026-01-26 20:54:25 -0800}: commit: Build and update dist for deployment
+26e926d HEAD@{2026-01-26 20:47:19 -0800}: pull origin main: Merge made by the 'recursive' strategy.
+cff21df HEAD@{2026-01-26 20:47:00 -0800}: commit: Implement Multi-Visuals Support, Realistic Fireplace. Fix DJ Synth Colors and add Sentaient Theme
+83ac2c5 HEAD@{2026-01-25 01:15:38 -0800}: commit: Improve Menu UX: Add info buttons and tooltips
+c11c9e5 HEAD@{2026-01-25 01:07:35 -0800}: commit: Restore free access to basic brainwave presets (left menu)
+8a1b31e HEAD@{2026-01-25 00:34:33 -0800}: commit: Trigger Netlify deploy
+4e1a7c2 HEAD@{2026-01-25 00:12:24 -0800}: commit: Fix visual menu tooltips, active state logic, and enable Ocean visual mode
+8188934 HEAD@{2026-01-23 20:44:24 -0800}: commit: Fix UI light mode visibility, DJ Synth ReferenceError, and Visualizer crash. Modernized menu toggles.
+e268781 HEAD@{2026-01-22 18:52:53 -0800}: commit: Update DJ Studio category colors (Pulse: Red, Drops: Blue, Texture: Yellow)
+bf1cdb4 HEAD@{2026-01-22 18:27:58 -0800}: commit: Fix Light Mode visibility, unify Mixer theming, and crop cursor text
+f947e5e HEAD@{2026-01-20 12:43:18 -0800}: commit: Add firebase dependency to fix build
+294e7a0 HEAD@{2026-01-20 12:28:47 -0800}: commit (merge): Merge remote changes
+2138d66 HEAD@{2026-01-20 09:02:32 -0800}: commit: Build: Updated dist with audio fixes and new features
+c0cd98d HEAD@{2026-01-20 08:47:16 -0800}: commit: Deploy: Audio engine fixes (nuclear reset), new visual modes & presets
+0366103 HEAD@{2026-01-13 14:04:44 -0800}: commit: Add MindWave binaural beats app at /mindwave route
+5af75ab HEAD@{2026-01-13 13:19:49 -0800}: clone: from https://github.com/sentAIent/sentaient_conversion_hub_7382.git

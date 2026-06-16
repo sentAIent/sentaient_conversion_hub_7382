@@ -1,0 +1,63 @@
+const fs = require('fs');
+const path = require('path');
+
+const targetPath = path.join(__dirname, 'public/binaural-assets/js/visuals/CymaticsCore.js');
+let code = fs.readFileSync(targetPath, 'utf8');
+
+const palettesToAdd = `
+    11: [ // Sacred Runes (10)
+        [0xffa500, 0x8b0000], [0x00ffff, 0x00008b], [0xff1493, 0x4b0082], [0x32cd32, 0x006400],
+        [0xffd700, 0x2f4f4f], [0xff00ff, 0x191970], [0x00fa9a, 0x008080], [0xff4500, 0x8b4513],
+        [0x1e90ff, 0x000000], [0xffff00, 0xb8860b]
+    ],
+    12: [ // Wireframe Topologies (10)
+        [0x00ff00, 0x000000], [0xff00ff, 0x000000], [0x00ffff, 0x000000], [0xffff00, 0x000000],
+        [0xff0000, 0x000000], [0x0000ff, 0x000000], [0xffa500, 0x000000], [0x1e90ff, 0x000000],
+        [0x32cd32, 0x000000], [0xff1493, 0x000000]
+    ],
+    13: [ // Ethereal Plasma & Smoke (10)
+        [0xe6e6fa, 0x4b0082], [0xffb6c1, 0x8b0000], [0xe0ffff, 0x008080], [0xfffacd, 0x8b4513],
+        [0xdda0dd, 0x483d8b], [0x98fb98, 0x2e8b57], [0x87cefa, 0x191970], [0xffdab9, 0xd2691e],
+        [0xf08080, 0x800000], [0x20b2aa, 0x00008b]
+    ],
+    14: [ // Sacred Geometry Vectors (10)
+        [0xffd700, 0x000000], [0x00ffff, 0x000080], [0xff00ff, 0x4b0082], [0x00ff00, 0x006400],
+        [0xff4500, 0x8b0000], [0x1e90ff, 0x191970], [0xff1493, 0x800080], [0x7fff00, 0x2e8b57],
+        [0x00fa9a, 0x008080], [0xffa500, 0x8b4513]
+    ],
+    15: [ // Retro-Wave Topologies (10)
+        [0xff00ff, 0x00ffff], [0xff1493, 0x1e90ff], [0xffa500, 0x800080], [0x00ff00, 0xff00ff],
+        [0xffff00, 0xff4500], [0x00ffff, 0x4b0082], [0xff69b4, 0x00ced1], [0x7fff00, 0xff1493],
+        [0x00fa9a, 0xff8c00], [0x1e90ff, 0xff0000]
+    ],
+    16: [ // Nano-Robotic Structures (10)
+        [0xc0c0c0, 0x000000], [0x808080, 0x00ff00], [0xa9a9a9, 0x00ffff], [0x696969, 0xff00ff],
+        [0x778899, 0xffa500], [0x708090, 0xff1493], [0x2f4f4f, 0x32cd32], [0x000000, 0xff0000],
+        [0xdcdcdc, 0x0000ff], [0xd3d3d3, 0x8b0000]
+    ],
+    17: [ // Raymarched Infinite Tunnels (10)
+        [0xff00ff, 0x00ffff], [0xff1493, 0x191970], [0x00ff00, 0x006400], [0xffa500, 0x8b0000],
+        [0x00ffff, 0x000080], [0xff0000, 0x8b4513], [0x32cd32, 0x2e8b57], [0x1e90ff, 0x4b0082],
+        [0xffff00, 0xd2691e], [0xff69b4, 0x800080]
+    ],
+    18: [ // Hyper-Complex 3D Entities (10)
+        [0xff00ff, 0x00ffff], // Mandelbulb Core
+        [0xff1493, 0xffd700], // Symbiotic Möbius Knots
+        [0xff0000, 0x8b0000], // Advanced Fractal Heart
+        [0x00fa9a, 0x0000cd], // Infinite SDF Engine
+        [0x9400d3, 0x32cd32], // Organic Alien Artifact
+        [0x00bfff, 0xff00ff], // Quantum Tesseract
+        [0xffffff, 0x87cefa], // Recursive Crystal Lattice
+        [0x4b0082, 0xff69b4], // Ethereal 3D Neural Web
+        [0xff4500, 0xffff00], // Hyper-Toroid Swarm
+        [0x191970, 0xadff2f]  // The Chronos Sphere
+    ]
+`;
+
+// Find where CYMATICS_PALETTES ends and inject the new palettes
+code = code.replace(/    10: \[\s*\/\/ Pixel Swarm.*?\n\s*\]\n\s*\n\};\n/s, (match) => {
+    return match.replace(/\]\n\s*\n\};/, '],\n' + palettesToAdd + '\n};\n');
+});
+
+fs.writeFileSync(targetPath, code);
+console.log("Palettes fixed!");

@@ -20,11 +20,22 @@ export async function initPWAInstall() {
         let hasAccess = false;
 
         try {
-            if (user) {
-                hasAccess = await hasPurchasedApp();
+            // Skip cloud purchase check if device is offline; fall back to local storage
+            if (!navigator.onLine) {
+                console.log('[PWA] Device is offline. Using local access cache.');
+                const localPremium = localStorage.getItem('mindwave_premium') === 'true';
+                if (localPremium) hasAccess = true;
+            } else {
+                if (user) {
+                    hasAccess = await hasPurchasedApp();
+                }
             }
-        } catch (e) {
-            console.warn('[PWA] Error checking app purchase access:', e);
+        } catch (err) {
+            if (err.message && err.message.includes('offline')) {
+                console.log('[PWA] Offline mode. Skipped app purchase access check.');
+            } else {
+                console.error('[PWA] Error checking app purchase access:', err);
+            }
         }
 
         // --- 1. RUNTIME STANDALONE LOCK ---

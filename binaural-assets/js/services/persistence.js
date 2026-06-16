@@ -48,7 +48,7 @@ export function loadUserPreferences() {
 
         // 2. Return for UI to handle slider Application
         // (Audio engine might not be ready yet, so we return values for controls.js to apply)
-        console.log('[Persistence] Loaded preferences:', prefs);
+        // console.log('[Persistence] Loaded preferences:', prefs);
         return prefs;
 
     } catch (e) {

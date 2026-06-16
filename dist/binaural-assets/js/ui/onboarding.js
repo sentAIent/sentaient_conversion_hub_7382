@@ -26,7 +26,7 @@ function startTour() {
     const tour = new Shepherd.Tour({
         useModalOverlay: true,
         defaultStepOptions: {
-            classes: 'shadow-2xl bg-[#11111a] border border-white/10 text-white rounded-xl p-4 font-sans',
+            classes: 'shadow-[0_0_30px_rgba(6,182,212,0.2)] bg-black/80 backdrop-blur-md border border-cyan-500/40 text-cyan-50 rounded-xl p-5 font-sans',
             scrollTo: true,
             cancelIcon: {
                 enabled: true
@@ -46,12 +46,12 @@ function startTour() {
             {
                 text: 'Skip',
                 action: tour.cancel,
-                classes: 'text-white/50 hover:text-white px-4 py-2 text-sm transition-colors'
+                classes: 'text-cyan-500/60 hover:text-cyan-300 px-4 py-2 text-sm transition-colors uppercase tracking-wider text-[11px]'
             },
             {
                 text: 'Next',
                 action: tour.next,
-                classes: 'bg-[var(--accent)] text-white px-4 py-2 rounded-lg text-sm hover:brightness-110 transition-all shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)]'
+                classes: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/40 px-4 py-2 rounded-lg text-sm transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] font-bold tracking-wider'
             }
         ]
     });
@@ -68,12 +68,12 @@ function startTour() {
             {
                 text: 'Back',
                 action: tour.back,
-                classes: 'text-white/50 hover:text-white px-4 py-2 text-sm transition-colors'
+                classes: 'text-cyan-500/60 hover:text-cyan-300 px-4 py-2 text-sm transition-colors uppercase tracking-wider text-[11px]'
             },
             {
                 text: 'Next',
                 action: tour.next,
-                classes: 'bg-[var(--accent)] text-white px-4 py-2 rounded-lg text-sm hover:brightness-110 transition-all shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)]'
+                classes: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/40 px-4 py-2 rounded-lg text-sm transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] font-bold tracking-wider'
             }
         ]
     });
@@ -90,7 +90,7 @@ function startTour() {
             {
                 text: 'Finish',
                 action: tour.complete,
-                classes: 'bg-[var(--accent)] text-white px-4 py-2 rounded-lg text-sm hover:brightness-110 transition-all shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)]'
+                classes: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/40 px-4 py-2 rounded-lg text-sm transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] font-bold tracking-wider'
             }
         ]
     });

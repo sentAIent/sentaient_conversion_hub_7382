@@ -37,7 +37,7 @@ registerProcessor('recorder-processor', RecorderProcessor);
 
 export function initAudio() {
     if (!state.audioCtx) {
-        state.audioCtx = new AudioContext();
+        window.__debugAudioCtx = state.audioCtx = new AudioContext();
     }
     if (state.audioCtx.state === 'suspended') {
         state.audioCtx.resume().catch(e => console.warn("Resume aborted", e));
@@ -79,7 +79,7 @@ export async function startAudio() {
     try {
         // Force new context creation inside user gesture if needed
         if (!state.audioCtx || state.audioCtx.state === 'closed') {
-            state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            window.__debugAudioCtx = state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             state.workletInitialized = false; // Reset worklet flag if context is new
         }
 

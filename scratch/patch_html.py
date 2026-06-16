@@ -1,58 +1,175 @@
-import re
+import os
 
-with open('public/mindwave.html', 'r') as f:
-    html = f.read()
+# 1. Read Uploads section
+with open('scratch/uploads_section.html', 'r') as f:
+    uploads_html = f.read()
 
-with open('scratch/old_mindwave.html', 'r') as f:
-    old_html = f.read()
+# 2. Read Classical section
+with open('scratch/classical_section.html', 'r') as f:
+    classical_html = f.read()
 
-# 1. Extract Visuals
-visual_btns_match = re.search(r'(<!-- SPHERE -->.*?)<!-- CYMATICS', old_html, re.DOTALL)
-if visual_btns_match:
-    cymatics_btn = re.search(r'(<button id="cymaticsBtn".*?</button>)', old_html, re.DOTALL).group(1)
-    visual_btns = visual_btns_match.group(1) + cymatics_btn
+# 3. Create the clean stories section
+stories_html = """<section class="mixer-section mb-6" data-section="stories">
+                <div class="flex justify-between items-center mb-4 cursor-pointer section-header"
+                    onclick="toggleMixerSection('stories')">
+                    <div class="flex items-center gap-4">
+                        <svg class="section-arrow transition-transform duration-200" width="12" height="12"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                        <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Sleep Stories
+                        </h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('stories'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="section-content mt-6 space-y-6">
+                    <!-- Story Cards (hardcoded grid list) -->
+                    <div class="grid grid-cols-1 gap-4">
+                        <!-- Story 1: Cosmic Voyage -->
+                        <div class="story-card p-4 rounded-xl bg-white/5 border border-white/10 hover:border-[var(--accent)]/50 transition-all flex flex-col gap-3 group relative overflow-hidden">
+                            <div class="flex justify-between items-start">
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-xs font-bold text-white group-hover:text-[var(--accent)] transition-colors">Cosmic Voyage</span>
+                                    <span class="text-[9px] text-[var(--text-muted)] uppercase font-mono tracking-wider">Deep Space Journey • 15:00</span>
+                                </div>
+                                <span class="px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[8px] uppercase tracking-wider font-mono">Ambient</span>
+                            </div>
+                            <p class="text-[10px] text-[var(--text-muted)] leading-relaxed">Drift through cosmic nebulae and distant starlight, guided by deep generative space drones and tranquil narration.</p>
+                            <div class="flex items-center justify-between mt-2 pt-3 border-t border-white/5">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="playMeditationStory('cosmic-voyage', this)"
+                                        class="play-story-btn p-2 rounded-lg bg-[var(--accent)]/20 border border-[var(--accent)]/30 hover:bg-[var(--accent)]/35 text-[var(--accent)] hover:text-white transition-all flex items-center justify-center"
+                                        title="Play Cosmic Voyage">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                            <polygon points="5 3 19 12 5 21 5 3" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="story-progress-container flex-1 mx-3 hidden">
+                                    <div class="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                                        <div class="story-progress bg-[var(--accent)] h-full w-0 transition-all duration-300"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Story 2: Rainforest Healing -->
+                        <div class="story-card p-4 rounded-xl bg-white/5 border border-white/10 hover:border-[var(--accent)]/50 transition-all flex flex-col gap-3 group relative overflow-hidden">
+                            <div class="flex justify-between items-start">
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-xs font-bold text-white group-hover:text-[var(--accent)] transition-colors">Rainforest Healing</span>
+                                    <span class="text-[9px] text-[var(--text-muted)] uppercase font-mono tracking-wider">Nature Immersion • 20:00</span>
+                                </div>
+                                <span class="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[8px] uppercase tracking-wider font-mono">Nature</span>
+                            </div>
+                            <p class="text-[10px] text-[var(--text-muted)] leading-relaxed">Deep rainforest atmospheric soundscape with healing Solfeggio frequencies and soft rain to soothe hyper-active neural activity.</p>
+                            <div class="flex items-center justify-between mt-2 pt-3 border-t border-white/5">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="playMeditationStory('rainforest-healing', this)"
+                                        class="play-story-btn p-2 rounded-lg bg-[var(--accent)]/20 border border-[var(--accent)]/30 hover:bg-[var(--accent)]/35 text-[var(--accent)] hover:text-white transition-all flex items-center justify-center"
+                                        title="Play Rainforest Healing">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                            <polygon points="5 3 19 12 5 21 5 3" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="story-progress-container flex-1 mx-3 hidden">
+                                    <div class="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                                        <div class="story-progress bg-[var(--accent)] h-full w-0 transition-all duration-300"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Story 3: Ancient Monasteries -->
+                        <div class="story-card p-4 rounded-xl bg-white/5 border border-white/10 hover:border-[var(--accent)]/50 transition-all flex flex-col gap-3 group relative overflow-hidden">
+                            <div class="flex justify-between items-start">
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-xs font-bold text-white group-hover:text-[var(--accent)] transition-colors">Ancient Monasteries</span>
+                                    <span class="text-[9px] text-[var(--text-muted)] uppercase font-mono tracking-wider">Tibetan Zen Chants • 12:00</span>
+                                </div>
+                                <span class="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[8px] uppercase tracking-wider font-mono">Zen Chants</span>
+                            </div>
+                            <p class="text-[10px] text-[var(--text-muted)] leading-relaxed">Authentic Tibetan bell resonations and deep throat singing echoes designed for transcendental meditation sessions.</p>
+                            <div class="flex items-center justify-between mt-2 pt-3 border-t border-white/5">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="playMeditationStory('ancient-monasteries', this)"
+                                        class="play-story-btn p-2 rounded-lg bg-[var(--accent)]/20 border border-[var(--accent)]/30 hover:bg-[var(--accent)]/35 text-[var(--accent)] hover:text-white transition-all flex items-center justify-center"
+                                        title="Play Ancient Monasteries">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                            <polygon points="5 3 19 12 5 21 5 3" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="story-progress-container flex-1 mx-3 hidden">
+                                    <div class="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                                        <div class="story-progress bg-[var(--accent)] h-full w-0 transition-all duration-300"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>"""
+
+# 4. Construct complete replacement block
+replacement_block = f"""{stories_html}
+
+            <div class="h-6 border-b border-white/5 mb-6"></div>
+
+            {uploads_html}
+
+            <div class="h-6 border-b border-white/5 mb-6"></div>
+
+            {classical_html}
+                </div>
+            </div>"""
+
+def patch_file(filepath):
+    print(f"Patching {filepath}...")
+    with open(filepath, 'r') as f:
+        content = f.read()
+
+    start_str = '<section class="mixer-section" data-section="stories">'
+    start_pos = content.find(start_str)
+    if start_pos == -1:
+        print(f"Could not find start_str in {filepath}!")
+        return False
+
+    # Find the end of data-section="stories" block
+    end_marker = 'id="classicalForwardBtn"'
+    end_search = content.find(end_marker, start_pos)
+    if end_search == -1:
+        print(f"Could not find end_marker in {filepath}!")
+        return False
+
+    end_pos = content.find('</div>', end_search) # inside controls row
+    end_pos = content.find('</div>', end_pos + 6) # past row
+    end_pos = content.find('</div>', end_pos + 6) # past panel
+    end_pos = content.find('</div>', end_pos + 6) # past section
+    end_pos = content.find('</div>', end_pos + 6) # past sidebar-section
+    end_pos = content.find('</div>', end_pos + 6) # past tab-panel (tab-atmosphere)
+
+    original_block = content[start_pos:end_pos+6]
     
-    # Replace the existing visuals Tab grid
-    old_grid_pattern = r'<div id="visualsTabGrid" class="grid grid-cols-3 gap-2">.*?</div>\n                </section>'
-    new_grid = f'<div id="visualsTabGrid" class="grid grid-cols-4 gap-2">\n{visual_btns}\n</div>\n                </section>'
-    html = re.sub(old_grid_pattern, new_grid, html, flags=re.DOTALL)
-
-# 2. Extract Brain Waves & Healing
-bw_match = re.search(r'(<div class="py-2 flex items-center justify-center shrink-0">\n\s*<div class="h-px w-full bg-white/10"></div>\n\s*<span\n\s*class="px-2 text-\[10px\] font-bold text-\[var\(--accent\)\] tracking-widest bg-\[#0f172a\]/0 whitespace-nowrap">BRAIN\n\s*WAVES</span>.*?<!-- Ambience Combos - 2 Column Grid -->\n\s*<div class="grid grid-cols-2 gap-1\.5 shrink-0">)', old_html, re.DOTALL)
-
-if bw_match:
-    # We want everything from Brain waves to the end of Healing
-    # Let's be more precise
-    bw_start = old_html.find('<div class="py-2 flex items-center justify-center shrink-0">')
-    bw_end = old_html.find('<!-- Ambience Combos - 2 Column Grid -->')
-    bw_content = old_html[bw_start:bw_end]
+    # Do replacement
+    new_content = content[:start_pos] + replacement_block + content[end_pos+6:]
     
-    # Inject into leftTabFreq
-    inject_target = r'(<div id="leftTabFreq" class="p-6 space-y-8 block tab-content">\n\s*<section class="mixer-section">)'
-    html = re.sub(inject_target, f'\\1\n{bw_content}\n', html)
-
-# 3. Extract Ambience
-ambience_start = old_html.find('<div class="py-2 flex items-center justify-center shrink-0">\n                <div class="h-px w-full bg-white/10"></div>\n                <span\n                    class="px-2 text-[10px] font-bold text-[var(--accent)] tracking-widest bg-[#0f172a]/0">AMBIENCE</span>')
-ambience_end = old_html.find('<!-- Saved Mixes Link -->')
-ambience_content = old_html[ambience_start:ambience_end]
-
-if ambience_content:
-    # Inject into leftTabEnv at the top
-    inject_target = r'(<div id="leftTabEnv" class="hidden p-6 space-y-8 tab-content">)'
-    html = re.sub(inject_target, f'\\1\n{ambience_content}\n', html)
-
-# 4. Extract Journeys
-journeys_start = old_html.find('<section class="mixer-section" data-section="journeys">')
-journeys_end = old_html.find('<!-- DJ PADS (Pioneer XDJ-style) -->')
-journeys_content = old_html[journeys_start:journeys_end]
-
-if journeys_content:
-    # Inject into leftTabFreq at the bottom
-    inject_target = r'(</section>\n\s*</div>\n\s*<!-- TAB: BIO \(SOUNDSCAPES & STORIES\) -->)'
-    html = re.sub(inject_target, f'</section>\n{journeys_content}\n</div>\n                <!-- TAB: BIO (SOUNDSCAPES & STORIES) -->', html)
-
-
-with open('public/mindwave.html', 'w') as f:
-    f.write(html)
+    with open(filepath, 'w') as f:
+        f.write(new_content)
     
-print("Patch completed successfully.")
+    print(f"Successfully patched {filepath}!")
+    return True
+
+patch_file('public/mindwave.html')
+patch_file('public/index.html')

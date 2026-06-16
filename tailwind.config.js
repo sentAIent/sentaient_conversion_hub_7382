@@ -2,8 +2,10 @@
 export default {
   content: [
     "./index.html",
+    "./mindwave*.html",
     "./public/**/*.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./binaural-assets/**/*.{js,ts,jsx,tsx}"
   ],
   theme: {
     extend: {

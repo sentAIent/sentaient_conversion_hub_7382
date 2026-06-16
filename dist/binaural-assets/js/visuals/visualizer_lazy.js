@@ -26,11 +26,12 @@ async function loadVisualizerModule() {
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
     if (isDev) {
-        // Dev: Bypasses browser dynamic import cache completely using dynamic timestamp
-        loadPromise = new Function(`return import('/binaural-assets/js/visuals/visualizer_vGOLD_SYNC.js?v=' + Date.now())`)().then(module => {
+        // Dev: Standard import. Vite handles its own HMR and caching. 
+        // Using Date.now() here breaks Vite's module graph and causes the import to hang forever!
+        loadPromise = import('./visualizer_vGOLD_SYNC.js?v=9997').then(module => {
             visualizerModule = module;
             const loadTime = (performance.now() - startTime).toFixed(0);
-            console.log(`[LazyViz] Local Dev Visualizer loaded in ${loadTime}ms (forced cache-bust)`);
+            console.log(`[LazyViz] Local Dev Visualizer loaded in ${loadTime}ms`);
             
             pendingActions.forEach(action => action());
             pendingActions.length = 0;

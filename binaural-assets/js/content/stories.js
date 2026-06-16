@@ -208,7 +208,14 @@ export function initStoryPlayer() {
  * Cloud Sync for story mappings
  */
 async function syncStoriesWithCloud() {
-    if (!db || !state.currentUser) return;
+    if (!state.currentUser) return;
+    
+    // Proactively skip cloud sync if device is offline
+    if (!navigator.onLine) {
+        console.log('[Stories] Device is offline. Operating strictly from local cache.');
+        return;
+    }
+
     try {
         const uid = state.currentUser.uid;
         const docRef = doc(db, 'users', uid, 'progress', 'stories');
@@ -220,8 +227,12 @@ async function syncStoriesWithCloud() {
             storyState.customAudioTracks = { ...storyState.customAudioTracks, ...cloudMappings };
             localStorage.setItem('mindwave_story_audio', JSON.stringify(storyState.customAudioTracks));
         }
-    } catch (e) {
-        console.warn('[Stories] Cloud sync failed:', e);
+    } catch (err) {
+        if (err.message && err.message.includes('offline')) {
+            console.log('[Stories] Offline mode. Skipped cloud sync.');
+        } else {
+            console.warn('[Stories] Cloud sync failed:', err);
+        }
     }
 }
 

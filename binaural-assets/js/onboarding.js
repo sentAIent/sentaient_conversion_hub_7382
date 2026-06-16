@@ -37,9 +37,10 @@ function startTour() {
     // Step 1: The Audio Mixer (Left Sidebar)
     tour.addStep({
         id: 'step-mixer',
-        text: `<b>Welcome to MindWave! 🧠</b><br><br>This is your Audio Mixer. Here you can blend Binaural Beats (Focus/Sleep frequencies) with soothing atmospheres like Heavy Rain or Brown Noise.`,
+        title: 'Welcome to the Sensory Hub',
+        text: 'This control center is where you calibrate your experience. You can switch between Audio and Visual controls at the top.',
         attachTo: {
-            element: '.md\\:flex.w-80', // The left sidebar container
+            element: '#leftSidebar', // The left sidebar container
             on: 'right'
         },
         buttons: [

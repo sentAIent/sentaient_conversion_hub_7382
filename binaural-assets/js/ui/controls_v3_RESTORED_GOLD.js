@@ -1914,6 +1914,12 @@ window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
 let lastPlayClickTime = 0;
 
 async function handlePlayClick() {
+    // UNLOCK AUDIO CONTEXT IMMEDIATELY (Must be synchronous for iOS Safari)
+    if (window.AudioContext || window.webkitAudioContext) {
+        if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (state.audioCtx && state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(() => {});
+    }
+
     // Debounce: Prevent double-triggers (e.g. ghost clicks)
     const now = Date.now();
     if (now - lastPlayClickTime < 300) {
@@ -2007,6 +2013,11 @@ async function handlePlayClick() {
 
 // --- AUDIO TOGGLE HANDLER (Left button) ---
 async function handleAudioToggle() {
+    if (window.AudioContext || window.webkitAudioContext) {
+        if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (state.audioCtx && state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(() => {});
+    }
+
     if (!state.disclaimerAccepted) {
         showDisclaimerModal();
         return;

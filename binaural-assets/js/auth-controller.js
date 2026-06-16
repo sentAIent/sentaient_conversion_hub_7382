@@ -194,10 +194,22 @@ function updateProfileUI(user) {
 
         // Check tier
         const isPremium = localStorage.getItem('mindwave_premium') === 'true';
+        const specialTier = localStorage.getItem('mindwave_special_tier');
+
         if (tierEl) {
             if (isPremium) {
-                tierEl.textContent = 'PRO';
+                let tierLabel = 'PRO';
+                if (specialTier === 'NirvanaPeace') tierLabel = 'PEACE';
+                else if (specialTier === 'Yogananda') tierLabel = 'BLISS';
+                
+                tierEl.textContent = tierLabel;
                 tierEl.className = 'inline-block mt-1 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400';
+                
+                // Update sidebar text
+                const sidebarTierText = document.getElementById('mindwaveSidebarTierText');
+                if (sidebarTierText) {
+                    sidebarTierText.textContent = 'MindWave ' + tierLabel;
+                }
             } else {
                 tierEl.textContent = 'Free';
                 tierEl.className = 'inline-block mt-1 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400';
@@ -227,7 +239,11 @@ function updateProfileUI(user) {
 
         if (isPremium) {
             // Premium user - show "Manage Subscription" button
-            upgradeBtn.textContent = '⚙️ Manage Subscription';
+            let btnText = '⚙️ Manage Subscription';
+            if (specialTier === 'NirvanaPeace') btnText = '⚙️ Manage Peace Access';
+            else if (specialTier === 'Yogananda') btnText = '⚙️ Manage Bliss Access';
+            
+            upgradeBtn.textContent = btnText;
             // Premium Glassmorphic Style
             upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wide bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/50 transition-all shadow-lg shadow-cyan-900/20';
             upgradeBtn.style.color = '';
@@ -469,6 +485,12 @@ export function openAuthModal() {
             // Reset scroll position on open
             const scrollContainer = profileModal.querySelector('.glass-card');
             if (scrollContainer) scrollContainer.scrollTop = 0;
+
+            // Unlock Admin Auto-Marketing Studio if flag exists
+            if (localStorage.getItem('mindwave_admin') === 'true') {
+                const adminBtn = document.getElementById('adminMarketingBtn');
+                if (adminBtn) adminBtn.classList.remove('hidden');
+            }
 
             // Update profile UI with current user data
             updateProfileUI(state.currentUser);

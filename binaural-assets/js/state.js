@@ -256,6 +256,8 @@ export const state = {
     visualVibration: false,
     visualSpeedAuto: true,
     aiVisualsLocked: false,
+    lotusState: 'auto',
+    lotusHeartbeatBpm: 11,
 
     // Preset tracking
     activePresetType: null,

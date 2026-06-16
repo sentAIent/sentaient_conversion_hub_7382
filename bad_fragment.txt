@@ -1,0 +1,267 @@
+                    float getDisplacementAt(vec2 uv, float t) {
+                        vec2 p = flowWarp(uv, t * 0.5 * uEntropy);
+                        
+                        // Acoustic fluid transient shiver
+                        vec2 distort = vec2(noise(uv * 12.0 + t), noise(uv * 12.0 - t)) * uShiver * 0.05;
+                        p += distort;
+
+                        float f = 0.0;
+                        vec2 q = p;
+                        float n_eff = uN * uResonance;
+                        float m_eff = uM * uResonance;
+                        
+                        // Interactive pointer ripple
+                        float distToMouse = distance(uv, (uMouse - 0.5) * 2.0);
+                        float ripple = sin(distToMouse * 35.0 - t * 18.0) * exp(-distToMouse * 5.0) * uMouseActive * 0.6;
+                        f += ripple;
+                        
+                        // Topological mathematical formulas
+                        if (uType < 0.5) { // SACRED RESONANCE (Chladni standing waves)
+                            f = fractalResonance(p, n_eff, m_eff, uBeatFreq, t);
+                            if (uHarmonics > 0.01) f += uHarmonics * chladniBase(p * 1.5, n_eff * 0.5, m_eff * 0.5);
+                        } 
+                        else if (uType < 1.5) { // SPINNING TORUS VORTEX
+                            float a = atan(p.y, p.x);
+                            float r = length(p);
+                            float twist = sin(r * 12.0 - a * n_eff + t);
+                            float s1 = sin(a * n_eff + t);
+                            float s2 = sin(a * m_eff - t * 0.4);
+                            f = sin(r * 40.0 + twist * 12.0 * uEntropy) * (s1 * s2);
+                        }
+                        else if (uType < 2.5) { // ORBITAL PHYLLOTAXIS
+                            float r = length(p) * (18.0 + n_eff * 0.4);
+                            float a = atan(p.y, p.x);
+                            float phyll = sin(r - a * m_eff) * cos(r * 0.08 + a * 3.0);
+                            f = phyll * (1.0 - smoothstep(1.3, 1.8, length(p)));
+                        }
+                        else if (uType < 3.5) { // DEEP CONVECTIVE FLUID WARP
+                            q = p + vec2(cos(t * 0.08), sin(t * 0.12)) * 0.6;
+                            float n1 = noise(q * (n_eff * 0.12) + t * 0.18);
+                            float n2 = noise(q * (m_eff * 0.12) - t * 0.08);
+                            vec2 warp = p + vec2(cos(n1 * PI * uEntropy), sin(n2 * PI * uEntropy)) * 0.9;
+                            f = sin(length(warp) * 18.0 + n1 * 6.0);
+                        }
+                        else if (uType < 4.5) { // APOLLONIAN FRACTIONAL FOLDING
+                            q = apollonianFold(p * 0.6, 0.35 + uEntropy * 0.18);
+                            float n1 = chladniBase(q, n_eff, m_eff);
+                            float n2 = chladniBase(q.yx, m_eff * 0.6, n_eff * 1.4);
+                            f = n1 * n2 * 2.2;
+                            f += 0.35 * sin(length(q) * 25.0 - t * 5.0);
+                        }
+                        else if (uType < 5.5) { // DEEP CHAOS BUTTERFLY FRACTAL
+                            float zoom = 1.0 + (uIntensity * 0.4);
+                            vec2 fUv = uv * zoom;
+                            float jitter = sin(uTime * 110.0) * 0.004 + cos(uTime * 55.0) * 0.002;
+                            float time = uTime * 2.8 + jitter;
+                            for (int i = 0; i < 9; i++) {
+                                fUv = abs(fUv) - 0.42;
+                                float a = time * 0.28 + float(i) * 0.42;
+                                float s = sin(a), c = cos(a);
+                                fUv = vec2(fUv.x * c - fUv.y * s, fUv.x * s + fUv.y * c);
+                                fUv.x -= 0.18 * sin(time * 0.5 + float(i));
+                            }
+                            float d = length(fUv);
+                            float ripple = sin(d * 24.0 - time * 5.5);
+                            f = ripple * cos(fUv.x * 9.0 + time * 2.2);
+                        }
+                        else if (uType < 6.5) { // MICRO-FRACTAL PIXEL STARDUST (Type 6)
+                            // Use low frequency for fragment displacement to match vertex and prevent normal aliasing
+                            f = chladniBase(p, n_eff * 0.15, m_eff * 0.15);
+                        }
+                        else if (uType < 7.5) { // HARMONIC GRADIENT (Type 7)
+                            float base = chladniBase(p, n_eff * 0.15, m_eff * 0.15);
+                            float secondary = chladniBase(p * 1.5, n_eff * 0.05, m_eff * 0.05);
+                            f = base * 0.8 + secondary * 0.2;
+                        }
+                        else if (uType < 8.5) { // LEVEL 3: QUANTUM PLASMA INTERFERENCE
+                            vec2 p8 = p * (0.5 + uEntropy * 0.5);
+                            float r = length(p8);
+                            float a = atan(p8.y, p8.x);
+                            
+                            // Mix between fluid noise and geometric symmetry
+                            float fbm = noise(p8 * (n_eff * 0.2) + t * 0.1) * 0.5 + noise(p8 * (m_eff * 0.3) - t * 0.15) * 0.25;
+                            float fluidSymmetry = cos(a * n_eff + fbm * 8.0) * sin(r * (10.0 + m_eff) - t * 2.0);
+                            float geomSymmetry = cos(a * n_eff) * sin(r * (10.0 + m_eff) - t * (uFractalType * 2.0));
+                            
+                            float symmetry = mix(geomSymmetry, fluidSymmetry, uFluidity);
+                            
+                            f = symmetry * (1.0 + fbm * 2.0 * uFluidity) * 0.6;
+                            f += sin(length(p) * (10.0 * uFractalType) - t * 4.0) * 0.2 * uIntensity;
+                        }
+                        else { // ICE (Structured crystalline glaze)
+                            edge = smoothstep(threshold + 0.06, threshold + 0.01, f);
+                            edge *= (0.75 + 0.25 * noise(vUv * 1350.0));
+                        }
+
+                        // ADVANCED KINETIC LIGHTING & MATCAP
+                        vec3 dx = dFdx(vec3(uv, fCenter));
+                        vec3 dy = dFdy(vec3(uv, fCenter));
+                        vec3 norm = normalize(cross(dx, dy));
+                        norm.z = mix(0.55, 0.15, uIntensity);
+                        norm = normalize(norm);
+
+                        vec3 lightDir = normalize(vec3(sin(t * 0.35), cos(t * 0.18), 1.3));
+                        vec3 viewDir = vec3(0.0, 0.0, 1.0);
+                        vec3 reflectDir = reflect(-lightDir, norm);
+                        
+                        float diff = max(dot(norm, lightDir), 0.0);
+                        float spec = pow(max(dot(reflectDir, viewDir), 0.0), 128.0);
+                        float env = noise(reflectDir.xy * 2.8 + t * 0.12) * 0.45;
+
+                        // COLLATING SYSTEM COLORS WITH DYNAMIC PRISMATIC SPLITTING
+                        vec3 mainTint = uColor;
+                        vec3 secondaryTint = uSecondaryColor;
+                        
+                        // Inject chromatic aberration into base color mapping
+                        vec3 baseCol = mix(mainTint, secondaryTint, spectralField);
+
+                        // VOLUMETRIC GLOW DECAY & BIOLUMINESCENT TRAILS
+                        if (uType > 3.5) {
+                            // Fold-based coordinate color shift (the "tons of colors" feedback loop)
+                            vec2 qFold = apollonianFold(uv * 0.5, 0.4);
+                            vec3 c1 = vec3(0.5 + 0.5 * cos(t * 0.6 + length(qFold) * 2.5 + vec3(0.0, 2.0, 4.0)));
+                            vec3 c2 = vec3(0.5 + 0.5 * sin(t * 0.4 - qFold.y * 3.5 + vec3(1.5, 3.5, 5.5)));
+                            vec3 c3 = vec3(0.5 + 0.5 * cos(t * 0.85 + qFold.x * 4.5 + vec3(4.0, 1.0, 2.0)));
+                            
+                            float blendVal = 0.5 + 0.5 * sin(length(qFold) * 6.0 - t);
+                            vec3 foldCol = mix(c1, mix(c2, c3, 0.5 + 0.5 * cos(qFold.x * qFold.y * 8.0)), blendVal);
+                            baseCol = mix(baseCol, foldCol * 1.6, 0.85);
+                        }
+
+                        // PHYSICAL SIMULATION VISCOSITY COLORING
+                        if (uType > 5.5 && uType < 6.5) { // TYPE 6: PIXEL STARDUST (Colorful Fine-Grain Sand)
+                            // 1. Generate 5-Color Palette
+                            vec2 grid = floor(uv * (200.0 + uIntensity * 150.0));
+                            vec3 c1 = vec3(0.1, 0.8, 1.0); // Cyan
+                            vec3 c2 = vec3(1.0, 0.2, 0.6); // Magenta
+                            vec3 c3 = vec3(0.9, 0.8, 0.1); // Gold
+                            vec3 c4 = vec3(0.5, 0.1, 0.9); // Purple
+                            vec3 c5 = vec3(0.1, 0.9, 0.4); // Neon Green
+                            
+                            float h1 = hash(grid + vec2(1.0, 2.0));
+                            float h2 = hash(grid + vec2(3.0, 4.0));
+                            float h3 = hash(grid + vec2(5.0, 6.0));
+                            
+                            vec3 stardustCol;
+                            if(h3 < 0.2) stardustCol = c1;
+                            else if(h3 < 0.4) stardustCol = c2;
+                            else if(h3 < 0.6) stardustCol = c3;
+                            else if(h3 < 0.8) stardustCol = c4;
+                            else stardustCol = c5;
+                            
+                            // 2. Generate Pixel-by-Pixel Fine Grain (The "Sand" effect)
+                            float threshold = 0.06 + uIntensity * 0.08;
+                            float sandP = smoothstep(threshold + 0.35, threshold - 0.05, f);
+                            vec2 fractP = fract(vUv * 980.0 * vec2(127.34, 451.21));
+                            fractP += dot(fractP, fractP + 43.32);
+                            float grainHash = fract(fractP.x * fractP.y);
+                            float finalSand = step(grainHash, sandP);
+                            
+                            // 3. Combine: Vivid Sand Grains on a dark plate
+                            vec3 plateCol = vec3(0.005, 0.005, 0.015);
+                            float twinkle = 0.5 + 0.5 * sin(t * 15.0 + h1 * 50.0);
+                            vec3 vividSand = stardustCol * 3.5 * twinkle;
+                            
+                            baseCol = mix(plateCol, vividSand, finalSand);
+                            baseCol += stardustCol * smoothstep(0.25, 0.0, f) * 0.6; // Ambient glow around grains
+                            
+                        } else if (uType > 6.5 && uType < 7.5) { // TYPE 7: HARMONIC GRADIENT (Vivid, Bright, Symmetrical, Unified)
+                            // 1. Symmetrical Coordinate System
+                            vec2 symUv = abs(uv);
+                            float r = length(symUv);
+                            float angle = atan(symUv.y, symUv.x);
+                            
+                            // 2. 5-Color Vivid Palette
+                            vec3 p1 = vec3(1.0, 0.0, 0.5); // Hot Pink
+                            vec3 p2 = vec3(0.0, 0.8, 1.0); // Bright Cyan
+                            vec3 p3 = vec3(1.0, 0.8, 0.0); // Vibrant Gold
+                            vec3 p4 = vec3(0.6, 0.0, 1.0); // Deep Violet
+                            vec3 p5 = vec3(0.0, 1.0, 0.5); // Neon Spring Green
+                            
+                            // 3. Complex Symmetrical Mapping
+                            float phase1 = sin(r * 12.0 - t * 2.0);
+                            float phase2 = cos(angle * 8.0 + t * 1.5);
+                            float phase3 = sin((r + angle) * 6.0);
+                            
+                            vec3 gradCol = mix(p4, p1, smoothstep(-1.0, 1.0, phase1));
+                            gradCol = mix(gradCol, p2, smoothstep(-1.0, 1.0, phase2));
+                            gradCol = mix(gradCol, p3, smoothstep(-1.0, 1.0, phase3));
+                            gradCol = mix(gradCol, p5, smoothstep(0.8, 1.0, sin(r * 20.0)));
+                            
+                            // 4. Boost brightness and apply to base
+                            baseCol = gradCol * (1.8 + uIntensity * 0.5);
+                            
+                            // 5. Add intense glowing highlights based on geometry peaks
+                            float peaks = smoothstep(0.1, 0.0, abs(fCenter));
+                            baseCol += p2 * peaks * 3.0; 
+                        } else if (uType > 7.5 && uType < 8.5) { // TYPE 8: LEVEL 3 QUANTUM PLASMA (Customizable)
+                            float r = length(uv);
+                            float a = atan(uv.y, uv.x);
+                            float phase = sin(r * (5.0 * uFractalType) - t * 3.0 + a * (2.0 + uFluidity * 2.0));
+                            float glow = smoothstep(0.1, -0.1, f);
+                            
+                            vec3 plasmaCol = mix(uCymaticCol1, uCymaticCol2, sin(a * 5.0 + t) * 0.5 + 0.5);
+                            plasmaCol = mix(plasmaCol, uCymaticCol3, cos(r * (10.0 + 10.0 * uFractalType) - t * 2.0) * 0.5 + 0.5);
+                            
+                            baseCol = plasmaCol * glow * 2.5;
+                            baseCol += mix(uCymaticCol1, uCymaticCol4, uFluidity) * (1.0 - smoothstep(0.0, 0.3, abs(f))) * 1.5;
+                            
+                        } else if (uType > 8.5) { // TYPE 9: LEVEL 4 COSMIC SYMPHONY (Customizable)
+                            float r = length(uv);
+                            float a = atan(uv.y, uv.x);
+                            
+                            float energy = smoothstep(0.2, -0.05, f);
+                            float core = smoothstep(0.02, 0.0, abs(f));
+                            
+                            vec3 nebulaCol = mix(uCymaticCol1, uCymaticCol2, sin(r * (4.0 + 4.0 * uFractalType) + t * (0.5 + uFluidity)) * 0.5 + 0.5);
+                            nebulaCol = mix(nebulaCol, uCymaticCol3, energy);
+                            
+                            baseCol = mix(nebulaCol, uCymaticCol4, core * 0.5);
+                            baseCol += uCymaticCol4 * core * (1.5 + 2.0 * uFluidity); // Sharp bright edges
+                            baseCol += uCymaticCol3 * energy * (1.0 + 0.5 * uFractalType); // Glow halo
+                        } else if (uMedium < 0.5) { // WATER
+                            baseCol = mix(baseCol, vec3(0.005, 0.04, 0.12), 0.55);
+                            baseCol += 0.4 * vec3(0.08, 0.65, 0.95) * vDisplace;
+                        } else if (uMedium < 1.5) { // SAND
+                            baseCol = mix(baseCol, vec3(0.98, 0.88, 0.48), 0.75);
+                            
+                            // High-frequency volumetric sand-grain step mapping
+                            float sandP = smoothstep(threshold + 0.35, threshold - 0.05, f);
+                            vec2 fractP = fract(vUv * 980.0 * vec2(127.34, 451.21));
+                            fractP += dot(fractP, fractP + 43.32);
+                            float grainHash = fract(fractP.x * fractP.y);
+                            float finalSand = step(grainHash, sandP);
+                            
+                            vec3 sandCol = mix(mainTint, vec3(1.0, 0.95, 0.75), uIntensity);
+                            vec3 plateCol = vec3(0.005, 0.005, 0.015);
+                            baseCol = mix(plateCol, sandCol * 2.8, finalSand);
+                            baseCol += sandCol * smoothstep(0.25, 0.0, f) * 0.4;
+                        } else if (uMedium < 2.5) { // ETHER
+                            baseCol += 0.75 * vec3(0.85, 0.35, 1.0) * (0.5 + 0.5 * cos(t * 1.9 + f * 10.0));
+                        } else { // ICE
+                            baseCol = mix(vec3(0.78, 0.96, 1.0), mainTint, 0.35);
+                            baseCol += spec * 0.6 + env * 0.45;
+                        }
+
+                        vec3 col = baseCol * (0.25 + 0.75 * diff);
+                        
+                        if (uHasTexture > 0.5) {
+                            vec2 texUv = vUv + grad * shift * 3.5;
+                            vec4 texColor = texture2D(uTexture, texUv);
+                            if (texColor.a > 0.0) {
+                                col = mix(col, texColor.rgb * (1.0 + diff * 0.5) * edge * 2.0, 0.75);
+                            }
+                        }
+
+                        col += spec * vec3(1.0, 0.98, 0.92) * (0.18 + uNormHighs * 0.2); // Glistening highlights
+                        col += uShiver * vec3(1.0, 0.35, 0.45) * 0.45; // Energy transients
+
+                        float vig = smoothstep(2.3, 0.6, length(uv));
+                        
+                        // Default composition
+                        gl_FragColor = vec4(col * edge * vig, edge * (0.82 + 0.18 * uEnergy));
+                        
+                        // For Pixel Stardust, we want the particles to show, but the mesh is now visible as sand!
+                        // So we don't hide the mesh anymore!
+                    }
+                `,

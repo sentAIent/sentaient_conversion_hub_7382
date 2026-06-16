@@ -1,0 +1,98 @@
+# CYMATICS AUDIT REPORT
+
+## JS Array Length: 13
+## HTML Button Count: 75
+
+## Structural Errors Found:
+- NAME MISMATCH: Button "Flower of Life" points to JS pattern "Fundamental Zenith" at index 0
+- NAME MISMATCH: Button "Metatron Cube" points to JS pattern "System Yellow" at index 1
+- NAME MISMATCH: Button "Fibonacci" points to JS pattern "Neon Pink" at index 2
+- NAME MISMATCH: Button "Torus Field" points to JS pattern "Chrome Static" at index 3
+- NAME MISMATCH: Button "Mandelbrot" points to JS pattern "Royal Data" at index 4
+- NAME MISMATCH: Button "Julia Loop" points to JS pattern "White Noise" at index 5
+- NAME MISMATCH: Button "Polygon" points to JS pattern "Cyan Future" at index 6
+- NAME MISMATCH: Button "Singularity" points to JS pattern "Lime Access" at index 7
+- NAME MISMATCH: Button "Quantum Flux" points to JS pattern "Purple Haze" at index 8
+- NAME MISMATCH: Button "Golden Ratio" points to JS pattern "Emerald Link" at index 9
+- NAME MISMATCH: Button "Celestial" points to JS pattern "Ice Blue" at index 10
+- NAME MISMATCH: Button "Infinite" points to JS pattern "sentAIent Blue" at index 11
+- NAME MISMATCH: Button "Prism Fold" points to JS pattern "Rainbow Surge" at index 12
+- ERROR: Button "Cosmic Knot" (index 13) points to undefined JS pattern.
+- ERROR: Button "Zen Mandala" (index 14) points to undefined JS pattern.
+- ERROR: Button "Astral" (index 15) points to undefined JS pattern.
+- ERROR: Button "Plasma Bloom" (index 16) points to undefined JS pattern.
+- ERROR: Button "Synchronicity" (index 17) points to undefined JS pattern.
+- ERROR: Button "Unified Field" (index 18) points to undefined JS pattern.
+- ERROR: Button "Omega Point" (index 19) points to undefined JS pattern.
+- ERROR: Button "Source Fold" (index 20) points to undefined JS pattern.
+- ERROR: Button "Prime Prime" (index 21) points to undefined JS pattern.
+- ERROR: Button "Metatron's Grid" (index 22) points to undefined JS pattern.
+- ERROR: Button "Aetheric Weaver" (index 23) points to undefined JS pattern.
+- ERROR: Button "Neural Singularity" (index 24) points to undefined JS pattern.
+- ERROR: Button "Chronos Vortex" (index 25) points to undefined JS pattern.
+- ERROR: Button "Void Fractal" (index 26) points to undefined JS pattern.
+- ERROR: Button "Crystalline Pulse" (index 27) points to undefined JS pattern.
+- ERROR: Button "Stellar Loom" (index 28) points to undefined JS pattern.
+- ERROR: Button "Fundamental Zenith" (index 29) points to undefined JS pattern.
+- ERROR: Button "Dual Horizon" (index 30) points to undefined JS pattern.
+- ERROR: Button "Quad Core" (index 31) points to undefined JS pattern.
+- ERROR: Button "Penta Wave" (index 32) points to undefined JS pattern.
+- ERROR: Button "Square Harmony" (index 33) points to undefined JS pattern.
+- ERROR: Button "Lotus Flow" (index 34) points to undefined JS pattern.
+- ERROR: Button "Cresent Node" (index 35) points to undefined JS pattern.
+- ERROR: Button "Orchid Ring" (index 36) points to undefined JS pattern.
+- ERROR: Button "Cross Pulse" (index 37) points to undefined JS pattern.
+- ERROR: Button "Nodal Ribbon" (index 38) points to undefined JS pattern.
+- ERROR: Button "Radial Seed" (index 39) points to undefined JS pattern.
+- ERROR: Button "Diamond Lattice" (index 40) points to undefined JS pattern.
+- ERROR: Button "Hexa Flux" (index 41) points to undefined JS pattern.
+- ERROR: Button "Solar Mandala" (index 42) points to undefined JS pattern.
+- ERROR: Button "Graphene Matrix" (index 43) points to undefined JS pattern.
+- ERROR: Button "Atomic Shell" (index 44) points to undefined JS pattern.
+- ERROR: Button "Fibonacci Spiral" (index 45) points to undefined JS pattern.
+- ERROR: Button "Fractal Lace" (index 46) points to undefined JS pattern.
+- ERROR: Button "Cosmic Gear" (index 47) points to undefined JS pattern.
+- ERROR: Button "Interstellar Mesh" (index 48) points to undefined JS pattern.
+- ERROR: Button "Quantum Foam" (index 49) points to undefined JS pattern.
+- ERROR: Button "Singularity" (index 50) points to undefined JS pattern.
+- ERROR: Button "Aura Genesis" (index 51) points to undefined JS pattern.
+- ERROR: Button "Quantum Singularity" (index 52) points to undefined JS pattern.
+- ERROR: Button "Neural Core" (index 53) points to undefined JS pattern.
+- ERROR: Button "Void Matrix" (index 54) points to undefined JS pattern.
+- ERROR: Button "Omega Resonance" (index 55) points to undefined JS pattern.
+- ERROR: Button "Stellar Nexus" (index 56) points to undefined JS pattern.
+- ERROR: Button "Chronos Weave" (index 57) points to undefined JS pattern.
+- ERROR: Button "Pixel Nebula" (index 58) points to undefined JS pattern.
+- ERROR: Button "Aura Genesis" (index 51) points to undefined JS pattern.
+- ERROR: Button "Neural Core" (index 53) points to undefined JS pattern.
+- ERROR: Button "Void Matrix" (index 54) points to undefined JS pattern.
+- ERROR: Button "Omega Resonance" (index 55) points to undefined JS pattern.
+- ERROR: Button "Stellar Nexus" (index 56) points to undefined JS pattern.
+- ERROR: Button "Chronos Weave" (index 57) points to undefined JS pattern.
+- ERROR: Button "Pixel Nebula" (index 58) points to undefined JS pattern.
+- ERROR: Button "Magnetic Stardust" (index 59) points to undefined JS pattern.
+- ERROR: Button "Quantum Granules" (index 60) points to undefined JS pattern.
+- ERROR: Button "Neon Sand" (index 61) points to undefined JS pattern.
+- ERROR: Button "Chromatic Dust" (index 62) points to undefined JS pattern.
+- ERROR: Button "Royal Gradient" (index 63) points to undefined JS pattern.
+- ERROR: Button "Sunset Flow" (index 64) points to undefined JS pattern.
+- ERROR: Button "Oceanic Folds" (index 65) points to undefined JS pattern.
+- ERROR: Button "Auroral Waves" (index 66) points to undefined JS pattern.
+- ERROR: Button "Golden Ratio Flow" (index 67) points to undefined JS pattern.
+
+## Current HTML Groupings vs Actual Shaders
+
+### HTML Section: Biological Resonance
+  - [0] Flower of Life -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [1] Metatron Cube -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [2] Fibonacci -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [3] Torus Field -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [4] Mandelbrot -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [5] Julia Loop -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [6] Polygon -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [7] Singularity -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [8] Quantum Flux -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [9] Golden Ratio -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [10] Celestial -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [11] Infinite -> renders as: Simple Cymatic (Chladni) (uType: 0)
+  - [12] Prism Fold -> renders as: Simple Cymatic (Chladni) (uType: 0)

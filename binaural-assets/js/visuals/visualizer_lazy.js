@@ -27,7 +27,8 @@ async function loadVisualizerModule() {
 
     if (isDev) {
         // Dev: Bypasses browser dynamic import cache completely using dynamic timestamp
-        loadPromise = new Function(`return import('/binaural-assets/js/visuals/visualizer_vGOLD_SYNC.js?v=' + Date.now())`)().then(module => {
+        // Added /* @vite-ignore */ to prevent Vite from intercepting and throwing a 500 error for public directory imports
+        loadPromise = import(/* @vite-ignore */ '/binaural-assets/js/visuals/visualizer_v4.js?v=' + Date.now()).then(module => {
             visualizerModule = module;
             const loadTime = (performance.now() - startTime).toFixed(0);
             console.log(`[LazyViz] Local Dev Visualizer loaded in ${loadTime}ms (forced cache-bust)`);
@@ -42,7 +43,7 @@ async function loadVisualizerModule() {
     } else {
         // Production: First try Vite-hashed production chunk (with fallback retry)
         // Note: Using standard import() allows Vite static analysis to hash/optimize production chunks.
-        loadPromise = import('./visualizer_vGOLD_SYNC.js')
+        loadPromise = import('./visualizer_v4.js')
             .then(module => {
                 visualizerModule = module;
                 const loadTime = (performance.now() - startTime).toFixed(0);
@@ -55,7 +56,7 @@ async function loadVisualizerModule() {
             .catch(err => {
                 console.warn('[LazyViz] Production Vite chunk import failed or cached. Retrying with cache-buster...', err);
                 // Fallback attempt: Force load the raw static file with cache-busting query parameter
-                return new Function(`return import('/binaural-assets/js/visuals/visualizer_vGOLD_SYNC.js?v=${VISUALIZER_VERSION}_' + Date.now())`)()
+                return new Function(`return import('/binaural-assets/js/visuals/visualizer_v4.js?v=${VISUALIZER_VERSION}_' + Date.now())`)()
                     .then(module => {
                         visualizerModule = module;
                         console.log('[LazyViz] Fallback cache-busted visualizer loaded successfully.');

@@ -87,11 +87,7 @@ window.controls = {
         this.syncSidebar('matrixPanel');
     },
     toggleSnowflakeSettings: function(btn) {
-        const panel = document.getElementById('snowflakeSettingsPanel');
-        if (panel) panel.classList.toggle('hidden');
-    },
-    toggleCymaticsSettings: function(btn) {
-        this.switchRightTab('active');
+        this.syncSidebar('snowflakeSettingsPanel');
     },
     setMatrixMode: function(mode) {
         const viz = getVisualizer();
@@ -241,7 +237,6 @@ window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
 window.toggleGalaxySun = window.controls.toggleGalaxySun;
 window.resetGalaxySettings = window.controls.resetGalaxySettings;
 window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
-window.toggleCymaticsSettings = window.controls.toggleCymaticsSettings;
 window.setMatrixMode = window.controls.setMatrixMode;
 
 // Activate any pending tabs queued before controls loaded
@@ -281,8 +276,7 @@ window.addEventListener('mindwave:visual-mode-sync', (e) => {
         { id: 'cyberBtn', mode: 'cyber' },
         { id: 'matrixBtn', mode: 'matrix' },
         { id: 'snowflakeBtn', mode: 'snowflake' },
-        { id: 'cymaticsBtn', mode: 'cymatics' }
-    ];
+            ];
 
     buttons.forEach(({ id, mode }) => {
         const btn = document.getElementById(id);
@@ -424,12 +418,7 @@ export function setupUI() {
     els.matrixBtn = document.getElementById('matrixBtn');
     els.snowflakeBtn = document.getElementById('snowflakeBtn');
     els.oceanBtn = document.getElementById('oceanBtn'); // New ID for island/waves
-    els.cymaticsBtn = document.getElementById('cymaticsBtn'); // Now Fractal Patterns
-
-    // Cymatics / Galaxy / Matrix Controls
-    els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
-    els.cymaticNextBtn = document.getElementById('cymaticNextBtn');
-    els.cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
+    
 
     els.matrixTextInput = document.getElementById('matrixTextInput');
     els.matrixVibrationToggle = document.getElementById('matrixVibrationToggle');
@@ -897,13 +886,19 @@ export function setupUI() {
     const updateDimmerUI = (val) => {
         if (els.globalDimmerSlider) els.globalDimmerSlider.value = val;
         if (els.dimmerValue) els.dimmerValue.textContent = `${Math.round(val * 100)}%`;
-        if (els.dimmerOverlay) els.dimmerOverlay.style.opacity = val.toString();
         
-        // Also dim the physical WebGL scene behind it
-        const vizCanvas = document.getElementById('visualizerCanvas') || document.getElementById('visualizer');
-        if (vizCanvas) {
-            vizCanvas.style.opacity = Math.max(0, 1.0 - val).toString();
+        // REMOVED dimmerOverlay to keep Lotus independent of global screen dimmer.
+        // WebGL dimmerPlane handles everything else.
+        if (els.dimmerOverlay) els.dimmerOverlay.style.opacity = '0';
+        
+        // Also dim the physical WebGL scene behind it (but leave the Lotus unaffected!)
+        if (state) {
+            state.screenDimmer = val;
         }
+        
+        // Dim the background video to match
+        const bgVideo = document.getElementById('bgVideo');
+        if (bgVideo) bgVideo.style.filter = `brightness(${1 - val})`;
     };
 
     if (els.globalDimmerSlider) {
@@ -1156,7 +1151,7 @@ export function setupUI() {
     if (els.snowflakeBtn) {
         els.snowflakeBtn.addEventListener('click', () => {
             setVisualMode('snowflake', null, true);
-            if (window.setCymaticMedium) window.setCymaticMedium(3); // Auto-set to ICE medium
+            
         });
     }
     // Duplicate oceanBtn listener removed (was causing double-toggle ON→OFF)
@@ -1166,94 +1161,9 @@ export function setupUI() {
     });
 
     // ── Cymatics panel controls ────────────────────────────────────
-    window.toggleCymaticsPanel = function() {
-        const panel = document.getElementById('cymaticsPanel');
-        if (panel) {
-            panel.classList.toggle('hidden');
-            panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
-        }
-    };
-
-    window.setCymaticMedium = function(mediumIdx) {
-        state.cymaticMedium = mediumIdx;
-        
-        // Update button UI
-        const buttons = document.querySelectorAll('.cym-medium-btn');
-        buttons.forEach((btn, idx) => {
-            if (idx === mediumIdx) {
-                btn.classList.add('active', 'border-purple-400');
-                btn.style.backgroundColor = 'rgba(168, 85, 247, 0.2)';
-            } else {
-                btn.classList.remove('active', 'border-purple-400');
-                btn.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-            }
-        });
-        
-        const mediumNames = ['Water', 'Sand', 'Ether', 'Ice/Crystal'];
-        showToast(`Simulation Medium: ${mediumNames[mediumIdx]}`, 'info');
-
-        // Instant Engine Update
-        const viz = getVisualizer();
-        if (viz && viz.cymaticMaterial) {
-            viz.cymaticMaterial.uniforms.uMedium.value = mediumIdx;
-        }
-    };
-
-    window.selectCymaticPattern = function(idx) {
-        console.log(`[Controls] Selecting Pattern: ${idx}`);
-        
-        // UI Highlighting Sync
-        const btns = document.querySelectorAll('.cymatics-pattern-btn');
-        btns.forEach((btn) => {
-            const clickAttr = btn.getAttribute('onclick');
-            let btnIdx = -1;
-            if (clickAttr) {
-                const match = clickAttr.match(/selectCymaticPattern\((\d+)\)/);
-                if (match) {
-                    btnIdx = parseInt(match[1]);
-                }
-            }
-            
-            if (btnIdx === idx) {
-                btn.classList.add('active', 'border-purple-400/80', 'bg-purple-400/10');
-                btn.style.color = '#ffffff';
-            } else {
-                btn.classList.remove('active', 'border-purple-400/80', 'bg-purple-400/10');
-                btn.style.color = ''; 
-            }
-        });
-
-        const viz = getVisualizer();
-        if (viz) {
-            // AUTO-ACTIVATE cymatics mode if not already active
-            if (!viz.activeModes || !viz.activeModes.has('cymatics')) {
-                console.log('[Controls] Auto-activating Cymatics mode for pattern selection');
-                setVisualMode('cymatics', null, true);
-            }
-            // Small delay to ensure initCymatics completes before setting pattern
-            const applyPattern = () => {
-                if (viz.cymaticMaterial && typeof viz.setCymaticPatternByIndex === 'function') {
-                    viz.setCymaticPatternByIndex(idx);
-                } else {
-                    // Retry once after initialization
-                    setTimeout(() => {
-                        if (typeof viz.setCymaticPatternByIndex === 'function') {
-                            viz.setCymaticPatternByIndex(idx);
-                        }
-                    }, 200);
-                }
-            };
-            // If cymatics was just activated, wait for init; otherwise apply immediately
-            if (viz.cymaticMaterial) {
-                applyPattern();
-            } else {
-                setTimeout(applyPattern, 100);
-            }
-        } else {
-            console.error("[Controls] Visualizer not available");
-        }
-    };
-
+    
+    
+    
     const cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
     const cymaticNextBtn = document.getElementById('cymaticNextBtn');
     if (cymaticPrevBtn) cymaticPrevBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.prevCymatic) viz.prevCymatic(); });
@@ -1273,10 +1183,14 @@ export function setupUI() {
 
         // Instant Engine Sync
         const viz = getVisualizer();
-        if (viz && viz.cymaticMaterial) {
-            const uniformKey = 'u' + key.replace('cymatic', ''); 
-            if (viz.cymaticMaterial.uniforms[uniformKey]) {
-                viz.cymaticMaterial.uniforms[uniformKey].value = val;
+        if (viz) {
+            if (viz.setCymaticParam) {
+                viz.setCymaticParam(key.replace('cymatic', ''), val);
+            } else if (viz.cymaticMaterial) {
+                const uniformKey = 'u' + key.replace('cymatic', ''); 
+                if (viz.cymaticMaterial.uniforms[uniformKey]) {
+                    viz.cymaticMaterial.uniforms[uniformKey].value = val;
+                }
             }
         }
         
@@ -1328,11 +1242,27 @@ export function setupUI() {
         });
     }
 
-    const cymaticsColorPicker = document.getElementById('cymaticsColorPicker');
-    if (cymaticsColorPicker) {
-        cymaticsColorPicker.addEventListener('input', () => {
+    const cymaticsCol1Picker = document.getElementById('cymaticsCol1Picker');
+    if (cymaticsCol1Picker) {
+        cymaticsCol1Picker.addEventListener('input', () => {
             const viz = getVisualizer();
-            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsColorPicker.value);
+            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsCol1Picker.value);
+        });
+    }
+
+    const cymaticsCol2Picker = document.getElementById('cymaticsCol2Picker');
+    if (cymaticsCol2Picker) {
+        cymaticsCol2Picker.addEventListener('input', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticColor2) viz.setCymaticColor2(cymaticsCol2Picker.value);
+        });
+    }
+
+    const cymaticsCol3Picker = document.getElementById('cymaticsCol3Picker');
+    if (cymaticsCol3Picker) {
+        cymaticsCol3Picker.addEventListener('input', () => {
+            const viz = getVisualizer();
+            if (viz?.setCymaticColor3) viz.setCymaticColor3(cymaticsCol3Picker.value);
         });
     }
 
@@ -1343,10 +1273,14 @@ export function setupUI() {
             const v = parseFloat(cymaticsIntensitySlider.value);
             if (cymaticsIntensityVal) cymaticsIntensityVal.textContent = v === 0 ? 'Auto' : Math.round(v * 100) + '%';
             const viz = getVisualizer();
-            if (viz?.cymaticMaterial) {
+            if (viz) {
                 // Manual override: clamp auto-update in render loop
                 viz._cymaticIntensityOverride = v > 0 ? v : null;
-                viz.cymaticMaterial.uniforms.uIntensity.value = v > 0 ? v : 0.5;
+                if (viz.setCymaticParam) {
+                    viz.setCymaticParam('intensity', v > 0 ? v : 0.5);
+                } else if (viz.cymaticMaterial) {
+                    viz.cymaticMaterial.uniforms.uIntensity.value = v > 0 ? v : 0.5;
+                }
             }
         });
     }
@@ -1361,8 +1295,12 @@ export function setupUI() {
             updateHarmonicsLevel(v); // Update Audio
             
             const viz = getVisualizer();
-            if (viz && viz.cymaticMaterial) {
-                viz.cymaticMaterial.uniforms.uHarmonics.value = v;
+            if (viz) {
+                if (viz.setCymaticParam) {
+                    viz.setCymaticParam('harmonics', v);
+                } else if (viz.cymaticMaterial) {
+                    viz.cymaticMaterial.uniforms.uHarmonics.value = v;
+                }
             }
         });
     }
@@ -1530,6 +1468,103 @@ export function setupUI() {
 
                 const viz = getVisualizer();
                 if (viz) viz.setColor(currentColor);
+            }
+        });
+    }
+
+    // MW LOTUS GLOW LOGIC
+    const glowBtns = document.querySelectorAll('.glow-btn');
+    if (glowBtns.length > 0) {
+        glowBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const mode = e.currentTarget.getAttribute('data-glow-mode');
+                if (state) {
+                    state.lotusState = mode;
+                }
+                
+                // Update active class
+                glowBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                });
+                
+                e.currentTarget.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                e.currentTarget.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+            });
+        });
+    }
+
+    const lotusOpacitySlider = document.getElementById('lotusOpacitySlider');
+    const lotusOpacityVal = document.getElementById('lotusOpacityVal');
+    if (lotusOpacitySlider) {
+        lotusOpacitySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (lotusOpacityVal) lotusOpacityVal.textContent = Math.round(val * 100) + '%';
+            
+            if (state) {
+                state.lotusOpacity = val;
+                state.lotusState = 'manual';
+            }
+            
+            // Auto-switch UI to DIM or FULL if they match, else unhighlight all mode buttons
+            glowBtns.forEach(b => {
+                b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+            });
+        });
+    }
+
+    const lotusHeartbeatSlider = document.getElementById('lotusHeartbeatSlider');
+    const lotusHeartbeatVal = document.getElementById('lotusHeartbeatVal');
+    if (lotusHeartbeatSlider) {
+        lotusHeartbeatSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            if (lotusHeartbeatVal) lotusHeartbeatVal.textContent = val + ' BPM';
+            
+            if (state) {
+                state.lotusHeartbeatBpm = val;
+                state.lotusState = 'heartbeat';
+                state.lotusHeartbeatSync = false;
+                if (lotusAudioSyncBtn) {
+                    lotusAudioSyncBtn.classList.remove('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                }
+            }
+            
+            // Auto-switch UI to heartbeat
+            glowBtns.forEach(b => {
+                b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                if (b.getAttribute('data-glow-mode') === 'heartbeat') {
+                    b.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                    b.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                }
+            });
+        });
+    }
+
+    const lotusAudioSyncBtn = document.getElementById('lotusAudioSyncBtn');
+    if (lotusAudioSyncBtn) {
+        lotusAudioSyncBtn.addEventListener('click', () => {
+            if (state) {
+                state.lotusHeartbeatSync = !state.lotusHeartbeatSync;
+                if (state.lotusHeartbeatSync) {
+                    lotusAudioSyncBtn.classList.add('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    if (lotusHeartbeatVal) lotusHeartbeatVal.textContent = 'SYNC';
+                } else {
+                    lotusAudioSyncBtn.classList.remove('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    if (lotusHeartbeatVal && lotusHeartbeatSlider) lotusHeartbeatVal.textContent = lotusHeartbeatSlider.value + ' BPM';
+                }
+                state.lotusState = 'heartbeat';
+                
+                // Auto-switch UI to heartbeat
+                glowBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                    if (b.getAttribute('data-glow-mode') === 'heartbeat') {
+                        b.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                        b.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    }
+                });
             }
         });
     }
@@ -1843,16 +1878,14 @@ export function setupUI() {
         }, { once: true });
     }
 
-    // Defer visualizer loading until after UI is fully settled
-    setTimeout(() => {
-        console.log('[Controls] Deferring visualizer preload to unblock boot path...');
-        // Only preload on idle or first interaction to prevent the "Stall"
-        if (window.requestIdleCallback) {
-            window.requestIdleCallback(() => preloadVisualizer());
-        } else {
-            setTimeout(() => preloadVisualizer(), 2000); // 2s delay fallback
-        }
-    }, 2000);
+    // Defer visualizer loading until after UI is fully settled using idle time
+    console.log('[Controls] Deferring visualizer preload to unblock boot path...');
+    // Only preload on idle to prevent the "Stall"
+    if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => preloadVisualizer(), { timeout: 2000 });
+    } else {
+        setTimeout(() => preloadVisualizer(), 500); // 500ms delay fallback
+    }
 
     // WATCHDOG: Force reveal visualizer if it hasn't loaded after 10 seconds
     setTimeout(() => {
@@ -2284,7 +2317,7 @@ async function applyAIPreset(result) {
     // 5. Enable soundscapes with intensity mapping
     result.soundscapes.forEach(id => {
         const scVol = 0.5 * (result.intensity || 1.0);
-        updateSoundscape(id, true, Math.min(1.0, scVol));
+        updateSoundscape(id, 'vol', Math.min(1.0, scVol));
     });
 
     // 6. Enable visuals if suggested (Total Immersion)
@@ -3073,19 +3106,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         modes.forEach(m => {
             const becomingActive = forceState !== false && !viz.activeModes.has(m);
 
-            // EXCLUSIVITY LOGIC:
-            if (becomingActive) {
-                if (m === 'cymatics') {
-                    console.log(`[Visuals] CYMATICS engaged - clearing other modes`);
-                    viz.activeModes.clear();
-                } else {
-                    // Any other mode clears Cymatics
-                    if (viz.activeModes.has('cymatics')) {
-                        console.log('[Visuals] Other mode engaged - exiting Cymatics');
-                        viz.activeModes.delete('cymatics');
-                    }
-                }
-            }
+            // No exclusivity logic - Cymatics can remain as an overlay
 
             if (forceState !== null) {
                 const isActive = viz.activeModes.has(m);
@@ -6282,4 +6303,91 @@ export function setupMasterVisualControls() {
     }
 }
 
+window.toggleAudioSync = function(isSync) {
+    console.log(`[Cymatics] Toggle Audio Sync: ${isSync}`);
+    window.cymaticsAudioSync = isSync;
+}
 
+window.toggleMouseSync = function(isSync) {
+    console.log(`[Cymatics] Toggle Mouse Sync: ${isSync}`);
+    window.cymaticsMouseSync = isSync ? 1.0 : 0.0;
+    
+    // Dispatch event to inform CymaticsCore to update uniforms
+    window.dispatchEvent(new CustomEvent('cymaticsToggleMouseSync', {
+        detail: { sync: window.cymaticsMouseSync }
+    }));
+}
+
+
+
+// ── Cymatics Engine v4 Native Routing ─────────────────────────────────────────
+
+window.setCymaticPattern = function(classId, variationId) {
+    console.log(`[Cymatics] Set Pattern - Class: ${classId}, Variation: ${variationId}`);
+    
+    // UI Highlighting Sync
+    // UI Highlighting Sync
+    const btns = document.querySelectorAll('.cymatics-pattern-btn');
+    btns.forEach(btn => {
+        btn.classList.remove('ring-2', 'ring-blue-400', 'ring-purple-400', 'ring-emerald-400', 'ring-fuchsia-400', 'ring-white', 'scale-95');
+    });
+    
+    const clickStr = `window.setCymaticPattern(${classId}, ${variationId})`;
+    const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick') === clickStr);
+    if (activeBtn) {
+        let ringColor = 'ring-white';
+        if (classId === 19) ringColor = 'ring-purple-400';
+        else if (classId === 22) ringColor = 'ring-emerald-400';
+        else if (classId === 21) ringColor = 'ring-fuchsia-400';
+        else if (classId === 20) ringColor = 'ring-blue-400';
+        activeBtn.classList.add('ring-2', ringColor, 'scale-95');
+    }
+
+    const viz = getVisualizer();
+    if (viz && viz.applyCymaticClassAndVariation) {
+        viz.applyCymaticClassAndVariation(classId, variationId);
+    }
+};
+
+window.setCymaticColor = function(classId, colorIndex, hex) {
+    console.log(`[Cymatics] Set Color - Class: ${classId}, Index: ${colorIndex}, Hex: ${hex}`);
+    const viz = getVisualizer();
+    if (viz) {
+        if (viz.cymaticsCore && viz.cymaticsCore.activeClassId !== classId) {
+            if (viz.applyCymaticClassAndVariation) {
+                viz.applyCymaticClassAndVariation(classId, 0);
+            }
+            const btns = document.querySelectorAll('.cymatics-pattern-btn');
+            btns.forEach(btn => btn.classList.remove('ring-2', 'ring-blue-400', 'ring-purple-400', 'ring-emerald-400', 'ring-fuchsia-400', 'ring-white', 'scale-95'));
+            const clickStr = `window.setCymaticPattern(${classId}, 0)`;
+            const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick') === clickStr);
+            if (activeBtn) {
+                activeBtn.classList.add('ring-2', 'ring-white', 'scale-95');
+            }
+        }
+        if (viz.setCymaticColor) {
+            viz.setCymaticColor(classId, colorIndex, hex);
+        }
+    }
+};
+
+window.setCymaticParam = function(classId, paramName, value) {
+    const viz = getVisualizer();
+    if (viz && viz.setCymaticParam) {
+        viz.setCymaticParam(classId, paramName, parseFloat(value));
+    }
+};
+
+window.addEventListener('cymaticColorSync', function(e) {
+    const { classId, color1, color2 } = e.detail;
+    // Find the primary color picker for this class
+    const picker1 = document.querySelector(`input[oninput*="window.setCymaticColor(${classId}, 1"]`);
+    if (picker1 && picker1.value !== color1) {
+        picker1.value = color1;
+    }
+    // Find the secondary color picker for this class
+    const picker2 = document.querySelector(`input[oninput*="window.setCymaticColor(${classId}, 2"]`);
+    if (picker2 && picker2.value !== color2) {
+        picker2.value = color2;
+    }
+});

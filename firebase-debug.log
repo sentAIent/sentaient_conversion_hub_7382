@@ -1,0 +1,107 @@
+[debug] [2026-05-23T08:21:15.250Z] ----------------------------------------------------------------------
+[debug] [2026-05-23T08:21:15.258Z] Command:       /Users/infinitealpha/.nvm/versions/node/v20.19.6/bin/node /Users/infinitealpha/.nvm/versions/node/v20.19.6/bin/firebase deploy
+[debug] [2026-05-23T08:21:15.259Z] CLI Version:   15.3.1
+[debug] [2026-05-23T08:21:15.260Z] Platform:      darwin
+[debug] [2026-05-23T08:21:15.260Z] Node Version:  v20.19.6
+[debug] [2026-05-23T08:21:15.260Z] Time:          Sat May 23 2026 01:21:15 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-05-23T08:21:15.260Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-23T08:21:15.265Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-05-23T08:21:21.743Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-23T08:21:21.744Z] > authorizing via signed-in user (bleonard@sentaient.com)
+[debug] [2026-05-23T08:21:21.744Z] [iam] checking project interstellar-9c864 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-05-23T08:21:21.747Z] Checked if tokens are valid: false, expires at: 1779310139756
+[debug] [2026-05-23T08:21:21.748Z] Checked if tokens are valid: false, expires at: 1779310139756
+[debug] [2026-05-23T08:21:21.748Z] > refreshing access token with scopes: []
+[debug] [2026-05-23T08:21:21.752Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-05-23T08:21:21.753Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-05-23T08:21:22.033Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-05-23T08:21:22.034Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-05-23T08:21:22.082Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-05-23T08:21:22.083Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-05-23T08:21:22.087Z] [iam] error while checking permissions, command may fail: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-05-23T08:21:22.088Z] Checked if tokens are valid: false, expires at: 1779310139756
+[debug] [2026-05-23T08:21:22.088Z] Checked if tokens are valid: false, expires at: 1779310139756
+[debug] [2026-05-23T08:21:22.090Z] > refreshing access token with scopes: []
+[debug] [2026-05-23T08:21:22.091Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-05-23T08:21:22.092Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-05-23T08:21:22.212Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-05-23T08:21:22.213Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-05-23T08:21:22.213Z] [functions] service account IAM check errored, deploy may fail: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci {"name":"FirebaseError","children":[],"exit":1,"message":"Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth\n\nFor CI servers and headless environments, generate a new token with firebase login:ci","status":500}
+[debug] [2026-05-23T08:21:22.217Z] Checked if tokens are valid: false, expires at: 1779310139756
+[debug] [2026-05-23T08:21:22.217Z] Checked if tokens are valid: false, expires at: 1779310139756
+[debug] [2026-05-23T08:21:22.217Z] > refreshing access token with scopes: []
+[debug] [2026-05-23T08:21:22.218Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-05-23T08:21:22.219Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-05-23T08:21:22.328Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-05-23T08:21:22.328Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-05-23T08:21:22.330Z] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] 
+[error] Error: Assertion failed: resolving hosting target of a site with no site name or target name. This should have caused an error earlier
+[debug] [2026-06-05T21:46:27.807Z] ----------------------------------------------------------------------
+[debug] [2026-06-05T21:46:27.816Z] Command:       /usr/local/Cellar/node/18.11.0/bin/node /Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/.bin/firebase deploy --only hosting
+[debug] [2026-06-05T21:46:27.818Z] CLI Version:   11.16.1
+[debug] [2026-06-05T21:46:27.819Z] Platform:      darwin
+[debug] [2026-06-05T21:46:27.834Z] Node Version:  v18.11.0
+[debug] [2026-06-05T21:46:27.839Z] Time:          Fri Jun 05 2026 14:46:27 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-06-05T21:46:27.841Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-05T21:46:27.868Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-06-05T21:46:29.240Z] Field ".functions" in "firebase.json" is possibly invalid: should be object
+[debug] [2026-06-05T21:46:29.240Z] Object ".functions[0]" in "firebase.json" has unknown property: {"additionalProperty":"disallowLegacyRuntimeConfig"}
+[debug] [2026-06-05T21:46:29.241Z] Field ".functions" in "firebase.json" is possibly invalid: should match some schema in anyOf
+[debug] [2026-06-05T21:46:29.319Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-05T21:46:29.321Z] > authorizing via signed-in user (bleonard@sentaient.com)
+[debug] [2026-06-05T21:46:29.321Z] [iam] checking project interstellar-9c864 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-06-05T21:46:29.338Z] > refreshing access token with scopes: []
+[debug] [2026-06-05T21:46:29.345Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-06-05T21:46:29.346Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-05T21:46:30.162Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-06-05T21:46:30.166Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-06-05T21:46:30.369Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-06-05T21:46:30.370Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-05T21:46:30.371Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions [none]
+[debug] [2026-06-05T21:46:30.372Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions x-goog-quota-user=projects/interstellar-9c864
+[debug] [2026-06-05T21:46:30.372Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-06-05T21:46:30.642Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions 401
+[debug] [2026-06-05T21:46:30.642Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"ACCESS_TOKEN_TYPE_UNSUPPORTED","metadata":{"method":"google.cloudresourcemanager.v1.Projects.TestIamPermissions","service":"cloudresourcemanager.googleapis.com"}}]}}
+[debug] [2026-06-05T21:46:30.644Z] [iam] error while checking permissions, command may fail: FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-06-05T21:46:30.646Z] > refreshing access token with scopes: []
+[debug] [2026-06-05T21:46:30.666Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-06-05T21:46:30.666Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-05T21:46:30.948Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-06-05T21:46:30.959Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-05T21:46:30.970Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 [none]
+[debug] [2026-06-05T21:46:31.355Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 401
+[debug] [2026-06-05T21:46:31.356Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}
+[debug] [2026-06-05T21:46:31.356Z] HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-06-05T21:46:31.709Z] FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at responseToError (/Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/firebase-tools/lib/responseToError.js:49:12)
+    at RetryOperation._fn (/Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/firebase-tools/lib/apiv2.js:288:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project interstellar-9c864. Please make sure the project exists and your account has permission to access it.

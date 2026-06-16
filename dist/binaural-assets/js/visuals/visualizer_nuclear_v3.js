@@ -1165,7 +1165,8 @@ export class Visualizer3D {
         // TIME MANAGEMENT
         const now = performance.now() * 0.001;
         if (!this.lastTime) this.lastTime = now;
-        const dt = now - this.lastTime;
+        let dt = now - this.lastTime;
+        if (dt < 0) dt = 0.016;
         this.lastTime = now;
 
         // Animation Logic
@@ -1455,6 +1456,7 @@ export class Visualizer3D {
         this.renderer.render(this.scene, this.camera);
 
         if (this.active !== false) {
+            if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
             state.animationId = requestAnimationFrame(() => this.render(analyserL, analyserR));
         }
     }
@@ -1582,12 +1584,53 @@ export class Visualizer3D {
         }
     }
     dispose() {
-        this.active = false; // Flag to stop internal loops if any
+        this.active = false;
+        if (typeof state !== 'undefined' && state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
+
+        const disposeGroup = (group) => {
+            if (!group) return;
+            while (group.children.length > 0) {
+                const child = group.children[0];
+                group.remove(child);
+                child.traverse((c) => {
+                    if (c.geometry) c.geometry.dispose();
+                    if (c.material) {
+                        if (c.material.map) c.material.map.dispose();
+                        if (c.material.uniforms) {
+                            for (const key in c.material.uniforms) {
+                                if (c.material.uniforms[key] && c.material.uniforms[key].value && c.material.uniforms[key].value.dispose) {
+                                    c.material.uniforms[key].value.dispose();
+                                }
+                            }
+                        }
+                        c.material.dispose();
+                    }
+                });
+            }
+        };
+
+        const groups = [
+            this.sphereGroup, this.particleGroup, this.lavaGroup,
+            this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup,
+            this.oceanGroup, this.matrixGroup, this.boxGroup,
+            this.dragonGroup, this.galaxyGroup, this.mandalaGroup,
+            this.wavesGroup
+        ];
+        groups.forEach(disposeGroup);
+
+        if (this.matrixMaterial) { this.matrixMaterial.dispose(); this.matrixMaterial = null; }
+        if (this.fireMaterial) { this.fireMaterial.dispose(); this.fireMaterial = null; }
+        for (const key in this.textures) {
+            if (this.textures[key] && this.textures[key].dispose) this.textures[key].dispose();
+        }
+        this.textures = {};
+
         if (this.renderer) {
             this.renderer.dispose();
             this.renderer.forceContextLoss();
             this.renderer = null;
         }
+        console.log('[Visualizer] Disposed all GPU resources.');
     }
 }
 

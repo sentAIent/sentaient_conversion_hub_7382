@@ -111,6 +111,28 @@ window.controls = {
             panel.classList.toggle('items-center');
         }
     },
+    toggleSnowflakeSettings: function(btn) {
+        state.snowflakePanelOpen = !state.snowflakePanelOpen;
+        const panel = document.getElementById('snowflakeSettingsPanel');
+        const viz = getVisualizer();
+        const active = viz && viz.activeModes && viz.activeModes.has('cymatics');
+        if (panel && active) {
+            if (state.snowflakePanelOpen) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex', 'items-center');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex', 'items-center');
+            }
+        } else if (panel) {
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            panel.classList.toggle('items-center');
+        }
+    },
+    setVisualBrightness: function(val) {
+        setVisualBrightness(val);
+    },
     showInquiryForm: function() {
         import('./inquiry-form.js').then(m => m.showInquiryForm());
     },
@@ -134,16 +156,23 @@ window.controls = {
         const rx = document.getElementById('galaxySunRX');
         const ry = document.getElementById('galaxySunRY');
         const rz = document.getElementById('galaxySunRZ');
+        const valX = document.getElementById('galaxySunRXVal');
+        const valY = document.getElementById('galaxySunRYVal');
+        const valZ = document.getElementById('galaxySunRZVal');
+        
         if (rx) rx.value = 0;
         if (ry) ry.value = 0.5;
         if (rz) rz.value = 0;
         
+        if (valX) valX.textContent = '0.0';
+        if (valY) valY.textContent = '0.5';
+        if (valZ) valZ.textContent = '0.0';
+        
         const viz = getVisualizer();
-        // If galaxy is active or was recently active, reset its rotation speeds
-        if (viz) {
-            viz.sunRotationSpeedX = 0;
-            viz.sunRotationSpeedY = 0.5;
-            viz.sunRotationSpeedZ = 0;
+        if (viz && viz.setGalaxySunRotation) {
+            viz.setGalaxySunRotation('x', 0);
+            viz.setGalaxySunRotation('y', 0.5 * 0.01);
+            viz.setGalaxySunRotation('z', 0);
         }
     },
     toggleGlobalMenu: function(forceClose = false) {
@@ -160,61 +189,53 @@ window.controls = {
             console.error('[Menu] setupGlobalMenuSystem not initialized');
         }
     },
-    switchGlobalTab: function(btn) {
+    switchRightTab: function(targetId, btn) {
         if (!btn) return;
-        const targetId = btn.dataset.target;
-        console.group('[Menu] Switch Tab:', targetId);
+        console.group('[RightMenu] Switch Tab:', targetId);
         
         // Find containers relative to the right panel
         const rightPanel = document.getElementById('rightPanel');
         if (!rightPanel) {
-            console.error('[Menu] Right panel not found');
+            console.error('[RightMenu] Right panel not found');
             console.groupEnd();
             return;
         }
 
-        const tabContainer = rightPanel.querySelector('.global-menu-tabs');
-        const contentContainer = rightPanel.querySelector('.global-menu-content');
-        
-        if (!tabContainer || !contentContainer) {
-            console.error('[Menu] Missing containers in right panel!');
-            console.groupEnd();
-            return;
-        }
+        const contentContainer = rightPanel.querySelector('.flex-1.overflow-y-auto') || rightPanel;
 
         // 1. Update Tab Buttons UI
-        const tabs = tabContainer.querySelectorAll('.global-tab-btn');
-        tabs.forEach(b => {
-            b.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold', 'shadow-[0_0_15px_rgba(45,212,191,0.3)]');
-            b.classList.add('bg-white/5', 'text-[var(--text-muted)]');
-            b.style.border = '1px solid rgba(255,255,255,0.1)';
-        });
+        if (btn && btn.parentNode) {
+            const pills = btn.parentNode.querySelectorAll('.tab-pill, .tab-btn');
+            pills.forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+        }
         
-        btn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold', 'shadow-[0_0_15px_rgba(45,212,191,0.3)]');
-        btn.classList.remove('bg-white/5', 'text-[var(--text-muted)]');
-        btn.style.border = '1px solid transparent';
-        
-        // 2. Switch Panels
-        const allPanels = contentContainer.querySelectorAll('.global-panel');
-        allPanels.forEach(p => {
-            p.classList.add('hidden');
-            p.classList.remove('flex');
-        });
-        
-        const targetPane = document.getElementById(targetId);
+        // 2. Find Target Pane
+        let targetPane = document.getElementById(targetId); // fallback
+        if (!targetPane) targetPane = document.getElementById('tab-' + targetId); // correct ID
+        if (!targetPane) targetPane = rightPanel.querySelector(`.tab-panel[id*="${targetId}"]`);
+
         if (targetPane) {
+            // ONLY hide others if target exists to prevent blanking menu
+            const allPanels = contentContainer.querySelectorAll('.tab-panel, .global-panel');
+            allPanels.forEach(p => {
+                p.classList.add('hidden');
+                p.classList.remove('flex', 'active');
+            });
+
             targetPane.classList.remove('hidden');
-            targetPane.classList.add('flex');
-            console.log('Switched to:', targetId);
-            contentContainer.scrollTop = 0;
+            targetPane.classList.add('active'); // Use active
+            console.log('Switched to:', targetPane.id);
+            if (contentContainer.scrollTop !== undefined) {
+                contentContainer.scrollTop = 0;
+            }
         } else {
-            console.warn('Target pane not found:', targetId);
+            console.warn('Target pane not found for:', targetId);
         }
         console.groupEnd();
     },
-    switchLeftTab: function(btn) {
+    switchLeftTab: function(targetId, btn) {
         if (!btn) return;
-        const targetId = btn.dataset.target;
         console.group('[LeftMenu] Switch Tab:', targetId);
         
         const leftPanel = document.getElementById('leftPanel');
@@ -224,37 +245,37 @@ window.controls = {
             return;
         }
 
-        const tabContainer = leftPanel.querySelector('.global-menu-tabs');
-        const contentContainer = leftPanel.querySelector('.global-menu-content');
-        
-        if (!tabContainer || !contentContainer) {
-            console.error('[LeftMenu] Missing containers in left panel!');
-            console.groupEnd();
-            return;
-        }
+        // The container does not use .global-menu-content, so fallback to the scrollable div or leftPanel itself
+        const contentContainer = leftPanel.querySelector('.flex-1.overflow-y-auto') || leftPanel;
 
         // 1. Update Tab Buttons UI
-        const tabs = tabContainer.querySelectorAll('.tab-btn');
-        tabs.forEach(b => {
-             b.classList.remove('active');
-        });
-        btn.classList.add('active');
+        if (btn && btn.parentNode) {
+            const pills = btn.parentNode.querySelectorAll('.tab-pill, .tab-btn');
+            pills.forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+        }
         
-        // 2. Switch Panels
-        const allPanels = contentContainer.querySelectorAll('.global-panel');
-        allPanels.forEach(p => {
-            p.classList.add('hidden');
-            p.classList.remove('flex');
-        });
-        
-        const targetPane = document.getElementById(targetId);
+        // 2. Find Target Pane
+        let targetPane = document.getElementById(targetId); // fallback
+        if (!targetPane) targetPane = document.getElementById('left-tab-' + targetId); // correct ID
+        if (!targetPane) targetPane = leftPanel.querySelector(`.tab-panel[id*="${targetId}"]`);
+
         if (targetPane) {
+            // ONLY hide others if target exists
+            const allPanels = contentContainer.querySelectorAll('.tab-panel, .global-panel');
+            allPanels.forEach(p => {
+                p.classList.add('hidden');
+                p.classList.remove('flex', 'active');
+            });
+
             targetPane.classList.remove('hidden');
-            targetPane.classList.add('flex');
-            console.log('Switched to:', targetId);
-            contentContainer.scrollTop = 0;
+            targetPane.classList.add('active'); // Use active
+            console.log('Switched to:', targetPane.id);
+            if (contentContainer.scrollTop !== undefined) {
+                contentContainer.scrollTop = 0;
+            }
         } else {
-            console.warn('Target pane not found:', targetId);
+            console.warn('Target pane not found for:', targetId);
         }
         console.groupEnd();
     }
@@ -264,8 +285,10 @@ window.controls = {
 window.toggleGalaxySettings = window.controls.toggleGalaxySettings;
 window.toggleCyberSettings = window.controls.toggleCyberSettings;
 window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
+window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
 window.toggleGalaxySun = window.controls.toggleGalaxySun;
 window.resetGalaxySettings = window.controls.resetGalaxySettings;
+window.setVisualBrightness = setVisualBrightness;
 
 export function updateDockScaling() {
     const width = window.innerWidth;
@@ -2552,9 +2575,9 @@ function setupGalaxyControls() {
         if (valZ) valZ.textContent = vz.toFixed(1);
 
         if (viz && viz.activeModes && viz.activeModes.has('galaxy')) {
-            viz.sunRotationSpeedX = vx;
-            viz.sunRotationSpeedY = vy;
-            viz.sunRotationSpeedZ = vz;
+            viz.sunRotationSpeedX = vx * 0.01;
+            viz.sunRotationSpeedY = vy * 0.01;
+            viz.sunRotationSpeedZ = vz * 0.01;
         }
     };
 
@@ -5862,7 +5885,9 @@ function setupMatrixControls() {
                 const colorPicker = document.getElementById('matrixColorPicker');
                 if (colorPicker) colorPicker.value = '#00FF41';
                 const rainbowToggle = document.getElementById('matrixRainbowToggle');
+                const rainbowToggleRight = document.getElementById('matrixRainbowToggleRight');
                 if (rainbowToggle) rainbowToggle.checked = false;
+                if (rainbowToggleRight) rainbowToggleRight.checked = false;
                 const speedSlider = document.getElementById('matrixSpeedSlider');
                 if (speedSlider) { speedSlider.value = 1.0; document.getElementById('matrixSpeedVal').textContent = '1.0x'; }
                 const lengthSlider = document.getElementById('matrixLengthSlider');
@@ -5884,10 +5909,10 @@ function setupMatrixControls() {
                 window._matrixPrevColor = matrixColorPicker.value;
                 viz.setMatrixColor(val);
                 const rainbowToggle = document.getElementById('matrixRainbowToggle');
-                if (rainbowToggle && rainbowToggle.checked) {
-                    rainbowToggle.checked = false;
-                    if (viz.setMatrixRainbow) viz.setMatrixRainbow(false);
-                }
+                const rainbowToggleRight = document.getElementById('matrixRainbowToggleRight');
+                if (rainbowToggle) rainbowToggle.checked = false;
+                if (rainbowToggleRight) rainbowToggleRight.checked = false;
+                if (viz.setMatrixRainbow) viz.setMatrixRainbow(false);
             }
         });
     }
@@ -5937,13 +5962,45 @@ function setupMatrixControls() {
         });
     }
 
-    const rainbowToggle = document.getElementById('matrixRainbowToggle');
-    if (rainbowToggle) {
-        rainbowToggle.addEventListener('change', (e) => {
-            const viz = getVisualizer();
-            if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(e.target.checked);
-        });
-    }
+    const mRbLeft = document.getElementById('matrixRainbowToggle');
+    const mRbRight = document.getElementById('matrixRainbowToggleRight');
+    const cRbLeft = document.getElementById('cyberRainbowToggle');
+    
+    const handleRainbowChange = (e) => {
+        const viz = getVisualizer();
+        
+        // Safely determine intended state (handling cases where e.target might be a label/span)
+        let isRainbow = false;
+        if (e && e.target && e.target.type === 'checkbox') {
+            isRainbow = e.target.checked;
+        } else {
+            // Fallback: Check if ANY of them are checked
+            isRainbow = (mRbLeft && mRbLeft.checked) || (mRbRight && mRbRight.checked) || (cRbLeft && cRbLeft.checked);
+        }
+
+        console.log('[Controls] Rainbow toggled:', isRainbow);
+
+        if (viz && viz.setMatrixRainbow) viz.setMatrixRainbow(isRainbow);
+        if (viz && viz.setCyberRainbow) viz.setCyberRainbow(isRainbow);
+        
+        // Sync all toggles to match
+        if (mRbLeft && mRbLeft !== e.target) mRbLeft.checked = isRainbow;
+        if (mRbRight && mRbRight !== e.target) mRbRight.checked = isRainbow;
+        if (cRbLeft && cRbLeft !== e.target) cRbLeft.checked = isRainbow;
+
+        // Automatically re-apply the user's selected color when Rainbow is turned off
+        if (!isRainbow && viz && viz.setMatrixColor) {
+            const mPicker = document.getElementById('matrixColorPicker');
+            const cPicker = document.getElementById('cyberColorPicker');
+            const colorToRestore = (mPicker && mPicker.value) || (cPicker && cPicker.value) || '#00FF41';
+            viz.setMatrixColor(colorToRestore);
+            if (viz.setCyberColor) viz.setCyberColor(colorToRestore);
+        }
+    };
+
+    if (mRbLeft) mRbLeft.addEventListener('change', handleRainbowChange);
+    if (mRbRight) mRbRight.addEventListener('change', handleRainbowChange);
+    if (cRbLeft) cRbLeft.addEventListener('change', handleRainbowChange);
 
     const sliders = [
         { id: 'matrixSpeed', method: 'setMatrixSpeed' },
@@ -6212,14 +6269,7 @@ function setupCyberControls() {
         });
     }
 
-    // Rainbow Toggle
-    const rainbowToggle = document.getElementById('cyberRainbowToggle');
-    if (rainbowToggle) {
-        rainbowToggle.addEventListener('change', (e) => {
-            const viz = getVisualizer();
-            if (viz && viz.setCyberRainbow) viz.setCyberRainbow(e.target.checked);
-        });
-    }
+    // Rainbow Toggle logic moved up and merged with handleRainbowChange
 
     // Sliders
     const sliders = [

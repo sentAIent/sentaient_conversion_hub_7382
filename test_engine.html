@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body>
+<button id="playBtn">Play</button>
+<input type="range" id="masterVolSlider" value="1.0">
+<input type="range" id="volSlider" value="0.5">
+<input type="range" id="baseSlider" value="200">
+<input type="range" id="beatSlider" value="10">
+<script type="module">
+import { startAudio } from './binaural-assets/js/audio/engine.js';
+import { els } from './binaural-assets/js/ui/controls_v3_RESTORED_GOLD.js';
+
+els.masterVolSlider = document.getElementById('masterVolSlider');
+els.volSlider = document.getElementById('volSlider');
+els.baseSlider = document.getElementById('baseSlider');
+els.beatSlider = document.getElementById('beatSlider');
+
+document.getElementById('playBtn').onclick = async () => {
+    try {
+        await startAudio();
+        console.log("Audio started");
+    } catch(e) {
+        console.error("Failed:", e);
+    }
+};
+</script>
+</body>
+</html>

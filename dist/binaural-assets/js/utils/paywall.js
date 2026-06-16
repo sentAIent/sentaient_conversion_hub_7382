@@ -28,12 +28,12 @@ export async function canAccessFeature(featureType, featureId) {
 
         // If auth not initialized yet, wait a bit
         if (!auth) {
-            console.warn('[Paywall] Firebase not initialized yet, allowing access temporarily');
-            return { allowed: true }; // Fail open during initialization
+            console.warn('[Paywall] Firebase not initialized yet, denying access to premium feature.');
+            return { allowed: false, reason: 'not_logged_in' }; // Fail closed
         }
     } catch (e) {
-        console.warn('[Paywall] Could not load Firebase, allowing access:', e);
-        return { allowed: true }; // Fail open if Firebase has issues
+        console.warn('[Paywall] Could not load Firebase, denying access:', e);
+        return { allowed: false, reason: 'not_logged_in' }; // Fail closed
     }
 
     if (!auth.currentUser) {

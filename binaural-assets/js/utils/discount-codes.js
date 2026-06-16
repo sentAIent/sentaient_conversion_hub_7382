@@ -24,7 +24,8 @@ export const DISCOUNT_CODES = {
     'RESONANCE30': { discount: 30, type: 'promo', description: '30% Off' },
     'PRESENCE40': { discount: 40, type: 'promo', description: '40% Off' },
     'ZEN50': { discount: 50, type: 'promo', description: '50% Off' },
-    'NIRVANA100': { discount: 100, type: 'promo', description: '100% Off' }
+    'NIRVANA100': { discount: 100, type: 'promo', description: '100% Off' },
+    'YOGANANDA': { discount: 100, type: 'promo', description: 'Master Access Code' }
 };
 
 /**

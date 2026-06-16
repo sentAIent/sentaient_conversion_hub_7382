@@ -1,0 +1,51 @@
+<section class="mixer-section mb-6 relative z-10" data-section="uploads">
+                <div class="flex justify-between items-center mb-4 cursor-pointer section-header"
+                    onclick="toggleMixerSection('uploads')">
+                    <div class="flex items-center gap-2">
+                        <svg class="section-arrow transition-transform duration-200" width="12" height="12"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                        <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Upload
+                            Audio</h3>
+                        <button class="ml-2 transition-colors relative" aria-label="Info"
+                            onclick="showInfoModal('uploads'); event.stopPropagation();"
+                            style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <label for="audioUploadInput" onclick="event.stopPropagation()"
+                        class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] text-[10px] font-bold uppercase tracking-wide cursor-pointer hover:bg-[var(--accent)]/20 transition-all">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Add Track
+                    </label>
+                    <input type="file" id="audioUploadInput" accept="audio/*" class="hidden" multiple
+                        onclick="event.stopPropagation()">
+                </div>
+                <div class="section-content">
+                    <div id="myAudioContainer" class="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                        <div class="text-xs text-center py-4 text-[var(--text-muted)] opacity-60">
+                            Upload MP3s (Classical, Nature, etc.) to layer with frequencies.
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-0.5 mt-4 pt-6">
+                        <div class="flex justify-between items-center px-0.5">
+                            <label class="premium-label">TRACK VOL</label>
+                            <span id="customAudioVolumeValue" class="premium-value">70%</span>
+                        </div>
+                        <input type="range" id="customAudioVolume" min="0" max="1" step="0.01" value="0.7"
+                            class="premium-slider">
+                    </div>
+                </div>
+            </section>
