@@ -1,6 +1,6 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_778");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
-import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS, updateHarmonicsLevel, setAmbientMixerVolume } from '../audio/engine.js';
+import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS, updateHarmonicsLevel } from '../audio/engine.js';
 import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
@@ -867,11 +867,11 @@ export function setupUI() {
     if (els.atmosMasterSlider) els.atmosMasterSlider.addEventListener('input', () => { updateAtmosMaster(); saveStateToLocal(); });
 
     // Ambient Mixer Event Listeners
-    if (els.ambientThunderSlider) els.ambientThunderSlider.addEventListener('input', (e) => { setAmbientMixerVolume('thunderstorm', parseFloat(e.target.value)); saveStateToLocal(); });
-    if (els.ambientOceanSlider) els.ambientOceanSlider.addEventListener('input', (e) => { setAmbientMixerVolume('ocean', parseFloat(e.target.value)); saveStateToLocal(); });
-    if (els.ambientFireSlider) els.ambientFireSlider.addEventListener('input', (e) => { setAmbientMixerVolume('fire', parseFloat(e.target.value)); saveStateToLocal(); });
-    if (els.ambient432Slider) els.ambient432Slider.addEventListener('input', (e) => { setAmbientMixerVolume('solfeggio432', parseFloat(e.target.value)); saveStateToLocal(); });
-    if (els.ambient528Slider) els.ambient528Slider.addEventListener('input', (e) => { setAmbientMixerVolume('solfeggio528', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambientThunderSlider) els.ambientThunderSlider.addEventListener('input', (e) => { updateSoundscape('thunderstorm', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambientOceanSlider) els.ambientOceanSlider.addEventListener('input', (e) => { updateSoundscape('ocean', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambientFireSlider) els.ambientFireSlider.addEventListener('input', (e) => { updateSoundscape('fire', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambient432Slider) els.ambient432Slider.addEventListener('input', (e) => { updateSoundscape('solfeggio432', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambient528Slider) els.ambient528Slider.addEventListener('input', (e) => { updateSoundscape('solfeggio528', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
     if (els.balanceSlider) els.balanceSlider.addEventListener('input', () => { updateMasterBalance(); saveStateToLocal(); });
     if (els.mouseInfluenceSlider) {
         els.mouseInfluenceSlider.addEventListener('input', () => {
