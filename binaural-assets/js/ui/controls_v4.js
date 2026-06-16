@@ -3117,10 +3117,27 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
 
     if (viz) {
         const modes = Array.isArray(mode) ? mode : [mode];
-
-        // If applying an array (preset), clear existing modes for 'Total Immersion'
+        const overlays = ['cymatics', 'snowflake'];
+        
+        // Exclusivity logic: Base visuals replace other base visuals, but overlays persist
         if (Array.isArray(mode)) {
+            // Preset: Clear all base visuals, but keep existing overlays
+            const activeOverlays = Array.from(viz.activeModes).filter(m => overlays.includes(m));
             viz.activeModes.clear();
+            activeOverlays.forEach(m => viz.activeModes.add(m));
+        } else {
+            const m = modes[0];
+            const target = viz.mapMode ? viz.mapMode(m) : m;
+            // If selecting a base visual, remove all other base visuals
+            if (!overlays.includes(target)) {
+                const toRemove = Array.from(viz.activeModes).filter(activeMode => 
+                    !overlays.includes(activeMode) && activeMode !== target
+                );
+                toRemove.forEach(rm => {
+                    // Force remove
+                    viz.activeModes.delete(rm);
+                });
+            }
         }
 
         modes.forEach(m => {

@@ -2912,6 +2912,11 @@ const getFragmentShader = (classId) => {
             // --- FALLBACK ---
             gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 #endif
+
+            // Apply universal tint using uColor1/uColor2 so color pickers work even at low intensity
+            float finalLuma = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+            vec3 globalTint = mix(uColor1, uColor2, finalLuma);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * globalTint * 2.5, 0.5);
         }
         `;
     } else if (classId === 23) {
