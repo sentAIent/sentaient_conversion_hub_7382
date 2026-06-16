@@ -61,7 +61,7 @@ window.controls = {
         if (rightPanel) rightPanel.classList.remove('translate-x-full');
 
         // Switch to correct Tab depending on the panel requested
-        if (panelId === 'cymaticsPanel' || panelId === 'snowflakeSettingsPanel') {
+        if (panelId === 'cymaticsPanel') {
             const activeTabBtn = document.querySelector('.tab-pill[onclick*="active"]');
             if (activeTabBtn) activeTabBtn.click();
             else this.switchRightTab('active');
@@ -3073,19 +3073,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         modes.forEach(m => {
             const becomingActive = forceState !== false && !viz.activeModes.has(m);
 
-            // EXCLUSIVITY LOGIC:
-            if (becomingActive) {
-                if (m === 'cymatics') {
-                    console.log(`[Visuals] CYMATICS engaged - clearing other modes`);
-                    viz.activeModes.clear();
-                } else {
-                    // Any other mode clears Cymatics
-                    if (viz.activeModes.has('cymatics')) {
-                        console.log('[Visuals] Other mode engaged - exiting Cymatics');
-                        viz.activeModes.delete('cymatics');
-                    }
-                }
-            }
+            // EXCLUSIVITY LOGIC REMOVED to allow mixing Cymatics with other visuals
 
             if (forceState !== null) {
                 const isActive = viz.activeModes.has(m);
@@ -3119,7 +3107,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             'galaxy': 'galaxyPanel',
             'cyber': 'matrixPanel',
             'matrix': 'matrixPanel',
-            'snowflake': 'cymaticsPanel',
+            'snowflake': 'snowflakeSettingsPanel',
             'cymatics': 'cymaticsPanel',
             'particles': 'visualsPanel',
             'lava': 'visualsPanel',

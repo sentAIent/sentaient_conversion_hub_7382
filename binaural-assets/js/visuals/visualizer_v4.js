@@ -1332,7 +1332,7 @@ static CYMATIC_PATTERNS = [
         }
         this._snowData = null;
 
-        const count = 700;
+        const count = this.snowCount || 200;
         const positions  = new Float32Array(count * 3);
         const sizes      = new Float32Array(count);
         const opacities  = new Float32Array(count);
@@ -1425,6 +1425,19 @@ static CYMATIC_PATTERNS = [
             this._snowData.material.uniforms.uSizeMultiplier.value = Math.max(0.2, Math.min(4.0, mult));
             console.log('[Viz] Snow Size Override:', mult);
         }
+    }
+
+    setSnowCount(count) {
+        this.snowCount = parseInt(count) || 200;
+        if (this.snowflakeGroup && this.snowflakeGroup.visible) {
+            this.initSnowflake();
+        }
+        console.log('[Viz] Snow Count Override:', this.snowCount);
+    }
+
+    setSnowDrift(mult) {
+        this.snowDriftMultiplier = parseFloat(mult) || 1.0;
+        console.log('[Viz] Snow Drift Override:', this.snowDriftMultiplier);
     }
 
     setSnowGlow(amount) {
@@ -3143,7 +3156,7 @@ static CYMATIC_PATTERNS = [
                     pos[i3 + 1] -= s.speeds[i] * spdMult;
 
                     // Horizontal Drift (Sinusoidal)
-                    let dx = Math.sin(now * s.driftFreqs[i] + s.phases[i]) * s.drifts[i] * spdMult;
+                    let dx = Math.sin(now * s.driftFreqs[i] + s.phases[i]) * s.drifts[i] * spdMult * (this.snowDriftMultiplier !== undefined ? this.snowDriftMultiplier : 1.0);
                     pos[i3] += dx;
 
                     // Wrap positions

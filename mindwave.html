@@ -1333,16 +1333,23 @@ window.resetGalaxySettings = function() {
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
 <label class="premium-label">COUNT</label>
-<span class="premium-value" id="snowflakeCountVal">5k</span>
+<span class="premium-value" id="snowflakeCountVal">200</span>
 </div>
-<input class="mw-slider" id="snowflakeCountSlider" max="15000" min="1000" step="500" type="range" value="5000"/>
+<input class="mw-slider" id="snowflakeCountSlider" max="1000" min="50" step="50" type="range" value="200" oninput="if(window.getVisualizer && window.getVisualizer()){ window.getVisualizer().setSnowCount(this.value); document.getElementById('snowflakeCountVal').textContent = this.value; }"/>
 </div>
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
 <label class="premium-label">DRIFT</label>
 <span class="premium-value" id="snowflakeDriftVal">1.0</span>
 </div>
-<input class="mw-slider" id="snowflakeDriftSlider" max="5.0" min="0.1" step="0.1" type="range" value="1.0"/>
+<input class="mw-slider" id="snowflakeDriftSlider" max="5.0" min="0.0" step="0.05" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer()){ let v = parseFloat(this.value); let exp = v * v; window.getVisualizer().setSnowDrift(exp); document.getElementById('snowflakeDriftVal').textContent = exp.toFixed(1); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">SIZE</label>
+<span class="premium-value" id="snowflakeSizeVal">1.0</span>
+</div>
+<input class="mw-slider" id="snowflakeSizeSlider" max="3.0" min="0.1" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer()){ window.getVisualizer().setSnowSize(this.value); document.getElementById('snowflakeSizeVal').textContent = this.value; }"/>
 </div>
 </div>
 </div>
