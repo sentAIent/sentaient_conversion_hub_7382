@@ -72,12 +72,12 @@ class GameLoopManager {
                 if (game.academyManager) game.academyManager.update(dt);
                 if (game.logisticsManager) game.logisticsManager.update(dt);
 
-                // Update engine hum pitch based on ship speed
-                const shipSpeed = Math.hypot(game.playerShip.vx || 0, game.playerShip.vy || 0);
+                // Update engine hum pitch based on ship thrust instead of raw speed
+                const thrustInput = (game.playerShip.currentThrust || 0) * 15;
                 
                 // --- POSITIONAL HAZARD AUDIO ---
                 if (window.gameAudio) {
-                    window.gameAudio.updateEngineHum(shipSpeed);
+                    window.gameAudio.updateEngineHum(thrustInput);
                     
                     // Nearest Black Hole
                     let nearestBHDist = 10000;

@@ -19,6 +19,42 @@
             -webkit-user-select: none;
         }
 
+        /* Hide ALL game UI during splash loading screen */
+        body.splash-active .hud,
+        body.splash-active .hud-column,
+        body.splash-active .hud-bottom,
+        body.splash-active .top-bar,
+        body.splash-active .bottom-bar,
+        body.splash-active .bottom-bar-left,
+        body.splash-active .bottom-bar-center,
+        body.splash-active .bottom-bar-right,
+        body.splash-active .zoom-controls,
+        body.splash-active .stats,
+        body.splash-active .mobile-controls,
+        body.splash-active .game-controls-section,
+        body.splash-active #flightHUD,
+        body.splash-active #windowTaskbar,
+        body.splash-active #templatePanel,
+        body.splash-active #designerBackdrop,
+        body.splash-active #shipModal,
+        body.splash-active #upgradePanel,
+        body.splash-active #rotationPanel,
+        body.splash-active #matrixPanel,
+        body.splash-active #adminPanel,
+        body.splash-active #clearModal,
+        body.splash-active #expandedMapModal,
+        body.splash-active #baseBuilderModal,
+        body.splash-active #accountModal,
+        body.splash-active .hud-panel,
+        body.splash-active .popup-panel,
+        body.splash-active .cockpit-section,
+        body.splash-active .modal-overlay {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
         #canvas {
             display: block;
             position: absolute;
@@ -113,7 +149,7 @@
             top: 190px;
             left: 20px;
             align-self: flex-start;
-            padding: 15px;
+            padding: calc(var(--bar-height, 60px) + 25px) 15px calc(var(--bar-height, 60px) + 15px) 15px;
             max-width: 280px;
             display: flex;
             flex-direction: column;
@@ -168,11 +204,11 @@
         /* General Small Button Styling */
         .btn-small {
             flex-grow: 1;
-            padding: 10px 12px;
-            font-size: 13px;
+            padding: 5px 10px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            border-radius: 8px;
+            border-radius: 6px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
             color: var(--text-main);
@@ -187,6 +223,13 @@
         .btn-small:hover {
             border-color: var(--accent);
             color: var(--accent);
+        }
+
+        .btn-small.active-template {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
         }
 
         /* Active Color Mode Indicator */
@@ -387,6 +430,14 @@
             box-shadow: 0 0 50px rgba(0, 243, 255, 0.15);
             max-width: 400px;
             max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .modal-content {
+            max-height: 90vh;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -877,12 +928,30 @@
             letter-spacing: 2px;
         }
 
-        .hangar-container .modal-actions .btn-secondary {
+        .modal-close-corner {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            margin-top: 0;
+        }
+
+        .modal-close-corner .btn-secondary {
             border-radius: 30px;
             padding: 10px 30px;
             font-size: 12px;
             letter-spacing: 2px;
             border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 50, 50, 0.2);
+            color: #fff;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close-corner .btn-secondary:hover {
+            background: rgba(255, 50, 50, 0.8);
+            border-color: #ff3333;
+            box-shadow: 0 0 15px rgba(255, 50, 50, 0.6);
         }
 
         .modal h2 {
@@ -1049,11 +1118,11 @@
         .bar-group {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
+            gap: 4px;
+            padding: 4px 8px;
             background: rgba(255, 255, 255, 0.04);
             backdrop-filter: blur(8px);
-            border-radius: 10px;
+            border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.15);
         }
@@ -1135,9 +1204,9 @@
             background: rgba(255, 255, 255, 0.06);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(100, 220, 255, 0.15);
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
             transition: all 0.2s ease;
         }
@@ -1467,8 +1536,8 @@
         }
 
         .color-picker-mini {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border: 1px solid var(--glass-border);
             border-radius: 4px;
             cursor: pointer;
@@ -1852,10 +1921,44 @@
         }
 
         .leaders-window {
-            top: 15px;
-            left: 15px;
+            bottom: 120px;
+            right: 15px;
+            left: auto;
+            top: auto;
             width: 220px;
             height: 260px;
+        }
+
+        /* Portrait (Tall HUD) Organization */
+        @media (max-aspect-ratio: 1/1) {
+            .map-window {
+                bottom: 180px; /* Above mobile joystick */
+                left: 10px;
+                width: 180px;
+                height: 160px;
+            }
+            .leaders-window {
+                bottom: 180px; /* Above mobile buttons */
+                right: 10px;
+                left: auto;
+                top: auto;
+                width: 180px;
+                height: 200px;
+            }
+            .hud-left {
+                top: 10px !important;
+                left: 10px !important;
+                max-width: 45vw !important;
+            }
+            .hud-right {
+                top: 10px !important;
+                right: 10px !important;
+                max-width: 45vw !important;
+            }
+            .cockpit-section {
+                min-width: 120px;
+                width: 100% !important;
+            }
         }
 
         /* Leaderboard Styling */
@@ -2107,12 +2210,7 @@
             z-index: 25;
         }
 
-        /* Legacy column classes - now just containers */
-        .hud-column,
-        .hud-bottom {
-            display: contents;
-            /* Pass through - windows position themselves */
-        }
+        /* Removed .hud-column wrappers - sections float independently */
 
         /* Glassmorphism Cockpit Sections - Floating Windows */
         .cockpit-section {
@@ -2134,6 +2232,8 @@
             min-width: 150px;
             min-height: 100px;
         }
+
+        /* Sections flow naturally */
 
         /* Resize handle */
         .cockpit-section::after {
@@ -2479,3 +2579,257 @@
                 display: none !important;
             }
         }
+
+/* CONSTELLATION GATE CSS */
+#templatePanel {
+    padding: 30px !important;
+    background: rgba(10, 20, 35, 0.95) !important;
+    border: 2px solid #00f3ff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 0 50px rgba(0, 243, 255, 0.4), inset 0 0 20px rgba(0, 243, 255, 0.2) !important;
+    display: none;
+    flex-direction: column !important;
+}
+
+/* Loading Prompt Pulse */
+@keyframes pulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { opacity: 0.3; }
+}
+
+#templatePanel > div {
+    margin-bottom: 0 !important;
+}
+
+.template-btn.active-template {
+    background: #00f3ff !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px #00f3ff !important;
+    border-color: #00f3ff !important;
+}
+
+#designerBackdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 90;
+    pointer-events: auto;
+}
+
+#gateLaunchBtn {
+    display: none;
+    width: 100%;
+    margin-top: 15px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #00f3ff, #00ffaa);
+    color: #000;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+#gateLaunchBtn:hover {
+    box-shadow: 0 0 20px #00f3ff;
+}
+
+
+input[type="range"] { pointer-events: auto !important; touch-action: auto !important; }
+.modal-overlay button, .modal-content button { touch-action: auto !important; }
+
+
+/* =========================================================
+   NEW FLEX-BASED FLIGHT HUD LAYOUT
+   ========================================================= */
+
+#flightHUD.flight-hud {
+    display: flex;
+    justify-content: space-between;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    padding: calc(var(--bar-height, 60px) + 25px) 15px calc(var(--bar-height, 60px) + 15px) 15px;
+    box-sizing: border-box;
+    zoom: var(--hud-scale, 1);
+}
+
+/* Ensure sections have auto pointer events */
+#flightHUD .cockpit-section, 
+#flightHUD .floating-window {
+    pointer-events: auto;
+    margin: 0;
+}
+
+/* Ensure sections snap unless actively dragged */
+#flightHUD .cockpit-section:not([style*="position: fixed"]),
+#flightHUD .floating-window:not([style*="position: fixed"]) {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+}
+
+/* Shift Vitals down to close the gap symmetrically */
+#sectionVitals {
+    margin-top: 45px;
+}
+
+/* Responsive adjustments for Gems section to prevent overflow */
+#sectionGems {
+    max-width: 100%;
+}
+
+
+
+
+
+/* Fix: Ensure HUD stays hidden on load screen */
+#flightHUD.flight-hud.hidden {
+    display: none !important;
+}
+
+
+/* =========================================================
+   HUD REFINEMENTS (User Feedback)
+   ========================================================= */
+
+/* Push bottom row up past the bottom bar */
+#flightHUD .bottom-row {
+    bottom: calc(var(--bar-height, 60px) + 15px) !important;
+}
+
+/* Make vertically stacked windows the same height */
+#flightHUD .left-column > .cockpit-section,
+#flightHUD .left-column > .floating-window,
+#flightHUD .right-column > .cockpit-section,
+#flightHUD .right-column > .floating-window {
+    flex: 1;
+    height: auto !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make inner content stretch */
+#flightHUD .left-column .cockpit-content,
+#flightHUD .left-column .window-content,
+#flightHUD .right-column .cockpit-content,
+#flightHUD .right-column .window-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Make horizontally stacked windows the same height */
+#flightHUD .bottom-row .bottom-left,
+#flightHUD .bottom-row .bottom-right {
+    align-items: stretch !important;
+}
+#flightHUD .bottom-row .bottom-left > .cockpit-section,
+#flightHUD .bottom-row .bottom-left > .floating-window,
+#flightHUD .bottom-row .bottom-right > .cockpit-section,
+#flightHUD .bottom-row .bottom-right > .floating-window {
+    height: auto !important;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make bottom inner content stretch */
+#flightHUD .bottom-row .cockpit-content,
+#flightHUD .bottom-row .window-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Remove old tall/vertical layout block as it is obsolete and causes conflicts */
+
+
+/* =========================================================
+   DYNAMIC SCALING & ANTI-OVERLAP
+   ========================================================= */
+
+/* Fix Bottom Clearance (Fallback to hard pixel values to guarantee clearance) */
+#flightHUD .bottom-row {
+    bottom: calc(var(--bar-height, 52px) + 15px) !important;
+}
+
+/* Precious Elements (Gems) Redesign */
+#sectionGems {
+    width: 60vw !important; /* Spans most of width */
+    min-width: 400px;
+    height: 180px !important; /* 2 rows height */
+    flex: 0 0 auto !important; /* Prevent it from shrinking */
+}
+#sectionGems .gems-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+}
+
+/* Window constraint to prevent overflow/overlap */
+#flightHUD .cockpit-content,
+#flightHUD .window-content {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+#flightHUD .left-column,
+#flightHUD .right-column {
+    max-height: calc(100vh - var(--bar-height, 52px) * 2 - 180px);
+}
+
+/* Responsive queries */
+@media (max-width: 1300px) {
+    #flightHUD.flight-hud {
+        zoom: 0.9;
+    }
+    #sectionGems {
+        width: 70vw !important;
+    }
+}
+
+@media (max-width: 1000px) {
+    #flightHUD.flight-hud {
+        zoom: 0.8;
+    }
+    #sectionGems {
+        width: 85vw !important;
+    }
+    #flightHUD .bottom-row {
+        flex-wrap: wrap;
+    }
+    #flightHUD .bottom-right {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+@media (max-height: 800px) {
+    #flightHUD.flight-hud {
+        zoom: 0.8;
+    }
+}
+
+@media (max-height: 600px) {
+    #flightHUD.flight-hud {
+        zoom: 0.65;
+    }
+}
+
+
+/* =========================================================
+   8-DIRECTIONAL RESIZE HANDLES
+   ========================================================= */
+.resize-n { position: absolute; top: -5px; left: 0; right: 0; height: 10px; cursor: n-resize; z-index: 10; }
+.resize-s { position: absolute; bottom: -5px; left: 0; right: 0; height: 10px; cursor: s-resize; z-index: 10; }
+.resize-e { position: absolute; top: 0; bottom: 0; right: -5px; width: 10px; cursor: e-resize; z-index: 10; }
+.resize-w { position: absolute; top: 0; bottom: 0; left: -5px; width: 10px; cursor: w-resize; z-index: 10; }
+.resize-nw { position: absolute; top: -5px; left: -5px; width: 10px; height: 10px; cursor: nw-resize; z-index: 11; }
+.resize-ne { position: absolute; top: -5px; right: -5px; width: 10px; height: 10px; cursor: ne-resize; z-index: 11; }
+.resize-sw { position: absolute; bottom: -5px; left: -5px; width: 10px; height: 10px; cursor: sw-resize; z-index: 11; }
+.resize-se { position: absolute; bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: se-resize; z-index: 11; }

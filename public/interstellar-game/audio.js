@@ -1,16 +1,24 @@
 export class AudioEngine {
     constructor() {
-        this.ctx = null; // AudioContext (lazy init on user interaction)
+        this.ctx = null;
+        this.streamingBufferSource = null;
+        this.streamingAbortController = null; // AudioContext (lazy init on user interaction)
         this.masterGain = null;
         this.musicGain = null;
         this.sfxGain = null;
+        this.enemyGain = null;
         this.muted = localStorage.getItem('audioMuted') === 'true';
+        this.masterMuted = localStorage.getItem('masterMuted') === 'true';
+        this.sfxMuted = localStorage.getItem('sfxMuted') === 'true';
+        this.engineHumMuted = localStorage.getItem('engineHumMuted') === 'true';
         this.musicPlaying = false;
         const savedVol = localStorage.getItem('audioVolume');
         this.volume = savedVol !== null && !isNaN(parseFloat(savedVol)) ? parseFloat(savedVol) : 0.3;
         
         const savedMusicVol = localStorage.getItem('audioMusicVolume');
         this.musicVolume = savedMusicVol !== null && !isNaN(parseFloat(savedMusicVol)) ? parseFloat(savedMusicVol) : 0.15;
+        const savedSfxVol = localStorage.getItem('audioSfxVolume');
+        this.sfxVolume = savedSfxVol !== null && !isNaN(parseFloat(savedSfxVol)) ? parseFloat(savedSfxVol) : 0.8;
         this.engineNode = null;
         this.engineGain = null;
         this.currentStreamingAudio = null;
@@ -34,20 +42,52 @@ export class AudioEngine {
         return true;
     }
 
+    
+    _applyVolumes() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        
+        const safeMaster = Math.max(0, Math.min(1, this.volume));
+        const safeMusic = Math.max(0, Math.min(1, this.musicVolume));
+        const safeEngine = Math.max(0, Math.min(2, this.engineVolume));
+
+        if (this.masterGain) {
+            try { this.masterGain.gain.setTargetAtTime(this.masterMuted ? 0 : safeMaster, now, 0.05); } catch(e) {}
+        }
+        if (this.musicGain) {
+            try { this.musicGain.gain.setTargetAtTime(this.muted ? 0 : safeMusic, now, 0.05); } catch(e) {}
+        }
+        if (this.sfxGain) {
+            try { this.sfxGain.gain.setTargetAtTime(this.sfxMuted ? 0 : this.sfxVolume, now, 0.05); } catch(e) {}
+        }
+        if (this.enemyGain) {
+            try { this.enemyGain.gain.setTargetAtTime(this.sfxMuted ? 0 : this.sfxVolume * 0.05, now, 0.05); } catch(e) {}
+        }
+        if (this.engineGain && !this.engineHumMuted) {
+            try { this.engineGain.gain.setTargetAtTime(0.05 * safeEngine, now, 0.05); } catch(e) {}
+        }
+        
+        // currentStreamingAudio volume is now handled by Web Audio API
+    }
+
     init() {
         if (this.ctx) return;
         try {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
             this.masterGain = this.ctx.createGain();
-            this.masterGain.gain.value = this.muted ? 0 : this.volume;
+            this.masterGain.gain.value = this.masterMuted ? 0 : Math.max(0, Math.min(1, this.volume));
             this.masterGain.connect(this.ctx.destination);
 
             this.sfxGain = this.ctx.createGain();
-            this.sfxGain.gain.value = 1.0;
+            this.sfxGain.gain.value = this.sfxMuted ? 0 : this.sfxVolume;
             this.sfxGain.connect(this.masterGain);
 
+            this.enemyGain = this.ctx.createGain();
+            this.enemyGain.gain.value = this.sfxMuted ? 0 : this.sfxVolume * 0.05;
+            this.enemyGain.connect(this.masterGain);
+
             this.musicGain = this.ctx.createGain();
-            this.musicGain.gain.value = this.musicVolume;
+            this.musicGain.gain.value = this.muted ? 0 : Math.max(0, Math.min(1, this.musicVolume));
             this.musicGain.connect(this.masterGain);
 
             console.log('[Audio] Engine initialized');
@@ -67,406 +107,37 @@ export class AudioEngine {
 
     toggleMute() {
         this.muted = !this.muted;
+        const ret = this.muted;
         localStorage.setItem('audioMuted', this.muted);
         if (this.masterGain) {
             this.masterGain.gain.setTargetAtTime(this.muted ? 0 : this.volume, this.ctx.currentTime, 0.05);
         }
-        if (this.currentStreamingAudio) {
-            this.currentStreamingAudio.muted = this.muted;
+        if (this.streamingAbortController) {
+            this.streamingAbortController.abort();
+            this.streamingAbortController = null;
         }
-        return this.muted;
-    }
-
-    // --- BINAURAL SYSTEM ---
-    
-    _createBinauralPair(type, freqBase, freqBeat, t, targetFreqTarget=null, rampDuration=null, rampType='exponential') {
-        const oscL = this.ctx.createOscillator();
-        const oscR = this.ctx.createOscillator();
-        const merger = this.ctx.createChannelMerger(2);
-        
-        oscL.type = type;
-        oscR.type = type;
-        
-        // Left Ear Base
-        oscL.frequency.setValueAtTime(freqBase, t);
-        // Right Ear + Binaural Beat offset
-        oscR.frequency.setValueAtTime(freqBase + freqBeat, t);
-        
-        if (targetFreqTarget && rampDuration) {
-            if (rampType === 'exponential') {
-                oscL.frequency.exponentialRampToValueAtTime(targetFreqTarget, t + rampDuration);
-                oscR.frequency.exponentialRampToValueAtTime(targetFreqTarget + freqBeat, t + rampDuration);
-            } else {
-                oscL.frequency.linearRampToValueAtTime(targetFreqTarget, t + rampDuration);
-                oscR.frequency.linearRampToValueAtTime(targetFreqTarget + freqBeat, t + rampDuration);
-            }
-        }
-        
-        oscL.connect(merger, 0, 0); // Left channel
-        oscR.connect(merger, 0, 1); // Right channel
-        
-        return {
-            start: (time) => { oscL.start(time); oscR.start(time); },
-            stop: (time) => { oscL.stop(time); oscR.stop(time); },
-            connect: (destination) => merger.connect(destination),
-            nodeL: oscL,
-            nodeR: oscR
-        };
-    }
-
-    // --- SOUND EFFECTS ---
-
-    playLaser() {
-        if (!this._canPlay('laser', 100)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // High Gamma Beat for focus/energy (40Hz difference)
-        const pair = this._createBinauralPair('sawtooth', 880, 40, t, 220, 0.15);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.15, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.15);
-    }
-
-    playEnemyLaser() {
-        if (!this._canPlay('enemyLaser', 80)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // High Beta beat for alertness (20Hz)
-        const pair = this._createBinauralPair('square', 440, 20, t, 110, 0.1);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.08, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.1);
-    }
-
-    playExplosionSmall() {
-        if (!this._canPlay('expSmall', 60)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        
-        // Minor Delta rumble underneath the noise
-        const pair = this._createBinauralPair('sine', 150, 4, t, 40, 0.3);
-        const oscGain = this.ctx.createGain();
-        oscGain.gain.setValueAtTime(0.1, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-        pair.connect(oscGain);
-        oscGain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.3);
-
-        const bufferSize = this.ctx.sampleRate * 0.3;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
-        }
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(2000, t);
-        filter.frequency.exponentialRampToValueAtTime(200, t + 0.3);
-
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.2, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.sfxGain);
-        noise.start(t);
-        noise.stop(t + 0.3);
-    }
-
-    playExplosionBig() {
-        if (!this._canPlay('expBig', 150)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        
-        // Deep Delta rumble for massive explosions (2Hz diff)
-        const pair = this._createBinauralPair('sine', 80, 2, t, 20, 0.8);
-        const oscGain = this.ctx.createGain();
-        oscGain.gain.setValueAtTime(0.3, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-        pair.connect(oscGain);
-        oscGain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.8);
-
-        const bufferSize = this.ctx.sampleRate * 0.8;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
-        }
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(3000, t);
-        filter.frequency.exponentialRampToValueAtTime(100, t + 0.8);
-
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.35, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.sfxGain);
-        noise.start(t);
-        noise.stop(t + 0.8);
-    }
-
-    playShieldHit() {
-        if (!this._canPlay('shield', 100)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // High frequency alpha hit
-        const pair = this._createBinauralPair('sine', 1200, 10, t, 400, 0.2);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.12, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.2);
-    }
-
-    playHullHit() {
-        if (!this._canPlay('hull', 100)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // Metallic clang Beta (15Hz)
-        const pair = this._createBinauralPair('triangle', 300, 15, t, 80, 0.15);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.15, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.15);
-    }
-
-    playUIClick() {
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const pair = this._createBinauralPair('sine', 660, 12, t);
-        // Custom linear sweep up
-        pair.nodeL.frequency.linearRampToValueAtTime(880, t + 0.03);
-        pair.nodeR.frequency.linearRampToValueAtTime(892, t + 0.03);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.08, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.08);
-    }
-
-    playMenuHover() {
-        if (!this._canPlay('hover', 50)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const pair = this._createBinauralPair('sine', 440, 5, t);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.05, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.05);
-    }
-
-    playMenuSelect() {
-        this.playUIClick();
-    }
-
-    playUpgrade() {
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // Ascending sci-fi arpeggio
-        const notes = [440, 554.37, 659.25, 880];
-        notes.forEach((freq, i) => {
-            const pair = this._createBinauralPair('sine', freq, 8, t + i * 0.1);
-            const gain = this.ctx.createGain();
-            gain.gain.setValueAtTime(0, t + i * 0.1);
-            gain.gain.linearRampToValueAtTime(0.15, t + i * 0.1 + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.3);
-            pair.connect(gain);
-            gain.connect(this.sfxGain);
-            pair.start(t + i * 0.1);
-            pair.stop(t + i * 0.1 + 0.3);
-        });
-    }
-
-    playMissionComplete() {
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // Victory fanfare — ascending tones with Alpha/Theta blend
-        const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
-        notes.forEach((freq, i) => {
-            const pair = this._createBinauralPair('sine', freq, 8, t + i * 0.15); // Alpha 8Hz
-            const gain = this.ctx.createGain();
-            gain.gain.setValueAtTime(0, t + i * 0.15);
-            gain.gain.linearRampToValueAtTime(0.12, t + i * 0.15 + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.3);
-            pair.connect(gain);
-            gain.connect(this.sfxGain);
-            pair.start(t + i * 0.15);
-            pair.stop(t + i * 0.15 + 0.3);
-        });
-    }
-
-    playBossAlert() {
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // Warning siren (Intense Gamma 35Hz)
-        for (let i = 0; i < 3; i++) {
-            const pair = this._createBinauralPair('sawtooth', 200, 35, t + i * 0.4);
-            // Custom linear ramps up and down
-            pair.nodeL.frequency.linearRampToValueAtTime(600, t + i * 0.4 + 0.2);
-            pair.nodeR.frequency.linearRampToValueAtTime(635, t + i * 0.4 + 0.2);
-            pair.nodeL.frequency.linearRampToValueAtTime(200, t + i * 0.4 + 0.4);
-            pair.nodeR.frequency.linearRampToValueAtTime(235, t + i * 0.4 + 0.4);
-            
-            const gain = this.ctx.createGain();
-            gain.gain.setValueAtTime(0.1, t + i * 0.4);
-            gain.gain.setValueAtTime(0.1, t + i * 0.4 + 0.35);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.4 + 0.4);
-            pair.connect(gain);
-            gain.connect(this.sfxGain);
-            pair.start(t + i * 0.4);
-            pair.stop(t + i * 0.4 + 0.4);
-        }
-    }
-
-    playCollect() {
-        if (!this._canPlay('collect', 100)) return;
-        this.ensureContext();
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        // High frequency Beta burst
-        const pair = this._createBinauralPair('sine', 600, 16, t, 1200, 0.1);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.08, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-        pair.connect(gain);
-        gain.connect(this.sfxGain);
-        pair.start(t);
-        pair.stop(t + 0.12);
-    }
-
-    // --- ENGINE HUM ---
-
-    startEngineHum() {
-        this.ensureContext();
-        if (!this.ctx || this.enginePair) return;
-
-        // Steady Theta wave for focus during sustained flight (6Hz diff)
-        this.enginePair = this._createBinauralPair('sawtooth', 40, 6, this.ctx.currentTime);
-        this.engineGain = this.ctx.createGain();
-        const filter = this.ctx.createBiquadFilter();
-
-        filter.type = 'lowpass';
-        filter.frequency.value = 150;
-        filter.Q.value = 2;
-        this.engineGain.gain.value = 0.04;
-
-        this.enginePair.connect(filter);
-        filter.connect(this.engineGain);
-        this.engineGain.connect(this.sfxGain);
-        this.enginePair.start(this.ctx.currentTime);
-    }
-
-    updateEngineHum(speed) {
-        if (!this.enginePair || !this.ctx) return;
-        const freq = 40 + speed * 8; // Pitch up with speed
-        this.enginePair.nodeL.frequency.setTargetAtTime(Math.min(freq, 200), this.ctx.currentTime, 0.1);
-        this.enginePair.nodeR.frequency.setTargetAtTime(Math.min(freq + 6, 206), this.ctx.currentTime, 0.1); // Keep 6Hz difference
-        const vol = 0.02 + Math.min(speed * 0.005, 0.08);
-        this.engineGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
-    }
-
-    stopEngineHum() {
-        if (this.enginePair) {
-            try { this.enginePair.stop(this.ctx.currentTime); } catch (e) { }
-            this.enginePair = null;
-            this.engineGain = null;
-        }
-    }
-
-    // --- AMBIENT SPACE MUSIC & STREAMING ---
-
-    setMusicVolume(vol) {
-        this.musicVolume = parseFloat(vol);
-        if (this.musicGain) {
-            this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx ? this.ctx.currentTime : 0);
-        }
-        if (this.currentStreamingAudio) {
-            this.currentStreamingAudio.volume = this.musicVolume;
-        }
-    }
-
-    stopAllMusic() {
-        this.musicPlaying = false;
-        if (this.ambientTimeout) {
-            clearTimeout(this.ambientTimeout);
-            this.ambientTimeout = null;
-        }
-        if (this.binauralInterval) {
-            clearInterval(this.binauralInterval);
-            this.binauralInterval = null;
-        }
-        if (this.currentStreamingAudio) {
-            this.currentStreamingAudio.pause();
-            this.currentStreamingAudio.src = '';
+        if (this.streamingBufferSource) {
             try {
-                if (this.currentStreamingAudio.parentNode) {
-                    this.currentStreamingAudio.parentNode.removeChild(this.currentStreamingAudio);
-                }
+                this.streamingBufferSource.stop();
+                this.streamingBufferSource.disconnect();
             } catch(e) {}
-            this.currentStreamingAudio = null;
-            this.isStreamingPlaying = false;
+            this.streamingBufferSource = null;
         }
+        this.isStreamingPlaying = false;
         
-        // Clean crossfade: gracefully kill the old gain node and spawn a new one 
-        // to prevent overlapping 8-second chords from clipping the context.
         if (this.musicGain && this.ctx) {
             const oldGain = this.musicGain;
             try {
                 oldGain.gain.cancelScheduledValues(this.ctx.currentTime);
                 oldGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
             } catch(e) {}
-            
-            setTimeout(() => {
-                try { oldGain.disconnect(); } catch(e) {}
-            }, 500);
+            setTimeout(() => { try { oldGain.disconnect(); } catch(e) {} }, 500);
 
-            // Fresh gain for any incoming new track
             this.musicGain = this.ctx.createGain();
-            this.musicGain.gain.value = this.musicVolume;
+            this.musicGain.gain.value = this.muted ? 0 : Math.max(0, Math.min(1, this.musicVolume));
             this.musicGain.connect(this.masterGain);
         }
+        return ret;
     }
 
     stopAmbientMusic() {
@@ -489,7 +160,7 @@ export class AudioEngine {
 
     playStreamingMusic(urlOrPlaylist, startIndex = 0) {
         this.ensureContext();
-        this.stopAllMusic();
+        this.pauseStream();
         
         if (Array.isArray(urlOrPlaylist)) {
             this.playlist = urlOrPlaylist;
@@ -502,85 +173,61 @@ export class AudioEngine {
         if (this.playlist.length === 0) return;
         
         const url = this.playlist[this.currentTrackIndex];
+        
+        if (window.app) window.app.showToast('Buffering...', 2000);
+        
+        if (this.currentStreamingAudio) {
+            this.currentStreamingAudio.pause();
+            this.currentStreamingAudio.src = '';
+            this.currentStreamingAudio = null;
+        }
+
+        if (this.streamingNode) {
+            this.streamingNode.disconnect();
+            this.streamingNode = null;
+        }
 
         this.currentStreamingAudio = new Audio(url);
-        // Loop if it's a single track, otherwise let onended handle next track
+        this.currentStreamingAudio.crossOrigin = "anonymous";
         this.currentStreamingAudio.loop = this.playlist.length === 1;
-        this.currentStreamingAudio.volume = this.musicVolume || 1.0;
-        this.currentStreamingAudio.muted = this.muted;
         
-        this.currentStreamingAudio.onended = () => {
+        this.currentStreamingAudio.addEventListener('canplay', () => {
+            this.currentStreamingAudio.play().catch(e => console.error("Audio playback blocked", e));
+        });
+
+        this.currentStreamingAudio.addEventListener('play', () => {
+            this.isStreamingPlaying = true;
+            if (window.app) window.app.showToast('Now Playing', 2000);
+        });
+
+        this.currentStreamingAudio.addEventListener('ended', () => {
             if (this.playlist.length > 1) {
                 this.playNextTrack();
             }
-        };
-
-        // Append to DOM to prevent Safari/macOS from garbage collecting or throttling background audio
-        this.currentStreamingAudio.style.display = 'none';
-        document.body.appendChild(this.currentStreamingAudio);
-        
-        this.isStreamingPlaying = true;
-        this.currentStreamingAudio.play().catch(err => {
-            if (err.name === 'AbortError') return;
-            console.warn("[Audio] Failed to play streaming audio:", err);
-            // If track fails, try the next one after a delay
-            if (this.playlist.length > 1) {
-                setTimeout(() => this.playNextTrack(), 2000);
-            }
         });
-        
-        // Add timeupdate listener for scrubber
-        this.currentStreamingAudio.addEventListener('timeupdate', () => {
-            if (window.app && window.app.updateScrubber) {
-                window.app.updateScrubber(
-                    this.currentStreamingAudio.currentTime, 
-                    this.currentStreamingAudio.duration
-                );
-            }
+
+        this.currentStreamingAudio.addEventListener('error', (e) => {
+            console.error("Audio streaming error:", e);
+            if (window.app) window.app.showToast('Audio Stream Failed', 3000);
         });
-        
-        // Notify UI
-        if (window.app && window.app.updateMediaControlsUI) {
-            window.app.updateMediaControlsUI(true);
-        }
-    }
 
-    playNextTrack() {
-        if (!this.playlist || this.playlist.length <= 1) return;
-        this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length;
-        this.playStreamingMusic(this.playlist, this.currentTrackIndex);
-        if (window.app && window.app.updateNowPlayingName) {
-            window.app.updateNowPlayingName(this.currentTrackIndex);
-        }
-    }
-
-    playPreviousTrack() {
-        if (!this.playlist || this.playlist.length <= 1) return;
-        this.currentTrackIndex = (this.currentTrackIndex - 1 + this.playlist.length) % this.playlist.length;
-        this.playStreamingMusic(this.playlist, this.currentTrackIndex);
-        if (window.app && window.app.updateNowPlayingName) {
-            window.app.updateNowPlayingName(this.currentTrackIndex);
-        }
+        this.streamingNode = this.ctx.createMediaElementSource(this.currentStreamingAudio);
+        this.streamingNode.connect(this.musicGain);
     }
 
     pauseStream() {
         if (this.currentStreamingAudio) {
             this.currentStreamingAudio.pause();
             this.isStreamingPlaying = false;
-            if (window.app && window.app.updateMediaControlsUI) {
-                window.app.updateMediaControlsUI(false);
-            }
         }
     }
 
     resumeStream() {
         if (this.currentStreamingAudio) {
-            this.ensureContext();
-            this.currentStreamingAudio.play().catch(e => console.warn(e));
+            this.currentStreamingAudio.play();
             this.isStreamingPlaying = true;
-            if (window.app && window.app.updateMediaControlsUI) {
-                window.app.updateMediaControlsUI(true);
-            }
+        } else if (this.playlist && this.playlist.length > 0) {
+            this.playStreamingMusic(this.playlist, this.currentTrackIndex);
         }
     }
 
@@ -678,6 +325,25 @@ export class AudioEngine {
         this.activeBinauralGains.push(padGain);
     }
 
+    updateBinauralFrequencies(baseFreq, beatSpread) {
+        if (!this.ctx || !this.activeBinauralNodes || this.activeBinauralNodes.length === 0) {
+            this.playBinauralLoop(baseFreq, beatSpread);
+            return;
+        }
+        
+        const t = this.ctx.currentTime;
+        const freqs = [baseFreq * 0.5, baseFreq, baseFreq * 1.5, baseFreq * 2.0];
+        
+        // The first 4 nodes are the binaural pairs
+        for(let i = 0; i < 4; i++) {
+            if(this.activeBinauralNodes[i] && this.activeBinauralNodes[i].nodeL && this.activeBinauralNodes[i].nodeR) {
+                const freq = freqs[i];
+                this.activeBinauralNodes[i].nodeL.frequency.setTargetAtTime(freq, t, 0.1);
+                this.activeBinauralNodes[i].nodeR.frequency.setTargetAtTime(freq + beatSpread, t, 0.1);
+            }
+        }
+    }
+
     stopBinauralTones() {
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
@@ -703,6 +369,233 @@ export class AudioEngine {
         this.activeBinauralNodes = [];
         this.activeBinauralGains = [];
     }
+
+    setMusicVolume(vol) {
+        this.musicVolume = Math.max(0, Math.min(1, parseFloat(vol) || 0));
+        localStorage.setItem('audioMusicVolume', this.musicVolume);
+        this._applyVolumes();
+    }
+
+    setSfxVolume(vol) {
+        this.sfxVolume = Math.max(0, Math.min(1, parseFloat(vol) || 0));
+        localStorage.setItem('audioSfxVolume', this.sfxVolume);
+        this._applyVolumes();
+    }
+
+    setMasterVolume(vol) {
+        this.volume = Math.max(0, Math.min(1, parseFloat(vol) || 0));
+        localStorage.setItem('audioVolume', this.volume);
+        this._applyVolumes();
+    }
+
+    setEngineVolume(vol) {
+        this.engineVolume = Math.max(0, Math.min(2, parseFloat(vol) || 0));
+        localStorage.setItem('engineVolume', this.engineVolume);
+        this._applyVolumes();
+    }
+
+    toggleMasterMute() {
+        this.masterMuted = !this.masterMuted;
+        localStorage.setItem('masterMuted', this.masterMuted);
+        this._applyVolumes();
+        return this.masterMuted;
+    }
+
+    toggleEngineHum() {
+        this.engineHumMuted = !this.engineHumMuted;
+        localStorage.setItem('engineHumMuted', this.engineHumMuted);
+        this._applyVolumes();
+        if (this.engineHumMuted) this.stopEngineHum();
+        else this.startEngineHum();
+        return this.engineHumMuted;
+    }
+
+    toggleSfx() {
+        this.sfxMuted = !this.sfxMuted;
+        localStorage.setItem('sfxMuted', this.sfxMuted);
+        this._applyVolumes();
+        return this.sfxMuted;
+    }
+
+    muteHumTemporarily(durationMs = 5000) {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        if (this.engineGain) {
+            this.engineGain.gain.cancelScheduledValues(now);
+            this.engineGain.gain.setTargetAtTime(0, now, 0.5);
+            setTimeout(() => {
+                if (this.engineGain && !this.engineHumMuted) {
+                    this.engineGain.gain.setTargetAtTime(0.05 * (this.engineVolume || 1), this.ctx.currentTime, 1.0);
+                }
+            }, durationMs);
+        }
+        if (this.activeBinauralGains && this.activeBinauralGains.length > 0) {
+            this.activeBinauralGains.forEach(gain => {
+                try {
+                    gain.gain.cancelScheduledValues(now);
+                    gain.gain.setTargetAtTime(0, now, 0.5);
+                } catch(e) {}
+            });
+            setTimeout(() => {
+                if (this.activeBinauralGains && !this.muted) {
+                    this.activeBinauralGains.forEach(gain => {
+                        try {
+                            gain.gain.setTargetAtTime(0.05 * (this.musicVolume || 1), this.ctx.currentTime, 1.0);
+                        } catch(e) {}
+                    });
+                }
+            }, durationMs);
+        }
+        if (this.sfxGain) {
+            this.sfxGain.gain.cancelScheduledValues(now);
+            this.sfxGain.gain.setTargetAtTime(0, now, 0.5);
+            setTimeout(() => {
+                if (this.sfxGain && !this.sfxMuted) {
+                    this.sfxGain.gain.setTargetAtTime(this.sfxVolume, this.ctx.currentTime, 1.0);
+                }
+            }, durationMs);
+        }
+        if (this.enemyGain) {
+            this.enemyGain.gain.cancelScheduledValues(now);
+            this.enemyGain.gain.setTargetAtTime(0, now, 0.5);
+            setTimeout(() => {
+                if (this.enemyGain && !this.sfxMuted) {
+                    this.enemyGain.gain.setTargetAtTime(this.sfxVolume * 0.05, this.ctx.currentTime, 1.0);
+                }
+            }, durationMs);
+        }
+    }
+
+    stopAllMusic() {
+        this.pauseStream();
+        this.stopBinauralTones();
+        this.musicPlaying = false;
+    }
+
+    playCollect() { if (!this.sfxMuted && this._canPlay('collect')) this._playSynthTone(600, 'sine', 0.1); }
+    playEMP() { if (!this.sfxMuted && this._canPlay('emp')) this._playSynthTone(200, 'square', 0.5); }
+    playAfterburner() { if (!this.sfxMuted && this._canPlay('afterburner')) this._playSynthTone(100, 'sawtooth', 0.3); }
+    playBossAlert() { if (!this.sfxMuted && this._canPlay('bossalert', 1000)) this._playSynthTone(800, 'triangle', 1.0); }
+    playPlayerDeath() { if (!this.sfxMuted && this._canPlay('playerdeath', 1000)) this._playSynthTone(150, 'sawtooth', 1.5); }
+    playPlayerExplosion() { if (!this.sfxMuted && this._canPlay('playerexplosion', 1000)) this._playSynthTone(100, 'square', 2.0); }
+    playExplosionBig() { if (!this.sfxMuted && this._canPlay('explosionbig', 200)) this._playEnemyTone(100, 'square', 0.8); }
+
+    startEngineHum() {
+        this.ensureContext();
+        if (this.engineHumMuted || !this.ctx) return;
+        if (!this.engineNode) {
+            this.engineNode = this.ctx.createOscillator();
+            this.engineNode.type = 'sine';
+            this.engineNode.frequency.value = 50;
+            this.engineGain = this.ctx.createGain();
+            this.engineGain.gain.value = 0.05 * (this.engineVolume || 1);
+            this.engineNode.connect(this.engineGain);
+            this.engineGain.connect(this.masterGain);
+            this.engineNode.start();
+        }
+    }
+
+    stopEngineHum() {
+        if (this.engineNode) {
+            try { this.engineNode.stop(); } catch(e) {}
+            this.engineNode = null;
+        }
+        if (this.engineGain) {
+            try { this.engineGain.disconnect(); } catch(e) {}
+            this.engineGain = null;
+        }
+    }
+
+    _playSynthTone(freq, type, duration) {
+        this.ensureContext();
+        if (!this.ctx || this.sfxMuted) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(this.sfxGain);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
+            osc.stop(this.ctx.currentTime + duration);
+        } catch(e) {}
+    }
+
+    _playEnemyTone(freq, type, duration) {
+        this.ensureContext();
+        if (!this.ctx || this.sfxMuted) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(this.enemyGain);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
+            osc.stop(this.ctx.currentTime + duration);
+        } catch(e) {}
+    }
+
+    _createBinauralPair(type, freq, beatSpread, t) {
+        const oscL = this.ctx.createOscillator();
+        const oscR = this.ctx.createOscillator();
+        oscL.type = type;
+        oscR.type = type;
+        oscL.frequency.setValueAtTime(freq, t);
+        oscR.frequency.setValueAtTime(freq + beatSpread, t);
+        
+        const merger = this.ctx.createChannelMerger(2);
+        oscL.connect(merger, 0, 0);
+        oscR.connect(merger, 0, 1);
+        
+        return Object.assign(merger, {
+            start: (time) => { oscL.start(time); oscR.start(time); },
+            stop: (time) => { oscL.stop(time); oscR.stop(time); },
+            nodeL: oscL,
+            nodeR: oscR
+        });
+    }
+
+
+    playEnemyLaser() { if (!this.sfxMuted && this._canPlay('enemylaser')) this._playEnemyTone(400, 'sawtooth', 0.15); }
+    playExplosionSmall() { if (!this.sfxMuted && this._canPlay('explosionsmall')) this._playEnemyTone(150, 'square', 0.3); }
+    playHullHit() { if (!this.sfxMuted && this._canPlay('hullhit')) this._playSynthTone(200, 'triangle', 0.2); }
+    playLaser() { if (!this.sfxMuted && this._canPlay('laser')) this._playSynthTone(600, 'sawtooth', 0.1); }
+    playMenuHover() { if (!this.sfxMuted && this._canPlay('menuhover', 100)) this._playSynthTone(800, 'sine', 0.05); }
+    playMenuSelect() { if (!this.sfxMuted && this._canPlay('menuselect', 100)) this._playSynthTone(1200, 'sine', 0.1); }
+    playMissionComplete() { if (!this.sfxMuted && this._canPlay('missioncomplete', 1000)) this._playSynthTone(500, 'sine', 1.0); }
+    playShieldHit() { if (!this.sfxMuted && this._canPlay('shieldhit')) this._playSynthTone(800, 'sine', 0.2); }
+    playUpgrade() { if (!this.sfxMuted && this._canPlay('upgrade')) this._playSynthTone(1000, 'sine', 0.5); }
+    
+    updateEngineHum(thrustInput = 0) {
+        if (!this.engineNode || !this.engineGain || this.engineHumMuted || !this.ctx) return;
+        
+        // RPMs: Track a virtual RPM that winds up when holding gas and drops when released
+        if (thrustInput > 0) {
+            this.currentRpm = Math.min((this.currentRpm || 50) + 3, 200); // Wind up
+        } else {
+            this.currentRpm = Math.max((this.currentRpm || 50) - 5, 50);  // Wind down
+        }
+        
+        // Apply RPM to pitch
+        this.engineNode.frequency.setTargetAtTime(this.currentRpm, this.ctx.currentTime, 0.1);
+        
+        // Volume jumps up with throttle, drops in neutral
+        const targetVolume = thrustInput > 0 ? 0.08 : 0.03;
+        this.engineGain.gain.setTargetAtTime(targetVolume * (this.engineVolume || 1), this.ctx.currentTime, 0.2);
+    }
+
+
+    updateHazardAudio(nearestBHDist, nearestBHRelX, nearestNebDist) {
+        // Implement logic if needed, or leave empty to prevent crashes
+    }
+    
+    playTransmissionStart() {
+        if (!this.sfxMuted && this._canPlay('transmissionstart', 1000)) this._playSynthTone(1500, 'sine', 0.5);
+    }
+
 }
 
 // Global audio engine instance

@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -42,10 +42,21 @@ localStorage.setItem = function(key, value) {
 
 // 2. Auth & Load logic
 onAuthStateChanged(auth, async (user) => {
-    if (user) {
+    const authStatusText = document.getElementById('authStatusText');
+    const authUserEmail = document.getElementById('authUserEmail');
+    const loginFormContainer = document.getElementById('loginFormContainer');
+    const loggedInContainer = document.getElementById('loggedInContainer');
+
+    if (user && !user.isAnonymous) {
         currentUid = user.uid;
-        console.log("🚀 Firebase Sync: Authenticated as", currentUid);
+        console.log("🚀 Firebase Sync: Authenticated as", user.email);
         
+        if (authStatusText) authStatusText.textContent = 'Authenticated';
+        if (authStatusText) authStatusText.style.color = '#00ffaa';
+        if (authUserEmail) authUserEmail.textContent = user.email;
+        if (loginFormContainer) loginFormContainer.classList.add('hidden');
+        if (loggedInContainer) loggedInContainer.classList.remove('hidden');
+
         // Load cloud save
         try {
             const docRef = doc(db, "interstellar_saves", currentUid);
@@ -89,15 +100,47 @@ onAuthStateChanged(auth, async (user) => {
             isPumpingFromCloud = false;
         }
     } else {
-        // Sign in anonymously if not authenticated
-        signInAnonymously(auth).catch((error) => {
-            console.error("Auth failed:", error);
-        });
+        // Not signed in — stay as guest, no anonymous auth attempt
+        currentUid = null;
+        if (authStatusText) authStatusText.textContent = 'Guest Mode';
+        if (authStatusText) authStatusText.style.color = '#ffaa00';
+        if (loginFormContainer) loginFormContainer.classList.remove('hidden');
+        if (loggedInContainer) loggedInContainer.classList.add('hidden');
     }
 });
 
-// 3. Leaderboards API
+// 3. Leaderboards API & Auth API
 window.firebaseSync = {
+    async registerUser(email, password) {
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            if (window.app && window.app.showToast) window.app.showToast('Registration Successful!', 2000);
+            return true;
+        } catch (e) {
+            console.error(e);
+            if (window.app && window.app.showToast) window.app.showToast('Registration Error: ' + e.message, 3000);
+            return false;
+        }
+    },
+    async loginUser(email, password) {
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            if (window.app && window.app.showToast) window.app.showToast('Login Successful!', 2000);
+            return true;
+        } catch (e) {
+            console.error(e);
+            if (window.app && window.app.showToast) window.app.showToast('Login Error: ' + e.message, 3000);
+            return false;
+        }
+    },
+    async logoutUser() {
+        try {
+            await signOut(auth);
+            if (window.app && window.app.showToast) window.app.showToast('Logged Out', 2000);
+        } catch (e) {
+            console.error(e);
+        }
+    },
     async submitHighScore(callsign, score) {
         if (!currentUid) return false;
         try {

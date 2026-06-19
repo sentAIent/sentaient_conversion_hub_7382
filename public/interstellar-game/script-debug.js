@@ -7,14 +7,6 @@
     document.body.appendChild(banner);
     setTimeout(() => { if(banner) banner.style.opacity = '0'; }, 3000);
     setTimeout(() => { if(banner) banner.remove(); }, 5000);
-
-    const resumeAudio = () => {
-        if (window.gameAudio && window.gameAudio.ctx && window.gameAudio.ctx.state === 'suspended') {
-            window.gameAudio.ctx.resume();
-        }
-    };
-    document.addEventListener('click', resumeAudio, { capture: true, passive: true });
-    document.addEventListener('keydown', resumeAudio, { capture: true, passive: true });
 })();
 
 console.log("🚀 INTERSTELLAR ENGINE V3.1 - Mindwave Lotus Restoration Active");
@@ -26,7 +18,7 @@ v5.0 - Pre-Placement Color Model
  */
 
 // === PROCEDURAL AUDIO ENGINE ===
-import { AudioEngine } from './audio.js?v=ray_fix_v35';
+import { AudioEngine } from './audio.js?v=ray_fix_v33';
 import * as Utils from './utils.js';
 
 window.gameAudio = new AudioEngine();
@@ -46,12 +38,6 @@ class InterstellarEngine {
         // Load Mindwave Lotus image
         this.lotusImage = new Image();
         this.lotusImage.src = '../mindwave-logo-icon.png';
-        
-        // Load Sun images
-        this.tribalSunImage = new Image();
-        this.tribalSunImage.src = 'tribal-sun.png';
-        this.svgSunImage = new Image();
-        this.svgSunImage.src = 'svg-sun.svg';
 
         // Configuration
         this.config = {
@@ -597,18 +583,8 @@ class InterstellarEngine {
             this.onWheel(e);
         }, { passive: false });
         this.canvas.addEventListener('contextmenu', e => this.onRightClick(e)); // Right-click deletion
-        
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                e.target.style.setProperty('display', 'none', 'important');
-            }
-        });
-
 
         window.addEventListener('keydown', e => {
-            const activeTag = document.activeElement && document.activeElement.tagName ? document.activeElement.tagName.toLowerCase() : '';
-            if (activeTag === 'input' || activeTag === 'textarea') return;
-            
             const key = e.key.toLowerCase();
             this.keysPressed[key] = true;
 
@@ -673,9 +649,6 @@ class InterstellarEngine {
         });
 
         window.addEventListener('keyup', e => {
-            const activeTag = document.activeElement && document.activeElement.tagName ? document.activeElement.tagName.toLowerCase() : '';
-            if (activeTag === 'input' || activeTag === 'textarea') return;
-            
             const key = e.key.toLowerCase();
             this.keysPressed[key] = false;
 
@@ -816,12 +789,12 @@ class InterstellarEngine {
                 loadingPrompt.style.opacity = '1';
                 // Add click handler to start the game
                 loadingPrompt.onclick = () => {
-                    if (window.gameAudio && window.gameAudio.init) {
-                        window.gameAudio.init(); // Initialize Audio Context on user interaction synchronously
-                    }
                     loadingScreen.style.opacity = '0';
                     setTimeout(() => {
                         loadingScreen.style.display = 'none';
+                        if (window.gameAudio && window.gameAudio.init) {
+                            window.gameAudio.init(); // Initialize Audio Context on user interaction
+                        }
                     }, 1500);
                 };
             } else {
@@ -907,8 +880,8 @@ class InterstellarEngine {
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist > maxDist) {
-                dx = (dx / Math.max(0.1, dist)) * maxDist;
-                dy = (dy / Math.max(0.1, dist)) * maxDist;
+                dx = (dx / dist) * maxDist;
+                dy = (dy / dist) * maxDist;
             }
 
             stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
@@ -966,7 +939,7 @@ class InterstellarEngine {
     generateStaticBackground() {
         const bgStars = [];
         const count = 300; // number of background stars
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < count; i++"); throw new Error("LOOP"); }
             bgStars.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
@@ -1024,12 +997,16 @@ class InterstellarEngine {
                     isDragging = true;
                     header.style.cursor = 'grabbing';
                     
-                    const rect = win.getBoundingClientRect();
-                    win.style.position = 'fixed';
-                    win.style.left = rect.left + 'px';
-                    win.style.top = rect.top + 'px';
-                    win.style.bottom = 'auto';
-                    win.style.right = 'auto';
+                    if (getComputedStyle(win).position !== 'fixed') {
+                        const rect = win.getBoundingClientRect();
+                        win.style.position = 'fixed';
+                        win.style.left = rect.left + 'px';
+                        win.style.top = rect.top + 'px';
+                        win.style.width = rect.width + 'px';
+                        win.style.height = rect.height + 'px';
+                        win.style.bottom = 'auto';
+                        win.style.right = 'auto';
+                    }
 
                     startX = e.clientX;
                     startY = e.clientY;
@@ -1041,13 +1018,12 @@ class InterstellarEngine {
 
                 window.addEventListener('mousemove', (e) => {
                     if (!isDragging) return;
-                    const zoom = parseFloat(getComputedStyle(win).zoom || 1);
-                    let newLeft = initialLeft + (e.clientX - startX) / zoom;
-                    let newTop = initialTop + (e.clientY - startY) / zoom;
+                    let newLeft = initialLeft + (e.clientX - startX);
+                    let newTop = initialTop + (e.clientY - startY);
                     
                     const minVisible = 50;
-                    newLeft = Math.max(-win.offsetWidth + minVisible, Math.min(window.innerWidth / zoom - minVisible, newLeft));
-                    newTop = Math.max(0, Math.min(window.innerHeight / zoom - minVisible, newTop));
+                    newLeft = Math.max(-win.offsetWidth + minVisible, Math.min(window.innerWidth - minVisible, newLeft));
+                    newTop = Math.max(0, Math.min(window.innerHeight - minVisible, newTop));
                     
                     win.style.left = newLeft + 'px';
                     win.style.top = newTop + 'px';
@@ -1066,125 +1042,53 @@ class InterstellarEngine {
                 });
             }
 
-            // 3. Setup 8-Directional Resize Handles
-            const handleDirs = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
-            
-            handleDirs.forEach(dir => {
-                let handle = win.querySelector('.resize-' + dir);
-                if (!handle) {
-                    handle = document.createElement('div');
-                    handle.className = 'resize-' + dir;
-                    win.appendChild(handle);
-                }
+            // 3. Setup Resize Handle
+            let resizeHandle = win.querySelector('.resize-handle');
+            if (!resizeHandle) {
+                resizeHandle = document.createElement('div');
+                resizeHandle.className = 'resize-handle';
+                resizeHandle.style.cssText = 'position:absolute; right:0; bottom:0; width:16px; height:16px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.5) 50%); z-index:10;';
+                win.appendChild(resizeHandle);
+            }
 
-                let isResizing = false;
-                let startRx, startRy, startWidth, startHeight, startLeft, startTop;
+            let isResizing = false;
+            let startRx, startRy, startWidth, startHeight;
 
-                handle.addEventListener('mousedown', (e) => {
-                    isResizing = true;
-                    startRx = e.clientX;
-                    startRy = e.clientY;
-                    
-                    const flightHud = document.getElementById('flightHUD');
-                    const zoom = flightHud ? parseFloat(getComputedStyle(flightHud).zoom || 1) : 1;
-
-                    // Let browser compute exact screen positions
+            resizeHandle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startRx = e.clientX;
+                startRy = e.clientY;
+                startWidth = win.offsetWidth;
+                startHeight = win.offsetHeight;
+                
+                if (getComputedStyle(win).position !== 'fixed') {
                     const rect = win.getBoundingClientRect();
-                    let currentLeft = rect.left / zoom;
-                    let currentTop = rect.top / zoom;
-                    
-                    if (getComputedStyle(win).position !== 'fixed' || win.style.right !== 'auto' || win.style.bottom !== 'auto') {
-                        // Create placeholder for static elements
-                        if (getComputedStyle(win).position !== 'fixed' && win.parentNode && win.parentNode.classList && 
-                           (win.parentNode.classList.contains('left-column') || win.parentNode.classList.contains('right-column') || 
-                            win.parentNode.classList.contains('bottom-left') || win.parentNode.classList.contains('bottom-right'))) {
-                            const placeholder = document.createElement('div');
-                            placeholder.style.width = win.offsetWidth + 'px';
-                            placeholder.style.height = win.offsetHeight + 'px';
-                            placeholder.style.flex = getComputedStyle(win).flex;
-                            placeholder.classList.add('drag-placeholder');
-                            win.parentNode.insertBefore(placeholder, win);
-                        }
-
-                        win.style.position = 'fixed';
-                        win.style.left = currentLeft + 'px';
-                        win.style.top = currentTop + 'px';
-                        win.style.bottom = 'auto';
-                        win.style.right = 'auto';
-                        win.style.margin = '0';
-                    }
-
-                    // Use offset properties which correctly map to the CSS values
-                    startWidth = win.offsetWidth;
-                    startHeight = win.offsetHeight;
-                    startLeft = win.offsetLeft;
-                    startTop = win.offsetTop;
-
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    if (!isResizing) return;
-                    
-                    const flightHud = document.getElementById('flightHUD');
-                    let zoom = 1;
-                    if (flightHud) {
-                        zoom = parseFloat(getComputedStyle(flightHud).zoom || 1);
-                    }
-
-                    const dx = (e.clientX - startRx) / zoom;
-                    const dy = (e.clientY - startRy) / zoom;
-
-                    let newWidth = startWidth;
-                    let newHeight = startHeight;
-                    let newLeft = startLeft;
-                    let newTop = startTop;
-
-                    const minWidth = Math.max(150, parseFloat(getComputedStyle(win).minWidth) || 150);
-                    const minHeight = Math.max(100, parseFloat(getComputedStyle(win).minHeight) || 100);
-
-                    if (dir.includes('e')) {
-                        newWidth = Math.max(minWidth, startWidth + dx);
-                    }
-                    if (dir.includes('s')) {
-                        newHeight = Math.max(minHeight, startHeight + dy);
-                    }
-                    if (dir.includes('w')) {
-                        const maxDx = startWidth - minWidth;
-                        const actualDx = Math.min(dx, maxDx);
-                        newWidth = startWidth - actualDx;
-                        newLeft = startLeft + actualDx;
-                    }
-                    if (dir.includes('n')) {
-                        const maxDy = startHeight - minHeight;
-                        const actualDy = Math.min(dy, maxDy);
-                        newHeight = startHeight - actualDy;
-                        newTop = startTop + actualDy;
-                    }
-
-                    // Bounds checking
-                    newWidth = Math.min(window.innerWidth / zoom - 20, newWidth);
-                    newHeight = Math.min(window.innerHeight / zoom - 20, newHeight);
-                    newLeft = Math.max(0, newLeft);
-                    newTop = Math.max(0, newTop);
-
-                    win.style.setProperty('width', newWidth + 'px', 'important');
-                    win.style.setProperty('height', newHeight + 'px', 'important');
-                    win.style.setProperty('max-width', 'none', 'important');
-                    win.style.setProperty('max-height', 'none', 'important');
-                    win.style.left = newLeft + 'px';
-                    win.style.top = newTop + 'px';
-                });
-
-                window.addEventListener('mouseup', () => {
-                    if (isResizing) {
-                        isResizing = false;
-                        this.saveWindowState(win);
-                    }
-                });
+                    win.style.position = 'fixed';
+                    win.style.left = rect.left + 'px';
+                    win.style.top = rect.top + 'px';
+                    win.style.bottom = 'auto';
+                    win.style.right = 'auto';
+                }
+                
+                e.preventDefault();
+                e.stopPropagation();
             });
-});
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const newWidth = Math.max(150, Math.min(window.innerWidth - 20, startWidth + (e.clientX - startRx)));
+                const newHeight = Math.max(100, Math.min(window.innerHeight - 20, startHeight + (e.clientY - startRy)));
+                win.style.width = newWidth + 'px';
+                win.style.height = newHeight + 'px';
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    this.saveWindowState(win);
+                }
+            });
+        });
     }
 
     saveWindowState(win) {
@@ -1250,8 +1154,8 @@ class InterstellarEngine {
 
         // Load 7x7 grid of sectors around player (increased from 3x3)
         const loadRadius = 3;
-        for (let dx = -loadRadius; dx <= loadRadius; dx++) {
-            for (let dy = -loadRadius; dy <= loadRadius; dy++) {
+        for (let dx = -loadRadius; dx <= loadRadius; dx++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let dx = -loadRadius; dx <= loadRadius; dx++"); throw new Error("LOOP"); }
+            for (let dy = -loadRadius; dy <= loadRadius; dy++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let dy = -loadRadius; dy <= loadRadius; dy++"); throw new Error("LOOP"); }
                 const sx = sector.x + dx;
                 const sy = sector.y + dy;
                 const key = `${sx},${sy} `;
@@ -1263,7 +1167,7 @@ class InterstellarEngine {
 
         // Cleanup sectors that are too far away (increased from 2 to 5)
         const cleanupRadius = 5;
-        for (const [key] of this.loadedSectors.entries()) {
+        for (const [key] of this.loadedSectors.entries()) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [key] of this.loadedSectors.entries()"); throw new Error("LOOP"); }
             const [sx, sy] = key.split(',').map(Number);
             const dist = Math.max(Math.abs(sx - sector.x), Math.abs(sy - sector.y));
             if (dist > cleanupRadius) {
@@ -1299,7 +1203,7 @@ class InterstellarEngine {
         const maxY = (sectorY + 1) * this.sectorSize;
 
         const mineralCount = Math.floor(100 + this.seededRandom(seed + 1) * 200);
-        for (let i = 0; i < mineralCount; i++) {
+        for (let i = 0; i < mineralCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < mineralCount; i++"); throw new Error("LOOP"); }
             const s = seed + i * 1000;
             const x = minX + this.seededRandom(s) * this.sectorSize;
             const y = minY + this.seededRandom(s + 1) * this.sectorSize;
@@ -1331,7 +1235,7 @@ class InterstellarEngine {
         if (dist >= 5000) mineProb = 0.4;
         if (this.seededRandom(hazardSeed) < mineProb) {
             const mCount = Math.floor(1 + this.seededRandom(hazardSeed + 1) * 5);
-            for (let i = 0; i < mCount; i++) {
+            for (let i = 0; i < mCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < mCount; i++"); throw new Error("LOOP"); }
                 const s = hazardSeed + 2 + i * 500;
                 const mine = {
                     x: minX + this.seededRandom(s) * this.sectorSize,
@@ -1379,7 +1283,7 @@ class InterstellarEngine {
             };
 
             // Initialize particles for the accretion disk
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 30; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 30; i++"); throw new Error("LOOP"); }
                 bh.particleRings.push({
                     angle: this.seededRandom(hazardSeed + 300 + i) * Math.PI * 2,
                     radius: 1.2 + this.seededRandom(hazardSeed + 400 + i) * 0.8,
@@ -1395,7 +1299,7 @@ class InterstellarEngine {
         }
 
         const depositCount = Math.floor(3 + this.seededRandom(seed + 500000) * 5);
-        for (let i = 0; i < depositCount; i++) {
+        for (let i = 0; i < depositCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < depositCount; i++"); throw new Error("LOOP"); }
             const s = seed + 500000 + i * 2000;
             const x = minX + this.seededRandom(s) * this.sectorSize;
             const y = minY + this.seededRandom(s + 1) * this.sectorSize;
@@ -1423,46 +1327,19 @@ class InterstellarEngine {
         // console.log(`[Universe] Sector(${sectorX}, ${sectorY}): ${mineralCount} minerals, ${depositCount} deposits`);
     }
 
-        toggleBgStyle(style) {
+    toggleBgStyle(style) {
         console.log(`[BG Toggle] ${style}, currently active: `, this.activeStyles.has(style));
-        
-        const arraysToManage = [
-            'staticStars', 'galaxies', 'blackHoles', 'planets', 
-            'shootingStars', 'backgroundStars', 'nebulae', 'spacecraft', 'matrixStreams'
-        ];
-
         if (this.activeStyles.has(style)) {
-            // Deselecting: Remove elements belonging to this style
+            // Deselecting
             this.activeStyles.delete(style);
-            arraysToManage.forEach(arrName => {
-                if (this[arrName]) {
-                    this[arrName] = this[arrName].filter(item => item.sourceStyle !== style);
-                }
-            });
         } else {
-            // Enabling: Generate elements just for this style and tag them
+            // Enabling
             this.activeStyles.add(style);
-            
-            const preLengths = {};
-            arraysToManage.forEach(arrName => {
-                this[arrName] = this[arrName] || [];
-                preLengths[arrName] = this[arrName].length;
-            });
-            
-            try {
-                this.generateSingleStyle(style);
-            } catch (e) {
-                console.error(`[BG Error] generateSingleStyle(${style}) failed:`, e);
-            }
-            
-            // Tag newly added elements with their source style
-            arraysToManage.forEach(arrName => {
-                for (let i = preLengths[arrName]; i < this[arrName].length; i++) {
-                    this[arrName][i].sourceStyle = style;
-                }
-            });
         }
 
+        // Completely regenerate the background based on active styles to prevent
+        // visual artifacts and array accumulation (like "asteroid belts" from backgroundStars)
+        this.generateBackground();
         this.updateBgUI();
     }
 
@@ -1493,7 +1370,6 @@ class InterstellarEngine {
                 this.blackHoles = [];
                 this.planets = [];
                 this.nebulae = []; // Clear deep-space nebulae
-                this.backgroundStars = []; // Fix memory leak / freeze
                 if (this.activeStyles.has('nebula')) {
                     this.generateSingleStyle('nebula'); // Restore nebula style if it was active
                 }
@@ -1560,20 +1436,15 @@ class InterstellarEngine {
     // Toggle functions for popup panels
     toggleRotationPanel() {
         const panel = document.getElementById('rotationPanel');
-        if (panel) {
-            const isHidden = panel.classList.toggle('hidden');
-            if (this.flightMode) this.gamePaused = !isHidden;
-        }
+        if (panel) panel.classList.toggle('hidden');
     }
 
     toggleTemplatePanel() {
         const panel = document.getElementById('templatePanel');
         if (panel.style.display === 'block') {
             panel.style.display = 'none';
-            if (this.flightMode) this.gamePaused = false;
         } else {
             panel.style.display = 'block';
-            if (this.flightMode) this.gamePaused = true;
         }
     }
 
@@ -1744,21 +1615,13 @@ class InterstellarEngine {
             if (!this.flightMode && this.gamePaused) this.togglePause(); // Reset pause state when exiting
         }
 
-        // Toggle HUD Sections explicitly to ensure they are visible
+        // Toggle Vitals HUD
         const vitalsEl = document.getElementById('sectionVitals');
-        if (vitalsEl) vitalsEl.style.setProperty('display', 'block', 'important');
-        
-        const shipStatusEl = document.getElementById('sectionShipStatus');
-        if (shipStatusEl) shipStatusEl.style.setProperty('display', 'flex', 'important');
-        
-        const shipDesignEl = document.getElementById('sectionShipDesign');
-        if (shipDesignEl) shipDesignEl.style.setProperty('display', this.flightMode ? 'flex' : 'none', 'important');
+        if (vitalsEl) {
+            vitalsEl.style.setProperty('display', this.flightMode ? 'block' : 'none', 'important');
+        }
         if (layoutPresets) {
             layoutPresets.style.setProperty('display', this.flightMode ? 'flex' : 'none', 'important');
-        }
-
-        if (this.flightMode) {
-            this.setLayout(localStorage.getItem('hudLayout') || 'horizontal');
         }
 
         this.draw();
@@ -1770,39 +1633,103 @@ class InterstellarEngine {
         const W = window.innerWidth;
         const H = window.innerHeight;
         
-        // Calculate optimal scale factor 
+        // Calculate optimal scale factor to prevent overlap on small screens
+        // Horizontally, we need ~1600px of safe space. Vertically we need ~1060px for the towering arrays.
         const widthScale = W / 1600;
         const heightScale = H / 1060;
         const scale = Math.min(1.0, Math.max(0.40, Math.min(widthScale, heightScale))); 
-        document.documentElement.style.setProperty('--hud-scale', scale);
-
-        // Fallback to horizontal if type is unrecognized
-        if (type !== 'horizontal' && type !== 'vertical') {
-            type = 'horizontal';
-        }
         
-        const hud = document.getElementById('flightHUD');
-        if (hud) {
-            hud.className = `flight-hud layout-${type}` + (this.flightMode ? '' : ' hidden');
-        }
-
-        const windows = ['sectionVitals', 'sectionRadar', 'sectionControls', 'sectionGems', 'sectionVelocity', 'floatingMap', 'floatingLeaders', 'sectionMap', 'sectionShipDesign', 'sectionShipStatus', 'sectionMission', 'sectionFactions'];
-
-        windows.forEach(id => {
+        const setCoords = (id, cssMap, origin = 'top left') => {
             const el = document.getElementById(id);
             if (el) {
-                el.style.transform = '';
+                // Clear any manual sizing locks
+                el.style.top = 'auto';
+                el.style.bottom = 'auto';
+                el.style.left = 'auto';
+                el.style.right = 'auto';
+
+                for (const prop in cssMap) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const prop in cssMap"); throw new Error("LOOP"); }
+                    el.style[prop] = cssMap[prop];
+                }
+                
+                el.style.transform = `scale(${scale})`;
+                el.style.transformOrigin = origin;
+                
                 if (el.classList.contains('minimized-to-taskbar')) {
                     this.restoreFromTaskbar(id);
-                } else {
-                    const displayType = (id === 'sectionVitals' || id === 'sectionMap' || id === 'sectionRadar') ? 'block' : 'flex';
-                    if (!el.classList.contains('hidden')) {
-                        el.style.setProperty('display', displayType, 'important');
-                    }
                 }
             }
-        });
+        };
 
+        const topY = 72;
+        const gemsH = 180;
+        const gap = 8 * scale; // Tight, scaled positioning gap
+
+        if (type === 'horizontal') {
+            // THE NATIVE LOAD LAYOUT (Single Massive Top Row)
+            let currentX = 15;
+            setCoords('sectionMap', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (220 * scale) + gap;
+
+            setCoords('sectionRadar', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (180 * scale) + gap;
+
+            setCoords('sectionVelocity', { top: `${topY}px`, left: `${currentX}px`, display: 'flex' });
+            currentX += (220 * scale) + gap;
+
+            setCoords('sectionShipStatus', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (230 * scale) + gap;
+            
+            setCoords('sectionControls', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (210 * scale) + gap;
+
+            setCoords('sectionShipDesign', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (230 * scale) + gap;
+            
+            setCoords('floatingLeaders', { top: `${topY}px`, left: `${currentX}px` });
+            currentX += (260 * scale) + gap;
+            
+            // Second row left (Below Map natively)
+            setCoords('sectionMission', { top: `${topY + (220 * scale)}px`, left: '15px' });
+
+            // BOTTOM EDGE
+            setCoords('sectionGems', { bottom: '15px', left: '15px', right: '15px', minWidth: '800px', height: `${gemsH}px` }, 'bottom center');
+
+        } else if (type === 'vertical') {
+            // LEFT COLUMN (Dynamically Stacking Heights to prevent any overlap)
+            let leftY = topY;
+            setCoords('sectionMap', { top: `${leftY}px`, left: '15px' });
+            leftY += (200 * scale) + gap;
+
+            setCoords('sectionRadar', { top: `${leftY}px`, left: '15px' });
+            leftY += (180 * scale) + gap;
+
+            // Moved Velocity squarely under Radar precisely as requested!
+            setCoords('sectionVelocity', { top: `${leftY}px`, left: '15px', display: 'flex' });
+            leftY += (200 * scale) + gap;
+
+            setCoords('sectionControls', { top: `${leftY}px`, left: '15px' });
+
+            // RIGHT COLUMN (Dynamically Stacking Heights)
+            let rightY = topY;
+            setCoords('floatingLeaders', { top: `${rightY}px`, right: '15px' }, 'top right');
+            rightY += (260 * scale) + gap;
+
+            setCoords('sectionShipStatus', { top: `${rightY}px`, right: '15px' }, 'top right');
+            rightY += (160 * scale) + gap;
+
+            // Moved Ship Design directly below Ship Status
+            setCoords('sectionShipDesign', { top: `${rightY}px`, right: '15px' }, 'top right');
+            rightY += (230 * scale) + gap; // Uses original Ship Design height geometry
+            
+            // Mission Tracker trails below Design
+            setCoords('sectionMission', { top: `${rightY}px`, right: '15px' }, 'top right');
+
+            // BOTTOM EDGE (Gems span uniformly like Wide HUD)
+            setCoords('sectionGems', { bottom: '15px', left: '15px', right: '15px', minWidth: '800px', height: `${gemsH}px` }, 'bottom center');
+        }
+
+        // Attach resize listener dynamically to enforce strictly on resize limits
         if (!this.resizeListenerAdded) {
             window.addEventListener('resize', () => {
                 if (localStorage.getItem('hudLayout')) {
@@ -1846,8 +1773,7 @@ class InterstellarEngine {
     toggleControlsExpanded() {
         const modal = document.getElementById('expandedControlsModal');
         if (modal) {
-            const isActive = modal.classList.toggle('active');
-            if (this.flightMode) this.gamePaused = isActive;
+            modal.classList.toggle('active');
         }
     }
 
@@ -1855,7 +1781,6 @@ class InterstellarEngine {
         const modal = document.getElementById('expandedControlsModal');
         if (modal) {
             modal.classList.remove('active');
-            if (this.flightMode) this.gamePaused = false;
         }
     }
 
@@ -1932,10 +1857,9 @@ class InterstellarEngine {
         if (this.savedWindowPositions && this.savedWindowPositions[windowId]) {
             const pos = this.savedWindowPositions[windowId];
             if (pos.left) {
-                    win.style.position = 'fixed';
-                    win.style.left = pos.left;
-                    win.style.right = 'auto';
-                }
+                win.style.left = pos.left;
+                win.style.right = 'auto';
+            }
             if (pos.top) {
                 win.style.top = pos.top;
                 win.style.bottom = 'auto';
@@ -1964,7 +1888,7 @@ class InterstellarEngine {
         const slot = prompt('Save to layout slot (1, 2, or 3):', '1');
         if (!slot || !['1', '2', '3'].includes(slot)) return;
 
-        const windows = ['sectionVitals', 'sectionRadar', 'sectionControls', 'sectionGems', 'sectionVelocity', 'floatingMap', 'floatingLeaders', 'sectionMap', 'sectionShipDesign', 'sectionShipStatus', 'sectionMission', 'sectionFactions'];
+        const windows = ['sectionRadar', 'sectionControls', 'sectionGems', 'sectionVelocity', 'floatingMap', 'floatingLeaders', 'sectionMap', 'sectionShipDesign', 'sectionShipStatus'];
         const layout = {};
 
         windows.forEach(id => {
@@ -2008,7 +1932,6 @@ class InterstellarEngine {
 
                 // Apply position
                 if (pos.left) {
-                    win.style.position = 'fixed';
                     win.style.left = pos.left;
                     win.style.right = 'auto';
                 }
@@ -2316,7 +2239,7 @@ class InterstellarEngine {
         const hullText = document.getElementById('hullText');
 
         if (hullBar && hullText) {
-            const hullPercent = Math.max(0, Math.min(100, (this.playerShip.hull / this.playerShip.maxHull) * 100));
+            const hullPercent = Math.max(0, Math.min(100, (this.playerShip.hullHealth / this.playerShip.maxHull) * 100));
             hullBar.style.width = `${hullPercent}%`;
             hullText.textContent = `${Math.round(hullPercent)}%`;
 
@@ -2402,8 +2325,8 @@ class InterstellarEngine {
                 if (dist < 10000) { // Beacons have huge radar range
                     // Clamp to radar edge
                     const displayDist = Math.min(dist, 2000); 
-                    const rx = cx + (dx / Math.max(0.1, dist)) * (displayDist / 2000) * 35;
-                    const ry = cy + (dy / Math.max(0.1, dist)) * (displayDist / 2000) * 35;
+                    const rx = cx + (dx / dist) * (displayDist / 2000) * 35;
+                    const ry = cy + (dy / dist) * (displayDist / 2000) * 35;
                     
                     const pulse = Math.sin(Date.now() * 0.005) * 0.5 + 0.5;
                     ctx.fillStyle = `rgba(255, 200, 0, ${0.4 + pulse * 0.6})`;
@@ -2607,9 +2530,9 @@ class InterstellarEngine {
         // TIER 1: Starting ring (30s-1min travel)
         // Distance: 2000-4000 units (expanded outward)
         // 12 clusters evenly distributed
-        for (let i = 0; i < 12; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.sqrt(Math.random() * (16000000 - 4000000) + 4000000);
+        for (let i = 0; i < 12; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 12; i++"); throw new Error("LOOP"); }
+            const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.2;
+            const dist = 2000 + Math.random() * 2000;
             this.resourceDeposits.push({
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist,
@@ -2626,9 +2549,9 @@ class InterstellarEngine {
         // TIER 2: Inner belt (1-2min travel)
         // Distance: 5000-8000 units (wider spread)
         // 10 clusters
-        for (let i = 0; i < 10; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.sqrt(Math.random() * (64000000 - 25000000) + 25000000);
+        for (let i = 0; i < 10; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 10; i++"); throw new Error("LOOP"); }
+            const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.3;
+            const dist = 5000 + Math.random() * 3000;
             const zone = Math.random() < 0.5 ? 'precious' : 'crystal';
             this.resourceDeposits.push({
                 x: Math.cos(angle) * dist,
@@ -2646,9 +2569,9 @@ class InterstellarEngine {
         // TIER 3: Mid expanse (2-4min travel)
         // Distance: 10000-15000 units
         // 8 clusters
-        for (let i = 0; i < 8; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.sqrt(Math.random() * (225000000 - 100000000) + 100000000);
+        for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
+            const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.4;
+            const dist = 10000 + Math.random() * 5000;
             const zone = Math.random() < 0.5 ? 'nuclear' : 'crystal';
             this.resourceDeposits.push({
                 x: Math.cos(angle) * dist,
@@ -2666,9 +2589,9 @@ class InterstellarEngine {
         // TIER 4: Outer frontier (4-6min travel)
         // Distance: 18000-25000 units  
         // 6 clusters - Epic/Legendary
-        for (let i = 0; i < 6; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.sqrt(Math.random() * (625000000 - 324000000) + 324000000);
+        for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
+            const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.5;
+            const dist = 18000 + Math.random() * 7000;
             this.resourceDeposits.push({
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist,
@@ -2685,9 +2608,9 @@ class InterstellarEngine {
         // TIER 5: Deep void (6-10min travel)
         // Distance: 28000-38000 units
         // 4 clusters - Legendary/Mythic
-        for (let i = 0; i < 4; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.sqrt(Math.random() * (1444000000 - 784000000) + 784000000);
+        for (let i = 0; i < 4; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 4; i++"); throw new Error("LOOP"); }
+            const angle = (i / 4) * Math.PI * 2 + Math.random() * 0.6;
+            const dist = 28000 + Math.random() * 10000;
             this.resourceDeposits.push({
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist,
@@ -2704,9 +2627,9 @@ class InterstellarEngine {
         // TIER 6: Distant galaxies (10-15min travel)
         // Distance: 42000-50000 units
         // 3 ultra-rare clusters - Pure mythic
-        for (let i = 0; i < 3; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.sqrt(Math.random() * (2500000000 - 1764000000) + 1764000000);
+        for (let i = 0; i < 3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 3; i++"); throw new Error("LOOP"); }
+            const angle = (i / 3) * Math.PI * 2 + Math.random() * 0.8;
+            const dist = 42000 + Math.random() * 8000;
             this.resourceDeposits.push({
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist,
@@ -2939,7 +2862,7 @@ class InterstellarEngine {
             modal.classList.add('active');
             
             this.expandedMapOpen = true;
-            this.gamePaused = true;
+            if (window.game) window.game.gamePaused = true;
             
             this.expandedMapZoom = this.expandedMapZoom || 1.0;
             this.expandedMapOffset = this.expandedMapOffset || { x: 0, y: 0 };
@@ -3126,11 +3049,11 @@ class InterstellarEngine {
         const endY = Math.floor((worldCy + visibleH) / gridSize) * gridSize;
 
         ctx.beginPath();
-        for (let x = startX; x <= endX; x += gridSize) {
+        for (let x = startX; x <= endX; x += gridSize) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let x = startX; x <= endX; x += gridSize"); throw new Error("LOOP"); }
             ctx.moveTo(x, startY);
             ctx.lineTo(x, endY);
         }
-        for (let y = startY; y <= endY; y += gridSize) {
+        for (let y = startY; y <= endY; y += gridSize) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let y = startY; y <= endY; y += gridSize"); throw new Error("LOOP"); }
             ctx.moveTo(startX, y);
             ctx.lineTo(endX, y);
         }
@@ -3305,8 +3228,8 @@ class InterstellarEngine {
 
         ctx.fillStyle = color;
 
-        for (let x = startX; x <= endX; x++) {
-            for (let y = startY; y <= endY; y++) {
+        for (let x = startX; x <= endX; x++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let x = startX; x <= endX; x++"); throw new Error("LOOP"); }
+            for (let y = startY; y <= endY; y++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let y = startY; y <= endY; y++"); throw new Error("LOOP"); }
                 // Deterministic random
                 const seed = x * 34234 + y * 23123;
                 const rx = Math.sin(seed) * effectiveSpacing;
@@ -3358,7 +3281,7 @@ class InterstellarEngine {
 
     calculateTotalWealth() {
         let total = 0;
-        for (const [type, count] of Object.entries(this.playerInventory)) {
+        for (const [type, count] of Object.entries(this.playerInventory)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [type, count] of Object.entries(this.playerInventory)"); throw new Error("LOOP"); }
             const mineralInfo = this.mineralTypes[type];
             if (mineralInfo) total += mineralInfo.value * count;
         }
@@ -3421,7 +3344,7 @@ class InterstellarEngine {
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.8 * intensity;
         ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
             const angle = (i / 8) * Math.PI * 2;
             const len = (i % 2 === 0 ? flashSize * 1.5 : flashSize * 0.8);
             const wx = Math.cos(angle) * len;
@@ -3571,7 +3494,7 @@ class InterstellarEngine {
         // Speed Lines Generation
         if (ship.speed > 5 && Math.random() < 0.3) {
             const lineCount = Math.floor(ship.speed / 15) + 1;
-            for (let i = 0; i < lineCount; i++) {
+            for (let i = 0; i < lineCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < lineCount; i++"); throw new Error("LOOP"); }
                 this.speedLines.push({
                     x: ship.x + (Math.random() - 0.5) * 600,
                     y: ship.y + (Math.random() - 0.5) * 600,
@@ -3601,7 +3524,7 @@ class InterstellarEngine {
             });
         }
         
-        for (let i = this.engineParticles.length - 1; i >= 0; i--) {
+        for (let i = this.engineParticles.length - 1; i >= 0; i--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = this.engineParticles.length - 1; i >= 0; i--"); throw new Error("LOOP"); }
             const p = this.engineParticles[i];
             p.x += p.vx;
             p.y += p.vy;
@@ -3624,8 +3547,8 @@ class InterstellarEngine {
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < 400 && dist > 1) {
                     const pull = 1.2 * (1 - dist / 400);
-                    line.vx += (dx / Math.max(0.1, dist)) * pull;
-                    line.vy += (dy / Math.max(0.1, dist)) * pull;
+                    line.vx += (dx / dist) * pull;
+                    line.vy += (dy / dist) * pull;
                 }
             }
         });
@@ -3734,7 +3657,7 @@ class InterstellarEngine {
 
     updateProjectiles() {
         // Iterate backwards to allow removal
-        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+        for (let i = this.projectiles.length - 1; i >= 0; i--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = this.projectiles.length - 1; i >= 0; i--"); throw new Error("LOOP"); }
             const p = this.projectiles[i];
             p.x += p.vx;
             p.y += p.vy;
@@ -3747,7 +3670,7 @@ class InterstellarEngine {
 
             // check collisions with Space Mines
             let hit = false;
-            for (let j = this.spaceMines.length - 1; j >= 0; j--) {
+            for (let j = this.spaceMines.length - 1; j >= 0; j--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let j = this.spaceMines.length - 1; j >= 0; j--"); throw new Error("LOOP"); }
                 const mine = this.spaceMines[j];
                 const dx = p.x - mine.x;
                 const dy = p.y - mine.y;
@@ -3775,7 +3698,7 @@ class InterstellarEngine {
             }
 
             // Check collisions with Missile Bases
-            for (let k = this.missileBases.length - 1; k >= 0; k--) {
+            for (let k = this.missileBases.length - 1; k >= 0; k--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let k = this.missileBases.length - 1; k >= 0; k--"); throw new Error("LOOP"); }
                 const base = this.missileBases[k];
                 const dx = p.x - base.x;
                 const dy = p.y - base.y;
@@ -3803,7 +3726,7 @@ class InterstellarEngine {
             }
 
             // Check collisions with Enemy Missiles
-            for (let m = this.enemyMissiles.length - 1; m >= 0; m--) {
+            for (let m = this.enemyMissiles.length - 1; m >= 0; m--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let m = this.enemyMissiles.length - 1; m >= 0; m--"); throw new Error("LOOP"); }
                 const missile = this.enemyMissiles[m];
                 const dx = p.x - missile.x;
                 const dy = p.y - missile.y;
@@ -3834,7 +3757,7 @@ class InterstellarEngine {
             }
 
             // Check collisions with Enemy Ships
-            for (let e = this.enemyShips.length - 1; e >= 0; e--) {
+            for (let e = this.enemyShips.length - 1; e >= 0; e--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let e = this.enemyShips.length - 1; e >= 0; e--"); throw new Error("LOOP"); }
                 const enemy = this.enemyShips[e];
                 const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
                 const dx = p.x - enemy.x;
@@ -3872,24 +3795,28 @@ class InterstellarEngine {
 
             // Check collisions with Background Spacecraft
             if (this.activeStyles.has('alien') && this.spacecraft && this.spacecraft.length > 0) {
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
+                const time = performance.now() / 1000;
+                const driftX = Math.sin(time / 5000) * 20;
+                const driftY = Math.cos(time / 7000) * 20;
+                const backgroundParallax = 0.98;
+                const zoomParallax = 0.3;
+                const pZoom = 1 + (this.camera.zoom - 1) * zoomParallax;
 
                 const pScreenX = this.canvas.width / 2 + (p.x - this.playerShip.x) * this.camera.zoom;
                 const pScreenY = this.canvas.height / 2 + (p.y - this.playerShip.y) * this.camera.zoom;
 
-                for (let sIdx = this.spacecraft.length - 1; sIdx >= 0; sIdx--) {
+                for (let sIdx = this.spacecraft.length - 1; sIdx >= 0; sIdx--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let sIdx = this.spacecraft.length - 1; sIdx >= 0; sIdx--"); throw new Error("LOOP"); }
                     const sc = this.spacecraft[sIdx];
                     if (sc.flownOut) continue;
 
-                    const para = sc.parallax || 0.4;
-                    const scScreenX = this.canvas.width / 2 + (sc.x - this.playerShip.x * para) * bgZoom;
-                    const scScreenY = this.canvas.height / 2 + (sc.y - this.playerShip.y * para) * bgZoom;
+                    const scScreenX = this.canvas.width / 2 + (sc.x - this.playerShip.x * backgroundParallax - driftX) * pZoom;
+                    const scScreenY = this.canvas.height / 2 + (sc.y - this.playerShip.y * backgroundParallax - driftY) * pZoom;
 
                     const dx = pScreenX - scScreenX;
                     const dy = pScreenY - scScreenY;
                     const dist = Math.hypot(dx, dy);
 
-                    const scRadius = (sc.size || 20) * 1.5 * bgZoom;
+                    const scRadius = (sc.size || 20) * pZoom;
 
                     if (dist < scRadius + 5) {
                         const hitWorldX = this.playerShip.x + (pScreenX - this.canvas.width / 2) / this.camera.zoom;
@@ -3941,7 +3868,7 @@ class InterstellarEngine {
             }
 
             // CHECK COLLISIONS WITH BLACK HOLES (Sucked in)
-            for (let b = 0; b < this.hazardBlackHoles.length; b++) {
+            for (let b = 0; b < this.hazardBlackHoles.length; b++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let b = 0; b < this.hazardBlackHoles.length; b++"); throw new Error("LOOP"); }
                 const bh = this.hazardBlackHoles[b];
                 const dx = p.x - bh.x;
                 const dy = p.y - bh.y;
@@ -3969,7 +3896,7 @@ class InterstellarEngine {
         const color = type === 'hit' ? '#ffff00' : '#ffaa00';
         const speed = type === 'hit' ? 2 : 5;
 
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < count; i++"); throw new Error("LOOP"); }
             const angle = Math.random() * Math.PI * 2;
             const vel = Math.random() * speed;
             this.damageParticles.push({
@@ -4011,7 +3938,7 @@ class InterstellarEngine {
 
         // Remove from sector data to prevent respawning
         if (this.sectors) {
-            for (const sector of this.sectors.values()) {
+            for (const sector of this.sectors.values()) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const sector of this.sectors.values()"); throw new Error("LOOP"); }
                 if (sector.hazards && sector.hazards.mines) {
                     const idx = sector.hazards.mines.indexOf(mine);
                     if (idx !== -1) sector.hazards.mines.splice(idx, 1);
@@ -4037,7 +3964,7 @@ class InterstellarEngine {
 
         // Remove from sector data to prevent respawning
         if (this.sectors) {
-            for (const sector of this.sectors.values()) {
+            for (const sector of this.sectors.values()) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const sector of this.sectors.values()"); throw new Error("LOOP"); }
                 if (sector.hazards && sector.hazards.turrets) {
                     const idx = sector.hazards.turrets.indexOf(base);
                     if (idx !== -1) sector.hazards.turrets.splice(idx, 1);
@@ -4119,15 +4046,14 @@ class InterstellarEngine {
         if (!this.flightMode || !this.playerShip) return;
 
         const ship = this.playerShip;
-        const spawnRadius = 1500; // Increase spawn distance so they don't jump the player
-        const minSpawnDist = 800; // Keep a generous safe buffer
-        const difficulty = window.gameDifficulty || 2;
-        const targetCount = Math.max(1, Math.floor(difficulty * 1.0)); // Level 2 = 2 enemies, Level 5 = 5 enemies
+        const spawnRadius = 2000;
+        const minSpawnDist = 800;
+        const targetCount = 4; // Max active enemies
 
         // Remove enemies too far away
         this.enemyShips = this.enemyShips.filter(e => {
             const dist = Math.hypot(e.x - ship.x, e.y - ship.y);
-            return dist < spawnRadius * 2.5; // Give them a slightly larger grace area before despawn
+            return dist < spawnRadius * 2;
         });
 
         // Remove distant enemy bullets
@@ -4137,11 +4063,9 @@ class InterstellarEngine {
         });
 
         // Spawn new enemies
-        let enemyAttempts = 0;
-        while (this.enemyShips.length < targetCount && enemyAttempts < targetCount * 5) {
-            enemyAttempts++;
+        while (this.enemyShips.length < targetCount) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT WHILE LOOP:", "this.enemyShips.length < targetCount"); throw new Error("LOOP"); }
             const angle = Math.random() * Math.PI * 2;
-            const dist = minSpawnDist + Math.sqrt(Math.random()) * (spawnRadius - minSpawnDist);
+            const dist = minSpawnDist + Math.random() * (spawnRadius - minSpawnDist);
 
             const enemyTypes = Object.keys(InterstellarEngine.ENEMY_TYPES);
             const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
@@ -4157,9 +4081,6 @@ class InterstellarEngine {
                 if (hostiles.length > 0) chosenFaction = hostiles[Math.floor(Math.random() * hostiles.length)];
             }
 
-            // Scale enemy stats dynamically based on skill level. Level 2 = standard. Level 1 = easier. Level 5 = nightmare.
-            const diffMultiplier = 0.6 + (difficulty * 0.2); // Level 1 = 0.8, Level 2 = 1.0, Level 5 = 1.6
-
             this.enemyShips.push({
                 x: ship.x + Math.cos(angle) * dist,
                 y: ship.y + Math.sin(angle) * dist,
@@ -4168,8 +4089,8 @@ class InterstellarEngine {
                 rotation: Math.random() * Math.PI * 2,
                 type: type,
                 faction: chosenFaction, // Faction integration
-                health: typeDef.health * diffMultiplier,
-                maxHealth: typeDef.health * diffMultiplier,
+                health: typeDef.health,
+                maxHealth: typeDef.health,
                 state: 'patrol', // patrol, chase, attack, flee
                 patrolAngle: Math.random() * Math.PI * 2,
                 patrolTimer: 0,
@@ -4178,8 +4099,7 @@ class InterstellarEngine {
                 burstTimer: 0,
                 hitFlash: 0,
                 isStalking: false, // New stalking state
-                spawnTime: Date.now(),
-                diffMultiplier: diffMultiplier // Store to scale damage and speed slightly
+                spawnTime: Date.now()
             });
         }
     }
@@ -4191,7 +4111,7 @@ class InterstellarEngine {
         const now = Date.now();
         const isPlayerCloaked = ship.isCloaked || ship.type === 'spectre';
 
-        for (const enemy of this.enemyShips) {
+        for (const enemy of this.enemyShips) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const enemy of this.enemyShips"); throw new Error("LOOP"); }
             const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
 
             // EMP FREEZE CHECK: Skip all AI logic while disabled
@@ -4232,7 +4152,7 @@ class InterstellarEngine {
             }
 
             // 2. Evaluate rival factions as targets (only if closer than current)
-            for (const other of this.enemyShips) {
+            for (const other of this.enemyShips) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const other of this.enemyShips"); throw new Error("LOOP"); }
                 if (!other.faction || other.faction === enemy.faction || other === enemy) continue;
                 const d = Math.hypot(enemy.x - other.x, enemy.y - other.y);
                 if (d < distToTarget) {
@@ -4296,26 +4216,21 @@ class InterstellarEngine {
                         ? typeDef.maxSpeed * 0.3
                         : 0; // Hover in place and shoot, don't spiral
 
-                    // Check if player is invulnerable (grace period on spawn)
-                    const isTargetInvulnerable = targetShip === this.playerShip && this.playerShip.invulnerableUntil && performance.now() < this.playerShip.invulnerableUntil;
-
                     // Fire weapons
-                    if (!isTargetInvulnerable) {
-                        if (enemy.burstRemaining > 0) {
-                            if (now - enemy.burstTimer > (typeDef.burstDelay || 0)) {
-                                this.fireEnemyBullet(enemy, typeDef, targetShip);
-                                enemy.burstRemaining--;
-                                enemy.burstTimer = now;
-                            }
-                        } else if (now - enemy.lastFireTime > typeDef.fireRate) {
-                            if (typeDef.burstCount) {
-                                enemy.burstRemaining = typeDef.burstCount;
-                                enemy.burstTimer = now;
-                            } else {
-                                this.fireEnemyBullet(enemy, typeDef, targetShip);
-                            }
-                            enemy.lastFireTime = now;
+                    if (enemy.burstRemaining > 0) {
+                        if (now - enemy.burstTimer > (typeDef.burstDelay || 0)) {
+                            this.fireEnemyBullet(enemy, typeDef, targetShip);
+                            enemy.burstRemaining--;
+                            enemy.burstTimer = now;
                         }
+                    } else if (now - enemy.lastFireTime > typeDef.fireRate) {
+                        if (typeDef.burstCount) {
+                            enemy.burstRemaining = typeDef.burstCount;
+                            enemy.burstTimer = now;
+                        } else {
+                            this.fireEnemyBullet(enemy, typeDef, targetShip);
+                        }
+                        enemy.lastFireTime = now;
                     }
                     break;
 
@@ -4373,14 +4288,13 @@ class InterstellarEngine {
         // Add slight inaccuracy
         const spread = (Math.random() - 0.5) * 0.15;
 
-        const dmgMult = enemy.diffMultiplier || 1.0;
         this.enemyBullets.push({
             x: enemy.x + Math.cos(leadAngle) * (typeDef.size + 5),
             y: enemy.y + Math.sin(leadAngle) * (typeDef.size + 5),
             vx: Math.cos(leadAngle + spread) * typeDef.bulletSpeed,
             vy: Math.sin(leadAngle + spread) * typeDef.bulletSpeed,
             rotation: leadAngle + spread,
-            damage: typeDef.bulletDamage * dmgMult,
+            damage: typeDef.bulletDamage,
             life: 80, // ~1.3 seconds
             color: typeDef.color,
             faction: enemy.faction, // Track which faction fired this bullet
@@ -4394,7 +4308,7 @@ class InterstellarEngine {
 
         const ship = this.playerShip;
 
-        for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
+        for (let i = this.enemyBullets.length - 1; i >= 0; i--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = this.enemyBullets.length - 1; i >= 0; i--"); throw new Error("LOOP"); }
             const b = this.enemyBullets[i];
             b.x += b.vx;
             b.y += b.vy;
@@ -4422,7 +4336,7 @@ class InterstellarEngine {
             }
 
             // Check collision with other factions (Enemies)
-            for (let j = this.enemyShips.length - 1; j >= 0; j--) {
+            for (let j = this.enemyShips.length - 1; j >= 0; j--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let j = this.enemyShips.length - 1; j >= 0; j--"); throw new Error("LOOP"); }
                 const enemy = this.enemyShips[j];
                 // Faction check: Terran bullets hit non-terran, Enemy bullets hit different factions
                 if (b.faction && enemy.faction && b.faction !== enemy.faction) {
@@ -4617,7 +4531,7 @@ class InterstellarEngine {
                 const spawnInterval = enraged ? 3000 : 5000;
                 if (now - boss.lastSpawnTime > spawnInterval && !isPlayerCloaked) {
                     const spawnCount = enraged ? 3 : 2;
-                    for (let i = 0; i < spawnCount; i++) {
+                    for (let i = 0; i < spawnCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < spawnCount; i++"); throw new Error("LOOP"); }
                         const sAngle = boss.rotation + (Math.random() - 0.5) * Math.PI;
                         const sDist = typeDef.size * 2;
                         const scoutDef = InterstellarEngine.ENEMY_TYPES.scout;
@@ -4707,7 +4621,7 @@ class InterstellarEngine {
         const bulletCount = boss.phase === 2 ? 3 : 2;
         const spreadAngle = 0.2;
 
-        for (let i = 0; i < bulletCount; i++) {
+        for (let i = 0; i < bulletCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < bulletCount; i++"); throw new Error("LOOP"); }
             const offset = (i - (bulletCount - 1) / 2) * spreadAngle;
             const angle = angleToPlayer + offset;
 
@@ -4767,7 +4681,7 @@ class InterstellarEngine {
         const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
 
         // Massive explosion
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
             setTimeout(() => {
                 if (this.activeBoss === null && i > 0) return;
                 this.createExplosion(
@@ -4938,7 +4852,7 @@ class InterstellarEngine {
         // Pick 3, trying to get variety across tiers
         const picked = [];
         const usedTiers = new Set();
-        for (const m of shuffled) {
+        for (const m of shuffled) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const m of shuffled"); throw new Error("LOOP"); }
             if (picked.length >= 3) break;
             if (!usedTiers.has(m.tier) || picked.length < 3) {
                 picked.push(m);
@@ -4971,9 +4885,9 @@ class InterstellarEngine {
         // Spawn mission targets dynamically so the player doesn't wander blindly
         if (missionTemplate.type === 'kill') {
             const spawnCount = missionTemplate.goal + 2; // Extra to be safe
-            for (let i = 0; i < spawnCount; i++) {
+            for (let i = 0; i < spawnCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < spawnCount; i++"); throw new Error("LOOP"); }
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.sqrt(Math.random() * (25000000 - 4000000) + 4000000); // 2k to 5k range
+                const dist = 2000 + Math.random() * 3000; // 2k to 5k range
                 this.enemyShips.push({
                     x: this.playerShip.x + Math.cos(angle) * dist,
                     y: this.playerShip.y + Math.sin(angle) * dist,
@@ -4986,9 +4900,9 @@ class InterstellarEngine {
             }
             this.showToast('⚠️ Mission Targets detected on radar!', 5000);
         } else if (missionTemplate.type === 'mine') {
-            for (let i = 0; i < missionTemplate.goal + 5; i++) {
+            for (let i = 0; i < missionTemplate.goal + 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < missionTemplate.goal + 5; i++"); throw new Error("LOOP"); }
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.sqrt(Math.random() * (12250000 - 2250000) + 2250000);
+                const dist = 1500 + Math.random() * 2000;
                 this.minerals.push({
                     x: this.playerShip.x + Math.cos(angle) * dist,
                     y: this.playerShip.y + Math.sin(angle) * dist,
@@ -5006,9 +4920,9 @@ class InterstellarEngine {
             const baseX = this.spaceBase?.x || 0;
             const baseY = this.spaceBase?.y || 0;
             const spawnCount = missionTemplate.goal;
-            for (let i = 0; i < spawnCount; i++) {
+            for (let i = 0; i < spawnCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < spawnCount; i++"); throw new Error("LOOP"); }
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.sqrt(Math.random() * (1000000 - 360000) + 360000); // Close range for siege
+                const dist = 600 + Math.random() * 400; // Close range for siege
                 this.enemyShips.push({
                     x: baseX + Math.cos(angle) * dist,
                     y: baseY + Math.sin(angle) * dist,
@@ -5033,9 +4947,6 @@ class InterstellarEngine {
         if (!this.flightMode) {
             if (typeof this.hideShipModal === 'function') this.hideShipModal();
             this.flightMode = true; // Force ON safely
-            if (this.playerShip) {
-                this.playerShip.invulnerableUntil = performance.now() + 3000;
-            }
             const hud = document.getElementById('flightHUD');
             const floatingLeaders = document.getElementById('floatingLeaders');
             if (hud) hud.classList.remove('hidden');
@@ -5227,7 +5138,7 @@ class InterstellarEngine {
         const sparkColors = ['#ffd700', '#ff6b9d', '#00ff88', '#00ccff', '#ff44ff', '#ffaa00'];
 
         // Burst particles from center
-        for (let i = 0; i < 120; i++) {
+        for (let i = 0; i < 120; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 120; i++"); throw new Error("LOOP"); }
             const angle = (Math.PI * 2 * i) / 120 + (Math.random() - 0.5) * 0.5;
             const speed = 3 + Math.random() * 8;
             particles.push({
@@ -5245,7 +5156,7 @@ class InterstellarEngine {
         }
 
         // Side confetti streams
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 60; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 60; i++"); throw new Error("LOOP"); }
             const side = Math.random() > 0.5 ? 0 : window.innerWidth;
             particles.push({
                 x: side,
@@ -5267,7 +5178,7 @@ class InterstellarEngine {
         const animateParticles = () => {
             pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
 
-            for (let i = particles.length - 1; i >= 0; i--) {
+            for (let i = particles.length - 1; i >= 0; i--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = particles.length - 1; i >= 0; i--"); throw new Error("LOOP"); }
                 const p = particles[i];
                 p.x += p.vx;
                 p.vy += p.gravity;
@@ -5391,10 +5302,8 @@ class InterstellarEngine {
         this.missionBoardOpen = !this.missionBoardOpen;
         if (this.missionBoardOpen) {
             this.showMissionBoardUI();
-            if (this.flightMode) this.gamePaused = true;
         } else {
             this.hideMissionBoardUI();
-            if (this.flightMode) this.gamePaused = false;
         }
     }
 
@@ -5611,18 +5520,12 @@ class InterstellarEngine {
     // Inventory Management
     showGemGuide() {
         const modal = document.getElementById('gemGuideModal');
-        if (modal) {
-            modal.classList.add('active');
-            if (this.flightMode) this.gamePaused = true;
-        }
+        if (modal) modal.classList.add('active');
     }
 
     hideGemGuide() {
         const modal = document.getElementById('gemGuideModal');
-        if (modal) {
-            modal.classList.remove('active');
-            if (this.flightMode) this.gamePaused = false;
-        }
+        if (modal) modal.classList.remove('active');
     }
 
     loadInventory() {
@@ -5656,10 +5559,10 @@ class InterstellarEngine {
     loadFactionRep() {
         try {
             const saved = localStorage.getItem('factionRep');
-            return saved ? JSON.parse(saved) : { xenon: -20, mauler: -20, terran: 0 };
+            return saved ? JSON.parse(saved) : { xenon: 0, mauler: 0, terran: 0 };
         } catch (e) {
             console.error('[Storage] FactionRep parse failed, resetting.', e);
-            return { xenon: -20, mauler: -20, terran: 0 };
+            return { xenon: 0, mauler: 0, terran: 0 };
         }
     }
 
@@ -5762,7 +5665,7 @@ class InterstellarEngine {
         let lostResources = {};
         let totalLost = 0;
 
-        for (const [type, qty] of Object.entries(this.carriedResources)) {
+        for (const [type, qty] of Object.entries(this.carriedResources)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [type, qty] of Object.entries(this.carriedResources)"); throw new Error("LOOP"); }
             if (qty > 0) {
                 const loss = Math.floor(qty * 0.25);
                 if (loss > 0) {
@@ -5933,7 +5836,7 @@ class InterstellarEngine {
 
         // Check resource costs
         if (moduleDef.resourceCost) {
-            for (const [res, amount] of Object.entries(moduleDef.resourceCost)) {
+            for (const [res, amount] of Object.entries(moduleDef.resourceCost)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [res, amount] of Object.entries(moduleDef.resourceCost)"); throw new Error("LOOP"); }
                 const available = (this.spaceBase.resources[res] || 0) + (this.carriedResources[res] || 0);
                 if (available < amount) {
                     this.showToast(`⚠️ Need ${amount} ${this.mineralTypes[res]?.name || res}!`);
@@ -5942,7 +5845,7 @@ class InterstellarEngine {
             }
 
             // Deduct resources (from carried first, then vault)
-            for (const [res, amount] of Object.entries(moduleDef.resourceCost)) {
+            for (const [res, amount] of Object.entries(moduleDef.resourceCost)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [res, amount] of Object.entries(moduleDef.resourceCost)"); throw new Error("LOOP"); }
                 let remaining = amount;
                 if (this.carriedResources[res]) {
                     const fromCarried = Math.min(this.carriedResources[res], remaining);
@@ -6001,9 +5904,6 @@ class InterstellarEngine {
             panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
             if (panel.style.display === 'block') {
                 this.updateBasePanelUI();
-                if (this.flightMode) this.gamePaused = true;
-            } else {
-                if (this.flightMode) this.gamePaused = false;
             }
         } else {
             this.showToast('🏠 Base Menu: ' + this.spaceBase.modules.length + ' modules built');
@@ -6051,7 +5951,7 @@ class InterstellarEngine {
         let totalDeposited = 0;
         const deposited = [];
 
-        for (const [type, qty] of Object.entries(this.carriedResources)) {
+        for (const [type, qty] of Object.entries(this.carriedResources)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [type, qty] of Object.entries(this.carriedResources)"); throw new Error("LOOP"); }
             if (qty > 0) {
                 this.spaceBase.resources[type] = (this.spaceBase.resources[type] || 0) + qty;
                 deposited.push(`${qty} ${this.mineralTypes[type]?.name || type}`);
@@ -6130,7 +6030,7 @@ class InterstellarEngine {
         console.log('[Sell All] Button clicked!');
         let totalValue = 0;
         let count = 0;
-        for (const [type, qty] of Object.entries(this.playerInventory)) {
+        for (const [type, qty] of Object.entries(this.playerInventory)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [type, qty] of Object.entries(this.playerInventory)"); throw new Error("LOOP"); }
             if (qty > 0) {
                 const val = this.mineralTypes[type].value;
                 totalValue += val * qty;
@@ -6321,7 +6221,7 @@ class InterstellarEngine {
         let activeHotspot = null;
         let inHotspot = false;
 
-        for (const dep of this.resourceDeposits) {
+        for (const dep of this.resourceDeposits) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const dep of this.resourceDeposits"); throw new Error("LOOP"); }
             const dx = ship.x - dep.x;
             const dy = ship.y - dep.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -6351,9 +6251,7 @@ class InterstellarEngine {
         });
 
         // INSTANT RESPAWN: Always maintain target density
-        let mineralAttempts = 0;
-        while (this.minerals.length < targetDensity && mineralAttempts < targetDensity * 5) {
-            mineralAttempts++;
+        while (this.minerals.length < targetDensity) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT WHILE LOOP:", "this.minerals.length < targetDensity"); throw new Error("LOOP"); }
             const currentZone = this.getZoneAtDistance(playerDistFromOrigin);
             const mineralKey = this.selectElementForZone(currentZone, playerDistFromOrigin, hotspotBonus);
             const type = this.mineralTypes[mineralKey];
@@ -6395,7 +6293,7 @@ class InterstellarEngine {
 
     // Get the zone type at a given distance from origin
     getZoneAtDistance(distance) {
-        for (const [zoneKey, zone] of Object.entries(this.galaxyZones)) {
+        for (const [zoneKey, zone] of Object.entries(this.galaxyZones)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [zoneKey, zone] of Object.entries(this.galaxyZones)"); throw new Error("LOOP"); }
             if (distance >= zone.distanceRange.min && distance < zone.distanceRange.max) {
                 return zoneKey;
             }
@@ -6416,7 +6314,7 @@ class InterstellarEngine {
         const weights = [];
         let totalWeight = 0;
 
-        for (const elementKey of allElements) {
+        for (const elementKey of allElements) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const elementKey of allElements"); throw new Error("LOOP"); }
             const element = this.mineralTypes[elementKey];
             let weight = 1;
 
@@ -6484,7 +6382,7 @@ class InterstellarEngine {
 
         // Weighted random selection
         let random = Math.random() * totalWeight;
-        for (const { key, weight } of weights) {
+        for (const { key, weight } of weights) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const { key, weight } of weights"); throw new Error("LOOP"); }
             random -= weight;
             if (random <= 0) {
                 return key;
@@ -6630,9 +6528,9 @@ class InterstellarEngine {
 
     spawnMindwaveLotuses() {
         console.log("🌸 Spawning Mindwave Lotuses...");
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 20; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 20; i++"); throw new Error("LOOP"); }
             const angle = Math.random() * Math.PI * 2;
-            const dist = Math.sqrt(Math.random() * (6250000 - 250000) + 250000);
+            const dist = 500 + Math.random() * 2000;
             this.minerals.push({
                 id: 'lotus-' + Date.now() + '-' + i,
                 x: this.playerShip.x + Math.cos(angle) * dist,
@@ -6692,7 +6590,7 @@ class InterstellarEngine {
         this.applyShipAbilities();
 
         // Check for collections
-        for (const mineral of [...this.minerals]) {
+        for (const mineral of [...this.minerals]) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const mineral of [...this.minerals]"); throw new Error("LOOP"); }
             this.collectMineral(mineral);
         }
 
@@ -6707,9 +6605,9 @@ class InterstellarEngine {
                 this.lastLotusRespawn = now;
                 // Spawn just enough to bring count up to 5
                 const toSpawn = 5 - lotusCount;
-                for (let i = 0; i < toSpawn; i++) {
+                for (let i = 0; i < toSpawn; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < toSpawn; i++"); throw new Error("LOOP"); }
                     const angle = Math.random() * Math.PI * 2;
-                    const dist = Math.sqrt(Math.random() * (1210000 - 90000) + 90000); // Spawn much closer so player sees them
+                    const dist = 300 + Math.random() * 800; // Spawn much closer so player sees them
                     this.minerals.push({
                         id: 'lotus-' + now + '-' + i,
                         x: this.playerShip.x + Math.cos(angle) * dist,
@@ -6794,7 +6692,7 @@ class InterstellarEngine {
             const tractorRadius = collectionRange + 25 * (1 + (this.playerShip.upgrades?.tractor || 0) * 0.5);
             const maxPullVelocity = 40;
 
-            for (const mineral of this.minerals) {
+            for (const mineral of this.minerals) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const mineral of this.minerals"); throw new Error("LOOP"); }
                 if (mineral.type === 'coal' || mineral.type === 'darkmatter' || mineral.type === 'lotus') continue;
 
                 const dx = this.playerShip.x - mineral.x;
@@ -6807,9 +6705,9 @@ class InterstellarEngine {
                     const pullIntensity = 1 - (dist / tractorRadius);
                     const pullVelocity = maxPullVelocity * pullIntensity;
 
-                    const dirX = dx / Math.max(0.1, dist);
-                    const dirY = dy / Math.max(0.1, dist);
-                    const dirZ = dz / Math.max(0.1, dist);
+                    const dirX = dx / dist;
+                    const dirY = dy / dist;
+                    const dirZ = dz / dist;
 
                     mineral.x += dirX * pullVelocity;
                     mineral.y += dirY * pullVelocity;
@@ -6828,7 +6726,7 @@ class InterstellarEngine {
             const magnetRadius = 160;
             const maxMagnetPull = 12;
 
-            for (const mineral of this.minerals) {
+            for (const mineral of this.minerals) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const mineral of this.minerals"); throw new Error("LOOP"); }
                 if (mineral.type === 'coal' || mineral.type === 'darkmatter' || mineral.type === 'lotus') continue;
                 
                 const dx = this.playerShip.x - mineral.x;
@@ -6838,8 +6736,8 @@ class InterstellarEngine {
                 if (dist < magnetRadius && dist > 10) {
                     const intensity = 1 - (dist / magnetRadius);
                     const pull = maxMagnetPull * intensity;
-                    mineral.x += (dx / Math.max(0.1, dist)) * pull;
-                    mineral.y += (dy / Math.max(0.1, dist)) * pull;
+                    mineral.x += (dx / dist) * pull;
+                    mineral.y += (dy / dist) * pull;
                 }
             }
         }
@@ -6926,11 +6824,9 @@ class InterstellarEngine {
         };
 
         // Spawn new mines — minSpawnDist away so player has time to react
-        let mineAttempts = 0;
-        while (this.spaceMines.length < targetMines && mineAttempts < targetMines * 5) {
-            mineAttempts++;
+        while (this.spaceMines.length < targetMines) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT WHILE LOOP:", "this.spaceMines.length < targetMines"); throw new Error("LOOP"); }
             const angle = safeAngle();
-            const dist = Math.sqrt(Math.random() * (spawnRadius*spawnRadius - minSpawnDist*minSpawnDist) + minSpawnDist*minSpawnDist);
+            const dist = minSpawnDist + Math.random() * (spawnRadius - minSpawnDist);
             this.spaceMines.push({
                 x: ship.x + Math.cos(angle) * dist,
                 y: ship.y + Math.sin(angle) * dist,
@@ -6943,11 +6839,9 @@ class InterstellarEngine {
         }
 
         // Spawn new black holes (rarer) — extra far, they're inescapable
-        let bhAttempts = 0;
-        while (this.hazardBlackHoles.length < targetBlackHoles && bhAttempts < targetBlackHoles * 5) {
-            bhAttempts++;
+        while (this.hazardBlackHoles.length < targetBlackHoles) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT WHILE LOOP:", "this.hazardBlackHoles.length < targetBlackHoles"); throw new Error("LOOP"); }
             const angle = safeAngle();
-            const dist = Math.sqrt(Math.random() * (spawnRadius*spawnRadius - (minSpawnDist*1.5)*(minSpawnDist*1.5)) + (minSpawnDist*1.5)*(minSpawnDist*1.5));
+            const dist = minSpawnDist * 1.5 + Math.random() * (spawnRadius - minSpawnDist);
             this.hazardBlackHoles.push({
                 x: ship.x + Math.cos(angle) * dist,
                 y: ship.y + Math.sin(angle) * dist,
@@ -6974,11 +6868,9 @@ class InterstellarEngine {
 
         // Spawn new missile bases
         const missileBaseMinDist = minSpawnDist + 200;
-        let mbAttempts = 0;
-        while (this.missileBases.length < targetBases && mbAttempts < targetBases * 5) {
-            mbAttempts++;
+        while (this.missileBases.length < targetBases) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT WHILE LOOP:", "this.missileBases.length < targetBases"); throw new Error("LOOP"); }
             const angle = safeAngle();
-            const dist = Math.sqrt(Math.random() * (spawnRadius*spawnRadius - missileBaseMinDist*missileBaseMinDist) + missileBaseMinDist*missileBaseMinDist);
+            const dist = missileBaseMinDist + Math.random() * (spawnRadius - missileBaseMinDist);
             this.missileBases.push({
                 x: ship.x + Math.cos(angle) * dist,
                 y: ship.y + Math.sin(angle) * dist,
@@ -6998,7 +6890,7 @@ class InterstellarEngine {
     // Generate accretion disk particles for black hole
     generateBlackHoleRings() {
         const rings = [];
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 60; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 60; i++"); throw new Error("LOOP"); }
             rings.push({
                 angle: Math.random() * Math.PI * 2,
                 radius: 0.8 + Math.random() * 0.7,
@@ -7016,11 +6908,6 @@ class InterstellarEngine {
 
         // If an effect is active, skip collision checks
         if (this.hazardEffect) {
-            return;
-        }
-
-        // Give 3 seconds of invincibility after respawn to prevent immediate re-death loops
-        if (this.playerShip.invulnerableUntil && performance.now() < this.playerShip.invulnerableUntil) {
             return;
         }
 
@@ -7049,7 +6936,7 @@ class InterstellarEngine {
             this.showToast('📡 DISTRESS BEACON DETECTED ON RADAR', 3000);
         }
 
-        for (let i = this.distressBeacons.length - 1; i >= 0; i--) {
+        for (let i = this.distressBeacons.length - 1; i >= 0; i--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = this.distressBeacons.length - 1; i >= 0; i--"); throw new Error("LOOP"); }
             const beacon = this.distressBeacons[i];
             const dist = Math.hypot(beacon.x - ship.x, beacon.y - ship.y);
             if (dist < 150 && beacon.active) {
@@ -7064,7 +6951,7 @@ class InterstellarEngine {
         }
 
         // Check mine collisions
-        for (const mine of this.spaceMines) {
+        for (const mine of this.spaceMines) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const mine of this.spaceMines"); throw new Error("LOOP"); }
             const dist = Math.hypot(mine.x - ship.x, mine.y - ship.y);
             if (dist < mine.size + collisionRadius) {
                 this.triggerSupernovaEffect(mine);
@@ -7073,80 +6960,31 @@ class InterstellarEngine {
             }
         }
 
-        // Check Sun (Galaxy) collisions (Vaporization and Heat)
+        // Check Sun (Galaxy) collisions (Vaporization)
         if (this.galaxies) {
-            for (const sun of this.galaxies) {
+            for (const sun of this.galaxies) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const sun of this.galaxies"); throw new Error("LOOP"); }
                 const scale = sun.size / 42;
-                const innerRadius = 15 * scale; // Instant death zone (solid core)
-                
-                const dx = ship.x - sun.x;
-                const dy = ship.y - sun.y;
-                const dist = Math.hypot(dx, dy);
-                
-                // State-of-the-art ray tracing collision for the 16-point starburst
-                let shipAngle = Math.atan2(dy, dx);
-                let relAngle = shipAngle - (sun.angle || 0);
-                
-                // Normalize to -PI to PI
-                while (relAngle <= -Math.PI) relAngle += Math.PI * 2;
-                while (relAngle > Math.PI) relAngle -= Math.PI * 2;
-                
-                // The pattern repeats every Math.PI / 4 (45 degrees).
-                let localAngle = relAngle % (Math.PI / 4);
-                if (localAngle < 0) localAngle += Math.PI / 4;
-                
-                // Shift so 0 is the long ray, and +/- 22.5 is the short ray
-                if (localAngle > Math.PI / 8) {
-                    localAngle -= Math.PI / 4;
-                }
-                const absAngle = Math.abs(localAngle); // 0 to 22.5 deg
-                
-                let effectiveRadius = 15;
-                
-                // Long ray (peaks at 0, length 42, angular width ~0.26 rad)
-                if (absAngle < 0.26) {
-                    const rLong = 42 - (27 * (absAngle / 0.26));
-                    effectiveRadius = Math.max(effectiveRadius, rLong);
-                }
-                
-                // Short ray (peaks at PI/8, length 32, angular width ~0.13 rad)
-                const distToShort = Math.abs(absAngle - (Math.PI / 8));
-                if (distToShort < 0.13) {
-                    const rShort = 32 - (17 * (distToShort / 0.13));
-                    effectiveRadius = Math.max(effectiveRadius, rShort);
-                }
-                
-                const heatRadius = effectiveRadius * scale;
-                
+                const innerRadius = 30 * scale; // Increased to make the hitbox more generous
+                const dist = Math.hypot(sun.x - ship.x, sun.y - ship.y);
                 if (dist < innerRadius + collisionRadius) {
                     this.showToast('☀️ VAPORIZED BY THE SUN!');
-                    
-                    const safeDist = (42 * scale) + collisionRadius + 200; // Push totally outside
-                    ship.x = sun.x + Math.cos(shipAngle) * safeDist;
-                    ship.y = sun.y + Math.sin(shipAngle) * safeDist;
-
+                    this.triggerSupernovaEffect(sun);
                     this.damagePlayer(Infinity, true); // True vaporization ignores shields
                     return;
-                } else if (dist < heatRadius + collisionRadius) {
-                    // Ship loses health on the exterior rays of the sun
-                    this.damagePlayer(0.5, true); // Heat damage
-                    if (Math.random() < 0.02) {
-                        this.showToast('🔥 HULL OVERHEATING! TOUCHING SOLAR FLARES!', 1000);
-                    }
                 }
             }
         }
 
         // Check black hole collisions
-        for (const bh of this.hazardBlackHoles) {
+        for (const bh of this.hazardBlackHoles) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const bh of this.hazardBlackHoles"); throw new Error("LOOP"); }
             const dist = Math.hypot(bh.x - ship.x, bh.y - ship.y);
             
             // True Gravity Well
             const gravityRadius = bh.size * 5;
             if (dist < gravityRadius && dist > 1) {
                 const pullStrength = (1 - (dist / gravityRadius)) * 0.5;
-                ship.vx += ((bh.x - ship.x) / Math.max(0.1, dist)) * pullStrength;
-                ship.vy += ((bh.y - ship.y) / Math.max(0.1, dist)) * pullStrength;
+                ship.vx += ((bh.x - ship.x) / dist) * pullStrength;
+                ship.vy += ((bh.y - ship.y) / dist) * pullStrength;
             }
 
             if (dist < bh.size * 0.5 + collisionRadius) {
@@ -7157,7 +6995,7 @@ class InterstellarEngine {
         }
 
         // Check missile base collisions (ramming the base)
-        for (const base of this.missileBases) {
+        for (const base of this.missileBases) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const base of this.missileBases"); throw new Error("LOOP"); }
             const dist = Math.hypot(base.x - ship.x, base.y - ship.y);
             if (dist < base.size * 1.5 + collisionRadius) {
                 this.triggerMissileBaseDestructionEffect(base);
@@ -7169,7 +7007,7 @@ class InterstellarEngine {
         // Check planet collisions (deep space background planets)
         // Only check if deep space style is active and planets exist
         if (this.planets && this.planets.length > 0) {
-            for (const planet of this.planets) {
+            for (const planet of this.planets) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const planet of this.planets"); throw new Error("LOOP"); }
                 const effectiveRadius = planet.radius;
 
                 const dist = Math.hypot(planet.x - ship.x, planet.y - ship.y);
@@ -7191,7 +7029,7 @@ class InterstellarEngine {
 
         // === UPDATE MISSILE BASES ===
         const now = Date.now();
-        for (const base of this.missileBases) {
+        for (const base of this.missileBases) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const base of this.missileBases"); throw new Error("LOOP"); }
             const distToPlayer = Math.hypot(base.x - ship.x, base.y - ship.y);
 
             // Update turret angle to track player
@@ -7225,7 +7063,7 @@ class InterstellarEngine {
         }
 
         // === UPDATE HEAT-SEEKING MISSILES ===
-        for (const missile of this.enemyMissiles) {
+        for (const missile of this.enemyMissiles) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const missile of this.enemyMissiles"); throw new Error("LOOP"); }
             const isSpectre = ship.type === 'spectre';
             
             // TARGET ACQUISITION: Check for flare distraction first
@@ -7237,7 +7075,7 @@ class InterstellarEngine {
                 // Find closest flare within distraction radius
                 let closestFlare = null;
                 let minDist = 800; // Flare attraction radius
-                for (const flare of this.decoyFlares) {
+                for (const flare of this.decoyFlares) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const flare of this.decoyFlares"); throw new Error("LOOP"); }
                     const d = Math.hypot(flare.x - missile.x, flare.y - missile.y);
                     if (d < minDist) {
                         minDist = d;
@@ -7306,7 +7144,7 @@ class InterstellarEngine {
         this.enemyMissiles = this.enemyMissiles.filter(m => m.life > 0 && !m.dead);
 
         // === UPDATE DECOY FLARES ===
-        for (let i = this.decoyFlares.length - 1; i >= 0; i--) {
+        for (let i = this.decoyFlares.length - 1; i >= 0; i--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = this.decoyFlares.length - 1; i >= 0; i--"); throw new Error("LOOP"); }
             const flare = this.decoyFlares[i];
             flare.x += flare.vx;
             flare.y += flare.vy;
@@ -7341,7 +7179,7 @@ class InterstellarEngine {
         }
 
         // Fire 2 flares in slightly different directions
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 2; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 2; i++"); throw new Error("LOOP"); }
             const angle = ship.angle + Math.PI + (Math.random() - 0.5) * 1.0; // Behind ship
             const speed = 5 + Math.random() * 5;
             this.decoyFlares.push({
@@ -7358,7 +7196,7 @@ class InterstellarEngine {
         this.showToast(`🔥 Flare Deployed! (${ship.flares} left)`);
 
         // BREAK STALKING: Breaking line of sight/distracting
-        for (const enemy of this.enemyShips) {
+        for (const enemy of this.enemyShips) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const enemy of this.enemyShips"); throw new Error("LOOP"); }
             const d = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
             if (d < 1000) {
                 enemy.isStalking = false; // Temporarily break stalking
@@ -7460,13 +7298,10 @@ class InterstellarEngine {
     toggleSkillTree() {
         let modal = document.getElementById('skillTreeModal');
         if (modal) {
-            const isVisible = modal.style.display === 'none';
-            modal.style.display = isVisible ? 'flex' : 'none';
-            if (this.flightMode) this.gamePaused = isVisible;
+            modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
         } else {
             this.showToast('🚀 Skill Tree Interface Loading...', 2000);
             this._injectSkillTreeUI();
-            if (this.flightMode) this.gamePaused = true;
         }
     }
 
@@ -7503,7 +7338,7 @@ class InterstellarEngine {
                 </div>
                 <div style="text-align: center; margin-top: 20px;">
                     <div style="color: #00ffaa; font-weight: bold; margin-bottom: 10px;">Available Gems: 💎<span id="skillGems">${this.playerGems}</span></div>
-                    <button class="btn-secondary" onclick="app.toggleSkillTree()">Close Terminal</button>
+                    <button class="btn-secondary" onclick="document.getElementById('skillTreeModal').style.display='none'">Close Terminal</button>
                 </div>
             </div>
         `;
@@ -7694,10 +7529,8 @@ class InterstellarEngine {
             this.activeBoss = null;
         }
 
-        // Engine hum is now muted later during the actual explosion phase
-        if (window.gameAudio) {
-            if (window.gameAudio.playPlayerDeath) window.gameAudio.playPlayerDeath();
-        }
+        // Stop engine hum during death sequence
+        gameAudio.stopEngineHum();
 
         // NOVA: Volatile Core (AoE explosion on death)
         if (this.playerShip.type === 'nova') {
@@ -7737,7 +7570,7 @@ class InterstellarEngine {
         };
 
         // Initialize some random hull venting points
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
             this.hazardEffect.ventingPoints.push({
                 offsetX: (Math.random() - 0.5) * 40,
                 offsetY: (Math.random() - 0.5) * 40,
@@ -7816,11 +7649,11 @@ class InterstellarEngine {
             const effectObj = this.hazardEffect;
             // Optimization: Reduce shard count for missile bases to 10
             const shardCount = 10;
-            for (let i = 0; i < shardCount; i++) {
+            for (let i = 0; i < shardCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < shardCount; i++"); throw new Error("LOOP"); }
                 const vertices = [];
                 const vCount = 3 + Math.floor(Math.random() * 4);
                 const avgSize = 10 + Math.random() * 25;
-                for (let v = 0; v < vCount; v++) {
+                for (let v = 0; v < vCount; v++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let v = 0; v < vCount; v++"); throw new Error("LOOP"); }
                     const ang = (v / vCount) * Math.PI * 2;
                     const r = avgSize * (0.6 + Math.random() * 0.8);
                     vertices.push({ x: Math.cos(ang) * r, y: Math.sin(ang) * r });
@@ -7840,7 +7673,7 @@ class InterstellarEngine {
             }
 
             // Init Sludge (Green chemical fire)
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 20; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 20; i++"); throw new Error("LOOP"); }
                 effectObj.sludge.push({
                     x: x + (Math.random() - 0.5) * 50,
                     y: y + (Math.random() - 0.5) * 50,
@@ -7854,7 +7687,7 @@ class InterstellarEngine {
         }
 
         // Initialize Lens Flare Elements
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
             this.hazardEffect.flareElements.push({
                 dist: 0.2 + i * 0.4,
                 size: 10 + i * 40,
@@ -7915,7 +7748,7 @@ class InterstellarEngine {
         // Generate directional plume - smoke/dust shooting "up" from surface
         const dustParticles = [];
         const dustCount = 80 + Math.floor(Math.random() * 40);
-        for (let i = 0; i < dustCount; i++) {
+        for (let i = 0; i < dustCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < dustCount; i++"); throw new Error("LOOP"); }
             // Tighter cone for the plume
             const particleAngle = impactAngle + (Math.random() - 0.5) * Math.PI * 0.4;
             const speed = 2 + Math.random() * 12 + impactSpeed * 0.5;
@@ -7939,7 +7772,7 @@ class InterstellarEngine {
 
         // Debris shards from the ship/planet crust
         const debrisRocks = [];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 20; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 20; i++"); throw new Error("LOOP"); }
             const angle = impactAngle + (Math.random() - 0.5) * Math.PI;
             const speed = 4 + Math.random() * 15;
             debrisRocks.push({
@@ -7960,7 +7793,7 @@ class InterstellarEngine {
         const zFactor = 1 / (1 + Math.abs(planet.z) * 0.0005);
         const effectiveRadius = planet.radius * zFactor;
         const collisionRadius = 30;
-        const safeDist = effectiveRadius + collisionRadius + 200; // Solid 200 unit buffer so player doesn't instantly die again
+        const safeDist = effectiveRadius + collisionRadius + 15; // 15 unit buffer
 
         ship.x = planet.x + Math.cos(impactAngle) * safeDist;
         ship.y = planet.y + Math.sin(impactAngle) * safeDist;
@@ -8002,7 +7835,7 @@ class InterstellarEngine {
         // Balanced count for performance + density
         const total = isMine ? 1000 : Math.min(count, 1500);
 
-        for (let i = 0; i < total; i++) {
+        for (let i = 0; i < total; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < total; i++"); throw new Error("LOOP"); }
             const rand = Math.random();
             let type, x, y, z, vx, vy, vz, size, decay, rollAngle, rollSpeed, torusAngle;
 
@@ -8089,7 +7922,7 @@ class InterstellarEngine {
     // Generate wormhole tunnel particles
     generateTunnelParticles(count) {
         const particles = [];
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < count; i++"); throw new Error("LOOP"); }
             particles.push({
                 angle: Math.random() * Math.PI * 2,
                 z: Math.random() * 1000,
@@ -8171,14 +8004,18 @@ class InterstellarEngine {
                 if (this.playerShip.hullHealth <= 0) {
                     this.playerShip.shield = this.playerShip.maxShield;
                     this.playerShip.hullHealth = this.playerShip.maxHull;
-                    this.playerShip.invulnerableUntil = performance.now() + 3000;
 
                     // RESTORE ENGINE AUDIO AFTER RESPAWN
                     if (window.gameAudio) window.gameAudio.startEngineHum();
 
-                    // Universal respawn means the player stays exactly where they died.
-                    // (Teleportation code removed for all hazard types per user request)
-                    this.showToast('🚀 Systems restored after critical impact.');
+                    // If it wasn't a player_death or blackhole (which handle their own spatial relocation), safely teleport them
+                    if (finishedHazardType !== 'player_death' && finishedHazardType !== 'blackhole') {
+                        const teleportDist = 2000 + Math.random() * 3000;
+                        const teleportAngle = Math.random() * Math.PI * 2;
+                        this.playerShip.x += Math.cos(teleportAngle) * teleportDist;
+                        this.playerShip.y += Math.sin(teleportAngle) * teleportDist;
+                        this.showToast('🚀 Systems restored after critical impact.');
+                    }
                 }
 
                 this.hazardEffect = null;
@@ -8198,15 +8035,10 @@ class InterstellarEngine {
                 this.mouseLastX = undefined;
                 this.mouseLastY = undefined;
 
-                // Ensure velocity is completely zeroed out after any hazard/death sequence
-                this.playerShip.vx = 0;
-                this.playerShip.vy = 0;
-                this.playerShip.vz = 0;
-                this.shipSpeed = 0;
-                this.targetShipSpeed = 0;
-                if (this.flightControls) {
-                    this.flightControls.targetSpeed = 0;
-                    this.flightControls.currentSpeed = 0;
+                if (finishedHazardType === 'blackhole' || finishedHazardType === 'player_death') {
+                    this.playerShip.vx = 0;
+                    this.playerShip.vy = 0;
+                    this.playerShip.vz = 0;
                 }
 
                 // Focus canvas to ensure keyboard events are captured
@@ -8244,7 +8076,7 @@ class InterstellarEngine {
                 gates: (() => {
                     // 3 gates in a straight line ahead
                     const g = [];
-                    for (let i = 0; i < 3; i++) {
+                    for (let i = 0; i < 3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 3; i++"); throw new Error("LOOP"); }
                         g.push({ x: (i + 1) * 800, y: 0, size: 200, reached: false });
                     }
                     return g;
@@ -8264,7 +8096,7 @@ class InterstellarEngine {
                 gates: (() => {
                     // 5 gates in an S-curve
                     const g = [];
-                    for (let i = 0; i < 5; i++) {
+                    for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
                         const angle = (i * Math.PI) / 4;
                         g.push({
                             x: Math.cos(angle) * (600 + i * 400) + i * 300,
@@ -8310,7 +8142,7 @@ class InterstellarEngine {
                 gates: (() => {
                     // 5 small gates in a zigzag
                     const g = [];
-                    for (let i = 0; i < 5; i++) {
+                    for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
                         g.push({
                             x: (i + 1) * 600,
                             y: (i % 2 === 0 ? 1 : -1) * (300 + i * 80),
@@ -8340,7 +8172,7 @@ class InterstellarEngine {
                     // 8 gems scattered in a path
                     const g = [];
                     const types = ['iron', 'copper', 'gold', 'silver', 'titanium', 'ruby', 'emerald', 'diamond'];
-                    for (let i = 0; i < 8; i++) {
+                    for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
                         g.push({
                             x: 300 + i * 330,
                             y: Math.sin(i * 0.8) * 200,
@@ -8389,7 +8221,7 @@ class InterstellarEngine {
                     const dists = [1000, 1200, 800, 1500, 900, 2000, 1100, 1400];
                     const sizes = [200, 160, 140, 180, 120, 250, 130, 200];
                     let heading = 0;
-                    for (let i = 0; i < 8; i++) {
+                    for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
                         heading += angles[i];
                         cx += Math.cos(heading) * dists[i];
                         cy += Math.sin(heading) * dists[i];
@@ -8405,7 +8237,7 @@ class InterstellarEngine {
                     const angles = [0.2, -0.6, 0.9, -0.3, 1.2];
                     const dists = [1000, 1200, 800, 1500, 900];
                     let heading = 0;
-                    for (let i = 0; i < 5; i++) {
+                    for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
                         heading += angles[i];
                         cx += Math.cos(heading) * dists[i];
                         cy += Math.sin(heading) * dists[i];
@@ -8431,14 +8263,14 @@ class InterstellarEngine {
                 keys: [{ key: 'SPACE', action: 'Fire Lasers' }, { key: 'W/A/D', action: 'Flight' }],
                 gates: (() => {
                     const g = [];
-                    for (let i = 0; i < 4; i++) {
+                    for (let i = 0; i < 4; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 4; i++"); throw new Error("LOOP"); }
                         g.push({ x: (i + 1) * 800, y: 0, size: 200, reached: false, targetDestroyed: false });
                     }
                     return g;
                 })(),
                 targets: (() => {
                     const t = [];
-                    for (let i = 0; i < 4; i++) {
+                    for (let i = 0; i < 4; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 4; i++"); throw new Error("LOOP"); }
                         t.push({ x: (i + 1) * 800, y: (Math.random() - 0.5) * 100, type: 'training_mine', id: i });
                     }
                     return t;
@@ -8456,7 +8288,7 @@ class InterstellarEngine {
                 keys: [{ key: 'W/A/D', action: 'Maneuver' }],
                 gates: (() => {
                     const g = [];
-                    for (let i = 0; i < 3; i++) {
+                    for (let i = 0; i < 3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 3; i++"); throw new Error("LOOP"); }
                         g.push({ x: (i + 1) * 1000, y: Math.sin(i) * 300, size: 250, reached: false });
                     }
                     return g;
@@ -8475,7 +8307,7 @@ class InterstellarEngine {
                 keys: [{ key: 'SHIFT', action: 'Boost to escape pull' }],
                 gates: (() => {
                     const g = [];
-                    for (let i = 0; i < 4; i++) {
+                    for (let i = 0; i < 4; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 4; i++"); throw new Error("LOOP"); }
                         g.push({ x: (i + 1) * 1200, y: (i % 2 === 0 ? 400 : -400), size: 180, reached: false });
                     }
                     return g;
@@ -8585,7 +8417,7 @@ class InterstellarEngine {
 
         // --- Check gem collection for lessons with gems ---
         if (lesson.gems && lesson.gems.length > 0) {
-            for (const gem of lesson.gems) {
+            for (const gem of lesson.gems) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const gem of lesson.gems"); throw new Error("LOOP"); }
                 if (gem.collected) continue;
                 const dx = ship.x - gem.x;
                 const dy = ship.y - gem.y;
@@ -8735,14 +8567,14 @@ class InterstellarEngine {
         const gemSummary = [];
         if (gemReward) {
             // Base gems (always awarded)
-            for (const [type, qty] of Object.entries(gemReward.gems)) {
+            for (const [type, qty] of Object.entries(gemReward.gems)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [type, qty] of Object.entries(gemReward.gems)"); throw new Error("LOOP"); }
                 this.playerInventory[type] = (this.playerInventory[type] || 0) + qty;
                 const name = this.mineralTypes[type]?.name || type;
                 gemSummary.push(`+${qty} ${name}`);
             }
             // Medal bonus gems
             if (medal && gemReward.bonus[medal]) {
-                for (const [type, qty] of Object.entries(gemReward.bonus[medal])) {
+                for (const [type, qty] of Object.entries(gemReward.bonus[medal])) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [type, qty] of Object.entries(gemReward.bonus[medal])"); throw new Error("LOOP"); }
                     this.playerInventory[type] = (this.playerInventory[type] || 0) + qty;
                     const name = this.mineralTypes[type]?.name || type;
                     gemSummary.push(`+${qty} ${name} ⭐`);
@@ -9011,7 +8843,7 @@ class InterstellarEngine {
         const progress = this.trainingProgress;
         
         // Auto pause
-        this.gamePaused = true;
+        if (window.game) window.game.gamePaused = true;
 
         let html = `
             <div id="flightAcademyModal" class="modal-overlay active" style="z-index: 10000; display: flex;">
@@ -9153,7 +8985,7 @@ class InterstellarEngine {
             // Directional chevrons on current gate (4 arrows pointing inward)
             if (isCurrent) {
                 ctx.globalAlpha = 0.5 + Math.sin(time * 3) * 0.3;
-                for (let a = 0; a < 4; a++) {
+                for (let a = 0; a < 4; a++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let a = 0; a < 4; a++"); throw new Error("LOOP"); }
                     const chevAngle = (a * Math.PI / 2) + time * 0.3;
                     ctx.save();
                     ctx.rotate(chevAngle);
@@ -9291,7 +9123,7 @@ class InterstellarEngine {
             ctx.font = 'bold 16px "Exo 2", monospace';
             ctx.fillStyle = '#ff5555';
             ctx.textAlign = 'center';
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 4; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 4; i++"); throw new Error("LOOP"); }
                 ctx.save();
                 ctx.rotate(time * 0.5 + i * Math.PI / 2);
                 ctx.translate(0, -r - 10);
@@ -9329,7 +9161,7 @@ class InterstellarEngine {
                     ctx.strokeStyle = '#aa00ff';
                     ctx.lineWidth = 2;
                     ctx.globalAlpha = 0.6;
-                    for (let i = 0; i < 5; i++) {
+                    for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
                         ctx.beginPath();
                         ctx.arc(0, 0, h.radius * (0.2 + (i/5) + Math.sin(time*2)/10), time + i, time + i + Math.PI);
                         ctx.stroke();
@@ -9642,7 +9474,7 @@ class InterstellarEngine {
         if (lesson.id === 'collection' && this.trainingGemsCollected < (lesson.collectTarget || lesson.gems.length)) {
             let nearestGem = null;
             let nearestDist = Infinity;
-            for (const gem of lesson.gems) {
+            for (const gem of lesson.gems) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const gem of lesson.gems"); throw new Error("LOOP"); }
                 if (gem.collected) continue;
                 const d = Math.hypot(gem.x - this.playerShip.x, gem.y - this.playerShip.y);
                 if (d < nearestDist) { nearestDist = d; nearestGem = gem; }
@@ -9766,9 +9598,9 @@ class InterstellarEngine {
                 // Pull in debris
                 if (!effect.hasGeneratedDebris) {
                     effect.hasGeneratedDebris = true;
-                    for (let i = 0; i < 40; i++) {
+                    for (let i = 0; i < 40; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 40; i++"); throw new Error("LOOP"); }
                         const ang = Math.random() * Math.PI * 2;
-                        const dist = Math.sqrt(Math.random() * (640000 - 90000) + 90000);
+                        const dist = 300 + Math.random() * 500;
                         effect.debris.push({
                             x: Math.cos(ang) * dist,
                             y: Math.sin(ang) * dist,
@@ -9809,7 +9641,7 @@ class InterstellarEngine {
                     }
                     else {
                         // Initialize light streaks for mine explosion - Optimization: reduce spear count
-                        for (let i = 0; i < 50; i++) {
+                        for (let i = 0; i < 50; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 50; i++"); throw new Error("LOOP"); }
                             effect.lightSpears.push({
                                 angle: Math.random() * Math.PI * 2,
                                 len: 2500 + Math.random() * 2000,
@@ -9893,7 +9725,7 @@ class InterstellarEngine {
 
         // 3. CONTINUOUS UPDATES (Physics for all active elements)
         // Shards
-        for (const shard of (effect.shards || [])) {
+        for (const shard of (effect.shards || [])) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const shard of (effect.shards || [])"); throw new Error("LOOP"); }
             // Updated to support 'fire' phase for initial vibration/meltdown
             if (effect.phase === 'fire' || effect.phase === 'explosion' || effect.phase === 'eruption') {
                 shard.offsetX += shard.vx;
@@ -9904,7 +9736,7 @@ class InterstellarEngine {
         }
 
         // Sludge
-        for (let i = effect.sludge.length - 1; i >= 0; i--) {
+        for (let i = effect.sludge.length - 1; i >= 0; i--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = effect.sludge.length - 1; i >= 0; i--"); throw new Error("LOOP"); }
             const s = effect.sludge[i];
             s.x += s.vx; s.y += s.vy;
             s.life -= s.decay;
@@ -9912,7 +9744,7 @@ class InterstellarEngine {
         }
 
         // Fires
-        for (let i = effect.fires.length - 1; i >= 0; i--) {
+        for (let i = effect.fires.length - 1; i >= 0; i--) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = effect.fires.length - 1; i >= 0; i--"); throw new Error("LOOP"); }
             const f = effect.fires[i];
             f.life -= f.decay;
             if (f.life <= 0) effect.fires.splice(i, 1);
@@ -9922,7 +9754,7 @@ class InterstellarEngine {
         const flashStart = isBase ? 0.50 : 0.20; // Detonation starts at mushroom phase (mine) or explosion phase (base)
         const expProgress = progress > flashStart ? (progress - flashStart) / (1.0 - flashStart) : 0;
 
-        for (const p of effect.particles) {
+        for (const p of effect.particles) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const p of effect.particles"); throw new Error("LOOP"); }
             // 4a. RADIAL PUSH (Only during ignition peak)
             if (effect.phase === 'explosion' && !p.hasBeenPushed) {
                 const dist = Math.hypot(p.x, p.y, p.z);
@@ -9953,8 +9785,8 @@ class InterstellarEngine {
                 // Centripetal component to keep it tight
                 const pullIn = 0.005 * dist;
 
-                p.vx += Math.cos(ang) * swirlForce * (150 / (dist + 10)) - (p.x / Math.max(0.1, dist)) * pullIn;
-                p.vy += Math.sin(ang) * swirlForce * (150 / (dist + 10)) - (p.y / Math.max(0.1, dist)) * pullIn;
+                p.vx += Math.cos(ang) * swirlForce * (150 / (dist + 10)) - (p.x / dist) * pullIn;
+                p.vy += Math.sin(ang) * swirlForce * (150 / (dist + 10)) - (p.y / dist) * pullIn;
 
                 // Quantum Jitter
                 if (Math.random() > 0.8) {
@@ -9995,7 +9827,7 @@ class InterstellarEngine {
 
 
         // 5. MISSILE AND DEBRIS UPDATES (Moved outside particle loop for performance and correctness)
-        for (const m of effect.chaoticMissiles) {
+        for (const m of effect.chaoticMissiles) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const m of effect.chaoticMissiles"); throw new Error("LOOP"); }
             m.x += m.vx;
             m.y += m.vy;
             m.vx += Math.cos(m.angle) * 0.5; // Erratic propulsion
@@ -10012,7 +9844,7 @@ class InterstellarEngine {
             if (m.life < 0 && !m.exploded) {
                 m.exploded = true;
                 // Add tiny debris bits
-                for (let i = 0; i < 3; i++) {
+                for (let i = 0; i < 3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 3; i++"); throw new Error("LOOP"); }
                     const dAngle = Math.random() * Math.PI * 2;
                     const dSpeed = 2 + Math.random() * 3;
                     effect.debris.push({
@@ -10027,7 +9859,7 @@ class InterstellarEngine {
         }
 
         // 6. DEBRIS PHYSICS
-        for (const d of effect.debris) {
+        for (const d of effect.debris) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const d of effect.debris"); throw new Error("LOOP"); }
             d.x += d.vx; d.y += d.vy;
             d.vx *= 0.98; d.vy *= 0.98;
             d.rotation += (d.rotSpd || 0.1);
@@ -10036,14 +9868,14 @@ class InterstellarEngine {
             if (effect.phase === 'singularity') {
                 const dist = Math.hypot(d.x, d.y);
                 if (dist > 10) {
-                    d.vx -= (d.x / Math.max(0.1, dist)) * 2;
-                    d.vy -= (d.y / Math.max(0.1, dist)) * 2;
+                    d.vx -= (d.x / dist) * 2;
+                    d.vy -= (d.y / dist) * 2;
                 }
             }
         }
 
         // 7. LIGHT SPEAR UPDATES
-        for (const s of effect.lightSpears) {
+        for (const s of effect.lightSpears) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const s of effect.lightSpears"); throw new Error("LOOP"); }
             // Growth and Decay
             if (effect.phase === 'explosion') {
                 s.len += s.v * 0.5;
@@ -10120,7 +9952,7 @@ class InterstellarEngine {
         }
 
         // Update tunnel particles (spiral motion)
-        for (const p of effect.tunnelParticles) {
+        for (const p of effect.tunnelParticles) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const p of effect.tunnelParticles"); throw new Error("LOOP"); }
             p.z -= p.speed;
             p.angle += 0.02 + (1000 - p.z) * 0.00005;
             if (p.z < -500) {
@@ -10152,7 +9984,7 @@ class InterstellarEngine {
         }
 
         // Update dust particles
-        for (const dust of (effect.dustParticles || [])) {
+        for (const dust of (effect.dustParticles || [])) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const dust of (effect.dustParticles || [])"); throw new Error("LOOP"); }
             dust.x += dust.vx;
             dust.y += dust.vy;
             dust.vx *= 0.97;
@@ -10161,7 +9993,7 @@ class InterstellarEngine {
         }
 
         // Update debris rocks
-        for (const rock of (effect.debrisRocks || [])) {
+        for (const rock of (effect.debrisRocks || [])) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const rock of (effect.debrisRocks || [])"); throw new Error("LOOP"); }
             rock.x += rock.vx;
             rock.y += rock.vy;
             rock.vx *= 0.98;
@@ -10184,20 +10016,6 @@ class InterstellarEngine {
             effect.cameraShake = 20 + Math.sin(now * 0.03) * 10;
             effect.flashIntensity = Math.sin((progress - 0.2) / 0.3 * Math.PI) * 0.5; // Pulsing red
         } else if (progress < 0.7) {
-            if (effect.phase !== 'explosion') {
-                if (window.gameAudio) {
-                    if (window.gameAudio.playPlayerExplosion) window.gameAudio.playPlayerExplosion();
-                    else window.gameAudio.playExplosionBig();
-                    // Mute hum and engines momentarily (2.5 seconds) following the explosion
-                    window.gameAudio.muteHumTemporarily(2500); 
-                }
-                // Massive expanding energy sphere
-                this.activePulsePing = {
-                    startTime: now,
-                    duration: 1500,
-                    maxRadius: 2000
-                };
-            }
             effect.phase = 'explosion';
             effect.cameraShake = 100 * (1 - (progress - 0.5) / 0.2);
             effect.flashIntensity = 1.0; // Brief white flash
@@ -10245,18 +10063,14 @@ class InterstellarEngine {
             this.shipPitch = 0;
             this.shipRoll = 0;
 
-            // Remain in the same location upon respawn
-            // (Teleportation code removed as per user request)
+            // Teleport to a safe location (away from hazards)
+            const teleportDist = 2000 + Math.random() * 3000;
+            const teleportAngle = Math.random() * Math.PI * 2;
+            this.playerShip.x += Math.cos(teleportAngle) * teleportDist;
+            this.playerShip.y += Math.sin(teleportAngle) * teleportDist;
             this.playerShip.vx = 0;
             this.playerShip.vy = 0;
-            this.playerShip.ax = 0;
-            this.playerShip.ay = 0;
-            this.shipSpeed = 0;
-            this.targetShipSpeed = 0;
-            if (this.flightControls) {
-                this.flightControls.targetSpeed = 0;
-                this.flightControls.currentSpeed = 0;
-            }
+
             this.showToast('🚀 Respawned! Shields restored.');
             effect.hasRespawned = true;
 
@@ -10426,10 +10240,10 @@ class InterstellarEngine {
         // Helper to check if player owns an item
         const ownsItem = (id) => inv.includes(id) || eq.engine === id || eq.shield === id || eq.radar === id || eq.wings === id || eq.weapons.includes(id);
 
-        for (const [category, items] of Object.entries(this.equipmentDB)) {
+        for (const [category, items] of Object.entries(this.equipmentDB)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [category, items] of Object.entries(this.equipmentDB)"); throw new Error("LOOP"); }
             html += `<div style="margin-top: 10px; font-weight: bold; color: #5c7a8a; border-bottom: 1px solid #5c7a8a; padding-bottom: 2px; text-transform: uppercase;">${category}</div>`;
             
-            for (const [id, def] of Object.entries(items)) {
+            for (const [id, def] of Object.entries(items)) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const [id, def] of Object.entries(items)"); throw new Error("LOOP"); }
                 const isOwned = ownsItem(id);
                 let isEquipped = false;
                 let equippedSlot = -1;
@@ -10832,8 +10646,7 @@ class InterstellarEngine {
         if (this.showWelcomeOverlay) {
             const w = this.canvas.width;
             const h = this.canvas.height;
-            const cardH = 360;
-            const cy = (h - cardH) / 2;
+            const cy = h / 2;
             const btnW = 220;
             const btnH = 42;
             const btnX = w / 2 - btnW / 2;
@@ -11098,9 +10911,9 @@ class InterstellarEngine {
 
         // Check if clicking on a connection line
         const lineHitDist = 5 / this.camera.zoom; // 5 pixel tolerance
-        for (let i = 0; i < this.stars.length; i++) {
+        for (let i = 0; i < this.stars.length; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < this.stars.length; i++"); throw new Error("LOOP"); }
             const s1 = this.stars[i];
-            for (let j = i + 1; j < this.stars.length; j++) {
+            for (let j = i + 1; j < this.stars.length; j++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let j = i + 1; j < this.stars.length; j++"); throw new Error("LOOP"); }
                 const s2 = this.stars[j];
 
                 // Only check connected stars
@@ -11144,9 +10957,6 @@ class InterstellarEngine {
 
         // Clamp zoom
         this.camera.zoom = Math.max(0.1, Math.min(6, this.camera.zoom));
-        if (!this.flightMode) {
-            this.draw();
-        }
     }
 
     /* --- Star Creation --- */
@@ -11301,11 +11111,10 @@ class InterstellarEngine {
     adjustZoom(delta) {
         this.camera.zoom = Math.max(0.1, Math.min(6, this.camera.zoom + delta));
         // Re-center camera on ship in flight mode to prevent drift
+        // Re-center camera on ship in flight mode to prevent drift
         if (this.flightMode && this.playerShip) {
             this.camera.x = -this.playerShip.x * this.camera.zoom;
             this.camera.y = -this.playerShip.y * this.camera.zoom;
-        } else {
-            this.draw();
         }
     }
 
@@ -11318,7 +11127,7 @@ class InterstellarEngine {
         const sortedIds = group.map(s => String(s.id)).sort((a, b) => a.localeCompare(b));
         let seed = 0;
         sortedIds.forEach((id, i) => {
-            for (let j = 0; j < id.length; j++) {
+            for (let j = 0; j < id.length; j++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let j = 0; j < id.length; j++"); throw new Error("LOOP"); }
                 seed += id.charCodeAt(j) * (j + 1) * (i + 1);
             }
         });
@@ -11445,15 +11254,34 @@ class InterstellarEngine {
 
             // 2. Compose Layers based on active styles
             // Order matters for layering (Deep Space -> Nebula -> Alien -> Cyber)
-            const orderedStyles = ['deep-space', 'nebula', 'alien', 'cyber'];
-            const activeSet = new Set(this.activeStyles);
-            this.activeStyles.clear();
-
-            orderedStyles.forEach(style => {
-                if (activeSet.has(style)) {
-                    this.toggleBgStyle(style);
+            if (this.activeStyles.has('deep-space')) {
+                try {
+                    this.generateDeepSpaceStyle();
+                } catch (e) {
+                    console.error('[BG Error] generateDeepSpaceStyle failed:', e);
                 }
-            });
+            }
+            if (this.activeStyles.has('nebula')) {
+                try {
+                    this.generateNebulaStyle();
+                } catch (e) {
+                    console.error('[BG Error] generateNebulaStyle failed:', e);
+                }
+            }
+            if (this.activeStyles.has('alien')) {
+                try {
+                    this.generateAlienStyle();
+                } catch (e) {
+                    console.error('[BG Error] generateAlienStyle failed:', e);
+                }
+            }
+            if (this.activeStyles.has('cyber')) {
+                try {
+                    this.generateCyberStyle();
+                } catch (e) {
+                    console.error('[BG Error] generateCyberStyle failed:', e);
+                }
+            }
         } catch (e) {
             console.error('[BG Error] generateBackground failed critically:', e);
             this.showToast('Background generation failed - using minimal mode');
@@ -11486,13 +11314,13 @@ class InterstellarEngine {
         const spreadX = w * 4;
         const spreadY = h * 4;
 
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < count; i++"); throw new Error("LOOP"); }
             let x, y, vx = 0, vy = 0;
             const depthLayer = 0.2 + Math.random() * 1.0;
 
             if (this.bgWarpMode) {
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.sqrt(Math.random()) * Math.max(w, h) * 0.8;
+                const dist = Math.random() * Math.max(w, h) * 0.8;
                 x = centerX + Math.cos(angle) * dist;
                 y = centerY + Math.sin(angle) * dist;
                 const speed = (6 + Math.random() * 14) * depthLayer;
@@ -11555,23 +11383,23 @@ class InterstellarEngine {
         const zRange = 3000; // Increased Z-axis depth range
 
         // Define zoom tiers: close, medium, far
-        // Close tier: objects within 4000px of center (visible at max zoom)
-        // Medium tier: objects 4000-20000px from center (visible at default zoom)
-        // Far tier: objects 20000-60000px from center (visible when zoomed out)
+        // Close tier: objects within 400px of center (visible at max zoom ~5x)
+        // Medium tier: objects 400-2000px from center (visible at default zoom ~1x)
+        // Far tier: objects 2000-6000px from center (visible when zoomed out ~0.1x)
 
         // 1. Background Stars - distributed across all tiers
-        const starCount = 3000; // Increased to cover larger area
-        for (let i = 0; i < starCount; i++) {
+        const starCount = 600; // +20%
+        for (let i = 0; i < starCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < starCount; i++"); throw new Error("LOOP"); }
             const tier = Math.random();
             let dist, size;
             if (tier < 0.2) { // Close tier - 20%
-                dist = Math.sqrt(Math.random()) * 4000;
+                dist = Math.random() * 400;
                 size = 0.5 + Math.random() * 1.0;
             } else if (tier < 0.5) { // Medium tier - 30%
-                dist = Math.sqrt(Math.random() * (24000*24000 - 4000*4000) + 4000*4000);
+                dist = 400 + Math.random() * 1600;
                 size = 1.0 + Math.random() * 1.5;
             } else { // Far tier - 50%
-                dist = Math.sqrt(Math.random() * (80000*80000 - 20000*20000) + 20000*20000);
+                dist = 2000 + Math.random() * 4000;
                 size = 1.5 + Math.random() * 2.0;
             }
             const angle = Math.random() * Math.PI * 2;
@@ -11584,17 +11412,15 @@ class InterstellarEngine {
             });
         }
 
-        // 2. Galaxies (Suns) - drastically reduced to stop spamming the map with instant-death fake planets
+        // 2. Galaxies - spread across the playable area so they are visible when zooming out
         const galaxyConfigs = [
-            { count: 1, minDist: 200, maxDist: 1000, minSize: 100, maxSize: 150 }, // Point-blank
-            { count: 4, minDist: 1000, maxDist: 10000, minSize: 80, maxSize: 250 },
-            { count: 8, minDist: 10000, maxDist: 40000, minSize: 200, maxSize: 500 },
-            { count: 12, minDist: 40000, maxDist: 80000, minSize: 400, maxSize: 1000 }
+            { count: 15, minDist: 1000, maxDist: 10000, minSize: 100, maxSize: 300 },
+            { count: 20, minDist: 10000, maxDist: 25000, minSize: 200, maxSize: 600 },
+            { count: 25, minDist: 25000, maxDist: 45000, minSize: 400, maxSize: 1000 }
         ];
         galaxyConfigs.forEach(cfg => {
-            for (let i = 0; i < cfg.count; i++) {
-                // Fix radial clustering: uniformly distribute in an annulus
-                const dist = Math.sqrt(Math.random() * (cfg.maxDist * cfg.maxDist - cfg.minDist * cfg.minDist) + cfg.minDist * cfg.minDist);
+            for (let i = 0; i < cfg.count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < cfg.count; i++"); throw new Error("LOOP"); }
+                const dist = cfg.minDist + Math.random() * (cfg.maxDist - cfg.minDist);
                 const angle = Math.random() * Math.PI * 2;
                 this.galaxies.push({
                     x: Math.cos(angle) * dist,
@@ -11603,49 +11429,41 @@ class InterstellarEngine {
                     // Expanded color palette
                     color: ['#ff0055', '#5500ff', '#00aaff', '#ff00aa', '#00ff88', '#ffaa00', '#aa00ff', '#ffffff'][Math.floor(Math.random() * 8)],
                     angle: Math.random() * Math.PI * 2,
-                    size: cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize),
-                    useTribal: Math.random() > 0.5
+                    size: cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize)
                 });
             }
         });
 
-        // 3. Black Holes - spread out, drastically reduced
+        // 3. Black Holes - spread out
         const blackHoleConfigs = [
-            { count: 5, minDist: 1000, maxDist: 10000, minSize: 30, maxSize: 60 },
-            { count: 10, minDist: 10000, maxDist: 30000, minSize: 60, maxSize: 120 },
-            { count: 15, minDist: 30000, maxDist: 80000, minSize: 120, maxSize: 250 }
+            { minDist: 1000, maxDist: 5000, minSize: 30, maxSize: 60 },
+            { minDist: 5000, maxDist: 15000, minSize: 60, maxSize: 120 },
+            { minDist: 15000, maxDist: 40000, minSize: 120, maxSize: 250 }
         ];
         blackHoleConfigs.forEach(cfg => {
-            for (let i = 0; i < cfg.count; i++) {
-                const dist = Math.sqrt(Math.random() * (cfg.maxDist * cfg.maxDist - cfg.minDist * cfg.minDist) + cfg.minDist * cfg.minDist);
+            const dist = cfg.minDist + Math.random() * (cfg.maxDist - cfg.minDist);
             const angle = Math.random() * Math.PI * 2;
             this.blackHoles.push({
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist,
                 z: (Math.random() * zRange) - zRange / 2,
                 size: cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize)
-                });
-            }
+            });
         });
 
         // 4. Nebulae - 18 total (+50%), distributed across tiers
         const nebulaConfigs = [
-            { count: 30, minDist: 500, maxDist: 5000, minSize: 150, maxSize: 350 },
-            { count: 60, minDist: 5000, maxDist: 25000, minSize: 350, maxSize: 700 },
-            { count: 110, minDist: 25000, maxDist: 80000, minSize: 600, maxSize: 1200 }
+            { count: 4, minDist: 50, maxDist: 500, minSize: 150, maxSize: 350 },
+            { count: 6, minDist: 500, maxDist: 2500, minSize: 350, maxSize: 700 },
+            { count: 8, minDist: 2500, maxDist: 6000, minSize: 600, maxSize: 1200 }
         ];
         nebulaConfigs.forEach(cfg => {
-            for (let i = 0; i < cfg.count; i++) {
-                // Place on a 3x3 grid spreading across the 15000 wrap bounds to ensure exact spacing
-                const row = Math.floor(i / 3);
-                const col = i % 3;
-                const cellW = 15000 / 3;
-                const x = (col * cellW) + (Math.random() * cellW * 0.5);
-                const y = (row * cellW) + (Math.random() * cellW * 0.5);
-                
+            for (let i = 0; i < cfg.count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < cfg.count; i++"); throw new Error("LOOP"); }
+                const dist = cfg.minDist + Math.random() * (cfg.maxDist - cfg.minDist);
+                const angle = Math.random() * Math.PI * 2;
                 this.nebulae.push({
-                    x: x,
-                    y: y,
+                    x: Math.cos(angle) * dist,
+                    y: Math.sin(angle) * dist,
                     z: (Math.random() * zRange) - zRange / 2,
                     size: cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize),
                     color: ['#4400cc', '#0033aa', '#cc0066', '#330066', '#003366', '#660033'][Math.floor(Math.random() * 6)],
@@ -11665,9 +11483,9 @@ class InterstellarEngine {
             { name: 'ocean', colors: ['#0077BE', '#005A87', '#003F5C'], hasAtmosphere: true }
         ];
         const planetConfigs = [
-            { count: 150, minDist: 0, maxDist: 10000, minRadius: 40, maxRadius: 120 },
-            { count: 300, minDist: 10000, maxDist: 30000, minRadius: 80, maxRadius: 250 },
-            { count: 600, minDist: 30000, maxDist: 80000, minRadius: 150, maxRadius: 400 }
+            { count: 30, minDist: 500, maxDist: 5000, minRadius: 20, maxRadius: 50 },
+            { count: 60, minDist: 5000, maxDist: 15000, minRadius: 40, maxRadius: 100 },
+            { count: 120, minDist: 15000, maxDist: 45000, minRadius: 80, maxRadius: 180 }
         ];
 
         // Helper to perturb colors for variety
@@ -11681,7 +11499,7 @@ class InterstellarEngine {
             g = Math.min(255, Math.max(0, g + (Math.random() - 0.5) * amount * 2));
             b = Math.min(255, Math.max(0, b + (Math.random() - 0.5) * amount * 2));
 
-            return `#${(r | 0).toString(16).padStart(2, '0')}${(g | 0).toString(16).padStart(2, '0')}${(b | 0).toString(16).padStart(2, '0')}`;
+            return `#${(r | 0).toString(16).padStart(2, '0')}${(g | 0).toString(16).padStart(2, '0')}${(b | 0).toString(16).padStart(2, '0')} `;
         };
 
         // Helper to check if a new planet overlaps with existing ones
@@ -11689,7 +11507,7 @@ class InterstellarEngine {
             const minSpacing = 800; // Increased spacing for "X, Y" separation (Visual Clutter reduction)
             const minZSpacing = 1000; // Z-axis separation
 
-            for (const existing of this.planets) {
+            for (const existing of this.planets) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const existing of this.planets"); throw new Error("LOOP"); }
                 const dx = x - existing.x;
                 const dy = y - existing.y;
                 const dz = z - existing.z;
@@ -11718,29 +11536,23 @@ class InterstellarEngine {
 
         planetConfigs.forEach((cfg, tierIndex) => {
             const zTier = zDepthTiers[tierIndex];
-            const count = cfg.count; // Restored count so they actually appear
 
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < cfg.count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < cfg.count; i++"); throw new Error("LOOP"); }
                 const type = planetTypes[Math.floor(Math.random() * planetTypes.length)];
                 const hasRings = Math.random() > 0.5;
-                let sizeRandom = Math.random();
-                let radius = cfg.minRadius + sizeRandom * (cfg.maxRadius - cfg.minRadius);
+                const radius = cfg.minRadius + Math.random() * (cfg.maxRadius - cfg.minRadius);
 
-                if (sizeRandom <= 0.25) {
-                    radius *= 3;
-                } else if (sizeRandom <= 0.50) {
-                    radius *= 2;
-                }
-
+                // Try to find a non-overlapping position (max 50 attempts)
                 let x, y, z, attempts = 0;
                 do {
-                    const dist = Math.sqrt(Math.random() * (cfg.maxDist * cfg.maxDist - cfg.minDist * cfg.minDist) + cfg.minDist * cfg.minDist);
+                    const dist = cfg.minDist + Math.random() * (cfg.maxDist - cfg.minDist);
                     const angle = Math.random() * Math.PI * 2;
                     x = Math.cos(angle) * dist;
                     y = Math.sin(angle) * dist;
+                    // Assign z-depth based on tier for visual depth separation
                     z = zTier.minZ + Math.random() * (zTier.maxZ - zTier.minZ);
                     attempts++;
-                } while (!checkPlanetSpacing(x, y, z, radius) && attempts < 20);
+                } while (!checkPlanetSpacing(x, y, z, radius) && attempts < 50);
 
                 this.planets.push({
                     x: x,
@@ -11768,9 +11580,9 @@ class InterstellarEngine {
         // 6. Moving Cosmic Stars (shooting stars / drifting stars)
         this.shootingStars = [];
         const shootingStarCount = 15;
-        for (let i = 0; i < shootingStarCount; i++) {
+        for (let i = 0; i < shootingStarCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < shootingStarCount; i++"); throw new Error("LOOP"); }
             const angle = Math.random() * Math.PI * 2;
-            const dist = Math.sqrt(Math.random() * (30250000 - 250000) + 250000);
+            const dist = 500 + Math.random() * 5000;
             this.shootingStars.push({
                 x: Math.cos(angle) * dist,
                 y: Math.sin(angle) * dist,
@@ -11788,45 +11600,42 @@ class InterstellarEngine {
     generateNebulaStyle() {
         const zRange = 3000;
 
-        // Vastly increased counts to fill 80,000 world without modulo wrapping
-        // Perfectly spaced grid for modulo wrapping (ensures no overlapping and perfect visibility)
+        // Nebulae distributed across zoom tiers (30 total, +50%)
         const nebulaConfigs = [
-            { count: 9, maxDist: 10000, minSize: 800, maxSize: 1600 }
+            { count: 6, minDist: 50, maxDist: 500, minSize: 100, maxSize: 300 },    // Close
+            { count: 10, minDist: 500, maxDist: 2500, minSize: 300, maxSize: 800 }, // Medium
+            { count: 14, minDist: 2500, maxDist: 6000, minSize: 700, maxSize: 1500 } // Far
         ];
+        const colors = ['#ff0055', '#ffaa00', '#00ffaa', '#0055ff', '#ff00ff', '#00ffff', '#ff5500', '#55ff00'];
+
         nebulaConfigs.forEach(cfg => {
-            for (let i = 0; i < cfg.count; i++) {
-                // Place on a 3x3 grid spreading across the 15000 wrap bounds to ensure exact spacing
-                const row = Math.floor(i / 3);
-                const col = i % 3;
-                const cellW = 15000 / 3;
-                const x = (col * cellW) + (Math.random() * cellW * 0.5);
-                const y = (row * cellW) + (Math.random() * cellW * 0.5);
-                
+            for (let i = 0; i < cfg.count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < cfg.count; i++"); throw new Error("LOOP"); }
+                const dist = cfg.minDist + Math.random() * (cfg.maxDist - cfg.minDist);
+                const angle = Math.random() * Math.PI * 2;
                 this.nebulae.push({
-                    x: x,
-                    y: y,
+                    x: Math.cos(angle) * dist,
+                    y: Math.sin(angle) * dist,
                     z: (Math.random() * zRange) - zRange / 2,
                     size: cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize),
-                    // Use dark, moody colors matching deep space
-                    color: ['#4400cc', '#0033aa', '#cc0066', '#330066', '#003366', '#660033'][Math.floor(Math.random() * 6)],
-                    alpha: 0.15 + Math.random() * 0.3
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 0.25 + Math.random() * 0.35
                 });
             }
         });
 
         // Background stars distributed across tiers (1000 total, +25%)
-        const starCount = 10000;
-        for (let i = 0; i < starCount; i++) {
+        const starCount = 1000;
+        for (let i = 0; i < starCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < starCount; i++"); throw new Error("LOOP"); }
             const tier = Math.random();
             let dist, size;
             if (tier < 0.2) {
-                dist = Math.sqrt(Math.random()) * 5000;
+                dist = Math.random() * 500;
                 size = 0.5 + Math.random() * 1.0;
             } else if (tier < 0.5) {
-                dist = Math.sqrt(Math.random() * (25000*25000 - 5000*5000) + 5000*5000);
+                dist = 500 + Math.random() * 2000;
                 size = 1.0 + Math.random() * 1.5;
             } else {
-                dist = Math.sqrt(Math.random() * (80000*80000 - 25000*25000) + 25000*25000);
+                dist = 2500 + Math.random() * 3500;
                 size = 1.5 + Math.random() * 2.5;
             }
             const angle = Math.random() * Math.PI * 2;
@@ -11852,17 +11661,17 @@ class InterstellarEngine {
 
         // Background stars distributed across zoom tiers (1800 total, +20%)
         const starCount = 1800;
-        for (let i = 0; i < starCount; i++) {
+        for (let i = 0; i < starCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < starCount; i++"); throw new Error("LOOP"); }
             const tier = Math.random();
             let dist, size;
             if (tier < 0.2) {
-                dist = Math.sqrt(Math.random()) * 5000;
+                dist = Math.random() * 500;
                 size = 0.3 + Math.random() * 0.6;
             } else if (tier < 0.5) {
-                dist = Math.sqrt(Math.random() * (25000*25000 - 5000*5000) + 5000*5000);
+                dist = 500 + Math.random() * 2000;
                 size = 0.5 + Math.random() * 0.8;
             } else {
-                dist = Math.sqrt(Math.random() * (80000*80000 - 25000*25000) + 25000*25000);
+                dist = 2500 + Math.random() * 3500;
                 size = 0.7 + Math.random() * 1.2;
             }
             const angle = Math.random() * Math.PI * 2;
@@ -11897,12 +11706,12 @@ class InterstellarEngine {
         ];
 
         craftConfigs.forEach(cfg => {
-            for (let i = 0; i < cfg.count; i++) {
+            for (let i = 0; i < cfg.count; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < cfg.count; i++"); throw new Error("LOOP"); }
                 const shipClass = pool[Math.floor(Math.random() * pool.length)];
                 const hue = Math.random() * 360;
                 const size = shipClass.baseSize * cfg.sizeScale * (0.7 + Math.random() * 0.6);
                 const isScout = shipClass.name === 'scout';
-                const dist = Math.sqrt(Math.random() * (cfg.maxDist * cfg.maxDist - cfg.minDist * cfg.minDist) + cfg.minDist * cfg.minDist);
+                const dist = cfg.minDist + Math.random() * (cfg.maxDist - cfg.minDist);
                 const angle = Math.random() * Math.PI * 2;
 
                 this.spacecraft.push({
@@ -12027,7 +11836,7 @@ class InterstellarEngine {
         if (slider) slider.value = this.matrixSpeedMultiplier;
         if (sliderValue) sliderValue.textContent = this.matrixSpeedMultiplier.toFixed(1) + 'x';
 
-        for (let i = 0; i < columns; i++) {
+        for (let i = 0; i < columns; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < columns; i++"); throw new Error("LOOP"); }
             const depth = Math.random(); // 0 to 1
             const size = Math.floor(10 + depth * 14); // 10px to 24px
             // Apply speed multiplier with per-stream variance
@@ -12036,7 +11845,7 @@ class InterstellarEngine {
             // Massive Trails: 600 to 1500 characters (3x longer)
             const len = 600 + Math.floor(Math.random() * 9000);
             const chars = [];
-            for (let j = 0; j < len; j++) {
+            for (let j = 0; j < len; j++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let j = 0; j < len; j++"); throw new Error("LOOP"); }
                 chars.push(String.fromCharCode(0x30A0 + Math.random() * 96));
             }
 
@@ -12080,13 +11889,7 @@ class InterstellarEngine {
                 // Safety Check: Avoid crashes if critical objects are missing
                 if (!this.playerShip || !this.camera) return;
 
-                // Check if any popup is open to automatically pause the physics loop
-                const isPopupOpen = Array.from(document.querySelectorAll('.modal-overlay, .fullscreen-modal')).some(el => {
-                    const style = window.getComputedStyle(el);
-                    return style.display !== 'none' && style.pointerEvents !== 'none' && parseFloat(style.opacity) > 0;
-                });
-
-                if (!this.gamePaused && !isPopupOpen) {
+                if (!this.gamePaused) {
                     this.checkAndGenerateSectors();
                     this.updatePlayerShip();
                     this.updateProjectiles();
@@ -12099,17 +11902,10 @@ class InterstellarEngine {
                     this.updateBoss();
                 }
 
-                // Update engine hum pitch based on both actual speed and active thrust (acceleration/RPM feel)
-                const isDead = this.playerShip.hullHealth <= 0 || (this.hazardEffect && ['player_death', 'planet_impact', 'supernova', 'missile_base_destruction'].includes(this.hazardEffect.type));
-                
-                if (isDead) {
-                    gameAudio.stopEngineHum();
-                } else {
-                    gameAudio.startEngineHum();
-                    const actualSpeed = Math.sqrt(this.playerShip.vx*this.playerShip.vx + this.playerShip.vy*this.playerShip.vy);
-                    const thrustInput = this.playerShip.currentThrust || 0;
-                    gameAudio.updateEngineHum(actualSpeed, thrustInput);
-                }
+                // Update engine hum pitch based on ship thrust instead of raw speed
+                // Multiply by a factor (e.g. 15) so that acceleration of ~1.0 gives ~15 equivalent speed for the audio math
+                const thrustInput = (this.playerShip.currentThrust || 0) * 15;
+                gameAudio.updateEngineHum(thrustInput);
 
                 if (this.activeMission && this.activeMission.type === 'survive') this.checkMissionComplete();
                 if (this.activeMission && this.activeMission.type === 'collect') {
@@ -12442,8 +12238,8 @@ class InterstellarEngine {
                         }
 
                         // Normalize for radial outward direction
-                        const dirX = dx / Math.max(0.1, dist);
-                        const dirY = dy / Math.max(0.1, dist);
+                        const dirX = dx / dist;
+                        const dirY = dy / dist;
 
                         // ZOOM COMPENSATION: Objects at higher zoom need to move faster
                         // to appear to leave the screen at the same visual rate
@@ -12596,8 +12392,8 @@ class InterstellarEngine {
                         // CRITICAL FIX: NEVER let the tail cross the black hole at the center (10px radius)
                         const cappedStreak = Math.min(streakLength, distFromCenter - 10);
 
-                        const dirOutX = dx / Math.max(0.1, distFromCenter);
-                        const dirOutY = dy / Math.max(0.1, distFromCenter);
+                        const dirOutX = dx / distFromCenter;
+                        const dirOutY = dy / distFromCenter;
 
                         const headX = sx;
                         const headY = sy;
@@ -12611,43 +12407,64 @@ class InterstellarEngine {
 
                         if (cappedStreak > 2) {
                             try {
-                                const baseWidth = Math.max(0.5, size * 0.4 + warpIntensity * 0.02);
+                                const dx_vec = headX - tailX;
+                                const dy_vec = headY - tailY;
+                                const dist_vec = Math.hypot(dx_vec, dy_vec);
+                                
+                                if (dist_vec > 0) {
+                                    const dirX = dx_vec / dist_vec;
+                                    const dirY = dy_vec / dist_vec;
+                                    const perpX = -dirY;
+                                    const perpY = dirX;
+                                    
+                                    const baseWidth = Math.max(0.1, size * 0.2 + warpIntensity * 0.01);
+                                    // Make the tail razor-thin at the center origin
+                                    const tailWidth = 0.01; 
+                                    // Keep the head very thin, barely expanding as it gets closer
+                                    const headWidth = Math.max(baseWidth, baseWidth * (1 + perspFactor * 0.2));
 
-                                // Extract RGB from hex to create dynamic glowing tails
-                                let r = 255, g = 255, b = 255;
-                                if (starColor.startsWith('#')) {
-                                    const hex = starColor.replace('#', '');
-                                    if (hex.length === 6) {
-                                        r = parseInt(hex.substring(0, 2), 16);
-                                        g = parseInt(hex.substring(2, 4), 16);
-                                        b = parseInt(hex.substring(4, 6), 16);
+                                    // Extract RGB from hex to create dynamic glowing tails
+                                    let r = 255, g = 255, b = 255;
+                                    if (starColor.startsWith('#')) {
+                                        const hex = starColor.replace('#', '');
+                                        if (hex.length === 6) {
+                                            r = parseInt(hex.substring(0, 2), 16);
+                                            g = parseInt(hex.substring(2, 4), 16);
+                                            b = parseInt(hex.substring(4, 6), 16);
+                                        }
                                     }
-                                }
 
-                                const grad = ctx.createLinearGradient(tailX, tailY, headX, headY);
-                                // Faded tail at the black hole
-                                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
-                                // Brightest at the head
-                                const brightR = Math.min(255, r + 80);
-                                const brightG = Math.min(255, g + 80);
-                                const brightB = Math.min(255, b + 80);
-                                grad.addColorStop(1, `rgba(${brightR}, ${brightG}, ${brightB}, 0.9)`);
+                                    const grad = ctx.createLinearGradient(tailX, tailY, headX, headY);
+                                    // Faded tail at the black hole
+                                    grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
+                                    // Mid body softer
+                                    grad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.3)`);
+                                    // Brightest at the head, but slightly softer
+                                    const brightR = Math.min(255, r + 80);
+                                    const brightG = Math.min(255, g + 80);
+                                    const brightB = Math.min(255, b + 80);
+                                    grad.addColorStop(1, `rgba(${brightR}, ${brightG}, ${brightB}, 0.9)`);
 
-                                ctx.strokeStyle = grad;
-                                ctx.lineWidth = baseWidth * (1 + perspFactor * 0.5);
-                                ctx.lineCap = "round";
-                                ctx.beginPath();
-                                ctx.moveTo(tailX, tailY);
-                                ctx.lineTo(headX, headY);
-                                ctx.stroke();
-
-                                if (cappedStreak > 15) {
-                                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-                                    ctx.lineWidth = baseWidth * 0.4;
+                                    ctx.fillStyle = grad;
                                     ctx.beginPath();
-                                    ctx.moveTo(tailX, tailY);
-                                    ctx.lineTo(headX, headY);
-                                    ctx.stroke();
+                                    ctx.moveTo(tailX + perpX * tailWidth, tailY + perpY * tailWidth);
+                                    ctx.lineTo(tailX - perpX * tailWidth, tailY - perpY * tailWidth);
+                                    ctx.lineTo(headX - perpX * headWidth, headY - perpY * headWidth);
+                                    ctx.lineTo(headX + perpX * headWidth, headY + perpY * headWidth);
+                                    ctx.closePath();
+                                    ctx.fill();
+
+
+                                    if (cappedStreak > 15) {
+                                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                                        ctx.beginPath();
+                                        ctx.moveTo(tailX + perpX * (tailWidth * 0.4), tailY + perpY * (tailWidth * 0.4));
+                                        ctx.lineTo(tailX - perpX * (tailWidth * 0.4), tailY - perpY * (tailWidth * 0.4));
+                                        ctx.lineTo(headX - perpX * (headWidth * 0.4), headY - perpY * (headWidth * 0.4));
+                                        ctx.lineTo(headX + perpX * (headWidth * 0.4), headY + perpY * (headWidth * 0.4));
+                                        ctx.closePath();
+                                        ctx.fill();
+                                    }
                                 }
                             } catch (e) {
                                 ctx.strokeStyle = 'rgba(200, 240, 255, 0.8)';
@@ -12658,6 +12475,13 @@ class InterstellarEngine {
                                 ctx.stroke();
                             }
                         }
+
+                        ctx.globalAlpha = Math.min(1.0, alpha + 0.3);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        const headSize = Math.min(3, Math.max(0.3, size * 0.3) * (1 + perspFactor * 0.2));
+                        ctx.arc(headX, headY, headSize, 0, Math.PI * 2);
+                        ctx.fill();
                     } else {
                         // Twinkle effect for normal and drift modes
                         s.twinklePhase = (s.twinklePhase || 0) + (s.twinkleSpeed || 0.03);
@@ -12739,26 +12563,27 @@ class InterstellarEngine {
                         return false; // Remove
                     }
 
-                    // Draw shooting star with cool gradient streak
+                    // Draw shooting star with tail
                     const speed = Math.sqrt(star.vx * star.vx + star.vy * star.vy);
                     const dirX = -star.vx / speed;
                     const dirY = -star.vy / speed;
                     const tailX = star.x + dirX * star.tailLength;
                     const tailY = star.y + dirY * star.tailLength;
 
-                    const grad = ctx.createLinearGradient(star.x, star.y, tailX, tailY);
-                    grad.addColorStop(0, '#ffffff');
-                    grad.addColorStop(0.2, star.color);
-                    grad.addColorStop(1, 'transparent');
-
-                    ctx.globalAlpha = star.life;
-                    ctx.strokeStyle = grad;
-                    ctx.lineWidth = star.size * 0.5;
-                    ctx.lineCap = 'butt';
+                    ctx.globalAlpha = star.life * 0.8;
+                    ctx.strokeStyle = star.color;
+                    ctx.lineWidth = star.size;
+                    ctx.lineCap = 'round';
                     ctx.beginPath();
                     ctx.moveTo(tailX, tailY);
                     ctx.lineTo(star.x, star.y);
                     ctx.stroke();
+
+                    // Bright head
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size * 1.2, 0, Math.PI * 2);
+                    ctx.fill();
 
                     return true; // Keep
                 });
@@ -12963,7 +12788,7 @@ class InterstellarEngine {
             if (this.engineParticles && this.engineParticles.length > 0) {
                 ctx.save();
                 ctx.globalCompositeOperation = 'lighter';
-                for (const p of this.engineParticles) {
+                for (const p of this.engineParticles) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const p of this.engineParticles"); throw new Error("LOOP"); }
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                     ctx.fillStyle = p.color + p.life + ')';
@@ -13040,7 +12865,7 @@ class InterstellarEngine {
                 ctx.textBaseline = 'middle';
 
                 // Only draw visible characters based on length multiplier
-                for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
+                for (let i = 0; i < visibleLength && i < stream.chars.length; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < visibleLength && i < stream.chars.length; i++"); throw new Error("LOOP"); }
                     const char = stream.chars[i];
                     const charY = stream.y - (i * stream.size);
                     if (charY < -stream.size * 2 || charY > canvas.height * 1.5) continue;
@@ -13275,7 +13100,7 @@ class InterstellarEngine {
         ctx.fill();
 
         // Lights around edge
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
             const angle = (i / 6) * Math.PI * 2 + (time || Date.now()) * 0.005;
             ctx.fillStyle = i % 2 === 0 ? '#ff0000' : '#00ff00';
             ctx.beginPath();
@@ -13453,7 +13278,7 @@ class InterstellarEngine {
             ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
             // Main star shape
             ctx.beginPath();
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
                 const outerAngle = (i * Math.PI * 2 / 5) - Math.PI / 2;
                 const innerAngle = outerAngle + Math.PI / 5;
                 const outerX = Math.cos(outerAngle) * size;
@@ -13619,7 +13444,7 @@ class InterstellarEngine {
         ctx.strokeStyle = this.adjustColor(shipColor, -40);
         ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
         ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
             const angle = (Math.PI / 3) * i;
             const x = -size * 1.2 + Math.cos(angle) * size * 0.4;
             const y = Math.sin(angle) * size * 0.6;
@@ -13632,7 +13457,7 @@ class InterstellarEngine {
 
         // Right hexagonal panel
         ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
             const angle = (Math.PI / 3) * i;
             const x = size * 1.2 + Math.cos(angle) * size * 0.4;
             const y = Math.sin(angle) * size * 0.6;
@@ -13771,7 +13596,7 @@ class InterstellarEngine {
         // Draw interlocking hexagons
         const drawHex = (cx, cy, r) => {
             ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
                 const angle = i * Math.PI / 3;
                 if (i === 0) ctx.moveTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
                 else ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
@@ -13795,7 +13620,7 @@ class InterstellarEngine {
         // Orbiting Shield Struts
         ctx.strokeStyle = '#ffbb00';
         ctx.lineWidth = 3 / (this.camera ? this.camera.zoom : 1);
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 3; i++"); throw new Error("LOOP"); }
             const angle = t + (i * Math.PI * 2 / 3);
             const r = size * 1.1;
             const sx = Math.cos(angle) * r;
@@ -13956,7 +13781,7 @@ class InterstellarEngine {
         ctx.save();
         ctx.rotate(t);
         ctx.beginPath();
-        for (let i = 0; i < Math.PI * 2; i += 0.2) {
+        for (let i = 0; i < Math.PI * 2; i += 0.2) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < Math.PI * 2; i += 0.2"); throw new Error("LOOP"); }
             ctx.lineTo(Math.cos(i) * size * 1.0, Math.sin(i) * size * 0.3);
         }
         ctx.closePath(); ctx.stroke();
@@ -13966,7 +13791,7 @@ class InterstellarEngine {
         ctx.save();
         ctx.rotate(-t * 1.5 + Math.PI / 4);
         ctx.beginPath();
-        for (let i = 0; i < Math.PI * 2; i += 0.2) {
+        for (let i = 0; i < Math.PI * 2; i += 0.2) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < Math.PI * 2; i += 0.2"); throw new Error("LOOP"); }
             ctx.lineTo(Math.cos(i) * size * 0.2, Math.sin(i) * size * 1.2);
         }
         ctx.closePath(); ctx.stroke();
@@ -13974,7 +13799,7 @@ class InterstellarEngine {
 
         // Emitted Particles
         ctx.fillStyle = '#ffffff';
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
             const pt = t * 3 + (i * Math.PI / 3);
             const r = size * 0.6 + Math.sin(t * 5 + i) * size * 0.2;
             ctx.beginPath(); ctx.arc(Math.cos(pt) * r, Math.sin(pt) * r, size * 0.08, 0, Math.PI * 2); ctx.fill();
@@ -14047,7 +13872,7 @@ class InterstellarEngine {
 
         // Scanning Wave Animation (expanding rings from dish)
         ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 3; i++"); throw new Error("LOOP"); }
             const wave = (t * 2 + i) % 3; // 0 to 3 scale
             ctx.globalAlpha = 1.0 - (wave / 3);
             ctx.beginPath();
@@ -14506,7 +14331,7 @@ class InterstellarEngine {
         ctx.stroke();
         
         // Nodes on the ring
-        for(let i=0; i<3; i++) {
+        for (let i=0; i<3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i=0; i<3; i++"); throw new Error("LOOP"); }
             let angle = (i/3) * Math.PI * 2;
             ctx.fillStyle = '#fff';
             ctx.beginPath();
@@ -14684,7 +14509,7 @@ class InterstellarEngine {
 
             // OUTER ELECTROMAGNETIC FIELD (pulsing energy barrier)
             const emPulse = (Math.sin(time * 0.006) + 1) * 0.5;
-            for (let ring = 0; ring < 3; ring++) {
+            for (let ring = 0; ring < 3; ring++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let ring = 0; ring < 3; ring++"); throw new Error("LOOP"); }
                 const ringRadius = size * (3.5 + ring * 0.8);
                 const ringAlpha = (0.3 - ring * 0.08) * emPulse;
                 const ringPhase = time * 0.002 + ring * Math.PI / 3;
@@ -14721,7 +14546,7 @@ class InterstellarEngine {
             ctx.strokeStyle = '#660000';
             ctx.lineWidth = 3 / safeZoom;
             ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
                 const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
                 const x = Math.cos(angle) * size * 1.8;
                 const y = Math.sin(angle) * size * 1.8;
@@ -14733,7 +14558,7 @@ class InterstellarEngine {
             ctx.stroke();
 
             // Inner rotating triangular segments (tech panels)
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
                 const segAngle = (i / 6) * Math.PI * 2 + time * 0.001;
                 const segPulse = Math.sin(time * 0.01 + i) * 0.2 + 0.8;
 
@@ -14751,7 +14576,7 @@ class InterstellarEngine {
 
             // ENERGY SPIKES (radiating outward, threatening appearance)
             const spikeCount = 12;
-            for (let i = 0; i < spikeCount; i++) {
+            for (let i = 0; i < spikeCount; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < spikeCount; i++"); throw new Error("LOOP"); }
                 const spikeAngle = (i / spikeCount) * Math.PI * 2 + time * 0.0005;
                 const spikePulse = Math.sin(time * 0.008 + i * 0.5) * 0.4 + 0.8;
                 const spikeLen = size * (1.2 + spikePulse * 0.8);
@@ -14791,7 +14616,7 @@ class InterstellarEngine {
             ctx.save();
             ctx.rotate(-time * 0.003);
             ctx.globalCompositeOperation = 'screen';
-            for (let arm = 0; arm < 3; arm++) {
+            for (let arm = 0; arm < 3; arm++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let arm = 0; arm < 3; arm++"); throw new Error("LOOP"); }
                 const armAngle = (arm / 3) * Math.PI * 2;
                 const armGrad = ctx.createRadialGradient(
                     Math.cos(armAngle) * size * 0.2,
@@ -14816,7 +14641,7 @@ class InterstellarEngine {
             ctx.fillStyle = '#ffcc00';
 
             // Draw 3 radiation sectors
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 3; i++"); throw new Error("LOOP"); }
                 const sectAngle = (i / 3) * Math.PI * 2 - Math.PI / 2;
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
@@ -14875,7 +14700,7 @@ class InterstellarEngine {
 
             // LIGHT TENDRILS BEING PULLED IN (dynamic folding effect)
             ctx.globalCompositeOperation = 'screen';
-            for (let tendril = 0; tendril < 16; tendril++) {
+            for (let tendril = 0; tendril < 16; tendril++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let tendril = 0; tendril < 16; tendril++"); throw new Error("LOOP"); }
                 const baseAngle = (tendril / 16) * Math.PI * 2;
                 // Spiral effect - light curves inward
                 const spiralOffset = Math.sin(time * 0.003 + tendril * 0.5) * 0.5;
@@ -14936,7 +14761,7 @@ class InterstellarEngine {
 
                 // Particle trail
                 const trailLen = 3 + p.brightness * 2;
-                for (let trail = 1; trail <= trailLen; trail++) {
+                for (let trail = 1; trail <= trailLen; trail++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let trail = 1; trail <= trailLen; trail++"); throw new Error("LOOP"); }
                     const trailAngle = p.angle - trail * p.speed * 3;
                     const trailX = Math.cos(trailAngle) * r;
                     const trailY = Math.sin(trailAngle) * r * 0.3;
@@ -14964,7 +14789,7 @@ class InterstellarEngine {
             const coreSize = size * 0.32 * corePulse;
 
             // Spiraling light rays being sucked inward
-            for (let ray = 0; ray < 12; ray++) {
+            for (let ray = 0; ray < 12; ray++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let ray = 0; ray < 12; ray++"); throw new Error("LOOP"); }
                 const rayAngle = (ray / 12) * Math.PI * 2 + time * 0.004;
                 const raySpeed = time * 0.008 + ray * 0.3;
 
@@ -15406,7 +15231,7 @@ class InterstellarEngine {
                 const time = Date.now() * 0.003;
                 ctx.strokeStyle = 'rgba(153, 68, 255, 0.4)';
                 ctx.lineWidth = 2 / safeZoom;
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < 4; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 4; i++"); throw new Error("LOOP"); }
                     const tAngle = time + (i * Math.PI / 2);
                     ctx.beginPath();
                     ctx.moveTo(0, 0);
@@ -15537,7 +15362,7 @@ class InterstellarEngine {
         ctx.strokeStyle = meltdowns > 0 ? '#00ff00' : (base.alertLevel > 0.5 ? '#ff3333' : '#4466aa');
         ctx.lineWidth = 3 / safeZoom;
         ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
             const angle = (i / 8) * Math.PI * 2;
             const x = Math.cos(angle) * size * 1.2;
             const y = Math.sin(angle) * size * 1.2;
@@ -15551,7 +15376,7 @@ class InterstellarEngine {
         // Inner platform
         ctx.fillStyle = damaged ? '#352545' : '#252545';
         ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
             const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
             const x = Math.cos(angle) * size * 0.8;
             const y = Math.sin(angle) * size * 0.8;
@@ -15594,7 +15419,7 @@ class InterstellarEngine {
         ctx.globalAlpha = 1.0;
 
         // Muzzle Brake / Energy Gates
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 3; i++"); throw new Error("LOOP"); }
             ctx.fillStyle = '#222';
             ctx.fillRect(size * 0.5 + i * size * 0.4 - recoil, -barrelWidth * 0.6, size * 0.15, barrelWidth * 1.2);
             // Gate glow
@@ -15615,7 +15440,7 @@ class InterstellarEngine {
             ctx.fillStyle = '#22ff44'; // Neon Green Sludge
 
             // Draw various viscous blobs dripping/coating the base
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 6; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 6; i++"); throw new Error("LOOP"); }
                 const blobAngle = (i / 6) * Math.PI * 2 + time * 0.002;
                 const blobDist = size * (0.6 + Math.sin(time * 0.005 + i) * 0.4);
                 const blobSize = size * (0.3 + Math.cos(time * 0.008 + i) * 0.2) * meltdowns;
@@ -15721,7 +15546,7 @@ class InterstellarEngine {
         ctx.stroke();
         
         // Glitch lines inside
-        for(let i=0; i<10; i++) {
+        for (let i=0; i<10; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i=0; i<10; i++"); throw new Error("LOOP"); }
             ctx.beginPath();
             ctx.moveTo(Math.random() * currentRadius * 0.8, 0);
             ctx.lineTo((Math.random() * currentRadius) + 20, 0);
@@ -15750,7 +15575,7 @@ class InterstellarEngine {
         const maxRadius = 400;
         const currentRadius = maxRadius * (1 - Math.pow(1 - progress, 3)); 
 
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
             ctx.beginPath();
             ctx.arc(0, 0, currentRadius + (i * 20), 0, Math.PI * 2);
             ctx.strokeStyle = `rgba(255, 0, 255, ${(alpha * 0.5) / (i + 1)})`;
@@ -15947,15 +15772,12 @@ class InterstellarEngine {
         const impactScreenY = centerY + (effect.y - this.playerShip.y) * zoom;
 
         // ============================================
-        // 0. DUST SHOCKWAVE (Instead of Nuclear Whiteout)
+        // 0. NUCLEAR WHITEOUT (0-10%)
         // ============================================
-        if (progress < 0.2) {
-            const shockAlpha = 1.0 - (progress / 0.2);
-            ctx.beginPath();
-            ctx.arc(impactScreenX, impactScreenY, progress * 2000 * zoom, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(100, 100, 100, ${shockAlpha})`;
-            ctx.lineWidth = 20 * zoom;
-            ctx.stroke();
+        if (progress < 0.1) {
+            const whiteoutAlpha = 1.0 - (progress / 0.1);
+            ctx.fillStyle = `rgba(255, 255, 255, ${whiteoutAlpha})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
         // ============================================
@@ -16014,7 +15836,7 @@ class InterstellarEngine {
         // 2. DUST PLUME & DEBRIS
         // ============================================
         // Render debris shards
-        for (const rock of (effect.debrisRocks || [])) {
+        for (const rock of (effect.debrisRocks || [])) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const rock of (effect.debrisRocks || [])"); throw new Error("LOOP"); }
             // Position is already updated by vx in updatePlanetImpactEffect
             const rx = impactScreenX + (rock.x - effect.x) * zoom;
             const ry = impactScreenY + (rock.y - effect.y) * zoom;
@@ -16040,7 +15862,7 @@ class InterstellarEngine {
         }
 
         // Render localized dust plume
-        for (const p of (effect.dustParticles || [])) {
+        for (const p of (effect.dustParticles || [])) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const p of (effect.dustParticles || [])"); throw new Error("LOOP"); }
             // Position is already updated by vx
             const px = impactScreenX + (p.x - effect.x) * zoom;
             const py = impactScreenY + (p.y - effect.y) * zoom;
@@ -16167,7 +15989,7 @@ class InterstellarEngine {
             const fp = (progress - 0.02) / 0.48;
             const fr = (120 + fp * 400) * scale;
             const fa = Math.max(0, 1 - fp * 1.3);
-            for (let layer = 0; layer < 3; layer++) {
+            for (let layer = 0; layer < 3; layer++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let layer = 0; layer < 3; layer++"); throw new Error("LOOP"); }
                 const lr = fr * (1 - layer * 0.25);
                 const la = fa * (1 - layer * 0.15);
                 const fg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, lr));
@@ -16207,7 +16029,7 @@ class InterstellarEngine {
 
             // ---- FIRE COLUMN inside stem ----
             if (hotness > 0.1) {
-                for (let i = 0; i < 25; i++) {
+                for (let i = 0; i < 25; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 25; i++"); throw new Error("LOOP"); }
                     const frac = i / 24;
                     const fy = -frac * (280 + cp * 150) * scale;
                     const fw = (35 + frac * frac * 50 + Math.sin(t * 8 + frac * 10) * 10) * scale * Math.min(1, cp * 3);
@@ -16227,7 +16049,7 @@ class InterstellarEngine {
 
             // ---- STEM: Dense layered smoke column ----
             const stemH = (320 + cp * 180) * scale;
-            for (let i = 0; i < 22; i++) {
+            for (let i = 0; i < 22; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 22; i++"); throw new Error("LOOP"); }
                 const frac = i / 21;
                 const sy = -frac * stemH;
                 const sw = (60 + frac * frac * 110 + Math.sin(t * 1.8 + frac * 6) * 10) * scale * Math.min(1, cp * 2.5);
@@ -16254,7 +16076,7 @@ class InterstellarEngine {
                 const capH = (140 + capGrow * 120) * scale;
 
                 // BACK LAYER - dark depth billows
-                for (let i = 0; i < 14; i++) {
+                for (let i = 0; i < 14; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 14; i++"); throw new Error("LOOP"); }
                     const angle = (i / 14) * Math.PI * 2 + t * 0.15;
                     const bx = Math.cos(angle) * capR * 0.6;
                     const by = capY + Math.sin(angle * 1.3 + t * 0.2) * capH * 0.4;
@@ -16271,7 +16093,7 @@ class InterstellarEngine {
                 }
 
                 // MID LAYER - main body
-                for (let i = 0; i < 18; i++) {
+                for (let i = 0; i < 18; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 18; i++"); throw new Error("LOOP"); }
                     const angle = (i / 18) * Math.PI * 2 + Math.PI / 18 + t * 0.22;
                     const bx = Math.cos(angle) * capR * 0.48 + Math.sin(t * 0.7 + i) * 15 * scale;
                     const by = capY + Math.sin(angle * 0.8 + t * 0.3) * capH * 0.32;
@@ -16292,7 +16114,7 @@ class InterstellarEngine {
                 }
 
                 // FRONT LAYER - bright highlights
-                for (let i = 0; i < 12; i++) {
+                for (let i = 0; i < 12; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 12; i++"); throw new Error("LOOP"); }
                     const angle = (i / 12) * Math.PI * 2 + t * 0.28;
                     const bx = Math.cos(angle) * capR * 0.35 + Math.sin(t + i * 1.3) * 10 * scale;
                     const by = capY + Math.sin(angle * 1.5 + t * 0.35) * capH * 0.25;
@@ -16350,7 +16172,7 @@ class InterstellarEngine {
                 ctx.stroke();
 
                 // SMOKE TENDRILS from cap edges
-                for (let i = 0; i < 8; i++) {
+                for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
                     const tA = (i / 8) * Math.PI * 2 + t * 0.1;
                     const tLen = (60 + Math.sin(t + i * 2) * 20) * scale * capGrow;
                     const tx = Math.cos(tA) * capR * 0.75;
@@ -16366,7 +16188,7 @@ class InterstellarEngine {
                 }
 
                 // RISING VAPOR above cap
-                for (let v = 0; v < 10; v++) {
+                for (let v = 0; v < 10; v++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let v = 0; v < 10; v++"); throw new Error("LOOP"); }
                     const vy = capY - (60 + v * 40) * scale;
                     const vr = Math.max(1, (35 + v * 15 + Math.sin(t * 2.5 + v * 0.9) * 10) * scale * capGrow);
                     const vx = Math.sin(t * 1.1 + v * 1.7) * 30 * scale;
@@ -16385,7 +16207,7 @@ class InterstellarEngine {
             // ---- EMBER PARTICLES ----
             if (!effect._embers) {
                 effect._embers = [];
-                for (let i = 0; i < 60; i++) {
+                for (let i = 0; i < 60; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 60; i++"); throw new Error("LOOP"); }
                     const a = Math.random() * Math.PI * 2;
                     const spd = 1 + Math.random() * 4;
                     effect._embers.push({
@@ -16394,7 +16216,7 @@ class InterstellarEngine {
                     });
                 }
             }
-            for (let i = 0; i < effect._embers.length; i++) {
+            for (let i = 0; i < effect._embers.length; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < effect._embers.length; i++"); throw new Error("LOOP"); }
                 const e = effect._embers[i];
                 if (progress < e.life || progress > e.life + 0.3) continue;
                 const ep = (progress - e.life) / 0.3;
@@ -16538,7 +16360,7 @@ class InterstellarEngine {
         }
 
         // 3. MECHANICAL SHARDS (The actual base breaking apart)
-        for (const shard of (effect.shards || [])) {
+        for (const shard of (effect.shards || [])) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const shard of (effect.shards || [])"); throw new Error("LOOP"); }
             const rx = sx + shard.offsetX * zoom;
             const ry = sy + shard.offsetY * zoom;
 
@@ -16556,7 +16378,7 @@ class InterstellarEngine {
             ctx.beginPath();
             if (shard.vertices) {
                 ctx.moveTo(shard.vertices[0].x * zoom, shard.vertices[0].y * zoom);
-                for (let j = 1; j < shard.vertices.length; j++) {
+                for (let j = 1; j < shard.vertices.length; j++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let j = 1; j < shard.vertices.length; j++"); throw new Error("LOOP"); }
                     ctx.lineTo(shard.vertices[j].x * zoom, shard.vertices[j].y * zoom);
                 }
             } else {
@@ -16575,7 +16397,7 @@ class InterstellarEngine {
 
 
         // 4. CHEMICAL SLUDGE (Green spewing fluid)
-        for (const s of (effect.sludge || [])) {
+        for (const s of (effect.sludge || [])) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const s of (effect.sludge || [])"); throw new Error("LOOP"); }
             const px = sx + (s.x - effect.x) * zoom;
             const py = sy + (s.y - effect.y) * zoom;
 
@@ -16666,7 +16488,7 @@ class InterstellarEngine {
             // Creates the feeling of forward motion
             // ============================================
             const starSpeed = 3 + acceleration * 15; // Accelerates dramatically
-            for (let star = 0; star < 200; star++) {
+            for (let star = 0; star < 200; star++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let star = 0; star < 200; star++"); throw new Error("LOOP"); }
                 // Stars originate from edges and rush toward center
                 const baseAngle = (star / 200) * Math.PI * 2 + (star * 0.618);
                 const starAngle = baseAngle + Math.sin(time * 0.001 + star) * 0.1;
@@ -16708,7 +16530,7 @@ class InterstellarEngine {
             // LIGHT RAYS BENDING INWARD (gravitational lensing)
             // Light curves toward the black hole
             // ============================================
-            for (let ray = 0; ray < 24; ray++) {
+            for (let ray = 0; ray < 24; ray++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let ray = 0; ray < 24; ray++"); throw new Error("LOOP"); }
                 const rayAngle = (ray / 24) * Math.PI * 2 + time * 0.0008;
                 const rayPulse = 0.6 + Math.sin(time * 0.004 + ray * 0.4) * 0.4;
 
@@ -16746,7 +16568,7 @@ class InterstellarEngine {
             // DEBRIS/MATTER BEING PULLED IN
             // Chunks of matter streaming toward the void
             // ============================================
-            for (let debris = 0; debris < 80; debris++) {
+            for (let debris = 0; debris < 80; debris++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let debris = 0; debris < 80; debris++"); throw new Error("LOOP"); }
                 const debrisAngle = (debris / 80) * Math.PI * 2 + debris * 1.3;
                 const debrisSpeed = (3 + debris % 5) * starSpeed * 0.004;
                 const debrisCycle = ((time * debrisSpeed + debris * 73) % 100) / 100;
@@ -16774,13 +16596,13 @@ class InterstellarEngine {
             // ============================================
             // ACCRETION DISK (spiraling matter around black hole)
             // ============================================
-            for (let ring = 0; ring < 15; ring++) {
+            for (let ring = 0; ring < 15; ring++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let ring = 0; ring < 15; ring++"); throw new Error("LOOP"); }
                 const ringRadius = 50 + ring * 25 * (1 - p * 0.3);
                 const ringRotation = time * (0.003 - ring * 0.0002) + ring * 0.5;
                 const ringAlpha = (0.5 - ring * 0.025) * Math.min(1, p * 2);
 
                 // Draw multiple arcs for spiral effect
-                for (let arc = 0; arc < 3; arc++) {
+                for (let arc = 0; arc < 3; arc++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let arc = 0; arc < 3; arc++"); throw new Error("LOOP"); }
                     const arcStart = ringRotation + arc * (Math.PI * 2 / 3);
                     const arcEnd = arcStart + Math.PI * 0.8;
 
@@ -16803,7 +16625,7 @@ class InterstellarEngine {
             // TUNNEL PARTICLES (additional depth) - transitioning to subatomic
             // ============================================
             if (effect.tunnelParticles) {
-                for (const particle of effect.tunnelParticles) {
+                for (const particle of effect.tunnelParticles) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const particle of effect.tunnelParticles"); throw new Error("LOOP"); }
                     // Move particles toward center over time
                     particle.z -= starSpeed * 2;
                     if (particle.z < -500) particle.z = 1500;
@@ -16875,7 +16697,7 @@ class InterstellarEngine {
             // ELECTRON ORBITAL SHELLS (rushing toward us)
             // Like atoms zooming past at subatomic scale
             // ============================================
-            for (let shell = 0; shell < 30; shell++) {
+            for (let shell = 0; shell < 30; shell++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let shell = 0; shell < 30; shell++"); throw new Error("LOOP"); }
                 const shellSpeed = (3 + shell * 0.2) * atomicSpeed;
                 const shellZ = ((time * shellSpeed * 0.004 + shell * 60) % 900);
                 const perspective = 500 / (500 + shellZ);
@@ -16904,7 +16726,7 @@ class InterstellarEngine {
 
                 // Electrons orbiting on the shell
                 const numElectrons = 2 + (shell % 4);
-                for (let e = 0; e < numElectrons; e++) {
+                for (let e = 0; e < numElectrons; e++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let e = 0; e < numElectrons; e++"); throw new Error("LOOP"); }
                     const electronAngle = time * 0.008 * atomicSpeed + (e / numElectrons) * Math.PI * 2 + shell;
                     const ex = centerX + Math.cos(electronAngle) * orbitalRadius;
                     const ey = centerY + Math.sin(electronAngle) * orbitalRadius * tilt;
@@ -16925,7 +16747,7 @@ class InterstellarEngine {
             // ENERGY BONDS (connecting structures)
             // Like chemical bonds between atoms
             // ============================================
-            for (let bond = 0; bond < 60; bond++) {
+            for (let bond = 0; bond < 60; bond++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let bond = 0; bond < 60; bond++"); throw new Error("LOOP"); }
                 const bondAngle = (bond / 60) * Math.PI * 2 + time * 0.002;
                 const bondSpeed = (4 + bond % 6) * atomicSpeed;
                 const bondZ = ((time * bondSpeed * 0.006 + bond * 31) % 700);
@@ -17003,7 +16825,7 @@ class InterstellarEngine {
             // COLLAPSING MATTER SHELL
             // Everything rushing toward center
             // ============================================
-            for (let shell = 0; shell < 25; shell++) {
+            for (let shell = 0; shell < 25; shell++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let shell = 0; shell < 25; shell++"); throw new Error("LOOP"); }
                 const collapseProgress = Math.min(1, p * 1.5 + shell * 0.02);
                 const shellRadius = maxDim * 0.8 * (1 - Math.pow(collapseProgress, 0.6));
 
@@ -17022,7 +16844,7 @@ class InterstellarEngine {
             // ============================================
             // STREAKING MATTER (being pulled to center)
             // ============================================
-            for (let streak = 0; streak < 80; streak++) {
+            for (let streak = 0; streak < 80; streak++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let streak = 0; streak < 80; streak++"); throw new Error("LOOP"); }
                 const streakAngle = (streak / 80) * Math.PI * 2 + streak * 0.37;
                 const collapseP = Math.min(1, p * 1.2);
                 const streakDist = maxDim * (1 - collapseP) * (0.2 + (streak % 10) * 0.08);
@@ -17163,26 +16985,17 @@ class InterstellarEngine {
 
         // 1. Background Stars (from all active styles)
         if (this.backgroundStars && this.backgroundStars.length > 0) {
-            const zoom = this.camera.zoom;
             this.backgroundStars.forEach(s => {
                 const para = s.parallax || 0.1;
-                
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
-                
-                // Using + this.camera.x to match other backgrounds
-                let sx = cx_offset + (s.x - this.playerShip.x * para) * bgZoom;
-                let sy = cy_offset + (s.y - this.playerShip.y * para) * bgZoom;
-
-                const screenRadius = s.r * zoom;
-                if (screenRadius < 0.1) return; // Cull if too small to see
-                
-                if (sx + screenRadius < 0 || sx - screenRadius > w ||
-                    sy + screenRadius < 0 || sy - screenRadius > h) return;
+                let sx = (s.x + this.camera.x * para) % w;
+                if (sx < 0) sx += w;
+                let sy = (s.y + this.camera.y * para) % h;
+                if (sy < 0) sy += h;
 
                 ctx.fillStyle = s.color || "white";
                 ctx.globalAlpha = s.alpha;
                 ctx.beginPath();
-                ctx.arc(sx, sy, screenRadius, 0, Math.PI * 2);
+                ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
                 ctx.fill();
             });
             ctx.globalAlpha = 1;
@@ -17202,25 +17015,8 @@ class InterstellarEngine {
                 }
 
                 const para = n.parallax || 0.2;
-                // Wrapping bounds: ensure they seamlessly tile around the screen
-                
-                
-                // Base background scaling (less aggressive than physical zoom)
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
-                
-                // Screen coordinates (wrapping modulo to fill screen infinitely)
-                // Wrap bounds perfectly spaced for the 9 grid items generated
-                const wrapSize = 15000;
-                let screenX = (n.x - this.playerShip.x * para) * bgZoom;
-                let screenY = (n.y - this.playerShip.y * para) * bgZoom;
-                
-                // Modulo wrap to infinite tiling
-                screenX = ((screenX % wrapSize) + wrapSize) % wrapSize;
-                screenY = ((screenY % wrapSize) + wrapSize) % wrapSize;
-                
-                // Shift to center around screen
-                const cx = screenX - wrapSize/2 + cx_offset;
-                const cy = screenY - wrapSize/2 + cy_offset;
+                const cx = n.x + this.camera.x * para + cx_offset;
+                const cy = n.y + this.camera.y * para + cy_offset;
 
                 const scaledSize = Math.max(0.1, n.size * scale);
                 const scaledAlpha = n.alpha * alpha;
@@ -17245,11 +17041,8 @@ class InterstellarEngine {
         if (this.activeStyles.has('deep-space') && this.shootingStars && this.shootingStars.length > 0) {
             this.shootingStars.forEach(s => {
                 const para = s.parallax || 0.5;
-                
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
-                
-                const cx = cx_offset + (s.x - this.playerShip.x * para) * bgZoom;
-                const cy = cy_offset + (s.y - this.playerShip.y * para) * bgZoom;
+                const cx = s.x + this.camera.x * para + cx_offset;
+                const cy = s.y + this.camera.y * para + cy_offset;
 
                 if (cx < -100 || cx > w + 100 || cy < -100 || cy > h + 100) return;
 
@@ -17272,18 +17065,11 @@ class InterstellarEngine {
                 ctx.lineTo(cx, cy);
                 ctx.stroke();
 
-                // Bright head streak
-                const speed = Math.sqrt(s.vx * s.vx + s.vy * s.vy) || 1;
-                const dirX = -s.vx / speed;
-                const dirY = -s.vy / speed;
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = s.size * 1.5;
+                ctx.fillStyle = s.color;
                 ctx.globalAlpha = s.alpha + 0.3;
                 ctx.beginPath();
-                ctx.moveTo(cx + dirX * (s.size * 2), cy + dirY * (s.size * 2));
-                ctx.lineTo(cx, cy);
-                ctx.stroke();
-                
+                ctx.arc(cx, cy, s.size, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.restore();
             });
             ctx.globalAlpha = 1;
@@ -17296,11 +17082,8 @@ class InterstellarEngine {
                 if (s.flownOut) return;
 
                 const para = s.parallax || 0.4;
-                
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
-                
-                const cx = cx_offset + (s.x - this.playerShip.x * para) * bgZoom;
-                const cy = cy_offset + (s.y - this.playerShip.y * para) * bgZoom;
+                const cx = s.x + this.camera.x * para + cx_offset;
+                const cy = s.y + this.camera.y * para + cy_offset;
 
                 if (cx < -200 || cx > w + 200 || cy < -200 || cy > h + 200) return;
 
@@ -17351,7 +17134,7 @@ class InterstellarEngine {
 
         ctx.fillStyle = color;
         
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
             ctx.save();
             ctx.rotate(i * Math.PI / 4);
             ctx.beginPath();
@@ -17363,7 +17146,7 @@ class InterstellarEngine {
             ctx.restore();
         }
 
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 8; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 8; i++"); throw new Error("LOOP"); }
             ctx.save();
             ctx.rotate(i * Math.PI / 4 + Math.PI / 8);
             ctx.beginPath();
@@ -17405,29 +17188,18 @@ class InterstellarEngine {
 
         // 1. Galaxies
         if (this.galaxies && this.galaxies.length > 0) {
-            ctx.globalCompositeOperation = 'screen';
             this.galaxies.forEach(g => {
                 if (g.flownOut) return;
 
-                // Infinite wrapping so suns never run out
-                const wrapRadius = 60000;
-                let dx = g.x - this.playerShip.x;
-                let dy = g.y - this.playerShip.y;
-                if (!this.bgWarpMode) { // Only wrap if not in warp mode, otherwise they snap back during warp
-                    while (dx > wrapRadius) dx -= wrapRadius * 2;
-                    while (dx < -wrapRadius) dx += wrapRadius * 2;
-                    while (dy > wrapRadius) dy -= wrapRadius * 2;
-                    while (dy < -wrapRadius) dy += wrapRadius * 2;
-                }
-                
-                const cx = this.playerShip.x + dx;
-                const cy = this.playerShip.y + dy;
+                const para = 0.0; // 0.0 means it is a physical object pinned to the world coordinates
+                const cx = g.x + this.playerShip.x * para;
+                const cy = g.y + this.playerShip.y * para;
 
-                // Simple culling
-                const distToCamX = cx - (-this.camera.x / zoom);
-                const distToCamY = cy - (-this.camera.y / zoom);
-                const buffer = Math.max(g.size * 5, 4000 / zoom);
-                if (Math.abs(distToCamX) > buffer || Math.abs(distToCamY) > buffer) return;
+                const screenX = w/2 + this.camera.x + cx * zoom;
+                const screenY = h/2 + this.camera.y + cy * zoom;
+                const screenRadius = g.size * zoom;
+                const buffer = Math.max(screenRadius * 5, 2000);
+                if (screenX < -buffer || screenX > w + buffer || screenY < -buffer || screenY > h + buffer) return;
 
                 ctx.save();
                 ctx.translate(cx, cy);
@@ -17437,31 +17209,12 @@ class InterstellarEngine {
                     ctx.globalAlpha = g.warpAlpha || 0;
                 }
 
-                ctx.rotate(g.angle); // Static rotation only
+                ctx.rotate(g.angle); // Static rotation only, no time-based spinning
 
-                if (g.useTribal) {
-                    // Original Mindwave Starburst Sun
-                    this.drawMindwaveSun(ctx, g.color, g.size, false);
-                } else {
-                    // SVG Sun
-                    if (this.svgSunImage && this.svgSunImage.complete && this.svgSunImage.naturalWidth !== 0) {
-                        ctx.drawImage(this.svgSunImage, -g.size, -g.size, g.size * 2, g.size * 2);
-                    } else {
-                        // Fallback gradient
-                        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
-                        grad.addColorStop(0, '#ffffff');
-                        grad.addColorStop(0.2, g.color);
-                        grad.addColorStop(1, 'transparent');
-                        ctx.fillStyle = grad;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, g.size, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-                
+                // Replace galaxy with SVG sun
+                this.drawMindwaveSun(ctx, g.color, g.size, false);
                 ctx.restore();
             });
-            ctx.globalCompositeOperation = 'source-over';
         }
 
         // 2. Black Holes
@@ -17476,41 +17229,20 @@ class InterstellarEngine {
                 const screenX = w/2 + this.camera.x + cx * zoom;
                 const screenY = h/2 + this.camera.y + cy * zoom;
                 const screenRadius = bh.size * zoom;
-                const buffer = Math.max(screenRadius * 5, 4000);
+                const buffer = Math.max(screenRadius * 5, 2000);
                 if (screenX < -buffer || screenX > w + buffer || screenY < -buffer || screenY > h + buffer) return;
 
                 ctx.save();
-                
-                // Reset transform to native screen resolution to prevent blurry radial gradients
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.translate(screenX, screenY);
-                
-                const oldSize = bh.size;
-                bh.size *= zoom;
+                ctx.translate(cx, cy);
 
                 if (this.warpDisengaging && bh.warpScale !== undefined) {
                     ctx.scale(bh.warpScale, bh.warpScale);
                     ctx.globalAlpha = bh.warpAlpha || 0;
                 }
 
-                // Performant black hole (Accretion disk + event horizon)
-                const bhGrad = ctx.createRadialGradient(0, 0, bh.size * 0.3, 0, 0, bh.size * 1.5);
-                bhGrad.addColorStop(0, 'transparent');
-                bhGrad.addColorStop(0.2, '#ffaa00');
-                bhGrad.addColorStop(0.5, '#5500ff');
-                bhGrad.addColorStop(1, 'transparent');
-                
-                ctx.fillStyle = bhGrad;
-                ctx.beginPath();
-                ctx.ellipse(0, 0, bh.size * 1.5, bh.size * 0.5, time, 0, Math.PI * 2);
-                ctx.fill();
+                // Replace black hole with SVG sun (isBlackHole = true)
+                this.drawMindwaveSun(ctx, 'orange', bh.size * 1.5, true);
 
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(0, 0, bh.size * 0.4, 0, Math.PI * 2);
-                ctx.fill();
-
-                bh.size = oldSize;
                 ctx.restore();
             });
         }
@@ -17524,13 +17256,11 @@ class InterstellarEngine {
                 const cx = p.x;
                 const cy = p.y;
                 
+                const screenX = w/2 + this.camera.x + cx * zoom;
+                const screenY = h/2 + this.camera.y + cy * zoom;
                 const screenRadius = p.radius * zoom;
-                // Simple culling using world coords
-                const distToCamX = cx - (-this.camera.x / zoom);
-                const distToCamY = cy - (-this.camera.y / zoom);
-                // Buffer accounts for rings which can be up to 3x radius
-                const buffer = Math.max(p.radius * 4, 4000 / zoom);
-                if (Math.abs(distToCamX) > buffer || Math.abs(distToCamY) > buffer) return;
+                const buffer = Math.max(screenRadius * 5, 2000);
+                if (screenX < -buffer || screenX > w + buffer || screenY < -buffer || screenY > h + buffer) return;
 
                 ctx.save();
                 ctx.translate(cx, cy);
@@ -17540,10 +17270,10 @@ class InterstellarEngine {
                     ctx.globalAlpha = p.warpAlpha || 0;
                 }
 
-                const detailLevel = Math.min(3, Math.floor(screenRadius / 30));
+                const rotationSpeed = p.rotationSpeed || 0.05;
+                ctx.rotate(p.axialTilt + time * rotationSpeed);
 
-                ctx.save();
-                ctx.rotate(p.axialTilt); // Static axial tilt for rings and body texture
+                const detailLevel = Math.min(3, Math.floor(screenRadius / 30));
 
                 if (p.hasRings) {
                     this.drawPlanetRingsHalf(ctx, p, 'back');
@@ -17551,8 +17281,7 @@ class InterstellarEngine {
 
                 if (p.hasAtmosphere) {
                     const atmosGrad = ctx.createRadialGradient(0, 0, p.radius * 0.95, 0, 0, p.radius * 1.15);
-                    const timeStr = performance.now() * 0.0005;
-                    const atmosAlpha = (0.5 + Math.sin(timeStr * 2 + p.textureSeed) * 0.1).toFixed(2);
+                    const atmosAlpha = (0.5 + Math.sin(time * 2 + p.textureSeed) * 0.1).toFixed(2);
                     atmosGrad.addColorStop(0, 'transparent');
                     atmosGrad.addColorStop(0.5, p.atmosphereColor + Math.floor(atmosAlpha * 64).toString(16).padStart(2, '0'));
                     atmosGrad.addColorStop(1, 'transparent');
@@ -17579,10 +17308,10 @@ class InterstellarEngine {
                 if (detailLevel >= 1) {
                     ctx.globalAlpha = 0.3;
                     ctx.strokeStyle = p.tertiaryColor;
-                    ctx.lineWidth = Math.max(1, 2 / zoom);
+                    ctx.lineWidth = 2 / zoom;
 
                     if (p.type === 'gas-giant' || p.type === 'ice-giant') {
-                        for (let i = -4; i <= 4; i++) {
+                        for (let i = -4; i <= 4; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = -4; i <= 4; i++"); throw new Error("LOOP"); }
                             const bandY = p.radius * (i * 0.15);
                             const bandWidth = Math.sqrt(p.radius * p.radius - bandY * bandY);
                             if (bandWidth > 0) {
@@ -17596,7 +17325,7 @@ class InterstellarEngine {
                     if ((p.type === 'terrestrial' || p.type === 'ocean') && detailLevel >= 2) {
                         ctx.fillStyle = p.type === 'ocean' ? p.baseColor : p.secondaryColor;
                         const seed = p.textureSeed;
-                        for (let j = 0; j < 5; j++) {
+                        for (let j = 0; j < 5; j++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let j = 0; j < 5; j++"); throw new Error("LOOP"); }
                             const scx = Math.cos(seed + j * 1.2) * p.radius * 0.5;
                             const scy = Math.sin(seed * 0.7 + j) * p.radius * 0.4;
                             const cr = p.radius * (0.15 + Math.sin(seed + j) * 0.1);
@@ -17607,30 +17336,25 @@ class InterstellarEngine {
                     }
                     ctx.globalAlpha = 1;
                 }
-                
-                ctx.restore(); // Restore axial tilt so shadow is unrotated
 
-                // Unrotated shadow (always opposite light source)
                 const shadowGrad = ctx.createLinearGradient(-p.radius, 0, p.radius, 0);
                 shadowGrad.addColorStop(0, 'transparent');
-                shadowGrad.addColorStop(0.5, 'transparent');
-                shadowGrad.addColorStop(1, 'rgba(0,0,0,0.8)');
+                shadowGrad.addColorStop(0.6, 'transparent');
+                shadowGrad.addColorStop(1, 'rgba(0,0,0,0.6)');
                 ctx.fillStyle = shadowGrad;
                 ctx.beginPath();
                 ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.save();
-                ctx.rotate(p.axialTilt); // Reapply tilt for front rings
                 if (p.hasRings) {
                     this.drawPlanetRingsHalf(ctx, p, 'front');
                 }
-                ctx.restore();
 
                 ctx.restore();
             });
         }
     }
+    // Helper method for drawing Saturn-style planet rings (half at a time)
     drawPlanetRingsHalf(ctx, planet, half) {
         const p = planet;
         ctx.save();
@@ -17639,20 +17363,23 @@ class InterstellarEngine {
         ctx.beginPath();
         if (half === 'back') {
             // Back half: top portion of ellipse (behind planet)
-            ctx.rect(-p.ringOuterRadius * 1.5, -p.ringOuterRadius * 1.5, p.ringOuterRadius * 3, p.ringOuterRadius * 1.5);
+            ctx.rect(-p.ringOuterRadius * 1.5, -p.ringOuterRadius, p.ringOuterRadius * 3, p.ringOuterRadius);
         } else {
             // Front half: bottom portion of ellipse (in front of planet)
-            ctx.rect(-p.ringOuterRadius * 1.5, 0, p.ringOuterRadius * 3, p.ringOuterRadius * 1.5);
+            ctx.rect(-p.ringOuterRadius * 1.5, 0, p.ringOuterRadius * 3, p.ringOuterRadius);
         }
         ctx.clip();
 
+        // Draw the ring bands
         ctx.globalAlpha = half === 'back' ? 0.4 : 0.7; // Back rings dimmer
 
         // Multiple ring bands with gradient colors
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < 5; i++"); throw new Error("LOOP"); }
             const ringR = p.ringInnerRadius + (p.ringOuterRadius - p.ringInnerRadius) * (i / 5 + 0.1);
             const ringThickness = (p.ringOuterRadius - p.ringInnerRadius) * 0.12;
 
+            // Slight color variation per band
+            const hueShift = i * 5;
             ctx.strokeStyle = p.ringColor;
             ctx.lineWidth = ringThickness;
 
@@ -17806,8 +17533,8 @@ class InterstellarEngine {
             starMap.set(s.id, s);
         });
 
-        for (let i = 0; i < this.stars.length; i++) {
-            for (let j = i + 1; j < this.stars.length; j++) {
+        for (let i = 0; i < this.stars.length; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < this.stars.length; i++"); throw new Error("LOOP"); }
+            for (let j = i + 1; j < this.stars.length; j++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let j = i + 1; j < this.stars.length; j++"); throw new Error("LOOP"); }
                 const s1 = this.stars[i];
                 const s2 = this.stars[j];
                 const dist = Math.hypot(s1.x - s2.x, s1.y - s2.y);
@@ -17828,7 +17555,7 @@ class InterstellarEngine {
                 const cluster = [];
                 const queue = [star.id];
                 visited.add(star.id);
-                while (queue.length) {
+                while (queue.length) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT WHILE LOOP:", "queue.length"); throw new Error("LOOP"); }
                     const id = queue.shift();
                     const s = starMap.get(id); // O(1) lookup
                     if (s) cluster.push(s);
@@ -18533,30 +18260,12 @@ class InterstellarEngine {
     toggleAdminPanel() {
         const panel = document.getElementById('adminPanel');
         if (panel) {
-            const isHidden = panel.classList.toggle('hidden');
-            if (this.flightMode) this.gamePaused = !isHidden;
+            panel.classList.toggle('hidden');
             this.updateAdminDebugInfo();
         }
     }
 
     // --- MUSIC SETTINGS UI ---
-
-    updateBinauralFrequencies() {
-        const baseSlider = document.getElementById('binauralBaseValue');
-        const beatSlider = document.getElementById('binauralBeatValue');
-        if (baseSlider && beatSlider && window.gameAudio) {
-            const base = parseFloat(baseSlider.value);
-            const beat = parseFloat(beatSlider.value);
-            console.log("[Music UI] Updating Binaural Frequencies:", base, beat);
-            window.gameAudio.updateBinauralFrequencies(base, beat);
-            
-            // Update labels
-            const baseLabel = document.getElementById('baseFreqDisplay');
-            const beatLabel = document.getElementById('beatFreqDisplay');
-            if (baseLabel) baseLabel.innerText = base + ' Hz';
-            if (beatLabel) beatLabel.innerText = beat + ' Hz';
-        }
-    }
 
     openMusicSettings() {
         console.log("[Music UI] Opening Music Settings Modal");
@@ -18567,31 +18276,8 @@ class InterstellarEngine {
             // Trigger reflow
             void modal.offsetWidth;
             modal.classList.add('active');
-            if (window.game) {
-                this._wasPausedBeforeMusic = window.game.gamePaused;
-                if (!window.game.gamePaused) {
-                    window.game.gamePaused = true;
-                    // Intentionally NOT stopping the engine hum here to keep audio running smoothly
-                }
-            }
-
-            // Sync sliders & buttons with audio state
-            if (window.gameAudio) {
-                const masterSlider = document.getElementById('masterVolumeSlider');
-                if (masterSlider) masterSlider.value = window.gameAudio.volume;
-                const masterBtn = document.getElementById('masterMuteToggleBtn');
-                if (masterBtn) masterBtn.textContent = `Mute: ${window.gameAudio.masterMuted ? 'ON' : 'OFF'}`;
-
-                const musicSlider = document.getElementById('musicVolumeSlider');
-                if (musicSlider) musicSlider.value = window.gameAudio.musicVolume;
-                const musicBtn = document.getElementById('muteToggleBtn');
-                if (musicBtn) musicBtn.textContent = `Mute: ${window.gameAudio.muted ? 'ON' : 'OFF'}`;
-
-                const engineSlider = document.getElementById('engineVolumeSlider');
-                if (engineSlider) engineSlider.value = window.gameAudio.engineVolume;
-                const engineBtn = document.getElementById('engineMuteBtn');
-                if (engineBtn) engineBtn.textContent = `Mute: ${window.gameAudio.engineHumMuted ? 'ON' : 'OFF'}`;
-            }
+            
+            if (window.game) window.game.gamePaused = true;
         } else {
             console.error("[Music UI] Error: musicSettingsModal not found in DOM");
         }
@@ -18602,13 +18288,7 @@ class InterstellarEngine {
         const modal = document.getElementById('musicSettingsModal');
         if (modal) {
             modal.classList.remove('active');
-            if (window.game && !this._wasPausedBeforeMusic && window.game.gamePaused) {
-                window.game.gamePaused = false;
-                if (window.gameAudio && !window.gameAudio.engineHumMuted) {
-                    window.gameAudio.startEngineHum();
-                }
-            }
-            
+            if (window.game) window.game.gamePaused = false;
             setTimeout(() => { 
                 modal.classList.add('hidden'); 
                 modal.style.display = 'none';
@@ -18623,9 +18303,8 @@ class InterstellarEngine {
             const content = document.getElementById(`musicTab_${t}`);
             if (btn) {
                 btn.classList.remove('active');
-                btn.style.background = 'rgba(255,255,255,0.05)';
-                btn.style.borderColor = 'rgba(255,255,255,0.3)';
-                btn.style.boxShadow = 'none';
+                btn.style.background = 'rgba(255,255,255,0.1)';
+                btn.style.borderColor = '#fff';
             }
             if (content) content.style.display = 'none';
         });
@@ -18633,9 +18312,8 @@ class InterstellarEngine {
         const activeBtn = document.getElementById(`musicTabBtn_${tab}`);
         if (activeBtn) {
             activeBtn.classList.add('active');
-            activeBtn.style.background = 'rgba(0,243,255,0.3)';
+            activeBtn.style.background = 'rgba(0,243,255,0.2)';
             activeBtn.style.borderColor = '#00f3ff';
-            activeBtn.style.boxShadow = '0 0 15px rgba(0,243,255,0.5)';
         }
         const activeContent = document.getElementById(`musicTab_${tab}`);
         if (activeContent) activeContent.style.display = 'block';
@@ -18647,37 +18325,19 @@ class InterstellarEngine {
         localStorage.setItem('audioMusicVolume', parsed);
     }
 
-    setMasterVolume(vol) {
-        const parsed = parseFloat(vol);
-        window.gameAudio.setMasterVolume(parsed);
-    }
-
-    setEngineVolume(vol) {
-        const parsed = parseFloat(vol);
-        window.gameAudio.setEngineVolume(parsed);
-    }
-
-    toggleMasterMute() {
-        const isMuted = window.gameAudio.toggleMasterMute();
-        const btn = document.getElementById('masterMuteToggleBtn');
-        if (btn) btn.textContent = `Mute: ${isMuted ? 'ON' : 'OFF'}`;
-    }
-
     toggleMute() {
         const isMuted = window.gameAudio.toggleMute();
         const btn1 = document.getElementById('muteToggleBtn');
         if (btn1) btn1.textContent = `Mute: ${isMuted ? 'ON' : 'OFF'}`;
         const btn2 = document.getElementById('audioMuteBtn');
-        if (btn2) btn2.textContent = isMuted ? '🔇 MUSIC MUTED' : '🔊 MUSIC ON';
+        if (btn2) btn2.textContent = isMuted ? '🔇 MUTED' : '🔊 UNMUTE';
     }
 
     toggleEngineHum() {
         const isHumMuted = window.gameAudio.toggleEngineHum();
         const btn = document.getElementById('engineHumBtn');
         if (btn) btn.innerHTML = isHumMuted ? '🚀 <span class="hide-mobile">HUM: OFF</span>' : '🚀 <span class="hide-mobile">HUM: ON</span>';
-        const muteBtn = document.getElementById('engineMuteBtn');
-        if (muteBtn) muteBtn.textContent = `Mute: ${isHumMuted ? 'ON' : 'OFF'}`;
-        if (!isHumMuted) {
+        if (!isHumMuted && this.flightMode && !this.gamePaused) {
             window.gameAudio.startEngineHum();
         }
     }
@@ -18697,9 +18357,9 @@ class InterstellarEngine {
     setBinauralPreset(beatFreq, baseFreq, btn) {
         if (btn) this._highlightMusicButton(btn);
         document.getElementById('binauralBaseSlider').value = baseFreq;
-        document.getElementById('binauralBaseValue').textContent = baseFreq + 'Hz';
+        document.getElementById('binauralBaseVal').textContent = baseFreq + 'Hz';
         document.getElementById('binauralBeatSlider').value = beatFreq;
-        document.getElementById('binauralBeatValue').textContent = beatFreq + 'Hz';
+        document.getElementById('binauralBeatVal').textContent = beatFreq + 'Hz';
         window.gameAudio.playBinauralLoop(baseFreq, beatFreq);
         if (this.showToast) this.showToast(`Binaural Beats: ${beatFreq}Hz`, 2000);
     }
@@ -18707,57 +18367,33 @@ class InterstellarEngine {
     updateBinauralCustom() {
         const base = parseFloat(document.getElementById('binauralBaseSlider').value);
         const beat = parseFloat(document.getElementById('binauralBeatSlider').value);
-        document.getElementById('binauralBaseValue').textContent = base + 'Hz';
-        document.getElementById('binauralBeatValue').textContent = beat + 'Hz';
+        document.getElementById('binauralBaseVal').textContent = base + 'Hz';
+        document.getElementById('binauralBeatVal').textContent = beat + 'Hz';
         
         // Debounce audio node creation to prevent AudioContext crash while dragging
         if (this.binauralDebounceTimer) clearTimeout(this.binauralDebounceTimer);
         this.binauralDebounceTimer = setTimeout(() => {
-            window.gameAudio.updateBinauralFrequencies(base, beat);
+            window.gameAudio.playBinauralLoop(base, beat);
         }, 300);
     }
 
     initMusicUI() {
         // Load settings and forcibly fix old broken defaults (<= 0.15)
-        let savedMusicVol = localStorage.getItem('audioMusicVolume');
-        if (savedMusicVol && parseFloat(savedMusicVol) <= 0.15) {
-            savedMusicVol = "1.0"; // Force reset the volume if they were stuck on the old inaudible default
+        let savedVol = localStorage.getItem('audioMusicVolume');
+        if (savedVol && parseFloat(savedVol) <= 0.15) {
+            savedVol = "1.0"; // Force reset the volume if they were stuck on the old inaudible default
             localStorage.setItem('audioMusicVolume', "1.0");
         }
         
-        if (savedMusicVol) {
+        if (savedVol) {
             const slider = document.getElementById('musicVolumeSlider');
-            if (slider) slider.value = savedMusicVol;
-            window.gameAudio.setMusicVolume(savedMusicVol);
+            if (slider) slider.value = savedVol;
+            window.gameAudio.setMusicVolume(savedVol);
         } else {
+            // Sync default volume to UI
             const slider = document.getElementById('musicVolumeSlider');
             if (slider) window.gameAudio.setMusicVolume(slider.value);
         }
-
-        // Init Master Volume
-        let savedMasterVol = localStorage.getItem('audioVolume');
-        const masterSlider = document.getElementById('masterVolumeSlider');
-        if (savedMasterVol) {
-            if (masterSlider) masterSlider.value = savedMasterVol;
-            window.gameAudio.setMasterVolume(savedMasterVol);
-        } else if (masterSlider) {
-            window.gameAudio.setMasterVolume(masterSlider.value);
-        }
-
-        // Init Engine Volume
-        let savedEngineVol = localStorage.getItem('audioEngineVolume');
-        const engineSlider = document.getElementById('engineVolumeSlider');
-        if (savedEngineVol) {
-            if (engineSlider) engineSlider.value = savedEngineVol;
-            window.gameAudio.setEngineVolume(savedEngineVol);
-        } else if (engineSlider) {
-            window.gameAudio.setEngineVolume(engineSlider.value);
-        }
-        
-        // Init Engine Mute UI
-        const isHumMuted = window.gameAudio.engineHumMuted;
-        const engineMuteBtn = document.getElementById('engineMuteBtn');
-        if (engineMuteBtn) engineMuteBtn.textContent = `Mute: ${isHumMuted ? 'ON' : 'OFF'}`;
 
         // Global Playlists (Using guaranteed direct .mp3 links for Mac/Safari compatibility)
         this.playlists = {
@@ -18955,8 +18591,8 @@ class InterstellarEngine {
     }
 
     seekAudio(offset) {
-        if (window.gameAudio) {
-            window.gameAudio.seekStream(offset);
+        if (this.audio) {
+            this.audio.seekStream(offset);
         }
     }
 
@@ -18965,10 +18601,10 @@ class InterstellarEngine {
     }
 
     scrubberReleased(val) {
-        if (window.gameAudio) {
+        if (this.audio) {
             const pct = parseFloat(val) / 100;
-            if (window.gameAudio.currentStreamingAudio && isFinite(window.gameAudio.currentStreamingAudio.duration)) {
-                window.gameAudio.setStreamTime(pct * window.gameAudio.currentStreamingAudio.duration);
+            if (this.audio.currentStreamingAudio && isFinite(this.audio.currentStreamingAudio.duration)) {
+                this.audio.setStreamTime(pct * this.audio.currentStreamingAudio.duration);
             }
         }
         this.isScrubbing = false;
@@ -19138,7 +18774,6 @@ class InterstellarEngine {
         const modal = document.getElementById('baseBuilderModal');
         if (modal) modal.style.display = 'flex';
         
-        this.gamePaused = true;
         this.activeBasePlanet = planet;
         this.baseTool = 'hab';
 
@@ -19155,7 +18790,6 @@ class InterstellarEngine {
         if (modal) modal.style.display = 'none';
         
         this.activeBasePlanet = null;
-        this.gamePaused = false;
         
         // Bounce player out of orbit so they don't immediately trigger it again
         if (this.playerShip) {
@@ -19191,8 +18825,8 @@ class InterstellarEngine {
         // Safer way to count tiles only from the 8x8 grid
         let collectorCount = 0;
         let turretCount = 0;
-        for (let y = 0; y < 8; y++) {
-            for (let x = 0; x < 8; x++) {
+        for (let y = 0; y < 8; y++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let y = 0; y < 8; y++"); throw new Error("LOOP"); }
+            for (let x = 0; x < 8; x++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let x = 0; x < 8; x++"); throw new Error("LOOP"); }
                 const type = this.spaceBase[`cell_${x}_${y}`];
                 if (type === 'mine') collectorCount++;
                 if (type === 'def') turretCount++;
@@ -19230,7 +18864,7 @@ class InterstellarEngine {
                 // Find closest hostile enemy within range
                 let closestEnemy = null;
                 let closestDist = Infinity;
-                for (const enemy of this.enemyShips) {
+                for (const enemy of this.enemyShips) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "const enemy of this.enemyShips"); throw new Error("LOOP"); }
                     const isHostile = (this.factionRep[enemy.faction] || 0) < 0;
                     if (!isHostile) continue;
                     const d = Math.hypot(enemy.x - baseX, enemy.y - baseY);
@@ -19278,8 +18912,8 @@ class InterstellarEngine {
         if (!grid) return;
         
         grid.innerHTML = '';
-        for (let y = 0; y < 8; y++) {
-            for (let x = 0; x < 8; x++) {
+        for (let y = 0; y < 8; y++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let y = 0; y < 8; y++"); throw new Error("LOOP"); }
+            for (let x = 0; x < 8; x++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let x = 0; x < 8; x++"); throw new Error("LOOP"); }
                 const cellId = `cell_${x}_${y}`;
                 const blockType = this.spaceBase[cellId];
                 
@@ -19348,7 +18982,7 @@ class InterstellarEngine {
     // --- SAVE DATA SYSTEM ---
     exportSaveData() {
         const data = {};
-        for(let i = 0; i < localStorage.length; i++){
+        for (let i = 0; i < localStorage.length; i++) { if(!window.__ls) window.__ls = Date.now(); if(Date.now() - window.__ls > 2000) { console.log("HUNG AT FOR LOOP:", "let i = 0; i < localStorage.length; i++"); throw new Error("LOOP"); }
             const k = localStorage.key(i);
             // Export game-relevant variables only
             if (['audioMuted', 'audioVolume', 'playerGems', 'unlockedShips', 'playerShipType', 
@@ -19423,7 +19057,7 @@ class InterstellarEngine {
 
         const shipClass = pool[Math.floor(Math.random() * pool.length)];
         const hue = Math.random() * 360;
-        const dist = Math.sqrt(Math.random() * (16000000 - 2250000) + 2250000);
+        const dist = 1500 + Math.random() * 2500;
         const angle = Math.random() * Math.PI * 2;
         const isSaucer = shipClass.name === 'saucer';
         const size = shipClass.baseSize * 0.8 * (0.7 + Math.random() * 0.6);
