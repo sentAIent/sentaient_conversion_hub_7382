@@ -601,6 +601,29 @@ window.resetGalaxySettings = function() {
 </button>
 </div>
 </div>
+
+<!-- Beat Sync Toggle -->
+<style>
+    #beatSyncToggle:checked ~ .beat-sync-handle {
+        transform: translateX(20px);
+    }
+    #beatSyncToggle:checked ~ .beat-sync-track {
+        background-color: #06b6d4; /* cyan-500 */
+        border-color: rgba(34, 211, 238, 0.5);
+        box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+    }
+</style>
+<div class="order-[1.5] flex justify-center items-center gap-4 bg-white/5 backdrop-blur-2xl px-5 py-2 rounded-full border border-white/10 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.5)] mt-2 hover:bg-white/10 hover:border-white/20 transition-all duration-300">
+    <span class="text-[10px] font-medium tracking-[0.2em] text-white/90 uppercase">Beat Sync</span>
+    <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="beatSyncToggle" class="sr-only peer" checked onchange="window.visualsBeatSync = this.checked;">
+        <!-- Track -->
+        <div class="w-11 h-6 bg-black/60 rounded-full border border-white/10 shadow-inner peer-focus:outline-none peer-checked:bg-cyan-500/50 peer-checked:border-cyan-400/50 transition-all duration-300"></div>
+        <!-- Handle -->
+        <div class="absolute w-5 h-5 bg-white rounded-full shadow-md border border-gray-300 peer-checked:translate-x-full transition-transform duration-300" style="left: 2px; top: 2px;"></div>
+    </label>
+</div>
+
 <!-- 3. New Horizontal Visual Dock -->
 <!-- FLOW SETTINGS -->
 <div class="order-2 hidden flex flex-wrap justify-center items-center gap-4 px-5 py-4 bg-[#020a14]/90 backdrop-blur-md border border-sky-400/30 rounded-xl shadow-[0_0_30px_rgba(147,210,255,0.15)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full" id="flowSettingsPanel">
@@ -1416,7 +1439,7 @@ window.resetGalaxySettings = function() {
 <div class="tab-panel hidden space-y-8" id="tab-cymatics">
 <div class="sidebar-section">
 <div class="flex items-center justify-between mb-2">
-<h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider"><i class="fas fa-wave-square mr-2" style="color: #60a9ff;"></i>Cymatics Engine Engine</h3>
+<h3 class="section-label"><i class="fas fa-wave-square mr-2 text-[var(--accent)]"></i>Cymatics Engine</h3>
 </div>
 <!-- THE ULTIMATE CYMATICS UI LIBRARY -->
 <div class="space-y-8 mt-4" id="cymatics-library">
@@ -1431,17 +1454,101 @@ window.resetGalaxySettings = function() {
             </h4>
 <div class="flex items-center gap-3 mt-2 w-full">
 <div class="flex items-center gap-1 bg-black/40 px-2 py-1 rounded border border-white/5"><input class="cymatic-color-picker w-4 h-4 rounded cursor-pointer border-none p-0 bg-transparent" data-class="25" data-color="1" title="Primary Color" type="color" value="#60a9ff"/></div>
-<div class="flex items-center gap-2 bg-black/40 px-2 py-1 rounded border border-white/5 flex-1" title="Intensity">
-<i class="fas fa-sun text-[8px] text-gray-400"></i>
-<input class="cymatic-intensity-slider w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer" data-class="25" max="2.0" min="0.1" step="0.05" type="range" value="1.0"/>
-</div><div class="cymatic-advanced-params mt-3 flex flex-col gap-3"><div><div class="flex justify-between text-xs text-white/50 mb-1 px-1"><span>Observer Effect</span><span class="value-display">0.0</span></div><input class="cymatic-param-slider w-full accent-cyan-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" data-class="25" data-param="observer" max="1.0" min="0.0" step="0.01" type="range" value="0.0"/></div></div>
 </div>
-<div class="flex items-center gap-3 bg-black/60 px-3 py-1.5 rounded-lg border border-cyan-500/30">
-<span class="text-[9px] font-mono text-cyan-200 uppercase">Observer Effect</span>
-<label class="relative inline-flex items-center cursor-pointer">
-<input class="sr-only peer" id="observerToggle" onchange="if(window.toggleObserverEffect) window.toggleObserverEffect(this.checked)" type="checkbox"/>
-<div class="w-8 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]"></div>
-</label>
+<div class="mt-4 relative overflow-hidden rounded-xl bg-gradient-to-b from-black/80 to-[#0a1128]/80 border border-white/10 p-4 backdrop-blur-xl group transition-all duration-700 hover:border-cyan-500/40 hover:shadow-[0_0_40px_rgba(34,211,238,0.15)] flex flex-col gap-3">
+    <!-- Grid/Tech Background Pattern -->
+    <div class="absolute inset-0 opacity-30 bg-[linear-gradient(rgba(34,211,238,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.15)_1px,transparent_1px)] bg-[size:12px_12px] [mask-image:radial-gradient(ellipse_100%_100%_at_50%_50%,black_10%,transparent_70%)] group-hover:opacity-50 transition-opacity duration-700 pointer-events-none" id="quantumGridBg"></div>
+    
+    <!-- Moving light sweeping across the top -->
+    <div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden">
+        <div class="w-1/2 h-full bg-white shadow-[0_0_10px_rgba(255,255,255,1)] animate-[translateX_2s_ease-in-out_infinite]"></div>
+    </div>
+
+    <div class="relative z-10 flex items-center justify-between">
+        <div class="flex flex-col">
+            <div class="flex items-center gap-2">
+                <div class="relative w-4 h-4 flex items-center justify-center">
+                    <i class="fas fa-atom text-cyan-400 absolute text-xs drop-shadow-[0_0_8px_rgba(34,211,238,1)] transition-all duration-700 animate-spin [animation-duration:4s]" id="observerIconWave"></i>
+                    <i class="fas fa-bullseye text-fuchsia-400 absolute text-xs drop-shadow-[0_0_8px_rgba(217,70,239,1)] transition-all duration-700 scale-0 opacity-0 animate-pulse" id="observerIconParticle"></i>
+                </div>
+                <span class="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500 tracking-[0.2em] uppercase transition-all duration-700" id="observerTitleText">Observer Effect</span>
+            </div>
+            <div class="mt-1.5 pl-6 flex flex-col">
+                <span class="text-[9px] text-cyan-200/70 font-mono tracking-[0.15em] transition-all duration-500" id="observerStatusText">STATE: PROBABILISTIC WAVE</span>
+                <div class="h-[2px] w-12 bg-cyan-500/50 mt-1 rounded-full shadow-[0_0_5px_rgba(34,211,238,0.6)] transition-all duration-500" id="observerStatusLine"></div>
+            </div>
+        </div>
+        
+        <label class="relative inline-flex items-center cursor-pointer group">
+            <input class="sr-only peer" id="observerToggle" onchange="
+                const status = document.getElementById('observerStatusText');
+                const title = document.getElementById('observerTitleText');
+                const line = document.getElementById('observerStatusLine');
+                const iconWave = document.getElementById('observerIconWave');
+                const iconParticle = document.getElementById('observerIconParticle');
+                const container = this.closest('.rounded-xl');
+                const gridBg = document.getElementById('quantumGridBg');
+                
+                if(this.checked) {
+                    status.textContent = 'STATE: COLLAPSED PARTICLE';
+                    status.classList.remove('text-cyan-200/70');
+                    status.classList.add('text-fuchsia-300/90');
+                    
+                    title.classList.replace('from-cyan-300', 'from-fuchsia-300');
+                    title.classList.replace('to-blue-500', 'to-purple-500');
+                    
+                    line.classList.replace('bg-cyan-500/50', 'bg-fuchsia-500/50');
+                    line.classList.replace('shadow-[0_0_5px_rgba(34,211,238,0.6)]', 'shadow-[0_0_5px_rgba(217,70,239,0.6)]');
+                    line.classList.replace('w-12', 'w-16');
+                    
+                    iconWave.classList.remove('scale-100', 'opacity-100');
+                    iconWave.classList.add('scale-0', 'opacity-0');
+                    iconParticle.classList.remove('scale-0', 'opacity-0');
+                    iconParticle.classList.add('scale-100', 'opacity-100');
+                    
+                    container.classList.replace('hover:border-cyan-500/40', 'hover:border-fuchsia-500/40');
+                    container.classList.replace('hover:shadow-[0_0_40px_rgba(34,211,238,0.15)]', 'hover:shadow-[0_0_40px_rgba(217,70,239,0.15)]');
+                    
+                    gridBg.classList.replace('bg-[linear-gradient(rgba(34,211,238,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.15)_1px,transparent_1px)]', 'bg-[linear-gradient(rgba(217,70,239,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(217,70,239,0.15)_1px,transparent_1px)]');
+                } else {
+                    status.textContent = 'STATE: PROBABILISTIC WAVE';
+                    status.classList.add('text-cyan-200/70');
+                    status.classList.remove('text-fuchsia-300/90');
+                    
+                    title.classList.replace('from-fuchsia-300', 'from-cyan-300');
+                    title.classList.replace('to-purple-500', 'to-blue-500');
+                    
+                    line.classList.replace('bg-fuchsia-500/50', 'bg-cyan-500/50');
+                    line.classList.replace('shadow-[0_0_5px_rgba(217,70,239,0.6)]', 'shadow-[0_0_5px_rgba(34,211,238,0.6)]');
+                    line.classList.replace('w-16', 'w-12');
+                    
+                    iconParticle.classList.remove('scale-100', 'opacity-100');
+                    iconParticle.classList.add('scale-0', 'opacity-0');
+                    iconWave.classList.remove('scale-0', 'opacity-0');
+                    iconWave.classList.add('scale-100', 'opacity-100');
+                    
+                    container.classList.replace('hover:border-fuchsia-500/40', 'hover:border-cyan-500/40');
+                    container.classList.replace('hover:shadow-[0_0_40px_rgba(217,70,239,0.15)]', 'hover:shadow-[0_0_40px_rgba(34,211,238,0.15)]');
+                    
+                    gridBg.classList.replace('bg-[linear-gradient(rgba(217,70,239,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(217,70,239,0.15)_1px,transparent_1px)]', 'bg-[linear-gradient(rgba(34,211,238,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.15)_1px,transparent_1px)]');
+                }
+                if(window.toggleObserverEffect) window.toggleObserverEffect(this.checked);
+            " type="checkbox"/>
+            
+            <!-- Quantum Button (Not a slider switch!) -->
+            <div class="relative w-12 h-12 rounded-full border-2 border-cyan-500/50 peer-checked:border-fuchsia-500/50 bg-black/50 flex items-center justify-center shadow-[0_0_15px_rgba(34,211,238,0.3),inset_0_0_10px_rgba(34,211,238,0.2)] peer-checked:shadow-[0_0_15px_rgba(217,70,239,0.3),inset_0_0_10px_rgba(217,70,239,0.2)] transition-all duration-500 overflow-hidden group-active:scale-90 group-hover:scale-105">
+                
+                <!-- Inner Glow Layer -->
+                <div class="absolute inset-0 bg-gradient-to-tr from-cyan-400/20 to-transparent peer-checked:from-fuchsia-400/20 transition-all duration-500"></div>
+
+                <!-- Glowing core -->
+                <div class="absolute w-6 h-6 bg-cyan-300/20 rounded-full blur-[4px] peer-checked:bg-fuchsia-300/40 transition-colors duration-500 animate-pulse"></div>
+
+                <!-- Button Center Icon -->
+                <i class="fas fa-power-off text-cyan-300 text-xl drop-shadow-[0_0_8px_rgba(34,211,238,1)] transition-all duration-500 peer-checked:text-fuchsia-300 peer-checked:drop-shadow-[0_0_8px_rgba(217,70,239,1)]"></i>
+            </div>
+        </label>
+    </div>
 </div>
 </div>
 <div class="grid grid-cols-1 gap-3 mt-3">
@@ -3548,33 +3655,36 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 <!-- TAB: ATMOSPHERE -->
-<div class="tab-panel hidden space-y-6" id="tab-atmosphere">
-<!-- Soundscapes -->
-<div class="sidebar-section !pt-0">
-<h3 class="premium-label text-white mb-4">Atmospheric Layer</h3>
-<section class="mixer-section" data-section="atmosphere">
-<div class="flex justify-between items-center mb-4 cursor-pointer section-header" onclick="toggleMixerSection('atmosphere')">
-<div class="flex items-center gap-4">
-<svg class="section-arrow transition-transform duration-200" fill="none" height="12" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="12">
-<polyline points="6 9 12 15 18 9"></polyline>
-</svg>
-<h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Atmosphere
-                        </h3>
-<button aria-label="Info" class="ml-2 transition-colors relative" onclick="showInfoModal('atmosphere'); event.stopPropagation();" style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-<svg fill="none" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="12" xmlns="http://www.w3.org/2000/svg">
-<circle cx="12" cy="12" r="10"></circle>
-<line x1="12" x2="12" y1="16" y2="12"></line>
-<line x1="12" x2="12.01" y1="8" y2="8"></line>
-</svg>
-</button>
+<div class="tab-panel hidden" id="tab-atmosphere" style="flex: 0 0 auto !important; justify-content: flex-start !important; padding-top: 0 !important; margin-top: 0 !important; gap: 0 !important;">
+    <!-- Soundscapes -->
+    <div class="sidebar-section" style="padding: 0 !important; border: none !important;">
+        <section class="mixer-section" data-section="atmosphere" style="margin: 0 !important; padding: 0 !important;">
+<div class="flex flex-col w-full" style="margin-top: 30px; margin-bottom: 40px;">
+    <div class="flex justify-between items-center px-1 mb-1">
+        <label class="premium-label tracking-widest text-[10px] text-cyan-400">MASTER VOLUME</label>
+        <span class="premium-value text-[10px]" id="atmosMasterValue">80%</span>
+    </div>
+    <input class="mw-slider w-full" id="atmosMasterSlider" max="1" min="0" step="0.01" type="range" value="0.8"/>
 </div>
-<div class="flex flex-col gap-0.5" onclick="event.stopPropagation()">
-<div class="flex justify-between items-center px-0.5">
-<label class="premium-label">MASTER</label>
-<span class="premium-value" id="atmosMasterValue">80%</span>
-</div>
-<input class="mw-slider w-24" id="atmosMasterSlider" max="1" min="0" step="0.01" type="range" value="0.8"/>
-</div>
+
+<div class="flex justify-between items-center mb-6 px-1 border border-cyan-500/30 bg-cyan-500/5 p-3 rounded-xl">
+    <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+            <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <path d="M2 12h20"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">3D Orbit Audio</h3>
+            <p class="text-[9px] text-[var(--text-muted)]">Sounds orbit your head in true spatial 3D</p>
+        </div>
+    </div>
+    <label class="switch shrink-0 ml-2">
+        <input type="checkbox" id="spatialOrbitToggle">
+        <span class="slider round"></span>
+    </label>
 </div>
 <div class="section-content">
 <div class="grid grid-cols-1 gap-5" id="soundscapeContainer">
@@ -3974,6 +4084,17 @@ window.resetGalaxySettings = function() {
                     Update Profile
                 </button>
 </div>
+<!-- Data Privacy & Security -->
+<div class="pt-6 border-t border-white/10 space-y-4">
+    <label class="text-[12px] font-bold uppercase block text-[var(--text-muted)]">Data & Privacy</label>
+    <button class="w-full py-4 px-6 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-sm uppercase tracking-wide hover:bg-white/10 transition-all flex items-center justify-center gap-2 shadow-sm" id="downloadDataBtn">
+        <i class="fas fa-download"></i> Download My Data
+    </button>
+    <button class="w-full py-4 px-6 mt-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-sm uppercase tracking-wide hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 shadow-sm" id="deleteAccountBtn">
+        <i class="fas fa-trash-alt"></i> Delete Account & Data
+    </button>
+</div>
+
 <!-- Logout -->
 <button class="w-full py-4 px-6 mt-6 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-base uppercase tracking-wide hover:bg-red-500/20 transition-all shadow-sm" id="logoutBtn">
                 Sign Out
@@ -4617,7 +4738,89 @@ window.resetGalaxySettings = function() {
             color: rgba(255, 255, 255, 0.3);
         }
     </style>
-<!-- Failsafe: Ensure app unlocks even if JS errors occur -->
+<!-- GLOBAL COMPLIANCE ONBOARDING MODAL -->
+    <div id="complianceModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 hidden px-4">
+        <div class="bg-[var(--bg-panel)] border border-[var(--border)] rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="p-6 border-b border-[var(--border)] flex items-center gap-4 bg-[var(--bg-panel)]">
+                <div class="w-12 h-12 rounded-full bg-[var(--accent)]/10 flex items-center justify-center text-[var(--accent)] shrink-0">
+                    <i class="fas fa-shield-check text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white tracking-wide">Welcome to MindWave</h2>
+                    <p class="text-sm text-[var(--text-muted)] mt-1">Please review our terms to continue.</p>
+                </div>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div class="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+                
+                <!-- Age & Disclaimers -->
+                <div class="space-y-4">
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="complianceAge" class="mt-1 w-4 h-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0 bg-black/50 cursor-pointer">
+                        <div class="text-sm text-white/90 leading-snug">
+                            <span class="block font-semibold text-white mb-0.5">Age Verification <span class="text-red-400">*</span></span>
+                            I confirm that I am 16 years of age or older.
+                        </div>
+                    </label>
+
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="complianceMedical" class="mt-1 w-4 h-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0 bg-black/50 cursor-pointer">
+                        <div class="text-sm text-white/90 leading-snug">
+                            <span class="block font-semibold text-white mb-0.5">Medical Disclaimer <span class="text-red-400">*</span></span>
+                            I understand this application is for entertainment and wellness purposes only. It is not intended to diagnose, treat, cure, or prevent any medical or psychological condition.
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Divider -->
+                <div class="h-px w-full bg-[var(--border)]"></div>
+
+                <!-- Cookie Consent -->
+                <div>
+                    <h3 class="font-bold text-white mb-3 flex items-center gap-2">
+                        <i class="fas fa-cookie-bite text-[var(--accent)]"></i> Cookie Preferences
+                    </h3>
+                    <p class="text-xs text-[var(--text-muted)] mb-4 leading-relaxed">
+                        We use essential cookies to ensure the app functions correctly (e.g., saving your preferences locally). We also use optional analytics cookies to understand usage and improve the experience.
+                    </p>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center justify-between p-3 rounded-lg border border-[var(--border)] bg-white/5 opacity-70">
+                            <div>
+                                <span class="block text-sm font-semibold text-white">Essential Cookies</span>
+                                <span class="text-xs text-[var(--text-muted)]">Required for core functionality.</span>
+                            </div>
+                            <input type="checkbox" checked disabled class="w-4 h-4 rounded text-gray-500 bg-gray-700 border-gray-600">
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-lg border border-[var(--border)] bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+                            <div>
+                                <span class="block text-sm font-semibold text-white">Analytics & Performance</span>
+                                <span class="text-xs text-[var(--text-muted)]">Help us improve by tracking usage anonymously.</span>
+                            </div>
+                            <input type="checkbox" id="complianceAnalytics" class="w-4 h-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0 bg-black/50 cursor-pointer">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer / Action -->
+            <div class="p-6 border-t border-[var(--border)] bg-[var(--bg-panel)] flex flex-col gap-3">
+                <button id="complianceAcceptBtn" class="w-full py-3 rounded-xl bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/50 font-bold uppercase tracking-wider hover:bg-[var(--accent)] hover:text-white transition-all opacity-50 cursor-not-allowed" disabled>
+                    Accept & Continue
+                </button>
+                <div class="text-center">
+                    <a href="#" class="text-[10px] text-[var(--text-muted)] hover:text-white underline">Privacy Policy</a>
+                    <span class="text-[var(--text-muted)] mx-2">&bull;</span>
+                    <a href="#" class="text-[10px] text-[var(--text-muted)] hover:text-white underline">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Failsafe: Ensure app unlocks even if JS errors occur -->
 <script>
         setTimeout(() => {
             const loading = document.getElementById('loadingScreen');

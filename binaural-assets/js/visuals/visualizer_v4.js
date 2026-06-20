@@ -219,7 +219,7 @@ static CYMATIC_PATTERNS = [
                     console.log('[Visualizer] Tab visible, resuming render loop.');
                     this.lastTime = performance.now() * 0.001; // Prevent time-jump glitches
                     if (this.active !== false && this.initialized) {
-                        this.render(state.analyserLeft, state.analyserRight);
+                        this.render((state.masterAnalyser || state.analyserLeft), state.analyserRight);
                     }
                 }
             };
@@ -247,7 +247,7 @@ static CYMATIC_PATTERNS = [
                     // Ensure only one loop is active
                     if (state.animationId) cancelAnimationFrame(state.animationId);
                     this._isRendering = false; 
-                    this.render(state.analyserLeft, state.analyserRight);
+                    this.render((state.masterAnalyser || state.analyserLeft), state.analyserRight);
                 } catch (err) {
                     console.error('[Visualizer] Failed to recover from context loss:', err);
                 }
@@ -2869,8 +2869,8 @@ static CYMATIC_PATTERNS = [
         this._isRendering = true;
 
         try {
-            if (typeof analyserL === 'number' || (!analyserL && state.analyserLeft)) {
-                analyserL = state.analyserLeft;
+            if (typeof analyserL === 'number' || (!analyserL && (state.masterAnalyser || state.analyserLeft))) {
+                analyserL = (state.masterAnalyser || state.analyserLeft);
                 analyserR = state.analyserRight;
             }
 
@@ -2892,7 +2892,7 @@ static CYMATIC_PATTERNS = [
             const multiplier = Math.max(0.001, this.speedMultiplier || 1.0);
             const now = performance.now() * 0.001;
             if (this.activeModes.has('cymatics') && this.cymaticsCore) {
-                const audioData = window.cymaticsAudioSync !== false ? {
+                const audioData = (window.visualsBeatSync !== false && window.cymaticsAudioSync !== false) ? {
                     bass: normBass || 0,
                     mids: normMids || 0,
                     highs: normHighs || 0
@@ -2911,7 +2911,11 @@ static CYMATIC_PATTERNS = [
             
             const visualBeatFreq = state.visualSpeedAuto ? (state.beatFrequency || 10) : (multiplier * 10);
             const beatPulse = (Math.sin(now * Math.PI * 2 * visualBeatFreq) * 0.5) + 0.5;
-            const vFactor = this.vibrationEnabled ? 1.0 : 0.0;
+            
+            // Check global beat sync toggle
+            const isBeatSyncEnabled = window.visualsBeatSync !== false;
+            const vFactor = (this.vibrationEnabled && isBeatSyncEnabled) ? 1.0 : 0.0;
+            
             const vBeatPulse = (beatPulse || 0) * vFactor;
             const vNormBass = (normBass || 0) * vFactor;
             const vNormMid = (normMids || 0) * vFactor;
@@ -3280,7 +3284,7 @@ static CYMATIC_PATTERNS = [
 
         // Always queue next frame
         if (this.active && !document.hidden) {
-            state.animationId = requestAnimationFrame(() => this.render(state.analyserLeft, state.analyserRight));
+            state.animationId = requestAnimationFrame(() => this.render((state.masterAnalyser || state.analyserLeft), state.analyserRight));
         } else {
             state.animationId = null;
         }
@@ -3321,7 +3325,7 @@ static CYMATIC_PATTERNS = [
     }
 
     getAverageFrequency(startIndex, endIndex) {
-        let analyser = state.analyserLeft || state.analyserRight;
+        let analyser = state.masterAnalyser || state.analyserLeft || state.analyserRight;
         if (!analyser) return 0;
         // Reuse cached buffer instead of allocating new Uint8Array every call
         const binCount = analyser.frequencyBinCount;
@@ -3927,7 +3931,7 @@ export function pauseVisuals() {
 export function resumeVisuals() {
     if (viz3D && !state.animationId) {
         viz3D.active = true;
-        viz3D.render(state.analyserLeft, state.analyserRight);
+        viz3D.render((state.masterAnalyser || state.analyserLeft), state.analyserRight);
         visualsPaused = false;
     }
 }

@@ -1913,7 +1913,7 @@ window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
 // --- PLAY BUTTON HANDLER ---
 let lastPlayClickTime = 0;
 
-async function handlePlayClick() {
+export async function handlePlayClick() {
     // Debounce: Prevent double-triggers (e.g. ghost clicks)
     const now = Date.now();
     if (now - lastPlayClickTime < 300) {
@@ -1944,6 +1944,16 @@ async function handlePlayClick() {
         // 1. Mark as stopping so UI knows we are "paused" even if audio is fading
         state.isStopping = true;
 
+        // Pause all independent HTML media
+        document.querySelectorAll('audio, video').forEach(media => {
+            if (!media.paused) {
+                media.dataset.wasPlaying = 'true';
+                media.pause();
+            } else {
+                media.dataset.wasPlaying = 'false';
+            }
+        });
+
         // 2. Pause visuals when stopping audio
         pauseVisuals();
         console.log('[Controls] Visuals paused.');
@@ -1969,6 +1979,13 @@ async function handlePlayClick() {
     } else {
         // STARTING
         try {
+            // Resume any previously playing independent HTML media
+            document.querySelectorAll('audio, video').forEach(media => {
+                if (media.dataset.wasPlaying === 'true') {
+                    media.play().catch(e => console.warn('Media resume failed:', e));
+                }
+            });
+
             // 1. Resume visuals FIRST so they're ready when audio starts
             resumeVisuals();
 
@@ -2021,6 +2038,16 @@ async function handleAudioToggle() {
         // 1. Mark as stopping so UI shows stopped state immediately
         state.isAudioStopping = true;
 
+        // Pause all independent HTML media
+        document.querySelectorAll('audio, video').forEach(media => {
+            if (!media.paused) {
+                media.dataset.wasPlaying = 'true';
+                media.pause();
+            } else {
+                media.dataset.wasPlaying = 'false';
+            }
+        });
+
         // 2. Force UI update immediately to show Play icon
         syncAllButtons();
 
@@ -2037,6 +2064,13 @@ async function handleAudioToggle() {
     } else {
         // Start audio only
         try {
+            // Resume any previously playing independent HTML media
+            document.querySelectorAll('audio, video').forEach(media => {
+                if (media.dataset.wasPlaying === 'true') {
+                    media.play().catch(e => console.warn('Media resume failed:', e));
+                }
+            });
+
             await startAudio();
             fadeIn(1.5);
 

@@ -5,6 +5,7 @@ import { DailyLimitService } from '../services/daily-limit.js';
 import { showPricingModal } from '../ui/pricing-3tier.js';
 import { isPremiumUser } from '../services/stripe-simple.js';
 import { isHapticsEnabled, hapticPulse } from '../utils/haptics.js';
+import { SpatialEngine } from './spatial-engine.js';
 
 let uiCallback = null;
 
@@ -1157,6 +1158,13 @@ export function updateAtmosMaster() {
     if (state.masterAtmosGain && state.isPlaying) { state.masterAtmosGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1); }
 }
 
+export function toggleSpatialOrbit(active) {
+    state.spatialOrbitActive = active;
+    if (state.spatialEngine) {
+        state.spatialEngine.setOrbitActive(active);
+    }
+}
+
 export function updateSoundscape(id, type, val) {
     // Always save settings to state
     state.soundscapeSettings[id][type] = val;
@@ -1269,11 +1277,23 @@ function startSingleSoundscape(id, vol, tone, speed) {
         // Set initial volume from slider (or default)
         const atmosVal = parseFloat(els.atmosMasterSlider?.value || 0.8);
         state.masterAtmosGain.gain.value = atmosVal;
+
+        // Initialize Spatial Engine on the Atmos bus
+        state.spatialEngine = new SpatialEngine(state.audioCtx, state.masterAtmosGain);
+        if (state.spatialOrbitActive) state.spatialEngine.setOrbitActive(true);
     }
 
     const channelGain = state.audioCtx.createGain();
     channelGain.gain.setValueAtTime(vol, state.audioCtx.currentTime);
-    channelGain.connect(state.masterAtmosGain);
+    
+    let spatialNode = null;
+    if (state.spatialEngine) {
+        spatialNode = state.spatialEngine.createSpatialNode();
+        channelGain.connect(spatialNode);
+    } else {
+        channelGain.connect(state.masterAtmosGain);
+    }
+    
     let nodes = [], cleanupFn = null;
 
     const rate = 0.2 + (speed * 3.8);
@@ -1504,7 +1524,7 @@ function startSingleSoundscape(id, vol, tone, speed) {
         };
         loop(); cleanupFn = () => { active = false; };
     }
-    state.activeSoundscapes[id] = { gainNode: channelGain, nodes: nodes, cleanup: cleanupFn };
+    state.activeSoundscapes[id] = { gainNode: channelGain, spatialNode: spatialNode, nodes: nodes, cleanup: cleanupFn };
 }
 
 function playOneShot(type, dest, tone) {
@@ -1587,6 +1607,12 @@ export function stopSingleSoundscape(id, immediate = false) {
             try {
                 sc.gainNode.disconnect();
                 sc.gainNode = null;
+            } catch (e) { }
+        }
+        if (sc.spatialNode && state.spatialEngine) {
+            try {
+                state.spatialEngine.removeSpatialNode(sc.spatialNode);
+                sc.spatialNode = null;
             } catch (e) { }
         }
     };

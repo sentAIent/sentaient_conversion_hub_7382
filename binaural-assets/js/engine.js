@@ -127,9 +127,11 @@ export async function startAudio() {
         state.masterCompressor = state.audioCtx.createDynamicsCompressor();
         state.analyserLeft = state.audioCtx.createAnalyser();
         state.analyserRight = state.audioCtx.createAnalyser();
+        state.masterAnalyser = state.audioCtx.createAnalyser();
+        
         state.analyserLeft.fftSize = 2048;
         state.analyserRight.fftSize = 2048;
-
+        state.masterAnalyser.fftSize = 2048;
 
         // Connections
         state.oscLeft.connect(state.panLeft);
@@ -154,12 +156,13 @@ export async function startAudio() {
         state.limiter.release.value = 0.1;
 
         state.masterCompressor.connect(state.limiter);
-        state.limiter.connect(state.audioCtx.destination);
+        state.limiter.connect(state.masterAnalyser);
+        state.masterAnalyser.connect(state.audioCtx.destination);
 
         // Recording Route
         state.videoCaptureGain = state.audioCtx.createGain();
         state.videoCaptureGain.gain.value = 1;
-        state.limiter.connect(state.videoCaptureGain);
+        state.masterAnalyser.connect(state.videoCaptureGain);
         // We do NOT create or connect `destStreamNode` here. It is lazily hooked in recorder.js!
 
         // Compressor Settings

@@ -2108,6 +2108,15 @@ async function handlePlayClick() {
         console.log('[Controls] Fast Resume triggered!');
         cancelFadeOut();
         state.isStopping = false;
+        
+        // Resume HTML media elements
+        document.querySelectorAll('audio, video').forEach(media => {
+            if (media.dataset.wasPlaying === 'true') {
+                media.play().catch(e => console.warn('Could not resume media', e));
+                media.dataset.wasPlaying = 'false'; // Reset state
+            }
+        });
+
         // Ensure UI reflects playing immediately
         syncAllButtons();
         return;
@@ -2123,6 +2132,16 @@ async function handlePlayClick() {
         // 2. Pause visuals when stopping audio
         pauseVisuals();
         console.log('[Controls] Visuals paused.');
+
+        // Pause all HTML media elements and track which ones were playing
+        document.querySelectorAll('audio, video').forEach(media => {
+            if (!media.paused) {
+                media.dataset.wasPlaying = 'true';
+                media.pause();
+            } else {
+                media.dataset.wasPlaying = 'false';
+            }
+        });
 
         // 3. Force UI update immediately to show Play icon (Pause state)
         syncAllButtons();
@@ -2147,6 +2166,14 @@ async function handlePlayClick() {
         try {
             // 1. Resume visuals FIRST so they're ready when audio starts
             resumeVisuals();
+
+            // Resume HTML media elements that were previously playing
+            document.querySelectorAll('audio, video').forEach(media => {
+                if (media.dataset.wasPlaying === 'true') {
+                    media.play().catch(e => console.warn('Could not resume media', e));
+                    media.dataset.wasPlaying = 'false'; // Reset state
+                }
+            });
 
             // 2. Start audio and fade in
             await startAudio();

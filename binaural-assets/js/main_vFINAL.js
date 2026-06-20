@@ -3,6 +3,7 @@ window.NUCLEAR_MAIN_LOADED = true;
 // Core Modules for boot
 import { setupUI, applyAIIntent, showDisclaimerModal } from './ui/controls_v3.js';
 import { initFirebase, registerAuthCallback } from './services/firebase.js';
+import { initCompliance } from './compliance.js';
 import { initAuthUI } from './ui/auth-controller.js';
 import { setupSwipeGestures } from './ui/layout.js';
 import { initResizablePanels } from './ui/resize-panels.js';
@@ -15,8 +16,9 @@ const lazy = {
     presence: () => import('./services/presence-service.js'),
     cursor: () => import('./ui/cursor.js'),
     share: () => import('./services/share.js'),
-    email: () => import('./ui/email-capture.js'),
-    haptics: () => import('./utils/haptics.js')
+    haptics: () => import('./utils/haptics.js'),
+    lockscreen: () => import('./audio/lock-screen.js'),
+    email: () => import('./ui/email-capture.js')
 };
 
 import { initExitIntent } from './ui/exit-intent.js';
@@ -133,6 +135,9 @@ const initApp = () => {
     }
     // Scaling & Stability (Phase 6)
     initSessionMilestones();
+
+    // Init State of the Art Features
+    lazy.lockscreen().then(m => m.initLockScreenControls());
 
     // Done
     console.log("[Main] Mindwave Core v101 Initialized.");
@@ -372,8 +377,15 @@ const initSessionMilestones = () => {
 
 // Check ready state to handle module deferral
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Initialize Compliance Gate
+        initCompliance();
+
+        // Remove fallback screen if any
+        initApp();
+    });
 } else {
+    initCompliance();
     initApp();
 }
 
@@ -586,8 +598,8 @@ window.toggleObserverEffect = function(isObserved) {
     const targetObserver = isObserved ? 1.0 : 0.0;
     const material = window.viz3D.cymaticsCore.materials[25];
     if (material && material.uniforms) {
-        if (material.uniforms.observerEffect) {
-            const start = material.uniforms.observerEffect.value;
+        if (material.uniforms.uObserver) {
+            const start = material.uniforms.uObserver.value;
             const startTime = Date.now();
             const duration = 1000;
             
@@ -595,7 +607,7 @@ window.toggleObserverEffect = function(isObserved) {
                 const now = Date.now();
                 const progress = Math.min((now - startTime) / duration, 1);
                 const ease = 1 - Math.pow(1 - progress, 3);
-                material.uniforms.observerEffect.value = start + (targetObserver - start) * ease;
+                material.uniforms.uObserver.value = start + (targetObserver - start) * ease;
                 
                 if (progress < 1) requestAnimationFrame(animateObserver);
             }

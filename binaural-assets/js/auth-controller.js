@@ -446,6 +446,53 @@ export function setupProfileHandlers() {
         });
     }
 
+    const downloadDataBtn = document.getElementById('downloadDataBtn');
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+
+    if (downloadDataBtn) {
+        downloadDataBtn.addEventListener('click', () => {
+            const dataStr = JSON.stringify(localStorage);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const exportFileDefaultName = `mindwave_data_${new Date().toISOString().split('T')[0]}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            showToast('Data exported successfully', 'success');
+        });
+    }
+
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', async () => {
+            if (confirm("WARNING: This will permanently delete your account, saved mixes, and all associated data. This action cannot be undone. Are you sure?")) {
+                try {
+                    const { auth } = await import('../services/firebase.js');
+                    const user = auth.currentUser;
+                    
+                    if (user) {
+                        const { deleteUser } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                        await deleteUser(user);
+                    }
+                    
+                    localStorage.clear();
+                    showToast('Account and data deleted.', 'info');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } catch (err) {
+                    console.error('[Profile] Deletion error:', err);
+                    if (err.code === 'auth/requires-recent-login') {
+                        showToast('Please sign out and sign back in to verify identity before deleting.', 'error');
+                    } else {
+                        showToast('Failed to delete account: ' + err.message, 'error');
+                    }
+                }
+            }
+        });
+    }
+
     const referralBtn = document.getElementById('profileReferralBtn');
     if (referralBtn) {
         referralBtn.addEventListener('click', () => {

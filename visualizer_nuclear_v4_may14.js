@@ -187,7 +187,7 @@ export class Visualizer3D {
                     console.log('[Visualizer] Tab visible, resuming render loop.');
                     this.lastTime = performance.now() * 0.001; // Prevent time-jump glitches
                     if (this.active !== false && this.initialized) {
-                        this.render(state.analyserLeft, state.analyserRight);
+                        this.render((state.masterAnalyser || state.analyserLeft), state.analyserRight);
                     }
                 }
             });
@@ -209,7 +209,7 @@ export class Visualizer3D {
                     this.initialized = true;
                     this.active = true;
                     this.lastTime = performance.now() * 0.001;
-                    this.render(state.analyserLeft, state.analyserRight);
+                    this.render((state.masterAnalyser || state.analyserLeft), state.analyserRight);
                 } catch (err) {
                     console.error('[Visualizer] Failed to recover from context loss:', err);
                 }
@@ -2079,7 +2079,7 @@ export class Visualizer3D {
         try {
             if (!this.initialized || !this.renderer || document.hidden) return;
 
-            if (!analyserL && state.analyserLeft) analyserL = state.analyserLeft;
+            if (!analyserL && (state.masterAnalyser || state.analyserLeft)) analyserL = (state.masterAnalyser || state.analyserLeft);
 
             let normBass = 0, normMids = 0, normHighs = 0;
             let dataL = null;
@@ -2114,7 +2114,8 @@ export class Visualizer3D {
             const beatIntensity = beatPulse * (normBass * 0.5 + 0.5); // Scaled by volume
 
             // Vibration Factor (Toggled by user)
-            const vFactor = this.vibrationEnabled ? 1.0 : 0.0;
+            // Default to true unless explicitly disabled via the Beat Sync toggle
+            const vFactor = (window.visualsBeatSync === false) ? 0.0 : (this.vibrationEnabled ? 1.0 : 1.0);
             const vBeatPulse = beatPulse * vFactor;
             const vNormBass = normBass * vFactor;
             const vNormMids = normMids * vFactor;
@@ -2708,7 +2709,7 @@ export class Visualizer3D {
     }
 
     getAverageFrequency(startIndex, endIndex) {
-        let analyser = state.analyserLeft || state.analyserRight;
+        let analyser = state.masterAnalyser || state.analyserLeft || state.analyserRight;
         if (!analyser) return 0;
         // Reuse cached buffer instead of allocating new Uint8Array every call
         const binCount = analyser.frequencyBinCount;
@@ -3158,7 +3159,7 @@ export function resumeVisuals() {
     console.log('[Visualizer] resumeVisuals CALLED. viz3D:', !!viz3D, 'animId:', state.animationId);
     if (viz3D && !state.animationId) {
         viz3D.active = true;
-        viz3D.render(state.analyserLeft, state.analyserRight);
+        viz3D.render((state.masterAnalyser || state.analyserLeft), state.analyserRight);
         visualsPaused = false;
     }
 }

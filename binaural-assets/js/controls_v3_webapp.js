@@ -1,6 +1,6 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
-import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
+import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, toggleSpatialOrbit, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS } from '../audio/engine.js';
 import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js?v=2';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
@@ -212,6 +212,7 @@ export function setupUI() {
     els.volSlider = document.getElementById('volSlider');
     els.masterVolSlider = document.getElementById('masterVolSlider');
     els.atmosMasterSlider = document.getElementById('atmosMasterSlider');
+    els.spatialOrbitToggle = document.getElementById('spatialOrbitToggle');
     els.baseValue = document.getElementById('baseValue');
     els.beatValue = document.getElementById('beatValue');
     els.volValue = document.getElementById('volValue');
@@ -687,6 +688,7 @@ export function setupUI() {
         saveStateToLocal();
     });
     if (els.atmosMasterSlider) els.atmosMasterSlider.addEventListener('input', () => { updateAtmosMaster(); saveStateToLocal(); });
+    if (els.spatialOrbitToggle) els.spatialOrbitToggle.addEventListener('change', () => { toggleSpatialOrbit(els.spatialOrbitToggle.checked); saveStateToLocal(); });
     if (els.balanceSlider) els.balanceSlider.addEventListener('input', () => { updateMasterBalance(); saveStateToLocal(); });
 
     // --- Speed Mapping Helpers (Quadratic) ---
@@ -2960,6 +2962,7 @@ function saveStateToLocal() {
         beatsVol: els.volSlider.value,
         masterVol: els.masterVolSlider.value,
         atmosMaster: els.atmosMasterSlider.value,
+        spatialOrbit: els.spatialOrbitToggle ? els.spatialOrbitToggle.checked : false,
         soundscapes: state.soundscapeSettings
     };
     localStorage.setItem('mindwave_state_v2', JSON.stringify(s));
@@ -3032,6 +3035,10 @@ export function loadSettings(payload) {
     if (settings.beatsVol) els.volSlider.value = settings.beatsVol;
     if (settings.masterVol) els.masterVolSlider.value = settings.masterVol;
     if (settings.atmosMaster) els.atmosMasterSlider.value = settings.atmosMaster;
+    if (settings.spatialOrbit !== undefined && els.spatialOrbitToggle) {
+        els.spatialOrbitToggle.checked = settings.spatialOrbit;
+        toggleSpatialOrbit(settings.spatialOrbit);
+    }
 
     // Update Frequencies immediately
     updateFrequencies();

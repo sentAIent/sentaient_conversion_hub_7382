@@ -1,17 +1,25 @@
 import { state } from '../state.js';
+import { SpatialEngine } from './spatial-engine.js';
 
 export class AmbientMixer {
     constructor(audioCtx, masterDest) {
         this.ctx = audioCtx;
         this.masterDest = masterDest; // Where to connect the ambient sounds
         
+        // Initialize Spatial Engine
+        this.spatialEngine = new SpatialEngine(this.ctx, this.masterDest);
+        
         this.tracks = {
-            thunderstorm: { active: false, gainNode: null, nodes: [], volume: 0.5 },
-            ocean: { active: false, gainNode: null, nodes: [], volume: 0.5 },
-            fire: { active: false, gainNode: null, nodes: [], volume: 0.5 },
-            solfeggio432: { active: false, gainNode: null, nodes: [], volume: 0.5 },
-            solfeggio528: { active: false, gainNode: null, nodes: [], volume: 0.5 }
+            thunderstorm: { active: false, gainNode: null, spatialNode: null, nodes: [], volume: 0.5 },
+            ocean: { active: false, gainNode: null, spatialNode: null, nodes: [], volume: 0.5 },
+            fire: { active: false, gainNode: null, spatialNode: null, nodes: [], volume: 0.5 },
+            solfeggio432: { active: false, gainNode: null, spatialNode: null, nodes: [], volume: 0.5 },
+            solfeggio528: { active: false, gainNode: null, spatialNode: null, nodes: [], volume: 0.5 }
         };
+    }
+
+    set3DOrbit(active) {
+        this.spatialEngine.setOrbitActive(active);
     }
 
     startTrack(id) {
@@ -20,8 +28,12 @@ export class AmbientMixer {
         
         const gainNode = this.ctx.createGain();
         gainNode.gain.value = this.tracks[id].volume;
-        gainNode.connect(this.masterDest);
+        
+        const spatialNode = this.spatialEngine.createSpatialNode();
+        gainNode.connect(spatialNode);
+        
         this.tracks[id].gainNode = gainNode;
+        this.tracks[id].spatialNode = spatialNode;
 
         const nodes = [];
 
@@ -68,6 +80,10 @@ export class AmbientMixer {
                 if (track.gainNode) {
                     track.gainNode.disconnect();
                     track.gainNode = null;
+                }
+                if (track.spatialNode) {
+                    this.spatialEngine.removeSpatialNode(track.spatialNode);
+                    track.spatialNode = null;
                 }
                 track.nodes = [];
             }, 600);
