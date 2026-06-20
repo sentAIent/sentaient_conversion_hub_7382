@@ -9,9 +9,10 @@
             --bar-height: 52px;
         }
 
-        body {
+        html, body {
             margin: 0;
             overflow: hidden;
+            overscroll-behavior: none;
             background-color: var(--bg-deep);
             font-family: 'Exo 2', sans-serif;
             color: var(--text-main);
@@ -2833,3 +2834,11 @@ input[type="range"] { pointer-events: auto !important; touch-action: auto !impor
 .resize-ne { position: absolute; top: -5px; right: -5px; width: 10px; height: 10px; cursor: ne-resize; z-index: 11; }
 .resize-sw { position: absolute; bottom: -5px; left: -5px; width: 10px; height: 10px; cursor: sw-resize; z-index: 11; }
 .resize-se { position: absolute; bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: se-resize; z-index: 11; }
+
+#matrixPanel {
+    top: 50px;
+    left: auto;
+    right: 20px;
+    overflow-y: hidden;
+    width: 150px;
+}
