@@ -258,6 +258,7 @@ class InterstellarEngine {
 
         // Mineral system
         this.minerals = [];
+        this.powerUps = []; // Added for Power-Ups & Consumables
         this.mineralTypes = {
             // ============ INDUSTRIAL ZONE (50% spawn rate in industrial galaxies) ============
             iron: { name: 'Iron', value: 10, color: '#8B8680', rarity: 'common', size: 15, zone: 'industrial', use: 'Basic construction' },
@@ -2494,6 +2495,28 @@ class InterstellarEngine {
             }
         });
 
+        // Draw power-ups
+        this.powerUps.forEach(pu => {
+            const dx = pu.x - this.playerShip.x;
+            const dy = pu.y - this.playerShip.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < radarRange) {
+                const rx = cx + (dx / radarRange) * 35;
+                const ry = cy + (dy / radarRange) * 35;
+                
+                let color = '#fff';
+                if (pu.type === 'shield_boost') color = '#00ffff';
+                if (pu.type === 'hull_repair') color = '#00ff00';
+                if (pu.type === 'weapon_overdrive') color = '#ff8800';
+                if (pu.type === 'speed_boost') color = '#ffff00';
+
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(rx, ry, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
         // Draw space mines (Red triangles)
         this.spaceMines.forEach(m => {
             const dx = m.x - this.playerShip.x;
@@ -3603,6 +3626,11 @@ class InterstellarEngine {
             effectiveMaxSpeed *= 3.0 + (this.playerSkills.afterburner * 0.5);
         }
 
+        // Power-Up: Speed Boost
+        if (ship.speedBoost && Date.now() < ship.speedBoost) {
+            effectiveMaxSpeed *= 1.5;
+        }
+
         // Penalty: Towing base reduces max speed
         if (this.spaceBase && this.spaceBase.isTowing) {
             effectiveMaxSpeed *= 0.5;
@@ -3744,7 +3772,10 @@ class InterstellarEngine {
             if (!weaponDef) return;
             
             // Cooldown in DB is roughly frames, multiply by 20 for ms
-            const wCooldown = (weaponDef.cooldown * 20) / (1 + weaponLevel * 0.5);
+            let wCooldown = (weaponDef.cooldown * 20) / (1 + weaponLevel * 0.5);
+            if (ship.weaponOverdrive && Date.now() < ship.weaponOverdrive) {
+                wCooldown *= 0.5; // Double fire rate
+            }
             
             if (now - ship.lastShots[index] < wCooldown) return;
             
@@ -4558,6 +4589,19 @@ class InterstellarEngine {
         const lootTypes = ['diamond', 'ruby', 'sapphire', 'gold', 'platinum'];
         const lootType = lootTypes[Math.floor(Math.random() * lootTypes.length)];
         this.spawnLoot(enemy.x, enemy.y, lootType, Math.ceil(typeDef.gemDrop / 3));
+
+        // Drop power-up (15% chance, guaranteed for boss)
+        if (Math.random() < 0.15 || typeDef.rarity === 'boss') {
+            const puTypes = ['shield_boost', 'hull_repair', 'weapon_overdrive', 'speed_boost'];
+            const puType = puTypes[Math.floor(Math.random() * puTypes.length)];
+            this.powerUps.push({
+                x: enemy.x,
+                y: enemy.y,
+                type: puType,
+                phase: Math.random() * Math.PI * 2,
+                size: 20
+            });
+        }
 
         this.showToast(`💥 ${typeDef.name} destroyed! +${typeDef.gemDrop} Gems`, 2000);
 
@@ -6805,6 +6849,49 @@ class InterstellarEngine {
 
         // Update Mauler Debris
         this.updateMaulerDebris();
+    }
+
+    updatePowerUps() {
+        if (!this.flightMode) return;
+
+        const ship = this.playerShip;
+        if (!ship) return;
+
+        for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const pu = this.powerUps[i];
+            const dx = pu.x - ship.x;
+            const dy = pu.y - ship.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // Pickup radius for powerups
+            if (dist < ship.pickupRadius || dist < 60) {
+                this.collectPowerUp(pu);
+                this.powerUps.splice(i, 1);
+            }
+        }
+    }
+
+    collectPowerUp(pu) {
+        if (pu.type === 'shield_boost') {
+            this.playerShip.shield = Math.min(this.playerShip.maxShield, this.playerShip.shield + this.playerShip.maxShield * 0.5);
+            this.showToast('🛡️ Shield Boost! (+50%)');
+            this.createExplosion(pu.x, pu.y, 'hit');
+        } else if (pu.type === 'hull_repair') {
+            this.playerShip.hull = Math.min(this.playerShip.maxHull, this.playerShip.hull + this.playerShip.maxHull * 0.2);
+            this.showToast('🔧 Hull Repair! (+20%)');
+            this.createExplosion(pu.x, pu.y, 'hit');
+        } else if (pu.type === 'weapon_overdrive') {
+            this.playerShip.weaponOverdrive = Date.now() + 10000; // 10s
+            this.showToast('⚔️ Weapon Overdrive! (10s)');
+            this.createExplosion(pu.x, pu.y, 'hit');
+        } else if (pu.type === 'speed_boost') {
+            this.playerShip.speedBoost = Date.now() + 10000; // 10s
+            this.showToast('🚀 Speed Boost! (10s)');
+            this.createExplosion(pu.x, pu.y, 'hit');
+        }
+        
+        // Ensure UI updates immediately
+        if (this.updateShipStatus) this.updateShipStatus();
     }
 
     updateMaulerDebris() {
@@ -12194,6 +12281,7 @@ class InterstellarEngine {
                     this.updateProjectiles();
                     this.updateDamageParticles();
                     this.updateMinerals();
+                    this.updatePowerUps();
                     this.updateHazards();
                     this.updateSpaceBase();
                     this.updateEnemyShips();
@@ -14695,6 +14783,49 @@ class InterstellarEngine {
             ctx.fill();
             ctx.globalAlpha = 1;
 
+            ctx.restore();
+        });
+
+        // --- 6.6. POWER-UPS ---
+        const safeZoomPU = Math.max(0.01, this.camera ? this.camera.zoom : 1);
+        const viewHalfW_PU = (this.canvas.width / safeZoomPU) / 2 + 100;
+        const viewHalfH_PU = (this.canvas.height / safeZoomPU) / 2 + 100;
+        const camX_PU = (this.camera && typeof this.camera.x === 'number') ? (-this.camera.x / safeZoomPU) : this.playerShip.x;
+        const camY_PU = (this.camera && typeof this.camera.y === 'number') ? (-this.camera.y / safeZoomPU) : this.playerShip.y;
+            
+        this.powerUps.forEach(pu => {
+            if (Math.abs(pu.x - camX_PU) > viewHalfW_PU || Math.abs(pu.y - camY_PU) > viewHalfH_PU) return;
+
+            ctx.save();
+            ctx.translate(pu.x, pu.y);
+
+            const pulse = Math.sin(time * 0.005 + pu.phase) * 0.2 + 0.8;
+            const size = pu.size * pulse / safeZoomPU;
+
+            let color = '#fff';
+            let icon = '?';
+            if (pu.type === 'shield_boost') { color = '#00ffff'; icon = '🛡️'; }
+            if (pu.type === 'hull_repair') { color = '#00ff00'; icon = '🔧'; }
+            if (pu.type === 'weapon_overdrive') { color = '#ff8800'; icon = '⚔️'; }
+            if (pu.type === 'speed_boost') { color = '#ffff00'; icon = '🚀'; }
+
+            // Glow effect
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 2);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(0.5, color + '88');
+            gradient.addColorStop(1, color + '00');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = `${15/safeZoomPU}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(icon, 0, 0);
+            
             ctx.restore();
         });
     }
