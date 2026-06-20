@@ -4205,6 +4205,68 @@ class InterstellarEngine {
             color: '#6600cc', 
             glowColor: 'rgba(102, 0, 204, 0.4)', 
             size: 30
+        },
+        stalker: {
+            name: 'Void Stalker Alpha',
+            health: 40,
+            maxSpeed: 3.5,
+            acceleration: 0.1,
+            fireRate: 1000,
+            aggroRange: 700,
+            attackRange: 350,
+            bulletSpeed: 15,
+            bulletDamage: 8,
+            gemDrop: 5,
+            color: '#ff0000',
+            glowColor: 'rgba(255, 0, 0, 0.6)',
+            size: 16
+        },
+        scythe: {
+            name: 'Alien Scythe Alpha',
+            health: 80,
+            maxSpeed: 2.8,
+            acceleration: 0.08,
+            fireRate: 900,
+            aggroRange: 800,
+            attackRange: 450,
+            bulletSpeed: 16,
+            bulletDamage: 12,
+            gemDrop: 15,
+            color: '#ff8800',
+            glowColor: 'rgba(255, 136, 0, 0.6)',
+            size: 20
+        },
+        shard: {
+            name: 'Obsidian Shard Alpha',
+            health: 150,
+            maxSpeed: 1.8,
+            acceleration: 0.04,
+            fireRate: 1500,
+            aggroRange: 1000,
+            attackRange: 550,
+            bulletSpeed: 12,
+            bulletDamage: 20,
+            gemDrop: 30,
+            burstCount: 2,
+            burstDelay: 150,
+            color: '#00ffff',
+            glowColor: 'rgba(0, 255, 255, 0.6)',
+            size: 28
+        },
+        phantom_legacy: {
+            name: 'Nebula Phantom Alpha',
+            health: 160,
+            maxSpeed: 2.5,
+            acceleration: 0.05,
+            fireRate: 1600,
+            aggroRange: 900,
+            attackRange: 600,
+            bulletSpeed: 13,
+            bulletDamage: 18,
+            gemDrop: 35,
+            color: '#ffffff',
+            glowColor: 'rgba(255, 255, 255, 0.6)',
+            size: 26
         }
     };
 
@@ -12965,6 +13027,9 @@ class InterstellarEngine {
         const backgroundParallax = 0.98; // 0.98 means moves at 2% of player speed (near static)
         const zoomParallax = 0.3; // 1.0 = full zoom, 0.0 = no zoom effect on backgrounds
         const pZoom = 1 + (this.camera.zoom - 1) * zoomParallax;
+        // Always draw background stars and nebulae if they exist
+        // (Must be drawn BEFORE any context translation, as drawBackgroundElements calculates its own parallax)
+        this.drawBackgroundElements();
 
         ctx.save();
         // Background Field Centering: Always relative to screen center
@@ -12980,8 +13045,6 @@ class InterstellarEngine {
             -(this.playerShip.y * backgroundParallax + driftY)
         );
 
-        // Always draw background stars and nebulae if they exist
-        this.drawBackgroundElements();
         ctx.restore();
 
         // World Transform (For interactive game objects)
@@ -14579,6 +14642,63 @@ class InterstellarEngine {
     // === ALIEN SHIPS ===
 
 
+    drawAlienScythe(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = '#111'; ctx.strokeStyle = glowColor; ctx.lineWidth = 2;
+        ctx.shadowColor = glowColor; ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(size * 1.5, 0);
+        ctx.quadraticCurveTo(size * 0.5, size * 0.8, -size * 1.2, size * 1.5);
+        ctx.lineTo(-size * 0.8, 0);
+        ctx.lineTo(-size * 1.2, -size * 1.5);
+        ctx.quadraticCurveTo(size * 0.5, -size * 0.8, size * 1.5, 0);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = glowColor; ctx.beginPath();
+        ctx.arc(size * 0.2, 0, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    drawObsidianShard(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = '#050505'; ctx.strokeStyle = glowColor; ctx.lineWidth = 1.5;
+        const pulse = Math.sin(time * 0.01) * 0.2 + 0.8;
+        ctx.shadowColor = glowColor; ctx.shadowBlur = 15 * pulse;
+        ctx.beginPath(); ctx.moveTo(size * 1.8, 0); ctx.lineTo(0, size * 0.6);
+        ctx.lineTo(-size * 1.2, 0); ctx.lineTo(0, -size * 0.6); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = glowColor; ctx.beginPath(); ctx.moveTo(size * 0.8, 0);
+        ctx.lineTo(0, size * 0.2); ctx.lineTo(-size * 0.5, 0); ctx.lineTo(0, -size * 0.2);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+    }
+
+    drawVoidStalker(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(10, 10, 10, 0.8)'; ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(size * 1.6, 0); ctx.lineTo(-size * 1.2, size * 0.4);
+        ctx.lineTo(-size * 0.8, 0); ctx.lineTo(-size * 1.2, -size * 0.4); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ff0000'; ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 15;
+        const blink = Math.random() > 0.95 ? 0.2 : 1; ctx.globalAlpha = blink;
+        ctx.beginPath(); ctx.arc(size * 0.8, 0, size * 0.15, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+    }
+
+    drawNebulaPhantom(ctx, size, baseColor, glowColor, time) {
+        ctx.save();
+        const grad = ctx.createLinearGradient(size, 0, -size, 0);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)'); grad.addColorStop(0.5, glowColor); grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad; ctx.shadowColor = glowColor; ctx.shadowBlur = 25;
+        const wave = Math.sin(time * 0.005) * size * 0.2;
+        ctx.beginPath(); ctx.moveTo(size * 1.5, 0);
+        ctx.bezierCurveTo(size * 0.5, size + wave, -size * 0.5, size * 0.5 - wave, -size * 1.5, size * 0.8);
+        ctx.quadraticCurveTo(-size, 0, -size * 1.5, -size * 0.8);
+        ctx.bezierCurveTo(-size * 0.5, -size * 0.5 + wave, size * 0.5, -size - wave, size * 1.5, 0);
+        ctx.fill();
+        ctx.restore();
+    }
+
     drawNewScout(ctx, size, baseColor, glowColor, time) {
         ctx.save();
         const pulse = Math.sin(time * 0.008) * 0.3 + 0.7;
@@ -15444,6 +15564,10 @@ class InterstellarEngine {
                 case 'fighter': this.drawNewFighter(ctx, size, baseColor, activeGlow, Date.now()); break;
                 case 'cruiser': this.drawNewCruiser(ctx, size, baseColor, activeGlow, Date.now()); break;
                 case 'phantom': this.drawNewScout(ctx, size * 1.5, baseColor, activeGlow, Date.now()); break;
+                case 'scythe': this.drawAlienScythe(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'shard': this.drawObsidianShard(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'stalker': this.drawVoidStalker(ctx, size, baseColor, activeGlow, Date.now()); break;
+                case 'phantom_legacy': this.drawNebulaPhantom(ctx, size, baseColor, activeGlow, Date.now()); break;
                 default:
                     // Ship body — aggressive triangle
                     ctx.fillStyle = baseColor;
