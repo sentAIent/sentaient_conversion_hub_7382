@@ -3,40 +3,50 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, si
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const firebaseConfig = JSON.parse(window.__firebase_config || '{}');
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+
+let app = null, auth = null, db = null;
+if (Object.keys(firebaseConfig).length > 0) {
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+    } catch (e) {
+        console.warn("Firebase initialization failed:", e);
+    }
+} else {
+    console.warn("No Firebase configuration found. Firebase features will be disabled.");
+}
 
 window.dbSync = {
     currentUser: null,
     _saveTimeout: null,
     _lastSavedDataStr: null,
-    cloudSyncDisabled: false,
+    cloudSyncDisabled: true, // Disable by default if no config
     analyticsOptOut: localStorage.getItem('analyticsOptOut') === 'true',
     
     init: async function() {
+        if (!auth || !db) return; // Skip if Firebase is not initialized
         // --- 1. Geoblocking for China (PIPL Compliance) ---
         try {
             const geoRes = await fetch('https://get.geojs.io/v1/ip/country.json');
             const geoData = await geoRes.json();
-            if (geoData.country === 'CN') {
+            if (geoData.country === 'CN' || geoData.country === 'China') {
+                console.warn("[PIPL] Cloud Sync Disabled for CN region");
                 this.cloudSyncDisabled = true;
-                console.warn("[Compliance] Cloud sync disabled for mainland China (PIPL compliance). Local play enabled.");
             }
-        } catch (e) {
-            console.warn("[Compliance] Geo-IP check failed, assuming safe region.", e);
+        } catch(e) {
+            console.warn("Geocheck failed, defaulting to active sync if opted in");
         }
 
-        // --- 2. Initialize Firebase Auth State Listener ---
+        // --- 2. Auth State Listener ---
         onAuthStateChanged(auth, (user) => {
-            if (user && !this.cloudSyncDisabled) {
-                console.log("[Firebase] User logged in:", user.email);
+            if (user) {
                 this.currentUser = user;
-                document.getElementById('authStatusText').innerText = "Logged in as " + (user.displayName || user.email);
+                console.log("[Firebase] User logged in:", user.email);
+                document.getElementById('authStatusText').innerText = `Logged in as ${user.email}`;
                 document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('accountBtn').style.display = 'inline-block';
                 document.getElementById('logoutBtn').style.display = 'inline-block';
-                const accBtn = document.getElementById('accountBtn');
-                if (accBtn) accBtn.style.display = 'inline-block';
                 
                 // Load save data immediately
                 this.loadData();

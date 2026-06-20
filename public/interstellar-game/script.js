@@ -1,13 +1,6 @@
 // Interstellar Game Engine
 // Restored Mindwave Lotus Features
 (function() {
-    const banner = document.createElement('div');
-    banner.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,100,200,0.8);color:white;padding:10px 20px;border-radius:20px;z-index:10000;font-weight:bold;font-family:Orbitron, sans-serif;pointer-events:none;transition:opacity 2s;box-shadow:0 0 20px rgba(255,100,200,0.5);';
-    banner.innerText = '🌸 MINDWAVE LOTUS ENGINE V3.1 ACTIVE 🌸';
-    document.body.appendChild(banner);
-    setTimeout(() => { if(banner) banner.style.opacity = '0'; }, 3000);
-    setTimeout(() => { if(banner) banner.remove(); }, 5000);
-
     const resumeAudio = () => {
         if (window.gameAudio && window.gameAudio.ctx && window.gameAudio.ctx.state === 'suspended') {
             window.gameAudio.ctx.resume();
@@ -16,7 +9,6 @@
     document.addEventListener('click', resumeAudio, { capture: true, passive: true });
     document.addEventListener('keydown', resumeAudio, { capture: true, passive: true });
 })();
-
 console.log("🚀 INTERSTELLAR ENGINE V3.1 - Mindwave Lotus Restoration Active");
 console.log("🌸 Lotus Rendering: Tribal Sun + Petals enabled.");
 
@@ -30,6 +22,26 @@ import { AudioEngine } from './audio.js?v=ray_fix_v35';
 import * as Utils from './utils.js';
 
 window.gameAudio = new AudioEngine();
+
+// Track user interaction to prevent navigator.vibrate intervention warnings
+window.hasUserInteracted = false;
+window.addEventListener('mousedown', () => window.hasUserInteracted = true, { once: true });
+window.addEventListener('keydown', () => window.hasUserInteracted = true, { once: true });
+window.addEventListener('touchstart', () => window.hasUserInteracted = true, { once: true });
+
+// --- HAPTIC FEEDBACK UTILITY ---
+window.hapticFeedback = function(pattern) {
+    if (!window.hasUserInteracted) return; // Prevent browser intervention warnings
+    if (window.game && window.game.settings && !window.game.settings.haptics) return;
+    if (navigator.vibrate) {
+        try {
+            navigator.vibrate(pattern);
+        } catch (e) {
+            console.log('Haptics not supported or blocked');
+        }
+    }
+};
+
 class InterstellarEngine {
     constructor() {
         console.log("🚀 InterstellarEngine: Initializing...");
@@ -582,9 +594,55 @@ class InterstellarEngine {
     init() {
         window.game = this; // Expose for debugging
         window.addEventListener('resize', () => this.resize());
+        
+        if (window.logGameEvent) window.logGameEvent('game_start');
+        
+        this.checkDailyLogin();
+        this.checkOfflineProgression();
+        this.requestNotificationPermission();
+        
+        // Track last active time & check achievements
+        setInterval(() => {
+            localStorage.setItem('lastActiveTime', Date.now().toString());
+            this.checkAchievements();
+        }, 10000);
+
+        // App Store Polish: Handle App Backgrounding
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Pause game if in flight mode and not already paused
+                if (this.flightMode && !this.gamePaused) {
+                    this.togglePause();
+                }
+                // Suspend audio context to save battery and mute audio
+                if (window.gameAudio && window.gameAudio.ctx) {
+                    window.gameAudio.ctx.suspend().catch(e => console.warn(e));
+                }
+                
+                // Schedule local push notification for offline earnings reminder
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    // Note: True background push requires a Service Worker. We simulate with a timeout if the browser keeps the tab alive, otherwise this serves as a foundation for a SW later.
+                    if (this.spaceBase && this.spaceBase.isDeployed) {
+                        this._notificationTimeout = setTimeout(() => {
+                            new Notification('Interstellar Base Report', {
+                                body: 'Your Space Base has collected Offline Gems! Come back and claim them.',
+                                icon: '/icon-192x192.png' // Adjust path if needed
+                            });
+                        }, 1000 * 60 * 60); // 1 hour
+                    }
+                }
+            } else {
+                // Resume audio context
+                if (window.gameAudio && window.gameAudio.ctx) {
+                    window.gameAudio.ctx.resume().catch(e => console.warn(e));
+                }
+            }
+        });
+
 
         // Load Pro State
         this.isPro = localStorage.getItem('isPro') === 'true';
+        this.loadSettings();
         this.initAdminPanel();
         this.initMusicUI();
 
@@ -1695,7 +1753,7 @@ class InterstellarEngine {
             if (hud) hud.classList.remove('hidden');
             if (floatingLeaders) floatingLeaders.classList.remove('hidden');
             this.updateFloatingLeaderboard();
-            this.showToast('Flight Mode: ON - Use WASD/QE/Shift');
+            this.showToast('Flight Mode: ON');
             this.updateMissionHUD(); // Call the new mission HUD update
             this.updateFactionHUD(); // Boot Faction HUD
             // Audio: start engine hum + ambient music
@@ -1715,7 +1773,7 @@ class InterstellarEngine {
             this.toggleBgStyle('deep-space');
         }
 
-        this.showToast(this.flightMode ? 'Flight Mode: ON - Use WASD/QE/Shift' : 'Flight Mode: OFF');
+        this.showToast(this.flightMode ? 'Flight Mode: ON' : 'Flight Mode: OFF');
 
         // Reset keys to prevent runaway ship
         this.keysPressed = {};
@@ -3109,6 +3167,7 @@ class InterstellarEngine {
 
         // --- 4. HOLO-GRID ---
         // A perspective grid. Since this is 2D top-down, we draw a rectangular grid that pans.
+        if (this.settings.background !== false) {
         ctx.strokeStyle = 'rgba(0, 243, 255, 0.08)';
         ctx.lineWidth = 1 / zoom;
         const gridSize = 1000;
@@ -3135,6 +3194,7 @@ class InterstellarEngine {
             ctx.lineTo(endX, y);
         }
         ctx.stroke();
+        }
 
 
         // --- 5. ORBITAL MECHANICS & PLANETS (Cosmetic) ---
@@ -3965,24 +4025,26 @@ class InterstellarEngine {
         else gameAudio.playExplosionBig();
 
         // Simple particle explosion
-        const count = type === 'hit' ? 5 : 20;
-        const color = type === 'hit' ? '#ffff00' : '#ffaa00';
-        const speed = type === 'hit' ? 2 : 5;
+        if (this.settings.particles !== false) {
+            const count = type === 'hit' ? 5 : 20;
+            const color = type === 'hit' ? '#ffff00' : '#ffaa00';
+            const speed = type === 'hit' ? 2 : 5;
 
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const vel = Math.random() * speed;
-            this.damageParticles.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angle) * vel,
-                vy: Math.sin(angle) * vel,
-                size: Math.random() * 5 + 2,
-                life: 30 + Math.random() * 20,
-                maxLife: 50,
-                color: color,
-                type: 'spark'
-            });
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const vel = Math.random() * speed;
+                this.damageParticles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * vel,
+                    vy: Math.sin(angle) * vel,
+                    size: Math.random() * 5 + 2,
+                    life: 30 + Math.random() * 20,
+                    maxLife: 50,
+                    color: color,
+                    type: 'spark'
+                });
+            }
         }
     }
 
@@ -5697,6 +5759,11 @@ class InterstellarEngine {
         this.syncWithCloud();
     }
 
+    saveGems() {
+        localStorage.setItem('playerGems', this.playerGems);
+        this.updateGemsUI();
+    }
+
     loadStats() {
         try {
             return JSON.parse(localStorage.getItem('playerStats')) || {
@@ -6175,6 +6242,12 @@ class InterstellarEngine {
         if (hangarGemsEl) {
             hangarGemsEl.textContent = this.playerGems.toLocaleString();
         }
+        
+        // Update the HUD Gem counter
+        const hudGemsEl = document.getElementById('hudGemsValue');
+        if (hudGemsEl) {
+            hudGemsEl.textContent = '💎' + this.playerGems.toLocaleString();
+        }
 
         // Update Top Bar Cargo Display
         const cargoEl = document.getElementById('cargoStatus');
@@ -6585,6 +6658,7 @@ class InterstellarEngine {
             }
 
             // Award permanent gems (1 gem per mineral collected)
+            if (window.hapticFeedback) window.hapticFeedback(10);
             this.playerGems += 1;
             localStorage.setItem('playerGems', this.playerGems);
 
@@ -7121,17 +7195,34 @@ class InterstellarEngine {
                 if (dist < innerRadius + collisionRadius) {
                     this.showToast('☀️ VAPORIZED BY THE SUN!');
                     
-                    const safeDist = (42 * scale) + collisionRadius + 200; // Push totally outside
-                    ship.x = sun.x + Math.cos(shipAngle) * safeDist;
-                    ship.y = sun.y + Math.sin(shipAngle) * safeDist;
-
-                    this.damagePlayer(Infinity, true); // True vaporization ignores shields
+                    // Vaporize instantly
+                    this.damagePlayer(Infinity, true, false); 
+                    
+                    // Override the hazard effect for a cinematic whiteout vaporization
+                    if (this.hazardEffect) {
+                        this.hazardEffect.type = 'supernova'; // Massive whiteout
+                        this.hazardEffect.duration = 4000;
+                    }
                     return;
                 } else if (dist < heatRadius + collisionRadius) {
-                    // Ship loses health on the exterior rays of the sun
-                    this.damagePlayer(0.5, true); // Heat damage
+                    // Ship loses shield first, then health
+                    this.damagePlayer(0.5, false, Math.random() > 0.05); // Silent 95% of the time to avoid audio spam
+                    
+                    // Melting particles
+                    if (Math.random() < 0.4 && this.damageParticles) {
+                        this.damageParticles.push({
+                            x: ship.x + (Math.random() - 0.5) * 30,
+                            y: ship.y + (Math.random() - 0.5) * 30,
+                            vx: ship.vx * 0.8 + (Math.random() - 0.5) * 4,
+                            vy: ship.vy * 0.8 + (Math.random() - 0.5) * 4,
+                            life: 30 + Math.random() * 20,
+                            color: Math.random() < 0.5 ? '#ff4400' : '#ffaa00',
+                            size: 4 + Math.random() * 6
+                        });
+                    }
+
                     if (Math.random() < 0.02) {
-                        this.showToast('🔥 HULL OVERHEATING! TOUCHING SOLAR FLARES!', 1000);
+                        this.showToast('🔥 SHIELDS MELTING! TOUCHING SOLAR FLARES!', 1000);
                     }
                 }
             }
@@ -7387,7 +7478,7 @@ class InterstellarEngine {
     }
 
     // Unified damage method for tracking and ship abilities
-    damagePlayer(amount, ignoreShield = false) {
+    damagePlayer(amount, ignoreShield = false, silent = false) {
         if (!this.playerShip || this.playerShip.hullHealth <= 0) return;
 
         // ZEN BUFFER: Invulnerability after Lotus collection
@@ -7417,21 +7508,24 @@ class InterstellarEngine {
         if (this.playerShip.shield > 0 && !ignoreShield) {
             const shieldDamage = Math.min(this.playerShip.shield, amount);
             this.playerShip.shield -= shieldDamage;
-            gameAudio.playShieldHit();
+            if (!silent && typeof gameAudio !== 'undefined' && gameAudio.playShieldHit) gameAudio.playShieldHit();
             const remainingDamage = amount - shieldDamage;
             if (remainingDamage > 0) {
                 this.playerShip.hullHealth = Math.max(0, this.playerShip.hullHealth - remainingDamage);
-                gameAudio.playHullHit();
+                if (!silent && typeof gameAudio !== 'undefined' && gameAudio.playHullHit) gameAudio.playHullHit();
             }
         } else {
             this.playerShip.hullHealth = Math.max(0, this.playerShip.hullHealth - amount);
-            gameAudio.playHullHit();
+            if (!silent && typeof gameAudio !== 'undefined' && gameAudio.playHullHit) gameAudio.playHullHit();
         }
 
         this.updateShipStatus();
 
         if (this.playerShip.hullHealth <= 0) {
+            if (window.hapticFeedback) window.hapticFeedback([200, 100, 200, 100, 400]);
             this.handlePlayerDeath();
+        } else if (!silent) {
+            if (window.hapticFeedback) window.hapticFeedback([50, 50, 50]);
         }
     }
 
@@ -7677,6 +7771,14 @@ class InterstellarEngine {
 
         this.playerStats.deaths++;
         this.saveStats();
+        
+        if (window.logGameEvent) {
+            window.logGameEvent('player_death', {
+                score: this.score,
+                gems: this.playerGems,
+                sector: this.level
+            });
+        }
 
         // Reset health/shield immediately so HUD reflects death
         this.playerShip.shield = 0;
@@ -8215,7 +8317,7 @@ class InterstellarEngine {
                 }
 
                 // Show toast so user knows they can move again
-                this.showToast('Controls restored - use WASD to move!');
+                this.showToast('Controls restored!');
 
                 console.log('[Hazard] Effect complete - ALL CONTROLS RE-ENABLED');
                 return;
@@ -8847,7 +8949,7 @@ class InterstellarEngine {
         ctx.font = 'bold 14px Orbitron, sans-serif';
         ctx.shadowBlur = 10;
         ctx.shadowColor = '#ff69b4';
-        ctx.fillText('🌸 LOTUS ENGINE V3.1 ACTIVE 🌸', 30, 40);
+
         ctx.restore();
 
         if (!this.showWelcomeOverlay) return;
@@ -17846,8 +17948,211 @@ class InterstellarEngine {
         return { lines, clusters };
     }
 
+    shareScore() {
+        if (window.logGameEvent) window.logGameEvent('share_score_clicked');
+        if (navigator.share) {
+            navigator.share({
+                title: 'Interstellar Game',
+                text: `I've reached Sector ${this.level} and collected ${this.playerStats.totalGemsCollected} Gems in Interstellar! Can you beat my score?`,
+                url: window.location.href,
+            }).then(() => {
+                if (window.logGameEvent) window.logGameEvent('share_score_success');
+                this.showToast('Thanks for sharing!');
+            }).catch(console.error);
+        } else {
+            // Fallback for desktop
+            navigator.clipboard.writeText(`I've reached Sector ${this.level} and collected ${this.playerStats.totalGemsCollected} Gems in Interstellar! Can you beat my score? Play at: ${window.location.href}`);
+            this.showToast('Score copied to clipboard!');
+        }
+    }
+
+    loadSettings() {
+        try {
+            this.settings = JSON.parse(localStorage.getItem('gameSettings')) || {
+                particles: true,
+                background: true,
+                haptics: true
+            };
+        } catch(e) {
+            this.settings = { particles: true, background: true, haptics: true };
+        }
+        
+        // Sync UI
+        const pCheck = document.getElementById('settingParticles');
+        if (pCheck) pCheck.checked = this.settings.particles;
+        const bCheck = document.getElementById('settingBackground');
+        if (bCheck) bCheck.checked = this.settings.background;
+        const hCheck = document.getElementById('settingHaptics');
+        if (hCheck) hCheck.checked = this.settings.haptics;
+    }
+
+    updateSettings() {
+        const pCheck = document.getElementById('settingParticles');
+        const bCheck = document.getElementById('settingBackground');
+        const hCheck = document.getElementById('settingHaptics');
+        
+        this.settings = {
+            particles: pCheck ? pCheck.checked : true,
+            background: bCheck ? bCheck.checked : true,
+            haptics: hCheck ? hCheck.checked : true
+        };
+        
+        localStorage.setItem('gameSettings', JSON.stringify(this.settings));
+        this.showToast('Settings saved!');
+    }
+
+    checkDailyLogin() {
+        const lastLogin = localStorage.getItem('lastDailyLogin');
+        const today = new Date().toDateString();
+
+        if (lastLogin !== today) {
+            // First login today!
+            this.playerGems += 500;
+            this.saveGems();
+            localStorage.setItem('lastDailyLogin', today);
+            
+            // Wait a moment for UI to initialize
+            setTimeout(() => {
+                this.showToast('🎁 Daily Login Reward: +500 Gems!');
+                if (window.hapticFeedback) window.hapticFeedback([50, 50, 50]); // Success haptic
+                if (window.logGameEvent) window.logGameEvent('daily_reward_claimed', { amount: 500 });
+            }, 2000);
+        }
+    }
+
+    checkOfflineProgression() {
+        const lastActiveStr = localStorage.getItem('lastActiveTime');
+        if (!lastActiveStr) return; // First time playing
+        
+        const lastActive = parseInt(lastActiveStr, 10);
+        const now = Date.now();
+        const elapsedMs = now - lastActive;
+        const elapsedHours = elapsedMs / (1000 * 60 * 60);
+
+        // If away for more than 1 hour and has a space base deployed
+        if (elapsedHours >= 1 && this.spaceBase && this.spaceBase.isDeployed) {
+            // Cap offline progression to 24 hours
+            const hoursToReward = Math.min(elapsedHours, 24);
+            const gemsPerHour = 50 + (this.level * 10); // Reward scales with sector level
+            const offlineGems = Math.floor(hoursToReward * gemsPerHour);
+            
+            this.playerGems += offlineGems;
+            this.saveGems();
+            
+            setTimeout(() => {
+                this.showToast(`💤 Offline Earnings: +${offlineGems} Gems from your Base!`);
+                if (window.hapticFeedback) window.hapticFeedback([30, 80, 30]);
+                if (window.logGameEvent) window.logGameEvent('offline_progression_claimed', { amount: offlineGems, hours: hoursToReward });
+            }, 4000);
+        }
+    }
+
+    // --- PUSH NOTIFICATIONS ---
+    requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            // Only ask after tutorial is completed or on subsequent launches
+            setTimeout(() => {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        if (window.logGameEvent) window.logGameEvent('notifications_enabled');
+                        this.showToast('Notifications Enabled! We will remind you about offline earnings.');
+                    }
+                });
+            }, 5000);
+        }
+    }
+
+    // --- ACHIEVEMENTS SYSTEM ---
+    get achievementsConfig() {
+        return [
+            { id: 'first_blood', name: 'First Blood', desc: 'Destroy your first enemy ship.', condition: () => this.playerStats && this.playerStats.enemiesDefeated >= 1, reward: 100 },
+            { id: 'veteran_pilot', name: 'Veteran Pilot', desc: 'Destroy 50 enemies.', condition: () => this.playerStats && this.playerStats.enemiesDefeated >= 50, reward: 500 },
+            { id: 'deep_space', name: 'Deep Space', desc: 'Reach Sector 10.', condition: () => this.level >= 10, reward: 1000 },
+            { id: 'gem_hoarder', name: 'Gem Hoarder', desc: 'Accumulate 10,000 gems.', condition: () => this.playerStats && this.playerStats.totalGemsCollected >= 10000, reward: 2000 },
+            { id: 'base_commander', name: 'Base Commander', desc: 'Deploy your space base.', condition: () => this.spaceBase && this.spaceBase.isDeployed, reward: 500 }
+        ];
+    }
+
+    checkAchievements() {
+        if (!this.playerStats) return;
+        if (!this.playerStats.unlockedAchievements) {
+            this.playerStats.unlockedAchievements = [];
+        }
+        
+        let newUnlock = false;
+        this.achievementsConfig.forEach(ach => {
+            if (!this.playerStats.unlockedAchievements.includes(ach.id)) {
+                try {
+                    if (ach.condition()) {
+                        this.playerStats.unlockedAchievements.push(ach.id);
+                        this.playerGems += ach.reward;
+                        newUnlock = true;
+                        
+                        setTimeout(() => {
+                            this.showToast(`🏅 Achievement Unlocked: ${ach.name}! (+${ach.reward} Gems)`);
+                            if (window.hapticFeedback) window.hapticFeedback([50, 100, 50, 100]);
+                            if (window.logGameEvent) window.logGameEvent('achievement_unlocked', { id: ach.id });
+                        }, 500);
+                    }
+                } catch (e) {
+                    // Ignore errors in condition checks
+                }
+            }
+        });
+        
+        if (newUnlock) {
+            this.saveGems();
+            this.saveStats();
+        }
+    }
+
+    populateAchievements() {
+        const container = document.getElementById('achievementsList');
+        if (!container) return;
+        
+        if (!this.playerStats || !this.playerStats.unlockedAchievements) {
+            if (this.playerStats) this.playerStats.unlockedAchievements = [];
+        }
+        
+        container.innerHTML = '';
+        const unlockedCount = this.playerStats && this.playerStats.unlockedAchievements ? this.playerStats.unlockedAchievements.length : 0;
+        const totalCount = this.achievementsConfig.length;
+        
+        const header = document.createElement('div');
+        header.style.cssText = 'text-align:center; color:#888; font-size:12px; margin-bottom:10px;';
+        header.textContent = `${unlockedCount} / ${totalCount} Unlocked`;
+        container.appendChild(header);
+
+        this.achievementsConfig.forEach(ach => {
+            const isUnlocked = this.playerStats && this.playerStats.unlockedAchievements && this.playerStats.unlockedAchievements.includes(ach.id);
+            const item = document.createElement('div');
+            item.style.cssText = `
+                padding: 10px;
+                background: ${isUnlocked ? 'rgba(0, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)'};
+                border: 1px solid ${isUnlocked ? 'rgba(0, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.1)'};
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                opacity: ${isUnlocked ? '1' : '0.5'};
+            `;
+            
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <strong style="color:${isUnlocked ? '#00ffff' : '#fff'}">${ach.name}</strong>
+                    <span style="font-size:10px; color:#ffd700;">💎 ${ach.reward}</span>
+                </div>
+                <div style="font-size:12px; color:#ccc;">${ach.desc}</div>
+                <div style="font-size:10px; margin-top:4px; color:${isUnlocked ? '#00ff88' : '#888'}">
+                    ${isUnlocked ? '✓ Unlocked' : 'Locked'}
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
     showToast(msg) {
         console.log('[Toast]', msg);
+        if (window.hapticFeedback) window.hapticFeedback(15);
         // Create a toast element if needed
         let toast = document.getElementById('toast');
         if (!toast) {
@@ -17866,6 +18171,7 @@ class InterstellarEngine {
     showShipModal() {
         const modal = document.getElementById('shipModal');
         if (modal) {
+            if (window.logGameEvent) window.logGameEvent('hangar_opened');
             modal.style.display = 'flex';
             modal.classList.add('active'); 
             this.gamePaused = true; // Auto-pause game while in hangar
@@ -18838,6 +19144,7 @@ class InterstellarEngine {
                 {name: "Secret Agent (Lounge Jazz Stream)", url: "https://ice1.somafm.com/secretagent-128-mp3"}
             ],
             ai: [
+                {name: "Stellar Void", url: "https://ice1.somafm.com/dronezone-128-mp3"},
                 {name: "Beat Blender", url: "https://ice1.somafm.com/beatblender-128-mp3"},
                 {name: "Dub Step Ambient", url: "https://ice1.somafm.com/dubstep-128-mp3"},
                 {name: "Cosmic Flow", url: "https://ice1.somafm.com/spacestation-128-mp3"},
@@ -18846,7 +19153,6 @@ class InterstellarEngine {
                 {name: "Groove Salad", url: "https://ice1.somafm.com/groovesalad-128-mp3"},
                 {name: "Dark Zone Ambient", url: "https://ice1.somafm.com/darkzone-128-mp3"},
                 {name: "Deep Space One", url: "https://ice1.somafm.com/deepspaceone-128-mp3"},
-                {name: "Stellar Void", url: "https://ice1.somafm.com/dronezone-128-mp3"},
                 {name: "Nebula Drift", url: "https://ice1.somafm.com/fluid-128-mp3"},
                 {name: "Galactic Core", url: "https://ice1.somafm.com/missioncontrol-128-mp3"},
                 {name: "Event Horizon", url: "https://ice1.somafm.com/thetrip-128-mp3"},
@@ -19469,3 +19775,110 @@ Object.assign(InterstellarEngine.prototype, Utils);
 
 window.game = new InterstellarEngine();
 window.app = window.game; // Bridge for HTML handlers
+
+// --- DASHCAM & ENGINE HARMONICS UI BINDINGS ---
+class Dashcam {
+    constructor(canvas, audioEngine) {
+        this.canvas = canvas;
+        this.audioEngine = audioEngine;
+        this.mediaRecorder = null;
+        this.recordedChunks = [];
+        this.isRecording = false;
+        this.stream = null;
+    }
+
+    start() {
+        if (this.isRecording) return;
+        this.recordedChunks = [];
+        
+        try {
+            const videoStream = this.canvas.captureStream(30);
+            const tracks = [...videoStream.getVideoTracks()];
+
+            if (this.audioEngine && this.audioEngine.ctx && this.audioEngine.masterGain) {
+                const audioDest = this.audioEngine.ctx.createMediaStreamDestination();
+                this.audioEngine.masterGain.connect(audioDest);
+                if (audioDest.stream.getAudioTracks().length > 0) {
+                    tracks.push(audioDest.stream.getAudioTracks()[0]);
+                }
+            }
+
+            this.stream = new MediaStream(tracks);
+            
+            let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options = { mimeType: 'video/webm' };
+            }
+
+            this.mediaRecorder = new MediaRecorder(this.stream, options);
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) this.recordedChunks.push(event.data);
+            };
+
+            this.mediaRecorder.onstop = () => {
+                const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `interstellar-dashcam-${new Date().getTime()}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+            };
+
+            this.mediaRecorder.start();
+            this.isRecording = true;
+            if (window.app) window.app.showToast('⏺ Dashcam Recording Started', 2000);
+        } catch (e) {
+            console.error("Dashcam error:", e);
+        }
+    }
+
+    stop() {
+        if (!this.isRecording || !this.mediaRecorder) return;
+        this.mediaRecorder.stop();
+        this.isRecording = false;
+        if (window.app) window.app.showToast('⏺ Dashcam Stopped. Saving...', 2000);
+    }
+}
+
+window.dashcam = new Dashcam(document.getElementById('canvas'), window.gameAudio);
+
+const dashcamBtn = document.getElementById('dashcamBtn');
+if (dashcamBtn) {
+    dashcamBtn.addEventListener('click', () => {
+        if (window.dashcam.isRecording) {
+            window.dashcam.stop();
+            dashcamBtn.style.color = '#ff3333';
+            dashcamBtn.innerHTML = '⏺ Dashcam';
+        } else {
+            window.dashcam.start();
+            dashcamBtn.style.color = '#ff0000';
+            dashcamBtn.innerHTML = '⏹ Stop Rec';
+        }
+    });
+}
+
+const pitchSlider = document.getElementById('enginePitchSlider');
+const harmonicsSlider = document.getElementById('engineHarmonicsSlider');
+const pitchLabel = document.getElementById('pitchValueLabel');
+const harmonicsLabel = document.getElementById('harmonicsValueLabel');
+
+if (pitchSlider && harmonicsSlider && pitchLabel && harmonicsLabel) {
+    pitchSlider.value = window.gameAudio.engineBasePitch || 60;
+    harmonicsSlider.value = window.gameAudio.engineHarmonics || 3;
+    pitchLabel.innerText = `${pitchSlider.value} Hz`;
+    harmonicsLabel.innerText = `${harmonicsSlider.value} Hz`;
+
+    const updateEngineParams = () => {
+        const p = parseFloat(pitchSlider.value);
+        const h = parseFloat(harmonicsSlider.value);
+        pitchLabel.innerText = `${p} Hz`;
+        harmonicsLabel.innerText = `${h} Hz`;
+        window.gameAudio.setEngineHarmonicsSettings(p, h);
+    };
+
+    pitchSlider.addEventListener('input', updateEngineParams);
+    harmonicsSlider.addEventListener('input', updateEngineParams);
+}

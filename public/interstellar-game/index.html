@@ -5,9 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Interstellar Map | Pre-Placement Cartographer</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192.png">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="./styles.css?v=ray_fix_v10">
+    <script>
+        // Service Worker disabled to prevent caching issues.
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
 </head>
 
 <body>
@@ -73,6 +85,10 @@
             <button class="btn-small" id="accountBtn" onclick="document.getElementById('accountModal').classList.remove('hidden')" style="display:none; color: #00f3ff; border-color: rgba(0,243,255,0.3);">Account</button>
             <button class="btn-small" id="logoutBtn" onclick="window.dbSync.logout()" style="display:none; color: #ff3333; border-color: rgba(255,51,51,0.3);">Logout</button>
             <button class="btn-small" id="leaderboardBtn" onclick="document.getElementById('leaderboardModal').classList.remove('hidden'); window.populateLeaderboard();" style="color: #ffd700; border-color: rgba(255,215,0,0.3);">🏆 Ranks</button>
+            <button class="btn-small" id="achievementsBtn" onclick="document.getElementById('achievementsModal').classList.remove('hidden'); window.game.populateAchievements();" style="color: #00ffff; border-color: rgba(0,255,255,0.3);">🏅 Medals</button>
+            <button class="btn-small" id="shareBtn" onclick="window.game.shareScore()" style="color: #ff00ff; border-color: rgba(255,0,255,0.3);">🚀 Share</button>
+            <button class="btn-small" onclick="document.getElementById('settingsModal').classList.remove('hidden')">⚙️ Settings</button>
+            <button class="btn-small" id="dashcamBtn" style="color: #ff3333; border-color: rgba(255,51,51,0.3);">⏺ Dashcam</button>
             <div class="divider"></div>
             <button class="btn-small" onclick="app.toggleAdminPanel()">👑 Admin</button>
         </div>
@@ -119,6 +135,9 @@
                     <div class="hangar-status">STATUS: ONLINE | STAGING AREA B-12</div>
                     <div class="hangar-gems">GEMS OVERRIDE: <span id="hangarGemBalance"
                             style="color: #00ff00; font-weight: bold; text-shadow: 0 0 10px #00ff00;">0</span></div>
+                </div>
+                <div style="margin-top: 8px; font-size: 11px; color: #7a8a9a; letter-spacing: 1px;">
+                    Advanced Ships and Premium Features are linked to your SentAIent Account. Manage your account profile at sentaient.com
                 </div>
             </div>
 
@@ -307,7 +326,7 @@
             <div class="game-controls-section">
                 <span class="game-label">🎮 PLAY GAME</span>
                 <button class="btn game-btn" onclick="window.game.toggleFlightMode()"
-                    data-tooltip="Enter Flight Mode - Use WASD to fly!">🚀 FLY</button>
+                    data-tooltip="Enter Flight Mode">🚀 FLY</button>
                 <button class="btn game-btn" id="selectShipBtn" onclick="window.game.showShipModal()"
                     data-tooltip="Choose Your Spaceship" style="display:none">🛸 <span class="hide-mobile">SHIP</span></button>
                 <button class="btn game-btn" id="dockBtn" onclick="window.game.toggleUpgradePanel()"
@@ -477,6 +496,10 @@
                     <div style="margin-bottom: 8px;">
                         <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">CREDITS</div>
                         <div style="font-size: 20px; color: #ffd700; font-weight: bold;" id="walletValue" class="editable-value-span">$0</div>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">GEMS</div>
+                        <div style="font-size: 20px; color: #00ff00; font-weight: bold; text-shadow: 0 0 10px #00ff00;" id="hudGemsValue" class="editable-value-span">💎0</div>
                     </div>
                     <div>
                         <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">CARGO CAPACITY</div>
@@ -984,7 +1007,7 @@
 
     <!-- Style for Mobile Visibility & UI Polish -->
     <!-- Main Game Script -->
-    <script type="module" src="script.js?v=ray_fix_v33"></script>
+    <script type="module" src="script.js?v=ray_fix_v35"></script>
     <!-- BASE BUILDER MODAL -->
     <div class="modal-overlay" id="baseBuilderModal">
         <div class="modal-content" style="width: 800px; max-width: 95vw; background: rgba(10, 20, 30, 0.95); border: 2px solid #228B22; box-shadow: 0 0 30px rgba(34, 139, 34, 0.4);">
@@ -1206,8 +1229,58 @@
         <button class="btn-small" onclick="document.getElementById('leaderboardModal').classList.add('hidden')" style="width: 100%;">Close</button>
     </div>
 
+    <!-- === SETTINGS MODAL === -->
+    <div id="settingsModal" class="popup-panel hidden" style="width: 300px; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; z-index: 300;">
+        <h3 style="text-align: center; margin-bottom: 15px;">Settings</h3>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span>Particles (Performance)</span>
+            <input type="checkbox" id="settingParticles" checked onchange="window.game.updateSettings()">
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span>Background Grid</span>
+            <input type="checkbox" id="settingBackground" checked onchange="window.game.updateSettings()">
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span>Haptics (Vibration)</span>
+            <input type="checkbox" id="settingHaptics" checked onchange="window.game.updateSettings()">
+        </div>
+        
+        <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #00f3ff;">Engine Harmonics</h4>
+            <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                    <span>Base Pitch</span>
+                    <span id="pitchValueLabel">60 Hz</span>
+                </div>
+                <input type="range" id="enginePitchSlider" min="30" max="150" value="60" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                    <span>Harmonics (Beat Spread)</span>
+                    <span id="harmonicsValueLabel">3 Hz</span>
+                </div>
+                <input type="range" id="engineHarmonicsSlider" min="0" max="15" step="0.5" value="3" style="width: 100%;">
+            </div>
+        </div>
+        
+        <button class="btn-small" onclick="document.getElementById('settingsModal').classList.add('hidden')" style="width: 100%; margin-top: 15px;">Close</button>
+    </div>
+
+    <!-- === ACHIEVEMENTS MODAL === -->
+    <div id="achievementsModal" class="popup-panel hidden" style="width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; z-index: 300;">
+        <h3 style="text-align: center; margin-bottom: 15px; color: #00ffff;">Achievements</h3>
+        <div id="achievementsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+            <div style="text-align:center; color:#aaa;">Loading...</div>
+                <button class="btn-small" onclick="document.getElementById('achievementsModal').classList.add('hidden')" style="width: 100%;">Close</button>
+    </div>
+
+    <!-- === HUD GEM DISPLAY === -->
+    <div id="gemDisplay" style="position: absolute; top: 10px; right: 10px; color: #ff00ff; font-family: monospace; font-size: 18px; pointer-events: none; z-index: 100;">
+        Gems: <span id="gemCount">0</span>
+    </div>
+
     <!-- Firebase Scripts -->
-    <script src="../binaural-assets/config.js"></script>
     <script type="module" src="js/firebase-integration.js"></script>
 
     <!-- Slider Edit Script -->

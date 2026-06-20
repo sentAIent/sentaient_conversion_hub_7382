@@ -21,6 +21,8 @@ export class AudioEngine {
         this.sfxVolume = savedSfxVol !== null && !isNaN(parseFloat(savedSfxVol)) ? parseFloat(savedSfxVol) : 0.8;
         this.engineNode = null;
         this.engineGain = null;
+        this.engineBasePitch = localStorage.getItem('engineBasePitch') ? parseFloat(localStorage.getItem('engineBasePitch')) : 60;
+        this.engineHarmonics = localStorage.getItem('engineHarmonics') ? parseFloat(localStorage.getItem('engineHarmonics')) : 3;
         this.currentStreamingAudio = null;
         this.ambientTimeout = null;
         this.binauralInterval = null;
@@ -191,9 +193,16 @@ export class AudioEngine {
         this.currentStreamingAudio.crossOrigin = "anonymous";
         this.currentStreamingAudio.loop = this.playlist.length === 1;
         
-        this.currentStreamingAudio.addEventListener('canplay', () => {
-            this.currentStreamingAudio.play().catch(e => console.error("Audio playback blocked", e));
-        });
+        // Start playback synchronously to satisfy browser interaction policies
+        const playPromise = this.currentStreamingAudio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(e => {
+                console.warn("[Audio] Sync play blocked, waiting for canplay:", e);
+                this.currentStreamingAudio.addEventListener('canplay', () => {
+                    this.currentStreamingAudio.play().catch(err => console.error("[Audio] Playback blocked permanently", err));
+                }, { once: true });
+            });
+        }
 
         this.currentStreamingAudio.addEventListener('play', () => {
             this.isStreamingPlaying = true;
@@ -484,14 +493,13 @@ export class AudioEngine {
         this.ensureContext();
         if (this.engineHumMuted || !this.ctx) return;
         if (!this.engineNode) {
-            this.engineNode = this.ctx.createOscillator();
-            this.engineNode.type = 'sine';
-            this.engineNode.frequency.value = 50;
+            this.currentRpm = this.engineBasePitch; // Initialize RPM to base pitch
+            this.engineNode = this._createBinauralPair('sine', this.currentRpm, this.engineHarmonics, this.ctx.currentTime);
             this.engineGain = this.ctx.createGain();
             this.engineGain.gain.value = 0.05 * (this.engineVolume || 1);
             this.engineNode.connect(this.engineGain);
             this.engineGain.connect(this.masterGain);
-            this.engineNode.start();
+            this.engineNode.start(this.ctx.currentTime);
         }
     }
 
@@ -574,17 +582,32 @@ export class AudioEngine {
         
         // RPMs: Track a virtual RPM that winds up when holding gas and drops when released
         if (thrustInput > 0) {
-            this.currentRpm = Math.min((this.currentRpm || 50) + 3, 200); // Wind up
+            this.currentRpm = Math.min((this.currentRpm || this.engineBasePitch) + 3, this.engineBasePitch + 150); // Wind up
         } else {
-            this.currentRpm = Math.max((this.currentRpm || 50) - 5, 50);  // Wind down
+            this.currentRpm = Math.max((this.currentRpm || this.engineBasePitch) - 5, this.engineBasePitch);  // Wind down
         }
         
         // Apply RPM to pitch
-        this.engineNode.frequency.setTargetAtTime(this.currentRpm, this.ctx.currentTime, 0.1);
+        if (this.engineNode.nodeL && this.engineNode.nodeR) {
+            this.engineNode.nodeL.frequency.setTargetAtTime(this.currentRpm, this.ctx.currentTime, 0.1);
+            this.engineNode.nodeR.frequency.setTargetAtTime(this.currentRpm + this.engineHarmonics, this.ctx.currentTime, 0.1);
+        }
         
         // Volume jumps up with throttle, drops in neutral
         const targetVolume = thrustInput > 0 ? 0.08 : 0.03;
         this.engineGain.gain.setTargetAtTime(targetVolume * (this.engineVolume || 1), this.ctx.currentTime, 0.2);
+    }
+
+    setEngineHarmonicsSettings(pitch, harmonics) {
+        this.engineBasePitch = pitch;
+        this.engineHarmonics = harmonics;
+        localStorage.setItem('engineBasePitch', pitch);
+        localStorage.setItem('engineHarmonics', harmonics);
+        // Instant update if engine is running
+        if (this.engineNode && this.engineNode.nodeL) {
+             this.engineNode.nodeL.frequency.setTargetAtTime(this.currentRpm || this.engineBasePitch, this.ctx.currentTime, 0.1);
+             this.engineNode.nodeR.frequency.setTargetAtTime((this.currentRpm || this.engineBasePitch) + this.engineHarmonics, this.ctx.currentTime, 0.1);
+        }
     }
 
 
