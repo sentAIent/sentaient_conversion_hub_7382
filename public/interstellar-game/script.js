@@ -11887,12 +11887,10 @@ class InterstellarEngine {
         ];
         nebulaConfigs.forEach(cfg => {
             for (let i = 0; i < cfg.count; i++) {
-                // Place on a 3x3 grid spreading across the 15000 wrap bounds to ensure exact spacing
-                const row = Math.floor(i / 3);
-                const col = i % 3;
-                const cellW = 15000 / 3;
-                const x = (col * cellW) + (Math.random() * cellW * 0.5);
-                const y = (row * cellW) + (Math.random() * cellW * 0.5);
+                const dist = Math.sqrt(Math.random() * (cfg.maxDist * cfg.maxDist - cfg.minDist * cfg.minDist) + cfg.minDist * cfg.minDist);
+                const angle = Math.random() * Math.PI * 2;
+                const x = Math.cos(angle) * dist;
+                const y = Math.sin(angle) * dist;
                 
                 this.nebulae.push({
                     x: x,
@@ -12039,27 +12037,24 @@ class InterstellarEngine {
     generateNebulaStyle() {
         const zRange = 3000;
 
-        // Vastly increased counts to fill 80,000 world without modulo wrapping
-        // Perfectly spaced grid for modulo wrapping (ensures no overlapping and perfect visibility)
         const nebulaConfigs = [
-            { count: 9, maxDist: 10000, minSize: 800, maxSize: 1600 }
+            { count: 30, minDist: 0, maxDist: 10000, minSize: 800, maxSize: 2500 },
+            { count: 60, minDist: 10000, maxDist: 40000, minSize: 1200, maxSize: 3500 },
+            { count: 110, minDist: 40000, maxDist: 80000, minSize: 2000, maxSize: 5000 }
         ];
         nebulaConfigs.forEach(cfg => {
             for (let i = 0; i < cfg.count; i++) {
-                // Place on a 3x3 grid spreading across the 15000 wrap bounds to ensure exact spacing
-                const row = Math.floor(i / 3);
-                const col = i % 3;
-                const cellW = 15000 / 3;
-                const x = (col * cellW) + (Math.random() * cellW * 0.5);
-                const y = (row * cellW) + (Math.random() * cellW * 0.5);
+                const dist = Math.sqrt(Math.random() * (cfg.maxDist * cfg.maxDist - cfg.minDist * cfg.minDist) + cfg.minDist * cfg.minDist);
+                const angle = Math.random() * Math.PI * 2;
+                const x = Math.cos(angle) * dist;
+                const y = Math.sin(angle) * dist;
                 
                 this.nebulae.push({
                     x: x,
                     y: y,
                     z: (Math.random() * zRange) - zRange / 2,
                     size: cfg.minSize + Math.random() * (cfg.maxSize - cfg.minSize),
-                    // Use dark, moody colors matching deep space
-                    color: ['#4400cc', '#0033aa', '#cc0066', '#330066', '#003366', '#660033'][Math.floor(Math.random() * 6)],
+                    color: ['#ff00ff', '#00ffff', '#ffaa00', '#aa00ff', '#00ff88', '#ff0055'][Math.floor(Math.random() * 6)],
                     alpha: 0.15 + Math.random() * 0.3
                 });
             }
@@ -12131,7 +12126,11 @@ class InterstellarEngine {
         const shipClasses = [
             { name: 'scout', baseSize: 40, weight: 4 },
             { name: 'fighter', baseSize: 60, weight: 4 },
-            { name: 'cruiser', baseSize: 100, weight: 2 }
+            { name: 'cruiser', baseSize: 100, weight: 2 },
+            { name: 'alien-scythe', baseSize: 50, weight: 3 },
+            { name: 'obsidian-shard', baseSize: 55, weight: 3 },
+            { name: 'void-stalker', baseSize: 70, weight: 2 },
+            { name: 'nebula-phantom', baseSize: 65, weight: 2 }
         ];
 
         // Build weighted selection pool
@@ -17559,27 +17558,16 @@ class InterstellarEngine {
                 }
 
                 const para = n.parallax || 0.2;
-                // Wrapping bounds: ensure they seamlessly tile around the screen
-                
-                
                 // Base background scaling (less aggressive than physical zoom)
                 const bgZoom = Math.pow(this.camera.zoom, 0.4);
                 
-                // Screen coordinates (wrapping modulo to fill screen infinitely)
-                // Wrap bounds perfectly spaced for the 9 grid items generated
-                const wrapSize = 15000;
                 let screenX = (n.x - this.playerShip.x * para) * bgZoom;
                 let screenY = (n.y - this.playerShip.y * para) * bgZoom;
                 
-                // Modulo wrap to infinite tiling
-                screenX = ((screenX % wrapSize) + wrapSize) % wrapSize;
-                screenY = ((screenY % wrapSize) + wrapSize) % wrapSize;
-                
-                // Shift to center around screen
-                const cx = screenX - wrapSize/2 + cx_offset;
-                const cy = screenY - wrapSize/2 + cy_offset;
+                const cx = screenX + cx_offset;
+                const cy = screenY + cy_offset;
 
-                const scaledSize = Math.max(0.1, n.size * scale);
+                const scaledSize = Math.max(0.1, n.size * scale * bgZoom);
                 const scaledAlpha = n.alpha * alpha;
 
                 if (cx < -scaledSize || cx > w + scaledSize || cy < -scaledSize || cy > h + scaledSize) return;
@@ -17686,6 +17674,18 @@ class InterstellarEngine {
                         break;
                     case 'cruiser':
                         this.drawNewCruiser(ctx, size * 1.5, baseColor, activeGlow, timeStr);
+                        break;
+                    case 'alien-scythe':
+                        this.drawAlienScythe(ctx, size * 1.5, baseColor, activeGlow, timeStr);
+                        break;
+                    case 'obsidian-shard':
+                        this.drawObsidianShard(ctx, size * 1.5, baseColor, activeGlow, timeStr);
+                        break;
+                    case 'void-stalker':
+                        this.drawVoidStalker(ctx, size * 1.5, baseColor, activeGlow, timeStr);
+                        break;
+                    case 'nebula-phantom':
+                        this.drawNebulaPhantom(ctx, size * 1.5, baseColor, activeGlow, timeStr);
                         break;
                     case 'scout':
                     default:
