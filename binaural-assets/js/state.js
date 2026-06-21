@@ -60,7 +60,9 @@ export const PRESET_COMBOS = [
         icon: '🌧️',
         preset: 'alpha',
         soundscapes: ['rain'],
-        visuals: ['rainforest', 'ocean', 'zengarden'],
+        visuals: ['rainforest', 'ocean', 'particles'],
+        cymaticClass: 19,
+        cymaticVariation: 4,
         atmosVolume: 0.6,
         color: '#6b7280'
     },
@@ -71,7 +73,9 @@ export const PRESET_COMBOS = [
         icon: '🌙',
         preset: 'delta',
         soundscapes: ['wind'],
-        visuals: ['galaxy', 'ocean', 'zengarden'],
+        visuals: ['galaxy', 'interstellar', 'particles'],
+        cymaticClass: 3,
+        cymaticVariation: 1,
         atmosVolume: 0.5,
         color: '#1e3a5f'
     },
@@ -82,7 +86,9 @@ export const PRESET_COMBOS = [
         icon: '⚔️',
         preset: 'beta',
         soundscapes: ['strings', 'brass'],
-        visuals: ['dragon', 'matrix', 'particles'],
+        visuals: ['dragon', 'matrix', 'lava'],
+        cymaticClass: 1,
+        cymaticVariation: 0,
         atmosVolume: 0.4,
         color: '#b45309'
     },
@@ -93,7 +99,9 @@ export const PRESET_COMBOS = [
         icon: '🌊',
         preset: 'theta',
         soundscapes: ['ocean'],
-        visuals: ['ocean', 'particles', 'flow'],
+        visuals: ['ocean', 'flow', 'particles'],
+        cymaticClass: 5,
+        cymaticVariation: 4,
         atmosVolume: 0.7,
         color: '#0891b2'
     },
@@ -104,7 +112,9 @@ export const PRESET_COMBOS = [
         icon: '⛈️',
         preset: 'gamma',
         soundscapes: ['rain', 'wind'],
-        visuals: ['rainforest', 'matrix', 'interstellar'],
+        visuals: ['matrix', 'cyber', 'interstellar'],
+        cymaticClass: 17,
+        cymaticVariation: 0,
         atmosVolume: 0.5,
         color: '#4b5563'
     },
@@ -115,7 +125,9 @@ export const PRESET_COMBOS = [
         icon: '🔔',
         preset: 'mu',
         soundscapes: ['bells'],
-        visuals: ['zengarden', 'sphere', 'particles'],
+        visuals: ['zengarden', 'mandala', 'particles'],
+        cymaticClass: 22,
+        cymaticVariation: 10,
         atmosVolume: 0.4,
         color: '#a855f7'
     },
@@ -126,7 +138,9 @@ export const PRESET_COMBOS = [
         icon: '🔥',
         preset: 'alpha',
         soundscapes: ['fireplace'],
-        visuals: ['fireplace', 'lava', 'particles'],
+        visuals: ['fireplace', 'lava', 'sphere'],
+        cymaticClass: 14,
+        cymaticVariation: 9,
         atmosVolume: 0.6,
         color: '#f97316'
     },
@@ -137,9 +151,11 @@ export const PRESET_COMBOS = [
         icon: '🌲',
         preset: 'theta',
         soundscapes: ['winds', 'brown', 'forest_birds'],
-        visuals: ['rainforest', 'zengarden', 'particles'],
+        visuals: ['rainforest', 'particles', 'flow'],
+        cymaticClass: 20,
+        cymaticVariation: 1,
         atmosVolume: 0.5,
-        color: '#10b981'
+        color: '#9ca3af'
     },
     {
         id: 'mountain-zen',
@@ -148,7 +164,9 @@ export const PRESET_COMBOS = [
         icon: '🏔️',
         preset: 'alpha',
         soundscapes: ['mountain_wind', 'forest_birds'],
-        visuals: ['zengarden', 'galaxy', 'sphere'],
+        visuals: ['ocean', 'galaxy', 'sphere', 'interstellar'],
+        cymaticClass: 15,
+        cymaticVariation: 4,
         atmosVolume: 0.5,
         color: '#94a3b8'
     },
@@ -159,7 +177,9 @@ export const PRESET_COMBOS = [
         icon: '🛶',
         preset: 'theta',
         soundscapes: ['river', 'forest_birds'],
-        visuals: ['particles', 'ocean', 'interstellar'],
+        visuals: ['ocean', 'particles', 'interstellar'],
+        cymaticClass: 8,
+        cymaticVariation: 7,
         atmosVolume: 0.7,
         color: '#38bdf8'
     },
@@ -170,7 +190,9 @@ export const PRESET_COMBOS = [
         icon: '🌌',
         preset: 'gamma',
         soundscapes: ['strings', 'white'],
-        visuals: ['galaxy', 'dragon', 'matrix'],
+        visuals: ['galaxy', 'tesseract', 'matrix'],
+        cymaticClass: 4,
+        cymaticVariation: 5,
         atmosVolume: 0.45,
         color: '#8b5cf6'
     },
@@ -181,7 +203,9 @@ export const PRESET_COMBOS = [
         icon: '☀️',
         preset: 'beta',
         soundscapes: ['pink', 'wood'],
-        visuals: ['sphere', 'zengarden', 'particles'],
+        visuals: ['sphere', 'flow', 'particles'],
+        cymaticClass: 10,
+        cymaticVariation: 2,
         atmosVolume: 0.5,
         color: '#fbbf24'
     }
@@ -189,6 +213,29 @@ export const PRESET_COMBOS = [
 
 // Brainwave-to-Visual mapping for standard presets
 export const BRAINWAVE_VISUALS = {
+
+    // Custom Deep Dive Frequencies
+    'freq-0.5': ['nebula'],
+    'freq-1.5': ['nebula'],
+    'freq-2.5': ['zengarden'],
+    'freq-3.0': ['particles'],
+    'freq-4.5': ['tesseract'],
+    'freq-5.5': ['zengarden'],
+    'freq-6.5': ['rainforest'],
+    'freq-7.83': ['rainforest'],
+    'freq-8.5': ['particles'],
+    'freq-10.0': ['matrix'],
+    'freq-11.5': ['tesseract'],
+    'freq-12.0': ['zengarden'],
+    'freq-14.0': ['matrix'],
+    'freq-16.0': ['matrix'],
+    'freq-18.0': ['tesseract'],
+    'freq-20.0': ['tesseract'],
+    'freq-30.0': ['galaxy'],
+    'freq-40.0': ['galaxy'],
+    'freq-50.0': ['galaxy'],
+    'freq-200.0': ['galaxy'],
+
     delta: ['ocean', 'zengarden'],
     theta: ['particles', 'ocean'],
     alpha: ['zengarden', 'sphere'],
@@ -212,6 +259,29 @@ export const HEALING_VISUALS = {
 };
 
 export const STATE_INSIGHTS = {
+
+    // Custom Deep Dive Frequencies
+    'freq-0.5': ['nebula'],
+    'freq-1.5': ['nebula'],
+    'freq-2.5': ['zengarden'],
+    'freq-3.0': ['particles'],
+    'freq-4.5': ['tesseract'],
+    'freq-5.5': ['zengarden'],
+    'freq-6.5': ['rainforest'],
+    'freq-7.83': ['rainforest'],
+    'freq-8.5': ['particles'],
+    'freq-10.0': ['matrix'],
+    'freq-11.5': ['tesseract'],
+    'freq-12.0': ['zengarden'],
+    'freq-14.0': ['matrix'],
+    'freq-16.0': ['matrix'],
+    'freq-18.0': ['tesseract'],
+    'freq-20.0': ['tesseract'],
+    'freq-30.0': ['galaxy'],
+    'freq-40.0': ['galaxy'],
+    'freq-50.0': ['galaxy'],
+    'freq-200.0': ['galaxy'],
+
     delta: ["Deep sleep approaches.", "Total regeneration.", "Unconscious healing."],
     theta: ["Dream state activated.", "Creativity flows.", "Access subconscious."],
     alpha: ["Relaxed awareness.", "Calm visualization.", "Bridge to meditation."],

@@ -1,6 +1,6 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
-import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS, updateHarmonicsLevel } from '../audio/engine.js';
+import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS, updateHarmonicsLevel, toggleSpatialOrbit } from '../audio/engine.js';
 import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
@@ -385,6 +385,7 @@ export function setupUI() {
     els.playbackVideo = document.getElementById('playbackVideo');
     els.videoToggleBtn = document.getElementById('videoToggleBtn');
     els.saveMixBtn = document.getElementById('saveMixBtn');
+    els.spatialOrbitToggleBtn = document.getElementById('spatialOrbitToggleBtn');
     els.historyBtn = document.getElementById('historyBtn');
     els.journeyBtn = document.getElementById('journeyBtn');
     els.libraryPanel = document.getElementById('libraryPanel');
@@ -817,6 +818,26 @@ export function setupUI() {
         if (els.playbackVideo) { els.playbackVideo.pause(); els.playbackVideo.src = ""; }
         if (els.playbackAudio) { els.playbackAudio.pause(); }
     });
+
+    if (els.spatialOrbitToggleBtn) {
+        els.spatialOrbitToggleBtn.addEventListener('click', () => {
+            const isActive = els.spatialOrbitToggleBtn.textContent.includes('ON');
+            const newState = !isActive;
+            
+            toggleSpatialOrbit(newState);
+            saveStateToLocal();
+            
+            if (newState) {
+                els.spatialOrbitToggleBtn.textContent = 'ORBIT ON';
+                els.spatialOrbitToggleBtn.classList.remove('bg-white/5', 'text-[var(--text-muted)]');
+                els.spatialOrbitToggleBtn.classList.add('bg-cyan-500/20', 'border-cyan-400', 'text-cyan-300');
+            } else {
+                els.spatialOrbitToggleBtn.textContent = 'ORBIT OFF';
+                els.spatialOrbitToggleBtn.classList.remove('bg-cyan-500/20', 'border-cyan-400', 'text-cyan-300');
+                els.spatialOrbitToggleBtn.classList.add('bg-white/5', 'text-[var(--text-muted)]');
+            }
+        });
+    }
 
     if (els.videoToggleBtn) {
         els.videoToggleBtn.addEventListener('click', () => {
@@ -2811,6 +2832,23 @@ function startSweepPresetUI(presetKey) {
     if (success) {
         activeSweepPreset = presetKey;
         updateSweepStatusUI(true, presetKey);
+
+        const presetInfo = SWEEP_PRESETS[presetKey];
+        if (presetInfo) {
+            // Apply visuals
+            if (presetInfo.visuals && window.setVisualMode) {
+                window.setVisualMode(presetInfo.visuals);
+            }
+            // Apply color
+            if (presetInfo.color) {
+                const viz = getVisualizer();
+                if (viz && viz.setColor) viz.setColor(presetInfo.color);
+            }
+            // Apply cymatics
+            if (presetInfo.cymaticClass !== undefined && window.setCymaticState) {
+                window.setCymaticState(presetInfo.cymaticClass, presetInfo.cymaticVariation);
+            }
+        }
         const preset = SWEEP_PRESETS[presetKey];
         if (preset) {
             showToast(`${preset.icon} ${preset.name} started`, 'success');
@@ -3656,9 +3694,14 @@ function restoreStateFromLocal() {
         const saved = localStorage.getItem('mindwave_state_v2');
         if (saved) {
             const s = JSON.parse(saved);
+            // DO NOT restore visual mode on load so default cymatics/cyber loads
+            delete s.visualMode;
             loadSettings({ settings: s });
         } else {
-            applyPreset('alpha', null, false); // Don't auto-start during page load
+            // Instead of applyPreset which overrides visuals, just set default audio state
+            if (els.baseSlider) els.baseSlider.value = 200;
+            if (els.beatSlider) els.beatSlider.value = 10;
+            updateFrequencies();
         }
     } catch (e) { console.warn("Failed to restore state", e); }
 }
@@ -4042,14 +4085,20 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     // 1. Update UI Buttons & Sync Presence
     if (els.presetButtons) {
         els.presetButtons.forEach(b => {
-            b.classList.remove('bg-white/10', 'border-white/20');
+            b.classList.remove('preset-active', 'bg-white/10', 'border-white/20');
+            b.style.boxShadow = '';
+            b.style.background = '';
+            b.style.borderColor = '';
             b.classList.add('bg-white/5', 'border-white/10');
         });
 
         const targetBtn = btnElement || document.querySelector(`.preset-btn[onclick*="'${type}'"]`);
         if (targetBtn) {
             targetBtn.classList.remove('bg-white/5', 'border-white/10');
-            targetBtn.classList.add('bg-white/10', 'border-white/20');
+            targetBtn.classList.add('preset-active');
+            targetBtn.style.borderColor = 'var(--accent)';
+            targetBtn.style.background = 'color-mix(in srgb, var(--accent) 15%, transparent)';
+            targetBtn.style.boxShadow = '0 0 20px var(--accent-glow), inset 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent)';
         }
     }
 
@@ -4070,26 +4119,49 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     let color = '#ffffff';
 
     switch (type) {
-        case 'delta': base = 100; beat = 2.5; color = '#6366f1'; break;
-        case 'theta': base = 144; beat = 5.5; color = '#a855f7'; break;
-        case 'alpha': base = 120; beat = 10; color = '#60a5fa'; break;
-        case 'beta': base = 200; beat = 20; color = '#facc15'; break;
-        case 'gamma': base = 200; beat = 40; color = '#f472b6'; break;
+        
+        // --- CUSTOM DEEP DIVE FREQUENCIES ---
+        case 'freq-0.5': base = 100; beat = 0.5; color = '#8b0000'; window.setCymaticState?.(9, 0); break;
+        case 'freq-1.5': base = 105; beat = 1.5; color = '#0000cd'; window.setCymaticState?.(3, 1); break;
+        case 'freq-2.5': base = 110; beat = 2.5; color = '#2e8b57'; window.setCymaticState?.(20, 1); break;
+        case 'freq-3.0': base = 111; beat = 3.0; color = '#8b0000'; window.setCymaticState?.(22, 10); break;
+        case 'freq-4.5': base = 120; beat = 4.5; color = '#191970'; window.setCymaticState?.(13, 6); break;
+        case 'freq-5.5': base = 130; beat = 5.5; color = '#ff4500'; window.setCymaticState?.(5, 4); break;
+        case 'freq-6.5': base = 140; beat = 6.5; color = '#006400'; window.setCymaticState?.(11, 3); break;
+        case 'freq-7.83': base = 144; beat = 7.83; color = '#00ff7f'; window.setCymaticState?.(22, 9); break;
+        case 'freq-8.5': base = 150; beat = 8.5; color = '#00ced1'; window.setCymaticState?.(8, 7); break;
+        case 'freq-10.0': base = 160; beat = 10.0; color = '#ffb6c1'; window.setCymaticState?.(19, 4); break;
+        case 'freq-11.5': base = 170; beat = 11.5; color = '#39ff14'; window.setCymaticState?.(6, 8); break;
+        case 'freq-12.0': base = 180; beat = 12.0; color = '#8b4513'; window.setCymaticState?.(14, 9); break;
+        case 'freq-14.0': base = 190; beat = 14.0; color = '#ffffff'; window.setCymaticState?.(1, 0); break;
+        case 'freq-16.0': base = 200; beat = 16.0; color = '#ffd700'; window.setCymaticState?.(10, 2); break;
+        case 'freq-18.0': base = 210; beat = 18.0; color = '#ffff00'; window.setCymaticState?.(15, 4); break;
+        case 'freq-20.0': base = 220; beat = 20.0; color = '#1e90ff'; window.setCymaticState?.(12, 7); break;
+        case 'freq-30.0': base = 250; beat = 30.0; color = '#172554'; window.setCymaticState?.(4, 5); break;
+        case 'freq-40.0': base = 300; beat = 40.0; color = '#ff00ff'; window.setCymaticState?.(17, 0); break;
+        case 'freq-50.0': base = 400; beat = 50.0; color = '#60a9ff'; window.setCymaticState?.(25, 0); break;
+        case 'freq-200.0': base = 800; beat = 200.0; color = '#adff2f'; window.setCymaticState?.(18, 9); break;
+
+        case 'delta': base = 100; beat = 2.5; color = '#6366f1'; window.setCymaticState?.(3, 1); break;
+        case 'theta': base = 144; beat = 5.5; color = '#a855f7'; window.setCymaticState?.(5, 4); break;
+        case 'alpha': base = 120; beat = 10; color = '#60a5fa'; window.setCymaticState?.(19, 4); break;
+        case 'beta': base = 200; beat = 20; color = '#facc15'; window.setCymaticState?.(1, 0); break;
+        case 'gamma': base = 200; beat = 40; color = '#f472b6'; window.setCymaticState?.(17, 0); break;
         // case 'hyper-gamma': base = 300; beat = 100; color = '#ffffff'; break; // REMOVED: Duplicate causing glitch
 
         // Solfeggio Healing Frequencies
         // We combine Solfeggio Base with Theta Beat for deep healing state
         // using Theta (5.5Hz) beat for relaxation, except 963Hz (Gamma/40Hz)
-        case 'heal-174': base = 174; beat = 5.5; color = '#2dd4bf'; break; // Teal
-        case 'heal-285': base = 285; beat = 5.5; color = '#38bdf8'; break; // Sky Blue [NEW]
-        case 'heal-396': base = 396; beat = 5.5; color = '#f43f5e'; break; // Rose
-        case 'heal-417': base = 417; beat = 5.5; color = '#fb923c'; break; // Orange [NEW]
-        case 'heal-432': base = 432; beat = 5.5; color = '#10b981'; break; // Emerald
-        case 'heal-528': base = 528; beat = 5.5; color = '#06b6d4'; break; // Cyan
-        case 'heal-639': base = 639; beat = 5.5; color = '#3b82f6'; break; // Blue
-        case 'heal-741': base = 741; beat = 5.5; color = '#6366f1'; break; // Indigo
-        case 'heal-852': base = 852; beat = 5.5; color = '#8b5cf6'; break; // Violet
-        case 'heal-963': base = 963; beat = 40; color = '#d946ef'; break; // Fuchsia (Hyper-Gamma)
+        case 'heal-174': base = 174; beat = 5.5; color = '#2dd4bf'; break; window.setCymaticState?.(22, 14); // Teal
+        case 'heal-285': base = 285; beat = 5.5; color = '#38bdf8'; break; window.setCymaticState?.(21, 2); // Sky Blue [NEW]
+        case 'heal-396': base = 396; beat = 5.5; color = '#f43f5e'; break; window.setCymaticState?.(22, 20); // Rose
+        case 'heal-417': base = 417; beat = 5.5; color = '#fb923c'; break; window.setCymaticState?.(22, 12); // Orange [NEW]
+        case 'heal-432': base = 432; beat = 5.5; color = '#10b981'; break; window.setCymaticState?.(22, 22); // Emerald
+        case 'heal-528': base = 528; beat = 5.5; color = '#06b6d4'; break; window.setCymaticState?.(22, 16); // Cyan
+        case 'heal-639': base = 639; beat = 5.5; color = '#3b82f6'; break; window.setCymaticState?.(21, 0); // Blue
+        case 'heal-741': base = 741; beat = 5.5; color = '#6366f1'; break; window.setCymaticState?.(22, 13); // Indigo
+        case 'heal-852': base = 852; beat = 5.5; color = '#8b5cf6'; break; window.setCymaticState?.(21, 5); // Violet
+        case 'heal-963': base = 963; beat = 40; color = '#d946ef'; break; window.setCymaticState?.(22, 29); // Fuchsia (Hyper-Gamma)
 
         // Mu Waves (Motor Cortex / Body Awareness) - 8-13Hz range
         // Using significantly different base frequency (150Hz vs Alpha's 200Hz) for audible distinction
@@ -4314,13 +4386,19 @@ export async function applyComboPreset(comboId, btnElement) {
     // 6. Update UI buttons (highlight selected combo)
     if (els.presetButtons) {
         els.presetButtons.forEach(b => {
-            b.classList.remove('bg-white/10', 'border-white/20');
+            b.classList.remove('preset-active', 'bg-white/10', 'border-white/20');
+            b.style.boxShadow = '';
+            b.style.background = '';
+            b.style.borderColor = '';
             b.classList.add('bg-white/5', 'border-white/10');
         });
     }
     if (btnElement) {
         btnElement.classList.remove('bg-white/5', 'border-white/10');
-        btnElement.classList.add('bg-white/10', 'border-white/20');
+        btnElement.classList.add('preset-active');
+        btnElement.style.borderColor = 'var(--accent)';
+        btnElement.style.background = 'color-mix(in srgb, var(--accent) 15%, transparent)';
+        btnElement.style.boxShadow = '0 0 20px var(--accent-glow), inset 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent)';
     }
 
     // 7. Total Immersion: Apply Visuals
@@ -4331,30 +4409,35 @@ export async function applyComboPreset(comboId, btnElement) {
         }
     }
 
+    // 7.5. Apply Cymatics
+    if (combo.cymaticClass !== undefined && combo.cymaticVariation !== undefined) {
+        console.log('[Controls] Applying cymatics:', combo.cymaticClass, combo.cymaticVariation);
+        if (window.setCymaticState) {
+            window.setCymaticState(combo.cymaticClass, combo.cymaticVariation);
+        }
+    }
+
     // 8. Save state
     saveStateToLocal();
 
     console.log('[Controls] Combo preset configured:', comboId);
 
     // 8. Start both binaural beats AND ambience together
-    // Use a small delay to ensure all state is updated
-    setTimeout(async () => {
-        try {
-            // Always start audio - don't check if already playing
-            // This ensures combos work even if clicked during fade-out
-            await startAudio();
-            fadeIn(1.5);
-            resumeVisuals();
-            syncAllButtons();
+    try {
+        // Always start audio - don't check if already playing
+        // This ensures combos work even if clicked during fade-out
+        await startAudio();
+        fadeIn(1.5);
+        resumeVisuals();
+        syncAllButtons();
 
-            // Show toast
-            showToast(`🎧 ${combo.label}: ${combo.description} `, 'success');
+        // Show toast
+        showToast(`🎧 ${combo.label}: ${combo.description} `, 'success');
 
-            console.log('[Controls] Combo preset fully active - beats + ambience');
-        } catch (err) {
-            console.error('[Controls] Failed to start combo preset:', err);
-        }
-    }, 100);
+        console.log('[Controls] Combo preset fully active - beats + ambience');
+    } catch (err) {
+        console.error('[Controls] Failed to start combo preset:', err);
+    }
 
     return true;
 }
@@ -4644,14 +4727,25 @@ export function updatePresetButtons(activeType) {
     if (!els.presetButtons) return;
 
     els.presetButtons.forEach(b => {
-        b.classList.remove('bg-white/10', 'border-white/20');
+        // Remove active styling classes
+        b.classList.remove('preset-active', 'border-[var(--accent)]', 'text-[var(--accent)]', 'bg-white/10', 'border-white/20');
+        b.style.boxShadow = '';
+        b.style.background = '';
+        b.style.borderColor = '';
+
+        // Add inactive styling
         b.classList.add('bg-white/5', 'border-white/10');
 
         // Check if this button matches the active type
-        // Note: onclick string matching is fragile, but consistent with existing app structure
         if (activeType && b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${activeType}'`)) {
+            // Remove inactive styling
             b.classList.remove('bg-white/5', 'border-white/10');
-            b.classList.add('bg-white/10', 'border-white/20');
+            
+            // Add prominent active styling
+            b.classList.add('preset-active');
+            b.style.borderColor = 'var(--accent)';
+            b.style.background = 'color-mix(in srgb, var(--accent) 15%, transparent)';
+            b.style.boxShadow = '0 0 20px var(--accent-glow), inset 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent)';
         }
     });
 }

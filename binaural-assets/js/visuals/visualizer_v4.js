@@ -40,7 +40,7 @@ static CYMATIC_PATTERNS = [
 ];
     constructor(canvas, initialState = {}) {
         this.canvas = canvas;
-        this.activeModes = initialState.activeModes || new Set(); // Start empty to match UI
+        this.activeModes = initialState.activeModes || new Set(['cyber', 'snowflake', 'ocean', 'cymatics']); // Changed defaults
         this.mode = initialState.mode || 'none'; // Legacy support
 
         // Default settings - MUST be set before init methods
@@ -48,6 +48,10 @@ static CYMATIC_PATTERNS = [
         this.galaxySunStyle = initialState.galaxySunStyle || 'sun';
         
         // Cymatics State
+        this.cymaticClass = initialState.cymaticClass !== undefined ? initialState.cymaticClass : 22;
+        this.cymaticVariation = initialState.cymaticVariation !== undefined ? initialState.cymaticVariation : 0;
+        this.cymaticColors = initialState.cymaticColors || ['#EEA0EB', '#FFB1A3'];
+        this.snowSizeOverride = initialState.snowSizeOverride !== undefined ? initialState.snowSizeOverride : 0.5;
         this.currentCymaticData = { name: "Fractal Heart", n: 1, m: 1, energy: 0.2 };
         this.cymaticsHistory = [];
         this.cymaticsHistoryIndex = -1;
@@ -152,6 +156,9 @@ static CYMATIC_PATTERNS = [
         try {
             this.scene = new THREE.Scene();
             this.cymaticsCore = new CymaticsCore(this.cymaticsGroup);
+            this.cymaticsCore.setPattern(this.cymaticClass, this.cymaticVariation);
+            this.cymaticsCore.setColor(this.cymaticClass, 1, this.cymaticColors[0]);
+            this.cymaticsCore.setColor(this.cymaticClass, 2, this.cymaticColors[1]);
             // Add groups to scene
             const groups = [
                 this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup, 
@@ -1371,7 +1378,7 @@ static CYMATIC_PATTERNS = [
                 uTexture:        { value: sfTex },
                 uColor:          { value: this.customColor ? this.customColor.clone() : new THREE.Color(0xa5f3eb) }, // Respect custom color
                 uIntensity:      { value: 0 },
-                uSizeMultiplier: { value: 1.0 },
+                uSizeMultiplier: { value: this.snowSizeOverride },
                 uGlowAmount:     { value: 0.5 },
             },
             vertexShader: `

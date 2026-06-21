@@ -397,62 +397,10 @@ window.resetGalaxySettings = function() {
 <div class="glass-lux rounded-2xl px-5 py-4 pointer-events-auto flex flex-wrap items-center justify-center gap-4 max-w-[calc(100vw-320px)] opacity-0 no-transition ui-fade-target shadow-2xl" id="topControlBar">
 <!-- Status Indicator -->
 <div class="h-3 w-3 rounded-full bg-slate-600 shadow-[0_0_12px_currentColor] shrink-0" id="statusIndicator"></div>
-<!-- Mode Toggles - Theme Aware -->
-<div class="flex gap-0.5 p-1 bg-black/40 rounded-xl border border-white/10 shrink-0" id="modeToggle">
-<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="binaural">
-                        Binaural
-                    </button>
-<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="isochronic">
-                        Isochronic
-                    </button>
-<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="monaural">
-                        Monaural
-                    </button>
-</div>
+
 <!-- Divider - Hidden on narrow screens -->
 <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
-<!-- Generator Sliders - Standardized Premium -->
-<div class="flex items-center gap-6 flex-wrap justify-center ml-2">
-<!-- Base Pitch -->
-<div class="flex flex-col items-center gap-1">
-<span class="text-[10px] uppercase tracking-tighter text-white/40">Pitch</span>
-<input class="mw-slider w-20 sm:w-28" id="baseSlider" max="1500" min="50" step="0.1" type="range" value="200"/>
-<span class="premium-value text-[10px]" id="baseValue">200Hz</span>
-</div>
-<!-- Beat Freq -->
-<div class="flex flex-col items-center gap-1">
-<span class="text-[10px] uppercase tracking-tighter text-white/40">Beat</span>
-<input class="mw-slider w-16 sm:w-20" id="beatSlider" max="100" min="0.5" step="0.1" type="range" value="10"/>
-<span class="premium-value text-[10px]" id="beatValue">10Hz</span>
-</div>
-<!-- Volume -->
-<div class="flex flex-col items-center gap-1">
-<span class="text-[10px] uppercase tracking-tighter text-white/40">Binaural</span>
-<input class="mw-slider w-14 sm:w-18" id="volSlider" max="1" min="0" step="0.01" type="range" value="0.5"/>
-<span class="premium-value text-[10px]" id="volValue">50%</span>
-</div>
-<!-- Separator -->
-<div class="w-[1px] h-6 bg-white/20 mx-1"></div>
-<!-- Master Volume -->
-<div class="flex flex-col items-center gap-1">
-<span class="text-[10px] uppercase tracking-tighter text-white/40">Main Out</span>
-<input class="mw-slider w-14 sm:w-18" id="masterVolSlider" max="1" min="0" step="0.01" type="range" value="1.0"/>
-<span class="premium-value text-[10px]" id="masterVolValue">100%</span>
-</div>
-<!-- L/R Balance -->
-<div class="flex flex-col items-center gap-1">
-<span class="text-[10px] uppercase tracking-tighter text-white/40">L/R Fader</span>
-<div class="flex items-center gap-1">
-<span class="premium-label text-[10px] opacity-60">L</span>
-<div class="relative flex-1 flex items-center justify-center w-14 sm:w-16">
-<div class="absolute w-0.5 h-3 bg-white/20 rounded-full z-10 pointer-events-none"></div>
-<input class="mw-slider w-full" id="balanceSlider" max="1" min="-1" step="0.1" style="padding:0; margin:0;" type="range" value="0"/>
-</div>
-<span class="premium-label text-[10px] opacity-60">R</span>
-</div>
-<span class="premium-value text-[10px]" id="balanceValue">0</span>
-</div>
-</div>
+
 <!-- Divider -->
 <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
 <!-- Action Icons -->
@@ -613,15 +561,42 @@ window.resetGalaxySettings = function() {
         box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
     }
 </style>
-<div class="order-[1.5] flex justify-center items-center gap-4 bg-white/5 backdrop-blur-2xl px-5 py-2 rounded-full border border-white/10 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.5)] mt-2 hover:bg-white/10 hover:border-white/20 transition-all duration-300">
-    <span class="text-[10px] font-medium tracking-[0.2em] text-white/90 uppercase">Beat Sync</span>
-    <label class="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox" id="beatSyncToggle" class="sr-only peer" checked onchange="window.visualsBeatSync = this.checked;">
-        <!-- Track -->
-        <div class="w-11 h-6 bg-black/60 rounded-full border border-white/10 shadow-inner peer-focus:outline-none peer-checked:bg-cyan-500/50 peer-checked:border-cyan-400/50 transition-all duration-300"></div>
-        <!-- Handle -->
-        <div class="absolute w-5 h-5 bg-white rounded-full shadow-md border border-gray-300 peer-checked:translate-x-full transition-transform duration-300" style="left: 2px; top: 2px;"></div>
-    </label>
+<!-- Volume, Balance, Beat Sync -->
+<div class="order-[1.5] flex items-center gap-2 mt-2 max-w-full overflow-x-auto no-scrollbar-firefox hide-scroll">
+    <!-- Master Volume -->
+    <div class="flex items-center gap-3 bg-white/5 backdrop-blur-2xl px-5 py-1.5 rounded-full border border-white/10 shadow-lg shrink-0 h-full">
+        <span class="text-[9px] uppercase tracking-widest text-white/60">Master Volume</span>
+        <div class="flex items-center w-28">
+            <input class="mw-slider w-full" id="masterVolSlider" max="1" min="0" step="0.01" type="range" value="1.0"/>
+        </div>
+        <span class="premium-value text-[9px] min-w-[24px]" id="masterVolValue">100%</span>
+    </div>
+
+    <!-- Beat Sync Toggle -->
+    <div class="flex justify-center items-center gap-4 bg-white/5 backdrop-blur-2xl px-5 py-1.5 rounded-full border border-white/10 shadow-lg hover:bg-white/10 hover:border-white/20 transition-all duration-300 h-full shrink-0">
+        <span class="text-[10px] font-medium tracking-[0.2em] text-white/90 uppercase">Beat Sync</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="beatSyncToggle" class="sr-only peer" checked onchange="window.visualsBeatSync = this.checked;">
+            <!-- Track -->
+            <div class="w-11 h-6 bg-black/60 rounded-full border border-white/10 shadow-inner peer-focus:outline-none peer-checked:bg-cyan-500/50 peer-checked:border-cyan-400/50 transition-all duration-300"></div>
+            <!-- Handle -->
+            <div class="absolute w-5 h-5 bg-white rounded-full shadow-md border border-gray-300 peer-checked:translate-x-full transition-transform duration-300" style="left: 2px; top: 2px;"></div>
+        </label>
+    </div>
+
+    <!-- L/R Balance -->
+    <div class="flex items-center gap-3 bg-white/5 backdrop-blur-2xl px-5 py-1.5 rounded-full border border-white/10 shadow-lg shrink-0 h-full">
+        <span class="text-[9px] uppercase tracking-widest text-white/60">L/R Fader</span>
+        <div class="flex items-center gap-2 w-28">
+            <span class="text-[8px] font-bold opacity-60">L</span>
+            <div class="relative flex-1 flex items-center justify-center">
+                <div class="absolute w-0.5 h-2 bg-white/30 rounded-full z-10 pointer-events-none"></div>
+                <input class="mw-slider w-full" id="balanceSlider" max="1" min="-1" step="0.1" style="padding:0; margin:0;" type="range" value="0"/>
+            </div>
+            <span class="text-[8px] font-bold opacity-60">R</span>
+        </div>
+        <span class="premium-value text-[9px] min-w-[20px] text-center" id="balanceValue">0</span>
+    </div>
 </div>
 
 <!-- 3. New Horizontal Visual Dock -->
@@ -815,24 +790,34 @@ window.resetGalaxySettings = function() {
 <div class="sidebar-section">
 <h3 class="section-label">Global Parameters</h3>
 <div class="space-y-7">
-<!-- Theme Gallery Trigger -->
-<button class="glass-btn w-full !rounded-full" id="themeGalleryBtn" onclick="showThemeGallery()">
-<svg fill="none" height="18" stroke="var(--accent)" stroke-width="2" viewbox="0 0 24 24" width="18">
-<rect height="18" rx="2" ry="2" width="18" x="3" y="3"></rect>
-<circle cx="8.5" cy="8.5" r="1.5"></circle>
-<polyline points="21 15 16 10 5 21"></polyline>
-</svg>
-<span class="flex-1 text-left text-xs uppercase tracking-widest font-bold">Theme Gallery</span>
-<span class="premium-value-badge">V138</span>
-</button>
-<!-- Interaction Settings -->
-<div class="mw-slider-container">
-<div class="flex justify-between items-center mb-4">
-<label class="premium-label">Mouse Influence</label>
-<span class="premium-value-badge" id="mouseInfluenceValue">50%</span>
+<!-- 3D Orbit Audio -->
+<div class="flex justify-between items-center mb-4 border border-cyan-500/30 bg-cyan-500/5 p-3 rounded-xl">
+    <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+            <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <path d="M2 12h20"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">3D Orbit Audio</h3>
+            <p class="text-[9px] text-[var(--text-muted)]">Sounds orbit your head in true spatial 3D</p>
+        </div>
+    </div>
+    <button id="spatialOrbitToggleBtn" class="shrink-0 ml-2 px-3 py-1.5 text-[10px] font-bold rounded-lg border border-[var(--glass-border)] text-[var(--text-muted)] bg-white/5 hover:bg-white/10 hover:border-white/30 hover:text-white transition-all duration-300">
+        ORBIT OFF
+    </button>
 </div>
-<input class="mw-slider" id="mouseInfluenceSlider" max="1" min="0" step="0.01" type="range" value="0.5"/>
+
+<!-- Audio Mode Toggles -->
+<div class="grid w-full gap-1 p-1 mb-6 bg-white/5 rounded-xl border border-[var(--glass-border)] shadow-inner" style="grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));" id="modeToggle">
+    <button class="mode-btn toggle-active py-2 px-1 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300 text-center" data-mode="binaural">Binaural</button>
+    <button class="mode-btn toggle-inactive py-2 px-1 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300 text-center" data-mode="isochronic">Isochronic</button>
+    <button class="mode-btn toggle-inactive py-2 px-1 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300 text-center" data-mode="monaural">Monaural</button>
 </div>
+
+
 </div>
 </div>
 <!-- SECTION: Preset Combinations -->
@@ -907,6 +892,38 @@ window.resetGalaxySettings = function() {
 </div>
 <!-- TAB: BEATS -->
 <div class="tab-panel hidden space-y-6" id="left-tab-beats">
+<!-- SECTION: Generator Sliders -->
+<div class="sidebar-section">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="section-label">Generator Sliders</h3>
+    </div>
+    <div class="space-y-5">
+        <!-- Base Pitch -->
+        <div class="mw-slider-container">
+            <div class="flex justify-between items-center mb-4">
+                <label class="premium-label text-white/70">Base Pitch</label>
+                <span class="premium-value-badge" id="baseValue">200Hz</span>
+            </div>
+            <input class="mw-slider" id="baseSlider" max="1500" min="50" step="0.1" type="range" value="200"/>
+        </div>
+        <!-- Beat Freq -->
+        <div class="mw-slider-container">
+            <div class="flex justify-between items-center mb-4">
+                <label class="premium-label text-white/70">Beat Frequency</label>
+                <span class="premium-value-badge" id="beatValue">10Hz</span>
+            </div>
+            <input class="mw-slider" id="beatSlider" max="100" min="0.5" step="0.1" type="range" value="10"/>
+        </div>
+        <!-- Binaural Vol -->
+        <div class="mw-slider-container">
+            <div class="flex justify-between items-center mb-4">
+                <label class="premium-label text-white/70">Binaural Volume</label>
+                <span class="premium-value-badge" id="volValue">50%</span>
+            </div>
+            <input class="mw-slider" id="volSlider" max="1" min="0" step="0.01" type="range" value="0.5"/>
+        </div>
+    </div>
+</div>
 <!-- SECTION: Neural Modulation -->
 <div class="sidebar-section">
 <div class="flex items-center justify-between mb-2">
@@ -962,6 +979,98 @@ window.resetGalaxySettings = function() {
 </button>
 </div>
 </div>
+
+<div class="sidebar-section mt-6">
+    <div class="flex items-center justify-between mb-2">
+        <h3 class="section-label text-cyan-400">Deep Dive Custom Frequencies</h3>
+        <div class="premium-value-badge border-cyan-500/30 text-cyan-400">PRO</div>
+    </div>
+    <div class="grid grid-cols-2 gap-2 w-full">
+        <!-- Buttons injected here -->
+
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-0.5', this)" title="Extreme Deep State">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">0.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Epsilon</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-1.5', this)" title="Deepest Healing">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">1.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Delta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-2.5', this)" title="Immune Support">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">2.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Delta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-3.0', this)" title="Anti-Aging">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">3.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Delta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-4.5', this)" title="REM Sleep">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">4.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Theta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-5.5', this)" title="Deep Meditation">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">5.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Theta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-6.5', this)" title="Memory Consolidation">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">6.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Theta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-7.83', this)" title="Earth Resonance">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">7.83 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Schumann</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-8.5', this)" title="Light Relaxation">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">8.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Alpha</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-10.0', this)" title="Serotonin / Mood">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">10.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Alpha</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-11.5', this)" title="Flow State">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">11.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Alpha</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-12.0', this)" title="Centering">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">12.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Alpha</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-14.0', this)" title="Focused Attention">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">14.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Beta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-16.0', this)" title="Cognitive Enhance">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">16.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Beta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-18.0', this)" title="Alertness & Energy">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">18.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Beta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-20.0', this)" title="Peak Intel">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">20.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Beta</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-30.0', this)" title="Hyper-Focus">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">30.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Gamma</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-40.0', this)" title="Advanced Insight">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">40.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Gamma</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-50.0', this)" title="Universal Compassion">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">50.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Gamma</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-200.0', this)" title="Mystical Conscious">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">200.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Lambda</span>
+        </button>
+    </div>
+</div>
+
 <!-- SECTION: Biological Resonance -->
 <div class="sidebar-section">
 <div class="py-4 flex items-center justify-center shrink-0 gap-5">
@@ -1023,6 +1132,38 @@ window.resetGalaxySettings = function() {
 </div>
 <!-- TAB: SETTINGS -->
 <div class="tab-panel hidden space-y-6" id="left-tab-settings">
+<!-- Visual & Interaction -->
+<div class="p-4 border border-white/10 rounded-xl bg-white/5 flex flex-col gap-4">
+<h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-2">Visuals &amp; Interaction</h3>
+
+<!-- Theme Gallery Trigger -->
+<div id="themeGalleryBtn" onclick="showThemeGallery()" class="flex justify-between items-center cursor-pointer border border-[var(--accent)]/30 bg-[var(--accent)]/5 hover:bg-[var(--accent)]/10 transition-colors p-3 rounded-xl">
+    <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-[var(--accent)]/20 border border-[var(--accent)]/40 flex items-center justify-center text-[var(--accent)]">
+            <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14">
+                <rect height="18" rx="2" ry="2" width="18" x="3" y="3"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Theme Gallery</h3>
+            <p class="text-[9px] text-[var(--text-muted)]">Select your visual atmosphere</p>
+        </div>
+    </div>
+    <span class="premium-value-badge">V138</span>
+</div>
+
+<!-- Interaction Settings -->
+<div class="mw-slider-container mt-2">
+<div class="flex justify-between items-center mb-4">
+<label class="premium-label">Mouse Influence</label>
+<span class="premium-value-badge" id="mouseInfluenceValue">50%</span>
+</div>
+<input class="mw-slider" id="mouseInfluenceSlider" max="1" min="0" step="0.01" type="range" value="0.5"/>
+</div>
+</div>
+
 <!-- Saved Mixes Link -->
 <div class="p-4 border border-white/10 rounded-xl bg-white/5 flex flex-col gap-4">
 <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-2">Workspace &amp; Tools</h3>
@@ -1112,97 +1253,6 @@ window.resetGalaxySettings = function() {
                             transform: translateX(-50%);
                         }
                     </style>
-<!-- SPHERE -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="sphereBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="sphere" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🔮</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
-</button>
-<!-- CUBE -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="cubeBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="cube" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">📦</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cube</span>
-</button>
-<!-- DRAGON -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="dragonBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="dragon" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🐉</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Dragon</span>
-</button>
-<!-- GALAXY -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="galaxyBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="galaxy" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🌌</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Galaxy</span>
-<!-- Sun Style Toggle (Left) -->
-<div class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="galaxySunToggle" onclick="event.stopPropagation(); toggleGalaxySun();" title="Toggle Sun Style">
-<span class="text-[10px] leading-none text-white">☀️</span>
-</div>
-<!-- Galaxy Settings Toggle -->
-<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="galaxySettingsToggle" onclick="event.stopPropagation(); toggleGalaxySettings(this);" title="Galaxy Settings">
-<span class="text-[10px] leading-none text-white">⚙️</span>
-</div>
-</button>
-<!-- MANDALA -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="mandalaBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="mandala" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🕉️</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Mandala</span>
-</button>
-<!-- FLOW -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="flowBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="particles" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🌀</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
-<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-sky-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="flowSettingsToggle" onclick="event.stopPropagation(); document.getElementById('flowSettingsPanel').classList.remove('hidden');" title="Flow Settings">
-<span class="text-[10px] leading-none text-white">⚙️</span>
-</div>
-</button>
-<!-- WARP -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="lightspeedBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="lightspeed" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">☄️</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Warp</span>
-</button>
-<!-- LAVA -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="lavaBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="lava" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🌋</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
-<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-orange-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="lavaSettingsToggle" onclick="event.stopPropagation(); document.getElementById('lavaSettingsPanel').classList.remove('hidden');" title="Lava Settings">
-<span class="text-[10px] leading-none text-white">⚙️</span>
-</div>
-</button>
-<!-- FIRE -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="fireplaceBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="fireplace" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🔥</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
-</button>
-<!-- RAIN -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="rainBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="rainforest" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🌿</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
-<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-emerald-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="rainSettingsToggle" onclick="event.stopPropagation(); document.getElementById('rainSettingsPanel').classList.remove('hidden');" title="Rain Settings">
-<span class="text-[10px] leading-none text-white">⚙️</span>
-</div>
-</button>
-<!-- ZEN -->
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="zenBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="zengarden" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🌸</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
-<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-pink-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="zenSettingsToggle" onclick="event.stopPropagation(); document.getElementById('zenSettingsPanel').classList.remove('hidden');" title="Zen Settings">
-<span class="text-[10px] leading-none text-white">⚙️</span>
-</div>
-</button>
-<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="oceanBtn">
-<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="ocean" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🏝️</span>
-<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Ocean</span>
-</button>
 <!-- CYBER -->
 <button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="cyberBtn">
 <input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="cyber" type="color" value="#00FF41"/>
@@ -1224,15 +1274,107 @@ window.resetGalaxySettings = function() {
 </div>
 </button>
 <!-- SNOWFLAKE ❌️ - Real particle snow system -->
-<button class="visual-btn p-2 rounded-xl transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="snowflakeBtn" style="background: linear-gradient(135deg, rgba(147,210,255,0.1) 0%, rgba(200,235,255,0.05) 100%); border: 1px solid rgba(147,210,255,0.35); box-shadow: 0 0 18px rgba(147,210,255,0.12);">
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="snowflakeBtn">
 <input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="snowflake" type="color" value="#b0d8ff"/>
-<span class="text-2xl" style="filter: drop-shadow(0 0 10px rgba(180,225,255,0.9));">❄️</span>
-<span class="text-[10px] font-bold uppercase tracking-wider transition-colors" style="color: rgba(147,210,255,0.8);">Snow</span>
+<span class="text-2xl filter drop-shadow-lg">❄️</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Snow</span>
 <!-- Settings Gear -->
 <div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-sky-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="snowflakeSettingsToggle" onclick="event.stopPropagation(); toggleSnowflakeSettings(this);" title="Snow Settings">
 <span class="text-[10px] leading-none text-white">⚙️</span>
 </div>
-</button></div>
+</button>
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="oceanBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="ocean" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🏝️</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Ocean</span>
+</button>
+<!-- DRAGON -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="dragonBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="dragon" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🐉</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Dragon</span>
+</button>
+<!-- GALAXY -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="galaxyBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="galaxy" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🌌</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Galaxy</span>
+<!-- Sun Style Toggle (Left) -->
+<div class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="galaxySunToggle" onclick="event.stopPropagation(); toggleGalaxySun();" title="Toggle Sun Style">
+<span class="text-[10px] leading-none text-white">☀️</span>
+</div>
+<!-- Galaxy Settings Toggle -->
+<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="galaxySettingsToggle" onclick="event.stopPropagation(); toggleGalaxySettings(this);" title="Galaxy Settings">
+<span class="text-[10px] leading-none text-white">⚙️</span>
+</div>
+</button>
+<!-- FLOW -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="flowBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="particles" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🌀</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Flow</span>
+<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-sky-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="flowSettingsToggle" onclick="event.stopPropagation(); document.getElementById('flowSettingsPanel').classList.remove('hidden');" title="Flow Settings">
+<span class="text-[10px] leading-none text-white">⚙️</span>
+</div>
+</button>
+<!-- RAIN -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="rainBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="rainforest" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🌿</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Rain</span>
+<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-emerald-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="rainSettingsToggle" onclick="event.stopPropagation(); document.getElementById('rainSettingsPanel').classList.remove('hidden');" title="Rain Settings">
+<span class="text-[10px] leading-none text-white">⚙️</span>
+</div>
+</button>
+<!-- ZEN -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="zenBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="zengarden" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🌸</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Zen</span>
+<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-pink-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="zenSettingsToggle" onclick="event.stopPropagation(); document.getElementById('zenSettingsPanel').classList.remove('hidden');" title="Zen Settings">
+<span class="text-[10px] leading-none text-white">⚙️</span>
+</div>
+</button>
+<!-- MANDALA -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="mandalaBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="mandala" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🕉️</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Mandala</span>
+</button>
+<!-- CUBE -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="cubeBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="cube" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">📦</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cube</span>
+</button>
+<!-- SPHERE -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="sphereBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="sphere" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🔮</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
+</button>
+<!-- LAVA -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="lavaBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="lava" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🌋</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Lava</span>
+<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-orange-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="lavaSettingsToggle" onclick="event.stopPropagation(); document.getElementById('lavaSettingsPanel').classList.remove('hidden');" title="Lava Settings">
+<span class="text-[10px] leading-none text-white">⚙️</span>
+</div>
+</button>
+<!-- FIRE -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="fireplaceBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="fireplace" type="color" value="#60a9ff"/>
+<span class="text-2xl filter drop-shadow-lg">🔥</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Fire</span>
+</button>
+<!-- WARP -->
+<button class="visual-btn p-2 rounded-xl transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="lightspeedBtn" style="background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent) 0%, color-mix(in srgb, var(--accent) 5%, transparent) 100%); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 12%, transparent); filter: hue-rotate(180deg);">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="lightspeed" type="color" value="#60a9ff"/>
+<span class="text-2xl" style="filter: drop-shadow(0 0 10px var(--accent));">☄️</span>
+<span class="text-[10px] font-bold uppercase tracking-wider transition-colors" style="color: var(--accent);">Warp</span>
+</button>
+</div>
 <!-- SECTION: Optics -->
 <div class="sidebar-section">
 <h3 class="section-label">Visual Synthesis</h3>
@@ -3574,82 +3716,125 @@ window.resetGalaxySettings = function() {
 <div class="sidebar-section">
 <h3 class="premium-label text-white mb-4">Live Performance</h3>
 <section class="mixer-section" data-section="djpads">
-<div class="flex justify-between items-center mb-3 section-header">
-<div class="flex items-center gap-4">
-<button class="p-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--accent)] transition-all text-[var(--text-muted)] hover:text-[var(--accent)]" onclick="toggleMixerSection('djpads')" title="Toggle DJ Studio Section">
-<svg class="section-arrow transition-transform duration-200" fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14">
-<polyline points="6 9 12 15 18 9"></polyline>
-<polyline points="6 3 12 9 18 3"></polyline>
-</svg>
-</button>
-<h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">DJ Pads</h3>
-<button aria-label="Info" class="ml-2 transition-colors relative" onclick="showInfoModal('djpads')" style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-<svg fill="none" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="12" xmlns="http://www.w3.org/2000/svg">
-<circle cx="12" cy="12" r="10"></circle>
-<line x1="12" x2="12" y1="16" y2="12"></line>
-<line x1="12" x2="12.01" y1="8" y2="8"></line>
-</svg>
-</button>
-</div>
-<div class="flex items-center gap-2">
-<button class="px-2 py-1 rounded bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-white transition-all" id="djHoldBtn" onclick="toggleDjHold()" title="Hold/Latch Pads">Latch</button>
-<button class="px-2 py-1 rounded bg-red-500/10 border border-red-500/25 text-[9px] font-bold uppercase tracking-wider text-red-400 hover:bg-red-500/20 transition-all" id="djClearBtn" onclick="clearAllDjPads()">Clear</button>
-</div>
-</div>
-<div class="section-content">
-<!-- Pioneer XDJ layout: Grid of 8 triggers -->
-<div class="grid grid-cols-4 gap-2 mb-4">
-<button class="dj-pad flex flex-col items-center justify-center p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-400 transition-all text-center relative overflow-hidden group h-[52px]" data-pad="0" onclick="triggerDjSound(0)">
-<span class="text-xs group-hover:scale-125 transition-transform">✨</span>
-<span class="text-[8px] font-bold text-cyan-300 mt-1 uppercase tracking-tighter">Sparkle</span>
-</button>
-<button class="dj-pad flex flex-col items-center justify-center p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-purple-400 transition-all text-center relative overflow-hidden group h-[52px]" data-pad="1" onclick="triggerDjSound(1)">
-<span class="text-xs group-hover:scale-125 transition-transform">🛸</span>
-<span class="text-[8px] font-bold text-purple-300 mt-1 uppercase tracking-tighter">Chime</span>
-</button>
-<button class="dj-pad flex flex-col items-center justify-center p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-pink-400 transition-all text-center relative overflow-hidden group h-[52px]" data-pad="2" onclick="triggerDjSound(2)">
-<span class="text-xs group-hover:scale-125 transition-transform">🔔</span>
-<span class="text-[8px] font-bold text-pink-300 mt-1 uppercase tracking-tighter">Crystal</span>
-</button>
-<button class="dj-pad flex flex-col items-center justify-center p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-yellow-400 transition-all text-center relative overflow-hidden group h-[52px]" data-pad="3" onclick="triggerDjSound(3)">
-<span class="text-xs group-hover:scale-125 transition-transform">🌌</span>
-<span class="text-[8px] font-bold text-yellow-300 mt-1 uppercase tracking-tighter">Space</span>
-</button>
-<button class="dj-pad flex flex-col items-center justify-center p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-emerald-400 transition-all text-center relative overflow-hidden group h-[52px]" data-pad="4" onclick="triggerDjSound(4)">
-<span class="text-xs group-hover:scale-125 transition-transform">🌊</span>
-<span class="text-[8px] font-bold text-emerald-300 mt-1 uppercase tracking-tighter">Swell</span>
-</button>
-<button class="dj-pad flex flex-col items-center justify-center p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-400 transition-all text-center relative overflow-hidden group h-[52px]" data-pad="5" onclick="triggerDjSound(5)">
-<span class="text-xs group-hover:scale-125 transition-transform">🍃</span>
-<span class="text-[8px] font-bold text-amber-300 mt-1 uppercase tracking-tighter">Breeze</span>
-</button>
-<button class="dj-pad flex flex-col items-center justify-center p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-rose-400 transition-all text-center relative overflow-hidden group h-[52px]" data-pad="6" onclick="triggerDjSound(6)">
-<span class="text-xs group-hover:scale-125 transition-transform">🌋</span>
-<span class="text-[8px] font-bold text-rose-300 mt-1 uppercase tracking-tighter">Rumble</span>
-</button>
-<button class="dj-pad flex flex-col items-center justify-center p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-indigo-400 transition-all text-center relative overflow-hidden group h-[52px]" data-pad="7" onclick="triggerDjSound(7)">
-<span class="text-xs group-hover:scale-125 transition-transform">⚡</span>
-<span class="text-[8px] font-bold text-indigo-300 mt-1 uppercase tracking-tighter">Sub</span>
-</button>
-</div>
-<!-- Pioneer XDJ Volume & Speed adjustments -->
-<div class="space-y-4">
-<div class="flex flex-col gap-0.5">
-<div class="flex justify-between items-center px-0.5">
-<label class="premium-label">PAD VOLUME</label>
-<span class="premium-value" id="djSoundVolumeVal">70%</span>
-</div>
-<input class="mw-slider" id="djSoundVolume" max="1" min="0" step="0.05" type="range" value="0.7"/>
-</div>
-<div class="flex flex-col gap-0.5">
-<div class="flex justify-between items-center px-0.5">
-<label class="premium-label">RE-SPEED</label>
-<span class="premium-value" id="djSoundSpeedVal">1x</span>
-</div>
-<input class="mw-slider" id="djSoundSpeed" max="2" min="0.5" step="0.1" type="range" value="1"/>
-</div>
-</div>
-</div>
+    <div class="flex justify-between items-center mb-3 section-header">
+        <div class="flex items-center gap-2">
+            <button
+                class="p-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--accent)] transition-all text-[var(--text-muted)] hover:text-[var(--accent)]"
+                onclick="toggleMixerSection('djpads')" title="Toggle DJ Studio Section">
+                <svg class="section-arrow transition-transform duration-200" width="14" height="14"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9" />
+                    <polyline points="6 3 12 9 18 3" />
+                </svg>
+            </button>
+            <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">DJ Studio</h3>
+            <button class="ml-2 transition-colors relative" aria-label="Info"
+                onclick="showInfoModal('djpads'); event.stopPropagation();"
+                style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="flex flex-col gap-0.5" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center px-0.5">
+                <label class="premium-label">VOL</label>
+                <span id="djMasterValue" class="premium-value">80%</span>
+            </div>
+            <input type="range" id="djMasterVolume" min="0" max="1" step="0.01" value="0.8"
+                class="premium-slider w-20">
+        </div>
+    </div>
+    <div class="section-content">
+        <!-- Mode Toggle & Stop All - NOW AT TOP -->
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-white/5">
+            <div class="flex items-center gap-3">
+                <span class="text-[9px] text-[var(--text-muted)] uppercase">Mode:</span>
+                <div class="flex gap-1 bg-black/30 rounded-lg p-0.5">
+                    <button id="djModeOneShot"
+                        class="dj-mode-btn px-2 py-1 rounded text-[9px] font-bold bg-pink-500/20 text-pink-400 border border-pink-500/30">
+                        One-Shot
+                    </button>
+                    <button id="djModeLoop"
+                        class="dj-mode-btn px-2 py-1 rounded text-[9px] font-bold bg-white/5 text-[var(--text-muted)] border border-white/10 hover:bg-white/10">
+                        Loop
+                    </button>
+                </div>
+            </div>
+            <button id="djStopAll"
+                class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[var(--text-muted)] text-[9px] font-bold uppercase hover:bg-white/10 transition-all">
+                ⏹ Stop All
+            </button>
+        </div>
+
+        <!-- Category Tabs with Show All Button -->
+        <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="flex gap-1 overflow-x-auto pb-1" id="djCategoryTabs">
+                <button data-category="ambient" class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-purple-500/20 text-purple-400 border border-purple-500/30 whitespace-nowrap hover:bg-white/10">🎧 Ambient</button>
+                <button data-category="pulse" class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-red-500/20 text-red-400 border border-red-500/30 whitespace-nowrap hover:bg-white/10">💓 Pulse</button>
+                <button data-category="texture" class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 whitespace-nowrap hover:bg-white/10">🌌 Texture</button>
+                <button data-category="healing" class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap hover:bg-white/10">🧘 Healing</button>
+                <button data-category="drops" class="dj-cat-tab px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-blue-500/20 text-blue-400 border border-blue-500/30 whitespace-nowrap hover:bg-white/10">💥 Drops</button>
+            </div>
+            <button id="djShowAllCategoriesBtn"
+                class="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 whitespace-nowrap hover:bg-cyan-500/30 transition-all flex items-center gap-1 shrink-0"
+                title="Show All Categories">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                </svg>
+                All
+            </button>
+        </div>
+
+        <!-- Pads Grid -->
+        <div id="djPadsGrid" class="grid grid-cols-3 gap-2">
+            <!-- JS will populate pads here -->
+        </div>
+
+        <!-- DJ Sound Controls -->
+        <div class="mt-4 pt-6 space-y-2">
+            <div class="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wide mb-2">
+                Sound Controls</div>
+
+            <!-- Pitch (+/- semitones) -->
+            <div class="flex flex-col gap-0.5">
+                <div class="flex justify-between items-center px-0.5">
+                    <label class="premium-label">PITCH</label>
+                    <span id="djSoundPitchVal" class="premium-value">0</span>
+                </div>
+                <input type="range" id="djSoundPitch" min="-12" max="12" step="1" value="0"
+                    class="premium-slider">
+            </div>
+
+            <!-- Tone (filter cutoff) -->
+            <div class="flex flex-col gap-0.5">
+                <div class="flex justify-between items-center px-0.5">
+                    <label class="premium-label">TONE</label>
+                    <span id="djSoundToneVal" class="premium-value">4k</span>
+                </div>
+                <input type="range" id="djSoundTone" min="200" max="8000" step="100" value="4000"
+                    class="premium-slider">
+            </div>
+
+            <!-- Retrigger Speed -->
+            <div class="flex flex-col gap-0.5 pb-4">
+                <div class="flex justify-between items-center px-0.5">
+                    <label class="premium-label">RE-SPEED</label>
+                    <span id="djSoundSpeedVal" class="premium-value">1x</span>
+                </div>
+                <input type="range" id="djSoundSpeed" min="0.5" max="2" step="0.1" value="1"
+                    class="premium-slider">
+            </div>
+        </div>
+    </div>
 </section>
 </div>
 </div>
@@ -3667,25 +3852,7 @@ window.resetGalaxySettings = function() {
     <input class="mw-slider w-full" id="atmosMasterSlider" max="1" min="0" step="0.01" type="range" value="0.8"/>
 </div>
 
-<div class="flex justify-between items-center mb-6 px-1 border border-cyan-500/30 bg-cyan-500/5 p-3 rounded-xl">
-    <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
-            <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                <path d="M2 12h20"></path>
-            </svg>
-        </div>
-        <div>
-            <h3 class="text-xs font-bold text-white uppercase tracking-wider">3D Orbit Audio</h3>
-            <p class="text-[9px] text-[var(--text-muted)]">Sounds orbit your head in true spatial 3D</p>
-        </div>
-    </div>
-    <label class="switch shrink-0 ml-2">
-        <input type="checkbox" id="spatialOrbitToggle">
-        <span class="slider round"></span>
-    </label>
-</div>
+
 <div class="section-content">
 <div class="grid grid-cols-1 gap-5" id="soundscapeContainer">
 <!-- JS Generated Items Will Go Here -->
