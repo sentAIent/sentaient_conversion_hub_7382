@@ -3225,6 +3225,7 @@ export class CymaticsCore {
         this.activeClassId = 22;
         this.activeVariationId = 0;
         this.materials = {};
+        this.rainbowMode = false;
         
         // Safe 1x1 transparent dummy texture to prevent GPU address violations on strict Metal drivers
         const dummyTexture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat);
@@ -3733,6 +3734,13 @@ export class CymaticsCore {
             if (mouseData) {
                 this.materials[this.activeClassId].uniforms.uMouse.value.set(mouseData.x || 0, mouseData.y || 0);
             }
+
+            if (this.rainbowMode) {
+                const hue1 = (time * 0.1) % 1.0;
+                const hue2 = (hue1 + 0.5) % 1.0;
+                this.materials[this.activeClassId].uniforms.uColor1.value.setHSL(hue1, 1.0, 0.6);
+                this.materials[this.activeClassId].uniforms.uColor2.value.setHSL(hue2, 1.0, 0.6);
+            }
         }
         
         // Handle Ghosted Alpha Crossfade
@@ -3799,6 +3807,14 @@ export class CymaticsCore {
     setConstellationLinesToggle(isOn) {
         if (this.materials[24]) {
             this.materials[24].uniforms.uShowLines.value = isOn ? 1.0 : 0.0;
+        }
+    }
+
+    setRainbow(isRainbow) {
+        this.rainbowMode = isRainbow;
+        if (!isRainbow) {
+            // Restore original colors for current pattern
+            this.setPattern(this.activeClassId, this.activeVariationId, false);
         }
     }
 }

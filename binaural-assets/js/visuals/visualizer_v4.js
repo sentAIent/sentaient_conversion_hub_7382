@@ -40,7 +40,7 @@ static CYMATIC_PATTERNS = [
 ];
     constructor(canvas, initialState = {}) {
         this.canvas = canvas;
-        this.activeModes = initialState.activeModes || new Set(['cyber', 'snowflake', 'ocean', 'cymatics']); // Changed defaults
+        this.activeModes = initialState.activeModes || new Set(['cymatics']); // Changed defaults
         this.mode = initialState.mode || 'none'; // Legacy support
 
         // Default settings - MUST be set before init methods
@@ -118,8 +118,13 @@ static CYMATIC_PATTERNS = [
             localStorage.getItem('mindwave_battery_saver') === 'true' ||
             document.body.classList.contains('system-stability-mode');
 
-        this.lastFrameRenderTime = 0;
+        this.isLowPower = initialState.isLowPower || false;
         this.targetFPS = this.isLowPower ? 30 : 60;
+        this.audioSensitivity = 1.0;
+        this.geoComplexity = 1.0;
+        this.cameraPitch = 0;
+        this.cameraYaw = 0;
+        this.cameraRoll = 0;
         this.vibrationEnabled = (typeof state !== 'undefined' && state.visualVibration !== undefined) ? state.visualVibration : (initialState.visualVibration !== undefined ? initialState.visualVibration : false);
 
         // Adaptive Level of Detail (LOD) Tracking — Ring Buffer (avoids push/shift deopt)
@@ -247,6 +252,14 @@ static CYMATIC_PATTERNS = [
                     this.initialized = false;
                     this._freqDataArray = null;
                     this.initEnvironment();
+
+                    // Reset camera rotations
+                    this.cameraPitch = 0;
+                    this.cameraYaw = 0;
+                    this.cameraRoll = 0;
+                    this.updateCameraRotation();
+                    if (typeof window.resetCameraControls === 'function') window.resetCameraControls();
+
                     this.updateVisibility();
                     this.initialized = true;
                     this.active = true;
@@ -318,6 +331,25 @@ static CYMATIC_PATTERNS = [
 
     }
 
+    setCameraRotation(pitch, yaw, roll) {
+        this.cameraPitch = pitch;
+        this.cameraYaw = yaw;
+        this.cameraRoll = roll;
+        this.updateCameraRotation();
+    }
+
+    updateCameraRotation() {
+        this.scene.rotation.set(this.cameraPitch, this.cameraYaw, this.cameraRoll);
+    }
+
+    setAudioSensitivity(val) {
+        this.audioSensitivity = parseFloat(val);
+    }
+
+    setGeoComplexity(val) {
+        this.geoComplexity = parseFloat(val);
+    }
+
     resize() {
         if (!this.renderer || !this.canvas || !this.camera) return;
 
@@ -348,6 +380,95 @@ static CYMATIC_PATTERNS = [
         this.overlayCanvas.width = window.innerWidth;
         this.overlayCanvas.height = window.innerHeight;
     }
+
+    // --- MEDIA EXPORT METHODS ---
+    
+    captureSnapshot() {
+        if (!this.canvas) return;
+        
+        // Force a synchronous render frame to ensure we have the latest visuals
+        // Since we have preserveDrawingBuffer: true, this should work perfectly
+        if (typeof state !== 'undefined' && this.active !== false && this.initialized) {
+            this.render((state.masterAnalyser || state.analyserLeft), state.analyserRight);
+        } else {
+            this.renderer.render(this.scene, this.camera);
+        }
+        
+        const dataURL = this.canvas.toDataURL('image/png', 1.0);
+        
+        // Create an invisible link to trigger download
+        const link = document.createElement('a');
+        link.download = `Mindwave-Snapshot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        return dataURL;
+    }
+
+    startRecording() {
+        if (!this.canvas) return false;
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            console.warn('[Visualizer] Already recording.');
+            return false;
+        }
+
+        try {
+            // Request 60 FPS stream
+            const stream = this.canvas.captureStream(60);
+            
+            // Prefer high-quality webm codecs
+            const options = { mimeType: 'video/webm; codecs=vp9' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options.mimeType = 'video/webm; codecs=vp8';
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/webm';
+                }
+            }
+            
+            this.recordedChunks = [];
+            this.mediaRecorder = new MediaRecorder(stream, options);
+            
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.recordedChunks.push(event.data);
+                }
+            };
+            
+            this.mediaRecorder.onstop = () => {
+                const blob = new Blob(this.recordedChunks, { type: options.mimeType });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.download = `Mindwave-Visuals-${new Date().toISOString().replace(/[:.]/g, '-')}.webm`;
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            };
+            
+            this.mediaRecorder.start(1000); // collect 1s chunks
+            console.log('[Visualizer] Started recording video stream.');
+            return true;
+        } catch (e) {
+            console.error('[Visualizer] Failed to start recording:', e);
+            return false;
+        }
+    }
+
+    stopRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.mediaRecorder.stop();
+            console.log('[Visualizer] Stopped recording.');
+            return true;
+        }
+        return false;
+    }
+    
+    // --- END MEDIA EXPORT METHODS ---
 
     generateCyberStyle() {
         const canvas = this.overlayCanvas;
@@ -2427,6 +2548,15 @@ static CYMATIC_PATTERNS = [
         const target = this.mapMode(mode);
         this.activeModes.clear();
         this.activeModes.add(target);
+        
+        // Reset camera rotations
+        this.cameraPitch = 0;
+        this.cameraYaw = 0;
+        this.cameraRoll = 0;
+        this.updateCameraRotation();
+        // Reset UI if it exists
+        if (typeof window.resetCameraControls === 'function') window.resetCameraControls();
+
         this.mode = target;
         this.updateVisibility();
         this.updateLabel(target);
@@ -2888,12 +3018,13 @@ static CYMATIC_PATTERNS = [
                     this._freqDataArray = new Uint8Array(binCount);
                 }
                 analyserL.getByteFrequencyData(this._freqDataArray);
+                const sens = typeof this.audioSensitivity === 'number' ? this.audioSensitivity : 1.0;
                 let bass = 0; for (let i = 0; i < 15; i++) bass += this._freqDataArray[i];
-                normBass = Math.pow((bass / 15) / 255, 0.8); // Apply power curve for better sensitivity
+                normBass = Math.pow((bass / 15) / 255, 0.8) * sens; // Apply power curve for better sensitivity
                 let mids = 0; for (let i = 10; i < 100; i++) mids += this._freqDataArray[i];
-                normMids = (mids / 90) / 255;
+                normMids = ((mids / 90) / 255) * sens;
                 let highs = 0; for (let i = 100; i < 300; i++) highs += this._freqDataArray[i];
-                normHighs = (highs / 200) / 255;
+                normHighs = ((highs / 200) / 255) * sens;
             }
 
             const multiplier = Math.max(0.001, this.speedMultiplier || 1.0);
@@ -3434,6 +3565,35 @@ static CYMATIC_PATTERNS = [
         } else {
             console.log('[DEBUG] setMatrixRainbow (ON) - cyberRainbowMode set to true.');
         }
+    }
+
+    setCymaticsRainbow(isRainbow) {
+        console.log('[DEBUG] setCymaticsRainbow called:', isRainbow);
+        if (this.cymaticsCore) {
+            this.cymaticsCore.setRainbow(isRainbow);
+        }
+    }
+
+    setCameraRotation(pitch, yaw, roll) {
+        this.cameraPitch = pitch * Math.PI / 180;
+        this.cameraYaw = yaw * Math.PI / 180;
+        this.cameraRoll = roll * Math.PI / 180;
+        this.updateCameraRotation();
+    }
+
+    updateCameraRotation() {
+        if (!this.scene) return;
+        // Apply rotation to the scene to orbit the camera effectively, since Cymatics bypasses scene matrices
+        this.scene.rotation.set(this.cameraPitch, this.cameraYaw, this.cameraRoll);
+    }
+
+    setAudioSensitivity(val) {
+        this.audioSensitivity = val;
+    }
+
+    setGeoComplexity(val) {
+        this.geoComplexity = val;
+        // Optionally pass to specific engines here
     }
 
     setBatterySaver(enabled) {

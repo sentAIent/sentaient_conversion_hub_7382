@@ -403,6 +403,17 @@ window.resetGalaxySettings = function() {
 
 <!-- Divider -->
 <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
+<!-- Visual Export Actions -->
+<div class="flex items-center gap-1 shrink-0">
+<button class="p-2 rounded-full bg-transparent hover:bg-cyan-500/20 transition-all text-cyan-400" id="snapshotBtn" title="Capture Snapshot">
+<svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg">
+  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+  <circle cx="12" cy="13" r="4"></circle>
+</svg>
+</button>
+</div>
+<!-- Divider -->
+<div class="w-px h-6 bg-white/20 hidden sm:block"></div>
 <!-- Action Icons -->
 <div class="flex items-center gap-1 shrink-0">
 <button class="p-2 rounded-full bg-transparent hover:bg-[var(--accent)]/20 transition-all" id="lockUIBtn" title="Lock Menus">
@@ -576,11 +587,11 @@ window.resetGalaxySettings = function() {
     <div class="flex justify-center items-center gap-4 bg-white/5 backdrop-blur-2xl px-5 py-1.5 rounded-full border border-white/10 shadow-lg hover:bg-white/10 hover:border-white/20 transition-all duration-300 h-full shrink-0">
         <span class="text-[10px] font-medium tracking-[0.2em] text-white/90 uppercase">Beat Sync</span>
         <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="beatSyncToggle" class="sr-only peer" checked onchange="window.visualsBeatSync = this.checked;">
+            <input type="checkbox" id="beatSyncToggle" class="sr-only" checked onchange="window.visualsBeatSync = this.checked;">
             <!-- Track -->
-            <div class="w-11 h-6 bg-black/60 rounded-full border border-white/10 shadow-inner peer-focus:outline-none peer-checked:bg-cyan-500/50 peer-checked:border-cyan-400/50 transition-all duration-300"></div>
+            <div class="beat-sync-track w-11 h-6 bg-black/60 rounded-full border border-white/10 shadow-inner transition-all duration-300"></div>
             <!-- Handle -->
-            <div class="absolute w-5 h-5 bg-white rounded-full shadow-md border border-gray-300 peer-checked:translate-x-full transition-transform duration-300" style="left: 2px; top: 2px;"></div>
+            <div class="beat-sync-handle absolute w-5 h-5 bg-white rounded-full shadow-md border border-gray-300 transition-transform duration-300" style="left: 2px; top: 2px;"></div>
         </label>
     </div>
 
@@ -1164,6 +1175,25 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 
+<!-- Custom Mixes -->
+<div class="p-4 border border-white/10 rounded-xl bg-white/5 flex flex-col gap-4">
+    <div class="flex justify-between items-center mb-2">
+        <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">My Custom Mixes</h3>
+        <span class="text-[9px] text-[var(--text-muted)]" id="customMixCount">0/20</span>
+    </div>
+    <button class="w-full py-3 px-4 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/30 hover:bg-[var(--accent)]/20 hover:border-[var(--accent)] text-xs font-bold flex items-center justify-center gap-2 text-[var(--accent)] hover:text-white transition-all" onclick="window.saveCustomMixPrompt()">
+        <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        Save Current Mix
+    </button>
+    <div id="customMixesContainer" class="flex flex-col gap-2 mt-2 empty:hidden">
+        <!-- Mix buttons injected here -->
+    </div>
+</div>
+
 <!-- Saved Mixes Link -->
 <div class="p-4 border border-white/10 rounded-xl bg-white/5 flex flex-col gap-4">
 <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-2">Workspace &amp; Tools</h3>
@@ -1401,6 +1431,62 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 </div>
+</div>
+<!-- SECTION: 3D Camera Controls -->
+<div class="sidebar-section">
+<h3 class="section-label">3D Camera Controls</h3>
+<div class="space-y-4">
+    <!-- Pitch -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">PITCH (X)</label>
+            <span class="premium-value-badge" id="cameraPitchValue">0&deg;</span>
+        </div>
+        <input class="mw-slider" id="cameraPitchSlider" max="90" min="-90" step="1" type="range" value="0"/>
+    </div>
+    <!-- Yaw -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">YAW (Y)</label>
+            <span class="premium-value-badge" id="cameraYawValue">0&deg;</span>
+        </div>
+        <input class="mw-slider" id="cameraYawSlider" max="180" min="-180" step="1" type="range" value="0"/>
+    </div>
+    <!-- Roll -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">ROLL (Z)</label>
+            <span class="premium-value-badge" id="cameraRollValue">0&deg;</span>
+        </div>
+        <input class="mw-slider" id="cameraRollSlider" max="180" min="-180" step="1" type="range" value="0"/>
+    </div>
+    <div class="flex justify-end mt-2">
+        <button class="text-[10px] font-bold uppercase text-[var(--accent)]/70 hover:text-[var(--accent)] transition-all" onclick="if(window.resetCameraControls) window.resetCameraControls()">Reset Camera</button>
+    </div>
+</div>
+</div>
+<!-- SECTION: Deep Parameters -->
+<div class="sidebar-section">
+<h3 class="section-label">Deep Parameters</h3>
+<div class="space-y-4">
+    <!-- Audio Sensitivity -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">AUDIO SENSITIVITY</label>
+            <span class="premium-value-badge" id="audioSensitivityValue">1.0x</span>
+        </div>
+        <input class="mw-slider" id="audioSensitivitySlider" max="3" min="0" step="0.1" type="range" value="1.0"/>
+    </div>
+    <!-- Geometric Complexity -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">GEOMETRIC COMPLEXITY</label>
+            <span class="premium-value-badge" id="geoComplexityValue">1.0x</span>
+        </div>
+        <input class="mw-slider" id="geoComplexitySlider" max="2" min="0.1" step="0.1" type="range" value="1.0"/>
+    </div>
+</div>
+</div>
 <!-- SECTION: Chromatic Resonance -->
 <div class="sidebar-section">
 <h3 class="section-label mb-4">Chromatic Resonance</h3>
@@ -1578,10 +1664,22 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 <!-- TAB: CYMATICS -->
-<div class="tab-panel hidden space-y-8" id="tab-cymatics">
-<div class="sidebar-section">
+<div class="tab-panel hidden space-y-8" id="tab-cymatics" style="flex: 0 0 auto !important; justify-content: flex-start !important; padding-top: 24px !important; margin-top: 0 !important;">
+<div class="sidebar-section" style="padding-top: 0 !important; margin-top: 0 !important; border: none !important;">
 <div class="flex items-center justify-between mb-2">
 <h3 class="section-label"><i class="fas fa-wave-square mr-2 text-[var(--accent)]"></i>Cymatics Engine</h3>
+</div>
+</div>
+<!-- Rainbow Mode Toggle -->
+<div class="flex justify-between items-center mb-4 bg-black/40 p-3 rounded-xl border border-cyan-500/30">
+    <div class="flex items-center gap-2">
+        <span class="text-[12px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 uppercase tracking-widest">Rainbow Morph</span>
+        <span class="text-[9px] text-[var(--text-muted)] hidden sm:block">Dynamic color shifting</span>
+    </div>
+    <label class="premium-toggle">
+        <input id="cymaticsRainbowToggle" type="checkbox"/>
+        <span class="toggle-slider"></span>
+    </label>
 </div>
 <!-- THE ULTIMATE CYMATICS UI LIBRARY -->
 <div class="space-y-8 mt-4" id="cymatics-library">

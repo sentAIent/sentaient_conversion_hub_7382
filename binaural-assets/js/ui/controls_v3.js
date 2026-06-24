@@ -384,6 +384,8 @@ export function setupUI() {
     els.videoModal = document.getElementById('videoModal');
     els.playbackVideo = document.getElementById('playbackVideo');
     els.videoToggleBtn = document.getElementById('videoToggleBtn');
+    els.snapshotBtn = document.getElementById('snapshotBtn');
+    els.visualRecordBtn = document.getElementById('visualRecordBtn');
     els.saveMixBtn = document.getElementById('saveMixBtn');
     els.spatialOrbitToggleBtn = document.getElementById('spatialOrbitToggleBtn');
     els.historyBtn = document.getElementById('historyBtn');
@@ -426,6 +428,8 @@ export function setupUI() {
     els.snowflakeBtn = document.getElementById('snowflakeBtn');
     els.oceanBtn = document.getElementById('oceanBtn'); // New ID for island/waves
     els.cymaticsBtn = document.getElementById('cymaticsBtn'); // Now Fractal Patterns
+    
+    els.cymaticsRainbowToggle = document.getElementById('cymaticsRainbowToggle');
 
     // Cymatics / Galaxy / Matrix Controls
     els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
@@ -852,6 +856,51 @@ export function setupUI() {
                 els.videoToggleBtn.style.backgroundColor = "";
                 els.videoToggleBtn.style.boxShadow = "";
                 console.log('[Controls] Video recording disabled');
+            }
+        });
+    }
+
+    // Visual Export Actions
+    if (els.snapshotBtn) {
+        els.snapshotBtn.addEventListener('click', () => {
+            const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
+            if (viz && viz.captureSnapshot) {
+                viz.captureSnapshot();
+                showToast('Snapshot Saved', 'success');
+            } else {
+                showToast('Visualizer not ready', 'error');
+            }
+        });
+    }
+
+    if (els.visualRecordBtn) {
+        els.visualRecordBtn.addEventListener('click', () => {
+            const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
+            if (!viz) {
+                showToast('Visualizer not ready', 'error');
+                return;
+            }
+
+            const isRecording = window.isVisualRecordingActive;
+            const ping = document.getElementById('visualRecordPing');
+
+            if (isRecording) {
+                if (viz.stopRecording) viz.stopRecording();
+                window.isVisualRecordingActive = false;
+                els.visualRecordBtn.classList.remove('text-red-400');
+                els.visualRecordBtn.classList.add('text-red-500');
+                if (ping) ping.classList.add('hidden');
+                showToast('Visual Recording Saved', 'success');
+            } else {
+                if (viz.startRecording && viz.startRecording()) {
+                    window.isVisualRecordingActive = true;
+                    els.visualRecordBtn.classList.remove('text-red-500');
+                    els.visualRecordBtn.classList.add('text-red-400');
+                    if (ping) ping.classList.remove('hidden');
+                    showToast('Visual Recording Started', 'success');
+                } else {
+                    showToast('Failed to start recording', 'error');
+                }
             }
         });
     }
@@ -3636,13 +3685,17 @@ export function initMixer() {
 }
 
 function saveStateToLocal() {
+    const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
     const s = {
         base: els.baseSlider.value,
         beat: els.beatSlider.value,
         beatsVol: els.volSlider.value,
         masterVol: els.masterVolSlider.value,
         atmosMaster: els.atmosMasterSlider.value,
-        soundscapes: state.soundscapeSettings
+        soundscapes: state.soundscapeSettings,
+        visualMode: viz ? Array.from(viz.activeModes) : ['cymatics'],
+        cymaticClass: viz?.cymaticsCore?.activeClassId || 22,
+        cymaticVariation: viz?.cymaticsCore?.activeVariationId || 0
     };
     localStorage.setItem('mindwave_state_v2', JSON.stringify(s));
 }
@@ -3694,8 +3747,8 @@ function restoreStateFromLocal() {
         const saved = localStorage.getItem('mindwave_state_v2');
         if (saved) {
             const s = JSON.parse(saved);
-            // DO NOT restore visual mode on load so default cymatics/cyber loads
-            delete s.visualMode;
+            // Visual mode and cymatics state are preserved
+
             loadSettings({ settings: s });
         } else {
             // Instead of applyPreset which overrides visuals, just set default audio state
@@ -3754,6 +3807,16 @@ export function loadSettings(payload) {
 
     if (settings.visualMode) {
         setVisualMode(settings.visualMode);
+    }
+
+    if (settings.cymaticClass !== undefined) {
+        const checkViz = setInterval(() => {
+            const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
+            if (viz && viz.initialized && viz.applyCymaticClassAndVariation) {
+                clearInterval(checkViz);
+                viz.applyCymaticClassAndVariation(settings.cymaticClass, settings.cymaticVariation || 0);
+            }
+        }, 500);
     }
 
     if (settings.theme) {
@@ -6399,3 +6462,253 @@ export function setupMasterVisualControls() {
 }
 
 
+
+// ==========================================
+// CUSTOM MIXES FEATURE
+// ==========================================
+function saveCustomMixPrompt() {
+    const mixName = prompt("Enter a name for this custom mix:", "My Mix " + (getCustomMixes().length + 1));
+    if (!mixName) return;
+    
+    const mixes = getCustomMixes();
+    if (mixes.length >= 20) {
+        alert("You have reached the limit of 20 custom mixes. Please delete one first.");
+        return;
+    }
+    
+    // gather state
+    const newMix = {
+        id: 'custom-' + Date.now(),
+        name: mixName,
+        baseFreq: parseFloat(els.baseSlider ? els.baseSlider.value : 0),
+        beatFreq: parseFloat(els.beatSlider ? els.beatSlider.value : 0),
+        vol: parseFloat(els.volSlider ? els.volSlider.value : 0),
+        activeVisuals: Array.from(window.getVisualizer && window.getVisualizer().activeModes || []),
+        cymaticClass: window.getVisualizer && window.getVisualizer().currentCymaticClass || 0,
+        cymaticVariation: window.getVisualizer && window.getVisualizer().currentCymaticVariation || 0,
+        activeSoundscapes: { ...(window.state?.soundscapeSettings || {}) },
+        audioMode: window.state?.audioMode || 'binaural'
+    };
+    
+    mixes.push(newMix);
+    localStorage.setItem('mindwave_custom_mixes', JSON.stringify(mixes));
+    renderCustomMixes();
+    if (window.showToast) window.showToast('Custom Mix Saved!', 'success');
+}
+
+function getCustomMixes() {
+    try {
+        return JSON.parse(localStorage.getItem('mindwave_custom_mixes') || '[]');
+    } catch(e) {
+        return [];
+    }
+}
+
+function renderCustomMixes() {
+    const container = document.getElementById('customMixesContainer');
+    const countEl = document.getElementById('customMixCount');
+    if (!container) return;
+    
+    const mixes = getCustomMixes();
+    if(countEl) countEl.innerText = `${mixes.length}/20`;
+    
+    container.innerHTML = '';
+    mixes.forEach(mix => {
+        const btn = document.createElement('div');
+        btn.className = "flex items-center justify-between w-full p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all";
+        
+        btn.innerHTML = `
+            <div class="flex-1 cursor-pointer flex flex-col" onclick="window.loadCustomMix('${mix.id}')">
+                <span class="text-xs font-bold text-white mb-0.5">${mix.name}</span>
+                <span class="text-[9px] text-[var(--text-muted)]">${mix.baseFreq}Hz | Beat: ${mix.beatFreq}Hz</span>
+            </div>
+            <button onclick="window.deleteCustomMix('${mix.id}')" class="p-2 ml-2 hover:bg-red-500/20 rounded-md text-white/50 hover:text-red-400 transition-colors" title="Delete Mix">
+                <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+                    <line x1="18" x2="6" y1="6" y2="18"></line>
+                    <line x1="6" x2="18" y1="6" y2="18"></line>
+                </svg>
+            </button>
+        `;
+        container.appendChild(btn);
+    });
+}
+
+function loadCustomMix(id) {
+    const mixes = getCustomMixes();
+    const mix = mixes.find(m => m.id === id);
+    if (!mix) return;
+    
+    // Set audio values
+    if (window.loadSettings) {
+        window.loadSettings({
+            settings: {
+                base: mix.baseFreq,
+                beat: mix.beatFreq,
+                beatsVol: mix.vol,
+                audioMode: mix.audioMode,
+                soundscapes: mix.activeSoundscapes,
+            }
+        });
+    }
+    
+    // Set Visuals
+    const viz = window.getVisualizer && window.getVisualizer();
+    if (viz) {
+        // clear current visuals
+        Array.from(viz.activeModes).forEach(mode => {
+            if (viz.toggleMode) viz.toggleMode(mode);
+        });
+        
+        // enable saved visuals
+        if (mix.activeVisuals && mix.activeVisuals.length > 0) {
+            mix.activeVisuals.forEach(mode => {
+                if (window.setVisualMode) window.setVisualMode(mode, null, true);
+            });
+        }
+        
+        // Handle Cymatics specifically if it's active
+        if (mix.activeVisuals.includes('cymatics')) {
+            viz.currentCymaticClass = mix.cymaticClass;
+            viz.currentCymaticVariation = mix.cymaticVariation;
+            if (viz.updateCymaticsUniforms) {
+                viz.updateCymaticsUniforms();
+            }
+        }
+    }
+    
+    if (window.showToast) window.showToast('Custom Mix Loaded', 'info');
+}
+
+function deleteCustomMix(id) {
+    if(!confirm("Are you sure you want to delete this custom mix?")) return;
+    let mixes = getCustomMixes();
+    mixes = mixes.filter(m => m.id !== id);
+    localStorage.setItem('mindwave_custom_mixes', JSON.stringify(mixes));
+    renderCustomMixes();
+}
+
+window.saveCustomMixPrompt = saveCustomMixPrompt;
+window.loadCustomMix = loadCustomMix;
+window.deleteCustomMix = deleteCustomMix;
+window.renderCustomMixes = renderCustomMixes;
+
+// call renderCustomMixes on load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(renderCustomMixes, 1000);
+});
+
+// ==========================================
+// DAILY USAGE TRACKER
+// ==========================================
+const USAGE_LIMITS = {
+    'free': 15 * 60, // 15 mins in seconds
+    'meditation': 60 * 60, // 1 hour in seconds
+    'zen': 2 * 60 * 60, // 2 hours
+    'nirvana': Infinity,
+    'lifetime': Infinity
+};
+
+function initUsageTracker() {
+    let trackerInterval;
+    
+    function getToday() {
+        return new Date().toISOString().split('T')[0];
+    }
+    
+    function getUsage() {
+        const today = getToday();
+        const data = JSON.parse(localStorage.getItem('mindwave_daily_usage') || '{}');
+        if (data.date !== today) {
+            return { date: today, seconds: 0 };
+        }
+        return data;
+    }
+    
+    function saveUsage(data) {
+        localStorage.setItem('mindwave_daily_usage', JSON.stringify(data));
+    }
+    
+    function checkLimit() {
+        if (!window.state || !window.state.isPlaying) return;
+        
+        // If they unlocked premium locally (e.g. promo code), bypass limit
+        if (window.__MOCK_PREMIUM || localStorage.getItem('mindwave_premium_unlocked') === 'true') return;
+        
+        const usage = getUsage();
+        usage.seconds += 1;
+        
+        const tier = window.state.userTier || 'free';
+        let limit = USAGE_LIMITS[tier] || USAGE_LIMITS['free'];
+        
+        // Once limit is hit, stop playback and show paywall
+        if (usage.seconds >= limit) {
+            if (window.togglePlay && window.state.isPlaying) {
+                window.togglePlay(); // Stop audio
+            }
+            if (window.showPricingModal) {
+                window.showPricingModal();
+                if (window.showToast) window.showToast("You've reached your daily limit. Upgrade to continue listening.", "warning");
+            }
+        }
+        
+        saveUsage(usage);
+    }
+    
+    trackerInterval = setInterval(checkLimit, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initUsageTracker();
+});
+
+    // --- 3D Camera Controls ---
+    const cameraPitchSlider = document.getElementById('cameraPitchSlider');
+    const cameraYawSlider = document.getElementById('cameraYawSlider');
+    const cameraRollSlider = document.getElementById('cameraRollSlider');
+    const cameraPitchValue = document.getElementById('cameraPitchValue');
+    const cameraYawValue = document.getElementById('cameraYawValue');
+    const cameraRollValue = document.getElementById('cameraRollValue');
+
+    function updateCameraFromSliders() {
+        if (!window.viz3D) return;
+        const p = parseFloat(cameraPitchSlider.value) || 0;
+        const y = parseFloat(cameraYawSlider.value) || 0;
+        const r = parseFloat(cameraRollSlider.value) || 0;
+        window.viz3D.setCameraRotation(p, y, r);
+        if (cameraPitchValue) cameraPitchValue.innerHTML = `${p}&deg;`;
+        if (cameraYawValue) cameraYawValue.innerHTML = `${y}&deg;`;
+        if (cameraRollValue) cameraRollValue.innerHTML = `${r}&deg;`;
+    }
+
+    if (cameraPitchSlider) cameraPitchSlider.addEventListener('input', updateCameraFromSliders);
+    if (cameraYawSlider) cameraYawSlider.addEventListener('input', updateCameraFromSliders);
+    if (cameraRollSlider) cameraRollSlider.addEventListener('input', updateCameraFromSliders);
+
+    window.resetCameraControls = function() {
+        if (cameraPitchSlider) { cameraPitchSlider.value = 0; cameraPitchValue.innerHTML = '0&deg;'; }
+        if (cameraYawSlider) { cameraYawSlider.value = 0; cameraYawValue.innerHTML = '0&deg;'; }
+        if (cameraRollSlider) { cameraRollSlider.value = 0; cameraRollValue.innerHTML = '0&deg;'; }
+        if (window.viz3D) window.viz3D.setCameraRotation(0, 0, 0);
+    };
+
+    // --- Deep Parameter Overrides ---
+    const audioSensitivitySlider = document.getElementById('audioSensitivitySlider');
+    const audioSensitivityValue = document.getElementById('audioSensitivityValue');
+    const geoComplexitySlider = document.getElementById('geoComplexitySlider');
+    const geoComplexityValue = document.getElementById('geoComplexityValue');
+
+    if (audioSensitivitySlider) {
+        audioSensitivitySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (audioSensitivityValue) audioSensitivityValue.innerHTML = `${val.toFixed(1)}x`;
+            if (window.viz3D) window.viz3D.setAudioSensitivity(val);
+        });
+    }
+
+    if (geoComplexitySlider) {
+        geoComplexitySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (geoComplexityValue) geoComplexityValue.innerHTML = `${val.toFixed(1)}x`;
+            if (window.viz3D) window.viz3D.setGeoComplexity(val);
+        });
+    }
