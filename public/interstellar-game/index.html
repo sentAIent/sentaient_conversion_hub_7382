@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Interstellar Map | Pre-Placement Cartographer</title>
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon-192.png">
@@ -43,22 +43,27 @@
             <!-- Motion Group -->
             <div class="bar-group">
                 <button class="btn-small" id="bgDriftBtn" onclick="app.toggleBgDrift()">Stardrift</button>
-                                <button class="btn-small" id="bgWarpBtn" onclick="app.toggleBgWarp()">Lightspeed</button>
+                <button class="btn-small" id="bgDriftBtn" onclick="window.game.toggleBgDrift()">Stardrift</button>
+                                <button class="btn-small" id="bgWarpBtn" onclick="window.game.toggleBgWarp()">Lightspeed</button>
                 <span id="warpSpeedValue" class="editable-value-span" style="font-size:10px; margin-left:5px;">10x</span>
                 <input type="range" id="warpSpeedSlider" min="0" max="100" step="1" value="10" style="width: 50px;"
-                    title="Warp Speed" oninput="app.setWarpSpeedMultiplier(this.value)">
+                    title="Warp Speed" oninput="window.game.setWarpSpeedMultiplier(this.value)">
             </div>
             <!-- Background Styles Group -->
             <div class="bar-group">
                 <button class="btn-small bg-toggle" data-style="deep-space"
-                    onclick="app.toggleBgStyle('deep-space')">Deep Space</button>
+                    onclick="window.game.toggleBgStyle('deep-space')">Deep Space</button>
                 <button class="btn-small bg-toggle" data-style="nebula"
-                    onclick="app.toggleBgStyle('nebula')">Nebula</button>
+                    onclick="window.game.toggleBgStyle('nebula')">Nebula</button>
                 <button class="btn-small bg-toggle" data-style="alien"
-                    onclick="app.toggleBgStyle('alien')">Alien</button>
+                    onclick="window.game.toggleBgStyle('alien')">Alien</button>
+                <button class="btn-small" id="battleToggleBtn" style="display: none; color: #ff5555; font-weight: bold; padding: 4px 8px; border-color: rgba(255, 85, 85, 0.4);"
+                    onclick="window.game.toggleBgBattles()">⚔️ Battle</button>
                 <button class="btn-small bg-toggle" data-style="cyber"
-                    onclick="app.toggleBgStyle('cyber')">Matrix</button>
-                <button class="btn-small btn-regen" onclick="app.generateBackground()"
+                    onclick="window.game.toggleBgStyle('cyber')">Cyber</button>
+                <button class="btn-small bg-toggle" data-style="matrix"
+                    onclick="window.game.toggleBgStyle('matrix')">Matrix</button>
+                <button class="btn-small btn-regen" onclick="window.game.generateBackground()"
                     title="Regenerate Background">⟳</button>
             </div>
         </div>
@@ -79,6 +84,7 @@
             <div class="divider"></div>
             <button class="btn-small" id="hangarBtn" onclick="app.showShipModal()">🚀 Hangar</button>
             <button class="btn-small" id="rotationToggle" onclick="app.toggleRotationPanel()">3D</button>
+            <button class="btn-small" id="batteryToggle" onclick="window.game && window.game.toggleBatterySaver()" style="color: #ffaa00; border-color: rgba(255,170,0,0.3);">⚡ 60 FPS</button>
             <div class="divider"></div>
             <span id="authStatusText" style="font-size: 10px; color: #888; margin-right: 5px;">Not logged in</span>
             <button class="btn-small" id="loginBtn" onclick="document.getElementById('authModal').classList.remove('hidden')" style="color: #00ff88; border-color: rgba(0,255,136,0.3);">Login</button>
@@ -97,22 +103,26 @@
 
     <!-- === MATRIX CONTROLS POPUP === -->
     <div id="matrixPanel" class="popup-panel hidden">
-        <h3>Matrix</h3>
-        <label style="font-size:10px">Speed: <span id="matrixSpeedValue" class="editable-value-span">1.0x</span></label>
-        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="0.1" style="width:100%">
+        <h3 style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;" onclick="document.getElementById('matrixPanelBody').classList.toggle('hidden')">
+            Matrix <span style="font-size: 12px; color: rgba(255,255,255,0.5);">▼</span>
+        </h3>
+        <div id="matrixPanelBody">
+            <label style="font-size:10px">Speed: <span id="matrixSpeedValue" class="editable-value-span">1.0x</span></label>
+            <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="0.1" style="width:100%">
 
-        <label style="font-size:10px;margin-top:6px;display:block">Length: <span
-                id="matrixLengthValue" class="editable-value-span">1.0x</span></label>
-        <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
+            <label style="font-size:10px;margin-top:6px;display:block">Length: <span
+                    id="matrixLengthValue" class="editable-value-span">1.0x</span></label>
+            <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
 
-        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue" class="editable-value-span">0°</span></label>
-        <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
+            <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue" class="editable-value-span">0°</span></label>
+            <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
 
-        <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
-            <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
-                style="width:24px;height:24px">
-            <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
-                style="font-size:10px;padding:6px">🌈</button>
+            <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
+                <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
+                    style="width:24px;height:24px">
+                <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
+                    style="font-size:10px;padding:6px">🌈</button>
+            </div>
         </div>
     </div>
 
@@ -1007,7 +1017,54 @@
 
     <!-- Style for Mobile Visibility & UI Polish -->
     <!-- Main Game Script -->
-    <script type="module" src="script.js?v=ray_fix_v37"></script>
+    <script type="module" src="script.js?v=63"></script>
+    <!-- GALACTIC EXCHANGE MODAL -->
+    <div id="galacticExchangeModal" class="modal-overlay" style="display: none; z-index: 20000; position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center;">
+        <div class="modal-content" style="width: 800px; max-width: 95vw; max-height: 90vh; overflow-y: auto; background: linear-gradient(135deg, rgba(20, 20, 40, 0.95), rgba(40, 20, 60, 0.95)); border: 2px solid #a855f7; box-shadow: 0 0 40px rgba(168, 85, 247, 0.5); border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(168, 85, 247, 0.3); padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #d8b4fe; font-size: 28px; text-shadow: 0 0 10px rgba(216, 180, 254, 0.8);">✨ Galactic Exchange</h2>
+                <button class="menu-btn" onclick="document.getElementById('galacticExchangeModal').style.display='none'" style="padding: 5px 15px; background: rgba(255,50,50,0.2); border-color: #ff4444; color: #ffaaaa;">CLOSE STORE</button>
+            </div>
+
+            <!-- Promotional Banner -->
+            <div style="background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 25px;">
+                <h3 style="margin: 0 0 10px 0; color: #fff; font-size: 20px;">STARTER BUNDLE - 80% OFF!</h3>
+                <p style="margin: 0 0 15px 0; color: #e9d5ff;">Get the Dreadnought class ship + 50,000 Credits instantly.</p>
+                <button class="menu-btn" onclick="window.purchaseItem('bundle_starter')" style="background: linear-gradient(90deg, #9333ea, #c084fc); border: none; font-size: 18px; font-weight: bold; padding: 10px 30px; box-shadow: 0 0 15px #a855f7;">UNLOCK NOW - $4.99</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                <!-- Item 1 -->
+                <div style="background: rgba(0,0,0,0.6); border: 1px solid #4ade80; border-radius: 8px; padding: 20px; text-align: center; transition: transform 0.2s;">
+                    <div style="font-size: 40px; margin-bottom: 15px;">💎</div>
+                    <h3 style="color: #4ade80; margin: 0 0 10px 0;">Crystal Pack</h3>
+                    <p style="color: #aaa; font-size: 14px; margin-bottom: 15px;">10,000 Premium Crystals for base building.</p>
+                    <button class="menu-btn" onclick="window.purchaseItem('crystals_10k')" style="width: 100%; border-color: #4ade80; color: #4ade80;">$1.99</button>
+                </div>
+
+                <!-- Item 2 -->
+                <div style="background: rgba(0,0,0,0.6); border: 1px solid #f87171; border-radius: 8px; padding: 20px; text-align: center; transition: transform 0.2s;">
+                    <div style="font-size: 40px; margin-bottom: 15px;">🚀</div>
+                    <h3 style="color: #f87171; margin: 0 0 10px 0;">Phantom Ship</h3>
+                    <p style="color: #aaa; font-size: 14px; margin-bottom: 15px;">Invisible to radar. Fast firing rate.</p>
+                    <button class="menu-btn" onclick="window.purchaseItem('ship_phantom')" style="width: 100%; border-color: #f87171; color: #f87171;">$9.99</button>
+                </div>
+
+                <!-- Item 3 -->
+                <div style="background: rgba(0,0,0,0.6); border: 1px solid #60a5fa; border-radius: 8px; padding: 20px; text-align: center; transition: transform 0.2s;">
+                    <div style="font-size: 40px; margin-bottom: 15px;">🛡️</div>
+                    <h3 style="color: #60a5fa; margin: 0 0 10px 0;">Titan Shield</h3>
+                    <p style="color: #aaa; font-size: 14px; margin-bottom: 15px;">Permanent 50% damage reduction.</p>
+                    <button class="menu-btn" onclick="window.purchaseItem('upgrade_shield')" style="width: 100%; border-color: #60a5fa; color: #60a5fa;">$14.99</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="menu-btn" onclick="window.restorePurchases()" style="font-size: 12px; border: none; text-decoration: underline; color: #aaa;">Restore Purchases</button>
+            </div>
+        </div>
+    </div>
+
     <!-- BASE BUILDER MODAL -->
     <div class="modal-overlay" id="baseBuilderModal">
         <div class="modal-content" style="width: 800px; max-width: 95vw; background: rgba(10, 20, 30, 0.95); border: 2px solid #228B22; box-shadow: 0 0 30px rgba(34, 139, 34, 0.4);">
@@ -1242,6 +1299,10 @@
             <input type="checkbox" id="settingBackground" checked onchange="window.game.updateSettings()">
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span>Background Battles</span>
+            <input type="checkbox" id="settingBgBattles" checked onchange="window.game.updateSettings()">
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <span>Haptics (Vibration)</span>
             <input type="checkbox" id="settingHaptics" checked onchange="window.game.updateSettings()">
         </div>
@@ -1282,6 +1343,8 @@
 
     <!-- Firebase Scripts -->
     <script type="module" src="js/firebase-integration.js"></script>
+    <script src="js/native-integration.js"></script>
+    <script src="script.js"></script>
 
     <!-- Slider Edit Script -->
     <script>
@@ -1371,6 +1434,17 @@
         });
     </script>
 
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').then(registration => {
+            console.log('SW registered: ', registration);
+          }).catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+        });
+      }
+    </script>
 </body>
 
 </html>

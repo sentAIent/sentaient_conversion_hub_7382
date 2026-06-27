@@ -31,14 +31,31 @@ window.addEventListener('touchstart', () => window.hasUserInteracted = true, { o
 
 // --- HAPTIC FEEDBACK UTILITY ---
 window.hapticFeedback = function(pattern) {
-    if (!window.hasUserInteracted) return; // Prevent browser intervention warnings
+    if (!window.hasUserInteracted) return;
     if (window.game && window.game.settings && !window.game.settings.haptics) return;
-    if (navigator.vibrate) {
-        try {
-            navigator.vibrate(pattern);
-        } catch (e) {
-            console.log('Haptics not supported or blocked');
-        }
+    
+    let style = 'Light';
+    if (Array.isArray(pattern)) {
+        if (pattern[0] > 100) style = 'Heavy';
+        else if (pattern[0] > 50) style = 'Medium';
+    } else {
+        if (pattern > 100) style = 'Heavy';
+        else if (pattern > 50) style = 'Medium';
+    }
+    
+    if (window.nativeIntegration) {
+        window.nativeIntegration.triggerHaptic(style);
+    } else if (navigator.vibrate) {
+        try { navigator.vibrate(pattern); } catch (e) { }
+    }
+};
+
+window.purchaseItem = function(productId) {
+    if (window.nativeIntegration) {
+        window.nativeIntegration.purchaseProduct(productId);
+    } else {
+        console.log('Purchase requested but native wrapper not found: ' + productId);
+        if (window.app && window.app.showToast) window.app.showToast('Purchases unavailable on Web');
     }
 };
 
@@ -401,6 +418,7 @@ class InterstellarEngine {
         this.spacecraft = [];
         this.matrixStreams = [];
         this.planets = [];
+        this.bgBullets = [];
 
         // 3D Rotation State (degrees)
         this.rotationX = 0;
@@ -892,6 +910,25 @@ class InterstellarEngine {
         }
 
         requestAnimationFrame(this.animate);
+    }
+
+    toggleBatterySaver() {
+        this.batterySaverEnabled = !this.batterySaverEnabled;
+        const btn = document.getElementById('batteryToggle');
+        if (btn) {
+            if (this.batterySaverEnabled) {
+                btn.innerHTML = "🔋 30 FPS";
+                btn.style.color = "#00ffaa";
+                btn.style.borderColor = "rgba(0,255,170,0.3)";
+            } else {
+                btn.innerHTML = "⚡ 60 FPS";
+                btn.style.color = "#ffaa00";
+                btn.style.borderColor = "rgba(255,170,0,0.3)";
+            }
+        }
+        if (window.app && window.app.showToast) {
+            window.app.showToast(this.batterySaverEnabled ? "Battery Saver: ON (30 FPS)" : "Battery Saver: OFF (60 FPS)", 3000);
+        }
     }
 
     togglePause() {
@@ -1525,6 +1562,63 @@ class InterstellarEngine {
         this.updateBgUI();
     }
 
+    drawCyberGrid(ctx, canvas, time) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Force screen space
+
+        // Horizon line
+        const horizon = canvas.height * 0.55;
+
+        // Sunset/Synthwave sun
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, horizon, 150, Math.PI, 0);
+        const sunGrad = ctx.createLinearGradient(0, horizon - 150, 0, horizon);
+        sunGrad.addColorStop(0, '#ff007f');
+        sunGrad.addColorStop(1, '#ffaa00');
+        ctx.fillStyle = sunGrad;
+        ctx.fill();
+
+        // Sun scanlines
+        ctx.globalCompositeOperation = 'destination-out';
+        for (let i = 0; i < 150; i += 15) {
+            ctx.fillRect(canvas.width / 2 - 150, horizon - i, 300, i * 0.1);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Floor Grid
+        ctx.fillStyle = '#0f0f1b';
+        ctx.fillRect(0, horizon, canvas.width, canvas.height - horizon);
+
+        const gridSize = 40;
+        const gridSpeed = (time * 0.05) % gridSize;
+
+        ctx.strokeStyle = '#ff007f';
+        ctx.lineWidth = 1.5;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ff007f';
+
+        ctx.beginPath();
+        
+        // Vertical perspective lines
+        const vanishingPoint = { x: canvas.width / 2, y: horizon };
+        for (let i = -canvas.width; i <= canvas.width * 2; i += gridSize * 2) {
+            ctx.moveTo(vanishingPoint.x, vanishingPoint.y);
+            ctx.lineTo(i, canvas.height);
+        }
+
+        // Horizontal perspective lines moving towards camera
+        for (let y = 0; y < canvas.height - horizon; y += gridSize) {
+            const perspectiveY = horizon + Math.pow(y / (canvas.height - horizon), 2) * (canvas.height - horizon) + gridSpeed;
+            if (perspectiveY <= canvas.height) {
+                ctx.moveTo(0, perspectiveY);
+                ctx.lineTo(canvas.width, perspectiveY);
+            }
+        }
+
+        ctx.stroke();
+        ctx.restore();
+    }
+
     // Generate only a single style's data
     generateSingleStyle(style) {
         switch (style) {
@@ -1536,6 +1630,9 @@ class InterstellarEngine {
                 break;
             case 'alien':
                 this.generateAlienStyle();
+                break;
+            case 'matrix':
+                this.generateMatrixStyle();
                 break;
             case 'cyber':
                 this.generateCyberStyle();
@@ -1571,8 +1668,11 @@ class InterstellarEngine {
             case 'alien':
                 this.spacecraft = [];
                 break;
-            case 'cyber':
+            case 'matrix':
                 this.matrixStreams = [];
+                break;
+            case 'cyber':
+                this.cyberGrid = null; // Clear synthwave grid
                 break;
         }
     }
@@ -1588,15 +1688,44 @@ class InterstellarEngine {
             }
         });
 
-        // Show/hide matrix panel when cyber style is active
+        // Show/hide matrix panel when cyber/matrix style is active
         const matrixPanel = document.getElementById('matrixPanel');
         if (matrixPanel) {
-            if (this.activeStyles.has('cyber')) {
+            if (this.activeStyles.has('cyber') || this.activeStyles.has('matrix')) {
                 matrixPanel.classList.remove('hidden');
             } else {
                 matrixPanel.classList.add('hidden');
             }
         }
+
+        // Show/hide battle toggle when alien style is active
+        const battleBtn = document.getElementById('battleToggleBtn');
+        if (battleBtn) {
+            if (this.activeStyles.has('alien')) {
+                battleBtn.style.display = 'inline-block';
+                if (this.settings && this.settings.bgBattles) {
+                    battleBtn.style.backgroundColor = '#ff5555';
+                    battleBtn.style.color = '#000';
+                } else {
+                    battleBtn.style.backgroundColor = 'transparent';
+                    battleBtn.style.color = '#ff5555';
+                }
+            } else {
+                battleBtn.style.display = 'none';
+            }
+        }
+    }
+
+    toggleBgBattles() {
+        if (!this.settings) return;
+        this.settings.bgBattles = !this.settings.bgBattles;
+        
+        const cb = document.getElementById('settingBgBattles');
+        if (cb) cb.checked = this.settings.bgBattles;
+
+        this.updateBgUI();
+        localStorage.setItem('gameSettings', JSON.stringify(this.settings));
+        this.showToast(this.settings.bgBattles ? 'Background Battles Enabled' : 'Background Battles Disabled');
     }
 
     // Warm up the particle generators to prevent JIT lag on first explosion
@@ -7299,12 +7428,28 @@ class InterstellarEngine {
         // Check Sun (Galaxy) collisions (Vaporization and Heat)
         if (this.galaxies) {
             for (const sun of this.galaxies) {
-                const scale = sun.size / 42;
-                const innerRadius = 15 * scale; // Instant death zone (solid core)
+                const zoom = this.camera.zoom;
+                const wrapRadius = Math.max(15000, 60000 / Math.max(1, Math.pow(zoom, 0.6)));
+                let gdx = sun.x - ship.x;
+                let gdy = sun.y - ship.y;
+                if (!this.bgWarpMode) {
+                    while (gdx > wrapRadius) gdx -= wrapRadius * 2;
+                    while (gdx < -wrapRadius) gdx += wrapRadius * 2;
+                    while (gdy > wrapRadius) gdy -= wrapRadius * 2;
+                    while (gdy < -wrapRadius) gdy += wrapRadius * 2;
+                }
+
+                const para = (sun.z || 0) * 0.0005;
+                const depthScale = 1 - para;
+                const cx = ship.x + gdx * depthScale;
+                const cy = ship.y + gdy * depthScale;
                 
-                const dx = ship.x - sun.x;
-                const dy = ship.y - sun.y;
+                const dx = ship.x - cx;
+                const dy = ship.y - cy;
                 const dist = Math.hypot(dx, dy);
+
+                const scale = (sun.size / 42) * depthScale;
+                const innerRadius = 15 * scale; // Instant death zone (solid core)
                 
                 // State-of-the-art ray tracing collision for the 16-point starburst
                 let shipAngle = Math.atan2(dy, dx);
@@ -7410,9 +7555,18 @@ class InterstellarEngine {
         // Only check if deep space style is active and planets exist
         if (this.planets && this.planets.length > 0) {
             for (const planet of this.planets) {
-                const effectiveRadius = planet.radius;
+                const para = (planet.z || 0) * 0.0005;
+                const depthScale = 1 - para;
+                const dx = planet.x - ship.x;
+                const dy = planet.y - ship.y;
+                
+                const visualX = ship.x + dx * depthScale;
+                const visualY = ship.y + dy * depthScale;
+                
+                // Effective visual distance between ship and parallaxed planet
+                const dist = Math.hypot(visualX - ship.x, visualY - ship.y);
+                const effectiveRadius = planet.radius * depthScale;
 
-                const dist = Math.hypot(planet.x - ship.x, planet.y - ship.y);
                 if (dist < effectiveRadius + collisionRadius) {
                     const speed = Math.hypot(ship.vx, ship.vy);
                     if (planet.type === 'terrestrial' && speed < 5) {
@@ -11120,9 +11274,9 @@ class InterstellarEngine {
         this.pointer.rotStartY = this.rotationY;
 
         // Middle mouse button OR Alt+Left = Orbit mode (Blender style)
-        // Shift+Left = Pan mode
+        // Shift+Left = Pan mode. Also allow default panning if the splash screen is active (user expects it)
         this.pointer.orbitMode = (e.button === 1) || (e.button === 0 && e.altKey);
-        this.pointer.panMode = (e.button === 0 && e.shiftKey);
+        this.pointer.panMode = (e.button === 0 && (e.shiftKey || document.body.classList.contains('splash-active')));
 
         // If orbiting or panning, skip star interactions
         if (this.pointer.orbitMode || this.pointer.panMode) {
@@ -11234,6 +11388,9 @@ class InterstellarEngine {
         if (this.pointer.panMode) {
             this.camera.x = this.pointer.camStartX + dx;
             this.camera.y = this.pointer.camStartY + dy;
+            // When in background mode (not flight mode), we must explicitly trigger a redraw
+            // to ensure smooth dragging if the background animation loop is slow or paused
+            if (!this.flightMode) this.draw();
             return;
         }
 
@@ -11693,6 +11850,8 @@ class InterstellarEngine {
             this.nebulae = [];
             this.spacecraft = [];
             this.matrixStreams = [];
+            this.bgBullets = [];
+            this.bgParticles = [];
 
             // 2. Compose Layers based on active styles
             // Order matters for layering (Deep Space -> Nebula -> Alien -> Cyber)
@@ -12004,9 +12163,10 @@ class InterstellarEngine {
                     hasAtmosphere: type.hasAtmosphere,
                     atmosphereColor: type.name === 'ice-giant' ? '#ADD8E6' : (type.name === 'volcanic' ? '#FF6347' : '#87CEEB'),
                     hasRings: hasRings,
-                    ringColor: hasRings ? `hsl(${Math.random() * 360}, ${40 + Math.random() * 40} %, ${50 + Math.random() * 30} %)` : null, // Full HSL/RGB variety
-                    ringInnerRadius: radius * 1.3,
-                    ringOuterRadius: radius * 2.2,
+                    ringColors: hasRings ? Array(5).fill(0).map(() => `hsl(${Math.random() * 360}, ${40 + Math.random() * 40}%, ${50 + Math.random() * 30}%)`) : null, // Array of 5 colors for rich rings
+                    ringInnerRadius: radius * (1.2 + Math.random() * 0.5),
+                    ringOuterRadius: radius * (2.0 + Math.random() * 1.5),
+                    ringAngle: Math.random() * Math.PI,
                     textureSeed: Math.random() * 1000,
                     rotation: Math.random() * Math.PI * 2,
                     axialTilt: (Math.random() - 0.5) * 0.6
@@ -12122,7 +12282,7 @@ class InterstellarEngine {
             });
         }
 
-        // Alien Spacecraft Fleet - distributed across zoom tiers (30 total, +50%)
+        // Alien Spacecraft Fleet - 7 Factions in Formations
         const shipClasses = [
             { name: 'scout', baseSize: 40, weight: 4 },
             { name: 'fighter', baseSize: 60, weight: 4 },
@@ -12133,48 +12293,99 @@ class InterstellarEngine {
             { name: 'nebula-phantom', baseSize: 65, weight: 2 }
         ];
 
+        const factions = [
+            { name: 'Void Pirates', hue: 0, shield: 'rgba(255,0,0,0.4)', engine: '#ff0000' },
+            { name: 'Galactic Federation', hue: 210, shield: 'rgba(0,100,255,0.4)', engine: '#0088ff' },
+            { name: 'Nebula Phantoms', hue: 280, shield: 'rgba(150,0,255,0.4)', engine: '#aa00ff' },
+            { name: 'Orion Syndicate', hue: 120, shield: 'rgba(0,255,0,0.4)', engine: '#00ff00' },
+            { name: 'Obsidian Order', hue: 30, shield: 'rgba(255,100,0,0.4)', engine: '#ffaa00' },
+            { name: 'Crimson Fleet', hue: 345, shield: 'rgba(255,0,100,0.4)', engine: '#ff0055' },
+            { name: 'Zenith Core', hue: 180, shield: 'rgba(0,255,255,0.4)', engine: '#00ffff' }
+        ];
+
         // Build weighted selection pool
         const pool = [];
         shipClasses.forEach(sc => {
             for (let w = 0; w < sc.weight; w++) pool.push(sc);
         });
 
-        // Spacecraft configs per tier
-        const craftConfigs = [
-            { count: 6, minDist: 50, maxDist: 500, sizeScale: 0.4 },    // Close - small ships
-            { count: 10, minDist: 500, maxDist: 2500, sizeScale: 0.7 }, // Medium
-            { count: 14, minDist: 2500, maxDist: 6000, sizeScale: 1.2 } // Far - larger ships
+        // Spacecraft configs per tier (Squadrons)
+        const squadConfigs = [
+            { count: 4, minDist: 50, maxDist: 1500, sizeScale: 0.5 },    // Close
+            { count: 6, minDist: 1500, maxDist: 4000, sizeScale: 0.8 },  // Medium
+            { count: 8, minDist: 4000, maxDist: 8000, sizeScale: 1.2 }   // Far
         ];
 
-        craftConfigs.forEach(cfg => {
+        squadConfigs.forEach(cfg => {
             for (let i = 0; i < cfg.count; i++) {
-                const shipClass = pool[Math.floor(Math.random() * pool.length)];
-                const hue = Math.random() * 360;
-                const size = shipClass.baseSize * cfg.sizeScale * (0.7 + Math.random() * 0.6);
-                const isScout = shipClass.name === 'scout';
+                const faction = factions[Math.floor(Math.random() * factions.length)];
+                const leaderClass = pool[Math.floor(Math.random() * pool.length)];
+                
                 const dist = Math.sqrt(Math.random() * (cfg.maxDist * cfg.maxDist - cfg.minDist * cfg.minDist) + cfg.minDist * cfg.minDist);
                 const angle = Math.random() * Math.PI * 2;
-
+                const sqX = Math.cos(angle) * dist;
+                const sqY = Math.sin(angle) * dist;
+                const sqZ = (Math.random() * zRange) - zRange / 2;
+                
+                const sqVx = (Math.random() - 0.5) * 4;
+                const sqVy = (Math.random() - 0.5) * 4;
+                const heading = Math.atan2(sqVy, sqVx);
+                
+                // Leader
                 this.spacecraft.push({
-                    x: Math.cos(angle) * dist,
-                    y: Math.sin(angle) * dist,
-                    z: (Math.random() * zRange) - zRange / 2,
-                    vx: (Math.random() - 0.5) * (isScout ? 4 : 2),
-                    vy: (Math.random() - 0.5) * (isScout ? 4 : 2),
-                    size: size,
-                    shipClass: shipClass.name,
-                    hullColor: `hsl(${hue}, ${isScout ? '30%' : '50%'}, 50%)`,
-                    engineColor: `hsl(${(hue + 180) % 360}, 100%, 60%)`,
-                    engineGlow: `hsl(${(hue + 180) % 360}, 100%, 85%)`,
-                    shieldColor: `rgba(${Math.random()*255},${Math.random()*255},255,0.4)`,
-                    rotationSpeed: (Math.random() - 0.5) * 0.02,
-                    rotation: Math.random() * Math.PI * 2
+                    x: sqX,
+                    y: sqY,
+                    z: sqZ,
+                    vx: sqVx,
+                    vy: sqVy,
+                    size: leaderClass.baseSize * cfg.sizeScale,
+                    shipClass: leaderClass.name,
+                    faction: faction.name,
+                    hullColor: `hsl(${faction.hue}, 50%, 50%)`,
+                    engineColor: faction.engine,
+                    engineGlow: faction.engine,
+                    shieldColor: faction.shield,
+                    rotationSpeed: 0,
+                    rotation: heading
                 });
+                
+                // Wingmen (V-formation)
+                const wingmenCount = 2 + Math.floor(Math.random() * 3) * 2; // 2 or 4 or 6 wingmen
+                for (let w = 1; w <= wingmenCount; w++) {
+                    const side = (w % 2 === 0) ? 1 : -1;
+                    const row = Math.ceil(w / 2);
+                    
+                    const wingmanClass = pool[Math.floor(Math.random() * pool.length)];
+                    const offsetBack = row * 80 * cfg.sizeScale;
+                    const offsetSide = side * row * 60 * cfg.sizeScale;
+                    
+                    // Rotate offsets by heading
+                    const offsetX = -Math.cos(heading) * offsetBack - Math.sin(heading) * offsetSide;
+                    const offsetY = -Math.sin(heading) * offsetBack + Math.cos(heading) * offsetSide;
+                    
+                    this.spacecraft.push({
+                        x: sqX + offsetX,
+                        y: sqY + offsetY,
+                        z: sqZ,
+                        vx: sqVx,
+                        vy: sqVy,
+                        size: wingmanClass.baseSize * cfg.sizeScale * 0.8,
+                        shipClass: wingmanClass.name,
+                        faction: faction.name,
+                        hullColor: `hsl(${faction.hue}, 40%, 40%)`,
+                        engineColor: faction.engine,
+                        engineGlow: faction.engine,
+                        shieldColor: faction.shield,
+                        rotationSpeed: 0,
+                        rotation: heading
+                    });
+                }
             }
         });
+
     }
 
-    generateCyberStyle() {
+    generateMatrixStyle() {
         // Reset custom color flag so new generation allows random themes again
         this.matrixColorCustomized = false;
 
@@ -12314,9 +12525,31 @@ class InterstellarEngine {
         console.log(`[Matrix] Generated ${this.matrixStreams.length} streams, columns: ${columns}, theme: ${theme.name} `);
     }
 
+    generateCyberStyle() {
+        this.cyberGrid = true;
+    }
+
     /* --- Rendering --- */
 
     animate(time) {
+        // Battery Saver (30 FPS cap)
+        if (this.batterySaverEnabled) {
+            if (!this.lastFrameTime) this.lastFrameTime = time;
+            const delta = time - this.lastFrameTime;
+            if (delta < 33.33) {
+                requestAnimationFrame(this.animate);
+                return;
+            }
+            this.lastFrameTime = time - (delta % 33.33);
+        }
+
+        // Smooth frame-independent timing
+        if (!this.lastTime) this.lastTime = time;
+        this.deltaTime = time - this.lastTime;
+        // Cap deltaTime to prevent huge jumps if tab was suspended
+        if (this.deltaTime > 100) this.deltaTime = 16.66;
+        this.lastTime = time;
+
         this.frameCounter++;
 
         // Always update active hazard effects (like supernova) even out of flight mode
@@ -12419,48 +12652,224 @@ class InterstellarEngine {
                 if (s.y > half) s.y = -half;
                 if (s.y < -half) s.y = half;
 
-                // Firing/Combat behavior
-                if (this.flightMode && !this.gamePaused && !s.flownOut) {
+                // Firing/Combat behavior (Faction vs Faction)
+                if (this.settings && this.settings.bgBattles !== false && !this.gamePaused && !s.flownOut) {
                     if (s.health === undefined) {
-                        s.health = s.shipClass === 'mothership' ? 250 : (s.shipClass === 'destroyer' ? 120 : (s.shipClass === 'cruiser' ? 80 : 40));
+                        s.health = s.shipClass === 'cruiser' ? 250 : (s.shipClass === 'fighter' ? 120 : 60);
                         s.maxHealth = s.health;
                         s.fireTimer = Math.random() * 200;
+                        s.targetIndex = -1;
                     }
 
-                    const scScreenX = this.canvas.width / 2 + (s.x - this.playerShip.x * backgroundParallax - driftX) * pZoom;
-                    const scScreenY = this.canvas.height / 2 + (s.y - this.playerShip.y * backgroundParallax - driftY) * pZoom;
+                    // Find nearest enemy if no target
+                    if (s.targetIndex === -1 || Math.random() < 0.05) {
+                        let closestDist = Infinity;
+                        let bestTarget = -1;
+                        this.spacecraft.forEach((other, idx) => {
+                            if (other !== s && other.faction !== s.faction && !other.flownOut) {
+                                const tdx = other.x - s.x;
+                                const tdy = other.y - s.y;
+                                const d = tdx*tdx + tdy*tdy;
+                                if (d < closestDist && d < 2000000) { // 1400 range squared
+                                    closestDist = d;
+                                    bestTarget = idx;
+                                }
+                            }
+                        });
+                        s.targetIndex = bestTarget;
+                    }
 
-                    if (scScreenX >= -100 && scScreenX <= this.canvas.width + 100 &&
-                        scScreenY >= -100 && scScreenY <= this.canvas.height + 100) {
-                        
+                    if (s.targetIndex !== -1 && this.spacecraft[s.targetIndex] && !this.spacecraft[s.targetIndex].flownOut) {
+                        const target = this.spacecraft[s.targetIndex];
                         s.fireTimer++;
-                        const fireInterval = s.shipClass === 'mothership' ? 180 : (s.shipClass === 'scout' ? 90 : 120);
-                        if (s.fireTimer >= fireInterval) {
-                            s.fireTimer = 0;
-
-                            const worldX = this.playerShip.x + (scScreenX - this.canvas.width / 2) / this.camera.zoom;
-                            const worldY = this.playerShip.y + (scScreenY - this.canvas.height / 2) / this.camera.zoom;
-
-                            const angle = Math.atan2(this.playerShip.y - worldY, this.playerShip.x - worldX);
-                            const bulletSpeed = 5 + Math.random() * 3;
+                        const fireInterval = s.shipClass === 'cruiser' ? 140 : (s.shipClass === 'scout' ? 60 : 90);
+                        
+                        // Prevent death spirals: break off if too close
+                        const targetDist = Math.sqrt((target.x - s.x)**2 + (target.y - s.y)**2);
+                        
+                        // Predictive aim: calculate where target will be based on bullet speed (avg 12.5)
+                        const timeToHit = targetDist / 12.5; 
+                        const predictedX = target.x + target.vx * timeToHit;
+                        const predictedY = target.y + target.vy * timeToHit;
+                        
+                        let diff = 0;
+                        if (targetDist < 200) {
+                            s.targetIndex = -1; // Drop target to break off
+                        } else {
+                            // Turn towards predicted target
+                            const targetAngle = Math.atan2(predictedY - s.y, predictedX - s.x);
+                            diff = targetAngle - s.rotation;
+                            while (diff > Math.PI) diff -= Math.PI * 2;
+                            while (diff < -Math.PI) diff += Math.PI * 2;
                             
-                            this.enemyBullets.push({
-                                x: worldX + Math.cos(angle) * (s.size * 0.5),
-                                y: worldY + Math.sin(angle) * (s.size * 0.5),
-                                vx: Math.cos(angle) * bulletSpeed,
-                                vy: Math.sin(angle) * bulletSpeed,
-                                rotation: angle,
-                                damage: s.shipClass === 'mothership' ? 12 : 5,
-                                life: 120,
-                                color: s.engineColor || '#00ff88',
-                                width: 3,
-                                length: 20
-                            });
-                            gameAudio.playEnemyLaser();
+                            // Slowly adjust heading toward enemy while maintaining velocity roughly
+                            // Limit max turn rate for cinematic swoops instead of spinning
+                            const maxTurn = 0.02;
+                            const turn = Math.max(-maxTurn, Math.min(maxTurn, diff * 0.05));
+                            s.rotation += turn;
+                        }
+                        
+                        const speed = Math.sqrt(s.vx * s.vx + s.vy * s.vy) || 2;
+                        s.vx = Math.cos(s.rotation) * speed;
+                        s.vy = Math.sin(s.rotation) * speed;
+                        
+                        // Only fire if reasonably facing target
+                        if (s.fireTimer >= fireInterval && Math.abs(diff) < 0.8) {
+                            s.fireTimer = 0;
+                            
+                            // Calculate screen coordinates based on exact background rendering projection
+                            const para = s.parallax || 0.4;
+                            const shipZoom = this.camera.zoom;
+                            const sScreenX = (this.canvas.width / 2 + this.camera.x) + (s.x - this.playerShip.x * para) * shipZoom;
+                            const sScreenY = (this.canvas.height / 2 + this.camera.y) + (s.y - this.playerShip.y * para) * shipZoom;
+                            
+                            // Only draw bullets if they are on screen!
+                            if (sScreenX >= -200 && sScreenX <= this.canvas.width + 200 &&
+                                sScreenY >= -200 && sScreenY <= this.canvas.height + 200) {
+                                
+                                const angle = Math.atan2(predictedY - s.y, predictedX - s.x);
+                                const bulletSpeed = 10 + Math.random() * 5;
+                                
+                                this.bgBullets = this.bgBullets || [];
+                                this.bgBullets.push({
+                                    x: s.x + Math.cos(angle) * (s.size * 0.5),
+                                    y: s.y + Math.sin(angle) * (s.size * 0.5),
+                                    vx: Math.cos(angle) * bulletSpeed,
+                                    vy: Math.sin(angle) * bulletSpeed,
+                                    rotation: angle,
+                                    damage: s.shipClass === 'cruiser' ? 25 : 10,
+                                    life: 150,
+                                    color: s.engineColor || '#00ff88',
+                                    width: 4,
+                                    length: 25,
+                                    targetFaction: target.faction
+                                });
+                                // Keep volume low for background battles
+                                if (Math.random() < 0.2) gameAudio.playEnemyLaser();
+                            }
+                        }
+                    } else {
+                        // Lost target or no target: slowly realign to forward velocity vector
+                        s.targetIndex = -1;
+                        if (s.rotationSpeed) s.rotation += s.rotationSpeed;
+                        const speed = Math.sqrt(s.vx * s.vx + s.vy * s.vy) || 2;
+                        s.vx = Math.cos(s.rotation) * speed;
+                        s.vy = Math.sin(s.rotation) * speed;
+                    }
+                } else if (!this.gamePaused && !s.flownOut) {
+                    // PATROL AI: Smoothly arc and patrol the sector
+                    s.targetIndex = -1;
+                    if (s.patrolTargetX === undefined || Math.random() < 0.005) {
+                        const range = 4000;
+                        s.patrolTargetX = this.playerShip.x + (Math.random() - 0.5) * range;
+                        s.patrolTargetY = this.playerShip.y + (Math.random() - 0.5) * range;
+                    }
+                    const targetAngle = Math.atan2(s.patrolTargetY - s.y, s.patrolTargetX - s.x);
+                    let diff = targetAngle - s.rotation;
+                    while (diff > Math.PI) diff -= Math.PI * 2;
+                    while (diff < -Math.PI) diff += Math.PI * 2;
+                    
+                    s.rotation += diff * 0.01; // Slower, elegant turn for patrol
+                    const speed = (Math.sqrt(s.vx * s.vx + s.vy * s.vy) || 2) * 0.99 + 0.02; // Cruise speed, slightly damp
+                    s.vx = Math.cos(s.rotation) * Math.max(1, Math.min(speed, 5));
+                    s.vy = Math.sin(s.rotation) * Math.max(1, Math.min(speed, 5));
+                } else if (s.flownOut && s.health <= 0) {
+                    // Respawn dead ships to keep the background battle going
+                    s.respawnTimer = (s.respawnTimer || 0) + 1;
+                    if (s.respawnTimer > 300) { // Respawn after ~5 seconds
+                        s.flownOut = false;
+                        s.health = s.maxHealth;
+                        s.respawnTimer = 0;
+                        s.targetIndex = -1;
+                        
+                        // Pick a random edge to warp back in from
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = 5000 + Math.random() * 2000;
+                        s.x = this.playerShip.x + Math.cos(angle) * dist;
+                        s.y = this.playerShip.y + Math.sin(angle) * dist;
+                        
+                        // Visual warp-in flash
+                        if (this.particles) {
+                            for (let p = 0; p < 15; p++) {
+                                this.particles.push({
+                                    x: s.x, y: s.y,
+                                    vx: (Math.random() - 0.5) * 15,
+                                    vy: (Math.random() - 0.5) * 15,
+                                    life: 20 + Math.random() * 20,
+                                    color: '#ffffff',
+                                    size: 3 + Math.random() * 4
+                                });
+                            }
                         }
                     }
                 }
             });
+        }
+
+        // Update Background Bullets (Faction vs Faction)
+        if (this.bgBullets && this.bgBullets.length > 0) {
+            for (let i = this.bgBullets.length - 1; i >= 0; i--) {
+                const b = this.bgBullets[i];
+                b.x += b.vx;
+                b.y += b.vy;
+                b.life--;
+
+                let hit = false;
+                // Hit detection against spacecraft
+                if (this.spacecraft) {
+                    for (let s of this.spacecraft) {
+                        if (s.flownOut || s.faction !== b.targetFaction) continue; // Only hit intended target faction and ALIVE ships
+                        
+                        const dx = s.x - b.x;
+                        const dy = s.y - b.y;
+                        const distSq = dx*dx + dy*dy;
+                        // Give a slightly more generous hit radius for fast bullets
+                        const hitRadius = (s.size * 0.8 + 15) * (s.size * 0.8 + 15);
+                        
+                        if (distSq < hitRadius) {
+                            hit = true;
+                            s.health -= b.damage;
+                            
+                            // Visual shield flash
+                            s.shieldFlash = 5;
+                            
+                            if (s.health <= 0) {
+                                s.flownOut = true;
+                                // Spawn background explosion particles
+                                this.bgParticles = this.bgParticles || [];
+                                for (let p = 0; p < 15; p++) {
+                                    this.bgParticles.push({
+                                        x: s.x, y: s.y,
+                                        vx: s.vx * 0.5 + (Math.random() - 0.5) * 12,
+                                        vy: s.vy * 0.5 + (Math.random() - 0.5) * 12,
+                                        life: 30 + Math.random() * 30,
+                                        color: s.engineColor || '#ff8800',
+                                        size: 2 + Math.random() * 4
+                                    });
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (hit || b.life <= 0) {
+                    this.bgBullets.splice(i, 1);
+                }
+            }
+        }
+
+        // Update Background Particles
+        if (this.bgParticles && this.bgParticles.length > 0) {
+            for (let i = this.bgParticles.length - 1; i >= 0; i--) {
+                const p = this.bgParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) {
+                    this.bgParticles.splice(i, 1);
+                }
+            }
         }
 
         // Update shooting/moving stars positions
@@ -12796,6 +13205,11 @@ class InterstellarEngine {
 
         ctx.fillStyle = this.config.bgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // SYNTWHAVE GRID BACKGROUND
+        if (this.activeStyles.has('cyber') && this.cyberGrid) {
+            this.drawCyberGrid(ctx, canvas, time);
+        }
 
         // Static Background Stars (Screen Space)
         if (this.config.showBackground) {
@@ -13257,7 +13671,7 @@ class InterstellarEngine {
 
         // --- MOVED: Cyber Matrix Rain (Screen Space Overlay) ---
         // Rendered HERE to ensure it overlays all 3D elements and backgrounds
-        if (this.activeStyles.has('cyber') && this.matrixStreams) {
+        if (this.activeStyles.has('matrix') && this.matrixStreams) {
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0); // Force screen space
 
@@ -13277,8 +13691,9 @@ class InterstellarEngine {
             const rainbowHueOffset = Date.now() * 0.1; // Animate rainbow hue
 
             this.matrixStreams.forEach((stream, streamIndex) => {
-                // Update with real-time speed multiplier
-                stream.y += stream.baseSpeed * speedMult;
+                // Update with real-time speed multiplier, bound to deltaTime for smooth movement independent of framerate drops
+                const dt = this.deltaTime || 16.66;
+                stream.y += stream.baseSpeed * speedMult * (dt / 16.66);
 
                 // Calculate visible length based on slider (independent of array size)
                 const visibleLength = Math.max(3, Math.floor(baseVisibleLength * lengthMult));
@@ -13291,10 +13706,13 @@ class InterstellarEngine {
                 ctx.font = `${stream.size}px monospace, 'Courier New', monospace`;
                 ctx.textBaseline = 'middle';
 
+                // Use Math.floor to eliminate sub-pixel fractional rendering jitter on 120Hz displays
+                const snappedY = Math.floor(stream.y);
+
                 // Only draw visible characters based on length multiplier
                 for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
                     const char = stream.chars[i];
-                    const charY = stream.y - (i * stream.size);
+                    const charY = snappedY - (i * stream.size);
                     if (charY < -stream.size * 2 || charY > canvas.height * 1.5) continue;
 
                     // Improved visibility: Fade out only near the end of the tail
@@ -17514,8 +17932,9 @@ class InterstellarEngine {
         const ctx = this.ctx;
         const w = this.canvas.width;
         const h = this.canvas.height;
-        const cx_offset = w / 2;
-        const cy_offset = h / 2;
+        // Include camera pan offsets for Map/Splash modes (camera is 0,0 in flight mode)
+        const cx_offset = w / 2 + this.camera.x;
+        const cy_offset = h / 2 + this.camera.y;
 
         // 1. Background Stars (from all active styles)
         if (this.backgroundStars && this.backgroundStars.length > 0) {
@@ -17523,7 +17942,7 @@ class InterstellarEngine {
             this.backgroundStars.forEach(s => {
                 const para = s.parallax || 0.1;
                 
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
+                const bgZoom = this.camera.zoom;
                 
                 // Using + this.camera.x to match other backgrounds
                 let sx = cx_offset + (s.x - this.playerShip.x * para) * bgZoom;
@@ -17559,7 +17978,7 @@ class InterstellarEngine {
 
                 const para = n.parallax || 0.2;
                 // Base background scaling (less aggressive than physical zoom)
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
+                const bgZoom = this.camera.zoom;
                 
                 let screenX = (n.x - this.playerShip.x * para) * bgZoom;
                 let screenY = (n.y - this.playerShip.y * para) * bgZoom;
@@ -17591,7 +18010,7 @@ class InterstellarEngine {
             this.shootingStars.forEach(s => {
                 const para = s.parallax || 0.5;
                 
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
+                const bgZoom = this.camera.zoom;
                 
                 const cx = cx_offset + (s.x - this.playerShip.x * para) * bgZoom;
                 const cy = cy_offset + (s.y - this.playerShip.y * para) * bgZoom;
@@ -17642,10 +18061,11 @@ class InterstellarEngine {
 
                 const para = s.parallax || 0.4;
                 
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
+                // Use 1:1 zoom for ships to make them feel part of the active layer
+                const shipZoom = this.camera.zoom;
                 
-                const cx = cx_offset + (s.x - this.playerShip.x * para) * bgZoom;
-                const cy = cy_offset + (s.y - this.playerShip.y * para) * bgZoom;
+                const cx = cx_offset + (s.x - this.playerShip.x * para) * shipZoom;
+                const cy = cy_offset + (s.y - this.playerShip.y * para) * shipZoom;
 
                 if (cx < -200 || cx > w + 200 || cy < -200 || cy > h + 200) return;
 
@@ -17658,12 +18078,12 @@ class InterstellarEngine {
                 }
 
                 if (s.rotationSpeed) s.rotation += s.rotationSpeed;
-
-                const size = s.size;
+                
+                // Add rotation to context so the ship draws facing its travel direction
+                ctx.rotate(s.rotation);
+                
                 const zoom = this.camera.zoom;
-                const angle = Math.atan2(s.vy, s.vx);
-
-
+                const size = s.size * shipZoom * 0.4; // Scaled 1:1 with zoom
                 const baseColor = s.hullColor || '#00f3ff';
                 const activeGlow = s.engineGlow || '#00f3ff';
                 const timeStr = performance.now();
@@ -17695,17 +18115,74 @@ class InterstellarEngine {
 
                 ctx.restore();
             });
+            ctx.globalAlpha = 1;
+        }
+
+        // 4. Background Bullets (Faction Battles)
+        if (this.bgBullets && this.bgBullets.length > 0) {
+            ctx.globalAlpha = 0.8;
+            this.bgBullets.forEach(b => {
+                const shipZoom = this.camera.zoom;
+                // Assume bullet uses parallax around 0.4 like the ships it targets
+                const cx = cx_offset + (b.x - this.playerShip.x * 0.4) * shipZoom;
+                const cy = cy_offset + (b.y - this.playerShip.y * 0.4) * shipZoom;
+
+                if (cx < -100 || cx > w + 100 || cy < -100 || cy > h + 100) return;
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(b.rotation);
+                
+                ctx.beginPath();
+                ctx.moveTo(-b.length/2, 0);
+                ctx.lineTo(b.length/2, 0);
+                ctx.strokeStyle = b.color;
+                ctx.lineWidth = b.width;
+                ctx.shadowColor = b.color;
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                
+                ctx.restore();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // 5. Background Particles (Explosions)
+        if (this.bgParticles && this.bgParticles.length > 0) {
+            const shipZoom = this.camera.zoom;
+            this.bgParticles.forEach(p => {
+                const cx = cx_offset + (p.x - this.playerShip.x * 0.4) * shipZoom;
+                const cy = cy_offset + (p.y - this.playerShip.y * 0.4) * shipZoom;
+
+                if (cx < -50 || cx > w + 50 || cy < -50 || cy > h + 50) return;
+
+                ctx.globalAlpha = Math.max(0, p.life / 60);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(cx, cy, p.size * shipZoom, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
         }
     }
-    drawMindwaveSun(ctx, color, radius, isBlackHole = false) {
-        ctx.save();
-        const scale = radius / 42;
+    getMindwaveSunCache(color, isBlackHole = false) {
+        this.sunCache = this.sunCache || {};
+        const cacheKey = color + (isBlackHole ? '_bh' : '');
+        if (this.sunCache[cacheKey]) return this.sunCache[cacheKey];
+        
+        const c = document.createElement('canvas');
+        const s = 150; // Cache size
+        c.width = s * 2;
+        c.height = s * 2;
+        const ctx = c.getContext('2d');
+        
+        ctx.translate(s, s);
+        const scale = s / 42;
         ctx.scale(scale, scale);
 
         ctx.globalCompositeOperation = 'lighter';
         ctx.shadowColor = color;
-        ctx.shadowBlur = isBlackHole ? 30 : 60; // Stronger Bloom
-
+        ctx.shadowBlur = isBlackHole ? 10 : 20; // Reduced to prevent white-box blowout
         ctx.fillStyle = color;
         
         for (let i = 0; i < 8; i++) {
@@ -17748,7 +18225,13 @@ class InterstellarEngine {
         ctx.arc(0, 0, 15, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.restore();
+        this.sunCache[cacheKey] = c;
+        return c;
+    }
+
+    drawMindwaveSun(ctx, color, radius, isBlackHole = false) {
+        const cachedSun = this.getMindwaveSunCache(color, isBlackHole);
+        ctx.drawImage(cachedSun, -radius, -radius, radius * 2, radius * 2);
     }
 
     drawDeepSpaceSpecific() {
@@ -17767,7 +18250,8 @@ class InterstellarEngine {
                 if (g.flownOut) return;
 
                 // Infinite wrapping so suns never run out
-                const wrapRadius = 60000;
+                const wrapRadius = Math.max(15000, 60000 / Math.max(1, Math.pow(zoom, 0.6)));
+                const para = (g.z || 0) * 0.0005; // Depth parallax
                 let dx = g.x - this.playerShip.x;
                 let dy = g.y - this.playerShip.y;
                 if (!this.bgWarpMode) { // Only wrap if not in warp mode, otherwise they snap back during warp
@@ -17777,14 +18261,12 @@ class InterstellarEngine {
                     while (dy < -wrapRadius) dy += wrapRadius * 2;
                 }
                 
-                const cx = this.playerShip.x + dx;
-                const cy = this.playerShip.y + dy;
-
-                // Simple culling
-                const distToCamX = cx - (-this.camera.x / zoom);
-                const distToCamY = cy - (-this.camera.y / zoom);
-                const buffer = Math.max(g.size * 5, 4000 / zoom);
-                if (Math.abs(distToCamX) > buffer || Math.abs(distToCamY) > buffer) return;
+                // Apply parallax displacement anchored to camera
+                const depthScale = 1 - para;
+                const cx = this.playerShip.x + dx * depthScale;
+                const cy = this.playerShip.y + dy * depthScale;
+                
+                const visualSize = g.size * depthScale;
 
                 ctx.save();
                 ctx.translate(cx, cy);
@@ -17798,20 +18280,20 @@ class InterstellarEngine {
 
                 if (g.useTribal) {
                     // Original Mindwave Starburst Sun
-                    this.drawMindwaveSun(ctx, g.color, g.size, false);
+                    this.drawMindwaveSun(ctx, g.color, visualSize, false);
                 } else {
                     // SVG Sun
                     if (this.svgSunImage && this.svgSunImage.complete && this.svgSunImage.naturalWidth !== 0) {
-                        ctx.drawImage(this.svgSunImage, -g.size, -g.size, g.size * 2, g.size * 2);
+                        ctx.drawImage(this.svgSunImage, -visualSize, -visualSize, visualSize * 2, visualSize * 2);
                     } else {
                         // Fallback gradient
-                        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+                        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, visualSize);
                         grad.addColorStop(0, '#ffffff');
                         grad.addColorStop(0.2, g.color);
                         grad.addColorStop(1, 'transparent');
                         ctx.fillStyle = grad;
                         ctx.beginPath();
-                        ctx.arc(0, 0, g.size, 0, Math.PI * 2);
+                        ctx.arc(0, 0, visualSize, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 }
@@ -17826,15 +18308,25 @@ class InterstellarEngine {
             this.blackHoles.forEach(bh => {
                 if (bh.flownOut) return;
 
-                const para = 0.0;
-                const cx = bh.x + this.playerShip.x * para;
-                const cy = bh.y + this.playerShip.y * para;
+                const para = (bh.z || 0) * 0.0005; // Depth parallax
+                let dx = bh.x - this.playerShip.x;
+                let dy = bh.y - this.playerShip.y;
+                
+                const wrapRadius = Math.max(10000, 40000 / Math.max(1, Math.pow(zoom, 0.6)));
+                if (!this.bgWarpMode) {
+                    while (dx > wrapRadius) dx -= wrapRadius * 2;
+                    while (dx < -wrapRadius) dx += wrapRadius * 2;
+                    while (dy > wrapRadius) dy -= wrapRadius * 2;
+                    while (dy < -wrapRadius) dy += wrapRadius * 2;
+                }
+                const depthScale = 1 - para;
+                const cx = this.playerShip.x + dx * depthScale;
+                const cy = this.playerShip.y + dy * depthScale;
 
                 const screenX = w/2 + this.camera.x + cx * zoom;
                 const screenY = h/2 + this.camera.y + cy * zoom;
-                const screenRadius = bh.size * zoom;
-                const buffer = Math.max(screenRadius * 5, 4000);
-                if (screenX < -buffer || screenX > w + buffer || screenY < -buffer || screenY > h + buffer) return;
+
+                const visualSize = bh.size * depthScale;
 
                 ctx.save();
                 
@@ -17843,7 +18335,7 @@ class InterstellarEngine {
                 ctx.translate(screenX, screenY);
                 
                 const oldSize = bh.size;
-                bh.size *= zoom;
+                bh.size = visualSize * zoom;
 
                 if (this.warpDisengaging && bh.warpScale !== undefined) {
                     ctx.scale(bh.warpScale, bh.warpScale);
@@ -17877,20 +18369,35 @@ class InterstellarEngine {
             this.planets.forEach(p => {
                 if (p.flownOut) return;
 
-                // Planets are interactive so they must NOT have parallax
-                const cx = p.x;
-                const cy = p.y;
+                // Apply depth-based parallax to planets for visual 3D layering
+                const wrapRadius = Math.max(15000, 60000 / Math.max(1, Math.pow(zoom, 0.6)));
+                const para = (p.z || 0) * 0.0005;
+                const depthScale = 1 - para;
+                let dx = p.x - this.playerShip.x;
+                let dy = p.y - this.playerShip.y;
+                if (!this.bgWarpMode) { // Only wrap if not in warp mode
+                    while (dx > wrapRadius) dx -= wrapRadius * 2;
+                    while (dx < -wrapRadius) dx += wrapRadius * 2;
+                    while (dy > wrapRadius) dy -= wrapRadius * 2;
+                    while (dy < -wrapRadius) dy += wrapRadius * 2;
+                }
+                const cx = this.playerShip.x + dx * depthScale;
+                const cy = this.playerShip.y + dy * depthScale;
+                const visualRadius = p.radius * depthScale;
+                const screenRadius = visualRadius * zoom;
                 
-                const screenRadius = p.radius * zoom;
                 // Simple culling using world coords
-                const distToCamX = cx - (-this.camera.x / zoom);
-                const distToCamY = cy - (-this.camera.y / zoom);
-                // Buffer accounts for rings which can be up to 3x radius
-                const buffer = Math.max(p.radius * 4, 4000 / zoom);
+                const distToCamX = cx - (-this.camera.x);
+                const distToCamY = cy - (-this.camera.y);
+                // Buffer accounts for rings which can be up to 3.5x radius
+                const buffer = Math.max(visualRadius * 6, 6000 / zoom);
                 if (Math.abs(distToCamX) > buffer || Math.abs(distToCamY) > buffer) return;
 
                 ctx.save();
                 ctx.translate(cx, cy);
+
+                // Apply visual scale
+                ctx.scale(depthScale, depthScale);
 
                 if (this.warpDisengaging && p.warpScale !== undefined) {
                     ctx.scale(p.warpScale, p.warpScale);
@@ -18010,7 +18517,7 @@ class InterstellarEngine {
             const ringR = p.ringInnerRadius + (p.ringOuterRadius - p.ringInnerRadius) * (i / 5 + 0.1);
             const ringThickness = (p.ringOuterRadius - p.ringInnerRadius) * 0.12;
 
-            ctx.strokeStyle = p.ringColor;
+            ctx.strokeStyle = p.ringColors ? p.ringColors[i % p.ringColors.length] : (p.ringColor || '#ffffff');
             ctx.lineWidth = ringThickness;
 
             ctx.beginPath();
@@ -18226,10 +18733,11 @@ class InterstellarEngine {
             this.settings = JSON.parse(localStorage.getItem('gameSettings')) || {
                 particles: true,
                 background: true,
-                haptics: true
+                haptics: true,
+                bgBattles: true
             };
         } catch(e) {
-            this.settings = { particles: true, background: true, haptics: true };
+            this.settings = { particles: true, background: true, haptics: true, bgBattles: true };
         }
         
         // Sync UI
@@ -18239,17 +18747,21 @@ class InterstellarEngine {
         if (bCheck) bCheck.checked = this.settings.background;
         const hCheck = document.getElementById('settingHaptics');
         if (hCheck) hCheck.checked = this.settings.haptics;
+        const bgBCheck = document.getElementById('settingBgBattles');
+        if (bgBCheck) bgBCheck.checked = this.settings.bgBattles;
     }
 
     updateSettings() {
         const pCheck = document.getElementById('settingParticles');
         const bCheck = document.getElementById('settingBackground');
         const hCheck = document.getElementById('settingHaptics');
+        const bgBCheck = document.getElementById('settingBgBattles');
         
         this.settings = {
             particles: pCheck ? pCheck.checked : true,
             background: bCheck ? bCheck.checked : true,
-            haptics: hCheck ? hCheck.checked : true
+            haptics: hCheck ? hCheck.checked : true,
+            bgBattles: bgBCheck ? bgBCheck.checked : true
         };
         
         localStorage.setItem('gameSettings', JSON.stringify(this.settings));
