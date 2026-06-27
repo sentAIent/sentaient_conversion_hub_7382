@@ -156,6 +156,7 @@ static CYMATIC_PATTERNS = [
         this.mandalaGroup = new THREE.Group();
         this.cymaticsGroup = new THREE.Group();
         this.snowflakeGroup = new THREE.Group();
+        this.tsunamiGroup = new THREE.Group();
         this._snowData = null; // {positions, phases, speeds, drifts, rotations}
 
         try {
@@ -169,7 +170,7 @@ static CYMATIC_PATTERNS = [
                 this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup, 
                 this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup, this.oceanGroup,
                 this.wavesGroup, this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
-                this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup
+                this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup, this.tsunamiGroup
             ];
             groups.forEach(g => this.scene.add(g));
 
@@ -1161,7 +1162,7 @@ static CYMATIC_PATTERNS = [
                   p1 *= norm.y;
                   p2 *= norm.z;
                   p3 *= norm.w;
-                  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), vec4(0.0));
                   m = m * m;
                   return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
                 }
@@ -1449,6 +1450,356 @@ static CYMATIC_PATTERNS = [
         this.textures.snowflake = new THREE.CanvasTexture(canvas);
         return this.textures.snowflake;
     }
+
+    
+        
+    // --- Tsunami Controls ---
+    setTsunamiAmplitude(val) {
+        if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
+            this.tsunamiMaterial.uniforms.uAmplitude.value = parseFloat(val);
+        }
+    }
+    setTsunamiCurl(val) {
+        if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
+            this.tsunamiMaterial.uniforms.uCurl.value = parseFloat(val);
+        }
+    }
+    setTsunamiMist(val) {
+        if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
+            this.tsunamiMaterial.uniforms.uMist.value = parseFloat(val);
+        }
+    }
+    setTsunamiStyle(val) {
+        if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
+            this.tsunamiMaterial.uniforms.uStyle.value = parseFloat(val);
+        }
+    }
+    setTsunamiReactivity(val) {
+        if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
+            this.tsunamiMaterial.uniforms.uReactivity.value = parseFloat(val);
+        }
+    }
+    setTsunamiLoop(isLooping) {
+        if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
+            this.tsunamiMaterial.uniforms.uLoopActive.value = isLooping ? 1.0 : 0.0;
+        }
+    }
+    initTsunami() {
+        if (!this.tsunamiGroup) return;
+        this.tsunamiGroup.clear();
+
+        const geometry = new THREE.PlaneGeometry(300, 200, 600, 400);
+        
+        const uniforms = {
+            uTime: { value: 0 },
+            uNormBass: { value: 0 },
+            uColor: { value: new THREE.Color(0x0bd3d3) },
+            uSecondaryColor: { value: new THREE.Color(0x006994) },
+            uDeepColor: { value: new THREE.Color(0x00132b) },
+            uFoamColor: { value: new THREE.Color(0xffffff) },
+            uAmplitude: { value: 1.0 },
+            uCurl: { value: 1.0 },
+            uMist: { value: 1.0 },
+            uStyle: { value: 1.0 },
+            uReactivity: { value: 1.0 },
+            uLoopActive: { value: 0.0 }
+        };
+        
+        const vertexShader = `
+            varying vec2 vUv;
+            varying float vElevation;
+            varying vec3 vViewPosition;
+            varying vec3 vWorldPosition;
+            varying float vFoamFactor;
+            varying float vStyle;
+            varying float vPhaseWashout;
+            
+            uniform float uTime;
+            uniform float uNormBass;
+            uniform float uAmplitude;
+            uniform float uCurl;
+            uniform float uReactivity;
+            uniform float uLoopActive;
+            uniform float uStyle;
+            
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+            float snoise(vec2 v) {
+                const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1;
+                i = mod289(i);
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m ; m = m*m ;
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
+
+            void main() {
+                vUv = uv;
+                vStyle = uStyle;
+                vec3 pos = position;
+                float time = uTime * 1.5;
+                vPhaseWashout = 0.0;
+                
+                float react = max(uNormBass * 10.0 * uReactivity, snoise(vec2(time * 0.5)) * uReactivity * 0.2); 
+                
+                // --- LIFECYCLE LOGIC ---
+                float activeAmp = uAmplitude;
+                // Target Curl uses a power curve so the barrel only completes near the end of the slider
+                float targetCurl = pow(uCurl / 4.0, 4.0) * 4.0; 
+                float activeCurl = targetCurl;
+                
+                float phase = 0.0;
+                float waveX = pos.x; 
+                
+                if (uLoopActive > 0.5) {
+                    float loopLen = 10.0; 
+                    phase = fract(time / loopLen); 
+                    
+                    // Forming
+                    float formProgress = smoothstep(0.0, 0.3, phase);
+                    activeAmp = mix(0.1, uAmplitude, formProgress);
+                    
+                    // Pitching
+                    float pitchProgress = smoothstep(0.3, 0.6, phase);
+                    activeCurl = mix(0.0, targetCurl, pitchProgress);
+                    
+                    // Crashing
+                    float crashProgress = smoothstep(0.85, 0.95, phase);
+                    activeAmp = mix(activeAmp, 0.1, crashProgress);
+                    activeCurl = mix(activeCurl, 0.0, crashProgress);
+                    
+                    // Washout
+                    vPhaseWashout = smoothstep(0.9, 1.0, phase);
+                    
+                    waveX = pos.x - 100.0 + (phase * 150.0);
+                }
+                
+                // Massive base height. Uncut by any cylinder radius!
+                float baseHeight = 60.0 * activeAmp * (1.0 + react * 0.3);
+                
+                // Asymmetric bell curve
+                float envelope = 0.0;
+                if (waveX < 0.0) {
+                    envelope = exp(-pow(waveX * 0.012, 2.0)); // Back of wave slope
+                } else {
+                    envelope = exp(-pow(waveX * 0.04, 2.0)); // Front cliff
+                }
+                
+                // Apply base height
+                pos.z += (baseHeight * envelope);
+                
+                // Chaotic violent spikes on bass
+                if (uReactivity > 0.1) {
+                    float chaos = snoise(vec2(pos.x * 0.2, pos.y * 0.2 + time));
+                    pos.z += (chaos * 20.0 * react * envelope); 
+                }
+                
+                // --- RESTORED CLASSIC CURL PHYSICS ---
+                // No more bizarre trigonometry. We push X drastically to create the massive overhang.
+                // We also slightly dip Z based on the curl to simulate the lip falling.
+                float curlAmount = pow(envelope, 3.0) * activeCurl * 45.0 * (1.0 + react * 0.5);
+                pos.x += curlAmount;
+                
+                // Parabolic dip to make the overhang actually fall downward like a barrel
+                if (activeCurl > 0.1) {
+                    // The more it pushes forward (X), the more it dips down (Z)
+                    float dip = pow(activeCurl / 4.0, 2.0) * 35.0 * pow(envelope, 3.0);
+                    pos.z -= dip;
+                }
+
+                vElevation = pos.z;
+                
+                float foamNoise = snoise(pos.xy * 0.2 - vec2(time));
+                vFoamFactor = smoothstep(baseHeight * 0.5, baseHeight, pos.z) + foamNoise * 0.3;
+                
+                vec4 worldPos = modelMatrix * vec4(pos, 1.0);
+                vWorldPosition = worldPos.xyz;
+                
+                vec4 mvPosition = viewMatrix * worldPos;
+                vViewPosition = -mvPosition.xyz;
+                
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+        
+        const fragmentShader = `
+            varying vec2 vUv;
+            varying float vElevation;
+            varying vec3 vViewPosition;
+            varying vec3 vWorldPosition;
+            varying float vFoamFactor;
+            varying float vStyle;
+            varying float vPhaseWashout;
+            
+            uniform vec3 uColor;
+            uniform vec3 uSecondaryColor;
+            uniform vec3 uDeepColor;
+            uniform vec3 uFoamColor;
+            uniform float uNormBass;
+            uniform float uTime;
+            uniform float uMist;
+            uniform float uReactivity;
+
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+            float snoise(vec2 v) {
+                const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1;
+                i = mod289(i);
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m; m = m*m;
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
+
+            void main() {
+                // Color Mapping - PERMANENT Buttery Smooth Gradients
+                float midWeight = smoothstep(2.0, 15.0, vElevation);
+                float highWeight = smoothstep(12.0, 35.0, vElevation);
+                
+                vec3 waterColor = mix(uDeepColor, uSecondaryColor, midWeight);
+                waterColor = mix(waterColor, uColor, highWeight);
+                
+                // Graphic Foam Claws - isolated strictly to elevation > 10.0
+                float foamThr = 0.5 - (max(uNormBass, 0.05) * uReactivity * 0.5);
+                float isFoam = step(foamThr, vFoamFactor);
+                
+                float floorMask = smoothstep(10.0, 15.0, vElevation);
+                isFoam *= floorMask;
+                
+                vec3 finalColor = mix(waterColor, uFoamColor, isFoam);
+                
+                // STYLIZATION: Great Wave Cartoon Tendrils
+                if (vStyle > 0.1 && floorMask > 0.5) {
+                    float foamEdge = smoothstep(foamThr - 0.1, foamThr, vFoamFactor) - smoothstep(foamThr, foamThr + 0.05, vFoamFactor);
+                    if (foamEdge > 0.5) {
+                        finalColor = mix(finalColor, uDeepColor, vStyle * 0.8);
+                    }
+                    
+                    if (isFoam > 0.5) {
+                        float woodblockLines = snoise(vWorldPosition.xy * 0.8);
+                        float lineThr = 0.6 - (vStyle * 0.2);
+                        if (woodblockLines > lineThr) {
+                            finalColor = mix(finalColor, uSecondaryColor, vStyle * 0.6);
+                        }
+                    }
+                }
+                
+                // Loop Washout
+                if (vPhaseWashout > 0.01) {
+                    finalColor = mix(finalColor, uFoamColor, vPhaseWashout * 0.8);
+                }
+                
+                // Sun & Glare (uMist slider repurposed as Sun Reflection)
+                float alpha = 1.0;
+                
+                if (uMist > 0.05) {
+                    // Position of the sun in world space (far away on the horizon)
+                    vec3 sunPos = vec3(-50.0, 200.0, 40.0);
+                    float sunDist = length(vWorldPosition - sunPos);
+                    
+                    // Sun Disc
+                    float sunRadius = 40.0;
+                    float sunCore = 1.0 - smoothstep(sunRadius * 0.8, sunRadius, sunDist);
+                    float sunGlow = 1.0 - smoothstep(sunRadius, sunRadius * 4.0, sunDist);
+                    
+                    vec3 sunColor = vec3(1.0, 0.9, 0.6); // Warm golden sun
+                    
+                    // Add the physical sun to the sky (only where elevation is high/sky area, 
+                    // but we can cheat by just drawing it behind the wave. Since we are on a plane,
+                    // we can draw the sun where the plane extends back on the Y axis).
+                    if (vWorldPosition.y > 50.0) {
+                        float sunMix = max(sunCore, sunGlow * 0.5) * (uMist / 3.0);
+                        finalColor = mix(finalColor, sunColor, sunMix);
+                    }
+                    
+                    // Ocean Glare / Specular Reflection
+                    // Vector from pixel to sun
+                    vec3 lightDir = normalize(sunPos - vWorldPosition);
+                    // View vector (roughly down the Y axis for painting perspective)
+                    vec3 viewDir = normalize(vViewPosition);
+                    
+                    // Fake a normal based on the noise/elevation
+                    // For a flat ocean, normal is (0,0,1)
+                    vec3 normal = vec3(0.0, 0.0, 1.0);
+                    // Add some noise to the normal to simulate rippling water for the glare
+                    float ripple = snoise(vWorldPosition.xy * 0.1 - vec2(0.0, uTime * 2.0));
+                    normal.x += ripple * 0.2;
+                    normal.y += ripple * 0.2;
+                    normal = normalize(normal);
+                    
+                    // Blinn-Phong specular
+                    vec3 halfVector = normalize(lightDir + viewDir);
+                    float spec = pow(max(dot(normal, halfVector), 0.0), 64.0); // Shininess
+                    
+                    // Add a broad specular highlight on the water
+                    float glareMix = spec * (uMist / 1.5) * smoothstep(-20.0, 10.0, vElevation);
+                    
+                    // Don't add glare on the foam
+                    glareMix *= (1.0 - isFoam);
+                    
+                    finalColor += sunColor * glareMix;
+                }
+
+                gl_FragColor = vec4(finalColor, alpha);
+            }
+        `;
+        
+        const material = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms,
+            transparent: true,
+            side: THREE.DoubleSide,
+            wireframe: false
+        });
+        
+        this.tsunamiMaterial = material;
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = -Math.PI / 2;
+        
+        // RESTORE THE CLASSIC "PAINTING" FRAMING. Z=-30 was a disaster.
+        mesh.position.y = -50; 
+        mesh.position.z = -120; 
+        mesh.position.x = -70; 
+        
+        this.tsunamiGroup.add(mesh);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     initSnowflake() {
         // Clear group
@@ -2421,6 +2772,7 @@ static CYMATIC_PATTERNS = [
         if (mode === 'rainforest' && (!this.rainforestGroup || this.rainforestGroup.children.length === 0)) this.initRainforest();
         if (mode === 'zengarden' && (!this.zenGardenGroup || this.zenGardenGroup.children.length === 0)) this.initZenGarden();
         if (mode === 'ocean' && (!this.oceanGroup || this.oceanGroup.children.length === 0)) this.initOcean();
+        if (mode === 'tsunami' && (!this.tsunamiGroup || this.tsunamiGroup.children.length === 0)) this.initTsunami();
         if ((mode === 'cyber' || mode === 'matrix') && (!this.cyberGroup || this.cyberGroup.children.length === 0)) this.initCyber();
         if (mode === 'box' && (!this.boxGroup || this.boxGroup.children.length === 0)) this.initBox();
         if (mode === 'dragon' && (!this.dragonGroup || this.dragonGroup.children.length === 0)) this.initDragon();
@@ -2668,6 +3020,7 @@ static CYMATIC_PATTERNS = [
         if (this.galaxyGroup) this.galaxyGroup.visible = this.activeModes.has('galaxy');
         if (this.mandalaGroup) this.mandalaGroup.visible = this.activeModes.has('mandala');
         if (this.cymaticsGroup) this.cymaticsGroup.visible = this.activeModes.has('cymatics');
+        if (this.tsunamiGroup) this.tsunamiGroup.visible = this.activeModes.has('tsunami');
         
         // Snowflake Layering Logic: Show snow particles explicitly or when layered with ICE medium
         if (this.snowflakeGroup) {
@@ -3018,6 +3371,7 @@ static CYMATIC_PATTERNS = [
                     this._freqDataArray = new Uint8Array(binCount);
                 }
                 analyserL.getByteFrequencyData(this._freqDataArray);
+                
                 const sens = typeof this.audioSensitivity === 'number' ? this.audioSensitivity : 1.0;
                 let bass = 0; for (let i = 0; i < 15; i++) bass += this._freqDataArray[i];
                 normBass = Math.pow((bass / 15) / 255, 0.8) * sens; // Apply power curve for better sensitivity
@@ -3069,7 +3423,7 @@ static CYMATIC_PATTERNS = [
                 this.sphereGroup, this.particleGroup, this.lightspeedGroup, this.lavaGroup,
                 this.fireplaceGroup, this.rainforestGroup, this.zenGardenGroup, this.oceanGroup,
                 this.wavesGroup, this.cyberGroup, this.boxGroup, this.dragonGroup, this.galaxyGroup, 
-                this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup
+                this.mandalaGroup, this.cymaticsGroup, this.snowflakeGroup, this.tsunamiGroup
             ];
             for (const target of shakeTargets) {
                 if (target) target.position.set(shakeX, shakeY, shakeZ);
@@ -3208,6 +3562,17 @@ static CYMATIC_PATTERNS = [
                 if (this.mandalaCenter) {
                     this.mandalaCenter.rotation.z -= 0.01 * multiplier;
                     this.mandalaCenter.scale.setScalar(1.0 + vNormBass * 0.3);
+                }
+            }
+
+            if (this.activeModes.has('tsunami') && this.tsunamiMaterial) {
+                const spd = multiplier * 0.5 * (1.0 + vBeatPulse * 0.2);
+                this.tsunamiMaterial.uniforms.uTime.value += dt * spd;
+                this.tsunamiMaterial.uniforms.uNormBass.value = vNormBass;
+                if (this.customColor) {
+                    this.tsunamiMaterial.uniforms.uColor.value.copy(this.customColor);
+                } else if (this.rainbowMode && this.currentColorHsl) {
+                    this.tsunamiMaterial.uniforms.uColor.value.setHSL(this.currentColorHsl.h, this.currentColorHsl.s, this.currentColorHsl.l);
                 }
             }
 

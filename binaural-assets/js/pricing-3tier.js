@@ -20,12 +20,22 @@ const PRICING_CONFIG = {
         period: "/forever",
         active: true
     },
+    meditation: {
+        name: "Meditation",
+        price: "$10.00",
+        period: "/month",
+        productId: "meditation",
+        description: "Perfect for daily wellness",
+        limitText: "1 Hour / Day",
+        active: true,
+        warning: ""
+    },
     zen: {
         name: "Zen",
         price: "$19.99",
         period: "/month",
         productId: "zen",
-        description: "Everything unlocked. Forever.",
+        description: "Deep, extended practice",
         warning: "🔥 40% off for the first 500",
         limitText: "2 Hours / Day",
         active: true,
@@ -143,8 +153,9 @@ function createPricingModal(currentTier, dynamicPricing = null) {
     const spots = dynamicPricing ? dynamicPricing.spotsLeft : 432;
     const isFull = dynamicPricing ? dynamicPricing.isFull : false;
 
-    const currentZenPrice = dynamicPricing ? dynamicPricing.zen.monthlyPrice : PRICING_CONFIG.zen.price;
-    const currentNirvanaPrice = dynamicPricing ? dynamicPricing.nirvana.monthlyPrice : PRICING_CONFIG.nirvana.price;
+    const currentMedPrice = dynamicPricing && dynamicPricing.meditation ? dynamicPricing.meditation.monthlyPrice : PRICING_CONFIG.meditation.price;
+    const currentZenPrice = dynamicPricing && dynamicPricing.zen ? dynamicPricing.zen.monthlyPrice : PRICING_CONFIG.zen.price;
+    const currentNirvanaPrice = dynamicPricing && dynamicPricing.nirvana ? dynamicPricing.nirvana.monthlyPrice : PRICING_CONFIG.nirvana.price;
 
     trackGlobalEvent('viewed_pricing_modal', {
         currentTier,
@@ -195,14 +206,16 @@ function createPricingModal(currentTier, dynamicPricing = null) {
                             <span style="font-size: 32px; font-weight: 700; color: white;">${PRICING_CONFIG.free.price}</span>
                             <span style="color: var(--text-muted);">${PRICING_CONFIG.free.period}</span>
                         </div>
-                        <div style="margin-top: 8px; font-size: 13px; color: #ef4444; font-weight: 600;">⚠️ ${PRICING_CONFIG.free.limitText}</div>
                     </div>
                     <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: var(--text-muted);">✓</span> Delta Waves Only
+                        <li style="padding: 8px 0; color: white; display: flex; gap: 12px; font-weight: 500;">
+                            <span style="color: #ef4444;">⚠️</span> <strong>${PRICING_CONFIG.free.limitText}</strong>
                         </li>
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: var(--text-muted);">✓</span> 15 Minutes / Day
+                            <span style="color: var(--text-muted);">✓</span> Basic Brainwaves (Delta & Beta)
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: var(--text-muted);">✓</span> Standard Visuals
                         </li>
                     </ul>
                     <button disabled style="width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: rgba(255, 255, 255, 0.4); font-weight: 600; margin-bottom: 12px;">Currently Active</button>
@@ -211,7 +224,33 @@ function createPricingModal(currentTier, dynamicPricing = null) {
                     </button>
                 </div>
 
-                <!-- Zen Tier (Yogi) -->
+                <!-- Meditation Tier -->
+                <div class="pricing-tier" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 20px; padding: 32px; display: flex; flex-direction: column;">
+                    <div style="padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(56, 189, 248, 0.3);">
+                        <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.meditation.name}</h3>
+                        <p style="font-size: 14px; color: #7dd3fc;">${PRICING_CONFIG.meditation.description}</p>
+                        <div style="margin-top: 16px;">
+                            <span style="font-size: 32px; font-weight: 700; color: white;">${currentMedPrice}</span>
+                            <span style="color: var(--text-muted);">${PRICING_CONFIG.meditation.period}</span>
+                        </div>
+                    </div>
+                    <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
+                        <li style="padding: 8px 0; color: white; display: flex; gap: 12px; font-weight: 500;">
+                            <span style="color: #38bdf8;">✓</span> <strong>${PRICING_CONFIG.meditation.limitText}</strong>
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #38bdf8;">✓</span> All Brainwaves Unlocked
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #38bdf8;">✓</span> Save Custom Mixes
+                        </li>
+                    </ul>
+                    <button id="upgradeBtnMeditation" style="width: 100%; padding: 16px; background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                        Start Meditation
+                    </button>
+                </div>
+
+                <!-- Zen Tier (Most Popular) -->
                 <div class="pricing-tier" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.2)); border: 2px solid #10b981; border-radius: 20px; padding: 32px; position: relative; display: flex; flex-direction: column; transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 0.15); z-index: 10;">
                     <div style="position: absolute; top: -12px; right: 24px; background: #10b981; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; color: white; text-transform: uppercase;">Most Popular</div>
                     
@@ -230,10 +269,13 @@ function createPricingModal(currentTier, dynamicPricing = null) {
                             <span style="color: #10b981;">✓</span> <strong>${PRICING_CONFIG.zen.limitText}</strong>
                         </li>
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #10b981;">✓</span> All Brainwaves Unlocked
+                            <span style="color: #10b981;">✓</span> Full 30-Day Guided Journey
                         </li>
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #10b981;">✓</span> Full 30-Day Journey
+                            <span style="color: #10b981;">✓</span> Advanced Soundscapes
+                        </li>
+                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
+                            <span style="color: #10b981;">✓</span> High-Fidelity Audio
                         </li>
                     </ul>
 
@@ -242,7 +284,7 @@ function createPricingModal(currentTier, dynamicPricing = null) {
                     </button>
                 </div>
 
-                <!-- Nirvana Tier (Buddha) -->
+                <!-- Nirvana Tier -->
                 <div class="pricing-tier" style="background: rgba(124, 58, 237, 0.05); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 20px; padding: 32px; display: flex; flex-direction: column;">
                     <div style="padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid rgba(124, 58, 237, 0.3);">
                         <h3 style="font-size: 24px; font-weight: 600; color: white; margin-bottom: 8px;">${PRICING_CONFIG.nirvana.name}</h3>
@@ -255,9 +297,6 @@ function createPricingModal(currentTier, dynamicPricing = null) {
                     </div>
                     <ul style="list-style: none; padding: 0; margin-bottom: 32px; flex-grow: 1;">
                         <li style="padding: 8px 0; color: white; display: flex; gap: 12px; font-weight: 500;">
-                            <span style="color: #a78bfa;">✓</span> Everything in Zen
-                        </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
                             <span style="color: #a78bfa;">✓</span> <strong>${PRICING_CONFIG.nirvana.limitText}</strong>
                         </li>
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
@@ -268,9 +307,6 @@ function createPricingModal(currentTier, dynamicPricing = null) {
                         </li>
                         <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
                             <span style="color: #a78bfa;">✓</span> Offline MP3 Export
-                        </li>
-                        <li style="padding: 8px 0; color: rgba(255, 255, 255, 0.8); display: flex; gap: 12px;">
-                            <span style="color: #a78bfa;">✓</span> AI Custom Frequencies (Beta)
                         </li>
                     </ul>
                     <button id="upgradeBtnPro" style="width: 100%; padding: 16px; background: rgba(124, 58, 237, 0.2); border: 1px solid #7c3aed; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">
@@ -370,6 +406,7 @@ function createPricingModal(currentTier, dynamicPricing = null) {
 
     // Handle Zen Upgrade Click
     const upgradeBtnFounders = modal.querySelector('#upgradeBtnFounders');
+    const upgradeBtnMeditation = modal.querySelector('#upgradeBtnMeditation');
 
     // Handle Nirvana Upgrade Click
     const upgradeBtnPro = modal.querySelector('#upgradeBtnPro');
@@ -384,6 +421,13 @@ function createPricingModal(currentTier, dynamicPricing = null) {
     }
 
     // Handle Subscription Upgrade Clicks (passing coupon)
+    if (upgradeBtnMeditation) {
+        upgradeBtnMeditation.onclick = () => {
+            trackConversion('pricing_cta', 'upgrade_click', { tier: 'meditation' });
+            let coupon = modal.querySelector('#couponCodeInput')?.value.trim();
+            handleUpgrade(PRICING_CONFIG.meditation.productId, 'monthly', coupon);
+        };
+    }
     if (upgradeBtnFounders) {
         upgradeBtnFounders.onclick = () => {
             trackConversion('pricing_cta', 'upgrade_click', { tier: 'zen' });

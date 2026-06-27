@@ -90,6 +90,10 @@ window.controls = {
         const panel = document.getElementById('snowflakeSettingsPanel');
         if (panel) panel.classList.toggle('hidden');
     },
+    toggleTsunamiSettings: function(btn) {
+        const panel = document.getElementById('tsunamiSettingsPanel');
+        if (panel) panel.classList.toggle('hidden');
+    },
     toggleCymaticsSettings: function(btn) {
         this.switchRightTab('active');
     },
@@ -241,6 +245,7 @@ window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
 window.toggleGalaxySun = window.controls.toggleGalaxySun;
 window.resetGalaxySettings = window.controls.resetGalaxySettings;
 window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
+window.toggleTsunamiSettings = window.controls.toggleTsunamiSettings;
 window.toggleCymaticsSettings = window.controls.toggleCymaticsSettings;
 window.setMatrixMode = window.controls.setMatrixMode;
 
@@ -281,6 +286,7 @@ window.addEventListener('mindwave:visual-mode-sync', (e) => {
         { id: 'cyberBtn', mode: 'cyber' },
         { id: 'matrixBtn', mode: 'matrix' },
         { id: 'snowflakeBtn', mode: 'snowflake' },
+        { id: 'tsunamiBtn', mode: 'tsunami' },
         { id: 'cymaticsBtn', mode: 'cymatics' }
     ];
 
@@ -426,10 +432,38 @@ export function setupUI() {
     els.cyberBtn = document.getElementById('cyberBtn');
     els.matrixBtn = document.getElementById('matrixBtn');
     els.snowflakeBtn = document.getElementById('snowflakeBtn');
+    els.tsunamiBtn = document.getElementById('tsunamiBtn');
     els.oceanBtn = document.getElementById('oceanBtn'); // New ID for island/waves
     els.cymaticsBtn = document.getElementById('cymaticsBtn'); // Now Fractal Patterns
     
     els.cymaticsRainbowToggle = document.getElementById('cymaticsRainbowToggle');
+
+    const stopAllCymaticsBtn = document.getElementById('stopAllCymaticsBtn');
+    if (stopAllCymaticsBtn) {
+        stopAllCymaticsBtn.addEventListener('click', () => {
+            const viz = window.getVisualizer ? window.getVisualizer() : null;
+            if (viz) {
+                viz.activeModes.delete('cymatics');
+                if (viz.activeModes.size === 0) {
+                    // Fallback to particles so the screen doesn't just go black
+                    if (window.setVisualMode) window.setVisualMode('particles', null, true);
+                    else {
+                        viz.activeModes.add('particles');
+                        viz.updateVisibility();
+                    }
+                } else {
+                    viz.updateVisibility();
+                }
+                
+                // Deselect all active cymatics buttons in UI
+                document.querySelectorAll('.cymatic-btn').forEach(b => {
+                    b.classList.remove('border-cyan-400', 'shadow-[0_0_15px_rgba(34,211,238,0.4)]');
+                    b.classList.add('border-white/10');
+                });
+            }
+        });
+    }
+
 
     // Cymatics / Galaxy / Matrix Controls
     els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
@@ -1227,6 +1261,11 @@ export function setupUI() {
         els.snowflakeBtn.addEventListener('click', () => {
             setVisualMode('snowflake', null, true);
             if (window.setCymaticMedium) window.setCymaticMedium(3); // Auto-set to ICE medium
+        });
+    }
+    if (els.tsunamiBtn) {
+        els.tsunamiBtn.addEventListener('click', () => {
+            setVisualMode('tsunami', null, true);
         });
     }
     // Duplicate oceanBtn listener removed (was causing double-toggle ON→OFF)
@@ -3229,6 +3268,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             'cyber': 'matrixPanel',
             'matrix': 'matrixPanel',
             'snowflake': 'snowflakeSettingsPanel',
+            'tsunami': 'tsunamiSettingsPanel',
             'cymatics': 'cymaticsPanel',
             'particles': 'visualsPanel',
             'lava': 'visualsPanel',
@@ -3263,6 +3303,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             { el: els.cyberBtn, mode: 'cyber' },
             { el: els.matrixBtn, mode: 'matrix' },
             { el: els.snowflakeBtn, mode: 'snowflake' },
+            { el: els.tsunamiBtn, mode: 'tsunami' },
             { el: els.cymaticsBtn, mode: 'cymatics' }
         ];
 
@@ -3291,12 +3332,14 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     const cyberPanel = document.getElementById('cyberSettingsPanel');
     const galaxyPanel = document.getElementById('galaxySettingsPanel');
     const snowflakePanel = document.getElementById('snowflakeSettingsPanel');
+    const tsunamiPanel = document.getElementById('tsunamiSettingsPanel');
     const contextualWrapper = document.getElementById('contextualVisualSettings');
 
     const matrixActive = activeModes.has('matrix');
     const cyberActive = activeModes.has('cyber');
     const galaxyActive = activeModes.has('galaxy');
     const snowflakeActive = activeModes.has('snowflake');
+    const tsunamiActive = activeModes.has('tsunami');
 
     let anySubPanelVisible = false;
 
@@ -3344,6 +3387,16 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             anySubPanelVisible = true;
         } else {
             snowflakePanel.classList.add('hidden');
+        }
+    }
+    
+    // Tsunami Panel Toggle
+    if (tsunamiPanel) {
+        if (tsunamiActive) {
+            tsunamiPanel.classList.remove('hidden');
+            anySubPanelVisible = true;
+        } else {
+            tsunamiPanel.classList.add('hidden');
         }
     }
 

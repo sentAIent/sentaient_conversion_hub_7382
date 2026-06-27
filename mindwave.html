@@ -1318,6 +1318,16 @@ window.resetGalaxySettings = function() {
 <span class="text-2xl filter drop-shadow-lg">🏝️</span>
 <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Ocean</span>
 </button>
+<!-- TSUNAMI -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="tsunamiBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="tsunami" type="color" value="#003366"/>
+<span class="text-2xl filter drop-shadow-lg">🌊</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Tsunami</span>
+<!-- Toggle Icon -->
+<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="tsunamiSettingsToggle" onclick="event.stopPropagation(); toggleTsunamiSettings(this);" title="Settings">
+<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+</button>
 <!-- DRAGON -->
 <button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="dragonBtn">
 <input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="dragon" type="color" value="#60a9ff"/>
@@ -1604,6 +1614,55 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 </div>
+<!-- Tsunami Settings -->
+<div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="tsunamiSettingsPanel">
+<span class="text-[10px] font-bold text-sky-300 uppercase tracking-wider px-0.5">The Great Wave</span>
+<div class="space-y-3">
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">AMPLITUDE</label>
+<span class="premium-value" id="tsunamiAmplitudeVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiAmplitudeSlider" max="3.0" min="0.1" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiAmplitude){ window.getVisualizer().setTsunamiAmplitude(this.value); document.getElementById('tsunamiAmplitudeVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">BARREL WAVE</label>
+<span class="premium-value" id="tsunamiCurlVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiCurlSlider" max="4.0" min="0.1" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiCurl){ window.getVisualizer().setTsunamiCurl(this.value); document.getElementById('tsunamiCurlVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">SUN REFLECTION</label>
+<span class="premium-value" id="tsunamiMistVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiMistSlider" max="3.0" min="0.0" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiMist){ window.getVisualizer().setTsunamiMist(this.value); document.getElementById('tsunamiMistVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">STYLIZATION</label>
+<span class="premium-value" id="tsunamiStyleVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiStyleSlider" max="1.0" min="0.0" step="0.05" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiStyle){ window.getVisualizer().setTsunamiStyle(this.value); document.getElementById('tsunamiStyleVal').textContent = parseFloat(this.value).toFixed(2); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">REACTIVITY</label>
+<span class="premium-value" id="tsunamiReactivityVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiReactivitySlider" max="3.0" min="0.0" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiReactivity){ window.getVisualizer().setTsunamiReactivity(this.value); document.getElementById('tsunamiReactivityVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+        </div>
+        
+        <div class="control-group">
+            <label>Animate Break Loop</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="tsunamiLoopToggle" onchange="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiLoop){ window.getVisualizer().setTsunamiLoop(this.checked); }">
+                <span class="slider"></span>
+            </label>
+</div>
+</div>
+</div>
 <!-- Flow / Neural Particles Settings -->
 <div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="flowSettingsSidebar">
 <span class="text-[10px] font-bold text-sky-300 uppercase tracking-wider px-0.5">🌀 Neural Flow</span>
@@ -1681,6 +1740,12 @@ window.resetGalaxySettings = function() {
         <span class="toggle-slider"></span>
     </label>
 </div>
+
+<!-- Stop All Cymatics Button -->
+<button id="stopAllCymaticsBtn" class="w-full mb-4 bg-red-900/50 hover:bg-red-800/80 border border-red-500/50 text-red-200 text-[11px] font-bold uppercase tracking-widest py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+    <i class="fas fa-stop-circle mr-2"></i>Stop All Cymatics
+</button>
+
 <!-- THE ULTIMATE CYMATICS UI LIBRARY -->
 <div class="space-y-8 mt-4" id="cymatics-library">
 <h3 class="text-[14px] font-bold text-white uppercase tracking-widest mb-4 flex items-center gap-3">
