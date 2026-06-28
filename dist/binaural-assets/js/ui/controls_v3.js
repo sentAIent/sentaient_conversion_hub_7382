@@ -6308,17 +6308,6 @@ window.toggleAudioSync = function(isSync) {
     window.cymaticsAudioSync = isSync;
 }
 
-window.toggleMouseSync = function(isSync) {
-    console.log(`[Cymatics] Toggle Mouse Sync: ${isSync}`);
-    window.cymaticsMouseSync = isSync ? 1.0 : 0.0;
-    
-    // Dispatch event to inform CymaticsCore to update uniforms
-    window.dispatchEvent(new CustomEvent('cymaticsToggleMouseSync', {
-        detail: { sync: window.cymaticsMouseSync }
-    }));
-}
-
-
 
 // ── Cymatics Engine v4 Native Routing ─────────────────────────────────────────
 
@@ -6326,21 +6315,14 @@ window.setCymaticPattern = function(classId, variationId) {
     console.log(`[Cymatics] Set Pattern - Class: ${classId}, Variation: ${variationId}`);
     
     // UI Highlighting Sync
-    // UI Highlighting Sync
     const btns = document.querySelectorAll('.cymatics-pattern-btn');
-    btns.forEach(btn => {
-        btn.classList.remove('ring-2', 'ring-blue-400', 'ring-purple-400', 'ring-emerald-400', 'ring-fuchsia-400', 'ring-white', 'scale-95');
-    });
+    btns.forEach(btn => btn.classList.remove('ring-2', 'ring-blue-400', 'scale-95'));
     
+    // Find the correct button using classId and variationId
     const clickStr = `window.setCymaticPattern(${classId}, ${variationId})`;
     const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick') === clickStr);
     if (activeBtn) {
-        let ringColor = 'ring-white';
-        if (classId === 19) ringColor = 'ring-purple-400';
-        else if (classId === 22) ringColor = 'ring-emerald-400';
-        else if (classId === 21) ringColor = 'ring-fuchsia-400';
-        else if (classId === 20) ringColor = 'ring-blue-400';
-        activeBtn.classList.add('ring-2', ringColor, 'scale-95');
+        activeBtn.classList.add('ring-2', 'ring-blue-400', 'scale-95');
     }
 
     const viz = getVisualizer();
@@ -6352,22 +6334,8 @@ window.setCymaticPattern = function(classId, variationId) {
 window.setCymaticColor = function(classId, colorIndex, hex) {
     console.log(`[Cymatics] Set Color - Class: ${classId}, Index: ${colorIndex}, Hex: ${hex}`);
     const viz = getVisualizer();
-    if (viz) {
-        if (viz.cymaticsCore && viz.cymaticsCore.activeClassId !== classId) {
-            if (viz.applyCymaticClassAndVariation) {
-                viz.applyCymaticClassAndVariation(classId, 0);
-            }
-            const btns = document.querySelectorAll('.cymatics-pattern-btn');
-            btns.forEach(btn => btn.classList.remove('ring-2', 'ring-blue-400', 'ring-purple-400', 'ring-emerald-400', 'ring-fuchsia-400', 'ring-white', 'scale-95'));
-            const clickStr = `window.setCymaticPattern(${classId}, 0)`;
-            const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick') === clickStr);
-            if (activeBtn) {
-                activeBtn.classList.add('ring-2', 'ring-white', 'scale-95');
-            }
-        }
-        if (viz.setCymaticColor) {
-            viz.setCymaticColor(classId, colorIndex, hex);
-        }
+    if (viz && viz.setCymaticColor) {
+        viz.setCymaticColor(classId, colorIndex, hex);
     }
 };
 

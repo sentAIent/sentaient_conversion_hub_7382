@@ -102,7 +102,12 @@ export class AudioEngine {
         if (!this.ctx) this.init();
         if (this.ctx && this.ctx.state !== 'running') {
             try {
-                this.ctx.resume().catch(e => console.warn("[Audio] Resume blocked:", e));
+                this.ctx.resume().catch(e => {
+                    console.warn("[Audio] Resume blocked:", e);
+                    if (window.app && typeof window.app.showToast === 'function') {
+                        window.app.showToast("Click anywhere to enable audio", 4000);
+                    }
+                });
             } catch(e) {}
         }
     }
@@ -206,7 +211,21 @@ export class AudioEngine {
 
         this.currentStreamingAudio.addEventListener('play', () => {
             this.isStreamingPlaying = true;
-            if (window.app) window.app.showToast('Now Playing', 2000);
+            if (window.app) {
+                window.app.showToast('Now Playing', 2000);
+                window.app.updateMediaControlsUI(true);
+            }
+        });
+
+        this.currentStreamingAudio.addEventListener('pause', () => {
+            this.isStreamingPlaying = false;
+            if (window.app) window.app.updateMediaControlsUI(false);
+        });
+
+        this.currentStreamingAudio.addEventListener('timeupdate', () => {
+            if (window.app && this.currentStreamingAudio) {
+                window.app.updateScrubber(this.currentStreamingAudio.currentTime, this.currentStreamingAudio.duration);
+            }
         });
 
         this.currentStreamingAudio.addEventListener('ended', () => {
@@ -220,8 +239,12 @@ export class AudioEngine {
             if (window.app) window.app.showToast('Audio Stream Failed', 3000);
         });
 
-        this.streamingNode = this.ctx.createMediaElementSource(this.currentStreamingAudio);
-        this.streamingNode.connect(this.musicGain);
+        try {
+            this.streamingNode = this.ctx.createMediaElementSource(this.currentStreamingAudio);
+            this.streamingNode.connect(this.musicGain);
+        } catch (e) {
+            console.warn("MediaElementSource connection failed (already connected?):", e);
+        }
     }
 
     pauseStream() {

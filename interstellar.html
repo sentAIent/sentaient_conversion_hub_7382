@@ -12,6 +12,18 @@
 </head>
 
 <body>
+    <!-- === MAJESTIC SPLASH LOADER === -->
+    <div id="loadingScreen" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: opacity 1.5s; font-family: 'Orbitron', sans-serif;">
+        <div id="loadingContent" style="text-align:center;">
+            <div id="loadingTitle" style="color:#00f3ff; letter-spacing:15px; font-size:42px; font-weight:bold; margin-bottom:10px; text-shadow:0 0 30px rgba(0, 243, 255, 0.6);">INTERSTELLAR</div>
+            <div id="loadingStatus" style="font-size:12px; color:#5c7a8a; letter-spacing:6px; margin-bottom:50px; text-transform: uppercase;">INITIALIZING CORE SYSTEMS</div>
+            <div style="width:300px; height:2px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; margin: 0 auto;">
+                <div id="loadingProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #00f3ff, #00ffaa); box-shadow:0 0 20px #00f3ff; transition: width 0.4s;"></div>
+            </div>
+            <div id="loadingLog" style="margin-top:25px; font-size:10px; color:#444; font-family:monospace; height:20px; text-transform: uppercase; letter-spacing: 2px;"></div>
+        </div>
+        <div id="loadingPrompt" style="position:absolute; bottom:80px; color:#00ffaa; letter-spacing:8px; font-size:14px; cursor:pointer; opacity:0; font-weight: bold; animation: pulse 2s infinite;">[ PRESS TO FLY ]</div>
+    </div>
 
     <div id="toast" class="toast">Action Successful</div>
 
@@ -752,7 +764,7 @@
     </button>
 
     <!-- Style for Mobile Visibility & UI Polish -->
-    <script type="module" src="./script.js?v=nuclear_v11"></script>
+    <script type="module" src="./script.js?v=nuclear_v12"></script>
 </body>
 
 </html>

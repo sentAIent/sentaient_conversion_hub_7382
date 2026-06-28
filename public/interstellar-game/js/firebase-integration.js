@@ -2,8 +2,20 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/fireba
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, updatePassword, deleteUser } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-const firebaseConfig = JSON.parse(window.__firebase_config || '{}');
+const fallbackConfig = {
+    apiKey: "dummy-api-key",
+    authDomain: "dummy",
+    projectId: "dummy",
+    storageBucket: "dummy",
+    messagingSenderId: "0000",
+    appId: "1:0000:web:0000"
+};
 
+if (typeof window.__firebase_config === 'undefined') {
+    window.__firebase_config = JSON.stringify(fallbackConfig);
+}
+
+const firebaseConfig = JSON.parse(window.__firebase_config || '{}');
 let app = null, auth = null, db = null;
 if (Object.keys(firebaseConfig).length > 0) {
     try {
@@ -16,6 +28,14 @@ if (Object.keys(firebaseConfig).length > 0) {
 } else {
     console.warn("No Firebase configuration found. Firebase features will be disabled.");
 }
+
+const showMsg = (msg) => {
+    if (window.app && typeof window.app.showToast === 'function') {
+        window.app.showToast(msg, 4000);
+    } else {
+        alert(msg);
+    }
+};
 
 window.dbSync = {
     currentUser: null,
@@ -71,18 +91,18 @@ window.dbSync = {
     },
 
     login: async function(email, password) {
-        if (this.cloudSyncDisabled) return alert("Notice: Due to regional data regulations, cloud saving is disabled in your area. Please continue playing locally in your browser!");
+        if (this.cloudSyncDisabled) return showMsg("Notice: Due to regional data regulations, cloud saving is disabled in your area. Please continue playing locally in your browser!");
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            alert("Login successful!");
+            showMsg("Login successful!");
             document.getElementById('authModal').classList.add('hidden');
         } catch (e) {
-            alert("Login failed: " + e.message);
+            showMsg("Login failed: " + e.message);
         }
     },
 
     register: async function(email, password, username) {
-        if (this.cloudSyncDisabled) return alert("Notice: Due to regional data regulations, cloud saving is disabled in your area. Please continue playing locally in your browser!");
+        if (this.cloudSyncDisabled) return showMsg("Notice: Due to regional data regulations, cloud saving is disabled in your area. Please continue playing locally in your browser!");
         try {
             const cred = await createUserWithEmailAndPassword(auth, email, password);
             if (username) {
@@ -96,17 +116,17 @@ window.dbSync = {
                 highestScore: 0
             }, { merge: true });
 
-            alert("Registration successful!");
+            showMsg("Registration successful!");
             document.getElementById('authModal').classList.add('hidden');
         } catch (e) {
-            alert("Registration failed: " + e.message);
+            showMsg("Registration failed: " + e.message);
         }
     },
 
     logout: async function() {
         try {
             await signOut(auth);
-            alert("Logged out successfully");
+            showMsg("Logged out successfully");
             // Reset local game state if needed
         } catch (e) {
             console.error(e);
@@ -218,14 +238,14 @@ window.dbSync = {
         if (!this.currentUser) return;
         try {
             await updatePassword(this.currentUser, newPassword);
-            alert("Password updated successfully!");
+            showMsg("Password updated successfully!");
         } catch (e) {
-            alert("Error updating password: " + e.message + ". You may need to log out and log back in first.");
+            showMsg("Error updating password: " + e.message + ". You may need to log out and log back in first.");
         }
     },
 
     downloadUserData: async function() {
-        if (!this.currentUser) return alert("You must be logged in to download your data.");
+        if (!this.currentUser) return showMsg("You must be logged in to download your data.");
         try {
             const userRef = doc(db, "users", this.currentUser.uid);
             const docSnap = await getDoc(userRef);
@@ -242,11 +262,11 @@ window.dbSync = {
                 a.click();
                 URL.revokeObjectURL(url);
             } else {
-                alert("No cloud data found for your account.");
+                showMsg("No cloud data found for your account.");
             }
         } catch(e) {
             console.error("GDPR Download Error:", e);
-            alert("Failed to download data: " + e.message);
+            showMsg("Failed to download data: " + e.message);
         }
     },
 
@@ -268,9 +288,9 @@ window.dbSync = {
                     const wallet = document.getElementById('walletValue');
                     if (wallet) wallet.innerText = "$0";
                 }
-                alert("Game data deleted and reset to zero.");
+                showMsg("Game data deleted and reset to zero.");
             } catch (e) {
-                alert("Error deleting data: " + e.message);
+                showMsg("Error deleting data: " + e.message);
             }
         }
     },
@@ -284,9 +304,9 @@ window.dbSync = {
                 await deleteDoc(doc(db, "interstellar_users", this.currentUser.uid));
                 // Then delete the user from Auth
                 await deleteUser(this.currentUser);
-                alert("Account deleted successfully.");
+                showMsg("Account deleted successfully.");
             } catch (e) {
-                alert("Error deleting account: " + e.message + ". You may need to log out and log back in to verify your identity before deleting.");
+                showMsg("Error deleting account: " + e.message + ". You may need to log out and log back in to verify your identity before deleting.");
             }
         }
     }
@@ -297,7 +317,7 @@ window.acceptCompliance = function(isOver13) {
     if (!isOver13) {
         // Underage: Block cloud sync per COPPA/GDPR-K
         window.dbSync.cloudSyncDisabled = true;
-        alert("Due to age restrictions, cloud saving and leaderboards have been disabled. You can still play locally in your browser.");
+        showMsg("Due to age restrictions, cloud saving and leaderboards have been disabled. You can still play locally in your browser.");
     }
     localStorage.setItem('complianceAccepted', 'true');
     document.getElementById('complianceModal').classList.add('hidden');
@@ -306,7 +326,7 @@ window.acceptCompliance = function(isOver13) {
 window.toggleAnalytics = function() {
     window.dbSync.analyticsOptOut = !window.dbSync.analyticsOptOut;
     localStorage.setItem('analyticsOptOut', window.dbSync.analyticsOptOut);
-    alert(window.dbSync.analyticsOptOut ? "Analytics tracking disabled (Opted-Out)." : "Analytics tracking enabled.");
+    showMsg(window.dbSync.analyticsOptOut ? "Analytics tracking disabled (Opted-Out)." : "Analytics tracking enabled.");
 };
 
 window.addEventListener('DOMContentLoaded', () => {

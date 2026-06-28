@@ -1,6 +1,6 @@
 import { state, els, THEMES } from '/binaural-assets/js/state.js';
 import * as THREE from '/binaural-assets/js/vendor/three.module.js';
-import { CymaticsCore } from './CymaticsCore.js?v=3';
+import { CymaticsCore } from './CymaticsCore.js';
 
 let viz3D = null;
 
@@ -2867,18 +2867,7 @@ static CYMATIC_PATTERNS = [
             const multiplier = Math.max(0.001, this.speedMultiplier || 1.0);
             const now = performance.now() * 0.001;
             if (this.activeModes.has('cymatics') && this.cymaticsCore) {
-                const audioData = window.cymaticsAudioSync !== false ? {
-                    bass: normBass || 0,
-                    mids: normMids || 0,
-                    highs: normHighs || 0
-                } : { bass: 0, mids: 0, highs: 0 };
-                
-                const mouseData = window.cymaticsMouseSync !== false ? {
-                    x: this.mouseX || 0,
-                    y: this.mouseY || 0
-                } : null;
-                
-                this.cymaticsCore.update(now * multiplier, audioData, mouseData);
+                this.cymaticsCore.update(now * multiplier);
             }
             if (!this.lastTime) this.lastTime = now;
             const dt = Math.min(0.1, now - this.lastTime);
@@ -3617,29 +3606,9 @@ static CYMATIC_PATTERNS = [
         }
     }
 
-    setCymaticColor(arg1, arg2, arg3) {
+    setCymaticColor(classId, colorIndex, hex) {
         if (!this.cymaticsCore) return;
-        if (arg3 !== undefined) {
-            // New signature: classId, colorIndex, hex
-            this.cymaticsCore.setColor(arg1, arg2, arg3);
-        } else if (arg1 !== undefined) {
-            // Old signature fallback: hex
-            const hex = arg1;
-            const classId = this.cymaticsCore.activeClassId || 22;
-            this.cymaticsCore.setColor(classId, 1, hex);
-        }
-    }
-
-    setCymaticColor2(hex) {
-        if (!this.cymaticsCore) return;
-        const classId = this.cymaticsCore.activeClassId || 22;
-        this.cymaticsCore.setColor(classId, 2, new THREE.Color(hex));
-    }
-
-    setCymaticColor3(hex) {
-        if (!this.cymaticsCore) return;
-        const classId = this.cymaticsCore.activeClassId || 22;
-        this.cymaticsCore.setColor(classId, 3, new THREE.Color(hex));
+        this.cymaticsCore.setColor(classId, colorIndex, new THREE.Color(hex));
     }
 
     setCymaticParam(classId, paramName, value) {
@@ -3863,22 +3832,6 @@ window.setCymaticPattern = function(classId, variationId) {
     }
 };
 
-window.setCymaticColor = function(classId, colorIndex, hex) {
-    if (viz3D && viz3D.cymaticsCore) {
-        viz3D.cymaticsCore.setColor(classId, colorIndex, hex);
-    }
-};
-
-window.setCymaticParam = function(classId, paramName, value) {
-    if (viz3D && viz3D.cymaticsCore) {
-        viz3D.cymaticsCore.setParam(classId, paramName, value);
-    }
-};
-
-window.setConstellationLayer2Type = function(typeId) {
-    if (viz3D && viz3D.cymaticsCore) {
-        viz3D.cymaticsCore.setConstellationLayer2Type(typeId);
-    }
-};
+// Visualizer initialization helpers are exported as part of the module
 
 // Visualizer initialization helpers are exported as part of the module

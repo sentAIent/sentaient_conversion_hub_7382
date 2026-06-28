@@ -2,7 +2,13 @@ class NativeIntegration {
     constructor() {
         this.isNative = !!(window.Capacitor && window.Capacitor.isNative);
         console.log("NativeIntegration init, isNative:", this.isNative);
-        this.revenueCatApiKey = 'YOUR_REVENUECAT_API_KEY'; // Placeholder
+        
+        // TODO: REPLACE WITH YOUR ACTUAL REVENUECAT PUBLIC API KEYS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        this.revenueCatApiKey = isIOS ? 
+            'sk_RTHqbTajlgrDWNlgrmOBoogRmFDPD' : 
+            'sk_YaEXCCKflycNimwSHkHHkvsLAEtJd';
+            
         this.initMonetization();
         this.requestNotificationPermission();
     }

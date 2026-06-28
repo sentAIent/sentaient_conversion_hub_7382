@@ -197,19 +197,49 @@ const initApp = () => {
     // PWA (Non-blocking)
     lazy.pwa().then(m => m.initPWAInstall());
 
-    // Hide loading screen immediately once core UI is ready
-    // Hide loading screen immediately once core UI is ready
+    // Hide loading screen once Visualizer is ready (or fallback timeout)
     const loadingScreen = document.getElementById('loadingScreen');
-    if (loadingScreen) {
-        // FORCE REMOVAL - Critical Path
-        console.log('[Main] Removing loading screen immediately (Time: ' + performance.now().toFixed(0) + 'ms)');
-        loadingScreen.style.opacity = '0';
-        loadingScreen.style.pointerEvents = 'none';
+    const entryGate = document.getElementById('entryGate');
+    const entryGateBtn = document.getElementById('entryGateBtn');
 
-        // Use a short timeout to allow CSS transition, but ensure removal
-        setTimeout(() => {
-            if (loadingScreen.parentNode) loadingScreen.parentNode.removeChild(loadingScreen);
-        }, 500);
+    if (loadingScreen && entryGate && entryGateBtn) {
+        let removed = false;
+        const removeLoader = () => {
+            if (removed) return;
+            removed = true;
+            console.log('[Main] Removing loading screen (Time: ' + performance.now().toFixed(0) + 'ms)');
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.pointerEvents = 'none';
+            
+            // Show entry gate
+            entryGate.classList.add('active');
+
+            setTimeout(() => {
+                if (loadingScreen.parentNode) loadingScreen.parentNode.removeChild(loadingScreen);
+            }, 800);
+        };
+
+        window.addEventListener('visualizerReady', removeLoader);
+        setTimeout(removeLoader, 7000);
+
+        // Handle Entry Gate Click
+        entryGateBtn.addEventListener('click', async () => {
+            console.log('[Main] Entry Gate Clicked - Initializing AudioContext');
+            entryGate.classList.remove('active');
+            
+            // Wait for fade out
+            setTimeout(() => {
+                if (entryGate.parentNode) entryGate.parentNode.removeChild(entryGate);
+            }, 800);
+
+            // Import engine dynamically to prevent circular dependencies
+            try {
+                const { initAudio, startAudio } = await import('./audio/engine.js');
+                initAudio();
+            } catch (e) {
+                console.error('[Main] Audio engine init failed:', e);
+            }
+        });
     }
 
     console.log("[Main] Core UI Ready - Loading content modules...");

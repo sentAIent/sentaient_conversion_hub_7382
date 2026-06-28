@@ -1,53 +1,99 @@
 import re
 
-with open('/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/public/mindwave.html', 'r') as f:
+with open('public/interstellar-game/index.html', 'r') as f:
     content = f.read()
 
-# Replace Audio Sync Toggle
-old_audio_sync = '''            <label class="flex items-center cursor-pointer gap-2 group">
-                <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400 group-hover:text-blue-400 transition-colors">Audio Sync</span>
-                <div class="relative">
-                    <input type="checkbox" id="audioSyncToggle" class="sr-only" checked>
-                    <div class="block bg-gray-800 w-8 h-4 rounded-full shadow-inner border border-white/10 group-hover:border-blue-500/50 transition-colors"></div>
-                    <div class="dot absolute left-1 top-0.5 bg-gray-400 w-3 h-3 rounded-full transition-transform duration-300 shadow-md"></div>
-                </div>
-            </label>'''
+script_to_add = """
+    <!-- Slider Edit Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const initEditableSpans = () => {
+                const spans = document.querySelectorAll('.editable-value-span');
+                spans.forEach(span => {
+                    span.addEventListener('click', (e) => {
+                        // Prevent triggering multiple times if already editing
+                        if (span.querySelector('input')) return;
+                        
+                        // Extract numeric value
+                        const currentText = span.textContent;
+                        const suffix = currentText.replace(/[0-9.-]/g, '');
+                        const currentValue = parseFloat(currentText.replace(/[^0-9.-]/g, ''));
+                        
+                        // Find matching slider. Assume id ends with 'Value', replace with 'Slider'
+                        let sliderId = span.id.replace('Value', 'Slider');
+                        let slider = document.getElementById(sliderId);
+                        
+                        // If standard mapping fails, check nearest input[type=range]
+                        if (!slider) {
+                            slider = span.parentElement.parentElement.querySelector('input[type=range]');
+                        }
 
-new_audio_sync = '''            <label class="flex items-center cursor-pointer gap-2 group">
-                <span class="text-[10px] text-emerald-400/80 uppercase tracking-widest font-bold group-hover:text-emerald-400 transition-colors">SYNC TO AUDIO</span>
-                <div class="relative flex items-center">
-                    <input type="checkbox" id="audioSyncToggle" class="sr-only peer" checked onchange="window.toggleAudioSync(this.checked)">
-                    <div class="w-8 h-4 bg-black/50 rounded-full shadow-inner border border-emerald-500/30 peer-checked:bg-emerald-900/50 peer-checked:border-emerald-500/50 transition-colors"></div>
-                    <div class="absolute left-1 w-2.5 h-2.5 bg-gray-500 rounded-full shadow-md transition-transform duration-300 peer-checked:translate-x-3.5 peer-checked:bg-emerald-400"></div>
-                </div>
-            </label>'''
+                        if (!slider) return;
 
-content = content.replace(old_audio_sync, new_audio_sync)
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.className = 'editable-value-input';
+                        input.value = isNaN(currentValue) ? slider.value : currentValue;
+                        if (slider.min !== '') input.min = slider.min;
+                        if (slider.max !== '') input.max = slider.max;
+                        if (slider.step) input.step = slider.step;
 
-# Replace the stray style tag associated with the old Audio Sync Toggle
-content = re.sub(r'<style>\s*input:checked ~ \.dot \{ transform: translateX\(100\%\); background-color: #60a9ff; \}\s*</style>', '', content)
+                        const finalize = () => {
+                            let newVal = parseFloat(input.value);
+                            if (isNaN(newVal)) newVal = parseFloat(slider.value);
+                            
+                            // Clamp
+                            if (slider.min !== '') newVal = Math.max(parseFloat(slider.min), newVal);
+                            if (slider.max !== '') newVal = Math.min(parseFloat(slider.max), newVal);
+                            
+                            // Update slider and trigger event
+                            slider.value = newVal;
+                            
+                            // Update span text immediately to give fast feedback
+                            span.textContent = newVal + suffix;
+                            
+                            // Trigger 'input' and 'change' so the app registers it
+                            slider.dispatchEvent(new Event('input', { bubbles: true }));
+                            slider.dispatchEvent(new Event('change', { bubbles: true }));
+                            
+                            // Replace input back with the updated span text
+                            if (input.parentNode === span) {
+                                span.innerHTML = '';
+                                span.textContent = newVal + suffix;
+                            }
+                        };
 
-# Replace Mouse Sync Toggle
-old_mouse_sync = '''                <label class="flex items-center cursor-pointer">
-                    <span class="text-[10px] text-emerald-400/80 mr-2 uppercase tracking-wider font-bold">Sync to Mouse</span>
-                    <div class="relative">
-                        <input type="checkbox" id="mouseSyncToggle" class="sr-only" onchange="window.toggleMouseSync(this.checked)">
-                        <div class="block bg-black/50 border border-emerald-500/30 w-8 h-4 rounded-full"></div>
-                        <div class="dot absolute left-1 top-1 bg-emerald-500 w-2 h-2 rounded-full transition transform"></div>
-                    </div>
-                </label>'''
+                        input.addEventListener('blur', finalize);
+                        input.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                input.blur();
+                            } else if (e.key === 'Escape') {
+                                span.innerHTML = '';
+                                span.textContent = currentText; // Cancel edit
+                            }
+                        });
 
-new_mouse_sync = '''                <label class="flex items-center cursor-pointer gap-2 group">
-                    <span class="text-[10px] text-emerald-400/80 uppercase tracking-widest font-bold group-hover:text-emerald-400 transition-colors">SYNC TO MOUSE</span>
-                    <div class="relative flex items-center">
-                        <input type="checkbox" id="mouseSyncToggle" class="sr-only peer" onchange="window.toggleMouseSync(this.checked)">
-                        <div class="w-8 h-4 bg-black/50 rounded-full shadow-inner border border-emerald-500/30 peer-checked:bg-emerald-900/50 peer-checked:border-emerald-500/50 transition-colors"></div>
-                        <div class="absolute left-1 w-2.5 h-2.5 bg-gray-500 rounded-full shadow-md transition-transform duration-300 peer-checked:translate-x-3.5 peer-checked:bg-emerald-400"></div>
-                    </div>
-                </label>'''
+                        span.innerHTML = '';
+                        span.appendChild(input);
+                        input.focus();
+                        input.select();
+                    });
+                });
+            };
+            
+            // Allow time for all UI to build
+            setTimeout(initEditableSpans, 1000);
+        });
+    </script>
+"""
 
-content = content.replace(old_mouse_sync, new_mouse_sync)
+# Only add if it doesn't exist
+if "<!-- Slider Edit Script -->" not in content:
+    content = content.replace('</body>', script_to_add + '\n</body>')
 
-with open('/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/public/mindwave.html', 'w') as f:
+# Ensure cache bust updates to v2
+content = re.sub(r'script\.js\?v=[a-zA-Z0-9_]+', 'script.js?v=ray_fix_v2', content)
+
+with open('public/interstellar-game/index.html', 'w') as f:
     f.write(content)
-
+print("Added editable sliders script and cache-busted to v2")

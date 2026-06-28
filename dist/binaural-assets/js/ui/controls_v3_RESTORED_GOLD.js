@@ -1,4 +1,4 @@
-console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
+console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_778");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
 import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS, updateHarmonicsLevel } from '../audio/engine.js';
 import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js';
@@ -465,6 +465,13 @@ export function setupUI() {
     els.statusIndicator = document.getElementById('statusIndicator');
     els.audioOnlyPlayer = document.getElementById('audioOnlyPlayer');
 
+    // Ambient Mixer Sliders
+    els.ambientThunderSlider = document.getElementById('ambientThunderSlider');
+    els.ambientOceanSlider = document.getElementById('ambientOceanSlider');
+    els.ambientFireSlider = document.getElementById('ambientFireSlider');
+    els.ambient432Slider = document.getElementById('ambient432Slider');
+    els.ambient528Slider = document.getElementById('ambient528Slider');
+
     // INITIAL LAYOUT SYNC:
     // Force immediate calculation before reveal to prevent shift
     updateTopBarWidth();
@@ -472,7 +479,7 @@ export function setupUI() {
     updateDockScaling();
 
 
-    console.log('[Controls] Initial layout synchronized');
+    // console.log('[Controls] Initial layout synchronized');
     els.playbackAudio = document.getElementById('playbackAudio');
     els.profileModal = document.getElementById('profileModal');
     els.profileNameInput = document.getElementById('profileNameInput');
@@ -615,7 +622,7 @@ export function setupUI() {
         if (el) el.addEventListener('click', saveUserPreferences); // For buttons
     });
 
-    console.log('[Controls] UI Setup & Persistence Loaded');
+    // console.log('[Controls] UI Setup & Persistence Loaded');
     els.closeStatsBtn = document.getElementById('closeStatsBtn');
     els.statStreak = document.getElementById('statStreak');
     els.statHours = document.getElementById('statHours');
@@ -869,6 +876,13 @@ export function setupUI() {
         saveStateToLocal();
     });
     if (els.atmosMasterSlider) els.atmosMasterSlider.addEventListener('input', () => { updateAtmosMaster(); saveStateToLocal(); });
+
+    // Ambient Mixer Event Listeners
+    if (els.ambientThunderSlider) els.ambientThunderSlider.addEventListener('input', (e) => { updateSoundscape('thunderstorm', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambientOceanSlider) els.ambientOceanSlider.addEventListener('input', (e) => { updateSoundscape('ocean', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambientFireSlider) els.ambientFireSlider.addEventListener('input', (e) => { updateSoundscape('fire', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambient432Slider) els.ambient432Slider.addEventListener('input', (e) => { updateSoundscape('solfeggio432', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
+    if (els.ambient528Slider) els.ambient528Slider.addEventListener('input', (e) => { updateSoundscape('solfeggio528', 'vol', parseFloat(e.target.value)); saveStateToLocal(); });
     if (els.balanceSlider) els.balanceSlider.addEventListener('input', () => { updateMasterBalance(); saveStateToLocal(); });
     if (els.mouseInfluenceSlider) {
         els.mouseInfluenceSlider.addEventListener('input', () => {
@@ -1534,6 +1548,103 @@ export function setupUI() {
         });
     }
 
+    // MW LOTUS GLOW LOGIC
+    const glowBtns = document.querySelectorAll('.glow-btn');
+    if (glowBtns.length > 0) {
+        glowBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const mode = e.currentTarget.getAttribute('data-glow-mode');
+                if (state) {
+                    state.lotusState = mode;
+                }
+                
+                // Update active class
+                glowBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                });
+                
+                e.currentTarget.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                e.currentTarget.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+            });
+        });
+    }
+
+    const lotusOpacitySlider = document.getElementById('lotusOpacitySlider');
+    const lotusOpacityVal = document.getElementById('lotusOpacityVal');
+    if (lotusOpacitySlider) {
+        lotusOpacitySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (lotusOpacityVal) lotusOpacityVal.textContent = Math.round(val * 100) + '%';
+            
+            if (state) {
+                state.lotusOpacity = val;
+                state.lotusState = 'manual';
+            }
+            
+            // Auto-switch UI to DIM or FULL if they match, else unhighlight all mode buttons
+            glowBtns.forEach(b => {
+                b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+            });
+        });
+    }
+
+    const lotusHeartbeatSlider = document.getElementById('lotusHeartbeatSlider');
+    const lotusHeartbeatVal = document.getElementById('lotusHeartbeatVal');
+    if (lotusHeartbeatSlider) {
+        lotusHeartbeatSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            if (lotusHeartbeatVal) lotusHeartbeatVal.textContent = val + ' BPM';
+            
+            if (state) {
+                state.lotusHeartbeatBpm = val;
+                state.lotusState = 'heartbeat';
+                state.lotusHeartbeatSync = false;
+                if (lotusAudioSyncBtn) {
+                    lotusAudioSyncBtn.classList.remove('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                }
+            }
+            
+            // Auto-switch UI to heartbeat
+            glowBtns.forEach(b => {
+                b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                if (b.getAttribute('data-glow-mode') === 'heartbeat') {
+                    b.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                    b.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                }
+            });
+        });
+    }
+
+    const lotusAudioSyncBtn = document.getElementById('lotusAudioSyncBtn');
+    if (lotusAudioSyncBtn) {
+        lotusAudioSyncBtn.addEventListener('click', () => {
+            if (state) {
+                state.lotusHeartbeatSync = !state.lotusHeartbeatSync;
+                if (state.lotusHeartbeatSync) {
+                    lotusAudioSyncBtn.classList.add('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    if (lotusHeartbeatVal) lotusHeartbeatVal.textContent = 'SYNC';
+                } else {
+                    lotusAudioSyncBtn.classList.remove('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    if (lotusHeartbeatVal && lotusHeartbeatSlider) lotusHeartbeatVal.textContent = lotusHeartbeatSlider.value + ' BPM';
+                }
+                state.lotusState = 'heartbeat';
+                
+                // Auto-switch UI to heartbeat
+                glowBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                    if (b.getAttribute('data-glow-mode') === 'heartbeat') {
+                        b.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+                        b.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+                    }
+                });
+            }
+        });
+    }
+
     if (els.vibrationToggleBtn) {
         els.vibrationToggleBtn.addEventListener('click', () => {
             state.visualVibration = !state.visualVibration;
@@ -1650,11 +1761,11 @@ export function setupUI() {
 
     // DEFERRED INITIALIZATION: Unblock Main Thread for Loading Screen Removal
     setTimeout(() => {
-        console.log('[Controls] deferred setup starting...');
+        // console.log('[Controls] deferred setup starting...');
         setupDJPads(); // NEW - DJ Sound Pads
         setupPresenceUI(); // NEW - Social Pulse
         initGallery(); // Moved from line 219
-        console.log('[Controls] deferred setup complete');
+        // console.log('[Controls] deferred setup complete');
     }, 100);
 
     // SYNC SLIDER VALUES - Ensure displays match slider positions on load
@@ -1908,7 +2019,6 @@ export function setupUI() {
     initVisualColorPickers();
 }
 window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
-
 
 // --- PLAY BUTTON HANDLER ---
 let lastPlayClickTime = 0;
@@ -2284,7 +2394,7 @@ async function applyAIPreset(result) {
     // 5. Enable soundscapes with intensity mapping
     result.soundscapes.forEach(id => {
         const scVol = 0.5 * (result.intensity || 1.0);
-        updateSoundscape(id, true, Math.min(1.0, scVol));
+        updateSoundscape(id, 'vol', Math.min(1.0, scVol));
     });
 
     // 6. Enable visuals if suggested (Total Immersion)
@@ -2398,7 +2508,7 @@ function setupGalaxyControls() {
         if (el) el.addEventListener('input', updateSun);
     });
 
-    console.log('[Controls] Galaxy Sun Controls Initialized');
+    // console.log('[Controls] Galaxy Sun Controls Initialized');
 }
 
 // Toggles moved to top for global availability
@@ -3032,6 +3142,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     let activeModes = new Set();
     const state = window.MindWaveState || {};
 
+
     // 1. Manual Override Check (Unlock AI Lock)
     if (isManual && state.aiVisualsLocked) {
         state.aiVisualsLocked = false;
@@ -3064,10 +3175,27 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
 
     if (viz) {
         const modes = Array.isArray(mode) ? mode : [mode];
-
-        // If applying an array (preset), clear existing modes for 'Total Immersion'
+        const overlays = ['cymatics', 'snowflake'];
+        
+        // Exclusivity logic: Base visuals replace other base visuals, but overlays persist
         if (Array.isArray(mode)) {
+            // Preset: Clear all base visuals, but keep existing overlays
+            const activeOverlays = Array.from(viz.activeModes).filter(m => overlays.includes(m));
             viz.activeModes.clear();
+            activeOverlays.forEach(m => viz.activeModes.add(m));
+        } else {
+            const m = modes[0];
+            const target = viz.mapMode ? viz.mapMode(m) : m;
+            // If selecting a base visual, remove all other base visuals
+            if (!overlays.includes(target)) {
+                const toRemove = Array.from(viz.activeModes).filter(activeMode => 
+                    !overlays.includes(activeMode) && activeMode !== target
+                );
+                toRemove.forEach(rm => {
+                    // Force remove
+                    viz.activeModes.delete(rm);
+                });
+            }
         }
 
         modes.forEach(m => {
@@ -3533,10 +3661,10 @@ export function initMixer() {
                     // Check if ALL soundscapes are now at 0 using state
                     const allSoundscapesOff = Object.values(state.soundscapeSettings).every(s => s.vol === 0);
 
-                    console.log('[Controls] Ambience slider to 0, all soundscapes off?', allSoundscapesOff, state.soundscapeSettings);
+                    // console.log('[Controls] Ambience slider to 0, all soundscapes off?', allSoundscapesOff, state.soundscapeSettings);
 
                     if (allSoundscapesOff) {
-                        console.log('[Controls] All ambience off - pausing visuals');
+                        // console.log('[Controls] All ambience off - pausing visuals');
                         // Pause visuals
                         if (!isVisualsPaused()) {
                             pauseVisuals();
@@ -3626,7 +3754,7 @@ function syncSliderDisplays() {
     if (els.visualSpeedSlider && els.speedValue) {
         els.speedValue.textContent = `${parseFloat(els.visualSpeedSlider.value).toFixed(1)} x`;
     }
-    console.log('[Controls] Slider displays synchronized');
+    // console.log('[Controls] Slider displays synchronized');
 }
 
 function restoreStateFromLocal() {
@@ -4351,7 +4479,7 @@ window.setCursorShape = (s) => {
 };
 
 export function initThemeModal() {
-    console.log('[Theme] initThemeModal CALLED (Optimized)');
+    // console.log('[Theme] initThemeModal CALLED (Optimized)');
     const grid = document.getElementById('themeGrid');
     const container = document.getElementById('themeModalContent');
     if (!grid || !container) {

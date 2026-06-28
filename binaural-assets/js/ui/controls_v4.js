@@ -87,7 +87,11 @@ window.controls = {
         this.syncSidebar('matrixPanel');
     },
     toggleSnowflakeSettings: function(btn) {
-        this.syncSidebar('snowflakeSettingsPanel');
+        const panel = document.getElementById('snowflakeSettingsPanel');
+        if (panel) panel.classList.toggle('hidden');
+    },
+    toggleCymaticsSettings: function(btn) {
+        this.switchRightTab('active');
     },
     setMatrixMode: function(mode) {
         const viz = getVisualizer();
@@ -237,6 +241,7 @@ window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
 window.toggleGalaxySun = window.controls.toggleGalaxySun;
 window.resetGalaxySettings = window.controls.resetGalaxySettings;
 window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
+window.toggleCymaticsSettings = window.controls.toggleCymaticsSettings;
 window.setMatrixMode = window.controls.setMatrixMode;
 
 // Activate any pending tabs queued before controls loaded
@@ -276,7 +281,8 @@ window.addEventListener('mindwave:visual-mode-sync', (e) => {
         { id: 'cyberBtn', mode: 'cyber' },
         { id: 'matrixBtn', mode: 'matrix' },
         { id: 'snowflakeBtn', mode: 'snowflake' },
-            ];
+        { id: 'cymaticsBtn', mode: 'cymatics' }
+    ];
 
     buttons.forEach(({ id, mode }) => {
         const btn = document.getElementById(id);
@@ -418,7 +424,12 @@ export function setupUI() {
     els.matrixBtn = document.getElementById('matrixBtn');
     els.snowflakeBtn = document.getElementById('snowflakeBtn');
     els.oceanBtn = document.getElementById('oceanBtn'); // New ID for island/waves
-    
+    els.cymaticsBtn = document.getElementById('cymaticsBtn'); // Now Fractal Patterns
+
+    // Cymatics / Galaxy / Matrix Controls
+    els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
+    els.cymaticNextBtn = document.getElementById('cymaticNextBtn');
+    els.cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
 
     els.matrixTextInput = document.getElementById('matrixTextInput');
     els.matrixVibrationToggle = document.getElementById('matrixVibrationToggle');
@@ -1165,7 +1176,7 @@ export function setupUI() {
     if (els.snowflakeBtn) {
         els.snowflakeBtn.addEventListener('click', () => {
             setVisualMode('snowflake', null, true);
-            
+            if (window.setCymaticMedium) window.setCymaticMedium(3); // Auto-set to ICE medium
         });
     }
     // Duplicate oceanBtn listener removed (was causing double-toggle ON→OFF)
@@ -1175,9 +1186,94 @@ export function setupUI() {
     });
 
     // ── Cymatics panel controls ────────────────────────────────────
-    
-    
-    
+    window.toggleCymaticsPanel = function() {
+        const panel = document.getElementById('cymaticsPanel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+            panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
+        }
+    };
+
+    window.setCymaticMedium = function(mediumIdx) {
+        state.cymaticMedium = mediumIdx;
+        
+        // Update button UI
+        const buttons = document.querySelectorAll('.cym-medium-btn');
+        buttons.forEach((btn, idx) => {
+            if (idx === mediumIdx) {
+                btn.classList.add('active', 'border-purple-400');
+                btn.style.backgroundColor = 'rgba(168, 85, 247, 0.2)';
+            } else {
+                btn.classList.remove('active', 'border-purple-400');
+                btn.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+            }
+        });
+        
+        const mediumNames = ['Water', 'Sand', 'Ether', 'Ice/Crystal'];
+        showToast(`Simulation Medium: ${mediumNames[mediumIdx]}`, 'info');
+
+        // Instant Engine Update
+        const viz = getVisualizer();
+        if (viz && viz.cymaticMaterial) {
+            viz.cymaticMaterial.uniforms.uMedium.value = mediumIdx;
+        }
+    };
+
+    window.selectCymaticPattern = function(idx) {
+        console.log(`[Controls] Selecting Pattern: ${idx}`);
+        
+        // UI Highlighting Sync
+        const btns = document.querySelectorAll('.cymatics-pattern-btn');
+        btns.forEach((btn) => {
+            const clickAttr = btn.getAttribute('onclick');
+            let btnIdx = -1;
+            if (clickAttr) {
+                const match = clickAttr.match(/selectCymaticPattern\((\d+)\)/);
+                if (match) {
+                    btnIdx = parseInt(match[1]);
+                }
+            }
+            
+            if (btnIdx === idx) {
+                btn.classList.add('active', 'border-purple-400/80', 'bg-purple-400/10');
+                btn.style.color = '#ffffff';
+            } else {
+                btn.classList.remove('active', 'border-purple-400/80', 'bg-purple-400/10');
+                btn.style.color = ''; 
+            }
+        });
+
+        const viz = getVisualizer();
+        if (viz) {
+            // AUTO-ACTIVATE cymatics mode if not already active
+            if (!viz.activeModes || !viz.activeModes.has('cymatics')) {
+                console.log('[Controls] Auto-activating Cymatics mode for pattern selection');
+                setVisualMode('cymatics', null, true);
+            }
+            // Small delay to ensure initCymatics completes before setting pattern
+            const applyPattern = () => {
+                if (viz.cymaticMaterial && typeof viz.setCymaticPatternByIndex === 'function') {
+                    viz.setCymaticPatternByIndex(idx);
+                } else {
+                    // Retry once after initialization
+                    setTimeout(() => {
+                        if (typeof viz.setCymaticPatternByIndex === 'function') {
+                            viz.setCymaticPatternByIndex(idx);
+                        }
+                    }, 200);
+                }
+            };
+            // If cymatics was just activated, wait for init; otherwise apply immediately
+            if (viz.cymaticMaterial) {
+                applyPattern();
+            } else {
+                setTimeout(applyPattern, 100);
+            }
+        } else {
+            console.error("[Controls] Visualizer not available");
+        }
+    };
+
     const cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
     const cymaticNextBtn = document.getElementById('cymaticNextBtn');
     if (cymaticPrevBtn) cymaticPrevBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.prevCymatic) viz.prevCymatic(); });
@@ -1256,27 +1352,11 @@ export function setupUI() {
         });
     }
 
-    const cymaticsCol1Picker = document.getElementById('cymaticsCol1Picker');
-    if (cymaticsCol1Picker) {
-        cymaticsCol1Picker.addEventListener('input', () => {
+    const cymaticsColorPicker = document.getElementById('cymaticsColorPicker');
+    if (cymaticsColorPicker) {
+        cymaticsColorPicker.addEventListener('input', () => {
             const viz = getVisualizer();
-            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsCol1Picker.value);
-        });
-    }
-
-    const cymaticsCol2Picker = document.getElementById('cymaticsCol2Picker');
-    if (cymaticsCol2Picker) {
-        cymaticsCol2Picker.addEventListener('input', () => {
-            const viz = getVisualizer();
-            if (viz?.setCymaticColor2) viz.setCymaticColor2(cymaticsCol2Picker.value);
-        });
-    }
-
-    const cymaticsCol3Picker = document.getElementById('cymaticsCol3Picker');
-    if (cymaticsCol3Picker) {
-        cymaticsCol3Picker.addEventListener('input', () => {
-            const viz = getVisualizer();
-            if (viz?.setCymaticColor3) viz.setCymaticColor3(cymaticsCol3Picker.value);
+            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsColorPicker.value);
         });
     }
 
@@ -3083,6 +3163,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     if (mode === 'cymatics') console.log('%c[Visuals] CYMATICS MODE ACTIVATED', 'color: #a855f7; font-weight: bold; font-size: 14px;');
     let viz = getVisualizer();
     let activeModes = new Set();
+    const state = window.MindWaveState || {};
 
 
     // 1. Manual Override Check (Unlock AI Lock)
@@ -6356,249 +6437,3 @@ window.toggleMouseSync = function(isSync) {
 }
 
 
-
-// ── Cymatics Engine v4 Native Routing ─────────────────────────────────────────
-
-window.setCymaticPattern = function(classId, variationId) {
-    if (classId === 0) {
-        classId = 22;
-        variationId = 8;
-    }
-    console.log(`[Cymatics] Set Pattern - Class: ${classId}, Variation: ${variationId}`);
-    
-    // UI Highlighting Sync
-    // UI Highlighting Sync
-    const btns = document.querySelectorAll('.cymatics-pattern-btn');
-    btns.forEach(btn => {
-        btn.classList.remove('ring-2', 'ring-blue-400', 'ring-purple-400', 'ring-emerald-400', 'ring-fuchsia-400', 'ring-white', 'scale-95');
-    });
-    
-    const clickStr = `window.setCymaticPattern(${classId}, ${variationId})`;
-    const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick') === clickStr);
-    if (activeBtn) {
-        let ringColor = 'ring-white';
-        if (classId === 19) ringColor = 'ring-purple-400';
-        else if (classId === 22) ringColor = 'ring-emerald-400';
-        else if (classId === 21) ringColor = 'ring-fuchsia-400';
-        else if (classId === 20) ringColor = 'ring-blue-400';
-        activeBtn.classList.add('ring-2', ringColor, 'scale-95');
-    }
-
-    const viz = getVisualizer();
-    if (viz && viz.applyCymaticClassAndVariation) {
-        viz.applyCymaticClassAndVariation(classId, variationId);
-    }
-};
-
-window.setCymaticColor = function(classId, colorIndex, hex) {
-    console.log(`[Cymatics] Set Color - Class: ${classId}, Index: ${colorIndex}, Hex: ${hex}`);
-    const viz = getVisualizer();
-    if (viz) {
-        if (viz.cymaticsCore && viz.cymaticsCore.activeClassId !== classId) {
-            if (viz.applyCymaticClassAndVariation) {
-                viz.applyCymaticClassAndVariation(classId, 0);
-            }
-            const btns = document.querySelectorAll('.cymatics-pattern-btn');
-            btns.forEach(btn => btn.classList.remove('ring-2', 'ring-blue-400', 'ring-purple-400', 'ring-emerald-400', 'ring-fuchsia-400', 'ring-white', 'scale-95'));
-            const clickStr = `window.setCymaticPattern(${classId}, 0)`;
-            const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick') === clickStr);
-            if (activeBtn) {
-                activeBtn.classList.add('ring-2', 'ring-white', 'scale-95');
-            }
-        }
-        if (viz.setCymaticColor) {
-            viz.setCymaticColor(classId, colorIndex, hex);
-        }
-    }
-};
-
-window.setCymaticParam = function(classId, paramName, value) {
-    const viz = getVisualizer();
-    if (viz && viz.setCymaticParam) {
-        viz.setCymaticParam(classId, paramName, parseFloat(value));
-    }
-};
-
-window.addEventListener('cymaticColorSync', function(e) {
-    const { classId, color1, color2 } = e.detail;
-    // Find the primary color picker for this class
-    const picker1 = document.querySelector(`input[oninput*="window.setCymaticColor(${classId}, 1"]`);
-    if (picker1 && picker1.value !== color1) {
-        picker1.value = color1;
-    }
-    // Find the secondary color picker for this class
-    const picker2 = document.querySelector(`input[oninput*="window.setCymaticColor(${classId}, 2"]`);
-    if (picker2 && picker2.value !== color2) {
-        picker2.value = color2;
-    }
-});
-
-// --- MISSING CYMATICS WRAPPERS ---
-function _lazyToggleObserverEffect(isObserved) {
-    if (window.viz3D) {
-         console.warn('Viz loaded but toggleObserverEffect not overwritten');
-    } else {
-         initVisualizer().then(() => {
-             if (window.toggleObserverEffect !== _lazyToggleObserverEffect) {
-                  window.toggleObserverEffect(isObserved);
-             }
-         });
-    }
-}
-window.toggleObserverEffect = window.toggleObserverEffect || _lazyToggleObserverEffect;
-
-function _lazyToggleQuantumHum(isObserved) {
-    if (window.viz3D) {
-         console.warn('Viz loaded but toggleQuantumHum not overwritten');
-    } else {
-         initVisualizer().then(() => {
-             if (window.toggleQuantumHum !== _lazyToggleQuantumHum) {
-                  window.toggleQuantumHum(isObserved);
-             }
-         });
-    }
-}
-window.toggleQuantumHum = window.toggleQuantumHum || _lazyToggleQuantumHum;
-
-function _lazySetConstellationLayer2Type(typeId) {
-    if (window.viz3D && window.viz3D.cymaticsCore) {
-        window.viz3D.cymaticsCore.setConstellationLayer2Type(typeId);
-    } else {
-        initVisualizer().then(() => {
-            if (window.viz3D && window.viz3D.cymaticsCore) {
-                window.viz3D.cymaticsCore.setConstellationLayer2Type(typeId);
-            }
-        });
-    }
-}
-window.setConstellationLayer2Type = window.setConstellationLayer2Type || _lazySetConstellationLayer2Type;
-
-// --- CLICK TO EDIT VALUES ---
-function initEditableValues() {
-    const valueSpans = document.querySelectorAll('.premium-value, .premium-value-badge');
-    valueSpans.forEach(span => {
-        // Find the closest slider by looking at previous sibling or in the same container
-        let container = span.parentElement;
-        let slider = container.querySelector('input[type="range"]');
-        
-        // Sometimes the slider is a sibling before the span
-        if (!slider && span.previousElementSibling && span.previousElementSibling.tagName === 'INPUT' && span.previousElementSibling.type === 'range') {
-            slider = span.previousElementSibling;
-        }
-
-        // Handle cases like L/R Fader where slider is nested deeper
-        if (!slider && container.parentElement) {
-            slider = container.parentElement.querySelector('input[type="range"]');
-        }
-
-        if (!slider) return;
-
-        span.style.cursor = 'pointer';
-        span.title = 'Click to edit value';
-        span.style.marginLeft = '8px';
-
-        span.addEventListener('click', (e) => {
-            if (span.querySelector('input')) return;
-
-            const currentValue = slider.value;
-            const originalText = span.textContent;
-            
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.value = currentValue;
-            input.min = slider.min;
-            input.max = slider.max;
-            input.step = slider.step || "any";
-            
-            // Match styles but look like an input
-            input.className = span.className;
-            input.style.width = Math.max(50, span.offsetWidth + 10) + 'px';
-            input.style.background = 'rgba(0,0,0,0.7)';
-            input.style.border = '1px solid var(--accent)';
-            input.style.color = 'white';
-            input.style.borderRadius = '4px';
-            input.style.padding = '2px 4px';
-            input.style.outline = 'none';
-            input.style.textAlign = 'center';
-
-            span.textContent = '';
-            span.appendChild(input);
-            input.focus();
-            input.select();
-
-            const finishEditing = () => {
-                let newVal = parseFloat(input.value);
-                if (isNaN(newVal)) newVal = currentValue;
-                newVal = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), newVal));
-                
-                slider.value = newVal;
-                slider.dispatchEvent(new Event('input', { bubbles: true }));
-                slider.dispatchEvent(new Event('change', { bubbles: true }));
-
-                setTimeout(() => {
-                    if (span.contains(input)) {
-                        input.remove();
-                        // Failsafe restore if 'input' event didn't update text
-                        if (span.textContent === '') span.textContent = originalText;
-                    }
-                }, 50);
-            };
-
-            input.addEventListener('blur', finishEditing);
-            input.addEventListener('keydown', (ev) => {
-                if (ev.key === 'Enter') finishEditing();
-                if (ev.key === 'Escape') {
-                    span.textContent = originalText;
-                }
-            });
-            
-            e.stopPropagation();
-        });
-    });
-}
-
-// Initialize on load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initEditableValues);
-} else {
-    setTimeout(initEditableValues, 500);
-}
-
-
-window.selectCymaticPattern = function(idx) {
-    let classId = 1;
-    let varId = 0;
-    const sizes = [14, 12, 10, 8, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10];
-    let remaining = idx;
-    for (let i = 0; i < sizes.length; i++) {
-        if (remaining < sizes[i]) {
-            classId = i + 1;
-            varId = remaining;
-            break;
-        }
-        remaining -= sizes[i];
-    }
-    
-    // Fallback if somehow out of bounds
-    if (classId > 18) { classId = 18; varId = 0; }
-    
-    console.log(`[Controls] Mapped old pattern ${idx} to Class ${classId}, Var ${varId}`);
-    window.setCymaticPattern(classId, varId);
-    
-    if (window.viz3D && !window.viz3D.activeModes.has('cymatics')) {
-        window.setVisualMode('cymatics', null, true);
-    }
-    
-    // UI Highlighting Sync for old UI
-    const btns = document.querySelectorAll('.cymatics-pattern-btn');
-    btns.forEach((btn) => {
-        const clickAttr = btn.getAttribute('onclick');
-        if (clickAttr && clickAttr.includes('selectCymaticPattern(' + idx + ')')) {
-            btn.classList.add('active', 'border-purple-400/80', 'bg-purple-400/10');
-            btn.style.color = '#ffffff';
-        } else if (clickAttr && clickAttr.includes('selectCymaticPattern')) {
-            btn.classList.remove('active', 'border-purple-400/80', 'bg-purple-400/10');
-            btn.style.color = ''; 
-        }
-    });
-};

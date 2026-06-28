@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBTZveJffu2Ed33hhU_G025FVMedIKyg28",
@@ -15,6 +16,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const analytics = getAnalytics(app);
+
+window.logGameEvent = function(eventName, params = {}) {
+    try {
+        logEvent(analytics, eventName, params);
+        console.log(`📊 Analytics Event: ${eventName}`, params);
+    } catch(e) {
+        console.error("Analytics Error:", e);
+    }
+};
 
 // Keys we care about syncing to the cloud
 const SYNC_KEYS = ['playerGems', 'unlockedShips', 'playerShipType', 'playerCredits'];
@@ -57,46 +68,58 @@ onAuthStateChanged(auth, async (user) => {
         if (loginFormContainer) loginFormContainer.classList.add('hidden');
         if (loggedInContainer) loggedInContainer.classList.remove('hidden');
 
-        // Load cloud save
+        // Listen to cloud save for live web-purchase updates (Monetization Sync)
         try {
             const docRef = doc(db, "interstellar_saves", currentUid);
-            const docSnap = await getDoc(docRef);
-            
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                isPumpingFromCloud = true; // prevent infinite loops
-                let needsUpdate = false;
-                
-                SYNC_KEYS.forEach(key => {
-                    if (data[key] !== undefined) {
-                        const valToSave = typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key].toString();
-                        originalSetItem.call(localStorage, key, valToSave);
-                        needsUpdate = true;
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    isPumpingFromCloud = true; // prevent infinite loops
+                    let needsUpdate = false;
+                    
+                    SYNC_KEYS.forEach(key => {
+                        if (data[key] !== undefined) {
+                            const valToSave = typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key].toString();
+                            // Only update if it changed
+                            if (localStorage.getItem(key) !== valToSave) {
+                                originalSetItem.call(localStorage, key, valToSave);
+                                needsUpdate = true;
+                            }
+                        }
+                    });
+                    isPumpingFromCloud = false;
+                    
+                    // If the game is already running, we need to poke it to refresh state
+                    if (needsUpdate && window.game) {
+                        window.game.playerGems = parseInt(localStorage.getItem('playerGems')) || 0;
+                        window.game.credits = parseInt(localStorage.getItem('playerCredits')) || 0;
+                        window.game.unlockedShips = JSON.parse(localStorage.getItem('unlockedShips')) || ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
+                        window.game.playerShipType = localStorage.getItem('playerShipType') || 'interceptor';
+                        
+                        if (typeof window.game.updateGemsDisplay === 'function') {
+                            window.game.updateGemsDisplay();
+                        }
+                        
+                        const creditsEl = document.getElementById('walletValue');
+                        if (creditsEl) creditsEl.textContent = window.game.credits.toLocaleString();
+                        const creditsDisplay = document.getElementById('creditsDisplay');
+                        if (creditsDisplay) creditsDisplay.textContent = '$' + window.game.credits.toLocaleString();
+                        
+                        // If the ship hangar is currently open, refresh it
+                        const shipModal = document.getElementById('shipModal');
+                        if (shipModal && shipModal.classList.contains('active') && typeof window.game.showShipModal === 'function') {
+                            window.game.showShipModal();
+                        }
+                        
+                        console.log("✅ Firebase Sync: Cloud state synchronized into game (Live Web Purchase Check).");
                     }
-                });
-                isPumpingFromCloud = false;
-                
-                // If the game is already running, we need to poke it to refresh state
-                if (needsUpdate && window.game) {
-                    window.game.playerGems = parseInt(localStorage.getItem('playerGems')) || 0;
-                    window.game.credits = parseInt(localStorage.getItem('playerCredits')) || 0;
-                    window.game.unlockedShips = JSON.parse(localStorage.getItem('unlockedShips')) || ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
-                    window.game.playerShipType = localStorage.getItem('playerShipType') || 'interceptor';
-                    
-                    if (typeof window.game.updateGemsDisplay === 'function') {
-                        window.game.updateGemsDisplay();
-                    }
-                    
-                    const creditsEl = document.getElementById('walletValue');
-                    if (creditsEl) creditsEl.textContent = window.game.credits.toLocaleString();
-                    const creditsDisplay = document.getElementById('creditsDisplay');
-                    if (creditsDisplay) creditsDisplay.textContent = '$' + window.game.credits.toLocaleString();
-                    
-                    console.log("✅ Firebase Sync: Cloud state loaded into game.");
                 }
-            }
+            }, (err) => {
+                console.error("Firebase Live Sync Error:", err);
+                isPumpingFromCloud = false;
+            });
         } catch (err) {
-            console.error("Firebase Load Error:", err);
+            console.error("Firebase Sync Setup Error:", err);
             isPumpingFromCloud = false;
         }
     } else {
