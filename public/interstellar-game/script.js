@@ -68,8 +68,8 @@ class InterstellarEngine {
             console.error("❌ CRITICAL: Canvas element NOT found!");
             return;
         }
-        this.ctx = this.canvas.getContext('2d', { alpha: false });
-        console.log("✅ Canvas context initialized");
+        this.ctx = this.canvas.getContext('2d', { alpha: true });
+        console.log("✅ Canvas context initialized (alpha: true for WebGL overlay)");
         document.title = "INTERSTELLAR v3.1 - Mindwave Lotus Restoration";
         
         // Load Mindwave Lotus image
@@ -115,6 +115,11 @@ class InterstellarEngine {
         this.matrixColor = '#00ff00'; // User-adjustable matrix stream color
         this.matrixRainbowMode = false; // Rainbow color cycling for matrix
         this.matrixAngle = 0; // Angle in degrees for stream direction
+        
+        // Cyber Style Options
+        this.cyberColor1 = '#ff007f'; // Vortex Rings
+        this.cyberColor2 = '#00ffff'; // Spirals
+        this.cyberRainbowMode = false;
 
         // Generic Background Mode Options
         this.starColors = ['#ffffff', '#aaddff', '#ffddaa']; // 3 customizable star colors
@@ -468,7 +473,152 @@ class InterstellarEngine {
         this._hangarLoopRunning = false;
 
         // Performance
+        // this.initWebGL(); // Disabled for now to focus on monetization
         this.init();
+    }
+
+    initWebGL() {
+        if (!window.THREE) {
+            console.warn("Three.js not loaded! WebGL disabled.");
+            return;
+        }
+        console.log("🌌 Initializing WebGL / Three.js Engine...");
+        
+        // 1. Create WebGL Renderer underneath 2D Canvas
+        this.glCanvas = document.createElement('canvas');
+        this.glCanvas.id = 'glcanvas';
+        this.glCanvas.style.position = 'absolute';
+        this.glCanvas.style.top = '0';
+        this.glCanvas.style.left = '0';
+        this.glCanvas.style.width = '100vw';
+        this.glCanvas.style.height = '100vh';
+        this.glCanvas.style.zIndex = '0'; // Behind 2D canvas which has z-index 1
+        
+        // Setup existing 2D canvas to be transparent
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.zIndex = '1';
+        this.canvas.style.backgroundColor = 'transparent';
+        
+        document.body.insertBefore(this.glCanvas, this.canvas);
+        
+        this.glRenderer = new THREE.WebGLRenderer({ canvas: this.glCanvas, alpha: true, antialias: true });
+        this.glRenderer.setSize(window.innerWidth, window.innerHeight);
+        this.glRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2 for performance
+        
+        // 2. Setup Scene & Camera
+        this.glScene = new THREE.Scene();
+        
+        // Use an Orthographic Camera to match 2D Canvas pixel coordinates initially
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        // To match 2D Canvas where (0,0) is top-left and Y goes down, 
+        // we can invert the Y-axis of the camera by setting top = -height/2 and bottom = height/2.
+        this.glCamera = new THREE.OrthographicCamera(
+            -width / 2, width / 2, 
+            -height / 2, height / 2, 
+            0.1, 1000
+        );
+        this.glCamera.position.z = 100;
+        
+        // 3. Initialize 3D Objects
+        this.init3DObjects();
+        
+        // Handle window resize for WebGL
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            if (this.glRenderer) {
+                this.glRenderer.setSize(w, h);
+                this.glCamera.left = -w / 2;
+                this.glCamera.right = w / 2;
+                this.glCamera.top = -h / 2;
+                this.glCamera.bottom = h / 2;
+                this.glCamera.updateProjectionMatrix();
+            }
+        });
+        
+        this.webglReady = true;
+    }
+
+    init3DObjects() {
+        if (!window.THREE) return;
+
+        // Player Ship Group
+        this.glPlayerShip = new THREE.Group();
+        
+        // Sleek triangular ship (Interceptor style)
+        const bodyGeo = new THREE.ConeGeometry( 15, 45, 4 );
+        // Default Cone points UP (+Y). In 2D game, 0 degrees is facing right (+X).
+        // Rotate -90 degrees around Z axis to point it to +X.
+        bodyGeo.rotateZ(-Math.PI / 2); 
+
+        const shipColorStr = (this.playerShip && this.playerShip.color) ? this.playerShip.color : '#00f3ff';
+        const shipColor = new THREE.Color(shipColorStr);
+
+        const bodyMat = new THREE.MeshPhongMaterial({ 
+            color: shipColor,
+            shininess: 100,
+            emissive: shipColor,
+            emissiveIntensity: 0.2
+        });
+        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+        
+        // Add some wings
+        const wingGeo = new THREE.BoxGeometry(20, 40, 5);
+        wingGeo.translate(-10, 0, 0); // push back a bit
+        const wingMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+        const wingMesh = new THREE.Mesh(wingGeo, wingMat);
+        
+        this.glPlayerShip.add(bodyMesh);
+        this.glPlayerShip.add(wingMesh);
+        
+        // Add a point light to the ship
+        const shipLight = new THREE.PointLight(shipColor, 2, 300);
+        shipLight.position.set(0, 0, 20); // slightly above
+        this.glPlayerShip.add(shipLight);
+        
+        this.glScene.add(this.glPlayerShip);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+        this.glScene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(0, 0, 100);
+        this.glScene.add(dirLight);
+    }
+
+    renderWebGL(time) {
+        if (!this.webglReady) return;
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // 2D game uses this.camera.zoom and this.camera.x / y
+        const zoom = (this.camera && this.camera.zoom) ? this.camera.zoom : 1.0;
+
+        if (this.playerShip && this.camera) {
+            // Update 3D ship position and rotation
+            if (this.glPlayerShip) {
+                this.glPlayerShip.position.set(this.playerShip.x, this.playerShip.y, 0);
+                this.glPlayerShip.rotation.z = this.playerShip.rotation;
+                
+                // In 2D, the ship size is 45 / zoom, effectively keeping it constant screen size.
+                // We'll scale the 3D mesh to match this behavior.
+                this.glPlayerShip.scale.set(1 / zoom, 1 / zoom, 1 / zoom);
+            }
+
+            // Update camera to follow the exact same coordinate as the 2D camera
+            this.glCamera.position.x = this.camera.x;
+            this.glCamera.position.y = this.camera.y;
+            
+            // Apply zoom to the camera
+            this.glCamera.zoom = zoom;
+            this.glCamera.updateProjectionMatrix();
+        }
+
+        // Render the WebGL scene
+        this.glRenderer.render(this.glScene, this.glCamera);
     }
 
     async initTemplates() {
@@ -669,8 +819,10 @@ class InterstellarEngine {
         this.canvas.addEventListener('pointerdown', e => this.onPointerDown(e));
         window.addEventListener('pointermove', e => this.onPointerMove(e));
         window.addEventListener('pointerup', e => this.onPointerUp(e));
-        this.canvas.addEventListener('wheel', e => {
-            console.log('[Zoom Event] Wheel event fired');
+        window.addEventListener('wheel', e => {
+            // Prevent zoom on scrollable UI elements
+            if (e.target.closest('.modal-content') || e.target.closest('.joystick-container') || e.target.closest('.mission-log')) return;
+            // console.log('[Zoom Event] Wheel event fired');
             this.onWheel(e);
         }, { passive: false });
         this.canvas.addEventListener('contextmenu', e => this.onRightClick(e)); // Right-click deletion
@@ -787,21 +939,49 @@ class InterstellarEngine {
             });
         }
 
-        // Matrix length slider
-        const matrixLengthSlider = document.getElementById('matrixLengthSlider');
-        if (matrixLengthSlider) {
-            matrixLengthSlider.addEventListener('input', (e) => {
+        const bgLengthSlider = document.getElementById('matrixLengthSlider');
+        if (bgLengthSlider) {
+            bgLengthSlider.addEventListener('input', (e) => {
                 this.matrixLengthMultiplier = parseFloat(e.target.value);
                 document.getElementById('matrixLengthValue').textContent = this.matrixLengthMultiplier.toFixed(1) + 'x';
             });
         }
 
-        // Matrix angle slider
-        const matrixAngleSlider = document.getElementById('matrixAngleSlider');
-        if (matrixAngleSlider) {
-            matrixAngleSlider.addEventListener('input', (e) => {
-                this.matrixAngle = parseFloat(e.target.value);
+        const bgAngleSlider = document.getElementById('matrixAngleSlider');
+        if (bgAngleSlider) {
+            bgAngleSlider.addEventListener('input', (e) => {
+                this.matrixAngle = parseInt(e.target.value, 10);
                 document.getElementById('matrixAngleValue').textContent = this.matrixAngle + '°';
+            });
+        }
+
+        const bgColorPicker = document.getElementById('matrixColorPicker');
+        if (bgColorPicker) {
+            bgColorPicker.addEventListener('input', (e) => {
+                this.matrixColor = e.target.value;
+                if (this.matrixRainbowMode) {
+                    this.toggleMatrixRainbow(); // Turn off rainbow if picking a color manually
+                }
+            });
+        }
+
+        const cyberColor1Picker = document.getElementById('cyberColor1Picker');
+        if (cyberColor1Picker) {
+            cyberColor1Picker.addEventListener('input', (e) => {
+                this.cyberColor1 = e.target.value;
+                if (this.cyberRainbowMode) {
+                    this.toggleCyberRainbow();
+                }
+            });
+        }
+
+        const cyberColor2Picker = document.getElementById('cyberColor2Picker');
+        if (cyberColor2Picker) {
+            cyberColor2Picker.addEventListener('input', (e) => {
+                this.cyberColor2 = e.target.value;
+                if (this.cyberRainbowMode) {
+                    this.toggleCyberRainbow();
+                }
             });
         }
 
@@ -1566,56 +1746,91 @@ class InterstellarEngine {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0); // Force screen space
 
-        // Horizon line
         const horizon = canvas.height * 0.55;
+        const centerX = canvas.width / 2;
+        const maxRadius = canvas.width * 1.5;
 
-        // Sunset/Synthwave sun
-        ctx.beginPath();
-        ctx.arc(canvas.width / 2, horizon, 150, Math.PI, 0);
-        const sunGrad = ctx.createLinearGradient(0, horizon - 150, 0, horizon);
-        sunGrad.addColorStop(0, '#ff007f');
-        sunGrad.addColorStop(1, '#ffaa00');
-        ctx.fillStyle = sunGrad;
-        ctx.fill();
+        // Space Background
+        ctx.fillStyle = '#050011';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Sun scanlines
-        ctx.globalCompositeOperation = 'destination-out';
-        for (let i = 0; i < 150; i += 15) {
-            ctx.fillRect(canvas.width / 2 - 150, horizon - i, 300, i * 0.1);
-        }
-        ctx.globalCompositeOperation = 'source-over';
+        // Move to vanishing point and scale Y to create a horizontal plane perspective
+        ctx.translate(centerX, horizon);
+        ctx.scale(1, 0.3); // Squash vertically to look like a horizontal plane
 
-        // Floor Grid
-        ctx.fillStyle = '#0f0f1b';
-        ctx.fillRect(0, horizon, canvas.width, canvas.height - horizon);
-
-        const gridSize = 40;
-        const gridSpeed = (time * 0.05) % gridSize;
-
-        ctx.strokeStyle = '#ff007f';
-        ctx.lineWidth = 1.5;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ff007f';
-
-        ctx.beginPath();
+        let color1 = this.cyberColor1;
+        let color2 = this.cyberColor2;
         
-        // Vertical perspective lines
-        const vanishingPoint = { x: canvas.width / 2, y: horizon };
-        for (let i = -canvas.width; i <= canvas.width * 2; i += gridSize * 2) {
-            ctx.moveTo(vanishingPoint.x, vanishingPoint.y);
-            ctx.lineTo(i, canvas.height);
+        if (this.cyberRainbowMode) {
+            const hue1 = (time * 0.05) % 360;
+            const hue2 = (time * 0.05 + 180) % 360; // Offset by 180 degrees
+            color1 = `hsl(${hue1}, 100%, 50%)`;
+            color2 = `hsl(${hue2}, 100%, 50%)`;
         }
 
-        // Horizontal perspective lines moving towards camera
-        for (let y = 0; y < canvas.height - horizon; y += gridSize) {
-            const perspectiveY = horizon + Math.pow(y / (canvas.height - horizon), 2) * (canvas.height - horizon) + gridSpeed;
-            if (perspectiveY <= canvas.height) {
-                ctx.moveTo(0, perspectiveY);
-                ctx.lineTo(canvas.width, perspectiveY);
-            }
-        }
+        // Singularity core
+        ctx.beginPath();
+        ctx.arc(0, 0, 80, 0, Math.PI * 2);
+        ctx.fillStyle = '#000000';
+        ctx.shadowBlur = 100;
+        ctx.shadowColor = color1;
+        ctx.fill();
+        ctx.shadowBlur = 0;
 
+        // Setup Vortex styling
+        ctx.lineWidth = 2.0;
+
+        // 1. Concentric rings moving inward (accretion)
+        // We reverse the phase to make them suck into the hole
+        const numRings = 20;
+        const scalePhase = 1 - ((time * 0.0005) % 1);
+
+        ctx.beginPath();
+        ctx.strokeStyle = color1;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = color1;
+
+        for (let i = 1; i <= numRings; i++) {
+            // Inward sucking effect
+            const ratio = (i - 1 + scalePhase) / numRings;
+            // Prevent drawing inside the black hole event horizon
+            if (ratio < 0.05) continue; 
+            
+            const r = Math.pow(ratio, 2) * maxRadius;
+            ctx.moveTo(r, 0);
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+        }
         ctx.stroke();
+
+        // 2. Swirling radial lines (Polar Grid)
+        const numSpokes = 36;
+        const rotationBase = time * 0.0002;
+
+        ctx.beginPath();
+        ctx.strokeStyle = color2;
+        ctx.shadowColor = color2;
+
+        for (let i = 0; i < numSpokes; i++) {
+            const angle = (i / numSpokes) * Math.PI * 2;
+            
+            // Draw a curved line (spiral) sucking into the center
+            const startRadius = 80;
+            ctx.moveTo(Math.cos(angle + rotationBase) * startRadius, Math.sin(angle + rotationBase) * startRadius);
+            
+            // Use quadratic curve to make it spiral
+            const cpRadius = maxRadius * 0.4;
+            const cpAngle = angle + rotationBase + 1.5; // Curve twist
+            const cpX = Math.cos(cpAngle) * cpRadius;
+            const cpY = Math.sin(cpAngle) * cpRadius;
+            
+            const endAngle = angle + rotationBase + 3.0;
+            const endX = Math.cos(endAngle) * maxRadius;
+            const endY = Math.sin(endAngle) * maxRadius;
+            
+            ctx.quadraticCurveTo(cpX, cpY, endX, endY);
+        }
+        ctx.stroke();
+
         ctx.restore();
     }
 
@@ -1688,13 +1903,23 @@ class InterstellarEngine {
             }
         });
 
-        // Show/hide matrix panel when cyber/matrix style is active
+        // Show/hide matrix panel when matrix style is active
         const matrixPanel = document.getElementById('matrixPanel');
         if (matrixPanel) {
-            if (this.activeStyles.has('cyber') || this.activeStyles.has('matrix')) {
+            if (this.activeStyles.has('matrix')) {
                 matrixPanel.classList.remove('hidden');
             } else {
                 matrixPanel.classList.add('hidden');
+            }
+        }
+        
+        // Show/hide cyber panel when cyber style is active
+        const cyberPanel = document.getElementById('cyberPanel');
+        if (cyberPanel) {
+            if (this.activeStyles.has('cyber')) {
+                cyberPanel.classList.remove('hidden');
+            } else {
+                cyberPanel.classList.add('hidden');
             }
         }
 
@@ -10693,6 +10918,15 @@ class InterstellarEngine {
         const btn = document.getElementById('matrixRainbowBtn');
         if (btn) btn.classList.toggle('active', this.matrixRainbowMode);
     }
+    
+    toggleCyberRainbow() {
+        this.cyberRainbowMode = !this.cyberRainbowMode;
+        const btn = document.getElementById('cyberRainbowBtn');
+        if (btn) {
+            btn.classList.toggle('active', this.cyberRainbowMode);
+            btn.textContent = this.cyberRainbowMode ? '🌈 Rainbow: ON' : '🌈 Rainbow: OFF';
+        }
+    }
 
     updateStarColors() {
         try {
@@ -11854,8 +12088,8 @@ class InterstellarEngine {
             this.bgParticles = [];
 
             // 2. Compose Layers based on active styles
-            // Order matters for layering (Deep Space -> Nebula -> Alien -> Cyber)
-            const orderedStyles = ['deep-space', 'nebula', 'alien', 'cyber'];
+            // Order matters for layering (Deep Space -> Nebula -> Alien -> Cyber -> Matrix)
+            const orderedStyles = ['deep-space', 'nebula', 'alien', 'cyber', 'matrix'];
             const activeSet = new Set(this.activeStyles);
             this.activeStyles.clear();
 
@@ -13170,6 +13404,9 @@ class InterstellarEngine {
         }
 
         try {
+            if (this.webglReady) {
+                this.renderWebGL(time);
+            }
             this.draw(time);
         } catch (e) {
             console.error('FATAL RENDER ERROR:', e);
@@ -13203,8 +13440,12 @@ class InterstellarEngine {
             this.shakeDuration--;
         }
 
-        ctx.fillStyle = this.config.bgColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (this.webglReady) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        } else {
+            ctx.fillStyle = this.config.bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
         // SYNTWHAVE GRID BACKGROUND
         if (this.activeStyles.has('cyber') && this.cyberGrid) {
@@ -13242,12 +13483,13 @@ class InterstellarEngine {
                     const starColor = s.color || '#ffffff';
 
                     if (this.bgWarpMode && !this.bgDriftMode) {
-                        // ====== STAR WARS LIGHTSPEED JUMP STREAKS ======
+                        // ====== CINEMATIC HYPERSPACE JUMP ======
                         const dx = sx - centerX;
                         const dy = sy - centerY;
                         const distFromCenter = Math.sqrt(dx * dx + dy * dy);
 
-                        if (distFromCenter < 3) return;
+                        // Don't draw if too close to the singularity
+                        if (distFromCenter < 15) return;
 
                         const warpIntensity = this.warpSpeed || 0;
                         const sliderValue = this.warpSpeedMultiplier || 1;
@@ -13255,11 +13497,12 @@ class InterstellarEngine {
                         const perspFactor = distFromCenter / maxDist;
                         const depthFactor = s.depth || 0.5;
                         
-                        const lengthFactor = Math.sqrt(sliderValue) * 16 * depthFactor;
-                        const streakLength = 5 + lengthFactor * (2 + perspFactor * 24) * (warpIntensity / 8);
+                        // Streaks get exponentially longer at the edges (fov distortion)
+                        const lengthFactor = Math.sqrt(sliderValue) * 20 * depthFactor;
+                        const streakLength = 5 + lengthFactor * (1 + Math.pow(perspFactor, 2) * 40) * (warpIntensity / 8);
                         
-                        // CRITICAL FIX: NEVER let the tail cross the black hole at the center (10px radius)
-                        const cappedStreak = Math.min(streakLength, distFromCenter - 10);
+                        // Prevent the tail from piercing the central singularity core
+                        const cappedStreak = Math.min(streakLength, distFromCenter - 15);
 
                         const dirOutX = dx / Math.max(0.1, distFromCenter);
                         const dirOutY = dy / Math.max(0.1, distFromCenter);
@@ -13269,18 +13512,27 @@ class InterstellarEngine {
                         const tailX = sx - dirOutX * cappedStreak;
                         const tailY = sy - dirOutY * cappedStreak;
 
-                        const baseAlpha = s.alpha || 0.2;
-                        const intensityBoost = Math.min(0.5, warpIntensity * 0.2);
-                        const alpha = Math.min(0.85, baseAlpha + intensityBoost);
+                        // Dynamic opacity (more transparent in the center, solid at edges)
+                        const baseAlpha = s.alpha || 0.3;
+                        const alpha = Math.min(0.9, baseAlpha + (perspFactor * 0.6) * (warpIntensity / 8));
                         ctx.globalAlpha = alpha;
 
                         if (cappedStreak > 2) {
                             try {
-                                const baseWidth = Math.max(0.5, size * 0.4 + warpIntensity * 0.02);
+                                const baseWidth = Math.max(0.5, size * 0.5 + (perspFactor * 3) * (warpIntensity / 8));
 
-                                // Extract RGB from hex to create dynamic glowing tails
+                                // Chromatic Shift & High Energy colors at high speeds
                                 let r = 255, g = 255, b = 255;
-                                if (starColor.startsWith('#')) {
+                                
+                                // Color shifting based on speed and position
+                                if (warpIntensity > 4) {
+                                    // High energy dynamic shift
+                                    if (Math.random() > 0.5) {
+                                        r = 0; g = 255; b = 255; // Cyan
+                                    } else {
+                                        r = 255; g = 0; b = 255; // Magenta
+                                    }
+                                } else if (starColor.startsWith('#')) {
                                     const hex = starColor.replace('#', '');
                                     if (hex.length === 6) {
                                         r = parseInt(hex.substring(0, 2), 16);
@@ -13289,26 +13541,32 @@ class InterstellarEngine {
                                     }
                                 }
 
+                                // Glowing Trail
                                 const grad = ctx.createLinearGradient(tailX, tailY, headX, headY);
-                                // Faded tail at the black hole
                                 grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
-                                // Brightest at the head
-                                const brightR = Math.min(255, r + 80);
-                                const brightG = Math.min(255, g + 80);
-                                const brightB = Math.min(255, b + 80);
-                                grad.addColorStop(1, `rgba(${brightR}, ${brightG}, ${brightB}, 0.9)`);
+                                const brightR = Math.min(255, r + 100);
+                                const brightG = Math.min(255, g + 100);
+                                const brightB = Math.min(255, b + 100);
+                                grad.addColorStop(1, `rgba(${brightR}, ${brightG}, ${brightB}, 1)`);
 
                                 ctx.strokeStyle = grad;
-                                ctx.lineWidth = baseWidth * (1 + perspFactor * 0.5);
+                                ctx.lineWidth = baseWidth;
                                 ctx.lineCap = "round";
+                                
+                                // massive glow for stars near the edge of the screen
+                                ctx.shadowBlur = 10 + (perspFactor * 30); 
+                                ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+
                                 ctx.beginPath();
                                 ctx.moveTo(tailX, tailY);
                                 ctx.lineTo(headX, headY);
                                 ctx.stroke();
 
-                                if (cappedStreak > 15) {
+                                // Intense white core for long streaks
+                                if (cappedStreak > 20) {
                                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-                                    ctx.lineWidth = baseWidth * 0.4;
+                                    ctx.lineWidth = baseWidth * 0.3;
+                                    ctx.shadowBlur = 0; // Turn off inner shadow
                                     ctx.beginPath();
                                     ctx.moveTo(tailX, tailY);
                                     ctx.lineTo(headX, headY);
@@ -13317,6 +13575,7 @@ class InterstellarEngine {
                             } catch (e) {
                                 ctx.strokeStyle = 'rgba(200, 240, 255, 0.8)';
                                 ctx.lineWidth = size;
+                                ctx.shadowBlur = 0;
                                 ctx.beginPath();
                                 ctx.moveTo(tailX, tailY);
                                 ctx.lineTo(headX, headY);
@@ -13341,12 +13600,49 @@ class InterstellarEngine {
                 console.error('[BG Error] Star rendering failed:', renderError);
             }
 
-            // Draw a tiny black circle at the vanishing point to represent a black hole or point of origin
+            // Reset shadows
+            ctx.shadowBlur = 0;
+
+            // Draw Pulsing Warp Core Singularity
             if (this.bgWarpMode && !this.bgDriftMode) {
+                const warpIntensity = this.warpSpeed || 0;
+                
+                // Expanding Tunnel Rings
+                const numRings = 5;
+                const ringSpeed = time * 2;
+                ctx.lineWidth = 2;
+                
+                for(let i = 0; i < numRings; i++) {
+                    const phase = ((ringSpeed + i * (100 / numRings)) % 100) / 100;
+                    const ringRadius = 15 + Math.pow(phase, 3) * (canvas.width * 1.5);
+                    const ringAlpha = (1 - phase) * 0.3 * (warpIntensity / 8);
+                    
+                    if (ringAlpha > 0.01) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(0, 255, 255, ${ringAlpha})`;
+                        ctx.arc(canvas.width / 2, canvas.height / 2, ringRadius, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+
+                // Central Singularity
+                const pulse = Math.sin(time * 15) * 5;
+                const coreRadius = 15 + (warpIntensity * 0.5) + pulse;
+                
                 ctx.globalAlpha = 1.0;
-                ctx.fillStyle = '#000000';
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 30 + warpIntensity * 2;
+                ctx.shadowColor = '#00ffff';
+                
                 ctx.beginPath();
-                ctx.arc(canvas.width / 2, canvas.height / 2, 10, 0, Math.PI * 2);
+                ctx.arc(canvas.width / 2, canvas.height / 2, coreRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Inner dark void
+                ctx.fillStyle = '#000000';
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, Math.max(2, coreRadius * 0.6), 0, Math.PI * 2);
                 ctx.fill();
             }
 
@@ -13706,8 +14002,8 @@ class InterstellarEngine {
                 ctx.font = `${stream.size}px monospace, 'Courier New', monospace`;
                 ctx.textBaseline = 'middle';
 
-                // Use Math.floor to eliminate sub-pixel fractional rendering jitter on 120Hz displays
-                const snappedY = Math.floor(stream.y);
+                // Removed Math.floor to allow smooth sub-pixel scrolling at slow speeds!
+                const snappedY = stream.y;
 
                 // Only draw visible characters based on length multiplier
                 for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
