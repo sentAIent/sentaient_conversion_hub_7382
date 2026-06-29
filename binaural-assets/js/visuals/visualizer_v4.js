@@ -1516,6 +1516,7 @@ static CYMATIC_PATTERNS = [
             varying float vElevation;
             varying vec3 vViewPosition;
             varying vec3 vWorldPosition;
+            varying vec3 vSurfaceNormal;
             varying float vFoamFactor;
             varying float vStyle;
             varying float vPhaseWashout;
@@ -1550,10 +1551,61 @@ static CYMATIC_PATTERNS = [
                 return 130.0 * dot(m, g);
             }
 
+            vec3 getWavePosition(vec3 p, float time, float activeAmp, float activeCurl, float phase, float react) {
+                float waveX = p.x;
+                if (uLoopActive > 0.5) {
+                    waveX = p.x - 100.0 + (phase * 150.0); // Sweep from left to right
+                }
+                
+                // Massive base height
+                float baseHeight = 60.0 * activeAmp * (1.0 + react * 0.3);
+                
+                // Asymmetric bell curve
+                float envelope = 0.0;
+                if (waveX < 0.0) {
+                    envelope = exp(-pow(waveX * 0.012, 2.0)); // Back of wave slope
+                } else {
+                    envelope = exp(-pow(waveX * 0.035, 2.0)); // Front cliff (steep)
+                }
+                
+                // Apply base height
+                p.z += (baseHeight * envelope);
+                
+                if (uReactivity > 0.1) {
+                    float chaos = snoise(vec2(p.x * 0.2, p.y * 0.2 + time));
+                    p.z += (chaos * 20.0 * react * envelope); 
+                }
+                
+                // --- PARAMETRIC SPACE FOLDING (TRUE TEAHUPO'O BARREL TUBE) ---
+                if (waveX > -25.0 && activeCurl > 0.05) {
+                    // Pivot point for the rotation (forward and down from the peak)
+                    vec2 pivot = vec2(35.0, baseHeight * 0.3);
+                    
+                    // Maximum rotation near the crest (waveX ~ 10)
+                    float curlFactor = exp(-pow((waveX - 10.0) * 0.03, 2.0));
+                    
+                    // Total rotation angle (in radians)
+                    float maxAngle = 3.14159 * 1.35; // Over 180 degrees to form a tube
+                    float angle = curlFactor * (activeCurl / 4.0) * maxAngle;
+                    angle += (react * 0.2 * curlFactor); // audio reactivity in the curl
+                    
+                    float s = sin(angle);
+                    float c = cos(angle);
+                    
+                    float dx = p.x - pivot.x;
+                    float dz = p.z - pivot.y;
+                    
+                    // Rotate
+                    p.x = dx * c - dz * s + pivot.x;
+                    p.z = dx * s + dz * c + pivot.y;
+                }
+                
+                return p;
+            }
+
             void main() {
                 vUv = uv;
                 vStyle = uStyle;
-                vec3 pos = position;
                 float time = uTime * 1.5;
                 vPhaseWashout = 0.0;
                 
@@ -1561,12 +1613,9 @@ static CYMATIC_PATTERNS = [
                 
                 // --- LIFECYCLE LOGIC ---
                 float activeAmp = uAmplitude;
-                // Target Curl uses a power curve so the barrel only completes near the end of the slider
                 float targetCurl = pow(uCurl / 4.0, 4.0) * 4.0; 
                 float activeCurl = targetCurl;
-                
                 float phase = 0.0;
-                float waveX = pos.x; 
                 
                 if (uLoopActive > 0.5) {
                     float loopLen = 10.0; 
@@ -1576,60 +1625,38 @@ static CYMATIC_PATTERNS = [
                     float formProgress = smoothstep(0.0, 0.3, phase);
                     activeAmp = mix(0.1, uAmplitude, formProgress);
                     
-                    // Pitching
+                    // Pitching (Throwing the lip)
                     float pitchProgress = smoothstep(0.3, 0.6, phase);
                     activeCurl = mix(0.0, targetCurl, pitchProgress);
                     
-                    // Crashing
+                    // Crashing (Total wipeout into the ocean)
                     float crashProgress = smoothstep(0.85, 0.95, phase);
                     activeAmp = mix(activeAmp, 0.1, crashProgress);
                     activeCurl = mix(activeCurl, 0.0, crashProgress);
                     
-                    // Washout
+                    // Washout (White foam everywhere)
                     vPhaseWashout = smoothstep(0.9, 1.0, phase);
-                    
-                    waveX = pos.x - 100.0 + (phase * 150.0);
                 }
                 
-                // Massive base height. Uncut by any cylinder radius!
-                float baseHeight = 60.0 * activeAmp * (1.0 + react * 0.3);
+                // Compute actual position
+                vec3 finalPos = getWavePosition(position, time, activeAmp, activeCurl, phase, react);
                 
-                // Asymmetric bell curve
-                float envelope = 0.0;
-                if (waveX < 0.0) {
-                    envelope = exp(-pow(waveX * 0.012, 2.0)); // Back of wave slope
-                } else {
-                    envelope = exp(-pow(waveX * 0.04, 2.0)); // Front cliff
-                }
-                
-                // Apply base height
-                pos.z += (baseHeight * envelope);
-                
-                // Chaotic violent spikes on bass
-                if (uReactivity > 0.1) {
-                    float chaos = snoise(vec2(pos.x * 0.2, pos.y * 0.2 + time));
-                    pos.z += (chaos * 20.0 * react * envelope); 
-                }
-                
-                // --- RESTORED CLASSIC CURL PHYSICS ---
-                // No more bizarre trigonometry. We push X drastically to create the massive overhang.
-                // We also slightly dip Z based on the curl to simulate the lip falling.
-                float curlAmount = pow(envelope, 3.0) * activeCurl * 45.0 * (1.0 + react * 0.5);
-                pos.x += curlAmount;
-                
-                // Parabolic dip to make the overhang actually fall downward like a barrel
-                if (activeCurl > 0.1) {
-                    // The more it pushes forward (X), the more it dips down (Z)
-                    float dip = pow(activeCurl / 4.0, 2.0) * 35.0 * pow(envelope, 3.0);
-                    pos.z -= dip;
-                }
+                // Compute mathematical normals via finite difference so lighting perfectly wraps the tube
+                vec3 pX = getWavePosition(position + vec3(0.5, 0.0, 0.0), time, activeAmp, activeCurl, phase, react);
+                vec3 pY = getWavePosition(position + vec3(0.0, 0.5, 0.0), time, activeAmp, activeCurl, phase, react);
+                vec3 tangent = normalize(pX - finalPos);
+                vec3 bitangent = normalize(pY - finalPos);
+                vec3 localNormal = normalize(cross(tangent, bitangent));
+                vSurfaceNormal = normalize(normalMatrix * localNormal);
 
-                vElevation = pos.z;
+                vElevation = finalPos.z;
                 
-                float foamNoise = snoise(pos.xy * 0.2 - vec2(time));
-                vFoamFactor = smoothstep(baseHeight * 0.5, baseHeight, pos.z) + foamNoise * 0.3;
+                // Foam calculation
+                float baseHeight = 60.0 * activeAmp * (1.0 + react * 0.3);
+                float foamNoise = snoise(finalPos.xy * 0.2 - vec2(time));
+                vFoamFactor = smoothstep(baseHeight * 0.5, baseHeight, finalPos.z) + foamNoise * 0.3;
                 
-                vec4 worldPos = modelMatrix * vec4(pos, 1.0);
+                vec4 worldPos = modelMatrix * vec4(finalPos, 1.0);
                 vWorldPosition = worldPos.xyz;
                 
                 vec4 mvPosition = viewMatrix * worldPos;
@@ -1644,6 +1671,7 @@ static CYMATIC_PATTERNS = [
             varying float vElevation;
             varying vec3 vViewPosition;
             varying vec3 vWorldPosition;
+            varying vec3 vSurfaceNormal;
             varying float vFoamFactor;
             varying float vStyle;
             varying float vPhaseWashout;
@@ -1717,44 +1745,28 @@ static CYMATIC_PATTERNS = [
                     finalColor = mix(finalColor, uFoamColor, vPhaseWashout * 0.8);
                 }
                 
-                // Sun & Glare (uMist slider repurposed as Sun Reflection)
+                // Sun Glare & Lighting Setup
                 float alpha = 1.0;
                 
                 if (uMist > 0.05) {
-                    // Position of the visible sun disc in world space (Top right horizon)
-                    vec3 visibleSunPos = vec3(100.0, 30.0, -180.0);
-                    float sunDist = length(vWorldPosition - visibleSunPos);
+                    // Use the mathematically perfect surface normal we calculated in the vertex shader
+                    vec3 normal = vSurfaceNormal;
                     
-                    // Sun Disc
-                    float sunRadius = 40.0;
-                    float sunCore = 1.0 - smoothstep(sunRadius * 0.8, sunRadius, sunDist);
-                    float sunGlow = 1.0 - smoothstep(sunRadius, sunRadius * 4.0, sunDist);
+                    // Add minor surface ripple noise to the analytical normal
+                    float ripple = snoise(vWorldPosition.xy * 0.1 - vec2(0.0, uTime * 2.0));
+                    normal.x += ripple * 0.15;
+                    normal.y += ripple * 0.15;
+                    normal = normalize(normal);
                     
-                    vec3 sunColor = vec3(1.0, 0.9, 0.6); // Warm golden sun
-                    
-                    // Add the physical sun disc to the background
-                    float sunMix = max(sunCore, sunGlow * 0.5) * (uMist / 3.0);
-                    finalColor = mix(finalColor, sunColor, sunMix);
-                    
-                    // Ocean Glare / Specular Reflection
                     // Use the original light source position to perfectly restore the glare the user loved
                     vec3 lightSourcePos = vec3(-50.0, 200.0, 40.0);
                     vec3 lightDir = normalize(lightSourcePos - vWorldPosition);
-                    // View vector (roughly down the Y axis for painting perspective)
                     vec3 viewDir = normalize(vViewPosition);
                     
-                    // Fake a normal based on the noise/elevation
-                    // For a flat ocean, normal is (0,0,1)
-                    vec3 normal = vec3(0.0, 0.0, 1.0);
-                    // Add some noise to the normal to simulate rippling water for the glare
-                    float ripple = snoise(vWorldPosition.xy * 0.1 - vec2(0.0, uTime * 2.0));
-                    normal.x += ripple * 0.2;
-                    normal.y += ripple * 0.2;
-                    normal = normalize(normal);
-                    
-                    // Blinn-Phong specular
+                    // Blinn-Phong specular highlight - wrapped smoothly inside the barrel
                     vec3 halfVector = normalize(lightDir + viewDir);
-                    float spec = pow(max(dot(normal, halfVector), 0.0), 64.0); // Shininess
+                    float NdotH = max(dot(normal, halfVector), 0.0);
+                    float spec = pow(NdotH, 64.0); // Shininess
                     
                     // Add a broad specular highlight on the water
                     float glareMix = spec * (uMist / 1.5) * smoothstep(-20.0, 10.0, vElevation);
@@ -1762,6 +1774,7 @@ static CYMATIC_PATTERNS = [
                     // Don't add glare on the foam
                     glareMix *= (1.0 - isFoam);
                     
+                    vec3 sunColor = vec3(1.0, 0.9, 0.6);
                     finalColor += sunColor * glareMix;
                 }
 
