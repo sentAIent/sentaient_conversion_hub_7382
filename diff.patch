@@ -1,0 +1,231 @@
+diff --git a/binaural-assets/js/controls_v3.js b/binaural-assets/js/controls_v3.js
+index 4cb7b6a..77f01b8 100644
+--- a/binaural-assets/js/controls_v3.js
++++ b/binaural-assets/js/controls_v3.js
+@@ -4752,3 +4752,226 @@ function setupSettingsHandlers() {
+         });
+     }
+ }
++
++// ==========================================
++// CUSTOM MIXES FEATURE
++// ==========================================
++function saveCustomMixPrompt() {
++    const mixName = prompt("Enter a name for this custom mix:", "My Mix " + (getCustomMixes().length + 1));
++    if (!mixName) return;
++    
++    const mixes = getCustomMixes();
++    if (mixes.length >= 20) {
++        alert("You have reached the limit of 20 custom mixes. Please delete one first.");
++        return;
++    }
++    
++    // gather state
++    const newMix = {
++        id: 'custom-' + Date.now(),
++        name: mixName,
++        baseFreq: parseFloat(els.baseSlider.value),
++        beatFreq: parseFloat(els.beatSlider.value),
++        vol: parseFloat(els.volSlider.value),
++        activeVisuals: Array.from(window.state?.visualizer?.activeModes || []),
++        cymaticClass: window.state?.visualizer?.currentCymaticClass || 0,
++        cymaticVariation: window.state?.visualizer?.currentCymaticVariation || 0,
++        activeSoundscapes: { ...window.state?.activeSoundscapes },
++        audioMode: window.state?.audioMode || 'binaural'
++    };
++    
++    mixes.push(newMix);
++    localStorage.setItem('mindwave_custom_mixes', JSON.stringify(mixes));
++    renderCustomMixes();
++    if (window.showToast) window.showToast('Custom Mix Saved!', 'success');
++}
++
++function getCustomMixes() {
++    try {
++        return JSON.parse(localStorage.getItem('mindwave_custom_mixes') || '[]');
++    } catch(e) {
++        return [];
++    }
++}
++
++function renderCustomMixes() {
++    const container = document.getElementById('customMixesContainer');
++    const countEl = document.getElementById('customMixCount');
++    if (!container) return;
++    
++    const mixes = getCustomMixes();
++    if(countEl) countEl.innerText = `${mixes.length}/20`;
++    
++    container.innerHTML = '';
++    mixes.forEach(mix => {
++        const btn = document.createElement('div');
++        btn.className = "flex items-center justify-between w-full p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all";
++        
++        btn.innerHTML = `
++            <div class="flex-1 cursor-pointer flex flex-col" onclick="window.loadCustomMix('${mix.id}')">
++                <span class="text-xs font-bold text-white mb-0.5">${mix.name}</span>
++                <span class="text-[9px] text-[var(--text-muted)]">${mix.baseFreq}Hz | Beat: ${mix.beatFreq}Hz</span>
++            </div>
++            <button onclick="window.deleteCustomMix('${mix.id}')" class="p-2 ml-2 hover:bg-red-500/20 rounded-md text-white/50 hover:text-red-400 transition-colors" title="Delete Mix">
++                <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
++                    <line x1="18" x2="6" y1="6" y2="18"></line>
++                    <line x1="6" x2="18" y1="6" y2="18"></line>
++                </svg>
++            </button>
++        `;
++        container.appendChild(btn);
++    });
++}
++
++function loadCustomMix(id) {
++    const mixes = getCustomMixes();
++    const mix = mixes.find(m => m.id === id);
++    if (!mix) return;
++    
++    // Set audio values
++    if (window.updateValue) {
++        els.baseSlider.value = mix.baseFreq;
++        els.beatSlider.value = mix.beatFreq;
++        els.volSlider.value = mix.vol;
++        window.updateValue(els.baseSlider, 'baseValue', 'Hz');
++        window.updateValue(els.beatSlider, 'beatValue', 'Hz');
++        window.updateValue(els.volSlider, 'volValue', '%', true);
++        
++        if (window.updateAudioParams) window.updateAudioParams();
++    }
++    
++    // Handle Audio Mode
++    if (mix.audioMode && window.setAudioMode) {
++        window.setAudioMode(mix.audioMode);
++    }
++    
++    // Set Visuals
++    if (window.state && window.state.visualizer) {
++        // clear current visuals
++        Array.from(window.state.visualizer.activeModes).forEach(mode => {
++            window.state.visualizer.toggleMode(mode);
++        });
++        
++        // enable saved visuals
++        if (mix.activeVisuals && mix.activeVisuals.length > 0) {
++            mix.activeVisuals.forEach(mode => {
++                window.state.visualizer.toggleMode(mode);
++            });
++        }
++        
++        // Handle Cymatics specifically if it's active
++        if (mix.activeVisuals.includes('cymatics')) {
++            window.state.visualizer.currentCymaticClass = mix.cymaticClass;
++            window.state.visualizer.currentCymaticVariation = mix.cymaticVariation;
++            if (window.state.visualizer.updateCymaticsUniforms) {
++                window.state.visualizer.updateCymaticsUniforms();
++            }
++        }
++    }
++    
++    // Set Soundscapes
++    if (window.toggleSoundscape && mix.activeSoundscapes) {
++        // Stop all current
++        Object.keys(window.state.activeSoundscapes).forEach(sid => {
++            if(window.state.activeSoundscapes[sid]) {
++                window.toggleSoundscape(sid, false);
++                const btn = document.querySelector(".soundscape-btn[data-soundscape='" + sid + "']");
++                if (btn) btn.classList.remove('active', 'border-[var(--accent)]');
++            }
++        });
++        
++        // Start saved
++        Object.keys(mix.activeSoundscapes).forEach(sid => {
++            if (mix.activeSoundscapes[sid]) {
++                window.toggleSoundscape(sid, true);
++                const btn = document.querySelector(".soundscape-btn[data-soundscape='" + sid + "']");
++                if (btn) btn.classList.add('active', 'border-[var(--accent)]');
++            }
++        });
++    }
++    
++    if (window.showToast) window.showToast('Custom Mix Loaded', 'info');
++}
++
++function deleteCustomMix(id) {
++    if(!confirm("Are you sure you want to delete this custom mix?")) return;
++    let mixes = getCustomMixes();
++    mixes = mixes.filter(m => m.id !== id);
++    localStorage.setItem('mindwave_custom_mixes', JSON.stringify(mixes));
++    renderCustomMixes();
++}
++
++window.saveCustomMixPrompt = saveCustomMixPrompt;
++window.loadCustomMix = loadCustomMix;
++window.deleteCustomMix = deleteCustomMix;
++window.renderCustomMixes = renderCustomMixes;
++
++// call renderCustomMixes on load
++document.addEventListener('DOMContentLoaded', () => {
++    setTimeout(renderCustomMixes, 1000);
++});
++
++// ==========================================
++// DAILY USAGE TRACKER
++// ==========================================
++const USAGE_LIMITS = {
++    'free': 15 * 60, // 15 mins in seconds
++    'meditation': 60 * 60, // 1 hour in seconds
++    'zen': 2 * 60 * 60, // 2 hours
++    'nirvana': Infinity,
++    'lifetime': Infinity
++};
++
++function initUsageTracker() {
++    let trackerInterval;
++    
++    function getToday() {
++        return new Date().toISOString().split('T')[0];
++    }
++    
++    function getUsage() {
++        const today = getToday();
++        const data = JSON.parse(localStorage.getItem('mindwave_daily_usage') || '{}');
++        if (data.date !== today) {
++            return { date: today, seconds: 0 };
++        }
++        return data;
++    }
++    
++    function saveUsage(data) {
++        localStorage.setItem('mindwave_daily_usage', JSON.stringify(data));
++    }
++    
++    function checkLimit() {
++        if (!window.state || !window.state.isPlaying) return;
++        
++        // If they unlocked premium locally (e.g. promo code), bypass limit
++        if (window.__MOCK_PREMIUM || localStorage.getItem('mindwave_premium_unlocked') === 'true') return;
++        
++        const usage = getUsage();
++        usage.seconds += 1;
++        
++        const tier = window.state.userTier || 'free';
++        let limit = USAGE_LIMITS[tier] || USAGE_LIMITS['free'];
++        
++        // Once limit is hit, stop playback and show paywall
++        if (usage.seconds >= limit) {
++            if (window.togglePlay && window.state.isPlaying) {
++                window.togglePlay(); // Stop audio
++            }
++            if (window.showPricingModal) {
++                window.showPricingModal();
++                if (window.showToast) window.showToast("You've reached your daily limit. Upgrade to continue listening.", "warning");
++            }
++        }
++        
++        saveUsage(usage);
++    }
++    
++    trackerInterval = setInterval(checkLimit, 1000);
++}
++
++document.addEventListener('DOMContentLoaded', () => {
++    initUsageTracker();
++});
++

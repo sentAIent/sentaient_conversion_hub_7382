@@ -1468,6 +1468,12 @@ static CYMATIC_PATTERNS = [
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
             this.tsunamiMaterial.uniforms.uMist.value = parseFloat(val);
         }
+        if (this.tsunamiSun && this.tsunamiSun.material) {
+            this.tsunamiSun.material.opacity = Math.max(parseFloat(val), 0.2);
+            if (this.tsunamiSun.material.uniforms) {
+                this.tsunamiSun.material.uniforms.uMist.value = parseFloat(val);
+            }
+        }
     }
     setTsunamiStyle(val) {
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
@@ -1715,9 +1721,9 @@ static CYMATIC_PATTERNS = [
                 float alpha = 1.0;
                 
                 if (uMist > 0.05) {
-                    // Position of the sun in world space (far away on the horizon)
-                    vec3 sunPos = vec3(-50.0, 200.0, 40.0);
-                    float sunDist = length(vWorldPosition - sunPos);
+                    // Position of the visible sun disc in world space (Top right horizon)
+                    vec3 visibleSunPos = vec3(100.0, 30.0, -180.0);
+                    float sunDist = length(vWorldPosition - visibleSunPos);
                     
                     // Sun Disc
                     float sunRadius = 40.0;
@@ -1726,17 +1732,14 @@ static CYMATIC_PATTERNS = [
                     
                     vec3 sunColor = vec3(1.0, 0.9, 0.6); // Warm golden sun
                     
-                    // Add the physical sun to the sky (only where elevation is high/sky area, 
-                    // but we can cheat by just drawing it behind the wave. Since we are on a plane,
-                    // we can draw the sun where the plane extends back on the Y axis).
-                    if (vWorldPosition.y > 50.0) {
-                        float sunMix = max(sunCore, sunGlow * 0.5) * (uMist / 3.0);
-                        finalColor = mix(finalColor, sunColor, sunMix);
-                    }
+                    // Add the physical sun disc to the background
+                    float sunMix = max(sunCore, sunGlow * 0.5) * (uMist / 3.0);
+                    finalColor = mix(finalColor, sunColor, sunMix);
                     
                     // Ocean Glare / Specular Reflection
-                    // Vector from pixel to sun
-                    vec3 lightDir = normalize(sunPos - vWorldPosition);
+                    // Use the original light source position to perfectly restore the glare the user loved
+                    vec3 lightSourcePos = vec3(-50.0, 200.0, 40.0);
+                    vec3 lightDir = normalize(lightSourcePos - vWorldPosition);
                     // View vector (roughly down the Y axis for painting perspective)
                     vec3 viewDir = normalize(vViewPosition);
                     
@@ -1786,6 +1789,52 @@ static CYMATIC_PATTERNS = [
         mesh.position.x = -70; 
         
         this.tsunamiGroup.add(mesh);
+        
+        // PHYSICAL SUN (In the sky - Cursor Style SVG)
+        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+            <g>
+                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(0,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(45,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(90,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(135,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(180,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(225,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(270,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(315,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(22.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(67.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(112.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(157.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(202.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(247.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(292.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(337.5,50,50)"/>
+                <circle cx="50" cy="50" r="15" fill="none" stroke="#ffcc00" stroke-width="5"/>
+            </g>
+        </svg>`;
+        
+        const svgData = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+        const texture = new THREE.TextureLoader().load(svgData);
+        
+        const sunMat = new THREE.SpriteMaterial({
+            map: texture,
+            color: 0xffffff,
+            transparent: true,
+            depthWrite: false,
+            fog: false // don't let THREE.js fog hide it
+        });
+        
+        // Use a sprite so it always faces the camera
+        this.tsunamiSun = new THREE.Sprite(sunMat);
+        
+        // Scale it up nicely and place it in the upper right corner
+        this.tsunamiSun.scale.set(60, 60, 1);
+        this.tsunamiSun.position.set(70, 50, -120);
+        
+        // Add custom uniform object so setTsunamiMist doesn't crash
+        this.tsunamiSun.material.uniforms = { uMist: { value: 1.0 } };
+        
+        this.tsunamiGroup.add(this.tsunamiSun);
     }
 
 
