@@ -1,0 +1,131 @@
+
+    drawBackgroundElements() {
+        if (!this.config.showBackground) return;
+
+        const ctx = this.ctx;
+
+        // 1. Background Stars (from all active styles)
+        if (this.backgroundStars && this.backgroundStars.length > 0) {
+            this.backgroundStars.forEach(s => {
+                ctx.fillStyle = s.color || "white";
+                ctx.globalAlpha = s.alpha;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // 2. Nebulae (from nebula + deep-space styles)
+        if (this.nebulae && this.nebulae.length > 0) {
+            ctx.globalCompositeOperation = 'screen';
+            this.nebulae.forEach(n => {
+                if (n.flownOut) return; // Skip if flown out during warp
+
+                // During disengage: use scale and alpha from flyObject
+                let scale = 1.0;
+                let alpha = 1.0;
+                if (this.warpDisengaging && n.warpScale !== undefined) {
+                    scale = n.warpScale || 0.01;
+                    alpha = n.warpAlpha || 0;
+                }
+
+                const scaledSize = Math.max(0.1, n.size * scale);
+                const scaledAlpha = n.alpha * alpha;
+
+                const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, scaledSize);
+                grad.addColorStop(0, n.color);
+                grad.addColorStop(1, 'transparent');
+
+                ctx.globalAlpha = scaledAlpha;
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, scaledSize, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+        }
+
+        // 2.5 Moving Cosmic Stars (shooting stars with tails)
+        if (this.activeStyles.has('deep-space') && this.shootingStars && this.shootingStars.length > 0) {
+            this.shootingStars.forEach(s => {
+                ctx.save();
+
+                // Draw tail (gradient line in opposite direction of movement)
+                const tailX = s.x - s.vx * s.tailLength;
+                const tailY = s.y - s.vy * s.tailLength;
+
+                const tailGrad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
+                tailGrad.addColorStop(0, 'transparent');
+                tailGrad.addColorStop(0.7, s.color + '40');
+                tailGrad.addColorStop(1, s.color);
+
+                ctx.strokeStyle = tailGrad;
+                ctx.lineWidth = s.size * 0.8;
+                ctx.lineCap = 'round';
+                ctx.globalAlpha = s.alpha;
+
+                ctx.beginPath();
+                ctx.moveTo(tailX, tailY);
+                ctx.lineTo(s.x, s.y);
+                ctx.stroke();
+
+                // Draw star head (bright point)
+                ctx.fillStyle = s.color;
+                ctx.globalAlpha = s.alpha + 0.3;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // 3. Spacecraft (from alien style) - ENHANCED RENDERING
+        if (this.activeStyles.has('alien') && this.spacecraft && this.spacecraft.length > 0) {
+            const time = performance.now() * 0.001;
+            this.spacecraft.forEach(s => {
+                if (s.flownOut) return; // Skip if flown out during warp
+                ctx.save();
+
+                // Position comes from flyObject during disengage
+                ctx.translate(s.x, s.y);
+
+                // During disengage: use scale and alpha from flyObject
+                if (this.warpDisengaging && s.warpScale !== undefined) {
+                    ctx.scale(s.warpScale, s.warpScale);
+                    ctx.globalAlpha = s.warpAlpha || 0;
+                }
+
+                // Update rotation for saucers
+                if (s.rotationSpeed) s.rotation += s.rotationSpeed;
+
+                const size = s.size;
+                const zoom = this.camera.zoom;
+                const angle = Math.atan2(s.vy, s.vx);
+
+                // Shield effect (drawn first, behind ship)
+                if (s.hasShield) {
+                    const shieldPulse = Math.sin(time * 2 + s.shieldPhase) * 0.3 + 0.4;
+                    ctx.globalAlpha = shieldPulse * 0.4;
+                    const shieldGrad = ctx.createRadialGradient(0, 0, size * 0.5, 0, 0, size * 1.5);
+                    shieldGrad.addColorStop(0, 'transparent');
+                    shieldGrad.addColorStop(0.7, s.shieldColor || 'rgba(100,200,255,0.3)');
+                    shieldGrad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = shieldGrad;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size * 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+
+                // Tractor beam (for saucers)
+                if (s.beamActive && s.shipClass === 'saucer') {
+                    const beamPulse = Math.sin(time * 5) * 0.2 + 0.6;
+                    ctx.globalAlpha = beamPulse * 0.5;
+                    const beamGrad = ctx.createLinearGradient(0, size * 0.2, 0, size * 3);
+                    beamGrad.addColorStop(0, s.beamColor || '#88ff88');
+                    beamGrad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = beamGrad;

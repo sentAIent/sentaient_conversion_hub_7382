@@ -1,0 +1,116 @@
+    <!-- MUSIC SETTINGS MODAL -->
+    <div id="musicSettingsModal" class="modal-overlay" style="display: none; z-index: 2147483647 !important; pointer-events: auto !important; position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; opacity: 1; visibility: visible; pointer-events: auto;" onclick="if(event.target === this) { if(window.app){app.closeMusicSettings();} this.style.setProperty('display','none','important'); }">
+        <div class="modal-content" style="width: 700px; max-width: 95vw; background: rgba(10, 20, 40, 0.95); border: 2px solid #00f3ff; box-shadow: 0 0 30px rgba(0, 243, 255, 0.4); border-radius: 10px; padding: 20px; z-index: 2147483647; pointer-events: auto !important; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; position: sticky; top: 0; background: rgba(10, 20, 40, 1); z-index: 10; padding-top: 20px; margin-top: -20px; border-radius: 10px 10px 0 0;">
+                <h2 style="margin: 0; color: #00f3ff; font-size: 24px;">🎵 Music & Frequencies</h2>
+                <button class="menu-btn" onclick="if(window.app){app.closeMusicSettings();} document.getElementById('musicSettingsModal').style.setProperty('display','none','important');" style="padding: 5px 15px;">CLOSE</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; position: relative; z-index: 2147483647; pointer-events: auto;">
+                <button id="musicTabBtn_binaural" class="music-tab-btn active" onclick="app.switchMusicTab('binaural')" style="flex: 1; padding: 10px; background: rgba(0,243,255,0.2); border: 1px solid #00f3ff; color: white; cursor: pointer; pointer-events: auto !important; position: relative; z-index: 2147483647;">Binaural Beats</button>
+                <button id="musicTabBtn_classical" class="music-tab-btn" onclick="app.switchMusicTab('classical')" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #fff; color: white; cursor: pointer; pointer-events: auto !important; position: relative; z-index: 2147483647;">Classical</button>
+                <button id="musicTabBtn_jazz" class="music-tab-btn" onclick="app.switchMusicTab('jazz')" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #fff; color: white; cursor: pointer; pointer-events: auto !important; position: relative; z-index: 2147483647;">Jazz</button>
+                <button id="musicTabBtn_ai" class="music-tab-btn" onclick="app.switchMusicTab('ai')" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #fff; color: white; cursor: pointer; pointer-events: auto !important; position: relative; z-index: 2147483647;">AI-Created</button>
+            </div>
+
+            <!-- Now Playing Indicator -->
+            <div id="nowPlayingBanner" style="position: relative; z-index: 1; pointer-events: none; background: rgba(255, 100, 200, 0.1); border: 1px solid rgba(255, 100, 200, 0.3); border-radius: 8px; padding: 10px 15px; margin-bottom: 15px; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <span style="color: #ff64c8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 3px;">Now Playing</span>
+                    <span id="nowPlayingTrackName" style="color: white; font-weight: bold; font-size: 16px;">Track Name</span>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; align-items: center; flex: 2; margin: 10px 15px; min-width: 300px;">
+                    <!-- Controls -->
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <button class="btn-small" onclick="app.prevTrack()" style="padding: 2px 8px; border-color: rgba(255,255,255,0.3);" title="Previous Track">⏮</button>
+                        <button class="btn-small" onclick="app.seekAudio(-15)" style="padding: 2px 8px; border-color: rgba(255,255,255,0.3);" title="Rewind 15s">⏪</button>
+                        <button class="btn-small media-playpause-btn" onclick="app.togglePlayPause()" style="padding: 2px 10px; border-color: rgba(255,255,255,0.3);" title="Play/Pause">▶</button>
+                        <button class="btn-small" onclick="app.seekAudio(15)" style="padding: 2px 8px; border-color: rgba(255,255,255,0.3);" title="Fast Forward 15s">⏩</button>
+                        <button class="btn-small" onclick="app.nextTrack()" style="padding: 2px 8px; border-color: rgba(255,255,255,0.3);" title="Next Track">⏭</button>
+                    </div>
+                    
+                    <!-- Scrubber / Timer -->
+                    <div style="display: flex; align-items: center; width: 100%; gap: 10px;">
+                        <span id="audioCurrentTime" style="color: #ccc; font-size: 12px; font-family: monospace; width: 45px; text-align: right;">0:00</span>
+                        <input type="range" id="audioScrubber" min="0" max="100" value="0" step="0.1" oninput="app.scrubberChanged(this.value)" onchange="app.scrubberReleased(this.value)" style="flex: 1; accent-color: #ff64c8;">
+                        <span id="audioDurationTime" style="color: #ccc; font-size: 12px; font-family: monospace; width: 45px;">0:00</span>
+                    </div>
+                </div>
+
+                <div class="audio-equalizer" style="display: flex; gap: 3px; height: 15px; align-items: flex-end; width: 40px; justify-content: flex-end;">
+                    <!-- Animated bars will go here via CSS -->
+                </div>
+            </div>
+
+            <!-- Volume Controls -->
+            <div style="margin-bottom: 20px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; position: relative; z-index: 2147483647; pointer-events: auto;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 15px;">
+                    <label style="color: #ccc; width: 120px; font-weight: bold;">Master Volume:</label>
+                    <input type="range" id="masterVolumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="if(window.app) app.setMasterVolume(this.value);" style="width: 150px; cursor: pointer; pointer-events: auto !important;">
+                    <button class="btn-small" id="masterMuteToggleBtn" onclick="if(window.app) app.toggleMasterMute();" style="width: 100px; cursor: pointer; pointer-events: auto !important;">Mute: OFF</button>
+                    <button class="btn-small" onclick="if(window.app) app.stopAllMusic();" style="width: 130px; border-color: #ff4444; color: #ffadad; cursor: pointer; pointer-events: auto !important;">Stop All Audio</button>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; margin-bottom: 15px;">
+                    <label style="color: #ccc; width: 120px; font-weight: bold;">Music Volume:</label>
+                    <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="if(window.app) app.setMusicVolume(this.value);" style="width: 150px; cursor: pointer; pointer-events: auto !important;">
+                    <button class="btn-small" id="muteToggleBtn" onclick="if(window.app) app.toggleMute();" style="width: 100px; cursor: pointer; pointer-events: auto !important;">Mute: OFF</button>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px;">
+                    <label style="color: #ccc; width: 120px; font-weight: bold;">Engine Hum:</label>
+                    <input type="range" id="engineVolumeSlider" min="0" max="2" step="0.05" value="1.0" oninput="if(window.app) app.setEngineVolume(this.value);" style="width: 150px; cursor: pointer; pointer-events: auto !important;">
+                    <button class="btn-small" id="engineMuteBtn" onclick="if(window.app) app.toggleEngineHum();" style="width: 100px; cursor: pointer; pointer-events: auto !important;">Mute: OFF</button>
+                </div>
+            </div>
+
+            <!-- Binaural Beats Tab -->
+            <div id="musicTab_binaural" class="music-tab-content">
+                <h3 style="color: #00f3ff; margin-top: 0; font-size: 18px;">Brainwave Entrainment Presets</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn-secondary" onclick="if(window.app) app.setBinauralPreset(2, 80, this)" style="pointer-events: auto !important;">Deep Delta (2Hz) - Healing & Sleep</button>
+                    <button class="btn-secondary" onclick="if(window.app) app.setBinauralPreset(6, 110, this)" style="pointer-events: auto !important;">Theta (6Hz) - Meditation & Intuition</button>
+                    <button class="btn-secondary" onclick="if(window.app) app.setBinauralPreset(10, 130, this)" style="pointer-events: auto !important;">Alpha (10Hz) - Relaxation & Flow</button>
+                    <button class="btn-secondary" onclick="if(window.app) app.setBinauralPreset(20, 200, this)" style="pointer-events: auto !important;">Beta (20Hz) - Focus & Alertness</button>
+                    <button class="btn-secondary" onclick="if(window.app) app.setBinauralPreset(40, 300, this)" style="pointer-events: auto !important;">Gamma (40Hz) - Peak Performance</button>
+                </div>
+                <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; color: #aaa;">Custom Frequency Override</h4>
+                    <div style="display: flex; gap: 20px; align-items: center; justify-content: flex-start; margin-bottom: 10px;">
+                        <label style="width: 120px; color: #ccc;">Base Frequency:</label>
+                        <input type="range" id="binauralBaseSlider" min="40" max="800" step="1" value="130" oninput="if(window.app) app.updateBinauralCustom();" style="width: 150px; cursor: pointer; pointer-events: auto !important;">
+                        <span id="binauralBaseValue" class="editable-value-span" style="color: #00f3ff; width: 60px;">130Hz</span>
+                    </div>
+                    <div style="display: flex; gap: 20px; align-items: center; justify-content: flex-start;">
+                        <label style="width: 120px; color: #ccc;">Beat Difference:</label>
+                        <input type="range" id="binauralBeatSlider" min="0.5" max="50" step="0.5" value="10" oninput="if(window.app) app.updateBinauralCustom();" style="width: 150px; cursor: pointer; pointer-events: auto !important;">
+                        <span id="binauralBeatValue" class="editable-value-span" style="color: #00f3ff; width: 60px;">10Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classical Tab -->
+            <div id="musicTab_classical" class="music-tab-content" style="display: none; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                <h3 style="color: #00f3ff; margin-top: 0; font-size: 18px; position: sticky; top: 0; background: rgba(10, 20, 40, 0.95); padding: 5px 0; z-index: 2;">Classical Masterpieces</h3>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;" id="classicalTrackList">
+                    <!-- Populated by script.js -->
+                </div>
+            </div>
+
+            <!-- Jazz Tab -->
+            <div id="musicTab_jazz" class="music-tab-content" style="display: none; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                <h3 style="color: #00f3ff; margin-top: 0; font-size: 18px; position: sticky; top: 0; background: rgba(10, 20, 40, 0.95); padding: 5px 0; z-index: 2;">Jazz & Lounge</h3>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;" id="jazzTrackList">
+                    <!-- Populated by script.js -->
+                </div>
+            </div>
+
+            <!-- AI-Created Tab -->
+            <div id="musicTab_ai" class="music-tab-content" style="display: none; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                <h3 style="color: #00f3ff; margin-top: 0; font-size: 18px; position: sticky; top: 0; background: rgba(10, 20, 40, 0.95); padding: 5px 0; z-index: 2;">AI-Created Atmospheres</h3>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;" id="aiTrackList">
+                    <!-- Populated by script.js -->
+                </div>
+            </div>
+
+        </div>
+    </div>

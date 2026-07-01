@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="300" height="300">
+    <rect width="100" height="100" fill="#222"/>
+    <g>
+        <polygon points="46,35 54,35 50,8"  fill="#FFD700" transform="rotate(0,50,50)"/>
+        <polygon points="46,35 54,35 50,8"  fill="#FFD700" transform="rotate(45,50,50)"/>
+        <polygon points="46,35 54,35 50,8"  fill="#FFD700" transform="rotate(90,50,50)"/>
+        <polygon points="46,35 54,35 50,8"  fill="#FFD700" transform="rotate(135,50,50)"/>
+        <polygon points="46,35 54,35 50,8"  fill="#FFD700" transform="rotate(180,50,50)"/>
+        <polygon points="46,35 54,35 50,8"  fill="#FFD700" transform="rotate(225,50,50)"/>
+        <polygon points="46,35 54,35 50,8"  fill="#FFD700" transform="rotate(270,50,50)"/>
+        <polygon points="46,35 54,35 50,8"  fill="#FFD700" transform="rotate(315,50,50)"/>
+        <polygon points="48,35 52,35 50,18" fill="#FFD700" transform="rotate(22.5,50,50)"/>
+        <polygon points="48,35 52,35 50,18" fill="#FFD700" transform="rotate(67.5,50,50)"/>
+        <polygon points="48,35 52,35 50,18" fill="#FFD700" transform="rotate(112.5,50,50)"/>
+        <polygon points="48,35 52,35 50,18" fill="#FFD700" transform="rotate(157.5,50,50)"/>
+        <polygon points="48,35 52,35 50,18" fill="#FFD700" transform="rotate(202.5,50,50)"/>
+        <polygon points="48,35 52,35 50,18" fill="#FFD700" transform="rotate(247.5,50,50)"/>
+        <polygon points="48,35 52,35 50,18" fill="#FFD700" transform="rotate(292.5,50,50)"/>
+        <polygon points="48,35 52,35 50,18" fill="#FFD700" transform="rotate(337.5,50,50)"/>
+        <circle cx="50" cy="50" r="15" fill="none" stroke="#FFD700" stroke-width="5"/>
+    </g>
+</svg>

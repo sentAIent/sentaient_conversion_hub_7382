@@ -1,0 +1,235 @@
+915: for (let i = 0; i < count; i++) {
+1058: for (let dx = -loadRadius; dx <= loadRadius; dx++) {
+1059: for (let dy = -loadRadius; dy <= loadRadius; dy++) {
+1071: for (const [key] of this.loadedSectors.entries()) {
+1107: for (let i = 0; i < mineralCount; i++) {
+1139: for (let i = 0; i < mCount; i++) {
+1187: for (let i = 0; i < 30; i++) {
+1203: for (let i = 0; i < depositCount; i++) {
+1456: for (const prop in cssMap) {
+2302: for (let i = 0; i < 12; i++) {
+2321: for (let i = 0; i < 10; i++) {
+2341: for (let i = 0; i < 8; i++) {
+2361: for (let i = 0; i < 6; i++) {
+2380: for (let i = 0; i < 4; i++) {
+2399: for (let i = 0; i < 3; i++) {
+2763: for (let x = startX; x <= endX; x += gridSize) {
+2767: for (let y = startY; y <= endY; y += gridSize) {
+2942: for (let x = startX; x <= endX; x++) {
+2943: for (let y = startY; y <= endY; y++) {
+2995: for (const [type, count] of Object.entries(this.playerInventory)) {
+3058: for (let i = 0; i < 8; i++) {
+3208: for (let i = 0; i < lineCount; i++) {
+3238: for (let i = this.engineParticles.length - 1; i >= 0; i--) {
+3344: for (let i = this.projectiles.length - 1; i >= 0; i--) {
+3357: for (let j = this.spaceMines.length - 1; j >= 0; j--) {
+3382: for (let k = this.missileBases.length - 1; k >= 0; k--) {
+3410: for (let e = this.enemyShips.length - 1; e >= 0; e--) {
+3457: for (let sIdx = this.spacecraft.length - 1; sIdx >= 0; sIdx--) {
+3520: for (let b = 0; b < this.hazardBlackHoles.length; b++) {
+3548: for (let i = 0; i < count; i++) {
+3722: while (this.enemyShips.length < targetCount) {
+3770: for (const enemy of this.enemyShips) {
+3811: for (const other of this.enemyShips) {
+3901: while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+3902: while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+3968: for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
+3996: for (let j = this.enemyShips.length - 1; j >= 0; j--) {
+4179: while (aDiff > Math.PI) aDiff -= Math.PI * 2;
+4180: while (aDiff < -Math.PI) aDiff += Math.PI * 2;
+4190: for (let i = 0; i < spawnCount; i++) {
+4220: while (aDiff > Math.PI) aDiff -= Math.PI * 2;
+4221: while (aDiff < -Math.PI) aDiff += Math.PI * 2;
+4230: while (aDiff > Math.PI) aDiff -= Math.PI * 2;
+4231: while (aDiff < -Math.PI) aDiff += Math.PI * 2;
+4282: for (let i = 0; i < bulletCount; i++) {
+4311: while (shieldDiff > Math.PI) shieldDiff -= Math.PI * 2;
+4312: while (shieldDiff < -Math.PI) shieldDiff += Math.PI * 2;
+4343: for (let i = 0; i < 5; i++) {
+4514: for (const m of shuffled) {
+4547: for (let i = 0; i < spawnCount; i++) {
+4562: for (let i = 0; i < missionTemplate.goal + 5; i++) {
+4582: for (let i = 0; i < spawnCount; i++) {
+4800: for (let i = 0; i < 120; i++) {
+4818: for (let i = 0; i < 60; i++) {
+4840: for (let i = particles.length - 1; i >= 0; i--) {
+5288: for (const [type, qty] of Object.entries(this.carriedResources)) {
+5459: for (const [res, amount] of Object.entries(moduleDef.resourceCost)) {
+5468: for (const [res, amount] of Object.entries(moduleDef.resourceCost)) {
+5574: for (const [type, qty] of Object.entries(this.carriedResources)) {
+5653: for (const [type, qty] of Object.entries(this.playerInventory)) {
+5844: for (const dep of this.resourceDeposits) {
+5874: while (this.minerals.length < targetDensity) {
+5916: for (const [zoneKey, zone] of Object.entries(this.galaxyZones)) {
+5937: for (const elementKey of allElements) {
+6005: for (const { key, weight } of weights) {
+6143: for (let i = 0; i < 20; i++) {
+6205: for (const mineral of [...this.minerals]) {
+6220: for (let i = 0; i < toSpawn; i++) {
+6307: for (const mineral of this.minerals) {
+6341: for (const mineral of this.minerals) {
+6429: do {
+6434: } while (attempts < 10);
+6439: while (this.spaceMines.length < targetMines) {
+6454: while (this.hazardBlackHoles.length < targetBlackHoles) {
+6483: while (this.missileBases.length < targetBases) {
+6505: for (let i = 0; i < 60; i++) {
+6542: for (const mine of this.spaceMines) {
+6554: for (let i = 0; i < 50; i++) {
+6568: for (let i = this.asteroids.length - 1; i >= 0; i--) {
+6589: for (const bh of this.hazardBlackHoles) {
+6608: for (const base of this.missileBases) {
+6620: for (const planet of this.planets) {
+6642: for (const base of this.missileBases) {
+6650: while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+6651: while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+6677: for (const missile of this.enemyMissiles) {
+6689: for (const flare of this.decoyFlares) {
+6709: while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+6710: while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+6759: for (let i = this.decoyFlares.length - 1; i >= 0; i--) {
+6794: for (let i = 0; i < 2; i++) {
+6811: for (const enemy of this.enemyShips) {
+7181: for (let i = 0; i < 5; i++) {
+7260: for (let i = 0; i < shardCount; i++) {
+7264: for (let v = 0; v < vCount; v++) {
+7284: for (let i = 0; i < 20; i++) {
+7298: for (let i = 0; i < 6; i++) {
+7359: for (let i = 0; i < dustCount; i++) {
+7383: for (let i = 0; i < 20; i++) {
+7446: for (let i = 0; i < total; i++) {
+7533: for (let i = 0; i < count; i++) {
+7687: for (let i = 0; i < 3; i++) {
+7707: for (let i = 0; i < 5; i++) {
+7753: for (let i = 0; i < 5; i++) {
+7783: for (let i = 0; i < 8; i++) {
+7832: for (let i = 0; i < 8; i++) {
+7848: for (let i = 0; i < 5; i++) {
+7874: for (let i = 0; i < 4; i++) {
+7881: for (let i = 0; i < 4; i++) {
+7899: for (let i = 0; i < 3; i++) {
+7918: for (let i = 0; i < 4; i++) {
+8028: for (const gem of lesson.gems) {
+8178: for (const [type, qty] of Object.entries(gemReward.gems)) {
+8185: for (const [type, qty] of Object.entries(gemReward.bonus[medal])) {
+8584: for (let a = 0; a < 4; a++) {
+8722: for (let i = 0; i < 4; i++) {
+8760: for (let i = 0; i < 5; i++) {
+9073: for (const gem of lesson.gems) {
+9197: for (let i = 0; i < 40; i++) {
+9240: for (let i = 0; i < 50; i++) {
+9324: for (const shard of (effect.shards || [])) {
+9335: for (let i = effect.sludge.length - 1; i >= 0; i--) {
+9343: for (let i = effect.fires.length - 1; i >= 0; i--) {
+9353: for (const p of effect.particles) {
+9426: for (const m of effect.chaoticMissiles) {
+9443: for (let i = 0; i < 3; i++) {
+9458: for (const d of effect.debris) {
+9474: for (const s of effect.lightSpears) {
+9551: for (const p of effect.tunnelParticles) {
+9583: for (const dust of (effect.dustParticles || [])) {
+9592: for (const rock of (effect.debrisRocks || [])) {
+9780: for (let i = 0; i < 5; i++) {
+10368: for (let i = 0; i < this.stars.length; i++) {
+10370: for (let j = i + 1; j < this.stars.length; j++) {
+10577: for (let j = 0; j < id.length; j++) {
+10753: for (let i = 0; i < count; i++) {
+10828: for (let i = 0; i < starCount; i++) {
+10859: for (let i = 0; i < cfg.count; i++) {
+10898: for (let i = 0; i < cfg.count; i++) {
+10947: for (const existing of this.planets) {
+10977: for (let i = 0; i < cfg.count; i++) {
+10984: do {
+10992: } while (!checkPlanetSpacing(x, y, z, radius) && attempts < 50);
+11020: for (let i = 0; i < shootingStarCount; i++) {
+11049: for (let i = 0; i < cfg.count; i++) {
+11065: for (let i = 0; i < starCount; i++) {
+11101: for (let i = 0; i < starCount; i++) {
+11145: for (let w = 0; w < sc.weight; w++) pool.push(sc);
+11156: for (let i = 0; i < cfg.count; i++) {
+11301: for (let i = 0; i < columns; i++) {
+11310: for (let j = 0; j < len; j++) {
+12253: for (const p of this.engineParticles) {
+12330: for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
+12518: for (let i = 0; i < 6; i++) {
+12696: for (let i = 0; i < 5; i++) {
+12862: for (let i = 0; i < 6; i++) {
+12875: for (let i = 0; i < 6; i++) {
+13014: for (let i = 0; i < 6; i++) {
+13038: for (let i = 0; i < 3; i++) {
+13199: for (let i = 0; i < Math.PI * 2; i += 0.2) {
+13209: for (let i = 0; i < Math.PI * 2; i += 0.2) {
+13217: for (let i = 0; i < 6; i++) {
+13290: for (let i = 0; i < 3; i++) {
+13322: for (let i = 1; i < corePts.length; i++) ctx.lineTo(corePts[i].x, corePts[i].y + coreOffY);
+13332: for (let i = 1; i < lwPts.length; i++) ctx.lineTo(lwPts[i].x + lwX, lwPts[i].y + lwY);
+13342: for (let i = 1; i < rwPts.length; i++) ctx.lineTo(rwPts[i].x + rwX, rwPts[i].y + rwY);
+13351: for (let i = 1; i < tdPts.length; i++) ctx.lineTo(tdPts[i].x + tdX, tdPts[i].y);
+13703: for (let i = -1; i <= 1; i += 2) {
+13801: for (let i = 0; i < sides; i++) {
+13814: for (let i = 0; i < sides; i++) {
+13853: for (let i = -1; i <= 1; i += 2) {
+13875: for (let i = 0; i < 8; i++) {
+14061: for (let j = 0; j < 8; j++) {
+14124: for (let ring = 0; ring < 3; ring++) {
+14161: for (let i = 0; i < 6; i++) {
+14173: for (let i = 0; i < 6; i++) {
+14191: for (let i = 0; i < spikeCount; i++) {
+14231: for (let arm = 0; arm < 3; arm++) {
+14256: for (let i = 0; i < 3; i++) {
+14315: for (let tendril = 0; tendril < 16; tendril++) {
+14376: for (let trail = 1; trail <= trailLen; trail++) {
+14404: for (let ray = 0; ray < 12; ray++) {
+14852: for (let i = 0; i < 4; i++) {
+14983: for (let i = 0; i < 8; i++) {
+14997: for (let i = 0; i < 8; i++) {
+15040: for (let i = 0; i < 3; i++) {
+15061: for (let i = 0; i < 6; i++) {
+15167: for(let i=0; i<10; i++) {
+15196: for (let i = 0; i < 5; i++) {
+15457: for (const rock of (effect.debrisRocks || [])) {
+15483: for (const p of (effect.dustParticles || [])) {
+15610: for (let layer = 0; layer < 3; layer++) {
+15650: for (let i = 0; i < 25; i++) {
+15670: for (let i = 0; i < 22; i++) {
+15697: for (let i = 0; i < 14; i++) {
+15714: for (let i = 0; i < 18; i++) {
+15735: for (let i = 0; i < 12; i++) {
+15793: for (let i = 0; i < 8; i++) {
+15809: for (let v = 0; v < 10; v++) {
+15828: for (let i = 0; i < 60; i++) {
+15837: for (let i = 0; i < effect._embers.length; i++) {
+15981: for (const shard of (effect.shards || [])) {
+15999: for (let j = 1; j < shard.vertices.length; j++) {
+16018: for (const s of (effect.sludge || [])) {
+16109: for (let star = 0; star < 200; star++) {
+16151: for (let ray = 0; ray < 24; ray++) {
+16189: for (let debris = 0; debris < 80; debris++) {
+16217: for (let ring = 0; ring < 15; ring++) {
+16223: for (let arc = 0; arc < 3; arc++) {
+16246: for (const particle of effect.tunnelParticles) {
+16318: for (let shell = 0; shell < 30; shell++) {
+16347: for (let e = 0; e < numElectrons; e++) {
+16368: for (let bond = 0; bond < 60; bond++) {
+16446: for (let shell = 0; shell < 25; shell++) {
+16465: for (let streak = 0; streak < 80; streak++) {
+16761: for (let i = 0; i < engineCount; i++) {
+16804: for (let i = 0; i < 6; i++) {
+16812: for (let i = 0; i < 3; i++) {
+16930: for (let i = 0; i < 8; i++) {
+16976: for (let i = 0; i < 6; i++) {
+17032: for (let i = 0; i < 8; i++) {
+17044: for (let i = 0; i < 8; i++) {
+17209: for (let i = -4; i <= 4; i++) {
+17223: for (let j = 0; j < 5; j++) {
+17272: for (let i = 0; i < 5; i++) {
+17431: for (let i = 0; i < this.stars.length; i++) {
+17432: for (let j = i + 1; j < this.stars.length; j++) {
+17453: while (queue.length) {
+18695: for (let y = 0; y < 8; y++) {
+18696: for (let x = 0; x < 8; x++) {
+18734: for (const enemy of this.enemyShips) {
+18782: for (let y = 0; y < 8; y++) {
+18783: for (let x = 0; x < 8; x++) {
+18852: for(let i = 0; i < safeStorage.length; i++){
+18932: for (let w = 0; w < sc.weight; w++) pool.push(sc);

@@ -1,0 +1,2608 @@
+--- ./public/interstellar-game/script.js	2026-06-11 12:48:27
++++ ./dist/interstellar-game/script.js	2026-06-09 13:54:08
+@@ -21,33 +21,6 @@
+ import { AudioEngine } from './audio.js?v=ray_fix_v33';
+ import * as Utils from './utils.js';
+ 
+-// --- SAFE STORAGE HELPERS ---
+-const safeStorage = {
+-    getItem: function(key) {
+-        try { return localStorage.getItem(key); }
+-        catch (e) { return window.__fallbackStorage ? window.__fallbackStorage[key] : null; }
+-    },
+-    setItem: function(key, value) {
+-        try { localStorage.setItem(key, value); }
+-        catch (e) {
+-            if (!window.__fallbackStorage) window.__fallbackStorage = {};
+-            window.__fallbackStorage[key] = value;
+-        }
+-    },
+-    removeItem: function(key) {
+-        try { localStorage.removeItem(key); }
+-        catch (e) { if (window.__fallbackStorage) delete window.__fallbackStorage[key]; }
+-    },
+-    key: function(index) {
+-        try { return localStorage.key(index); }
+-        catch (e) { return Object.keys(window.__fallbackStorage || {})[index]; }
+-    },
+-    get length() {
+-        try { return localStorage.length; }
+-        catch (e) { return Object.keys(window.__fallbackStorage || {}).length; }
+-    }
+-};
+-
+ window.gameAudio = new AudioEngine();
+ class InterstellarEngine {
+     constructor() {
+@@ -114,33 +87,58 @@
+         this.flightMode = false;
+         this.keysPressed = {};
+         // 5. Load Persistent State (PRIORITIZE: Load before ship init to ensure cargoCount check works)
+-        // Safe localStorage parsing helper
+-        this.safeJSONParse = (key, defaultVal) => {
+-            try {
+-                const item = safeStorage.getItem(key);
+-                if (!item) return defaultVal;
+-                const parsed = JSON.parse(item);
+-                return parsed !== null ? parsed : defaultVal;
+-            } catch (e) {
+-                console.warn(`[Storage] Corrupted data for ${key}, using default.`);
+-                return defaultVal;
+-            }
+-        };
+-
+-        // --- Core State ---
++        this.topZIndex = 1000;
+         this.credits = this.loadCredits();
+-        this.playerGems = parseInt(safeStorage.getItem('playerGems')) || 0;
+-        this.flightMode = false;
+-        this.gameOver = false;
+-        this.paused = false;
+-
++        this.playerGems = parseInt(localStorage.getItem('playerGems')) || 0;
+         this.playerInventory = this.loadInventory();
+         this.carriedResources = this.loadCarriedResources();
++        // Ship Upgrades
++        this.upgrades = { health: 1, speed: 1, weapons: 1, cargo: 1, radar: 1 };
+         const savedUpgrades = this.loadUpgrades();
++        if (savedUpgrades) {
++            this.upgrades = { ...this.upgrades, ...savedUpgrades };
++        }
+ 
+-        this.unlockedShips = this.safeJSONParse('unlockedShips', ['interceptor', 'hauler', 'orion', 'draco', 'phoenix']);
++        // Pilot Statistics
++        this.playerStats = this.loadStats();
+ 
+-        const savedShipType = safeStorage.getItem('playerShipType') || 'interceptor';
++        // Modular Equipment Database
++        this.equipmentDB = {
++            weapons: {
++                basic_laser: { name: "Basic Laser", type: "weapon", damage: 10, speed: 20, cooldown: 10, color: "#00f3ff", cost: 0, description: "Standard plasma emitter." },
++                plasma_cannon: { name: "Plasma Cannon", type: "weapon", damage: 25, speed: 15, cooldown: 20, color: "#ff00ff", cost: 500, description: "High-damage, slow-firing plasma burst." },
++                rapid_blaster: { name: "Rapid Blaster", type: "weapon", damage: 5, speed: 25, cooldown: 5, color: "#ffff00", cost: 1000, description: "High rate of fire, low damage." },
++                missile_pod: { name: "Missile Pod", type: "weapon", damage: 40, speed: 10, cooldown: 60, color: "#ff5500", cost: 2500, description: "Fires seeking missiles." }
++            },
++            engine: {
++                basic_engine: { name: "Basic Engine", type: "engine", maxSpeedBonus: 0, accelBonus: 0, cost: 0, description: "Standard propulsion system." },
++                ion_thruster: { name: "Ion Thruster", type: "engine", maxSpeedBonus: 20, accelBonus: 0.2, cost: 1500, description: "Increases top speed and acceleration." },
++                warp_drive: { name: "Warp Drive", type: "engine", maxSpeedBonus: 50, accelBonus: 0.5, cost: 5000, description: "State of the art propulsion." }
++            },
++            shield: {
++                basic_shield: { name: "Basic Shield", type: "shield", capacity: 100, rechargeRate: 0.1, cost: 0, description: "Standard deflector shield." },
++                advanced_shield: { name: "Advanced Shield", type: "shield", capacity: 250, rechargeRate: 0.2, cost: 2000, description: "High-capacity energy shield." },
++                fortress_shield: { name: "Fortress Shield", type: "shield", capacity: 500, rechargeRate: 0.5, cost: 8000, description: "Military-grade deflection barrier." }
++            },
++            wings: {
++                basic_wings: { name: "Standard Wings", type: "wings", rotationBonus: 0, cost: 0, description: "Standard aerodynamic wings." },
++                delta_wings: { name: "Delta Wings", type: "wings", rotationBonus: 0.05, cost: 1200, description: "Increases turn speed significantly." },
++                x_wings: { name: "X-Wings", type: "wings", rotationBonus: 0.1, cost: 3000, description: "Superior maneuverability." }
++            },
++            radar: {
++                basic_radar: { name: "Basic Radar", type: "radar", range: 1500, mapVisibility: false, cost: 0, description: "Standard proximity radar." },
++                advanced_radar: { name: "Advanced Radar", type: "radar", range: 3000, mapVisibility: true, cost: 1000, description: "Extended range, shows enemies on Map." },
++                deep_space_radar: { name: "Deep Space Radar", type: "radar", range: 6000, mapVisibility: true, cost: 4000, description: "Massive range, full Map awareness." }
++            }
++        };
++
++        try {
++            this.unlockedShips = JSON.parse(localStorage.getItem('unlockedShips')) || ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
++        } catch (e) {
++            this.unlockedShips = ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
++        }
++
++        const savedShipType = localStorage.getItem('playerShipType') || 'interceptor';
+         this.playerShip = {
+             type: savedShipType,
+             x: 0, y: 0, z: 0,
+@@ -153,7 +151,7 @@
+             acceleration: 0.5 * (1 + (savedUpgrades.speed || 0) * 0.1),
+             rotationSpeed: 0.08,
+             size: 45,
+-            color: safeStorage.getItem('playerShipColor') || '#00f3ff', // Customizable color
++            color: localStorage.getItem('playerShipColor') || '#00f3ff', // Customizable color
+             hullHealth: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
+             maxHull: 100 * (1 + (savedUpgrades.armor || 0) * 0.2),
+             shield: 50 * (1 + (savedUpgrades.shield || 0) * 0.2),
+@@ -163,6 +161,13 @@
+             maxCargo: 1000 * (1 + (savedUpgrades.cargo || 0) * 1.0), // Scale cargo with upgrade
+             cargoCount: Object.values(this.carriedResources || {}).reduce((a, b) => a + (Number(b) || 0), 0),
+             upgrades: savedUpgrades,
++            equipment: {
++                weapons: ['basic_laser', null, null, null, null],
++                engine: 'basic_engine',
++                shield: 'basic_shield',
++                wings: ['basic_wings', 'basic_wings'],
++                radar: 'basic_radar'
++            },
+             // Ability State
+             lastDamageTime: 0,
+             boostActive: false,
+@@ -171,6 +176,7 @@
+             lastPulseTime: 0
+         };
+ 
++        this.calculateShipStats();
+ 
+         // Space Base - player's permanent base
+         this.spaceBase = this.loadSpaceBase() || {
+@@ -216,8 +222,8 @@
+         this.trainingProgress = this.loadTrainingProgress();
+ 
+         // --- MISSION & FACTION STATS (Initialized for HUD stability) ---
+-        this.missionsCompleted = Number(safeStorage.getItem('missionsCompleted')) || 0;
+-        this.bossesDefeated = Number(safeStorage.getItem('bossesDefeated')) || 0;
++        this.missionsCompleted = Number(localStorage.getItem('missionsCompleted')) || 0;
++        this.bossesDefeated = Number(localStorage.getItem('bossesDefeated')) || 0;
+         this.factionRep = this.loadFactionRep();
+ 
+         // --- 8. Persistent State Network (Bridge) ---
+@@ -336,7 +342,7 @@
+         this.glowSprites = {};     // Glow sprite cache — populated by initGlowSprites() on init
+ 
+         try {
+-            this.playerSkills = this.safeJSONParse('playerSkills', { emp: 0, afterburner: 0, quantum: 0 });
++            this.playerSkills = JSON.parse(localStorage.getItem('playerSkills')) || { emp: 0, afterburner: 0, quantum: 0 };
+         } catch(e) {
+             this.playerSkills = { emp: 0, afterburner: 0, quantum: 0 };
+         }
+@@ -350,8 +356,9 @@
+ 
+         // Initialize Matrix theme history (must exist before toggleBgStyle/generateCyberStyle is called)
+         try {
+-            this.themeHistory = this.safeJSONParse('matrixThemeHistory', []);
+-            this.lastMatrixFamily = safeStorage.getItem('matrixLastFamily') || '';
++            const savedHistory = localStorage.getItem('matrixThemeHistory');
++            this.themeHistory = savedHistory ? JSON.parse(savedHistory) : [];
++            this.lastMatrixFamily = localStorage.getItem('matrixLastFamily') || '';
+         } catch (e) {
+             this.themeHistory = [];
+             this.lastMatrixFamily = '';
+@@ -563,7 +570,7 @@
+         window.addEventListener('resize', () => this.resize());
+ 
+         // Load Pro State
+-        this.isPro = safeStorage.getItem('isPro') === 'true';
++        this.isPro = localStorage.getItem('isPro') === 'true';
+         this.initAdminPanel();
+         this.initMusicUI();
+ 
+@@ -602,6 +609,8 @@
+             if (this.flightMode) {
+                 if (key === 'u') {
+                     this.toggleUpgradePanel();
++                } else if (key === 'i') {
++                    this.toggleStatusWindow();
+                 } else if (key === 'b') {
+                     if (!this.spaceBase.isDeployed) {
+                         this.deployBase();
+@@ -657,28 +666,14 @@
+         this.matrixColorCustomized = false;
+ 
+         // UI Events
+-        this.initDraggableWindows();
++        this.initWindowSystem();
+ 
+-        // Make all panels resizable with 2D support
+-        this.makeResizable('floatingMap');
+-        this.makeResizable('floatingLeaders');
+-        this.makeResizable('sectionControls');
+-        this.makeResizable('sectionRadar');
+-        this.makeResizable('sectionVelocity');
+-        this.makeResizable('sectionMission');
+-
+         // Apply saved HUD layout 
+-        setTimeout(() => this.setLayout(safeStorage.getItem('hudLayout') || 'horizontal'), 500);
++        setTimeout(() => this.setLayout(localStorage.getItem('hudLayout') || 'horizontal'), 500);
+ 
+         // Initialize kbd tooltips for flight controls
+         this.initKbdTooltips();
+-        this.makeResizable('sectionMap');
+-        this.makeResizable('sectionGems');
+ 
+-        document.querySelectorAll('.popup-panel').forEach(panel => {
+-            if (panel.id) this.makeResizable(panel.id);
+-        });
+-
+         // Matrix (previously Cyber) speed slider
+         const matrixSpeedSlider = document.getElementById('matrixSpeedSlider');
+         if (matrixSpeedSlider) {
+@@ -766,59 +761,20 @@
+         this.initJoystick();
+ 
+         // Trigger initial background generation
+-        console.log("Constructor: calling resize()");
+         this.resize();
+ 
+         // Initial UI population
+-        console.log("Constructor: calling updateWalletUI()");
+         this.updateWalletUI();
+-        console.log("Constructor: calling updateInventoryUI()");
+         this.updateInventoryUI();
+-        console.log("Constructor: calling updateGemsUI()");
+         if (this.updateGemsUI) this.updateGemsUI();
+-        console.log("Constructor: calling updateShipStatus()");
+         this.updateShipStatus();
+-        console.log("Constructor: calling updateMap()");
+         this.updateMap();
+ 
+         // First-login tracking & onboarding
+-        console.log("Constructor: calling checkFirstLogin()");
+         this.checkFirstLogin();
+ 
+-        console.log("Constructor: calling initGlowSprites()");
+         this.initGlowSprites(); // Pre-build glow sprite cache before first render frame
+         this.animate = this.animate.bind(this);
+-        
+-        // --- HIDE MAJESTIC SPLASH LOADER ---
+-        const loadingScreen = document.getElementById('loadingScreen');
+-        if (loadingScreen) {
+-            const loadingProgressBar = document.getElementById('loadingProgressBar');
+-            const loadingLog = document.getElementById('loadingLog');
+-            const loadingPrompt = document.getElementById('loadingPrompt');
+-
+-            if (loadingProgressBar) loadingProgressBar.style.width = '100%';
+-            if (loadingLog) loadingLog.textContent = "SYSTEMS ONLINE";
+-            if (loadingPrompt) {
+-                loadingPrompt.style.opacity = '1';
+-                // Add click handler to start the game
+-                loadingPrompt.onclick = () => {
+-                    loadingScreen.style.opacity = '0';
+-                    setTimeout(() => {
+-                        loadingScreen.style.display = 'none';
+-                        if (window.gameAudio && window.gameAudio.init) {
+-                            window.gameAudio.init(); // Initialize Audio Context on user interaction
+-                        }
+-                    }, 1500);
+-                };
+-            } else {
+-                loadingScreen.style.opacity = '0';
+-                setTimeout(() => {
+-                    loadingScreen.style.display = 'none';
+-                }, 1500);
+-            }
+-        }
+-
+-        console.log("Constructor: DONE, requesting animation frame");
+         requestAnimationFrame(this.animate);
+     }
+ 
+@@ -835,6 +791,7 @@
+             this.showToast('⏸️ Game Paused');
+             this.pauseStartTime = Date.now();
+             if (pb) pb.innerHTML = '▶️ <span class="hide-mobile">RESUME</span>';
++            if (window.gameAudio) window.gameAudio.stopEngineHum();
+         } else {
+             this.showToast('▶️ Game Resumed');
+             if (this.pauseStartTime) {
+@@ -845,6 +802,7 @@
+                 if (this.quantumJump && this.quantumJump.startTime) this.quantumJump.startTime += delta;
+             }
+             if (pb) pb.innerHTML = '⏸️ <span class="hide-mobile">PAUSE</span>';
++            if (window.gameAudio && !window.gameAudio.engineHumMuted) window.gameAudio.startEngineHum();
+         }
+     }
+ 
+@@ -965,84 +923,155 @@
+         return bgStars;
+     }
+ 
+-    initDraggableWindows() {
+-        // Reusable drag function
+-        const makeDraggable = (elementId) => {
+-            const element = document.getElementById(elementId);
+-            if (!element) return;
++    initWindowSystem() {
++        const windows = document.querySelectorAll('.cockpit-section, .floating-window, .popup-panel');
++        
++        windows.forEach(win => {
++            if (!win.id) return;
++            
++            // 1. Restore state
++            const savedState = localStorage.getItem('windowState_' + win.id);
++            if (savedState) {
++                try {
++                    const state = JSON.parse(savedState);
++                    win.style.position = 'fixed';
++                    if (state.left !== undefined) win.style.left = state.left;
++                    if (state.top !== undefined) win.style.top = state.top;
++                    if (state.width !== undefined) win.style.width = state.width;
++                    if (state.height !== undefined) win.style.height = state.height;
++                    win.style.bottom = 'auto';
++                    win.style.right = 'auto';
++                    if (state.zIndex) {
++                        win.style.zIndex = state.zIndex;
++                        if (parseInt(state.zIndex) > this.topZIndex) this.topZIndex = parseInt(state.zIndex);
++                    }
++                } catch(e) {}
++            }
+ 
+-            // Find the header - it could be .window-header or .cockpit-header
+-            const header = element.querySelector('.window-header, .cockpit-header');
+-            if (!header) return;
++            // Bring to front on click anywhere in window
++            win.addEventListener('mousedown', () => {
++                this.topZIndex++;
++                win.style.zIndex = this.topZIndex;
++                this.saveWindowState(win);
++            }, true); // use capture to fire early
+ 
+-            let isDragging = false;
+-            let startX, startY, initialX, initialY;
++            // 2. Setup Draggable Header
++            const header = win.querySelector('.window-header, .cockpit-header');
++            if (header) {
++                header.style.cursor = 'grab';
++                let isDragging = false;
++                let startX, startY, initialLeft, initialTop;
+ 
+-            header.style.cursor = 'grab';
++                header.addEventListener('mousedown', (e) => {
++                    isDragging = true;
++                    header.style.cursor = 'grabbing';
++                    
++                    if (getComputedStyle(win).position !== 'fixed') {
++                        const rect = win.getBoundingClientRect();
++                        win.style.position = 'fixed';
++                        win.style.left = rect.left + 'px';
++                        win.style.top = rect.top + 'px';
++                        win.style.width = rect.width + 'px';
++                        win.style.height = rect.height + 'px';
++                        win.style.bottom = 'auto';
++                        win.style.right = 'auto';
++                    }
+ 
+-            header.addEventListener('mousedown', (e) => {
+-                isDragging = true;
+-                header.style.cursor = 'grabbing';
+-                element.style.zIndex = '1000'; // Bring to front
++                    startX = e.clientX;
++                    startY = e.clientY;
++                    initialLeft = parseInt(win.style.left) || win.getBoundingClientRect().left;
++                    initialTop = parseInt(win.style.top) || win.getBoundingClientRect().top;
++                    
++                    e.preventDefault(); 
++                });
+ 
+-                // Lock dimensions to current size so removing right/bottom doesn't collapse it
+-                const rect = element.getBoundingClientRect();
+-                element.style.width = rect.width + 'px';
+-                element.style.height = rect.height + 'px';
++                window.addEventListener('mousemove', (e) => {
++                    if (!isDragging) return;
++                    let newLeft = initialLeft + (e.clientX - startX);
++                    let newTop = initialTop + (e.clientY - startY);
++                    
++                    const minVisible = 50;
++                    newLeft = Math.max(-win.offsetWidth + minVisible, Math.min(window.innerWidth - minVisible, newLeft));
++                    newTop = Math.max(0, Math.min(window.innerHeight - minVisible, newTop));
++                    
++                    win.style.left = newLeft + 'px';
++                    win.style.top = newTop + 'px';
++                });
+ 
+-                // Ensure element is position:fixed for proper dragging
+-                if (getComputedStyle(element).position !== 'fixed') {
+-                    element.style.position = 'fixed';
+-                }
++                window.addEventListener('mouseup', () => {
++                    if (isDragging) {
++                        isDragging = false;
++                        header.style.cursor = 'grab';
++                        this.saveWindowState(win);
++                    }
++                });
++                
++                header.addEventListener('dblclick', () => {
++                    win.classList.toggle('collapsed');
++                });
++            }
+ 
+-                element.style.left = rect.left + 'px';
+-                element.style.top = rect.top + 'px';
+-                element.style.bottom = 'auto';
+-                element.style.right = 'auto';
++            // 3. Setup Resize Handle
++            let resizeHandle = win.querySelector('.resize-handle');
++            if (!resizeHandle) {
++                resizeHandle = document.createElement('div');
++                resizeHandle.className = 'resize-handle';
++                resizeHandle.style.cssText = 'position:absolute; right:0; bottom:0; width:16px; height:16px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.5) 50%); z-index:10;';
++                win.appendChild(resizeHandle);
++            }
+ 
+-                startX = e.clientX;
+-                startY = e.clientY;
++            let isResizing = false;
++            let startRx, startRy, startWidth, startHeight;
+ 
+-                initialX = rect.left;
+-                initialY = rect.top;
+-
++            resizeHandle.addEventListener('mousedown', (e) => {
++                isResizing = true;
++                startRx = e.clientX;
++                startRy = e.clientY;
++                startWidth = win.offsetWidth;
++                startHeight = win.offsetHeight;
++                
++                if (getComputedStyle(win).position !== 'fixed') {
++                    const rect = win.getBoundingClientRect();
++                    win.style.position = 'fixed';
++                    win.style.left = rect.left + 'px';
++                    win.style.top = rect.top + 'px';
++                    win.style.bottom = 'auto';
++                    win.style.right = 'auto';
++                }
++                
+                 e.preventDefault();
++                e.stopPropagation();
+             });
+ 
+             window.addEventListener('mousemove', (e) => {
+-                if (!isDragging) return;
+-
+-                const dx = e.clientX - startX;
+-                const dy = e.clientY - startY;
+-
+-                // Calculate new position
+-                let newX = initialX + dx;
+-                let newY = initialY + dy;
+-
+-                // Bounds checking - keep at least 50px visible
+-                const minVisible = 50;
+-                const elemWidth = element.offsetWidth;
+-                const elemHeight = element.offsetHeight;
+-
+-                // Keep within viewport bounds
+-                newX = Math.max(-elemWidth + minVisible, Math.min(window.innerWidth - minVisible, newX));
+-                newY = Math.max(0, Math.min(window.innerHeight - minVisible, newY));
+-
+-                element.style.left = newX + 'px';
+-                element.style.top = newY + 'px';
++                if (!isResizing) return;
++                const newWidth = Math.max(150, Math.min(window.innerWidth - 20, startWidth + (e.clientX - startRx)));
++                const newHeight = Math.max(100, Math.min(window.innerHeight - 20, startHeight + (e.clientY - startRy)));
++                win.style.width = newWidth + 'px';
++                win.style.height = newHeight + 'px';
+             });
+ 
+             window.addEventListener('mouseup', () => {
+-                isDragging = false;
+-                header.style.cursor = 'grab';
++                if (isResizing) {
++                    isResizing = false;
++                    this.saveWindowState(win);
++                }
+             });
+-        };
+-        // Make all UI windows dynamically draggable instead of hardcoding IDs
+-        document.querySelectorAll('.cockpit-section, .floating-window, .popup-panel').forEach(el => {
+-            if (el.id) makeDraggable(el.id);
+         });
+     }
+ 
++    saveWindowState(win) {
++        if (!win.id) return;
++        const state = {
++            left: win.style.left,
++            top: win.style.top,
++            width: win.style.width,
++            height: win.style.height,
++            zIndex: win.style.zIndex
++        };
++        localStorage.setItem('windowState_' + win.id, JSON.stringify(state));
++    }
++
+     setMode(newMode) {
+         this.mode = newMode;
+         document.getElementById('drawModeBtn').classList.remove('active');
+@@ -1375,7 +1404,70 @@
+             panel.style.display = 'none';
+         } else {
+             panel.style.display = 'block';
++        }
++    }
++
++    calculateShipStats() {
++        if (!this.playerShip || !this.playerShip.equipment) return;
++
++        // Base stats
++        let maxSpeed = 50;
++        let acceleration = 0.5;
++        let rotationSpeed = 0.08;
++        let maxShield = 100;
++        let shieldRecharge = 0.1;
++        let radarRange = 1500;
++        let mapVisibility = false;
++
++        const eq = this.playerShip.equipment;
++
++        // Apply Engine
++        if (eq.engine && this.equipmentDB.engine[eq.engine]) {
++            const engine = this.equipmentDB.engine[eq.engine];
++            maxSpeed += engine.maxSpeedBonus || 0;
++            acceleration += engine.accelBonus || 0;
+         }
++
++        // Apply Shield
++        if (eq.shield && this.equipmentDB.shield[eq.shield]) {
++            const shield = this.equipmentDB.shield[eq.shield];
++            maxShield = shield.capacity || maxShield;
++            shieldRecharge = shield.rechargeRate || shieldRecharge;
++        }
++
++        // Apply Wings
++        if (Array.isArray(eq.wings)) {
++            eq.wings.forEach(wingId => {
++                if (wingId && this.equipmentDB.wings[wingId]) {
++                    rotationSpeed += this.equipmentDB.wings[wingId].rotationBonus || 0;
++                }
++            });
++        }
++
++        // Apply Radar
++        if (eq.radar && this.equipmentDB.radar[eq.radar]) {
++            const radar = this.equipmentDB.radar[eq.radar];
++            radarRange = radar.range || radarRange;
++            mapVisibility = radar.mapVisibility || false;
++        }
++
++        // Apply basic generic upgrades on top (for backward compatibility during migration)
++        if (this.playerShip.upgrades) {
++            maxSpeed *= (1 + (this.playerShip.upgrades.speed || 0) * 0.2);
++            acceleration *= (1 + (this.playerShip.upgrades.speed || 0) * 0.1);
++        }
++
++        // Assign to playerShip
++        this.playerShip.maxSpeed = maxSpeed;
++        this.playerShip.acceleration = acceleration;
++        this.playerShip.rotationSpeed = rotationSpeed;
++        
++        this.playerShip.maxShield = maxShield;
++        this.playerShip.shieldRechargeRate = shieldRecharge;
++        if (this.playerShip.shield > maxShield) this.playerShip.shield = maxShield;
++
++        this.playerShip.radarRange = radarRange;
++        this.playerShip.mapVisibility = mapVisibility;
+     }
+ 
+     toggleFlightMode() {
+@@ -1390,13 +1482,32 @@
+ 
+         // Ensure ship is at valid coordinates (Fix NaN or undefined)
+         if (!this.playerShip) {
+-            this.playerShip = { type: 'interceptor', x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, rotation: 0, pitch: 0, roll: 0, speed: 0, maxSpeed: 50, acceleration: 0.5, rotationSpeed: 0.08, size: 45, color: '#00f3ff', shield: 100, maxShield: 100, hull: 100, maxHull: 100, cargoCount: 0, cargoCapacity: 100 };
++            this.playerShip = { 
++                type: 'interceptor', 
++                x: 0, y: 0, z: 0, 
++                vx: 0, vy: 0, vz: 0, 
++                rotation: 0, pitch: 0, roll: 0, 
++                speed: 0, maxSpeed: 50, acceleration: 0.5, rotationSpeed: 0.08, 
++                size: 45, color: '#00f3ff', 
++                shield: 100, maxShield: 100, 
++                hull: 100, maxHull: 100, 
++                cargoCount: 0, cargoCapacity: 100,
++                equipment: {
++                    weapons: ['basic_laser', null, null, null, null],
++                    engine: 'basic_engine',
++                    shield: 'basic_shield',
++                    wings: ['basic_wings', 'basic_wings'],
++                    radar: 'basic_radar'
++                }
++            };
+         }
+         if (isNaN(this.playerShip.x)) this.playerShip.x = 0;
+         if (isNaN(this.playerShip.y)) this.playerShip.y = 0;
+         if (isNaN(this.playerShip.vx)) this.playerShip.vx = 0;
+         if (isNaN(this.playerShip.vy)) this.playerShip.vy = 0;
+ 
++        this.calculateShipStats();
++
+         // Safety: Clear any active hazard effects when entering/exiting flight mode
+         // EXCEPT nuclear explosions which should play out fully
+         if (this.hazardEffect && this.hazardEffect.type !== 'supernova') {
+@@ -1466,7 +1577,7 @@
+         // Toggle Vitals HUD
+         const vitalsEl = document.getElementById('sectionVitals');
+         if (vitalsEl) {
+-            vitalsEl.style.setProperty('display', this.flightMode ? 'flex' : 'none', 'important');
++            vitalsEl.style.setProperty('display', this.flightMode ? 'block' : 'none', 'important');
+         }
+         if (layoutPresets) {
+             layoutPresets.style.setProperty('display', this.flightMode ? 'flex' : 'none', 'important');
+@@ -1476,17 +1587,21 @@
+     }
+ 
+     setLayout(type) {
+-        safeStorage.setItem('hudLayout', type);
++        localStorage.setItem('hudLayout', type);
+ 
+         const W = window.innerWidth;
+         const H = window.innerHeight;
+         
+-        const topY = 72;
+-        const gemsH = 180;
+-
+-        const setCoords = (id, cssMap) => {
++        // Calculate optimal scale factor to prevent overlap on small screens
++        // Horizontally, we need ~1600px of safe space. Vertically we need ~1060px for the towering arrays.
++        const widthScale = W / 1600;
++        const heightScale = H / 1060;
++        const scale = Math.min(1.0, Math.max(0.40, Math.min(widthScale, heightScale))); 
++        
++        const setCoords = (id, cssMap, origin = 'top left') => {
+             const el = document.getElementById(id);
+             if (el) {
++                // Clear any manual sizing locks
+                 el.style.top = 'auto';
+                 el.style.bottom = 'auto';
+                 el.style.left = 'auto';
+@@ -1495,34 +1610,89 @@
+                 for (const prop in cssMap) {
+                     el.style[prop] = cssMap[prop];
+                 }
+-
++                
++                el.style.transform = `scale(${scale})`;
++                el.style.transformOrigin = origin;
++                
+                 if (el.classList.contains('minimized-to-taskbar')) {
+                     this.restoreFromTaskbar(id);
+                 }
+             }
+         };
+ 
+-        // Default positions for floating HUD windows
+-        setCoords('sectionVitals', { top: '72px', left: '15px' });
+-        setCoords('sectionMission', { top: '330px', left: '15px' });
+-        setCoords('sectionFactions', { top: '430px', left: '15px' });
+-        setCoords('sectionShipStatus', { top: '72px', right: '15px' });
+-        setCoords('sectionControls', { top: '260px', right: '15px' });
+-        setCoords('sectionShipDesign', { top: '72px', right: '280px' });
+-        setCoords('sectionDamageAlerts', { top: '350px', right: '15px' });
++        const topY = 72;
++        const gemsH = 180;
++        const gap = 8 * scale; // Tight, scaled positioning gap
+ 
+-        // Bottom row sections - these are standalone position:fixed elements
+-        setCoords('sectionRadar',    { bottom: '15px', left: '15px' });
+-        setCoords('sectionVelocity', { bottom: '15px', left: '200px', display: 'flex' });
+-        setCoords('sectionMap',      { bottom: '15px', left: '425px' });
+-        setCoords('sectionGems',     { bottom: '15px', left: '15px', right: '15px', minWidth: '800px', height: `${gemsH}px` });
+-        setCoords('floatingLeaders', { top: `${topY}px`, right: '15px' });
++        if (type === 'horizontal') {
++            // THE NATIVE LOAD LAYOUT (Single Massive Top Row)
++            let currentX = 15;
++            setCoords('sectionMap', { top: `${topY}px`, left: `${currentX}px` });
++            currentX += (220 * scale) + gap;
+ 
+-        // Attach resize listener
++            setCoords('sectionRadar', { top: `${topY}px`, left: `${currentX}px` });
++            currentX += (180 * scale) + gap;
++
++            setCoords('sectionVelocity', { top: `${topY}px`, left: `${currentX}px`, display: 'flex' });
++            currentX += (220 * scale) + gap;
++
++            setCoords('sectionShipStatus', { top: `${topY}px`, left: `${currentX}px` });
++            currentX += (230 * scale) + gap;
++            
++            setCoords('sectionControls', { top: `${topY}px`, left: `${currentX}px` });
++            currentX += (210 * scale) + gap;
++
++            setCoords('sectionShipDesign', { top: `${topY}px`, left: `${currentX}px` });
++            currentX += (230 * scale) + gap;
++            
++            setCoords('floatingLeaders', { top: `${topY}px`, left: `${currentX}px` });
++            currentX += (260 * scale) + gap;
++            
++            // Second row left (Below Map natively)
++            setCoords('sectionMission', { top: `${topY + (220 * scale)}px`, left: '15px' });
++
++            // BOTTOM EDGE
++            setCoords('sectionGems', { bottom: '15px', left: '15px', right: '15px', minWidth: '800px', height: `${gemsH}px` }, 'bottom center');
++
++        } else if (type === 'vertical') {
++            // LEFT COLUMN (Dynamically Stacking Heights to prevent any overlap)
++            let leftY = topY;
++            setCoords('sectionMap', { top: `${leftY}px`, left: '15px' });
++            leftY += (200 * scale) + gap;
++
++            setCoords('sectionRadar', { top: `${leftY}px`, left: '15px' });
++            leftY += (180 * scale) + gap;
++
++            // Moved Velocity squarely under Radar precisely as requested!
++            setCoords('sectionVelocity', { top: `${leftY}px`, left: '15px', display: 'flex' });
++            leftY += (200 * scale) + gap;
++
++            setCoords('sectionControls', { top: `${leftY}px`, left: '15px' });
++
++            // RIGHT COLUMN (Dynamically Stacking Heights)
++            let rightY = topY;
++            setCoords('floatingLeaders', { top: `${rightY}px`, right: '15px' }, 'top right');
++            rightY += (260 * scale) + gap;
++
++            setCoords('sectionShipStatus', { top: `${rightY}px`, right: '15px' }, 'top right');
++            rightY += (160 * scale) + gap;
++
++            // Moved Ship Design directly below Ship Status
++            setCoords('sectionShipDesign', { top: `${rightY}px`, right: '15px' }, 'top right');
++            rightY += (230 * scale) + gap; // Uses original Ship Design height geometry
++            
++            // Mission Tracker trails below Design
++            setCoords('sectionMission', { top: `${rightY}px`, right: '15px' }, 'top right');
++
++            // BOTTOM EDGE (Gems span uniformly like Wide HUD)
++            setCoords('sectionGems', { bottom: '15px', left: '15px', right: '15px', minWidth: '800px', height: `${gemsH}px` }, 'bottom center');
++        }
++
++        // Attach resize listener dynamically to enforce strictly on resize limits
+         if (!this.resizeListenerAdded) {
+             window.addEventListener('resize', () => {
+-                if (safeStorage.getItem('hudLayout')) {
+-                    this.setLayout(safeStorage.getItem('hudLayout'));
++                if (localStorage.getItem('hudLayout')) {
++                    this.setLayout(localStorage.getItem('hudLayout'));
+                 }
+             });
+             this.resizeListenerAdded = true;
+@@ -1659,7 +1829,7 @@
+ 
+         // Show window
+         win.classList.remove('minimized-to-taskbar');
+-        win.style.display = win.classList.contains('cockpit-section') ? 'flex' : 'block';
++        win.style.display = 'block';
+ 
+         // Remove from taskbar
+         const taskbarItem = document.getElementById('taskbar-' + windowId);
+@@ -1694,14 +1864,14 @@
+             }
+         });
+ 
+-        safeStorage.setItem('windowLayout' + slot, JSON.stringify(layout));
++        localStorage.setItem('windowLayout' + slot, JSON.stringify(layout));
+         document.getElementById('layout' + slot + 'Btn')?.classList.add('active');
+         this.showToast('Layout ' + slot + ' saved!');
+     }
+ 
+     // Load layout from a slot
+     loadLayout(slot) {
+-        const layoutStr = safeStorage.getItem('windowLayout' + slot);
++        const layoutStr = localStorage.getItem('windowLayout' + slot);
+         if (!layoutStr) {
+             this.showToast('No layout saved in slot ' + slot);
+             return;
+@@ -1806,47 +1976,7 @@
+ 
+     // Universal resize system for ALL panels
+     makeResizable(elementId) {
+-        const element = document.getElementById(elementId);
+-        if (!element) return;
+-
+-        // Add resize handle if it doesn't exist
+-        let resizeHandle = element.querySelector('.resize-handle');
+-        if (!resizeHandle) {
+-            resizeHandle = document.createElement('div');
+-            resizeHandle.className = 'resize-handle';
+-            resizeHandle.style.cssText = 'position:absolute; right:0; bottom:0; width:16px; height:16px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.5) 50%); z-index:10;';
+-            element.appendChild(resizeHandle);
+-        }
+-
+-        let isResizing = false;
+-        let startX, startY, startWidth, startHeight;
+-
+-        resizeHandle.addEventListener('mousedown', (e) => {
+-            isResizing = true;
+-            startX = e.clientX;
+-            startY = e.clientY;
+-            startWidth = element.offsetWidth;
+-            startHeight = element.offsetHeight;
+-            e.preventDefault();
+-            e.stopPropagation();
+-        });
+-
+-        window.addEventListener('mousemove', (e) => {
+-            if (!isResizing) return;
+-
+-            const deltaX = e.clientX - startX;
+-            const deltaY = e.clientY - startY;
+-
+-            const newWidth = Math.max(150, Math.min(1200, startWidth + deltaX));
+-            const newHeight = Math.max(100, Math.min(800, startHeight + deltaY));
+-
+-            element.style.width = newWidth + 'px';
+-            element.style.height = newHeight + 'px';
+-        });
+-
+-        window.addEventListener('mouseup', () => {
+-            isResizing = false;
+-        });
++        // Obsolete: Handled centrally by initWindowSystem()
+     }
+ 
+     // Toggle floating window collapse
+@@ -1858,13 +1988,13 @@
+     // Spacecraft color customization
+     setShipColor(color) {
+         this.playerShip.color = color;
+-        safeStorage.setItem('playerShipColor', color); // Fixed Key
++        localStorage.setItem('playerShipColor', color); // Fixed Key
+     }
+ 
+     resetShipColor() {
+         const defaultColor = '#00f3ff';
+         this.playerShip.color = defaultColor;
+-        safeStorage.setItem('playerShipColor', defaultColor); // Fixed Key
++        localStorage.setItem('playerShipColor', defaultColor); // Fixed Key
+         document.getElementById('shipColorPicker').value = defaultColor;
+         this.showToast('Ship color reset to default');
+     }
+@@ -1886,7 +2016,7 @@
+         }
+ 
+         // Save rotation to localStorage
+-        safeStorage.setItem('shipRotation', JSON.stringify({
++        localStorage.setItem('shipRotation', JSON.stringify({
+             yaw: this.playerShip.rotation,
+             pitch: this.playerShip.pitch,
+             roll: this.playerShip.roll
+@@ -1908,7 +2038,7 @@
+         document.getElementById('pitchValue').textContent = '0°';
+         document.getElementById('rollValue').textContent = '0°';
+ 
+-        safeStorage.removeItem('shipRotation');
++        localStorage.removeItem('shipRotation');
+         this.showToast('Ship rotation reset');
+     }
+ 
+@@ -2145,6 +2275,27 @@
+             }
+         }
+ 
++        // Draw distress beacons
++        if (this.distressBeacons) {
++            this.distressBeacons.forEach(beacon => {
++                const dx = beacon.x - this.playerShip.x;
++                const dy = beacon.y - this.playerShip.y;
++                const dist = Math.sqrt(dx * dx + dy * dy);
++                if (dist < 10000) { // Beacons have huge radar range
++                    // Clamp to radar edge
++                    const displayDist = Math.min(dist, 2000); 
++                    const rx = cx + (dx / dist) * (displayDist / 2000) * 35;
++                    const ry = cy + (dy / dist) * (displayDist / 2000) * 35;
++                    
++                    const pulse = Math.sin(Date.now() * 0.005) * 0.5 + 0.5;
++                    ctx.fillStyle = `rgba(255, 200, 0, ${0.4 + pulse * 0.6})`;
++                    ctx.beginPath();
++                    ctx.arc(rx, ry, 2.5, 0, Math.PI * 2);
++                    ctx.fill();
++                }
++            });
++        }
++
+         // Draw nearby minerals as dots
+         let radarRange = 2000;
+         if (this.activePulsePing) {
+@@ -2597,7 +2748,31 @@
+                 ctx.textBaseline = 'middle';
+                 ctx.fillText(label, cx + dx, cy + dy);
+             });
++            ctx.globalAlpha = 1;
++
+             ctx.globalAlpha = 1;
++
++            // Draw Enemies if within Radar Range and map visibility is enabled
++            if (this.playerShip.mapVisibility && this.enemyShips) {
++                this.enemyShips.forEach(enemy => {
++                    const dx = enemy.x - this.playerShip.x;
++                    const dy = enemy.y - this.playerShip.y;
++                    const dist = Math.hypot(dx, dy);
++
++                    if (dist <= this.playerShip.radarRange) {
++                        const sx = dx * scale;
++                        const sy = dy * scale;
++                        
++                        // Only draw if on screen
++                        if (Math.abs(sx) <= w / 2 && Math.abs(sy) <= h / 2) {
++                            ctx.fillStyle = '#ff0044'; // Red enemy blip
++                            ctx.beginPath();
++                            ctx.arc(cx + sx, cy + sy, 3, 0, Math.PI * 2);
++                            ctx.fill();
++                        }
++                    }
++                });
++            }
+ 
+             // Draw Player (now always at center) - PROMINENT
+             const px = cx;
+@@ -2641,13 +2816,21 @@
+ 
+         if (modal) {
+             modal.classList.remove('hidden');
++            // Trigger reflow for transition
++            void modal.offsetWidth;
++            modal.classList.add('active');
++            
+             this.expandedMapOpen = true;
++            if (window.game) window.game.gamePaused = true;
++            
+             this.expandedMapZoom = this.expandedMapZoom || 1.0;
+             this.expandedMapOffset = this.expandedMapOffset || { x: 0, y: 0 };
+ 
+             // Center on player initially
+-            this.expandedMapOffset.x = -this.playerShip.x;
+-            this.expandedMapOffset.y = -this.playerShip.y;
++            if (window.game && window.game.playerShip) {
++                this.expandedMapOffset.x = -window.game.playerShip.x;
++                this.expandedMapOffset.y = -window.game.playerShip.y;
++            }
+ 
+             console.log('[Expand Map] Starting animation, zoom:', this.expandedMapZoom);
+             this.animateExpandedMap();
+@@ -2696,8 +2879,10 @@
+     closeExpandedMap() {
+         const modal = document.getElementById('expandedMapModal');
+         if (modal) {
+-            modal.classList.add('hidden');
++            modal.classList.remove('active');
+             this.expandedMapOpen = false;
++            if (window.game) window.game.gamePaused = false;
++            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+         }
+     }
+ 
+@@ -2779,6 +2964,30 @@
+             ctx.globalAlpha = 0.4;
+             ctx.fillText(zone.name.toUpperCase(), 0, -dist + 200);
+         });
++
++        // --- 4. DRAW ENEMIES ON RADAR ---
++        if (this.playerShip && this.playerShip.mapVisibility && this.enemyShips) {
++            this.enemyShips.forEach(enemy => {
++                const dx = enemy.x - this.playerShip.x;
++                const dy = enemy.y - this.playerShip.y;
++                const dist = Math.hypot(dx, dy);
++
++                if (dist <= this.playerShip.radarRange) {
++                    ctx.fillStyle = '#ff0044';
++                    ctx.beginPath();
++                    ctx.arc(enemy.x, enemy.y, Math.max(100, 3 / zoom), 0, Math.PI * 2);
++                    ctx.fill();
++                    
++                    // Small pulse for enemies
++                    const pulse = 1 + Math.sin(time * 5) * 0.5;
++                    ctx.globalAlpha = 0.5;
++                    ctx.beginPath();
++                    ctx.arc(enemy.x, enemy.y, Math.max(100, 3 / zoom) * (1 + pulse), 0, Math.PI * 2);
++                    ctx.fill();
++                    ctx.globalAlpha = 1;
++                }
++            });
++        }
+ 
+         // --- 4. HOLO-GRID ---
+         // A perspective grid. Since this is 2D top-down, we draw a rectangular grid that pans.
+@@ -3331,51 +3540,78 @@
+     shoot() {
+         const now = Date.now();
+         const ship = this.playerShip;
+-        if (!ship) return;
++        if (!ship || !ship.equipment) return;
+ 
+-        // Cooldown scales with weapon level (e.g., base 200ms, -33% per level)
+         const weaponLevel = ship.upgrades.weapons || 0;
+-        const cooldown = 200 / (1 + weaponLevel * 0.5);
+-        if (ship.lastShot && now - ship.lastShot < cooldown) return;
+-        ship.lastShot = now;
++        let firedAny = false;
+ 
+-        // Audio: player laser
+-        gameAudio.playLaser();
++        const eq = ship.equipment;
++        const weapons = eq.weapons || []; // Array of up to 5 weapon IDs
+ 
+-        // Muzzle Flash
+-        ship.muzzleFlash = 1.0;
++        // Weapon offset angles and distances (slot 0: center, slot 1: left, slot 2: right, slot 3: far left, slot 4: far right)
++        const slotOffsets = [
++            { x: 40, y: 0 },       // Center Nose
++            { x: 10, y: -20 },     // Left Wing
++            { x: 10, y: 20 },      // Right Wing
++            { x: -10, y: -40 },    // Outer Left
++            { x: -10, y: 40 }      // Outer Right
++        ];
+ 
+-        // Create Projectile
+-        const speed = 25; // Faster than ship (max 15-20)
+-        // Direction based on ship rotation and pitch
+-        const angle = ship.rotation;
++        if (!ship.lastShots) ship.lastShots = [0, 0, 0, 0, 0];
+ 
+-        // Offset to match ship nose
+-        const noseOffset = 40 / this.camera.zoom;
+-        const startX = ship.x + Math.cos(angle) * noseOffset;
+-        const startY = ship.y + Math.sin(angle) * noseOffset;
++        weapons.forEach((weaponId, index) => {
++            if (!weaponId) return; // Empty slot
++            
++            const weaponDef = this.equipmentDB.weapons[weaponId];
++            if (!weaponDef) return;
++            
++            // Cooldown in DB is roughly frames, multiply by 20 for ms
++            const wCooldown = (weaponDef.cooldown * 20) / (1 + weaponLevel * 0.5);
++            
++            if (now - ship.lastShots[index] < wCooldown) return;
++            
++            ship.lastShots[index] = now;
++            firedAny = true;
+ 
+-        // Add velocity of ship to projectile for conservation of momentum feel
+-        const pVx = ship.vx * 0.5 + Math.cos(angle) * speed;
+-        const pVy = ship.vy * 0.5 + Math.sin(angle) * speed;
++            const speed = weaponDef.speed || 25;
++            const angle = ship.rotation;
++            
++            const offset = slotOffsets[index] || { x: 0, y: 0 };
++            
++            const zoom = this.camera.zoom;
++            const rx = (offset.x * Math.cos(angle) - offset.y * Math.sin(angle)) / zoom;
++            const ry = (offset.x * Math.sin(angle) + offset.y * Math.cos(angle)) / zoom;
+ 
+-        // Visual scaling based on weapon level
+-        const pWidth = (4 + weaponLevel * 2) / this.camera.zoom;
+-        const pLength = (40 + weaponLevel * 20) / this.camera.zoom;
+-        const pColor = weaponLevel >= 3 ? '#ff3300' : (weaponLevel >= 1 ? '#ffff00' : '#00ffcc');
++            const startX = ship.x + rx;
++            const startY = ship.y + ry;
+ 
+-        this.projectiles.push({
+-            x: startX,
+-            y: startY,
+-            vx: pVx,
+-            vy: pVy,
+-            rotation: angle,
+-            color: pColor, 
+-            life: 60, // Frames (1 second at 60fps)
+-            width: pWidth,
+-            length: pLength,
+-            damage: 25 * (1 + weaponLevel * 0.5) // Attach damage to projectile
++            const pVx = ship.vx * 0.5 + Math.cos(angle) * speed;
++            const pVy = ship.vy * 0.5 + Math.sin(angle) * speed;
++
++            const pWidth = (4 + weaponLevel * 2) / zoom;
++            const pLength = (40 + weaponLevel * 20) / zoom;
++            
++            this.playerStats.shotsFired++;
++
++            this.projectiles.push({
++                x: startX,
++                y: startY,
++                vx: pVx,
++                vy: pVy,
++                rotation: angle,
++                color: weaponDef.color || '#00f3ff', 
++                life: 60, // Frames (1 second at 60fps)
++                width: pWidth,
++                length: pLength,
++                damage: (weaponDef.damage || 10) * (1 + weaponLevel * 0.5),
++                type: weaponDef.name
++            });
+         });
++
++        if (firedAny) {
++            ship.muzzleFlash = 1.0;
++            gameAudio.playLaser();
++        }
+     }
+ 
+     updateProjectiles() {
+@@ -3399,9 +3635,12 @@
+                 const dy = p.y - mine.y;
+                 const dist = Math.sqrt(dx * dx + dy * dy);
+ 
+-                if (dist < mine.size + p.width) {
++                const hitRadius = mine.radius || mine.size || 20;
++
++                if (dist < hitRadius + (p.width || 4)) {
+                     // HIT!
+                     this.createExplosion(p.x, p.y, 'hit');
++                    if (mine.health === undefined) mine.health = 50; // Default health
+                     mine.health -= (p.damage || 25); // Use projectile damage
+                     hit = true;
+ 
+@@ -3435,6 +3674,37 @@
+ 
+                     if (base.health <= 0) {
+                         this.destroyMissileBase(k);
++                    }
++                    break;
++                }
++            }
++
++            if (hit) {
++                this.projectiles.splice(i, 1);
++                continue;
++            }
++
++            // Check collisions with Enemy Missiles
++            for (let m = this.enemyMissiles.length - 1; m >= 0; m--) {
++                const missile = this.enemyMissiles[m];
++                const dx = p.x - missile.x;
++                const dy = p.y - missile.y;
++                const dist = Math.sqrt(dx * dx + dy * dy);
++
++                if (dist < missile.size * 3 + p.width + 10) { // Generous leeway for hitting fast-moving missiles
++                    // HIT!
++                    this.createExplosion(p.x, p.y, 'hit');
++                    missile.health -= (p.damage || 25);
++                    hit = true;
++
++                    if (missile.health <= 0) {
++                        this.createExplosion(missile.x, missile.y, 'destruction');
++                        this.enemyMissiles.splice(m, 1);
++                        
++                        // Small reward for shooting down a missile
++                        this.playerGems += 2;
++                        localStorage.setItem('playerGems', this.playerGems);
++                        this.showToast(`💥 Missile Intercepted! +2 Gems`, 1000);
+                     }
+                     break;
+                 }
+@@ -3458,6 +3728,7 @@
+                     enemy.health -= (p.damage || 25);
+                     enemy.hitFlash = 10;
+                     hit = true;
++                    this.playerStats.shotsHit++;
+ 
+                     // Faction Wars: Reputation Adjustments
+                     if (enemy.faction) {
+@@ -3466,7 +3737,7 @@
+                         Object.keys(this.factionRep).forEach(f => {
+                             if (f !== enemy.faction) this.factionRep[f] = Math.min(100, (this.factionRep[f] || 0) + 1);
+                         });
+-                        safeStorage.setItem('factionRep', JSON.stringify(this.factionRep));
++                        localStorage.setItem('factionRep', JSON.stringify(this.factionRep));
+                     }
+ 
+                     if (enemy.health <= 0) {
+@@ -3605,10 +3876,13 @@
+         const mine = this.spaceMines[index];
+         this.createExplosion(mine.x, mine.y, 'destruction');
+ 
++        // Remove from array so it can't be hit anymore
++        this.spaceMines.splice(index, 1);
++
+         // Award gems
+         const reward = 10;
+         this.playerGems += reward;
+-        safeStorage.setItem('playerGems', this.playerGems);
++        localStorage.setItem('playerGems', this.playerGems);
+         this.showToast(`💥 Space Mine destroyed! +${reward} Gems`, 2000);
+ 
+         // TRACK MISSION PROGRESS (ONLY ON WEAPON DESTRUCTION)
+@@ -3621,6 +3895,16 @@
+         // Loot
+         this.spawnLoot(mine.x, mine.y, 'uranium', 5);
+ 
++        // Remove from sector data to prevent respawning
++        if (this.sectors) {
++            for (const sector of this.sectors.values()) {
++                if (sector.hazards && sector.hazards.mines) {
++                    const idx = sector.hazards.mines.indexOf(mine);
++                    if (idx !== -1) sector.hazards.mines.splice(idx, 1);
++                }
++            }
++        }
++
+         this.spaceMines.splice(index, 1);
+     }
+ 
+@@ -3631,12 +3915,22 @@
+         // Award gems
+         const reward = 25;
+         this.playerGems += reward;
+-        safeStorage.setItem('playerGems', this.playerGems);
++        localStorage.setItem('playerGems', this.playerGems);
+         this.showToast(`💥 Missile Base destroyed! +${reward} Gems`, 2000);
+ 
+         // Loot
+         this.spawnLoot(base.x, base.y, 'plutonium', 10);
+ 
++        // Remove from sector data to prevent respawning
++        if (this.sectors) {
++            for (const sector of this.sectors.values()) {
++                if (sector.hazards && sector.hazards.turrets) {
++                    const idx = sector.hazards.turrets.indexOf(base);
++                    if (idx !== -1) sector.hazards.turrets.splice(idx, 1);
++                }
++            }
++        }
++
+         this.missileBases.splice(index, 1);
+     }
+ 
+@@ -3644,7 +3938,7 @@
+ 
+     static ENEMY_TYPES = {
+         scout: {
+-            name: 'Scout',
++            name: 'Void Stalker',
+             health: 50,
+             maxSpeed: 3.0,
+             acceleration: 0.08,
+@@ -3659,7 +3953,7 @@
+             size: 18
+         },
+         fighter: {
+-            name: 'Fighter',
++            name: 'Alien Scythe',
+             health: 100,
+             maxSpeed: 2.5,
+             acceleration: 0.06,
+@@ -3674,7 +3968,7 @@
+             size: 24
+         },
+         cruiser: {
+-            name: 'Cruiser',
++            name: 'Obsidian Shard',
+             health: 200,
+             maxSpeed: 1.5,
+             acceleration: 0.03,
+@@ -3690,50 +3984,20 @@
+             glowColor: 'rgba(170, 68, 255, 0.6)',
+             size: 32
+         },
+-        hauler: {
+-            name: 'Hauler',
+-            health: 150,
+-            maxSpeed: 1.0,
+-            acceleration: 0.02,
+-            fireRate: 3000,
+-            aggroRange: 800,
+-            attackRange: 500,
+-            bulletSpeed: 8,
+-            bulletDamage: 15,
+-            gemDrop: 50,
+-            color: '#888888',
+-            glowColor: 'rgba(136, 136, 136, 0.6)',
+-            size: 40
+-        },
+-        alien_scythe: {
+-            name: 'Alien Scythe', health: 120, maxSpeed: 3.5, acceleration: 0.1, fireRate: 800, aggroRange: 900, attackRange: 500, bulletSpeed: 15, bulletDamage: 20, gemDrop: 20, color: '#00ffcc', glowColor: 'rgba(0, 255, 204, 0.6)', size: 26
+-        },
+-        obsidian_shard: {
+-            name: 'Obsidian Shard', health: 80, maxSpeed: 4.0, acceleration: 0.15, fireRate: 600, aggroRange: 700, attackRange: 400, bulletSpeed: 18, bulletDamage: 10, gemDrop: 15, color: '#8800ff', glowColor: 'rgba(136, 0, 255, 0.6)', size: 20
+-        },
+-        biomech_weaver: {
+-            name: 'Biomech Weaver', health: 150, maxSpeed: 2.0, acceleration: 0.05, fireRate: 1500, aggroRange: 800, attackRange: 600, bulletSpeed: 10, bulletDamage: 25, gemDrop: 30, color: '#33ff33', glowColor: 'rgba(51, 255, 51, 0.6)', size: 28
+-        },
+-        plasma_sphere: {
+-            name: 'Plasma Sphere', health: 250, maxSpeed: 1.2, acceleration: 0.02, fireRate: 2000, aggroRange: 1200, attackRange: 800, bulletSpeed: 8, bulletDamage: 40, gemDrop: 45, color: '#ff00aa', glowColor: 'rgba(255, 0, 170, 0.6)', size: 35
+-        },
+-        void_stalker: {
+-            name: 'Void Stalker', health: 100, maxSpeed: 3.8, acceleration: 0.12, fireRate: 1000, aggroRange: 1000, attackRange: 700, bulletSpeed: 20, bulletDamage: 15, gemDrop: 25, color: '#111111', glowColor: 'rgba(255, 0, 0, 0.8)', size: 22
+-        },
+-        nexus_prism: {
+-            name: 'Nexus Prism', health: 300, maxSpeed: 0.8, acceleration: 0.01, fireRate: 3000, aggroRange: 1500, attackRange: 1000, bulletSpeed: 12, bulletDamage: 50, gemDrop: 60, burstCount: 5, burstDelay: 100, color: '#00ffff', glowColor: 'rgba(0, 255, 255, 0.6)', size: 45
+-        },
+-        hive_carrier: {
+-            name: 'Hive Carrier', health: 500, maxSpeed: 0.5, acceleration: 0.01, fireRate: 4000, aggroRange: 1200, attackRange: 900, bulletSpeed: 8, bulletDamage: 30, gemDrop: 100, color: '#ffaa00', glowColor: 'rgba(255, 170, 0, 0.6)', size: 60
+-        },
+-        arachnid_drone: {
+-            name: 'Arachnid Drone', health: 60, maxSpeed: 3.2, acceleration: 0.09, fireRate: 500, aggroRange: 600, attackRange: 300, bulletSpeed: 14, bulletDamage: 8, gemDrop: 10, color: '#cc0000', glowColor: 'rgba(204, 0, 0, 0.6)', size: 16
+-        },
+-        nebula_phantom: {
+-            name: 'Nebula Phantom', health: 180, maxSpeed: 2.2, acceleration: 0.04, fireRate: 1800, aggroRange: 900, attackRange: 600, bulletSpeed: 11, bulletDamage: 22, gemDrop: 35, color: '#6600cc', glowColor: 'rgba(102, 0, 204, 0.4)', size: 30
+-        },
+-        zenith_destroyer: {
+-            name: 'Zenith Destroyer', health: 400, maxSpeed: 0.9, acceleration: 0.02, fireRate: 2500, aggroRange: 1400, attackRange: 800, bulletSpeed: 16, bulletDamage: 60, gemDrop: 80, color: '#ff3300', glowColor: 'rgba(255, 51, 0, 0.6)', size: 50
++        phantom: {
++            name: 'Nebula Phantom', 
++            health: 180, 
++            maxSpeed: 2.2, 
++            acceleration: 0.04, 
++            fireRate: 1800, 
++            aggroRange: 900, 
++            attackRange: 600, 
++            bulletSpeed: 11, 
++            bulletDamage: 22, 
++            gemDrop: 35, 
++            color: '#6600cc', 
++            glowColor: 'rgba(102, 0, 204, 0.4)', 
++            size: 30
+         }
+     };
+ 
+@@ -4082,10 +4346,12 @@
+         // Award gems (Buffed for mid-to-high tier)
+         const gemMult = typeDef.rarity === 'boss' ? 1.5 : (typeDef.rank >= 2 ? 1.2 : 1.0);
+         this.playerGems += Math.ceil(typeDef.gemDrop * gemMult);
+-        safeStorage.setItem('playerGems', this.playerGems);
++        localStorage.setItem('playerGems', this.playerGems);
+ 
+         // Increment kill counter
+         this.enemyKills++;
++        this.playerStats.kills++;
++        this.saveStats();
+ 
+         // Track mission progress
+         if (this.activeMission) {
+@@ -4392,11 +4658,11 @@
+ 
+         // Award gems
+         this.playerGems += typeDef.gemReward;
+-        safeStorage.setItem('playerGems', this.playerGems);
++        localStorage.setItem('playerGems', this.playerGems);
+ 
+         // Track boss kills
+         this.bossesDefeated++;
+-        safeStorage.setItem('bossesDefeated', this.bossesDefeated);
++        localStorage.setItem('bossesDefeated', this.bossesDefeated);
+ 
+         // Rich loot drop
+         const rareLoots = ['antimatter', 'darkmatter', 'neodymium', 'lanthanum'];
+@@ -4677,9 +4943,9 @@
+         if (m.progress >= m.goal) {
+             // Mission complete!
+             this.playerGems += m.reward;
+-            safeStorage.setItem('playerGems', this.playerGems);
++            localStorage.setItem('playerGems', this.playerGems);
+             this.missionsCompleted++;
+-            safeStorage.setItem('missionsCompleted', this.missionsCompleted);
++            localStorage.setItem('missionsCompleted', this.missionsCompleted);
+             if (this.updateGemsUI) this.updateGemsUI();
+ 
+             // Launch the cinematic achievement overlay
+@@ -5014,30 +5280,33 @@
+ 
+         overlay = document.createElement('div');
+         overlay.id = 'missionBoardOverlay';
+-        overlay.style.cssText = `
+-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+-            background: rgba(10, 15, 30, 0.95); border: 2px solid #00ffcc;
+-            border-radius: 12px; padding: 30px; z-index: 10000;
+-            min-width: 400px; max-width: 500px; color: #e0e0e0;
+-            box-shadow: 0 0 40px rgba(0, 255, 204, 0.3);
+-            font-family: 'Orbitron', monospace;
+-        `;
++        overlay.className = 'modal-overlay hidden';
++        // Add active in next frame for transition
++        setTimeout(() => overlay.classList.add('active'), 10);
+ 
+-        let html = `<h2 style="color: #00ffcc; margin: 0 0 5px; font-size: 18px; text-align: center;">📋 MISSION BOARD</h2>`;
+-        html += `<p style="color: #888; font-size: 11px; text-align: center; margin: 0 0 15px;">Missions Completed: ${this.missionsCompleted} | Bosses Defeated: ${this.bossesDefeated}</p>`;
++        this.gamePaused = true;
+ 
++        let html = `
++        <div class="modal" style="width: 500px; max-width: 95vw;">
++            <div class="modal-close-corner">
++                <button class="btn-secondary" onclick="window.game.hideMissionBoardUI()">EXIT MISSIONS</button>
++            </div>
++            <h2 style="color: #00ffcc; text-shadow: 0 0 10px rgba(0, 255, 204, 0.5); font-family: 'Cinzel', serif; margin-top: 0; text-align: center;">MISSION BOARD</h2>
++            <p style="color: #888; font-size: 11px; text-align: center; margin: 0 0 20px;">Missions Completed: ${this.missionsCompleted} | Bosses Defeated: ${this.bossesDefeated}</p>
++            <div style="overflow-y: auto; max-height: 400px; padding-right: 10px;">
++        `;
++
+         if (this.activeMission) {
+-            html += `<div style="background: rgba(255,170,0,0.15); border: 1px solid #ffaa00; border-radius: 8px; padding: 12px; margin-bottom: 10px;">`;
+-            html += `<div style="color: #ffaa00; font-size: 14px; font-weight: bold;">ACTIVE: ${this.activeMission.name}</div>`;
++            html += `<div style="background: rgba(255,170,0,0.15); border: 1px solid #ffaa00; border-radius: 8px; padding: 15px; margin-bottom: 10px;">`;
++            html += `<div style="color: #ffaa00; font-size: 14px; font-weight: bold; margin-bottom: 5px;">ACTIVE: ${this.activeMission.name}</div>`;
+             html += `<div style="color: #ccc; font-size: 12px; margin: 4px 0;">${this.activeMission.desc}</div>`;
+             if (this.activeMission.hint) {
+-                html += `<div style="color: #00eaff; font-size: 10px; margin: 4px 0; font-style: italic;">${this.activeMission.hint}</div>`;
++                html += `<div style="color: #00eaff; font-size: 10px; margin: 8px 0; font-style: italic;">${this.activeMission.hint}</div>`;
+             }
+-            html += `<div style="color: #00ff88; font-size: 12px;">Progress: ${this.activeMission.progress}/${this.activeMission.goal}</div>`;
+-            html += `<button onclick="window.game.abandonMission(); window.game.hideMissionBoardUI();" style="
+-                margin-top: 8px; padding: 6px 16px; background: rgba(255,50,50,0.3); color: #ff4444;
+-                border: 1px solid #ff4444; border-radius: 6px; cursor: pointer; font-size: 11px;
+-            ">ABANDON</button></div>`;
++            html += `<div style="color: #00ff88; font-size: 12px; margin-top: 10px; font-weight: bold;">Progress: ${this.activeMission.progress}/${this.activeMission.goal}</div>`;
++            html += `<button onclick="window.game.abandonMission(); window.game.hideMissionBoardUI();" class="btn-small" style="
++                margin-top: 12px; width: 100%; background: rgba(255,50,50,0.2); color: #ff4444; border-color: #ff4444;
++            ">ABANDON MISSION</button></div>`;
+         } else {
+             const tierColors = { 1: '#00ff88', 2: '#ffaa00', 3: '#ff6b9d', 4: '#ff44ff' };
+             const tierLabels = { 1: 'BASICS', 2: 'COMBAT', 3: 'ADVANCED', 4: 'ELITE' };
+@@ -5045,26 +5314,22 @@
+                 const desc = m.desc.replace('{goal}', m.goal);
+                 const tierCol = tierColors[m.tier] || '#00ffcc';
+                 const tierLabel = tierLabels[m.tier] || 'MISSION';
+-                html += `<div style="background: rgba(0,255,204,0.08); border: 1px solid rgba(0,255,204,0.3); border-radius: 8px; padding: 12px; margin-bottom: 8px;">`;
++                html += `<div style="background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.2); border-radius: 8px; padding: 15px; margin-bottom: 10px; transition: all 0.2s ease;">`;
+                 html += `<div style="display: flex; justify-content: space-between; align-items: flex-start;">`;
+-                html += `<div style="flex:1;"><div style="display:flex; align-items:center; gap:6px;"><span style="font-size:9px; color:${tierCol}; background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:3px; border:1px solid ${tierCol}; letter-spacing:1px;">${tierLabel}</span><span style="color: #00ffcc; font-size: 13px; font-weight: bold;">${m.name}</span></div>`;
+-                html += `<div style="color: #aaa; font-size: 11px; margin-top: 3px;">${desc}</div>`;
++                html += `<div style="flex:1; padding-right: 15px;"><div style="display:flex; align-items:center; gap:8px; margin-bottom: 6px;"><span style="font-size:9px; color:${tierCol}; background:rgba(0,0,0,0.5); padding:3px 8px; border-radius:4px; border:1px solid ${tierCol}; letter-spacing:1px; font-weight: bold;">${tierLabel}</span><span style="color: #00ffcc; font-size: 14px; font-weight: bold;">${m.name}</span></div>`;
++                html += `<div style="color: #aaa; font-size: 12px; margin-top: 5px;">${desc}</div>`;
+                 if (m.briefing) {
+-                    html += `<div style="color: #7ab; font-size: 10px; margin-top: 6px; line-height: 1.4; border-left: 2px solid rgba(0,255,204,0.3); padding-left: 8px;">${m.briefing}</div>`;
++                    html += `<div style="color: #7ab; font-size: 11px; margin-top: 8px; line-height: 1.5; border-left: 2px solid rgba(0,255,204,0.3); padding-left: 10px;">${m.briefing}</div>`;
+                 }
+                 html += `</div>`;
+-                html += `<div style="text-align: right; min-width: 80px;"><div style="font-size: 9px; color: #667; letter-spacing: 1px; margin-bottom: 2px;">REWARD</div><div style="color: #ffd700; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px rgba(255,215,0,0.4);">💎 ${m.reward}</div>`;
+-                html += `<button onclick="window.game.acceptMission(window.game._boardMissions[${i}])" style="
+-                    margin-top: 4px; padding: 4px 12px; background: rgba(0,255,204,0.2); color: #00ffcc;
+-                    border: 1px solid #00ffcc; border-radius: 6px; cursor: pointer; font-size: 11px;
++                html += `<div style="text-align: right; min-width: 90px;"><div style="font-size: 10px; color: #667; letter-spacing: 1px; margin-bottom: 4px;">REWARD</div><div style="color: #ffd700; font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(255,215,0,0.5);">💎 ${m.reward}</div>`;
++                html += `<button onclick="window.game.acceptMission(window.game._boardMissions[${i}])" class="btn-small" style="
++                    margin-top: 10px; width: 100%; border-color: #00ffcc; color: #00ffcc;
+                 ">ACCEPT</button></div></div></div>`;
+             });
+         }
+ 
+-        html += `<button onclick="window.game.hideMissionBoardUI()" style="
+-            width: 100%; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.1);
+-            color: #888; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-size: 12px;
+-        ">CLOSE</button>`;
++        html += `</div></div>`; // Close overflow div and modal
+ 
+         overlay.innerHTML = html;
+         document.body.appendChild(overlay);
+@@ -5075,8 +5340,14 @@
+ 
+     hideMissionBoardUI() {
+         const overlay = document.getElementById('missionBoardOverlay');
+-        if (overlay) overlay.remove();
++        if (overlay) {
++            overlay.classList.remove('active');
++            setTimeout(() => {
++                overlay.remove();
++            }, 300);
++        }
+         this.missionBoardOpen = false;
++        this.gamePaused = false;
+     }
+ 
+     spawnLoot(x, y, type, amount) {
+@@ -5222,34 +5493,45 @@
+     }
+ 
+     loadInventory() {
+-        return this.safeJSONParse('playerInventory', {});
++        try {
++            const saved = localStorage.getItem('playerInventory');
++            return saved ? JSON.parse(saved) : {};
++        } catch (e) {
++            return {};
++        }
+     }
+ 
+ 
+     saveInventory() {
+         try {
+-            safeStorage.setItem('playerInventory', JSON.stringify(this.playerInventory));
++            localStorage.setItem('playerInventory', JSON.stringify(this.playerInventory));
+         } catch (e) {
+             console.error('Failed to save inventory:', e);
+         }
+     }
+ 
+     loadCredits() {
+-        return parseInt(safeStorage.getItem('playerCredits')) || 0;
++        return parseInt(localStorage.getItem('playerCredits')) || 0;
+     }
+ 
+     saveCredits() {
+-        safeStorage.setItem('playerCredits', this.credits);
++        localStorage.setItem('playerCredits', this.credits);
+         // Sync with React bridge if it's a purchase/spend
+         this.syncWithCloud();
+     }
+ 
+     loadFactionRep() {
+-        return this.safeJSONParse('factionRep', { xenon: 0, mauler: 0, terran: 0 });
++        try {
++            const saved = localStorage.getItem('factionRep');
++            return saved ? JSON.parse(saved) : { xenon: 0, mauler: 0, terran: 0 };
++        } catch (e) {
++            console.error('[Storage] FactionRep parse failed, resetting.', e);
++            return { xenon: 0, mauler: 0, terran: 0 };
++        }
+     }
+ 
+     saveFactionRep() {
+-        safeStorage.setItem('factionRep', JSON.stringify(this.factionRep));
++        localStorage.setItem('factionRep', JSON.stringify(this.factionRep));
+     }
+ 
+     repairHull() {
+@@ -5271,41 +5553,64 @@
+ 
+     loadUpgrades() {
+         try {
+-            return this.safeJSONParse('playerUpgrades', { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0, ecm: 0, flares: 0 });
++            return JSON.parse(localStorage.getItem('playerUpgrades')) || { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0, ecm: 0, flares: 0 };
+         } catch (e) {
+             return { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0, ecm: 0, flares: 0 };
+         }
+     }
+ 
+     saveUpgrades() {
+-        safeStorage.setItem('playerUpgrades', JSON.stringify(this.playerShip.upgrades));
++        localStorage.setItem('playerUpgrades', JSON.stringify(this.playerShip.upgrades));
++        this.syncWithCloud();
++    }
++
++    loadStats() {
++        try {
++            return JSON.parse(localStorage.getItem('playerStats')) || {
++                kills: 0,
++                deaths: 0,
++                shotsFired: 0,
++                shotsHit: 0
++            };
++        } catch (e) {
++            return {
++                kills: 0,
++                deaths: 0,
++                shotsFired: 0,
++                shotsHit: 0
++            };
++        }
++    }
++
++    saveStats() {
++        localStorage.setItem('playerStats', JSON.stringify(this.playerStats));
+         this.syncWithCloud();
+     }
+ 
+     // === SPACE BASE RESOURCE SYSTEM ===
+     loadCarriedResources() {
+         try {
+-            return this.safeJSONParse('carriedResources', {});
++            return JSON.parse(localStorage.getItem('carriedResources')) || {};
+         } catch (e) {
+             return {};
+         }
+     }
+ 
+     saveCarriedResources() {
+-        safeStorage.setItem('carriedResources', JSON.stringify(this.carriedResources));
++        localStorage.setItem('carriedResources', JSON.stringify(this.carriedResources));
+         this.syncBaseWithCloud();
+     }
+ 
+     loadSpaceBase() {
+         try {
+-            return this.safeJSONParse('spaceBase', null);
++            return JSON.parse(localStorage.getItem('spaceBase')) || null;
+         } catch (e) {
+             return null;
+         }
+     }
+ 
+     saveSpaceBase() {
+-        safeStorage.setItem('spaceBase', JSON.stringify(this.spaceBase));
++        localStorage.setItem('spaceBase', JSON.stringify(this.spaceBase));
+         this.syncBaseWithCloud();
+     }
+ 
+@@ -5711,7 +6016,7 @@
+             // Also award permanent gems (1 gem per 10 credit value = 10%)
+             const gemsAwarded = Math.floor(totalValue / 10);
+             this.playerGems += gemsAwarded;
+-            safeStorage.setItem('playerGems', this.playerGems);
++            localStorage.setItem('playerGems', this.playerGems);
+ 
+             this.saveCredits();
+             this.saveInventory();
+@@ -6143,8 +6448,16 @@
+ 
+             // Award permanent gems (1 gem per mineral collected)
+             this.playerGems += 1;
+-            safeStorage.setItem('playerGems', this.playerGems);
++            localStorage.setItem('playerGems', this.playerGems);
+ 
++            // Pirate Boss Spawn Logic
++            this.mineralsMinedCount = (this.mineralsMinedCount || 0) + 1;
++            if (this.mineralsMinedCount >= 50 && !this.activeBoss) {
++                this.mineralsMinedCount = 0; // Reset counter
++                this.showToast('🚨 PIRATE DREADNOUGHT DETECTED! PREPARE FOR COMBAT! 🚨', 5000);
++                this.spawnBoss('dreadnought');
++            }
++
+             // Audio: collect jingle
+             if (typeof gameAudio !== 'undefined' && gameAudio.playCollect) {
+                 gameAudio.playCollect();
+@@ -6574,9 +6887,33 @@
+         const ship = this.playerShip;
+         const collisionRadius = 30;
+ 
+-        // If a hazard effect is already active, don't process new collisions
+-        if (this.hazardEffect) return;
++        // Distress Beacons Generation & Logic
++        if (!this.distressBeacons) this.distressBeacons = [];
++        // Spawn chance based on time (about once every few minutes)
++        if (Math.random() < 0.0002 && this.distressBeacons.length < 2) {
++            this.distressBeacons.push({
++                x: ship.x + (Math.random() - 0.5) * 8000,
++                y: ship.y + (Math.random() - 0.5) * 8000,
++                active: true,
++                id: Date.now()
++            });
++            this.showToast('📡 DISTRESS BEACON DETECTED ON RADAR', 3000);
++        }
+ 
++        for (let i = this.distressBeacons.length - 1; i >= 0; i--) {
++            const beacon = this.distressBeacons[i];
++            const dist = Math.hypot(beacon.x - ship.x, beacon.y - ship.y);
++            if (dist < 150 && beacon.active) {
++                beacon.active = false;
++                this.distressBeacons.splice(i, 1);
++                // Reward player
++                this.credits = (this.credits || 0) + 1500;
++                localStorage.setItem('playerCredits', this.credits);
++                this.showToast('✅ CIVILIAN RESCUED: +$1500!', 3000);
++                if (typeof gameAudio !== 'undefined' && gameAudio.playCollect) gameAudio.playCollect();
++            }
++        }
++
+         // Check mine collisions
+         for (const mine of this.spaceMines) {
+             const dist = Math.hypot(mine.x - ship.x, mine.y - ship.y);
+@@ -6855,7 +7192,6 @@
+             }
+         }
+     }
+-
+     // Fire a heat-seeking missile from a base
+     fireMissile(base) {
+         const speed = 4 + Math.random() * 2;
+@@ -6868,6 +7204,8 @@
+             speed: speed,
+             life: 5000, // 5 seconds lifetime
+             maxLife: 5000,
++            health: 1, // Missiles should die in one hit
++            maxHealth: 1,
+             size: 8,
+             trail: [],
+             fromBase: base
+@@ -7002,8 +7340,8 @@
+         if (this.playerGems >= cost) {
+             this.playerGems -= cost;
+             this.playerSkills[skillKey] += 1;
+-            safeStorage.setItem('playerGems', this.playerGems);
+-            safeStorage.setItem('playerSkills', JSON.stringify(this.playerSkills));
++            localStorage.setItem('playerGems', this.playerGems);
++            localStorage.setItem('playerSkills', JSON.stringify(this.playerSkills));
+             
+             // Update UI
+             document.getElementById('skillGems').innerText = this.playerGems;
+@@ -7025,7 +7363,7 @@
+         this.skillCooldowns.emp = now;
+         this.showToast('⚡ SYSTEM: EMP BURST DEPLOYED!', 2000);
+         
+-        if (window.gameAudio) window.gameAudio.playExplosionBig();
++        if (typeof window.gameAudio !== 'undefined' && window.gameAudio.playEMP) window.gameAudio.playEMP();
+         this.hazardEffect = { type: 'emp', startTime: now, duration: 1500 };
+ 
+         const radius = 500 + (lvl * 250);
+@@ -7051,7 +7389,7 @@
+         this.skillCooldowns.afterburner = now;
+         this.globalAbilityActive.afterburner = true;
+         this.showToast('🔥 SYSTEM: AFTERBURNER ENGAGED!', 2000);
+-        if (window.gameAudio) window.gameAudio.playShieldHit();
++        if (typeof window.gameAudio !== 'undefined' && window.gameAudio.playAfterburner) window.gameAudio.playAfterburner();
+         
+         // Push ship slightly instantly
+         this.playerShip.vx += Math.cos(this.playerShip.rotation) * 20;
+@@ -7160,6 +7498,9 @@
+         // Prevent overwriting critical cinematic hazards
+         if (this.hazardEffect && (this.hazardEffect.type === 'player_death' || this.hazardEffect.type === 'planet_impact')) return;
+ 
++        this.playerStats.deaths++;
++        this.saveStats();
++
+         // Reset health/shield immediately so HUD reflects death
+         this.playerShip.shield = 0;
+         this.playerShip.hullHealth = 0;
+@@ -7353,7 +7694,7 @@
+         // Award reward
+         if (this.flightMode) {
+             this.playerGems += 5;
+-            safeStorage.setItem('playerGems', this.playerGems);
++            localStorage.setItem('playerGems', this.playerGems);
+             if (this.updateGemsUI) this.updateGemsUI();
+             this.showToast('💥 Mine Defused! +5 Gems', 1500);
+ 
+@@ -7366,7 +7707,7 @@
+         // Award reward
+         if (this.flightMode) {
+             this.playerGems += 25; // More for a base!
+-            safeStorage.setItem('playerGems', this.playerGems);
++            localStorage.setItem('playerGems', this.playerGems);
+             if (this.updateGemsUI) this.updateGemsUI();
+             this.showToast('💥 Missile Base Destroyed! +25 Gems', 2000);
+ 
+@@ -7974,12 +8315,12 @@
+     // Load/save training progress
+     loadTrainingProgress() {
+         try {
+-            return this.safeJSONParse('trainingProgress', {});
++            return JSON.parse(localStorage.getItem('trainingProgress')) || {};
+         } catch (e) { return {}; }
+     }
+     saveTrainingProgress() {
+         try {
+-            safeStorage.setItem('trainingProgress', JSON.stringify(this.trainingProgress));
++            localStorage.setItem('trainingProgress', JSON.stringify(this.trainingProgress));
+         } catch (e) { }
+     }
+ 
+@@ -8309,12 +8650,12 @@
+ 
+     loadLoginData() {
+         try {
+-            return this.safeJSONParse('loginData', {});
++            return JSON.parse(localStorage.getItem('loginData')) || {};
+         } catch (e) { return {}; }
+     }
+     saveLoginData(data) {
+         try {
+-            safeStorage.setItem('loginData', JSON.stringify(data));
++            localStorage.setItem('loginData', JSON.stringify(data));
+         } catch (e) { }
+     }
+ 
+@@ -8488,15 +8829,26 @@
+ 
+         const lessons = this.getTrainingLessons();
+         const progress = this.trainingProgress;
++        
++        // Auto pause
++        if (window.game) window.game.gamePaused = true;
+ 
+         let html = `
+-            <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; display:flex; align-items:center; justify-content:center;" id="flightAcademyModal">
+-                <div style="background:linear-gradient(145deg, #0a1628, #162040); border:2px solid rgba(0,243,255,0.4); border-radius:16px; padding:30px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; box-shadow: 0 0 40px rgba(0,243,255,0.15);">
++            <div id="flightAcademyModal" class="modal-overlay active" style="z-index: 10000; display: flex;">
++                <div class="modal" style="width: 600px; max-width: 90vw; padding: 30px;">
++                    <div class="modal-close-corner">
++                        <button class="btn-secondary" onclick="
++                            const m = document.getElementById('flightAcademyModal');
++                            m.classList.remove('active');
++                            if(window.game) window.game.gamePaused = false;
++                            setTimeout(() => m.remove(), 300);
++                        ">EXIT ACADEMY</button>
++                    </div>
+                     <div style="text-align:center; margin-bottom:20px;">
+-                        <div style="font-size:28px; font-weight:bold; color:#00f3ff; text-shadow:0 0 20px rgba(0,243,255,0.5); letter-spacing:3px;">🎓 FLIGHT ACADEMY</div>
++                        <div style="font-size:28px; font-weight:bold; color:#00f3ff; text-shadow:0 0 20px rgba(0,243,255,0.5); letter-spacing:3px; font-family: 'Cinzel', serif;">🎓 FLIGHT ACADEMY</div>
+                         <div style="font-size:12px; color:#8ba; margin-top:6px;">Master the art of interstellar flight</div>
+                     </div>
+-                    <div style="display:grid; gap:10px;">
++                    <div style="display:grid; gap:10px; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+         `;
+ 
+         lessons.forEach((lesson, i) => {
+@@ -8512,7 +8864,13 @@
+                 <div style="background:${bgColor}; border:1px solid ${borderColor}; border-radius:10px; padding:14px 16px; cursor:pointer; transition:all 0.2s;"
+                      onmouseenter="this.style.background='rgba(0,243,255,0.1)'; this.style.transform='translateX(4px)';"
+                      onmouseleave="this.style.background='${bgColor}'; this.style.transform='none';"
+-                     onclick="document.getElementById('flightAcademyModal').remove(); app.startTraining(${i});">
++                     onclick="
++                        const m = document.getElementById('flightAcademyModal');
++                        m.classList.remove('active');
++                        setTimeout(() => m.remove(), 300);
++                        if(window.game) window.game.gamePaused = false;
++                        app.startTraining(${i});
++                     ">
+                     <div style="display:flex; justify-content:space-between; align-items:center;">
+                         <div>
+                             <span style="font-size:18px; margin-right:8px;">${lesson.icon}</span>
+@@ -8530,11 +8888,6 @@
+ 
+         html += `
+                     </div>
+-                    <div style="text-align:center; margin-top:20px;">
+-                        <button onclick="document.getElementById('flightAcademyModal').remove();"
+-                                style="background:rgba(255,50,50,0.2); border:1px solid rgba(255,50,50,0.4); color:#ff6666; padding:10px 30px; border-radius:8px; cursor:pointer; font-size:13px; letter-spacing:1px;">
+-                            CLOSE
+-                        </button>
+                     </div>
+                 </div>
+             </div>
+@@ -9778,15 +10131,84 @@
+         console.log("[HUD] Toggle Upgrade Panel triggered");
+         const panel = document.getElementById('upgradePanel');
+         if (panel) {
+-            panel.classList.toggle('hidden');
+-            if (!panel.classList.contains('hidden')) {
++            if (panel.classList.contains('active')) {
++                // Hide
++                panel.classList.remove('active');
++                this.gamePaused = false;
++                setTimeout(() => { panel.classList.add('hidden'); }, 300);
++            } else {
++                // Show
++                panel.classList.remove('hidden');
++                // trigger reflow
++                void panel.offsetWidth;
++                panel.classList.add('active');
++                this.gamePaused = true;
+                 this.updateUpgradeUI();
+             }
+         } else {
+             console.error("[HUD] upgradePanel NOT found in DOM!");
+         }
+     }
++    toggleStatusWindow() {
++        const panel = document.getElementById('statusWindow');
++        if (!panel) return;
++        
++        if (panel.classList.contains('active')) {
++            panel.classList.remove('active');
++            this.gamePaused = false;
++            setTimeout(() => { panel.classList.add('hidden'); }, 300);
++        } else {
++            panel.classList.remove('hidden');
++            void panel.offsetWidth;
++            panel.classList.add('active');
++            this.gamePaused = true;
++            this.updateStatusWindowUI();
++        }
++    }
+ 
++    updateStatusWindowUI() {
++        // Pilot Tab
++        const pStats = this.playerStats;
++        document.getElementById('statKills').textContent = pStats.kills.toLocaleString();
++        document.getElementById('statDeaths').textContent = pStats.deaths.toLocaleString();
++        
++        const kd = pStats.deaths === 0 ? pStats.kills : (pStats.kills / pStats.deaths).toFixed(2);
++        document.getElementById('statKD').textContent = kd;
++        
++        document.getElementById('statShotsFired').textContent = pStats.shotsFired.toLocaleString();
++        document.getElementById('statShotsHit').textContent = pStats.shotsHit.toLocaleString();
++        
++        const accuracy = pStats.shotsFired === 0 ? 0 : Math.round((pStats.shotsHit / pStats.shotsFired) * 100);
++        document.getElementById('statAccuracyPercent').textContent = accuracy + '%';
++        document.getElementById('statAccuracyBar').style.width = accuracy + '%';
++
++        // Ship Tab
++        const ship = this.playerShip;
++        if (ship) {
++            const hullPct = Math.round((ship.hullHealth / ship.maxHull) * 100) || 0;
++            const shieldPct = Math.round((ship.shield / ship.maxShield) * 100) || 0;
++            const energyPct = Math.round((ship.energy / ship.maxEnergy) * 100) || 0;
++            const maxSpeed = Math.round(ship.maxSpeed || 0);
++
++            document.getElementById('statusHull').textContent = hullPct + '%';
++            document.getElementById('statusShields').textContent = shieldPct + '%';
++            document.getElementById('statusEnergy').textContent = energyPct + '%';
++            document.getElementById('statusSpeed').textContent = maxSpeed + ' m/s';
++
++            const eq = ship.equipment || {};
++            const inv = ship.inventory || [];
++            document.getElementById('statusCargo').textContent = `${inv.length} / ${ship.cargoCapacity || 10}`;
++            document.getElementById('statusCredits').textContent = this.credits.toLocaleString();
++            document.getElementById('statusGems').textContent = this.playerGems.toLocaleString();
++            
++            let weaponCount = 0;
++            if (eq.weapons) {
++                weaponCount = Array.isArray(eq.weapons) ? eq.weapons.filter(w => w).length : (eq.weapons ? 1 : 0);
++            }
++            document.getElementById('statusWeapons').textContent = weaponCount;
++        }
++    }
++
+     updateUpgradeUI() {
+         const list = document.getElementById('upgradeList');
+         const credits = document.getElementById('dockCredits');
+@@ -9794,49 +10216,122 @@
+ 
+         credits.textContent = '$' + this.credits.toLocaleString();
+ 
+-        const upgrades = [
+-            { id: 'speed', name: 'Engine Overclock', desc: 'Increases max speed & acceleration' },
+-            { id: 'armor', name: 'Nanocarbon Hull', desc: 'Increases hull integrity' },
+-            { id: 'weapons', name: 'Photon Cannons', desc: 'Increases damage output (Coming Soon)' },
+-            { id: 'shield', name: 'Energy Shield', desc: 'Increases shield capacity' },
+-            { id: 'cargo', name: 'Quantum Hold', desc: 'Increases gem capacity (Coming Soon)' },
+-            { id: 'radar', name: 'Deep Scan Radar', desc: 'Increases detection range' },
+-            { id: 'tractor', name: 'Tractor Beam', desc: 'Increases gem pull radius (Mauler)' },
+-            { id: 'ecm', name: 'ECM Scrambler', desc: 'Reduces enemy aggro range & breaks stalking' },
+-            { id: 'flares', name: 'Decoy Flares', desc: 'Distracts heat-seeking missiles (Press G)' }
+-        ];
++        let html = '';
++        const eq = this.playerShip.equipment || {};
++        const inv = this.playerShip.inventory || [];
++        
++        // Ensure weapons is an array of 5 slots
++        if (!Array.isArray(eq.weapons)) {
++            eq.weapons = [eq.weapons, null, null, null, null];
++        }
+ 
+-        const costs = [1000, 2500, 5000, 10000, 25000];
++        // Helper to check if player owns an item
++        const ownsItem = (id) => inv.includes(id) || eq.engine === id || eq.shield === id || eq.radar === id || eq.wings === id || eq.weapons.includes(id);
+ 
+-        let html = '';
+-        upgrades.forEach(u => {
+-            const level = this.playerShip.upgrades[u.id] || 0;
+-            const cost = costs[level];
+-            const isMax = level >= 5;
+-            const canAfford = this.credits >= cost;
++        for (const [category, items] of Object.entries(this.equipmentDB)) {
++            html += `<div style="margin-top: 10px; font-weight: bold; color: #5c7a8a; border-bottom: 1px solid #5c7a8a; padding-bottom: 2px; text-transform: uppercase;">${category}</div>`;
++            
++            for (const [id, def] of Object.entries(items)) {
++                const isOwned = ownsItem(id);
++                let isEquipped = false;
++                let equippedSlot = -1;
+ 
+-            let bars = '';
+-            for (let i = 0; i < 5; i++) {
+-                bars += `<div style="flex:1; height:4px; background:${i < level ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; margin:0 1px;"></div>`;
+-            }
++                if (category === 'weapons') {
++                    equippedSlot = eq.weapons.indexOf(id);
++                    isEquipped = equippedSlot !== -1;
++                } else {
++                    isEquipped = eq[category] === id;
++                }
+ 
+-            html += `
+-                <div style="background:rgba(255,255,255,0.05); border:1px solid ${canAfford ? 'rgba(0,243,255,0.3)' : 'rgba(255,50,50,0.3)'}; padding:8px; border-radius:6px;">
+-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+-                        <span style="font-weight:bold; color:#e0faff; font-size:11px;">${u.name}</span>
+-                        <span style="font-size:10px; color:${isMax ? '#00f3ff' : '#ffd700'}">${isMax ? 'MAX' : '$' + cost.toLocaleString()}</span>
++                const canAfford = this.credits >= def.cost;
++                
++                let btnHtml = '';
++                if (isEquipped) {
++                    if (category === 'weapons') {
++                        btnHtml = `<button class="btn-small" onclick="app.unequipItem('${category}', '${id}')" style="width:100%; font-size:10px; padding:4px; background: rgba(255,50,50,0.2); border: 1px solid #ff3333; color: #ff3333;">UNEQUIP (SLOT ${equippedSlot + 1})</button>`;
++                    } else {
++                        btnHtml = `<button class="btn-small" style="width:100%; font-size:10px; padding:4px; opacity:0.5; cursor:not-allowed;">EQUIPPED</button>`;
++                    }
++                } else if (isOwned) {
++                    btnHtml = `<button class="btn-small" onclick="app.equipItem('${category}', '${id}')" style="width:100%; font-size:10px; padding:4px; border: 1px solid #00f3ff; color: #00f3ff; background: rgba(0,243,255,0.1);">EQUIP</button>`;
++                } else {
++                    btnHtml = `<button class="btn-small" onclick="app.buyItem('${category}', '${id}')" style="width:100%; font-size:10px; padding:4px; ${canAfford ? 'cursor:pointer' : 'opacity:0.5; cursor:not-allowed;'}">BUY ($${def.cost.toLocaleString()})</button>`;
++                }
++
++                // Make specific stat descriptions
++                let statText = def.description;
++                if (def.damage) statText += ` • Dmg: ${def.damage}`;
++                if (def.speedModifier) statText += ` • Spd: +${Math.round(def.speedModifier * 100)}%`;
++                if (def.shieldBonus) statText += ` • Shld: +${def.shieldBonus}`;
++                if (def.range) statText += ` • Rng: ${def.range}`;
++
++                html += `
++                    <div style="background:rgba(255,255,255,0.05); border:1px solid ${isEquipped ? 'rgba(0,243,255,0.6)' : (isOwned ? 'rgba(255,255,255,0.2)' : (canAfford ? 'rgba(0,243,255,0.3)' : 'rgba(255,50,50,0.3)'))}; padding:8px; border-radius:6px; margin-top: 4px;">
++                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
++                            <span style="font-weight:bold; color:${isEquipped ? '#00f3ff' : '#e0faff'}; font-size:11px;">${def.name}</span>
++                        </div>
++                        <div style="font-size:9px; color:#8ba; margin-bottom:6px;">${statText}</div>
++                        ${btnHtml}
+                     </div>
+-                    <div style="font-size:9px; color:#8ba; margin-bottom:6px;">${u.desc}</div>
+-                    <div style="display:flex; margin-bottom:6px;">${bars}</div>
+-                    ${!isMax ? `<button class="btn-small" onclick="app.upgradeShip('${u.id}')" style="width:100%; font-size:10px; padding:4px; ${canAfford ? 'cursor:pointer' : 'opacity:0.5; cursor:not-allowed;'}">UPGRADE</button>` : ''}
+-                </div>
+-            `;
+-        });
++                `;
++            }
++        }
+ 
+         list.innerHTML = html;
+     }
+ 
+-    // Toggle warp speed mode
++    buyItem(category, id) {
++        const def = this.equipmentDB[category][id];
++        if (!def) return;
++        if (this.credits >= def.cost) {
++            this.credits -= def.cost;
++            if (!this.playerShip.inventory) this.playerShip.inventory = [];
++            this.playerShip.inventory.push(id);
++            this.showToast(`Bought ${def.name}!`);
++            
++            // Auto-equip if we don't have something equipped in that category (or if it's weapons and we have an empty slot)
++            this.equipItem(category, id, true);
++        } else {
++            this.showToast('Not enough credits!');
++        }
++    }
++
++    equipItem(category, id, isAutoEquip = false) {
++        if (!this.playerShip.inventory) this.playerShip.inventory = [];
++        const eq = this.playerShip.equipment;
++        
++        if (category === 'weapons') {
++            const emptySlot = eq.weapons.indexOf(null);
++            if (emptySlot !== -1) {
++                eq.weapons[emptySlot] = id;
++                this.showToast(`Equipped ${this.equipmentDB[category][id].name} to slot ${emptySlot + 1}`);
++            } else if (!isAutoEquip) {
++                // If full, replace slot 1 (index 0) for now
++                eq.weapons[0] = id;
++                this.showToast(`Replaced Slot 1 with ${this.equipmentDB[category][id].name}`);
++            }
++        } else {
++            eq[category] = id;
++            if (!isAutoEquip) this.showToast(`Equipped ${this.equipmentDB[category][id].name}`);
++        }
++        
++        this.playerShip.calculateShipStats();
++        this.updateUpgradeUI();
++    }
++
++    unequipItem(category, id) {
++        const eq = this.playerShip.equipment;
++        if (category === 'weapons') {
++            const slot = eq.weapons.indexOf(id);
++            if (slot !== -1) {
++                eq.weapons[slot] = null;
++                this.showToast(`Unequipped ${this.equipmentDB[category][id].name}`);
++            }
++        }
++        this.playerShip.calculateShipStats();
++        this.updateUpgradeUI();
++    }
++
+     toggleBgWarp() {
+         try {
+             // Mutex: Turn off drift first if it's on
+@@ -10574,11 +11069,18 @@
+     }
+ 
+     requestClear() {
+-        document.getElementById('clearModal').classList.add('active');
++        const modal = document.getElementById('clearModal');
++        modal.classList.remove('hidden');
++        void modal.offsetWidth;
++        modal.classList.add('active');
++        if (window.game) window.game.gamePaused = true;
+     }
+ 
+     closeModal() {
+-        document.getElementById('clearModal').classList.remove('active');
++        const modal = document.getElementById('clearModal');
++        modal.classList.remove('active');
++        if (window.game) window.game.gamePaused = false;
++        setTimeout(() => modal.classList.add('hidden'), 300);
+     }
+ 
+     confirmClear() {
+@@ -10648,7 +11150,7 @@
+ 
+             // Load ship settings
+             // Load ship settings
+-            const savedColor = safeStorage.getItem('playerShipColor'); // Consistent Key
++            const savedColor = localStorage.getItem('playerShipColor'); // Consistent Key
+             if (savedColor) {
+                 this.playerShip.color = savedColor;
+                 // Also update the color picker UI to match
+@@ -10657,7 +11159,7 @@
+             }
+ 
+             // Load saved 3D rotation
+-            const savedRotation = safeStorage.getItem('shipRotation');
++            const savedRotation = localStorage.getItem('shipRotation');
+             if (savedRotation) {
+                 try {
+                     const rot = JSON.parse(savedRotation);
+@@ -10698,7 +11200,7 @@
+                 this.playerShip.acceleration = baseStats.acceleration;
+             }
+ 
+-            const savedStruct = safeStorage.getItem('customShipStructure');
++            const savedStruct = localStorage.getItem('customShipStructure');
+             if (savedStruct) {
+                 try {
+                     this.playerShip.customStructure = JSON.parse(savedStruct);
+@@ -10706,13 +11208,14 @@
+             }
+ 
+             // Load saved type
+-            const savedType = safeStorage.getItem('playerShipType');
++            const savedType = localStorage.getItem('playerShipType');
+             if (savedType) this.playerShip.type = savedType;
+ 
+             // State handling for Cyber theme history
+             try {
+-                this.themeHistory = this.safeJSONParse('matrixThemeHistory', []);
+-                this.lastMatrixFamily = safeStorage.getItem('matrixLastFamily') || '';
++                const savedHistory = localStorage.getItem('matrixThemeHistory');
++                this.themeHistory = savedHistory ? JSON.parse(savedHistory) : [];
++                this.lastMatrixFamily = localStorage.getItem('matrixLastFamily') || '';
+             } catch (e) {
+                 console.warn('[BG] Theme history load failed:', e);
+                 this.themeHistory = [];
+@@ -11301,8 +11804,8 @@
+ 
+         // Persist to LocalStorage
+         try {
+-            safeStorage.setItem('matrixThemeHistory', JSON.stringify(this.themeHistory));
+-            safeStorage.setItem('matrixLastFamily', this.lastMatrixFamily);
++            localStorage.setItem('matrixThemeHistory', JSON.stringify(this.themeHistory));
++            localStorage.setItem('matrixLastFamily', this.lastMatrixFamily);
+         } catch (e) {
+             console.warn('LocalStorage failed', e);
+         }
+@@ -12314,7 +12817,7 @@
+             ctx.setTransform(1, 0, 0, 1, 0, 0);
+             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+             ctx.fillRect(0, 0, canvas.width, canvas.height);
+-            ctx.fillStyle = '#ffcc00';
++            ctx.fillStyle = (this.playerShip && this.playerShip.color) ? this.playerShip.color : '#ffcc00';
+             ctx.font = 'bold 48px monospace';
+             ctx.textAlign = 'center';
+             ctx.textBaseline = 'middle';
+@@ -12532,6 +13035,53 @@
+         ctx.restore();
+     }
+ 
++    drawInterceptor(ctx, size, shipColor, pitchScale, time = performance.now()) {
++        ctx.save();
++        ctx.scale(1, pitchScale || 1);
++        
++        const pulse = Math.sin(time * 0.008) * 0.3 + 0.7;
++        
++        // Sleek manta-ray wings
++        ctx.fillStyle = '#181822';
++        ctx.strokeStyle = '#334';
++        ctx.lineWidth = 1;
++        ctx.beginPath();
++        ctx.moveTo(size * 1.8, 0); // nose
++        ctx.quadraticCurveTo(size * 0.2, size * 0.8, -size * 0.5, size * 1.5); // wingtip
++        ctx.quadraticCurveTo(-size * 0.2, size * 0.4, -size * 0.8, 0); // tail indent
++        ctx.quadraticCurveTo(-size * 0.2, -size * 0.4, -size * 0.5, -size * 1.5);
++        ctx.quadraticCurveTo(size * 0.2, -size * 0.8, size * 1.8, 0);
++        ctx.fill();
++        ctx.stroke();
++
++        // Internal glowing veins
++        ctx.shadowColor = shipColor;
++        ctx.shadowBlur = 10 * pulse;
++        ctx.strokeStyle = shipColor;
++        ctx.lineWidth = 1.5;
++        ctx.beginPath();
++        ctx.moveTo(-size * 0.6, 0);
++        ctx.lineTo(size * 0.8, 0);
++        ctx.moveTo(-size * 0.2, 0);
++        ctx.quadraticCurveTo(0, size * 0.5, -size * 0.3, size * 1.2);
++        ctx.moveTo(-size * 0.2, 0);
++        ctx.quadraticCurveTo(0, -size * 0.5, -size * 0.3, -size * 1.2);
++        ctx.stroke();
++
++        // Cockpit/Sensor eye
++        ctx.fillStyle = '#fff';
++        ctx.shadowBlur = 20 * pulse;
++        ctx.beginPath();
++        ctx.ellipse(size * 1.0, 0, size * 0.4, size * 0.15, 0, 0, Math.PI * 2);
++        ctx.fill();
++
++        // Muzzle Flash
++        if (this.playerShip && this.playerShip.muzzleFlash) {
++            this.drawMuzzleFlash(ctx, 0, size * 0.8, size * 0.6, '#00ff00', this.playerShip.muzzleFlash);
++        }
++        ctx.restore();
++    }
++
+     drawSaucer(ctx, size, shipColor, pitchScale, time) {
+         // Classic flying saucer
+         ctx.save();
+@@ -12983,56 +13533,56 @@
+         }
+         ctx.restore();
+     }
+-
+-    drawViper(ctx, size, shipColor, pitchScale, time) {
+-        // VIPER - Aggressive, forward-swept segmented wings
++    drawViper(ctx, size, shipColor, pitchScale, time = performance.now()) {
+         ctx.save();
+         ctx.scale(1, pitchScale || 1);
+-        const t = (time || Date.now()) * 0.005;
++        const pulse = Math.sin(time * 0.005) * 0.5 + 0.5;
+ 
+-        // Core Fuselage
+-        ctx.fillStyle = this.adjustColor(shipColor, -50);
++        // Heavy Carapace
++        ctx.fillStyle = '#221111';
+         ctx.strokeStyle = shipColor;
+-        ctx.lineWidth = 2 / (this.camera ? this.camera.zoom : 1);
++        ctx.lineWidth = 2;
+         ctx.beginPath();
+-        ctx.moveTo(size * 1.4, 0); // Sharp needle nose
+-        ctx.lineTo(size * 0.4, -size * 0.15);
+-        ctx.lineTo(-size * 0.5, -size * 0.2);
+-        ctx.lineTo(-size * 0.5, size * 0.2);
+-        ctx.lineTo(size * 0.4, size * 0.15);
++        ctx.moveTo(size * 1.2, size * 0.3); // right mandible
++        ctx.lineTo(size * 0.4, size * 0.4);
++        ctx.lineTo(-size * 0.8, size * 1.2); // wing
++        ctx.lineTo(-size * 1.2, size * 0.8);
++        ctx.lineTo(-size * 0.8, 0); // rear
++        ctx.lineTo(-size * 1.2, -size * 0.8);
++        ctx.lineTo(-size * 0.8, -size * 1.2);
++        ctx.lineTo(size * 0.4, -size * 0.4);
++        ctx.lineTo(size * 1.2, -size * 0.3); // left mandible
++        ctx.lineTo(size * 0.6, 0); // inner mouth
+         ctx.closePath();
+         ctx.fill();
+         ctx.stroke();
+ 
+-        // Forward-swept segmented wings
++        // Core Energy
+         ctx.fillStyle = shipColor;
+-        // Left Wing
++        ctx.shadowColor = shipColor;
++        ctx.shadowBlur = 15;
++        ctx.globalAlpha = 0.8 + 0.2 * pulse;
+         ctx.beginPath();
+-        ctx.moveTo(size * 0.2, -size * 0.15);
+-        ctx.lineTo(size * 0.5, -size * 0.8);
+-        ctx.lineTo(-size * 0.2, -size * 0.9);
+-        ctx.lineTo(-size * 0.4, -size * 0.2);
++        ctx.arc(-size * 0.2, 0, size * 0.35, 0, Math.PI * 2);
+         ctx.fill();
+-        ctx.stroke();
+-        // Right Wing
++        ctx.globalAlpha = 1;
++
++        // Armor plating lines
++        ctx.strokeStyle = '#442222';
++        ctx.lineWidth = 2;
+         ctx.beginPath();
+-        ctx.moveTo(size * 0.2, size * 0.15);
+-        ctx.lineTo(size * 0.5, size * 0.8);
+-        ctx.lineTo(-size * 0.2, size * 0.9);
+-        ctx.lineTo(-size * 0.4, size * 0.2);
+-        ctx.fill();
++        ctx.moveTo(-size * 0.8, 0);
++        ctx.lineTo(size * 0.6, 0);
++        ctx.moveTo(-size * 0.4, size * 0.6);
++        ctx.lineTo(size * 0.4, size * 0.4);
++        ctx.moveTo(-size * 0.4, -size * 0.6);
++        ctx.lineTo(size * 0.4, -size * 0.4);
+         ctx.stroke();
+ 
+-        // Glowing Thruster Ports built into fuselage
+-        ctx.fillStyle = '#00ffff';
+-        ctx.globalAlpha = 0.7 + Math.sin(t * 3) * 0.3;
+-        ctx.beginPath(); ctx.ellipse(-size * 0.2, -size * 0.3, size * 0.2, size * 0.05, 0, 0, Math.PI * 2); ctx.fill();
+-        ctx.beginPath(); ctx.ellipse(-size * 0.2, size * 0.3, size * 0.2, size * 0.05, 0, 0, Math.PI * 2); ctx.fill();
+-        ctx.globalAlpha = 1.0;
+-
+-        // Main Engines
+-        this.drawEngineFlame(ctx, -size * 0.5, -size * 0.1, size * 0.5, '#00f3ff', time);
+-        this.drawEngineFlame(ctx, -size * 0.5, size * 0.1, size * 0.5, '#00f3ff', time);
++        // Muzzle Flash
++        if (this.playerShip && this.playerShip.muzzleFlash) {
++            this.drawMuzzleFlash(ctx, 0, size * 0.8, size * 0.6, '#00ff00', this.playerShip.muzzleFlash);
++        }
+         ctx.restore();
+     }
+ 
+@@ -14112,6 +14662,35 @@
+                 ctx.restore();
+             });
+         }
++        // Render distress beacons
++        if (this.distressBeacons) {
++            this.distressBeacons.forEach(beacon => {
++                if (!beacon.active) return;
++                const rotated = this.rotate3D(beacon.x, beacon.y, 0, rotCenterX, rotCenterY);
++                ctx.save();
++                ctx.translate(rotated.x, rotated.y);
++                const safeZoom = Math.max(0.01, this.camera.zoom || 1);
++                const size = 25 * rotated.scale / safeZoom;
++                
++                // Pulsing yellow beacon
++                const pulse = Math.sin(time * 0.005) * 0.5 + 0.5;
++                ctx.fillStyle = `rgba(255, 200, 0, ${0.4 + pulse * 0.6})`;
++                ctx.shadowColor = '#ffcc00';
++                ctx.shadowBlur = 15;
++                
++                ctx.beginPath();
++                ctx.arc(0, 0, size, 0, Math.PI * 2);
++                ctx.fill();
++                
++                // Inner core
++                ctx.fillStyle = '#ffffff';
++                ctx.beginPath();
++                ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
++                ctx.fill();
++                
++                ctx.restore();
++            });
++        }
+ 
+         // Render space mines - OMINOUS ADVANCED TECHNOLOGY DESIGN
+         this.spaceMines.forEach(mine => {
+@@ -14683,16 +15262,10 @@
+             ctx.fill();
+ 
+             switch (enemy.type) {
+-                case 'alien_scythe': this.drawAlienScythe(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'obsidian_shard': this.drawObsidianShard(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'biomech_weaver': this.drawBiomechWeaver(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'plasma_sphere': this.drawPlasmaSphere(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'void_stalker': this.drawVoidStalker(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'nexus_prism': this.drawNexusPrism(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'hive_carrier': this.drawHiveCarrier(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'arachnid_drone': this.drawArachnidDrone(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'nebula_phantom': this.drawNebulaPhantom(ctx, size, baseColor, activeGlow, Date.now()); break;
+-                case 'zenith_destroyer': this.drawZenithDestroyer(ctx, size, baseColor, activeGlow, Date.now()); break;
++                case 'scout': this.drawVoidStalker(ctx, size, baseColor, activeGlow, Date.now()); break;
++                case 'fighter': this.drawAlienScythe(ctx, size, baseColor, activeGlow, Date.now()); break;
++                case 'cruiser': this.drawObsidianShard(ctx, size, baseColor, activeGlow, Date.now()); break;
++                case 'phantom': this.drawNebulaPhantom(ctx, size, baseColor, activeGlow, Date.now()); break;
+                 default:
+                     // Ship body — aggressive triangle
+                     ctx.fillStyle = baseColor;
+@@ -17065,6 +17638,8 @@
+         ctx.scale(scale, scale);
+ 
+         ctx.globalCompositeOperation = 'lighter';
++        ctx.shadowColor = color;
++        ctx.shadowBlur = isBlackHole ? 30 : 60; // Stronger Bloom
+ 
+         ctx.fillStyle = color;
+         
+@@ -17529,6 +18104,7 @@
+         if (modal) {
+             modal.style.display = 'flex';
+             modal.classList.add('active'); 
++            this.gamePaused = true; // Auto-pause game while in hangar
+             this.initHangar(); // Generate bays
+             this.updateHangarUI(); // Set initial position
+             if (this.resizeHangar) this.resizeHangar(); // Apply responsive sizing
+@@ -17551,20 +18127,13 @@
+         if (modal) {
+             modal.classList.remove('active');
+             this._hangarActive = false;
++            this.gamePaused = false; // Unpause when exiting hangar
+             // Delay hidding display to allow transition
+             setTimeout(() => {
+                 if (!modal.classList.contains('active')) {
+                     modal.style.display = 'none';
+                 }
+             }, 500);
+-        }
+-    }
+-
+-    hideShipModal() {
+-        const modal = document.getElementById('shipModal');
+-        if (modal) {
+-            modal.classList.remove('active');
+-            this._hangarActive = false;
+         }
+     }
+ 
+@@ -17833,11 +18402,11 @@
+         };
+ 
+         // Save to LocalStorage
+-        safeStorage.setItem('customShipStructure', JSON.stringify(this.playerShip.customStructure));
++        localStorage.setItem('customShipStructure', JSON.stringify(this.playerShip.customStructure));
+ 
+         // Auto-select "Orion" type (which we'll use for custom)
+         this.playerShip.type = 'orion';
+-        safeStorage.setItem('playerShipType', 'orion');
++        localStorage.setItem('playerShipType', 'orion');
+ 
+         this.showToast("Constellation SAVED as Spacecraft!");
+     }
+@@ -17877,7 +18446,7 @@
+             this.playerShip.acceleration = ship.acceleration;
+ 
+             // Save ship type to localStorage for persistence
+-            safeStorage.setItem('playerShipType', shipType);
++            localStorage.setItem('playerShipType', shipType);
+             console.log(`[Hangar] Selected ${shipType}`);
+ 
+             this.showToast(`SYSTEMS ONLINE: ${ship.name.toUpperCase()} CLASS`, 2000);
+@@ -17899,8 +18468,8 @@
+             this.unlockedShips.push(shipId);
+ 
+             // Save state
+-            safeStorage.setItem('playerGems', this.playerGems);
+-            safeStorage.setItem('unlockedShips', JSON.stringify(this.unlockedShips));
++            localStorage.setItem('playerGems', this.playerGems);
++            localStorage.setItem('unlockedShips', JSON.stringify(this.unlockedShips));
+ 
+             this.showToast(`✨ UNLOCKED ${shipId.toUpperCase()}! ✨`, 3000);
+ 
+@@ -18211,12 +18780,13 @@
+         console.log("[Music UI] Opening Music Settings Modal");
+         const modal = document.getElementById('musicSettingsModal');
+         if (modal) {
++            modal.style.display = 'flex';
+             modal.classList.remove('hidden');
+-            modal.style.setProperty('display', 'flex', 'important');
+-            modal.style.setProperty('visibility', 'visible', 'important');
+-            modal.style.setProperty('opacity', '1', 'important');
+-            modal.style.setProperty('pointer-events', 'auto', 'important');
+-            modal.style.setProperty('z-index', '999999', 'important');
++            // Trigger reflow
++            void modal.offsetWidth;
++            modal.classList.add('active');
++            
++            if (window.game) window.game.gamePaused = true;
+         } else {
+             console.error("[Music UI] Error: musicSettingsModal not found in DOM");
+         }
+@@ -18226,7 +18796,12 @@
+         console.log("[Music UI] Closing Music Settings Modal");
+         const modal = document.getElementById('musicSettingsModal');
+         if (modal) {
+-            modal.style.setProperty('display', 'none', 'important');
++            modal.classList.remove('active');
++            if (window.game) window.game.gamePaused = false;
++            setTimeout(() => { 
++                modal.classList.add('hidden'); 
++                modal.style.display = 'none';
++            }, 300);
+         }
+     }
+ 
+@@ -18256,15 +18831,33 @@
+     setMusicVolume(vol) {
+         const parsed = parseFloat(vol);
+         window.gameAudio.setMusicVolume(parsed);
+-        safeStorage.setItem('audioMusicVolume', parsed);
++        localStorage.setItem('audioMusicVolume', parsed);
+     }
+ 
+     toggleMute() {
+         const isMuted = window.gameAudio.toggleMute();
+-        const btn = document.getElementById('muteToggleBtn');
+-        if (btn) btn.textContent = `Mute: ${isMuted ? 'ON' : 'OFF'}`;
++        const btn1 = document.getElementById('muteToggleBtn');
++        if (btn1) btn1.textContent = `Mute: ${isMuted ? 'ON' : 'OFF'}`;
++        const btn2 = document.getElementById('audioMuteBtn');
++        if (btn2) btn2.textContent = isMuted ? '🔇 MUTED' : '🔊 UNMUTE';
++    }
++
++    toggleEngineHum() {
++        const isHumMuted = window.gameAudio.toggleEngineHum();
++        const btn = document.getElementById('engineHumBtn');
++        if (btn) btn.innerHTML = isHumMuted ? '🚀 <span class="hide-mobile">HUM: OFF</span>' : '🚀 <span class="hide-mobile">HUM: ON</span>';
++        if (!isHumMuted && this.flightMode && !this.gamePaused) {
++            window.gameAudio.startEngineHum();
++        }
+     }
+ 
++    toggleSfx() {
++        const isSfxMuted = window.gameAudio.toggleSfx();
++        const btn = document.getElementById('sfxMuteBtn');
++        if (btn) btn.innerHTML = isSfxMuted ? '💥 <span class="hide-mobile">SFX: OFF</span>' : '💥 <span class="hide-mobile">SFX: ON</span>';
++    }
++
++
+     stopAllMusic() {
+         window.gameAudio.stopAllMusic();
+         this._highlightMusicButton(null);
+@@ -18295,10 +18888,10 @@
+ 
+     initMusicUI() {
+         // Load settings and forcibly fix old broken defaults (<= 0.15)
+-        let savedVol = safeStorage.getItem('audioMusicVolume');
++        let savedVol = localStorage.getItem('audioMusicVolume');
+         if (savedVol && parseFloat(savedVol) <= 0.15) {
+             savedVol = "1.0"; // Force reset the volume if they were stuck on the old inaudible default
+-            safeStorage.setItem('audioMusicVolume', "1.0");
++            localStorage.setItem('audioMusicVolume', "1.0");
+         }
+         
+         if (savedVol) {
+@@ -18397,7 +18990,17 @@
+                 {name: "Lush Atmosphere", url: "https://ice1.somafm.com/lush-128-mp3"},
+                 {name: "Groove Salad", url: "https://ice1.somafm.com/groovesalad-128-mp3"},
+                 {name: "Dark Zone Ambient", url: "https://ice1.somafm.com/darkzone-128-mp3"},
+-                {name: "Deep Space One", url: "https://ice1.somafm.com/deepspaceone-128-mp3"}
++                {name: "Deep Space One", url: "https://ice1.somafm.com/deepspaceone-128-mp3"},
++                {name: "Stellar Void", url: "https://ice1.somafm.com/dronezone-128-mp3"},
++                {name: "Nebula Drift", url: "https://ice1.somafm.com/fluid-128-mp3"},
++                {name: "Galactic Core", url: "https://ice1.somafm.com/missioncontrol-128-mp3"},
++                {name: "Event Horizon", url: "https://ice1.somafm.com/thetrip-128-mp3"},
++                {name: "Quantum Fluctuations", url: "https://ice1.somafm.com/cliqhop-128-mp3"},
++                {name: "Solar Winds", url: "https://ice1.somafm.com/defcon-128-mp3"},
++                {name: "Dark Matter Streams", url: "https://ice1.somafm.com/vaporwaves-128-mp3"},
++                {name: "Supernova Remnants", url: "https://ice1.somafm.com/suburbsofgoa-128-mp3"},
++                {name: "Orbital Resonance", url: "https://ice1.somafm.com/dronezone-128-mp3"},
++                {name: "Pulsar Beats", url: "https://ice1.somafm.com/groovesalad-128-mp3"}
+             ]
+         };
+ 
+@@ -18567,7 +19170,7 @@
+             premiumToggle.checked = this.isPro;
+             premiumToggle.addEventListener('change', (e) => {
+                 this.isPro = e.target.checked;
+-                safeStorage.setItem('isPro', this.isPro);
++                localStorage.setItem('isPro', this.isPro);
+                 this.showToast(this.isPro ? "PREMIUM MODE ENABLED" : "PREMIUM MODE DISABLED");
+                 this.updateAdminDebugInfo();
+             });
+@@ -18583,7 +19186,7 @@
+         // Add Minerals
+         document.getElementById('adminAddMineralsBtn')?.addEventListener('click', () => {
+             this.playerGems += 5000;
+-            safeStorage.setItem('playerGems', this.playerGems);
++            localStorage.setItem('playerGems', this.playerGems);
+             if (this.updateGemsUI) this.updateGemsUI();
+             this.showToast(`ADDED 5000 GEMS (Total: ${this.playerGems})`);
+         });
+@@ -18596,9 +19199,9 @@
+                     this.unlockedShips.push(id);
+                 }
+             });
+-            safeStorage.setItem('unlockedShips', JSON.stringify(this.unlockedShips));
++            localStorage.setItem('unlockedShips', JSON.stringify(this.unlockedShips));
+             this.isPro = true;
+-            safeStorage.setItem('isPro', 'true');
++            localStorage.setItem('isPro', 'true');
+             if (premiumToggle) premiumToggle.checked = true;
+             this.showToast("ALL SHIPS UNLOCKED!");
+         });
+@@ -18632,7 +19235,7 @@
+ 
+     setHangarColor(color) {
+         this.playerShip.color = color;
+-        safeStorage.setItem('playerShipColor', color);
++        localStorage.setItem('playerShipColor', color);
+ 
+         // Update UI state
+         document.querySelectorAll('.color-option').forEach(el => {
+@@ -18684,7 +19287,7 @@
+         this.baseTool = 'hab';
+ 
+         // Load or initialize base map (8x8 grid)
+-        this.spaceBase = this.safeJSONParse('spaceBase', {});
++        this.spaceBase = JSON.parse(localStorage.getItem('spaceBase')) || {};
+         
+         this.drawBaseGrid();
+         
+@@ -18888,14 +19491,14 @@
+     // --- SAVE DATA SYSTEM ---
+     exportSaveData() {
+         const data = {};
+-        for(let i = 0; i < safeStorage.length; i++){
+-            const k = safeStorage.key(i);
++        for(let i = 0; i < localStorage.length; i++){
++            const k = localStorage.key(i);
+             // Export game-relevant variables only
+             if (['audioMuted', 'audioVolume', 'playerGems', 'unlockedShips', 'playerShipType', 
+                  'playerShipColor', 'missionsCompleted', 'bossesDefeated', 'isPro', 'hudLayout',
+                  'shipRotation', 'playerInventory', 'playerCredits', 'playerUpgrades', 
+                  'carriedResources', 'spaceBase', 'trainingProgress', 'loginData', 'playerSkills', 'factionRep'].includes(k) || k.startsWith('windowLayout')) {
+-                 data[k] = safeStorage.getItem(k);
++                 data[k] = localStorage.getItem(k);
+             }
+         }
+         
+@@ -18936,7 +19539,7 @@
+             try {
+                 const data = JSON.parse(e.target.result);
+                 Object.keys(data).forEach(k => {
+-                    safeStorage.setItem(k, data[k]);
++                    localStorage.setItem(k, data[k]);
+                 });
+                 if (this.showToast) this.showToast("✅ Save Imported! Reloading...");
+                 setTimeout(() => location.reload(), 1500);

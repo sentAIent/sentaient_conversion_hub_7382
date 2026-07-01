@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Interstellar Map | Pre-Placement Cartographer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=hangar_polish">
+    
+    <!-- CACHE NUCLEAR SCRIPT (v23 Deep Stabilization) -->
+    <script>
+        (function() {
+            const VERSION_KEY = 'v23_final_nuclear_stablenal';
+            try {
+                if (!localStorage.getItem(VERSION_KEY)) {
+                    console.log("🧨 [Nuclear] Purging caches for Deep Stabilization...");
+                    
+                    // 1. Unregister SWs
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(registrations => {
+                            for(let registration of registrations) registration.unregister();
+                        });
+                    }
+                    
+                    // 2. Clear Browser Caches
+                    if ('caches' in window) {
+                        caches.keys().then(names => {
+                            for (let name of names) caches.delete(name);
+                        });
+                    }
+                    
+                    // 3. Selective LocalStorage Purge (Keep essential progress)
+                    const keys = Object.keys(localStorage);
+                    keys.forEach(k => {
+                        if (k !== 'playerCredits' && k !== 'playerInventory' && k !== 'playerGems' && k !== 'playerLegacy') {
+                            localStorage.removeItem(k);
+                        }
+                    });
+                    
+                    localStorage.setItem(VERSION_KEY, 'true');
+                    console.log("🧨 [Nuclear] Force reloading in 500ms...");
+                    setTimeout(() => location.reload(true), 500);
+                }
+            } catch (e) {
+                console.error("Nuclear purge failed:", e);
+            }
+        })();
+    </script>
+</head>

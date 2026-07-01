@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Icebreaker Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #0f172a; color: #f8fafc; }
+    .card { background-color: #1e293b; border-radius: 0.5rem; padding: 1.5rem; }
+  </style>
+</head>
+<body class="p-8 font-sans">
+  <div class="max-w-7xl mx-auto">
+    <header class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+          Icebreaker Analytics
+        </h1>
+        <p class="text-slate-400 mt-2">Executive Overview & Marketing Insights</p>
+      </div>
+      <button onclick="fetchData()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition">
+        Refresh Data
+      </button>
+    </header>
+
+    <div id="loading" class="text-center py-20 text-slate-400">Loading analytics...</div>
+
+    <div id="dashboard" class="hidden space-y-6">
+      
+      <!-- Key Metrics Row -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="card border-t-4 border-blue-500">
+          <h3 class="text-slate-400 text-sm font-semibold uppercase">Total Users</h3>
+          <p id="totalUsers" class="text-4xl font-bold mt-2">0</p>
+        </div>
+        <div class="card border-t-4 border-green-500">
+          <h3 class="text-slate-400 text-sm font-semibold uppercase">Monthly Active (MAU)</h3>
+          <p id="mau" class="text-4xl font-bold mt-2">0</p>
+        </div>
+        <div class="card border-t-4 border-purple-500">
+          <h3 class="text-slate-400 text-sm font-semibold uppercase">Total Check-Ins</h3>
+          <p id="totalCheckIns" class="text-4xl font-bold mt-2">0</p>
+        </div>
+        <div class="card border-t-4 border-yellow-500">
+          <h3 class="text-slate-400 text-sm font-semibold uppercase">Avg Trust Score</h3>
+          <p id="avgTrustScore" class="text-4xl font-bold mt-2">0.0</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Funnel / Engagement Card -->
+        <div class="card">
+          <h2 class="text-xl font-bold mb-4">Meeting Engagement Funnel</h2>
+          <div class="flex flex-col gap-4">
+            <div class="flex justify-between items-center bg-slate-800 p-4 rounded">
+              <span class="text-slate-400">Meeting Requests Sent</span>
+              <span id="totalRequests" class="text-2xl font-bold">0</span>
+            </div>
+            <div class="flex justify-between items-center bg-slate-800 p-4 rounded">
+              <span class="text-slate-400">Requests Accepted</span>
+              <span id="acceptedRequests" class="text-2xl font-bold text-green-400">0</span>
+            </div>
+            <div class="flex justify-between items-center bg-slate-800 p-4 rounded">
+              <span class="text-slate-400">Acceptance Rate</span>
+              <span id="acceptanceRate" class="text-2xl font-bold text-blue-400">0%</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 mt-4">High acceptance rate indicates healthy platform trust and user quality.</p>
+        </div>
+
+        <!-- Openness Signals -->
+        <div class="card">
+          <h2 class="text-xl font-bold mb-4">User Intent Signals (Colors)</h2>
+          <canvas id="signalsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Business Opportunities -->
+      <div class="card">
+        <h2 class="text-xl font-bold mb-4">Top Locations for B2B Partnerships</h2>
+        <p class="text-sm text-slate-400 mb-4">Most popular venues for Icebreaker meetings. Target these for marketing & venue partnerships.</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700">
+                <th class="p-3 text-slate-300 font-semibold">Location Name</th>
+                <th class="p-3 text-slate-300 font-semibold">Meeting Volume</th>
+              </tr>
+            </thead>
+            <tbody id="locationsTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let signalsChart = null;
+
+    async function fetchData() {
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/admin/stats');
+        
+        if (res.status === 401) {
+          alert("Unauthorized. Please login via Basic Auth popup.");
+          // Trigger basic auth prompt by reloading
+          window.location.reload();
+          return;
+        }
+        
+        const data = await res.json();
+        
+        // Populate Key Metrics
+        document.getElementById('totalUsers').innerText = data.acquisition.totalUsers;
+        document.getElementById('mau').innerText = data.acquisition.mau;
+        document.getElementById('totalCheckIns').innerText = data.engagement.totalCheckIns;
+        document.getElementById('avgTrustScore').innerText = data.trust.avgTrustScore.toFixed(2);
+        
+        // Engagement
+        document.getElementById('totalRequests').innerText = data.engagement.totalRequests;
+        document.getElementById('acceptedRequests').innerText = data.engagement.acceptedRequests;
+        document.getElementById('acceptanceRate').innerText = data.engagement.acceptanceRate.toFixed(1) + '%';
+        
+        // Locations
+        const tbody = document.getElementById('locationsTableBody');
+        tbody.innerHTML = '';
+        data.business.topLocations.forEach(loc => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b border-slate-800 hover:bg-slate-800 transition';
+          tr.innerHTML = `
+            <td class="p-3 font-medium text-slate-200">${loc.locationName}</td>
+            <td class="p-3 text-blue-400 font-bold">${loc._count.locationName}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // Signals Chart
+        const ctx = document.getElementById('signalsChart').getContext('2d');
+        if (signalsChart) signalsChart.destroy();
+        
+        signalsChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(data.signals),
+            datasets: [{
+              data: Object.values(data.signals),
+              backgroundColor: ['#ef4444', '#22c55e', '#3b82f6', '#a855f7', '#f59e0b', '#ec4899'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'right', labels: { color: '#cbd5e1' } }
+            }
+          }
+        });
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('loading').innerText = "Failed to load data. Check console.";
+      }
+    }
+
+    // Init
+    fetchData();
+  </script>
+</body>
+</html>

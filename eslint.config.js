@@ -1,0 +1,1 @@
+export default [{languageOptions: {ecmaVersion: 2022, sourceType: "module", globals: {window: "readonly", document: "readonly", console: "readonly", performance: "readonly", Math: "readonly", localStorage: "readonly"}}}];

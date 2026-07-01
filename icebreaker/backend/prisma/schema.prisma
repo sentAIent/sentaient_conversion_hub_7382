@@ -1,0 +1,284 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+enum AccountType {
+  personal
+  venue
+  event
+}
+
+enum PrivacyTier {
+  exact
+  neighborhood
+  city
+  ghost
+}
+
+enum Color {
+  GREEN
+  RED
+  ELECTRIC_BLUE
+  ORANGE
+  YELLOW
+  PURPLE
+  PINK
+  DARK_BLUE
+}
+
+enum DayOfWeek {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+enum ContentType {
+  photo
+  video
+  audio
+  text
+  doodle
+  moment
+}
+
+enum SourceFlag {
+  in_app_camera
+  in_app_recorder
+  in_app_audio
+  in_app_draw
+  in_app_text
+}
+
+enum MeetingStatus {
+  scheduled
+  confirmed
+  completed
+  cancelled
+}
+
+enum RsvpStatus {
+  pending
+  confirmed
+  declined
+}
+
+enum ReferralStatus {
+  pending
+  completed
+  expired
+}
+
+enum PrivacyMode {
+  public
+  private
+}
+
+enum FollowStatus {
+  PENDING
+  ACCEPTED
+}
+
+model User {
+  id                   String      @id
+  name                 String
+  username             String      @unique
+  email                String      @unique
+  emailVerified        Boolean     @default(false)
+  phone                String?     @unique
+  phoneVerified        Boolean     @default(false)
+  pushToken            String?
+  profilePhotoUrl      String?
+  bio                  String?
+  city                 String?
+  cityCheckInCompleted Boolean     @default(false)
+  dateOfBirth          DateTime?
+  ageVerified          Boolean     @default(false)
+  accountType          AccountType @default(personal)
+  privacy              PrivacyMode @default(public)
+  isActive             Boolean     @default(true)
+  isPaused             Boolean     @default(false)
+  trustScore           Float       @default(5.0)
+  referralCode         String      @unique
+  referredBy           String?
+  referralCount        Int         @default(0)
+  proStatus            Boolean     @default(false)
+  proExpiresAt         DateTime?
+  streakCount          Int         @default(0)
+  lastCheckInAt        DateTime?
+  lastActiveAt         DateTime    @default(now())
+  createdAt            DateTime    @default(now())
+  embedding            Unsupported("vector(768)")?
+
+  // Relationships
+  referrer              User?                @relation("Referrals", fields: [referredBy], references: [id])
+  referrees             User[]               @relation("Referrals")
+  checkIns              CheckIn[]
+  opennessProfile       OpennessProfile?
+  contents              Content[]
+  meetingsCreated       Meeting[]            @relation("MeetingCreator")
+  meetingParticipations MeetingParticipant[]
+  referralsMade         Referral[]           @relation("Referrer")
+  referralsReceived     Referral[]           @relation("ReferredUser")
+  sentMeetingRequests   MeetingRequest[]     @relation("SentMeetings")
+  receivedMeetingRequests MeetingRequest[]   @relation("ReceivedMeetings")
+  followers             Follows[]            @relation("UserFollowers")
+  following             Follows[]            @relation("UserFollowing")
+  notifications         Notification[]       @relation("UserNotifications")
+  notificationsCaused   Notification[]       @relation("NotificationActor")
+}
+
+model CheckIn {
+  id             String      @id @default(uuid()) @db.Uuid
+  userId         String
+  venueId        String?     @db.Uuid
+  eventId        String?     @db.Uuid
+  popUpRoomId    String?     @db.Uuid
+  privacyTier    PrivacyTier
+  latitude       Float
+  longitude      Float
+  fuzzyLatitude  Float
+  fuzzyLongitude Float
+  isActive       Boolean     @default(true)
+  autoCheckIn    Boolean     @default(false)
+  expiresAt      DateTime
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model OpennessProfile {
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @unique
+  activeColors        Color[]
+  calendarSyncEnabled Boolean  @default(false)
+  showOnColorMap      Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id])
+  colorSchedules ScheduleBlock[]
+}
+
+model ScheduleBlock {
+  id                String    @id @default(uuid()) @db.Uuid
+  opennessProfileId String    @db.Uuid
+  dayOfWeek         DayOfWeek
+  startTime         String // e.g. "09:00"
+  endTime           String // e.g. "17:00"
+  colors            Color[]
+
+  opennessProfile OpennessProfile @relation(fields: [opennessProfileId], references: [id])
+}
+
+model Content {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String
+  type       ContentType
+  mediaUrl   String?
+  textBody   String?
+  sourceFlag SourceFlag
+  isMoment   Boolean     @default(false)
+  expiresAt  DateTime?
+  venueId    String?     @db.Uuid
+  isDeleted  Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Meeting {
+  id                String        @id @default(uuid()) @db.Uuid
+  creatorId         String
+  title             String
+  venueId           String        @db.Uuid
+  scheduledAt       DateTime
+  status            MeetingStatus @default(scheduled)
+  autoConfirmWindow Int           @default(15) // minutes
+  createdAt         DateTime      @default(now())
+
+  creator      User                 @relation("MeetingCreator", fields: [creatorId], references: [id])
+  participants MeetingParticipant[]
+}
+
+model MeetingParticipant {
+  id                String     @id @default(uuid()) @db.Uuid
+  meetingId         String     @db.Uuid
+  userId            String
+  rsvpStatus        RsvpStatus @default(pending)
+  checkedIn         Boolean    @default(false)
+  postMeetingRating Int? // 1-5
+
+  meeting Meeting @relation(fields: [meetingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model Referral {
+  id             String         @id @default(uuid()) @db.Uuid
+  referrerId     String
+  referredUserId String         @unique
+  referralCode   String
+  status         ReferralStatus @default(pending)
+  completedAt    DateTime?
+  expiresAt      DateTime
+  rewardGranted  Boolean        @default(false)
+
+  referrer     User @relation("Referrer", fields: [referrerId], references: [id])
+  referredUser User @relation("ReferredUser", fields: [referredUserId], references: [id])
+}
+
+model MeetingRequest {
+  id            String   @id @default(uuid()) @db.Uuid
+  senderId      String
+  receiverId    String
+  status        String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  proposedTime  DateTime
+  locationName  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sender        User     @relation("SentMeetings", fields: [senderId], references: [id])
+  receiver      User     @relation("ReceivedMeetings", fields: [receiverId], references: [id])
+}
+
+model Follows {
+  id          String       @id @default(uuid()) @db.Uuid
+  followerId  String
+  followingId String
+  status      FollowStatus @default(ACCEPTED)
+  createdAt   DateTime     @default(now())
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id])
+  following User @relation("UserFollowers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String
+  actorId   String?
+  type      String   // e.g., 'LIKE', 'COMMENT', 'FOLLOW', 'FOLLOW_REQUEST'
+  message   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation("UserNotifications", fields: [userId], references: [id])
+  actor     User?    @relation("NotificationActor", fields: [actorId], references: [id])
+}
