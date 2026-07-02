@@ -383,6 +383,7 @@ export function setupUI() {
     els.visualColorPicker = document.getElementById('visualColorPicker');
     els.randomColorBtn = document.getElementById('randomColorBtn');
     els.prevColorBtn = document.getElementById('prevColorBtn');
+    els.saveColorBtn = document.getElementById('saveColorBtn');
     els.vibrationToggleBtn = document.getElementById('vibrationToggleBtn');
     els.colorPreview = document.getElementById('colorPreview');
     els.profileBtn = document.getElementById('profileBtn');
@@ -1584,11 +1585,15 @@ export function setupUI() {
 
     // Color Controls
     // Color history for back button
-    let previousColor = null;
+    let colorHistory = [];
     let currentColor = '#60a9ff'; // Default
 
-    function updateColorWithHistory(newColor) {
-        previousColor = currentColor;
+    function updateColorWithHistory(newColor, isBack = false) {
+        if (!isBack && currentColor !== newColor) {
+            colorHistory.push(currentColor);
+            if (colorHistory.length > 50) colorHistory.shift();
+        }
+        
         currentColor = newColor;
 
         if (els.colorPreview) els.colorPreview.style.backgroundColor = newColor;
@@ -1602,9 +1607,13 @@ export function setupUI() {
         if (els.sessionLabel) els.sessionLabel.style.color = newColor;
         if (els.visualsLabel) els.visualsLabel.style.color = newColor;
 
-        // Show back button if we have a previous color
-        if (els.prevColorBtn && previousColor) {
-            els.prevColorBtn.classList.remove('hidden');
+        // Show back button if we have history
+        if (els.prevColorBtn) {
+            if (colorHistory.length > 0) {
+                els.prevColorBtn.classList.remove('hidden');
+            } else {
+                els.prevColorBtn.classList.add('hidden');
+            }
         }
     }
 
@@ -1628,17 +1637,38 @@ export function setupUI() {
 
     if (els.prevColorBtn) {
         els.prevColorBtn.addEventListener('click', () => {
-            if (previousColor) {
-                // Swap colors
-                const temp = currentColor;
-                currentColor = previousColor;
-                previousColor = temp;
+            if (colorHistory.length > 0) {
+                const prevColor = colorHistory.pop();
+                updateColorWithHistory(prevColor, true);
+            }
+        });
+    }
 
-                if (els.colorPreview) els.colorPreview.style.backgroundColor = currentColor;
-                if (els.visualColorPicker) els.visualColorPicker.value = currentColor;
-
-                const viz = getVisualizer();
-                if (viz) viz.setColor(currentColor);
+    if (els.saveColorBtn) {
+        els.saveColorBtn.addEventListener('click', async () => {
+            if (!state.currentUser) {
+                alert('Please log in to save your favorite colors.');
+                return;
+            }
+            try {
+                // We'll dynamically import getDoc, setDoc, doc from firebase.js
+                const fb = await import('../services/firebase.js');
+                const docRef = fb.doc(fb.db, 'users', state.currentUser.uid, 'profile', 'data');
+                const docSnap = await fb.getDoc(docRef);
+                let favorites = [];
+                if (docSnap.exists() && docSnap.data().favoriteColors) {
+                    favorites = docSnap.data().favoriteColors;
+                }
+                if (!favorites.includes(currentColor)) {
+                    favorites.push(currentColor);
+                    await fb.setDoc(docRef, { favoriteColors: favorites, updatedAt: fb.serverTimestamp() }, { merge: true });
+                    alert(`Color ${currentColor} saved to favorites!`);
+                } else {
+                    alert(`Color ${currentColor} is already in your favorites!`);
+                }
+            } catch (err) {
+                console.error('Error saving favorite color:', err);
+                alert('Failed to save color to profile.');
             }
         });
     }

@@ -1455,8 +1455,31 @@ static CYMATIC_PATTERNS = [
     }
 
     
-        
     // --- Tsunami Controls ---
+    setTsunamiKanagawa(val) {
+        if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
+            if (val > 0.5) {
+                this.tsunamiMaterial.uniforms.uCurl.value = 4.0;
+                this.tsunamiMaterial.uniforms.uAmplitude.value = 3.0;
+                
+                // Update UI sliders if present
+                const curlSlider = document.getElementById('tsunamiCurlSlider');
+                if (curlSlider) { curlSlider.value = 4.0; document.getElementById('tsunamiCurlVal').textContent = '4.0'; }
+                const ampSlider = document.getElementById('tsunamiAmplitudeSlider');
+                if (ampSlider) { ampSlider.value = 3.0; document.getElementById('tsunamiAmplitudeVal').textContent = '3.0'; }
+            } else {
+                this.tsunamiMaterial.uniforms.uCurl.value = 1.0;
+                this.tsunamiMaterial.uniforms.uAmplitude.value = 1.0;
+                
+                // Update UI sliders if present
+                const curlSlider = document.getElementById('tsunamiCurlSlider');
+                if (curlSlider) { curlSlider.value = 1.0; document.getElementById('tsunamiCurlVal').textContent = '1.0'; }
+                const ampSlider = document.getElementById('tsunamiAmplitudeSlider');
+                if (ampSlider) { ampSlider.value = 1.0; document.getElementById('tsunamiAmplitudeVal').textContent = '1.0'; }
+            }
+        }
+    }
+    
     setTsunamiAmplitude(val) {
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
             this.tsunamiMaterial.uniforms.uAmplitude.value = parseFloat(val);
@@ -1529,6 +1552,7 @@ static CYMATIC_PATTERNS = [
             uSecondaryColor: { value: new THREE.Color(0x006994) },
             uDeepColor: { value: new THREE.Color(0x005bb5) },
             uFoamColor: { value: new THREE.Color(0xffffff) },
+            uSunColor: { value: new THREE.Color(0xffe599) },
             uAmplitude: { value: 1.0 },
             uCurl: { value: 1.0 },
             uMist: { value: 1.0 },
@@ -1707,6 +1731,7 @@ static CYMATIC_PATTERNS = [
             uniform vec3 uSecondaryColor;
             uniform vec3 uDeepColor;
             uniform vec3 uFoamColor;
+            uniform vec3 uSunColor;
             uniform float uNormBass;
             uniform float uTime;
             uniform float uMist;
@@ -1801,7 +1826,7 @@ static CYMATIC_PATTERNS = [
                 float sunDist = length(vWorldPosition - visibleSunPos);
                 float sunCore = 1.0 - smoothstep(32.0, 40.0, sunDist);
                 float sunGlow = 1.0 - smoothstep(40.0, 160.0, sunDist);
-                vec3 sunColor = vec3(1.0, 0.9, 0.6); // Warm golden sun
+                vec3 sunColor = uSunColor; // Dynamically colored sun
                 
                 float sunMixIntensity = max(sunCore, sunGlow * 0.5) * 0.33;
                 float sunSpec = spec * 0.66 * smoothstep(-20.0, 10.0, vElevation);
@@ -3451,12 +3476,31 @@ static CYMATIC_PATTERNS = [
         }
 
         try {
+            const baseColor = new THREE.Color(hex);
+            const hsl = {};
+            baseColor.getHSL(hsl);
+
+            const secondaryColor = new THREE.Color().setHSL(hsl.h, hsl.s, Math.max(0.1, hsl.l * 0.5));
+            const deepColor = new THREE.Color().setHSL(hsl.h, hsl.s, Math.max(0.02, hsl.l * 0.15));
+            const sunColor = new THREE.Color().setHSL(hsl.h, Math.min(1.0, hsl.s * 0.8), 0.9);
+
             const setMatColor = (mat) => {
                 if (!mat) return;
                 if (mat.color && typeof mat.color.set === 'function') {
                     mat.color.set(hex);
                 } else if (mat.uniforms && mat.uniforms.uColor) {
                     mat.uniforms.uColor.value.set(hex);
+                }
+                
+                // Proportionally tint the deep water and sun to match the new resonance hue
+                if (mat.uniforms && mat.uniforms.uSecondaryColor) {
+                    mat.uniforms.uSecondaryColor.value.copy(secondaryColor);
+                }
+                if (mat.uniforms && mat.uniforms.uDeepColor) {
+                    mat.uniforms.uDeepColor.value.copy(deepColor);
+                }
+                if (mat.uniforms && mat.uniforms.uSunColor) {
+                    mat.uniforms.uSunColor.value.copy(sunColor);
                 }
             };
 

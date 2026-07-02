@@ -1505,8 +1505,14 @@ window.resetGalaxySettings = function() {
 <div class="relative w-10 h-10 rounded-full border border-white/20 shadow-lg cursor-pointer overflow-hidden ring-4 ring-black/40" id="colorPreview" style="background-color: #60a9ff;">
 <input class="absolute inset-0 opacity-0 cursor-pointer scale-150" id="visualColorPicker" type="color" value="#60a9ff"/>
 </div>
-<button class="glass-btn !p-2 !rounded-full" id="randomColorBtn">
+<button class="glass-btn !p-2 !rounded-full" id="randomColorBtn" title="Random Color">
 <svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" x2="21" y1="15" y2="21"></line><line x1="4" x2="9" y1="4" y2="9"></line></svg>
+</button>
+<button class="glass-btn !p-2 !rounded-full hidden" id="prevColorBtn" title="Previous Color">
+<svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6"></polyline></svg>
+</button>
+<button class="glass-btn !p-2 !rounded-full" id="saveColorBtn" title="Save to Favorites">
+<svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
 </button>
 </div>
 </div>
