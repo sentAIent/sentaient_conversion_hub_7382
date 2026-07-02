@@ -1471,11 +1471,27 @@ static CYMATIC_PATTERNS = [
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
             this.tsunamiMaterial.uniforms.uMist.value = parseFloat(val);
         }
+        
+        let mistVal = parseFloat(val);
+        let sunOp = Math.max(Math.min(mistVal, 1.0), 0.0);
+        let moonOp = Math.max(Math.min(1.0 - (mistVal * 2.0), 1.0), 0.0); // Fades completely out when mist >= 0.5
+        
         if (this.tsunamiSun && this.tsunamiSun.material) {
-            this.tsunamiSun.material.opacity = Math.max(parseFloat(val), 0.2);
-            if (this.tsunamiSun.material.uniforms) {
-                this.tsunamiSun.material.uniforms.uMist.value = parseFloat(val);
+            this.tsunamiSun.material.opacity = sunOp;
+            if (this.tsunamiSun.material.uniforms && this.tsunamiSun.material.uniforms.uMist) {
+                this.tsunamiSun.material.uniforms.uMist.value = mistVal;
             }
+        }
+        if (this.tsunamiMoon && this.tsunamiMoon.material && this.tsunamiMoon.material.uniforms) {
+            this.tsunamiMoon.material.uniforms.uOpacity.value = moonOp;
+        }
+    }
+    setTsunamiMoonPhase(val) {
+        if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
+            if(this.tsunamiMaterial.uniforms.uMoonPhase) this.tsunamiMaterial.uniforms.uMoonPhase.value = parseFloat(val);
+        }
+        if (this.tsunamiMoon && this.tsunamiMoon.material && this.tsunamiMoon.material.uniforms) {
+            this.tsunamiMoon.material.uniforms.uMoonPhase.value = parseFloat(val);
         }
     }
     setTsunamiStyle(val) {
@@ -1500,7 +1516,10 @@ static CYMATIC_PATTERNS = [
         if (!this.tsunamiGroup) return;
         this.tsunamiGroup.clear();
 
-        const geometry = new THREE.PlaneGeometry(300, 200, 600, 400);
+        // Increased width to 4000 and shifted to the right to simulate an infinite flat ocean off-canvas.
+        const geometry = new THREE.PlaneGeometry(4000, 250, 1500, 300);
+        geometry.translate(1500, 0, 0); // Shift right so left side matches old layout but right side extends infinitely
+
         
         const uniforms = {
             uTime: { value: 0 },
@@ -1513,6 +1532,7 @@ static CYMATIC_PATTERNS = [
             uAmplitude: { value: 1.0 },
             uCurl: { value: 1.0 },
             uMist: { value: 1.0 },
+            uMoonPhase: { value: 1.0 },
             uStyle: { value: 1.0 },
             uReactivity: { value: 1.0 },
             uLoopActive: { value: 0.0 }
@@ -1756,59 +1776,66 @@ static CYMATIC_PATTERNS = [
                 
                 // Sun & Glare (uMist slider repurposed as Sun Reflection)
                 float alpha = 1.0;
+                // GLOSS AND GLARE (SUN OR MOON)
+                vec3 lightSourcePos = vec3(-50.0, 200.0, 40.0);
+                vec3 lightDir = normalize(lightSourcePos - vWorldPosition);
+                vec3 viewDir = normalize(vViewPosition);
                 
-                if (uMist > 0.05) {
-                    // Position of the visible sun disc in world space (Top right horizon)
-                    vec3 visibleSunPos = vec3(100.0, 30.0, -180.0);
-                    float sunDist = length(vWorldPosition - visibleSunPos);
-                    
-                    // Sun Disc
-                    float sunRadius = 40.0;
-                    float sunCore = 1.0 - smoothstep(sunRadius * 0.8, sunRadius, sunDist);
-                    float sunGlow = 1.0 - smoothstep(sunRadius, sunRadius * 4.0, sunDist);
-                    
-                    vec3 sunColor = vec3(1.0, 0.9, 0.6); // Warm golden sun
-                    
-                    // Add the physical sun disc to the background
-                    float sunMix = max(sunCore, sunGlow * 0.5) * (uMist / 3.0);
-                    finalColor = mix(finalColor, sunColor, sunMix);
-                    
-                    // Ocean Glare / Specular Reflection
-                    // Use the original light source position to perfectly restore the glare the user loved
-                    vec3 lightSourcePos = vec3(-50.0, 200.0, 40.0);
-                    vec3 lightDir = normalize(lightSourcePos - vWorldPosition);
-                    // View vector (roughly down the Y axis for painting perspective)
-                    vec3 viewDir = normalize(vViewPosition);
-                    
-                    // Fake a normal based on the noise/elevation
-                    // For a flat ocean, normal is (0,0,1)
-                    vec3 normal = vec3(0.0, 0.0, 1.0);
-                    // Add some noise to the normal to simulate rippling water for the glare
-                    // Rushing backwards to simulate high speed
-                    float ripSpeed1 = mix(0.0, 4.0, uLoopActive);
-                    float ripSpeed2 = mix(2.0, 6.0, uLoopActive);
-                    // Use cheap sine waves instead of expensive snoise in the fragment shader!
-                    float rippleX = (vWorldPosition.x * 0.1) - (uTime * ripSpeed1);
-                    float rippleY = (vWorldPosition.y * 0.1) - (uTime * ripSpeed2);
-                    float ripple = sin(rippleX) * cos(rippleY);
-                    
-                    normal.x += ripple * 0.2;
-                    normal.y += ripple * 0.2;
-                    normal = normalize(normal);
-                    
-                    // Blinn-Phong specular
-                    vec3 halfVector = normalize(lightDir + viewDir);
-                    float spec = pow(max(dot(normal, halfVector), 0.0), 64.0); // Shininess
-                    
-                    // Add a broad specular highlight on the water
-                    float glareMix = spec * (uMist / 1.5) * smoothstep(-20.0, 10.0, vElevation);
-                    
-                    // Don't add glare on the foam
-                    glareMix *= (1.0 - isFoam);
-                    
-                    finalColor += sunColor * glareMix;
-                }
-
+                vec3 normal = vec3(0.0, 0.0, 1.0);
+                
+                float ripSpeed1 = mix(0.0, 4.0, uLoopActive);
+                float ripSpeed2 = mix(2.0, 6.0, uLoopActive);
+                float rippleX = (vWorldPosition.x * 0.1) - (uTime * ripSpeed1);
+                float rippleY = (vWorldPosition.y * 0.1) - (uTime * ripSpeed2);
+                float ripple = sin(rippleX) * cos(rippleY);
+                
+                normal.x += ripple * 0.2;
+                normal.y += ripple * 0.2;
+                normal = normalize(normal);
+                
+                vec3 halfVector = normalize(lightDir + viewDir);
+                float spec = pow(max(dot(normal, halfVector), 0.0), 64.0); // Shininess
+                
+                // --- SUN GLARE ---
+                vec3 visibleSunPos = vec3(100.0, 30.0, -180.0);
+                float sunDist = length(vWorldPosition - visibleSunPos);
+                float sunCore = 1.0 - smoothstep(32.0, 40.0, sunDist);
+                float sunGlow = 1.0 - smoothstep(40.0, 160.0, sunDist);
+                vec3 sunColor = vec3(1.0, 0.9, 0.6); // Warm golden sun
+                
+                float sunMixIntensity = max(sunCore, sunGlow * 0.5) * 0.33;
+                float sunSpec = spec * 0.66 * smoothstep(-20.0, 10.0, vElevation);
+                
+                // --- MOONLIGHT SPARKLES ---
+                float moonSpecAmount = pow(max(dot(normal, halfVector), 0.0), 64.0);
+                float broadCone = pow(max(dot(normal, halfVector), 0.0), 4.0); // Broad illumination
+                
+                // Gentle, smooth noise for subtle water glints instead of chaotic white noise
+                // IMPORTANT: We use .xz here so the noise maps to the flat ocean surface without stretching into "lasers"
+                vec2 sparkleUV = vWorldPosition.xz * 1.5 - vec2(0.0, uTime * 0.2);
+                float sparkleNoise = snoise(sparkleUV);
+                
+                // Only keep the absolute highest peaks for a soft, sparse glint (smaller number and size)
+                float sparkles = smoothstep(0.96, 1.0, sparkleNoise);
+                vec3 moonColor = vec3(0.8, 0.95, 1.0); // Bright silver/blue moon
+                
+                // Less intense, softer sparkles
+                float moonSpec = (moonSpecAmount * 0.4 + sparkles * broadCone * 2.0) * smoothstep(-20.0, 10.0, vElevation);
+                
+                // Blend based on uMist
+                float sunWeight = smoothstep(0.0, 1.0, uMist);
+                float moonWeight = smoothstep(1.0, 0.0, uMist * 2.0); // Fades completely in earlier half
+                
+                // Apply ONLY sun ambient to water (leave wave base color alone for the moon per user request!)
+                finalColor = mix(finalColor, sunColor, sunMixIntensity * sunWeight);
+                
+                float glareMix = (sunSpec * sunWeight) + (moonSpec * moonWeight);
+                vec3 glareColor = mix(moonColor, sunColor, sunWeight);
+                
+                // Don't add glare on the foam
+                glareMix *= (1.0 - isFoam);
+                finalColor += glareColor * glareMix;
+                
                 gl_FragColor = vec4(finalColor, alpha);
             }
         `;
@@ -1872,17 +1899,79 @@ static CYMATIC_PATTERNS = [
             fog: false // don't let THREE.js fog hide it
         });
         
-        // Use a sprite so it always faces the camera
         this.tsunamiSun = new THREE.Sprite(sunMat);
-        
-        // Scale it up nicely and place it in the upper right corner
         this.tsunamiSun.scale.set(60, 60, 1);
         this.tsunamiSun.position.set(70, 50, -120);
-        
-        // Add custom uniform object so setTsunamiMist doesn't crash
         this.tsunamiSun.material.uniforms = { uMist: { value: 1.0 } };
-        
         this.tsunamiGroup.add(this.tsunamiSun);
+
+        // PHYSICAL MOON (Dynamic ShaderBody)
+        const moonVert = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+        const moonFrag = `
+            varying vec2 vUv;
+            uniform float uMoonPhase;
+            uniform float uOpacity;
+            
+            float circleSDF(vec2 p, float r) {
+                return length(p) - r;
+            }
+            
+            void main() {
+                if (uOpacity <= 0.0) discard;
+                
+                vec2 uv = vUv * 2.0 - 1.0;
+                float d = circleSDF(uv, 0.5);
+                
+                // 3D Sphere lighting for realistic phases
+                float z = sqrt(max(0.0, 0.5*0.5 - dot(uv, uv)));
+                vec3 normal = normalize(vec3(uv, z));
+                
+                float moonAlpha = smoothstep(0.02, -0.02, d);
+                
+                // Light direction based on phase
+                float anglePhase = uMoonPhase * 3.14159; 
+                vec3 lightDir = normalize(vec3(sin(anglePhase), 0.0, -cos(anglePhase)));
+                float diff = max(dot(normal, lightDir), 0.0);
+                
+                // Simple crater noise
+                float n = fract(sin(dot(uv * 15.0, vec2(12.9898, 78.233))) * 43758.5453) * 0.15;
+                vec3 moonBase = vec3(0.8, 0.85, 0.9);
+                vec3 litMoon = moonBase * (diff - n) * 1.2;
+                
+                // Eclipse aura
+                float eclipseAura = 0.0;
+                if (uMoonPhase < 0.1) {
+                    eclipseAura = exp(-max(0.0, d) * 8.0) * (1.0 - (uMoonPhase * 10.0));
+                }
+                
+                vec3 finalMoon = litMoon * moonAlpha;
+                finalMoon += vec3(0.8, 0.9, 1.0) * eclipseAura;
+                
+                gl_FragColor = vec4(finalMoon, max(moonAlpha, eclipseAura) * uOpacity);
+            }
+        `;
+        
+        const moonMat = new THREE.ShaderMaterial({
+            vertexShader: moonVert,
+            fragmentShader: moonFrag,
+            uniforms: {
+                uMoonPhase: { value: 1.0 },
+                uOpacity: { value: 0.0 }
+            },
+            transparent: true,
+            depthWrite: false
+        });
+        
+        const moonGeo = new THREE.PlaneGeometry(100, 100);
+        this.tsunamiMoon = new THREE.Mesh(moonGeo, moonMat);
+        this.tsunamiMoon.position.set(70, 50, -120);
+        this.tsunamiGroup.add(this.tsunamiMoon);
     }
 
 
@@ -3677,7 +3766,6 @@ static CYMATIC_PATTERNS = [
                 // Always increment time so foam/mist keep moving
                 this.tsunamiMaterial.uniforms.uTime.value += dt * spd;
                 const t = this.tsunamiMaterial.uniforms.uTime.value;
-                
                 if (this.customColor) {
                     this.tsunamiMaterial.uniforms.uColor.value.copy(this.customColor);
                 } else if (this.rainbowMode && this.currentColorHsl) {
