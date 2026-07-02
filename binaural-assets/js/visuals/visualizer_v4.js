@@ -1741,7 +1741,7 @@ static CYMATIC_PATTERNS = [
                     }
                     
                     if (isFoam > 0.5) {
-                        float woodblockLines = snoise(vWorldPosition.xy * 0.8);
+                        float woodblockLines = (sin(vWorldPosition.x * 0.8) + cos(vWorldPosition.y * 0.8)) * 0.5;
                         float lineThr = 0.6 - (vStyle * 0.2);
                         if (woodblockLines > lineThr) {
                             finalColor = mix(finalColor, uSecondaryColor, vStyle * 0.6);
@@ -1787,7 +1787,11 @@ static CYMATIC_PATTERNS = [
                     // Rushing backwards to simulate high speed
                     float ripSpeed1 = mix(0.0, 4.0, uLoopActive);
                     float ripSpeed2 = mix(2.0, 6.0, uLoopActive);
-                    float ripple = snoise(vWorldPosition.xy * 0.1 - vec2(uTime * ripSpeed1, uTime * ripSpeed2));
+                    // Use cheap sine waves instead of expensive snoise in the fragment shader!
+                    float rippleX = (vWorldPosition.x * 0.1) - (uTime * ripSpeed1);
+                    float rippleY = (vWorldPosition.y * 0.1) - (uTime * ripSpeed2);
+                    float ripple = sin(rippleX) * cos(rippleY);
+                    
                     normal.x += ripple * 0.2;
                     normal.y += ripple * 0.2;
                     normal = normalize(normal);

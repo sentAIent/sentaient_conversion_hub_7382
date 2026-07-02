@@ -2863,3 +2863,27 @@ input[type="range"] { pointer-events: auto !important; touch-action: auto !impor
     overflow-y: hidden;
     width: 150px;
 }
+
+/* === CLOSE BUTTON STYLES === */
+.btn-close-modal {
+    background: linear-gradient(90deg, rgba(255, 50, 50, 0.2), rgba(255, 100, 100, 0.1));
+    border: 1px solid #ff4444;
+    color: #ffaaaa;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.2);
+    width: 100%;
+    margin-top: 10px;
+}
+.btn-close-modal:hover {
+    background: linear-gradient(90deg, rgba(255, 50, 50, 0.4), rgba(255, 100, 100, 0.2));
+    border-color: #ff6666;
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+    transform: translateY(-2px);
+}

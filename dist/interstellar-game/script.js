@@ -29,6 +29,33 @@ window.addEventListener('mousedown', () => window.hasUserInteracted = true, { on
 window.addEventListener('keydown', () => window.hasUserInteracted = true, { once: true });
 window.addEventListener('touchstart', () => window.hasUserInteracted = true, { once: true });
 
+// Global click handler to close modals/popups when clicking outside
+document.addEventListener('click', function(e) {
+    // 1. Check if clicking on an overlay itself (closes it)
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.style.display = 'none';
+        e.target.classList.add('hidden');
+        e.target.classList.remove('active');
+        if (window.app && typeof window.app.closeModal === 'function') {
+            window.app.closeModal();
+        }
+        return;
+    }
+
+    // 2. Check if clicking outside a popup-panel
+    const isClickInsidePopup = e.target.closest('.popup-panel') || e.target.closest('.modal-content') || e.target.closest('.modal');
+    const isClickOnButton = e.target.closest('button') || e.target.closest('.hud-btn') || e.target.closest('.menu-btn') || e.target.closest('.btn-small');
+    
+    if (!isClickInsidePopup && !isClickOnButton && !e.target.classList.contains('modal-overlay')) {
+        const popups = document.querySelectorAll('.popup-panel:not(.hidden)');
+        popups.forEach(p => {
+            // Close central popups, excluding HUD panels like bottom bars
+            if (['authModal', 'accountModal', 'leaderboardModal', 'achievementsModal', 'settingsModal', 'complianceModal', 'upgradePanel', 'gemGuideModal', 'expandedControlsModal', 'baseBuilderModal'].includes(p.id)) {
+                p.classList.add('hidden');
+            }
+        });
+    }
+});
 // --- HAPTIC FEEDBACK UTILITY ---
 window.hapticFeedback = function(pattern) {
     if (!window.hasUserInteracted) return;
@@ -821,7 +848,7 @@ class InterstellarEngine {
         window.addEventListener('pointerup', e => this.onPointerUp(e));
         window.addEventListener('wheel', e => {
             // Prevent zoom on scrollable UI elements
-            if (e.target.closest('.modal-content') || e.target.closest('.joystick-container') || e.target.closest('.mission-log')) return;
+            if (e.target.closest && (e.target.closest('.modal-content') || e.target.closest('.joystick-container') || e.target.closest('.mission-log'))) return;
             // console.log('[Zoom Event] Wheel event fired');
             this.onWheel(e);
         }, { passive: false });
@@ -5929,7 +5956,7 @@ class InterstellarEngine {
 
         overlay = document.createElement('div');
         overlay.id = 'missionBoardOverlay';
-        overlay.className = 'modal-overlay hidden';
+        overlay.className = 'modal-overlay';
         // Add active in next frame for transition
         setTimeout(() => overlay.classList.add('active'), 10);
 
@@ -20066,9 +20093,9 @@ class InterstellarEngine {
     setBinauralPreset(beatFreq, baseFreq, btn) {
         if (btn) this._highlightMusicButton(btn);
         document.getElementById('binauralBaseSlider').value = baseFreq;
-        document.getElementById('binauralBaseValue').textContent = baseFreq + 'Hz';
+        document.getElementById('binauralBaseVal').textContent = baseFreq + 'Hz';
         document.getElementById('binauralBeatSlider').value = beatFreq;
-        document.getElementById('binauralBeatValue').textContent = beatFreq + 'Hz';
+        document.getElementById('binauralBeatVal').textContent = beatFreq + 'Hz';
         window.gameAudio.playBinauralLoop(baseFreq, beatFreq);
         if (this.showToast) this.showToast(`Binaural Beats: ${beatFreq}Hz`, 2000);
     }
@@ -20076,8 +20103,8 @@ class InterstellarEngine {
     updateBinauralCustom() {
         const base = parseFloat(document.getElementById('binauralBaseSlider').value);
         const beat = parseFloat(document.getElementById('binauralBeatSlider').value);
-        document.getElementById('binauralBaseValue').textContent = base + 'Hz';
-        document.getElementById('binauralBeatValue').textContent = beat + 'Hz';
+        document.getElementById('binauralBaseVal').textContent = base + 'Hz';
+        document.getElementById('binauralBeatVal').textContent = beat + 'Hz';
         
         // Debounce audio node creation to prevent AudioContext crash while dragging
         if (this.binauralDebounceTimer) clearTimeout(this.binauralDebounceTimer);

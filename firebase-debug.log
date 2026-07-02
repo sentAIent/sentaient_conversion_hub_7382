@@ -1,0 +1,171 @@
+[debug] [2026-07-02T04:25:59.499Z] ----------------------------------------------------------------------
+[debug] [2026-07-02T04:25:59.501Z] Command:       /usr/local/Cellar/node/18.11.0/bin/node /Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/.bin/firebase deploy --only hosting
+[debug] [2026-07-02T04:25:59.502Z] CLI Version:   11.16.1
+[debug] [2026-07-02T04:25:59.502Z] Platform:      darwin
+[debug] [2026-07-02T04:25:59.502Z] Node Version:  v18.11.0
+[debug] [2026-07-02T04:25:59.504Z] Time:          Wed Jul 01 2026 21:25:59 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-07-02T04:25:59.504Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-02T04:25:59.508Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-07-02T04:25:59.614Z] Field ".functions" in "firebase.json" is possibly invalid: should be object
+[debug] [2026-07-02T04:25:59.614Z] Object ".functions[0]" in "firebase.json" has unknown property: {"additionalProperty":"disallowLegacyRuntimeConfig"}
+[debug] [2026-07-02T04:25:59.615Z] Field ".functions" in "firebase.json" is possibly invalid: should match some schema in anyOf
+[debug] [2026-07-02T04:25:59.623Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-02T04:25:59.624Z] > authorizing via signed-in user (bleonard@sentaient.com)
+[debug] [2026-07-02T04:25:59.624Z] [iam] checking project interstellar-9c864 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-07-02T04:25:59.625Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T04:25:59.626Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T04:25:59.627Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:25:59.863Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T04:25:59.863Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:25:59.863Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions [none]
+[debug] [2026-07-02T04:25:59.863Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions x-goog-quota-user=projects/interstellar-9c864
+[debug] [2026-07-02T04:25:59.864Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-07-02T04:25:59.911Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-07-02T04:25:59.911Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-07-02T04:26:00.083Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions 401
+[debug] [2026-07-02T04:26:00.084Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"ACCESS_TOKEN_TYPE_UNSUPPORTED","metadata":{"method":"google.cloudresourcemanager.v1.Projects.TestIamPermissions","service":"cloudresourcemanager.googleapis.com"}}]}}
+[debug] [2026-07-02T04:26:00.085Z] [iam] error while checking permissions, command may fail: FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-07-02T04:26:00.085Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T04:26:00.085Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T04:26:00.085Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:00.271Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T04:26:00.271Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:00.272Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 [none]
+[debug] [2026-07-02T04:26:00.476Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 401
+[debug] [2026-07-02T04:26:00.476Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}
+[debug] [2026-07-02T04:26:00.477Z] HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-07-02T04:26:00.479Z] FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at responseToError (/Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/firebase-tools/lib/responseToError.js:49:12)
+    at RetryOperation._fn (/Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/firebase-tools/lib/apiv2.js:288:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project interstellar-9c864. Please make sure the project exists and your account has permission to access it.
+[debug] [2026-07-02T04:26:28.937Z] ----------------------------------------------------------------------
+[debug] [2026-07-02T04:26:28.940Z] Command:       /usr/local/Cellar/node/18.11.0/bin/node /Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/.bin/firebase deploy --only hosting
+[debug] [2026-07-02T04:26:28.940Z] CLI Version:   11.16.1
+[debug] [2026-07-02T04:26:28.941Z] Platform:      darwin
+[debug] [2026-07-02T04:26:28.941Z] Node Version:  v18.11.0
+[debug] [2026-07-02T04:26:28.943Z] Time:          Wed Jul 01 2026 21:26:28 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-07-02T04:26:28.943Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-02T04:26:29.022Z] Field ".functions" in "firebase.json" is possibly invalid: should be object
+[debug] [2026-07-02T04:26:29.022Z] Object ".functions[0]" in "firebase.json" has unknown property: {"additionalProperty":"disallowLegacyRuntimeConfig"}
+[debug] [2026-07-02T04:26:29.022Z] Field ".functions" in "firebase.json" is possibly invalid: should match some schema in anyOf
+[debug] [2026-07-02T04:26:29.029Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-02T04:26:29.029Z] > authorizing via signed-in user (bleonard@sentaient.com)
+[debug] [2026-07-02T04:26:29.030Z] [iam] checking project interstellar-9c864 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-07-02T04:26:29.031Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T04:26:29.034Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T04:26:29.034Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:29.267Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T04:26:29.268Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:29.268Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions [none]
+[debug] [2026-07-02T04:26:29.268Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions x-goog-quota-user=projects/interstellar-9c864
+[debug] [2026-07-02T04:26:29.269Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-07-02T04:26:29.588Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions 401
+[debug] [2026-07-02T04:26:29.588Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/interstellar-9c864:testIamPermissions {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"ACCESS_TOKEN_TYPE_UNSUPPORTED","metadata":{"method":"google.cloudresourcemanager.v1.Projects.TestIamPermissions","service":"cloudresourcemanager.googleapis.com"}}]}}
+[debug] [2026-07-02T04:26:29.589Z] [iam] error while checking permissions, command may fail: FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-07-02T04:26:29.590Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T04:26:29.590Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T04:26:29.590Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:29.770Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T04:26:29.770Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:29.771Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 [none]
+[debug] [2026-07-02T04:26:29.904Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 401
+[debug] [2026-07-02T04:26:29.904Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/interstellar-9c864 {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}
+[debug] [2026-07-02T04:26:29.904Z] HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-07-02T04:26:29.906Z] FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at responseToError (/Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/firebase-tools/lib/responseToError.js:49:12)
+    at RetryOperation._fn (/Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/firebase-tools/lib/apiv2.js:288:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project interstellar-9c864. Please make sure the project exists and your account has permission to access it.
+[debug] [2026-07-02T04:26:55.373Z] ----------------------------------------------------------------------
+[debug] [2026-07-02T04:26:55.375Z] Command:       /usr/local/Cellar/node/18.11.0/bin/node /Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/.bin/firebase deploy --only hosting --project mindwave-binaural-beats
+[debug] [2026-07-02T04:26:55.376Z] CLI Version:   11.16.1
+[debug] [2026-07-02T04:26:55.377Z] Platform:      darwin
+[debug] [2026-07-02T04:26:55.377Z] Node Version:  v18.11.0
+[debug] [2026-07-02T04:26:55.378Z] Time:          Wed Jul 01 2026 21:26:55 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-07-02T04:26:55.379Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-02T04:26:55.458Z] Field ".functions" in "firebase.json" is possibly invalid: should be object
+[debug] [2026-07-02T04:26:55.458Z] Object ".functions[0]" in "firebase.json" has unknown property: {"additionalProperty":"disallowLegacyRuntimeConfig"}
+[debug] [2026-07-02T04:26:55.458Z] Field ".functions" in "firebase.json" is possibly invalid: should match some schema in anyOf
+[debug] [2026-07-02T04:26:55.464Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-02T04:26:55.465Z] > authorizing via signed-in user (bleonard@sentaient.com)
+[debug] [2026-07-02T04:26:55.465Z] [iam] checking project mindwave-binaural-beats for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-07-02T04:26:55.467Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T04:26:55.469Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T04:26:55.469Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:55.658Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T04:26:55.658Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:55.658Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/mindwave-binaural-beats:testIamPermissions [none]
+[debug] [2026-07-02T04:26:55.659Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/mindwave-binaural-beats:testIamPermissions x-goog-quota-user=projects/mindwave-binaural-beats
+[debug] [2026-07-02T04:26:55.659Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mindwave-binaural-beats:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-07-02T04:26:55.797Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/mindwave-binaural-beats:testIamPermissions 401
+[debug] [2026-07-02T04:26:55.798Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mindwave-binaural-beats:testIamPermissions {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"ACCESS_TOKEN_TYPE_UNSUPPORTED","metadata":{"method":"google.cloudresourcemanager.v1.Projects.TestIamPermissions","service":"cloudresourcemanager.googleapis.com"}}]}}
+[debug] [2026-07-02T04:26:55.798Z] [iam] error while checking permissions, command may fail: FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-07-02T04:26:55.799Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T04:26:55.799Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T04:26:55.800Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:55.976Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T04:26:55.976Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:26:55.977Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/mindwave-binaural-beats [none]
+[debug] [2026-07-02T04:26:56.109Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/mindwave-binaural-beats 401
+[debug] [2026-07-02T04:26:56.110Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/mindwave-binaural-beats {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}
+[debug] [2026-07-02T04:26:56.110Z] HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-07-02T04:26:56.112Z] FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at responseToError (/Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/firebase-tools/lib/responseToError.js:49:12)
+    at RetryOperation._fn (/Users/infinitealpha/.npm/_npx/6eab156e2be4494f/node_modules/firebase-tools/lib/apiv2.js:288:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project mindwave-binaural-beats. Please make sure the project exists and your account has permission to access it.
+[debug] [2026-07-02T04:49:47.041Z] ----------------------------------------------------------------------
+[debug] [2026-07-02T04:49:47.045Z] Command:       /Users/infinitealpha/.nvm/versions/node/v20.20.2/bin/node /usr/local/bin/firebase deploy --only hosting
+[debug] [2026-07-02T04:49:47.045Z] CLI Version:   14.0.0
+[debug] [2026-07-02T04:49:47.045Z] Platform:      darwin
+[debug] [2026-07-02T04:49:47.046Z] Node Version:  v20.20.2
+[debug] [2026-07-02T04:49:47.046Z] Time:          Wed Jul 01 2026 21:49:47 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-07-02T04:49:47.046Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-02T04:49:47.303Z] Field "/functions" in "firebase.json" is possibly invalid: must be object
+[debug] [2026-07-02T04:49:47.303Z] Object "/functions/0" in "firebase.json" has unknown property: {"additionalProperty":"disallowLegacyRuntimeConfig"}
+[debug] [2026-07-02T04:49:47.304Z] Field "/functions" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2026-07-02T04:49:47.312Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-02T04:49:47.312Z] > authorizing via signed-in user (bleonard@sentaient.com)
+[debug] [2026-07-02T04:49:47.313Z] [iam] checking project interstellar-9c864 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-07-02T04:49:47.314Z] Checked if tokens are valid: false, expires at: 1782883929969
+[debug] [2026-07-02T04:49:47.314Z] Checked if tokens are valid: false, expires at: 1782883929969
+[debug] [2026-07-02T04:49:47.315Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T04:49:47.317Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T04:49:47.317Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:49:47.700Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T04:49:47.700Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-02T04:49:47.701Z] [iam] error while checking permissions, command may fail: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-02T04:49:47.702Z] Checked if tokens are valid: false, expires at: 1782883929969
+[debug] [2026-07-02T04:49:47.702Z] Checked if tokens are valid: false, expires at: 1782883929969
+[debug] [2026-07-02T04:49:47.702Z] > refreshing access token with scopes: []
+[debug] [2026-07-02T04:49:47.703Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-02T04:49:47.703Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-02T04:49:47.795Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-07-02T04:49:47.795Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-02T04:49:47.796Z] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] 
+[error] Error: Assertion failed: resolving hosting target of a site with no site name or target name. This should have caused an error earlier
