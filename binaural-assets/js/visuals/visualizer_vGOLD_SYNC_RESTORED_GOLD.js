@@ -1,6 +1,6 @@
 import { state, els, THEMES } from '/binaural-assets/js/state.js';
 import * as THREE from '/binaural-assets/js/vendor/three.module.js';
-import { CymaticsCore } from './CymaticsCore.js';
+import { CymaticsCore } from './CymaticsCore_v4.js';
 
 let viz3D = null;
 

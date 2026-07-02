@@ -45,6 +45,7 @@
         body.splash-active #upgradePanel,
         body.splash-active #rotationPanel,
         body.splash-active #matrixPanel,
+        body.splash-active #cyberPanel,
         body.splash-active #adminPanel,
         body.splash-active #clearModal,
         body.splash-active #expandedMapModal,
@@ -1535,6 +1536,12 @@
             max-height: calc(50vh - var(--bar-height) - 20px);
         }
 
+        #cyberPanel {
+            top: calc(var(--bar-height) + 8px);
+            right: 130px;
+            max-height: calc(50vh - var(--bar-height) - 20px);
+        }
+
         #rotationPanel {
             bottom: calc(var(--bar-height) + 8px);
             right: 0;
@@ -2845,6 +2852,14 @@ input[type="range"] { pointer-events: auto !important; touch-action: auto !impor
     top: 50px;
     left: auto;
     right: 20px;
+    overflow-y: hidden;
+    width: 150px;
+}
+
+#cyberPanel {
+    top: 50px;
+    left: auto;
+    right: 190px;
     overflow-y: hidden;
     width: 150px;
 }

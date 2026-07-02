@@ -84,7 +84,7 @@ window.controls = {
         this.syncSidebar('matrixPanel');
     },
     toggleMatrixSettings: function(btn) {
-        this.syncSidebar('matrixPanel');
+        window.controls.syncSidebar('matrixPanel');
     },
     toggleSnowflakeSettings: function(btn) {
         const panel = document.getElementById('snowflakeSettingsPanel');
@@ -3211,11 +3211,17 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         if (isManual) { showToast('Initializing Visualizer...', 'info'); }
 
         // Queue the click action instead of silently dropping it!
+        let retries = 0;
+        const maxRetries = 20; // 10 seconds total wait
         const checkViz = setInterval(() => {
+            retries++;
             const v = getVisualizer();
             if (v && v.initialized) {
                 clearInterval(checkViz);
                 setVisualMode(mode, forceState, false); // Re-execute silently
+            } else if (retries >= maxRetries) {
+                clearInterval(checkViz);
+                console.error('[Controls] Visualizer failed to load after ' + (maxRetries * 500) + 'ms. Aborting mode switch.');
             }
         }, 500);
 
@@ -3863,11 +3869,16 @@ export function loadSettings(payload) {
     }
 
     if (settings.cymaticClass !== undefined) {
+        let attempts = 0;
         const checkViz = setInterval(() => {
+            attempts++;
             const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
             if (viz && viz.initialized && viz.applyCymaticClassAndVariation) {
                 clearInterval(checkViz);
                 viz.applyCymaticClassAndVariation(settings.cymaticClass, settings.cymaticVariation || 0);
+            } else if (attempts > 20) { // 10 seconds max
+                clearInterval(checkViz);
+                console.warn('[Controls] Visualizer never loaded. Aborting cymatic class application.');
             }
         }, 500);
     }

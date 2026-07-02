@@ -361,8 +361,8 @@ window.resetGalaxySettings = function() {
     </script>
 <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
   <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
-  <script type="module" crossorigin src="/assets/share-C8X14jlp.js"></script>
-  <script type="module" crossorigin src="/assets/main_vFINAL-Kdli_4Af.js"></script>
+  <script type="module" crossorigin src="/assets/share-BzrAhNg0.js"></script>
+  <script type="module" crossorigin src="/assets/main_vFINAL-DFoaTBVh.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/share-BppMSQte.css">
 </head>
 <body class="w-full relative min-h-screen bg-slate-900 text-slate-200 antialiased selection:bg-cyan-500 selection:text-white">
@@ -400,6 +400,17 @@ window.resetGalaxySettings = function() {
 <!-- Divider - Hidden on narrow screens -->
 <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
 
+<!-- Divider -->
+<div class="w-px h-6 bg-white/20 hidden sm:block"></div>
+<!-- Visual Export Actions -->
+<div class="flex items-center gap-1 shrink-0">
+<button class="p-2 rounded-full bg-transparent hover:bg-cyan-500/20 transition-all text-cyan-400" id="snapshotBtn" title="Capture Snapshot">
+<svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg">
+  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+  <circle cx="12" cy="13" r="4"></circle>
+</svg>
+</button>
+</div>
 <!-- Divider -->
 <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
 <!-- Action Icons -->
@@ -575,11 +586,11 @@ window.resetGalaxySettings = function() {
     <div class="flex justify-center items-center gap-4 bg-white/5 backdrop-blur-2xl px-5 py-1.5 rounded-full border border-white/10 shadow-lg hover:bg-white/10 hover:border-white/20 transition-all duration-300 h-full shrink-0">
         <span class="text-[10px] font-medium tracking-[0.2em] text-white/90 uppercase">Beat Sync</span>
         <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="beatSyncToggle" class="sr-only peer" checked onchange="window.visualsBeatSync = this.checked;">
+            <input type="checkbox" id="beatSyncToggle" class="sr-only" checked onchange="window.visualsBeatSync = this.checked;">
             <!-- Track -->
-            <div class="w-11 h-6 bg-black/60 rounded-full border border-white/10 shadow-inner peer-focus:outline-none peer-checked:bg-cyan-500/50 peer-checked:border-cyan-400/50 transition-all duration-300"></div>
+            <div class="beat-sync-track w-11 h-6 bg-black/60 rounded-full border border-white/10 shadow-inner transition-all duration-300"></div>
             <!-- Handle -->
-            <div class="absolute w-5 h-5 bg-white rounded-full shadow-md border border-gray-300 peer-checked:translate-x-full transition-transform duration-300" style="left: 2px; top: 2px;"></div>
+            <div class="beat-sync-handle absolute w-5 h-5 bg-white rounded-full shadow-md border border-gray-300 transition-transform duration-300" style="left: 2px; top: 2px;"></div>
         </label>
     </div>
 
@@ -1163,6 +1174,25 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 
+<!-- Custom Mixes -->
+<div class="p-4 border border-white/10 rounded-xl bg-white/5 flex flex-col gap-4">
+    <div class="flex justify-between items-center mb-2">
+        <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">My Custom Mixes</h3>
+        <span class="text-[9px] text-[var(--text-muted)]" id="customMixCount">0/20</span>
+    </div>
+    <button class="w-full py-3 px-4 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/30 hover:bg-[var(--accent)]/20 hover:border-[var(--accent)] text-xs font-bold flex items-center justify-center gap-2 text-[var(--accent)] hover:text-white transition-all" onclick="window.saveCustomMixPrompt()">
+        <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        Save Current Mix
+    </button>
+    <div id="customMixesContainer" class="flex flex-col gap-2 mt-2 empty:hidden">
+        <!-- Mix buttons injected here -->
+    </div>
+</div>
+
 <!-- Saved Mixes Link -->
 <div class="p-4 border border-white/10 rounded-xl bg-white/5 flex flex-col gap-4">
 <h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-2">Workspace &amp; Tools</h3>
@@ -1287,6 +1317,16 @@ window.resetGalaxySettings = function() {
 <span class="text-2xl filter drop-shadow-lg">🏝️</span>
 <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Ocean</span>
 </button>
+<!-- TSUNAMI -->
+<button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="tsunamiBtn">
+<input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="tsunami" type="color" value="#003366"/>
+<span class="text-2xl filter drop-shadow-lg">🌊</span>
+<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Tsunami</span>
+<!-- Toggle Icon -->
+<div class="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="tsunamiSettingsToggle" onclick="event.stopPropagation(); toggleTsunamiSettings(this);" title="Settings">
+<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+</button>
 <!-- DRAGON -->
 <button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="dragonBtn">
 <input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="dragon" type="color" value="#60a9ff"/>
@@ -1398,6 +1438,62 @@ window.resetGalaxySettings = function() {
 </div>
 <input class="mw-slider" id="globalDimmerSlider" max="1" min="0" step="0.01" type="range" value="0"/>
 </div>
+</div>
+</div>
+</div>
+<!-- SECTION: 3D Camera Controls -->
+<div class="sidebar-section">
+<h3 class="section-label">3D Camera Controls</h3>
+<div class="space-y-4">
+    <!-- Pitch -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">PITCH (X)</label>
+            <span class="premium-value-badge" id="cameraPitchValue">0&deg;</span>
+        </div>
+        <input class="mw-slider" id="cameraPitchSlider" max="90" min="-90" step="1" type="range" value="0"/>
+    </div>
+    <!-- Yaw -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">YAW (Y)</label>
+            <span class="premium-value-badge" id="cameraYawValue">0&deg;</span>
+        </div>
+        <input class="mw-slider" id="cameraYawSlider" max="180" min="-180" step="1" type="range" value="0"/>
+    </div>
+    <!-- Roll -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">ROLL (Z)</label>
+            <span class="premium-value-badge" id="cameraRollValue">0&deg;</span>
+        </div>
+        <input class="mw-slider" id="cameraRollSlider" max="180" min="-180" step="1" type="range" value="0"/>
+    </div>
+    <div class="flex justify-end mt-2">
+        <button class="text-[10px] font-bold uppercase text-[var(--accent)]/70 hover:text-[var(--accent)] transition-all" onclick="if(window.resetCameraControls) window.resetCameraControls()">Reset Camera</button>
+    </div>
+</div>
+</div>
+<!-- SECTION: Deep Parameters -->
+<div class="sidebar-section">
+<h3 class="section-label">Deep Parameters</h3>
+<div class="space-y-4">
+    <!-- Audio Sensitivity -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">AUDIO SENSITIVITY</label>
+            <span class="premium-value-badge" id="audioSensitivityValue">1.0x</span>
+        </div>
+        <input class="mw-slider" id="audioSensitivitySlider" max="3" min="0" step="0.1" type="range" value="1.0"/>
+    </div>
+    <!-- Geometric Complexity -->
+    <div class="mw-slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <label class="premium-label">GEOMETRIC COMPLEXITY</label>
+            <span class="premium-value-badge" id="geoComplexityValue">1.0x</span>
+        </div>
+        <input class="mw-slider" id="geoComplexitySlider" max="2" min="0.1" step="0.1" type="range" value="1.0"/>
+    </div>
 </div>
 </div>
 <!-- SECTION: Chromatic Resonance -->
@@ -1517,6 +1613,84 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 </div>
+<!-- Tsunami Settings -->
+<div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="tsunamiSettingsPanel">
+<span class="text-[10px] font-bold text-sky-300 uppercase tracking-wider px-0.5">The Great Wave</span>
+<div class="space-y-3">
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">AMPLITUDE</label>
+<span class="premium-value" id="tsunamiAmplitudeVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiAmplitudeSlider" max="3.0" min="0.1" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiAmplitude){ window.getVisualizer().setTsunamiAmplitude(this.value); document.getElementById('tsunamiAmplitudeVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">BARREL WAVE</label>
+<span class="premium-value" id="tsunamiCurlVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiCurlSlider" max="4.0" min="0.1" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiCurl){ window.getVisualizer().setTsunamiCurl(this.value); document.getElementById('tsunamiCurlVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">SUN REFLECTION</label>
+<span class="premium-value" id="tsunamiMistVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiMistSlider" max="3.0" min="0.0" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiMist){ window.getVisualizer().setTsunamiMist(this.value); document.getElementById('tsunamiMistVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">STYLIZATION</label>
+<span class="premium-value" id="tsunamiStyleVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiStyleSlider" max="1.0" min="0.0" step="0.05" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiStyle){ window.getVisualizer().setTsunamiStyle(this.value); document.getElementById('tsunamiStyleVal').textContent = parseFloat(this.value).toFixed(2); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">REACTIVITY</label>
+<span class="premium-value" id="tsunamiReactivityVal">1.0</span>
+</div>
+<input class="mw-slider" id="tsunamiReactivitySlider" max="3.0" min="0.0" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiReactivity){ window.getVisualizer().setTsunamiReactivity(this.value); document.getElementById('tsunamiReactivityVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+        </div>
+        <button id="tsunamiKanagawaBtn" data-active="false" class="w-full mt-4 relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-blue-900/50 via-cyan-900/40 to-teal-900/50 hover:from-blue-800/60 hover:via-cyan-800/50 hover:to-teal-800/60 border border-cyan-400/30 border-b-[4px] border-b-cyan-600/50 active:translate-y-[3px] active:border-b-[1px] text-cyan-50 text-[12px] font-black uppercase tracking-widest py-4 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(6,182,212,0.3)] group"
+        onclick="
+            const v = window.getVisualizer && window.getVisualizer();
+            if(v && v.setTsunamiKanagawa) {
+                const isActive = this.dataset.active !== 'true';
+                this.dataset.active = isActive;
+                v.setTsunamiKanagawa(isActive ? 1.0 : 0.0);
+                if(isActive) {
+                    this.classList.replace('border-cyan-400/30', 'border-cyan-300');
+                    this.classList.replace('border-b-cyan-600/50', 'border-b-cyan-300');
+                    this.style.boxShadow = '0 0 30px rgba(6,182,212,0.6), inset 0 0 15px rgba(6,182,212,0.4)';
+                    this.querySelector('.btn-text').textContent = 'THE GREAT WAVE: ON';
+                    this.querySelector('.btn-icon').classList.add('animate-pulse');
+                    this.querySelector('.btn-icon').style.color = '#fff';
+                } else {
+                    this.classList.replace('border-cyan-300', 'border-cyan-400/30');
+                    this.classList.replace('border-b-cyan-300', 'border-b-cyan-600/50');
+                    this.style.boxShadow = '';
+                    this.querySelector('.btn-text').textContent = 'THE GREAT WAVE: OFF';
+                    this.querySelector('.btn-icon').classList.remove('animate-pulse');
+                    this.querySelector('.btn-icon').style.color = '';
+                }
+            }
+        ">
+            <div class="relative z-10 flex items-center justify-center gap-2">
+                <i class="btn-icon fas fa-water text-cyan-300 text-base drop-shadow-[0_0_8px_rgba(103,232,249,0.8)] transition-all"></i>
+                <span class="btn-text drop-shadow-md">THE GREAT WAVE: OFF</span>
+            </div>
+        </button>
+        
+        <div class="control-group">
+            <label>Animate Break Loop</label>
+            <label class="premium-toggle">
+                <input type="checkbox" id="tsunamiLoopToggle" onchange="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiLoop){ window.getVisualizer().setTsunamiLoop(this.checked); }">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+</div>
+</div>
 <!-- Flow / Neural Particles Settings -->
 <div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="flowSettingsSidebar">
 <span class="text-[10px] font-bold text-sky-300 uppercase tracking-wider px-0.5">🌀 Neural Flow</span>
@@ -1577,11 +1751,29 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 <!-- TAB: CYMATICS -->
-<div class="tab-panel hidden space-y-8" id="tab-cymatics">
-<div class="sidebar-section">
+<div class="tab-panel hidden space-y-8" id="tab-cymatics" style="flex: 0 0 auto !important; justify-content: flex-start !important; padding-top: 24px !important; margin-top: 0 !important;">
+<div class="sidebar-section" style="padding-top: 0 !important; margin-top: 0 !important; border: none !important;">
 <div class="flex items-center justify-between mb-2">
 <h3 class="section-label"><i class="fas fa-wave-square mr-2 text-[var(--accent)]"></i>Cymatics Engine</h3>
 </div>
+</div>
+<!-- Rainbow Mode Toggle -->
+<div class="flex justify-between items-center mb-4 bg-black/40 p-3 rounded-xl border border-cyan-500/30">
+    <div class="flex items-center gap-2">
+        <span class="text-[12px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 uppercase tracking-widest">Rainbow Morph</span>
+        <span class="text-[9px] text-[var(--text-muted)] hidden sm:block">Dynamic color shifting</span>
+    </div>
+    <label class="premium-toggle">
+        <input id="cymaticsRainbowToggle" type="checkbox"/>
+        <span class="toggle-slider"></span>
+    </label>
+</div>
+
+<!-- Stop All Cymatics Button -->
+<button id="stopAllCymaticsBtn" class="w-full mb-4 bg-red-900/50 hover:bg-red-800/80 border border-red-500/50 text-red-200 text-[11px] font-bold uppercase tracking-widest py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+    <i class="fas fa-stop-circle mr-2"></i>Stop All Cymatics
+</button>
+
 <!-- THE ULTIMATE CYMATICS UI LIBRARY -->
 <div class="space-y-8 mt-4" id="cymatics-library">
 <h3 class="text-[14px] font-bold text-white uppercase tracking-widest mb-4 flex items-center gap-3">

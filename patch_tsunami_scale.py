@@ -5,13 +5,16 @@ with open(file_path, "r") as f:
     content = f.read()
 
 # Adjust the tsunami mesh position
-old_pos = """        mesh.rotation.x = -Math.PI / 2;
-        mesh.position.y = -15; // floor level
-        mesh.position.z = -120; // pushed back so the camera isn't inside it"""
-new_pos = """        mesh.rotation.x = -Math.PI / 2;
-        mesh.position.y = -50; // Push it WAY down so the huge wave crest is centered on screen, not towering over us
-        mesh.position.z = -120; // pushed back so the camera isn't inside it
-        mesh.position.x = 20; // Shift it slightly right so the Kanagawa hook curls perfectly into the center
+old_pos = """        this.tsunamiWave.rotation.x = -Math.PI / 2;
+        this.tsunamiWave.position.y = -50; 
+        this.tsunamiWave.position.z = -120; 
+        this.tsunamiWave.position.x = -70;"""
+
+new_pos = """        this.tsunamiWave.rotation.x = -Math.PI / 2;
+        this.tsunamiWave.position.y = -15; 
+        this.tsunamiWave.position.z = -120; 
+        this.tsunamiWave.position.x = 0;
+        this.tsunamiWave.frustumCulled = false;
 """
 
 if old_pos in content:
@@ -21,4 +24,3 @@ if old_pos in content:
     print("Patched tsunami scale/position.")
 else:
     print("Could not find old_pos.")
-

@@ -717,6 +717,7 @@ static CYMATIC_PATTERNS = [
         this.lightspeedMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uSpeed: { value: 1.0 },
                 uColor: { value: new THREE.Color(0x2dd4bf) },
                 uTexture: { value: this.createCircleTexture() }
@@ -777,6 +778,7 @@ static CYMATIC_PATTERNS = [
         this.particleMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uSpeed: { value: 1.0 },
                 uSize: { value: 0.4 },
                 uTexture: { value: this.createCircleTexture() },
@@ -1093,6 +1095,7 @@ static CYMATIC_PATTERNS = [
             // ── SUN 3: Volumetric Plasma Core (Premium Upgrade) ──
             const uniforms = {
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uColor: { value: sunMaterial.color },
                 uBassIntt: { value: 0.0 }
             };
@@ -1488,6 +1491,9 @@ static CYMATIC_PATTERNS = [
     setTsunamiLoop(isLooping) {
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
             this.tsunamiMaterial.uniforms.uLoopActive.value = isLooping ? 1.0 : 0.0;
+            if (isLooping) {
+                this.tsunamiMaterial.uniforms.uTime.value = 0.0;
+            }
         }
     }
     initTsunami() {
@@ -1498,10 +1504,11 @@ static CYMATIC_PATTERNS = [
         
         const uniforms = {
             uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
             uNormBass: { value: 0 },
             uColor: { value: new THREE.Color(0x0bd3d3) },
             uSecondaryColor: { value: new THREE.Color(0x006994) },
-            uDeepColor: { value: new THREE.Color(0x00132b) },
+            uDeepColor: { value: new THREE.Color(0x005bb5) },
             uFoamColor: { value: new THREE.Color(0xffffff) },
             uAmplitude: { value: 1.0 },
             uCurl: { value: 1.0 },
@@ -1516,10 +1523,10 @@ static CYMATIC_PATTERNS = [
             varying float vElevation;
             varying vec3 vViewPosition;
             varying vec3 vWorldPosition;
-            varying vec3 vSurfaceNormal;
             varying float vFoamFactor;
             varying float vStyle;
             varying float vPhaseWashout;
+            varying float vWaveX;
             
             uniform float uTime;
             uniform float uNormBass;
@@ -1527,6 +1534,7 @@ static CYMATIC_PATTERNS = [
             uniform float uCurl;
             uniform float uReactivity;
             uniform float uLoopActive;
+            uniform float uLoopTime;
             uniform float uStyle;
             
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -1551,61 +1559,10 @@ static CYMATIC_PATTERNS = [
                 return 130.0 * dot(m, g);
             }
 
-            vec3 getWavePosition(vec3 p, float time, float activeAmp, float activeCurl, float phase, float react) {
-                float waveX = p.x;
-                if (uLoopActive > 0.5) {
-                    waveX = p.x - 100.0 + (phase * 150.0); // Sweep from left to right
-                }
-                
-                // Massive base height
-                float baseHeight = 60.0 * activeAmp * (1.0 + react * 0.3);
-                
-                // Asymmetric bell curve
-                float envelope = 0.0;
-                if (waveX < 0.0) {
-                    envelope = exp(-pow(waveX * 0.012, 2.0)); // Back of wave slope
-                } else {
-                    envelope = exp(-pow(waveX * 0.035, 2.0)); // Front cliff (steep)
-                }
-                
-                // Apply base height
-                p.z += (baseHeight * envelope);
-                
-                if (uReactivity > 0.1) {
-                    float chaos = snoise(vec2(p.x * 0.2, p.y * 0.2 + time));
-                    p.z += (chaos * 20.0 * react * envelope); 
-                }
-                
-                // --- PARAMETRIC SPACE FOLDING (TRUE TEAHUPO'O BARREL TUBE) ---
-                if (waveX > -25.0 && activeCurl > 0.05) {
-                    // Pivot point for the rotation (forward and down from the peak)
-                    vec2 pivot = vec2(35.0, baseHeight * 0.3);
-                    
-                    // Maximum rotation near the crest (waveX ~ 10)
-                    float curlFactor = exp(-pow((waveX - 10.0) * 0.03, 2.0));
-                    
-                    // Total rotation angle (in radians)
-                    float maxAngle = 3.14159 * 1.35; // Over 180 degrees to form a tube
-                    float angle = curlFactor * (activeCurl / 4.0) * maxAngle;
-                    angle += (react * 0.2 * curlFactor); // audio reactivity in the curl
-                    
-                    float s = sin(angle);
-                    float c = cos(angle);
-                    
-                    float dx = p.x - pivot.x;
-                    float dz = p.z - pivot.y;
-                    
-                    // Rotate
-                    p.x = dx * c - dz * s + pivot.x;
-                    p.z = dx * s + dz * c + pivot.y;
-                }
-                
-                return p;
-            }
-
             void main() {
                 vUv = uv;
                 vStyle = uStyle;
+                vec3 pos = position;
                 float time = uTime * 1.5;
                 vPhaseWashout = 0.0;
                 
@@ -1618,45 +1575,95 @@ static CYMATIC_PATTERNS = [
                 float phase = 0.0;
                 
                 if (uLoopActive > 0.5) {
-                    float loopLen = 10.0; 
-                    phase = fract(time / loopLen); 
+                    float totalDur = 12.0;
+                    float progress = clamp(uTime / totalDur, 0.0, 1.0);
+                    float ampProgress = clamp(progress * 2.0, 0.0, 1.0);
+                    float curlProgress = clamp((progress - 0.5) * 2.0, 0.0, 1.0);
                     
-                    // Forming
-                    float formProgress = smoothstep(0.0, 0.3, phase);
-                    activeAmp = mix(0.1, uAmplitude, formProgress);
+                    float ampEase = 1.0 - pow(1.0 - ampProgress, 3.0);
+                    float curlEase = 1.0 - pow(1.0 - curlProgress, 3.0);
                     
-                    // Pitching (Throwing the lip)
-                    float pitchProgress = smoothstep(0.3, 0.6, phase);
-                    activeCurl = mix(0.0, targetCurl, pitchProgress);
-                    
-                    // Crashing (Total wipeout into the ocean)
-                    float crashProgress = smoothstep(0.85, 0.95, phase);
-                    activeAmp = mix(activeAmp, 0.1, crashProgress);
-                    activeCurl = mix(activeCurl, 0.0, crashProgress);
-                    
-                    // Washout (White foam everywhere)
-                    vPhaseWashout = smoothstep(0.9, 1.0, phase);
+                    activeAmp = mix(uAmplitude * 0.1, uAmplitude, ampEase);
+                    activeCurl = mix(0.0, targetCurl, curlEase);
                 }
                 
-                // Compute actual position
-                vec3 finalPos = getWavePosition(position, time, activeAmp, activeCurl, phase, react);
+                // Base coordinate for the wave sweeping across.
+                // Base coordinate for the wave. 
+                // We make it static so the barrel stays in one place relative to the camera!
+                // The camera panning is handled in Javascript by animating the mesh position!
+                // Reduced pos.y slant to 0.1 so the pipeline stays centered on the camera in the distance!
+                float waveX = pos.x + (pos.y * 0.1) + 20.0;
+                vWaveX = waveX; 
                 
-                // Compute mathematical normals via finite difference so lighting perfectly wraps the tube
-                vec3 pX = getWavePosition(position + vec3(0.5, 0.0, 0.0), time, activeAmp, activeCurl, phase, react);
-                vec3 pY = getWavePosition(position + vec3(0.0, 0.5, 0.0), time, activeAmp, activeCurl, phase, react);
-                vec3 tangent = normalize(pX - finalPos);
-                vec3 bitangent = normalize(pY - finalPos);
-                vec3 localNormal = normalize(cross(tangent, bitangent));
-                vSurfaceNormal = normalize(normalMatrix * localNormal);
-
-                vElevation = finalPos.z;
-                
-                // Foam calculation
+                // --- WAVE ENVELOPE (Shape & Height) ---
+                // Massive base height
                 float baseHeight = 60.0 * activeAmp * (1.0 + react * 0.3);
-                float foamNoise = snoise(finalPos.xy * 0.2 - vec2(time));
-                vFoamFactor = smoothstep(baseHeight * 0.5, baseHeight, finalPos.z) + foamNoise * 0.3;
                 
-                vec4 worldPos = modelMatrix * vec4(finalPos, 1.0);
+                // Asymmetric bell curve to give the wave a thick back and steep front
+                float envelope = 0.0;
+                if (waveX < 0.0) {
+                    envelope = exp(-pow(waveX * 0.012, 2.0)); // Back of wave slope
+                } else {
+                    envelope = exp(-pow(waveX * 0.04, 2.0)); // Front cliff
+                }
+                
+                // Apply base height
+                pos.z += baseHeight * envelope; 
+                
+                // Chaos (subtle surface variation)
+                // RUSHING NOISE to simulate high speed surfing!
+                float noiseDisp = 0.0;
+                if (envelope > 0.01) {
+                    float noiseSpeed1 = mix(0.5, 3.0, uLoopActive);
+                    float noiseSpeed2 = mix(0.5, 4.0, uLoopActive);
+                    float chaos = snoise(pos.xy * 0.1 + vec2(time * noiseSpeed1, time * noiseSpeed2));
+                    noiseDisp = (chaos * 20.0 * react * envelope); 
+                }
+                
+                // Save the original, uncurled, un-noised Z height for coloring and foam
+                float originalZ = pos.z + noiseDisp;
+                
+                // --- TRUE SURFING BARREL CURL ---
+                // Start the curl higher up so the wave has a solid, heavy base wall
+                float curlStartHeight = 25.0; 
+                if (pos.z > curlStartHeight) {
+                    float h = pos.z - curlStartHeight; 
+                    float normH = clamp(h / 35.0, 0.0, 1.0); // 35 is roughly max height above curl start
+                    
+                    float normalizedCurl = clamp(activeCurl / 4.0, 0.0, 1.0);
+                    
+                    // The curl envelope is shifted FORWARD (positive waveX) so the front cliff curls heavily to form the lip,
+                    // but the back of the wave remains a solid, mostly uncurled slope.
+                    // This prevents the mesh from self-intersecting and trapping the camera in the unfilled geometry!
+                    float curlEnvelope = exp(-pow((waveX - 12.0) * 0.04, 2.0)); 
+                    
+                    // Wrap the curl to exactly 190 degrees (1.05 PI) so the lip completes the barrel and touches the water
+                    float bendAngle = pow(normH, 1.2) * 3.14159 * 1.05 * normalizedCurl * curlEnvelope; 
+                    
+                    // Massive forward throw to ensure the lip crosses over the trough
+                    float forwardThrow = pow(normH, 2.0) * 40.0 * normalizedCurl * curlEnvelope;
+                    
+                    // Constant radius to maintain a clean C-shape overhang and preserve wave height
+                    float radius = h;
+                    
+                    float originalX = pos.x;
+                    
+                    // x shift = forward throw + circular arc
+                    // z shift = circular arc
+                    pos.x = originalX + forwardThrow + sin(bendAngle) * radius * 1.5;
+                    pos.z = curlStartHeight + cos(bendAngle) * radius;
+                }
+                
+                // Add the rippling noise AFTER the physics calculation so it doesn't cause vertices to slide horizontally and tear!
+                pos.z += noiseDisp;
+
+                // Pass the original, uncurled Z height so color and foam track the physical lip of the wave!
+                vElevation = originalZ;
+                
+                float foamNoise = snoise(pos.xy * 0.2 - vec2(time));
+                vFoamFactor = smoothstep(baseHeight * 0.5, baseHeight, originalZ) + foamNoise * 0.3;
+                
+                vec4 worldPos = modelMatrix * vec4(pos, 1.0);
                 vWorldPosition = worldPos.xyz;
                 
                 vec4 mvPosition = viewMatrix * worldPos;
@@ -1671,10 +1678,10 @@ static CYMATIC_PATTERNS = [
             varying float vElevation;
             varying vec3 vViewPosition;
             varying vec3 vWorldPosition;
-            varying vec3 vSurfaceNormal;
             varying float vFoamFactor;
             varying float vStyle;
             varying float vPhaseWashout;
+            varying float vWaveX;
             
             uniform vec3 uColor;
             uniform vec3 uSecondaryColor;
@@ -1684,6 +1691,8 @@ static CYMATIC_PATTERNS = [
             uniform float uTime;
             uniform float uMist;
             uniform float uReactivity;
+            uniform float uLoopActive;
+            uniform float uLoopTime;
 
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -1745,28 +1754,47 @@ static CYMATIC_PATTERNS = [
                     finalColor = mix(finalColor, uFoamColor, vPhaseWashout * 0.8);
                 }
                 
-                // Sun Glare & Lighting Setup
+                // Sun & Glare (uMist slider repurposed as Sun Reflection)
                 float alpha = 1.0;
                 
                 if (uMist > 0.05) {
-                    // Use the mathematically perfect surface normal we calculated in the vertex shader
-                    vec3 normal = vSurfaceNormal;
+                    // Position of the visible sun disc in world space (Top right horizon)
+                    vec3 visibleSunPos = vec3(100.0, 30.0, -180.0);
+                    float sunDist = length(vWorldPosition - visibleSunPos);
                     
-                    // Add minor surface ripple noise to the analytical normal
-                    float ripple = snoise(vWorldPosition.xy * 0.1 - vec2(0.0, uTime * 2.0));
-                    normal.x += ripple * 0.15;
-                    normal.y += ripple * 0.15;
-                    normal = normalize(normal);
+                    // Sun Disc
+                    float sunRadius = 40.0;
+                    float sunCore = 1.0 - smoothstep(sunRadius * 0.8, sunRadius, sunDist);
+                    float sunGlow = 1.0 - smoothstep(sunRadius, sunRadius * 4.0, sunDist);
                     
+                    vec3 sunColor = vec3(1.0, 0.9, 0.6); // Warm golden sun
+                    
+                    // Add the physical sun disc to the background
+                    float sunMix = max(sunCore, sunGlow * 0.5) * (uMist / 3.0);
+                    finalColor = mix(finalColor, sunColor, sunMix);
+                    
+                    // Ocean Glare / Specular Reflection
                     // Use the original light source position to perfectly restore the glare the user loved
                     vec3 lightSourcePos = vec3(-50.0, 200.0, 40.0);
                     vec3 lightDir = normalize(lightSourcePos - vWorldPosition);
+                    // View vector (roughly down the Y axis for painting perspective)
                     vec3 viewDir = normalize(vViewPosition);
                     
-                    // Blinn-Phong specular highlight - wrapped smoothly inside the barrel
+                    // Fake a normal based on the noise/elevation
+                    // For a flat ocean, normal is (0,0,1)
+                    vec3 normal = vec3(0.0, 0.0, 1.0);
+                    // Add some noise to the normal to simulate rippling water for the glare
+                    // Rushing backwards to simulate high speed
+                    float ripSpeed1 = mix(0.0, 4.0, uLoopActive);
+                    float ripSpeed2 = mix(2.0, 6.0, uLoopActive);
+                    float ripple = snoise(vWorldPosition.xy * 0.1 - vec2(uTime * ripSpeed1, uTime * ripSpeed2));
+                    normal.x += ripple * 0.2;
+                    normal.y += ripple * 0.2;
+                    normal = normalize(normal);
+                    
+                    // Blinn-Phong specular
                     vec3 halfVector = normalize(lightDir + viewDir);
-                    float NdotH = max(dot(normal, halfVector), 0.0);
-                    float spec = pow(NdotH, 64.0); // Shininess
+                    float spec = pow(max(dot(normal, halfVector), 0.0), 64.0); // Shininess
                     
                     // Add a broad specular highlight on the water
                     float glareMix = spec * (uMist / 1.5) * smoothstep(-20.0, 10.0, vElevation);
@@ -1774,7 +1802,6 @@ static CYMATIC_PATTERNS = [
                     // Don't add glare on the foam
                     glareMix *= (1.0 - isFoam);
                     
-                    vec3 sunColor = vec3(1.0, 0.9, 0.6);
                     finalColor += sunColor * glareMix;
                 }
 
@@ -1796,10 +1823,14 @@ static CYMATIC_PATTERNS = [
         const mesh = new THREE.Mesh(geometry, material);
         mesh.rotation.x = -Math.PI / 2;
         
-        // RESTORE THE CLASSIC "PAINTING" FRAMING. Z=-30 was a disaster.
-        mesh.position.y = -50; 
-        mesh.position.z = -120; 
-        mesh.position.x = -70; 
+        // Adjust framing so camera is looking DOWN the barrel.
+        // The wave now sweeps across X dynamically.
+        // We set Z = -50, so the 200-unit deep wave spans World Z from +50 to -150, enveloping the camera at Z=5.
+        // We set Y = -40 to lower the floor, giving the wave towering height over the camera.
+        mesh.position.y = -40;
+        mesh.position.z = -50;
+        mesh.position.x = 0;
+        mesh.frustumCulled = false; // Prevent clipping due to massive vertex displacement
         
         this.tsunamiGroup.add(mesh);
         
@@ -2018,6 +2049,7 @@ static CYMATIC_PATTERNS = [
             uColor: { value: new THREE.Color(state.visualColors?.lava || 0xff6600) },
             uSecondaryColor: { value: new THREE.Color(0xffaa00) },
             uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
             uIntensity: { value: 0 },
             uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
         };
@@ -2228,6 +2260,7 @@ static CYMATIC_PATTERNS = [
         return new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uColor: { value: new THREE.Color(0xff4400) }, // Base fire
                 uSpeed: { value: 1.0 },
                 uIntensity: { value: 1.0 }
@@ -2331,6 +2364,7 @@ static CYMATIC_PATTERNS = [
         this.rainMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uSpeed: { value: 1.0 },
                 uColor: { value: new THREE.Color(0x88ccff) },
                 uIntensity: { value: 0.6 }
@@ -2401,6 +2435,7 @@ static CYMATIC_PATTERNS = [
         this.petalMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uSpeed: { value: 1.0 },
                 uColor: { value: new THREE.Color(0xffb7c5) }, // Sakura Pink
                 uIntensity: { value: 0.8 }
@@ -2464,6 +2499,7 @@ static CYMATIC_PATTERNS = [
         this.oceanWave = new THREE.Mesh(waveGeo, new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uColor: { value: this.customColor ? this.customColor.clone() : new THREE.Color(0x00aaff) },
                 uNormBass: { value: 0 },
                 uBeatPulse: { value: 0 }
@@ -2703,6 +2739,7 @@ static CYMATIC_PATTERNS = [
                 uColor: { value: new THREE.Color(config.color || 0x00FF41) },
                 uHeadColor: { value: new THREE.Color(0xF0FFF0) },
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uSpeed: { value: config.speed || 1.0 },
                 uTailLength: { value: config.length || 1.0 },
                 uRainbow: { value: config.rainbow ? 1.0 : 0.0 },
@@ -3184,6 +3221,7 @@ static CYMATIC_PATTERNS = [
         this.wavesMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
+            uLoopTime: { value: 0.0 },
                 uColor: { value: this.customColor ? new THREE.Color(this.customColor) : new THREE.Color(0x0066FF) },
                 uSecondaryColor: { value: new THREE.Color(0x00F2FF) },
                 uIntensity: { value: 1.0 },
@@ -3629,12 +3667,39 @@ static CYMATIC_PATTERNS = [
 
             if (this.activeModes.has('tsunami') && this.tsunamiMaterial) {
                 const spd = multiplier * 0.5 * (1.0 + vBeatPulse * 0.2);
+                const loopActive = this.tsunamiMaterial.uniforms.uLoopActive.value;
+                const amp = this.tsunamiMaterial.uniforms.uAmplitude.value;
+                
+                // Always increment time so foam/mist keep moving
                 this.tsunamiMaterial.uniforms.uTime.value += dt * spd;
-                this.tsunamiMaterial.uniforms.uNormBass.value = vNormBass;
+                const t = this.tsunamiMaterial.uniforms.uTime.value;
+                
                 if (this.customColor) {
                     this.tsunamiMaterial.uniforms.uColor.value.copy(this.customColor);
                 } else if (this.rainbowMode && this.currentColorHsl) {
                     this.tsunamiMaterial.uniforms.uColor.value.setHSL(this.currentColorHsl.h, this.currentColorHsl.s, this.currentColorHsl.l);
+                }
+                
+                // CINEMATIC SURFING CAMERA
+                if (this.tsunamiGroup && this.tsunamiGroup.children.length > 0) {
+                    const mesh = this.tsunamiGroup.children[0];
+                    const t = this.tsunamiMaterial.uniforms.uTime.value;
+                    const amp = this.tsunamiMaterial.uniforms.uAmplitude.value;
+                    const targetX = -30.0 - (amp - 1.0) * 15.0; // Push further back if wave is bigger
+                    const targetY = -20.0; // Keep flat ocean surface at constant height
+
+                    if (loopActive > 0.5) {
+                        const progress = Math.min(t / 12.0, 1.0);
+                        const ease = 1.0 - Math.pow(1.0 - progress, 3.0);
+                        
+                        // Start far outside, then slide into the barrel
+                        mesh.position.x = -110.0 + ((110.0 + targetX) * ease);
+                        mesh.position.y = targetY + Math.sin(t * 3.0) * 1.5;
+                    } else {
+                        // Static inside the barrel perfectly centered relative to amplitude
+                        mesh.position.x = targetX;
+                        mesh.position.y = targetY + Math.sin(t * 3.0) * 1.5; // keep surfing motion
+                    }
                 }
             }
 

@@ -150,11 +150,11 @@ export async function initFirebase() {
                 localCache: persistentLocalCache({
                     tabManager: persistentMultipleTabManager()
                 })
-            });
+            }, "mindwave");
             console.log('[Firebase] Persistence enabled (Modern API)');
         } catch (e) {
             console.warn('[Firebase] Firestore init custom settings failed, falling back to default:', e);
-            db = getFirestore(app);
+            db = getFirestore(app, "mindwave");
         }
 
         console.log("Firebase initialized successfully");
@@ -636,5 +636,9 @@ export {
     where,
     limit,
     getDocs,
-    collectionGroup
+    collectionGroup,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject
 };

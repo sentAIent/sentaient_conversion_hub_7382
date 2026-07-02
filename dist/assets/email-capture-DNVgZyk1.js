@@ -129,7 +129,7 @@ import{_ as s}from"./share-1zxJlZdY.js";import"https://www.gstatic.com/firebasej
                 color: white;
                 margin-bottom: 12px;
                 letter-spacing: -0.5px;
-            ">Unlock Your Mind</h2>
+            ">Unlock Your Energy</h2>
             
             <!-- Subtitle -->
             <p style="
@@ -137,7 +137,7 @@ import{_ as s}from"./share-1zxJlZdY.js";import"https://www.gstatic.com/firebasej
                 color: #94a3b8;
                 margin-bottom: 32px;
                 line-height: 1.6;
-            ">Join 10,000+ elite performers. We'll send you a <strong style="color: #c084fc">Free 7-Day Eternity Pass</strong> instantly.</p>
+            ">Join 10,000+ elite performers. We'll send you a <strong style="color: #c084fc">Free 7-Day Zen Pass</strong> instantly.</p>
             
             <!-- Form -->
             <form id="emailCaptureForm">

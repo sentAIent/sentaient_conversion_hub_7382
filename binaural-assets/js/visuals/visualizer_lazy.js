@@ -23,7 +23,7 @@ async function loadVisualizerModule() {
     console.log(`[LazyViz] Loading visualizer module... Version: ${VISUALIZER_VERSION}`);
     const startTime = performance.now();
 
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isDev = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port === '5173';
 
     if (isDev) {
         // Dev: Bypasses browser dynamic import cache completely using dynamic timestamp

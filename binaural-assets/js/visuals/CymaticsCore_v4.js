@@ -3405,6 +3405,17 @@ export class CymaticsCore {
         // Hide all, show active
         this.meshes.forEach((mesh, index) => {
             mesh.visible = (index + 1 === classId);
+            
+            // Fix Teahupo'o camera/mesh perspective so it looks like a wave on load
+            if (index + 1 === 25) {
+                mesh.rotation.x = -Math.PI / 3; 
+                mesh.position.y = -2;
+                mesh.position.z = -10;
+            } else {
+                mesh.rotation.x = 0;
+                mesh.position.y = 0;
+                mesh.position.z = -1;
+            }
         });
 
         if (this.materials[classId]) {
@@ -3417,13 +3428,20 @@ export class CymaticsCore {
                 shaderVariation = variationId % 14; // Safely wrap around to 0-13
             }
             
-            // Recompile shader for Class 17, 18, 19, 20, 21, 22, 23 to prevent TDR crashes and enable unique variations
-            if ((classId === 17 || classId === 18 || classId === 19 || classId === 20 || classId === 21 || classId === 22 || classId === 23) && this.materials[classId].defines.VARIATION !== shaderVariation) {
-                this.materials[classId].defines.VARIATION = shaderVariation;
-                this.materials[classId].needsUpdate = true;
-                if (this.materials[classId].uniforms.uSpawnTime) {
-                    this.materials[classId].uniforms.uSpawnTime.value = (performance.now() * 0.001) % (2000.0 * Math.PI); // record spawn time
-                }
+            // DEBOUNCE SHADER RECOMPILATION to prevent TDR crashes when rapidly clicking through variations
+            if ((classId >= 17 && classId <= 23) && this.materials[classId].defines.VARIATION !== shaderVariation) {
+                if (this._shaderCompileTimeout) clearTimeout(this._shaderCompileTimeout);
+                
+                this._shaderCompileTimeout = setTimeout(() => {
+                    // Only recompile if the variation is still the active one after they stop clicking
+                    if (this.activeVariationId === variationId && this.activeClassId === classId) {
+                        this.materials[classId].defines.VARIATION = shaderVariation;
+                        this.materials[classId].needsUpdate = true;
+                        if (this.materials[classId].uniforms.uSpawnTime) {
+                            this.materials[classId].uniforms.uSpawnTime.value = (performance.now() * 0.001) % (2000.0 * Math.PI);
+                        }
+                    }
+                }, 300); // 300ms debounce
             }
             
             // Inject distinct colors automatically

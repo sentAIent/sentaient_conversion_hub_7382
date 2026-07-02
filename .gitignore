@@ -12,3 +12,4 @@ vite.config.*s.*
 .kluster
 **/api-keys.local.js
 amazon-corretto-*.jdk
+firebase-key.json

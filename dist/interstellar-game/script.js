@@ -115,6 +115,11 @@ class InterstellarEngine {
         this.matrixColor = '#00ff00'; // User-adjustable matrix stream color
         this.matrixRainbowMode = false; // Rainbow color cycling for matrix
         this.matrixAngle = 0; // Angle in degrees for stream direction
+        
+        // Cyber Style Options
+        this.cyberColor1 = '#ff007f'; // Vortex Rings
+        this.cyberColor2 = '#00ffff'; // Spirals
+        this.cyberRainbowMode = false;
 
         // Generic Background Mode Options
         this.starColors = ['#ffffff', '#aaddff', '#ffddaa']; // 3 customizable star colors
@@ -814,8 +819,10 @@ class InterstellarEngine {
         this.canvas.addEventListener('pointerdown', e => this.onPointerDown(e));
         window.addEventListener('pointermove', e => this.onPointerMove(e));
         window.addEventListener('pointerup', e => this.onPointerUp(e));
-        this.canvas.addEventListener('wheel', e => {
-            console.log('[Zoom Event] Wheel event fired');
+        window.addEventListener('wheel', e => {
+            // Prevent zoom on scrollable UI elements
+            if (e.target.closest('.modal-content') || e.target.closest('.joystick-container') || e.target.closest('.mission-log')) return;
+            // console.log('[Zoom Event] Wheel event fired');
             this.onWheel(e);
         }, { passive: false });
         this.canvas.addEventListener('contextmenu', e => this.onRightClick(e)); // Right-click deletion
@@ -932,21 +939,49 @@ class InterstellarEngine {
             });
         }
 
-        // Matrix length slider
-        const matrixLengthSlider = document.getElementById('matrixLengthSlider');
-        if (matrixLengthSlider) {
-            matrixLengthSlider.addEventListener('input', (e) => {
+        const bgLengthSlider = document.getElementById('matrixLengthSlider');
+        if (bgLengthSlider) {
+            bgLengthSlider.addEventListener('input', (e) => {
                 this.matrixLengthMultiplier = parseFloat(e.target.value);
                 document.getElementById('matrixLengthValue').textContent = this.matrixLengthMultiplier.toFixed(1) + 'x';
             });
         }
 
-        // Matrix angle slider
-        const matrixAngleSlider = document.getElementById('matrixAngleSlider');
-        if (matrixAngleSlider) {
-            matrixAngleSlider.addEventListener('input', (e) => {
-                this.matrixAngle = parseFloat(e.target.value);
+        const bgAngleSlider = document.getElementById('matrixAngleSlider');
+        if (bgAngleSlider) {
+            bgAngleSlider.addEventListener('input', (e) => {
+                this.matrixAngle = parseInt(e.target.value, 10);
                 document.getElementById('matrixAngleValue').textContent = this.matrixAngle + '°';
+            });
+        }
+
+        const bgColorPicker = document.getElementById('matrixColorPicker');
+        if (bgColorPicker) {
+            bgColorPicker.addEventListener('input', (e) => {
+                this.matrixColor = e.target.value;
+                if (this.matrixRainbowMode) {
+                    this.toggleMatrixRainbow(); // Turn off rainbow if picking a color manually
+                }
+            });
+        }
+
+        const cyberColor1Picker = document.getElementById('cyberColor1Picker');
+        if (cyberColor1Picker) {
+            cyberColor1Picker.addEventListener('input', (e) => {
+                this.cyberColor1 = e.target.value;
+                if (this.cyberRainbowMode) {
+                    this.toggleCyberRainbow();
+                }
+            });
+        }
+
+        const cyberColor2Picker = document.getElementById('cyberColor2Picker');
+        if (cyberColor2Picker) {
+            cyberColor2Picker.addEventListener('input', (e) => {
+                this.cyberColor2 = e.target.value;
+                if (this.cyberRainbowMode) {
+                    this.toggleCyberRainbow();
+                }
             });
         }
 
@@ -1711,56 +1746,91 @@ class InterstellarEngine {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0); // Force screen space
 
-        // Horizon line
         const horizon = canvas.height * 0.55;
+        const centerX = canvas.width / 2;
+        const maxRadius = canvas.width * 1.5;
 
-        // Sunset/Synthwave sun
-        ctx.beginPath();
-        ctx.arc(canvas.width / 2, horizon, 150, Math.PI, 0);
-        const sunGrad = ctx.createLinearGradient(0, horizon - 150, 0, horizon);
-        sunGrad.addColorStop(0, '#ff007f');
-        sunGrad.addColorStop(1, '#ffaa00');
-        ctx.fillStyle = sunGrad;
-        ctx.fill();
+        // Space Background
+        ctx.fillStyle = '#050011';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Sun scanlines
-        ctx.globalCompositeOperation = 'destination-out';
-        for (let i = 0; i < 150; i += 15) {
-            ctx.fillRect(canvas.width / 2 - 150, horizon - i, 300, i * 0.1);
-        }
-        ctx.globalCompositeOperation = 'source-over';
+        // Move to vanishing point and scale Y to create a horizontal plane perspective
+        ctx.translate(centerX, horizon);
+        ctx.scale(1, 0.3); // Squash vertically to look like a horizontal plane
 
-        // Floor Grid
-        ctx.fillStyle = '#0f0f1b';
-        ctx.fillRect(0, horizon, canvas.width, canvas.height - horizon);
-
-        const gridSize = 40;
-        const gridSpeed = (time * 0.05) % gridSize;
-
-        ctx.strokeStyle = '#ff007f';
-        ctx.lineWidth = 1.5;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ff007f';
-
-        ctx.beginPath();
+        let color1 = this.cyberColor1;
+        let color2 = this.cyberColor2;
         
-        // Vertical perspective lines
-        const vanishingPoint = { x: canvas.width / 2, y: horizon };
-        for (let i = -canvas.width; i <= canvas.width * 2; i += gridSize * 2) {
-            ctx.moveTo(vanishingPoint.x, vanishingPoint.y);
-            ctx.lineTo(i, canvas.height);
+        if (this.cyberRainbowMode) {
+            const hue1 = (time * 0.05) % 360;
+            const hue2 = (time * 0.05 + 180) % 360; // Offset by 180 degrees
+            color1 = `hsl(${hue1}, 100%, 50%)`;
+            color2 = `hsl(${hue2}, 100%, 50%)`;
         }
 
-        // Horizontal perspective lines moving towards camera
-        for (let y = 0; y < canvas.height - horizon; y += gridSize) {
-            const perspectiveY = horizon + Math.pow(y / (canvas.height - horizon), 2) * (canvas.height - horizon) + gridSpeed;
-            if (perspectiveY <= canvas.height) {
-                ctx.moveTo(0, perspectiveY);
-                ctx.lineTo(canvas.width, perspectiveY);
-            }
-        }
+        // Singularity core
+        ctx.beginPath();
+        ctx.arc(0, 0, 80, 0, Math.PI * 2);
+        ctx.fillStyle = '#000000';
+        ctx.shadowBlur = 100;
+        ctx.shadowColor = color1;
+        ctx.fill();
+        ctx.shadowBlur = 0;
 
+        // Setup Vortex styling
+        ctx.lineWidth = 2.0;
+
+        // 1. Concentric rings moving inward (accretion)
+        // We reverse the phase to make them suck into the hole
+        const numRings = 20;
+        const scalePhase = 1 - ((time * 0.0005) % 1);
+
+        ctx.beginPath();
+        ctx.strokeStyle = color1;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = color1;
+
+        for (let i = 1; i <= numRings; i++) {
+            // Inward sucking effect
+            const ratio = (i - 1 + scalePhase) / numRings;
+            // Prevent drawing inside the black hole event horizon
+            if (ratio < 0.05) continue; 
+            
+            const r = Math.pow(ratio, 2) * maxRadius;
+            ctx.moveTo(r, 0);
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+        }
         ctx.stroke();
+
+        // 2. Swirling radial lines (Polar Grid)
+        const numSpokes = 36;
+        const rotationBase = time * 0.0002;
+
+        ctx.beginPath();
+        ctx.strokeStyle = color2;
+        ctx.shadowColor = color2;
+
+        for (let i = 0; i < numSpokes; i++) {
+            const angle = (i / numSpokes) * Math.PI * 2;
+            
+            // Draw a curved line (spiral) sucking into the center
+            const startRadius = 80;
+            ctx.moveTo(Math.cos(angle + rotationBase) * startRadius, Math.sin(angle + rotationBase) * startRadius);
+            
+            // Use quadratic curve to make it spiral
+            const cpRadius = maxRadius * 0.4;
+            const cpAngle = angle + rotationBase + 1.5; // Curve twist
+            const cpX = Math.cos(cpAngle) * cpRadius;
+            const cpY = Math.sin(cpAngle) * cpRadius;
+            
+            const endAngle = angle + rotationBase + 3.0;
+            const endX = Math.cos(endAngle) * maxRadius;
+            const endY = Math.sin(endAngle) * maxRadius;
+            
+            ctx.quadraticCurveTo(cpX, cpY, endX, endY);
+        }
+        ctx.stroke();
+
         ctx.restore();
     }
 
@@ -1833,13 +1903,23 @@ class InterstellarEngine {
             }
         });
 
-        // Show/hide matrix panel when cyber/matrix style is active
+        // Show/hide matrix panel when matrix style is active
         const matrixPanel = document.getElementById('matrixPanel');
         if (matrixPanel) {
-            if (this.activeStyles.has('cyber') || this.activeStyles.has('matrix')) {
+            if (this.activeStyles.has('matrix')) {
                 matrixPanel.classList.remove('hidden');
             } else {
                 matrixPanel.classList.add('hidden');
+            }
+        }
+        
+        // Show/hide cyber panel when cyber style is active
+        const cyberPanel = document.getElementById('cyberPanel');
+        if (cyberPanel) {
+            if (this.activeStyles.has('cyber')) {
+                cyberPanel.classList.remove('hidden');
+            } else {
+                cyberPanel.classList.add('hidden');
             }
         }
 
@@ -10838,6 +10918,15 @@ class InterstellarEngine {
         const btn = document.getElementById('matrixRainbowBtn');
         if (btn) btn.classList.toggle('active', this.matrixRainbowMode);
     }
+    
+    toggleCyberRainbow() {
+        this.cyberRainbowMode = !this.cyberRainbowMode;
+        const btn = document.getElementById('cyberRainbowBtn');
+        if (btn) {
+            btn.classList.toggle('active', this.cyberRainbowMode);
+            btn.textContent = this.cyberRainbowMode ? '🌈 Rainbow: ON' : '🌈 Rainbow: OFF';
+        }
+    }
 
     updateStarColors() {
         try {
@@ -11999,8 +12088,8 @@ class InterstellarEngine {
             this.bgParticles = [];
 
             // 2. Compose Layers based on active styles
-            // Order matters for layering (Deep Space -> Nebula -> Alien -> Cyber)
-            const orderedStyles = ['deep-space', 'nebula', 'alien', 'cyber'];
+            // Order matters for layering (Deep Space -> Nebula -> Alien -> Cyber -> Matrix)
+            const orderedStyles = ['deep-space', 'nebula', 'alien', 'cyber', 'matrix'];
             const activeSet = new Set(this.activeStyles);
             this.activeStyles.clear();
 
@@ -13394,12 +13483,13 @@ class InterstellarEngine {
                     const starColor = s.color || '#ffffff';
 
                     if (this.bgWarpMode && !this.bgDriftMode) {
-                        // ====== STAR WARS LIGHTSPEED JUMP STREAKS ======
+                        // ====== CINEMATIC HYPERSPACE JUMP ======
                         const dx = sx - centerX;
                         const dy = sy - centerY;
                         const distFromCenter = Math.sqrt(dx * dx + dy * dy);
 
-                        if (distFromCenter < 3) return;
+                        // Don't draw if too close to the singularity
+                        if (distFromCenter < 15) return;
 
                         const warpIntensity = this.warpSpeed || 0;
                         const sliderValue = this.warpSpeedMultiplier || 1;
@@ -13407,11 +13497,12 @@ class InterstellarEngine {
                         const perspFactor = distFromCenter / maxDist;
                         const depthFactor = s.depth || 0.5;
                         
-                        const lengthFactor = Math.sqrt(sliderValue) * 16 * depthFactor;
-                        const streakLength = 5 + lengthFactor * (2 + perspFactor * 24) * (warpIntensity / 8);
+                        // Streaks get exponentially longer at the edges (fov distortion)
+                        const lengthFactor = Math.sqrt(sliderValue) * 20 * depthFactor;
+                        const streakLength = 5 + lengthFactor * (1 + Math.pow(perspFactor, 2) * 40) * (warpIntensity / 8);
                         
-                        // CRITICAL FIX: NEVER let the tail cross the black hole at the center (10px radius)
-                        const cappedStreak = Math.min(streakLength, distFromCenter - 10);
+                        // Prevent the tail from piercing the central singularity core
+                        const cappedStreak = Math.min(streakLength, distFromCenter - 15);
 
                         const dirOutX = dx / Math.max(0.1, distFromCenter);
                         const dirOutY = dy / Math.max(0.1, distFromCenter);
@@ -13421,18 +13512,27 @@ class InterstellarEngine {
                         const tailX = sx - dirOutX * cappedStreak;
                         const tailY = sy - dirOutY * cappedStreak;
 
-                        const baseAlpha = s.alpha || 0.2;
-                        const intensityBoost = Math.min(0.5, warpIntensity * 0.2);
-                        const alpha = Math.min(0.85, baseAlpha + intensityBoost);
+                        // Dynamic opacity (more transparent in the center, solid at edges)
+                        const baseAlpha = s.alpha || 0.3;
+                        const alpha = Math.min(0.9, baseAlpha + (perspFactor * 0.6) * (warpIntensity / 8));
                         ctx.globalAlpha = alpha;
 
                         if (cappedStreak > 2) {
                             try {
-                                const baseWidth = Math.max(0.5, size * 0.4 + warpIntensity * 0.02);
+                                const baseWidth = Math.max(0.5, size * 0.5 + (perspFactor * 3) * (warpIntensity / 8));
 
-                                // Extract RGB from hex to create dynamic glowing tails
+                                // Chromatic Shift & High Energy colors at high speeds
                                 let r = 255, g = 255, b = 255;
-                                if (starColor.startsWith('#')) {
+                                
+                                // Color shifting based on speed and position
+                                if (warpIntensity > 4) {
+                                    // High energy dynamic shift
+                                    if (Math.random() > 0.5) {
+                                        r = 0; g = 255; b = 255; // Cyan
+                                    } else {
+                                        r = 255; g = 0; b = 255; // Magenta
+                                    }
+                                } else if (starColor.startsWith('#')) {
                                     const hex = starColor.replace('#', '');
                                     if (hex.length === 6) {
                                         r = parseInt(hex.substring(0, 2), 16);
@@ -13441,26 +13541,32 @@ class InterstellarEngine {
                                     }
                                 }
 
+                                // Glowing Trail
                                 const grad = ctx.createLinearGradient(tailX, tailY, headX, headY);
-                                // Faded tail at the black hole
                                 grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
-                                // Brightest at the head
-                                const brightR = Math.min(255, r + 80);
-                                const brightG = Math.min(255, g + 80);
-                                const brightB = Math.min(255, b + 80);
-                                grad.addColorStop(1, `rgba(${brightR}, ${brightG}, ${brightB}, 0.9)`);
+                                const brightR = Math.min(255, r + 100);
+                                const brightG = Math.min(255, g + 100);
+                                const brightB = Math.min(255, b + 100);
+                                grad.addColorStop(1, `rgba(${brightR}, ${brightG}, ${brightB}, 1)`);
 
                                 ctx.strokeStyle = grad;
-                                ctx.lineWidth = baseWidth * (1 + perspFactor * 0.5);
+                                ctx.lineWidth = baseWidth;
                                 ctx.lineCap = "round";
+                                
+                                // massive glow for stars near the edge of the screen
+                                ctx.shadowBlur = 10 + (perspFactor * 30); 
+                                ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+
                                 ctx.beginPath();
                                 ctx.moveTo(tailX, tailY);
                                 ctx.lineTo(headX, headY);
                                 ctx.stroke();
 
-                                if (cappedStreak > 15) {
+                                // Intense white core for long streaks
+                                if (cappedStreak > 20) {
                                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-                                    ctx.lineWidth = baseWidth * 0.4;
+                                    ctx.lineWidth = baseWidth * 0.3;
+                                    ctx.shadowBlur = 0; // Turn off inner shadow
                                     ctx.beginPath();
                                     ctx.moveTo(tailX, tailY);
                                     ctx.lineTo(headX, headY);
@@ -13469,6 +13575,7 @@ class InterstellarEngine {
                             } catch (e) {
                                 ctx.strokeStyle = 'rgba(200, 240, 255, 0.8)';
                                 ctx.lineWidth = size;
+                                ctx.shadowBlur = 0;
                                 ctx.beginPath();
                                 ctx.moveTo(tailX, tailY);
                                 ctx.lineTo(headX, headY);
@@ -13493,12 +13600,49 @@ class InterstellarEngine {
                 console.error('[BG Error] Star rendering failed:', renderError);
             }
 
-            // Draw a tiny black circle at the vanishing point to represent a black hole or point of origin
+            // Reset shadows
+            ctx.shadowBlur = 0;
+
+            // Draw Pulsing Warp Core Singularity
             if (this.bgWarpMode && !this.bgDriftMode) {
+                const warpIntensity = this.warpSpeed || 0;
+                
+                // Expanding Tunnel Rings
+                const numRings = 5;
+                const ringSpeed = time * 2;
+                ctx.lineWidth = 2;
+                
+                for(let i = 0; i < numRings; i++) {
+                    const phase = ((ringSpeed + i * (100 / numRings)) % 100) / 100;
+                    const ringRadius = 15 + Math.pow(phase, 3) * (canvas.width * 1.5);
+                    const ringAlpha = (1 - phase) * 0.3 * (warpIntensity / 8);
+                    
+                    if (ringAlpha > 0.01) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(0, 255, 255, ${ringAlpha})`;
+                        ctx.arc(canvas.width / 2, canvas.height / 2, ringRadius, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+
+                // Central Singularity
+                const pulse = Math.sin(time * 15) * 5;
+                const coreRadius = 15 + (warpIntensity * 0.5) + pulse;
+                
                 ctx.globalAlpha = 1.0;
-                ctx.fillStyle = '#000000';
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 30 + warpIntensity * 2;
+                ctx.shadowColor = '#00ffff';
+                
                 ctx.beginPath();
-                ctx.arc(canvas.width / 2, canvas.height / 2, 10, 0, Math.PI * 2);
+                ctx.arc(canvas.width / 2, canvas.height / 2, coreRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Inner dark void
+                ctx.fillStyle = '#000000';
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, Math.max(2, coreRadius * 0.6), 0, Math.PI * 2);
                 ctx.fill();
             }
 
@@ -13858,8 +14002,8 @@ class InterstellarEngine {
                 ctx.font = `${stream.size}px monospace, 'Courier New', monospace`;
                 ctx.textBaseline = 'middle';
 
-                // Use Math.floor to eliminate sub-pixel fractional rendering jitter on 120Hz displays
-                const snappedY = Math.floor(stream.y);
+                // Removed Math.floor to allow smooth sub-pixel scrolling at slow speeds!
+                const snappedY = stream.y;
 
                 // Only draw visible characters based on length multiplier
                 for (let i = 0; i < visibleLength && i < stream.chars.length; i++) {
