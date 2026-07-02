@@ -6,8 +6,8 @@ class NativeIntegration {
         // TODO: REPLACE WITH YOUR ACTUAL REVENUECAT PUBLIC API KEYS
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         this.revenueCatApiKey = isIOS ? 
-            'sk_RTHqbTajlgrDWNlgrmOBoogRmFDPD' : 
-            'sk_YaEXCCKflycNimwSHkHHkvsLAEtJd';
+            'YOUR_IOS_REVENUECAT_KEY' : 
+            'YOUR_ANDROID_REVENUECAT_KEY';
             
         this.initMonetization();
         this.requestNotificationPermission();
