@@ -78,6 +78,17 @@ export const typeDefs = `#graphql
     isMoment: Boolean!
     createdAt: String!
     user: User!
+    productTags: [ProductTag!]
+    likesCount: Int!
+    commentsCount: Int!
+    hasLiked: Boolean!
+  }
+
+  type ProductTag {
+    id: ID!
+    productId: ID!
+    contentId: ID!
+    product: Product!
   }
 
   union FeedItem = Content | CheckIn
@@ -130,6 +141,102 @@ export const typeDefs = `#graphql
     actor: User
   }
 
+  type Wallet {
+    id: ID!
+    balance: Int!
+    transactions: [Transaction!]!
+  }
+
+  type Transaction {
+    id: ID!
+    amount: Int!
+    type: String!
+    description: String
+    createdAt: String!
+  }
+
+  type Storefront {
+    id: ID!
+    name: String!
+    description: String
+    products: [Product!]!
+  }
+
+  type Product {
+    id: ID!
+    name: String!
+    description: String
+    price: Int!
+    imageUrl: String
+  }
+
+  type Bounty {
+    id: ID!
+    venueId: ID!
+    title: String!
+    description: String!
+    reward: Int!
+    totalBudget: Int!
+    latitude: Float!
+    longitude: Float!
+    isActive: Boolean!
+    expiresAt: String!
+  }
+
+  type SwarmCampaign {
+    id: ID!
+    venueId: ID!
+    title: String!
+    description: String!
+    latitude: Float!
+    longitude: Float!
+    radiusMeters: Int!
+    targetCheckIns: Int!
+    maxDiscount: String!
+    isActive: Boolean!
+    expiresAt: String!
+  }
+
+  type Like {
+    id: ID!
+    userId: ID!
+    contentId: ID!
+    createdAt: String!
+    user: User!
+  }
+
+  type Comment {
+    id: ID!
+    userId: ID!
+    contentId: ID!
+    text: String!
+    createdAt: String!
+    user: User!
+  }
+
+  type UserProfile {
+    user: User!
+    contents: [Content!]!
+  }
+
+  type Message {
+    id: ID!
+    senderId: ID!
+    receiverId: ID!
+    text: String
+    sharedContentId: ID
+    sharedContent: Content
+    isRead: Boolean!
+    createdAt: String!
+    sender: User!
+  }
+
+  type Conversation {
+    otherUser: User!
+    lastMessage: Message!
+    unreadCount: Int!
+  }
+
   type Query {
     me: User
     activeCheckIns: [CheckIn!]!
@@ -142,6 +249,14 @@ export const typeDefs = `#graphql
     pendingFollowRequests: [User!]!
     followStatus(userId: ID!): String!
     alerts: [Notification!]!
+    userProfile(userId: ID!): UserProfile!
+    myConversations: [Conversation!]!
+    conversationMessages(userId: ID!): [Message!]!
+    
+    myWallet: Wallet
+    activeBounties(latitude: Float!, longitude: Float!, radiusKm: Float!): [Bounty!]!
+    venueStorefront(venueId: ID!): Storefront
+    activeSwarmCampaigns(latitude: Float!, longitude: Float!, radiusKm: Float!): [SwarmCampaign!]!
   }
 
   type Mutation {
@@ -160,6 +275,54 @@ export const typeDefs = `#graphql
     rejectFollowRequest(userId: ID!): Boolean!
     markAlertRead(id: ID!): Boolean!
     updatePrivacy(isPrivate: Boolean!): User
+    
+    createStorefront(name: String!, description: String): Storefront
+    addProduct(storefrontId: ID!, name: String!, price: Int!, imageUrl: String): Product
+    createBounty(title: String!, description: String!, reward: Int!, totalBudget: Int!, latitude: Float!, longitude: Float!): Bounty
+    claimBounty(bountyId: ID!, contentId: ID!): Boolean!
+    createSwarmCampaign(title: String!, description: String!, targetCheckIns: Int!, maxDiscount: String!, latitude: Float!, longitude: Float!): SwarmCampaign
+    createContent(type: String!, textBody: String, mediaUrl: String, venueId: ID): Content
+    autoMonetizeContent(contentId: ID!, venueId: ID!): [ProductTag!]
+    likeContent(contentId: ID!): Boolean!
+    unlikeContent(contentId: ID!): Boolean!
+    commentContent(contentId: ID!, text: String!): Comment!
+    sendMessage(receiverId: ID!, text: String, sharedContentId: ID): Message!
+    markConversationRead(userId: ID!): Boolean!
+    
+    createPaymentIntent(amount: Int!): String!
+    createOrder(items: [OrderItemInput!]!, paymentIntentId: String, shippingAddress: String): Order!
+    cashOutWallet: CashOutResponse!
+  }
+
+  type CashOutResponse {
+    status: String!
+    url: String
+  }
+
+  input OrderItemInput {
+    productId: ID!
+    quantity: Int!
+    priceAtPurchase: Int!
+  }
+
+  type Order {
+    id: ID!
+    userId: ID!
+    totalAmount: Int!
+    status: String!
+    stripePaymentIntentId: String
+    shippingAddress: String
+    createdAt: String!
+    items: [OrderItem!]!
+  }
+
+  type OrderItem {
+    id: ID!
+    orderId: ID!
+    productId: ID!
+    quantity: Int!
+    priceAtPurchase: Int!
+    product: Product!
   }
 `;
 
@@ -172,6 +335,11 @@ export const trackActivity = async (userId: string) => {
 
 import { GoogleGenAI } from '@google/genai';
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_12345', {
+  apiVersion: '2024-06-20' as any,
+});
 
 async function ensureUserExists(contextUser: any) {
   if (!contextUser || !contextUser.uid) return;
@@ -191,6 +359,20 @@ async function ensureUserExists(contextUser: any) {
 }
 
 export const resolvers = {
+  Content: {
+    likesCount: async (parent: any) => prisma.like.count({ where: { contentId: parent.id } }),
+    commentsCount: async (parent: any) => prisma.comment.count({ where: { contentId: parent.id } }),
+    hasLiked: async (parent: any, _: any, context: any) => {
+      if (!context.user) return false;
+      const like = await prisma.like.findUnique({ where: { userId_contentId: { userId: context.user.uid, contentId: parent.id } } });
+      return !!like;
+    }
+  },
+  CheckIn: {
+    user: async (parent: any) => {
+      return prisma.user.findUnique({ where: { id: parent.userId } });
+    }
+  },
   FeedItem: {
     __resolveType(obj: any, contextValue: any, info: any) {
       if (obj.latitude !== undefined) {
@@ -335,7 +517,12 @@ export const resolvers = {
 
       const contents = await prisma.content.findMany({
         where: { userId: { in: followingIds }, isDeleted: false, isMoment: false },
-        include: { user: true },
+        include: { 
+          user: true,
+          productTags: {
+            include: { product: true }
+          }
+        },
         orderBy: { createdAt: 'desc' },
         take: 20
       });
@@ -355,7 +542,12 @@ export const resolvers = {
 
       const contents = await prisma.content.findMany({
         where: { isDeleted: false, isMoment: false },
-        include: { user: true },
+        include: { 
+          user: true,
+          productTags: {
+            include: { product: true }
+          }
+        },
         orderBy: { createdAt: 'desc' },
         take: 30
       });
@@ -421,6 +613,109 @@ export const resolvers = {
         take: 50
       });
       return notifications;
+    },
+    myWallet: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      let wallet = await prisma.wallet.findUnique({
+        where: { userId: context.user.uid },
+        include: { transactions: { orderBy: { createdAt: 'desc' } } }
+      });
+      if (!wallet) {
+        wallet = await prisma.wallet.create({
+          data: { userId: context.user.uid, balance: 0 },
+          include: { transactions: true }
+        });
+      }
+      return wallet;
+    },
+    activeBounties: async (_: any, { latitude, longitude, radiusKm }: any, context: any) => {
+      return prisma.bounty.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' }
+      });
+    },
+    venueStorefront: async (_: any, { venueId }: any, context: any) => {
+      return prisma.storefront.findUnique({
+        where: { userId: venueId },
+        include: { products: true }
+      });
+    },
+    activeSwarmCampaigns: async (_: any, { latitude, longitude, radiusKm }: any, context: any) => {
+      return prisma.swarmCampaign.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' }
+      });
+    },
+    userProfile: async (_: any, { userId }: any, context: any) => {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { opennessProfile: true }
+      });
+      if (!user) throw new GraphQLError("User not found", { extensions: { code: 'NOT_FOUND' } });
+      const contents = await prisma.content.findMany({
+        where: { userId, isDeleted: false },
+        include: { 
+          user: true,
+          productTags: { include: { product: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      return { user, contents };
+    },
+    myConversations: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const myId = context.user.uid;
+      
+      // Get all messages involving this user
+      const messages = await prisma.message.findMany({
+        where: { OR: [{ senderId: myId }, { receiverId: myId }] },
+        orderBy: { createdAt: 'desc' },
+        include: { sender: true, receiver: true }
+      });
+
+      // Group by the *other* user
+      const conversationsMap = new Map();
+      
+      for (const msg of messages) {
+        const otherUserId = msg.senderId === myId ? msg.receiverId : msg.senderId;
+        const otherUser = msg.senderId === myId ? msg.receiver : msg.sender;
+        
+        if (!conversationsMap.has(otherUserId)) {
+          conversationsMap.set(otherUserId, {
+            otherUser,
+            lastMessage: msg,
+            unreadCount: 0
+          });
+        }
+        
+        // Count unread if I am the receiver and it's not read
+        if (msg.receiverId === myId && !msg.isRead) {
+          conversationsMap.get(otherUserId).unreadCount += 1;
+        }
+      }
+      
+      return Array.from(conversationsMap.values());
+    },
+    conversationMessages: async (_: any, { userId }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const myId = context.user.uid;
+      
+      const messages = await prisma.message.findMany({
+        where: {
+          OR: [
+            { senderId: myId, receiverId: userId },
+            { senderId: userId, receiverId: myId }
+          ]
+        },
+        orderBy: { createdAt: 'desc' },
+        include: { 
+          sender: true,
+          sharedContent: {
+            include: { user: true }
+          }
+        }
+      });
+      return messages;
     }
   },
   Mutation: {
@@ -731,7 +1026,345 @@ export const resolvers = {
         where: { id: context.user.uid },
         data: { privacy: isPrivate ? 'private' : 'public' }
       });
+    },
+    createStorefront: async (_: any, { name, description }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      return prisma.storefront.create({
+        data: {
+          userId: context.user.uid,
+          name,
+          description
+        }
+      });
+    },
+    addProduct: async (_: any, { storefrontId, name, price, imageUrl }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      return prisma.product.create({
+        data: {
+          storefrontId,
+          name,
+          price,
+          imageUrl
+        }
+      });
+    },
+    createBounty: async (_: any, { title, description, reward, totalBudget, latitude, longitude }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      return prisma.bounty.create({
+        data: {
+          venueId: context.user.uid,
+          title,
+          description,
+          reward,
+          totalBudget,
+          latitude,
+          longitude,
+          isActive: true,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        }
+      });
+    },
+    claimBounty: async (_: any, { bountyId, contentId }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      
+      const bounty = await prisma.bounty.findUnique({ where: { id: bountyId } });
+      if (!bounty || !bounty.isActive) throw new GraphQLError("Bounty not available");
+
+      await prisma.bountyClaim.create({
+        data: {
+          bountyId,
+          userId: context.user.uid,
+          contentId,
+          status: 'APPROVED'
+        }
+      });
+
+      let wallet = await prisma.wallet.findUnique({ where: { userId: context.user.uid } });
+      if (!wallet) {
+        wallet = await prisma.wallet.create({ data: { userId: context.user.uid, balance: 0 } });
+      }
+
+      await prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { increment: bounty.reward } }
+      });
+
+      await prisma.transaction.create({
+        data: {
+          walletId: wallet.id,
+          amount: bounty.reward,
+          type: 'BOUNTY_PAYOUT',
+          description: `Payout for bounty: ${bounty.title}`
+        }
+      });
+
+      return true;
+    },
+    createSwarmCampaign: async (_: any, { title, description, targetCheckIns, maxDiscount, latitude, longitude }: any, context: any) => {
+      await ensureUserExists(context.user);
+      if (!context.user) throw new Error('Not authenticated');
+      return prisma.swarmCampaign.create({
+        data: {
+          venueId: context.user.uid,
+          title,
+          description,
+          targetCheckIns,
+          maxDiscount,
+          latitude,
+          longitude,
+          expiresAt: new Date(Date.now() + 86400000)
+        }
+      });
+    },
+
+    createContent: async (_: any, { type, textBody, mediaUrl, venueId }: any, context: any) => {
+      await ensureUserExists(context.user);
+      if (!context.user) throw new Error('Not authenticated');
+      return prisma.content.create({
+        data: {
+          userId: context.user.uid,
+          type: type as any,
+          textBody,
+          mediaUrl,
+          venueId,
+          sourceFlag: 'in_app_text',
+        }
+      });
+    },
+
+    autoMonetizeContent: async (_: any, { contentId, venueId }: any, context: any) => {
+      await ensureUserExists(context.user);
+      if (!context.user) throw new Error('Not authenticated');
+      
+      const content = await prisma.content.findUnique({ where: { id: contentId } });
+      if (!content) throw new Error('Content not found');
+
+      const storefront = await prisma.storefront.findUnique({
+        where: { userId: venueId },
+        include: { products: true }
+      });
+      if (!storefront || storefront.products.length === 0) {
+        return [];
+      }
+
+      let taggedProductIds: string[] = [];
+
+      if (ai) {
+        const productListStr = storefront.products.map((p: any) => `- ID: ${p.id}, Name: ${p.name}, Desc: ${p.description || ''}`).join('\n');
+        const prompt = `
+          You are an AI auto-monetization agent. A user has posted the following content:
+          "${content.textBody || content.mediaUrl}"
+          
+          Here are the available products from the venue's storefront:
+          ${productListStr}
+          
+          Which products are likely featured or referenced in the user's content?
+          Return ONLY a JSON array of the product IDs. Example: ["id1", "id2"]. If none match, return [].
+        `;
+        try {
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt
+          });
+          const text = response.text || '';
+          const match = text.match(/\[.*\]/s);
+          if (match) {
+            taggedProductIds = JSON.parse(match[0]);
+          }
+        } catch (e) {
+          console.error("AI tagging failed", e);
+        }
+      }
+
+      // If AI fails or no GEMINI_API_KEY, mock it by picking the first product if any
+      if (taggedProductIds.length === 0 && storefront && storefront.products && storefront.products.length > 0) {
+         taggedProductIds = [(storefront as any).products[0].id];
+      }
+
+      const tags = [];
+      for (const pId of taggedProductIds) {
+        const existing = await prisma.productTag.findFirst({
+          where: { productId: pId, contentId }
+        });
+        if (!existing) {
+          const tag = await prisma.productTag.create({
+            data: { productId: pId, contentId },
+            include: { product: true }
+          });
+          tags.push(tag);
+        }
+      }
+
+      return tags;
+    },
+    likeContent: async (_: any, { contentId }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      await prisma.like.create({
+        data: { userId: context.user.uid, contentId }
+      }).catch(e => {
+        if (e.code !== 'P2002') throw e;
+      });
+      
+      const content = await prisma.content.findUnique({ where: { id: contentId } });
+      if (content && content.userId !== context.user.uid) {
+        await prisma.notification.create({
+          data: {
+            userId: content.userId,
+            actorId: context.user.uid,
+            type: 'LIKE',
+            message: 'liked your post'
+          }
+        });
+      }
+      return true;
+    },
+    unlikeContent: async (_: any, { contentId }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      await prisma.like.deleteMany({
+        where: { userId: context.user.uid, contentId }
+      });
+      return true;
+    },
+    commentContent: async (_: any, { contentId, text }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const comment = await prisma.comment.create({
+        data: { userId: context.user.uid, contentId, text },
+        include: { user: true }
+      });
+      
+      const content = await prisma.content.findUnique({ where: { id: contentId } });
+      if (content && content.userId !== context.user.uid) {
+        await prisma.notification.create({
+          data: {
+            userId: content.userId,
+            actorId: context.user.uid,
+            type: 'COMMENT',
+            message: `commented: ${text}`
+          }
+        });
+      }
+      return comment;
+    },
+    sendMessage: async (_: any, { receiverId, text, sharedContentId }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const myId = context.user.uid;
+      
+      const message = await prisma.message.create({
+        data: {
+          senderId: myId,
+          receiverId,
+          text,
+          sharedContentId
+        },
+        include: { sender: true, sharedContent: { include: { user: true } } }
+      });
+      
+      // Optionally notify
+      await prisma.notification.create({
+        data: {
+          userId: receiverId,
+          actorId: myId,
+          type: 'MESSAGE',
+          message: sharedContentId ? 'shared a post with you' : 'sent you a message'
+        }
+      });
+      
+      return message;
+    },
+    markConversationRead: async (_: any, { userId }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const myId = context.user.uid;
+      
+      await prisma.message.updateMany({
+        where: { senderId: userId, receiverId: myId, isRead: false },
+        data: { isRead: true }
+      });
+      
+      return true;
+    },
+    createPaymentIntent: async (_: any, { amount }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: 'usd',
+      });
+      return paymentIntent.client_secret;
+    },
+    createOrder: async (_: any, { items, paymentIntentId, shippingAddress }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const myId = context.user.uid;
+      
+      const totalAmount = items.reduce((acc: number, item: any) => acc + (item.quantity * item.priceAtPurchase), 0);
+      
+      const order = await prisma.order.create({
+        data: {
+          userId: myId,
+          totalAmount,
+          status: paymentIntentId ? 'PAID' : 'PENDING',
+          stripePaymentIntentId: paymentIntentId,
+          shippingAddress,
+          items: {
+            create: items.map((item: any) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              priceAtPurchase: item.priceAtPurchase
+            }))
+          }
+        },
+        include: { items: { include: { product: true } } }
+      });
+      
+      return order;
+    },
+    cashOutWallet: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const user = await prisma.user.findUnique({ where: { id: context.user.uid }, include: { wallet: true } });
+      if (!user || !user.wallet) throw new GraphQLError("Wallet not found");
+      
+      const balance = user.wallet.balance;
+      if (balance < 2000) {
+        throw new GraphQLError("Minimum cash out is $20");
+      }
+
+      if (!user.stripeAccountId) {
+        const { createConnectAccount } = require('./services/stripe');
+        const { accountId, url } = await createConnectAccount(user.id, user.email);
+        
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { stripeAccountId: accountId }
+        });
+        
+        return { status: "REQUIRES_ONBOARDING", url };
+      }
+
+      const { processPayout } = require('./services/stripe');
+      try {
+        await processPayout(user.stripeAccountId, balance);
+        
+        await prisma.wallet.update({
+          where: { id: user.wallet.id },
+          data: { balance: 0 }
+        });
+        
+        await prisma.transaction.create({
+          data: {
+            walletId: user.wallet.id,
+            amount: -balance,
+            type: 'CASH_OUT',
+            description: 'Wallet cash out to bank account'
+          }
+        });
+        
+        return { status: "SUCCESS", url: null };
+      } catch (err: any) {
+        throw new GraphQLError(err.message || "Payout failed");
+      }
     }
+  },
+  
+  ProductTag: {
+    product: (parent: any) => prisma.product.findUnique({ where: { id: parent.productId } })
   }
 };
 

@@ -1,10 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { gql, useMutation } from '@apollo/client';
-import * as Haptics from 'expo-haptics';
+import { gql, useQuery, useMutation } from '@apollo/client';
+import { triggerHaptic } from '../../utils/haptics';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming } from 'react-native-reanimated';
+import { TapGestureHandler, State } from 'react-native-gesture-handler';
+import { Video, ResizeMode } from 'expo-av';
+import { SkeletonLoader } from '../../components/SkeletonLoader';
+import { AnimatedButton } from '../../components/AnimatedButton';
 
 const FOLLOW_USER = gql`
   mutation FollowUser($userId: ID!) {
@@ -24,29 +29,200 @@ const FOLLOW_STATUS = gql`
   }
 `;
 
+const USER_PROFILE_QUERY = gql`
+  query GetUserProfile($userId: ID!) {
+    userProfile(userId: $userId) {
+      user {
+        id
+        username
+        name
+        profilePhotoUrl
+      }
+      contents {
+        id
+        type
+        mediaUrl
+        textBody
+        createdAt
+        likesCount
+        commentsCount
+        hasLiked
+        user {
+          id
+          username
+          profilePhotoUrl
+        }
+      }
+    }
+  }
+`;
+
+const LIKE_MUTATION = gql`
+  mutation LikeContent($contentId: ID!) {
+    likeContent(contentId: $contentId)
+  }
+`;
+const UNLIKE_MUTATION = gql`
+  mutation UnlikeContent($contentId: ID!) {
+    unlikeContent(contentId: $contentId)
+  }
+`;
+
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
 
-  const { data: statusData, refetch } = useQuery(FOLLOW_STATUS, { variables: { userId: id } });
+  const { data: statusData, refetch: refetchStatus } = useQuery(FOLLOW_STATUS, { variables: { userId: id } });
+  const { data: profileData, loading, refetch: refetchProfile } = useQuery(USER_PROFILE_QUERY, { variables: { userId: id } });
   
   const [followUser] = useMutation(FOLLOW_USER);
   const [unfollowUser] = useMutation(UNFOLLOW_USER);
+  const [likeContent] = useMutation(LIKE_MUTATION);
+  const [unlikeContent] = useMutation(UNLIKE_MUTATION);
 
   const status = statusData?.followStatus || 'NONE';
+  const profile = profileData?.userProfile?.user;
+  const contents = profileData?.userProfile?.contents || [];
 
   const handleFollowToggle = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    triggerHaptic('medium');
     try {
       if (status !== 'NONE') {
         await unfollowUser({ variables: { userId: id } });
       } else {
         await followUser({ variables: { userId: id } });
       }
-      refetch();
+      refetchStatus();
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const renderHeader = () => (
+    <View style={styles.profileHeader}>
+      <BlurView intensity={20} tint="dark" style={styles.card}>
+        <View style={styles.avatar}>
+          {profile?.profilePhotoUrl ? (
+            <Image source={{ uri: profile.profilePhotoUrl }} style={{ width: 100, height: 100, borderRadius: 50 }} />
+          ) : (
+            <Ionicons name="person" size={40} color="#fff" />
+          )}
+        </View>
+        <Text style={styles.name}>{profile?.name || profile?.username || `User ${id}`}</Text>
+        <Text style={styles.bio}>@{profile?.username || 'user'}</Text>
+
+        <AnimatedButton 
+          style={[
+            styles.followButton, 
+            status !== 'NONE' && styles.followingButton
+          ]}
+          onPress={handleFollowToggle}
+          hapticType="light"
+        >
+          <Text style={[
+            styles.followButtonText, 
+            status !== 'NONE' && styles.followingButtonText,
+            status === 'PENDING' && styles.pendingButtonText
+          ]}>
+            {status === 'ACCEPTED' ? 'Following' : status === 'PENDING' ? 'Requested' : 'Follow'}
+          </Text>
+        </AnimatedButton>
+      </BlurView>
+      <Text style={styles.sectionTitle}>Recent Posts</Text>
+    </View>
+  );
+
+  const renderItem = ({ item }: { item: any }) => {
+    const isMedia = ['photo', 'video'].includes(item.type);
+    
+    return (
+      <View style={feedStyles.postCard}>
+        <View style={feedStyles.postHeader}>
+          <View style={feedStyles.avatar}>
+            {item.user.profilePhotoUrl ? (
+              <Image source={{ uri: item.user.profilePhotoUrl }} style={feedStyles.avatarImg} />
+            ) : (
+              <Ionicons name="person" size={20} color="#666" />
+            )}
+          </View>
+          <View>
+            <Text style={feedStyles.username}>{item.user.username}</Text>
+          </View>
+        </View>
+        
+        {isMedia && item.mediaUrl && (
+          item.type === 'video' ? (
+            <View style={feedStyles.postImageContainer}>
+              <Video
+                source={{ uri: item.mediaUrl }}
+                style={feedStyles.postImageInside}
+                resizeMode={ResizeMode.COVER}
+                shouldPlay
+                isLooping
+                isMuted
+              />
+            </View>
+          ) : (
+            <PostImage 
+              url={item.mediaUrl} 
+              onLike={async () => {
+                if (!item.hasLiked) {
+                  await likeContent({ variables: { contentId: item.id } });
+                  refetchProfile();
+                }
+              }} 
+            />
+          )
+        )}
+        {item.type === 'text' && item.textBody && (
+          <View style={feedStyles.textContainer}>
+            <Text style={feedStyles.postText}>{item.textBody}</Text>
+          </View>
+        )}
+
+        <View style={feedStyles.engagementRow}>
+          <View style={feedStyles.leftActionGroup}>
+            <AnimatedButton 
+              onPress={async () => {
+                if (item.hasLiked) {
+                  await unlikeContent({ variables: { contentId: item.id } });
+                } else {
+                  await likeContent({ variables: { contentId: item.id } });
+                }
+                refetchProfile();
+              }} 
+              style={feedStyles.actionIcon}
+              hapticType="light"
+            >
+              <Feather name="heart" size={24} color={item.hasLiked ? "#ff3b30" : "#fff"} />
+            </AnimatedButton>
+            <AnimatedButton style={feedStyles.actionIcon} hapticType="light">
+              <Feather name="message-circle" size={24} color="#fff" />
+            </AnimatedButton>
+            <AnimatedButton style={feedStyles.actionIcon} hapticType="light">
+              <Feather name="send" size={24} color="#fff" />
+            </AnimatedButton>
+          </View>
+        </View>
+        
+        <View style={feedStyles.postFooter}>
+          <Text style={feedStyles.likesCount}>{(item.likesCount || 0).toLocaleString()} likes</Text>
+          {isMedia && item.textBody && (
+            <Text style={feedStyles.captionText}>
+              <Text style={feedStyles.captionUsername}>{item.user.username}</Text> {item.textBody}
+            </Text>
+          )}
+          {(item.commentsCount || 0) > 0 && (
+             <TouchableOpacity style={{ marginTop: 5 }}>
+               <Text style={{ color: '#aaa', fontSize: 14 }}>View all {item.commentsCount} comments</Text>
+             </TouchableOpacity>
+          )}
+          <Text style={feedStyles.postDate}>
+            {new Date(parseInt(item.createdAt)).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+          </Text>
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -55,48 +231,64 @@ export default function UserProfileScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>User Profile</Text>
+        <Text style={styles.headerTitle}>{profile?.username || 'User Profile'}</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={styles.content}>
-        <BlurView intensity={20} tint="dark" style={styles.card}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={40} color="#fff" />
+      {loading ? (
+        <View style={styles.center}>
+          <View style={[styles.card, { width: '100%' }]}>
+            <SkeletonLoader width={100} height={100} borderRadius={50} style={{ marginBottom: 20 }} />
+            <SkeletonLoader width={200} height={28} style={{ marginBottom: 10 }} />
+            <SkeletonLoader width={120} height={16} style={{ marginBottom: 25 }} />
+            <SkeletonLoader width="100%" height={50} borderRadius={16} />
           </View>
-          <Text style={styles.name}>User {id}</Text>
-          <Text style={styles.bio}>This user joined via a deep link.</Text>
-
-          <View style={styles.tagsContainer}>
-            <View style={[styles.tag, { backgroundColor: '#00E67620', borderColor: '#00E676' }]}>
-              <Text style={[styles.tagText, { color: '#00E676' }]}>Networking</Text>
-            </View>
-            <View style={[styles.tag, { backgroundColor: '#FFD60020', borderColor: '#FFD600' }]}>
-              <Text style={[styles.tagText, { color: '#FFD600' }]}>Socializing</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.connectButton}>
-            <Text style={styles.connectButtonText}>Send Meeting Request</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[
-              styles.followButton, 
-              status !== 'NONE' && styles.followingButton
-            ]}
-            onPress={handleFollowToggle}
-          >
-            <Text style={[
-              styles.followButtonText, 
-              status !== 'NONE' && styles.followingButtonText,
-              status === 'PENDING' && styles.pendingButtonText
-            ]}>
-              {status === 'ACCEPTED' ? 'Following' : status === 'PENDING' ? 'Requested' : 'Follow'}
-            </Text>
-          </TouchableOpacity>
-        </BlurView>
-      </View>
+        </View>
+      ) : (
+        <FlatList
+          data={contents}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        />
+      )}
     </SafeAreaView>
+  );
+}
+
+const PostImage: React.FC<{ url: string, onLike?: () => void }> = ({ url, onLike }) => {
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+  const doubleTapRef = useRef(null);
+
+  const onDoubleTap = useCallback((event: any) => {
+    if (event.nativeEvent.state === State.ACTIVE) {
+      triggerHaptic('heavy');
+      scale.value = withSpring(1, { damping: 12 });
+      opacity.value = withSpring(1);
+      if (onLike) onLike();
+      setTimeout(() => {
+        opacity.value = withTiming(0, { duration: 300 });
+        scale.value = withDelay(300, withTiming(0));
+      }, 1000);
+    }
+  }, [onLike]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: Math.max(scale.value, 0) }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <TapGestureHandler ref={doubleTapRef} onHandlerStateChange={onDoubleTap} numberOfTaps={2}>
+      <Animated.View style={feedStyles.postImageContainer}>
+        <Image source={{ uri: url }} style={feedStyles.postImageInside} />
+        <Animated.View style={[animatedStyle, { position: 'absolute', zIndex: 10, alignSelf: 'center', top: '50%', marginTop: -50 }]}>
+          <Ionicons name="heart" size={100} color="#ff3b30" />
+        </Animated.View>
+      </Animated.View>
+    </TapGestureHandler>
   );
 }
 
@@ -207,5 +399,116 @@ const styles = StyleSheet.create({
   },
   pendingButtonText: {
     color: '#FF9100',
-  }
+  },
+  profileHeader: {
+    padding: 20,
+  },
+  sectionTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 30,
+    marginBottom: 10,
+    paddingHorizontal: 5,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+const feedStyles = StyleSheet.create({
+  postCard: {
+    backgroundColor: '#111',
+    marginBottom: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#222',
+    paddingBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#333',
+    marginRight: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+  },
+  username: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  postImageContainer: {
+    width: '100%',
+    aspectRatio: 4 / 5,
+    backgroundColor: '#000',
+  },
+  postImageInside: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  textContainer: {
+    padding: 15,
+    paddingTop: 0,
+  },
+  postText: {
+    color: '#fff',
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  engagementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  leftActionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  actionIcon: {
+    padding: 5,
+  },
+  postFooter: {
+    paddingHorizontal: 15,
+    paddingBottom: 15,
+  },
+  likesCount: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  captionText: {
+    color: '#fff',
+    lineHeight: 20,
+  },
+  captionUsername: {
+    fontWeight: 'bold',
+  },
+  postDate: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 5,
+  },
 });

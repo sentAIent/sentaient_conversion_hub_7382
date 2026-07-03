@@ -96,52 +96,65 @@ enum FollowStatus {
 }
 
 model User {
-  id                   String      @id
+  id                   String                      @id
   name                 String
-  username             String      @unique
-  email                String      @unique
-  emailVerified        Boolean     @default(false)
-  phone                String?     @unique
-  phoneVerified        Boolean     @default(false)
+  username             String                      @unique
+  email                String                      @unique
+  emailVerified        Boolean                     @default(false)
+  phone                String?                     @unique
+  phoneVerified        Boolean                     @default(false)
   pushToken            String?
   profilePhotoUrl      String?
   bio                  String?
   city                 String?
-  cityCheckInCompleted Boolean     @default(false)
+  cityCheckInCompleted Boolean                     @default(false)
   dateOfBirth          DateTime?
-  ageVerified          Boolean     @default(false)
-  accountType          AccountType @default(personal)
-  privacy              PrivacyMode @default(public)
-  isActive             Boolean     @default(true)
-  isPaused             Boolean     @default(false)
-  trustScore           Float       @default(5.0)
-  referralCode         String      @unique
+  ageVerified          Boolean                     @default(false)
+  accountType          AccountType                 @default(personal)
+  privacy              PrivacyMode                 @default(public)
+  isActive             Boolean                     @default(true)
+  isPaused             Boolean                     @default(false)
+  trustScore           Float                       @default(5.0)
+  referralCode         String                      @unique
   referredBy           String?
-  referralCount        Int         @default(0)
-  proStatus            Boolean     @default(false)
+  referralCount        Int                         @default(0)
+  proStatus            Boolean                     @default(false)
   proExpiresAt         DateTime?
-  streakCount          Int         @default(0)
+  streakCount          Int                         @default(0)
   lastCheckInAt        DateTime?
-  lastActiveAt         DateTime    @default(now())
-  createdAt            DateTime    @default(now())
+  lastActiveAt         DateTime                    @default(now())
+  createdAt            DateTime                    @default(now())
+  stripeAccountId      String?
   embedding            Unsupported("vector(768)")?
 
   // Relationships
-  referrer              User?                @relation("Referrals", fields: [referredBy], references: [id])
-  referrees             User[]               @relation("Referrals")
-  checkIns              CheckIn[]
-  opennessProfile       OpennessProfile?
-  contents              Content[]
-  meetingsCreated       Meeting[]            @relation("MeetingCreator")
-  meetingParticipations MeetingParticipant[]
-  referralsMade         Referral[]           @relation("Referrer")
-  referralsReceived     Referral[]           @relation("ReferredUser")
-  sentMeetingRequests   MeetingRequest[]     @relation("SentMeetings")
-  receivedMeetingRequests MeetingRequest[]   @relation("ReceivedMeetings")
-  followers             Follows[]            @relation("UserFollowers")
-  following             Follows[]            @relation("UserFollowing")
-  notifications         Notification[]       @relation("UserNotifications")
-  notificationsCaused   Notification[]       @relation("NotificationActor")
+  referrer                User?                @relation("Referrals", fields: [referredBy], references: [id])
+  referrees               User[]               @relation("Referrals")
+  checkIns                CheckIn[]
+  opennessProfile         OpennessProfile?
+  contents                Content[]
+  meetingsCreated         Meeting[]            @relation("MeetingCreator")
+  meetingParticipations   MeetingParticipant[]
+  referralsMade           Referral[]           @relation("Referrer")
+  referralsReceived       Referral[]           @relation("ReferredUser")
+  sentMeetingRequests     MeetingRequest[]     @relation("SentMeetings")
+  receivedMeetingRequests MeetingRequest[]     @relation("ReceivedMeetings")
+  followers               Follows[]            @relation("UserFollowers")
+  following               Follows[]            @relation("UserFollowing")
+  notifications           Notification[]       @relation("UserNotifications")
+  notificationsCaused     Notification[]       @relation("NotificationActor")
+
+  // B2B & Commerce Relations
+  wallet          Wallet?
+  storefront      Storefront?
+  bountiesCreated Bounty[]        @relation("VenueBounties")
+  bountyClaims    BountyClaim[]
+  swarmCampaigns  SwarmCampaign[] @relation("VenueSwarmCampaigns")
+  likes           Like[]
+  comments        Comment[]
+  sentMessages    Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  orders          Order[]
 }
 
 model CheckIn {
@@ -200,7 +213,12 @@ model Content {
   isDeleted  Boolean     @default(false)
   createdAt  DateTime    @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
+  productTags  ProductTag[]
+  bountyClaims BountyClaim[]
+  likes        Like[]
+  comments     Comment[]
+  sharedInMessages Message[] @relation("SharedContent")
 }
 
 model Meeting {
@@ -244,17 +262,17 @@ model Referral {
 }
 
 model MeetingRequest {
-  id            String   @id @default(uuid()) @db.Uuid
-  senderId      String
-  receiverId    String
-  status        String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
-  proposedTime  DateTime
-  locationName  String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(uuid()) @db.Uuid
+  senderId     String
+  receiverId   String
+  status       String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  proposedTime DateTime
+  locationName String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  sender        User     @relation("SentMeetings", fields: [senderId], references: [id])
-  receiver      User     @relation("ReceivedMeetings", fields: [receiverId], references: [id])
+  sender   User @relation("SentMeetings", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMeetings", fields: [receiverId], references: [id])
 }
 
 model Follows {
@@ -274,11 +292,184 @@ model Notification {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String
   actorId   String?
-  type      String   // e.g., 'LIKE', 'COMMENT', 'FOLLOW', 'FOLLOW_REQUEST'
+  type      String // e.g., 'LIKE', 'COMMENT', 'FOLLOW', 'FOLLOW_REQUEST'
   message   String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user      User     @relation("UserNotifications", fields: [userId], references: [id])
-  actor     User?    @relation("NotificationActor", fields: [actorId], references: [id])
+  user  User  @relation("UserNotifications", fields: [userId], references: [id])
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id])
+}
+
+// ==========================================
+// B2B Commerce & Monetization Models
+// ==========================================
+
+model Wallet {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique
+  balance   Int      @default(0) // Balance in cents
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String   @id @default(uuid()) @db.Uuid
+  walletId    String   @db.Uuid
+  amount      Int // Positive for credit, negative for debit
+  type        String // "bounty_payout", "purchase", "cash_out"
+  description String?
+  createdAt   DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+}
+
+model Storefront {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  products Product[]
+}
+
+model Product {
+  id           String   @id @default(uuid()) @db.Uuid
+  storefrontId String   @db.Uuid
+  name         String
+  description  String?
+  price        Int // Price in cents
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  storefront Storefront   @relation(fields: [storefrontId], references: [id])
+  tags       ProductTag[]
+  orderItems OrderItem[]
+}
+
+model ProductTag {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @db.Uuid
+  contentId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  content Content @relation(fields: [contentId], references: [id])
+}
+
+model Bounty {
+  id          String   @id @default(uuid()) @db.Uuid
+  venueId     String // Ties to the brand/venue user
+  title       String
+  description String
+  reward      Int // Reward in cents
+  totalBudget Int // Max budget in cents
+  latitude    Float
+  longitude   Float
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator User          @relation("VenueBounties", fields: [venueId], references: [id])
+  claims  BountyClaim[]
+}
+
+model BountyClaim {
+  id        String   @id @default(uuid()) @db.Uuid
+  bountyId  String   @db.Uuid
+  userId    String
+  contentId String   @db.Uuid
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt DateTime @default(now())
+
+  bounty  Bounty  @relation(fields: [bountyId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  content Content @relation(fields: [contentId], references: [id])
+}
+
+model SwarmCampaign {
+  id             String   @id @default(uuid()) @db.Uuid
+  venueId        String
+  title          String
+  description    String
+  latitude       Float
+  longitude      Float
+  radiusMeters   Int      @default(500)
+  targetCheckIns Int // Number of check-ins needed for max discount
+  maxDiscount    String // e.g. "50%"
+  isActive       Boolean  @default(true)
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  venue User @relation("VenueSwarmCampaigns", fields: [venueId], references: [id])
+}
+
+model Like {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String
+  contentId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  content Content @relation(fields: [contentId], references: [id])
+
+  @@unique([userId, contentId])
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String
+  contentId String   @db.Uuid
+  text      String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  content Content @relation(fields: [contentId], references: [id])
+}
+
+model Message {
+  id              String   @id @default(uuid()) @db.Uuid
+  senderId        String
+  receiverId      String
+  text            String?
+  sharedContentId String?  @db.Uuid
+  isRead          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  sender        User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver      User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  sharedContent Content? @relation("SharedContent", fields: [sharedContentId], references: [id])
+}
+
+model Order {
+  id                    String   @id @default(uuid()) @db.Uuid
+  userId                String
+  totalAmount           Int      // Total in cents
+  status                String   @default("PENDING") // PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
+  stripePaymentIntentId String?
+  shippingAddress       String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                  User        @relation(fields: [userId], references: [id])
+  items                 OrderItem[]
+}
+
+model OrderItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  orderId         String   @db.Uuid
+  productId       String   @db.Uuid
+  quantity        Int
+  priceAtPurchase Int      // In cents
+  
+  order           Order   @relation(fields: [orderId], references: [id])
+  product         Product @relation(fields: [productId], references: [id])
 }

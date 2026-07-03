@@ -9,6 +9,8 @@ import { auth } from '../utils/firebase';
 import { registerForPushNotificationsAsync } from '../utils/notifications';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ActivityIndicator, View } from 'react-native';
+import { CartProvider } from '../context/CartContext';
+import { StripeWrapper } from '../components/StripeWrapper';
 
 const httpLink = createHttpLink({
   uri: 'http://localhost:4000/graphql', // Local dev backend
@@ -107,14 +109,19 @@ export default function Layout() {
 
   return (
     <ErrorBoundary>
-      <ApolloProvider client={client}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="schedule" options={{ presentation: 'modal', headerShown: false }} />
-          <Stack.Screen name="rating" options={{ presentation: 'transparentModal', headerShown: false }} />
-        </Stack>
-      </ApolloProvider>
+      <StripeWrapper>
+        <ApolloProvider client={client}>
+          <CartProvider>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="schedule" options={{ presentation: 'modal', headerShown: false }} />
+              <Stack.Screen name="rating" options={{ presentation: 'transparentModal', headerShown: false }} />
+              <Stack.Screen name="cart" options={{ presentation: 'modal', headerShown: false }} />
+            </Stack>
+          </CartProvider>
+        </ApolloProvider>
+      </StripeWrapper>
     </ErrorBoundary>
   );
 }
