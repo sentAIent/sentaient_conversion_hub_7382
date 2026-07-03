@@ -7,7 +7,7 @@ let viz3D = null;
 export class Visualizer3D {
 
 static CYMATIC_PATTERNS = [
-    { classId: 22, variationId: 0, name: "Fundamental Zenith", style: "fractal" },
+    { classId: 22, variationId: 0, name: "Heartbeat", style: "fractal" },
     { classId: 22, variationId: 1, name: "Quantum Flower", style: "sacred" },
     { classId: 22, variationId: 2, name: "Sacred Sun Resonance", style: "complex" },
     { classId: 22, variationId: 3, name: "Ethereal Nexus", style: "geometry" },
@@ -40,7 +40,7 @@ static CYMATIC_PATTERNS = [
 ];
     constructor(canvas, initialState = {}) {
         this.canvas = canvas;
-        this.activeModes = initialState.activeModes || new Set(['cymatics']); // Changed defaults
+        this.activeModes = initialState.activeModes || new Set(['cyber', 'snowflake', 'waves', 'particles', 'cymatics']); // Changed defaults
         this.mode = initialState.mode || 'none'; // Legacy support
 
         // Default settings - MUST be set before init methods
@@ -324,6 +324,13 @@ static CYMATIC_PATTERNS = [
             // Global Fallback for UI Controls (controls_v3.js / main_vGOLD_SYNC.js)
             window.viz3D = this;
             console.log('[Viz] Visualizer3D Hard-Linked to Global Scope.');
+            
+            // Notify UI of initial active modes
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('mindwave:visual-mode-sync', { 
+                    detail: { activeModes: Array.from(this.activeModes) } 
+                }));
+            }, 100);
         } catch (e) {
             console.error("Three.js Init Failed:", e);
             this.initialized = false;

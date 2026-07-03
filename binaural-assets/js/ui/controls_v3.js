@@ -3717,6 +3717,21 @@ function enforceLightThemeStyles() {
         [data-theme-type="light"] .text-\\[var\\(--accent-secondary\\)\\] {
             color: var(--accent) !important;
         }
+        
+        /* Fix theme modal text visibility */
+        [data-theme-type="light"] #themeModalCard,
+        [data-theme-type="light"] .theme-card-title,
+        [data-theme-type="light"] .theme-card-desc,
+        [data-theme-type="light"] .theme-card-content,
+        [data-theme-type="light"] #themeModalCard h2,
+        [data-theme-type="light"] #themeModalCard h3,
+        [data-theme-type="light"] #themeModalCard .opacity-70 {
+            color: var(--text-main) !important;
+        }
+        
+        [data-theme-type="light"] .text-amber-500 {
+            color: #f59e0b !important;
+        }
     `;
 
     // Fix preset button text - make it DARK
@@ -4748,7 +4763,7 @@ export function initThemeModal() {
         { id: 'sun', name: 'Sun', icon: '☀️' },
         { id: 'moon', name: 'Moon', icon: '🌙' },
         { id: 'heart', name: 'Heart', icon: '❤️' },
-        { id: 'mindwave', name: 'MindWave', icon: '🧠' },
+        { id: 'mindwave', name: 'MindWave', icon: '<img src="./mindwave-cursor.png" width="24" height="24" style="display:inline-block;">' },
         { id: 'sun2', name: 'Sun 2', icon: '🌞' },
         { id: 'default', name: 'Default', icon: '🖱️' }
     ];
