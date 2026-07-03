@@ -130,7 +130,7 @@ function updateCursorStyle() {
     }
 
     if (currentShape === 'mindwave') {
-        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./mindwave-cursor.png') 31 31, auto !important; }`;
+        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./mindwave-cursor.png') 16 16, auto !important; }`;
         return;
     }
 
@@ -146,7 +146,7 @@ function updateCursorStyle() {
         finalSvg = finalSvg.replace('<svg ', `<svg opacity="${customOpacity}" `);
     }
 
-    const dataUri = `url("data:image/svg+xml,${encodeURIComponent(finalSvg)}") 16 16, auto`;
+    const dataUri = `url("data:image/svg+xml;utf8,${encodeURIComponent(finalSvg)}") 16 16, auto`;
     styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: ${dataUri} !important; }`;
 }
 
