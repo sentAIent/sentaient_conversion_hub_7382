@@ -240,3 +240,4 @@ window.setCursorColor = setCursorColor;
 window.setCursorOpacity = setCursorOpacity;
 window.resetCursorColor = resetCursorColor;
 window.createCursorUIInThemeModal = createCursorUIInThemeModal;
+window._setCursorShape = setCursorShape;

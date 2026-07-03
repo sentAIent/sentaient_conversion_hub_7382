@@ -3659,34 +3659,64 @@ function enforceLightThemeStyles() {
     const themeName = localStorage.getItem('mindwave_theme') || 'default';
     const isLightTheme = document.body.dataset.themeType === 'light';
 
-    if (!isLightTheme) return;
+    let styleTag = document.getElementById('light-theme-overrides');
+    if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'light-theme-overrides';
+        document.head.appendChild(styleTag);
+    }
+
+    if (!isLightTheme) {
+        styleTag.textContent = '';
+        return;
+    }
 
     const t = THEMES[themeName];
     if (!t) return;
 
-    const leftPanel = document.getElementById('leftPanel');
-    const rightPanel = document.getElementById('rightPanel');
+    // Apply global overrides for light themes to override Tailwind dark defaults
+    styleTag.textContent = `
+        [data-theme-type="light"] body,
+        [data-theme-type="light"] .text-white,
+        [data-theme-type="light"] .text-gray-200,
+        [data-theme-type="light"] .text-gray-300,
+        [data-theme-type="light"] .text-gray-400,
+        [data-theme-type="light"] .text-white\\/70,
+        [data-theme-type="light"] .text-white\\/50 {
+            color: var(--text-main) !important;
+        }
+        
+        [data-theme-type="light"] .glass-lux,
+        [data-theme-type="light"] .glass-panel,
+        [data-theme-type="light"] .bg-black\\/50,
+        [data-theme-type="light"] .bg-gray-900\\/50,
+        [data-theme-type="light"] .bg-white\\/5,
+        [data-theme-type="light"] .bg-white\\/10 {
+            background-color: var(--panel-bg) !important;
+        }
 
-    // Apply light backgrounds
-    if (leftPanel) leftPanel.style.backgroundColor = t.panel;
-    if (rightPanel) rightPanel.style.backgroundColor = t.panel;
+        [data-theme-type="light"] .border-white\\/10,
+        [data-theme-type="light"] .border-gray-800 {
+            border-color: var(--border-main) !important;
+        }
+
+        [data-theme-type="light"] svg.lucide, 
+        [data-theme-type="light"] svg.text-white {
+            stroke: var(--text-main) !important;
+            color: var(--text-main) !important;
+        }
+        
+        /* Specific overrides for accent colors to not be overwritten */
+        [data-theme-type="light"] .text-\\[var\\(--accent\\)\\],
+        [data-theme-type="light"] .text-\\[var\\(--accent-secondary\\)\\] {
+            color: var(--accent) !important;
+        }
+    `;
 
     // Fix preset button text - make it DARK
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.style.backgroundColor = 'rgba(255,255,255,0.8)';
         btn.style.borderColor = t.border;
-        btn.querySelectorAll('*').forEach(child => {
-            child.style.color = t.text;
-        });
-    });
-
-    // Fix all text labels in sidebars
-    const textElements = document.querySelectorAll('#leftPanel span, #leftPanel label, #rightPanel span, #rightPanel label');
-    textElements.forEach(el => {
-        // Don't override accent-colored headers
-        if (!el.style.color.includes('var(--accent)') && !el.classList.contains('text-\\[var\\(--accent\\)\\]')) {
-            el.style.color = t.text;
-        }
     });
 }
 
@@ -4604,13 +4634,6 @@ window.renderThemeModal = () => {
     if (typeof showThemeGallery === 'function') showThemeGallery();
 };
 
-window.setCursorShape = (s) => {
-    if (typeof window._setCursorShape === 'function') {
-        window._setCursorShape(s);
-    } else {
-        console.warn('[Failsafe] _setCursorShape not ready:', s);
-    }
-};
 
 export function initThemeModal() {
     console.log('[Theme] initThemeModal CALLED (Optimized)');
