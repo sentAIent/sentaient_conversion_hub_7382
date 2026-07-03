@@ -3698,7 +3698,7 @@ function enforceLightThemeStyles() {
         [data-theme-type="light"] .bg-gray-900\\/50,
         [data-theme-type="light"] .bg-white\\/5,
         [data-theme-type="light"] .bg-white\\/10 {
-            background-color: var(--panel-bg) !important;
+            background-color: var(--bg-panel) !important;
         }
 
         [data-theme-type="light"] .border-white\\/10,

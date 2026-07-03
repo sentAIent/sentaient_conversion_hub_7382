@@ -178,7 +178,7 @@ export function setCursorColor(color) {
     color ? localStorage.setItem('mindwave_cursor_color', color) : localStorage.removeItem('mindwave_cursor_color');
     updateCursorStyle();
     const picker = document.getElementById('cursorColorPicker');
-    if (picker && color) picker.value = color;
+    if (picker && color && picker.value !== color) picker.value = color;
     const preview = document.getElementById('cursorColorPreview');
     if (preview) preview.style.backgroundColor = getEffectiveCursorColor();
 }
