@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, Platform } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { triggerHaptic } from '../../utils/haptics';
+import { SkeletonLoader } from '../../components/SkeletonLoader';
+import { AnimatedButton } from '../../components/AnimatedButton';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
+import { Image } from 'expo-image';
 
 const GET_NETWORK_DATA = gql`
   query GetNetworkData($lat: Float!, $lng: Float!, $radius: Float!) {
@@ -17,12 +21,27 @@ const GET_NETWORK_DATA = gql`
       user {
         id
         name
+        profilePhotoUrl
       }
       checkIn {
         id
         fuzzyLatitude
         fuzzyLongitude
       }
+    }
+    activeBounties(latitude: $lat, longitude: $lng, radiusKm: $radius) {
+      id
+      title
+      reward
+      latitude
+      longitude
+    }
+    activeSwarmCampaigns(latitude: $lat, longitude: $lng, radiusKm: $radius) {
+      id
+      title
+      maxDiscount
+      latitude
+      longitude
     }
   }
 `;
@@ -69,8 +88,31 @@ export default function MapScreen() {
     })();
   }, []);
 
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0.6);
+
+  useEffect(() => {
+    pulseScale.value = withRepeat(
+      withTiming(4, { duration: 2500, easing: Easing.out(Easing.ease) }),
+      -1,
+      false
+    );
+    pulseOpacity.value = withRepeat(
+      withTiming(0, { duration: 2500, easing: Easing.out(Easing.ease) }),
+      -1,
+      false
+    );
+  }, []);
+
+  const pulseStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: pulseScale.value }],
+      opacity: pulseOpacity.value,
+    };
+  });
+
   const handleCheckIn = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    triggerHaptic('medium');
     if (!location) return;
     try {
       await checkIn({
@@ -110,13 +152,15 @@ export default function MapScreen() {
   if (!location) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00ffcc" />
+        <SkeletonLoader width={80} height={80} borderRadius={40} style={{ marginBottom: 20 }} />
         <Text style={styles.loadingText}>Locating you securely...</Text>
       </View>
     );
   }
 
   const nearbyUsers = networkData?.nearbyUsers || [];
+  const activeBounties = networkData?.activeBounties || [];
+  const activeSwarms = networkData?.activeSwarmCampaigns || [];
   const myId = networkData?.me?.id;
 
   return (
@@ -134,24 +178,85 @@ export default function MapScreen() {
         <Marker
           coordinate={{ latitude: location.coords.latitude, longitude: location.coords.longitude }}
           title="You"
-          pinColor="#00ffcc"
-        />
+          zIndex={100}
+        >
+          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+            <Animated.View style={[styles.radarPulse, pulseStyle]} />
+            <View style={styles.userDot} />
+          </View>
+        </Marker>
 
         {nearbyUsers.map((match: any) => {
           if (match.user.id === myId) return null;
-          const scoreText = match.matchScore ? ` - ${match.matchScore}% Match` : '';
+          const scoreText = match.matchScore ? `${match.matchScore}% Match` : '';
           return (
             <Marker
               key={match.checkIn.id}
               coordinate={{ latitude: match.checkIn.fuzzyLatitude, longitude: match.checkIn.fuzzyLongitude }}
-              title={`Tap to connect${scoreText}`}
-              pinColor="#ef4444"
               onCalloutPress={() => {
                 router.push({ pathname: '/schedule', params: { receiverId: match.user.id } });
               }}
-            />
+            >
+              <View style={styles.userMarkerContainer}>
+                 <Image source={{ uri: match.user.profilePhotoUrl || `https://api.dicebear.com/7.x/avataaars/png?seed=${match.user.id}` }} style={styles.userAvatar} />
+                 {match.matchScore && (
+                   <View style={styles.matchBadge}>
+                     <Text style={styles.matchBadgeText}>{match.matchScore}%</Text>
+                   </View>
+                 )}
+              </View>
+              <Callout tooltip>
+                <View style={styles.calloutCard}>
+                  <Text style={styles.calloutTitle}>{match.user.name}</Text>
+                  {scoreText ? <Text style={styles.calloutSubtitle}>{scoreText}</Text> : null}
+                  <Text style={styles.calloutAction}>Tap to connect ➔</Text>
+                </View>
+              </Callout>
+            </Marker>
           );
         })}
+
+        {activeBounties.map((bounty: any) => (
+          <Marker
+            key={`bounty-${bounty.id}`}
+            coordinate={{ latitude: bounty.latitude, longitude: bounty.longitude }}
+            onCalloutPress={() => {
+              router.push(`/bounty/${bounty.id}`);
+            }}
+          >
+            <View style={styles.bountyMarker}>
+              <Text style={styles.bountyMarkerEmoji}>💰</Text>
+            </View>
+            <Callout tooltip>
+              <View style={styles.calloutCard}>
+                <Text style={styles.calloutTitle}>{bounty.title}</Text>
+                <Text style={styles.calloutSubtitle}>Reward: ${(bounty.reward / 100).toFixed(2)}</Text>
+                <Text style={styles.calloutAction}>Claim Bounty ➔</Text>
+              </View>
+            </Callout>
+          </Marker>
+        ))}
+
+        {activeSwarms.map((swarm: any) => (
+          <Marker
+            key={`swarm-${swarm.id}`}
+            coordinate={{ latitude: swarm.latitude, longitude: swarm.longitude }}
+            onCalloutPress={() => {
+              alert(`Swarm unlocked at ${swarm.title}! Check-in to join.`);
+            }}
+          >
+            <View style={styles.swarmMarker}>
+              <Text style={styles.swarmMarkerEmoji}>🐝</Text>
+            </View>
+            <Callout tooltip>
+              <View style={styles.calloutCard}>
+                <Text style={styles.calloutTitle}>{swarm.title}</Text>
+                <Text style={styles.calloutSubtitle}>Max Discount: {swarm.maxDiscount}</Text>
+                <Text style={styles.calloutAction}>Join Swarm ➔</Text>
+              </View>
+            </Callout>
+          </Marker>
+        ))}
       </MapView>
 
       <BlurView intensity={95} tint="dark" style={styles.overlay}>
@@ -164,7 +269,7 @@ export default function MapScreen() {
               key={tier} 
               style={[styles.tierBtn, selectedTier === tier && styles.tierBtnSelected]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                triggerHaptic('light');
                 setSelectedTier(tier);
               }}
             >
@@ -175,17 +280,13 @@ export default function MapScreen() {
           ))}
         </View>
 
-        <TouchableOpacity 
-          style={styles.checkInBtn} 
-          onPress={handleCheckIn}
-          disabled={loading}
-        >
-          {loading ? (
-             <ActivityIndicator color="#000" />
-          ) : (
-             <Text style={styles.checkInBtnText}>Check In Here</Text>
-          )}
-        </TouchableOpacity>
+        <View style={{ marginBottom: 60 }}>
+          <AnimatedButton
+            title={loading ? "Locating..." : "Check In Here"}
+            onPress={handleCheckIn}
+            variant="primary"
+          />
+        </View>
       </BlurView>
     </View>
   );
@@ -230,21 +331,18 @@ const styles = StyleSheet.create({
   tierBtnSelected: { backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
   tierText: { color: '#888', fontSize: 13, fontWeight: '600' },
   tierTextSelected: { color: '#fff', fontWeight: '800' },
-  checkInBtn: {
-    backgroundColor: '#fff',
-    paddingVertical: 18,
-    borderRadius: 15,
-    alignItems: 'center',
-    ...(Platform.OS === 'web' ? { boxShadow: '0px 0px 10px rgba(255,255,255,0.2)' as any } : {
-      shadowColor: '#fff',
-      shadowOpacity: 0.2,
-      shadowRadius: 10,
-    }),
-    marginBottom: 60, // Give space for floating tab bar
-  },
-  checkInBtnText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '800',
-  }
+  userDot: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#00ffcc', borderWidth: 3, borderColor: '#000', zIndex: 2 },
+  radarPulse: { position: 'absolute', width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0, 255, 204, 0.4)', zIndex: 1 },
+  userMarkerContainer: { alignItems: 'center', justifyContent: 'center' },
+  userAvatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: '#fff' },
+  matchBadge: { position: 'absolute', bottom: -5, backgroundColor: '#ef4444', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10, borderWidth: 1, borderColor: '#fff' },
+  matchBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+  bountyMarker: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFD700', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  bountyMarkerEmoji: { fontSize: 20 },
+  swarmMarker: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FF9100', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
+  swarmMarkerEmoji: { fontSize: 20 },
+  calloutCard: { backgroundColor: 'rgba(25, 25, 25, 0.95)', padding: 15, borderRadius: 16, minWidth: 150, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  calloutTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  calloutSubtitle: { color: '#00ffcc', fontSize: 14, fontWeight: '600', marginBottom: 8 },
+  calloutAction: { color: '#3b82f6', fontSize: 13, fontWeight: '700' },
 });

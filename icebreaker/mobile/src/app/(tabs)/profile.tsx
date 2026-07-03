@@ -4,6 +4,7 @@ import { gql, useMutation, useQuery } from '@apollo/client';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 
 const GET_ME = gql`
   query GetMeProfile {
@@ -65,6 +66,7 @@ const COLORS = [
 ];
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const [activeColors, setActiveColors] = useState<string[]>([]);
   const [showOnMap, setShowOnMap] = useState(true);
   
@@ -240,6 +242,51 @@ export default function ProfileScreen() {
                   ✨ PRO ACTIVE (Expires: {new Date(me.proExpiresAt).toLocaleDateString()})
                 </Text>
               )}
+            </View>
+          </BlurView>
+        )}
+
+        {/* Creator & Business Tools */}
+        {me && (
+          <BlurView intensity={20} tint="dark" style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="briefcase" size={24} color="#FFD700" />
+              <Text style={[styles.sectionTitle, { color: '#FFD700' }]}>Creator & Business Tools</Text>
+            </View>
+            
+            <View style={styles.row}>
+              <Text style={styles.label}>My Wallet</Text>
+              <TouchableOpacity style={styles.shareSmallButton} onPress={() => router.push('/wallet')}>
+                <Text style={styles.shareSmallText}>View</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ height: 20 }} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Simulate Post (Auto-Tag)</Text>
+              <TouchableOpacity style={styles.shareSmallButton} onPress={() => router.push('/create-post')}>
+                <Text style={styles.shareSmallText}>Test AI</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ height: 20 }} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Create a Bounty</Text>
+              <TouchableOpacity style={styles.shareSmallButton} onPress={() => router.push('/business/create-bounty')}>
+                <Text style={styles.shareSmallText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ height: 20 }} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Create Swarm Campaign</Text>
+              <TouchableOpacity style={styles.shareSmallButton} onPress={() => router.push('/business/create-swarm')}>
+                <Text style={styles.shareSmallText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ height: 20 }} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Manage Storefront</Text>
+              <TouchableOpacity style={styles.shareSmallButton} onPress={() => router.push('/business/manage-storefront')}>
+                <Text style={styles.shareSmallText}>Manage</Text>
+              </TouchableOpacity>
             </View>
           </BlurView>
         )}

@@ -34,6 +34,23 @@ const GET_NETWORK_DATA = gql`
       username
       profilePhotoUrl
     }
+    myConversations {
+      otherUser {
+        id
+        name
+        username
+        profilePhotoUrl
+      }
+      lastMessage {
+        id
+        text
+        createdAt
+        isRead
+        senderId
+        sharedContentId
+      }
+      unreadCount
+    }
   }
 `;
 
@@ -91,6 +108,7 @@ export default function NetworkScreen() {
   const myId = data?.me?.id;
   const requests = data?.myMeetingRequests || [];
   const followRequests = data?.pendingFollowRequests || [];
+  const conversations = data?.myConversations || [];
 
   const handleRespond = async (id: string, status: string) => {
     try {
@@ -114,6 +132,10 @@ export default function NetworkScreen() {
 
   const handleUserTap = (userId: string) => {
     router.push({ pathname: '/schedule', params: { receiverId: userId } });
+  };
+
+  const handleChatTap = (userId: string) => {
+    router.push(`/messages/${userId}`);
   };
 
   const renderRequest = ({ item }: any) => {
@@ -207,14 +229,54 @@ export default function NetworkScreen() {
                 ))}
               </View>
             )}
-            <Text style={styles.sectionHeaderTitle}>Meeting Requests</Text>
+
+            {/* Conversations List */}
+            {conversations.length > 0 && (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={styles.sectionHeaderTitle}>Direct Messages</Text>
+                {conversations.map((conv: any) => {
+                  const isUnread = conv.unreadCount > 0;
+                  const isMe = conv.lastMessage.senderId === myId;
+                  const messagePreview = conv.lastMessage.sharedContentId ? 
+                    (isMe ? 'You shared a post' : 'Shared a post with you') :
+                    (isMe ? `You: ${conv.lastMessage.text}` : conv.lastMessage.text);
+
+                  return (
+                    <TouchableOpacity 
+                      key={conv.otherUser.id} 
+                      style={styles.conversationRow}
+                      onPress={() => handleChatTap(conv.otherUser.id)}
+                    >
+                      <View style={styles.conversationAvatar}>
+                        <Ionicons name="person" size={24} color="#666" />
+                      </View>
+                      <View style={styles.conversationInfo}>
+                        <Text style={[styles.conversationName, isUnread && styles.unreadText]}>{conv.otherUser.name || conv.otherUser.username}</Text>
+                        <Text style={[styles.conversationPreview, isUnread && styles.unreadText]} numberOfLines={1}>
+                          {messagePreview}
+                        </Text>
+                      </View>
+                      {isUnread && (
+                        <View style={styles.unreadBadge}>
+                          <Text style={styles.unreadBadgeText}>{conv.unreadCount}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+
+            {requests.length > 0 && <Text style={styles.sectionHeaderTitle}>Meeting Requests</Text>}
           </>
         )}
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="mail-open-outline" size={48} color="#444" />
-            <Text style={styles.emptyText}>No meeting requests yet.</Text>
-          </View>
+          (requests.length === 0 && conversations.length === 0) ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="mail-open-outline" size={48} color="#444" />
+              <Text style={styles.emptyText}>No messages or requests.</Text>
+            </View>
+          ) : null
         }
       />
     </SafeAreaView>
@@ -342,5 +404,53 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 13,
+  },
+  conversationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  conversationAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  conversationInfo: {
+    flex: 1,
+  },
+  conversationName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  conversationPreview: {
+    color: '#888',
+    fontSize: 14,
+  },
+  unreadText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  unreadBadge: {
+    backgroundColor: '#3b82f6',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    marginLeft: 10,
+  },
+  unreadBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   }
 });

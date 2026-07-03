@@ -1,0 +1,609 @@
+src/__tests__/Map.test.tsx(5,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(6,29): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(9,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(10,12): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(11,12): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(14,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(29,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(30,8): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(48,23): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(51,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/__tests__/Map.test.tsx(52,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/__tests__/Map.test.tsx(56,5): error TS2304: Cannot find name 'expect'.
+src/__tests__/Network.test.tsx(5,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(6,29): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(9,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(10,12): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(11,12): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(14,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(15,8): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(33,23): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(36,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/__tests__/Network.test.tsx(37,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/__tests__/Network.test.tsx(43,5): error TS2304: Cannot find name 'expect'.
+src/__tests__/Network.test.tsx(47,5): error TS2304: Cannot find name 'expect'.
+src/app/(auth)/_layout.tsx(1,23): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/(auth)/login.tsx(3,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/(auth)/login.tsx(8,47): error TS7016: Could not find a declaration file for module 'react-native-reanimated'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/react-native-reanimated/lib/module/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-native-reanimated` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-native-reanimated';`
+src/app/(auth)/onboarding.tsx(3,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/(tabs)/_layout.tsx(1,22): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/(tabs)/_layout.tsx(32,31): error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof StyleSheet'. Did you mean 'absoluteFill'?
+src/app/(tabs)/_layout.tsx(44,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(44,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(51,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(51,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(58,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(58,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(65,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(65,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(72,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(72,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/camera.tsx(18,28): error TS2749: 'Camera' refers to a value, but is being used as a type here. Did you mean 'typeof Camera'?
+src/app/(tabs)/camera.tsx(80,9): error TS2322: Type '{ ref: RefObject<Camera>; style: AbsoluteFillStyle; device: CameraDevice; isActive: boolean; photo: boolean; }' is not assignable to type 'IntrinsicAttributes & CameraViewProps'.
+  Property 'photo' does not exist on type 'IntrinsicAttributes & CameraViewProps'.
+src/app/(tabs)/feed.tsx(7,95): error TS7016: Could not find a declaration file for module 'react-native-reanimated'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/react-native-reanimated/lib/module/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-native-reanimated` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-native-reanimated';`
+src/app/(tabs)/feed.tsx(8,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/(tabs)/feed.tsx(171,29): error TS2339: Property 'media' does not exist on type '{ container: { flex: number; backgroundColor: string; }; header: { paddingHorizontal: number; paddingVertical: number; flexDirection: "row"; alignItems: "center"; justifyContent: "space-between"; borderBottomWidth: number; borderBottomColor: string; }; ... 61 more ...; promoText: { ...; }; }'.
+src/app/(tabs)/feed.tsx(377,56): error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof StyleSheet'. Did you mean 'absoluteFill'?
+src/app/(tabs)/index.tsx(7,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/(tabs)/network.tsx(4,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/(tabs)/network.tsx(72,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): SafeAreaView', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): SafeAreaView', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(73,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(74,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(82,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): SafeAreaView', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): SafeAreaView', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(83,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(84,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(128,44): error TS2322: Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+  Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+    Type 'TextStyle' is not assignable to type 'ViewStyle'.
+      Types of property 'cursor' are incompatible.
+        Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+          Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(129,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(131,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(134,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(135,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(136,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(137,31): error TS2349: This expression is not callable.
+  No constituent of type 'ViewStyle | TextStyle | ImageStyle' is callable.
+src/app/(tabs)/network.tsx(141,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(142,31): error TS2322: Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+  Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+    Type 'TextStyle' is not assignable to type 'ViewStyle'.
+      Types of property 'cursor' are incompatible.
+        Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+          Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(146,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(148,31): error TS2322: Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+  Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+    Type 'TextStyle' is not assignable to type 'ViewStyle'.
+      Types of property 'cursor' are incompatible.
+        Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+          Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(152,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(159,14): error TS2322: Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+  Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+    Type 'TextStyle' is not assignable to type 'ViewStyle'.
+      Types of property 'cursor' are incompatible.
+        Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+          Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(163,20): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(171,19): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): SafeAreaView', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): SafeAreaView', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(172,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(178,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: FlatListProps<any>): FlatList<any>', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: FlatListProps<any>, context: any): FlatList<any>', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(182,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(183,23): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(185,25): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(188,38): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(189,27): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(190,29): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(194,31): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(195,31): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(198,27): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(199,41): error TS2322: Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+  Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+    Type 'TextStyle' is not assignable to type 'ViewStyle'.
+      Types of property 'cursor' are incompatible.
+        Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+          Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(200,31): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(202,41): error TS2322: Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+  Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+    Type 'TextStyle' is not assignable to type 'ViewStyle'.
+      Types of property 'cursor' are incompatible.
+        Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+          Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(210,19): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(214,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+      Type 'TextStyle' is not assignable to type 'StyleProp<ViewStyle>'.
+        Type 'TextStyle' is not assignable to type 'ViewStyle'.
+          Types of property 'cursor' are incompatible.
+            Type 'string | undefined' is not assignable to type 'CursorValue | undefined'.
+              Type 'string' is not assignable to type 'CursorValue | undefined'.
+src/app/(tabs)/network.tsx(216,19): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'ViewStyle | TextStyle | ImageStyle' is not assignable to type 'StyleProp<TextStyle>'.
+      Type 'ViewStyle' is not assignable to type 'StyleProp<TextStyle>'.
+        Type 'ViewStyle' is not assignable to type 'TextStyle'.
+          Types of property 'userSelect' are incompatible.
+            Type 'string | undefined' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+              Type 'string' is not assignable to type '"text" | "none" | "auto" | "contain" | "all" | undefined'.
+src/app/(tabs)/network.tsx(253,15): error TS2322: Type '(status: string) => { color: string; fontWeight: string; marginTop: number; fontSize: number; letterSpacing: number; }' is not assignable to type 'ViewStyle | TextStyle | ImageStyle'.
+src/app/(tabs)/profile.tsx(7,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/_layout.tsx(2,47): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/alerts.tsx(5,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/bounty/[id].tsx(3,49): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/business/create-bounty.tsx(3,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/business/create-swarm.tsx(3,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/business/manage-storefront.tsx(3,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/cart.tsx(4,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/create-post.tsx(5,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/rating.tsx(3,49): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/referral/[code].tsx(3,49): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/schedule.tsx(3,49): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/user/[id].tsx(3,49): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/user/[id].tsx(31,41): error TS2304: Cannot find name 'useQuery'.
+src/app/venue/[id].tsx(3,49): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/app/wallet.tsx(5,27): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/components/animated-icon.tsx(4,44): error TS7016: Could not find a declaration file for module 'react-native-reanimated'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/react-native-reanimated/lib/module/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-native-reanimated` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-native-reanimated';`
+src/components/animated-icon.tsx(36,65): error TS7006: Parameter 'finished' implicitly has an 'any' type.
+src/components/animated-icon.web.tsx(3,44): error TS7016: Could not find a declaration file for module 'react-native-reanimated'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/react-native-reanimated/lib/module/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-native-reanimated` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-native-reanimated';`
+src/components/app-tabs.tsx(1,28): error TS7016: Could not find a declaration file for module 'expo-router/unstable-native-tabs'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/unstable-native-tabs.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router/unstable-native-tabs';`
+src/components/app-tabs.web.tsx(8,8): error TS7016: Could not find a declaration file for module 'expo-router/ui'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/ui.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router/ui';`
+src/components/external-link.tsx(1,28): error TS7016: Could not find a declaration file for module 'expo-router'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/expo-router/build/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/expo-router` if it exists or add a new declaration (.d.ts) file containing `declare module 'expo-router';`
+src/components/external-link.tsx(13,23): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/components/ui/collapsible.tsx(4,34): error TS7016: Could not find a declaration file for module 'react-native-reanimated'. '/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/mobile/node_modules/react-native-reanimated/lib/module/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-native-reanimated` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-native-reanimated';`
+src/utils/notifications.ts(6,35): error TS2322: Type 'Promise<{ shouldShowAlert: true; shouldPlaySound: true; shouldSetBadge: false; }>' is not assignable to type 'Promise<NotificationBehavior>'.
+  Type '{ shouldShowAlert: true; shouldPlaySound: true; shouldSetBadge: false; }' is missing the following properties from type 'NotificationBehavior': shouldShowBanner, shouldShowList
