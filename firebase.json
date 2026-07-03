@@ -40,11 +40,11 @@
     "rewrites": [
       {
         "source": "/",
-        "destination": "/mindwave.html"
+        "destination": "/index.html"
       },
       {
         "source": "**",
-        "destination": "/mindwave.html"
+        "destination": "/index.html"
       }
     ]
   }

@@ -16,6 +16,11 @@
     filter: drop-shadow(0 0 8px var(--accent));
 }
 
+.visual-btn.active svg {
+    /* Mathematically flip the accent color to its exact opposite on the color wheel */
+    filter: hue-rotate(180deg) brightness(1.5) drop-shadow(0 0 5px currentColor) !important;
+}
+
 /* Light Theme Adjustments */
 [data-theme="cloud"] .visual-btn,
 [data-theme="dawn"] .visual-btn {

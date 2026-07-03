@@ -626,8 +626,13 @@ async function handleUpgrade(productId, billingPeriod = 'monthly', couponCode = 
         }
         // ------------------------------
 
-        // Map products to existing stripe logic
-        goToCheckout(productId, billingPeriod, couponCode);
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+            const { triggerRevenueCatCheckout } = await import('../services/revenuecat.js');
+            await triggerRevenueCatCheckout(productId, billingPeriod);
+        } else {
+            // Map products to existing stripe logic for Web
+            goToCheckout(productId, billingPeriod, couponCode);
+        }
     } catch (error) {
         console.error('[Pricing] Checkout error:', error);
         if (error.message.includes('logged in')) {

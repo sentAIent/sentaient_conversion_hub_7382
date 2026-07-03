@@ -202,6 +202,15 @@ export function goToCheckout(tier, billingPeriod = 'monthly', discountCode = nul
 
     // Redirect to Stripe or show a helpful error
     try {
+        // APPLE COMPLIANCE: If native iOS, we MUST use RevenueCat / Native IAP, not Stripe URLs
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+            console.log('[IAP] Native platform detected. Triggering RevenueCat in-app purchase...');
+            // STUB: RevenueCat checkout integration
+            // e.g., await Purchases.purchasePackage(package)
+            alert("App Store Checkout (RevenueCat) triggered! Please configure your Apple Developer API keys in RevenueCat to finalize purchases.");
+            return;
+        }
+
         // Basic URL validation
         new URL(checkoutUrl);
 

@@ -1458,25 +1458,7 @@ static CYMATIC_PATTERNS = [
     // --- Tsunami Controls ---
     setTsunamiKanagawa(val) {
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
-            if (val > 0.5) {
-                this.tsunamiMaterial.uniforms.uCurl.value = 4.0;
-                this.tsunamiMaterial.uniforms.uAmplitude.value = 3.0;
-                
-                // Update UI sliders if present
-                const curlSlider = document.getElementById('tsunamiCurlSlider');
-                if (curlSlider) { curlSlider.value = 4.0; document.getElementById('tsunamiCurlVal').textContent = '4.0'; }
-                const ampSlider = document.getElementById('tsunamiAmplitudeSlider');
-                if (ampSlider) { ampSlider.value = 3.0; document.getElementById('tsunamiAmplitudeVal').textContent = '3.0'; }
-            } else {
-                this.tsunamiMaterial.uniforms.uCurl.value = 1.0;
-                this.tsunamiMaterial.uniforms.uAmplitude.value = 1.0;
-                
-                // Update UI sliders if present
-                const curlSlider = document.getElementById('tsunamiCurlSlider');
-                if (curlSlider) { curlSlider.value = 1.0; document.getElementById('tsunamiCurlVal').textContent = '1.0'; }
-                const ampSlider = document.getElementById('tsunamiAmplitudeSlider');
-                if (ampSlider) { ampSlider.value = 1.0; document.getElementById('tsunamiAmplitudeVal').textContent = '1.0'; }
-            }
+            this.tsunamiMaterial.uniforms.uKanagawa.value = val;
         }
     }
     
@@ -1484,10 +1466,18 @@ static CYMATIC_PATTERNS = [
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
             this.tsunamiMaterial.uniforms.uAmplitude.value = parseFloat(val);
         }
+        if (this.tsunamiAnimState && this.tsunamiAnimState.active) {
+            this.tsunamiAnimState.startAmp = parseFloat(val);
+            this.tsunamiAnimState.phase = 0.0; // Reset animation
+        }
     }
     setTsunamiCurl(val) {
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
             this.tsunamiMaterial.uniforms.uCurl.value = parseFloat(val);
+        }
+        if (this.tsunamiAnimState && this.tsunamiAnimState.active) {
+            this.tsunamiAnimState.startCurl = parseFloat(val);
+            this.tsunamiAnimState.phase = 0.0; // Reset animation
         }
     }
     setTsunamiMist(val) {
@@ -1530,9 +1520,16 @@ static CYMATIC_PATTERNS = [
     setTsunamiLoop(isLooping) {
         if (this.tsunamiMaterial && this.tsunamiMaterial.uniforms) {
             this.tsunamiMaterial.uniforms.uLoopActive.value = isLooping ? 1.0 : 0.0;
-            if (isLooping) {
-                this.tsunamiMaterial.uniforms.uTime.value = 0.0;
-            }
+        }
+        
+        if (!this.tsunamiAnimState) {
+            this.tsunamiAnimState = { active: false, phase: 0.0, startAmp: 1.0, startCurl: 1.0 };
+        }
+        this.tsunamiAnimState.active = isLooping;
+        if (isLooping) {
+            this.tsunamiAnimState.phase = 0.0;
+            this.tsunamiAnimState.startAmp = this.tsunamiMaterial ? this.tsunamiMaterial.uniforms.uAmplitude.value : 1.0;
+            this.tsunamiAnimState.startCurl = this.tsunamiMaterial ? this.tsunamiMaterial.uniforms.uCurl.value : 1.0;
         }
     }
     initTsunami() {
@@ -1549,17 +1546,20 @@ static CYMATIC_PATTERNS = [
             uLoopTime: { value: 0.0 },
             uNormBass: { value: 0 },
             uColor: { value: new THREE.Color(0x0bd3d3) },
+            uHasCustomColor: { value: 0.0 },
             uSecondaryColor: { value: new THREE.Color(0x006994) },
             uDeepColor: { value: new THREE.Color(0x005bb5) },
             uFoamColor: { value: new THREE.Color(0xffffff) },
             uSunColor: { value: new THREE.Color(0xffe599) },
-            uAmplitude: { value: 1.0 },
-            uCurl: { value: 1.0 },
+            uAmplitude: { value: 2.2 },
+            uCurl: { value: 2.4 },
             uMist: { value: 1.0 },
-            uMoonPhase: { value: 1.0 },
+            uMoonPhase: { value: 0.0 },
             uStyle: { value: 1.0 },
-            uReactivity: { value: 1.0 },
-            uLoopActive: { value: 0.0 }
+            uReactivity: { value: 2.0 },
+            uLoopActive: { value: 0.0 },
+            uKanagawa: { value: 0.0 },
+            uWaveOffset: { value: 0.0 }
         };
         
         const vertexShader = `
@@ -1580,6 +1580,8 @@ static CYMATIC_PATTERNS = [
             uniform float uLoopActive;
             uniform float uLoopTime;
             uniform float uStyle;
+            uniform float uWaveOffset;
+            uniform float uKanagawa;
             
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -1618,25 +1620,10 @@ static CYMATIC_PATTERNS = [
                 float activeCurl = targetCurl;
                 float phase = 0.0;
                 
-                if (uLoopActive > 0.5) {
-                    float totalDur = 12.0;
-                    float progress = clamp(uTime / totalDur, 0.0, 1.0);
-                    float ampProgress = clamp(progress * 2.0, 0.0, 1.0);
-                    float curlProgress = clamp((progress - 0.5) * 2.0, 0.0, 1.0);
-                    
-                    float ampEase = 1.0 - pow(1.0 - ampProgress, 3.0);
-                    float curlEase = 1.0 - pow(1.0 - curlProgress, 3.0);
-                    
-                    activeAmp = mix(uAmplitude * 0.1, uAmplitude, ampEase);
-                    activeCurl = mix(0.0, targetCurl, curlEase);
-                }
-                
                 // Base coordinate for the wave sweeping across.
-                // Base coordinate for the wave. 
-                // We make it static so the barrel stays in one place relative to the camera!
-                // The camera panning is handled in Javascript by animating the mesh position!
+                // We add uWaveOffset so the JS can physically pan the wave from left to right!
                 // Reduced pos.y slant to 0.1 so the pipeline stays centered on the camera in the distance!
-                float waveX = pos.x + (pos.y * 0.1) + 20.0;
+                float waveX = pos.x + (pos.y * 0.1) + 20.0 - uWaveOffset;
                 vWaveX = waveX; 
                 
                 // --- WAVE ENVELOPE (Shape & Height) ---
@@ -1672,7 +1659,9 @@ static CYMATIC_PATTERNS = [
                 float curlStartHeight = 25.0; 
                 if (pos.z > curlStartHeight) {
                     float h = pos.z - curlStartHeight; 
-                    float normH = clamp(h / 35.0, 0.0, 1.0); // 35 is roughly max height above curl start
+                    // Dynamic max height prevents the wave from breaking into a straight line at high amplitudes
+                    float currentMaxH = max(10.0, baseHeight - curlStartHeight);
+                    float normH = clamp(h / currentMaxH, 0.0, 1.0); 
                     
                     float normalizedCurl = clamp(activeCurl / 4.0, 0.0, 1.0);
                     
@@ -1684,8 +1673,9 @@ static CYMATIC_PATTERNS = [
                     // Wrap the curl to exactly 190 degrees (1.05 PI) so the lip completes the barrel and touches the water
                     float bendAngle = pow(normH, 1.2) * 3.14159 * 1.05 * normalizedCurl * curlEnvelope; 
                     
-                    // Massive forward throw to ensure the lip crosses over the trough
-                    float forwardThrow = pow(normH, 2.0) * 40.0 * normalizedCurl * curlEnvelope;
+                    // Massive forward throw, scaled to the dynamic height to prevent the huge lip from intersecting itself
+                    float heightScale = currentMaxH / 35.0;
+                    float forwardThrow = pow(normH, 2.0) * 40.0 * heightScale * normalizedCurl * curlEnvelope;
                     
                     // Constant radius to maintain a clean C-shape overhang and preserve wave height
                     float radius = h;
@@ -1700,7 +1690,7 @@ static CYMATIC_PATTERNS = [
                 
                 // Add the rippling noise AFTER the physics calculation so it doesn't cause vertices to slide horizontally and tear!
                 pos.z += noiseDisp;
-
+                
                 // Pass the original, uncurled Z height so color and foam track the physical lip of the wave!
                 vElevation = originalZ;
                 
@@ -1738,16 +1728,25 @@ static CYMATIC_PATTERNS = [
             uniform float uReactivity;
             uniform float uLoopActive;
             uniform float uLoopTime;
+            uniform float uKanagawa;
+            uniform float uHasCustomColor;
+            uniform float uWaveOffset;
 
+            vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            float mod289(float x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            float permute(float x) { return mod289(((x*34.0)+1.0)*x); }
             vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+            vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+            
             float snoise(vec2 v) {
                 const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
                 vec2 i  = floor(v + dot(v, C.yy) );
                 vec2 x0 = v -   i + dot(i, C.xx);
-                vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-                vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1;
+                vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
                 i = mod289(i);
                 vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
                 vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
@@ -1762,36 +1761,130 @@ static CYMATIC_PATTERNS = [
             }
 
             void main() {
+                // Base colors
+                vec3 baseColor = uColor;
+                vec3 secColor = uSecondaryColor;
+                vec3 deepColor = uDeepColor;
+                vec3 foamColor = uFoamColor;
+                
+                if (uKanagawa > 0.5) {
+                    if (uHasCustomColor > 0.5) {
+                        // Inherit custom color directly but build depth for the Kanagawa aesthetic
+                        baseColor = uColor;
+                        secColor = uColor * 0.5;
+                        deepColor = uColor * 0.15;
+                        foamColor = mix(vec3(0.96, 0.96, 0.92), uColor, 0.2); // Mostly bone white, slightly tinted
+                    } else {
+                        // Default classic Kanagawa blues
+                        deepColor = vec3(0.0, 0.08, 0.35); // Pure deep Navy/Prussian Blue
+                        secColor = vec3(0.17, 0.42, 0.77); // Indigo/teal
+                        baseColor = vec3(0.65, 0.8, 0.95); // Light blue
+                        foamColor = vec3(0.96, 0.96, 0.92); // Bone white foam
+                    }
+                } else {
+                    if (uHasCustomColor > 0.5) {
+                        baseColor = uColor;
+                        secColor = uColor * 0.6;
+                        deepColor = uColor * 0.25;
+                    }
+                }
+
                 // Color Mapping - PERMANENT Buttery Smooth Gradients
                 float midWeight = smoothstep(2.0, 15.0, vElevation);
                 float highWeight = smoothstep(12.0, 35.0, vElevation);
                 
-                vec3 waterColor = mix(uDeepColor, uSecondaryColor, midWeight);
-                waterColor = mix(waterColor, uColor, highWeight);
+                vec3 waterColor = mix(deepColor, secColor, midWeight);
+                waterColor = mix(waterColor, baseColor, highWeight);
+                
+                if (uKanagawa > 0.5) {
+                    // Woodblock Striations (Hard-edged, hand-drawn contour lines)
+                    float striationNoise = sin(vElevation * 1.2 + vWorldPosition.x * 0.2);
+                    float breakups = snoise(vWorldPosition.xy * 0.08) * 0.8;
+                    
+                    // Tight step for the hard-edged woodblock print style
+                    float striationMask = step(0.85, striationNoise + breakups);
+                    
+                    // Iconic Kanagawa light blue contour lines
+                    vec3 stripeColor = vec3(0.65, 0.8, 0.95); 
+                    
+                    // Only apply striations on the raised wave, leave flat ocean smooth
+                    float elevationMask = smoothstep(5.0, 15.0, vElevation);
+                    striationMask *= elevationMask;
+                    
+                    waterColor = mix(waterColor, stripeColor, striationMask);
+                }
                 
                 // Graphic Foam Claws - isolated strictly to elevation > 10.0
                 float foamThr = 0.5 - (max(uNormBass, 0.05) * uReactivity * 0.5);
-                float isFoam = step(foamThr, vFoamFactor);
+                float foamFac = vFoamFactor;
                 
+                if (uKanagawa > 0.5) {
+                    // NUMBER OF FINGERS scales with reactivity
+                    float numFingers = 8.0 + (uReactivity * max(0.1, uNormBass) * 45.0);
+                    
+                    // Elevation mapped from 25 (bottom of claws) to 50 (top crest)
+                    float elevationFactor = clamp((vElevation - 25.0) / 25.0, 0.0, 1.0);
+                    
+                    // Curve the fingers strongly forward to mimic the Kanagawa hook
+                    // As elevation goes down, the distortion increases, bending the finger into a 'C' shape
+                    float hookDistortion = (50.0 - vElevation) * 0.6 + sin(vElevation * 0.4) * 2.0;
+                    
+                    // Base repeating wave for the distinct fingers
+                    float baseFingers = sin((vWorldPosition.y + hookDistortion) * numFingers * 0.06);
+                    
+                    // High-frequency noise to give it the jagged, hand-drawn woodblock edge
+                    float jaggedNoise = snoise(vWorldPosition.xy * 0.5 - vec2(uTime * 1.5)) * 0.6 + snoise(vWorldPosition.xy * 1.5) * 0.3;
+                    
+                    // Combine the shape
+                    float clawShape = baseFingers + jaggedNoise;
+                    
+                    // The threshold dictates thickness.
+                    // At the crest (elevationFactor = 1.0), threshold is low (-0.5), making it a solid block of white foam.
+                    // As it reaches down (elevationFactor = 0.0), threshold is high (1.3), tapering the foam into sharp, thin claws.
+                    float threshold = mix(1.3, -0.5, elevationFactor);
+                    
+                    // Hard step for the woodblock print aesthetic
+                    float clawIntensity = step(threshold, clawShape);
+                    
+                    // Add the iconic Kanagawa floating foam droplets breaking off the claws
+                    float dropletNoise = snoise(vWorldPosition.xy * 0.8 - vec2(uTime * 2.0));
+                    float dropletMask = step(0.85, dropletNoise);
+                    
+                    // Combine claws and droplets, isolating them to the top half of the wave
+                    float finalKanagawaFoam = clamp(clawIntensity + dropletMask, 0.0, 1.0) * step(25.0, vElevation);
+                    
+                    foamFac += finalKanagawaFoam * 5.0; // Force to pure foam
+                }
+                
+                float isFoam = step(foamThr, foamFac);
                 float floorMask = smoothstep(10.0, 15.0, vElevation);
                 isFoam *= floorMask;
+                vec3 finalColor = mix(waterColor, foamColor, isFoam);
                 
-                vec3 finalColor = mix(waterColor, uFoamColor, isFoam);
-                
-                // STYLIZATION: Great Wave Cartoon Tendrils
-                if (vStyle > 0.1 && floorMask > 0.5) {
-                    float foamEdge = smoothstep(foamThr - 0.1, foamThr, vFoamFactor) - smoothstep(foamThr, foamThr + 0.05, vFoamFactor);
-                    if (foamEdge > 0.5) {
-                        finalColor = mix(finalColor, uDeepColor, vStyle * 0.8);
-                    }
+                // STYLIZATION: Synthwave / Holographic Grid (Applies to ALL waves!)
+                if (vStyle > 0.01) {
+                    // Create a sharp geometric grid on the water surface
+                    vec2 gridUV = vWorldPosition.xy * 0.3;
                     
-                    if (isFoam > 0.5) {
-                        float woodblockLines = (sin(vWorldPosition.x * 0.8) + cos(vWorldPosition.y * 0.8)) * 0.5;
-                        float lineThr = 0.6 - (vStyle * 0.2);
-                        if (woodblockLines > lineThr) {
-                            finalColor = mix(finalColor, uSecondaryColor, vStyle * 0.6);
-                        }
-                    }
+                    // Warp the grid slightly along the elevation to make it curve with the barrel!
+                    gridUV.x += sin(vElevation * 0.15) * 1.5;
+                    
+                    float gridX = abs(fract(gridUV.x) - 0.5) * 2.0;
+                    float gridY = abs(fract(gridUV.y) - 0.5) * 2.0;
+                    
+                    // Grid lines become sharper and brighter as stylization increases
+                    float lineThickness = mix(0.9, 0.96, vStyle);
+                    float gridMask = step(lineThickness, max(gridX, gridY));
+                    
+                    // Fade the grid out ONLY on the thick foam, let it wrap the entire water body (barrel included!)
+                    gridMask *= (1.0 - isFoam);
+                    
+                    // Vibrant glowing grid lines matching the secondary theme color
+                    vec3 gridColor = uSecondaryColor * 1.5;
+                    finalColor = mix(finalColor, gridColor, gridMask * vStyle);
+                    
+                    // Darken the entire water base slightly to make the grid pop!
+                    finalColor = mix(finalColor, finalColor * 0.5, vStyle * 0.5 * (1.0 - isFoam));
                 }
                 
                 // Loop Washout
@@ -1847,9 +1940,9 @@ static CYMATIC_PATTERNS = [
                 // Less intense, softer sparkles
                 float moonSpec = (moonSpecAmount * 0.4 + sparkles * broadCone * 2.0) * smoothstep(-20.0, 10.0, vElevation);
                 
-                // Blend based on uMist
-                float sunWeight = smoothstep(0.0, 1.0, uMist);
-                float moonWeight = smoothstep(1.0, 0.0, uMist * 2.0); // Fades completely in earlier half
+                // Use uMist directly as a multiplier for Sun Reflection (scales 0.0 to 3.0)
+                float sunWeight = uMist;
+                float moonWeight = max(0.0, 1.0 - uMist * 1.5); // Fades completely as sun gets stronger
                 
                 // Apply ONLY sun ambient to water (leave wave base color alone for the moon per user request!)
                 finalColor = mix(finalColor, sunColor, sunMixIntensity * sunWeight);
@@ -1893,23 +1986,23 @@ static CYMATIC_PATTERNS = [
         // PHYSICAL SUN (In the sky - Cursor Style SVG)
         const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
             <g>
-                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(0,50,50)"/>
-                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(45,50,50)"/>
-                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(90,50,50)"/>
-                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(135,50,50)"/>
-                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(180,50,50)"/>
-                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(225,50,50)"/>
-                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(270,50,50)"/>
-                <polygon points="46,35 54,35 50,8"  fill="#ffcc00" transform="rotate(315,50,50)"/>
-                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(22.5,50,50)"/>
-                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(67.5,50,50)"/>
-                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(112.5,50,50)"/>
-                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(157.5,50,50)"/>
-                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(202.5,50,50)"/>
-                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(247.5,50,50)"/>
-                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(292.5,50,50)"/>
-                <polygon points="48,35 52,35 50,18" fill="#ffcc00" transform="rotate(337.5,50,50)"/>
-                <circle cx="50" cy="50" r="15" fill="none" stroke="#ffcc00" stroke-width="5"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffffff" transform="rotate(0,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffffff" transform="rotate(45,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffffff" transform="rotate(90,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffffff" transform="rotate(135,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffffff" transform="rotate(180,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffffff" transform="rotate(225,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffffff" transform="rotate(270,50,50)"/>
+                <polygon points="46,35 54,35 50,8"  fill="#ffffff" transform="rotate(315,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffffff" transform="rotate(22.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffffff" transform="rotate(67.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffffff" transform="rotate(112.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffffff" transform="rotate(157.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffffff" transform="rotate(202.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffffff" transform="rotate(247.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffffff" transform="rotate(292.5,50,50)"/>
+                <polygon points="48,35 52,35 50,18" fill="#ffffff" transform="rotate(337.5,50,50)"/>
+                <circle cx="50" cy="50" r="15" fill="none" stroke="#ffffff" stroke-width="5"/>
             </g>
         </svg>`;
         
@@ -3809,11 +3902,87 @@ static CYMATIC_PATTERNS = [
                 
                 // Always increment time so foam/mist keep moving
                 this.tsunamiMaterial.uniforms.uTime.value += dt * spd;
+                
+                // JS-based Slider Animation Loop
+                if (this.tsunamiAnimState && this.tsunamiAnimState.active) {
+                    this.tsunamiAnimState.phase += dt; // phase is now strictly in seconds
+                    if (this.tsunamiAnimState.phase > 10.0) {
+                        this.tsunamiAnimState.phase = 0.0;
+                    }
+                    
+                    let time = this.tsunamiAnimState.phase;
+                    let newAmp = this.tsunamiAnimState.startAmp;
+                    let newCurl = this.tsunamiAnimState.startCurl;
+                    let newOffset = 0.0;
+                    
+                    // PHASE 1 (0-2s): Swell moves in from left to center
+                    if (time < 2.0) {
+                        let p = time / 2.0;
+                        let ease = 1.0 - Math.pow(1.0 - p, 3.0);
+                        newOffset = -300.0 + (300.0 * ease);
+                    } 
+                    // PHASE 2 (2-4s): Wave holds center, curl builds into a massive barrel
+                    else if (time < 4.0) {
+                        newOffset = 0.0;
+                        let p = (time - 2.0) / 2.0;
+                        let ease = 1.0 - Math.pow(1.0 - p, 3.0);
+                        newCurl = this.tsunamiAnimState.startCurl + (4.0 - this.tsunamiAnimState.startCurl) * ease;
+                    } 
+                    // PHASE 3 (4-9s): PAUSE for 5 seconds surfing the barrel
+                    else if (time < 9.0) {
+                        newOffset = 0.0;
+                        newCurl = 4.0;
+                    }
+                    // PHASE 4 (9-10s): CRASH! Wave collapses into the ocean
+                    else {
+                        newOffset = 0.0;
+                        newCurl = 4.0; 
+                        let p = (time - 9.0) / 1.0;
+                        let ease = p * p; // Accelerate downward
+                        newAmp = this.tsunamiAnimState.startAmp * (1.0 - ease); // Collapse amplitude to 0
+                    }
+                    
+                    this.tsunamiMaterial.uniforms.uAmplitude.value = newAmp;
+                    this.tsunamiMaterial.uniforms.uCurl.value = newCurl;
+                    if (this.tsunamiMaterial.uniforms.uWaveOffset) {
+                        this.tsunamiMaterial.uniforms.uWaveOffset.value = newOffset;
+                    }
+                    
+                    // Safely update the HTML sliders if present
+                    if (typeof window !== 'undefined' && window.document) {
+                        const curlSlider = document.getElementById('tsunamiCurlSlider');
+                        const curlVal = document.getElementById('tsunamiCurlVal');
+                        if (curlSlider && curlVal) {
+                            curlSlider.value = newCurl;
+                            curlVal.textContent = newCurl.toFixed(1);
+                        }
+                    }
+                } else {
+                    // Loop is off, reset offset to center
+                    if (this.tsunamiMaterial.uniforms.uWaveOffset) {
+                        this.tsunamiMaterial.uniforms.uWaveOffset.value = 0.0;
+                    }
+                }
+
                 const t = this.tsunamiMaterial.uniforms.uTime.value;
                 if (this.customColor) {
                     this.tsunamiMaterial.uniforms.uColor.value.copy(this.customColor);
+                    this.tsunamiMaterial.uniforms.uHasCustomColor.value = 1.0;
+                    if (this.tsunamiSun && this.tsunamiSun.material) {
+                        this.tsunamiSun.material.color.copy(this.customColor);
+                    }
                 } else if (this.rainbowMode && this.currentColorHsl) {
                     this.tsunamiMaterial.uniforms.uColor.value.setHSL(this.currentColorHsl.h, this.currentColorHsl.s, this.currentColorHsl.l);
+                    this.tsunamiMaterial.uniforms.uHasCustomColor.value = 1.0; // Rainbow is also custom color
+                    if (this.tsunamiSun && this.tsunamiSun.material) {
+                        this.tsunamiSun.material.color.setHSL(this.currentColorHsl.h, this.currentColorHsl.s, this.currentColorHsl.l);
+                    }
+                } else {
+                    this.tsunamiMaterial.uniforms.uHasCustomColor.value = 0.0;
+                    if (this.tsunamiSun && this.tsunamiSun.material) {
+                        // Default yellow sun for default ocean
+                        this.tsunamiSun.material.color.setHex(0xffcc00);
+                    }
                 }
                 
                 // CINEMATIC SURFING CAMERA
@@ -4384,10 +4553,13 @@ static CYMATIC_PATTERNS = [
         for (let i = 0; i < data.length; i += 4) {
             const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
             
-            // Aggressively discard low/mid alpha to completely remove the drop-shadow "blob"
-            if (a < 220) {
+            // Discard low alpha to remove the drop shadow, but smoothly map the rest to keep anti-aliasing perfectly crisp
+            if (a < 60) {
                 data[i + 3] = 0;
                 continue;
+            } else {
+                // Map 60-255 back to 0-255 for smooth anti-aliased edges
+                data[i + 3] = (a - 60) * 1.307;
             }
 
             // Detect M and W (brightest parts of original logo)
@@ -4396,20 +4568,17 @@ static CYMATIC_PATTERNS = [
                 data[i] = accentR;
                 data[i + 1] = accentG;
                 data[i + 2] = accentB;
-                data[i + 3] = a; // preserve original alpha
             } else {
                 // CURATED SECONDARY for petals/outlines
                 data[i] = secondaryR;
                 data[i + 1] = secondaryG;
                 data[i + 2] = secondaryB;
-                // Smoothly taper off the alpha for softer edges instead of boosting
-                data[i + 3] = a; 
             }
         }
         ctx.putImageData(imageData, 0, 0);
 
         const texture = new THREE.CanvasTexture(canvas);
-        texture.minFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.LinearMipMapLinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.generateMipmaps = true;
         // Ensure single triangle texture mapping doesn't tile visible edges

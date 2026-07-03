@@ -1,6 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // STRIPE EXTENSION RULES
     match /customers/{uid} {
       allow read: if request.auth.uid == uid;
 
@@ -17,19 +19,62 @@ service cloud.firestore {
 
     match /products/{id} {
       allow read: if true;
-
       match /prices/{id} {
         allow read: if true;
       }
-
       match /tax_rates/{id} {
         allow read: if true;
       }
     }
 
-    // Public stats
+    // PUBLIC DATA
     match /stats/{docId} {
       allow read: if true;
+    }
+    
+    match /presets/{presetId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /soundscapes/{id} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /public_gallery/{id} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // USER PRIVATE DATA
+    match /users/{uid} {
+      allow read, write: if request.auth.uid == uid;
+
+      match /mixes/{mixId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      
+      match /audioLibrary/{audioId} {
+        allow read, write: if request.auth.uid == uid;
+      }
+    }
+
+    // APP INFRASTRUCTURE
+    match /presence_sessions/{sessionId} {
+      // Allow read/write if the user's uid matches the document's uid
+      allow read, write: if request.auth.uid == resource.data.uid || request.auth.uid == request.resource.data.uid;
+    }
+
+    match /referrals/{refId} {
+      allow create: if request.auth != null;
+      allow read, update: if request.auth.uid == resource.data.referrerUid || request.auth.uid == resource.data.referredUid;
+    }
+
+    match /analytics/{docId} {
+      // Allow appending analytics data but not reading or deleting
+      allow create: if true;
+      allow read, update, delete: if false;
     }
   }
 }
