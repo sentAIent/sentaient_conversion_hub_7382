@@ -225,7 +225,9 @@ export function createCursorUIInThemeModal() {
     themeGrid.parentElement.appendChild(section);
     section.querySelectorAll('.cursor-option').forEach(btn => btn.addEventListener('click', () => setCursorShape(btn.dataset.shape)));
     const colorPicker = section.querySelector('#cursorColorPicker');
-    if (colorPicker) colorPicker.addEventListener('input', (e) => setCursorColor(e.target.value));
+    if (colorPicker) {
+        ['input', 'change'].forEach(evt => colorPicker.addEventListener(evt, (e) => setCursorColor(e.target.value)));
+    }
     const resetBtn = section.querySelector('#resetCursorColor');
     if (resetBtn) resetBtn.addEventListener('click', () => {
         resetCursorColor();

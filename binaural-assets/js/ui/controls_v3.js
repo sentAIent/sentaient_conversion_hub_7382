@@ -3648,6 +3648,12 @@ export function setTheme(themeName) {
                 el.style.color = '';
             });
         }
+        if (typeof updateJourneyStyles === 'function') updateJourneyStyles();
+    }
+    
+    // Always call enforceLightThemeStyles to update global injected CSS
+    if (typeof enforceLightThemeStyles === 'function') {
+        enforceLightThemeStyles();
     }
 }
 
@@ -4792,12 +4798,14 @@ export function initThemeModal() {
 
     const cp = section.querySelector('#cursorColorPicker');
     if (cp) {
-        cp.addEventListener('input', (e) => {
-            if (typeof window.setCursorColor === 'function') {
-                window.setCursorColor(e.target.value);
-                const prev = section.querySelector('#cursorColorPreview');
-                if (prev) prev.style.backgroundColor = e.target.value;
-            }
+        ['input', 'change'].forEach(evt => {
+            cp.addEventListener(evt, (e) => {
+                if (typeof window.setCursorColor === 'function') {
+                    window.setCursorColor(e.target.value);
+                    const prev = section.querySelector('#cursorColorPreview');
+                    if (prev) prev.style.backgroundColor = e.target.value;
+                }
+            });
         });
     }
 
