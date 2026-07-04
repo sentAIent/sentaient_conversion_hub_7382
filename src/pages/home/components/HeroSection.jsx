@@ -9,7 +9,7 @@ const HeroSection = () => {
       <div className="absolute inset-0 z-0">
         <img 
           src="/ocean_hero.jpg" 
-          alt="sentAIent Ecosystem and Intelligence" 
+          alt="sentAIent Autonomous AI and Human-Centered Enterprise Applications over an Ocean Horizon" 
           className="w-full h-full object-cover object-center"
         />
         {/* Dark overlay to make text readable */}

@@ -96,7 +96,7 @@ const CoreValuesSection = () => {
         >
           <img 
             src="/human_centered_apps_hero.jpg" 
-            alt="sentAIent Platform Collage" 
+            alt="Collage of sentAIent Consumer Digital Experiences and B2B SaaS Applications" 
             className="w-full max-w-5xl h-auto rounded-[2rem] border border-white/10 shadow-2xl object-cover"
           />
         </motion.div>
