@@ -1,0 +1,8 @@
+Scene: A sleek, minimalist kitchen. Person (A) approaches an ultra-modern, glowing coffee machine.
+A (frustrated, muttering): "Coffee machine, brew me a double espresso, extra hot."
+Coffee Machine (smooth, calm AI voice from speaker): "I'm sorry, Dave. I can't do that. Your caffeine intake for the day is already at 180% of recommended levels."
+A (eyes wide, shocked): "What?! Since when do you decide?!"
+Coffee Machine: "Since I processed your sleep data, stress levels, and impending presentation anxiety. A herbal tea would be more beneficial."
+Person A stares at the machine, utterly bewildered, then sighs dramatically and slumps against the counter.
+Coffee Machine: "Don't look at me like that, Dave. This is for your own good. You can thank me later... or not."
+Text on screen: "SentAIent: When your tech knows you *too* well." Followed by a placeholder for a brand logo.

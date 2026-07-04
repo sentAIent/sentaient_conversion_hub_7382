@@ -1,0 +1,5 @@
+[
+  "Opening shot: POV of a person approaching a sleek, minimalist kitchen counter with an ultra-modern, glowing coffee machine. Soft, futuristic lighting emphasizes the tech's pristine appearance.",
+  "Mid-shot: Close-up on the person's face, a rapid transition from initial expectation to disbelief, mild annoyance, and finally, a comedic resignation as the AI speaks. Subtle facial expressions are key to convey the humor.",
+  "Closing shot: Wide shot of the kitchen, person slumped dramatically against the counter, arms crossed, looking utterly defeated. The coffee machine still glows faintly. On-screen text appears prominently, followed by a placeholder for a brand logo/website."
+]

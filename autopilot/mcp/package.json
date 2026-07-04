@@ -1,0 +1,16 @@
+{
+  "name": "sentaient-marketing-mcp",
+  "version": "1.0.0",
+  "description": "SentAIent Orchestrator MCP Server for Antigravity IDE",
+  "type": "module",
+  "main": "mcp-server.js",
+  "scripts": {
+    "start": "node mcp-server.js",
+    "dev": "node --watch mcp-server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "redis": "^4.7.0"
+  },
+  "engines": { "node": ">=18.0.0" }
+}

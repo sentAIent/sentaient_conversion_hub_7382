@@ -1,0 +1,280 @@
+{
+  "name": "SentAIent Campaign Intake Pipeline",
+  "nodes": [
+
+    {
+      "id": "webhook_intake",
+      "name": "Campaign Intake Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "campaign-intake",
+        "responseMode": "lastNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "notes": "Entry point. Receives: { brand, input_type, input_value, campaign_type, requested_formats }"
+    },
+
+    {
+      "id": "validate_input",
+      "name": "Validate & Normalize Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\n\nconst validBrands = ['cloveh2o', 'mindwave', 'sentaient'];\nconst validInputTypes = ['url', 'text', 'pdf'];\nconst validCampaignTypes = ['viral_hook', 'technical_deep_dive', 'founder_story'];\nconst validFormats = ['9:16', '1:1', '16:9', 'email'];\n\n// Validate required fields\nif (!body.brand || !validBrands.includes(body.brand)) {\n  throw new Error(`Invalid brand. Must be one of: ${validBrands.join(', ')}`);\n}\nif (!body.input_type || !validInputTypes.includes(body.input_type)) {\n  throw new Error(`Invalid input_type. Must be one of: ${validInputTypes.join(', ')}`);\n}\nif (!body.input_value) {\n  throw new Error('input_value is required');\n}\n\nconst campaignType = body.campaign_type || 'viral_hook';\nconst formats = body.requested_formats || ['9:16', '1:1'];\nconst campaignId = `campaign_${body.brand}_${Date.now()}`;\n\nreturn [{\n  json: {\n    campaign_id: campaignId,\n    brand: body.brand,\n    input_type: body.input_type,\n    input_value: body.input_value,\n    campaign_type: campaignType,\n    requested_formats: formats,\n    status: 'validated',\n    created_at: new Date().toISOString()\n  }\n}];"
+      }
+    },
+
+    {
+      "id": "load_brand_codes",
+      "name": "Load Brand House Codes",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [400, 300],
+      "parameters": {
+        "operation": "read",
+        "fileName": "/home/node/.n8n/config/brand-house-codes.json"
+      },
+      "notes": "Reads brand-house-codes.json and extracts config for the active brand"
+    },
+
+    {
+      "id": "extract_brand_context",
+      "name": "Extract Brand Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 300],
+      "parameters": {
+        "jsCode": "const campaign = $('validate_input').first().json;\nconst rawFile = $('load_brand_codes').first().json.data;\nconst allCodes = JSON.parse(rawFile);\n\nconst brandConfig = allCodes.brands[campaign.brand];\nconst templateConfig = allCodes.campaign_templates[campaign.campaign_type];\nconst orchestratorConfig = allCodes.orchestrator_config;\n\nif (!brandConfig) {\n  throw new Error(`Brand config not found for: ${campaign.brand}`);\n}\n\nreturn [{\n  json: {\n    ...campaign,\n    brand_config: brandConfig,\n    template_config: templateConfig,\n    orchestrator_config: orchestratorConfig,\n    status: 'context_loaded'\n  }\n}];"
+      }
+    },
+
+    {
+      "id": "route_input_type",
+      "name": "Route by Input Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [800, 300],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            { "conditions": { "options": { "caseSensitive": false }, "combinator": "and", "conditions": [{ "leftValue": "={{ $json.input_type }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "url" }] }, "renameOutput": true, "outputKey": "URL" },
+            { "conditions": { "options": { "caseSensitive": false }, "combinator": "and", "conditions": [{ "leftValue": "={{ $json.input_type }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "text" }] }, "renameOutput": true, "outputKey": "Text" },
+            { "conditions": { "options": { "caseSensitive": false }, "combinator": "and", "conditions": [{ "leftValue": "={{ $json.input_type }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "pdf" }] }, "renameOutput": true, "outputKey": "PDF" }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "fetch_url_content",
+      "name": "Fetch URL Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 150],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.input_value }}",
+        "options": { "response": { "response": { "responseFormat": "text" } } }
+      }
+    },
+
+    {
+      "id": "merge_input_content",
+      "name": "Merge Input Content",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1200, 300],
+      "parameters": { "mode": "passThrough", "output": "all" }
+    },
+
+    {
+      "id": "generate_strategy",
+      "name": "Generate Campaign Strategy",
+      "type": "n8n-nodes-base.anthropic",
+      "typeVersion": 1,
+      "position": [1400, 300],
+      "parameters": {
+        "model": "claude-sonnet-4-20250514",
+        "maxTokensToSample": 2000,
+        "prompt": "=You are the SentAIent Campaign Strategist. Your job is to generate a campaign strategy for the following brand and input.\n\nBRAND: {{ $json.brand_config.name }}\nARCHETYPE: {{ $json.brand_config.archetype }}\nVOICE TONE: {{ JSON.stringify($json.brand_config.voice.tone) }}\nAVOID: {{ JSON.stringify($json.brand_config.voice.avoid) }}\nCAMPAIGN TYPE: {{ $json.campaign_type }}\nTEMPLATE STRUCTURE: {{ JSON.stringify($json.template_config.structure) }}\nCONTENT PILLARS: {{ JSON.stringify($json.brand_config.content.content_pillars) }}\nSAMPLE HOOKS: {{ JSON.stringify($json.brand_config.voice.sample_hooks) }}\n\nINPUT CONTENT:\n{{ $json.raw_content || $json.input_value }}\n\nGenerate a campaign strategy with:\n1. VIRAL ANGLE: The single most compelling hook (1 sentence)\n2. SCRIPT: A tight script following the template structure above — label each section\n3. VISUAL DIRECTION: 3 specific shot/image descriptions aligned to the brand's visual style\n4. CAPTION: Full social media caption with hashtags\n5. CONFIDENCE SCORE: 0.0–1.0 on how well this aligns to brand guidelines\n\nRespond in JSON only. No preamble, no markdown fences.",
+        "options": {}
+      }
+    },
+
+    {
+      "id": "check_confidence",
+      "name": "Check Confidence Threshold",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1600, 300],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nlet strategy;\n\ntry {\n  strategy = JSON.parse(data.text || data.content?.[0]?.text || '{}');\n} catch(e) {\n  throw new Error('Failed to parse strategy JSON from LLM: ' + e.message);\n}\n\nconst confidence = parseFloat(strategy.CONFIDENCE_SCORE || strategy.confidence_score || 0);\nconst threshold = 0.90;\n\nreturn [{\n  json: {\n    ...data,\n    strategy,\n    confidence,\n    passes_threshold: confidence >= threshold,\n    status: confidence >= threshold ? 'approved' : 'needs_human_review'\n  }\n}];"
+      }
+    },
+
+    {
+      "id": "route_confidence",
+      "name": "Route on Confidence",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1800, 300],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.passes_threshold }}", "operator": { "type": "boolean", "operation": "true" } }] }, "renameOutput": true, "outputKey": "Approved" },
+            { "conditions": { "combinator": "and", "conditions": [{ "leftValue": "={{ $json.passes_threshold }}", "operator": { "type": "boolean", "operation": "false" } }] }, "renameOutput": true, "outputKey": "NeedsReview" }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "queue_human_review",
+      "name": "Queue for Human Review",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [2000, 450],
+      "parameters": {
+        "operation": "set",
+        "key": "=human_review:{{ $json.campaign_id }}",
+        "value": "={{ JSON.stringify($json) }}",
+        "keyType": "automatic"
+      },
+      "notes": "Low confidence campaigns park here for manual approval before continuing"
+    },
+
+    {
+      "id": "stage_asset_metadata",
+      "name": "Write Asset Metadata to Staging",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 300],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst stagingPath = `/marketing/media/staging/${data.campaign_id}`;\n\nconst metadata = {\n  campaign_id: data.campaign_id,\n  brand: data.brand,\n  campaign_type: data.campaign_type,\n  confidence: data.confidence,\n  strategy: data.strategy,\n  requested_formats: data.requested_formats,\n  status: 'staged',\n  staged_at: new Date().toISOString(),\n  paths: {\n    staging: stagingPath,\n    script: `${stagingPath}/script.txt`,\n    caption: `${stagingPath}/caption.txt`,\n    visual_brief: `${stagingPath}/visual_brief.txt`,\n    approved: `/marketing/media/approved/${data.campaign_id}`\n  }\n};\n\nreturn [{ json: metadata }];"
+      }
+    },
+
+    {
+      "id": "write_script_file",
+      "name": "Write Script to Staging",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [2200, 200],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/marketing/media/staging/{{ $json.campaign_id }}/script.txt",
+        "dataPropertyName": "={{ $json.strategy.SCRIPT || $json.strategy.script || 'No script generated' }}"
+      }
+    },
+
+    {
+      "id": "write_caption_file",
+      "name": "Write Caption to Staging",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [2200, 350],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/marketing/media/staging/{{ $json.campaign_id }}/caption.txt",
+        "dataPropertyName": "={{ $json.strategy.CAPTION || $json.strategy.caption || 'No caption generated' }}"
+      }
+    },
+
+    {
+      "id": "write_visual_brief",
+      "name": "Write Visual Brief to Staging",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [2200, 500],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/marketing/media/staging/{{ $json.campaign_id }}/visual_brief.txt",
+        "dataPropertyName": "={{ JSON.stringify($json.strategy.VISUAL_DIRECTION || $json.strategy.visual_direction || [], null, 2) }}"
+      }
+    },
+
+    {
+      "id": "update_redis_status",
+      "name": "Update Campaign Status in Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [2400, 300],
+      "parameters": {
+        "operation": "set",
+        "key": "=campaign:{{ $json.campaign_id }}",
+        "value": "={{ JSON.stringify({ campaign_id: $json.campaign_id, brand: $json.brand, status: 'staged', staged_at: $json.staged_at, confidence: $json.confidence }) }}",
+        "keyType": "automatic",
+        "expire": true,
+        "ttl": 604800
+      }
+    },
+
+    {
+      "id": "respond_success",
+      "name": "Respond with Campaign Summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2600, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, campaign_id: $json.campaign_id, brand: $json.brand, status: $json.status, confidence: $json.confidence, staging_path: $json.paths?.staging, viral_angle: $json.strategy?.VIRAL_ANGLE || $json.strategy?.viral_angle, message: 'Campaign staged successfully. Assets ready for visual generation.' }) }}"
+      }
+    }
+
+  ],
+
+  "connections": {
+    "Campaign Intake Webhook": { "main": [[{ "node": "Validate & Normalize Input", "type": "main", "index": 0 }]] },
+    "Validate & Normalize Input": { "main": [[{ "node": "Load Brand House Codes", "type": "main", "index": 0 }]] },
+    "Load Brand House Codes": { "main": [[{ "node": "Extract Brand Context", "type": "main", "index": 0 }]] },
+    "Extract Brand Context": { "main": [[{ "node": "Route by Input Type", "type": "main", "index": 0 }]] },
+    "Route by Input Type": {
+      "main": [
+        [{ "node": "Fetch URL Content", "type": "main", "index": 0 }],
+        [{ "node": "Merge Input Content", "type": "main", "index": 1 }],
+        [{ "node": "Merge Input Content", "type": "main", "index": 2 }]
+      ]
+    },
+    "Fetch URL Content": { "main": [[{ "node": "Merge Input Content", "type": "main", "index": 0 }]] },
+    "Merge Input Content": { "main": [[{ "node": "Generate Campaign Strategy", "type": "main", "index": 0 }]] },
+    "Generate Campaign Strategy": { "main": [[{ "node": "Check Confidence Threshold", "type": "main", "index": 0 }]] },
+    "Check Confidence Threshold": { "main": [[{ "node": "Route on Confidence", "type": "main", "index": 0 }]] },
+    "Route on Confidence": {
+      "main": [
+        [{ "node": "Stage Asset Metadata", "type": "main", "index": 0 }],
+        [{ "node": "Queue for Human Review", "type": "main", "index": 0 }]
+      ]
+    },
+    "Stage Asset Metadata": {
+      "main": [[
+        { "node": "Write Script to Staging", "type": "main", "index": 0 },
+        { "node": "Write Caption to Staging", "type": "main", "index": 0 },
+        { "node": "Write Visual Brief to Staging", "type": "main", "index": 0 }
+      ]]
+    },
+    "Write Script to Staging": { "main": [[{ "node": "Update Campaign Status in Redis", "type": "main", "index": 0 }]] },
+    "Update Campaign Status in Redis": { "main": [[{ "node": "Respond with Campaign Summary", "type": "main", "index": 0 }]] }
+  },
+
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "sentaient_error_handler"
+  },
+
+  "staticData": null,
+  "tags": ["sentaient", "orchestrator", "campaign", "marketing"],
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "sentaient-orchestrator-v1"
+  }
+}

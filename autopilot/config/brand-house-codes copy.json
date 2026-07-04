@@ -1,0 +1,251 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "last_updated": "2026-06-09",
+    "owner": "SentAIent",
+    "description": "Master brand configuration file for the SentAIent Orchestrator. All agents read from this file to ensure 100% brand compliance across every asset."
+  },
+
+  "brands": {
+
+    "CloveH2O": {
+      "id": "CloveH2O",
+      "name": "CloveH2O",
+      "tagline": "Premium clove infused water. Pure ingredients. Everyday price.",
+      "url": "https://cloveh2o.com",
+      "archetype": "The Everyman — accessible premium, honest, functional",
+      "voice": {
+        "tone": ["clean", "confident", "science-backed", "approachable", "direct"],
+        "avoid": ["luxury gatekeeping", "pseudoscience", "excessive hype", "aggressive sales language"],
+        "sample_hooks": [
+          "Two ingredients. Zero shortcuts.",
+          "The spice that changed history. Now in your water.",
+          "Premium hydration doesn't have to cost $8.",
+          "Non-GMO cloves. RO purified water. That's it.",
+          "Ancient wellness. Modern price."
+        ],
+        "cta_style": "soft urgency — invite, don't push"
+      },
+      "visual": {
+        "palette": {
+          "primary": "#B85C2A",
+          "primary_deep": "#8A3D18",
+          "primary_mid": "#D4784A",
+          "primary_light": "#EFA882",
+          "primary_pale": "#FDF0E8",
+          "accent_green": "#3A7A4A",
+          "background": "#FFFFFF",
+          "off_white": "#FAFAF8",
+          "ink": "#1A1209",
+          "text_secondary": "#5C4030",
+          "text_tertiary": "#9A7A68"
+        },
+        "typography": {
+          "heading": "Playfair Display — serif, weight 400–700, italic for emphasis",
+          "body": "DM Sans — weight 200–500",
+          "eyebrow": "DM Sans 500, 0.7rem, 0.2em letter-spacing, uppercase"
+        },
+        "style": "clean white background, warm amber accents, glassmorphic cards on white, editorial layout",
+        "image_direction": "bright, natural light, clean surfaces, amber/clove color pops, no dark moody aesthetics",
+        "logo": "droplet + ripple mark, blue on white, wordmark: Clove H2O",
+        "avoid": ["dark backgrounds", "neon", "overly complex layouts", "stock photo clichés"]
+      },
+      "product": {
+        "flagship": "Original Clove Infusion 500mL",
+        "price_point": "$3.49 single / $33.99 12-pack",
+        "key_claims": [
+          "Non-GMO certified cloves",
+          "Reverse osmosis purified water",
+          "Zero sugar, zero calories",
+          "No preservatives or artificial flavors",
+          "Cold infusion process",
+          "Third-party lab tested"
+        ],
+        "benefits": [
+          "290,000+ ORAC antioxidant score",
+          "Natural anti-inflammatory via eugenol",
+          "Digestive support",
+          "Oral health",
+          "Blood sugar balance",
+          "Antimicrobial properties"
+        ],
+        "ingredients": ["Reverse Osmosis Water", "Non-GMO Whole Cloves"]
+      },
+      "content": {
+        "formats": ["16:9 hero", "9:16 Reels/TikTok", "1:1 feed post", "email header", "product label"],
+        "platforms": ["Instagram", "TikTok", "YouTube Shorts", "Email"],
+        "content_pillars": [
+          "Science & benefits education",
+          "Ingredient transparency",
+          "Lifestyle / hydration ritual",
+          "Price-value contrast vs competitors",
+          "Founder story"
+        ],
+        "post_cadence": "daily",
+        "hashtags": ["#CloveH2O", "#FunctionalHydration", "#CleanWater", "#NonGMO", "#WellnessWater", "#CloveWater"]
+      },
+      "founders": {
+        "brian_leonard": {
+          "role": "Co-Founder, Technology & Strategy",
+          "background": "Quantitative trading, AI development, fintech entrepreneurship"
+        },
+        "michael_hughes": {
+          "role": "Co-Founder, Food & Beverage Operations",
+          "background": "25+ years F&B industry, supply chain, retail distribution, product formulation"
+        }
+      }
+    },
+
+    "MindWave": {
+      "id": "MindWave",
+      "name": "MindWave",
+      "tagline": "Free binaural beats for focus, sleep, and flow.",
+      "url": "https://sentaient.com/mindwave",
+      "archetype": "The Sage — calm, cerebral, evidence-aware, anti-hype",
+      "voice": {
+        "tone": ["calm", "intelligent", "minimalist", "science-curious", "non-commercial"],
+        "avoid": ["wellness woo", "aggressive monetization language", "overclaiming", "noise"],
+        "sample_hooks": [
+          "Your brain has a frequency. Find it.",
+          "40Hz gamma. Deep focus. Free.",
+          "Sleep isn't a luxury. Neither is the science behind it.",
+          "No subscription. No ads. Just signal."
+        ],
+        "cta_style": "frictionless — one click, instant access, no commitment"
+      },
+      "visual": {
+        "palette": {
+          "primary": "#7B5EA7",
+          "primary_deep": "#4A2D7A",
+          "primary_light": "#B89FD4",
+          "accent": "#1AB8C4",
+          "background": "#0A0A12",
+          "surface": "#12121E",
+          "text": "#E8E4F0",
+          "text_dim": "rgba(232,228,240,0.55)"
+        },
+        "typography": {
+          "heading": "Space Grotesk or Inter — modern, geometric",
+          "body": "Inter — weight 300–400"
+        },
+        "style": "OLED dark, deep purple/teal gradients, subtle waveform visualizations, glassmorphic dark panels",
+        "image_direction": "dark ambient, brain/neural imagery, waveforms, deep space aesthetics",
+        "avoid": ["bright white backgrounds", "warm colors", "busy layouts"]
+      },
+      "product": {
+        "flagship": "Binaural beats web app — free",
+        "frequencies": ["Delta 0.5–4Hz sleep", "Theta 4–8Hz meditation", "Alpha 8–13Hz relaxed focus", "Beta 13–30Hz active thinking", "Gamma 40Hz peak performance"],
+        "price_point": "Free",
+        "key_claims": [
+          "Scientifically studied frequency ranges",
+          "No account required",
+          "No ads",
+          "Works on any device"
+        ]
+      },
+      "content": {
+        "formats": ["9:16 Reels/TikTok", "1:1 feed", "YouTube long-form", "email"],
+        "platforms": ["YouTube", "TikTok", "Reddit", "Instagram"],
+        "content_pillars": [
+          "Neuroscience education",
+          "Use-case demos (study, sleep, workout)",
+          "Frequency explainers",
+          "User transformation stories"
+        ],
+        "hashtags": ["#MindWave", "#BinauralBeats", "#FocusMusic", "#SleepSounds", "#Neuroscience", "#BrainWaves"]
+      }
+    },
+
+    "SentAIent": {
+      "id": "sentaient",
+      "name": "SentAIent",
+      "tagline": "Agentic AI systems built for velocity.",
+      "url": "https://sentaient.com",
+      "archetype": "The Outsider — sharp, builder-first, no-BS, contrarian to AI hype",
+      "voice": {
+        "tone": ["direct", "technical", "builder-focused", "confident", "anti-fluff"],
+        "avoid": ["corporate AI speak", "buzzword stacking", "vague capability claims", "fake urgency"],
+        "sample_hooks": [
+          "We don't demo AI. We deploy it.",
+          "Autonomous systems. Real output. No prompting theater.",
+          "Built for operators, not observers.",
+          "The gap between AI demo and AI product is where we live."
+        ],
+        "cta_style": "peer-to-peer — direct invitation, no sales pressure"
+      },
+      "visual": {
+        "palette": {
+          "primary": "#00D4FF",
+          "primary_deep": "#0099BB",
+          "accent": "#FF6B35",
+          "background": "#050508",
+          "surface": "#0D0D14",
+          "text": "#F0F0F8",
+          "text_dim": "rgba(240,240,248,0.6)"
+        },
+        "typography": {
+          "heading": "Space Grotesk — geometric, technical weight",
+          "body": "JetBrains Mono or Inter"
+        },
+        "style": "terminal/IDE aesthetic, OLED black, electric cyan accents, code-block UI elements",
+        "image_direction": "dark technical interfaces, agentic workflow diagrams, clean code aesthetics",
+        "avoid": ["stock tech imagery", "robot clichés", "blue gradient corporate AI"]
+      },
+      "content": {
+        "formats": ["9:16 build logs/demos", "GitHub README style posts", "technical Twitter threads", "YouTube build videos"],
+        "platforms": ["Twitter/X", "YouTube", "LinkedIn", "GitHub"],
+        "content_pillars": [
+          "Build-in-public logs",
+          "Agentic system architecture",
+          "Tool comparisons",
+          "Founder POV / contrarian takes",
+          "Product launches"
+        ],
+        "hashtags": ["#SentAIent", "#AgenticAI", "#BuildInPublic", "#AIAgents", "#LLM", "#AIAutomation"]
+      }
+    }
+
+  },
+
+  "orchestrator_config": {
+    "routing_rules": [
+      {
+        "trigger_keywords": ["cloveh2o", "clove water", "clove h2o", "clove infused"],
+        "brand": "cloveh2o"
+      },
+      {
+        "trigger_keywords": ["mindwave", "binaural", "beats", "frequency", "focus music"],
+        "brand": "mindwave"
+      },
+      {
+        "trigger_keywords": ["sentaient", "orchestrator", "agentic", "ai system", "campaign engine"],
+        "brand": "sentaient"
+      }
+    ],
+    "confidence_threshold": 0.90,
+    "fallback_on_low_confidence": "human_approval_queue",
+    "default_video_format": "9:16",
+    "default_image_format": "1:1",
+    "output_path": "/marketing/media",
+    "staging_path": "/marketing/media/staging",
+    "approved_path": "/marketing/media/approved"
+  },
+
+  "campaign_templates": {
+    "viral_hook": {
+      "structure": ["hook_0_3s", "problem_3_8s", "solution_8_20s", "proof_20_28s", "cta_28_30s"],
+      "max_duration_seconds": 30,
+      "caption_style": "punchy — 1 line hook + 3 bullet benefits + CTA + hashtags"
+    },
+    "technical_deep_dive": {
+      "structure": ["thesis", "evidence_1", "evidence_2", "evidence_3", "conclusion", "cta"],
+      "max_duration_seconds": 90,
+      "caption_style": "educational — full paragraph + sources + soft CTA"
+    },
+    "founder_story": {
+      "structure": ["origin_moment", "problem_identified", "solution_built", "mission_statement", "cta"],
+      "max_duration_seconds": 60,
+      "caption_style": "personal — first person, raw, direct"
+    }
+  }
+}
