@@ -85,7 +85,7 @@ export default function CartScreen() {
       
       Alert.alert('Success', 'Your order is confirmed!');
       clearCart();
-      router.back();
+      (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'));
       
     } catch (e: any) {
       console.error(e);
@@ -126,7 +126,7 @@ export default function CartScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.closeBtn}>
           <Ionicons name="close" size={28} color="#f8fafc" />
         </TouchableOpacity>
         <Text style={styles.title}>Your Cart ({cartCount})</Text>
@@ -137,7 +137,7 @@ export default function CartScreen() {
         <View style={styles.emptyContainer}>
           <Ionicons name="cart-outline" size={64} color="#334155" />
           <Text style={styles.emptyText}>Your cart is empty.</Text>
-          <TouchableOpacity style={styles.continueBtn} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.continueBtn} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))}>
             <Text style={styles.continueBtnText}>Continue Browsing</Text>
           </TouchableOpacity>
         </View>

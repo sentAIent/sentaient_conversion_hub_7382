@@ -9,10 +9,10 @@ import { useRouter } from 'expo-router';
 import { useCart } from '../../context/CartContext';
 import StoryModal from '../../components/StoryModal';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
-import { Video, ResizeMode } from 'expo-av';
 import { KeyboardAvoidingView, TextInput, Platform } from 'react-native';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { AnimatedButton } from '../../components/AnimatedButton';
+import { useVideoPlayer, VideoView } from 'expo-video';
 
 const FOLLOWER_FEED_QUERY = gql`
   query GetFollowerFeed {
@@ -229,14 +229,7 @@ export default function FeedScreen() {
         {isMedia && item.mediaUrl && (
           item.type === 'video' ? (
             <View style={styles.postImageContainer}>
-              <Video
-                source={{ uri: item.mediaUrl }}
-                style={styles.postImageInside}
-                resizeMode={ResizeMode.COVER}
-                shouldPlay
-                isLooping
-                isMuted
-              />
+              <FeedVideo url={item.mediaUrl} />
             </View>
           ) : (
             <PostImage 
@@ -298,7 +291,7 @@ export default function FeedScreen() {
                 refetch();
               }} 
               style={styles.actionIcon}
-              hapticType="light"
+              hapticType="success"
             >
               <Feather name="heart" size={24} color={item.hasLiked ? "#ff3b30" : "#fff"} />
             </AnimatedButton>
@@ -497,6 +490,23 @@ const PostImage: React.FC<{ url: string, onLike?: () => void }> = ({ url, onLike
     </TapGestureHandler>
   );
 }
+
+const FeedVideo: React.FC<{ url: string }> = ({ url }) => {
+  const player = useVideoPlayer(url, player => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+  
+  return (
+    <VideoView 
+      player={player} 
+      style={styles.postImageInside} 
+      nativeControls={false}
+      contentFit="cover"
+    />
+  );
+};
 
 const ShoppableTags: React.FC<{ tags: any[] }> = ({ tags }) => {
   const { addToCart } = useCart();
@@ -779,10 +789,20 @@ const styles = StyleSheet.create({
     borderColor: '#222',
     paddingBottom: 16, // more breathing room at bottom
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0px 4px 8px rgba(0,0,0,0.3)',
+      }
+    }),
   },
   postHeader: {
     flexDirection: 'row',

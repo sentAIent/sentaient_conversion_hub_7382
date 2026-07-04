@@ -83,7 +83,7 @@ export default function CreatePostScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Simulate Post</Text>
@@ -141,7 +141,7 @@ export default function CreatePostScreen() {
               <Text style={styles.noTagsText}>The AI couldn't find any matching products in this venue's storefront.</Text>
             )}
             
-            <TouchableOpacity style={styles.doneBtn} onPress={() => router.back()}>
+            <TouchableOpacity style={styles.doneBtn} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))}>
               <Text style={styles.doneBtnText}>Awesome</Text>
             </TouchableOpacity>
           </BlurView>

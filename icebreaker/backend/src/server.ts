@@ -16,11 +16,9 @@ dotenv.config({ override: true });
 
 const prisma = new PrismaClient();
 
-if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-  initializeApp({
-    credential: applicationDefault(),
-  });
-}
+initializeApp({
+  projectId: process.env.FIREBASE_PROJECT_ID || 'icebreaker-6fb93',
+});
 
 // Cloudflare R2 / S3 Setup
 const s3 = new S3Client({
@@ -180,7 +178,10 @@ export const typeDefs = `#graphql
     latitude: Float!
     longitude: Float!
     isActive: Boolean!
+    paymentStatus: String!
+    checkoutUrl: String
     expiresAt: String!
+    claimsCount: Int!
   }
 
   type SwarmCampaign {
@@ -255,6 +256,7 @@ export const typeDefs = `#graphql
     
     myWallet: Wallet
     activeBounties(latitude: Float!, longitude: Float!, radiusKm: Float!): [Bounty!]!
+    myBounties: [Bounty!]!
     venueStorefront(venueId: ID!): Storefront
     activeSwarmCampaigns(latitude: Float!, longitude: Float!, radiusKm: Float!): [SwarmCampaign!]!
   }
@@ -631,6 +633,13 @@ export const resolvers = {
     activeBounties: async (_: any, { latitude, longitude, radiusKm }: any, context: any) => {
       return prisma.bounty.findMany({
         where: { isActive: true },
+        orderBy: { createdAt: 'desc' }
+      });
+    },
+    myBounties: async (_: any, args: any, context: any) => {
+      if (!context.user) throw new Error("Unauthorized");
+      return prisma.bounty.findMany({
+        where: { venueId: context.user.uid },
         orderBy: { createdAt: 'desc' }
       });
     },
@@ -1050,7 +1059,7 @@ export const resolvers = {
     },
     createBounty: async (_: any, { title, description, reward, totalBudget, latitude, longitude }: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
-      return prisma.bounty.create({
+      const bounty = await prisma.bounty.create({
         data: {
           venueId: context.user.uid,
           title,
@@ -1059,10 +1068,39 @@ export const resolvers = {
           totalBudget,
           latitude,
           longitude,
-          isActive: true,
+          isActive: false,
+          paymentStatus: 'PENDING',
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         }
       });
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Bounty: ${title}`,
+              description: description || 'Payment for bounty reward budget',
+            },
+            unit_amount: totalBudget,
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        success_url: `http://localhost:3005/dashboard/bounties?payment_success=true`,
+        cancel_url: `http://localhost:3005/dashboard/bounties/new?canceled=true`,
+      });
+
+      const updatedBounty = await prisma.bounty.update({
+        where: { id: bounty.id },
+        data: { stripeSessionId: session.id }
+      });
+
+      return {
+        ...updatedBounty,
+        checkoutUrl: session.url
+      };
     },
     claimBounty: async (_: any, { bountyId, contentId }: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
@@ -1447,6 +1485,35 @@ async function startServer() {
   
   await server.start();
   
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'] as string;
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_123');
+    } catch (err: any) {
+      console.error(`Webhook signature verification failed.`, err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      
+      if (session.id) {
+        await prisma.bounty.updateMany({
+          where: { stripeSessionId: session.id },
+          data: {
+            isActive: true,
+            paymentStatus: 'PAID'
+          }
+        });
+        console.log(`[Stripe Webhook] Bounty payment completed for session: ${session.id}`);
+      }
+    }
+
+    res.json({ received: true });
+  });
+
   app.use(
     '/graphql',
     cors<cors.CorsRequest>(),
@@ -1454,7 +1521,7 @@ async function startServer() {
     (expressMiddleware(server, {
       context: async ({ req }: any) => {
         const token = req.headers.authorization?.split('Bearer ')[1];
-        if (token && process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        if (token) {
           try {
             const decodedToken = await getAuth().verifyIdToken(token);
             return { user: decodedToken };

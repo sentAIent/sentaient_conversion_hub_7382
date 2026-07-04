@@ -14,7 +14,7 @@ import CheckoutSuccess from './pages/checkout-success';
 import ITravel from './pages/iTravel';
 import Interstellar from './pages/Interstellar';
 import MindWave from './pages/MindWave';
-
+import Home from './pages/home';
 
 import AnalyticsTracker from './components/AnalyticsTracker';
 import HomeAlt from './pages/home-alt';
@@ -39,6 +39,7 @@ const ProjectRoutes = () => {
           <Route path="/itravel" element={<ITravel />} />
           <Route path="/interstellar" element={<Interstellar />} />
           <Route path="/mindwave" element={<MindWave />} />
+          <Route path="/portfolio" element={<Home />} />
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>
       </ErrorBoundary>

@@ -62,7 +62,7 @@ export default function CreateSwarmScreen() {
       });
 
       alert('Swarm Campaign launched successfully!');
-      router.back();
+      (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'));
     } catch (e: any) {
       alert(e.message);
     }
@@ -71,7 +71,7 @@ export default function CreateSwarmScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Launch Swarm Campaign</Text>

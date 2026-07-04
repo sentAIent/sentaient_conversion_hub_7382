@@ -117,7 +117,7 @@ export default function UserProfileScreen() {
             status !== 'NONE' && styles.followingButton
           ]}
           onPress={handleFollowToggle}
-          hapticType="light"
+          hapticType="success"
         >
           <Text style={[
             styles.followButtonText, 
@@ -228,9 +228,15 @@ export default function UserProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <AnimatedButton style={styles.backButton} onPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/(tabs)/feed');
+          }
+        }} hapticType="light">
           <Ionicons name="chevron-back" size={24} color="#fff" />
-        </TouchableOpacity>
+        </AnimatedButton>
         <Text style={styles.headerTitle}>{profile?.username || 'User Profile'}</Text>
         <View style={{ width: 40 }} />
       </View>

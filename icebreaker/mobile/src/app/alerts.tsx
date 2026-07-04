@@ -69,7 +69,7 @@ export default function AlertsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>

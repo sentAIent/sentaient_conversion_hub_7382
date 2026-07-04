@@ -101,7 +101,7 @@ export default function ChatScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Error</Text>
@@ -187,7 +187,7 @@ export default function ChatScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerUserInfo} onPress={() => router.push(`/user/${otherUser?.id}`)}>

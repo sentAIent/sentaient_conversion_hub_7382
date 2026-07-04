@@ -39,7 +39,7 @@ export default function ScheduleScreen() {
         }
       });
       Alert.alert("Request Sent", "They will receive a notification.");
-      router.back();
+      (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'));
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }
@@ -88,7 +88,7 @@ export default function ScheduleScreen() {
           <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send Request'}</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()} disabled={loading}>
+        <TouchableOpacity style={styles.cancelButton} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} disabled={loading}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
         

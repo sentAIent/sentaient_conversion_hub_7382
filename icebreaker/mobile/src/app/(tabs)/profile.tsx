@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity, ActivityI
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { AnimatedButton } from '../../components/AnimatedButton';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-
+import { auth } from '../../utils/firebase';
+import { signOut } from 'firebase/auth';
 const GET_ME = gql`
   query GetMeProfile {
     me {
@@ -158,6 +160,16 @@ export default function ProfileScreen() {
     refetch();
   };
 
+  const handleSignOut = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await signOut(auth);
+      router.replace('/(auth)/login');
+    } catch (e) {
+      console.error('Failed to sign out', e);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Top Header */}
@@ -206,12 +218,12 @@ export default function ProfileScreen() {
 
         {/* Action Buttons */}
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setIsEditModalVisible(true)}>
+          <AnimatedButton style={styles.actionButton} onPress={() => setIsEditModalVisible(true)} hapticType="light">
             <Text style={styles.actionButtonText}>Edit profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+          </AnimatedButton>
+          <AnimatedButton style={styles.actionButton} onPress={handleShare} hapticType="light">
             <Text style={styles.actionButtonText}>Share profile</Text>
-          </TouchableOpacity>
+          </AnimatedButton>
         </View>
 
         {/* Tier & Gamification */}
@@ -320,6 +332,14 @@ export default function ProfileScreen() {
               thumbColor={showOnMap ? '#fff' : '#f4f3f4'}
             />
           </View>
+        </BlurView>
+
+        {/* Account Management */}
+        <BlurView intensity={20} tint="dark" style={[styles.section, { marginTop: 20 }]}>
+          <TouchableOpacity style={styles.row} onPress={handleSignOut}>
+            <Text style={[styles.label, { color: '#ff3b30', fontWeight: 'bold' }]}>Sign Out</Text>
+            <Ionicons name="log-out-outline" size={24} color="#ff3b30" />
+          </TouchableOpacity>
         </BlurView>
 
         {/* Signals */}

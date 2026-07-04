@@ -44,7 +44,7 @@ const OriginStorySection = () => {
     {
       icon: "Shield",
       title: "Ethical Foundation",
-      description: "Transparent, responsible AI implementation with clear governance frameworks and bias mitigation strategies."
+      description: "Our mission reflects our commitment to creating technology that makes a positive impact on human lives broadly."
     },
     {
       icon: "Target",
@@ -76,7 +76,7 @@ const OriginStorySection = () => {
           </h2>
           
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Born from the belief that AI should be a bridge to human potential, not a barrier to understanding. Our journey reflects our commitment to making intelligent technology accessible and impactful.
+            Born from the belief that AI should be a bridge to human potential, not a barrier to achievement.
           </p>
         </div>
 

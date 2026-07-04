@@ -361,9 +361,9 @@ window.resetGalaxySettings = function() {
     </script>
 <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
   <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
-  <script type="module" crossorigin src="/assets/share-CLGO8S5k.js"></script>
-  <script type="module" crossorigin src="/assets/main_vFINAL-B-Dt2g52.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/share-BppMSQte.css">
+  <script type="module" crossorigin src="/assets/share-BbuT61ap.js"></script>
+  <script type="module" crossorigin src="/assets/main_vFINAL-DNi0TshP.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/share-KSIIf11n.css">
 </head>
 <body class="w-full relative min-h-screen bg-slate-900 text-slate-200 antialiased selection:bg-cyan-500 selection:text-white">
 <!-- UNIFIED COMMAND CENTER (Moved to root for z-index) -->
@@ -1336,7 +1336,15 @@ window.resetGalaxySettings = function() {
 <!-- GALAXY -->
 <button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="galaxyBtn">
 <input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="galaxy" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🌌</span>
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--accent)] filter drop-shadow-[0_0_5px_currentColor] group-hover:scale-110 transition-transform">
+    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+    <path d="M12 10c-3.5 0-6 2-7 5 0 0 2-3 5-3 3 0 5 2 5 2s-1.5-2.5-3-4z" fill="currentColor" stroke="none"></path>
+    <path d="M12 14c3.5 0 6-2 7-5 0 0-2 3-5 3-3 0-5-2-5-2s1.5 2.5 3 4z" fill="currentColor" stroke="none"></path>
+    <path d="M19 4L19 8M17 6L21 6" stroke-width="1.5"></path>
+    <path d="M5 18L5 22M3 20L7 20" stroke-width="1.5"></path>
+    <circle cx="4" cy="6" r="1" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="18" r="1" fill="currentColor" stroke="none"></circle>
+</svg>
 <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Galaxy</span>
 <!-- Sun Style Toggle (Left) -->
 <div class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white/10 hover:bg-[var(--accent)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg" id="galaxySunToggle" onclick="event.stopPropagation(); toggleGalaxySun();" title="Toggle Sun Style">
@@ -1383,13 +1391,21 @@ window.resetGalaxySettings = function() {
 <!-- CUBE -->
 <button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="cubeBtn">
 <input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="cube" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">📦</span>
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--accent)] filter drop-shadow-[0_0_5px_currentColor] group-hover:scale-110 transition-transform">
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+</svg>
 <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Cube</span>
 </button>
 <!-- SPHERE -->
 <button class="visual-btn p-2 rounded-xl glass-pill border-[var(--accent)]/30 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="sphereBtn">
 <input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="sphere" type="color" value="#60a9ff"/>
-<span class="text-2xl filter drop-shadow-lg">🔮</span>
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--accent)] filter drop-shadow-[0_0_5px_currentColor] group-hover:scale-110 transition-transform">
+    <circle cx="12" cy="12" r="10"></circle>
+    <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(45 12 12)"></ellipse>
+    <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-45 12 12)"></ellipse>
+</svg>
 <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">Sphere</span>
 </button>
 <!-- LAVA -->
@@ -1410,7 +1426,18 @@ window.resetGalaxySettings = function() {
 <!-- WARP -->
 <button class="visual-btn p-2 rounded-xl transition-all group relative flex flex-col items-center justify-center gap-1 h-16 min-w-[4rem]" id="lightspeedBtn" style="background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent) 0%, color-mix(in srgb, var(--accent) 5%, transparent) 100%); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 12%, transparent); filter: hue-rotate(180deg);">
 <input class="absolute -top-1 -left-1 w-4 h-4 rounded-full border border-white/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10" data-visual-color="lightspeed" type="color" value="#60a9ff"/>
-<span class="text-2xl" style="filter: drop-shadow(0 0 10px var(--accent));">☄️</span>
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--accent)] filter drop-shadow-[0_0_5px_currentColor] group-hover:scale-110 transition-transform">
+    <!-- Canopy -->
+    <path d="M8 10a4 4 0 0 1 8 0"></path>
+    <!-- Saucer Body -->
+    <ellipse cx="12" cy="12" rx="10" ry="3"></ellipse>
+    <!-- Tractor Beam -->
+    <path d="M9 15l-2 6h10l-2-6" stroke-dasharray="2 2" opacity="0.6"></path>
+    <!-- Lights -->
+    <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+    <circle cx="7" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+    <circle cx="17" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+</svg>
 <span class="text-[10px] font-bold uppercase tracking-wider transition-colors" style="color: var(--accent);">Warp</span>
 </button>
 </div>
@@ -1504,8 +1531,14 @@ window.resetGalaxySettings = function() {
 <div class="relative w-10 h-10 rounded-full border border-white/20 shadow-lg cursor-pointer overflow-hidden ring-4 ring-black/40" id="colorPreview" style="background-color: #60a9ff;">
 <input class="absolute inset-0 opacity-0 cursor-pointer scale-150" id="visualColorPicker" type="color" value="#60a9ff"/>
 </div>
-<button class="glass-btn !p-2 !rounded-full" id="randomColorBtn">
+<button class="glass-btn !p-2 !rounded-full" id="randomColorBtn" title="Random Color">
 <svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" x2="21" y1="15" y2="21"></line><line x1="4" x2="9" y1="4" y2="9"></line></svg>
+</button>
+<button class="glass-btn !p-2 !rounded-full hidden" id="prevColorBtn" title="Previous Color">
+<svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6"></polyline></svg>
+</button>
+<button class="glass-btn !p-2 !rounded-full" id="saveColorBtn" title="Save to Favorites">
+<svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
 </button>
 </div>
 </div>
@@ -1620,16 +1653,16 @@ window.resetGalaxySettings = function() {
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
 <label class="premium-label">AMPLITUDE</label>
-<span class="premium-value" id="tsunamiAmplitudeVal">1.0</span>
+<span class="premium-value" id="tsunamiAmplitudeVal">2.2</span>
 </div>
-<input class="mw-slider" id="tsunamiAmplitudeSlider" max="3.0" min="0.1" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiAmplitude){ window.getVisualizer().setTsunamiAmplitude(this.value); document.getElementById('tsunamiAmplitudeVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+<input class="mw-slider" id="tsunamiAmplitudeSlider" max="3.0" min="0.1" step="0.1" type="range" value="2.2" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiAmplitude){ window.getVisualizer().setTsunamiAmplitude(this.value); document.getElementById('tsunamiAmplitudeVal').textContent = parseFloat(this.value).toFixed(1); }"/>
 </div>
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
 <label class="premium-label">BARREL WAVE</label>
-<span class="premium-value" id="tsunamiCurlVal">1.0</span>
+<span class="premium-value" id="tsunamiCurlVal">2.4</span>
 </div>
-<input class="mw-slider" id="tsunamiCurlSlider" max="4.0" min="0.1" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiCurl){ window.getVisualizer().setTsunamiCurl(this.value); document.getElementById('tsunamiCurlVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+<input class="mw-slider" id="tsunamiCurlSlider" max="4.0" min="0.1" step="0.1" type="range" value="2.4" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiCurl){ window.getVisualizer().setTsunamiCurl(this.value); document.getElementById('tsunamiCurlVal').textContent = parseFloat(this.value).toFixed(1); }"/>
 </div>
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
@@ -1637,6 +1670,13 @@ window.resetGalaxySettings = function() {
 <span class="premium-value" id="tsunamiMistVal">1.0</span>
 </div>
 <input class="mw-slider" id="tsunamiMistSlider" max="3.0" min="0.0" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiMist){ window.getVisualizer().setTsunamiMist(this.value); document.getElementById('tsunamiMistVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">MOON PHASE</label>
+<span class="premium-value" id="tsunamiMoonPhaseVal">0.00</span>
+</div>
+<input class="mw-slider" id="tsunamiMoonPhaseSlider" max="1.0" min="0.0" step="0.05" type="range" value="0.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiMoonPhase){ window.getVisualizer().setTsunamiMoonPhase(this.value); document.getElementById('tsunamiMoonPhaseVal').textContent = parseFloat(this.value).toFixed(2); }"/>
 </div>
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
@@ -1648,9 +1688,9 @@ window.resetGalaxySettings = function() {
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
 <label class="premium-label">REACTIVITY</label>
-<span class="premium-value" id="tsunamiReactivityVal">1.0</span>
+<span class="premium-value" id="tsunamiReactivityVal">2.0</span>
 </div>
-<input class="mw-slider" id="tsunamiReactivitySlider" max="3.0" min="0.0" step="0.1" type="range" value="1.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiReactivity){ window.getVisualizer().setTsunamiReactivity(this.value); document.getElementById('tsunamiReactivityVal').textContent = parseFloat(this.value).toFixed(1); }"/>
+<input class="mw-slider" id="tsunamiReactivitySlider" max="3.0" min="0.0" step="0.1" type="range" value="2.0" oninput="if(window.getVisualizer && window.getVisualizer() && window.getVisualizer().setTsunamiReactivity){ window.getVisualizer().setTsunamiReactivity(this.value); document.getElementById('tsunamiReactivityVal').textContent = parseFloat(this.value).toFixed(1); }"/>
         </div>
         <button id="tsunamiKanagawaBtn" data-active="false" class="w-full mt-4 relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-blue-900/50 via-cyan-900/40 to-teal-900/50 hover:from-blue-800/60 hover:via-cyan-800/50 hover:to-teal-800/60 border border-cyan-400/30 border-b-[4px] border-b-cyan-600/50 active:translate-y-[3px] active:border-b-[1px] text-cyan-50 text-[12px] font-black uppercase tracking-widest py-4 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(6,182,212,0.3)] group"
         onclick="

@@ -1,6 +1,25 @@
+"use client";
+
 import Link from 'next/link';
+import { gql } from '@apollo/client';
+import { useQuery } from '@apollo/experimental-nextjs-app-support/ssr';
+
+const MY_BOUNTIES_QUERY = gql`
+  query MyBounties {
+    myBounties {
+      id
+      isActive
+      claimsCount
+    }
+  }
+`;
 
 export default function DashboardOverview() {
+  const { data, loading, error } = useQuery(MY_BOUNTIES_QUERY);
+
+  const activeBounties = data?.myBounties?.filter((b: any) => b.isActive).length || 0;
+  const totalClaims = data?.myBounties?.reduce((acc: number, b: any) => acc + b.claimsCount, 0) || 0;
+
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-8">Overview</h1>
@@ -15,12 +34,25 @@ export default function DashboardOverview() {
           </div>
         </div>
         
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h3 className="text-white/60 font-medium mb-2">Active Bounties</h3>
-          <p className="text-4xl font-bold">3</p>
-          <div className="mt-4 flex items-center text-sm text-[#3b82f6]">
-            <span className="font-bold">24</span>
-            <span className="text-white/40 ml-2">claims pending review</span>
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="text-white/60 font-medium mb-2">Active Bounties</h3>
+            {loading ? (
+              <p className="text-4xl font-bold animate-pulse text-white/50">...</p>
+            ) : error ? (
+              <p className="text-lg text-red-400">Failed to load</p>
+            ) : (
+              <p className="text-4xl font-bold">{activeBounties}</p>
+            )}
+          </div>
+          <div className="mt-4 flex flex-col gap-2">
+            <div className="flex items-center text-sm text-[#3b82f6]">
+              <span className="font-bold">{totalClaims}</span>
+              <span className="text-white/40 ml-2">total claims</span>
+            </div>
+            <Link href="/dashboard/bounties" className="text-sm text-[#00ffcc] hover:underline">
+              Manage Bounties &rarr;
+            </Link>
           </div>
         </div>
         

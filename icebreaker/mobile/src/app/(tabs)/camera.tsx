@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { gql, useMutation } from '@apollo/client';
+import { triggerHaptic } from '../../utils/haptics';
 
 const GET_UPLOAD_URL = gql`
   mutation GetUploadUrl($contentType: String!) {
@@ -28,6 +29,7 @@ export default function CameraScreen() {
 
   const handleCaptureAndUpload = async () => {
     if (!cameraRef.current) return;
+    triggerHaptic('heavy');
     
     try {
       setIsUploading(true);

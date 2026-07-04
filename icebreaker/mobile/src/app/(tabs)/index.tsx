@@ -112,7 +112,7 @@ export default function MapScreen() {
   });
 
   const handleCheckIn = async () => {
-    triggerHaptic('medium');
+    triggerHaptic('heavy');
     if (!location) return;
     try {
       await checkIn({
@@ -194,6 +194,7 @@ export default function MapScreen() {
               key={match.checkIn.id}
               coordinate={{ latitude: match.checkIn.fuzzyLatitude, longitude: match.checkIn.fuzzyLongitude }}
               onCalloutPress={() => {
+                triggerHaptic('light');
                 router.push({ pathname: '/schedule', params: { receiverId: match.user.id } });
               }}
             >
@@ -221,6 +222,7 @@ export default function MapScreen() {
             key={`bounty-${bounty.id}`}
             coordinate={{ latitude: bounty.latitude, longitude: bounty.longitude }}
             onCalloutPress={() => {
+              triggerHaptic('light');
               router.push(`/bounty/${bounty.id}`);
             }}
           >
@@ -242,6 +244,7 @@ export default function MapScreen() {
             key={`swarm-${swarm.id}`}
             coordinate={{ latitude: swarm.latitude, longitude: swarm.longitude }}
             onCalloutPress={() => {
+              triggerHaptic('light');
               alert(`Swarm unlocked at ${swarm.title}! Check-in to join.`);
             }}
           >

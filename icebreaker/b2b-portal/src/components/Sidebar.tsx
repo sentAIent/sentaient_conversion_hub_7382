@@ -7,10 +7,11 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const links = [
-    { href: '/dashboard', label: 'Overview' },
-    { href: '/dashboard/campaigns', label: 'Campaigns (Bounties)' },
-    { href: '/dashboard/storefront', label: 'Physical Storefront' },
-    { href: '/dashboard/billing', label: 'Billing & Payouts' },
+    { name: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { name: 'Swarm Campaigns', href: '/dashboard/campaigns', icon: '🐝' },
+    { name: 'Bounties', href: '/dashboard/bounties/new', icon: '💰' },
+    { name: 'Storefront', href: '/dashboard/storefront', icon: '🏪' },
+    { name: 'Wallet', href: '/dashboard/wallet', icon: '💳' },
   ];
 
   return (
@@ -28,14 +29,15 @@ export default function Sidebar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`block px-4 py-2 rounded-lg transition-colors font-medium ${
-                isActive
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              {link.label}
-            </Link>
+                className={`flex items-center px-4 py-3 mb-2 rounded-xl text-sm font-medium transition-colors ${
+                  pathname === link.href 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span className="mr-3">{link.icon}</span>
+                {link.name}
+              </Link>
           );
         })}
       </nav>
