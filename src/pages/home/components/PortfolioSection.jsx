@@ -77,7 +77,7 @@ const projects = [
     icon: Scale,
     logo: '/legal_eagle_logo.png',
     color: 'from-indigo-500 to-purple-400',
-    logoBg: 'bg-[#000000]',
+    logoBg: 'bg-[#202733]',
     cardBg: 'bg-gradient-to-br from-violet-700 to-purple-800 hover:from-violet-600 hover:to-purple-700',
     modalBg: 'bg-gradient-to-br from-violet-700 to-purple-800',
     buttonColor: 'bg-white text-purple-900 hover:bg-purple-50',
