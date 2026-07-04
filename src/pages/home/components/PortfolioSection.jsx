@@ -18,8 +18,8 @@ const projects = [
     logo: '/icebreaker_logo.png',
     color: 'from-pink-500 to-rose-400',
     logoBg: 'bg-[#202733]', 
-    cardBg: 'bg-[#60a9ff] hover:bg-[#509af0]',
-    modalBg: 'bg-[#60a9ff]',
+    cardBg: 'bg-gradient-to-br from-rose-500 to-orange-600 hover:from-rose-400 hover:to-orange-500',
+    modalBg: 'bg-gradient-to-br from-rose-500 to-orange-600',
     buttonColor: 'bg-white text-blue-900 hover:bg-blue-50',
     path: '#', // Placeholder
     tag: 'Social Platform'
@@ -38,8 +38,8 @@ const projects = [
     logo: '/mindwave-logo.png',
     color: 'from-slate-800 to-indigo-900',
     logoBg: 'bg-[#202733]',
-    cardBg: 'bg-gradient-to-br from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600',
-    modalBg: 'bg-gradient-to-br from-yellow-600 to-amber-700',
+    cardBg: 'bg-[#60a9ff] hover:bg-[#509af0]',
+    modalBg: 'bg-[#60a9ff]',
     buttonColor: 'bg-white text-amber-900 hover:bg-amber-50',
     path: '/mindwave',
     tag: 'Wellness & Health'
@@ -57,16 +57,16 @@ const projects = [
     icon: BrainCircuit,
     logo: '/interstellar_logo.png',
     color: 'from-orange-500 to-amber-400',
-    logoBg: 'bg-[#ff8c00]',
-    cardBg: 'bg-gradient-to-br from-blue-700 to-cyan-800 hover:from-blue-600 hover:to-cyan-700',
-    modalBg: 'bg-gradient-to-br from-blue-700 to-cyan-800',
+    logoBg: 'bg-[#202733]',
+    cardBg: 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 hover:from-gray-800 hover:via-indigo-800 hover:to-purple-800',
+    modalBg: 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900',
     buttonColor: 'bg-white text-blue-900 hover:bg-blue-50',
     path: '/interstellar',
     tag: 'Interactive Media'
   },
   {
     title: 'Legal Eagle',
-    description: 'Contract Clause & Effect. AI document analysis proposing new clauses, featuring a comically brutal "Roast Mode".',
+    description: 'Eagle-eyed contract review for your peace of mind. AI document analysis proposes new clauses based on US contract law, featuring a comically brutal "Roast Mode".',
     longDescription: 'Legal Eagle brings the power of LLMs to the legal sector with unparalleled document analysis. It not only compares your contracts against a vast legal database to propose new clauses, but its infamous "Roast Mode" comically highlights loopholes, tearing apart bad clauses while providing bulletproof recommendations.',
     features: [
       'Deep-dive Contract Analysis',
@@ -97,9 +97,9 @@ const projects = [
     icon: Rocket,
     logo: '/autopilot_logo.png',
     color: 'from-blue-500 to-cyan-400',
-    logoBg: 'bg-[#ff3300]',
-    cardBg: 'bg-gradient-to-br from-cyan-600 to-teal-700 hover:from-cyan-500 hover:to-teal-600',
-    modalBg: 'bg-gradient-to-br from-cyan-600 to-teal-700',
+    logoBg: 'bg-[#202733]',
+    cardBg: 'bg-gradient-to-br from-green-700 to-emerald-900 hover:from-green-600 hover:to-emerald-800',
+    modalBg: 'bg-gradient-to-br from-green-700 to-emerald-900',
     buttonColor: 'bg-white text-teal-900 hover:bg-teal-50',
     path: '/ai-solutions-experience-center',
     tag: 'Enterprise'
@@ -117,9 +117,9 @@ const projects = [
     icon: Waves,
     logo: '/cloveh2o_logo.png',
     color: 'from-cyan-400 to-blue-300',
-    logoBg: 'bg-[#ff007f]',
-    cardBg: 'bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500',
-    modalBg: 'bg-gradient-to-br from-emerald-500 to-green-600',
+    logoBg: 'bg-[#202733]',
+    cardBg: 'bg-gradient-to-br from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400',
+    modalBg: 'bg-gradient-to-br from-teal-400 to-cyan-500',
     buttonColor: 'bg-white text-green-900 hover:bg-green-50',
     path: 'https://cloveh2o.com',
     tag: 'Health Tech'

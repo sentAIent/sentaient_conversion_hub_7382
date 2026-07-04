@@ -26,7 +26,8 @@ const ProjectRoutes = () => {
       <ErrorBoundary>
         <ScrollToTop />
         <RouterRoutes>
-          <Route path="/" element={<AboutOurApproachIntelligenceCenter />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/ai" element={<AboutOurApproachIntelligenceCenter />} />
           <Route path="/knowledge-nexus-resource-library" element={<KnowledgeNexusResourceLibrary />} />
           <Route path="/free-ai-assessment-portal" element={<FreeAIAssessmentPortal />} />
           <Route path="/home-alt" element={<HomeAlt />} />
@@ -39,7 +40,6 @@ const ProjectRoutes = () => {
           <Route path="/itravel" element={<ITravel />} />
           <Route path="/interstellar" element={<Interstellar />} />
           <Route path="/mindwave" element={<MindWave />} />
-          <Route path="/portfolio" element={<Home />} />
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>
       </ErrorBoundary>

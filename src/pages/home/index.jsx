@@ -30,20 +30,45 @@ const PortfolioHome = () => {
         <CoreValuesSection />
       </main>
 
-      {/* Minimal Footer */}
+      {/* Expanded Footer with Bento Grid */}
       <footer className="bg-[#0A0A0B] border-t border-white/5 py-12">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-16">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { name: 'MindWave', tag: 'Cognitive Entrainment', logo: '/mindwave-logo.png', gradient: 'from-blue-600/20 to-[#60a9ff]/20' },
+              { name: 'Legal Eagle', tag: 'AI Document Analysis', logo: '/legal_eagle_logo.png', gradient: 'from-violet-600/20 to-purple-600/20' },
+              { name: 'Icebreaker', tag: 'Real-world Social', logo: '/icebreaker_logo.png', gradient: 'from-rose-600/20 to-orange-600/20' },
+              { name: 'Interstellar', tag: 'Cosmic Exploration', logo: '/interstellar_logo.png', gradient: 'from-gray-800/40 to-indigo-900/40' },
+              { name: 'AutoPilot', tag: 'B2B Marketing', logo: '/autopilot_logo.png', gradient: 'from-green-700/20 to-emerald-800/20' },
+              { name: 'CloveH2O', tag: 'Smart Hydration', logo: '/cloveh2o_logo.png', gradient: 'from-teal-500/20 to-cyan-500/20' }
+            ].map((app, i) => (
+              <a
+                key={app.name}
+                href="#platforms"
+                className={`group flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br ${app.gradient} border border-white/5 hover:border-white/20 transition-all hover:-translate-y-1`}
+              >
+                <div className="w-10 h-10 mb-3 p-1.5 bg-[#202733] rounded-lg shadow-inner flex items-center justify-center border border-white/5">
+                  <img src={app.logo} alt={app.name} className="w-full h-full object-contain" />
+                </div>
+                <h4 className="text-white font-semibold text-xs mb-1">{app.name}</h4>
+                <p className="text-white/50 text-[10px] text-center">{app.tag}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 border-t border-white/5 pt-8">
           <div className="flex items-center space-x-3">
             <img 
               src="/sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png" 
               alt="sentAIent" 
-              className="h-10 w-auto object-contain opacity-80" 
+              className="h-8 w-auto object-contain opacity-60" 
             />
           </div>
-          <div className="text-gray-500 text-sm">
+          <div className="text-gray-500 text-xs">
             © {new Date().getFullYear()} sentAIent Conversion Hub. All rights reserved.
           </div>
-          <div className="flex gap-6 text-sm text-gray-500">
+          <div className="flex gap-6 text-xs text-gray-500">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
             <a href="#" className="hover:text-white transition-colors">Terms</a>
             <a href="#" className="hover:text-white transition-colors">Contact</a>

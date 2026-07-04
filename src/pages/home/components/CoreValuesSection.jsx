@@ -85,6 +85,21 @@ const CoreValuesSection = () => {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Collage Image underneath Core Values */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="mt-20 flex justify-center"
+        >
+          <img 
+            src="/human_centered_apps_hero.jpg" 
+            alt="sentAIent Platform Collage" 
+            className="w-full max-w-5xl h-auto rounded-[2rem] border border-white/10 shadow-2xl object-cover"
+          />
+        </motion.div>
       </div>
     </section>
   );
