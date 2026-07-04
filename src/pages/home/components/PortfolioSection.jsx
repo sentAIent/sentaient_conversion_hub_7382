@@ -16,6 +16,7 @@ const projects = [
     ],
     icon: Globe,
     logo: '/icebreaker_logo.png',
+    logoScale: 'scale-[1.5] translate-y-3',
     color: 'from-pink-500 to-rose-400',
     logoBg: 'bg-[#202733]', 
     cardBg: 'bg-gradient-to-br from-rose-500 to-orange-600 hover:from-rose-400 hover:to-orange-500',
@@ -36,6 +37,7 @@ const projects = [
     ],
     icon: HeartPulse,
     logo: '/mindwave-logo.png',
+    logoScale: 'scale-[2.2] translate-y-3',
     color: 'from-slate-800 to-indigo-900',
     logoBg: 'bg-[#202733]',
     cardBg: 'bg-[#60a9ff] hover:bg-[#509af0]',
@@ -56,6 +58,7 @@ const projects = [
     ],
     icon: BrainCircuit,
     logo: '/interstellar_logo.png',
+    logoScale: 'scale-100',
     color: 'from-orange-500 to-amber-400',
     logoBg: 'bg-[#202733]',
     cardBg: 'bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 hover:from-gray-800 hover:via-indigo-800 hover:to-purple-800',
@@ -76,6 +79,7 @@ const projects = [
     ],
     icon: Scale,
     logo: '/legal_eagle_logo.png',
+    logoScale: 'scale-[1.35]',
     color: 'from-indigo-500 to-purple-400',
     logoBg: 'bg-[#202733]',
     cardBg: 'bg-gradient-to-br from-violet-700 to-purple-800 hover:from-violet-600 hover:to-purple-700',
@@ -96,6 +100,7 @@ const projects = [
     ],
     icon: Rocket,
     logo: '/autopilot_logo.png',
+    logoScale: 'scale-[1.4] translate-y-3',
     color: 'from-blue-500 to-cyan-400',
     logoBg: 'bg-[#202733]',
     cardBg: 'bg-gradient-to-br from-green-700 to-emerald-900 hover:from-green-600 hover:to-emerald-800',
@@ -116,6 +121,7 @@ const projects = [
     ],
     icon: Waves,
     logo: '/cloveh2o_logo.png',
+    logoScale: 'scale-[1.4] translate-y-3',
     color: 'from-cyan-400 to-blue-300',
     logoBg: 'bg-[#202733]',
     cardBg: 'bg-gradient-to-br from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400',
@@ -195,7 +201,7 @@ const PortfolioSection = () => {
                     <div className="flex justify-between items-start mb-6">
                       <div className={`p-2 rounded-2xl ${project.logoBg} shadow-inner flex items-center justify-center`}>
                         {project.logo ? (
-                          <img src={project.logo} alt={`${project.title} logo`} className="w-32 h-32 object-contain drop-shadow-lg" />
+                          <img src={project.logo} alt={`${project.title} logo`} className={`w-32 h-32 object-contain drop-shadow-lg ${project.logoScale || ''}`} />
                         ) : (
                           <project.icon className="w-16 h-16 text-white" />
                         )}
@@ -247,7 +253,7 @@ const PortfolioSection = () => {
                 <div className="flex items-center gap-6 mb-6">
                   <div className={`p-2 rounded-2xl ${activeProject.logoBg} flex items-center justify-center`}>
                     {activeProject.logo ? (
-                      <img src={activeProject.logo} alt={`${activeProject.title} logo`} className="w-48 h-48 sm:w-56 sm:h-56 object-contain drop-shadow-xl" />
+                      <img src={activeProject.logo} alt={`${activeProject.title} logo`} className={`w-48 h-48 sm:w-56 sm:h-56 object-contain drop-shadow-xl ${activeProject.logoScale || ''}`} />
                     ) : (
                       <activeProject.icon className="w-24 h-24 sm:w-32 sm:h-32 text-white" />
                     )}

@@ -12,8 +12,16 @@ const HeroSection = () => {
           alt="sentAIent Autonomous AI and Human-Centered Enterprise Applications over an Ocean Horizon" 
           className="w-full h-full object-cover object-center"
         />
+        
         {/* Dark overlay to make text readable */}
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/60 to-black/30" />
+
+        {/* Collage Overlay Watermark */}
+        <img 
+          src="/logo_collage_overlay.png" 
+          alt="Logos Overlay" 
+          className="absolute inset-0 w-full h-full object-cover object-center mix-blend-screen pointer-events-none"
+        />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full text-center">
@@ -24,9 +32,8 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-[#60a9ff]"
         >
-          Connect. Elevate. <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-white">
-            Intelligent Technology.
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-gray-300">
+            Intelligent Technology
           </span>
         </motion.h1>
 
