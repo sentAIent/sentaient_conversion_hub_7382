@@ -43,19 +43,7 @@ const CoreValuesSection = () => {
     <section className="py-24 bg-[#050505] relative border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="text-center mb-16 space-y-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-3xl lg:text-5xl font-bold text-white mb-6">
-              From Vision to <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Transformation Reality</span>
-            </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              Born from the belief that AI should be a bridge to human potential, not a barrier to achievement.
-            </p>
-          </motion.div>
+
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
