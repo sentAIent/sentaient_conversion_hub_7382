@@ -91,16 +91,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* Logo */}
                 <div className={`p-6 flex items-center gap-3 border-b ${isLightSidebar ? 'border-slate-300' : 'border-white/10'}`}>
                     <div
-                        className={`p-2 rounded-lg transition-all duration-300 ${isRoastMode ? 'bg-red-600' : currentTheme.accent}`}
+                        className={`p-1 rounded-lg transition-all duration-300 ${isRoastMode ? 'bg-red-600' : 'bg-black'}`}
                     >
                         {isRoastMode
-                            ? <Flame className="text-white w-6 h-6 animate-pulse" />
-                            : <Scale className="text-white w-6 h-6" />
+                            ? <Flame className="text-white w-8 h-8 animate-pulse" />
+                            : <img src="/legal_eagle_logo.png" alt="Legal Eagle Logo" className="w-8 h-8 rounded object-cover" />
                         }
                     </div>
                     <div>
                         <h1 className={`font-bold tracking-tight transition-colors duration-300 ${isLightSidebar ? 'text-slate-900' : 'text-white'}`}>
-                            {isRoastMode ? 'RoastAI' : 'LexGuard AI'}
+                            {isRoastMode ? 'RoastAI' : 'Legal Eagle'}
                         </h1>
                         <p className={`text-xs transition-colors duration-300 ${currentTheme.sidebarText}`}>
                             {isRoastMode ? 'Brutal Contract Review' : 'Legal Precision Engine'}
