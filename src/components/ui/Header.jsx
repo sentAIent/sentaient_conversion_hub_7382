@@ -45,7 +45,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 px-6 lg:px-8">
           {/* Logo */}
           <Link
-            to="/portfolio"
+            to="/"
             className="flex items-center space-x-3 transition-transform duration-300"
           >
             <div className="relative">
