@@ -22,5 +22,5 @@
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/mindwave.html"
   status = 200
