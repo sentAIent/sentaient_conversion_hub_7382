@@ -15,15 +15,23 @@ const firebaseConfig = {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-TENPZ98XDX"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize Firebase safely to prevent app crashes on invalid config
+let app;
+let auth;
+let db;
 let analytics = null;
 
-// Only initialize analytics on the client side and if a measurement ID is provided
-if (typeof window !== "undefined" && firebaseConfig.measurementId) {
-    analytics = getAnalytics(app);
+try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    
+    // Only initialize analytics on the client side and if a measurement ID is provided
+    if (typeof window !== "undefined" && firebaseConfig.measurementId) {
+        analytics = getAnalytics(app);
+    }
+} catch (error) {
+    console.error("Firebase initialization error:", error);
 }
 
 export { auth, db, analytics };
