@@ -62,11 +62,11 @@ const PortfolioHome = () => {
             <img 
               src="/sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png" 
               alt="sentAIent" 
-              className="h-8 w-auto object-contain opacity-60" 
+              className="h-24 w-auto object-contain opacity-80" 
             />
           </div>
           <div className="text-gray-500 text-xs">
-            © {new Date().getFullYear()} sentAIent Conversion Hub. All rights reserved.
+            © {new Date().getFullYear()} sentAIent. All rights reserved.
           </div>
           <div className="flex gap-6 text-xs text-gray-500">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>

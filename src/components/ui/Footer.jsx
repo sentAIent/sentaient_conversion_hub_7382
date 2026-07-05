@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '../AppIcon';
+import logo from './sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png';
 
 const Footer = () => {
     return (
@@ -8,10 +9,7 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                     <div className="md:col-span-2">
                         <div className="flex items-center space-x-3 mb-6">
-                            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                                <Icon name="Brain" size={24} color="var(--color-background)" />
-                            </div>
-                            <span className="text-2xl font-black tracking-tighter">sentAIent</span>
+                            <img src={logo} alt="sentAIent" className="h-32 md:h-48 w-auto object-contain opacity-90" />
                         </div>
                         <p className="text-muted-foreground max-w-sm mb-6 leading-relaxed">
                             We build the bridges between human potential and digital intelligence.
