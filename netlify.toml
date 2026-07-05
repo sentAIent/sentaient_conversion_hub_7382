@@ -3,6 +3,24 @@
   publish = "dist"
 
 [[redirects]]
+  from = "/icebreaker/*"
+  to = "https://sentaient-icebreaker.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/icebusiness/*"
+  to = "https://sentaient-icebusiness.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/iceadmin/*"
+  to = "https://sentaient-iceadmin.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
