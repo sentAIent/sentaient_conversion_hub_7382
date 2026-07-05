@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, BrainCircuit, Globe, HeartPulse, Scale, Rocket, Waves, X, CheckCircle2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const projects = [
   {
@@ -282,25 +283,7 @@ const PortfolioSection = () => {
 
                 <div className="mt-auto pt-6 border-t border-white/5 flex flex-col sm:flex-row gap-4">
                   {activeProject.path !== '#' ? (
-                    activeProject.path.startsWith('http') ? (
-                      <a 
-                        href={activeProject.path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`px-8 py-3 rounded-full font-semibold transition-colors ${activeProject.buttonColor} text-center`}
-                      >
-                        Launch Experience
-                      </a>
-                    ) : (
-                      <Link 
-                        to={activeProject.path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`px-8 py-3 rounded-full font-semibold transition-colors ${activeProject.buttonColor} text-center`}
-                      >
-                        Launch Experience
-                      </Link>
-                    )
+                    <LaunchButton activeProject={activeProject} />
                   ) : (
                     <button 
                       disabled
@@ -322,6 +305,40 @@ const PortfolioSection = () => {
         )}
       </AnimatePresence>
     </section>
+  );
+};
+
+const LaunchButton = ({ activeProject }) => {
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLaunch = (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    
+    const isLifetime = currentUser.subscription?.plan === 'lifetime' || 
+                       currentUser.subscription?.planId === 'lifetime' || 
+                       currentUser.subscription?.isProPilot === true;
+                       
+    if (!isLifetime) {
+      navigate('/pricing');
+      return;
+    }
+
+    // Open in a new tab
+    window.open(activeProject.path, '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <button 
+      onClick={handleLaunch}
+      className={`px-8 py-3 rounded-full font-semibold transition-colors ${activeProject.buttonColor} text-center w-full sm:w-auto`}
+    >
+      Launch Experience
+    </button>
   );
 };
 

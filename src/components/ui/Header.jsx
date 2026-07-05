@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../AppIcon';
 import logo from './sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png';
 
@@ -7,6 +8,10 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const auth = useAuth(); // It might be null if rendered outside AuthProvider, but we wrapped it in Routes.jsx
+  const currentUser = auth?.currentUser;
+  const logout = auth?.logout;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,6 +86,29 @@ const Header = () => {
             >
               <span>Contact Us</span>
             </button>
+            
+            {currentUser ? (
+              <button 
+                onClick={async () => {
+                  try {
+                    await logout();
+                    navigate('/');
+                  } catch (err) {
+                    console.error("Failed to log out", err);
+                  }
+                }}
+                className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
+              >
+                <span>Log Out</span>
+              </button>
+            ) : (
+              <Link 
+                to="/login"
+                className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20"
+              >
+                <span>Login</span>
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -135,6 +163,31 @@ const Header = () => {
               >
                 <span>Contact Us</span>
               </button>
+              
+              {currentUser ? (
+                <button 
+                  onClick={async () => {
+                    setIsMobileMenuOpen(false);
+                    try {
+                      await logout();
+                      navigate('/');
+                    } catch (err) {
+                      console.error("Failed to log out", err);
+                    }
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
+                >
+                  <span>Log Out</span>
+                </button>
+              ) : (
+                <Link 
+                  to="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-white/10 text-white hover:bg-white/20 border border-white/10"
+                >
+                  <span>Login</span>
+                </Link>
+              )}
             </nav>
           </div>
         </div>

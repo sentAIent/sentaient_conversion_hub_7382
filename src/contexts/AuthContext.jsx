@@ -94,19 +94,53 @@ export function AuthProvider({ children }) {
     }
 
     useEffect(() => {
-        const行为 = onAuthStateChanged(auth, async (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Fetch additional data from Firestore if needed
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                const userData = userDoc.exists() ? userDoc.data() : {};
-                setCurrentUser({ ...user, ...userData });
+                try {
+                    // Fetch additional data from Firestore
+                    const userDocPromise = getDoc(doc(db, "users", user.uid));
+                    const subDocPromise = getDoc(doc(db, "subscriptions", user.uid));
+
+                    const [userDoc, subDoc] = await Promise.all([userDocPromise, subDocPromise]);
+                    
+                    const userData = userDoc.exists() ? userDoc.data() : {};
+                    const subData = subDoc.exists() ? subDoc.data() : {};
+                    
+                    // Merge subscription data to ensure we have the 'lifetime' or 'plan' tier 
+                    // accessible directly on currentUser object
+                    const mergedSubscription = {
+                        ...(userData.subscription || {}),
+                        ...subData
+                    };
+
+                    const isLifetime = mergedSubscription.plan === 'lifetime' || 
+                                       mergedSubscription.planId === 'lifetime' || 
+                                       mergedSubscription.isProPilot === true;
+
+                    if (isLifetime) {
+                        localStorage.setItem('sentaient_lifetime_access', 'true');
+                    } else {
+                        localStorage.removeItem('sentaient_lifetime_access');
+                    }
+
+                    setCurrentUser({ 
+                        ...user, 
+                        ...userData,
+                        subscription: mergedSubscription
+                    });
+                } catch (err) {
+                    console.error("Error fetching user data:", err);
+                    setCurrentUser(user);
+                    localStorage.removeItem('sentaient_lifetime_access');
+                }
             } else {
                 setCurrentUser(null);
+                localStorage.removeItem('sentaient_lifetime_access');
             }
             setLoading(false);
         });
 
-        return 行为;
+        return unsubscribe;
     }, []);
 
     const value = {
