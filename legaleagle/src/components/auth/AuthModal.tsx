@@ -25,22 +25,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         try {
             if (isSignUp) {
-                const { error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                });
+                const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
-                setMessage('Check your email for the confirmation link!');
+                setMessage('Account created successfully! You can now log in.');
+                setIsSignUp(false);
             } else {
-                const { error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
-                });
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 onClose();
             }
         } catch (err: any) {
-            setError(err.message);
+            setError(err.message || 'An error occurred during authentication.');
         } finally {
             setLoading(false);
         }

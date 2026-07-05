@@ -17,6 +17,12 @@ export interface Database {
                     full_name: string | null
                     avatar_url: string | null
                     website: string | null
+                    is_premium: boolean | null
+                    subscription_tier: string | null
+                    drafts_limit: number | null
+                    drafts_used: number | null
+                    reviews_limit: number | null
+                    reviews_used: number | null
                 }
                 Insert: {
                     id: string
@@ -25,6 +31,12 @@ export interface Database {
                     full_name?: string | null
                     avatar_url?: string | null
                     website?: string | null
+                    is_premium?: boolean | null
+                    subscription_tier?: string | null
+                    drafts_limit?: number | null
+                    drafts_used?: number | null
+                    reviews_limit?: number | null
+                    reviews_used?: number | null
                 }
                 Update: {
                     id?: string
@@ -33,6 +45,12 @@ export interface Database {
                     full_name?: string | null
                     avatar_url?: string | null
                     website?: string | null
+                    is_premium?: boolean | null
+                    subscription_tier?: string | null
+                    drafts_limit?: number | null
+                    drafts_used?: number | null
+                    reviews_limit?: number | null
+                    reviews_used?: number | null
                 }
                 Relationships: [
                     {

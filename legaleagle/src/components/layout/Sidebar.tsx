@@ -10,11 +10,16 @@ import {
     Settings,
     LogIn,
     User as UserIcon,
-    LogOut
+    LogOut,
+    PenTool,
+    BookMarked,
+    Crown
 } from 'lucide-react';
 import { ThemeGalleryModal } from '@/components/features/ThemeGalleryModal';
-import type { Theme, AnalysisDepth } from '@/types';
+import type { Theme, AnalysisDepth, ContractType } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import logoUrl from '/legal_eagle_logo.png';
+import roastLogoUrl from '/roast_eagle_logo.jpg';
 
 // ...
 
@@ -27,9 +32,12 @@ interface SidebarProps {
     setIsRoastMode: (value: boolean) => void;
     perspective: string;
     setPerspective: (value: string) => void;
+    contractType: ContractType;
+    setContractType: (value: ContractType) => void;
     currentTheme: Theme;
     setCurrentTheme: (theme: Theme) => void;
     onOpenAuth: () => void;
+    onOpenPricing: () => void;
     analysisDepth: AnalysisDepth;
     setAnalysisDepth: (depth: AnalysisDepth) => void;
     onAnalyze: () => void;
@@ -48,9 +56,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setIsRoastMode,
     perspective,
     setPerspective,
+    contractType,
+    setContractType,
     currentTheme,
     setCurrentTheme,
     onOpenAuth,
+    onOpenPricing,
     analysisDepth,
     setAnalysisDepth,
     onAnalyze
@@ -78,10 +89,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     const navItems = [
         { id: 'editor', icon: FileText, label: 'Document Editor' },
+        { id: 'draft', icon: PenTool, label: 'Draft Contract' },
         { id: 'context', icon: Users, label: 'Case Context' },
+        { id: 'clauses', icon: BookMarked, label: 'Clause Library' },
         { id: 'chat', icon: MessageSquare, label: 'Assistant' },
         { id: 'analysis', icon: ShieldCheck, label: 'Analysis', showScore: true },
         { id: 'history', icon: History, label: 'History' },
+        { id: 'pricing', icon: Crown, label: 'Plans & Upgrade' },
+        { id: 'privacy', icon: ShieldCheck, label: 'Privacy Policy' },
+        { id: 'tos', icon: FileText, label: 'Terms of Service' }
     ];
 
     return (
@@ -90,24 +106,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* Logo */}
                 <div className={`p-6 flex items-center gap-3 border-b ${isLightSidebar ? 'border-slate-300' : 'border-white/10'}`}>
                     <div
-                        className={`p-1 rounded-lg transition-all duration-300 ${isRoastMode ? 'bg-red-600' : 'bg-black'}`}
+                        className={`p-1 rounded-lg transition-all duration-300 shrink-0 flex items-center justify-center bg-black`}
                     >
                         {isRoastMode
-                            ? <Flame className="text-white w-8 h-8 animate-pulse" />
-                            : <img src="/legal_eagle_logo.png" alt="Legal Eagle Logo" className="w-8 h-8 rounded object-cover" />
+                            ? <img src={roastLogoUrl} alt="Eagle Roast Logo" className="w-16 h-16 rounded object-cover shrink-0" />
+                            : <img src={logoUrl} alt="Legal Eagle Logo" className="w-16 h-16 rounded object-cover shrink-0" />
                         }
                     </div>
                     <div>
-                        <h1 className={`font-bold tracking-tight transition-colors duration-300 ${isLightSidebar ? 'text-slate-900' : 'text-white'}`}>
-                            {isRoastMode ? 'RoastAI' : 'Legal Eagle'}
+                        <h1 className={`font-bold tracking-tight transition-colors duration-300 ${isRoastMode ? 'text-red-500' : (isLightSidebar ? 'text-slate-900' : 'text-white')}`}>
+                            {isRoastMode ? 'Eagle Roast' : 'Legal Eagle'}
                         </h1>
-                        <p className={`text-xs transition-colors duration-300 ${currentTheme.sidebarText}`}>
-                            {isRoastMode ? 'Brutal Contract Review' : 'Legal Precision Engine'}
+                        <p className={`text-xs transition-colors duration-300 ${isRoastMode ? 'text-red-500' : currentTheme.sidebarText}`}>
+                            {isRoastMode ? 'Clause & Effect' : 'Legal Precision Engine'}
                         </p>
                     </div>
                 </div>
 
-                {/* Perspective Selector */}
                 {/* Perspective Selector */}
                 <div className="px-4 pt-4 space-y-4">
                     {/* Perspective */}
@@ -130,9 +145,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             Negotiation Stance
                         </div>
                     </div>
+
+                    {/* Contract Type */}
+                    <div>
+                        <select 
+                            value={contractType}
+                            onChange={(e) => setContractType(e.target.value as ContractType)}
+                            className={`w-full text-xs font-bold py-2 px-3 rounded-lg appearance-none transition-all outline-none border cursor-pointer ${
+                                isLightSidebar 
+                                    ? 'bg-slate-200/50 border-slate-300 text-slate-900' 
+                                    : 'bg-black/20 border-white/10 text-white hover:bg-black/40'
+                            }`}
+                        >
+                            <option value="General">General Review</option>
+                            <option value="NDA">NDA (Non-Disclosure)</option>
+                            <option value="Employment Agreement">Employment Agreement</option>
+                            <option value="Terms of Service">Terms of Service</option>
+                            <option value="Real Estate Lease">Real Estate Lease</option>
+                        </select>
+                        <div className={`text-[10px] text-center mt-1 uppercase tracking-wide ${currentTheme.sidebarText}`}>
+                            Contract Type
+                        </div>
+                    </div>
                 </div>
 
-                {/* Navigation */}
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                     {navItems.map((item) => (
@@ -228,12 +264,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <Settings className="w-3 h-3 opacity-70" />
                     </button>
 
+                    {/* Upgrade Button */}
+                    <button
+                        onClick={onOpenPricing}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all border border-blue-500 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white"
+                    >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Upgrade to Premium</span>
+                    </button>
+
                     {/* Roast Mode Toggle - with debounce */}
                     <button
                         onClick={handleRoastToggle}
                         disabled={isToggling}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 border transform ${isToggling ? 'scale-[0.98]' : ''} ${isRoastMode
-                            ? (isLightSidebar ? 'bg-red-600 border-red-800 text-white shadow-lg shadow-red-500/30' : 'bg-red-900/30 border-red-500/50 text-red-400')
+                            ? (isLightSidebar ? 'bg-slate-200/50 border-transparent text-red-500 shadow-lg shadow-red-500/10' : 'bg-black/20 border-transparent text-red-500')
                             : `${isLightSidebar ? 'bg-slate-200/50' : 'bg-black/20'} border-transparent ${currentTheme.sidebarText} hover:bg-black/10`
                             }`}
                     >

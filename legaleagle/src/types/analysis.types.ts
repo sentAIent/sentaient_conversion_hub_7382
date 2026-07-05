@@ -16,6 +16,7 @@ export interface Recommendation {
     citation?: string;
     accepted: boolean;
     chunkIndex?: number;
+    isUserAnnotation?: boolean;
 }
 
 export interface SwotAnalysis {
@@ -100,3 +101,5 @@ export interface AnalysisChunkResult {
 }
 
 export type AnalysisDepth = 'quick' | 'standard' | 'deep';
+
+export type ContractType = 'General' | 'NDA' | 'Employment Agreement' | 'Terms of Service' | 'Real Estate Lease';

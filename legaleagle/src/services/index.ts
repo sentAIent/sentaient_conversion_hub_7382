@@ -1,8 +1,4 @@
-export { callGemini, isApiConfigured, testConnection } from './geminiService';
-export {
-    analyzeDocument,
-    sendChatMessage,
-    splitIntoChunks,
-    calculateScore,
-    getRiskDistribution
-} from './analysisService';
+export * from './geminiService';
+export * from './analysisService';
+export * from './storageService';
+export * from './databaseService';

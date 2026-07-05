@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useEffect } from 'react';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
 import {
     FileText,
     RefreshCw,
@@ -15,7 +15,7 @@ import {
     ChevronDown
 } from 'lucide-react';
 import { findFuzzyMatch } from '@/utils/textMatching';
-import type { Theme, Recommendation, ScanProgress } from '@/types';
+import type { Theme, Recommendation, ScanProgress, Severity } from '@/types';
 
 interface EditorViewProps {
     documentName: string;
@@ -32,8 +32,11 @@ interface EditorViewProps {
     setActiveTab: (tab: string) => void;
     onTriggerUpload: () => void;
     handleSave: () => void;
+    handleExportPdf?: () => void;
+    handleExportWord?: () => void;
     currentTheme: Theme;
     scanProgress: ScanProgress;
+    onAddAnnotation: (rec: Recommendation) => void;
 }
 
 export const EditorView: React.FC<EditorViewProps> = ({
@@ -51,10 +54,57 @@ export const EditorView: React.FC<EditorViewProps> = ({
     setActiveTab,
     onTriggerUpload,
     handleSave,
+    handleExportPdf,
+    handleExportWord,
     currentTheme,
-    scanProgress
+    scanProgress,
+    onAddAnnotation
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    // Annotation State
+    const [selectedTextData, setSelectedTextData] = useState<{ text: string, x: number, y: number } | null>(null);
+    const [showAnnotationModal, setShowAnnotationModal] = useState(false);
+    const [annotationComment, setAnnotationComment] = useState('');
+    const [annotationSeverity, setAnnotationSeverity] = useState<Severity>('Medium');
+
+    const handleTextareaSelect = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+        const textarea = e.currentTarget;
+        if (textarea.selectionStart !== textarea.selectionEnd) {
+            const text = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+            setSelectedTextData({
+                text,
+                x: e.clientX,
+                y: e.clientY
+            });
+        } else {
+            setSelectedTextData(null);
+            setShowAnnotationModal(false);
+        }
+    };
+
+    const submitAnnotation = () => {
+        if (!selectedTextData || !annotationComment.trim()) return;
+        
+        onAddAnnotation({
+            id: Date.now(),
+            section: 'User Annotation',
+            severity: annotationSeverity,
+            category: 'Manual',
+            title: annotationComment,
+            currentText: selectedTextData.text,
+            proposedText: selectedTextData.text,
+            legalBasis: 'Added manually by user',
+            scoreImpact: 0,
+            accepted: false,
+            isUserAnnotation: true
+        });
+        
+        setShowAnnotationModal(false);
+        setSelectedTextData(null);
+        setAnnotationComment('');
+        setAnnotationSeverity('Medium');
+    };
 
     // Build sorted highlights from recommendations
     const sortedHighlights = useMemo(() => {
@@ -279,12 +329,32 @@ export const EditorView: React.FC<EditorViewProps> = ({
                         >
                             <Upload className="w-4 h-4" /> Upload
                         </button>
-                        <button
-                            onClick={handleSave}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${currentTheme.buttonSecondary}`}
-                        >
-                            <Save className="w-4 h-4" /> Save
-                        </button>
+                        
+                        <div className="flex items-center rounded-lg border bg-slate-100 overflow-hidden text-sm font-medium">
+                            <button
+                                onClick={handleSave}
+                                className={`flex items-center gap-2 px-3 py-2 transition-colors ${currentTheme.buttonSecondary} border-none rounded-none`}
+                                title="Save as TXT"
+                            >
+                                <Save className="w-4 h-4" /> Save
+                            </button>
+                            <div className="w-px h-full bg-slate-300" />
+                            <button
+                                onClick={handleExportPdf}
+                                className={`px-3 py-2 transition-colors font-bold text-red-600 hover:bg-red-50`}
+                                title="Export to PDF"
+                            >
+                                PDF
+                            </button>
+                            <div className="w-px h-full bg-slate-300" />
+                            <button
+                                onClick={handleExportWord}
+                                className={`px-3 py-2 transition-colors font-bold text-blue-600 hover:bg-blue-50`}
+                                title="Export to Word"
+                            >
+                                DOCX
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -320,7 +390,72 @@ export const EditorView: React.FC<EditorViewProps> = ({
                             }}
                             className="w-full h-full resize-none outline-none font-serif text-lg leading-loose bg-transparent overflow-hidden"
                             spellCheck="false"
+                            onMouseUp={handleTextareaSelect}
                         />
+                    )}
+                    
+                    {/* Floating Annotation UI */}
+                    {selectedTextData && !heatmapEnabled && (
+                        <div 
+                            className="fixed z-50 bg-white border shadow-2xl rounded-xl p-4 w-80 transform -translate-x-1/2 -translate-y-[120%]"
+                            style={{ left: selectedTextData.x, top: selectedTextData.y }}
+                        >
+                            {!showAnnotationModal ? (
+                                <button 
+                                    onClick={() => setShowAnnotationModal(true)}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow flex items-center justify-center gap-2"
+                                >
+                                    <MessageSquare className="w-4 h-4" /> Add Comment
+                                </button>
+                            ) : (
+                                <div className="space-y-3">
+                                    <h4 className="font-bold text-slate-800 text-sm border-b pb-2">New Annotation</h4>
+                                    
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1">Severity</label>
+                                        <select 
+                                            value={annotationSeverity}
+                                            onChange={(e) => setAnnotationSeverity(e.target.value as Severity)}
+                                            className="w-full text-sm border rounded p-1.5 bg-slate-50"
+                                        >
+                                            <option value="Critical">Critical</option>
+                                            <option value="High">High</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="Low">Low</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1">Comment</label>
+                                        <textarea 
+                                            value={annotationComment}
+                                            onChange={(e) => setAnnotationComment(e.target.value)}
+                                            placeholder="What's the issue here?"
+                                            className="w-full h-20 text-sm border rounded p-2 bg-slate-50 resize-none outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <button 
+                                            onClick={() => {
+                                                setShowAnnotationModal(false);
+                                                setSelectedTextData(null);
+                                            }}
+                                            className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button 
+                                            onClick={submitAnnotation}
+                                            disabled={!annotationComment.trim()}
+                                            className="px-3 py-1.5 text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 rounded disabled:opacity-50"
+                                        >
+                                            Save
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

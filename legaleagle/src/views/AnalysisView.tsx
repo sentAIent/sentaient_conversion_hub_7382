@@ -9,7 +9,9 @@ import {
     BarChart3,
     ShieldCheck,
     Award,
-    CheckCircle2
+    CheckCircle2,
+    Trash2,
+    User
 } from 'lucide-react';
 import { ScoreCircle, SwotCard } from '@/components/ui';
 import type { Theme, Recommendation, SwotAnalysis } from '@/types';
@@ -29,6 +31,7 @@ interface AnalysisViewProps {
     emailDraft: string;
     setEmailDraft: (draft: string) => void;
     handleAcceptRecommendation: (rec: Recommendation) => void;
+    onDeleteAnnotation: (id: number) => void;
     currentTheme: Theme;
 }
 
@@ -47,6 +50,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     emailDraft,
     setEmailDraft,
     handleAcceptRecommendation,
+    onDeleteAnnotation,
     currentTheme
 }) => {
     const activeRec = recommendations.find(r => r.id === selectedRecId);
@@ -191,13 +195,29 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                 {rec.accepted && (
                                     <CheckCircle2 className="absolute top-2 right-2 w-5 h-5 text-emerald-500" />
                                 )}
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${isRoastMode
-                                        ? 'bg-black/30 text-white'
-                                        : (rec.severity === 'Critical' ? 'bg-red-500 text-white' : 'bg-orange-500 text-white')
-                                        }`}>
-                                        {rec.severity}
-                                    </span>
+                                <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${isRoastMode
+                                            ? 'bg-black/30 text-white'
+                                            : (rec.severity === 'Critical' ? 'bg-red-500 text-white' : 'bg-orange-500 text-white')
+                                            }`}>
+                                            {rec.severity}
+                                        </span>
+                                        {rec.isUserAnnotation && (
+                                            <span className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase">
+                                                <User className="w-3 h-3" /> Manual
+                                            </span>
+                                        )}
+                                    </div>
+                                    {rec.isUserAnnotation && (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onDeleteAnnotation(rec.id); }}
+                                            className="text-slate-400 hover:text-red-500 transition-colors"
+                                            title="Delete Annotation"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
                                 <h4 className="font-semibold text-sm mb-1">
                                     {isRoastMode && rec.roastTitle ? rec.roastTitle : rec.title}

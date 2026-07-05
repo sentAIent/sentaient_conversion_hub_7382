@@ -1,12 +1,25 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+
+export interface UserProfile {
+    id: string;
+    is_premium: boolean;
+    subscription_tier: string;
+    drafts_limit: number;
+    drafts_used: number;
+    reviews_limit: number;
+    reviews_used: number;
+}
 
 interface AuthContextType {
     session: Session | null;
     user: User | null;
+    profile: UserProfile | null;
+    isPremium: boolean;
     loading: boolean;
     signOut: () => Promise<void>;
+    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,7 +27,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [isPremium, setIsPremium] = useState(false);
     const [loading, setLoading] = useState(true);
+
+    const fetchProfile = async (userId: string) => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, is_premium, subscription_tier, drafts_limit, drafts_used, reviews_limit, reviews_used')
+            .eq('id', userId)
+            .single();
+            
+        if (!error && data) {
+            setIsPremium(data.is_premium);
+            setProfile(data as UserProfile);
+        } else {
+            setIsPremium(false);
+            setProfile(null);
+        }
+    };
+
+    const refreshProfile = async () => {
+        if (user) {
+            await fetchProfile(user.id);
+        }
+    };
 
     useEffect(() => {
         if (!isSupabaseConfigured) {
@@ -26,19 +63,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
-            setLoading(false);
+            if (session?.user) {
+                fetchProfile(session.user.id).then(() => setLoading(false));
+            } else {
+                setLoading(false);
+            }
         });
 
-        // Listen for changes
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            (_event, session) => {
+                setSession(session);
+                setUser(session?.user ?? null);
+                if (session?.user) {
+                    fetchProfile(session.user.id).then(() => setLoading(false));
+                } else {
+                    setIsPremium(false);
+                    setProfile(null);
+                    setLoading(false);
+                }
+            }
+        );
 
-        return () => subscription.unsubscribe();
+        return () => {
+            subscription.unsubscribe();
+        };
     }, []);
 
     const signOut = async () => {
@@ -47,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ session, user, loading, signOut }}>
+        <AuthContext.Provider value={{ session, user, profile, isPremium, loading, signOut, refreshProfile }}>
             {children}
         </AuthContext.Provider>
     );
@@ -60,3 +109,4 @@ export const useAuth = () => {
     }
     return context;
 };
+

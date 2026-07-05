@@ -26,7 +26,8 @@ import type {
     Party,
     AnalysisChunkResult,
     GeminiResponse,
-    AnalysisDepth
+    AnalysisDepth,
+    ContractType
 } from '@/types';
 
 /**
@@ -89,6 +90,7 @@ const analyzeChunk = async (
     perspective: string,
     parties: Party[],
     depth: AnalysisDepth = 'standard',
+    contractType: ContractType = 'General',
     retries = 3
 ): Promise<AnalysisChunkResult | null> => {
     const partiesStr = parties.map(p => `${p.name} (${p.role}, ${p.domicile})`).join(', ');
@@ -98,6 +100,7 @@ Document Context:
 Entities: ${partiesStr}.
 My Perspective: Representing the ${perspective}.
 Analysis Depth: ${depth.toUpperCase()}
+Contract Type: ${contractType}
 
 TEXT TO ANALYZE:
 """
@@ -198,14 +201,14 @@ export const analyzeDocument = async (
     parties: Party[],
     onProgress?: (progress: AnalysisProgress) => void,
     onRecommendationsUpdate?: (recommendations: Recommendation[]) => void,
-    analysisDepth: AnalysisDepth = 'standard'
+    analysisDepth: AnalysisDepth = 'standard',
+    contractType: ContractType = 'General'
 ): Promise<{
     recommendations: Recommendation[];
     swot: SwotAnalysis;
     score: number;
     partialSuccess?: boolean;
 }> => {
-    // Check API configuration
     if (!isApiConfigured()) {
         // If API is not configured, fallback to sample data for the sample text
         if (documentText.trim() === INITIAL_TEXT.trim()) {
@@ -218,6 +221,18 @@ export const analyzeDocument = async (
             };
         }
         throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
+    }
+
+    // Force demo mode for sample text if the backend isn't deployed yet
+    // This allows the UI to work before Firebase Functions are deployed
+    const isDemoMode = import.meta.env.VITE_USE_DEMO_DATA !== 'false';
+    if (isDemoMode && documentText.trim() === INITIAL_TEXT.trim()) {
+        await new Promise(r => setTimeout(r, 1500));
+        return {
+            recommendations: SAMPLE_RECOMMENDATIONS,
+            swot: SAMPLE_SWOT,
+            score: SAMPLE_SCORE
+        };
     }
 
     // If API is configured, we ALWAYS analyze for real, even the sample text.
@@ -233,7 +248,7 @@ export const analyzeDocument = async (
     for (let i = 0; i < chunks.length; i++) {
         onProgress?.({ current: i + 1, total: chunks.length });
 
-        const result = await analyzeChunk(chunks[i], i, perspective, parties, analysisDepth);
+        const result = await analyzeChunk(chunks[i], i, perspective, parties, analysisDepth, contractType);
 
         if (result && result.recommendations && result.recommendations.length > 0) {
             allRecommendations.push(...result.recommendations);
@@ -241,6 +256,19 @@ export const analyzeDocument = async (
         } else if (result === null) {
             failedChunks++;
         }
+    }
+
+    if (failedChunks === chunks.length) {
+        // If it's a demo, just return the sample data so the UI doesn't break
+        const isDemoMode = import.meta.env.VITE_USE_DEMO_DATA !== 'false';
+        if (isDemoMode) {
+            return {
+                recommendations: SAMPLE_RECOMMENDATIONS,
+                swot: SAMPLE_SWOT,
+                score: SAMPLE_SCORE
+            };
+        }
+        throw new Error('Backend AI function is not deployed or service is unavailable.');
     }
 
     // Generate SWOT analysis
