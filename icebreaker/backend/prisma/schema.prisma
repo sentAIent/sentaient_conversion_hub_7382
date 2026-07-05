@@ -407,7 +407,10 @@ model SwarmCampaign {
   radiusMeters   Int      @default(500)
   targetCheckIns Int // Number of check-ins needed for max discount
   maxDiscount    String // e.g. "50%"
-  isActive       Boolean  @default(true)
+  totalBudget    Int      @default(0) // Max budget in cents
+  paymentStatus  String   @default("PENDING")
+  stripeSessionId String?
+  isActive       Boolean  @default(false)
   expiresAt      DateTime
   createdAt      DateTime @default(now())
 

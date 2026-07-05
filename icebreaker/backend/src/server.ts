@@ -194,6 +194,9 @@ export const typeDefs = `#graphql
     radiusMeters: Int!
     targetCheckIns: Int!
     maxDiscount: String!
+    totalBudget: Int!
+    paymentStatus: String!
+    checkoutUrl: String
     isActive: Boolean!
     expiresAt: String!
   }
@@ -282,7 +285,7 @@ export const typeDefs = `#graphql
     addProduct(storefrontId: ID!, name: String!, price: Int!, imageUrl: String): Product
     createBounty(title: String!, description: String!, reward: Int!, totalBudget: Int!, latitude: Float!, longitude: Float!): Bounty
     claimBounty(bountyId: ID!, contentId: ID!): Boolean!
-    createSwarmCampaign(title: String!, description: String!, targetCheckIns: Int!, maxDiscount: String!, latitude: Float!, longitude: Float!): SwarmCampaign
+    createSwarmCampaign(title: String!, description: String!, targetCheckIns: Int!, maxDiscount: String!, latitude: Float!, longitude: Float!, totalBudget: Int!): SwarmCampaign
     createContent(type: String!, textBody: String, mediaUrl: String, venueId: ID): Content
     autoMonetizeContent(contentId: ID!, venueId: ID!): [ProductTag!]
     likeContent(contentId: ID!): Boolean!
@@ -1138,10 +1141,11 @@ export const resolvers = {
 
       return true;
     },
-    createSwarmCampaign: async (_: any, { title, description, targetCheckIns, maxDiscount, latitude, longitude }: any, context: any) => {
+    createSwarmCampaign: async (_: any, { title, description, targetCheckIns, maxDiscount, latitude, longitude, totalBudget }: any, context: any) => {
       await ensureUserExists(context.user);
       if (!context.user) throw new Error('Not authenticated');
-      return prisma.swarmCampaign.create({
+      
+      const campaign = await prisma.swarmCampaign.create({
         data: {
           venueId: context.user.uid,
           title,
@@ -1150,9 +1154,40 @@ export const resolvers = {
           maxDiscount,
           latitude,
           longitude,
+          totalBudget,
+          paymentStatus: 'PENDING',
+          isActive: false,
           expiresAt: new Date(Date.now() + 86400000)
         }
       });
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Campaign: ${title}`,
+              description: description || 'Payment for swarm campaign budget',
+            },
+            unit_amount: totalBudget,
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        success_url: `http://localhost:3005/dashboard/campaigns?payment_success=true`,
+        cancel_url: `http://localhost:3005/dashboard/campaigns/new?canceled=true`,
+      });
+
+      const updatedCampaign = await prisma.swarmCampaign.update({
+        where: { id: campaign.id },
+        data: { stripeSessionId: session.id }
+      });
+
+      return {
+        ...updatedCampaign,
+        checkoutUrl: session.url
+      };
     },
 
     createContent: async (_: any, { type, textBody, mediaUrl, venueId }: any, context: any) => {
@@ -1507,7 +1542,15 @@ async function startServer() {
             paymentStatus: 'PAID'
           }
         });
-        console.log(`[Stripe Webhook] Bounty payment completed for session: ${session.id}`);
+        
+        await prisma.swarmCampaign.updateMany({
+          where: { stripeSessionId: session.id },
+          data: {
+            isActive: true,
+            paymentStatus: 'PAID'
+          }
+        });
+        console.log(`[Stripe Webhook] Payment completed for session: ${session.id}`);
       }
     }
 

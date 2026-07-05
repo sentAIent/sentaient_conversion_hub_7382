@@ -1,5 +1,5 @@
 functionsDirectory = "/Users/ute/Dev/sentaient_conversion_hub_7382-Website/netlify/functions"
-functionsDirectoryOrigin = "config"
+functionsDirectoryOrigin = "default"
 redirectsOrigin = "config"
 plugins = []
 headers = []
@@ -30,10 +30,10 @@ functions = "/Users/ute/Dev/sentaient_conversion_hub_7382-Website/netlify/functi
 [functions."*"]
 
 [[redirects]]
-from = "/*"
-to = "/index.html"
+from = "/icebreaker/*"
+to = "https://sentaient-icebreaker.netlify.app/:splat"
 status = 200.0
-force = false
+force = true
 
 [redirects.query]
 
@@ -42,8 +42,32 @@ force = false
 [redirects.headers]
 
 [[redirects]]
-from = "/api/stripe-webhook"
-to = "/.netlify/functions/stripe-webhook"
+from = "/icebusiness/*"
+to = "https://sentaient-icebusiness.netlify.app/:splat"
+status = 200.0
+force = true
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/iceadmin/*"
+to = "https://sentaient-iceadmin.netlify.app/:splat"
+status = 200.0
+force = true
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
 status = 200.0
 force = false
 

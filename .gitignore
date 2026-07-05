@@ -13,3 +13,6 @@ vite.config.*s.*
 **/api-keys.local.js
 amazon-corretto-*.jdk
 firebase-key.json
+
+# Local Netlify folder
+.netlify
