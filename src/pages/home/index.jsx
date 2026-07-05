@@ -24,7 +24,7 @@ const PortfolioHome = () => {
       {/* Reusing existing Header but ensuring it works with dark theme */}
       <Header />
 
-      <main className="pt-16">
+      <main>
         <HeroSection />
         <PortfolioSection />
         <CoreValuesSection />

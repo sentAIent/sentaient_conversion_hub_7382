@@ -20,7 +20,8 @@ const HeroSection = () => {
         <img 
           src="/logo_collage_overlay.png" 
           alt="Logos Overlay" 
-          className="absolute inset-0 w-full h-full object-cover object-center mix-blend-screen pointer-events-none"
+          className="absolute inset-0 w-full h-full object-cover object-center mix-blend-screen pointer-events-none opacity-60"
+          style={{ WebkitMaskImage: 'radial-gradient(circle at center, transparent 35%, black 80%)', maskImage: 'radial-gradient(circle at center, transparent 35%, black 80%)' }}
         />
       </div>
 
@@ -32,7 +33,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-[#60a9ff]"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-gray-300">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-gray-300 drop-shadow-lg">
             Intelligent Technology
           </span>
         </motion.h1>
@@ -41,7 +42,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="mt-6 text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed"
+          className="mt-6 text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md"
         >
           sentAIent builds and scales proprietary AI products. Explore our cutting-edge portfolio including 
           <span className="text-white font-semibold"> MindWave</span>, 
@@ -59,7 +60,7 @@ const HeroSection = () => {
         >
           <button 
             onClick={() => document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth' })}
-            className="w-full sm:w-auto group relative inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-[#202733] bg-[#60a9ff] rounded-full overflow-hidden transition-all hover:scale-105 hover:bg-[#509af0] hover:shadow-[0_0_40px_rgba(96,169,255,0.4)]"
+            className="w-full sm:w-auto group relative inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full overflow-hidden transition-all hover:scale-105 hover:from-blue-500 hover:to-indigo-500 hover:shadow-[0_0_40px_rgba(79,70,229,0.4)]"
           >
             <span>Explore Portfolio</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
