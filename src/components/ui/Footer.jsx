@@ -42,8 +42,8 @@ const Footer = () => {
                         <h4 className="font-bold mb-6 text-sm uppercase tracking-widest text-accent">Company</h4>
                         <ul className="space-y-4 text-foreground/60 text-sm">
                             <li><a href="/about-our-approach-intelligence-center" className="hover:text-accent transition-colors">Our Approach</a></li>
-                            <li><a href="/mindwave" className="hover:text-accent transition-colors">Mindwave</a></li>
-                            <li><a href="/interstellar" className="hover:text-accent transition-colors">Interstellar</a></li>
+                            <li><a href="/mindwave" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">Mindwave</a></li>
+                            <li><a href="/interstellar" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">Interstellar</a></li>
                             <li><a href="/trust-transparency-hub" className="hover:text-accent transition-colors">Trust & Security</a></li>
                         </ul>
                     </div>
