@@ -17,7 +17,7 @@ const projects = [
     ],
     icon: Globe,
     logo: '/icebreaker_logo.png',
-    logoScale: 'scale-100',
+    logoScale: 'scale-[0.85]',
     color: 'from-pink-500 to-rose-400',
     logoBg: 'bg-[#202733]', 
     cardBg: 'bg-gradient-to-br from-rose-500 to-orange-600 hover:from-rose-400 hover:to-orange-500',
