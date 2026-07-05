@@ -1,4 +1,0 @@
-async function i(){if(!(!window.Capacitor||!window.Capacitor.isNativePlatform()))try{}catch{}}async function n(e,o){if(!window.Capacitor||!window.Capacitor.isNativePlatform())throw new Error("Cannot trigger RevenueCat on Web. Use Stripe.");const t=e==="zen"?"mindwave_zen_monthly":e==="thrive"?"mindwave_thrive_monthly":"mindwave_eternity_lifetime";window.confirm(`[Apple App Store Mock]
-
-Would you like to purchase ${e} for iOS?`)&&(window.__MOCK_PREMIUM=!0,localStorage.setItem("mindwave_premium","true"),o==="oneTime"&&localStorage.setItem("mindwave_lifetime","true"),window.showToast&&window.showToast("Apple Purchase Successful! (MOCK)","success"),setTimeout(()=>window.location.reload(),1500))}async function r(){return!window.Capacitor||!window.Capacitor.isNativePlatform()?!1:localStorage.getItem("mindwave_premium")==="true"}export{r as checkRevenueCatSubscription,i as initRevenueCat,n as triggerRevenueCatCheckout};
-//# sourceMappingURL=revenuecat-YC8o31pU.js.map

@@ -16,3 +16,5 @@ firebase-key.json
 
 # Local Netlify folder
 .netlify
+
+dist/

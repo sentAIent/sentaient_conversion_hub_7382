@@ -1,1 +1,0 @@
-import{e as t}from"./dynamic-import-helper-CTnsj-vI.js";const o=t("tasksMockData",{state:()=>({listTitle:"",todos:[],providerIcon:""})});export{o as u};
