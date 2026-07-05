@@ -35,23 +35,23 @@ const PortfolioHome = () => {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 mb-16">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { name: 'MindWave', tag: 'Cognitive Entrainment', logo: '/mindwave-logo.png', gradient: 'from-blue-600/20 to-[#60a9ff]/20' },
-              { name: 'Legal Eagle', tag: 'AI Document Analysis', logo: '/legal_eagle_logo.png', gradient: 'from-violet-600/20 to-purple-600/20' },
-              { name: 'Icebreaker', tag: 'Real-world Social', logo: '/icebreaker_logo.png', gradient: 'from-rose-600/20 to-orange-600/20' },
-              { name: 'Interstellar', tag: 'Cosmic Exploration', logo: '/interstellar_logo.png', gradient: 'from-gray-800/40 to-indigo-900/40' },
-              { name: 'AutoPilot', tag: 'B2B Marketing', logo: '/autopilot_logo.png', gradient: 'from-green-700/20 to-emerald-800/20' },
-              { name: 'CloveH2O', tag: 'Smart Hydration', logo: '/cloveh2o_logo.png', gradient: 'from-teal-500/20 to-cyan-500/20' }
+              { name: 'MindWave', tag: 'Cognitive Entrainment', logo: '/mindwave-logo.png', gradient: 'from-blue-600/20 to-[#60a9ff]/20', scale: 'scale-[2.2]' },
+              { name: 'Legal Eagle', tag: 'AI Document Analysis', logo: '/legal_eagle_logo.png', gradient: 'from-violet-600/20 to-purple-600/20', scale: 'scale-125' },
+              { name: 'Icebreaker', tag: 'Real-world Social', logo: '/icebreaker_logo.png', gradient: 'from-rose-600/20 to-orange-600/20', scale: 'scale-[1.5] translate-y-2' },
+              { name: 'Interstellar', tag: 'Cosmic Exploration', logo: '/interstellar_logo.png', gradient: 'from-gray-800/40 to-indigo-900/40', scale: 'scale-100' },
+              { name: 'AutoPilot', tag: 'B2B Marketing', logo: '/autopilot_logo.png', gradient: 'from-green-700/20 to-emerald-800/20', scale: 'scale-[1.4] translate-y-2' },
+              { name: 'CloveH2O', tag: 'Smart Hydration', logo: '/cloveh2o_logo.png', gradient: 'from-teal-500/20 to-cyan-500/20', scale: 'scale-[1.4] translate-y-2' }
             ].map((app, i) => (
               <a
                 key={app.name}
                 href="#platforms"
-                className={`group flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br ${app.gradient} border border-white/5 hover:border-white/20 transition-all hover:-translate-y-1`}
+                className={`group flex flex-col items-center justify-center p-5 rounded-xl bg-gradient-to-br ${app.gradient} border border-white/5 hover:border-white/20 transition-all hover:-translate-y-1 overflow-hidden`}
               >
-                <div className="w-10 h-10 mb-3 p-1.5 bg-[#202733] rounded-lg shadow-inner flex items-center justify-center border border-white/5">
-                  <img src={app.logo} alt={app.name} className="w-full h-full object-contain" />
+                <div className="w-16 h-16 mb-4 bg-[#202733] rounded-2xl shadow-inner flex items-center justify-center border border-white/5 relative overflow-hidden">
+                  <img src={app.logo} alt={app.name} className={`w-full h-full object-contain ${app.scale}`} />
                 </div>
-                <h4 className="text-white font-semibold text-xs mb-1">{app.name}</h4>
-                <p className="text-white/50 text-[10px] text-center">{app.tag}</p>
+                <h4 className="text-white font-semibold text-sm mb-1">{app.name}</h4>
+                <p className="text-white/50 text-[11px] text-center">{app.tag}</p>
               </a>
             ))}
           </div>
