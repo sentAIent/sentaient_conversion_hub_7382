@@ -3,7 +3,7 @@
   "short_name": "MindWave",
   "description": "High-fidelity binaural beats and isochronic tones for deep focus, sleep, and meditation.",
   "start_url": "/mindwave-beta.html",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#050510",
   "theme_color": "#8b5cf6",
   "icons": [
