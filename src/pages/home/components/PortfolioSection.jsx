@@ -45,7 +45,7 @@ const projects = [
     modalBg: 'bg-[#60a9ff]',
     buttonColor: 'bg-white text-amber-900 hover:bg-amber-50',
     path: '/mindwave',
-    tag: 'Wellness & Health'
+    tag: 'Health & Wellness'
   },
   {
     title: 'Interstellar',
@@ -87,7 +87,7 @@ const projects = [
     modalBg: 'bg-gradient-to-br from-violet-700 to-purple-800',
     buttonColor: 'bg-white text-purple-900 hover:bg-purple-50',
     path: 'https://sentaient.com/legaleagle', // Added link
-    tag: 'Legal Tech'
+    tag: 'Legal'
   },
   {
     title: 'AutoPilot',
@@ -129,7 +129,7 @@ const projects = [
     modalBg: 'bg-gradient-to-br from-teal-400 to-cyan-500',
     buttonColor: 'bg-white text-green-900 hover:bg-green-50',
     path: 'https://cloveh2o.com',
-    tag: 'Health Tech'
+    tag: 'Health & Wellness'
   }
 ];
 
@@ -168,17 +168,18 @@ const PortfolioSection = () => {
   return (
     <section id="platforms" className="py-24 bg-[#050505] relative border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="mb-16 md:mb-24">
+        <div className="mb-16 md:mb-24 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
+            className="flex flex-col items-center"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Our Flagship <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Platforms</span>
+              Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Technology</span>
             </h2>
-            <p className="text-xl text-gray-400 max-w-2xl">
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Discover the core revenue drivers powering the sentAIent ecosystem. Each product is built to dominate its category through superior AI architecture.
             </p>
           </motion.div>
