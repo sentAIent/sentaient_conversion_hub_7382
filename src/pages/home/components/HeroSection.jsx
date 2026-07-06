@@ -7,6 +7,7 @@ const SLIDES = [
     id: 'interstellar',
     image: '/hero_slide_interstellar.jpg',
     logo: '/interstellar_logo.png',
+    logoScale: 'scale-100',
     appName: 'Interstellar',
     tagline: 'Deep-space exploration game',
     accentFrom: 'from-blue-500',
@@ -19,6 +20,7 @@ const SLIDES = [
     id: 'mindwave',
     image: '/hero_slide_mindwave.jpg',
     logo: '/mindwave-logo.png',
+    logoScale: 'scale-[2.2]',
     appName: 'MindWave',
     tagline: 'Binaural beats & cymatic visuals',
     accentFrom: 'from-teal-400',
@@ -31,6 +33,7 @@ const SLIDES = [
     id: 'icebreaker',
     image: '/hero_slide_icebreaker.jpg',
     logo: '/icebreaker_logo.png',
+    logoScale: 'scale-[0.85]',
     appName: 'Icebreaker',
     tagline: 'Real-world social discovery platform',
     accentFrom: 'from-pink-500',
@@ -43,6 +46,7 @@ const SLIDES = [
     id: 'legaleagle',
     image: '/hero_slide_legaleagle.jpg',
     logo: '/legal_eagle_logo.png',
+    logoScale: 'scale-125',
     appName: 'Legal Eagle',
     tagline: 'AI-powered legal document analysis',
     accentFrom: 'from-violet-500',
@@ -55,6 +59,7 @@ const SLIDES = [
     id: 'autopilot',
     image: '/hero_slide_autopilot.jpg',
     logo: '/autopilot_logo.png',
+    logoScale: 'scale-[1.4]',
     appName: 'AutoPilot',
     tagline: 'Autonomous AI marketing engine',
     accentFrom: 'from-emerald-500',
@@ -158,7 +163,7 @@ const HeroSection = () => {
               <img
                 src={slide.logo}
                 alt={`${slide.appName} logo`}
-                className="w-full h-full object-contain p-2"
+                className={`w-full h-full object-contain ${slide.logoScale}`}
               />
             </div>
           </motion.div>
