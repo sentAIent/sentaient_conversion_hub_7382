@@ -24,7 +24,10 @@ function Dashboard({ password }: { password: string }) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('http://localhost:4000/graphql', {
+    const apiUri = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:4000/graphql'
+      : 'https://icebreaker-b5u1.onrender.com/graphql';
+    fetch(apiUri, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: ADMIN_ANALYTICS, variables: { password } })

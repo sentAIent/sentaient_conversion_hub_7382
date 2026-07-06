@@ -10,8 +10,12 @@ import {
 import { setContext } from '@apollo/client/link/context';
 
 function makeClient() {
+  const uri = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:4000/graphql"
+    : "https://icebreaker-b5u1.onrender.com/graphql";
+
   const httpLink = new HttpLink({
-    uri: "http://localhost:4000/graphql",
+    uri,
   });
 
   const authLink = setContext((_, { headers }) => {

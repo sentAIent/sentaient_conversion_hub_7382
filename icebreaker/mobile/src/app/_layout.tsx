@@ -13,7 +13,9 @@ import { CartProvider } from '../context/CartContext';
 import { StripeWrapper } from '../components/StripeWrapper';
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:4000/graphql', // Local dev backend
+  uri: __DEV__
+    ? 'http://localhost:4000/graphql' // Local dev backend
+    : 'https://icebreaker-b5u1.onrender.com/graphql', // Production backend
 });
 
 const errorLink = onError(({ graphQLErrors, networkError }) => {
