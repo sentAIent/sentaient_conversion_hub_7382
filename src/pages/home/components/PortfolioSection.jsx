@@ -104,9 +104,9 @@ const projects = [
     logoScale: 'scale-[1.4] translate-y-3',
     color: 'from-blue-500 to-cyan-400',
     logoBg: 'bg-[#202733]',
-    cardBg: 'bg-gradient-to-br from-[#2b2f34] to-[#1c1e22] hover:from-[#33383e] hover:to-[#22252a]',
-    modalBg: 'bg-gradient-to-br from-[#2b2f34] to-[#1c1e22]',
-    buttonColor: 'bg-white text-gray-900 hover:bg-gray-100',
+    cardBg: 'bg-gradient-to-br from-[#8E9AAF] to-[#4A5568] hover:from-[#9ba7bb] hover:to-[#556276]',
+    modalBg: 'bg-gradient-to-br from-[#8E9AAF] to-[#4A5568]',
+    buttonColor: 'bg-white text-slate-900 hover:bg-slate-100',
     path: '/ai-solutions-experience-center',
     tag: 'Enterprise'
   },
