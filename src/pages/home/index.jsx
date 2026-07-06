@@ -39,7 +39,7 @@ const PortfolioHome = () => {
               { name: 'Legal Eagle', tag: 'AI Document Analysis', logo: '/legal_eagle_logo.png', gradient: 'from-violet-600/20 to-purple-600/20', scale: 'scale-125' },
               { name: 'Icebreaker', tag: 'Real-world Social', logo: '/icebreaker_logo.png', gradient: 'from-rose-600/20 to-orange-600/20', scale: 'scale-[0.85]' },
               { name: 'Interstellar', tag: 'Cosmic Exploration', logo: '/interstellar_logo.png', gradient: 'from-gray-800/40 to-indigo-900/40', scale: 'scale-100' },
-              { name: 'AutoPilot', tag: 'B2B Marketing', logo: '/autopilot_logo.png', gradient: 'from-green-700/20 to-emerald-800/20', scale: 'scale-[1.4] translate-y-2' },
+              {name: 'AutoPilot', tag: 'B2B Marketing', logo: '/autopilot_logo.png', gradient: 'from-[#2b2f34]/40 to-[#1c1e22]/40', scale: 'scale-[1.4] translate-y-2'},
               { name: 'CloveH2O', tag: 'Smart Hydration', logo: '/cloveh2o_logo.png', gradient: 'from-teal-500/20 to-cyan-500/20', scale: 'scale-[1.4] translate-y-2' }
             ].map((app, i) => (
               <a
