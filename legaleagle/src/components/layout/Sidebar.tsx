@@ -16,7 +16,9 @@ import {
     Crown,
     Activity,
     Building,
-    BookOpen
+    BookOpen,
+    Eye,
+    Briefcase
 } from 'lucide-react';
 import { ThemeGalleryModal } from '@/components/features/ThemeGalleryModal';
 import type { Theme, AnalysisDepth, ContractType } from '@/types';
@@ -69,9 +71,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setAnalysisDepth,
     onAnalyze
 }) => {
-    const { user, signOut } = useAuth();
+    const { user, profile, signOut } = useAuth();
     const [showThemeGallery, setShowThemeGallery] = useState(false);
     const [isToggling, setIsToggling] = useState(false);
+    const [terminology, setTerminology] = useState('Matters');
+    
+    React.useEffect(() => {
+        if (profile?.current_team_id) {
+            import('@/lib/supabase').then(({ supabase }) => {
+                supabase.from('teams').select('terminology_preference').eq('id', profile.current_team_id).single()
+                    .then(({ data }) => {
+                        if (data?.terminology_preference) setTerminology(data.terminology_preference);
+                    });
+            });
+        }
+    }, [profile?.current_team_id]);
 
     const depthOptions: { id: AnalysisDepth; label: string; desc: string }[] = [
         { id: 'quick', label: 'Quick Scan', desc: 'Fast check for major risks' },
@@ -95,10 +109,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const navItems = [
         { id: 'editor', icon: FileText, label: 'Document Editor' },
         { id: 'draft', icon: PenTool, label: 'Draft Contract' },
-        { id: 'context', icon: Users, label: 'Case Context' },
+        { id: 'cases', icon: Briefcase, label: terminology },
+        { id: 'context', icon: Users, label: `${terminology} Context` },
         { id: 'clauses', icon: BookMarked, label: 'Clause Library' },
-        { id: 'playbook', icon: BookOpen, label: 'Custom Playbook' },
+        { id: 'playbooks', icon: BookOpen, label: 'Playbooks' },
         { id: 'workspace', icon: Building, label: 'Team Workspace' },
+        { id: 'audit', icon: Eye, label: 'Audit Logs' },
         { id: 'chat', icon: MessageSquare, label: 'Assistant' },
         { id: 'analysis', icon: ShieldCheck, label: 'Analysis', showScore: true },
         { id: 'history', icon: History, label: 'History' },

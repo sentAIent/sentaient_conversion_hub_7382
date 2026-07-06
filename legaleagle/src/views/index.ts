@@ -9,3 +9,8 @@ export { PricingView } from './PricingView';
 export * from './PrivacyPolicyView';
 export * from './TOSView';
 export { AdminAnalyticsView } from './AdminAnalyticsView';
+export { WorkspaceView } from './WorkspaceView';
+export { PlaybookView } from './PlaybookView';
+export { AuditLogView } from './AuditLogView';
+export { AcceptInviteView } from './AcceptInviteView';
+export { CasesView } from './CasesView';

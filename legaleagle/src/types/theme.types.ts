@@ -33,6 +33,7 @@ export interface Theme {
     roastTitleRed: string;
     selectedIssue: string;
     selectedIssueRoast: string;
+    [key: string]: any;
 }
 
 export type ThemeId =

@@ -88,6 +88,36 @@ export const getRiskDistribution = (recommendations: Recommendation[]) => {
 };
 
 /**
+ * Generates a contract draft from scratch using Gemini.
+ */
+export const generateContract = async (
+    promptText: string
+): Promise<string> => {
+    if (!isApiConfigured()) {
+        throw new Error('Gemini API key not configured.');
+    }
+
+    const prompt = `
+You are an expert corporate attorney. Generate a professional legal contract draft based on the following user request.
+Use markdown formatting (headings, bullet points, bold text) to structure the document professionally.
+
+USER REQUEST:
+${promptText}
+
+Ensure the draft is thorough, legally sound, and includes standard boilerplate clauses where appropriate (e.g., severability, governing law).
+Only output the contract text, do not include any conversational filler.
+`;
+
+    try {
+        const result = await callGemini(prompt, "You are a professional legal contract generator.", false);
+        return result as string;
+    } catch (error) {
+        console.error('Gemini API Error (Generate Contract):', error);
+        throw new Error('Failed to generate contract. Please try again.');
+    }
+};
+
+/**
  * Analyze a single chunk of the document with retry logic
  */
 const analyzeChunk = async (
@@ -99,6 +129,7 @@ const analyzeChunk = async (
     contractType: ContractType = 'General',
     model: string = 'gemini-2.5-pro',
     abortSignal?: AbortSignal,
+    playbookText?: string,
     retries = 3
 ): Promise<AnalysisChunkResult | null> => {
     const partiesStr = parties.map(p => `${p.name} (${p.role}, ${p.domicile})`).join(', ');
@@ -116,7 +147,7 @@ ${chunk}
 """
 
 Analyze this section thoroughly and return your findings.
-`;
+${playbookText ? `\nCRITICAL CUSTOM PLAYBOOK RULES:\nYou MUST evaluate the text against the following custom company playbook rules and explicitly flag any deviations as Critical risks:\n"""\n${playbookText}\n"""\n` : ''}`;
 
     let systemPrompt;
     switch (depth) {
@@ -213,7 +244,8 @@ export const analyzeDocument = async (
     onRecommendationsUpdate?: (recommendations: Recommendation[]) => void,
     analysisDepth: AnalysisDepth = 'standard',
     contractType: ContractType = 'General',
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
+    playbookText?: string
 ): Promise<{
     recommendations: Recommendation[];
     swot: SwotAnalysis;
@@ -250,7 +282,7 @@ export const analyzeDocument = async (
     // Process all chunks concurrently
     const chunkPromises = chunks.map(async (chunk, i) => {
         if (abortSignal?.aborted) throw new Error('AbortError');
-        const result = await analyzeChunk(chunk, i, perspective, parties, analysisDepth, contractType, model, abortSignal);
+        const result = await analyzeChunk(chunk, i, perspective, parties, analysisDepth, contractType, model, abortSignal, playbookText);
         completed++;
         onProgress?.({ current: completed, total: chunks.length });
 

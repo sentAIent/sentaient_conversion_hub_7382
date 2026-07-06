@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Theme } from '@/types';
-import { Users, Plus, Building, Save, Mail, Trash2 } from 'lucide-react';
+import { Users, Plus, Building, Save, Mail, Trash2, Shield } from 'lucide-react';
 
 interface WorkspaceViewProps {
     currentTheme: Theme;
@@ -13,11 +13,14 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
     const { user, profile } = useAuth();
     const [teams, setTeams] = useState<any[]>([]);
     const [members, setMembers] = useState<any[]>([]);
+    const [invitations, setInvitations] = useState<any[]>([]);
     const [newTeamName, setNewTeamName] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState('member');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [retentionDays, setRetentionDays] = useState(0);
+    const [terminologyPreference, setTerminologyPreference] = useState('Matters');
 
     useEffect(() => {
         if (user) {
@@ -28,6 +31,7 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
     useEffect(() => {
         if (profile?.current_team_id) {
             fetchMembers(profile.current_team_id);
+            fetchInvitations(profile.current_team_id);
         }
     }, [profile?.current_team_id]);
 
@@ -40,6 +44,14 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
             console.error('Error fetching teams:', error);
         } else {
             setTeams(data || []);
+            // Set retention days and terminology for active team
+            if (profile?.current_team_id) {
+                const activeTeam = data?.find(t => t.id === profile.current_team_id);
+                if (activeTeam) {
+                    setRetentionDays(activeTeam.data_retention_days || 0);
+                    setTerminologyPreference(activeTeam.terminology_preference || 'Matters');
+                }
+            }
         }
     };
 
@@ -53,6 +65,17 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
             console.error('Error fetching members:', error);
         } else {
             setMembers(data || []);
+        }
+    };
+
+    const fetchInvitations = async (teamId: string) => {
+        const { data, error } = await supabase
+            .from('team_invitations')
+            .select('*')
+            .eq('team_id', teamId);
+            
+        if (!error) {
+            setInvitations(data || []);
         }
     };
 
@@ -103,12 +126,22 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
         setError(null);
         
         try {
-            // Find the user by email via a secure edge function or RPC (for now, we'll simulate it or assume they exist)
-            // Real implementation requires an RPC to lookup user by email safely, or use Supabase Auth invite
-            alert(`In production, this would send an invite email to ${inviteEmail} for role ${inviteRole}.`);
+            const { data, error } = await supabase.functions.invoke('invite-user', {
+                body: {
+                    email: inviteEmail.toLowerCase(),
+                    team_id: profile.current_team_id,
+                    role: inviteRole
+                }
+            });
+
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+
+            alert(`Invitation sent to ${inviteEmail}.`);
             setInviteEmail('');
+            fetchInvitations(profile.current_team_id);
         } catch (err: any) {
-            setError(err.message);
+            setError(err.message || 'Failed to send invitation.');
         } finally {
             setLoading(false);
         }
@@ -124,6 +157,28 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
                 
             if (error) throw error;
             fetchMembers(profile!.current_team_id!);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdateRetention = async () => {
+        if (!profile?.current_team_id) return;
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('teams')
+                .update({ 
+                    data_retention_days: retentionDays,
+                    terminology_preference: terminologyPreference
+                })
+                .eq('id', profile.current_team_id);
+            
+            if (error) throw error;
+            
+            alert('Settings updated successfully.');
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -241,6 +296,24 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
                                 )}
                             </div>
                         ))}
+                        
+                        {invitations.map(invite => (
+                            <div key={invite.id} className={`flex items-center justify-between p-3 rounded-lg border border-dashed ${currentTheme.border} bg-gray-50/50 dark:bg-gray-800/50`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm">
+                                        {invite.email.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className={`font-medium text-sm text-slate-600 dark:text-slate-400`}>
+                                            {invite.email} <span className="text-xs font-normal bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-full ml-2">Pending</span>
+                                        </div>
+                                        <div className={`text-xs ${currentTheme.textMuted} capitalize`}>
+                                            {invite.role}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
@@ -268,6 +341,68 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
                             >
                                 <Mail className="w-4 h-4" />
                                 Invite
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Data Retention & Terminology Settings */}
+            {profile?.current_team_id && (
+                <div className={`p-6 rounded-xl shadow-sm ${currentTheme.card} border ${currentTheme.border}`}>
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className={`p-2 rounded-lg ${currentTheme.primary} bg-opacity-10 text-blue-600`}>
+                            <Shield className="w-5 h-5" />
+                        </div>
+                        <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Workspace Settings</h3>
+                    </div>
+
+                    <div className="space-y-6 mb-6">
+                        <div>
+                            <h4 className={`text-sm font-medium mb-2 ${currentTheme.text}`}>App Terminology</h4>
+                            <p className={`text-sm ${currentTheme.textMuted} mb-3`}>
+                                Choose how you want to refer to case configurations across the application.
+                            </p>
+                            <select
+                                value={terminologyPreference}
+                                onChange={(e) => setTerminologyPreference(e.target.value)}
+                                className={`px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${currentTheme.input} w-64`}
+                            >
+                                <option value="Cases">Cases</option>
+                                <option value="Matters">Matters</option>
+                                <option value="Projects">Projects</option>
+                                <option value="Clients">Clients</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <h4 className={`text-sm font-medium mb-2 ${currentTheme.text}`}>Data Retention Policy</h4>
+                            <p className={`text-sm ${currentTheme.textMuted} mb-3`}>
+                                Configure how long Legal Eagle stores analyzed documents for this workspace. 
+                            </p>
+                            <div className="flex gap-4 items-center">
+                                <select
+                                    value={retentionDays}
+                                    onChange={(e) => setRetentionDays(Number(e.target.value))}
+                                    className={`px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${currentTheme.input} w-64`}
+                                >
+                                    <option value={0}>Indefinitely (Keep forever)</option>
+                                    <option value={30}>30 Days</option>
+                                    <option value={90}>90 Days</option>
+                                    <option value={180}>180 Days</option>
+                                    <option value={365}>1 Year</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                            <button
+                                onClick={handleUpdateRetention}
+                                disabled={loading}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTheme.button} disabled:opacity-50`}
+                            >
+                                <Save className="w-4 h-4" />
+                                Save Settings
                             </button>
                         </div>
                     </div>

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Clock, UserCheck, Cloud, FileText, ChevronRight } from 'lucide-react';
+import { Clock, UserCheck, Cloud, FileText, ChevronRight, Trash2 } from 'lucide-react';
 import type { Theme, ChangeLogEntry } from '@/types';
 
 interface HistoryViewProps {
     changeLog: ChangeLogEntry[];
     cloudHistory?: any[];
     onLoadItem?: (item: any) => void;
+    onDeleteDocument?: (id: string) => void;
     currentTheme: Theme;
 }
 
@@ -13,6 +14,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
     changeLog,
     cloudHistory = [],
     onLoadItem,
+    onDeleteDocument,
     currentTheme
 }) => {
     return (
@@ -38,26 +40,41 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                         ) : (
                             <div className="grid gap-4">
                                 {cloudHistory.map((item, index) => (
-                                    <button
-                                        key={item.id || index}
-                                        onClick={() => onLoadItem && onLoadItem(item)}
-                                        className={`p-4 rounded-xl border shadow-sm flex items-center justify-between text-left transition-all hover:border-blue-300 hover:shadow-md ${currentTheme.card || currentTheme.panelBg}`}
-                                    >
-                                        <div className="flex items-center gap-4">
+                                    <div key={item.id || index} className={`p-4 rounded-xl border shadow-sm flex items-center justify-between text-left transition-all ${currentTheme.card || currentTheme.panelBg}`}>
+                                        <button
+                                            onClick={() => onLoadItem && onLoadItem(item)}
+                                            className="flex-1 flex items-center gap-4 hover:opacity-80"
+                                        >
                                             <div className="bg-blue-50 p-3 rounded-full text-blue-600">
                                                 <FileText className="w-6 h-6" />
                                             </div>
-                                            <div>
-                                                <h4 className="font-bold text-slate-800">{item.documentName || "Untitled Document"}</h4>
+                                            <div className="text-left">
+                                                <h4 className="font-bold text-slate-800">{item.document_name || item.documentName || "Untitled Document"}</h4>
                                                 <div className="text-xs text-slate-500 mt-1 flex items-center gap-3">
-                                                    <span>{new Date(item.timestamp).toLocaleDateString()} at {new Date(item.timestamp).toLocaleTimeString()}</span>
+                                                    <span>{new Date(item.created_at || item.timestamp).toLocaleDateString()} at {new Date(item.created_at || item.timestamp).toLocaleTimeString()}</span>
                                                     {item.score > 0 && <span className="font-semibold text-blue-600">Score: {item.score}</span>}
                                                     {item.contractType && <span>{item.contractType}</span>}
                                                 </div>
                                             </div>
+                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            {onDeleteDocument && item.id && (
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (window.confirm("Are you sure you want to permanently delete this document? This cannot be undone.")) {
+                                                            onDeleteDocument(item.id);
+                                                        }
+                                                    }}
+                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Permanently Delete Document"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            )}
+                                            <ChevronRight className="w-5 h-5 text-slate-400" />
                                         </div>
-                                        <ChevronRight className="w-5 h-5 text-slate-400" />
-                                    </button>
+                                    </div>
                                 ))}
                             </div>
                         )}

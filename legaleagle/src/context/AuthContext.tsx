@@ -11,6 +11,7 @@ export interface UserProfile {
     reviews_limit: number;
     reviews_used: number;
     n8n_webhook_url: string | null;
+    current_team_id?: string | null;
 }
 
 interface AuthContextType {

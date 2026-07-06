@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-
+import { useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Shield, Zap, FileText, ArrowRight, CheckCircle2, MessageSquare, Briefcase } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { PricingView } from './PricingView';
 import { THEMES } from '@/constants';
+import { getSEOData } from '@/utils/seoData';
 
 export const LandingPageView: React.FC = () => {
+    const { contractType } = useParams<{ contractType: string }>();
+    const seo = getSEOData(contractType);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
     const handleCTA = () => {
@@ -14,6 +18,11 @@ export const LandingPageView: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-blue-500/30">
+            <Helmet>
+                <title>{seo.title}</title>
+                <meta name="description" content={seo.description} />
+            </Helmet>
+
             {/* Navigation */}
             <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -45,14 +54,11 @@ export const LandingPageView: React.FC = () => {
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] -z-10 pointer-events-none" />
                 
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
-                    State-of-the-art legal analysis.<br/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
-                        Powered by AI.
-                    </span>
+                    {seo.h1}
                 </h1>
                 
                 <p className="text-xl md:text-2xl text-slate-400 mb-12 max-w-3xl mx-auto leading-relaxed">
-                    Professional contract review for attorneys, judges, and legal professionals. Identify risks, extract clauses, and negotiate from a position of power.
+                    {seo.subtitle}
                 </p>
                 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

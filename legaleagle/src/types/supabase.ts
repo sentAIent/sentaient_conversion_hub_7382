@@ -79,18 +79,21 @@ export interface Database {
                     name: string
                     created_at: string
                     owner_id: string
+                    data_retention_days: number
                 }
                 Insert: {
                     id?: string
                     name: string
                     created_at?: string
                     owner_id: string
+                    data_retention_days?: number
                 }
                 Update: {
                     id?: string
                     name?: string
                     created_at?: string
                     owner_id?: string
+                    data_retention_days?: number
                 }
                 Relationships: [
                     {
@@ -200,6 +203,52 @@ export interface Database {
                 Relationships: [
                     {
                         foreignKeyName: "analyses_user_id_fkey"
+                        columns: ["user_id"]
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            audit_logs: {
+                Row: {
+                    id: string
+                    team_id: string
+                    user_id: string | null
+                    action: string
+                    target_type: string | null
+                    target_id: string | null
+                    details: Json | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    team_id: string
+                    user_id?: string | null
+                    action: string
+                    target_type?: string | null
+                    target_id?: string | null
+                    details?: Json | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    team_id?: string
+                    user_id?: string | null
+                    action?: string
+                    target_type?: string | null
+                    target_id?: string | null
+                    details?: Json | null
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "audit_logs_team_id_fkey"
+                        columns: ["team_id"]
+                        referencedRelation: "teams"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "audit_logs_user_id_fkey"
                         columns: ["user_id"]
                         referencedRelation: "users"
                         referencedColumns: ["id"]

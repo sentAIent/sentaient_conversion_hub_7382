@@ -19,13 +19,15 @@ import {
     TOSView,
     AdminAnalyticsView,
     WorkspaceView,
-    PlaybookView
+    PlaybookView,
+    AuditLogView,
+    CasesView
 } from '@/views';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { OfflineBanner } from '@/components/features/OfflineBanner';
 
 // Services
-import { analyzeDocument, sendChatMessage, calculateScore } from '@/services';
+import { analyzeDocument, sendChatMessage, calculateScore, generateContract } from '@/services';
 import { supabase } from '@/lib/supabase';
 
 // Hooks
@@ -76,6 +78,7 @@ export default function MainApp() {
     const [selectedRecId, setSelectedRecId] = useState<number | null>(null);
     const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
     const [scanProgress, setScanProgress] = useState<ScanProgress>({ current: 0, total: 0 });
+    const [cloudHistory, setCloudHistory] = useState<any[]>([]);
 
     // Email modal state
     const [showEmailModal, setShowEmailModal] = useState(false);
@@ -144,6 +147,58 @@ export default function MainApp() {
         };
         localStorage.setItem('legalAnalyzerState', JSON.stringify(stateToSave));
     }, [documentText, documentName, recommendations, score, swotData, changeLog, analysisComplete, perspective, heatmapEnabled]);
+
+    // Fetch cloud history when opening the history tab
+    useEffect(() => {
+        if (activeTab === 'history' && profile?.id) {
+            fetchCloudHistory();
+        }
+    }, [activeTab, profile]);
+
+    const fetchCloudHistory = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('analyses')
+                .select('*')
+                .eq('user_id', profile?.id)
+                .order('created_at', { ascending: false })
+                .limit(50);
+            
+            if (error) throw error;
+            if (data) setCloudHistory(data);
+        } catch (e) {
+            console.error("Failed to fetch cloud history", e);
+        }
+    };
+
+    const handleDeleteDocument = async (id: string) => {
+        if (!profile?.id) return;
+        try {
+            const { error } = await supabase
+                .from('analyses')
+                .delete()
+                .eq('id', id);
+            
+            if (error) throw error;
+            
+            // Remove from local state
+            setCloudHistory(prev => prev.filter(item => item.id !== id));
+            
+            // Log audit event if in a team
+            if (profile.current_team_id) {
+                await supabase.from('audit_logs').insert({
+                    team_id: profile.current_team_id,
+                    user_id: profile.id,
+                    action: 'document_deleted',
+                    target_type: 'analysis',
+                    target_id: id
+                });
+            }
+        } catch (e) {
+            console.error("Failed to delete document", e);
+            alert("Failed to delete document. Please try again.");
+        }
+    };
 
     // Handle document analysis
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -553,8 +608,13 @@ Legal Team`;
                 {activeTab === 'draft' && (
                     <DraftView
                         currentTheme={currentTheme}
-                        onGenerate={async (_prompt: string) => { return ""; }}
-                        onSendToEditor={() => {}}
+                        onGenerate={async (prompt: string) => {
+                            return await generateContract(prompt);
+                        }}
+                        onSendToEditor={(text: string) => {
+                            setDocumentText(text);
+                            setActiveTab('editor');
+                        }}
                         handleExportPdf={() => {}}
                         handleExportWord={() => {}}
                     />
@@ -584,7 +644,18 @@ Legal Team`;
                 {activeTab === 'history' && (
                     <HistoryView
                         changeLog={changeLog}
+                        cloudHistory={cloudHistory}
+                        onDeleteDocument={handleDeleteDocument}
                         currentTheme={currentTheme}
+                        onLoadItem={(item) => {
+                            setDocumentText(item.content);
+                            setDocumentName(item.document_name);
+                            setScore(item.score);
+                            if (item.recommendations) setRecommendations(item.recommendations);
+                            if (item.swot) setSwotData(item.swot);
+                            setAnalysisComplete(true);
+                            setActiveTab('analysis');
+                        }}
                     />
                 )}
 
@@ -600,6 +671,18 @@ Legal Team`;
                         currentTheme={currentTheme}
                     />
                 )}
+
+                {activeTab === 'workspace' && (
+                    <WorkspaceView currentTheme={currentTheme} />
+                )}
+
+                {activeTab === 'playbook' && (
+                    <PlaybookView currentTheme={currentTheme} />
+                )}
+
+                {activeTab === 'audit' && <AuditLogView currentTheme={currentTheme} />}
+
+                {activeTab === 'cases' && <CasesView currentTheme={currentTheme} />}
 
                 {activeTab === 'admin' && (
                     <AdminAnalyticsView currentTheme={currentTheme} />
