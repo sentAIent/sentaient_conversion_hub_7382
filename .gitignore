@@ -18,3 +18,5 @@ firebase-key.json
 .netlify
 
 dist/
+tmp_legaleagle/
+tmp_legaleagle
