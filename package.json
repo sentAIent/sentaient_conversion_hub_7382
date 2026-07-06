@@ -76,7 +76,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build --sourcemap && cd legaleagle && npm install && npm run build && mkdir -p ../dist/legaleagle && cp -R dist/* ../dist/legaleagle/",
+    "build": "vite build --sourcemap && cd legaleagle && npm install --legacy-peer-deps && npm run build && mkdir -p ../dist/legaleagle && cp -R dist/* ../dist/legaleagle/",
     "serve": "vite preview"
   },
   "eslintConfig": {

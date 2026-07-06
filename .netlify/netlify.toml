@@ -31,7 +31,7 @@ functions = "/Users/ute/Dev/sentaient_conversion_hub_7382-Website/netlify/functi
 
 [[redirects]]
 from = "/icebreaker/*"
-to = "https://sentaient-icebreaker.netlify.app/:splat"
+to = "https://sentaient-icebreaker-857.netlify.app/:splat"
 status = 200.0
 force = true
 
@@ -43,7 +43,7 @@ force = true
 
 [[redirects]]
 from = "/icebusiness/*"
-to = "https://sentaient-icebusiness.netlify.app/:splat"
+to = "https://sentaient-icebusiness-hub.netlify.app/:splat"
 status = 200.0
 force = true
 
@@ -55,9 +55,21 @@ force = true
 
 [[redirects]]
 from = "/iceadmin/*"
-to = "https://sentaient-iceadmin.netlify.app/:splat"
+to = "https://sentaient-iceadmin-hub.netlify.app/:splat"
 status = 200.0
 force = true
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/legaleagle/*"
+to = "/legaleagle/index.html"
+status = 200.0
+force = false
 
 [redirects.query]
 
