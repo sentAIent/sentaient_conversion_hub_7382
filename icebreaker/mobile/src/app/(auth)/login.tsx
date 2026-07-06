@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../utils/firebase';
 import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,16 +13,33 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  const validateEmail = (emailStr: string) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(emailStr);
+  };
 
   const handleAuth = async (isSignUp: boolean) => {
     if (!email || !password) {
       setError('Please enter email and password');
       return;
     }
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
     
     setLoading(true);
     setError('');
+    setSuccess('');
     
     try {
       if (isSignUp) {
@@ -51,6 +68,39 @@ export default function LoginScreen() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address first.');
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setSuccess('Password reset link sent! Please check your inbox.');
+    } catch (err: any) {
+      console.error("Reset Error:", err);
+      let errorMessage = 'Failed to send reset link. Please try again.';
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
@@ -65,9 +115,24 @@ export default function LoginScreen() {
           </Animated.View>
         ) : null}
 
+        {success ? (
+          <Animated.View 
+            entering={FadeInUp.duration(400)} 
+            exiting={FadeOutUp.duration(300)} 
+            style={styles.successToast}
+          >
+            <Ionicons name="checkmark-circle" size={24} color="#10b981" style={{marginRight: 10}} />
+            <Text style={styles.successText}>{success}</Text>
+          </Animated.View>
+        ) : null}
+
         <BlurView intensity={30} tint="dark" style={styles.glassCard}>
           <Text style={styles.title}>ICEBREAKER</Text>
-          <Text style={styles.subtitle}>Log in to map your network.</Text>
+          <Text style={styles.subtitle}>
+            {mode === 'signin' && 'Log in to map your network.'}
+            {mode === 'signup' && 'Create your account to start mapping.'}
+            {mode === 'forgot' && 'Reset your password.'}
+          </Text>
 
         <TextInput
           style={styles.input}
@@ -76,33 +141,121 @@ export default function LoginScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (error) setError('');
+            if (success) setSuccess('');
+          }}
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#888"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        {mode !== 'forgot' && (
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Password"
+              placeholderTextColor="#888"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (error) setError('');
+              }}
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon} 
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off" : "eye"} 
+                size={22} 
+                color="rgba(255,255,255,0.5)" 
+              />
+            </TouchableOpacity>
+          </View>
+        )}
 
-        <TouchableOpacity 
-          style={styles.primaryButton} 
-          onPress={() => handleAuth(false)}
-          disabled={loading}
-        >
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
-        </TouchableOpacity>
+        {mode === 'signin' && (
+          <>
+            <TouchableOpacity 
+              style={styles.primaryButton} 
+              onPress={() => handleAuth(false)}
+              disabled={loading}
+            >
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
+            </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.secondaryButton} 
-          onPress={() => handleAuth(true)}
-          disabled={loading}
-        >
-          <Text style={styles.secondaryButtonText}>Create Account</Text>
-        </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.forgotButton}
+              onPress={() => {
+                setMode('forgot');
+                setError('');
+                setSuccess('');
+              }}
+            >
+              <Text style={styles.forgotButtonText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.secondaryButton} 
+              onPress={() => {
+                setMode('signup');
+                setError('');
+                setSuccess('');
+              }}
+              disabled={loading}
+            >
+              <Text style={styles.secondaryButtonText}>Create Account</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {mode === 'signup' && (
+          <>
+            <TouchableOpacity 
+              style={styles.primaryButton} 
+              onPress={() => handleAuth(true)}
+              disabled={loading}
+            >
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign Up</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.secondaryButton} 
+              onPress={() => {
+                setMode('signin');
+                setError('');
+                setSuccess('');
+              }}
+              disabled={loading}
+            >
+              <Text style={styles.secondaryButtonText}>Back to Sign In</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {mode === 'forgot' && (
+          <>
+            <TouchableOpacity 
+              style={styles.primaryButton} 
+              onPress={handleResetPassword}
+              disabled={loading}
+            >
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Reset Link</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.secondaryButton} 
+              onPress={() => {
+                setMode('signin');
+                setError('');
+                setSuccess('');
+              }}
+              disabled={loading}
+            >
+              <Text style={styles.secondaryButtonText}>Back to Sign In</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </BlurView>
       </SafeAreaView>
     </View>
@@ -147,6 +300,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
+  passwordContainer: {
+    position: 'relative',
+    marginBottom: 15,
+  },
+  passwordInput: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    color: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    paddingRight: 50,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 15,
+    top: 15,
+    zIndex: 10,
+  },
   primaryButton: {
     backgroundColor: '#3b82f6',
     borderRadius: 10,
@@ -158,6 +331,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: 16,
+  },
+  forgotButton: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  forgotButtonText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '500',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
   secondaryButton: {
     marginTop: 20,
@@ -190,6 +373,32 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#ef4444',
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  successToast: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 30, 10, 0.8)',
+    borderColor: 'rgba(16, 185, 129, 0.5)',
+    borderWidth: 1,
+    padding: 15,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 100,
+    ...(Platform.OS === 'web' ? { boxShadow: '0px 4px 10px rgba(16, 185, 129, 0.3)' as any } : {
+      shadowColor: '#10b981',
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+    }),
+  },
+  successText: {
+    color: '#10b981',
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
