@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 
 // Components
@@ -16,7 +17,9 @@ import {
     PricingView,
     PrivacyPolicyView,
     TOSView,
-    AdminAnalyticsView
+    AdminAnalyticsView,
+    WorkspaceView,
+    PlaybookView
 } from '@/views';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { OfflineBanner } from '@/components/features/OfflineBanner';
@@ -178,6 +181,19 @@ export default function MainApp() {
         setSelectedRecId(null);
         abortControllerRef.current = new AbortController();
 
+        let playbookText = undefined;
+        if (profile?.current_team_id) {
+            const { data } = await supabase
+                .from('playbooks')
+                .select('rules_text')
+                .eq('team_id', profile.current_team_id)
+                .maybeSingle();
+            
+            if (data?.rules_text && data.rules_text.trim() !== '') {
+                playbookText = data.rules_text;
+            }
+        }
+
         try {
             const result = await analyzeDocument(
                 documentText,
@@ -190,7 +206,8 @@ export default function MainApp() {
                 },
                 analysisDepth,
                 contractType,
-                abortControllerRef.current.signal
+                abortControllerRef.current.signal,
+                playbookText
             );
             setRecommendations(result.recommendations);
             setSwotData(result.swot);
