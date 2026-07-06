@@ -56,9 +56,9 @@ const ProjectRoutes = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
-              {/* Protected App Routes */}
-              <Route path="/interstellar" element={<ProtectedRoute><Interstellar /></ProtectedRoute>} />
-              <Route path="/mindwave" element={<ProtectedRoute><MindWave /></ProtectedRoute>} />
+              {/* App Routes (Public for Marketing Phase) */}
+              <Route path="/interstellar" element={<Interstellar />} />
+              <Route path="/mindwave" element={<MindWave />} />
               
               <Route path="/portfolio" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
