@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { initAnalytics, trackPageView } from '../utils/analytics';
 
 const SEO_MAP = {
-    '/': 'sentAIent | Autonomous AI & Human-Centered Apps',
+    '/': 'sentAIent | Advanced Intelligent Technology',
     '/ai': 'sentAIent | AI Consultancy Hub',
     '/portfolio': 'sentAIent | Our Work',
     '/pricing': 'sentAIent | Enterprise & Consumer Pricing',

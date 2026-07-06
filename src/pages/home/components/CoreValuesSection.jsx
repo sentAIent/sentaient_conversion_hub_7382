@@ -55,7 +55,7 @@ const CoreValuesSection = () => {
               Our Core <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Values</span>
             </h3>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              These principles guide every decision, every implementation, and every client relationship we build.
+              These principles guide every decision, every implementation, and every relationship we build.
             </p>
           </motion.div>
         </div>

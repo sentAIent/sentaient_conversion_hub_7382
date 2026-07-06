@@ -28,10 +28,15 @@ export const callGemini = async (
     prompt: string,
     systemPrompt: string,
     isJson = false,
-    customModel?: string
+    customModel?: string,
+    abortSignal?: AbortSignal
 ): Promise<GeminiResponse | Record<string, unknown>> => {
     if (!isSupabaseConfigured) {
         throw new Error('Supabase is not configured. Cannot call the AI backend.');
+    }
+
+    if (abortSignal?.aborted) {
+        throw new Error('AbortError');
     }
 
     const payload = {
@@ -46,9 +51,17 @@ export const callGemini = async (
 
     for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
         try {
+            if (abortSignal?.aborted) {
+                throw new Error('AbortError');
+            }
+
             const { data, error } = await supabase.functions.invoke('analyze-document', {
                 body: payload,
             });
+
+            if (abortSignal?.aborted) {
+                throw new Error('AbortError');
+            }
 
             if (error) {
                 // If it's an Auth error, don't retry

@@ -22,7 +22,7 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ onAccept }) =>
                 <div className="p-8 space-y-4 max-h-[60vh] overflow-y-auto text-slate-700">
                     <p className="font-bold">1. No Attorney-Client Relationship</p>
                     <p className="text-sm">
-                        Use of LexGuard AI ("The Application") does not create an attorney-client
+                        Use of Legal Eagle ("The Application") does not create an attorney-client
                         relationship between you and the creators of The Application. The Application
                         is an automated tool powered by artificial intelligence and is not a substitute
                         for the advice of an attorney.

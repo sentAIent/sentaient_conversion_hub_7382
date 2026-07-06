@@ -2049,6 +2049,22 @@ export function setupUI() {
 window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
 
 
+// --- NATIVE BACKGROUND AUDIO HACK ---
+// A silent looping audio element forces WKWebView to keep the JS engine alive
+window.bgAudioHack = null;
+export function initBackgroundAudioHack() {
+    if (window.bgAudioHack) return;
+    const audio = document.createElement('audio');
+    audio.id = 'bgAudioHack';
+    audio.loop = true;
+    audio.crossOrigin = 'anonymous';
+    audio.volume = 0.01;
+    // Tiny Base64 silent WAV
+    audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    document.body.appendChild(audio);
+    window.bgAudioHack = audio;
+}
+
 // --- PLAY BUTTON HANDLER ---
 let lastPlayClickTime = 0;
 
@@ -2131,6 +2147,12 @@ export async function handlePlayClick() {
             // 2. Start audio and fade in
             await startAudio();
             fadeIn(1.5);
+            
+            // Start the background audio hack to prevent WKWebView suspension
+            if (!window.bgAudioHack) initBackgroundAudioHack();
+            if (window.bgAudioHack) {
+                window.bgAudioHack.play().catch(e => console.warn('Background hack blocked by browser:', e));
+            }
 
             // 3. Sync buttons IMMEDIATELY to show pause state
             syncAllButtons();

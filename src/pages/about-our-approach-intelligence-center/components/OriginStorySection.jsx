@@ -155,7 +155,7 @@ const OriginStorySection = () => {
               Our Core Values
             </h3>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              These principles guide every decision, every implementation, and every client relationship we build.
+              These principles guide every decision, every implementation, and every relationship we build.
             </p>
           </div>
           

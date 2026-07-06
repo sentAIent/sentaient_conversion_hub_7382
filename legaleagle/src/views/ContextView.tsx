@@ -1,6 +1,8 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { Theme, Party } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface ContextViewProps {
     parties: Party[];
@@ -13,6 +15,30 @@ export const ContextView: React.FC<ContextViewProps> = ({
     setParties,
     currentTheme
 }) => {
+    const { profile, refreshProfile } = useAuth();
+    const [webhookUrl, setWebhookUrl] = React.useState(profile?.n8n_webhook_url || '');
+    const [isSaving, setIsSaving] = React.useState(false);
+
+    React.useEffect(() => {
+        if (profile?.n8n_webhook_url) {
+            setWebhookUrl(profile.n8n_webhook_url);
+        }
+    }, [profile]);
+
+    const handleSaveWebhook = async () => {
+        setIsSaving(true);
+        try {
+            await supabase.rpc('update_profile', { new_n8n_webhook_url: webhookUrl });
+            await refreshProfile();
+            alert('n8n Webhook URL saved successfully!');
+        } catch (error) {
+            console.error('Failed to save webhook', error);
+            alert('Failed to save webhook URL.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleAddParty = () => {
         setParties([
             ...parties,
@@ -140,6 +166,39 @@ export const ContextView: React.FC<ContextViewProps> = ({
                                 <option value="other">Other</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+
+                {/* Automation & Integrations Section */}
+                <div className={`mt-6 rounded-xl border shadow-sm p-6 ${currentTheme.card || currentTheme.panelBg}`}>
+                    <h3 className="font-bold text-lg mb-4">Integrations & Automation</h3>
+                    <p className="text-sm text-slate-500 mb-4">
+                        Connect Legal Eagle to your workflows. We currently support pushing analysis results to n8n Webhooks.
+                    </p>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            n8n Webhook URL
+                        </label>
+                        <div className="flex gap-2">
+                            <input 
+                                type="url" 
+                                className="flex-1 border border-slate-200 p-2 rounded-lg text-sm bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="https://your-n8n-instance.com/webhook/..."
+                                value={webhookUrl}
+                                onChange={(e) => setWebhookUrl(e.target.value)}
+                            />
+                            <button 
+                                onClick={handleSaveWebhook}
+                                disabled={isSaving}
+                                className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+                            >
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2">
+                            When an analysis completes, we will send a POST request with the JSON payload to this URL.
+                        </p>
                     </div>
                 </div>
             </div>

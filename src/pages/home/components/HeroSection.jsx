@@ -34,7 +34,7 @@ const HeroSection = () => {
           className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-[#60a9ff]"
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-gray-300 drop-shadow-lg">
-            Intelligent Technology
+            Advanced Intelligence
           </span>
         </motion.h1>
 
@@ -44,12 +44,12 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
           className="mt-6 text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md"
         >
-          sentAIent builds and scales proprietary AI products. Explore our cutting-edge portfolio including 
+          sentAIent builds and scales proprietary AI technology. Explore our cutting-edge portfolio including 
           <span className="text-white font-semibold"> MindWave</span>, 
           <span className="text-white font-semibold"> Legal Eagle</span>, 
           <span className="text-white font-semibold"> Icebreaker</span>, 
-          <span className="text-white font-semibold"> Interstellar</span>, and 
-          <span className="text-white font-semibold"> Autonomous AI Systems</span>.
+          <span className="text-white font-semibold"> Interstellar</span> <br />
+          and <span className="text-white font-semibold"> AutoPilot, our autonomous AI enterprise systems</span>.
         </motion.p>
 
         <motion.div

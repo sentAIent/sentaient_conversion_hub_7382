@@ -10,6 +10,7 @@ export interface UserProfile {
     drafts_used: number;
     reviews_limit: number;
     reviews_used: number;
+    n8n_webhook_url: string | null;
 }
 
 interface AuthContextType {
@@ -34,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchProfile = async (userId: string) => {
         const { data, error } = await supabase
             .from('profiles')
-            .select('id, is_premium, subscription_tier, drafts_limit, drafts_used, reviews_limit, reviews_used')
+            .select('id, is_premium, subscription_tier, drafts_limit, drafts_used, reviews_limit, reviews_used, n8n_webhook_url')
             .eq('id', userId)
             .single();
             

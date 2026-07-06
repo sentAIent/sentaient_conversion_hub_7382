@@ -15,13 +15,18 @@ import {
     ClauseLibraryView,
     PricingView,
     PrivacyPolicyView,
-    TOSView
+    TOSView,
+    AdminAnalyticsView
 } from '@/views';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { OfflineBanner } from '@/components/features/OfflineBanner';
 
 // Services
 import { analyzeDocument, sendChatMessage, calculateScore } from '@/services';
+import { supabase } from '@/lib/supabase';
+
+// Hooks
+import { useAuth } from '@/context/AuthContext';
 
 // Constants
 import { THEMES, INITIAL_TEXT } from '@/constants';
@@ -41,8 +46,9 @@ import type {
     AnalysisDepth
 } from '@/types';
 
-function App() {
-    // Core state
+export default function MainApp() {
+    const { profile } = useAuth();
+    // App State
     const [hasAcceptedDisclaimer, setHasAcceptedDisclaimer] = useState(false);
     const [activeTab, setActiveTab] = useState('editor');
     const [isRoastMode, setIsRoastMode] = useState(false);
@@ -137,13 +143,40 @@ function App() {
     }, [documentText, documentName, recommendations, score, swotData, changeLog, analysisComplete, perspective, heatmapEnabled]);
 
     // Handle document analysis
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    const handleCancelAnalysis = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+    };
+
+    const handleUpgrade = async (tier: string, isAnnual: boolean) => {
+        try {
+            const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                body: { tier, isAnnual }
+            });
+            
+            if (error) throw error;
+            if (data?.url) {
+                window.location.href = data.url;
+            }
+        } catch (err) {
+            console.error('Failed to create checkout session:', err);
+            alert('Failed to initiate checkout.');
+        }
+    };
+
     const handleAnalyze = async () => {
-        if (!documentText.trim()) return;
+        if (!documentText) return;
 
         setIsAnalyzing(true);
+        setAnalysisComplete(false);
         setRecommendations([]);
         setSwotData(null);
         setSelectedRecId(null);
+        abortControllerRef.current = new AbortController();
 
         try {
             const result = await analyzeDocument(
@@ -155,14 +188,37 @@ function App() {
                     setRecommendations(recs);
                     if (recs.length > 0) setHeatmapEnabled(true);
                 },
-                analysisDepth
+                analysisDepth,
+                contractType,
+                abortControllerRef.current.signal
             );
-
             setRecommendations(result.recommendations);
             setSwotData(result.swot);
             setScore(result.score);
             setAnalysisComplete(true);
             setActiveTab('analysis');
+
+            // Trigger n8n webhook if configured
+            if (profile?.n8n_webhook_url && !abortControllerRef.current.signal.aborted) {
+                try {
+                    fetch(profile.n8n_webhook_url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'analysis.completed',
+                            document_length: documentText.length,
+                            contract_type: contractType,
+                            analysis_depth: analysisDepth,
+                            score: result.score,
+                            swot: result.swot,
+                            critical_risks_count: result.recommendations.filter(r => r.severity === 'Critical').length,
+                            timestamp: new Date().toISOString()
+                        })
+                    }).catch(err => console.error('Failed to trigger n8n webhook', err));
+                } catch (e) {
+                    console.error('Webhook execution failed', e);
+                }
+            }
 
             if (result.partialSuccess) {
                 setChatHistory(prev => [...prev, {
@@ -173,14 +229,12 @@ function App() {
             }
 
         } catch (error) {
-            console.error('Analysis failed:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-            setChatHistory(prev => [...prev, {
-                id: Date.now(),
-                role: 'ai',
-                content: `Analysis failed: ${errorMessage}`
-            }]);
+            console.error("Analysis failed:", error);
+            if (error instanceof Error && error.message === 'AbortError') {
+                alert("Analysis stopped.");
+            } else {
+                alert(error instanceof Error ? error.message : "Failed to analyze document.");
+            }
         } finally {
             setIsAnalyzing(false);
         }
@@ -436,6 +490,7 @@ Legal Team`;
                         setHeatmapEnabled={setHeatmapEnabled}
                         isAnalyzing={isAnalyzing}
                         handleAnalyze={handleAnalyze}
+                        handleCancelAnalysis={handleCancelAnalysis}
                         recommendations={recommendations}
                         isRoastMode={isRoastMode}
                         selectedRecId={selectedRecId}
@@ -496,7 +551,7 @@ Legal Team`;
                 {activeTab === 'pricing' && (
                     <PricingView
                         currentTheme={currentTheme}
-                        onUpgrade={() => {}}
+                        onUpgrade={handleUpgrade}
                     />
                 )}
                 {activeTab === 'privacy' && (
@@ -528,10 +583,12 @@ Legal Team`;
                         currentTheme={currentTheme}
                     />
                 )}
+
+                {activeTab === 'admin' && (
+                    <AdminAnalyticsView currentTheme={currentTheme} />
+                )}
             </div>
         </div>
         </ErrorBoundary>
     );
 }
-
-export default App;

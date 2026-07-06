@@ -13,7 +13,10 @@ import {
     LogOut,
     PenTool,
     BookMarked,
-    Crown
+    Crown,
+    Activity,
+    Building,
+    BookOpen
 } from 'lucide-react';
 import { ThemeGalleryModal } from '@/components/features/ThemeGalleryModal';
 import type { Theme, AnalysisDepth, ContractType } from '@/types';
@@ -87,11 +90,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     const isLightSidebar = ['eggshell', 'sand'].includes(currentTheme.id);
 
+    const isAdmin = user && ['bleonardca@gmail.com', 'bleonard@sentaient.com', 'bleonardcali@gmail.com'].includes(user.email || '');
+
     const navItems = [
         { id: 'editor', icon: FileText, label: 'Document Editor' },
         { id: 'draft', icon: PenTool, label: 'Draft Contract' },
         { id: 'context', icon: Users, label: 'Case Context' },
         { id: 'clauses', icon: BookMarked, label: 'Clause Library' },
+        { id: 'playbook', icon: BookOpen, label: 'Custom Playbook' },
+        { id: 'workspace', icon: Building, label: 'Team Workspace' },
         { id: 'chat', icon: MessageSquare, label: 'Assistant' },
         { id: 'analysis', icon: ShieldCheck, label: 'Analysis', showScore: true },
         { id: 'history', icon: History, label: 'History' },
@@ -99,6 +106,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'privacy', icon: ShieldCheck, label: 'Privacy Policy' },
         { id: 'tos', icon: FileText, label: 'Terms of Service' }
     ];
+
+    if (isAdmin) {
+        navItems.push({ id: 'admin', icon: Activity, label: 'Admin Analytics' });
+    }
 
     return (
         <>

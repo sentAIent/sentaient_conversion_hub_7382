@@ -180,7 +180,7 @@ const PortfolioSection = () => {
               Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Technology</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Discover the core revenue drivers powering the sentAIent ecosystem. Each product is built to dominate its category through superior AI architecture.
+              Our Advanced Intelligence Technology systems are designed to help you conquer your world while remaining grounded.
             </p>
           </motion.div>
         </div>

@@ -23,6 +23,8 @@ export interface Database {
                     drafts_used: number | null
                     reviews_limit: number | null
                     reviews_used: number | null
+                    n8n_webhook_url: string | null
+                    current_team_id: string | null
                 }
                 Insert: {
                     id: string
@@ -37,6 +39,8 @@ export interface Database {
                     drafts_used?: number | null
                     reviews_limit?: number | null
                     reviews_used?: number | null
+                    n8n_webhook_url?: string | null
+                    current_team_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -51,12 +55,113 @@ export interface Database {
                     drafts_used?: number | null
                     reviews_limit?: number | null
                     reviews_used?: number | null
+                    n8n_webhook_url?: string | null
+                    current_team_id?: string | null
                 }
                 Relationships: [
                     {
                         foreignKeyName: "profiles_id_fkey"
                         columns: ["id"]
                         referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "profiles_current_team_id_fkey"
+                        columns: ["current_team_id"]
+                        referencedRelation: "teams"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            teams: {
+                Row: {
+                    id: string
+                    name: string
+                    created_at: string
+                    owner_id: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    created_at?: string
+                    owner_id: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    created_at?: string
+                    owner_id?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "teams_owner_id_fkey"
+                        columns: ["owner_id"]
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            team_members: {
+                Row: {
+                    id: string
+                    team_id: string
+                    user_id: string
+                    role: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    team_id: string
+                    user_id: string
+                    role: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    team_id?: string
+                    user_id?: string
+                    role?: string
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "team_members_team_id_fkey"
+                        columns: ["team_id"]
+                        referencedRelation: "teams"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "team_members_user_id_fkey"
+                        columns: ["user_id"]
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            playbooks: {
+                Row: {
+                    id: string
+                    team_id: string
+                    rules_text: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    team_id: string
+                    rules_text?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    team_id?: string
+                    rules_text?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "playbooks_team_id_fkey"
+                        columns: ["team_id"]
+                        referencedRelation: "teams"
                         referencedColumns: ["id"]
                     }
                 ]

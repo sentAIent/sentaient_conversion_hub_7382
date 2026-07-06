@@ -30,10 +30,16 @@ import type {
     ContractType
 } from '@/types';
 
+const MODEL_CONFIG = {
+    'gemini-2.5-flash': 80000,
+    'gemini-2.5-pro': 150000,
+    'default': 30000
+};
+
 /**
  * Split document into chunks for analysis
  */
-export const splitIntoChunks = (text: string, maxChars = 3000): string[] => {
+export const splitIntoChunks = (text: string, maxChars = 30000): string[] => {
     const paragraphs = text.split(/\n\s*\n/);
     const chunks: string[] = [];
     let currentChunk = "";
@@ -91,6 +97,8 @@ const analyzeChunk = async (
     parties: Party[],
     depth: AnalysisDepth = 'standard',
     contractType: ContractType = 'General',
+    model: string = 'gemini-2.5-pro',
+    abortSignal?: AbortSignal,
     retries = 3
 ): Promise<AnalysisChunkResult | null> => {
     const partiesStr = parties.map(p => `${p.name} (${p.role}, ${p.domicile})`).join(', ');
@@ -126,7 +134,8 @@ Analyze this section thoroughly and return your findings.
 
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
-            const result = await callGemini(prompt, systemPrompt, true) as AnalysisChunkResult;
+            if (abortSignal?.aborted) throw new Error('AbortError');
+            const result = await callGemini(prompt, systemPrompt, true, model, abortSignal) as AnalysisChunkResult;
 
             if (result && result.recommendations) {
                 // Add IDs and chunk index to recommendations
@@ -157,7 +166,7 @@ Analyze this section thoroughly and return your findings.
 /**
  * Generate SWOT analysis from recommendations
  */
-const generateSWOT = async (recommendations: Recommendation[]): Promise<SwotAnalysis> => {
+const generateSWOT = async (recommendations: Recommendation[], abortSignal?: AbortSignal): Promise<SwotAnalysis> => {
     const issuesSummary = recommendations
         .filter(r => !r.accepted)
         .map(r => `- ${r.severity}: ${r.title} (${r.section})`)
@@ -173,7 +182,8 @@ Provide actionable insights for legal negotiation strategy.
 `;
 
     try {
-        const result = await callGemini(prompt, getSWOTAnalysisPrompt(), true) as { swot: SwotAnalysis };
+        if (abortSignal?.aborted) throw new Error('AbortError');
+        const result = await callGemini(prompt, getSWOTAnalysisPrompt(), true, undefined, abortSignal) as { swot: SwotAnalysis };
         return result.swot;
     } catch (error) {
         console.error('SWOT generation failed, using fallback:', error);
@@ -202,31 +212,16 @@ export const analyzeDocument = async (
     onProgress?: (progress: AnalysisProgress) => void,
     onRecommendationsUpdate?: (recommendations: Recommendation[]) => void,
     analysisDepth: AnalysisDepth = 'standard',
-    contractType: ContractType = 'General'
+    contractType: ContractType = 'General',
+    abortSignal?: AbortSignal
 ): Promise<{
     recommendations: Recommendation[];
     swot: SwotAnalysis;
     score: number;
     partialSuccess?: boolean;
 }> => {
-    if (!isApiConfigured()) {
-        // If API is not configured, fallback to sample data for the sample text
-        if (documentText.trim() === INITIAL_TEXT.trim()) {
-            // Simulate brief processing delay
-            await new Promise(r => setTimeout(r, 1500));
-            return {
-                recommendations: SAMPLE_RECOMMENDATIONS,
-                swot: SAMPLE_SWOT,
-                score: SAMPLE_SCORE
-            };
-        }
-        throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
-    }
-
-    // Force demo mode for sample text if the backend isn't deployed yet
-    // This allows the UI to work before Firebase Functions are deployed
-    const isDemoMode = import.meta.env.VITE_USE_DEMO_DATA !== 'false';
-    if (isDemoMode && documentText.trim() === INITIAL_TEXT.trim()) {
+    // Always use demo data for the default sample text to save AI credits
+    if (documentText.trim() === INITIAL_TEXT.trim()) {
         await new Promise(r => setTimeout(r, 1500));
         return {
             recommendations: SAMPLE_RECOMMENDATIONS,
@@ -235,28 +230,39 @@ export const analyzeDocument = async (
         };
     }
 
-    // If API is configured, we ALWAYS analyze for real, even the sample text.
-    // This ensures the different analysis depths (Quick vs Deep) actually work.
+    if (!isApiConfigured()) {
+        throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
+    }
 
-    const chunks = splitIntoChunks(documentText);
+    let model = 'gemini-2.5-pro';
+    if (analysisDepth === 'quick') {
+        model = 'gemini-2.5-flash';
+    }
+    const maxChars = MODEL_CONFIG[model as keyof typeof MODEL_CONFIG] || MODEL_CONFIG['default'];
+
+    const chunks = splitIntoChunks(documentText, maxChars);
     const allRecommendations: Recommendation[] = [];
     let failedChunks = 0;
 
     onProgress?.({ current: 0, total: chunks.length });
+    let completed = 0;
 
-    // Analyze each chunk
-    for (let i = 0; i < chunks.length; i++) {
-        onProgress?.({ current: i + 1, total: chunks.length });
-
-        const result = await analyzeChunk(chunks[i], i, perspective, parties, analysisDepth, contractType);
+    // Process all chunks concurrently
+    const chunkPromises = chunks.map(async (chunk, i) => {
+        if (abortSignal?.aborted) throw new Error('AbortError');
+        const result = await analyzeChunk(chunk, i, perspective, parties, analysisDepth, contractType, model, abortSignal);
+        completed++;
+        onProgress?.({ current: completed, total: chunks.length });
 
         if (result && result.recommendations && result.recommendations.length > 0) {
             allRecommendations.push(...result.recommendations);
-            onRecommendationsUpdate?.(allRecommendations);
+            onRecommendationsUpdate?.([...allRecommendations]);
         } else if (result === null) {
             failedChunks++;
         }
-    }
+    });
+
+    await Promise.all(chunkPromises);
 
     if (failedChunks === chunks.length) {
         // If it's a demo, just return the sample data so the UI doesn't break
@@ -271,8 +277,10 @@ export const analyzeDocument = async (
         throw new Error('Backend AI function is not deployed or service is unavailable.');
     }
 
+    if (abortSignal?.aborted) throw new Error('AbortError');
+
     // Generate SWOT analysis
-    const swot = await generateSWOT(allRecommendations);
+    const swot = await generateSWOT(allRecommendations, abortSignal);
 
     // Calculate final score
     const score = calculateScore(allRecommendations);

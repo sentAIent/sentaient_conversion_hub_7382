@@ -3,6 +3,7 @@ window.NUCLEAR_MAIN_LOADED = true;
 // Core Modules for boot
 import { setupUI, applyAIIntent, showDisclaimerModal } from './ui/controls_v3.js?v=NUCLEAR_FIX_V2';
 import { initFirebase, registerAuthCallback } from './services/firebase.js';
+import { initRevenueCat } from './services/revenuecat.js';
 import { initAuthUI } from './ui/auth-controller.js';
 import { setupSwipeGestures } from './ui/layout.js';
 import { initResizablePanels } from './ui/resize-panels.js';
@@ -132,9 +133,10 @@ const initApp = () => {
     // Done
     console.log("[Main] Mindwave Core v101 Initialized.");
 
-    // Firebase & Auth (non-blocking)
+    // Firebase, Auth & Payments (non-blocking)
     try {
         initFirebase();
+        initRevenueCat();
         initAuthUI();
         initPresencePulse();
         initConnectivityListener();

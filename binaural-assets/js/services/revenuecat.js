@@ -10,11 +10,21 @@ export async function initRevenueCat() {
     }
 
     try {
-        // We will dynamically import the RevenueCat capacitor plugin once installed
-        // const { Purchases } = await import('@revenuecat/purchases-capacitor');
+        const { Purchases } = await import('@revenuecat/purchases-capacitor');
         
-        console.log('[RevenueCat] Initializing with Apple App Store API Key...');
-        // Purchases.configure({ apiKey: "appl_YOUR_API_KEY_HERE" });
+        const platform = window.Capacitor.getPlatform();
+        const apiKey = platform === 'ios' 
+            ? import.meta.env.VITE_REVENUECAT_APPLE_KEY 
+            : import.meta.env.VITE_REVENUECAT_GOOGLE_KEY;
+
+        if (!apiKey) {
+            console.warn(`[RevenueCat] Missing API Key for ${platform}`);
+            return;
+        }
+
+        console.log(`[RevenueCat] Initializing for ${platform}...`);
+        await Purchases.configure({ apiKey });
+        console.log('[RevenueCat] Initialization complete.');
     } catch (e) {
         console.error('[RevenueCat] Init error:', e);
     }
@@ -32,34 +42,49 @@ export async function triggerRevenueCatCheckout(productId, billingPeriod) {
 
     console.log(`[RevenueCat] Triggering native purchase flow for: ${rcProductId}`);
 
-    // Since the Apple Developer Account is not yet created, we mock the flow
-    if (window.confirm(`[Apple App Store Mock]\n\nWould you like to purchase ${productId} for iOS?`)) {
-        console.log('[RevenueCat] Mock purchase successful!');
+    try {
+        const { Purchases } = await import('@revenuecat/purchases-capacitor');
         
-        // Grant local access in testing
-        window.__MOCK_PREMIUM = true;
-        localStorage.setItem('mindwave_premium', 'true');
+        if (window.showToast) window.showToast('Connecting to App Store...', 'info');
         
-        if (billingPeriod === 'oneTime') {
-            localStorage.setItem('mindwave_lifetime', 'true');
-        }
+        const { customerInfo } = await Purchases.purchaseStoreProduct({
+            identifier: rcProductId
+        });
 
-        if (window.showToast) {
-            window.showToast('Apple Purchase Successful! (MOCK)', 'success');
+        if (typeof customerInfo.entitlements.active['Premium'] !== "undefined") {
+            console.log('[RevenueCat] Native purchase successful!');
+            
+            // Grant local access
+            window.__MOCK_PREMIUM = true; // Use existing flag structure
+            localStorage.setItem('mindwave_premium', 'true');
+            if (billingPeriod === 'oneTime') {
+                localStorage.setItem('mindwave_lifetime', 'true');
+            }
+
+            if (window.showToast) {
+                window.showToast('Purchase Successful! Welcome to Premium.', 'success');
+            }
+            setTimeout(() => window.location.reload(), 1500);
         }
-        
-        setTimeout(() => window.location.reload(), 1500);
+    } catch (e) {
+        if (!e.userCancelled) {
+            console.error('[RevenueCat] Purchase error:', e);
+            if (window.showToast) window.showToast('Purchase failed. Please try again.', 'error');
+        } else {
+            console.log('[RevenueCat] Purchase cancelled by user.');
+        }
     }
 }
 
 export async function checkRevenueCatSubscription() {
     if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return false;
     
-    // try {
-    //     const { Purchases } = await import('@revenuecat/purchases-capacitor');
-    //     const customerInfo = await Purchases.getCustomerInfo();
-    //     return typeof customerInfo.entitlements.active['Premium'] !== "undefined";
-    // } catch (e) { return false; }
-    
-    return localStorage.getItem('mindwave_premium') === 'true';
+    try {
+        const { Purchases } = await import('@revenuecat/purchases-capacitor');
+        const customerInfo = await Purchases.getCustomerInfo();
+        return typeof customerInfo.entitlements.active['Premium'] !== "undefined";
+    } catch (e) { 
+        console.error('[RevenueCat] Entitlement check failed:', e);
+        return false; 
+    }
 }

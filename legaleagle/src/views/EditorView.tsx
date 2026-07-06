@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { findFuzzyMatch } from '@/utils/textMatching';
 import type { Theme, Recommendation, ScanProgress, Severity } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 interface EditorViewProps {
     documentName: string;
@@ -25,6 +26,7 @@ interface EditorViewProps {
     setHeatmapEnabled: (enabled: boolean) => void;
     isAnalyzing: boolean;
     handleAnalyze: () => void;
+    handleCancelAnalysis?: () => void;
     recommendations: Recommendation[];
     isRoastMode: boolean;
     selectedRecId: number | null;
@@ -47,6 +49,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
     setHeatmapEnabled,
     isAnalyzing,
     handleAnalyze,
+    handleCancelAnalysis,
     recommendations,
     isRoastMode,
     selectedRecId,
@@ -61,6 +64,18 @@ export const EditorView: React.FC<EditorViewProps> = ({
     onAddAnnotation
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const { profile } = useAuth();
+
+    // Check if user has exceeded their limits (demo/free users get 1 review by default)
+    const isLimitExceeded = profile && profile.reviews_used >= profile.reviews_limit;
+
+    const handleRunAudit = () => {
+        if (isLimitExceeded) {
+            setActiveTab('pricing');
+            return;
+        }
+        handleAnalyze();
+    };
 
     // Annotation State
     const [selectedTextData, setSelectedTextData] = useState<{ text: string, x: number, y: number } | null>(null);
@@ -240,14 +255,31 @@ export const EditorView: React.FC<EditorViewProps> = ({
                                 Scanning Part {scanProgress.current} of {scanProgress.total}...
                             </div>
                         )}
-                        <button
-                            onClick={handleAnalyze}
-                            disabled={isAnalyzing}
-                            className={`flex items-center gap-2 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-sm shadow-blue-200 ${currentTheme.accent} disabled:opacity-50`}
-                        >
-                            {isAnalyzing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Gavel className="w-4 h-4" />}
-                            {isAnalyzing ? 'Scanning...' : 'Run Legal Audit'}
-                        </button>
+                        {isAnalyzing ? (
+                            <div className="flex gap-2">
+                                <button
+                                    disabled
+                                    className={`flex items-center gap-2 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-sm opacity-50 ${currentTheme.accent}`}
+                                >
+                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                    Scanning...
+                                </button>
+                                <button
+                                    onClick={handleCancelAnalysis}
+                                    className="flex items-center gap-2 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-sm bg-red-500 hover:bg-red-600"
+                                >
+                                    Stop
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleRunAudit}
+                                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${isLimitExceeded ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                            >
+                                <Gavel className="w-4 h-4" />
+                                {isLimitExceeded ? 'Upgrade to Analyze' : 'Run Legal Audit'}
+                            </button>
+                        )}
                     </div>
                 </div>
 

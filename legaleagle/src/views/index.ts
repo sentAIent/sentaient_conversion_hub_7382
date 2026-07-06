@@ -8,3 +8,4 @@ export { ClauseLibraryView } from './ClauseLibraryView';
 export { PricingView } from './PricingView';
 export * from './PrivacyPolicyView';
 export * from './TOSView';
+export { AdminAnalyticsView } from './AdminAnalyticsView';
