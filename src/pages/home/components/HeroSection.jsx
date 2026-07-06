@@ -123,7 +123,7 @@ const HeroSection = () => {
         src="/logo_collage_overlay.png"
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover object-center mix-blend-screen pointer-events-none opacity-40 z-10"
+        className="absolute inset-0 w-full h-full object-cover object-center mix-blend-screen pointer-events-none opacity-25 z-10"
         style={{
           WebkitMaskImage: 'radial-gradient(circle at center, transparent 40%, black 85%)',
           maskImage: 'radial-gradient(circle at center, transparent 40%, black 85%)',
@@ -218,6 +218,17 @@ const HeroSection = () => {
         <div className="flex flex-row items-center gap-4">
           <a
             href={slide.href}
+            onClick={(e) => {
+              if (!slide.href.startsWith('#')) {
+                e.preventDefault();
+                // Bypass universal links by opening a blank tab and setting location asynchronously
+                const w = window.open('about:blank', '_blank');
+                if (w) {
+                  w.opener = null;
+                  w.location.href = slide.href;
+                }
+              }
+            }}
             target={slide.href.startsWith('#') ? undefined : "_blank"}
             rel={slide.href.startsWith('#') ? undefined : "noopener noreferrer"}
             className={`group inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-gradient-to-r ${slide.accentFrom} ${slide.accentTo} rounded-full transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)]`}
