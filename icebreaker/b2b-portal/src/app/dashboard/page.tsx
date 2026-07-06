@@ -15,7 +15,7 @@ const MY_BOUNTIES_QUERY = gql`
 `;
 
 export default function DashboardOverview() {
-  const { data, loading, error } = useQuery(MY_BOUNTIES_QUERY);
+  const { data, loading, error } = useQuery<any>(MY_BOUNTIES_QUERY);
 
   const activeBounties = data?.myBounties?.filter((b: any) => b.isActive).length || 0;
   const totalClaims = data?.myBounties?.reduce((acc: number, b: any) => acc + b.claimsCount, 0) || 0;

@@ -14,7 +14,7 @@ const SLIDES = [
     accentTo: 'to-cyan-400',
     badgeColor: 'bg-cyan-500/20 border-cyan-400/40 text-cyan-300',
     category: 'Gaming',
-    href: 'https://sentaient.com/interstellar',
+    href: '/interstellar',
   },
   {
     id: 'mindwave',
@@ -27,7 +27,7 @@ const SLIDES = [
     accentTo: 'to-blue-500',
     badgeColor: 'bg-teal-500/20 border-teal-400/40 text-teal-300',
     category: 'Health & Wellness',
-    href: 'https://sentaient.com/mindwave',
+    href: '/mindwave',
   },
   {
     id: 'icebreaker',
@@ -40,7 +40,7 @@ const SLIDES = [
     accentTo: 'to-purple-500',
     badgeColor: 'bg-pink-500/20 border-pink-400/40 text-pink-300',
     category: 'Social',
-    href: 'https://sentaient.com/icebreaker',
+    href: '/icebreaker',
   },
   {
     id: 'legaleagle',
@@ -53,7 +53,7 @@ const SLIDES = [
     accentTo: 'to-purple-600',
     badgeColor: 'bg-violet-500/20 border-violet-400/40 text-violet-300',
     category: 'Legal',
-    href: 'https://sentaient.com/legaleagle',
+    href: '/legaleagle',
   },
   {
     id: 'autopilot',
@@ -66,7 +66,7 @@ const SLIDES = [
     accentTo: 'to-green-400',
     badgeColor: 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300',
     category: 'B2B Marketing',
-    href: 'https://sentaient.com/#platforms',
+    href: '#platforms',
   },
 ];
 
@@ -218,8 +218,8 @@ const HeroSection = () => {
         <div className="flex flex-row items-center gap-4">
           <a
             href={slide.href}
-            target="_blank"
-            rel="noopener noreferrer"
+            target={slide.href.startsWith('#') ? undefined : "_blank"}
+            rel={slide.href.startsWith('#') ? undefined : "noopener noreferrer"}
             className={`group inline-flex items-center gap-2 px-7 py-3.5 text-sm font-semibold text-white bg-gradient-to-r ${slide.accentFrom} ${slide.accentTo} rounded-full transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)]`}
           >
             Launch {slide.appName}

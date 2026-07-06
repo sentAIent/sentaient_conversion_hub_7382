@@ -20,7 +20,7 @@ const MY_BOUNTIES_QUERY = gql`
 `;
 
 export default function BountiesPage() {
-  const { data, loading, error } = useQuery(MY_BOUNTIES_QUERY);
+  const { data, loading, error } = useQuery<any>(MY_BOUNTIES_QUERY);
 
   return (
     <div className="p-8 max-w-5xl mx-auto">

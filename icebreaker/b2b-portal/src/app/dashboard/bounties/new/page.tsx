@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { gql, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -33,7 +34,7 @@ export default function NewBountyPage() {
   const [inputValue, setInputValue] = useState('');
   const [budgetMode, setBudgetMode] = useState<'INCLUSIVE' | 'EXCLUSIVE'>('INCLUSIVE');
   
-  const [createBounty, { loading, error }] = useMutation(CREATE_BOUNTY);
+  const [createBounty, { loading, error }] = useMutation<any, any>(CREATE_BOUNTY);
 
   const PLATFORM_FEE_RATE = 0.10; // 10%
 

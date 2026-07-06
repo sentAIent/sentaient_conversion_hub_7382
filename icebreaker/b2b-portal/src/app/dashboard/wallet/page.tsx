@@ -1,6 +1,7 @@
 "use client";
 
-import { gql, useQuery, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { useState } from 'react';
 
 const GET_WALLET = gql`
@@ -25,8 +26,8 @@ const CASH_OUT_WALLET = gql`
 `;
 
 export default function WalletPage() {
-  const { data, loading: loadingWallet, refetch } = useQuery(GET_WALLET);
-  const [cashOut, { loading: loadingCashOut, error }] = useMutation(CASH_OUT_WALLET);
+  const { data, loading: loadingWallet, refetch } = useQuery<any>(GET_WALLET);
+  const [cashOut, { loading: loadingCashOut, error }] = useMutation<any, any>(CASH_OUT_WALLET);
   const [successMsg, setSuccessMsg] = useState('');
 
   const handleCashOut = async () => {

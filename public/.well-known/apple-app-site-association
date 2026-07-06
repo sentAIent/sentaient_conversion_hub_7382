@@ -5,6 +5,10 @@
       {
         "appID": "YOUR_APPLE_TEAM_ID.com.sentaient.interstellar",
         "paths": [
+          "NOT /interstellar*",
+          "NOT /mindwave*",
+          "NOT /legaleagle*",
+          "NOT /icebreaker*",
           "*",
           "/*"
         ]

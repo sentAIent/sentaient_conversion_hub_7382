@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { gql, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -35,7 +36,7 @@ export default function NewSwarmCampaignPage() {
   const [inputValue, setInputValue] = useState('');
   const [budgetMode, setBudgetMode] = useState<'INCLUSIVE' | 'EXCLUSIVE'>('INCLUSIVE');
   
-  const [createCampaign, { loading, error }] = useMutation(CREATE_SWARM_CAMPAIGN);
+  const [createCampaign, { loading, error }] = useMutation<any, any>(CREATE_SWARM_CAMPAIGN);
 
   const PLATFORM_FEE_RATE = 0.10; // 10%
 
