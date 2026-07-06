@@ -3,6 +3,11 @@ import { BrowserRouter, Routes as RouterRoutes, Route, Navigate } from 'react-ro
 import ScrollToTop from './components/ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './pages/NotFound';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import AnalyticsTracker from './components/AnalyticsTracker';
+
+const Home = React.lazy(() => import('./pages/home'));
 const KnowledgeNexusResourceLibrary = React.lazy(() => import('./pages/knowledge-nexus-resource-library'));
 const FreeAIAssessmentPortal = React.lazy(() => import('./pages/free-ai-assessment-portal'));
 const HomepageAIConsultancyHub = React.lazy(() => import('./pages/homepage-ai-consultancy-hub'));
