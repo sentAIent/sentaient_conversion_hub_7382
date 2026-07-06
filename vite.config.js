@@ -4,6 +4,22 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/icebreaker': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/icebusiness': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/iceadmin': {
+        target: 'http://localhost:5174',
+        changeOrigin: true,
+      },
+    },
+  },
   css: {
     postcss: './postcss.config.js'
   },
