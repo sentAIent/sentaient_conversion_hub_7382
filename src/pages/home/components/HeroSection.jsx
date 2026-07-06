@@ -6,6 +6,7 @@ const SLIDES = [
   {
     id: 'interstellar',
     image: '/hero_slide_interstellar.jpg',
+    logo: '/interstellar_logo.png',
     appName: 'Interstellar',
     tagline: 'Deep-space exploration game',
     accentFrom: 'from-blue-500',
@@ -17,6 +18,7 @@ const SLIDES = [
   {
     id: 'mindwave',
     image: '/hero_slide_mindwave.jpg',
+    logo: '/mindwave-logo.png',
     appName: 'MindWave',
     tagline: 'Binaural beats & cymatic visuals',
     accentFrom: 'from-teal-400',
@@ -28,6 +30,7 @@ const SLIDES = [
   {
     id: 'icebreaker',
     image: '/hero_slide_icebreaker.jpg',
+    logo: '/icebreaker_logo.png',
     appName: 'Icebreaker',
     tagline: 'Real-world social discovery platform',
     accentFrom: 'from-pink-500',
@@ -39,6 +42,7 @@ const SLIDES = [
   {
     id: 'legaleagle',
     image: '/hero_slide_legaleagle.jpg',
+    logo: '/legal_eagle_logo.png',
     appName: 'Legal Eagle',
     tagline: 'AI-powered legal document analysis',
     accentFrom: 'from-violet-500',
@@ -50,6 +54,7 @@ const SLIDES = [
   {
     id: 'autopilot',
     image: '/hero_slide_autopilot.jpg',
+    logo: '/autopilot_logo.png',
     appName: 'AutoPilot',
     tagline: 'Autonomous AI marketing engine',
     accentFrom: 'from-emerald-500',
@@ -138,6 +143,26 @@ const HeroSection = () => {
 
       {/* ── Content ── */}
       <div className="relative z-20 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-20 text-left">
+
+        {/* App logo icon */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`logo-${slide.id}`}
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.85, y: -10 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+            className="mb-5"
+          >
+            <div className="w-20 h-20 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden">
+              <img
+                src={slide.logo}
+                alt={`${slide.appName} logo`}
+                className="w-full h-full object-contain p-2"
+              />
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
         {/* App badge */}
         <AnimatePresence mode="wait">
