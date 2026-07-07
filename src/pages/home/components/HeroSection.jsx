@@ -40,7 +40,7 @@ const SLIDES = [
     accentTo: 'to-purple-500',
     badgeColor: 'bg-pink-500/20 border-pink-400/40 text-pink-300',
     category: 'Social',
-    href: '/icebreaker',
+    href: '/icelogin',
   },
   {
     id: 'legaleagle',
