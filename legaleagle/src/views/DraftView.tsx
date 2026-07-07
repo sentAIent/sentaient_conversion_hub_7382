@@ -137,8 +137,59 @@ export const DraftView: React.FC<DraftViewProps> = ({
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        <div className={`p-6 rounded-xl border ${currentTheme.panelBg} min-h-[400px] prose ${isDarkPanel ? 'prose-invert' : ''} max-w-none`}>
-                            <ReactMarkdown>{generatedDraft}</ReactMarkdown>
+                        <div className={`p-8 rounded-xl border ${currentTheme.panelBg} min-h-[400px] max-w-none`}>
+                            <ReactMarkdown
+                                components={{
+                                    h1: ({ children }) => (
+                                        <h1 className={`text-2xl font-bold text-center uppercase tracking-widest mb-8 mt-2 pb-4 border-b ${isDarkPanel ? 'text-white border-white/20' : 'text-slate-900 border-slate-300'}`}>
+                                            {children}
+                                        </h1>
+                                    ),
+                                    h2: ({ children }) => (
+                                        <h2 className={`text-lg font-bold uppercase tracking-wide mt-10 mb-3 ${isDarkPanel ? 'text-white' : 'text-slate-900'}`}>
+                                            {children}
+                                        </h2>
+                                    ),
+                                    h3: ({ children }) => (
+                                        <h3 className={`text-base font-bold mt-8 mb-2 ${isDarkPanel ? 'text-white' : 'text-slate-800'}`}>
+                                            {children}
+                                        </h3>
+                                    ),
+                                    p: ({ children }) => (
+                                        <p className={`text-sm leading-7 mb-5 ${isDarkPanel ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            {children}
+                                        </p>
+                                    ),
+                                    strong: ({ children }) => (
+                                        <strong className={`font-bold ${isDarkPanel ? 'text-white' : 'text-slate-900'}`}>
+                                            {children}
+                                        </strong>
+                                    ),
+                                    ul: ({ children }) => (
+                                        <ul className={`list-disc pl-6 mb-5 space-y-2 text-sm ${isDarkPanel ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            {children}
+                                        </ul>
+                                    ),
+                                    ol: ({ children }) => (
+                                        <ol className={`list-decimal pl-6 mb-5 space-y-2 text-sm ${isDarkPanel ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            {children}
+                                        </ol>
+                                    ),
+                                    li: ({ children }) => (
+                                        <li className="leading-6">{children}</li>
+                                    ),
+                                    hr: () => (
+                                        <hr className={`my-8 ${isDarkPanel ? 'border-white/10' : 'border-slate-200'}`} />
+                                    ),
+                                    blockquote: ({ children }) => (
+                                        <blockquote className={`border-l-4 pl-4 my-5 italic ${isDarkPanel ? 'border-indigo-400 text-slate-400' : 'border-indigo-500 text-slate-600'}`}>
+                                            {children}
+                                        </blockquote>
+                                    ),
+                                }}
+                            >
+                                {generatedDraft}
+                            </ReactMarkdown>
                         </div>
                         
                         <div className="flex flex-wrap gap-4">

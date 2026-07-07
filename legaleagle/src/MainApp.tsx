@@ -59,7 +59,14 @@ export default function MainApp() {
     const { profile } = useAuth();
     // App State
     const [hasAcceptedDisclaimer, setHasAcceptedDisclaimer] = useState(false);
-    const [activeTab, setActiveTab] = useState('editor');
+    const [activeTab, setActiveTabRaw] = useState('editor');
+    const [prevTab, setPrevTab] = useState<string | null>(null);
+    const setActiveTab = (tab: string) => {
+        setActiveTabRaw(prev => {
+            setPrevTab(prev);
+            return tab;
+        });
+    };
     const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
     const [isRoastMode, setIsRoastMode] = useState(false);
     const [perspective, setPerspective] = useState('User');
@@ -83,6 +90,8 @@ export default function MainApp() {
     const [swotData, setSwotData] = useState<SwotAnalysis | null>(null);
     const [selectedRecId, setSelectedRecId] = useState<number | null>(null);
     const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
+    // Undo stack: each entry stores the doc text + recommendations state before a revision was applied
+    const [undoHistory, setUndoHistory] = useState<Array<{ documentText: string; recommendations: Recommendation[] }>>([]);
     const [scanProgress, setScanProgress] = useState<ScanProgress>({ current: 0, total: 0 });
     const [cloudHistory, setCloudHistory] = useState<any[]>([]);
 
@@ -152,24 +161,37 @@ export default function MainApp() {
             return;
         }
 
-        const savedState = localStorage.getItem('legalAnalyzerState');
+        const savedState = localStorage.getItem('legalEagleStateV2');
         if (savedState) {
             try {
                 const parsed = JSON.parse(savedState);
-                if (parsed.documentText) setDocumentText(parsed.documentText);
-                if (parsed.documentName) setDocumentName(parsed.documentName);
-                if (parsed.recommendations) setRecommendations(parsed.recommendations);
-                if (parsed.score) setScore(parsed.score);
-                if (parsed.swotData) setSwotData(parsed.swotData);
-                if (parsed.changeLog) setChangeLog(parsed.changeLog);
-                if (parsed.analysisComplete) setAnalysisComplete(parsed.analysisComplete);
-                if (parsed.perspective) setPerspective(parsed.perspective);
-                if (parsed.activeDemoId) setActiveDemoId(parsed.activeDemoId);
-                if (parsed.heatmapEnabled) setHeatmapEnabled(parsed.heatmapEnabled);
 
-                // If analysis was complete, ensure we're on the analysis tab or editor
-                if (parsed.analysisComplete && parsed.recommendations.length > 0) {
-                    // Optional: could force tab, but better to respect default or last active
+                // If the user previously had a demo loaded as their "draft", we need to nuke it
+                const isLeakedDemo = !parsed.activeDemoId && parsed.documentText && (
+                    parsed.documentText.includes('Welcome to TikTok') ||
+                    parsed.documentText.includes('Netflix') ||
+                    parsed.documentText.includes('Slack') ||
+                    parsed.documentText.includes('OpenAI') ||
+                    parsed.documentText.includes('X Corp') ||
+                    parsed.documentText.includes('X (formerly Twitter)')
+                );
+
+                if (isLeakedDemo) {
+                    localStorage.removeItem('legalEagleStateV2');
+                    return;
+                }
+
+                // Never restore demo state on initial load - keep it as draft agreement
+                if (!parsed.activeDemoId) {
+                    if (parsed.documentText) setDocumentText(parsed.documentText);
+                    if (parsed.documentName) setDocumentName(parsed.documentName);
+                    if (parsed.recommendations) setRecommendations(parsed.recommendations);
+                    if (parsed.score) setScore(parsed.score);
+                    if (parsed.swotData) setSwotData(parsed.swotData);
+                    if (parsed.changeLog) setChangeLog(parsed.changeLog);
+                    if (parsed.analysisComplete) setAnalysisComplete(parsed.analysisComplete);
+                    if (parsed.perspective) setPerspective(parsed.perspective);
+                    if (parsed.heatmapEnabled) setHeatmapEnabled(parsed.heatmapEnabled);
                 }
             } catch (e) {
                 console.error("Failed to load saved state:", e);
@@ -200,6 +222,9 @@ export default function MainApp() {
 
     // Save state to localStorage whenever key data changes
     useEffect(() => {
+        // DO NOT save state if we are viewing a demo
+        if (activeDemoId) return;
+
         const stateToSave = {
             documentText,
             documentName,
@@ -209,10 +234,9 @@ export default function MainApp() {
             changeLog,
             analysisComplete,
             perspective,
-            activeDemoId,
             heatmapEnabled
         };
-        localStorage.setItem('legalAnalyzerState', JSON.stringify(stateToSave));
+        localStorage.setItem('legalEagleStateV2', JSON.stringify(stateToSave));
     }, [documentText, documentName, recommendations, score, swotData, changeLog, analysisComplete, perspective, activeDemoId, heatmapEnabled]);
 
     // Fetch cloud history when opening the history tab
@@ -449,11 +473,14 @@ export default function MainApp() {
         setChangeLog(prev => [entry, ...prev]);
     };
 
-    // Accept a recommendation
+    // Accept a recommendation (with undo snapshot)
     const handleAcceptRecommendation = (rec: Recommendation) => {
         const match = findFuzzyMatch(documentText, rec.currentText);
 
         if (match) {
+            // Save snapshot for undo
+            setUndoHistory(prev => [...prev, { documentText, recommendations }]);
+
             const prefix = documentText.slice(0, match.start);
             const suffix = documentText.slice(match.end);
             const newText = prefix + rec.proposedText + suffix;
@@ -468,7 +495,29 @@ export default function MainApp() {
         }
     };
 
-    // Apply all recommendations
+    // Undo the most recent individual revision
+    const handleUndoRevision = () => {
+        setUndoHistory(prev => {
+            if (prev.length === 0) return prev;
+            const snapshot = prev[prev.length - 1];
+            setDocumentText(snapshot.documentText);
+            setRecommendations(snapshot.recommendations);
+            return prev.slice(0, -1);
+        });
+    };
+
+    // Undo ALL applied revisions in one shot
+    const handleUndoAllRevisions = () => {
+        setUndoHistory(prev => {
+            if (prev.length === 0) return prev;
+            const snapshot = prev[0]; // oldest snapshot = original state
+            setDocumentText(snapshot.documentText);
+            setRecommendations(snapshot.recommendations);
+            return [];
+        });
+    };
+
+    // Apply all recommendations (with undo snapshot)
     const handleApplyAll = () => {
         let currentDocText = documentText;
         const updates: Array<Recommendation & { match: { start: number; end: number } }> = [];
@@ -479,6 +528,11 @@ export default function MainApp() {
                 if (match) updates.push({ ...rec, match });
             }
         });
+
+        if (updates.length === 0) return;
+
+        // Save one collective snapshot for undo-all
+        setUndoHistory(prev => [...prev, { documentText, recommendations }]);
 
         // Sort by position (end to start) to avoid offset issues
         updates.sort((a, b) => b.match.start - a.match.start);
@@ -665,6 +719,8 @@ Legal Team`;
                         setContractType={setContractType}
                         perspective={perspective}
                         setPerspective={setPerspective}
+                        prevTab={prevTab}
+                        analysisComplete={analysisComplete}
                     />
                 )}
 
@@ -687,6 +743,9 @@ Legal Team`;
                         isRoastMode={isRoastMode}
                         perspective={perspective}
                         handleApplyAll={handleApplyAll}
+                        handleUndoRevision={handleUndoRevision}
+                        handleUndoAllRevisions={handleUndoAllRevisions}
+                        canUndo={undoHistory.length > 0}
                         generateNegotiationEmail={generateNegotiationEmail}
                         showEmailModal={showEmailModal}
                         setShowEmailModal={setShowEmailModal}
@@ -695,6 +754,9 @@ Legal Team`;
                         handleAcceptRecommendation={handleAcceptRecommendation}
                         currentTheme={currentTheme}
                         setPerspective={setPerspective}
+                        setActiveTab={setActiveTab}
+                        analysisDepth={analysisDepth}
+                        setAnalysisDepth={setAnalysisDepth}
                     />
                 )}
 
