@@ -89,33 +89,50 @@ export const getRiskDistribution = (recommendations: Recommendation[]) => {
 
 /**
  * Generates a contract draft from scratch using Gemini.
+ * Tailored to perspective (User vs Company) and analysis depth (basic/standard/deep).
  */
 export const generateContract = async (
-    promptText: string
+    promptText: string,
+    perspective: string = 'User',
+    analysisDepth: AnalysisDepth = 'standard'
 ): Promise<string> => {
     if (!isApiConfigured()) {
         throw new Error('Gemini API key not configured.');
     }
 
-    const prompt = `
-You are an expert corporate attorney. Generate a professional legal contract draft based on the following user request.
+    const perspectiveInstruction = perspective === 'Company'
+        ? `You are drafting on behalf of the COMPANY/BUSINESS. Draft terms that robustly protect the company's interests: limit liability, preserve termination rights, protect IP, and minimize obligations.`
+        : perspective === 'User'
+        ? `You are drafting on behalf of the USER/INDIVIDUAL. Draft balanced terms that protect the individual: cap penalties, ensure clear termination rights, limit data sharing, and include consumer-protective provisions.`
+        : `You are drafting a neutral, balanced agreement. Terms should be fair and equitable to all parties.`;
+
+    const depthInstruction = analysisDepth === 'quick'
+        ? `DRAFTING STYLE: Keep it simple and concise. Use plain language. Include only essential clauses. Avoid excessive legalese. Aim for brevity and clarity over comprehensiveness.`
+        : analysisDepth === 'deep'
+        ? `DRAFTING STYLE: Be exhaustive and comprehensive. Include every standard protective clause, extensive representations and warranties, detailed indemnification provisions, force majeure, audit rights, step-in rights, detailed dispute resolution, and any jurisdiction-specific requirements. Use precise formal legal language throughout. Leave no edge case unaddressed.`
+        : `DRAFTING STYLE: Use professional legal language. Include all standard protective clauses, standard representations and warranties, and industry-standard provisions. Thorough but not exhaustive.`;
+
+    const prompt = `You are an expert corporate attorney. Generate a professional legal contract draft based on the following request.
 Use markdown formatting (headings, bullet points, bold text) to structure the document professionally.
+
+PERSPECTIVE: ${perspectiveInstruction}
+
+${depthInstruction}
 
 USER REQUEST:
 ${promptText}
 
-Ensure the draft is thorough, legally sound, and includes standard boilerplate clauses where appropriate (e.g., severability, governing law).
-Only output the contract text, do not include any conversational filler.
-`;
+Only output the contract text. Do not include any conversational filler or meta-commentary.`;
 
     try {
-        const result = await callGemini(prompt, "You are a professional legal contract generator.", false) as GeminiResponse;
+        const result = await callGemini(prompt, "You are a professional legal contract generator. Tailor every clause to the specified perspective and drafting depth.", false) as GeminiResponse;
         return result.text || '';
     } catch (error) {
         console.error('Gemini API Error (Generate Contract):', error);
         throw new Error('Failed to generate contract. Please try again.');
     }
 };
+
 
 /**
  * Analyze a single chunk of the document with retry logic

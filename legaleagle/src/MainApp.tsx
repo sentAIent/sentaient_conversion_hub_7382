@@ -788,7 +788,7 @@ Legal Team`;
                     <DraftView
                         currentTheme={currentTheme}
                         onGenerate={async (prompt: string) => {
-                            return await generateContract(prompt);
+                            return await generateContract(prompt, perspective, analysisDepth);
                         }}
                         onSendToEditor={async (text: string) => {
                             setDocumentText(text);
