@@ -314,8 +314,16 @@ const LaunchButton = ({ activeProject }) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
+
   const handleLaunch = (e) => {
     e.preventDefault();
+
+    // External URLs (e.g. cloveh2o.com) — open directly, no auth required
+    if (activeProject.path.startsWith('http')) {
+      window.open(activeProject.path, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     if (!currentUser) {
       navigate('/login');
       return;
