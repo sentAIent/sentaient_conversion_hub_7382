@@ -5,7 +5,8 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     sendPasswordResetEmail,
-    updateProfile
+    updateProfile,
+    sendEmailVerification
 } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -22,6 +23,9 @@ export function AuthProvider({ children }) {
 
     function signup(email, password, username) {
         return createUserWithEmailAndPassword(auth, email, password).then((result) => {
+            // Send email verification
+            sendEmailVerification(result.user).catch(err => console.error("Error sending verification email", err));
+
             // Create comprehensive user profile in Firestore
             return setDoc(doc(db, "users", result.user.uid), {
                 // Identity

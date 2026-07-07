@@ -11,6 +11,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ActivityIndicator, View } from 'react-native';
 import { CartProvider } from '../context/CartContext';
 import { StripeWrapper } from '../components/StripeWrapper';
+import { InstallPrompt } from '../components/InstallPrompt';
 
 const httpLink = createHttpLink({
   uri: __DEV__
@@ -71,20 +72,20 @@ export default function Layout() {
       setClientReady(true);
     });
 
-    // Push Notifications
-    registerForPushNotificationsAsync().then(token => {
-      if (token && auth.currentUser) {
-        client.mutate({
-          mutation: UPDATE_PUSH_TOKEN,
-          variables: { token }
-        }).catch(err => console.error("Error saving push token", err));
-      }
-    });
-
     // Auth State Listener
     const unsubscribe = auth.onAuthStateChanged(user => {
       setUser(user);
       if (initializing) setInitializing(false);
+      if (user) {
+        registerForPushNotificationsAsync().then(token => {
+          if (token) {
+            client.mutate({
+              mutation: UPDATE_PUSH_TOKEN,
+              variables: { token }
+            }).catch(err => console.error("Error saving push token", err));
+          }
+        });
+      }
     });
     return unsubscribe;
   }, []);
@@ -111,6 +112,7 @@ export default function Layout() {
 
   return (
     <ErrorBoundary>
+      <InstallPrompt />
       <StripeWrapper>
         <ApolloProvider client={client}>
           <CartProvider>

@@ -6,12 +6,13 @@ import { PrismaClient, PrivacyTier, Color } from '@prisma/client';
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getMessaging } from 'firebase-admin/messaging';
+import { getFirestore } from 'firebase-admin/firestore';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dotenv from 'dotenv';
 import { GraphQLError } from 'graphql';
 import path from 'path';
-
+import { sendPushNotification } from './services/pushNotifications';
 dotenv.config({ override: true });
 
 const prisma = new PrismaClient();
@@ -29,6 +30,8 @@ const s3 = new S3Client({
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
   },
 });
+
+const db = getFirestore();
 
 export const typeDefs = `#graphql
   type User {
@@ -892,12 +895,10 @@ export const resolvers = {
 
       try {
         if (status === 'ACCEPTED') {
-          const sender = await prisma.user.findUnique({ where: { id: request.senderId } });
-          if (sender && sender.pushToken) {
-            await getMessaging().send({
-              token: sender.pushToken,
-              notification: { title: "Meeting Accepted! 🎉", body: `Your meeting at ${request.locationName} was accepted.` }
-            });
+          const requester = await prisma.user.findUnique({ where: { id: request.senderId }, select: { pushToken: true } });
+          const responder = await prisma.user.findUnique({ where: { id: context.user.uid }, select: { name: true } });
+          if (requester?.pushToken) {
+            sendPushNotification({ to: requester.pushToken, title: 'Meeting Accepted! 🤝', body: `${responder?.name} accepted your meeting request`, data: { type: 'meeting', requestId: requestId }, sound: 'default' });
           }
         }
       } catch (err) { console.error("Failed to send push:", err); }
@@ -990,6 +991,13 @@ export const resolvers = {
         if (e.code !== 'P2002') throw e;
       });
       
+      const followedUser = await prisma.user.findUnique({ where: { id: userId }, select: { pushToken: true, privacy: true } });
+      const followerUser = await prisma.user.findUnique({ where: { id: context.user.uid }, select: { name: true } });
+      if (followedUser?.pushToken) {
+        const msg = followedUser.privacy === 'private' ? 'sent you a follow request' : 'started following you';
+        sendPushNotification({ to: followedUser.pushToken, title: `${followerUser?.name || 'Someone'} ${msg}`, body: 'Tap to view their profile', data: { type: 'follow', userId: context.user.uid }, sound: 'default' });
+      }
+
       return true;
     },
     unfollowUser: async (_: any, { userId }: any, context: any) => {
@@ -1138,6 +1146,12 @@ export const resolvers = {
           description: `Payout for bounty: ${bounty.title}`
         }
       });
+
+      const venueUser = await prisma.user.findUnique({ where: { id: bounty.venueId }, select: { pushToken: true, name: true } });
+      const claimer = await prisma.user.findUnique({ where: { id: context.user.uid }, select: { name: true } });
+      if (venueUser?.pushToken) {
+        sendPushNotification({ to: venueUser.pushToken, title: 'Bounty Claimed! 💰', body: `${claimer?.name || 'Someone'} claimed your bounty: ${bounty.title}`, data: { type: 'bounty', bountyId: bounty.id }, sound: 'default' });
+      }
 
       return true;
     },
@@ -1342,6 +1356,32 @@ export const resolvers = {
         }
       });
       
+      // Send push notification to receiver
+      const receiver = await prisma.user.findUnique({ where: { id: receiverId }, select: { pushToken: true, name: true } });
+      const sender = await prisma.user.findUnique({ where: { id: context.user.uid }, select: { name: true } });
+      if (receiver?.pushToken) {
+        sendPushNotification({ to: receiver.pushToken, title: sender?.name || 'Someone', body: text || 'Sent you a message', data: { type: 'message', userId: context.user.uid }, sound: 'default' });
+      }
+      
+      try {
+        const chatId = [myId, receiverId].sort().join('_');
+        await db.collection('chats').doc(chatId).collection('messages').doc(message.id).set({
+          id: message.id,
+          text: message.text || null,
+          senderId: message.senderId,
+          receiverId: message.receiverId,
+          createdAt: message.createdAt.toISOString(),
+          isRead: false,
+          sharedContentId: message.sharedContentId || null,
+          sender: {
+            id: myId,
+            name: sender?.name || null
+          }
+        });
+      } catch (err) {
+        console.error("Firestore sync failed:", err);
+      }
+
       return message;
     },
     markConversationRead: async (_: any, { userId }: any, context: any) => {
@@ -1353,6 +1393,21 @@ export const resolvers = {
         data: { isRead: true }
       });
       
+      try {
+        const chatId = [myId, userId].sort().join('_');
+        const batch = db.batch();
+        const unreadDocs = await db.collection('chats').doc(chatId).collection('messages')
+          .where('receiverId', '==', myId)
+          .where('isRead', '==', false).get();
+        
+        unreadDocs.forEach(doc => {
+          batch.update(doc.ref, { isRead: true });
+        });
+        await batch.commit();
+      } catch (err) {
+        console.error("Firestore read update failed:", err);
+      }
+
       return true;
     },
     createPaymentIntent: async (_: any, { amount }: any, context: any) => {

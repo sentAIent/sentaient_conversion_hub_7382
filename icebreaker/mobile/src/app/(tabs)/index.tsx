@@ -195,7 +195,7 @@ export default function MapScreen() {
               coordinate={{ latitude: match.checkIn.fuzzyLatitude, longitude: match.checkIn.fuzzyLongitude }}
               onCalloutPress={() => {
                 triggerHaptic('light');
-                router.push({ pathname: '/schedule', params: { receiverId: match.user.id } });
+                router.push(`/user/${match.user.id}`);
               }}
             >
               <View style={styles.userMarkerContainer}>
@@ -210,7 +210,7 @@ export default function MapScreen() {
                 <View style={styles.calloutCard}>
                   <Text style={styles.calloutTitle}>{match.user.name}</Text>
                   {scoreText ? <Text style={styles.calloutSubtitle}>{scoreText}</Text> : null}
-                  <Text style={styles.calloutAction}>Tap to connect ➔</Text>
+                  <Text style={styles.calloutAction}>View Profile ➔</Text>
                 </View>
               </Callout>
             </Marker>

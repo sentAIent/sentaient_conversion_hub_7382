@@ -42,7 +42,7 @@ export async function registerForPushNotificationsAsync() {
     
     // Learn more about projectId:
     // https://docs.expo.dev/push-notifications/push-notifications-setup/#configure-projectid
-    token = (await Notifications.getExpoPushTokenAsync()).data;
+    token = (await Notifications.getExpoPushTokenAsync({ projectId: 'icebreaker-6fb93' })).data;
     console.log("Push Token:", token);
   } else {
     console.log('Must use physical device for Push Notifications');

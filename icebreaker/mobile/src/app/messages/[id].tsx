@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { gql, useQuery, useMutation } from '@apollo/client';
+import { gql, useQuery, useMutation, useApolloClient } from '@apollo/client';
+import { collection, query, onSnapshot } from 'firebase/firestore';
+import { db } from '../../utils/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
@@ -69,8 +71,10 @@ export default function ChatScreen() {
 
   const { data, loading, error, refetch } = useQuery(GET_MESSAGES, {
     variables: { userId: id as string },
-    pollInterval: 3000 // Poll every 3 seconds for new messages
+    // Remove pollInterval, relying on Firestore for real-time
   });
+
+  const client = useApolloClient();
 
   const [sendMessage] = useMutation(SEND_MESSAGE);
   const [markRead] = useMutation(MARK_READ);
@@ -83,6 +87,62 @@ export default function ChatScreen() {
       }
     }
   }, [data, id, markRead]);
+
+  useEffect(() => {
+    const myId = data?.me?.id;
+    const otherId = id as string;
+    if (!myId || !otherId) return;
+    
+    const chatId = [myId, otherId].sort().join('_');
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const q = query(messagesRef);
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const newMsg = change.doc.data();
+          
+          const formattedMsg = {
+            __typename: "Message",
+            id: newMsg.id,
+            text: newMsg.text,
+            createdAt: newMsg.createdAt,
+            isRead: newMsg.isRead,
+            senderId: newMsg.senderId,
+            receiverId: newMsg.receiverId,
+            sender: {
+               __typename: "User",
+               id: newMsg.sender.id,
+               name: newMsg.sender.name,
+               username: null
+            },
+            sharedContent: null
+          };
+          
+          const existing = client.readQuery<any>({
+            query: GET_MESSAGES,
+            variables: { userId: otherId }
+          });
+          
+          if (existing && existing.conversationMessages) {
+             const exists = existing.conversationMessages.find((m: any) => m.id === newMsg.id);
+             if (!exists) {
+                client.writeQuery({
+                  query: GET_MESSAGES,
+                  variables: { userId: otherId },
+                  data: {
+                    ...existing,
+                    conversationMessages: [formattedMsg, ...existing.conversationMessages]
+                  }
+                });
+             }
+          }
+        }
+      });
+    });
+    
+    return () => unsubscribe();
+  }, [data?.me?.id, id, client]);
 
   if (loading && !data) {
     return (

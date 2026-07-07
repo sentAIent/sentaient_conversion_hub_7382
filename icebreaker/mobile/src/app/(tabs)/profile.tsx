@@ -6,8 +6,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { AnimatedButton } from '../../components/AnimatedButton';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { auth } from '../../utils/firebase';
+import { auth, storage } from '../../utils/firebase';
 import { signOut } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import * as ImagePicker from 'expo-image-picker';
+
+const uploadPhotoToStorage = async (uri: string, userId: string): Promise<string> => {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  const fileRef = ref(storage, `profiles/${userId}/${Date.now()}`);
+  await uploadBytes(fileRef, blob);
+  return getDownloadURL(fileRef);
+};
+
 const GET_ME = gql`
   query GetMeProfile {
     me {
@@ -94,6 +105,25 @@ export default function ProfileScreen() {
   const [updateUserDetails, { loading: savingDetails }] = useMutation(UPDATE_USER_DETAILS);
   const [updateProfile, { loading: savingColors }] = useMutation(UPDATE_PROFILE);
   const [updatePrivacy] = useMutation(UPDATE_PRIVACY);
+
+  const handlePickImage = async () => {
+    if (!auth.currentUser) return;
+    const result = await ImagePicker.launchImageLibraryAsync({ 
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+      allowsEditing: true, 
+      aspect: [1, 1], 
+      quality: 0.8 
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      try {
+        const uri = result.assets[0].uri;
+        const downloadUrl = await uploadPhotoToStorage(uri, auth.currentUser.uid);
+        setEditPhotoUrl(downloadUrl);
+      } catch (err) {
+        console.error('Failed to upload image:', err);
+      }
+    }
+  };
 
   const toggleColor = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -395,7 +425,9 @@ export default function ProfileScreen() {
                   <Ionicons name="person" size={40} color="#555" />
                 </View>
               )}
-              <Text style={styles.modalEditPhotoText}>Provide Image URL below</Text>
+              <TouchableOpacity onPress={handlePickImage} style={{ marginTop: 8 }}>
+                <Text style={styles.modalEditPhotoText}>Change Profile Photo</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.inputGroup}>
@@ -433,17 +465,6 @@ export default function ProfileScreen() {
               />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Profile Photo URL</Text>
-              <TextInput 
-                style={styles.input} 
-                value={editPhotoUrl} 
-                onChangeText={setEditPhotoUrl} 
-                placeholder="https://..." 
-                placeholderTextColor="#666" 
-                autoCapitalize="none"
-              />
-            </View>
           </ScrollView>
         </View>
       </Modal>
