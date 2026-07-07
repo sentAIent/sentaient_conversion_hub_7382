@@ -779,6 +779,8 @@ Legal Team`;
                         currentTheme={currentTheme}
                         setPerspective={setPerspective}
                         setActiveTab={setActiveTab}
+                        prevTab={prevTab}
+                        onReanalyze={handleAnalyze}
                         analysisDepth={analysisDepth}
                         setAnalysisDepth={setAnalysisDepth}
                     />

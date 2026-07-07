@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     return (
         <div className="relative w-20 h-full shrink-0 z-50">
-            <div className={`absolute top-0 left-0 group/sidebar w-20 hover:w-64 flex flex-col h-full border-r transition-all duration-300 ease-in-out z-50 overflow-hidden shadow-xl ${currentTheme.sidebar}`}>
+            <div className={`absolute top-0 left-0 group/sidebar w-20 hover:w-64 flex flex-col h-full border-r transition-all duration-300 ease-in-out z-50 overflow-x-hidden shadow-xl ${currentTheme.sidebar}`}>
                 {/* Logo Area */}
                 <div className={`p-4 border-b flex items-center justify-start h-[73px] ${isLightSidebar ? 'border-slate-300' : 'border-white/10'}`}>
                     <div className="relative group w-12 h-12 rounded-xl overflow-hidden shadow-lg border border-white/10 flex items-center justify-center shrink-0 mx-auto group-hover/sidebar:mx-0 transition-all duration-300">

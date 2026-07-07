@@ -38,6 +38,8 @@ interface AnalysisViewProps {
     onDeleteAnnotation: (id: number) => void;
     currentTheme: Theme;
     setActiveTab: (tab: string) => void;
+    prevTab?: string | null;
+    onReanalyze?: () => void;
     handleUndoRevision: () => void;
     handleUndoAllRevisions: () => void;
     canUndo: boolean;
@@ -62,6 +64,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     onDeleteAnnotation,
     currentTheme,
     setActiveTab,
+    prevTab,
+    onReanalyze,
     analysisDepth = 'standard',
     setAnalysisDepth,
     handleUndoRevision,
@@ -134,13 +138,15 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
             {/* Left Sidebar - Issues List */}
             <div className={`w-96 border-r flex flex-col h-full z-10 shadow-md shrink-0 transition-colors ${currentTheme.sidebar} min-h-0`}>
                 <div className="p-6 border-b border-white/10">
-                    <button 
-                        onClick={() => setActiveTab('cases')}
-                        className={`flex items-center gap-1 mb-4 text-sm font-bold transition-opacity text-blue-500 hover:text-blue-400`}
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Back to Matters
-                    </button>
+                    {prevTab === 'cases' && (
+                        <button 
+                            onClick={() => setActiveTab('cases')}
+                            className={`flex items-center gap-1 mb-4 text-sm font-bold transition-opacity text-blue-500 hover:text-blue-400`}
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Back to Matters
+                        </button>
+                    )}
                     <h2 className={`font-bold text-lg mb-4 ${isLightSidebar ? 'text-slate-800' : 'text-white'}`}>
                         {isRoastMode ? 'Roast Results 🔥' : 'Audit Results'}
                     </h2>
@@ -150,10 +156,13 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                         <div className="mb-3">
                             <p className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 ${isLightSidebar ? 'text-slate-400' : 'text-slate-500'}`}>Scan Depth</p>
                             <div className={`p-1 flex rounded-xl border shadow-inner ${isLightSidebar ? 'bg-slate-200/50 border-slate-300/50' : 'bg-slate-900/50 border-slate-800'}`}>
-                                {[{ id: 'basic', label: 'Basic', sub: 'Quick Scan' }, { id: 'standard', label: 'Standard', sub: 'Full Audit' }].map(({ id, label, sub }) => (
+                                {[{ id: 'quick', label: 'Basic', sub: 'Quick Scan' }, { id: 'standard', label: 'Standard', sub: 'Full Audit' }].map(({ id, label, sub }) => (
                                     <button
                                         key={id}
-                                        onClick={() => setAnalysisDepth(id)}
+                                        onClick={() => {
+                                            setAnalysisDepth(id);
+                                            setTimeout(() => onReanalyze?.(), 50);
+                                        }}
                                         className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
                                             analysisDepth === id
                                                 ? `${currentTheme.accent} text-white shadow-md shadow-black/20 font-bold`
@@ -176,7 +185,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                 {['User', 'Company'].map((role) => (
                                     <button
                                         key={role}
-                                        onClick={() => setPerspective(role)}
+                                        onClick={() => {
+                                            setPerspective(role);
+                                            setTimeout(() => onReanalyze?.(), 50);
+                                        }}
                                         className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
                                             perspective === role
                                                 ? `${currentTheme.accent} text-white shadow-md shadow-black/20 font-bold`
