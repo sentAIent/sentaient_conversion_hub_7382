@@ -91,6 +91,7 @@ export default function MainApp() {
     const [swotData, setSwotData] = useState<SwotAnalysis | null>(null);
     const [selectedRecId, setSelectedRecId] = useState<number | null>(null);
     const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
+    const [scanProgress, setScanProgress] = useState<ScanProgress>({ current: 0, total: 0 });
     // Undo stack: each entry stores the doc text + recommendations state before a revision was applied
     const [undoHistory, setUndoHistory] = useState<Array<{ documentText: string; recommendations: Recommendation[] }>>([]);
     const [cloudHistory, setCloudHistory] = useState<any[]>([]);
