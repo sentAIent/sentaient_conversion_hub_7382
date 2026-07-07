@@ -11,7 +11,8 @@ import {
     Award,
     CheckCircle2,
     Trash2,
-    User
+    User,
+    ChevronLeft
 } from 'lucide-react';
 import { ScoreCircle, SwotCard } from '@/components/ui';
 import type { Theme, Recommendation, SwotAnalysis } from '@/types';
@@ -25,6 +26,8 @@ interface AnalysisViewProps {
     isRoastMode: boolean;
     perspective: string;
     setPerspective: (p: string) => void;
+    analysisDepth: string;
+    setAnalysisDepth: (d: string) => void;
     handleApplyAll: () => void;
     generateNegotiationEmail: () => void;
     showEmailModal: boolean;
@@ -34,6 +37,12 @@ interface AnalysisViewProps {
     handleAcceptRecommendation: (rec: Recommendation) => void;
     onDeleteAnnotation: (id: number) => void;
     currentTheme: Theme;
+    setActiveTab: (tab: string) => void;
+    prevTab?: string | null;
+    onReanalyze?: (newPerspective: string) => void;
+    handleUndoRevision: () => void;
+    handleUndoAllRevisions: () => void;
+    canUndo: boolean;
 }
 
 export const AnalysisView: React.FC<AnalysisViewProps> = ({
@@ -53,10 +62,25 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     setEmailDraft,
     handleAcceptRecommendation,
     onDeleteAnnotation,
-    currentTheme
+    currentTheme,
+    setActiveTab,
+    prevTab,
+    onReanalyze,
+    analysisDepth = 'standard',
+    setAnalysisDepth,
+    handleUndoRevision,
+    handleUndoAllRevisions,
+    canUndo,
 }) => {
     const activeRec = recommendations.find(r => r.id === selectedRecId);
-    const visibleRecommendations = recommendations.filter(r => !r.accepted);
+    // Depth-aware filtering: Basic/quick shows Critical+High only; standard/deep shows all
+    const visibleRecommendations = useMemo(() => {
+        const unaccepted = recommendations.filter(r => !r.accepted);
+        if (analysisDepth === 'quick') {
+            return unaccepted.filter(r => r.severity === 'Critical' || r.severity === 'High');
+        }
+        return unaccepted;
+    }, [recommendations, analysisDepth]);
     const isLightSidebar = ['eggshell', 'sand'].includes(currentTheme.id);
 
     // Aggregate citations for the "Table of Authorities"
@@ -121,29 +145,67 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
             {/* Left Sidebar - Issues List */}
             <div className={`w-96 border-r flex flex-col h-full z-10 shadow-md shrink-0 transition-colors ${currentTheme.sidebar} min-h-0`}>
                 <div className="p-6 border-b border-white/10">
+                    {prevTab === 'cases' && (
+                        <button 
+                            onClick={() => setActiveTab('cases')}
+                            className={`flex items-center gap-1 mb-4 text-sm font-bold transition-opacity text-blue-500 hover:text-blue-400`}
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Back to Matters
+                        </button>
+                    )}
                     <h2 className={`font-bold text-lg mb-4 ${isLightSidebar ? 'text-slate-800' : 'text-white'}`}>
                         {isRoastMode ? 'Roast Results 🔥' : 'Audit Results'}
                     </h2>
                     
-                    {/* Sophisticated Perspective Toggle */}
+                    {/* Analysis Depth Toggle — Basic vs Standard only */}
+                    {!isRoastMode && setAnalysisDepth && (
+                        <div className="mb-3">
+                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 ${isLightSidebar ? 'text-slate-400' : 'text-slate-500'}`}>Scan Depth</p>
+                            <div className={`p-1 flex rounded-xl border shadow-inner ${isLightSidebar ? 'bg-slate-200/50 border-slate-300/50' : 'bg-slate-900/50 border-slate-800'}`}>
+                                {[{ id: 'quick', label: 'Basic', sub: 'Quick Scan' }, { id: 'standard', label: 'Standard', sub: 'Full Audit' }].map(({ id, label, sub }) => (
+                                    <button
+                                        key={id}
+                                        onClick={() => setAnalysisDepth(id)}
+                                        className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
+                                            analysisDepth === id
+                                                ? `${currentTheme.accent} text-white shadow-md shadow-black/20 font-bold`
+                                                : `${currentTheme.sidebarText} hover:bg-white/10 opacity-70 hover:opacity-100 font-semibold`
+                                        }`}
+                                    >
+                                        <span className="text-sm">{label}</span>
+                                        <span className="text-[10px] font-normal opacity-75 mt-0.5">{sub}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Perspective Toggle — Whose side are we on? */}
                     {!isRoastMode && (
-                        <div className={`p-1 flex mb-6 rounded-xl border shadow-inner ${isLightSidebar ? 'bg-slate-200/50 border-slate-300/50' : 'bg-slate-900/50 border-slate-800'}`}>
-                            {['Basic', 'Standard', 'User', 'Company'].map((role) => (
-                                <button
-                                    key={role}
-                                    onClick={() => setPerspective(role)}
-                                    className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
-                                        perspective === role 
-                                            ? `${currentTheme.accent} text-white shadow-md shadow-black/20 font-bold` 
-                                            : `${currentTheme.sidebarText} hover:bg-white/10 opacity-70 hover:opacity-100 font-semibold`
-                                    }`}
-                                >
-                                    <span className="text-sm">{role}</span>
-                                    <span className="text-[10px] font-normal opacity-75 mt-0.5 text-center leading-tight">
-                                        {role === 'Basic' ? 'Overview' : role === 'Standard' ? 'Detailed' : role === 'User' ? 'Protect User' : 'Protect Co.'}
-                                    </span>
-                                </button>
-                            ))}
+                        <div className="mb-6">
+                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 ${isLightSidebar ? 'text-slate-400' : 'text-slate-500'}`}>Perspective</p>
+                            <div className={`p-1 flex rounded-xl border shadow-inner ${isLightSidebar ? 'bg-slate-200/50 border-slate-300/50' : 'bg-slate-900/50 border-slate-800'}`}>
+                                {['User', 'Company'].map((role) => (
+                                    <button
+                                        key={role}
+                                        onClick={() => {
+                                            setPerspective(role);
+                                            onReanalyze?.(role); // pass new value directly — avoids stale closure
+                                        }}
+                                        className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
+                                            perspective === role
+                                                ? `${currentTheme.accent} text-white shadow-md shadow-black/20 font-bold`
+                                                : `${currentTheme.sidebarText} hover:bg-white/10 opacity-70 hover:opacity-100 font-semibold`
+                                        }`}
+                                    >
+                                        <span className="text-sm">{role}</span>
+                                        <span className="text-[10px] font-normal opacity-75 mt-0.5 text-center leading-tight">
+                                            {role === 'User' ? 'Protect User' : 'Protect Co.'}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -183,14 +245,22 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                     </div>
                     
                     {visibleRecommendations.length > 0 && (
-                        <div className="flex px-2 mb-3">
+                        <div className="flex px-2 mb-3 gap-2">
                             <button
                                 onClick={handleApplyAll}
                                 className={`w-full flex items-center justify-center gap-1 text-xs font-bold px-3 py-1.5 rounded text-white shadow-sm hover:opacity-90 transition-opacity ${isRoastMode ? 'bg-red-600' : 'bg-blue-600'
                                     }`}
                             >
-                                Apply All Issues
+                                Apply All Revisions
                             </button>
+                            {canUndo && (
+                                <button
+                                    onClick={handleUndoAllRevisions}
+                                    className="flex items-center justify-center gap-1 text-xs font-bold px-3 py-1.5 rounded bg-slate-500 text-white shadow-sm hover:opacity-90 transition-opacity"
+                                >
+                                    Undo All
+                                </button>
+                            )}
                         </div>
                     )}
 
@@ -223,7 +293,15 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                 className={`p-4 rounded-lg cursor-pointer transition-all relative group ${selectedStyle}`}
                             >
                                 {rec.accepted && (
-                                    <CheckCircle2 className="absolute top-2 right-2 w-5 h-5 text-emerald-500" />
+                                    <div className="absolute top-2 right-2 flex items-center gap-2">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleUndoRevision(); }}
+                                            className="text-xs font-bold px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors"
+                                        >
+                                            Undo
+                                        </button>
+                                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                    </div>
                                 )}
                                 <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-2">

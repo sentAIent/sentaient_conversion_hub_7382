@@ -12,7 +12,8 @@ import {
     ChevronsUp,
     ChevronsDown,
     ChevronUp,
-    ChevronDown
+    ChevronDown,
+    ChevronLeft
 } from 'lucide-react';
 import { findFuzzyMatch, tokenize } from '@/utils/textMatching';
 import type { Theme, Recommendation, ScanProgress, Severity, ContractType } from '@/types';
@@ -43,6 +44,8 @@ interface EditorViewProps {
     setContractType?: (type: ContractType) => void;
     perspective?: string;
     setPerspective?: (perspective: string) => void;
+    prevTab?: string | null;
+    analysisComplete?: boolean;
 }
 
 export const EditorView: React.FC<EditorViewProps> = ({
@@ -69,7 +72,9 @@ export const EditorView: React.FC<EditorViewProps> = ({
     contractType = 'General',
     setContractType,
     perspective = 'Neutral',
-    setPerspective
+    setPerspective,
+    prevTab = null,
+    analysisComplete = false,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const { profile } = useAuth();
@@ -262,6 +267,25 @@ export const EditorView: React.FC<EditorViewProps> = ({
             <div className={`border-b p-4 shadow-sm flex flex-col gap-4 ${currentTheme.panelBg}`}>
                 <div className="flex justify-between items-center">
                     <div className="flex flex-col gap-2">
+                        {/* Smart Context-Aware Back Button */}
+                        {prevTab === 'cases' && (
+                            <button
+                                onClick={() => setActiveTab('cases')}
+                                className="flex w-fit items-center gap-1 text-sm font-bold transition-opacity text-blue-500 hover:text-blue-400"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                                Back to Matters
+                            </button>
+                        )}
+                        {prevTab === 'analysis' || (analysisComplete && prevTab !== 'cases') ? (
+                            <button
+                                onClick={() => setActiveTab('analysis')}
+                                className="flex w-fit items-center gap-1 text-sm font-bold transition-opacity text-blue-500 hover:text-blue-400"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                                Back to Analysis
+                            </button>
+                        ) : null}
                         <div className="flex items-center gap-2">
                             <FileText className="w-5 h-5 text-blue-600" />
                             <h2 className={`text-xl font-bold truncate max-w-md ${currentTheme.panelText}`}>

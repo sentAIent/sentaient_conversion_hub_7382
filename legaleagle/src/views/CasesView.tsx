@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Theme } from '@/types';
 import toast from 'react-hot-toast';
-import { Briefcase, Plus, Users, Lock, EyeOff, Save, Trash2 } from 'lucide-react';
+import { Briefcase, Plus, Users, Lock, Eye, EyeOff, Save, Trash2, Folder, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface CasesViewProps {
     currentTheme: Theme;
@@ -24,6 +24,8 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
     const [loading, setLoading] = useState(false);
     const [terminology, setTerminology] = useState('Matters');
     const [members, setMembers] = useState<any[]>([]);
+    const [isDemosExpanded, setIsDemosExpanded] = useState(false);
+    const [showTimestamps, setShowTimestamps] = useState(true);
     
     // Form state
     const [isCreating, setIsCreating] = useState(false);
@@ -62,7 +64,9 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
             .eq('team_id', profile!.current_team_id!)
             .order('created_at', { ascending: false });
         if (!error && data) {
-            setCases([...PRE_INSTALLED_DEMOS, ...data]);
+            // Filter out any db cases that share a name with our pre-installed demos to prevent "copies of copies"
+            const filteredData = data.filter(d => !PRE_INSTALLED_DEMOS.some(p => p.name === d.name));
+            setCases([...PRE_INSTALLED_DEMOS, ...filteredData]);
         } else {
             setCases([...PRE_INSTALLED_DEMOS]);
         }
@@ -149,20 +153,29 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
                     </p>
                 </div>
                 {!isCreating && (
-                    <button
-                        onClick={() => {
-                            setEditingCase(null);
-                            setCaseName('');
-                            setCaseDesc('');
-                            setAccessLevel('public');
-                            setAccessList([]);
-                            setIsCreating(true);
-                        }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTheme.button}`}
-                    >
-                        <Plus className="w-4 h-4" />
-                        New {terminology.replace(/s$/, '')}
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setShowTimestamps(!showTimestamps)}
+                            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+                        >
+                            {showTimestamps ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showTimestamps ? "Hide Timestamps" : "Show Timestamps"}
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditingCase(null);
+                                setCaseName('');
+                                setCaseDesc('');
+                                setAccessLevel('public');
+                                setAccessList([]);
+                                setIsCreating(true);
+                            }}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTheme.button}`}
+                        >
+                            <Plus className="w-4 h-4" />
+                            New {terminology.replace(/s$/, '')}
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -266,8 +279,52 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {cases.map(c => (
+                <div className="space-y-6">
+                    {/* Folders / Categories */}
+                    {cases.filter(c => c.isDemo).length > 0 && (
+                        <div className={`rounded-xl border ${currentTheme.border} ${currentTheme.card} overflow-hidden shadow-sm`}>
+                            <button
+                                onClick={() => setIsDemosExpanded(!isDemosExpanded)}
+                                className={`w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Folder className={`w-5 h-5 ${currentTheme.primary}`} />
+                                    <h3 className={`font-semibold text-lg ${currentTheme.text}`}>
+                                        Demo Platforms (TOS)
+                                    </h3>
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                                        5 Items
+                                    </span>
+                                </div>
+                                {isDemosExpanded ? (
+                                    <ChevronDown className={`w-5 h-5 ${currentTheme.textMuted}`} />
+                                ) : (
+                                    <ChevronRight className={`w-5 h-5 ${currentTheme.textMuted}`} />
+                                )}
+                            </button>
+                            
+                            {isDemosExpanded && (
+                                <div className={`border-t ${currentTheme.border} p-4 bg-black/5 dark:bg-black/20`}>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {cases.filter(c => c.isDemo).map(c => (
+                                            <div key={c.id} className={`p-4 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group hover:border-blue-500/50 transition-colors cursor-pointer`} onClick={() => onLoadDemo(c.id)}>
+                                                <h3 className={`font-semibold text-md ${currentTheme.text} mb-1 group-hover:text-blue-500 transition-colors`}>
+                                                    {c.name}
+                                                </h3>
+                                                <p className={`text-xs ${currentTheme.textMuted} line-clamp-2`}>
+                                                    {c.description || 'No description'}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Standard Cases Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {cases.filter(c => !c.isDemo).map(c => (
                         <div key={c.id} className={`p-5 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group`}>
                             <div className="flex justify-between items-start mb-2">
                                 <h3 className={`font-semibold text-lg ${currentTheme.text} ${c.isDemo ? 'cursor-pointer hover:underline' : ''}`} onClick={() => c.isDemo && onLoadDemo(c.id)}>
@@ -291,6 +348,11 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
                                 <span className={`px-2 py-1 rounded-full ${c.access_level === 'public' ? 'bg-blue-100 text-blue-700' : c.access_level === 'confidential' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
                                     {c.access_level.charAt(0).toUpperCase() + c.access_level.slice(1)}
                                 </span>
+                                {showTimestamps && c.created_at && (
+                                    <span className={currentTheme.textMuted}>
+                                        {new Date(c.created_at).toLocaleDateString()} {new Date(c.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -301,6 +363,7 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
                             <p className={`text-sm ${currentTheme.textMuted}`}>Create your first {terminology.toLowerCase()} to organize documents.</p>
                         </div>
                     )}
+                </div>
                 </div>
             )}
         </div>

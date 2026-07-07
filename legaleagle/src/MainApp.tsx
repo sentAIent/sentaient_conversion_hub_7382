@@ -59,8 +59,16 @@ export default function MainApp() {
     const { profile } = useAuth();
     // App State
     const [hasAcceptedDisclaimer, setHasAcceptedDisclaimer] = useState(false);
-    const [activeTab, setActiveTab] = useState('editor');
+    const [activeTab, setActiveTabRaw] = useState('editor');
+    const [prevTab, setPrevTab] = useState<string | null>(null);
+    const setActiveTab = (tab: string) => {
+        setActiveTabRaw(prev => {
+            setPrevTab(prev);
+            return tab;
+        });
+    };
     const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
+    const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
     const [isRoastMode, setIsRoastMode] = useState(false);
     const [perspective, setPerspective] = useState('User');
     const [activeDemoId, setActiveDemoId] = useState<string | null>(null);
@@ -84,7 +92,24 @@ export default function MainApp() {
     const [selectedRecId, setSelectedRecId] = useState<number | null>(null);
     const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
     const [scanProgress, setScanProgress] = useState<ScanProgress>({ current: 0, total: 0 });
+    // Undo stack: each entry stores the doc text + recommendations state before a revision was applied
+    const [undoHistory, setUndoHistory] = useState<Array<{ documentText: string; recommendations: Recommendation[] }>>([]);
     const [cloudHistory, setCloudHistory] = useState<any[]>([]);
+
+    // Auto-save logic
+    useEffect(() => {
+        if (!activeHistoryId || !profile?.id || !documentText) return;
+        const timer = setTimeout(async () => {
+            try {
+                // Call our new historyService to save version
+                const { saveNewVersion } = await import('@/services/historyService');
+                await saveNewVersion(profile.id, activeHistoryId, documentText, 'Auto-save');
+            } catch (e) {
+                console.error('Auto-save failed:', e);
+            }
+        }, 2000); // Debounce 2 seconds
+        return () => clearTimeout(timer);
+    }, [documentText, activeHistoryId, profile?.id]);
 
     // Email modal state
     const [showEmailModal, setShowEmailModal] = useState(false);
@@ -136,6 +161,7 @@ export default function MainApp() {
             setScore(demo.score);
             setSwotData(demo.swotData);
             setAnalysisComplete(true);
+            setActiveHistoryId(null); // demos aren't in history yet
             setActiveTab('analysis');
             
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -152,24 +178,37 @@ export default function MainApp() {
             return;
         }
 
-        const savedState = localStorage.getItem('legalAnalyzerState');
+        const savedState = localStorage.getItem('legalEagleStateV2');
         if (savedState) {
             try {
                 const parsed = JSON.parse(savedState);
-                if (parsed.documentText) setDocumentText(parsed.documentText);
-                if (parsed.documentName) setDocumentName(parsed.documentName);
-                if (parsed.recommendations) setRecommendations(parsed.recommendations);
-                if (parsed.score) setScore(parsed.score);
-                if (parsed.swotData) setSwotData(parsed.swotData);
-                if (parsed.changeLog) setChangeLog(parsed.changeLog);
-                if (parsed.analysisComplete) setAnalysisComplete(parsed.analysisComplete);
-                if (parsed.perspective) setPerspective(parsed.perspective);
-                if (parsed.activeDemoId) setActiveDemoId(parsed.activeDemoId);
-                if (parsed.heatmapEnabled) setHeatmapEnabled(parsed.heatmapEnabled);
 
-                // If analysis was complete, ensure we're on the analysis tab or editor
-                if (parsed.analysisComplete && parsed.recommendations.length > 0) {
-                    // Optional: could force tab, but better to respect default or last active
+                // If the user previously had a demo loaded as their "draft", we need to nuke it
+                const isLeakedDemo = !parsed.activeDemoId && parsed.documentText && (
+                    parsed.documentText.includes('Welcome to TikTok') ||
+                    parsed.documentText.includes('Netflix') ||
+                    parsed.documentText.includes('Slack') ||
+                    parsed.documentText.includes('OpenAI') ||
+                    parsed.documentText.includes('X Corp') ||
+                    parsed.documentText.includes('X (formerly Twitter)')
+                );
+
+                if (isLeakedDemo) {
+                    localStorage.removeItem('legalEagleStateV2');
+                    return;
+                }
+
+                // Never restore demo state on initial load - keep it as draft agreement
+                if (!parsed.activeDemoId) {
+                    if (parsed.documentText) setDocumentText(parsed.documentText);
+                    if (parsed.documentName) setDocumentName(parsed.documentName);
+                    if (parsed.recommendations) setRecommendations(parsed.recommendations);
+                    if (parsed.score) setScore(parsed.score);
+                    if (parsed.swotData) setSwotData(parsed.swotData);
+                    if (parsed.changeLog) setChangeLog(parsed.changeLog);
+                    if (parsed.analysisComplete) setAnalysisComplete(parsed.analysisComplete);
+                    if (parsed.perspective) setPerspective(parsed.perspective);
+                    if (parsed.heatmapEnabled) setHeatmapEnabled(parsed.heatmapEnabled);
                 }
             } catch (e) {
                 console.error("Failed to load saved state:", e);
@@ -200,6 +239,9 @@ export default function MainApp() {
 
     // Save state to localStorage whenever key data changes
     useEffect(() => {
+        // DO NOT save state if we are viewing a demo
+        if (activeDemoId) return;
+
         const stateToSave = {
             documentText,
             documentName,
@@ -209,10 +251,9 @@ export default function MainApp() {
             changeLog,
             analysisComplete,
             perspective,
-            activeDemoId,
             heatmapEnabled
         };
-        localStorage.setItem('legalAnalyzerState', JSON.stringify(stateToSave));
+        localStorage.setItem('legalEagleStateV2', JSON.stringify(stateToSave));
     }, [documentText, documentName, recommendations, score, swotData, changeLog, analysisComplete, perspective, activeDemoId, heatmapEnabled]);
 
     // Fetch cloud history when opening the history tab
@@ -293,7 +334,44 @@ export default function MainApp() {
         }
     };
 
+    /**
+     * Silent re-analysis triggered by perspective toggle.
+     * Keeps current results on screen while running in background —
+     * never clears analysisComplete or redirects the tab.
+     * Accepts the new perspective directly to avoid stale closure bugs.
+     */
+    const handleSilentReanalyze = async (newPerspective: string) => {
+        if (!documentText || !analysisComplete) return;
+
+        setIsAnalyzing(true);
+        abortControllerRef.current = new AbortController();
+
+        try {
+            const result = await analyzeDocument(
+                documentText,
+                newPerspective,        // use passed value — state may still be stale here
+                parties,
+                (progress) => setScanProgress(progress),
+                (recs) => { if (recs.length > 0) setRecommendations(recs); },
+                analysisDepth,
+                contractType,
+                abortControllerRef.current.signal
+            );
+            setRecommendations(result.recommendations);
+            setSwotData(result.swot);
+            setScore(result.score);
+            // analysisComplete stays true — no empty state flash
+        } catch (error: any) {
+            if (error?.message !== 'AbortError') {
+                console.error('Silent re-analyze failed:', error);
+            }
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     const handleAnalyze = async () => {
+
         if (!documentText) return;
 
         setIsAnalyzing(true);
@@ -370,18 +448,25 @@ export default function MainApp() {
 
             // Save to history table
             if (profile?.id && !abortControllerRef.current.signal.aborted) {
-                await supabase.from('history').insert({
+                const { data: newDoc, error: insertErr } = await supabase.from('history').insert({
                     user_id: profile.id,
                     team_id: profile.current_team_id || null,
                     case_id: activeCaseId || null,
-                    document_name: 'Analysis',
+                    document_name: 'Analysis - ' + new Date().toLocaleDateString(),
                     document_text: documentText,
                     recommendations: result.recommendations,
                     score: result.score,
                     swot_data: result.swot,
                     perspective: perspective,
                     contract_type: contractType
-                });
+                }).select().single();
+                
+                if (!insertErr && newDoc) {
+                    setActiveHistoryId(newDoc.id);
+                    // Create v1
+                    const { saveNewVersion } = await import('@/services/historyService');
+                    await saveNewVersion(profile.id, newDoc.id, documentText, 'Initial Analysis');
+                }
                 // Refresh cloud history after insert
                 fetchCloudHistory();
             }
@@ -449,11 +534,14 @@ export default function MainApp() {
         setChangeLog(prev => [entry, ...prev]);
     };
 
-    // Accept a recommendation
+    // Accept a recommendation (with undo snapshot)
     const handleAcceptRecommendation = (rec: Recommendation) => {
         const match = findFuzzyMatch(documentText, rec.currentText);
 
         if (match) {
+            // Save snapshot for undo
+            setUndoHistory(prev => [...prev, { documentText, recommendations }]);
+
             const prefix = documentText.slice(0, match.start);
             const suffix = documentText.slice(match.end);
             const newText = prefix + rec.proposedText + suffix;
@@ -468,7 +556,29 @@ export default function MainApp() {
         }
     };
 
-    // Apply all recommendations
+    // Undo the most recent individual revision
+    const handleUndoRevision = () => {
+        setUndoHistory(prev => {
+            if (prev.length === 0) return prev;
+            const snapshot = prev[prev.length - 1];
+            setDocumentText(snapshot.documentText);
+            setRecommendations(snapshot.recommendations);
+            return prev.slice(0, -1);
+        });
+    };
+
+    // Undo ALL applied revisions in one shot
+    const handleUndoAllRevisions = () => {
+        setUndoHistory(prev => {
+            if (prev.length === 0) return prev;
+            const snapshot = prev[0]; // oldest snapshot = original state
+            setDocumentText(snapshot.documentText);
+            setRecommendations(snapshot.recommendations);
+            return [];
+        });
+    };
+
+    // Apply all recommendations (with undo snapshot)
     const handleApplyAll = () => {
         let currentDocText = documentText;
         const updates: Array<Recommendation & { match: { start: number; end: number } }> = [];
@@ -479,6 +589,11 @@ export default function MainApp() {
                 if (match) updates.push({ ...rec, match });
             }
         });
+
+        if (updates.length === 0) return;
+
+        // Save one collective snapshot for undo-all
+        setUndoHistory(prev => [...prev, { documentText, recommendations }]);
 
         // Sort by position (end to start) to avoid offset issues
         updates.sort((a, b) => b.match.start - a.match.start);
@@ -665,6 +780,8 @@ Legal Team`;
                         setContractType={setContractType}
                         perspective={perspective}
                         setPerspective={setPerspective}
+                        prevTab={prevTab}
+                        analysisComplete={analysisComplete}
                     />
                 )}
 
@@ -687,6 +804,9 @@ Legal Team`;
                         isRoastMode={isRoastMode}
                         perspective={perspective}
                         handleApplyAll={handleApplyAll}
+                        handleUndoRevision={handleUndoRevision}
+                        handleUndoAllRevisions={handleUndoAllRevisions}
+                        canUndo={undoHistory.length > 0}
                         generateNegotiationEmail={generateNegotiationEmail}
                         showEmailModal={showEmailModal}
                         setShowEmailModal={setShowEmailModal}
@@ -695,6 +815,11 @@ Legal Team`;
                         handleAcceptRecommendation={handleAcceptRecommendation}
                         currentTheme={currentTheme}
                         setPerspective={setPerspective}
+                        setActiveTab={setActiveTab}
+                        prevTab={prevTab}
+                        onReanalyze={handleSilentReanalyze}
+                        analysisDepth={analysisDepth}
+                        setAnalysisDepth={setAnalysisDepth}
                     />
                 )}
 
@@ -702,10 +827,30 @@ Legal Team`;
                     <DraftView
                         currentTheme={currentTheme}
                         onGenerate={async (prompt: string) => {
-                            return await generateContract(prompt);
+                            return await generateContract(prompt, perspective, analysisDepth);
                         }}
-                        onSendToEditor={(text: string) => {
+                        onSendToEditor={async (text: string) => {
                             setDocumentText(text);
+                            
+                            // Save draft to history to enable version control immediately
+                            if (profile?.id) {
+                                const { data: newDoc, error: insertErr } = await supabase.from('history').insert({
+                                    user_id: profile.id,
+                                    team_id: profile.current_team_id || null,
+                                    case_id: activeCaseId || null,
+                                    document_name: 'Generated Draft - ' + new Date().toLocaleDateString(),
+                                    document_text: text,
+                                    contract_type: 'Draft'
+                                }).select().single();
+                                
+                                if (!insertErr && newDoc) {
+                                    setActiveHistoryId(newDoc.id);
+                                    const { saveNewVersion } = await import('@/services/historyService');
+                                    await saveNewVersion(profile.id, newDoc.id, text, 'Initial Draft');
+                                    fetchCloudHistory();
+                                }
+                            }
+                            
                             setActiveTab('editor');
                         }}
                         handleExportPdf={() => {}}
@@ -736,18 +881,23 @@ Legal Team`;
                 )}
                 {activeTab === 'history' && (
                     <HistoryView
-                        changeLog={changeLog}
-                        cloudHistory={cloudHistory}
-                        onDeleteDocument={handleDeleteDocument}
                         currentTheme={currentTheme}
                         onLoadItem={(item) => {
-                            setDocumentText(item.content);
-                            setDocumentName(item.document_name);
-                            setScore(item.score);
-                            if (item.recommendations) setRecommendations(item.recommendations);
-                            if (item.swot) setSwotData(item.swot);
-                            setAnalysisComplete(true);
-                            setActiveTab('analysis');
+                            // Map LibraryDocument/HistoryDocument to what MainApp expects
+                            setDocumentText(item.document_text || '');
+                            setDocumentName(item.document_name || 'Untitled Document');
+                            setActiveHistoryId(item.id);
+                            
+                            if (item.recommendations) {
+                                setRecommendations(item.recommendations);
+                                setScore(item.score || 0);
+                                setSwotData(item.swot_data || { strengths: [], weaknesses: [], opportunities: [], threats: [] });
+                                setPerspective(item.perspective || 'User');
+                                setAnalysisComplete(true);
+                                setActiveTab('analysis');
+                            } else {
+                                setActiveTab('editor');
+                            }
                         }}
                     />
                 )}
