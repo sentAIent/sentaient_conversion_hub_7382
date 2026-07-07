@@ -39,7 +39,7 @@ interface AnalysisViewProps {
     currentTheme: Theme;
     setActiveTab: (tab: string) => void;
     prevTab?: string | null;
-    onReanalyze?: () => void;
+    onReanalyze?: (newPerspective: string) => void;
     handleUndoRevision: () => void;
     handleUndoAllRevisions: () => void;
     canUndo: boolean;
@@ -73,7 +73,14 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     canUndo,
 }) => {
     const activeRec = recommendations.find(r => r.id === selectedRecId);
-    const visibleRecommendations = recommendations.filter(r => !r.accepted);
+    // Depth-aware filtering: Basic/quick shows Critical+High only; standard/deep shows all
+    const visibleRecommendations = useMemo(() => {
+        const unaccepted = recommendations.filter(r => !r.accepted);
+        if (analysisDepth === 'quick') {
+            return unaccepted.filter(r => r.severity === 'Critical' || r.severity === 'High');
+        }
+        return unaccepted;
+    }, [recommendations, analysisDepth]);
     const isLightSidebar = ['eggshell', 'sand'].includes(currentTheme.id);
 
     // Aggregate citations for the "Table of Authorities"
@@ -159,10 +166,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                 {[{ id: 'quick', label: 'Basic', sub: 'Quick Scan' }, { id: 'standard', label: 'Standard', sub: 'Full Audit' }].map(({ id, label, sub }) => (
                                     <button
                                         key={id}
-                                        onClick={() => {
-                                            setAnalysisDepth(id);
-                                            setTimeout(() => onReanalyze?.(), 50);
-                                        }}
+                                        onClick={() => setAnalysisDepth(id)}
                                         className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
                                             analysisDepth === id
                                                 ? `${currentTheme.accent} text-white shadow-md shadow-black/20 font-bold`
@@ -187,7 +191,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                         key={role}
                                         onClick={() => {
                                             setPerspective(role);
-                                            setTimeout(() => onReanalyze?.(), 50);
+                                            onReanalyze?.(role); // pass new value directly — avoids stale closure
                                         }}
                                         className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
                                             perspective === role

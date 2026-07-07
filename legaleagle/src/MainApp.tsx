@@ -334,7 +334,44 @@ export default function MainApp() {
         }
     };
 
+    /**
+     * Silent re-analysis triggered by perspective toggle.
+     * Keeps current results on screen while running in background —
+     * never clears analysisComplete or redirects the tab.
+     * Accepts the new perspective directly to avoid stale closure bugs.
+     */
+    const handleSilentReanalyze = async (newPerspective: string) => {
+        if (!documentText || !analysisComplete) return;
+
+        setIsAnalyzing(true);
+        abortControllerRef.current = new AbortController();
+
+        try {
+            const result = await analyzeDocument(
+                documentText,
+                newPerspective,        // use passed value — state may still be stale here
+                parties,
+                (progress) => setScanProgress(progress),
+                (recs) => { if (recs.length > 0) setRecommendations(recs); },
+                analysisDepth,
+                contractType,
+                abortControllerRef.current.signal
+            );
+            setRecommendations(result.recommendations);
+            setSwotData(result.swot);
+            setScore(result.score);
+            // analysisComplete stays true — no empty state flash
+        } catch (error: any) {
+            if (error?.message !== 'AbortError') {
+                console.error('Silent re-analyze failed:', error);
+            }
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     const handleAnalyze = async () => {
+
         if (!documentText) return;
 
         setIsAnalyzing(true);
@@ -780,7 +817,7 @@ Legal Team`;
                         setPerspective={setPerspective}
                         setActiveTab={setActiveTab}
                         prevTab={prevTab}
-                        onReanalyze={handleAnalyze}
+                        onReanalyze={handleSilentReanalyze}
                         analysisDepth={analysisDepth}
                         setAnalysisDepth={setAnalysisDepth}
                     />
