@@ -66,11 +66,11 @@
 <!-- SUPER CACHE KILLER: Force fresh load of the new 3600-line fractal engine -->
 <script>
         /**
-         * Mindwave Resilient Bootloader (V132_RESET)
+         * Mindwave Resilient Bootloader (V133_RESET)
          * Ensures fresh assets but prevents infinite refresh loops.
          */
         (function() {
-            const CURRENT_VERSION = 'V132_RESET';
+            const CURRENT_VERSION = 'V133_RESET';
             const lastVersion = localStorage.getItem('mw_boot_version');
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
@@ -230,7 +230,7 @@ window.resetGalaxySettings = function() {
 <link href="./binaural-assets/js/main_vFINAL.js" rel="modulepreload"/>
 <!-- Visualizer modulepreload removed to unblock critical path -->
 <script defer="" onerror="console.log('[Config] No config.js found - using mock mode')" src="./binaural-assets/config.js" type="module"></script>
-<script onerror="console.error('Failed to load main_vFINAL.js')" src="./binaural-assets/js/main_vFINAL.js?v=999" type="module"></script>
+<script onerror="console.error('Failed to load main_vFINAL.js')" src="./binaural-assets/js/main_vFINAL.js?v=1000" type="module"></script>
 <style>
         /* Auto-hide subtext when panels are resized narrower */
         .panel-compact .preset-btn > span:nth-of-type(2),
