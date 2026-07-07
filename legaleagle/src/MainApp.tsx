@@ -68,6 +68,7 @@ export default function MainApp() {
         });
     };
     const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
+    const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
     const [isRoastMode, setIsRoastMode] = useState(false);
     const [perspective, setPerspective] = useState('User');
     const [activeDemoId, setActiveDemoId] = useState<string | null>(null);
@@ -92,8 +93,22 @@ export default function MainApp() {
     const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
     // Undo stack: each entry stores the doc text + recommendations state before a revision was applied
     const [undoHistory, setUndoHistory] = useState<Array<{ documentText: string; recommendations: Recommendation[] }>>([]);
-    const [scanProgress, setScanProgress] = useState<ScanProgress>({ current: 0, total: 0 });
     const [cloudHistory, setCloudHistory] = useState<any[]>([]);
+
+    // Auto-save logic
+    useEffect(() => {
+        if (!activeHistoryId || !profile?.id || !documentText) return;
+        const timer = setTimeout(async () => {
+            try {
+                // Call our new historyService to save version
+                const { saveNewVersion } = await import('@/services/historyService');
+                await saveNewVersion(profile.id, activeHistoryId, documentText, 'Auto-save');
+            } catch (e) {
+                console.error('Auto-save failed:', e);
+            }
+        }, 2000); // Debounce 2 seconds
+        return () => clearTimeout(timer);
+    }, [documentText, activeHistoryId, profile?.id]);
 
     // Email modal state
     const [showEmailModal, setShowEmailModal] = useState(false);
@@ -145,6 +160,7 @@ export default function MainApp() {
             setScore(demo.score);
             setSwotData(demo.swotData);
             setAnalysisComplete(true);
+            setActiveHistoryId(null); // demos aren't in history yet
             setActiveTab('analysis');
             
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -394,18 +410,25 @@ export default function MainApp() {
 
             // Save to history table
             if (profile?.id && !abortControllerRef.current.signal.aborted) {
-                await supabase.from('history').insert({
+                const { data: newDoc, error: insertErr } = await supabase.from('history').insert({
                     user_id: profile.id,
                     team_id: profile.current_team_id || null,
                     case_id: activeCaseId || null,
-                    document_name: 'Analysis',
+                    document_name: 'Analysis - ' + new Date().toLocaleDateString(),
                     document_text: documentText,
                     recommendations: result.recommendations,
                     score: result.score,
                     swot_data: result.swot,
                     perspective: perspective,
                     contract_type: contractType
-                });
+                }).select().single();
+                
+                if (!insertErr && newDoc) {
+                    setActiveHistoryId(newDoc.id);
+                    // Create v1
+                    const { saveNewVersion } = await import('@/services/historyService');
+                    await saveNewVersion(profile.id, newDoc.id, documentText, 'Initial Analysis');
+                }
                 // Refresh cloud history after insert
                 fetchCloudHistory();
             }
@@ -766,8 +789,28 @@ Legal Team`;
                         onGenerate={async (prompt: string) => {
                             return await generateContract(prompt);
                         }}
-                        onSendToEditor={(text: string) => {
+                        onSendToEditor={async (text: string) => {
                             setDocumentText(text);
+                            
+                            // Save draft to history to enable version control immediately
+                            if (profile?.id) {
+                                const { data: newDoc, error: insertErr } = await supabase.from('history').insert({
+                                    user_id: profile.id,
+                                    team_id: profile.current_team_id || null,
+                                    case_id: activeCaseId || null,
+                                    document_name: 'Generated Draft - ' + new Date().toLocaleDateString(),
+                                    document_text: text,
+                                    contract_type: 'Draft'
+                                }).select().single();
+                                
+                                if (!insertErr && newDoc) {
+                                    setActiveHistoryId(newDoc.id);
+                                    const { saveNewVersion } = await import('@/services/historyService');
+                                    await saveNewVersion(profile.id, newDoc.id, text, 'Initial Draft');
+                                    fetchCloudHistory();
+                                }
+                            }
+                            
                             setActiveTab('editor');
                         }}
                         handleExportPdf={() => {}}
@@ -798,18 +841,23 @@ Legal Team`;
                 )}
                 {activeTab === 'history' && (
                     <HistoryView
-                        changeLog={changeLog}
-                        cloudHistory={cloudHistory}
-                        onDeleteDocument={handleDeleteDocument}
                         currentTheme={currentTheme}
                         onLoadItem={(item) => {
-                            setDocumentText(item.content);
-                            setDocumentName(item.document_name);
-                            setScore(item.score);
-                            if (item.recommendations) setRecommendations(item.recommendations);
-                            if (item.swot) setSwotData(item.swot);
-                            setAnalysisComplete(true);
-                            setActiveTab('analysis');
+                            // Map LibraryDocument/HistoryDocument to what MainApp expects
+                            setDocumentText(item.document_text || '');
+                            setDocumentName(item.document_name || 'Untitled Document');
+                            setActiveHistoryId(item.id);
+                            
+                            if (item.recommendations) {
+                                setRecommendations(item.recommendations);
+                                setScore(item.score || 0);
+                                setSwotData(item.swot_data || { strengths: [], weaknesses: [], opportunities: [], threats: [] });
+                                setPerspective(item.perspective || 'User');
+                                setAnalysisComplete(true);
+                                setActiveTab('analysis');
+                            } else {
+                                setActiveTab('editor');
+                            }
                         }}
                     />
                 )}

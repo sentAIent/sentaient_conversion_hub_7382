@@ -38,11 +38,7 @@
   status = 200
   force = true
 
-[[redirects]]
-  from = "/legaleagle"
-  to = "/legaleagle/"
-  status = 301
-  force = true
+
 
 [[redirects]]
   from = "/legaleagle/*"
