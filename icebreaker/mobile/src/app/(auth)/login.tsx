@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
@@ -16,6 +16,7 @@ export default function LoginScreen() {
   const [success, setSuccess] = useState('');
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [showPassword, setShowPassword] = useState(false);
+  const passwordInputRef = useRef<TextInput>(null);
   const router = useRouter();
 
   const validateEmail = (emailStr: string) => {
@@ -85,8 +86,12 @@ export default function LoginScreen() {
     setSuccess('');
     
     try {
-      await sendPasswordResetEmail(auth, email);
-      setSuccess('Password reset link sent! Please check your inbox.');
+      const actionCodeSettings = {
+        url: 'https://sentaient.com/icebreaker/login',
+        handleCodeInApp: false,
+      };
+      await sendPasswordResetEmail(auth, email, actionCodeSettings);
+      setSuccess('Reset link sent! Check your inbox — and your spam/junk folder.');
     } catch (err: any) {
       console.error("Reset Error:", err);
       let errorMessage = 'Failed to send reset link. Please try again.';
@@ -150,11 +155,20 @@ export default function LoginScreen() {
             if (error) setError('');
             if (success) setSuccess('');
           }}
+          returnKeyType={mode === 'forgot' ? 'send' : 'next'}
+          onSubmitEditing={() => {
+            if (mode === 'forgot') {
+              handleResetPassword();
+            } else {
+              passwordInputRef.current?.focus();
+            }
+          }}
         />
 
         {mode !== 'forgot' && (
           <View style={styles.passwordContainer}>
             <TextInput
+              ref={passwordInputRef}
               style={styles.passwordInput}
               placeholder="Password"
               placeholderTextColor="#888"
@@ -164,6 +178,8 @@ export default function LoginScreen() {
                 setPassword(text);
                 if (error) setError('');
               }}
+              returnKeyType="go"
+              onSubmitEditing={() => handleAuth(mode === 'signup')}
             />
             <TouchableOpacity 
               style={styles.eyeIcon} 
