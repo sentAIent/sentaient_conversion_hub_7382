@@ -129,7 +129,8 @@ const projects = [
     modalBg: 'bg-gradient-to-br from-teal-400 to-cyan-500',
     buttonColor: 'bg-white text-green-900 hover:bg-green-50',
     path: 'https://cloveh2o.com',
-    tag: 'Health & Wellness'
+    tag: 'Health & Wellness',
+    launchLabel: 'Launch Website'
   }
 ];
 
@@ -338,7 +339,7 @@ const LaunchButton = ({ activeProject }) => {
       onClick={handleLaunch}
       className={`px-8 py-3 rounded-full font-semibold transition-colors ${activeProject.buttonColor} text-center w-full sm:w-auto`}
     >
-      Launch Experience
+      {activeProject.launchLabel || 'Launch Experience'}
     </button>
   );
 };
