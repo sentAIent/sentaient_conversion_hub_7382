@@ -1,9 +1,13 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getDemoById } from '@/data/demos';
 
 // Components
 import { Sidebar, DisclaimerModal } from '@/components';
+import { TopHeader } from '@/components/layout/TopHeader';
 import { AuthModal } from '@/components/auth/AuthModal';
+import toast from 'react-hot-toast';
 
 // Views
 import {
@@ -56,8 +60,10 @@ export default function MainApp() {
     // App State
     const [hasAcceptedDisclaimer, setHasAcceptedDisclaimer] = useState(false);
     const [activeTab, setActiveTab] = useState('editor');
+    const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
     const [isRoastMode, setIsRoastMode] = useState(false);
-    const [perspective, setPerspective] = useState('Buyer');
+    const [perspective, setPerspective] = useState('User');
+    const [activeDemoId, setActiveDemoId] = useState<string | null>(null);
     const [contractType, setContractType] = useState<any>('nda');
     const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -106,8 +112,46 @@ export default function MainApp() {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Load state from localStorage on mount
+    // Function to load a demo
+    const loadDemo = (demoId: string) => {
+        const demo = getDemoById(demoId);
+        if (demo) {
+            setDocumentText(demo.documentText);
+            setDocumentName(demo.name);
+            setActiveDemoId(demoId);
+            
+            const isRoast = perspective === 'roast';
+            if (isRoast && demo.roastRecommendations?.length) {
+                setRecommendations(demo.roastRecommendations);
+            } else if (perspective === 'Company' && (demo as any).companyRecommendations?.length) {
+                setRecommendations((demo as any).companyRecommendations);
+            } else if (perspective === 'User' && (demo as any).userRecommendations?.length) {
+                setRecommendations((demo as any).userRecommendations);
+            } else if (perspective === 'Standard' && (demo as any).standardRecommendations?.length) {
+                setRecommendations((demo as any).standardRecommendations);
+            } else {
+                setRecommendations(demo.recommendations);
+            }
+            
+            setScore(demo.score);
+            setSwotData(demo.swotData);
+            setAnalysisComplete(true);
+            setActiveTab('analysis');
+            
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    };
+
+    // Load state from localStorage on mount or URL param
     useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const demoId = queryParams.get('demo');
+        
+        if (demoId) {
+            loadDemo(demoId);
+            return;
+        }
+
         const savedState = localStorage.getItem('legalAnalyzerState');
         if (savedState) {
             try {
@@ -120,6 +164,7 @@ export default function MainApp() {
                 if (parsed.changeLog) setChangeLog(parsed.changeLog);
                 if (parsed.analysisComplete) setAnalysisComplete(parsed.analysisComplete);
                 if (parsed.perspective) setPerspective(parsed.perspective);
+                if (parsed.activeDemoId) setActiveDemoId(parsed.activeDemoId);
                 if (parsed.heatmapEnabled) setHeatmapEnabled(parsed.heatmapEnabled);
 
                 // If analysis was complete, ensure we're on the analysis tab or editor
@@ -130,7 +175,28 @@ export default function MainApp() {
                 console.error("Failed to load saved state:", e);
             }
         }
-    }, []);
+    }, []); // Only run on mount! URL params check is sufficient.
+
+    // Handle perspective changes when viewing a demo
+    useEffect(() => {
+        if (activeDemoId) {
+            const demo = getDemoById(activeDemoId);
+            if (demo) {
+                const isRoast = perspective === 'roast';
+                if (isRoast && demo.roastRecommendations?.length) {
+                    setRecommendations(demo.roastRecommendations);
+                } else if (perspective === 'Company' && (demo as any).companyRecommendations?.length) {
+                    setRecommendations((demo as any).companyRecommendations);
+                } else if (perspective === 'User' && (demo as any).userRecommendations?.length) {
+                    setRecommendations((demo as any).userRecommendations);
+                } else if (perspective === 'Standard' && (demo as any).standardRecommendations?.length) {
+                    setRecommendations((demo as any).standardRecommendations);
+                } else {
+                    setRecommendations(demo.recommendations);
+                }
+            }
+        }
+    }, [perspective, activeDemoId]);
 
     // Save state to localStorage whenever key data changes
     useEffect(() => {
@@ -143,10 +209,11 @@ export default function MainApp() {
             changeLog,
             analysisComplete,
             perspective,
+            activeDemoId,
             heatmapEnabled
         };
         localStorage.setItem('legalAnalyzerState', JSON.stringify(stateToSave));
-    }, [documentText, documentName, recommendations, score, swotData, changeLog, analysisComplete, perspective, heatmapEnabled]);
+    }, [documentText, documentName, recommendations, score, swotData, changeLog, analysisComplete, perspective, activeDemoId, heatmapEnabled]);
 
     // Fetch cloud history when opening the history tab
     useEffect(() => {
@@ -158,7 +225,7 @@ export default function MainApp() {
     const fetchCloudHistory = async () => {
         try {
             const { data, error } = await supabase
-                .from('analyses')
+                .from('history')
                 .select('*')
                 .eq('user_id', profile?.id)
                 .order('created_at', { ascending: false })
@@ -175,7 +242,7 @@ export default function MainApp() {
         if (!profile?.id) return;
         try {
             const { error } = await supabase
-                .from('analyses')
+                .from('history')
                 .delete()
                 .eq('id', id);
             
@@ -196,7 +263,7 @@ export default function MainApp() {
             }
         } catch (e) {
             console.error("Failed to delete document", e);
-            alert("Failed to delete document. Please try again.");
+            toast.error("Failed to delete document. Please try again.");
         }
     };
 
@@ -222,7 +289,7 @@ export default function MainApp() {
             }
         } catch (err) {
             console.error('Failed to create checkout session:', err);
-            alert('Failed to initiate checkout.');
+            toast.error('Failed to initiate checkout.');
         }
     };
 
@@ -281,6 +348,7 @@ export default function MainApp() {
                             document_length: documentText.length,
                             contract_type: contractType,
                             analysis_depth: analysisDepth,
+                            case_id: activeCaseId,
                             score: result.score,
                             swot: result.swot,
                             critical_risks_count: result.recommendations.filter(r => r.severity === 'Critical').length,
@@ -300,12 +368,32 @@ export default function MainApp() {
                 }]);
             }
 
-        } catch (error) {
+            // Save to history table
+            if (profile?.id && !abortControllerRef.current.signal.aborted) {
+                await supabase.from('history').insert({
+                    user_id: profile.id,
+                    team_id: profile.current_team_id || null,
+                    case_id: activeCaseId || null,
+                    document_name: 'Analysis',
+                    document_text: documentText,
+                    recommendations: result.recommendations,
+                    score: result.score,
+                    swot_data: result.swot,
+                    perspective: perspective,
+                    contract_type: contractType
+                });
+                // Refresh cloud history after insert
+                fetchCloudHistory();
+            }
+
+        } catch (error: any) {
             console.error("Analysis failed:", error);
-            if (error instanceof Error && error.message === 'AbortError') {
-                alert("Analysis stopped.");
+            if (error?.name === 'AbortError' || (error instanceof Error && (error.message.includes('AbortError') || error.message.toLowerCase().includes('abort')))) {
+                toast.info("Analysis stopped by user.");
+            } else if (error instanceof Error && error.message.includes('429')) {
+                toast.error("API Rate Limit Exceeded. Please wait a moment before trying again.");
             } else {
-                alert(error instanceof Error ? error.message : "Failed to analyze document.");
+                toast.error(error instanceof Error ? error.message : "Failed to analyze document.");
             }
         } finally {
             setIsAnalyzing(false);
@@ -376,7 +464,7 @@ export default function MainApp() {
             );
             addToChangeLog(rec);
         } else {
-            alert("Could not auto-replace: Text match failed. Please apply manually.");
+            toast.error("Could not auto-replace: Text match failed. Please apply manually.");
         }
     };
 
@@ -485,7 +573,7 @@ Legal Team`;
             URL.revokeObjectURL(url);
         } catch (e) {
             console.error("Save failed", e);
-            alert("Failed to save document.");
+            toast.error("Failed to save document.");
         }
     };
 
@@ -518,20 +606,12 @@ Legal Team`;
                 setActiveTab={setActiveTab}
                 analysisComplete={analysisComplete}
                 score={score}
-                isRoastMode={isRoastMode}
-                setIsRoastMode={setIsRoastMode}
-                perspective={perspective}
-                setPerspective={setPerspective}
                 currentTheme={currentTheme}
-                setCurrentTheme={setCurrentTheme}
-                onOpenAuth={() => setIsAuthModalOpen(true)}
                 analysisDepth={analysisDepth}
                 setAnalysisDepth={setAnalysisDepth}
                 onAnalyze={handleAnalyze}
-                contractType={contractType}
-                setContractType={setContractType}
-                onOpenPricing={() => setIsPricingModalOpen(true)}
-                    />
+                isRoastMode={isRoastMode}
+            />
 
             <AuthModal
                 isOpen={isAuthModalOpen}
@@ -542,6 +622,14 @@ Legal Team`;
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col relative overflow-hidden">
+                <TopHeader 
+                    currentTheme={currentTheme}
+                    setCurrentTheme={setCurrentTheme}
+                    isRoastMode={isRoastMode}
+                    setIsRoastMode={setIsRoastMode}
+                    onOpenAuth={() => setIsAuthModalOpen(true)}
+                    onOpenPricing={() => setIsPricingModalOpen(true)}
+                />
                 <OfflineBanner currentTheme={currentTheme} />
                 {/* Hidden File Input */}
                 <input
@@ -573,6 +661,10 @@ Legal Team`;
                         currentTheme={currentTheme}
                         scanProgress={scanProgress}
                         onAddAnnotation={() => {}}
+                        contractType={contractType}
+                        setContractType={setContractType}
+                        perspective={perspective}
+                        setPerspective={setPerspective}
                     />
                 )}
 
@@ -602,6 +694,7 @@ Legal Team`;
                         setEmailDraft={setEmailDraft}
                         handleAcceptRecommendation={handleAcceptRecommendation}
                         currentTheme={currentTheme}
+                        setPerspective={setPerspective}
                     />
                 )}
 
@@ -682,7 +775,7 @@ Legal Team`;
 
                 {activeTab === 'audit' && <AuditLogView currentTheme={currentTheme} />}
 
-                {activeTab === 'cases' && <CasesView currentTheme={currentTheme} />}
+                {activeTab === 'cases' && <CasesView currentTheme={currentTheme} onLoadDemo={loadDemo} />}
 
                 {activeTab === 'admin' && (
                     <AdminAnalyticsView currentTheme={currentTheme} />

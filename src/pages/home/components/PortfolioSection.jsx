@@ -101,7 +101,7 @@ const projects = [
     ],
     icon: Rocket,
     logo: '/autopilot_logo.png',
-    logoScale: 'scale-[1.4] translate-y-3',
+    logoScale: 'scale-[1.1]',
     color: 'from-blue-500 to-cyan-400',
     logoBg: 'bg-[#202733]',
     cardBg: 'bg-gradient-to-br from-[#8E9AAF] to-[#4A5568] hover:from-[#9ba7bb] hover:to-[#556276]',

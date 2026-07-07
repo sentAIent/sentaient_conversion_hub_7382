@@ -4,5 +4,7 @@
 /icebusiness/* https://sentaient-icebusiness-hub.netlify.app/:splat 200!
 /iceadmin https://sentaient-iceadmin-hub.netlify.app/ 200!
 /iceadmin/* https://sentaient-iceadmin-hub.netlify.app/:splat 200!
+/legaleagle /legaleagle/ 301!
+/legaleagle/* /legaleagle/index.html 200
 / /mindwave.html 200
 /* /index.html 200

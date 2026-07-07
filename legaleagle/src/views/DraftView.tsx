@@ -59,6 +59,8 @@ export const DraftView: React.FC<DraftViewProps> = ({
         }
     };
 
+    const isDarkPanel = currentTheme.panelBg.includes('900') || currentTheme.panelBg.includes('950');
+
     return (
         <div className={`flex flex-col h-full w-full ${currentTheme.main} p-6 overflow-y-auto`}>
             <div className="max-w-4xl mx-auto w-full space-y-6">
@@ -69,7 +71,7 @@ export const DraftView: React.FC<DraftViewProps> = ({
 
                 {!generatedDraft ? (
                     <div className="space-y-6">
-                        <div className={`p-6 rounded-xl border ${currentTheme.card} ${currentTheme.docBorder}`}>
+                        <div className={`p-6 rounded-xl border ${currentTheme.panelBg}`}>
                             <h3 className={`text-lg font-semibold ${currentTheme.panelText} mb-4`}>1. Select a Template</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {TEMPLATES.map((template) => (
@@ -79,13 +81,13 @@ export const DraftView: React.FC<DraftViewProps> = ({
                                         className={`p-4 rounded-lg text-left border transition-all ${
                                             selectedTemplate === template.id 
                                                 ? 'border-indigo-500 bg-indigo-500/10' 
-                                                : `border-transparent ${currentTheme.accent} hover:border-white/20`
+                                                : `border-transparent ${currentTheme.buttonSecondary}`
                                         }`}
                                     >
-                                        <div className={`font-semibold ${selectedTemplate === template.id ? 'text-indigo-400' : currentTheme.panelText}`}>
+                                        <div className={`font-semibold ${selectedTemplate === template.id ? 'text-indigo-500' : currentTheme.panelText}`}>
                                             {template.name}
                                         </div>
-                                        <div className="text-sm text-slate-400 mt-1">
+                                        <div className={`text-sm opacity-70 mt-1 ${currentTheme.panelText}`}>
                                             {template.description}
                                         </div>
                                     </button>
@@ -93,7 +95,7 @@ export const DraftView: React.FC<DraftViewProps> = ({
                             </div>
                         </div>
 
-                        <div className={`p-6 rounded-xl border ${currentTheme.card} ${currentTheme.docBorder}`}>
+                        <div className={`p-6 rounded-xl border ${currentTheme.panelBg}`}>
                             <h3 className={`text-lg font-semibold ${currentTheme.panelText} mb-4`}>2. Provide Details</h3>
                             <textarea
                                 value={prompt}
@@ -101,7 +103,7 @@ export const DraftView: React.FC<DraftViewProps> = ({
                                 placeholder={selectedTemplate === 'custom' 
                                     ? "Describe the contract in detail..." 
                                     : "Enter any specific clauses, parties involved, or special requirements (Optional)"}
-                                className={`w-full h-32 p-4 rounded-lg bg-black/20 border border-white/10 ${currentTheme.panelText} placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                                className={`w-full h-32 p-4 rounded-lg bg-transparent border ${currentTheme.docBorder} ${currentTheme.panelText} placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                             />
                         </div>
 
@@ -135,7 +137,7 @@ export const DraftView: React.FC<DraftViewProps> = ({
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        <div className={`p-6 rounded-xl border ${currentTheme.card} ${currentTheme.docBorder} min-h-[400px] prose prose-invert max-w-none`}>
+                        <div className={`p-6 rounded-xl border ${currentTheme.panelBg} min-h-[400px] prose ${isDarkPanel ? 'prose-invert' : ''} max-w-none`}>
                             <ReactMarkdown>{generatedDraft}</ReactMarkdown>
                         </div>
                         
@@ -169,7 +171,7 @@ export const DraftView: React.FC<DraftViewProps> = ({
                                     setGeneratedDraft('');
                                     setPrompt('');
                                 }}
-                                className={`px-6 py-3 rounded-lg border border-white/10 bg-transparent hover:bg-white/5 ${currentTheme.panelText} font-semibold transition-colors`}
+                                className={`px-6 py-3 rounded-lg border bg-transparent ${currentTheme.buttonSecondary} ${currentTheme.docBorder} font-semibold transition-colors`}
                             >
                                 Start Over
                             </button>

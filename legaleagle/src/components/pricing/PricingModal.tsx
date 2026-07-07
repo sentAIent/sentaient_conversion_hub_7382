@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useRevenueCat } from '@/context/RevenueCatContext';
 
 export const PricingModal = ({ isOpen, onClose }: any) => {
@@ -14,7 +15,7 @@ export const PricingModal = ({ isOpen, onClose }: any) => {
             onClose();
         } catch (error) {
             console.error('Purchase failed', error);
-            alert('Purchase failed. Please try again.');
+            toast.error('Purchase failed. Please try again.');
         } finally {
             setIsLoading(false);
         }

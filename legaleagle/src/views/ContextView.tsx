@@ -3,21 +3,52 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { Theme, Party } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 interface ContextViewProps {
     parties: Party[];
     setParties: (parties: Party[]) => void;
     currentTheme: Theme;
+    activeCaseId: string | null;
+    setActiveCaseId: (id: string | null) => void;
 }
 
 export const ContextView: React.FC<ContextViewProps> = ({
     parties,
     setParties,
-    currentTheme
+    currentTheme,
+    activeCaseId,
+    setActiveCaseId
 }) => {
     const { profile, refreshProfile } = useAuth();
     const [webhookUrl, setWebhookUrl] = React.useState(profile?.n8n_webhook_url || '');
     const [isSaving, setIsSaving] = React.useState(false);
+    const [cases, setCases] = React.useState<any[]>([]);
+    
+    // Determine terminology
+    const terminology = (profile as any)?.team?.terminology_preference || 'matter';
+    const termCapitalized = terminology.charAt(0).toUpperCase() + terminology.slice(1);
+
+    React.useEffect(() => {
+        if (profile?.current_team_id) {
+            fetchCases();
+        }
+    }, [profile?.current_team_id]);
+
+    const fetchCases = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('cases')
+                .select('*')
+                .eq('team_id', profile?.current_team_id)
+                .order('created_at', { ascending: false });
+                
+            if (error) throw error;
+            setCases(data || []);
+        } catch (error) {
+            console.error('Error fetching cases:', error);
+        }
+    };
 
     React.useEffect(() => {
         if (profile?.n8n_webhook_url) {
@@ -30,10 +61,10 @@ export const ContextView: React.FC<ContextViewProps> = ({
         try {
             await supabase.rpc('update_profile', { new_n8n_webhook_url: webhookUrl });
             await refreshProfile();
-            alert('n8n Webhook URL saved successfully!');
+            toast.success('n8n Webhook URL saved successfully!');
         } catch (error) {
             console.error('Failed to save webhook', error);
-            alert('Failed to save webhook URL.');
+            toast.error('Failed to save webhook URL.');
         } finally {
             setIsSaving(false);
         }
@@ -64,10 +95,29 @@ export const ContextView: React.FC<ContextViewProps> = ({
     return (
         <div className={`flex-1 p-8 overflow-auto ${currentTheme.main || currentTheme.appBg}`}>
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-2xl font-bold text-slate-900 mb-2">Case Configuration</h1>
+                <h1 className="text-2xl font-bold text-slate-900 mb-2">Context & Settings</h1>
                 <p className="text-slate-500 mb-6">
-                    Configure the parties and context for more accurate legal analysis.
+                    Configure the active {terminology} and set contract parties.
                 </p>
+
+                {/* Case/Matter Selection */}
+                <div className={`rounded-xl border shadow-sm p-6 mb-6 ${currentTheme.card || currentTheme.panelBg}`}>
+                    <h3 className="font-bold text-lg mb-4">Active {termCapitalized}</h3>
+                    <p className="text-sm text-slate-500 mb-4">
+                        Select a {terminology} to automatically attach generated documents and analyses to it.
+                    </p>
+                    
+                    <select 
+                        className="w-full border border-slate-200 p-2 rounded-lg text-sm bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={activeCaseId || ''}
+                        onChange={(e) => setActiveCaseId(e.target.value || null)}
+                    >
+                        <option value="">-- No Active {termCapitalized} --</option>
+                        {cases.map(c => (
+                            <option key={c.id} value={c.id}>{c.title} ({c.status})</option>
+                        ))}
+                    </select>
+                </div>
 
                 {/* Parties Section */}
                 <div className={`rounded-xl border shadow-sm p-6 mb-6 ${currentTheme.card || currentTheme.panelBg}`}>

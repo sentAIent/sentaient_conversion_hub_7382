@@ -1,0 +1,176 @@
+{
+  "id": "tiktok",
+  "name": "TikTok Terms of Service",
+  "documentText": "Welcome to TikTok.\nBy using the Services, you grant us an unconditional irrevocable, non-exclusive, royalty-free, fully transferable, perpetual worldwide license to use, modify, adapt, reproduce, make derivative works of, publish and/or transmit your User Content in any format and on any platform, either now known or hereinafter invented. We collect biometric identifiers and biometric information as defined under US laws, such as faceprints and voiceprints, from your User Content.",
+  "recommendations": [
+    {
+      "id": 1,
+      "section": "Biometric Data",
+      "severity": "Critical",
+      "category": "Privacy",
+      "title": "Faceprint and Voiceprint Harvesting",
+      "roastTitle": "They're Cloning You",
+      "currentText": "We collect biometric identifiers and biometric information as defined under US laws, such as faceprints and voiceprints, from your User Content.",
+      "proposedText": "We will not collect, store, or process biometric identifiers without separate, explicit written consent, and all such data will be stored locally on your device.",
+      "legalBasis": "Harvesting faceprints and voiceprints presents massive identity theft and deepfake risks. In jurisdictions like Illinois (BIPA), this requires highly specific consent.",
+      "roastComment": "They're explicitly taking your face and voice. When an AI clone of you starts calling your grandma asking for money, you literally agreed to let them build the model.",
+      "scoreImpact": 30,
+      "accepted": false
+    },
+    {
+      "id": 2,
+      "section": "Content License",
+      "severity": "Critical",
+      "category": "Intellectual Property",
+      "title": "Irrevocable, Perpetual License",
+      "roastTitle": "Forever Means Forever",
+      "currentText": "you grant us an unconditional irrevocable... perpetual worldwide license to use... your User Content in any format and on any platform, either now known or hereinafter invented.",
+      "proposedText": "you grant us a license to use your User Content only while you maintain an active account. The license is revoked upon account deletion.",
+      "legalBasis": "Unlike most platforms, TikTok claims a 'perpetual' and 'irrevocable' license. Even if you delete your account, they claim the legal right to keep using your videos forever.",
+      "roastComment": "'Hereinafter invented'? They're reserving the right to beam your embarrassing dance videos into people's brain chips in the year 2075. And you can't stop them.",
+      "scoreImpact": 25,
+      "accepted": false
+    }
+  ],
+  "userRecommendations": [
+    {
+      "id": 1,
+      "section": "Biometric Data",
+      "severity": "Critical",
+      "category": "Privacy",
+      "title": "Faceprint and Voiceprint Harvesting",
+      "roastTitle": "They're Cloning You",
+      "currentText": "We collect biometric identifiers and biometric information as defined under US laws, such as faceprints and voiceprints, from your User Content.",
+      "proposedText": "We will not collect, store, or process biometric identifiers without separate, explicit written consent, and all such data will be stored locally on your device.",
+      "legalBasis": "Harvesting faceprints and voiceprints presents massive identity theft and deepfake risks. In jurisdictions like Illinois (BIPA), this requires highly specific consent.",
+      "roastComment": "They're explicitly taking your face and voice. When an AI clone of you starts calling your grandma asking for money, you literally agreed to let them build the model.",
+      "scoreImpact": 30,
+      "accepted": false
+    },
+    {
+      "id": 2,
+      "section": "Content License",
+      "severity": "Critical",
+      "category": "Intellectual Property",
+      "title": "Irrevocable, Perpetual License",
+      "roastTitle": "Forever Means Forever",
+      "currentText": "you grant us an unconditional irrevocable... perpetual worldwide license to use... your User Content in any format and on any platform, either now known or hereinafter invented.",
+      "proposedText": "you grant us a license to use your User Content only while you maintain an active account. The license is revoked upon account deletion.",
+      "legalBasis": "Unlike most platforms, TikTok claims a 'perpetual' and 'irrevocable' license. Even if you delete your account, they claim the legal right to keep using your videos forever.",
+      "roastComment": "'Hereinafter invented'? They're reserving the right to beam your embarrassing dance videos into people's brain chips in the year 2075. And you can't stop them.",
+      "scoreImpact": 25,
+      "accepted": false
+    }
+  ],
+  "companyRecommendations": [
+    {
+      "id": 1,
+      "section": "Biometric Data",
+      "severity": "Medium",
+      "category": "Privacy",
+      "title": "Protect Corporate Interests: Faceprint and Voiceprint Harvesting",
+      "roastTitle": "Corporate Shielding",
+      "currentText": "We collect biometric identifiers and biometric information as defined under US laws, such as faceprints and voiceprints, from your User Content.",
+      "proposedText": "Ensure this clause is as broad as legally permissible to maximize operational flexibility and limit corporate liability.",
+      "legalBasis": "From the company's perspective, this clause provides essential protection against unpredictable user behavior and class action lawsuits. We recommend strengthening this clause rather than diluting it.",
+      "roastComment": "Keep it broad. We hold the cards.",
+      "scoreImpact": 10,
+      "accepted": false
+    },
+    {
+      "id": 2,
+      "section": "Content License",
+      "severity": "Medium",
+      "category": "Intellectual Property",
+      "title": "Protect Corporate Interests: Irrevocable, Perpetual License",
+      "roastTitle": "Corporate Shielding",
+      "currentText": "you grant us an unconditional irrevocable... perpetual worldwide license to use... your User Content in any format and on any platform, either now known or hereinafter invented.",
+      "proposedText": "Ensure this clause is as broad as legally permissible to maximize operational flexibility and limit corporate liability.",
+      "legalBasis": "From the company's perspective, this clause provides essential protection against unpredictable user behavior and class action lawsuits. We recommend strengthening this clause rather than diluting it.",
+      "roastComment": "Keep it broad. We hold the cards.",
+      "scoreImpact": 10,
+      "accepted": false
+    }
+  ],
+  "roastRecommendations": [
+    {
+      "id": 1,
+      "section": "Biometric Data",
+      "severity": "Critical",
+      "category": "Privacy",
+      "title": "They're Cloning You",
+      "roastTitle": "They're Cloning You",
+      "currentText": "We collect biometric identifiers and biometric information as defined under US laws, such as faceprints and voiceprints, from your User Content.",
+      "proposedText": "We will not collect, store, or process biometric identifiers without separate, explicit written consent, and all such data will be stored locally on your device.",
+      "legalBasis": "Harvesting faceprints and voiceprints presents massive identity theft and deepfake risks. In jurisdictions like Illinois (BIPA), this requires highly specific consent.",
+      "roastComment": "They're explicitly taking your face and voice. When an AI clone of you starts calling your grandma asking for money, you literally agreed to let them build the model.",
+      "scoreImpact": 30,
+      "accepted": false,
+      "description": "They're explicitly taking your face and voice. When an AI clone of you starts calling your grandma asking for money, you literally agreed to let them build the model.",
+      "type": "red_flag"
+    },
+    {
+      "id": 2,
+      "section": "Content License",
+      "severity": "Critical",
+      "category": "Intellectual Property",
+      "title": "Forever Means Forever",
+      "roastTitle": "Forever Means Forever",
+      "currentText": "you grant us an unconditional irrevocable... perpetual worldwide license to use... your User Content in any format and on any platform, either now known or hereinafter invented.",
+      "proposedText": "you grant us a license to use your User Content only while you maintain an active account. The license is revoked upon account deletion.",
+      "legalBasis": "Unlike most platforms, TikTok claims a 'perpetual' and 'irrevocable' license. Even if you delete your account, they claim the legal right to keep using your videos forever.",
+      "roastComment": "'Hereinafter invented'? They're reserving the right to beam your embarrassing dance videos into people's brain chips in the year 2075. And you can't stop them.",
+      "scoreImpact": 25,
+      "accepted": false,
+      "description": "'Hereinafter invented'? They're reserving the right to beam your embarrassing dance videos into people's brain chips in the year 2075. And you can't stop them.",
+      "type": "red_flag"
+    }
+  ],
+  "score": 15,
+  "swotData": {
+    "strengths": [
+      "Clear disclosures of data collection (legally compliant)"
+    ],
+    "weaknesses": [
+      "Aggressive biometric data collection",
+      "Perpetual, irrevocable licenses"
+    ],
+    "opportunities": [
+      "Opt-out options in certain US states (CCPA)"
+    ],
+    "threats": [
+      "Foreign intelligence risks",
+      "Irrevocable loss of biometric privacy"
+    ]
+  },
+  "standardRecommendations": [
+    {
+      "id": 1,
+      "section": "Biometric Data",
+      "severity": "Critical",
+      "category": "Privacy",
+      "title": "Faceprint and Voiceprint Harvesting (Detailed Review)",
+      "roastTitle": "They're Cloning You",
+      "currentText": "We collect biometric identifiers and biometric information as defined under US laws, such as faceprints and voiceprints, from your User Content.",
+      "proposedText": "We will not collect, store, or process biometric identifiers without separate, explicit written consent, and all such data will be stored locally on your device.",
+      "legalBasis": "Standard Review: Harvesting faceprints and voiceprints presents massive identity theft and deepfake risks. In jurisdictions like Illinois (BIPA), this requires highly specific consent. This clause was evaluated against standard industry boilerplate norms and found to be notable.",
+      "roastComment": "They're explicitly taking your face and voice. When an AI clone of you starts calling your grandma asking for money, you literally agreed to let them build the model.",
+      "scoreImpact": 30,
+      "accepted": false
+    },
+    {
+      "id": 2,
+      "section": "Content License",
+      "severity": "Critical",
+      "category": "Intellectual Property",
+      "title": "Irrevocable, Perpetual License (Detailed Review)",
+      "roastTitle": "Forever Means Forever",
+      "currentText": "you grant us an unconditional irrevocable... perpetual worldwide license to use... your User Content in any format and on any platform, either now known or hereinafter invented.",
+      "proposedText": "you grant us a license to use your User Content only while you maintain an active account. The license is revoked upon account deletion.",
+      "legalBasis": "Standard Review: Unlike most platforms, TikTok claims a 'perpetual' and 'irrevocable' license. Even if you delete your account, they claim the legal right to keep using your videos forever. This clause was evaluated against standard industry boilerplate norms and found to be notable.",
+      "roastComment": "'Hereinafter invented'? They're reserving the right to beam your embarrassing dance videos into people's brain chips in the year 2075. And you can't stop them.",
+      "scoreImpact": 25,
+      "accepted": false
+    }
+  ]
+}

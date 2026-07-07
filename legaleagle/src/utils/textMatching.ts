@@ -10,7 +10,7 @@ interface MatchResult {
     end: number;
 }
 
-interface Token {
+export interface Token {
     word: string;
     start: number;
     end: number;
@@ -19,7 +19,7 @@ interface Token {
 /**
  * Tokenize text into words with position information
  */
-const tokenize = (text: string): Token[] => {
+export const tokenize = (text: string): Token[] => {
     const tokens: Token[] = [];
     const regex = /[a-z0-9]+/gi;
     let match;
@@ -41,10 +41,10 @@ const tokenize = (text: string): Token[] => {
  * Uses token-based matching with multi-anchor fallback
  * for reliable text location even with formatting differences.
  */
-export const findFuzzyMatch = (doc: string, search: string): MatchResult | null => {
+export const findFuzzyMatch = (doc: string | Token[], search: string): MatchResult | null => {
     if (!doc || !search || search.length < 3) return null;
 
-    const docTokens = tokenize(doc);
+    const docTokens = typeof doc === 'string' ? tokenize(doc) : doc;
     const searchTokens = tokenize(search);
 
     if (searchTokens.length === 0) return null;

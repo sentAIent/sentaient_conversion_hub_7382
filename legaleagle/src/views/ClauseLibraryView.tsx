@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Theme } from '@/types/theme.types';
 
@@ -88,7 +89,7 @@ export const ClauseLibraryView: React.FC<ClauseLibraryViewProps> = ({
             setNewContent('');
             loadCustomClauses();
         } else {
-            alert('Failed to save clause. Please try again.');
+            toast.error('Failed to save clause. Please try again.');
         }
     };
 

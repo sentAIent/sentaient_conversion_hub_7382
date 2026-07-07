@@ -39,6 +39,12 @@
   force = true
 
 [[redirects]]
+  from = "/legaleagle"
+  to = "/legaleagle/"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/legaleagle/*"
   to = "/legaleagle/index.html"
   status = 200

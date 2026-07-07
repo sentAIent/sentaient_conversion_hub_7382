@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Theme } from '@/types';
+import toast from 'react-hot-toast';
 import { Users, Plus, Building, Save, Mail, Trash2, Shield } from 'lucide-react';
 
 interface WorkspaceViewProps {
@@ -137,7 +138,7 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
             if (error) throw error;
             if (data?.error) throw new Error(data.error);
 
-            alert(`Invitation sent to ${inviteEmail}.`);
+            toast.success(`Invitation sent to ${inviteEmail}.`);
             setInviteEmail('');
             fetchInvitations(profile.current_team_id);
         } catch (err: any) {
@@ -178,7 +179,7 @@ export const WorkspaceView: React.FC<WorkspaceViewProps> = ({ currentTheme }) =>
             
             if (error) throw error;
             
-            alert('Settings updated successfully.');
+            toast.success('Settings updated successfully.');
         } catch (err: any) {
             setError(err.message);
         } finally {

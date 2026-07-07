@@ -14,8 +14,8 @@ import {
     ChevronUp,
     ChevronDown
 } from 'lucide-react';
-import { findFuzzyMatch } from '@/utils/textMatching';
-import type { Theme, Recommendation, ScanProgress, Severity } from '@/types';
+import { findFuzzyMatch, tokenize } from '@/utils/textMatching';
+import type { Theme, Recommendation, ScanProgress, Severity, ContractType } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 
 interface EditorViewProps {
@@ -39,6 +39,10 @@ interface EditorViewProps {
     currentTheme: Theme;
     scanProgress: ScanProgress;
     onAddAnnotation: (rec: Recommendation) => void;
+    contractType?: ContractType;
+    setContractType?: (type: ContractType) => void;
+    perspective?: string;
+    setPerspective?: (perspective: string) => void;
 }
 
 export const EditorView: React.FC<EditorViewProps> = ({
@@ -61,7 +65,11 @@ export const EditorView: React.FC<EditorViewProps> = ({
     handleExportWord,
     currentTheme,
     scanProgress,
-    onAddAnnotation
+    onAddAnnotation,
+    contractType = 'General',
+    setContractType,
+    perspective = 'Neutral',
+    setPerspective
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const { profile } = useAuth();
@@ -121,6 +129,15 @@ export const EditorView: React.FC<EditorViewProps> = ({
         setAnnotationSeverity('Medium');
     };
 
+    // Debounce the document text for heavy processing to prevent typing lag
+    const [debouncedDocumentText, setDebouncedDocumentText] = useState(documentText);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedDocumentText(documentText);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [documentText]);
+
     // Build sorted highlights from recommendations
     const sortedHighlights = useMemo(() => {
         const highlights: Array<{
@@ -131,9 +148,11 @@ export const EditorView: React.FC<EditorViewProps> = ({
             title: string;
         }> = [];
 
+        const docTokens = tokenize(debouncedDocumentText);
+
         recommendations.forEach(rec => {
             if (rec.accepted || !rec.currentText) return;
-            const match = findFuzzyMatch(documentText, rec.currentText);
+            const match = findFuzzyMatch(docTokens, rec.currentText);
             if (match) {
                 highlights.push({
                     start: match.start,
@@ -146,7 +165,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
         });
 
         return highlights.sort((a, b) => a.start - b.start);
-    }, [documentText, recommendations, isRoastMode]);
+    }, [debouncedDocumentText, recommendations, isRoastMode]);
 
     const currentHighlightIndex = sortedHighlights.findIndex(h => h.id === selectedRecId);
 
@@ -198,7 +217,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
             if (h.start > lastIndex) {
                 segments.push(
-                    <span key={`safe-${i}`}>{documentText.slice(lastIndex, h.start)}</span>
+                    <span key={`safe-${i}`}>{debouncedDocumentText.slice(lastIndex, h.start)}</span>
                 );
             }
 
@@ -216,7 +235,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
                     className={`${bgClass} ${ringClass} cursor-pointer relative group px-0.5 rounded-sm transition-all hover:bg-opacity-80`}
                     onClick={() => setSelectedRecId(h.id)}
                 >
-                    {documentText.slice(h.start, h.end)}
+                    {debouncedDocumentText.slice(h.start, h.end)}
                     <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-xs font-sans px-2 py-1 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none">
                         {h.title}
                     </span>
@@ -226,8 +245,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
             lastIndex = h.end;
         });
 
-        if (lastIndex < documentText.length) {
-            segments.push(<span key="safe-end">{documentText.slice(lastIndex)}</span>);
+        if (lastIndex < debouncedDocumentText.length) {
+            segments.push(<span key="safe-end">{debouncedDocumentText.slice(lastIndex)}</span>);
         }
 
         return (
@@ -242,11 +261,48 @@ export const EditorView: React.FC<EditorViewProps> = ({
             {/* Toolbar */}
             <div className={`border-b p-4 shadow-sm flex flex-col gap-4 ${currentTheme.panelBg}`}>
                 <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                        <h2 className={`text-xl font-bold truncate max-w-md ${currentTheme.panelText}`}>
-                            {documentName}
-                        </h2>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                            <h2 className={`text-xl font-bold truncate max-w-md ${currentTheme.panelText}`}>
+                                {documentName}
+                            </h2>
+                        </div>
+                        <div className="flex gap-2">
+                            {setContractType && (
+                                <select
+                                    value={contractType}
+                                    onChange={(e) => setContractType(e.target.value as ContractType)}
+                                    className={`text-xs font-bold py-1.5 px-3 rounded-lg appearance-none transition-all outline-none border cursor-pointer ${
+                                        currentTheme.id === 'light' || currentTheme.id === 'corporate'
+                                            ? 'bg-slate-200/50 border-slate-300 text-slate-900' 
+                                            : 'bg-black/20 border-white/10 text-white hover:bg-black/40'
+                                    }`}
+                                >
+                                    <option value="General">General Review</option>
+                                    <option value="NDA">NDA (Non-Disclosure)</option>
+                                    <option value="Employment Agreement">Employment Agreement</option>
+                                    <option value="Terms of Service">Terms of Service</option>
+                                    <option value="Real Estate Lease">Real Estate Lease</option>
+                                </select>
+                            )}
+                            {setPerspective && (
+                                <div className="flex bg-black/10 rounded-lg p-0.5 border border-white/10">
+                                    {['Neutral', 'User', 'Company'].map((role) => (
+                                        <button
+                                            key={role}
+                                            onClick={() => setPerspective(role)}
+                                            className={`text-xs font-bold px-3 py-1 rounded-md transition-all ${perspective === role
+                                                ? `${currentTheme.accent} text-white shadow-sm`
+                                                : `${currentTheme.sidebarText} hover:bg-white/5`
+                                                }`}
+                                        >
+                                            {role}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="flex items-center gap-4">
                         {isAnalyzing && (
@@ -398,32 +454,30 @@ export const EditorView: React.FC<EditorViewProps> = ({
             >
                 <div className={`w-full max-w-4xl shadow-lg border min-h-[800px] p-12 relative ${currentTheme.docBg} ${currentTheme.docText} ${currentTheme.docBorder}`}>
                     {isAnalyzing && (
-                        <div className="absolute inset-0 bg-white z-10 flex flex-col items-center justify-center text-slate-800">
-                            <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4" />
-                            <h3 className="text-xl font-bold">Analyzing Document...</h3>
-                            <p className="text-slate-500 mt-2">Consulting Federal & State Case Law</p>
+                        <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center backdrop-blur-sm ${currentTheme.id === 'dark' || currentTheme.id === 'dracula' || currentTheme.id === 'hacker' ? 'bg-slate-900/90 text-white' : 'bg-white/90 text-slate-800'}`}>
+                            <div className={`w-16 h-16 border-4 rounded-full animate-spin mb-4 ${currentTheme.id === 'dark' || currentTheme.id === 'dracula' || currentTheme.id === 'hacker' ? 'border-blue-500/30 border-t-blue-400' : 'border-blue-100 border-t-blue-600'}`} />
+                            <h3 className="text-xl font-bold drop-shadow-sm">Analyzing Document...</h3>
+                            <p className={`mt-2 font-medium ${currentTheme.id === 'dark' || currentTheme.id === 'dracula' || currentTheme.id === 'hacker' ? 'text-slate-300' : 'text-slate-500'}`}>Consulting Federal & State Case Law</p>
                         </div>
                     )}
                     {heatmapEnabled ? (
                         <div className="w-full h-full outline-none font-serif">{renderHeatmap()}</div>
                     ) : (
-                        <textarea
-                            ref={(el) => {
-                                if (el) {
-                                    el.style.height = 'auto';
-                                    el.style.height = el.scrollHeight + 'px';
-                                }
-                            }}
-                            value={documentText}
-                            onChange={(e) => {
-                                setDocumentText(e.target.value);
-                                e.target.style.height = 'auto';
-                                e.target.style.height = e.target.scrollHeight + 'px';
-                            }}
-                            className="w-full h-full resize-none outline-none font-serif text-lg leading-loose bg-transparent overflow-hidden"
-                            spellCheck="false"
-                            onMouseUp={handleTextareaSelect}
-                        />
+                        <div className="grid w-full h-full font-serif text-lg leading-loose">
+                            <div 
+                                className="whitespace-pre-wrap invisible [grid-area:1/1/2/2]"
+                                aria-hidden="true"
+                            >
+                                {documentText + ' '}
+                            </div>
+                            <textarea
+                                value={documentText}
+                                onChange={(e) => setDocumentText(e.target.value)}
+                                className="w-full h-full resize-none outline-none bg-transparent overflow-hidden [grid-area:1/1/2/2]"
+                                spellCheck="false"
+                                onMouseUp={handleTextareaSelect}
+                            />
+                        </div>
                     )}
                     
                     {/* Floating Annotation UI */}

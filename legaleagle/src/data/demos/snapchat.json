@@ -1,0 +1,102 @@
+{
+  "id": "snapchat",
+  "name": "Snapchat Terms of Service",
+  "documentText": "Welcome to Snapchat.\nWhile we delete most Snaps and Chats from our servers after they've been opened, you grant us a worldwide, royalty-free, sublicensable, and transferable license to host, store, use, display, reproduce, modify, adapt, edit, publish, and distribute your content. You also grant us the right to use your name, likeness, and voice in any commercial or sponsored content without compensation to you.",
+  "recommendations": [
+    {
+      "id": 1,
+      "section": "Commercial Rights",
+      "severity": "Critical",
+      "category": "Liability",
+      "title": "Uncompensated Use of Likeness",
+      "roastTitle": "You're Their Free Actor",
+      "currentText": "You also grant us the right to use your name, likeness, and voice in any commercial or sponsored content without compensation to you.",
+      "proposedText": "We will never use your name, likeness, or voice in commercial or sponsored content without your explicit, separate agreement and appropriate compensation.",
+      "legalBasis": "This clause attempts to waive standard Right of Publicity laws. It allows Snapchat to use your face in an advertisement for a third-party brand without paying you.",
+      "roastComment": "Congratulations on becoming the new face of an embarrassing medical ointment brand! No, you don't get paid. Yes, your crush will see it.",
+      "scoreImpact": 35,
+      "accepted": false
+    }
+  ],
+  "userRecommendations": [
+    {
+      "id": 1,
+      "section": "Commercial Rights",
+      "severity": "Critical",
+      "category": "Liability",
+      "title": "Uncompensated Use of Likeness",
+      "roastTitle": "You're Their Free Actor",
+      "currentText": "You also grant us the right to use your name, likeness, and voice in any commercial or sponsored content without compensation to you.",
+      "proposedText": "We will never use your name, likeness, or voice in commercial or sponsored content without your explicit, separate agreement and appropriate compensation.",
+      "legalBasis": "This clause attempts to waive standard Right of Publicity laws. It allows Snapchat to use your face in an advertisement for a third-party brand without paying you.",
+      "roastComment": "Congratulations on becoming the new face of an embarrassing medical ointment brand! No, you don't get paid. Yes, your crush will see it.",
+      "scoreImpact": 35,
+      "accepted": false
+    }
+  ],
+  "companyRecommendations": [
+    {
+      "id": 1,
+      "section": "Commercial Rights",
+      "severity": "Medium",
+      "category": "Liability",
+      "title": "Protect Corporate Interests: Uncompensated Use of Likeness",
+      "roastTitle": "Corporate Shielding",
+      "currentText": "You also grant us the right to use your name, likeness, and voice in any commercial or sponsored content without compensation to you.",
+      "proposedText": "Ensure this clause is as broad as legally permissible to maximize operational flexibility and limit corporate liability.",
+      "legalBasis": "From the company's perspective, this clause provides essential protection against unpredictable user behavior and class action lawsuits. We recommend strengthening this clause rather than diluting it.",
+      "roastComment": "Keep it broad. We hold the cards.",
+      "scoreImpact": 10,
+      "accepted": false
+    }
+  ],
+  "roastRecommendations": [
+    {
+      "id": 1,
+      "section": "Commercial Rights",
+      "severity": "Critical",
+      "category": "Liability",
+      "title": "You're Their Free Actor",
+      "roastTitle": "You're Their Free Actor",
+      "currentText": "You also grant us the right to use your name, likeness, and voice in any commercial or sponsored content without compensation to you.",
+      "proposedText": "We will never use your name, likeness, or voice in commercial or sponsored content without your explicit, separate agreement and appropriate compensation.",
+      "legalBasis": "This clause attempts to waive standard Right of Publicity laws. It allows Snapchat to use your face in an advertisement for a third-party brand without paying you.",
+      "roastComment": "Congratulations on becoming the new face of an embarrassing medical ointment brand! No, you don't get paid. Yes, your crush will see it.",
+      "scoreImpact": 35,
+      "accepted": false,
+      "description": "Congratulations on becoming the new face of an embarrassing medical ointment brand! No, you don't get paid. Yes, your crush will see it.",
+      "type": "red_flag"
+    }
+  ],
+  "score": 25,
+  "swotData": {
+    "strengths": [
+      "Ephemeral messaging design protects some privacy"
+    ],
+    "weaknesses": [
+      "Extreme commercialization rights over user likeness"
+    ],
+    "opportunities": [
+      "Stronger protections for minors could be implemented"
+    ],
+    "threats": [
+      "Users can be featured in ads without pay or explicit consent"
+    ]
+  },
+  "standardRecommendations": [
+    {
+      "id": 1,
+      "section": "Commercial Rights",
+      "severity": "Critical",
+      "category": "Liability",
+      "title": "Uncompensated Use of Likeness (Detailed Review)",
+      "roastTitle": "You're Their Free Actor",
+      "currentText": "You also grant us the right to use your name, likeness, and voice in any commercial or sponsored content without compensation to you.",
+      "proposedText": "We will never use your name, likeness, or voice in commercial or sponsored content without your explicit, separate agreement and appropriate compensation.",
+      "legalBasis": "Standard Review: This clause attempts to waive standard Right of Publicity laws. It allows Snapchat to use your face in an advertisement for a third-party brand without paying you. This clause was evaluated against standard industry boilerplate norms and found to be notable.",
+      "roastComment": "Congratulations on becoming the new face of an embarrassing medical ointment brand! No, you don't get paid. Yes, your crush will see it.",
+      "scoreImpact": 35,
+      "accepted": false
+    }
+  ]
+}

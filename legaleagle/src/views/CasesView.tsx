@@ -2,15 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Theme } from '@/types';
+import toast from 'react-hot-toast';
 import { Briefcase, Plus, Users, Lock, EyeOff, Save, Trash2 } from 'lucide-react';
 
 interface CasesViewProps {
     currentTheme: Theme;
+    onLoadDemo: (demoId: string) => void;
 }
 
-export const CasesView: React.FC<CasesViewProps> = ({ currentTheme }) => {
+const PRE_INSTALLED_DEMOS = [
+    { id: 'instagram', name: 'Instagram Demo', description: 'Instagram Terms of Service', access_level: 'public', isDemo: true },
+    { id: 'facebook', name: 'Facebook Demo', description: 'Facebook Terms of Service', access_level: 'public', isDemo: true },
+    { id: 'tiktok', name: 'TikTok Demo', description: 'TikTok Terms of Service', access_level: 'public', isDemo: true },
+    { id: 'x', name: 'X Demo', description: 'X (Twitter) Terms of Service', access_level: 'public', isDemo: true },
+    { id: 'snapchat', name: 'Snapchat Demo', description: 'Snapchat Terms of Service', access_level: 'public', isDemo: true }
+];
+
+export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }) => {
     const { user, profile } = useAuth();
-    const [cases, setCases] = useState<any[]>([]);
+    const [cases, setCases] = useState<any[]>(PRE_INSTALLED_DEMOS);
     const [loading, setLoading] = useState(false);
     const [terminology, setTerminology] = useState('Matters');
     const [members, setMembers] = useState<any[]>([]);
@@ -52,7 +62,9 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme }) => {
             .eq('team_id', profile!.current_team_id!)
             .order('created_at', { ascending: false });
         if (!error && data) {
-            setCases(data);
+            setCases([...PRE_INSTALLED_DEMOS, ...data]);
+        } else {
+            setCases([...PRE_INSTALLED_DEMOS]);
         }
         setLoading(false);
     };
@@ -100,7 +112,7 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme }) => {
             setEditingCase(null);
             fetchCases();
         } catch (err: any) {
-            alert(err.message);
+            toast.error(err.message);
         } finally {
             setLoading(false);
         }
@@ -258,17 +270,23 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme }) => {
                     {cases.map(c => (
                         <div key={c.id} className={`p-5 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group`}>
                             <div className="flex justify-between items-start mb-2">
-                                <h3 className={`font-semibold text-lg ${currentTheme.text}`}>{c.name}</h3>
-                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => handleEdit(c)} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded">
-                                        Edit
-                                    </button>
-                                    <button onClick={() => handleDelete(c.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
+                                <h3 className={`font-semibold text-lg ${currentTheme.text} ${c.isDemo ? 'cursor-pointer hover:underline' : ''}`} onClick={() => c.isDemo && onLoadDemo(c.id)}>
+                                    {c.name} {c.isDemo && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">DEMO</span>}
+                                </h3>
+                                {!c.isDemo && (
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleEdit(c)} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded">
+                                            Edit
+                                        </button>
+                                        <button onClick={() => handleDelete(c.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                            <p className={`text-sm ${currentTheme.textMuted} mb-4 line-clamp-2`}>{c.description || 'No description'}</p>
+                            <p className={`text-sm ${currentTheme.textMuted} mb-4 line-clamp-2 ${c.isDemo ? 'cursor-pointer' : ''}`} onClick={() => c.isDemo && onLoadDemo(c.id)}>
+                                {c.description || 'No description'}
+                            </p>
                             <div className="flex items-center gap-3 text-xs">
                                 <span className={`px-2 py-1 rounded-full ${c.access_level === 'public' ? 'bg-blue-100 text-blue-700' : c.access_level === 'confidential' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
                                     {c.access_level.charAt(0).toUpperCase() + c.access_level.slice(1)}

@@ -6,11 +6,14 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { PricingView } from './PricingView';
 import { THEMES } from '@/constants';
 import { getSEOData } from '@/utils/seoData';
+import { Link } from 'react-router-dom';
+import { DEMOS } from '@/data/demos';
 
 export const LandingPageView: React.FC = () => {
     const { contractType } = useParams<{ contractType: string }>();
     const seo = getSEOData(contractType);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
 
     const handleCTA = () => {
         setIsAuthModalOpen(true);
@@ -144,6 +147,30 @@ export const LandingPageView: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Featured Demos Section */}
+            <section className="py-24 bg-slate-900 border-y border-slate-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold mb-4">Try a Live Demo</h2>
+                        <p className="text-slate-400">Instantly see how Legal Eagle analyzes real-world Terms of Service.</p>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-4">
+                        {DEMOS.map(demo => (
+                            <Link
+                                key={demo.id}
+                                to={`/?demo=${demo.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-6 py-4 rounded-xl bg-slate-950 border border-slate-700 hover:border-blue-500 hover:shadow-[0_0_15px_rgba(37,99,235,0.2)] transition-all flex items-center gap-3 group cursor-pointer"
+                            >
+                                <FileText className="w-5 h-5 text-slate-400 group-hover:text-blue-400" />
+                                <span className="font-medium text-slate-200 group-hover:text-white">{demo.name}</span>
+                            </Link>
                         ))}
                     </div>
                 </div>

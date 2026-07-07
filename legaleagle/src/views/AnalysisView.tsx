@@ -24,6 +24,7 @@ interface AnalysisViewProps {
     swotData: SwotAnalysis | null;
     isRoastMode: boolean;
     perspective: string;
+    setPerspective: (p: string) => void;
     handleApplyAll: () => void;
     generateNegotiationEmail: () => void;
     showEmailModal: boolean;
@@ -43,6 +44,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     swotData,
     isRoastMode,
     perspective,
+    setPerspective,
     handleApplyAll,
     generateNegotiationEmail,
     showEmailModal,
@@ -122,10 +124,32 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                     <h2 className={`font-bold text-lg mb-4 ${isLightSidebar ? 'text-slate-800' : 'text-white'}`}>
                         {isRoastMode ? 'Roast Results 🔥' : 'Audit Results'}
                     </h2>
+                    
+                    {/* Sophisticated Perspective Toggle */}
+                    {!isRoastMode && (
+                        <div className={`p-1 flex mb-6 rounded-xl border shadow-inner ${isLightSidebar ? 'bg-slate-200/50 border-slate-300/50' : 'bg-slate-900/50 border-slate-800'}`}>
+                            {['Basic', 'Standard', 'User', 'Company'].map((role) => (
+                                <button
+                                    key={role}
+                                    onClick={() => setPerspective(role)}
+                                    className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
+                                        perspective === role 
+                                            ? `${currentTheme.accent} text-white shadow-md shadow-black/20 font-bold` 
+                                            : `${currentTheme.sidebarText} hover:bg-white/10 opacity-70 hover:opacity-100 font-semibold`
+                                    }`}
+                                >
+                                    <span className="text-sm">{role}</span>
+                                    <span className="text-[10px] font-normal opacity-75 mt-0.5 text-center leading-tight">
+                                        {role === 'Basic' ? 'Overview' : role === 'Standard' ? 'Detailed' : role === 'User' ? 'Protect User' : 'Protect Co.'}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Score Display */}
                     <div
-                        className={`flex items-center gap-4 p-4 rounded-xl shadow-sm cursor-pointer transition-all ${isRoastMode
+                        className={`flex flex-col items-center justify-center text-center p-6 gap-3 rounded-xl shadow-sm cursor-pointer transition-all ${isRoastMode
                             ? 'bg-slate-900 border-2 border-red-500/50 ring-2 ring-red-500/20'
                             : 'bg-slate-800 border-slate-700 hover:bg-slate-700'
                             }`}
@@ -143,6 +167,9 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                     : (isRoastMode ? 'COOKED' : 'High Risk')
                                 }
                             </p>
+                            <p className={`text-sm mt-2 font-semibold ${isRoastMode ? 'text-red-400' : 'text-slate-300'}`}>
+                                {visibleRecommendations.length} {visibleRecommendations.length === 1 ? 'Issue' : 'Issues'} Found
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -153,16 +180,19 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                         <div className={`text-xs font-bold uppercase tracking-wider ${currentTheme.sidebarText}`}>
                             Issues
                         </div>
-                        {visibleRecommendations.length > 0 && (
+                    </div>
+                    
+                    {visibleRecommendations.length > 0 && (
+                        <div className="flex px-2 mb-3">
                             <button
                                 onClick={handleApplyAll}
-                                className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded text-white shadow-sm hover:opacity-90 transition-opacity ${isRoastMode ? 'bg-red-600' : 'bg-blue-600'
+                                className={`w-full flex items-center justify-center gap-1 text-xs font-bold px-3 py-1.5 rounded text-white shadow-sm hover:opacity-90 transition-opacity ${isRoastMode ? 'bg-red-600' : 'bg-blue-600'
                                     }`}
                             >
-                                Apply All
+                                Apply All Issues
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {visibleRecommendations.length === 0 && (
                         <div className={`text-center p-4 text-sm opacity-50 ${currentTheme.sidebarText}`}>

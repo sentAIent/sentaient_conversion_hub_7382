@@ -254,8 +254,25 @@ export async function initFirebase() {
 
     } catch (e) {
         console.warn("Firebase Init Failed (Network or Config):", e);
-        // Fallback to offline mode?
-        // Could enable isMock = true here as fallback? 
+        console.warn("[Firebase] Network request failed. Falling back to MOCK MODE.");
+        isMock = true;
+        
+        // Attempt to load from localStorage or just use a dummy offline profile
+        const storedUser = localStorage.getItem('mindwave_mock_user');
+        if (storedUser) {
+            try {
+                const user = JSON.parse(storedUser);
+                if (localStorage.getItem('mindwave_premium') === 'true') {
+                    window.__MOCK_PREMIUM = true;
+                }
+                state.currentUser = user;
+                authCallbacks.forEach(cb => cb(user));
+            } catch (err) {
+                authCallbacks.forEach(cb => cb(null));
+            }
+        } else {
+            authCallbacks.forEach(cb => cb(null));
+        }
     }
 }
 

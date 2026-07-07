@@ -1,0 +1,104 @@
+{
+  "id": "facebook",
+  "name": "Facebook Terms of Service",
+  "documentText": "Welcome to Facebook.\nWe use the data we have to deliver our products, including to personalize features and content and make suggestions for you. You grant us a non-exclusive, transferable, sub-licensable, royalty-free, and worldwide license to host, use, distribute, modify, run, copy, publicly perform or display, translate, and create derivative works of your content. We don't sell your personal data to advertisers, but we use it to show you relevant ads. We can suspend or terminate your account if you violate our Community Standards.",
+  "recommendations": [
+    {
+      "id": 1,
+      "section": "Data Usage",
+      "severity": "Critical",
+      "category": "Privacy",
+      "title": "Invasive Data Harvesting for Ads",
+      "roastTitle": "The Panopticon is Real",
+      "currentText": "We use the data we have to deliver our products, including to personalize features and content and make suggestions for you... we use it to show you relevant ads.",
+      "proposedText": "We will only use your data to provide core functional services. We will not use off-platform browsing data to target advertising without explicit, affirmative opt-in consent.",
+      "legalBasis": "The current phrasing allows Facebook to track user behavior not just on-platform, but across the wider internet via tracking pixels, creating an incredibly invasive shadow profile.",
+      "roastComment": "They know you bought those weird socks on Amazon before you even put them on. They say they don't 'sell' your data, they just rent access to your brain.",
+      "scoreImpact": 25,
+      "accepted": false
+    }
+  ],
+  "userRecommendations": [
+    {
+      "id": 1,
+      "section": "Data Usage",
+      "severity": "Critical",
+      "category": "Privacy",
+      "title": "Invasive Data Harvesting for Ads",
+      "roastTitle": "The Panopticon is Real",
+      "currentText": "We use the data we have to deliver our products, including to personalize features and content and make suggestions for you... we use it to show you relevant ads.",
+      "proposedText": "We will only use your data to provide core functional services. We will not use off-platform browsing data to target advertising without explicit, affirmative opt-in consent.",
+      "legalBasis": "The current phrasing allows Facebook to track user behavior not just on-platform, but across the wider internet via tracking pixels, creating an incredibly invasive shadow profile.",
+      "roastComment": "They know you bought those weird socks on Amazon before you even put them on. They say they don't 'sell' your data, they just rent access to your brain.",
+      "scoreImpact": 25,
+      "accepted": false
+    }
+  ],
+  "companyRecommendations": [
+    {
+      "id": 1,
+      "section": "Data Usage",
+      "severity": "Medium",
+      "category": "Privacy",
+      "title": "Protect Corporate Interests: Invasive Data Harvesting for Ads",
+      "roastTitle": "Corporate Shielding",
+      "currentText": "We use the data we have to deliver our products, including to personalize features and content and make suggestions for you... we use it to show you relevant ads.",
+      "proposedText": "Ensure this clause is as broad as legally permissible to maximize operational flexibility and limit corporate liability.",
+      "legalBasis": "From the company's perspective, this clause provides essential protection against unpredictable user behavior and class action lawsuits. We recommend strengthening this clause rather than diluting it.",
+      "roastComment": "Keep it broad. We hold the cards.",
+      "scoreImpact": 10,
+      "accepted": false
+    }
+  ],
+  "roastRecommendations": [
+    {
+      "id": 1,
+      "section": "Data Usage",
+      "severity": "Critical",
+      "category": "Privacy",
+      "title": "The Panopticon is Real",
+      "roastTitle": "The Panopticon is Real",
+      "currentText": "We use the data we have to deliver our products, including to personalize features and content and make suggestions for you... we use it to show you relevant ads.",
+      "proposedText": "We will only use your data to provide core functional services. We will not use off-platform browsing data to target advertising without explicit, affirmative opt-in consent.",
+      "legalBasis": "The current phrasing allows Facebook to track user behavior not just on-platform, but across the wider internet via tracking pixels, creating an incredibly invasive shadow profile.",
+      "roastComment": "They know you bought those weird socks on Amazon before you even put them on. They say they don't 'sell' your data, they just rent access to your brain.",
+      "scoreImpact": 25,
+      "accepted": false,
+      "description": "They know you bought those weird socks on Amazon before you even put them on. They say they don't 'sell' your data, they just rent access to your brain.",
+      "type": "red_flag"
+    }
+  ],
+  "score": 28,
+  "swotData": {
+    "strengths": [
+      "Detailed Community Standards"
+    ],
+    "weaknesses": [
+      "Massive data harvesting mandate",
+      "Invasive tracking across third-party sites"
+    ],
+    "opportunities": [
+      "Privacy settings allow some limitation of data sharing"
+    ],
+    "threats": [
+      "Algorithmic manipulation of content feed",
+      "Complete loss of privacy regarding browsing habits"
+    ]
+  },
+  "standardRecommendations": [
+    {
+      "id": 1,
+      "section": "Data Usage",
+      "severity": "Critical",
+      "category": "Privacy",
+      "title": "Invasive Data Harvesting for Ads (Detailed Review)",
+      "roastTitle": "The Panopticon is Real",
+      "currentText": "We use the data we have to deliver our products, including to personalize features and content and make suggestions for you... we use it to show you relevant ads.",
+      "proposedText": "We will only use your data to provide core functional services. We will not use off-platform browsing data to target advertising without explicit, affirmative opt-in consent.",
+      "legalBasis": "Standard Review: The current phrasing allows Facebook to track user behavior not just on-platform, but across the wider internet via tracking pixels, creating an incredibly invasive shadow profile. This clause was evaluated against standard industry boilerplate norms and found to be notable.",
+      "roastComment": "They know you bought those weird socks on Amazon before you even put them on. They say they don't 'sell' your data, they just rent access to your brain.",
+      "scoreImpact": 25,
+      "accepted": false
+    }
+  ]
+}

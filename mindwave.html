@@ -232,23 +232,12 @@ window.resetGalaxySettings = function() {
 <script defer="" onerror="console.log('[Config] No config.js found - using mock mode')" src="./binaural-assets/config.js" type="module"></script>
 <script onerror="console.error('Failed to load main_vFINAL.js')" src="./binaural-assets/js/main_vFINAL.js?v=999" type="module"></script>
 <style>
-        /* Auto-hide subtext on narrow viewports or scaled-down containers */
-        @media (max-width: 600px) {
-            #leftPanel .preset-btn > span:nth-of-type(2),
-            #rightPanel .visual-btn > span:nth-of-type(2) {
-                display: none !important;
-            }
-        }
-        
-        #leftPanel, #rightPanel {
-            container-type: inline-size;
-        }
-        
-        @container (max-width: 260px) {
-            .preset-btn > span:nth-of-type(2),
-            .visual-btn > span:nth-of-type(2) {
-                display: none !important;
-            }
+        /* Auto-hide subtext when panels are resized narrower */
+        .panel-compact .preset-btn > span:nth-of-type(2),
+        .panel-compact .visual-btn > span:nth-of-type(2),
+        .panel-compact p[class*="text-muted"],
+        .panel-compact span[class*="text-muted"] {
+            display: none !important;
         }
 
         /* Fallback Styles if Tailwind fails */

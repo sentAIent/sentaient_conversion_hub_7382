@@ -109,8 +109,8 @@ Only output the contract text, do not include any conversational filler.
 `;
 
     try {
-        const result = await callGemini(prompt, "You are a professional legal contract generator.", false);
-        return result as string;
+        const result = await callGemini(prompt, "You are a professional legal contract generator.", false) as GeminiResponse;
+        return result.text || '';
     } catch (error) {
         console.error('Gemini API Error (Generate Contract):', error);
         throw new Error('Failed to generate contract. Please try again.');
@@ -129,8 +129,7 @@ const analyzeChunk = async (
     contractType: ContractType = 'General',
     model: string = 'gemini-2.5-pro',
     abortSignal?: AbortSignal,
-    playbookText?: string,
-    retries = 3
+    playbookText?: string
 ): Promise<AnalysisChunkResult | null> => {
     const partiesStr = parties.map(p => `${p.name} (${p.role}, ${p.domicile})`).join(', ');
 
@@ -163,35 +162,26 @@ ${playbookText ? `\nCRITICAL CUSTOM PLAYBOOK RULES:\nYou MUST evaluate the text 
             break;
     }
 
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            if (abortSignal?.aborted) throw new Error('AbortError');
-            const result = await callGemini(prompt, systemPrompt, true, model, abortSignal) as AnalysisChunkResult;
+    try {
+        if (abortSignal?.aborted) throw new Error('AbortError');
+        const result = await callGemini(prompt, systemPrompt, true, model, abortSignal) as AnalysisChunkResult;
 
-            if (result && result.recommendations) {
-                // Add IDs and chunk index to recommendations
-                result.recommendations = result.recommendations.map((r, idx) => ({
-                    ...r,
-                    id: Date.now() + chunkIndex * 100 + idx,
-                    chunkIndex,
-                    accepted: false
-                }));
-                return result;
-            }
-            // If result is null/invalid but no error thrown, retry
-            throw new Error("Invalid response from AI");
-
-        } catch (error) {
-            console.warn(`Chunk ${chunkIndex} analysis failed (attempt ${attempt + 1}/${retries + 1}):`, error);
-            if (attempt === retries) {
-                console.error(`Chunk ${chunkIndex} failed after all retries.`);
-                return null;
-            }
-            // Exponential backoff: 1s, 2s, 4s
-            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+        if (result && result.recommendations) {
+            // Add IDs and chunk index to recommendations
+            result.recommendations = result.recommendations.map((r, idx) => ({
+                ...r,
+                id: Date.now() + chunkIndex * 100 + idx,
+                chunkIndex,
+                accepted: false
+            }));
+            return result;
         }
+        throw new Error("Invalid response from AI");
+
+    } catch (error: any) {
+        console.warn(`Chunk ${chunkIndex} analysis failed:`, error);
+        throw error; // Let the caller handle it (it will be caught by Promise.all, but we should handle it in analyzeDocument instead)
     }
-    return null;
 };
 
 /**
@@ -266,35 +256,45 @@ export const analyzeDocument = async (
         throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
     }
 
-    let model = 'gemini-2.5-pro';
-    if (analysisDepth === 'quick') {
-        model = 'gemini-2.5-flash';
+    let model = 'gemini-2.5-flash'; // Safer rate limits for default/quick
+    if (analysisDepth === 'deep') {
+        model = 'gemini-2.5-pro';
     }
     const maxChars = MODEL_CONFIG[model as keyof typeof MODEL_CONFIG] || MODEL_CONFIG['default'];
 
     const chunks = splitIntoChunks(documentText, maxChars);
     const allRecommendations: Recommendation[] = [];
     let failedChunks = 0;
+    let lastError: any = null;
 
     onProgress?.({ current: 0, total: chunks.length });
     let completed = 0;
 
-    // Process all chunks concurrently
-    const chunkPromises = chunks.map(async (chunk, i) => {
+    // Process chunks sequentially to avoid Gemini API rate limits (429 Too Many Requests)
+    for (let i = 0; i < chunks.length; i++) {
         if (abortSignal?.aborted) throw new Error('AbortError');
-        const result = await analyzeChunk(chunk, i, perspective, parties, analysisDepth, contractType, model, abortSignal, playbookText);
-        completed++;
-        onProgress?.({ current: completed, total: chunks.length });
+        const chunk = chunks[i];
+        try {
+            const result = await analyzeChunk(chunk, i, perspective, parties, analysisDepth, contractType, model, abortSignal, playbookText);
+            
+            if (abortSignal?.aborted) throw new Error('AbortError');
+            
+            completed++;
+            onProgress?.({ current: completed, total: chunks.length });
 
-        if (result && result.recommendations && result.recommendations.length > 0) {
-            allRecommendations.push(...result.recommendations);
-            onRecommendationsUpdate?.([...allRecommendations]);
-        } else if (result === null) {
+            if (result && result.recommendations && result.recommendations.length > 0) {
+                allRecommendations.push(...result.recommendations);
+                onRecommendationsUpdate?.([...allRecommendations]);
+            }
+        } catch (error: any) {
+            if (error.message === 'AbortError' || abortSignal?.aborted) {
+                throw new Error('AbortError');
+            }
             failedChunks++;
+            lastError = error;
+            console.error(`Chunk ${i} failed`, error);
         }
-    });
-
-    await Promise.all(chunkPromises);
+    }
 
     if (failedChunks === chunks.length) {
         // If it's a demo, just return the sample data so the UI doesn't break
@@ -306,7 +306,8 @@ export const analyzeDocument = async (
                 score: SAMPLE_SCORE
             };
         }
-        throw new Error('Backend AI function is not deployed or service is unavailable.');
+        
+        throw new Error(lastError ? `Analysis failed: ${lastError.message || lastError}` : 'Backend AI function failed.');
     }
 
     if (abortSignal?.aborted) throw new Error('AbortError');
