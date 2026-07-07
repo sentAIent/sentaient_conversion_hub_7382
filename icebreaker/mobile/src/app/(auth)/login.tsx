@@ -59,6 +59,8 @@ export default function LoginScreen() {
         errorMessage = 'An account with this email already exists.';
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = 'This domain is not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains. Please add sentaient.com and your netlify subdomains.';
       } else if (err.message) {
         errorMessage = err.message;
       }
@@ -92,6 +94,8 @@ export default function LoginScreen() {
         errorMessage = 'No account found with this email.';
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = 'This domain is not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains. Please add sentaient.com and your netlify subdomains.';
       } else if (err.message) {
         errorMessage = err.message;
       }
