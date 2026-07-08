@@ -169,7 +169,7 @@ export const LandingPageView: React.FC = () => {
                         {DEMOS.map(demo => (
                             <Link
                                 key={demo.id}
-                                to={`/app?demo=${demo.id}`}
+                                to={`/?demo=${demo.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="px-6 py-4 rounded-xl bg-slate-950 border border-slate-700 hover:border-blue-500 hover:shadow-[0_0_15px_rgba(37,99,235,0.2)] transition-all flex items-center gap-3 group cursor-pointer"
