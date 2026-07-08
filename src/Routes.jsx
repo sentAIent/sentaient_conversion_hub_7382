@@ -63,7 +63,7 @@ const ProjectRoutes = () => {
               <Route path="/mindwave" element={<MindWave />} />
               
               <Route path="/icelogin" element={<IcebreakerLanding />} />
-              <Route path="/iceadmin" element={<IcebreakerAdmin />} />
+              <Route path="/icewaitlist" element={<IcebreakerAdmin />} />
 
               <Route path="/portfolio" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
