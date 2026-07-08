@@ -16,10 +16,10 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase safely to prevent app crashes on invalid config
-let app;
-let auth;
-let db;
-let analytics = null;
+let app: any;
+let auth: any;
+let db: any;
+let analytics: any = null;
 
 try {
     app = initializeApp(firebaseConfig);
