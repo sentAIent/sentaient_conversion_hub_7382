@@ -340,20 +340,27 @@ export default function MainApp() {
      * never clears analysisComplete or redirects the tab.
      * Accepts the new perspective directly to avoid stale closure bugs.
      */
-    const handleSilentReanalyze = async (newPerspective: string) => {
+    const handleSilentReanalyze = async (newPerspective: string, newAnalysisDepth: string) => {
         if (!documentText || !analysisComplete) return;
 
         setIsAnalyzing(true);
         abortControllerRef.current = new AbortController();
 
         try {
+            // For demos, simulate analysis to show the loading spinner briefly
+            if (activeDemoId) {
+                await new Promise(r => setTimeout(r, 800));
+                // State updates for perspective change are handled by the useEffect
+                return;
+            }
+
             const result = await analyzeDocument(
                 documentText,
                 newPerspective,        // use passed value — state may still be stale here
                 parties,
                 (progress) => setScanProgress(progress),
                 (recs) => { if (recs.length > 0) setRecommendations(recs); },
-                analysisDepth,
+                newAnalysisDepth,
                 contractType,
                 abortControllerRef.current.signal
             );
@@ -736,7 +743,7 @@ Legal Team`;
             {isPricingModalOpen && <div onClick={() => setIsPricingModalOpen(false)}></div>}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col relative overflow-hidden">
+            <div className="flex-1 flex flex-col relative overflow-hidden min-h-0">
                 <TopHeader 
                     currentTheme={currentTheme}
                     setCurrentTheme={setCurrentTheme}
@@ -801,6 +808,7 @@ Legal Team`;
                         setSelectedRecId={setSelectedRecId}
                         score={score}
                         swotData={swotData}
+                        isAnalyzing={isAnalyzing}
                         isRoastMode={isRoastMode}
                         perspective={perspective}
                         handleApplyAll={handleApplyAll}

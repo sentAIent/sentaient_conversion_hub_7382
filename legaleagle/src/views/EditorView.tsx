@@ -267,23 +267,14 @@ export const EditorView: React.FC<EditorViewProps> = ({
             <div className={`border-b p-4 shadow-sm flex flex-col gap-4 ${currentTheme.panelBg}`}>
                 <div className="flex justify-between items-center">
                     <div className="flex flex-col gap-2">
-                        {/* Smart Context-Aware Back Button */}
-                        {prevTab === 'cases' && (
-                            <button
-                                onClick={() => setActiveTab('cases')}
-                                className="flex w-fit items-center gap-1 text-sm font-bold transition-opacity text-blue-500 hover:text-blue-400"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                                Back to Matters
-                            </button>
-                        )}
+
                         {prevTab === 'analysis' || (analysisComplete && prevTab !== 'cases') ? (
                             <button
                                 onClick={() => setActiveTab('analysis')}
                                 className="flex w-fit items-center gap-1 text-sm font-bold transition-opacity text-blue-500 hover:text-blue-400"
                             >
                                 <ChevronLeft className="w-4 h-4" />
-                                Back to Analysis
+                                Back
                             </button>
                         ) : null}
                         <div className="flex items-center gap-2">

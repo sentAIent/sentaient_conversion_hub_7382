@@ -10,8 +10,10 @@ const App: React.FC = () => {
     <HelmetProvider>
       <BrowserRouter basename="/legaleagle">
         <Routes>
+          <Route path="/" element={<LandingPageView />} />
           <Route path="/landing/:contractType?" element={<LandingPageView />} />
           <Route path="/accept-invite" element={<AcceptInviteView />} />
+          <Route path="/app/*" element={<MainApp />} />
           <Route path="/*" element={<MainApp />} />
         </Routes>
       </BrowserRouter>

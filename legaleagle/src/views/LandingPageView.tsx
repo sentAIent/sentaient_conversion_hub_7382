@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Shield, Zap, FileText, ArrowRight, CheckCircle2, MessageSquare, Briefcase } from 'lucide-react';
 import { AuthModal } from '@/components/auth/AuthModal';
@@ -8,15 +8,21 @@ import { THEMES } from '@/constants';
 import { getSEOData } from '@/utils/seoData';
 import { Link } from 'react-router-dom';
 import { DEMOS } from '@/data/demos';
+import { useAuth } from '@/context/AuthContext';
 
 export const LandingPageView: React.FC = () => {
     const { contractType } = useParams<{ contractType: string }>();
+    const navigate = useNavigate();
+    const { profile } = useAuth();
     const seo = getSEOData(contractType);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-
     const handleCTA = () => {
-        setIsAuthModalOpen(true);
+        if (profile) {
+            navigate('/app');
+        } else {
+            setIsAuthModalOpen(true);
+        }
     };
 
     return (
@@ -163,7 +169,7 @@ export const LandingPageView: React.FC = () => {
                         {DEMOS.map(demo => (
                             <Link
                                 key={demo.id}
-                                to={`/?demo=${demo.id}`}
+                                to={`/app?demo=${demo.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="px-6 py-4 rounded-xl bg-slate-950 border border-slate-700 hover:border-blue-500 hover:shadow-[0_0_15px_rgba(37,99,235,0.2)] transition-all flex items-center gap-3 group cursor-pointer"

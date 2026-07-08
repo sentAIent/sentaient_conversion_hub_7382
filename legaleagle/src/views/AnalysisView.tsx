@@ -11,8 +11,7 @@ import {
     Award,
     CheckCircle2,
     Trash2,
-    User,
-    ChevronLeft
+    User
 } from 'lucide-react';
 import { ScoreCircle, SwotCard } from '@/components/ui';
 import type { Theme, Recommendation, SwotAnalysis } from '@/types';
@@ -23,6 +22,7 @@ interface AnalysisViewProps {
     setSelectedRecId: (id: number | null) => void;
     score: number;
     swotData: SwotAnalysis | null;
+    isAnalyzing?: boolean;
     isRoastMode: boolean;
     perspective: string;
     setPerspective: (p: string) => void;
@@ -37,9 +37,7 @@ interface AnalysisViewProps {
     handleAcceptRecommendation: (rec: Recommendation) => void;
     onDeleteAnnotation: (id: number) => void;
     currentTheme: Theme;
-    setActiveTab: (tab: string) => void;
-    prevTab?: string | null;
-    onReanalyze?: (newPerspective: string) => void;
+    onReanalyze?: (perspective: string, depth: string) => void;
     handleUndoRevision: () => void;
     handleUndoAllRevisions: () => void;
     canUndo: boolean;
@@ -51,6 +49,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     setSelectedRecId,
     score,
     swotData,
+    isAnalyzing = false,
     isRoastMode,
     perspective,
     setPerspective,
@@ -63,8 +62,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     handleAcceptRecommendation,
     onDeleteAnnotation,
     currentTheme,
-    setActiveTab,
-    prevTab,
     onReanalyze,
     analysisDepth = 'standard',
     setAnalysisDepth,
@@ -103,7 +100,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     }, [recommendations]);
 
     return (
-        <div className="flex h-full bg-slate-50 overflow-hidden relative">
+        <div className="flex flex-1 h-full min-h-0 bg-slate-50 overflow-hidden relative">
             {/* Excellence Badge */}
             {score >= 98 && (
                 <div className="fixed top-24 right-8 z-40 animate-bounce">
@@ -144,16 +141,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
 
             {/* Left Sidebar - Issues List */}
             <div className={`w-96 border-r flex flex-col h-full z-10 shadow-md shrink-0 transition-colors ${currentTheme.sidebar} min-h-0`}>
-                <div className="p-6 border-b border-white/10">
-                    {prevTab === 'cases' && (
-                        <button 
-                            onClick={() => setActiveTab('cases')}
-                            className={`flex items-center gap-1 mb-4 text-sm font-bold transition-opacity text-blue-500 hover:text-blue-400`}
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                            Back to Matters
-                        </button>
-                    )}
+                {/* Sidebar Header */}
+                <div className="p-6 border-b border-white/10 shrink-0">
                     <h2 className={`font-bold text-lg mb-4 ${isLightSidebar ? 'text-slate-800' : 'text-white'}`}>
                         {isRoastMode ? 'Roast Results 🔥' : 'Audit Results'}
                     </h2>
@@ -166,7 +155,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                 {[{ id: 'quick', label: 'Basic', sub: 'Quick Scan' }, { id: 'standard', label: 'Standard', sub: 'Full Audit' }].map(({ id, label, sub }) => (
                                     <button
                                         key={id}
-                                        onClick={() => setAnalysisDepth(id)}
+                                        onClick={() => {
+                                            setAnalysisDepth(id);
+                                            onReanalyze?.(perspective, id);
+                                        }}
                                         className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
                                             analysisDepth === id
                                                 ? `${currentTheme.accent} text-white shadow-md shadow-black/20 font-bold`
@@ -191,7 +183,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                         key={role}
                                         onClick={() => {
                                             setPerspective(role);
-                                            onReanalyze?.(role); // pass new value directly — avoids stale closure
+                                            onReanalyze?.(role, analysisDepth); // pass new value directly — avoids stale closure
                                         }}
                                         className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
                                             perspective === role
@@ -361,7 +353,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                 className="mb-4 flex items-center gap-2 text-sm text-slate-400 hover:text-slate-600 cursor-pointer"
                                 onClick={() => setSelectedRecId(null)}
                             >
-                                <ChevronDown className="w-4 h-4 rotate-90" /> Back to Summary
+                                <ChevronDown className="w-4 h-4 rotate-90" /> Back
                             </div>
 
                             {/* Issue Header */}
@@ -443,7 +435,15 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                 ) : (
                     /* Summary View */
                     <div className="flex-1 overflow-y-auto p-8">
-                        {swotData ? (
+                        {isAnalyzing ? (
+                            <div className="flex h-full items-center justify-center text-center p-8 opacity-70">
+                                <div>
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    <h2 className="text-xl font-bold text-slate-600">Re-analyzing document...</h2>
+                                    <p className="text-sm text-slate-500 mt-2">Updating insights based on your selected perspective and depth.</p>
+                                </div>
+                            </div>
+                        ) : swotData ? (
                             <div className="max-w-4xl w-full mx-auto space-y-8">
                                 {/* Risk Distribution */}
                                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">

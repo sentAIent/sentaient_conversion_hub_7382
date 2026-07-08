@@ -262,10 +262,50 @@ export const analyzeDocument = async (
     // Always use demo data for the default sample text to save AI credits
     if (documentText.trim() === INITIAL_TEXT.trim()) {
         await new Promise(r => setTimeout(r, 1500));
+        
+        let customRecs = [...SAMPLE_RECOMMENDATIONS];
+        let customSwot = { ...SAMPLE_SWOT };
+        
+        // Change data based on perspective
+        if (perspective.toLowerCase() === 'company') {
+            customSwot.strengths = ['Company favorable terms', 'Clear service delivery requirements'];
+            customRecs = customRecs.map(r => ({
+                ...r,
+                proposedText: r.proposedText.replace('Client', 'Company'),
+            }));
+        } else if (perspective.toLowerCase() === 'user') {
+            customSwot.weaknesses = ['User data privacy not explicitly protected', 'No explicit termination for convenience for User'];
+            customRecs = customRecs.map(r => ({
+                ...r,
+                roastComment: r.roastComment + ' (User perspective)',
+            }));
+        }
+        
+        // Change data based on depth
+        if (analysisDepth === 'quick') {
+            customRecs = customRecs.filter(r => r.severity === 'High' || r.severity === 'Critical');
+        } else if (analysisDepth === 'deep') {
+            customRecs.push({
+                id: 999,
+                section: '1. SERVICES',
+                severity: 'Medium',
+                category: 'Operational',
+                title: 'Service Levels Undefined',
+                roastTitle: 'The "Best Effort" Scam',
+                currentText: 'Provider agrees to do work for Client.',
+                proposedText: 'Provider shall perform the Services in a professional and workmanlike manner, in accordance with industry standards.',
+                legalBasis: 'Implied warranty of merchantability',
+                roastComment: '"Do work"? Are we in preschool?',
+                scoreImpact: 5,
+                citation: 'UCC 2-314',
+                accepted: false
+            });
+        }
+        
         return {
-            recommendations: SAMPLE_RECOMMENDATIONS,
-            swot: SAMPLE_SWOT,
-            score: SAMPLE_SCORE
+            recommendations: customRecs,
+            swot: customSwot,
+            score: SAMPLE_SCORE + (analysisDepth === 'deep' ? -5 : 0)
         };
     }
 
