@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Users, MapPin, Calendar, Activity, Share2, Shield, Lock } from 'lucide-react'
+import WaitlistPanel from './WaitlistPanel'
 
 const ADMIN_ANALYTICS = `
   query AdminAnalytics($password: String!) {
@@ -145,6 +146,9 @@ function Dashboard({ password }: { password: string }) {
             </div>
           </div>
         </div>
+
+        {/* Waitlist Panel at the bottom */}
+        <WaitlistPanel />
       </div>
     </div>
   )
