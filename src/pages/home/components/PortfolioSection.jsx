@@ -318,8 +318,8 @@ const LaunchButton = ({ activeProject }) => {
   const handleLaunch = (e) => {
     e.preventDefault();
 
-    // External URLs (e.g. cloveh2o.com) — open directly, no auth required
-    if (activeProject.path.startsWith('http')) {
+    // External URLs (e.g. cloveh2o.com) and un-gated routes (e.g. /icelogin) — open directly
+    if (activeProject.path.startsWith('http') || activeProject.path === '/icelogin') {
       window.open(activeProject.path, '_blank', 'noopener,noreferrer');
       return;
     }
