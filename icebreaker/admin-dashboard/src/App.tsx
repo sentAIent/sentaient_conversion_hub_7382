@@ -148,7 +148,7 @@ function Dashboard({ password }: { password: string }) {
         </div>
 
         {/* Waitlist Panel at the bottom */}
-        <WaitlistPanel />
+        <WaitlistPanel password={password} />
       </div>
     </div>
   )

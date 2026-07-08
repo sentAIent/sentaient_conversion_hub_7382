@@ -133,6 +133,12 @@ export const typeDefs = `#graphql
     avgStreak: Float!
   }
 
+  type WaitlistEntry {
+    id: ID!
+    email: String!
+    timestamp: String!
+  }
+
   type Notification {
     id: ID!
     type: String!
@@ -250,6 +256,7 @@ export const typeDefs = `#graphql
     myMeetingRequests: [MeetingRequest!]!
     nearbyUsers(latitude: Float!, longitude: Float!, radiusKm: Float!): [NearbyMatch!]!
     adminAnalytics(password: String!): AdminAnalytics!
+    adminWaitlist(password: String!): [WaitlistEntry!]!
     followerFeed: [FeedItem!]!
     exploreFeed: [FeedItem!]!
     followerStories: [Content!]!
@@ -283,6 +290,7 @@ export const typeDefs = `#graphql
     rejectFollowRequest(userId: ID!): Boolean!
     markAlertRead(id: ID!): Boolean!
     updatePrivacy(isPrivate: Boolean!): User
+    adminDeleteWaitlistEntry(password: String!, id: ID!): Boolean!
     
     createStorefront(name: String!, description: String): Storefront
     addProduct(storefrontId: ID!, name: String!, price: Int!, imageUrl: String): Product
@@ -506,6 +514,17 @@ export const resolvers = {
         averageTrustScore: usersAvg._avg.trustScore || 5.0,
         avgStreak: usersAvg._avg.streakCount || 0
       };
+    },
+    adminWaitlist: async (_: any, { password }: any) => {
+      if (password !== 'icebreaker2026') {
+        throw new GraphQLError("Unauthorized admin access", { extensions: { code: 'UNAUTHENTICATED' } });
+      }
+      const snap = await db.collection('icebreaker_waitlist').orderBy('timestamp', 'desc').get();
+      return snap.docs.map(d => ({
+        id: d.id,
+        email: d.data().email || '',
+        timestamp: d.data().timestamp?.toDate ? d.data().timestamp.toDate().toISOString() : new Date(d.data().timestamp).toISOString()
+      }));
     },
     followerFeed: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
