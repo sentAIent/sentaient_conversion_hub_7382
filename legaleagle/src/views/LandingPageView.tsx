@@ -17,6 +17,12 @@ export const LandingPageView: React.FC = () => {
     const seo = getSEOData(contractType);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+    useEffect(() => {
+        if (profile) {
+            navigate('/app');
+        }
+    }, [profile, navigate]);
+
     const handleCTA = () => {
         if (profile) {
             navigate('/app');
