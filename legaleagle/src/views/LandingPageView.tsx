@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Shield, Zap, FileText, ArrowRight, CheckCircle2, MessageSquare, Briefcase } from 'lucide-react';
@@ -16,12 +16,6 @@ export const LandingPageView: React.FC = () => {
     const { profile } = useAuth();
     const seo = getSEOData(contractType);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
-    useEffect(() => {
-        if (profile) {
-            navigate('/app');
-        }
-    }, [profile, navigate]);
 
     const handleCTA = () => {
         if (profile) {

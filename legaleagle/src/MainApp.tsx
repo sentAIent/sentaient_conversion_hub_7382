@@ -216,26 +216,7 @@ export default function MainApp() {
         }
     }, []); // Only run on mount! URL params check is sufficient.
 
-    // Handle perspective changes when viewing a demo
-    useEffect(() => {
-        if (activeDemoId) {
-            const demo = getDemoById(activeDemoId);
-            if (demo) {
-                const isRoast = perspective === 'roast';
-                if (isRoast && demo.roastRecommendations?.length) {
-                    setRecommendations(demo.roastRecommendations);
-                } else if (perspective === 'Company' && (demo as any).companyRecommendations?.length) {
-                    setRecommendations((demo as any).companyRecommendations);
-                } else if (perspective === 'User' && (demo as any).userRecommendations?.length) {
-                    setRecommendations((demo as any).userRecommendations);
-                } else if (perspective === 'Standard' && (demo as any).standardRecommendations?.length) {
-                    setRecommendations((demo as any).standardRecommendations);
-                } else {
-                    setRecommendations(demo.recommendations);
-                }
-            }
-        }
-    }, [perspective, activeDemoId]);
+
 
     // Save state to localStorage whenever key data changes
     useEffect(() => {
@@ -347,10 +328,48 @@ export default function MainApp() {
         abortControllerRef.current = new AbortController();
 
         try {
-            // For demos, simulate analysis to show the loading spinner briefly
+            // For demos, dynamically adjust demo data based on perspective and depth
             if (activeDemoId) {
                 await new Promise(r => setTimeout(r, 800));
-                // State updates for perspective change are handled by the useEffect
+                
+                const demo = getDemoById(activeDemoId);
+                if (demo) {
+                    const isRoast = newPerspective.toLowerCase() === 'roast';
+                    let newRecs = [...(isRoast && (demo as any).roastRecommendations ? (demo as any).roastRecommendations : demo.recommendations)];
+                    let newSwot = { ...(isRoast && (demo as any).roastSwot ? (demo as any).roastSwot : demo.swotData) };
+
+                    // Apply perspective
+                    if (newPerspective.toLowerCase() === 'company') {
+                        newSwot.strengths = ['Company favorable terms identified.', ...newSwot.strengths];
+                        newRecs = newRecs.map(r => ({ ...r, proposedText: r.proposedText.replace(/Client|User/g, 'Company') }));
+                    } else if (newPerspective.toLowerCase() === 'user') {
+                        newSwot.weaknesses = ['User data privacy could be better protected.', ...newSwot.weaknesses];
+                        newRecs = newRecs.map(r => ({ ...r, roastComment: r.roastComment ? r.roastComment + ' (User perspective)' : '(User perspective)' }));
+                    }
+
+                    // Apply depth
+                    if (newAnalysisDepth === 'quick') {
+                        newRecs = newRecs.filter(r => r.severity === 'High' || r.severity === 'Critical');
+                    } else if (newAnalysisDepth === 'deep') {
+                        newRecs.push({
+                            id: 9999,
+                            section: 'General',
+                            severity: 'Medium',
+                            category: 'Operational',
+                            title: 'Deep Audit Finding',
+                            roastTitle: 'Nitpick',
+                            currentText: 'Standard terms apply.',
+                            proposedText: 'Highly detailed and specific terms apply.',
+                            legalBasis: 'Deep analysis mode',
+                            roastComment: 'We dug deep for this one.',
+                            scoreImpact: 1,
+                            accepted: false
+                        } as any);
+                    }
+
+                    setRecommendations(newRecs);
+                    setSwotData(newSwot);
+                }
                 return;
             }
 
