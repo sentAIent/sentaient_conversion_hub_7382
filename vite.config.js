@@ -14,10 +14,6 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
-      '/iceadmin': {
-        target: 'http://localhost:5174',
-        changeOrigin: true,
-      },
     },
   },
   css: {

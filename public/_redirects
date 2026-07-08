@@ -1,7 +1,7 @@
-/icebreaker https://sentaient-icebreaker-857.netlify.app/ 200!
-/icebreaker/* https://sentaient-icebreaker-857.netlify.app/:splat 200!
-/icebusiness https://sentaient-icebusiness-hub.netlify.app/ 200!
-/icebusiness/* https://sentaient-icebusiness-hub.netlify.app/:splat 200!
+/icebreaker https://sentaient-icebreaker-857.netlify.app/ 301!
+/icebreaker/* https://sentaient-icebreaker-857.netlify.app/:splat 301!
+/icebusiness https://sentaient-icebusiness-hub.netlify.app/ 301!
+/icebusiness/* https://sentaient-icebusiness-hub.netlify.app/:splat 301!
 /legaleagle /legaleagle/ 301!
 /legaleagle/* /legaleagle/index.html 200
 /icelogin /index.html 200
