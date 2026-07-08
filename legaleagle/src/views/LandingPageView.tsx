@@ -19,7 +19,7 @@ export const LandingPageView: React.FC = () => {
 
     const handleCTA = () => {
         if (profile) {
-            navigate('/app');
+            navigate('/');
         } else {
             setIsAuthModalOpen(true);
         }
