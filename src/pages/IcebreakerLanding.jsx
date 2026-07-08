@@ -35,7 +35,7 @@ const IcebreakerLanding = () => {
         try {
             if (isLogin) {
                 await login(email, password);
-                navigate('/icebreaker');
+                window.location.href = '/icebreaker';
             } else {
                 await signup(email, password, username);
                 setMessage('Account created! Please check your email for a verification link.');
@@ -145,7 +145,9 @@ const IcebreakerLanding = () => {
                         {/* View App Demo — floats at the gap intersection */}
                         <div className="absolute inset-0 hidden sm:flex items-center justify-center pointer-events-none z-20">
                             <button
-                                onClick={() => window.open('/icebreaker', '_blank')}
+                                onClick={() => {
+                                    window.open('/icebreaker', '_blank');
+                                }}
                                 style={{transform: 'translateY(13px)'}}
                                 className="pointer-events-auto relative group focus:outline-none"
                             >

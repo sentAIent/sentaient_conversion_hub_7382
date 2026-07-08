@@ -1,0 +1,91 @@
+
+> backend@1.0.0 dev
+> ts-node src/server.ts
+
+◇ injected env (6) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+🚀 Server ready at http://localhost:4000/graphql
+📊 Admin Dashboard ready at http://localhost:4000/admin
+{
+  message: 'Unauthorized admin access',
+  locations: [ { line: 3, column: 5 } ],
+  path: [ 'adminAnalytics' ],
+  extensions: {
+    code: 'UNAUTHENTICATED',
+    stacktrace: [
+      'GraphQLError: Unauthorized admin access',
+      '    at Object.adminAnalytics (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/src/server.ts:478:15)',
+      '    at field.resolve (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/utils/schemaInstrumentation.ts:82:22)',
+      '    at executeField (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:733:20)',
+      '    at executeFields (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:653:22)',
+      '    at executeOperation (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:579:14)',
+      '    at execute (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:309:20)',
+      '    at executeIncrementally (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/incrementalDeliveryPolyfill.ts:114:17)',
+      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)',
+      '    at async execute (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/requestPipeline.ts:547:31)',
+      '    at async processGraphQLRequest (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/requestPipeline.ts:433:26)'
+    ]
+  }
+}
+{
+  message: 'Unauthorized admin access',
+  locations: [ { line: 3, column: 5 } ],
+  path: [ 'adminAnalytics' ],
+  extensions: {
+    code: 'UNAUTHENTICATED',
+    stacktrace: [
+      'GraphQLError: Unauthorized admin access',
+      '    at Object.adminAnalytics (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/src/server.ts:478:15)',
+      '    at field.resolve (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/utils/schemaInstrumentation.ts:82:22)',
+      '    at executeField (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:733:20)',
+      '    at executeFields (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:653:22)',
+      '    at executeOperation (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:579:14)',
+      '    at execute (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:309:20)',
+      '    at executeIncrementally (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/incrementalDeliveryPolyfill.ts:114:17)',
+      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)',
+      '    at async execute (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/requestPipeline.ts:547:31)',
+      '    at async processGraphQLRequest (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/requestPipeline.ts:433:26)'
+    ]
+  }
+}
+{
+  message: 'Unauthorized admin access',
+  locations: [ { line: 3, column: 5 } ],
+  path: [ 'adminAnalytics' ],
+  extensions: {
+    code: 'UNAUTHENTICATED',
+    stacktrace: [
+      'GraphQLError: Unauthorized admin access',
+      '    at Object.adminAnalytics (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/src/server.ts:478:15)',
+      '    at field.resolve (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/utils/schemaInstrumentation.ts:82:22)',
+      '    at executeField (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:733:20)',
+      '    at executeFields (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:653:22)',
+      '    at executeOperation (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:579:14)',
+      '    at execute (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:309:20)',
+      '    at executeIncrementally (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/incrementalDeliveryPolyfill.ts:114:17)',
+      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)',
+      '    at async execute (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/requestPipeline.ts:547:31)',
+      '    at async processGraphQLRequest (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/requestPipeline.ts:433:26)'
+    ]
+  }
+}
+{
+  message: 'Unauthorized admin access',
+  locations: [ { line: 3, column: 5 } ],
+  path: [ 'adminAnalytics' ],
+  extensions: {
+    code: 'UNAUTHENTICATED',
+    stacktrace: [
+      'GraphQLError: Unauthorized admin access',
+      '    at Object.adminAnalytics (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/src/server.ts:478:15)',
+      '    at field.resolve (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/utils/schemaInstrumentation.ts:82:22)',
+      '    at executeField (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:733:20)',
+      '    at executeFields (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:653:22)',
+      '    at executeOperation (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:579:14)',
+      '    at execute (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/graphql/execution/execute.js:309:20)',
+      '    at executeIncrementally (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/incrementalDeliveryPolyfill.ts:114:17)',
+      '    at processTicksAndRejections (node:internal/process/task_queues:105:5)',
+      '    at async execute (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/requestPipeline.ts:547:31)',
+      '    at async processGraphQLRequest (/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/node_modules/@apollo/server/src/requestPipeline.ts:433:26)'
+    ]
+  }
+}

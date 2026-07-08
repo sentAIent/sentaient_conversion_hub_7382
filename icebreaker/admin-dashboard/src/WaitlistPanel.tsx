@@ -1,21 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Mail, Clock, Trash2, RefreshCw, ChevronDown, ChevronUp, Users, Download } from 'lucide-react';
-
-const ADMIN_WAITLIST = `
-  query AdminWaitlist($password: String!) {
-    adminWaitlist(password: $password) {
-      id
-      email
-      timestamp
-    }
-  }
-`;
-
-const ADMIN_DELETE_WAITLIST = `
-  mutation AdminDeleteWaitlistEntry($password: String!, $id: ID!) {
-    adminDeleteWaitlistEntry(password: $password, id: $id)
-  }
-`;
+import { collection, query, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from './firebase';
 
 export default function WaitlistPanel({ password }: { password: string }) {
     const [entries, setEntries] = useState<any[]>([]);
@@ -25,10 +12,6 @@ export default function WaitlistPanel({ password }: { password: string }) {
     const [search, setSearch] = useState('');
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-    const apiUri = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:4000/graphql'
-        : 'https://icebreaker-b5u1.onrender.com/graphql';
-
     useEffect(() => {
         if (password) fetchWaitlist();
     }, [password]);
@@ -37,14 +20,12 @@ export default function WaitlistPanel({ password }: { password: string }) {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch(apiUri, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: ADMIN_WAITLIST, variables: { password } })
-            });
-            const data = await res.json();
-            if (data.errors) throw new Error(data.errors[0].message);
-            setEntries(data.data.adminWaitlist || []);
+            // Securely authenticate using the provided admin password
+            await signInWithEmailAndPassword(auth, 'admin@sentaient.com', password);
+
+            const q = query(collection(db, 'icebreaker_waitlist'), orderBy('timestamp', 'desc'));
+            const snapshot = await getDocs(q);
+            setEntries(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         } catch (err: any) {
             setError('Failed to load waitlist: ' + err.message);
         } finally {
@@ -54,13 +35,7 @@ export default function WaitlistPanel({ password }: { password: string }) {
 
     const handleDelete = async (id: string) => {
         try {
-            const res = await fetch(apiUri, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: ADMIN_DELETE_WAITLIST, variables: { password, id } })
-            });
-            const data = await res.json();
-            if (data.errors) throw new Error(data.errors[0].message);
+            await deleteDoc(doc(db, 'icebreaker_waitlist', id));
             setEntries(prev => prev.filter(e => e.id !== id));
             setDeleteConfirm(null);
         } catch (err: any) {
@@ -71,7 +46,7 @@ export default function WaitlistPanel({ password }: { password: string }) {
     const exportCSV = () => {
         const rows = [['Email', 'Signed Up At']];
         filtered.forEach(e => {
-            const ts = new Date(e.timestamp);
+            const ts = e.timestamp?.toDate ? e.timestamp.toDate() : new Date(e.timestamp);
             rows.push([e.email, ts.toISOString()]);
         });
         const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
@@ -87,14 +62,14 @@ export default function WaitlistPanel({ password }: { password: string }) {
     const filtered = entries
         .filter(e => e.email?.toLowerCase().includes(search.toLowerCase()))
         .sort((a, b) => {
-            const ta = new Date(a.timestamp);
-            const tb = new Date(b.timestamp);
+            const ta = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+            const tb = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
             return sortAsc ? ta.getTime() - tb.getTime() : tb.getTime() - ta.getTime();
         });
 
     const formatDate = (ts: any) => {
         if (!ts) return '—';
-        const d = new Date(ts);
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
         return d.toLocaleString('en-US', {
             month: 'short', day: 'numeric', year: 'numeric',
             hour: '2-digit', minute: '2-digit'

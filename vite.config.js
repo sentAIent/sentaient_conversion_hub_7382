@@ -9,13 +9,14 @@ export default defineConfig({
       '/icebreaker': {
         target: 'http://localhost:8081',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/icebreaker/, ''),
+      },
+      '/_expo': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
       },
       '/icebusiness': {
         target: 'http://localhost:3000',
-        changeOrigin: true,
-      },
-      '/iceadmin': {
-        target: 'http://localhost:5174',
         changeOrigin: true,
       },
     },

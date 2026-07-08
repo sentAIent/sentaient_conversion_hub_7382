@@ -6,7 +6,7 @@
 /legaleagle/* /legaleagle/index.html 200
 /icelogin /index.html 200
 /icewaitlist /index.html 200
-/iceadmin https://sentaient-iceadmin-hub.netlify.app/ 301!
-/iceadmin/* https://sentaient-iceadmin-hub.netlify.app/:splat 301!
+/iceadmin /index.html 200
+/iceadmin/* /index.html 200
 / /mindwave.html 200
 /* /index.html 200

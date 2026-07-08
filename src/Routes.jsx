@@ -64,6 +64,7 @@ const ProjectRoutes = () => {
               
               <Route path="/icelogin" element={<IcebreakerLanding />} />
               <Route path="/icewaitlist" element={<IcebreakerAdmin />} />
+              <Route path="/iceadmin" element={<IcebreakerAdmin />} />
 
               <Route path="/portfolio" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />

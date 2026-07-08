@@ -23,7 +23,7 @@ const projects = [
     cardBg: 'bg-gradient-to-br from-rose-500 to-orange-600 hover:from-rose-400 hover:to-orange-500',
     modalBg: 'bg-gradient-to-br from-rose-500 to-orange-600',
     buttonColor: 'bg-white text-blue-900 hover:bg-blue-50',
-    path: '#', // Placeholder
+    path: '/icelogin',
     tag: 'Social Platform'
   },
   {

@@ -1,0 +1,128 @@
+
+> sentaient-conversion-hub@0.1.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 694 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+5:37:27 PM [vite] http proxy error: /iceadmin
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+5:37:29 PM [vite] http proxy error: /iceadmin
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+
+warn - Your `content` configuration includes a pattern which looks like it's accidentally matching all of `node_modules` and can cause serious performance issues.
+warn - Pattern: `./public/**/*.html`
+warn - See our documentation for recommendations:
+warn - https://tailwindcss.com/docs/content-configuration#pattern-recommendations
+6:26:51 PM [vite] http proxy error: /iceadmin
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+6:40:50 PM [vite] page reload icebreaker/admin-dashboard/dist/index.html
+6:40:51 PM [vite] page reload icebreaker/admin-dashboard/dist/index.html
+6:56:44 PM [vite] page reload icebreaker/admin-dashboard/dist/index.html
+6:56:45 PM [vite] page reload icebreaker/admin-dashboard/dist/index.html
+7:03:56 PM [vite] page reload icebreaker/admin-dashboard/dist/index.html
+7:03:56 PM [vite] page reload icebreaker/admin-dashboard/dist/index.html
+7:04:42 PM [vite] page reload icebreaker/admin-dashboard/dist/index.html
+7:04:42 PM [vite] page reload icebreaker/admin-dashboard/dist/index.html
+7:32:35 PM [vite] vite.config.js changed, restarting server...
+7:32:38 PM [vite] server restarted.
+10:01:28 AM [vite] http proxy error: /iceadmin/src/App.tsx?t=1783476220012
+AggregateError [ETIMEDOUT]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+10:01:30 AM [vite] http proxy error: /iceadmin/node_modules/vite/dist/client/env.mjs
+AggregateError [ETIMEDOUT]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+10:01:30 AM [vite] http proxy error: /iceadmin/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=c427a316
+AggregateError [ETIMEDOUT]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+11:05:13 AM [vite] hmr update /src/styles/tailwind.css, /src/Routes.jsx
+11:05:24 AM [vite] hmr update /src/Routes.jsx, /src/styles/tailwind.css
+11:06:04 AM [vite] hmr update /src/pages/IcebreakerLanding.jsx, /src/styles/tailwind.css
+11:06:15 AM [vite] vite.config.js changed, restarting server...
+11:06:16 AM [vite] server restarted.
+11:06:22 AM [vite] vite.config.js changed, restarting server...
+11:06:22 AM [vite] server restarted.
+12:53:37 PM [vite] hmr update /src/pages/IcebreakerLanding.jsx, /src/styles/tailwind.css
+12:53:43 PM [vite] vite.config.js changed, restarting server...
+12:53:43 PM [vite] server restarted.
+12:53:43 PM [vite] http proxy error: 
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+12:56:09 PM [vite] page reload dist/binaural-beats/admin.html
+12:56:12 PM [vite] page reload dist/binaural-beats/index.html
+12:56:12 PM [vite] page reload dist/binaural-beats/loading.html
+12:56:12 PM [vite] page reload dist/binaural-beats/offscreenDocument.html
+12:56:12 PM [vite] page reload dist/binaural-beats/site-blocker.html
+12:56:13 PM [vite] page reload dist/interstellar-game/android/app/src/main/assets/public/index.html
+12:56:13 PM [vite] page reload dist/interstellar-game/android/app/src/main/assets/public/privacy-policy.html
+12:56:13 PM [vite] page reload dist/interstellar-game/android/app/src/main/assets/public/terms-of-service.html
+12:56:13 PM [vite] page reload dist/interstellar-game/android/app/src/main/assets/public/test_audio_bug.html
+12:56:13 PM [vite] page reload dist/interstellar-game/dist/index.html
+12:56:13 PM [vite] page reload dist/interstellar-game/dist/privacy-policy.html
+12:56:13 PM [vite] page reload dist/interstellar-game/dist/terms-of-service.html
+12:56:13 PM [vite] page reload dist/interstellar-game/dist/test_audio_bug.html
+12:56:13 PM [vite] page reload dist/interstellar-game/dist/test_audio_bug.html
+12:56:13 PM [vite] page reload dist/interstellar-game/index.html
+12:56:13 PM [vite] page reload dist/interstellar-game/ios/App/App/public/index.html
+12:56:14 PM [vite] page reload dist/interstellar-game/ios/App/App/public/privacy-policy.html
+12:56:14 PM [vite] page reload dist/interstellar-game/ios/App/App/public/terms-of-service.html
+12:56:14 PM [vite] page reload dist/interstellar-game/ios/App/App/public/test_audio_bug.html
+12:56:18 PM [vite] page reload dist/interstellar-game/privacy-policy.html
+12:56:18 PM [vite] page reload dist/interstellar-game/terms-of-service.html
+12:56:18 PM [vite] page reload dist/interstellar-game/test_audio_bug.html
+12:56:18 PM [vite] page reload dist/interstellar-game-v8/interstellar-game/index.html
+12:56:18 PM [vite] page reload dist/interstellar-game_BROKEN_MAY11_CRASHED/index.html
+12:56:18 PM [vite] page reload dist/interstellar-game_backup/index.html
+12:56:18 PM [vite] page reload dist/interstellar-game_broken_phase25/index.html
+12:56:18 PM [vite] page reload dist/interstellar-game_current_backup_may10/index.html
+12:56:26 PM [vite] page reload dist/mindwave-friday.html
+12:56:26 PM [vite] page reload dist/index.html
+12:56:26 PM [vite] page reload dist/mindwave-beta.html
+12:56:26 PM [vite] page reload dist/mindwave.html
+12:56:26 PM [vite] page reload dist/mindwave-friday.html
+12:57:00 PM [vite] page reload legaleagle/dist/index.html
+12:57:01 PM [vite] page reload legaleagle/dist/index.html
+12:57:02 PM [vite] page reload dist/legaleagle/index.html
+12:58:00 PM [vite] http proxy error: 
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+12:59:50 PM [vite] vite.config.js changed, restarting server...
+12:59:51 PM [vite] server restarted.
+1:11:18 PM [vite] http proxy error: 
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:11:21 PM [vite] http proxy error: 
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:11:23 PM [vite] http proxy error: 
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:11:24 PM [vite] http proxy error: 
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:37:54 PM [vite] http proxy error: 
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:37:57 PM [vite] http proxy error: 
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+4:39:04 PM [vite] page reload src/pages/home/components/PortfolioSection.jsx
