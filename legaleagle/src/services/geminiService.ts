@@ -27,7 +27,6 @@ const delay = (ms: number): Promise<void> =>
 const MODEL_FALLBACK_CHAIN = [
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
-    'gemini-2.5-flash',
     'gemini-2.5-pro',
 ];
 
@@ -153,7 +152,19 @@ export const callGemini = async (
                     break; // break inner retry loop, move to next model
                 }
 
-                // Non-retryable client errors (except 429 handled above)
+                // Handle model deprecation/not found (404 or 400)
+                if (error.status === 404 || error.status === 400 || errorMessage.includes('404') || errorMessage.includes('400')) {
+                    const isModelError = errorMessage.toLowerCase().includes('model') && 
+                                       (errorMessage.toLowerCase().includes('not found') || 
+                                        errorMessage.toLowerCase().includes('no longer available') ||
+                                        errorMessage.toLowerCase().includes('not exist'));
+                    if (isModelError || error.status === 404) {
+                        console.warn(`[Gemini] Model ${model} is deprecated or not found. Falling back to next model...`);
+                        break; // break inner retry loop, move to next model
+                    }
+                }
+
+                // Non-retryable client errors (except 429 and deprecation handled above)
                 if (error.status && error.status >= 400 && error.status < 500) {
                     throw error;
                 }

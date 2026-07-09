@@ -14,6 +14,8 @@ export default function BrandDetail({ params }: { params: { id: string } }) {
   const { brands, setActiveWorkspace } = useWorkspace();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [brandData, setBrandData] = useState<any>(null);
+  const [isEditingGuidelines, setIsEditingGuidelines] = useState(false);
+  const [editForm, setEditForm] = useState({ targetAudience: '', toneOfVoice: '' });
 
   const brand = brands.find(b => b.id === params.id);
 
@@ -21,10 +23,23 @@ export default function BrandDetail({ params }: { params: { id: string } }) {
     if (!params.id) return;
     const unsubscribe = onSnapshot(doc(db, 'brands', params.id), (docSnap) => {
       if (docSnap.exists()) {
-        setBrandData({ id: docSnap.id, ...docSnap.data() });
+        const data = docSnap.data();
+        setBrandData({ id: docSnap.id, ...data });
+        if (!isEditingGuidelines) {
+          setEditForm({
+            targetAudience: data.targetAudience || 'Tech-savvy professionals aged 25-45 looking for AI automation tools. High emphasis on productivity and ROI.',
+            toneOfVoice: data.toneOfVoice || 'Authoritative, innovative, yet accessible. Avoid overly dense jargon. Focus on actionable insights.'
+          });
+        }
       } else if (brand) {
         // Fallback to provider data if doc doesn't exist yet but is in context
         setBrandData(brand);
+        if (!isEditingGuidelines) {
+          setEditForm({
+            targetAudience: brand.targetAudience || 'Tech-savvy professionals aged 25-45 looking for AI automation tools. High emphasis on productivity and ROI.',
+            toneOfVoice: brand.toneOfVoice || 'Authoritative, innovative, yet accessible. Avoid overly dense jargon. Focus on actionable insights.'
+          });
+        }
       }
     });
     return () => unsubscribe();
@@ -40,6 +55,19 @@ export default function BrandDetail({ params }: { params: { id: string } }) {
       </div>
     );
   }
+
+  const handleSaveGuidelines = async () => {
+    if (!brandData?.id) return;
+    try {
+      await updateDoc(doc(db, 'brands', brandData.id), {
+        targetAudience: editForm.targetAudience,
+        toneOfVoice: editForm.toneOfVoice
+      });
+      setIsEditingGuidelines(false);
+    } catch (e) {
+      console.error('Failed to save guidelines:', e);
+    }
+  };
 
   return (
     <div className="min-h-screen p-8 md:p-12 bg-transparent text-white relative">
@@ -88,22 +116,63 @@ export default function BrandDetail({ params }: { params: { id: string } }) {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Brand Guidelines</h2>
-                <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-all">
-                  Edit Guidelines
-                </button>
+                {isEditingGuidelines ? (
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setIsEditingGuidelines(false)}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handleSaveGuidelines}
+                      className="px-4 py-2 bg-[#60a9ff] hover:bg-[#4b8ce0] text-black rounded-lg text-sm font-bold transition-all"
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log("Edit Guidelines button clicked!");
+                      setIsEditingGuidelines(true);
+                    }}
+                    style={{ position: 'relative', zIndex: 50, pointerEvents: 'auto' }}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-all cursor-pointer"
+                  >
+                    Edit Guidelines
+                  </button>
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
+                <div className="bg-black/20 p-6 rounded-2xl border border-white/5 flex flex-col">
                   <h3 className="text-[#60a9ff] font-bold mb-3 uppercase tracking-wider text-xs">Target Audience</h3>
-                  <p className="text-gray-300 text-sm leading-relaxed">
-                    Tech-savvy professionals aged 25-45 looking for AI automation tools. High emphasis on productivity and ROI.
-                  </p>
+                  {isEditingGuidelines ? (
+                    <textarea
+                      value={editForm.targetAudience}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, targetAudience: e.target.value }))}
+                      className="w-full flex-grow bg-black/40 border border-white/10 rounded-xl p-3 text-white text-sm focus:ring-2 focus:ring-[#60a9ff] outline-none min-h-[100px]"
+                    />
+                  ) : (
+                    <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                      {brandData?.targetAudience || 'Tech-savvy professionals aged 25-45 looking for AI automation tools. High emphasis on productivity and ROI.'}
+                    </p>
+                  )}
                 </div>
-                <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
+                <div className="bg-black/20 p-6 rounded-2xl border border-white/5 flex flex-col">
                   <h3 className="text-[#60a9ff] font-bold mb-3 uppercase tracking-wider text-xs">Tone of Voice</h3>
-                  <p className="text-gray-300 text-sm leading-relaxed">
-                    Authoritative, innovative, yet accessible. Avoid overly dense jargon. Focus on actionable insights.
-                  </p>
+                  {isEditingGuidelines ? (
+                    <textarea
+                      value={editForm.toneOfVoice}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, toneOfVoice: e.target.value }))}
+                      className="w-full flex-grow bg-black/40 border border-white/10 rounded-xl p-3 text-white text-sm focus:ring-2 focus:ring-[#60a9ff] outline-none min-h-[100px]"
+                    />
+                  ) : (
+                    <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                      {brandData?.toneOfVoice || 'Authoritative, innovative, yet accessible. Avoid overly dense jargon. Focus on actionable insights.'}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

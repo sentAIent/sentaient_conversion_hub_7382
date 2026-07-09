@@ -12,7 +12,7 @@ import { flowManager } from './utils/modal-manager.js';
 
 // Pre-define dynamic imports for performance modeling
 const lazy = {
-    onboarding: () => import('./ui/onboarding.js?v=FIX_TUTORIAL_V127'),
+    onboarding: () => import('./tutorial-walkthrough.js?v=TUTORIAL_V2'),
     pwa: () => import('./utils/pwa-install.js'),
     presence: () => import('./services/presence-service.js'),
     cursor: () => import('./ui/cursor.js'),
@@ -58,7 +58,7 @@ window.trackFeatureUse = trackFeatureUse;
 
 // Expose onboarding globally (Lazy)
 window.startOnboarding = async (force = false) => {
-    const { initializeOnboarding: start } = await lazy.onboarding();
+    const { initTutorial: start } = await lazy.onboarding();
     start(force);
 };
 window.startTutorial = () => window.startOnboarding(true);

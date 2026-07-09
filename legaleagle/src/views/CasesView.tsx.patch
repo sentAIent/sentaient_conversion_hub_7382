@@ -1,0 +1,106 @@
+--- legaleagle/src/views/CasesView.tsx
++++ legaleagle/src/views/CasesView.tsx
+@@ -4,4 +4,6 @@
+ import { Theme } from '@/types';
+ import toast from 'react-hot-toast';
+-import { Briefcase, Plus, Users, Lock, Eye, EyeOff, Save, Trash2, Folder, ChevronDown, ChevronRight } from 'lucide-react';
++import { Briefcase, Plus, Users, Lock, Eye, EyeOff, Save, Trash2, Folder, ChevronDown, ChevronRight, ArrowLeft, FileText, Upload } from 'lucide-react';
++import { fetchCaseDocuments, HistoryDocument } from '@/services/historyService';
++import { formatDate } from '@/utils';
+ 
+@@ -10,2 +12,3 @@
+     onLoadDemo: (demoId: string) => void;
++    onOpenDocument?: (doc: HistoryDocument) => void;
+ }
+@@ -28,2 +31,5 @@
+     const [showTimestamps, setShowTimestamps] = useState(true);
++    
++    const [selectedCase, setSelectedCase] = useState<any>(null);
++    const [caseDocuments, setCaseDocuments] = useState<HistoryDocument[]>([]);
+     
+@@ -144,2 +150,15 @@
+ 
++    const handleCaseClick = async (c: any) => {
++        if (c.isDemo) {
++            onLoadDemo(c.id);
++            return;
++        }
++        setSelectedCase(c);
++        setLoading(true);
++        try {
++            const docs = await fetchCaseDocuments(c.id);
++            setCaseDocuments(docs);
++        } catch (e) {}
++        setLoading(false);
++    };
++
+     return (
+@@ -148,8 +167,10 @@
+                 <div>
+-                    <h2 className={`text-2xl font-bold ${currentTheme.text}`}>{terminology} Management</h2>
++                    <h2 className={`text-2xl font-bold flex items-center gap-3 ${currentTheme.text}`}>
++                        {selectedCase && <button onClick={() => setSelectedCase(null)} className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"><ArrowLeft className="w-5 h-5"/></button>}
++                        {selectedCase ? selectedCase.name : `${terminology} Management`}
++                    </h2>
+                     <p className={`text-sm ${currentTheme.textMuted} mt-1`}>
+-                        Organize documents and configure access rules by {terminology.toLowerCase()}.
++                        {selectedCase ? (selectedCase.description || 'View and manage documents for this matter.') : `Organize documents and configure access rules by ${terminology.toLowerCase()}.`}
+                     </p>
+                 </div>
+-                {!isCreating && (
++                {!isCreating && !selectedCase && (
+                     <div className="flex items-center gap-4">
+@@ -181,2 +202,34 @@
+ 
++            {selectedCase ? (
++                <div className="space-y-6 animate-fade-in">
++                    <div className="flex justify-end mb-4">
++                        <button
++                            onClick={() => {
++                                // Ideally trigger a file upload to this case
++                                toast.success("To add a document, go to New Scan and save it to this Matter.", { icon: 'ℹ️' });
++                            }}
++                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTheme.button}`}
++                        >
++                            <Upload className="w-4 h-4" />
++                            Upload to {terminology.replace(/s$/, '')}
++                        </button>
++                    </div>
++                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
++                        {caseDocuments.map(doc => (
++                            <div key={doc.id} className={`p-5 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group hover:border-blue-500/50 transition-colors cursor-pointer`} onClick={() => onOpenDocument && onOpenDocument(doc)}>
++                                <div className="flex items-start gap-3">
++                                    <div className={`p-2 rounded-lg bg-blue-100 text-blue-700`}>
++                                        <FileText className="w-5 h-5" />
++                                    </div>
++                                    <div>
++                                        <h3 className={`font-semibold text-md ${currentTheme.text} mb-1 group-hover:text-blue-500 transition-colors`}>{doc.document_name || 'Untitled Document'}</h3>
++                                        <p className={`text-xs ${currentTheme.textMuted}`}>Score: {doc.score || 'N/A'}</p>
++                                        <p className={`text-xs ${currentTheme.textMuted} mt-1`}>Added {formatDate(new Date(doc.created_at))}</p>
++                                    </div>
++                                </div>
++                            </div>
++                        ))}
++                        {caseDocuments.length === 0 && !loading && (
++                            <div className={`col-span-full py-12 text-center rounded-xl border border-dashed ${currentTheme.border}`}>
++                                <FileText className={`w-12 h-12 mx-auto mb-4 ${currentTheme.textMuted} opacity-50`} />
++                                <h3 className={`text-lg font-medium ${currentTheme.text} mb-2`}>No documents yet</h3>
++                                <p className={`text-sm ${currentTheme.textMuted}`}>Go to New Scan to analyze and save a document to this {terminology.toLowerCase()}.</p>
++                            </div>
++                        )}
++                    </div>
++                </div>
++            ) : isCreating ? (
+@@ -327,3 +380,3 @@
+                     {cases.filter(c => !c.isDemo).map(c => (
+-                        <div key={c.id} className={`p-5 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group`}>
++                        <div key={c.id} className={`p-5 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group hover:border-blue-500/50 transition-colors`}>
+                             <div className="flex justify-between items-start mb-2">
+-                                <h3 className={`font-semibold text-lg ${currentTheme.text} ${c.isDemo ? 'cursor-pointer hover:underline' : ''}`} onClick={() => c.isDemo && onLoadDemo(c.id)}>
++                                <h3 className={`font-semibold text-lg cursor-pointer hover:text-blue-500 ${currentTheme.text}`} onClick={() => handleCaseClick(c)}>
+                                     {c.name} {c.isDemo && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">DEMO</span>}
+@@ -343,3 +396,3 @@
+                             </div>
+-                            <p className={`text-sm ${currentTheme.textMuted} mb-4 line-clamp-2 ${c.isDemo ? 'cursor-pointer' : ''}`} onClick={() => c.isDemo && onLoadDemo(c.id)}>
++                            <p className={`text-sm ${currentTheme.textMuted} mb-4 line-clamp-2 cursor-pointer`} onClick={() => handleCaseClick(c)}>
+                                 {c.description || 'No description'}

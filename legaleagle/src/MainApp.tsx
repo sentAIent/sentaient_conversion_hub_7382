@@ -8,6 +8,7 @@ import { Sidebar, DisclaimerModal } from '@/components';
 import { TopHeader } from '@/components/layout/TopHeader';
 import { AuthModal } from '@/components/auth/AuthModal';
 import toast from 'react-hot-toast';
+import { parseDocument } from '@/utils/documentParser';
 
 // Views
 import {
@@ -335,16 +336,27 @@ export default function MainApp() {
                 const demo = getDemoById(activeDemoId);
                 if (demo) {
                     const isRoast = newPerspective.toLowerCase() === 'roast';
-                    let newRecs = [...(isRoast && (demo as any).roastRecommendations ? (demo as any).roastRecommendations : demo.recommendations)];
+                    const perspectiveKey = newPerspective.toLowerCase();
+                    
+                    let baseRecs = demo.recommendations;
+                    if (isRoast && (demo as any).roastRecommendations?.length) {
+                        baseRecs = (demo as any).roastRecommendations;
+                    } else if (perspectiveKey === 'company' && (demo as any).companyRecommendations?.length) {
+                        baseRecs = (demo as any).companyRecommendations;
+                    } else if (perspectiveKey === 'user' && (demo as any).userRecommendations?.length) {
+                        baseRecs = (demo as any).userRecommendations;
+                    } else if (perspectiveKey === 'standard' && (demo as any).standardRecommendations?.length) {
+                        baseRecs = (demo as any).standardRecommendations;
+                    }
+                    
+                    let newRecs = [...baseRecs];
                     let newSwot = { ...(isRoast && (demo as any).roastSwot ? (demo as any).roastSwot : demo.swotData) };
 
-                    // Apply perspective
-                    if (newPerspective.toLowerCase() === 'company') {
-                        newSwot.strengths = ['Company favorable terms identified.', ...newSwot.strengths];
-                        newRecs = newRecs.map(r => ({ ...r, proposedText: r.proposedText.replace(/Client|User/g, 'Company') }));
-                    } else if (newPerspective.toLowerCase() === 'user') {
-                        newSwot.weaknesses = ['User data privacy could be better protected.', ...newSwot.weaknesses];
-                        newRecs = newRecs.map(r => ({ ...r, roastComment: r.roastComment ? r.roastComment + ' (User perspective)' : '(User perspective)' }));
+                    // Optional slight string tweaks if fallback occurred or just to augment
+                    if (perspectiveKey === 'company') {
+                        newSwot.strengths = ['Company favorable terms identified.', ...(newSwot.strengths || [])];
+                    } else if (perspectiveKey === 'user') {
+                        newSwot.weaknesses = ['User data privacy could be better protected.', ...(newSwot.weaknesses || [])];
                     }
 
                     // Apply depth
@@ -396,7 +408,7 @@ export default function MainApp() {
         }
     };
 
-    const handleAnalyze = async () => {
+    const handleAnalyze = async (useDemoPlaybook: boolean = false) => {
 
         if (!documentText) return;
 
@@ -408,7 +420,9 @@ export default function MainApp() {
         abortControllerRef.current = new AbortController();
 
         let playbookText = undefined;
-        if (profile?.current_team_id) {
+        if (useDemoPlaybook) {
+            playbookText = "ACME CORP LEGAL PLAYBOOK\n1. Indemnification: ACME Corp liability must always be capped at 12 months fees. Never accept uncapped indemnification.\n2. Governing Law: Must be Delaware or California. Reject any other jurisdiction.\n3. Payment Terms: Net 45 or Net 60 only. Reject Net 30.";
+        } else if (profile?.current_team_id) {
             const { data } = await supabase
                 .from('playbooks')
                 .select('rules_text')
@@ -672,15 +686,15 @@ Legal Team`;
     };
 
     // Handle file upload
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
 
         if (file) {
             setDocumentName(file.name);
+            const toastId = toast.loading('Extracting text from document...');
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const content = (e.target?.result as string).replace(/\r\n/g, '\n');
+            try {
+                const content = await parseDocument(file);
                 setDocumentText(content);
 
                 // Reset analysis state
@@ -689,13 +703,26 @@ Legal Team`;
                 setRecommendations([]);
                 setSwotData(null);
                 setHeatmapEnabled(false);
+                toast.success('Document loaded successfully', { id: toastId });
+            } catch (err: any) {
+                toast.error(`Failed to load document: ${err.message}`, { id: toastId });
+            }
 
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                }
-            };
-            reader.readAsText(file);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
+    };
+
+    // Handle clearing the document
+    const handleClearDocument = () => {
+        setDocumentText(INITIAL_TEXT);
+        setDocumentName('Draft_Agreement.txt');
+        setScore(0);
+        setAnalysisComplete(false);
+        setRecommendations([]);
+        setSwotData(null);
+        setHeatmapEnabled(false);
     };
 
     // Handle save
@@ -778,7 +805,7 @@ Legal Team`;
                     ref={fileInputRef}
                     onChange={handleFileUpload}
                     className="hidden"
-                    accept=".txt,.md,.json,.csv,.doc,.docx"
+                    accept=".txt,.md,.json,.csv,.doc,.docx,.pdf"
                     />
 
                 {/* Views */}
@@ -799,6 +826,7 @@ Legal Team`;
                         setActiveTab={setActiveTab}
                         onTriggerUpload={() => fileInputRef.current?.click()}
                         handleSave={handleSave}
+                        onClearDocument={handleClearDocument}
                         currentTheme={currentTheme}
                         scanProgress={scanProgress}
                         onAddAnnotation={() => {}}
@@ -808,6 +836,8 @@ Legal Team`;
                         setPerspective={setPerspective}
                         prevTab={prevTab}
                         analysisComplete={analysisComplete}
+                        activeCaseId={activeCaseId}
+                        setActiveCaseId={setActiveCaseId}
                     />
                 )}
 

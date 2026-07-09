@@ -13,11 +13,13 @@ import {
     ChevronsDown,
     ChevronUp,
     ChevronDown,
-    ChevronLeft
+    ChevronLeft,
+    Trash2
 } from 'lucide-react';
 import { findFuzzyMatch, tokenize } from '@/utils/textMatching';
 import type { Theme, Recommendation, ScanProgress, Severity, ContractType } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 interface EditorViewProps {
     documentName: string;
@@ -26,7 +28,7 @@ interface EditorViewProps {
     heatmapEnabled: boolean;
     setHeatmapEnabled: (enabled: boolean) => void;
     isAnalyzing: boolean;
-    handleAnalyze: () => void;
+    handleAnalyze: (useDemoPlaybook?: boolean) => void;
     handleCancelAnalysis?: () => void;
     recommendations: Recommendation[];
     isRoastMode: boolean;
@@ -46,6 +48,9 @@ interface EditorViewProps {
     setPerspective?: (perspective: string) => void;
     prevTab?: string | null;
     analysisComplete?: boolean;
+    activeCaseId?: string | null;
+    setActiveCaseId?: (id: string | null) => void;
+    onClearDocument?: () => void;
 }
 
 export const EditorView: React.FC<EditorViewProps> = ({
@@ -75,9 +80,20 @@ export const EditorView: React.FC<EditorViewProps> = ({
     setPerspective,
     prevTab = null,
     analysisComplete = false,
+    activeCaseId = null,
+    setActiveCaseId,
+    onClearDocument,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const { profile } = useAuth();
+
+    const [cases, setCases] = useState<any[]>([]);
+    useEffect(() => {
+        if (profile?.current_team_id) {
+            supabase.from('cases').select('*').eq('team_id', profile.current_team_id).order('created_at', { ascending: false })
+                .then(({ data }) => setCases(data || []));
+        }
+    }, [profile?.current_team_id]);
 
     // Check if user has exceeded their limits (demo/free users get 1 review by default)
     const isLimitExceeded = profile && profile.reviews_used >= profile.reviews_limit;
@@ -284,6 +300,22 @@ export const EditorView: React.FC<EditorViewProps> = ({
                             </h2>
                         </div>
                         <div className="flex gap-2">
+                            {setActiveCaseId && (
+                                <select
+                                    value={activeCaseId || ''}
+                                    onChange={(e) => setActiveCaseId(e.target.value || null)}
+                                    className={`text-xs font-bold py-1.5 px-3 rounded-lg appearance-none transition-all outline-none border cursor-pointer ${
+                                        currentTheme.id === 'light' || currentTheme.id === 'corporate'
+                                            ? 'bg-slate-200/50 border-slate-300 text-slate-900' 
+                                            : 'bg-black/20 border-white/10 text-white hover:bg-black/40'
+                                    }`}
+                                >
+                                    <option value="">No Matter Assigned</option>
+                                    {cases.filter(c => !c.isDemo).map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            )}
                             {setContractType && (
                                 <select
                                     value={contractType}
@@ -343,13 +375,32 @@ export const EditorView: React.FC<EditorViewProps> = ({
                                 </button>
                             </div>
                         ) : (
-                            <button
-                                onClick={handleRunAudit}
-                                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${isLimitExceeded ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-                            >
-                                <Gavel className="w-4 h-4" />
-                                {isLimitExceeded ? 'Upgrade to Analyze' : 'Run Legal Audit'}
-                            </button>
+                            <>
+                                {documentName === 'Draft_Agreement.txt' ? (
+                                    <button
+                                        onClick={() => handleAnalyze(true)}
+                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all bg-emerald-600 text-white hover:bg-emerald-700`}
+                                    >
+                                        <FileText className="w-4 h-4" />
+                                        Apply ACME Playbook
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setActiveTab('playbook')}
+                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all bg-emerald-600 text-white hover:bg-emerald-700`}
+                                    >
+                                        <FileText className="w-4 h-4" />
+                                        Add Playbook
+                                    </button>
+                                )}
+                                <button
+                                    onClick={handleRunAudit}
+                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${isLimitExceeded ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                                >
+                                    <Gavel className="w-4 h-4" />
+                                    {isLimitExceeded ? 'Upgrade to Analyze' : 'Run Legal Audit'}
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
@@ -432,6 +483,15 @@ export const EditorView: React.FC<EditorViewProps> = ({
                         >
                             <Upload className="w-4 h-4" /> Upload
                         </button>
+                        {onClearDocument && (
+                            <button
+                                onClick={onClearDocument}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium border border-transparent text-red-600 hover:bg-red-50`}
+                                title="Clear Document"
+                            >
+                                <Trash2 className="w-4 h-4" /> Clear
+                            </button>
+                        )}
                         
                         <div className="flex items-center rounded-lg border bg-slate-100 overflow-hidden text-sm font-medium">
                             <button

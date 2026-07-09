@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Theme } from '@/types';
-import { Save, BookOpen, AlertTriangle } from 'lucide-react';
+import { Save, BookOpen, AlertTriangle, Upload } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { parseDocument } from '@/utils/documentParser';
 
 interface PlaybookViewProps {
     currentTheme: Theme;
@@ -13,6 +15,7 @@ export const PlaybookView: React.FC<PlaybookViewProps> = ({ currentTheme }) => {
     const { profile } = useAuth();
     const [rulesText, setRulesText] = useState('');
     const [loading, setLoading] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
@@ -68,6 +71,25 @@ export const PlaybookView: React.FC<PlaybookViewProps> = ({ currentTheme }) => {
         }
     };
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const toastId = toast.loading('Extracting text from document...');
+            const text = await parseDocument(file);
+            setRulesText(prev => prev ? prev + '\n\n' + text : text);
+            toast.success('Document text loaded successfully. Remember to click Save.', { id: toastId });
+        } catch (err: any) {
+            toast.error(`Failed to load document: ${err.message}`);
+        }
+        
+        // Reset input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     if (!profile?.current_team_id) {
         return (
             <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in pb-12 text-center pt-12">
@@ -83,9 +105,11 @@ export const PlaybookView: React.FC<PlaybookViewProps> = ({ currentTheme }) => {
     return (
         <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
             <div>
-                <h2 className={`text-2xl font-bold mb-2 ${currentTheme.text}`}>Custom Legal Playbook</h2>
+                <h2 className={`text-2xl font-bold mb-2 ${currentTheme.text}`}>RAG Legal Playbook</h2>
                 <p className={`${currentTheme.textMuted} mb-6`}>
-                    Define your company's specific legal rules and guardrails in plain English. The AI will enforce these rules on every contract you scan.
+                    This is your team's custom Retrieval-Augmented Generation (RAG) knowledge base. 
+                    The AI Legal Assistant will automatically consult these rules and guidelines whenever you run a Legal Audit, 
+                    using them to generate highly contextual, personalized recommendations and flag specific violations.
                 </p>
             </div>
 
@@ -97,7 +121,7 @@ export const PlaybookView: React.FC<PlaybookViewProps> = ({ currentTheme }) => {
 
             {success && (
                 <div className="p-4 bg-green-100 text-green-700 rounded-lg text-sm border border-green-200">
-                    Playbook saved successfully!
+                    Playbook saved successfully! The AI will now use these rules for all future analyses.
                 </div>
             )}
 
@@ -107,25 +131,44 @@ export const PlaybookView: React.FC<PlaybookViewProps> = ({ currentTheme }) => {
                         <div className={`p-2 rounded-lg ${currentTheme.primary} bg-opacity-10 text-blue-600`}>
                             <BookOpen className="w-5 h-5" />
                         </div>
-                        <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Rules Engine</h3>
+                        <div>
+                            <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Rules & Guidelines Engine</h3>
+                            <p className={`text-xs ${currentTheme.textMuted}`}>Define your company's specific legal rules in plain English.</p>
+                        </div>
                     </div>
                     
-                    <button
-                        onClick={handleSave}
-                        disabled={loading}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold transition-all ${currentTheme.button} disabled:opacity-50`}
-                    >
-                        <Save className="w-4 h-4" />
-                        {loading ? 'Saving...' : 'Save Playbook'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleFileUpload} 
+                            className="hidden" 
+                        />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTheme.button} bg-opacity-10 hover:bg-opacity-20`}
+                        >
+                            <Upload className="w-4 h-4" />
+                            Upload (.txt, .md)
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={loading}
+                            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold transition-all ${currentTheme.button} disabled:opacity-50`}
+                        >
+                            <Save className="w-4 h-4" />
+                            {loading ? 'Saving to RAG...' : 'Save Knowledge Base'}
+                        </button>
+                    </div>
                 </div>
 
-                <div className="mb-4 text-sm text-amber-600 bg-amber-50 p-4 rounded-lg border border-amber-200">
-                    <strong className="block mb-1">Tips for effective rules:</strong>
-                    <ul className="list-disc pl-5 space-y-1">
-                        <li>Be specific (e.g., "Always ensure governing law is Delaware or New York.")</li>
-                        <li>Include both required inclusions and explicit exclusions.</li>
-                        <li>Number your rules for better AI comprehension.</li>
+                <div className="mb-4 text-sm bg-blue-50/50 p-4 rounded-lg border border-blue-100 text-blue-800">
+                    <strong className="block mb-2 font-bold">How to structure your Playbook for optimal AI extraction:</strong>
+                    <ul className="list-disc pl-5 space-y-1.5 opacity-90">
+                        <li><strong>Be explicit:</strong> (e.g., "Always ensure governing law is Delaware or New York. Reject California.")</li>
+                        <li><strong>Use numbered lists:</strong> Discrete, numbered rules are easier for the LLM to parse and apply.</li>
+                        <li><strong>Provide Fallbacks:</strong> Include negotiation fallback positions (e.g., "If Net 30 is rejected, accept Net 45. Never Net 90.")</li>
+                        <li><strong>Define Risk Severity:</strong> Tell the AI what is a dealbreaker vs. a minor issue.</li>
                     </ul>
                 </div>
 

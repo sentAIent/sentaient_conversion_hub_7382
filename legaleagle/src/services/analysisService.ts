@@ -31,7 +31,7 @@ import type {
 } from '@/types';
 
 const MODEL_CONFIG = {
-    'gemini-2.5-flash': 80000,
+    'gemini-2.0-flash': 80000,
     'gemini-2.5-pro': 150000,
     'default': 30000
 };
@@ -269,21 +269,61 @@ export const analyzeDocument = async (
         // Change data based on perspective
         if (perspective.toLowerCase() === 'company') {
             customSwot.strengths = ['Company favorable terms', 'Clear service delivery requirements'];
+            customSwot.weaknesses = ['No IP assignment clause', 'Missing confidentiality protections'];
+            customSwot.opportunities = ['Include unilateral termination right', 'Add automatic renewal clause'];
+            customSwot.threats = ['Unlimited liability exposure to third parties'];
+            
             customRecs = customRecs.map(r => ({
                 ...r,
                 proposedText: r.proposedText.replace('Client', 'Company'),
             }));
+            customRecs.push({
+                id: 104,
+                section: '7. IP RIGHTS',
+                severity: 'High',
+                category: 'Intellectual Property',
+                title: 'No IP Protection for Company',
+                roastTitle: 'Giving Away the Farm',
+                currentText: 'Client owns the work product.',
+                proposedText: 'Company retains all pre-existing IP. Client receives a non-exclusive license upon full payment.',
+                legalBasis: 'Standard IP retention.',
+                roastComment: 'Never give it away for free.',
+                scoreImpact: 10,
+                citation: 'IP Law Standard',
+                accepted: false
+            });
         } else if (perspective.toLowerCase() === 'user') {
+            customSwot.strengths = ['Basic scope is defined'];
             customSwot.weaknesses = ['User data privacy not explicitly protected', 'No explicit termination for convenience for User'];
+            customSwot.opportunities = ['Add mutual NDA', 'Define strict SLA with penalties'];
+            customSwot.threats = ['Vendor lock-in without clear exit strategy', 'Uncapped damages from data breach'];
+            
             customRecs = customRecs.map(r => ({
                 ...r,
                 roastComment: r.roastComment + ' (User perspective)',
             }));
+            customRecs.push({
+                id: 105,
+                section: '8. DATA PRIVACY',
+                severity: 'Critical',
+                category: 'Privacy',
+                title: 'Missing Data Processing Agreement',
+                roastTitle: 'GDPR Nightmare Fuel',
+                currentText: 'Provider can use Client data.',
+                proposedText: 'Provider shall only process Client data in accordance with strict DPA terms and may not sell or share data.',
+                legalBasis: 'CCPA/GDPR compliance.',
+                roastComment: 'This is how you end up in the news.',
+                scoreImpact: 15,
+                citation: 'GDPR Art. 28',
+                accepted: false
+            });
         }
         
         // Change data based on depth
         if (analysisDepth === 'quick') {
             customRecs = customRecs.filter(r => r.severity === 'High' || r.severity === 'Critical');
+            customSwot.weaknesses = customSwot.weaknesses.filter(w => w.includes('Critical') || w.includes('exposure'));
+            customSwot.opportunities = customSwot.opportunities.slice(0, 1);
         } else if (analysisDepth === 'deep') {
             customRecs.push({
                 id: 999,
@@ -313,7 +353,7 @@ export const analyzeDocument = async (
         throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
     }
 
-    let model = 'gemini-2.5-flash'; // Safer rate limits for default/quick
+    let model = 'gemini-2.0-flash'; // Safer rate limits for default/quick
     if (analysisDepth === 'deep') {
         model = 'gemini-2.5-pro';
     }

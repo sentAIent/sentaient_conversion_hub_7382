@@ -146,6 +146,16 @@ const HeroSection = () => {
         <ChevronRight className="w-5 h-5" />
       </button>
 
+      {/* ── Hidden Preloader for all slides ── */}
+      <div className="hidden" aria-hidden="true">
+        {SLIDES.map(s => (
+          <React.Fragment key={`preload-${s.id}`}>
+            <img src={s.image} alt="" loading="lazy" />
+            <img src={s.logo} alt="" loading="lazy" />
+          </React.Fragment>
+        ))}
+      </div>
+
       {/* ── Content ── */}
       <div className="relative z-20 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-20 text-left">
 
@@ -163,6 +173,9 @@ const HeroSection = () => {
               <img
                 src={slide.logo}
                 alt={`${slide.appName} logo`}
+                width={80}
+                height={80}
+                loading="eager"
                 className={`w-full h-full object-contain ${slide.logoScale}`}
               />
             </div>

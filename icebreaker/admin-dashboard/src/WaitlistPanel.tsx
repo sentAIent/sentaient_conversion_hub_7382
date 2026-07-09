@@ -16,7 +16,7 @@ export default function WaitlistPanel({ password }: { password: string }) {
         if (password) fetchWaitlist();
     }, [password]);
 
-    const fetchWaitlist = async () => {
+    const fetchWaitlist = async (retries = 3, delay = 1000) => {
         setLoading(true);
         setError('');
         try {
@@ -27,9 +27,15 @@ export default function WaitlistPanel({ password }: { password: string }) {
             const snapshot = await getDocs(q);
             setEntries(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         } catch (err: any) {
-            setError('Failed to load waitlist: ' + err.message);
+            if (retries > 0) {
+                setTimeout(() => fetchWaitlist(retries - 1, delay * 2), delay);
+                return;
+            }
+            setError('Failed to load waitlist after multiple attempts: ' + err.message);
         } finally {
-            setLoading(false);
+            if (retries === 0) {
+                setLoading(false);
+            }
         }
     };
 

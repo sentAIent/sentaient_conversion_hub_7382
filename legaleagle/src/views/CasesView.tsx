@@ -3,11 +3,15 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Theme } from '@/types';
 import toast from 'react-hot-toast';
-import { Briefcase, Plus, Users, Lock, Eye, EyeOff, Save, Trash2, Folder, ChevronDown, ChevronRight } from 'lucide-react';
+import { Briefcase, Plus, Users, Lock, Eye, EyeOff, Save, Trash2, Folder, ChevronDown, ChevronRight, ArrowLeft, FileText, Upload } from 'lucide-react';
+import { fetchCaseDocuments, HistoryDocument } from '@/services/historyService';
+import { formatDate } from '@/utils';
+import { parseDocument } from '@/utils/documentParser';
 
 interface CasesViewProps {
     currentTheme: Theme;
     onLoadDemo: (demoId: string) => void;
+    onOpenDocument?: (doc: HistoryDocument) => void;
 }
 
 const PRE_INSTALLED_DEMOS = [
@@ -18,7 +22,7 @@ const PRE_INSTALLED_DEMOS = [
     { id: 'snapchat', name: 'Snapchat Demo', description: 'Snapchat Terms of Service', access_level: 'public', isDemo: true }
 ];
 
-export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }) => {
+export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo, onOpenDocument }) => {
     const { user, profile } = useAuth();
     const [cases, setCases] = useState<any[]>(PRE_INSTALLED_DEMOS);
     const [loading, setLoading] = useState(false);
@@ -27,6 +31,13 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
     const [isDemosExpanded, setIsDemosExpanded] = useState(false);
     const [showTimestamps, setShowTimestamps] = useState(true);
     
+    const [selectedCase, setSelectedCase] = useState<any>(null);
+    const [caseDocuments, setCaseDocuments] = useState<HistoryDocument[]>([]);
+    
+    // Dashboard state
+    const [recentDocuments, setRecentDocuments] = useState<any[]>([]);
+    const [loadingDocs, setLoadingDocs] = useState(false);
+    
     // Form state
     const [isCreating, setIsCreating] = useState(false);
     const [editingCase, setEditingCase] = useState<any>(null);
@@ -34,12 +45,17 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
     const [caseDesc, setCaseDesc] = useState('');
     const [accessLevel, setAccessLevel] = useState('public');
     const [accessList, setAccessList] = useState<{user_id: string, access_type: string}[]>([]);
+    
+    // File upload state
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         if (profile?.current_team_id) {
             fetchTerminology();
             fetchCases();
             fetchMembers();
+            fetchRecentDocuments();
         }
     }, [profile?.current_team_id]);
 
@@ -71,6 +87,81 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
             setCases([...PRE_INSTALLED_DEMOS]);
         }
         setLoading(false);
+    };
+
+    const fetchRecentDocuments = async () => {
+        setLoadingDocs(true);
+        try {
+            const { data, error } = await supabase
+                .from('documents')
+                .select('*')
+                .eq('team_id', profile!.current_team_id!)
+                .order('created_at', { ascending: false })
+                .limit(5);
+            
+            if (error) {
+                console.warn('Error fetching documents (table may not exist yet):', error);
+                setRecentDocuments([]);
+            } else {
+                setRecentDocuments(data || []);
+            }
+        } catch (e) {
+            console.error(e);
+            setRecentDocuments([]);
+        }
+        setLoadingDocs(false);
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        
+        setIsUploading(true);
+        const toastId = toast.loading(`Uploading ${files.length} document(s)...`);
+        
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const text = await parseDocument(file);
+                
+                if (selectedCase) {
+                    const { error } = await supabase.from('history').insert({
+                        user_id: user?.id,
+                        team_id: profile!.current_team_id!,
+                        case_id: selectedCase.id,
+                        document_name: file.name,
+                        document_text: text,
+                        score: 0
+                    });
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabase.from('documents').insert({
+                        team_id: profile!.current_team_id!,
+                        uploader_id: user?.id,
+                        name: file.name,
+                        content: text,
+                        status: 'draft'
+                    });
+                    if (error) throw error;
+                }
+            }
+            
+            toast.success(`Successfully uploaded ${files.length} document(s)`, { id: toastId });
+            
+            if (selectedCase) {
+                const docs = await fetchCaseDocuments(selectedCase.id);
+                setCaseDocuments(docs);
+            } else {
+                fetchRecentDocuments();
+            }
+        } catch (err: any) {
+            toast.error(`Upload failed: ${err.message}`, { id: toastId });
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
     };
 
     const handleSave = async () => {
@@ -143,16 +234,40 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
         fetchCases();
     };
 
+    const handleCaseClick = async (c: any) => {
+        if (c.isDemo) {
+            onLoadDemo(c.id);
+            return;
+        }
+        setSelectedCase(c);
+        setLoading(true);
+        try {
+            const docs = await fetchCaseDocuments(c.id);
+            setCaseDocuments(docs);
+        } catch (e) {}
+        setLoading(false);
+    };
+
     return (
         <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{ display: 'none' }} 
+                multiple 
+                onChange={handleFileUpload} 
+            />
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className={`text-2xl font-bold ${currentTheme.text}`}>{terminology} Management</h2>
+                    <h2 className={`text-2xl font-bold flex items-center gap-3 ${currentTheme.text}`}>
+                        {selectedCase && <button onClick={() => setSelectedCase(null)} className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"><ArrowLeft className="w-5 h-5"/></button>}
+                        {selectedCase ? selectedCase.name : `${terminology} Management`}
+                    </h2>
                     <p className={`text-sm ${currentTheme.textMuted} mt-1`}>
-                        Organize documents and configure access rules by {terminology.toLowerCase()}.
+                        {selectedCase ? (selectedCase.description || 'View and manage documents for this matter.') : `Organize documents and configure access rules by ${terminology.toLowerCase()}.`}
                     </p>
                 </div>
-                {!isCreating && (
+                {!isCreating && !selectedCase && (
                     <div className="flex items-center gap-4">
                         <button 
                             onClick={() => setShowTimestamps(!showTimestamps)}
@@ -179,7 +294,91 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
                 )}
             </div>
 
-            {isCreating ? (
+            {!selectedCase && !isCreating && (
+                <div className="space-y-4 mb-10 animate-fade-in">
+                    <div className="flex justify-between items-center">
+                        <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Recent Documents</h3>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${currentTheme.button} ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            <Upload className="w-4 h-4" />
+                            {isUploading ? 'Uploading...' : 'Upload Document'}
+                        </button>
+                    </div>
+                    {loadingDocs ? (
+                        <div className={`p-8 text-center text-sm ${currentTheme.textMuted}`}>Loading documents...</div>
+                    ) : recentDocuments.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {recentDocuments.map(doc => (
+                                <div key={doc.id} className={`p-4 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group hover:border-blue-500/50 transition-colors cursor-pointer`}>
+                                    <div className="flex items-start gap-3">
+                                        <div className={`p-2 rounded-lg bg-blue-100 text-blue-700`}>
+                                            <FileText className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className={`font-semibold text-sm ${currentTheme.text} mb-1 group-hover:text-blue-500 transition-colors`}>{doc.name || 'Untitled'}</h3>
+                                            <p className={`text-xs ${currentTheme.textMuted}`}>{doc.status}</p>
+                                            <p className={`text-xs ${currentTheme.textMuted} mt-1`}>{formatDate(new Date(doc.created_at))}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className={`p-8 rounded-xl border border-dashed ${currentTheme.border} text-center`}>
+                            <FileText className={`w-8 h-8 mx-auto mb-2 ${currentTheme.textMuted} opacity-50`} />
+                            <p className={`text-sm ${currentTheme.textMuted}`}>No recent documents found in this workspace.</p>
+                            <p className={`text-xs ${currentTheme.textMuted} mt-1`}>(Note: If you haven't run the SQL setup, this will remain empty).</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {!selectedCase && !isCreating && (
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className={`text-lg font-semibold ${currentTheme.text}`}>{terminology}</h3>
+                </div>
+            )}
+
+            {selectedCase ? (
+                <div className="space-y-6 animate-fade-in">
+                    <div className="flex justify-end mb-4">
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${currentTheme.button} ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            <Upload className="w-4 h-4" />
+                            {isUploading ? 'Uploading...' : `Upload to ${terminology.replace(/s$/, '')}`}
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {caseDocuments.map(doc => (
+                            <div key={doc.id} className={`p-5 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group hover:border-blue-500/50 transition-colors cursor-pointer`} onClick={() => onOpenDocument && onOpenDocument(doc)}>
+                                <div className="flex items-start gap-3">
+                                    <div className={`p-2 rounded-lg bg-blue-100 text-blue-700`}>
+                                        <FileText className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className={`font-semibold text-md ${currentTheme.text} mb-1 group-hover:text-blue-500 transition-colors`}>{doc.document_name || 'Untitled Document'}</h3>
+                                        <p className={`text-xs ${currentTheme.textMuted}`}>Score: {doc.score || 'N/A'}</p>
+                                        <p className={`text-xs ${currentTheme.textMuted} mt-1`}>Added {formatDate(new Date(doc.created_at))}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {caseDocuments.length === 0 && !loading && (
+                            <div className={`col-span-full py-12 text-center rounded-xl border border-dashed ${currentTheme.border}`}>
+                                <FileText className={`w-12 h-12 mx-auto mb-4 ${currentTheme.textMuted} opacity-50`} />
+                                <h3 className={`text-lg font-medium ${currentTheme.text} mb-2`}>No documents yet</h3>
+                                <p className={`text-sm ${currentTheme.textMuted}`}>Go to New Scan to analyze and save a document to this {terminology.toLowerCase()}.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ) : isCreating ? (
                 <div className={`p-6 rounded-xl shadow-sm ${currentTheme.card} border ${currentTheme.border} space-y-6`}>
                     <div>
                         <label className={`block text-sm font-medium mb-2 ${currentTheme.text}`}>Name</label>
@@ -325,9 +524,9 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
                     {/* Standard Cases Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {cases.filter(c => !c.isDemo).map(c => (
-                        <div key={c.id} className={`p-5 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group`}>
+                        <div key={c.id} className={`p-5 rounded-xl border ${currentTheme.border} ${currentTheme.card} shadow-sm group hover:border-blue-500/50 transition-colors`}>
                             <div className="flex justify-between items-start mb-2">
-                                <h3 className={`font-semibold text-lg ${currentTheme.text} ${c.isDemo ? 'cursor-pointer hover:underline' : ''}`} onClick={() => c.isDemo && onLoadDemo(c.id)}>
+                                <h3 className={`font-semibold text-lg cursor-pointer hover:text-blue-500 transition-colors ${currentTheme.text}`} onClick={() => handleCaseClick(c)}>
                                     {c.name} {c.isDemo && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">DEMO</span>}
                                 </h3>
                                 {!c.isDemo && (
@@ -341,7 +540,7 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo }
                                     </div>
                                 )}
                             </div>
-                            <p className={`text-sm ${currentTheme.textMuted} mb-4 line-clamp-2 ${c.isDemo ? 'cursor-pointer' : ''}`} onClick={() => c.isDemo && onLoadDemo(c.id)}>
+                            <p className={`text-sm ${currentTheme.textMuted} mb-4 line-clamp-2 cursor-pointer`} onClick={() => handleCaseClick(c)}>
                                 {c.description || 'No description'}
                             </p>
                             <div className="flex items-center gap-3 text-xs">

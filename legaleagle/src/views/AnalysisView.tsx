@@ -140,7 +140,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
             )}
 
             {/* Left Sidebar - Issues List */}
-            <div className={`w-96 border-r flex flex-col h-full z-10 shadow-md shrink-0 transition-colors ${currentTheme.sidebar} min-h-0`}>
+            <div className={`w-96 border-r flex flex-col h-full z-10 shadow-md shrink-0 transition-colors ${currentTheme.sidebar} overflow-y-auto`}>
                 {/* Sidebar Header */}
                 <div className="p-6 border-b border-white/10 shrink-0">
                     <h2 className={`font-bold text-lg mb-4 ${isLightSidebar ? 'text-slate-800' : 'text-white'}`}>
@@ -148,7 +148,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                     </h2>
                     
                     {/* Analysis Depth Toggle — Basic vs Standard only */}
-                    {!isRoastMode && setAnalysisDepth && (
+                    {setAnalysisDepth && (
                         <div className="mb-3">
                             <p className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 ${isLightSidebar ? 'text-slate-400' : 'text-slate-500'}`}>Scan Depth</p>
                             <div className={`p-1 flex rounded-xl border shadow-inner ${isLightSidebar ? 'bg-slate-200/50 border-slate-300/50' : 'bg-slate-900/50 border-slate-800'}`}>
@@ -174,7 +174,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                     )}
 
                     {/* Perspective Toggle — Whose side are we on? */}
-                    {!isRoastMode && (
+                    {true && (
                         <div className="mb-6">
                             <p className={`text-[10px] font-bold uppercase tracking-widest mb-1.5 ${isLightSidebar ? 'text-slate-400' : 'text-slate-500'}`}>Perspective</p>
                             <div className={`p-1 flex rounded-xl border shadow-inner ${isLightSidebar ? 'bg-slate-200/50 border-slate-300/50' : 'bg-slate-900/50 border-slate-800'}`}>
@@ -229,7 +229,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                 </div>
 
                 {/* Issues List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+                <div className="p-4 space-y-3 shrink-0">
                     <div className="flex items-center justify-between px-2 mb-2">
                         <div className={`text-xs font-bold uppercase tracking-wider ${currentTheme.sidebarText}`}>
                             Issues

@@ -42,6 +42,17 @@ export const fetchLibraryDocuments = async (userId: string, includeDeleted = fal
     return data || [];
 };
 
+export const fetchCaseDocuments = async (caseId: string): Promise<HistoryDocument[]> => {
+    const { data, error } = await supabase
+        .from('history')
+        .select('*, profiles:user_id(username, full_name)')
+        .eq('case_id', caseId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+};
+
 export const fetchDeletedDocuments = async (userId: string): Promise<HistoryDocument[]> => {
     const { data, error } = await supabase
         .from('history')

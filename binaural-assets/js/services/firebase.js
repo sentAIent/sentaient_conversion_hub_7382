@@ -300,17 +300,7 @@ export async function loginUser(email, password) {
     }
 
     if (!auth) throw new Error("Firebase not initialized");
-    try {
-        return await signInWithEmailAndPassword(auth, email, password);
-    } catch (e) {
-        if (e.code === 'auth/network-request-failed' || (e.message && e.message.includes('network'))) {
-            console.warn("[Firebase] Network request failed during login. Falling back to MOCK MODE.");
-            isMock = true;
-            // Execute mock login recursively now that isMock is true
-            return loginUser(email, password);
-        }
-        throw e;
-    }
+    return await signInWithEmailAndPassword(auth, email, password);
 }
 
 export async function registerUser(email, password, displayName) {
@@ -335,21 +325,11 @@ export async function registerUser(email, password, displayName) {
     }
 
     if (!auth) throw new Error("Firebase not initialized");
-    try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        if (displayName) {
-            await updateProfile(cred.user, { displayName });
-        }
-        return cred;
-    } catch (e) {
-        if (e.code === 'auth/network-request-failed' || (e.message && e.message.includes('network'))) {
-            console.warn("[Firebase] Network request failed during register. Falling back to MOCK MODE.");
-            isMock = true;
-            // Execute mock register recursively now that isMock is true
-            return registerUser(email, password, displayName);
-        }
-        throw e;
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    if (displayName) {
+        await updateProfile(cred.user, { displayName });
     }
+    return cred;
 }
 
 export async function logoutUser() {

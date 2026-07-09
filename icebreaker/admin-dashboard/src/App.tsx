@@ -28,21 +28,29 @@ function Dashboard({ password }: { password: string }) {
     const apiUri = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? 'http://localhost:4000/graphql'
       : 'https://icebreaker-b5u1.onrender.com/graphql';
-    fetch(apiUri, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: ADMIN_ANALYTICS, variables: { password } })
-    })
-    .then(res => res.json())
-    .then(res => {
-      if (res.errors) throw new Error(res.errors[0].message)
-      setData(res.data)
-      setLoading(false)
-    })
-    .catch(err => {
-      setError(err.message)
-      setLoading(false)
-    })
+
+    const fetchAnalytics = async (retries = 3, delay = 1000) => {
+      try {
+        const res = await fetch(apiUri, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: ADMIN_ANALYTICS, variables: { password } })
+        });
+        const data = await res.json();
+        if (data.errors) throw new Error(data.errors[0].message);
+        setData(data.data);
+        setLoading(false);
+      } catch (err: any) {
+        if (retries > 0) {
+          setTimeout(() => fetchAnalytics(retries - 1, delay * 2), delay);
+          return;
+        }
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
   }, [password])
 
   if (loading) return <div className="flex h-screen items-center justify-center text-white"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-400"></div></div>

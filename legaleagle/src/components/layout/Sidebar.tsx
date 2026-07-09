@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'editor', label: 'Editor', icon: FileText, showScore: true },
         { id: 'clauses', label: 'Clause Library', icon: BookMarked, showScore: false },
         { id: 'chat', label: 'Chat', icon: MessageSquare, showScore: false },
-        { id: 'cases', label: 'Matters', icon: Briefcase, showScore: false },
+        { id: 'cases', label: 'Dashboard', icon: Briefcase, showScore: false },
         { id: 'history', label: 'History', icon: History, showScore: false },
         { id: 'context', label: 'Business Context', icon: Building, showScore: false },
         { id: 'team', label: 'Team', icon: Users, showScore: false },
