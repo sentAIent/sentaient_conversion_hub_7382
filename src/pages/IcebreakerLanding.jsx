@@ -122,7 +122,7 @@ const IcebreakerLanding = () => {
                             <Building className="text-blue-400 mb-3 w-7 h-7" />
                             <h3 className="text-xl font-semibold mb-2">For Businesses</h3>
                             <p className="text-gray-400 text-sm leading-relaxed">
-                                Create digital storefronts, launch targeted B2B bounties, and drive foot traffic with high-density Geo-Swarms. Put your brand where your customers already are.
+                                Create digital storefronts, launch targeted bounties to reward UGC (User-Generated Content) influencers, and drive foot traffic with high-density Geo-Swarms. Put your brand where your customers already are.
                             </p>
                         </div>
                         {/* BOTTOM-LEFT: Real-Time Chat */}

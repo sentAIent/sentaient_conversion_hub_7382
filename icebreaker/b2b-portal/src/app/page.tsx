@@ -7,7 +7,7 @@ const bullets = [
     icon: "🎯",
     heading: "Bounty Management",
     items: [
-      "Create performance-based reward campaigns and track real-time claims",
+      "Create performance-based reward campaigns for UGC influencers",
       "Set per-bounty spending caps and monitor total budget vs. burn",
       "Stripe-powered checkout — fund bounties securely, no manual invoicing",
     ],
@@ -110,7 +110,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg md:text-xl text-white/55 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Icebreaker Business connects your venue or brand with thousands in your exact target market. Run Swarm Campaigns, post Bounties, and manage your Storefront — all
+            Icebreaker Business connects your venue or brand with thousands in your exact target market. Run Swarm Campaigns, post Bounties to reward UGC influencers, and manage your Storefront — all
             from one powerful dashboard.
           </p>
 
