@@ -22,6 +22,7 @@ const IcebreakerAdmin = () => {
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [analytics, setAnalytics] = useState(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(true);
+    const [analyticsError, setAnalyticsError] = useState('');
 
     // Auth guard
     useEffect(() => {
@@ -62,8 +63,10 @@ const IcebreakerAdmin = () => {
             const data = await res.json();
             if (data.errors) throw new Error(data.errors[0].message);
             setAnalytics(data.data.adminAnalytics);
+            setAnalyticsError('');
         } catch (err) {
             console.error('Analytics error:', err);
+            setAnalyticsError(err.message || 'Failed to fetch analytics');
         } finally {
             setAnalyticsLoading(false);
         }
@@ -191,7 +194,27 @@ const IcebreakerAdmin = () => {
             </div>
 
             <div className="max-w-5xl mx-auto px-6 py-10">
-                {!analyticsLoading && analytics && (
+                {analyticsLoading ? (
+                    <div className="mb-12 bg-white/5 rounded-2xl p-12 border border-white/10 flex flex-col items-center justify-center text-center">
+                        <div className="relative w-16 h-16 mb-6">
+                            <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+                            <div className="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="absolute inset-2 bg-gradient-to-tr from-blue-500 to-teal-400 rounded-full animate-pulse opacity-50 blur-sm"></div>
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-2">Connecting to Analytics Backend...</h3>
+                        <p className="text-gray-400 max-w-sm mx-auto">
+                            The backend server may take <span className="text-white font-semibold">up to 50 seconds</span> to load. Hang tight!
+                        </p>
+                    </div>
+                ) : analyticsError ? (
+                    <div className="mb-12 bg-red-500/10 rounded-2xl p-6 border border-red-500/20 text-center">
+                        <p className="text-red-400 font-bold mb-2">Analytics Currently Unavailable</p>
+                        <p className="text-sm text-red-300/80 mb-4">{analyticsError}</p>
+                        <button onClick={fetchAnalytics} className="px-4 py-2 bg-red-500/20 text-red-300 rounded-lg text-sm hover:bg-red-500/30 transition-all">
+                            Retry Connection
+                        </button>
+                    </div>
+                ) : analytics ? (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             <StatCard title="Total Users" value={analytics.totalUsers} icon={Users} color="blue" />
@@ -261,7 +284,7 @@ const IcebreakerAdmin = () => {
                             </div>
                         </div>
                     </>
-                )}
+                ) : null}
 
                 {/* Waitlist Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">

@@ -6,18 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/icebreaker': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/icebreaker/, ''),
-      },
-      '/_expo': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-      },
       '/icebusiness': {
-        target: 'http://localhost:3000',
+        target: 'https://sentaient-icebusiness-hub.netlify.app',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/icebusiness/, ''),
       },
     },
   },
