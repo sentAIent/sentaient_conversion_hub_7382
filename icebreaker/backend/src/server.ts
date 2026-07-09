@@ -13,6 +13,7 @@ import dotenv from 'dotenv';
 import { GraphQLError } from 'graphql';
 import path from 'path';
 import { sendPushNotification } from './services/pushNotifications';
+import { sendEmail } from './services/email';
 dotenv.config({ override: true });
 
 const prisma = new PrismaClient();
@@ -280,6 +281,7 @@ export const typeDefs = `#graphql
     updateUserDetails(name: String, username: String, bio: String, profilePhotoUrl: String): User
     getPresignedUploadUrl(contentType: String!): PresignedUrl
     sendMeetingRequest(receiverId: ID!, proposedTime: String!, locationName: String!): MeetingRequest
+    sendWaitlistEmail(emails: [String!]!, subject: String!, html: String!, password: String!): Boolean!
     respondToMeetingRequest(requestId: ID!, status: String!): MeetingRequest
     submitMeetingRating(targetUserId: ID!, rating: Float!): User
     updatePushToken(token: String!): User
@@ -753,6 +755,14 @@ export const resolvers = {
     }
   },
   Mutation: {
+    sendWaitlistEmail: async (_: any, { emails, subject, html, password }: any) => {
+      if (password !== 'icebreaker2026') {
+        throw new GraphQLError("Unauthorized admin password", { extensions: { code: 'UNAUTHENTICATED' } });
+      }
+      
+      const success = await sendEmail(emails, subject, html);
+      return success;
+    },
     updateUserDetails: async (_: any, { name, username, bio, profilePhotoUrl }: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
       await ensureUserExists(context.user);

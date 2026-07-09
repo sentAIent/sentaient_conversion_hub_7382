@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Users, Download, Trash2, RefreshCw, LogOut,
     Mail, Clock, Shield, ChevronDown, ChevronUp,
-    Activity, MapPin, Calendar, Share2
+    Activity, MapPin, Calendar, Share2, Send, X, CheckSquare
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -23,6 +23,14 @@ const IcebreakerAdmin = () => {
     const [analytics, setAnalytics] = useState(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(true);
     const [analyticsError, setAnalyticsError] = useState('');
+
+    // Email state
+    const [selectedEmails, setSelectedEmails] = useState([]);
+    const [emailModalOpen, setEmailModalOpen] = useState(false);
+    const [emailSubject, setEmailSubject] = useState('');
+    const [emailBody, setEmailBody] = useState('');
+    const [emailSending, setEmailSending] = useState(false);
+    const [emailStatus, setEmailStatus] = useState(null);
 
     // Auth guard
     useEffect(() => {
@@ -89,10 +97,52 @@ const IcebreakerAdmin = () => {
     const handleDelete = async (id) => {
         try {
             await deleteDoc(doc(db, 'icebreaker_waitlist', id));
-            setEntries(prev => prev.filter(e => e.id !== id));
+            setEntries(entries.filter(e => e.id !== id));
             setDeleteConfirm(null);
+            setSelectedEmails(selectedEmails.filter(email => entries.find(e => e.id === id)?.email !== email));
         } catch (err) {
-            setError('Delete failed: ' + err.message);
+            setError('Failed to delete entry: ' + err.message);
+        }
+    };
+
+    const handleSendEmail = async () => {
+        if (!emailSubject || !emailBody || selectedEmails.length === 0) return;
+        setEmailSending(true);
+        setEmailStatus(null);
+        try {
+            const apiUri = 'https://icebreaker-b5u1.onrender.com/graphql';
+            const SEND_EMAIL = `
+              mutation SendWaitlistEmail($emails: [String!]!, $subject: String!, $html: String!, $password: String!) {
+                sendWaitlistEmail(emails: $emails, subject: $subject, html: $html, password: $password)
+              }
+            `;
+            const res = await fetch(apiUri, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: SEND_EMAIL,
+                    variables: {
+                        emails: selectedEmails,
+                        subject: emailSubject,
+                        html: emailBody,
+                        password: 'icebreaker2026'
+                    }
+                })
+            });
+            const data = await res.json();
+            if (data.errors) throw new Error(data.errors[0].message);
+            
+            setEmailStatus({ success: true, message: `Successfully sent to ${selectedEmails.length} recipients.` });
+            setTimeout(() => {
+                setEmailModalOpen(false);
+                setEmailStatus(null);
+                setEmailSubject('');
+                setEmailBody('');
+            }, 3000);
+        } catch (err) {
+            setEmailStatus({ success: false, message: err.message });
+        } finally {
+            setEmailSending(false);
         }
     };
 
@@ -315,6 +365,13 @@ const IcebreakerAdmin = () => {
                     >
                         <Download className="w-4 h-4" /> Export CSV
                     </button>
+                    <button
+                        onClick={() => setEmailModalOpen(true)}
+                        disabled={selectedEmails.length === 0}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        <Send className="w-4 h-4" /> Compose Email ({selectedEmails.length})
+                    </button>
                 </div>
 
                 {error && (
@@ -326,7 +383,21 @@ const IcebreakerAdmin = () => {
                 {/* Table */}
                 <div className="bg-white/3 border border-white/10 rounded-2xl overflow-hidden">
                     {/* Table header */}
-                    <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 border-b border-white/10 bg-white/5">
+                    <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3 border-b border-white/10 bg-white/5">
+                        <div className="flex items-center justify-center">
+                            <button 
+                                onClick={() => {
+                                    if (selectedEmails.length === filtered.length && filtered.length > 0) {
+                                        setSelectedEmails([]);
+                                    } else {
+                                        setSelectedEmails(filtered.map(e => e.email));
+                                    }
+                                }}
+                                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedEmails.length === filtered.length && filtered.length > 0 ? 'bg-blue-500 border-blue-500' : 'border-gray-500 hover:border-gray-300'}`}
+                            >
+                                {selectedEmails.length === filtered.length && filtered.length > 0 && <CheckSquare className="w-3 h-3 text-white" />}
+                            </button>
+                        </div>
                         <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wide">
                             <Mail className="w-3.5 h-3.5" /> Email
                         </div>
@@ -352,7 +423,21 @@ const IcebreakerAdmin = () => {
                     ) : (
                         <div className="divide-y divide-white/5">
                             {filtered.map((entry, i) => (
-                                <div key={entry.id} className="grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3.5 items-center hover:bg-white/3 transition-colors">
+                                <div key={entry.id} className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3.5 items-center hover:bg-white/3 transition-colors">
+                                    <div className="flex items-center justify-center">
+                                        <button 
+                                            onClick={() => {
+                                                if (selectedEmails.includes(entry.email)) {
+                                                    setSelectedEmails(selectedEmails.filter(e => e !== entry.email));
+                                                } else {
+                                                    setSelectedEmails([...selectedEmails, entry.email]);
+                                                }
+                                            }}
+                                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedEmails.includes(entry.email) ? 'bg-blue-500 border-blue-500' : 'border-gray-500 hover:border-gray-300'}`}
+                                        >
+                                            {selectedEmails.includes(entry.email) && <CheckSquare className="w-3 h-3 text-white" />}
+                                        </button>
+                                    </div>
                                     <span className="text-sm text-white font-medium truncate">{entry.email}</span>
                                     <span className="text-xs text-gray-400 whitespace-nowrap">{formatDate(entry.timestamp)}</span>
                                     <div>
@@ -387,12 +472,84 @@ const IcebreakerAdmin = () => {
 
                     {/* Footer count */}
                     {filtered.length > 0 && (
-                        <div className="px-5 py-3 border-t border-white/10 text-xs text-gray-500">
-                            Showing {filtered.length} of {entries.length} entries
+                        <div className="px-5 py-3 border-t border-white/10 text-xs text-gray-500 flex justify-between">
+                            <span>Showing {filtered.length} of {entries.length} entries</span>
+                            <span>{selectedEmails.length} selected</span>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Email Compose Modal */}
+            {emailModalOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-2xl shadow-2xl relative">
+                        <button 
+                            onClick={() => !emailSending && setEmailModalOpen(false)}
+                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        
+                        <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                            <Send className="w-6 h-6 text-purple-400" />
+                            Compose Broadcast
+                        </h2>
+                        <p className="text-sm text-gray-400 mb-6">Sending to {selectedEmails.length} waitlist subscribers</p>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Subject</label>
+                                <input 
+                                    type="text" 
+                                    value={emailSubject}
+                                    onChange={(e) => setEmailSubject(e.target.value)}
+                                    placeholder="e.g. Sentaient Icebreaker is live! 🧊🔥"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Message (HTML supported)</label>
+                                <textarea 
+                                    value={emailBody}
+                                    onChange={(e) => setEmailBody(e.target.value)}
+                                    placeholder="Write your email content here..."
+                                    rows={8}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                                />
+                            </div>
+
+                            {emailStatus && (
+                                <div className={`p-4 rounded-xl text-sm ${emailStatus.success ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
+                                    {emailStatus.message}
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                                <button 
+                                    onClick={() => setEmailModalOpen(false)}
+                                    disabled={emailSending}
+                                    className="px-6 py-2.5 rounded-xl font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleSendEmail}
+                                    disabled={emailSending || !emailSubject || !emailBody}
+                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {emailSending ? (
+                                        <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Sending...</>
+                                    ) : (
+                                        <><Send className="w-4 h-4" /> Send Email</>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
