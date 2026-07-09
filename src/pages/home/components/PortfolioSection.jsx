@@ -318,8 +318,9 @@ const LaunchButton = ({ activeProject }) => {
   const handleLaunch = (e) => {
     e.preventDefault();
 
-    // External URLs (e.g. cloveh2o.com) and un-gated routes (e.g. /icelogin) — open directly
-    if (activeProject.path.startsWith('http') || activeProject.path === '/icelogin') {
+    // External URLs (e.g. cloveh2o.com) and un-gated marketing routes — open directly
+    const publicPaths = ['/icelogin', '/mindwave', '/interstellar'];
+    if (activeProject.path.startsWith('http') || publicPaths.includes(activeProject.path)) {
       window.open(activeProject.path, '_blank', 'noopener,noreferrer');
       return;
     }
