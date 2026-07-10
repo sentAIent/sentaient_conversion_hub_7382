@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AnalyticsTracker from './components/AnalyticsTracker';
 
 const Home = React.lazy(() => import('./pages/home'));
+const DemoHome = React.lazy(() => import('./pages/demo'));
 const KnowledgeNexusResourceLibrary = React.lazy(() => import('./pages/knowledge-nexus-resource-library'));
 const FreeAIAssessmentPortal = React.lazy(() => import('./pages/free-ai-assessment-portal'));
 const HomepageAIConsultancyHub = React.lazy(() => import('./pages/homepage-ai-consultancy-hub'));

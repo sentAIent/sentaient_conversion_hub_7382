@@ -7,10 +7,20 @@ import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { gql, useMutation } from '@apollo/client';
+
+const REGISTER_USER = gql`
+  mutation RegisterUser($inviteCode: String) {
+    registerUser(inviteCode: $inviteCode) {
+      id
+    }
+  }
+`;
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -18,6 +28,8 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const passwordInputRef = useRef<TextInput>(null);
   const router = useRouter();
+
+  const [registerUser] = useMutation(REGISTER_USER);
 
   const validateEmail = (emailStr: string) => {
     const re = /\S+@\S+\.\S+/;
@@ -45,6 +57,7 @@ export default function LoginScreen() {
     try {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
+        await registerUser({ variables: { inviteCode } });
         // New users go to onboarding to set up profile
         router.replace('/(auth)/onboarding');
       } else {
@@ -192,6 +205,17 @@ export default function LoginScreen() {
               />
             </TouchableOpacity>
           </View>
+        )}
+
+        {mode === 'signup' && (
+          <TextInput
+            style={styles.input}
+            placeholder="Invite Code (optional)"
+            placeholderTextColor="#888"
+            autoCapitalize="none"
+            value={inviteCode}
+            onChangeText={setInviteCode}
+          />
         )}
 
         {mode === 'signin' && (

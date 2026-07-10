@@ -1,0 +1,90 @@
+    <!-- === SPACEX HOLOGRAPHIC SHIP FACTORY === -->
+    <div id="factoryModal" class="modal-overlay hidden" style="background: rgba(0, 5, 10, 0.95); backdrop-filter: blur(20px); z-index: 1000; align-items: stretch; justify-content: stretch; padding: 20px;">
+        <div class="factory-container" style="display: flex; flex-direction: column; width: 100%; height: 100%; border: 1px solid rgba(0, 243, 255, 0.2); border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(0, 20, 40, 0.6) 0%, rgba(0, 5, 10, 0.8) 100%); box-shadow: 0 0 50px rgba(0, 243, 255, 0.1) inset;">
+            
+            <!-- Header -->
+            <div class="factory-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid rgba(0, 243, 255, 0.2); background: rgba(0, 10, 20, 0.5);">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00f3ff" stroke-width="2"><path d="M12 2L2 22h20L12 2zm0 3.5L18.5 20h-13L12 5.5z" /></svg>
+                    <h2 style="margin: 0; font-size: 24px; letter-spacing: 4px; color: #fff; text-shadow: 0 0 10px #00f3ff;">SENTAIENT SHIPYARD</h2>
+                </div>
+                <div class="factory-credits" style="font-size: 18px; color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); letter-spacing: 2px;">
+                    CREDITS: <span id="factoryCreditBalance">0</span>
+                </div>
+                <button class="btn-close-modal" onclick="document.getElementById('factoryModal').classList.add('hidden')" style="width: auto; margin: 0;">EXIT FACILITY</button>
+            </div>
+
+            <!-- Main Workspace -->
+            <div class="factory-workspace" style="display: flex; flex: 1; overflow: hidden;">
+                
+                <!-- Left: Categories -->
+                <div class="factory-sidebar" style="width: 250px; border-right: 1px solid rgba(0, 243, 255, 0.1); padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                    <div style="font-size: 12px; color: #5c7a8a; letter-spacing: 2px; margin-bottom: 10px;">SYSTEM ARCHITECTURE</div>
+                    
+                    <button class="factory-tab active" data-category="chassis" style="background: rgba(0, 243, 255, 0.1); border: 1px solid #00f3ff; color: #fff; padding: 15px; text-align: left; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="letter-spacing: 1px;">CHASSIS</span> <span style="color: #00f3ff;">▶</span>
+                    </button>
+                    <button class="factory-tab" data-category="weapons" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: #88a0b0; padding: 15px; text-align: left; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        <span style="letter-spacing: 1px;">WEAPON SYSTEMS</span>
+                    </button>
+                    <button class="factory-tab" data-category="shields" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: #88a0b0; padding: 15px; text-align: left; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        <span style="letter-spacing: 1px;">DEFENSE MATRIX</span>
+                    </button>
+                    <button class="factory-tab" data-category="engines" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: #88a0b0; padding: 15px; text-align: left; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        <span style="letter-spacing: 1px;">PROPULSION</span>
+                    </button>
+                    <button class="factory-tab" data-category="core" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: #88a0b0; padding: 15px; text-align: left; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        <span style="letter-spacing: 1px;">ENERGY CORES</span>
+                    </button>
+                </div>
+
+                <!-- Center: Holographic Visualizer -->
+                <div class="factory-visualizer" style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, rgba(0, 243, 255, 0.05) 0%, transparent 70%);">
+                    
+                    <!-- Decorative Grid overlay -->
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none;"></div>
+                    
+                    <canvas id="factoryPreviewCanvas" width="600" height="600" style="position: relative; z-index: 2; filter: drop-shadow(0 0 20px rgba(0, 243, 255, 0.6));"></canvas>
+                    
+                    <!-- Tech Ring purely for aesthetics -->
+                    <div class="tech-ring" style="position: absolute; width: 450px; height: 450px; border: 1px dashed rgba(0, 243, 255, 0.3); border-radius: 50%; pointer-events: none; animation: spin-slow 20s linear infinite;"></div>
+                    <div class="tech-ring-inner" style="position: absolute; width: 300px; height: 300px; border: 1px solid rgba(0, 243, 255, 0.1); border-radius: 50%; pointer-events: none;"></div>
+                </div>
+
+                <!-- Right: Inventory / Item Selection -->
+                <div class="factory-inventory" style="width: 320px; border-left: 1px solid rgba(0, 243, 255, 0.1); padding: 20px; display: flex; flex-direction: column; background: rgba(0, 10, 20, 0.3);">
+                    <div style="font-size: 12px; color: #5c7a8a; letter-spacing: 2px; margin-bottom: 15px; display: flex; justify-content: space-between;">
+                        <span>AVAILABLE COMPONENTS</span>
+                        <span id="factoryCategoryLabel" style="color: #00f3ff;">CHASSIS</span>
+                    </div>
+                    
+                    <div id="factoryItemList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+                        <!-- JS WILL POPULATE THIS -->
+                        <div style="text-align: center; color: #5c7a8a; padding: 40px 0;">INITIALIZING...</div>
+                    </div>
+                    
+                    <div class="factory-stats-panel" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0, 243, 255, 0.2);">
+                        <div style="font-size: 12px; color: #5c7a8a; letter-spacing: 2px; margin-bottom: 15px;">PROJECTED METRICS</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+                            <div style="display: flex; justify-content: space-between;"><span style="color: #88a0b0;">SPEED</span> <span id="facStatSpeed" style="color: #fff;">100</span></div>
+                            <div style="display: flex; justify-content: space-between;"><span style="color: #88a0b0;">FIREPOWER</span> <span id="facStatFire" style="color: #fff;">50</span></div>
+                            <div style="display: flex; justify-content: space-between;"><span style="color: #88a0b0;">SHIELDS</span> <span id="facStatShield" style="color: #fff;">200</span></div>
+                            <div style="display: flex; justify-content: space-between;"><span style="color: #88a0b0;">ENERGY</span> <span id="facStatEnergy" style="color: #fff;">150</span></div>
+                        </div>
+                        <button id="factoryApplyBtn" style="width: 100%; margin-top: 20px; padding: 15px; background: rgba(0, 243, 255, 0.2); border: 1px solid #00f3ff; color: #fff; font-weight: bold; letter-spacing: 2px; cursor: pointer; border-radius: 8px; transition: all 0.2s;">
+                            FINALIZE BUILD
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <style>
+            @keyframes spin-slow { 100% { transform: rotate(360deg); } }
+            .factory-tab:hover { background: rgba(255,255,255,0.05) !important; color: #fff !important; }
+            .factory-item { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; }
+            .factory-item:hover { border-color: rgba(0,243,255,0.5); background: rgba(0,243,255,0.05); }
+            .factory-item.equipped { border-color: #00f3ff; background: rgba(0,243,255,0.1); box-shadow: 0 0 10px rgba(0,243,255,0.2); }
+            #factoryApplyBtn:hover { background: rgba(0,243,255,0.4) !important; box-shadow: 0 0 20px rgba(0,243,255,0.4); }
+        </style>
+    </div>

@@ -178,6 +178,13 @@ export const typeDefs = `#graphql
     imageUrl: String
   }
 
+  type BountyClaim {
+    id: ID!
+    status: String!
+    user: User!
+    content: Content!
+  }
+
   type Bounty {
     id: ID!
     venueId: ID!
@@ -192,6 +199,7 @@ export const typeDefs = `#graphql
     checkoutUrl: String
     expiresAt: String!
     claimsCount: Int!
+    claims: [BountyClaim!]
   }
 
   type SwarmCampaign {
@@ -251,6 +259,11 @@ export const typeDefs = `#graphql
     unreadCount: Int!
   }
 
+  type VenueAnalytics {
+    totalImpressions: Int!
+    storefrontSales: Int!
+  }
+
   type Query {
     me: User
     activeCheckIns: [CheckIn!]!
@@ -273,9 +286,13 @@ export const typeDefs = `#graphql
     myBounties: [Bounty!]!
     venueStorefront(venueId: ID!): Storefront
     activeSwarmCampaigns(latitude: Float!, longitude: Float!, radiusKm: Float!): [SwarmCampaign!]!
+    mySwarmCampaigns: [SwarmCampaign!]!
+    venueAnalytics(venueId: ID!): VenueAnalytics!
   }
 
   type Mutation {
+    syncUser(inviteCode: String!): User!
+    syncContacts(phones: [String!]!): [User!]!
     createOrUpdateCheckIn(location: LocationInput!): CheckIn
     updateOpennessProfile(activeColors: [String!]!, showOnColorMap: Boolean!): OpennessProfile
     updateUserDetails(name: String, username: String, bio: String, profilePhotoUrl: String): User
@@ -298,6 +315,7 @@ export const typeDefs = `#graphql
     addProduct(storefrontId: ID!, name: String!, price: Int!, imageUrl: String): Product
     createBounty(title: String!, description: String!, reward: Int!, totalBudget: Int!, latitude: Float!, longitude: Float!): Bounty
     claimBounty(bountyId: ID!, contentId: ID!): Boolean!
+    reviewBountyClaim(claimId: ID!, status: String!): Boolean!
     createSwarmCampaign(title: String!, description: String!, targetCheckIns: Int!, maxDiscount: String!, latitude: Float!, longitude: Float!, totalBudget: Int!): SwarmCampaign
     createContent(type: String!, textBody: String, mediaUrl: String, venueId: ID): Content
     autoMonetizeContent(contentId: ID!, venueId: ID!): [ProductTag!]
@@ -390,6 +408,13 @@ export const resolvers = {
     user: async (parent: any) => {
       return prisma.user.findUnique({ where: { id: parent.userId } });
     }
+  },
+  Bounty: {
+    claims: async (parent: any) => prisma.bountyClaim.findMany({ where: { bountyId: parent.id } })
+  },
+  BountyClaim: {
+    user: async (parent: any) => prisma.user.findUnique({ where: { id: parent.userId } }),
+    content: async (parent: any) => prisma.content.findUnique({ where: { id: parent.contentId } })
   },
   FeedItem: {
     __resolveType(obj: any, contextValue: any, info: any) {
@@ -562,27 +587,33 @@ export const resolvers = {
     exploreFeed: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
       
-      const checkIns = await prisma.checkIn.findMany({
-        where: { isActive: true },
-        include: { user: true },
-        orderBy: { createdAt: 'desc' },
-        take: 30
-      });
-
-      const contents = await prisma.content.findMany({
-        where: { isDeleted: false, isMoment: false },
-        include: { 
-          user: true,
-          productTags: {
-            include: { product: true }
-          }
+      const mockVideos = Array.from({ length: 10 }).map((_, i) => ({
+        __typename: 'Content',
+        id: `mock-video-${i}`,
+        userId: `mock-user-${i}`,
+        type: 'video',
+        mediaUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        textBody: `Explore this amazing video! #${i}`,
+        sourceFlag: 'mock',
+        isMoment: false,
+        createdAt: new Date(Date.now() - i * 3600000),
+        user: {
+          id: `mock-user-${i}`,
+          name: `Creator ${i}`,
+          username: `creator_${i}`,
+          email: `creator${i}@example.com`,
+          trustScore: 5.0,
+          streakCount: 0,
+          referralCode: `MOCK${i}`,
+          profilePhotoUrl: `https://i.pravatar.cc/150?u=${i}`,
         },
-        orderBy: { createdAt: 'desc' },
-        take: 30
-      });
+        productTags: [],
+        likesCount: Math.floor(Math.random() * 1000),
+        commentsCount: Math.floor(Math.random() * 100),
+        hasLiked: false,
+      }));
 
-      const items = [...checkIns, ...contents].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      return items;
+      return mockVideos;
     },
     followerStories: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
@@ -682,6 +713,19 @@ export const resolvers = {
         orderBy: { createdAt: 'desc' }
       });
     },
+    mySwarmCampaigns: async (_: any, args: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      return prisma.swarmCampaign.findMany({
+        where: { venueId: context.user.uid },
+        orderBy: { createdAt: 'desc' }
+      });
+    },
+    venueAnalytics: async (_: any, { venueId }: any, context: any) => {
+      return {
+        totalImpressions: 124500,
+        storefrontSales: 425000
+      };
+    },
     userProfile: async (_: any, { userId }: any, context: any) => {
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -755,6 +799,81 @@ export const resolvers = {
     }
   },
   Mutation: {
+    syncUser: async (_: any, { inviteCode }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      let user = await prisma.user.findUnique({ where: { id: context.user.uid } });
+      
+      if (!user) {
+        const inviter = await prisma.user.findUnique({ where: { inviteCode } });
+        if (!inviter) throw new GraphQLError("Invalid invite code");
+        
+        const suffix = Math.floor(Math.random() * 100000).toString();
+        user = await prisma.user.create({
+          data: {
+            id: context.user.uid,
+            email: context.user.email || `${context.user.uid}@placeholder.com`,
+            username: `user_${suffix}`,
+            name: context.user.name || 'New User',
+            referralCode: `REF${suffix}`,
+            isFirePremium: true,
+            invitedById: inviter.id
+          }
+        });
+      }
+
+      const now = new Date();
+      let currentStreak = user.currentStreak || 0;
+      let longestStreak = user.longestStreak || 0;
+      
+      if (user.lastLoginDate) {
+        const lastLogin = new Date(user.lastLoginDate);
+        lastLogin.setHours(0, 0, 0, 0);
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        
+        if (lastLogin.getTime() === yesterday.getTime()) {
+          currentStreak += 1;
+          if (currentStreak > longestStreak) longestStreak = currentStreak;
+        } else if (lastLogin.getTime() < yesterday.getTime()) {
+          currentStreak = 1;
+        }
+      } else {
+        currentStreak = 1;
+        if (currentStreak > longestStreak) longestStreak = currentStreak;
+      }
+
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { currentStreak, longestStreak, lastLoginDate: now }
+      });
+      
+      await trackActivity(context.user.uid);
+      return user;
+    },
+    syncContacts: async (_: any, { phones }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const matchedUsers = await prisma.user.findMany({
+        where: { phone: { in: phones } }
+      });
+      
+      if (matchedUsers.length >= 3) {
+        const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+        const matchedUserIds = matchedUsers.map((u: any) => u.id);
+        const recentCheckIns = await prisma.checkIn.findFirst({
+          where: { userId: { in: matchedUserIds }, isActive: true, createdAt: { gte: twelveHoursAgo } }
+        });
+        
+        if (recentCheckIns) {
+          const caller = await prisma.user.findUnique({ where: { id: context.user.uid } });
+          if (caller?.pushToken) {
+            await sendPushNotification(caller.pushToken, "Swarm Alert", "3 of your contacts are at a Swarm!");
+          }
+        }
+      }
+      
+      return matchedUsers;
+    },
     sendWaitlistEmail: async (_: any, { emails, subject, html, password }: any) => {
       if (password !== 'icebreaker2026') {
         throw new GraphQLError("Unauthorized admin password", { extensions: { code: 'UNAUTHENTICATED' } });
@@ -1153,33 +1272,67 @@ export const resolvers = {
           bountyId,
           userId: context.user.uid,
           contentId,
-          status: 'APPROVED'
-        }
-      });
-
-      let wallet = await prisma.wallet.findUnique({ where: { userId: context.user.uid } });
-      if (!wallet) {
-        wallet = await prisma.wallet.create({ data: { userId: context.user.uid, balance: 0 } });
-      }
-
-      await prisma.wallet.update({
-        where: { id: wallet.id },
-        data: { balance: { increment: bounty.reward } }
-      });
-
-      await prisma.transaction.create({
-        data: {
-          walletId: wallet.id,
-          amount: bounty.reward,
-          type: 'BOUNTY_PAYOUT',
-          description: `Payout for bounty: ${bounty.title}`
+          status: 'PENDING'
         }
       });
 
       const venueUser = await prisma.user.findUnique({ where: { id: bounty.venueId }, select: { pushToken: true, name: true } });
       const claimer = await prisma.user.findUnique({ where: { id: context.user.uid }, select: { name: true } });
       if (venueUser?.pushToken) {
-        sendPushNotification({ to: venueUser.pushToken, title: 'Bounty Claimed! 💰', body: `${claimer?.name || 'Someone'} claimed your bounty: ${bounty.title}`, data: { type: 'bounty', bountyId: bounty.id }, sound: 'default' });
+        sendPushNotification({ to: venueUser.pushToken, title: 'Bounty Claimed! 📝', body: `${claimer?.name || 'Someone'} claimed your bounty: ${bounty.title} (Pending review)`, data: { type: 'bounty', bountyId: bounty.id }, sound: 'default' });
+      }
+
+      return true;
+    },
+    reviewBountyClaim: async (_: any, { claimId, status }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      
+      const claim = await prisma.bountyClaim.findUnique({
+        where: { id: claimId },
+        include: { bounty: true }
+      });
+      if (!claim) throw new GraphQLError("Claim not found");
+      
+      if (claim.bounty.venueId !== context.user.uid) {
+        throw new GraphQLError("Unauthorized to review this claim");
+      }
+      
+      if (claim.status !== 'PENDING') {
+        throw new GraphQLError("Claim is not pending");
+      }
+
+      if (status === 'APPROVED') {
+        await prisma.bountyClaim.update({
+          where: { id: claimId },
+          data: { status: 'APPROVED' }
+        });
+        
+        let wallet = await prisma.wallet.findUnique({ where: { userId: claim.userId } });
+        if (!wallet) {
+          wallet = await prisma.wallet.create({ data: { userId: claim.userId, balance: 0 } });
+        }
+        await prisma.wallet.update({
+          where: { id: wallet.id },
+          data: { balance: { increment: claim.bounty.reward } }
+        });
+        await prisma.transaction.create({
+          data: {
+            walletId: wallet.id,
+            amount: claim.bounty.reward,
+            type: 'BOUNTY_PAYOUT',
+            description: `Payout for bounty: ${claim.bounty.title}`
+          }
+        });
+        
+        await prisma.bounty.update({
+          where: { id: claim.bounty.id },
+          data: { totalBudget: { decrement: claim.bounty.reward } }
+        });
+      } else {
+        await prisma.bountyClaim.update({
+          where: { id: claimId },
+          data: { status: 'REJECTED' }
+        });
       }
 
       return true;

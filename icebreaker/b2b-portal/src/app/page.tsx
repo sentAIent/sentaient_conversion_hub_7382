@@ -8,17 +8,17 @@ const bullets = [
     heading: "Bounty Management",
     items: [
       "Create performance-based reward campaigns for UGC influencers",
-      "Set per-bounty spending caps and monitor total budget vs. burn",
+      "Your bounties appear directly in the hyper-local TikTok-style feed",
       "Stripe-powered checkout — fund bounties securely, no manual invoicing",
     ],
   },
   {
     icon: "📣",
-    heading: "Campaign Hub",
+    heading: "End-to-End UGC Loop",
     items: [
-      "Launch Swarm Campaigns that geo-trigger group events at your venue",
-      "Offer dynamic discounts that unlock when enough users check in together",
-      "Monitor campaign reach, active bounties, and total claims from one dashboard",
+      "Fund bounties to incentivize local content creation",
+      "Users create and share authentic videos about your brand",
+      "You get viral local visibility and measurable foot traffic",
     ],
   },
   {
@@ -106,7 +106,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50 mb-6 leading-[1.1]">
-            Drive hyper-local<br />demand on command.
+            Turn local creators into<br />your marketing engine.
           </h1>
 
           <p className="text-lg md:text-xl text-white/55 max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -127,6 +127,18 @@ export default function Home() {
             >
               Manage Storefront
             </Link>
+          </div>
+
+          {/* Founder's Promotion Alert */}
+          <div className="mt-10 pt-8 border-t border-white/10 flex flex-col items-center">
+            <div className="inline-flex items-center justify-center bg-[#00ffcc]/10 border border-[#00ffcc]/30 px-3 py-1 rounded-full mb-3">
+              <span className="text-[#00ffcc] font-bold text-xs uppercase tracking-widest">🔥 Founder's Promotion</span>
+            </div>
+            <p className="text-white font-medium text-lg mb-2">100% Free Enterprise Software</p>
+            <p className="text-white/50 text-sm max-w-lg leading-relaxed">
+              Get our marketing suite completely free when you join today. You only pay to fund your creator Bounties. 
+              Price increases to <span className="text-white font-semibold line-through opacity-70">$99/mo</span> for new businesses after we reach 10,000 local users.
+            </p>
           </div>
         </div>
       </section>

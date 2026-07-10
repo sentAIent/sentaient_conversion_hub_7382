@@ -8,6 +8,7 @@ import { persistCache } from 'apollo3-cache-persist';
 import { auth } from '../utils/firebase';
 import { registerForPushNotificationsAsync } from '../utils/notifications';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import * as Linking from 'expo-linking';
 import { ActivityIndicator, View } from 'react-native';
 import { CartProvider } from '../context/CartContext';
 import { StripeWrapper } from '../components/StripeWrapper';
@@ -62,6 +63,17 @@ export default function Layout() {
   
   const segments = useSegments();
   const router = useRouter();
+
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      const { path, queryParams } = Linking.parse(url);
+      if (path?.startsWith('v/')) {
+         // example: icebreaker://v/123 -> open video
+         router.push(`/(tabs)/explore?videoId=${path.split('/')[1]}`);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     // Setup Apollo Cache Persistence

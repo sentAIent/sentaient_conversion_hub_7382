@@ -1,6 +1,7 @@
 "use client";
 
-import { gql } from '@apollo/client';
+import { useState } from 'react';
+import { gql, useMutation } from '@apollo/client';
 import { useQuery } from '@apollo/experimental-nextjs-app-support/ssr';
 import Link from 'next/link';
 
@@ -15,12 +16,46 @@ const MY_BOUNTIES_QUERY = gql`
       isActive
       expiresAt
       claimsCount
+      claims {
+        id
+        status
+        user {
+          id
+          name
+          profilePhotoUrl
+        }
+        content {
+          id
+          textBody
+          mediaUrl
+        }
+      }
     }
+  }
+`;
+
+const REVIEW_CLAIM_MUTATION = gql`
+  mutation ReviewBountyClaim($claimId: ID!, $status: String!) {
+    reviewBountyClaim(claimId: $claimId, status: $status)
   }
 `;
 
 export default function BountiesPage() {
   const { data, loading, error } = useQuery<any>(MY_BOUNTIES_QUERY);
+  const [expandedBountyId, setExpandedBountyId] = useState<string | null>(null);
+  const [reviewClaim, { loading: reviewing }] = useMutation(REVIEW_CLAIM_MUTATION, {
+    refetchQueries: [{ query: MY_BOUNTIES_QUERY }]
+  });
+
+  const handleReview = async (claimId: string, status: string) => {
+    try {
+      await reviewClaim({ variables: { claimId, status } });
+      refetch();
+    } catch (err) {
+      console.error(err);
+      alert('Error reviewing claim');
+    }
+  };
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -73,47 +108,108 @@ export default function BountiesPage() {
             </div>
           ) : (
             data.myBounties.map((bounty: any) => (
-              <div key={bounty.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-white/20 transition-colors">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-bold">{bounty.title}</h3>
-                    {bounty.isActive ? (
-                      <span className="px-2 py-1 bg-green-500/10 text-green-400 text-xs font-medium rounded-full border border-green-500/20">Active</span>
+              <div key={bounty.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-xl font-bold">{bounty.title}</h3>
+                      {bounty.isActive ? (
+                        <span className="px-2 py-1 bg-green-500/10 text-green-400 text-xs font-medium rounded-full border border-green-500/20">Active</span>
+                      ) : (
+                        <span className="px-2 py-1 bg-white/10 text-white/40 text-xs font-medium rounded-full border border-white/10">Inactive</span>
+                      )}
+                    </div>
+                    <p className="text-white/60 text-sm line-clamp-2 mb-4">{bounty.description}</p>
+                    
+                    <div className="flex flex-wrap gap-4 text-sm bg-black/20 p-3 rounded-lg inline-flex">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/40">Reward</span>
+                        <span className="font-bold text-[#00ffcc]">${bounty.reward}</span>
+                      </div>
+                      <div className="w-px h-4 bg-white/10" />
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/40">Total Budget</span>
+                        <span className="font-bold">${bounty.totalBudget}</span>
+                      </div>
+                      <div className="w-px h-4 bg-white/10" />
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/40">Expires</span>
+                        <span className="font-medium text-white/80">
+                          {isNaN(parseInt(bounty.expiresAt)) 
+                            ? new Date(bounty.expiresAt).toLocaleDateString()
+                            : new Date(parseInt(bounty.expiresAt)).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-black/30 border border-white/5 rounded-xl p-4 min-w-[120px] text-center">
+                    <p className="text-sm text-white/40 mb-1">Claims</p>
+                    <p className="text-3xl font-bold text-[#3b82f6]">{bounty.claimsCount}</p>
+                    <button 
+                      onClick={() => setExpandedBountyId(expandedBountyId === bounty.id ? null : bounty.id)}
+                      className="mt-2 text-xs text-[#00ffcc] hover:underline w-full"
+                    >
+                      {expandedBountyId === bounty.id ? 'Hide Claims ↑' : 'View Claims ↓'}
+                    </button>
+                  </div>
+                </div>
+
+                {expandedBountyId === bounty.id && (
+                  <div className="mt-4 pt-4 border-t border-white/10 w-full">
+                    <h4 className="text-lg font-bold mb-4">Review Claims</h4>
+                    {bounty.claims && bounty.claims.length > 0 ? (
+                      <div className="space-y-4">
+                        {bounty.claims.map((claim: any) => (
+                          <div key={claim.id} className="bg-black/30 p-4 rounded-xl flex items-center justify-between border border-white/5">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-white/20 overflow-hidden flex-shrink-0">
+                                {claim.user.profilePhotoUrl ? (
+                                  <img src={claim.user.profilePhotoUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-white/50 text-xl">👤</div>
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-bold">{claim.user.name}</p>
+                                <p className="text-sm text-white/60">{claim.content.textBody}</p>
+                                {claim.content.mediaUrl && (
+                                  <a href={claim.content.mediaUrl} target="_blank" rel="noreferrer" className="text-xs text-[#3b82f6] hover:underline mt-1 inline-block">View Media</a>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {claim.status === 'PENDING' ? (
+                                <>
+                                  <button 
+                                    onClick={() => handleReview(claim.id, 'REJECTED')}
+                                    disabled={reviewing}
+                                    className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                                  >
+                                    Reject
+                                  </button>
+                                  <button 
+                                    onClick={() => handleReview(claim.id, 'APPROVED')}
+                                    disabled={reviewing}
+                                    className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                                  >
+                                    Approve
+                                  </button>
+                                </>
+                              ) : (
+                                <span className={`text-sm font-bold ${claim.status === 'APPROVED' ? 'text-green-400' : 'text-red-400'}`}>
+                                  {claim.status}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
-                      <span className="px-2 py-1 bg-white/10 text-white/40 text-xs font-medium rounded-full border border-white/10">Inactive</span>
+                      <p className="text-white/40 text-sm">No claims yet.</p>
                     )}
                   </div>
-                  <p className="text-white/60 text-sm line-clamp-2 mb-4">{bounty.description}</p>
-                  
-                  <div className="flex flex-wrap gap-4 text-sm bg-black/20 p-3 rounded-lg inline-flex">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/40">Reward</span>
-                      <span className="font-bold text-[#00ffcc]">${bounty.reward}</span>
-                    </div>
-                    <div className="w-px h-4 bg-white/10" />
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/40">Total Budget</span>
-                      <span className="font-bold">${bounty.totalBudget}</span>
-                    </div>
-                    <div className="w-px h-4 bg-white/10" />
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/40">Expires</span>
-                      <span className="font-medium text-white/80">
-                        {isNaN(parseInt(bounty.expiresAt)) 
-                          ? new Date(bounty.expiresAt).toLocaleDateString()
-                          : new Date(parseInt(bounty.expiresAt)).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-black/30 border border-white/5 rounded-xl p-4 min-w-[120px] text-center">
-                  <p className="text-sm text-white/40 mb-1">Claims</p>
-                  <p className="text-3xl font-bold text-[#3b82f6]">{bounty.claimsCount}</p>
-                  <button className="mt-2 text-xs text-[#00ffcc] hover:underline w-full">
-                    View Claims &rarr;
-                  </button>
-                </div>
+                )}
               </div>
             ))
           )}

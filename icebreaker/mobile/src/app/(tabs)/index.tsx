@@ -39,6 +39,8 @@ const GET_NETWORK_DATA = gql`
     activeSwarmCampaigns(latitude: $lat, longitude: $lng, radiusKm: $radius) {
       id
       title
+      description
+      targetCheckIns
       maxDiscount
       latitude
       longitude
@@ -63,6 +65,7 @@ export default function MapScreen() {
   const [location, setLocation] = useState<any | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedTier, setSelectedTier] = useState('exact');
+  const [selectedSwarm, setSelectedSwarm] = useState<any | null>(null);
   
   const { data: networkData } = useQuery(GET_NETWORK_DATA, { 
     variables: { 
@@ -125,6 +128,9 @@ export default function MapScreen() {
         }
       });
       alert('Checked in securely!');
+      if (selectedSwarm) {
+        setSelectedSwarm(null);
+      }
     } catch (e: any) {
       alert(e.message);
     }
@@ -243,53 +249,73 @@ export default function MapScreen() {
           <Marker
             key={`swarm-${swarm.id}`}
             coordinate={{ latitude: swarm.latitude, longitude: swarm.longitude }}
-            onCalloutPress={() => {
+            onPress={() => {
               triggerHaptic('light');
-              alert(`Swarm unlocked at ${swarm.title}! Check-in to join.`);
+              setSelectedSwarm(swarm);
             }}
           >
-            <View style={styles.swarmMarker}>
-              <Text style={styles.swarmMarkerEmoji}>🐝</Text>
-            </View>
-            <Callout tooltip>
-              <View style={styles.calloutCard}>
-                <Text style={styles.calloutTitle}>{swarm.title}</Text>
-                <Text style={styles.calloutSubtitle}>Max Discount: {swarm.maxDiscount}</Text>
-                <Text style={styles.calloutAction}>Join Swarm ➔</Text>
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <Animated.View style={[styles.radarPulse, { backgroundColor: 'rgba(255, 145, 0, 0.4)' }, pulseStyle]} />
+              <View style={styles.swarmMarker}>
+                <Text style={styles.swarmMarkerEmoji}>🐝</Text>
               </View>
-            </Callout>
+            </View>
           </Marker>
         ))}
       </MapView>
 
       <BlurView intensity={95} tint="dark" style={styles.overlay}>
         <View style={styles.drawerHandle} />
-        <Text style={styles.overlayTitle}>Broadcast Location</Text>
-        
-        <View style={styles.tierSelector}>
-          {PRIVACY_TIERS.map(tier => (
-            <TouchableOpacity 
-              key={tier} 
-              style={[styles.tierBtn, selectedTier === tier && styles.tierBtnSelected]}
-              onPress={() => {
-                triggerHaptic('light');
-                setSelectedTier(tier);
-              }}
-            >
-              <Text style={[styles.tierText, selectedTier === tier && styles.tierTextSelected]}>
-                {tier.charAt(0).toUpperCase() + tier.slice(1)}
+        {selectedSwarm ? (
+          <>
+            <Text style={styles.overlayTitle}>{selectedSwarm.title}</Text>
+            {selectedSwarm.description ? <Text style={styles.swarmDescription}>{selectedSwarm.description}</Text> : null}
+            <View style={styles.swarmTargetContainer}>
+              <Text style={styles.swarmTargetText}>
+                Check in here with <Text style={{ color: '#FF9100', fontWeight: '800' }}>{selectedSwarm.targetCheckIns || 'some'}</Text> people to unlock <Text style={{ color: '#00ffcc', fontWeight: '800' }}>{selectedSwarm.maxDiscount || 'a discount'}</Text>!
               </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+            </View>
+            <View style={{ marginBottom: 40, marginTop: 10 }}>
+              <AnimatedButton
+                title={loading ? "Locating..." : "Check In to Swarm"}
+                onPress={handleCheckIn}
+                variant="primary"
+              />
+              <TouchableOpacity onPress={() => setSelectedSwarm(null)} style={{ marginTop: 20 }}>
+                <Text style={{ color: '#888', textAlign: 'center', fontWeight: '700' }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.overlayTitle}>Broadcast Location</Text>
+            
+            <View style={styles.tierSelector}>
+              {PRIVACY_TIERS.map(tier => (
+                <TouchableOpacity 
+                  key={tier} 
+                  style={[styles.tierBtn, selectedTier === tier && styles.tierBtnSelected]}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    setSelectedTier(tier);
+                  }}
+                >
+                  <Text style={[styles.tierText, selectedTier === tier && styles.tierTextSelected]}>
+                    {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-        <View style={{ marginBottom: 60 }}>
-          <AnimatedButton
-            title={loading ? "Locating..." : "Check In Here"}
-            onPress={handleCheckIn}
-            variant="primary"
-          />
-        </View>
+            <View style={{ marginBottom: 60 }}>
+              <AnimatedButton
+                title={loading ? "Locating..." : "Check In Here"}
+                onPress={handleCheckIn}
+                variant="primary"
+              />
+            </View>
+          </>
+        )}
       </BlurView>
     </View>
   );
@@ -348,4 +374,7 @@ const styles = StyleSheet.create({
   calloutTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 4 },
   calloutSubtitle: { color: '#00ffcc', fontSize: 14, fontWeight: '600', marginBottom: 8 },
   calloutAction: { color: '#3b82f6', fontSize: 13, fontWeight: '700' },
+  swarmDescription: { color: '#ccc', fontSize: 14, textAlign: 'center', marginBottom: 15, paddingHorizontal: 10, lineHeight: 20 },
+  swarmTargetContainer: { backgroundColor: 'rgba(255, 145, 0, 0.1)', padding: 15, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255, 145, 0, 0.3)', marginBottom: 20 },
+  swarmTargetText: { color: '#fff', fontSize: 15, textAlign: 'center', fontWeight: '600', lineHeight: 22 },
 });

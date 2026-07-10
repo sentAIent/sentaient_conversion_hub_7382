@@ -11,6 +11,10 @@ const MY_BOUNTIES_QUERY = gql`
       isActive
       claimsCount
     }
+    venueAnalytics(venueId: "1") {
+      totalImpressions
+      storefrontSales
+    }
   }
 `;
 
@@ -19,6 +23,12 @@ export default function DashboardOverview() {
 
   const activeBounties = data?.myBounties?.filter((b: any) => b.isActive).length || 0;
   const totalClaims = data?.myBounties?.reduce((acc: number, b: any) => acc + b.claimsCount, 0) || 0;
+  
+  const totalImpressions = data?.venueAnalytics?.totalImpressions || 0;
+  const storefrontSales = data?.venueAnalytics?.storefrontSales || 0;
+
+  const formattedImpressions = totalImpressions >= 1000 ? `${(totalImpressions / 1000).toFixed(1)}K` : totalImpressions.toString();
+  const formattedSales = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(storefrontSales / 100);
 
   return (
     <div className="p-8">
@@ -27,7 +37,13 @@ export default function DashboardOverview() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
           <h3 className="text-white/60 font-medium mb-2">Total Impressions</h3>
-          <p className="text-4xl font-bold">124.5K</p>
+          {loading ? (
+            <p className="text-4xl font-bold animate-pulse text-white/50">...</p>
+          ) : error ? (
+            <p className="text-lg text-red-400">Failed to load</p>
+          ) : (
+            <p className="text-4xl font-bold">{formattedImpressions}</p>
+          )}
           <div className="mt-4 flex items-center text-sm text-[#00ffcc]">
             <span className="font-bold">+12%</span>
             <span className="text-white/40 ml-2">from last week</span>
@@ -58,7 +74,13 @@ export default function DashboardOverview() {
         
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
           <h3 className="text-white/60 font-medium mb-2">Storefront Sales</h3>
-          <p className="text-4xl font-bold">$4,250</p>
+          {loading ? (
+            <p className="text-4xl font-bold animate-pulse text-white/50">...</p>
+          ) : error ? (
+            <p className="text-lg text-red-400">Failed to load</p>
+          ) : (
+            <p className="text-4xl font-bold">{formattedSales}</p>
+          )}
           <div className="mt-4 flex items-center text-sm text-[#00ffcc]">
             <span className="font-bold">+5%</span>
             <span className="text-white/40 ml-2">from last week</span>

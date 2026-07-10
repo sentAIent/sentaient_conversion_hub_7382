@@ -10,26 +10,55 @@ const CLAIM_BOUNTY = gql`
   }
 `;
 
+const CREATE_CONTENT = gql`
+  mutation CreateContent($type: String!, $textBody: String, $venueId: ID) {
+    createContent(type: $type, textBody: $textBody, venueId: $venueId) {
+      id
+    }
+  }
+`;
+
 export default function BountyScreen() {
-  const { id } = useLocalSearchParams();
+  const { id, venueId } = useLocalSearchParams();
   const router = useRouter();
   
-  const [contentId, setContentId] = useState('');
-  const [claim, { loading, error }] = useMutation(CLAIM_BOUNTY);
+  const [proofUrl, setProofUrl] = useState('');
+  const [createContent] = useMutation(CREATE_CONTENT);
+  const [claim, { loading: claimLoading, error }] = useMutation(CLAIM_BOUNTY);
   const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleClaim = async () => {
     try {
-      if (!contentId.trim()) {
-        alert('Please provide a content ID (mock)');
+      if (!proofUrl.trim()) {
+        alert('Please provide a proof URL or simulated media path');
         return;
       }
-      await claim({ variables: { bountyId: id, contentId } });
+      setIsSubmitting(true);
+      
+      const contentRes = await createContent({
+        variables: {
+          type: "ugc",
+          textBody: "Bounty claim - " + proofUrl,
+          venueId: venueId || "1"
+        }
+      });
+      
+      const newContentId = contentRes.data?.createContent?.id;
+      if (!newContentId) {
+        throw new Error('Failed to create content');
+      }
+
+      await claim({ variables: { bountyId: id, contentId: newContentId } });
       setSuccess(true);
     } catch (e: any) {
       alert(e.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const loading = claimLoading || isSubmitting;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,32 +73,32 @@ export default function BountyScreen() {
       <View style={styles.content}>
         {success ? (
           <View style={styles.successBox}>
-            <Ionicons name="checkmark-circle" size={80} color="#00E676" />
-            <Text style={styles.successTitle}>Bounty Claimed!</Text>
-            <Text style={styles.successDesc}>The reward has been added to your wallet.</Text>
-            <TouchableOpacity style={styles.button} onPress={() => router.replace('/wallet')}>
-              <Text style={styles.buttonText}>View Wallet</Text>
+            <Ionicons name="time-outline" size={80} color="#00E676" />
+            <Text style={styles.successTitle}>Pending Review</Text>
+            <Text style={styles.successDesc}>Your submission has been received and is pending review.</Text>
+            <TouchableOpacity style={styles.button} onPress={() => router.replace('/(tabs)/feed')}>
+              <Text style={styles.buttonText}>Back to Feed</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.formBox}>
             <Text style={styles.title}>Submit your content</Text>
-            <Text style={styles.desc}>To claim this bounty, upload the required content (mock implementation).</Text>
+            <Text style={styles.desc}>To claim this bounty, upload the required content.</Text>
             
             <TextInput
               style={styles.input}
-              placeholder="Content ID (mock)"
+              placeholder="Simulated Media URL / Text"
               placeholderTextColor="#666"
-              value={contentId}
-              onChangeText={setContentId}
+              value={proofUrl}
+              onChangeText={setProofUrl}
             />
 
             <TouchableOpacity 
-              style={[styles.button, (!contentId || loading) && { opacity: 0.5 }]} 
+              style={[styles.button, (!proofUrl || loading) && { opacity: 0.5 }]} 
               onPress={handleClaim}
-              disabled={loading || !contentId}
+              disabled={loading || !proofUrl}
             >
-              {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Submit Claim</Text>}
+              {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Submit Proof</Text>}
             </TouchableOpacity>
           </View>
         )}

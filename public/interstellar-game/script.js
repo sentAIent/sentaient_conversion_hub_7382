@@ -20,6 +20,12 @@ v5.0 - Pre-Placement Color Model
 // === PROCEDURAL AUDIO ENGINE ===
 import { AudioEngine } from './audio.js?v=ray_fix_v35';
 import * as Utils from './utils.js';
+import { equipmentDB, baseModules, mineralTypes, galaxyZones, hangarShips } from './js/core/constants.js';
+import { applyRenderMixin } from './js/mixins/RenderMixin.js';
+import { applyInputMixin } from './js/mixins/InputMixin.js';
+import { applyUIMixin } from './js/mixins/UIMixin.js';
+import { applyFactoryMixin } from './js/mixins/FactoryMixin.js';
+
 
 window.gameAudio = new AudioEngine();
 
@@ -178,34 +184,13 @@ class InterstellarEngine {
         this.playerStats = this.loadStats();
 
         // Modular Equipment Database
-        this.equipmentDB = {
-            weapons: {
-                basic_laser: { name: "Basic Laser", type: "weapon", damage: 10, speed: 20, cooldown: 10, color: "#00f3ff", cost: 0, description: "Standard plasma emitter." },
-                plasma_cannon: { name: "Plasma Cannon", type: "weapon", damage: 25, speed: 15, cooldown: 20, color: "#ff00ff", cost: 500, description: "High-damage, slow-firing plasma burst." },
-                rapid_blaster: { name: "Rapid Blaster", type: "weapon", damage: 5, speed: 25, cooldown: 5, color: "#ffff00", cost: 1000, description: "High rate of fire, low damage." },
-                missile_pod: { name: "Missile Pod", type: "weapon", damage: 40, speed: 10, cooldown: 60, color: "#ff5500", cost: 2500, description: "Fires seeking missiles." }
-            },
-            engine: {
-                basic_engine: { name: "Basic Engine", type: "engine", maxSpeedBonus: 0, accelBonus: 0, cost: 0, description: "Standard propulsion system." },
-                ion_thruster: { name: "Ion Thruster", type: "engine", maxSpeedBonus: 20, accelBonus: 0.2, cost: 1500, description: "Increases top speed and acceleration." },
-                warp_drive: { name: "Warp Drive", type: "engine", maxSpeedBonus: 50, accelBonus: 0.5, cost: 5000, description: "State of the art propulsion." }
-            },
-            shield: {
-                basic_shield: { name: "Basic Shield", type: "shield", capacity: 100, rechargeRate: 0.1, cost: 0, description: "Standard deflector shield." },
-                advanced_shield: { name: "Advanced Shield", type: "shield", capacity: 250, rechargeRate: 0.2, cost: 2000, description: "High-capacity energy shield." },
-                fortress_shield: { name: "Fortress Shield", type: "shield", capacity: 500, rechargeRate: 0.5, cost: 8000, description: "Military-grade deflection barrier." }
-            },
-            wings: {
-                basic_wings: { name: "Standard Wings", type: "wings", rotationBonus: 0, cost: 0, description: "Standard aerodynamic wings." },
-                delta_wings: { name: "Delta Wings", type: "wings", rotationBonus: 0.05, cost: 1200, description: "Increases turn speed significantly." },
-                x_wings: { name: "X-Wings", type: "wings", rotationBonus: 0.1, cost: 3000, description: "Superior maneuverability." }
-            },
-            radar: {
-                basic_radar: { name: "Basic Radar", type: "radar", range: 1500, mapVisibility: false, cost: 0, description: "Standard proximity radar." },
-                advanced_radar: { name: "Advanced Radar", type: "radar", range: 3000, mapVisibility: true, cost: 1000, description: "Extended range, shows enemies on Map." },
-                deep_space_radar: { name: "Deep Space Radar", type: "radar", range: 6000, mapVisibility: true, cost: 4000, description: "Massive range, full Map awareness." }
-            }
-        };
+        
+        this.equipmentDB = equipmentDB;
+        this.baseModules = baseModules;
+        this.mineralTypes = mineralTypes;
+        this.galaxyZones = galaxyZones;
+        this.hangarShips = hangarShips;
+
 
         try {
             this.unlockedShips = JSON.parse(localStorage.getItem('unlockedShips')) || ['interceptor', 'hauler', 'orion', 'draco', 'phoenix'];
@@ -263,20 +248,9 @@ class InterstellarEngine {
         };
 
         // Base modules available
-        this.baseModules = {
-            command: { name: 'Command Center', cost: 1000, icon: '🏛️', required: null },
-            storage: { name: 'Storage Vault', cost: 500, icon: '📦', required: 'command' },
-            research: { name: 'R&D Lab', cost: 2000, icon: '🔬', required: 'command', resourceCost: { quartz: 50 } },
-            engineering: { name: 'Engineering Bay', cost: 1500, icon: '🔧', required: 'command', resourceCost: { titanium: 30 } },
-            manufacturing: { name: 'Manufacturing', cost: 2500, icon: '🏭', required: 'engineering', resourceCost: { iron: 100 } },
-            hydroponics: { name: 'Hydroponics', cost: 1000, icon: '🌱', required: 'command', resourceCost: { silicon: 20 } },
-            refinery: { name: 'Refinery', cost: 2000, icon: '⚗️', required: 'manufacturing', resourceCost: { coal: 50 } },
-            defense: { name: 'Defense Turret', cost: 1500, icon: '🔫', required: 'command', resourceCost: { copper: 25 } },
-            shield: { name: 'Shield Generator', cost: 3000, icon: '🛡️', required: 'engineering', resourceCost: { ruby: 10 } },
-            teleport: { name: 'Teleport Pad', cost: 10000, icon: '🌀', required: 'research', resourceCost: { darkmatter: 5 } },
-            hangar: { name: 'Hangar Bay', cost: 5000, icon: '🛸', required: 'command', resourceCost: { titanium: 50 } },
-            trading: { name: 'Trading Post', cost: 3000, icon: '💱', required: 'command', resourceCost: { gold: 20 } },
-        };
+        
+        
+
 
         this.tutorialSuccessCount = 0;
 
@@ -308,88 +282,14 @@ class InterstellarEngine {
         // Mineral system
         this.minerals = [];
         this.powerUps = []; // Added for Power-Ups & Consumables
-        this.mineralTypes = {
-            // ============ INDUSTRIAL ZONE (50% spawn rate in industrial galaxies) ============
-            iron: { name: 'Iron', value: 10, color: '#8B8680', rarity: 'common', size: 15, zone: 'industrial', use: 'Basic construction' },
-            copper: { name: 'Copper', value: 25, color: '#B87333', rarity: 'common', size: 15, zone: 'industrial', use: 'Wiring, conductors' },
-            coal: { name: 'Coal', value: 15, color: '#36454F', rarity: 'common', size: 12, zone: 'industrial', use: 'Fuel source' },
-            titanium: { name: 'Titanium', value: 80, color: '#878681', rarity: 'common', size: 16, zone: 'industrial', use: 'Armor plating' },
-            silicon: { name: 'Silicon', value: 45, color: '#A0A0A0', rarity: 'common', size: 14, zone: 'industrial', use: 'Electronics, circuits' },
+        
+        
 
-            // ============ PRECIOUS ZONE (25% spawn rate in precious galaxies) ============
-            silver: { name: 'Silver', value: 150, color: '#C0C0C0', rarity: 'uncommon', size: 18, zone: 'precious', use: 'Currency, conductors' },
-            gold: { name: 'Gold', value: 400, color: '#FFD700', rarity: 'uncommon', size: 20, zone: 'precious', use: 'Electronics, currency' },
-            platinum: { name: 'Platinum', value: 500, color: '#E5E4E2', rarity: 'uncommon', size: 20, zone: 'precious', use: 'Catalysts, jewelry' },
-            palladium: { name: 'Palladium', value: 600, color: '#CED0DD', rarity: 'uncommon', size: 19, zone: 'precious', use: 'Fuel cells, catalysts' },
-
-            // ============ CRYSTAL ZONE (15% spawn rate in crystal galaxies) ============
-            quartz: { name: 'Quartz', value: 800, color: '#F5F5F5', rarity: 'rare', size: 22, zone: 'crystal', use: 'Optics, sensors' },
-            diamond: { name: 'Diamond', value: 2500, color: '#B9F2FF', rarity: 'rare', size: 25, zone: 'crystal', use: 'Cutting tools, lasers' },
-            emerald: { name: 'Emerald', value: 3000, color: '#50C878', rarity: 'rare', size: 25, zone: 'crystal', use: 'Energy focusing' },
-            ruby: { name: 'Ruby', value: 2800, color: '#E0115F', rarity: 'rare', size: 25, zone: 'crystal', use: 'Laser amplification' },
-            sapphire: { name: 'Sapphire', value: 3200, color: '#0F52BA', rarity: 'rare', size: 25, zone: 'crystal', use: 'Shield technology' },
-
-            // ============ NUCLEAR ZONE (7% spawn rate near black holes) ============
-            uranium: { name: 'Uranium', value: 8000, color: '#4AFF00', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Nuclear reactors' },
-            plutonium: { name: 'Plutonium', value: 12000, color: '#00FF7F', rarity: 'epic', size: 28, zone: 'nuclear', use: 'Advanced power' },
-            helium3: { name: 'Helium-3', value: 15000, color: '#87CEEB', rarity: 'epic', size: 26, zone: 'nuclear', use: 'Fusion reactors' },
-
-            // ============ EXOTIC ZONE (3% spawn rate - edge of space) ============
-            neodymium: { name: 'Neodymium', value: 25000, color: '#FF6EC7', rarity: 'legendary', size: 30, zone: 'exotic', use: 'Magnet tech' },
-            lanthanum: { name: 'Lanthanum', value: 30000, color: '#9D00FF', rarity: 'legendary', size: 32, zone: 'exotic', use: 'Hybrid engines' },
-            darkmatter: { name: 'Dark Matter', value: 100000, color: '#1a0033', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Warp drives' },
-            antimatter: { name: 'Antimatter', value: 150000, color: '#FF00FF', rarity: 'mythic', size: 35, zone: 'exotic', use: 'Annihilation power' },
-            lotus: { name: 'Mindwave Lotus', value: 500000, color: '#ff69b4', rarity: 'transcendental', size: 40, zone: 'all', use: 'Ultimate Enlightenment' }
-        };
 
         // Galaxy zone configuration - determines element distribution
-        this.galaxyZones = {
-            industrial: {
-                name: 'Industrial Sector',
-                color: '#8B8680',
-                glowColor: 'rgba(139, 134, 128, 0.3)',
-                elements: ['iron', 'copper', 'coal', 'titanium', 'silicon'],
-                concentrationBonus: 3.0,
-                defenseLevel: 1,
-                distanceRange: { min: 100, max: 800 }
-            },
-            precious: {
-                name: 'Precious Nebula',
-                color: '#FFD700',
-                glowColor: 'rgba(255, 215, 0, 0.3)',
-                elements: ['silver', 'gold', 'platinum', 'palladium'],
-                concentrationBonus: 2.5,
-                defenseLevel: 2,
-                distanceRange: { min: 800, max: 2000 }
-            },
-            crystal: {
-                name: 'Crystal Fields',
-                color: '#50C878',
-                glowColor: 'rgba(80, 200, 120, 0.3)',
-                elements: ['quartz', 'diamond', 'emerald', 'ruby', 'sapphire'],
-                concentrationBonus: 2.0,
-                defenseLevel: 3,
-                distanceRange: { min: 2000, max: 4000 }
-            },
-            nuclear: {
-                name: 'Radiation Belt',
-                color: '#4AFF00',
-                glowColor: 'rgba(74, 255, 0, 0.4)',
-                elements: ['uranium', 'plutonium', 'helium3'],
-                concentrationBonus: 1.5,
-                defenseLevel: 4,
-                distanceRange: { min: 3500, max: 5000 }
-            },
-            exotic: {
-                name: 'Dark Frontier',
-                color: '#9D00FF',
-                glowColor: 'rgba(157, 0, 255, 0.4)',
-                elements: ['neodymium', 'lanthanum', 'darkmatter', 'antimatter'],
-                concentrationBonus: 1.0,
-                defenseLevel: 5,
-                distanceRange: { min: 5000, max: 8000 }
-            }
-        };
+        
+        
+
 
         // Resource deposits - persistent locations with finite resources
         this.resourceDeposits = [];
@@ -471,182 +371,21 @@ class InterstellarEngine {
 
         // Hangar State
         this.currentHangarBay = 0;
-        this.hangarShips = [
-            { id: 'interceptor', name: 'INTERCEPTOR', model: 'Scout Mark IV', speed: 90, armor: 'Light', power: 'Nimble Dash', desc: 'Standard issue Aether Fleet scout. High visibility, extreme agility.', premium: false },
-            { id: 'orion', name: 'ORION', model: 'Cosmos Custom', speed: 100, armor: 'Medium', power: 'Constellation Sync', desc: 'A custom frame built from raw stardust. Adapts to your drawings.', premium: false },
-            { id: 'hauler', name: 'MAULER', model: 'Juggernaut-9', speed: 70, armor: 'Heavy+', power: 'Gravity Well', desc: 'Massive armored hull capable of towing stars. Industrial powerhouse.', premium: false },
-            { id: 'draco', name: 'DRACO', model: 'Dragon-Wing', speed: 130, armor: 'Light', power: 'Hyper-Cruise', desc: 'Built for pure velocity. The fastest non-pro vessel in the sector.', premium: false },
-            { id: 'phoenix', name: 'PHOENIX', model: 'S-77 Firebird', speed: 95, armor: 'Renewable', power: 'Solar Siphon', desc: 'Advanced hull that regenerates from cosmic radiation.', premium: false },
-            { id: 'saucer', name: 'SAUCER', model: 'Ancient Disk', speed: 110, armor: 'Shielded', power: 'Inertia Nullifier', desc: 'Mysterious tech from the inner rings. Defies standard physics.', premium: true },
-            { id: 'harvester', name: 'STARFIGHTER', model: 'Mk. Infinity', speed: 140, armor: 'Aegis+', power: 'Final Strike', desc: 'The ultimate combat vessel. Apex of Aether engineering.', premium: true },
-            { id: 'viper', name: 'VIPER', model: 'V-12 Strike', speed: 120, armor: 'Medium', power: 'Speed Surge', desc: 'Elite interceptor with extreme burst acceleration modules.', premium: true },
-            { id: 'bulwark', name: 'BULWARK', model: 'Titan Ward', speed: 60, armor: 'Fortress', power: 'Shield Regen', desc: 'The ultimate defensive platform. Near-impenetrable armor plating.', premium: true },
-            { id: 'prospector', name: 'PROSPECTOR', model: 'Mining Rig', speed: 80, armor: 'Reinforced', power: 'Gem Magnet', desc: 'Optimized for resource extraction with powerful magnetic fields.', premium: true },
-            { id: 'spectre', name: 'SPECTRE', model: 'Ghost Frame', speed: 105, armor: 'Phase', power: 'Cloak', desc: 'Stealth-first design. Vanish from radar at the touch of a key.', premium: true },
-            { id: 'nova', name: 'NOVA', model: 'Supernova S-1', speed: 100, armor: 'Volatile', power: 'Volatile Core', desc: 'Experimental engine that releases energy on structural failure.', premium: true },
-            { id: 'siphon', name: 'SIPHON', model: 'Leech V1', speed: 85, armor: 'Energy', power: 'Energy Leech', desc: 'Drains energy from local anomalies to power its specialized systems.', premium: true },
-            { id: 'titan', name: 'TITAN', model: 'Colossus', speed: 50, armor: 'Undeath', power: 'Hardened Hull', desc: 'A literal flying mountain. Slow, but effectively indestructible.', premium: true },
-            { id: 'pulse', name: 'PULSE', model: 'Radar-Class', speed: 130, armor: 'Sensors', power: 'Pulse Ping', desc: 'Tactical specialist with long-range environmental mapping.', premium: true },
-            { id: 'apex', name: 'APEX', model: 'Overclocker', speed: 100, armor: 'Cyber', power: 'Overclock', desc: 'Pushing boundaries of digital integration for peak performance.', premium: true },
-            { id: 'valkyrie', name: 'VALKYRIE', model: 'Strike Fighter', speed: 135, armor: 'Aero', power: 'Ion Trail', desc: 'Swept-wing fighter with twin trailing ion engines. Extremely fast.', premium: true },
-            { id: 'leviathan', name: 'LEVIATHAN', model: 'Dreadnought', speed: 45, armor: 'Titanium+', power: 'Broadside', desc: 'A massive, blocky heavy cruiser with glowing side-thrusters.', premium: true },
-            { id: 'wraith', name: 'WRAITH', model: 'Stealth Bomber', speed: 110, armor: 'Radar-Absorbent', power: 'Invisibility', desc: 'Pitch-black angular stealth craft with glowing red micro-thrusters.', premium: true },
-            { id: 'pulsar', name: 'PULSAR', model: 'Energy Frigate', speed: 100, armor: 'Plasma', power: 'EMP Blast', desc: 'A central glowing energy ring flanked by stabilizing nacelles.', premium: true },
-            { id: 'nomad', name: 'NOMAD', model: 'Deep Explorer', speed: 90, armor: 'Medium', power: 'Sensor Sweep', desc: 'Modular-looking vessel with distinct command bridge and rotating dishes.', premium: true },
-            { id: 'eclipse', name: 'ECLIPSE', model: 'Prototype', speed: 125, armor: 'Nano-Carbon', power: 'Dark Energy', desc: 'Highly curved saucer-like stealth ship with flowing neon light strips.', premium: true },
-            { id: 'hyperion', name: 'HYPERION', model: 'Assault Carrier', speed: 75, armor: 'Heavy', power: 'Drone Swarm', desc: 'Wide-bodied aggressive carrier with visible launch bays.', premium: true },
-            { id: 'archangel', name: 'ARCHANGEL', model: 'Apex Fighter', speed: 140, armor: 'Hard-Light', power: 'Holy Fire', desc: 'Pure white and gold vessel with sweeping angelic hard-light wings.', premium: true }
-        ];
+        
+
         this._hangarLoopRunning = false;
 
         // Performance
         // this.initWebGL(); // Disabled for now to focus on monetization
         this.init();
+        this.initFactory();
     }
 
-    initWebGL() {
-        if (!window.THREE) {
-            console.warn("Three.js not loaded! WebGL disabled.");
-            return;
-        }
-        console.log("🌌 Initializing WebGL / Three.js Engine...");
-        
-        // 1. Create WebGL Renderer underneath 2D Canvas
-        this.glCanvas = document.createElement('canvas');
-        this.glCanvas.id = 'glcanvas';
-        this.glCanvas.style.position = 'absolute';
-        this.glCanvas.style.top = '0';
-        this.glCanvas.style.left = '0';
-        this.glCanvas.style.width = '100vw';
-        this.glCanvas.style.height = '100vh';
-        this.glCanvas.style.zIndex = '0'; // Behind 2D canvas which has z-index 1
-        
-        // Setup existing 2D canvas to be transparent
-        this.canvas.style.position = 'absolute';
-        this.canvas.style.zIndex = '1';
-        this.canvas.style.backgroundColor = 'transparent';
-        
-        document.body.insertBefore(this.glCanvas, this.canvas);
-        
-        this.glRenderer = new THREE.WebGLRenderer({ canvas: this.glCanvas, alpha: true, antialias: true });
-        this.glRenderer.setSize(window.innerWidth, window.innerHeight);
-        this.glRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2 for performance
-        
-        // 2. Setup Scene & Camera
-        this.glScene = new THREE.Scene();
-        
-        // Use an Orthographic Camera to match 2D Canvas pixel coordinates initially
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        // To match 2D Canvas where (0,0) is top-left and Y goes down, 
-        // we can invert the Y-axis of the camera by setting top = -height/2 and bottom = height/2.
-        this.glCamera = new THREE.OrthographicCamera(
-            -width / 2, width / 2, 
-            -height / 2, height / 2, 
-            0.1, 1000
-        );
-        this.glCamera.position.z = 100;
-        
-        // 3. Initialize 3D Objects
-        this.init3DObjects();
-        
-        // Handle window resize for WebGL
-        window.addEventListener('resize', () => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            if (this.glRenderer) {
-                this.glRenderer.setSize(w, h);
-                this.glCamera.left = -w / 2;
-                this.glCamera.right = w / 2;
-                this.glCamera.top = -h / 2;
-                this.glCamera.bottom = h / 2;
-                this.glCamera.updateProjectionMatrix();
-            }
-        });
-        
-        this.webglReady = true;
-    }
 
-    init3DObjects() {
-        if (!window.THREE) return;
 
-        // Player Ship Group
-        this.glPlayerShip = new THREE.Group();
-        
-        // Sleek triangular ship (Interceptor style)
-        const bodyGeo = new THREE.ConeGeometry( 15, 45, 4 );
-        // Default Cone points UP (+Y). In 2D game, 0 degrees is facing right (+X).
-        // Rotate -90 degrees around Z axis to point it to +X.
-        bodyGeo.rotateZ(-Math.PI / 2); 
+    
 
-        const shipColorStr = (this.playerShip && this.playerShip.color) ? this.playerShip.color : '#00f3ff';
-        const shipColor = new THREE.Color(shipColorStr);
-
-        const bodyMat = new THREE.MeshPhongMaterial({ 
-            color: shipColor,
-            shininess: 100,
-            emissive: shipColor,
-            emissiveIntensity: 0.2
-        });
-        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-        
-        // Add some wings
-        const wingGeo = new THREE.BoxGeometry(20, 40, 5);
-        wingGeo.translate(-10, 0, 0); // push back a bit
-        const wingMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
-        const wingMesh = new THREE.Mesh(wingGeo, wingMat);
-        
-        this.glPlayerShip.add(bodyMesh);
-        this.glPlayerShip.add(wingMesh);
-        
-        // Add a point light to the ship
-        const shipLight = new THREE.PointLight(shipColor, 2, 300);
-        shipLight.position.set(0, 0, 20); // slightly above
-        this.glPlayerShip.add(shipLight);
-        
-        this.glScene.add(this.glPlayerShip);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
-        this.glScene.add(ambientLight);
-        
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(0, 0, 100);
-        this.glScene.add(dirLight);
-    }
-
-    renderWebGL(time) {
-        if (!this.webglReady) return;
-
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        
-        // 2D game uses this.camera.zoom and this.camera.x / y
-        const zoom = (this.camera && this.camera.zoom) ? this.camera.zoom : 1.0;
-
-        if (this.playerShip && this.camera) {
-            // Update 3D ship position and rotation
-            if (this.glPlayerShip) {
-                this.glPlayerShip.position.set(this.playerShip.x, this.playerShip.y, 0);
-                this.glPlayerShip.rotation.z = this.playerShip.rotation;
-                
-                // In 2D, the ship size is 45 / zoom, effectively keeping it constant screen size.
-                // We'll scale the 3D mesh to match this behavior.
-                this.glPlayerShip.scale.set(1 / zoom, 1 / zoom, 1 / zoom);
-            }
-
-            // Update camera to follow the exact same coordinate as the 2D camera
-            this.glCamera.position.x = this.camera.x;
-            this.glCamera.position.y = this.camera.y;
-            
-            // Apply zoom to the camera
-            this.glCamera.zoom = zoom;
-            this.glCamera.updateProjectionMatrix();
-        }
-
-        // Render the WebGL scene
-        this.glRenderer.render(this.glScene, this.glCamera);
-    }
+    
 
     async initTemplates() {
         try {
@@ -1167,77 +906,9 @@ class InterstellarEngine {
     }
 
     // Mobile Controls
-    toggleMobileControls() {
-        const joy = document.getElementById('joystick-container');
-        if (joy) {
-            joy.style.display = joy.style.display === 'none' ? 'block' : 'none';
-        }
-    }
+    
 
-    initJoystick() {
-        const base = document.getElementById('joystick-base');
-        const stick = document.getElementById('joystick-stick');
-        const container = document.getElementById('joystick-container');
-
-        // Show joystick on init if likely mobile
-        // We default to hidden in CSS, but check here
-        if (window.innerWidth <= 768 && container) {
-            container.style.display = 'block';
-            this.joystickActive = true;
-        }
-
-        if (!base || !stick) return;
-
-        let startX = 0, startY = 0;
-        let moveX = 0, moveY = 0;
-        const maxDist = 35; // Max movement radius
-
-        const handleStart = (e) => {
-            e.preventDefault();
-            const touch = e.touches ? e.touches[0] : e;
-            startX = touch.clientX;
-            startY = touch.clientY;
-            this.joystickActive = true;
-        };
-
-        const handleMove = (e) => {
-            if (!this.joystickActive) return;
-            e.preventDefault();
-            const touch = e.touches ? e.touches[0] : e;
-
-            let dx = touch.clientX - startX;
-            let dy = touch.clientY - startY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist > maxDist) {
-                dx = (dx / Math.max(0.1, dist)) * maxDist;
-                dy = (dy / Math.max(0.1, dist)) * maxDist;
-            }
-
-            stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-
-            // Normalize -1 to 1
-            this.joyInputX = dx / maxDist;
-            this.joyInputY = dy / maxDist;
-        };
-
-        const handleEnd = (e) => {
-            e.preventDefault();
-            this.joystickActive = false;
-            this.joyInputX = 0;
-            this.joyInputY = 0;
-            stick.style.transform = `translate(-50%, -50%)`;
-        };
-
-        base.addEventListener('touchstart', handleStart, { passive: false });
-        base.addEventListener('touchmove', handleMove, { passive: false });
-        base.addEventListener('touchend', handleEnd, { passive: false });
-
-        // Also mouse for testing
-        base.addEventListener('mousedown', handleStart);
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleEnd);
-    }
+    
 
     resize() {
         this.canvas.width = window.innerWidth;
@@ -1266,271 +937,20 @@ class InterstellarEngine {
      * This method is now positioned explicitly before other methods that rely on it
      * (like resize) to ensure availability in sensitive execution environments.
      */
-    generateStaticBackground() {
-        const bgStars = [];
-        const count = 300; // number of background stars
-        for (let i = 0; i < count; i++) {
-            bgStars.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                size: Math.random() * 0.5 + 0.1,
-                alpha: Math.random() * 0.5 + 0.2,
-                vx: (Math.random() - 0.5) * 1.5,
-                vy: (Math.random() - 0.5) * 1.5,
-                depth: 0.3 + Math.random() * 0.7
-            });
-        }
-        return bgStars;
-    }
+    
 
-    initWindowSystem() {
-        const windows = document.querySelectorAll('.cockpit-section, .floating-window, .popup-panel');
-        
-        windows.forEach(win => {
-            if (!win.id) return;
-            
-            // 1. Restore state
-            localStorage.removeItem('windowState_' + win.id);
-            const savedState = null;
-            if (savedState) {
-                try {
-                    const state = JSON.parse(savedState);
-                    win.style.position = 'fixed';
-                    if (state.left !== undefined) win.style.left = state.left;
-                    if (state.top !== undefined) win.style.top = state.top;
-                    if (state.width !== undefined) win.style.width = state.width;
-                    if (state.height !== undefined) win.style.height = state.height;
-                    win.style.bottom = 'auto';
-                    win.style.right = 'auto';
-                    if (state.zIndex) {
-                        win.style.zIndex = state.zIndex;
-                        if (parseInt(state.zIndex) > this.topZIndex) this.topZIndex = parseInt(state.zIndex);
-                    }
-                } catch(e) {}
-            }
+    
 
-            // Bring to front on click anywhere in window
-            win.addEventListener('mousedown', () => {
-                this.topZIndex++;
-                win.style.zIndex = this.topZIndex;
-                this.saveWindowState(win);
-            }, true); // use capture to fire early
+    
 
-            // 2. Setup Draggable Header
-            const header = win.querySelector('.window-header, .cockpit-header');
-            if (header) {
-                header.style.cursor = 'grab';
-                let isDragging = false;
-                let startX, startY, initialLeft, initialTop;
-
-                header.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    header.style.cursor = 'grabbing';
-                    
-                    const rect = win.getBoundingClientRect();
-                    win.style.position = 'fixed';
-                    win.style.left = rect.left + 'px';
-                    win.style.top = rect.top + 'px';
-                    win.style.bottom = 'auto';
-                    win.style.right = 'auto';
-
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    initialLeft = parseInt(win.style.left) || win.getBoundingClientRect().left;
-                    initialTop = parseInt(win.style.top) || win.getBoundingClientRect().top;
-                    
-                    e.preventDefault(); 
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    if (!isDragging) return;
-                    const zoom = parseFloat(getComputedStyle(win).zoom || 1);
-                    let newLeft = initialLeft + (e.clientX - startX) / zoom;
-                    let newTop = initialTop + (e.clientY - startY) / zoom;
-                    
-                    const minVisible = 50;
-                    newLeft = Math.max(-win.offsetWidth + minVisible, Math.min(window.innerWidth / zoom - minVisible, newLeft));
-                    newTop = Math.max(0, Math.min(window.innerHeight / zoom - minVisible, newTop));
-                    
-                    win.style.left = newLeft + 'px';
-                    win.style.top = newTop + 'px';
-                });
-
-                window.addEventListener('mouseup', () => {
-                    if (isDragging) {
-                        isDragging = false;
-                        header.style.cursor = 'grab';
-                        this.saveWindowState(win);
-                    }
-                });
-                
-                header.addEventListener('dblclick', () => {
-                    win.classList.toggle('collapsed');
-                });
-            }
-
-            // 3. Setup 8-Directional Resize Handles
-            const handleDirs = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
-            
-            handleDirs.forEach(dir => {
-                let handle = win.querySelector('.resize-' + dir);
-                if (!handle) {
-                    handle = document.createElement('div');
-                    handle.className = 'resize-' + dir;
-                    win.appendChild(handle);
-                }
-
-                let isResizing = false;
-                let startRx, startRy, startWidth, startHeight, startLeft, startTop;
-
-                handle.addEventListener('mousedown', (e) => {
-                    isResizing = true;
-                    startRx = e.clientX;
-                    startRy = e.clientY;
-                    
-                    const flightHud = document.getElementById('flightHUD');
-                    const zoom = flightHud ? parseFloat(getComputedStyle(flightHud).zoom || 1) : 1;
-
-                    // Let browser compute exact screen positions
-                    const rect = win.getBoundingClientRect();
-                    let currentLeft = rect.left / zoom;
-                    let currentTop = rect.top / zoom;
-                    
-                    if (getComputedStyle(win).position !== 'fixed' || win.style.right !== 'auto' || win.style.bottom !== 'auto') {
-                        // Create placeholder for static elements
-                        if (getComputedStyle(win).position !== 'fixed' && win.parentNode && win.parentNode.classList && 
-                           (win.parentNode.classList.contains('left-column') || win.parentNode.classList.contains('right-column') || 
-                            win.parentNode.classList.contains('bottom-left') || win.parentNode.classList.contains('bottom-right'))) {
-                            const placeholder = document.createElement('div');
-                            placeholder.style.width = win.offsetWidth + 'px';
-                            placeholder.style.height = win.offsetHeight + 'px';
-                            placeholder.style.flex = getComputedStyle(win).flex;
-                            placeholder.classList.add('drag-placeholder');
-                            win.parentNode.insertBefore(placeholder, win);
-                        }
-
-                        win.style.position = 'fixed';
-                        win.style.left = currentLeft + 'px';
-                        win.style.top = currentTop + 'px';
-                        win.style.bottom = 'auto';
-                        win.style.right = 'auto';
-                        win.style.margin = '0';
-                    }
-
-                    // Use offset properties which correctly map to the CSS values
-                    startWidth = win.offsetWidth;
-                    startHeight = win.offsetHeight;
-                    startLeft = win.offsetLeft;
-                    startTop = win.offsetTop;
-
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    if (!isResizing) return;
-                    
-                    const flightHud = document.getElementById('flightHUD');
-                    let zoom = 1;
-                    if (flightHud) {
-                        zoom = parseFloat(getComputedStyle(flightHud).zoom || 1);
-                    }
-
-                    const dx = (e.clientX - startRx) / zoom;
-                    const dy = (e.clientY - startRy) / zoom;
-
-                    let newWidth = startWidth;
-                    let newHeight = startHeight;
-                    let newLeft = startLeft;
-                    let newTop = startTop;
-
-                    const minWidth = Math.max(150, parseFloat(getComputedStyle(win).minWidth) || 150);
-                    const minHeight = Math.max(100, parseFloat(getComputedStyle(win).minHeight) || 100);
-
-                    if (dir.includes('e')) {
-                        newWidth = Math.max(minWidth, startWidth + dx);
-                    }
-                    if (dir.includes('s')) {
-                        newHeight = Math.max(minHeight, startHeight + dy);
-                    }
-                    if (dir.includes('w')) {
-                        const maxDx = startWidth - minWidth;
-                        const actualDx = Math.min(dx, maxDx);
-                        newWidth = startWidth - actualDx;
-                        newLeft = startLeft + actualDx;
-                    }
-                    if (dir.includes('n')) {
-                        const maxDy = startHeight - minHeight;
-                        const actualDy = Math.min(dy, maxDy);
-                        newHeight = startHeight - actualDy;
-                        newTop = startTop + actualDy;
-                    }
-
-                    // Bounds checking
-                    newWidth = Math.min(window.innerWidth / zoom - 20, newWidth);
-                    newHeight = Math.min(window.innerHeight / zoom - 20, newHeight);
-                    newLeft = Math.max(0, newLeft);
-                    newTop = Math.max(0, newTop);
-
-                    win.style.setProperty('width', newWidth + 'px', 'important');
-                    win.style.setProperty('height', newHeight + 'px', 'important');
-                    win.style.setProperty('max-width', 'none', 'important');
-                    win.style.setProperty('max-height', 'none', 'important');
-                    win.style.left = newLeft + 'px';
-                    win.style.top = newTop + 'px';
-                });
-
-                window.addEventListener('mouseup', () => {
-                    if (isResizing) {
-                        isResizing = false;
-                        this.saveWindowState(win);
-                    }
-                });
-            });
-});
-    }
-
-    saveWindowState(win) {
-        if (!win.id) return;
-        const state = {
-            left: win.style.left,
-            top: win.style.top,
-            width: win.style.width,
-            height: win.style.height,
-            zIndex: win.style.zIndex
-        };
-        localStorage.setItem('windowState_' + win.id, JSON.stringify(state));
-    }
-
-    setMode(newMode) {
-        this.mode = newMode;
-        document.getElementById('drawModeBtn').classList.remove('active');
-        document.getElementById('selectModeBtn').classList.remove('active');
-
-        if (newMode === 'draw') {
-            document.getElementById('drawModeBtn').classList.add('active');
-            this.canvas.style.cursor = 'crosshair';
-        } else if (newMode === 'select') {
-            document.getElementById('selectModeBtn').classList.add('active');
-            this.canvas.style.cursor = 'pointer';
-        }
-    }
+    
 
     /* --- NEW COLOR CONTROLS --- */
     // Utilities moved to utils.js
 
-    setFixedColor(hexColor) {
-        this.activeColor = hexColor;
-        this.colorMode = 'fixed';
-        this.updateColorModeUI();
-        this.showToast(`Active color set to ${hexColor} `);
-    }
+    
 
-    setRainbowMode() {
-        this.colorMode = 'rainbow';
-        this.updateColorModeUI();
-        this.showToast("Active color set to Rainbow Mode 🌈");
-    }
+    
 
     // ===== PROCEDURAL UNIVERSE GENERATION =====
 
@@ -1769,253 +1189,25 @@ class InterstellarEngine {
         this.updateBgUI();
     }
 
-    drawCyberGrid(ctx, canvas, time) {
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0); // Force screen space
-
-        const horizon = canvas.height * 0.55;
-        const centerX = canvas.width / 2;
-        const maxRadius = canvas.width * 1.5;
-
-        // Space Background
-        ctx.fillStyle = '#050011';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Move to vanishing point and scale Y to create a horizontal plane perspective
-        ctx.translate(centerX, horizon);
-        ctx.scale(1, 0.3); // Squash vertically to look like a horizontal plane
-
-        let color1 = this.cyberColor1;
-        let color2 = this.cyberColor2;
-        
-        if (this.cyberRainbowMode) {
-            const hue1 = (time * 0.05) % 360;
-            const hue2 = (time * 0.05 + 180) % 360; // Offset by 180 degrees
-            color1 = `hsl(${hue1}, 100%, 50%)`;
-            color2 = `hsl(${hue2}, 100%, 50%)`;
-        }
-
-        // Singularity core
-        ctx.beginPath();
-        ctx.arc(0, 0, 80, 0, Math.PI * 2);
-        ctx.fillStyle = '#000000';
-        ctx.shadowBlur = 100;
-        ctx.shadowColor = color1;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // Setup Vortex styling
-        ctx.lineWidth = 2.0;
-
-        // 1. Concentric rings moving inward (accretion)
-        // We reverse the phase to make them suck into the hole
-        const numRings = 20;
-        const scalePhase = 1 - ((time * 0.0005) % 1);
-
-        ctx.beginPath();
-        ctx.strokeStyle = color1;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = color1;
-
-        for (let i = 1; i <= numRings; i++) {
-            // Inward sucking effect
-            const ratio = (i - 1 + scalePhase) / numRings;
-            // Prevent drawing inside the black hole event horizon
-            if (ratio < 0.05) continue; 
-            
-            const r = Math.pow(ratio, 2) * maxRadius;
-            ctx.moveTo(r, 0);
-            ctx.arc(0, 0, r, 0, Math.PI * 2);
-        }
-        ctx.stroke();
-
-        // 2. Swirling radial lines (Polar Grid)
-        const numSpokes = 36;
-        const rotationBase = time * 0.0002;
-
-        ctx.beginPath();
-        ctx.strokeStyle = color2;
-        ctx.shadowColor = color2;
-
-        for (let i = 0; i < numSpokes; i++) {
-            const angle = (i / numSpokes) * Math.PI * 2;
-            
-            // Draw a curved line (spiral) sucking into the center
-            const startRadius = 80;
-            ctx.moveTo(Math.cos(angle + rotationBase) * startRadius, Math.sin(angle + rotationBase) * startRadius);
-            
-            // Use quadratic curve to make it spiral
-            const cpRadius = maxRadius * 0.4;
-            const cpAngle = angle + rotationBase + 1.5; // Curve twist
-            const cpX = Math.cos(cpAngle) * cpRadius;
-            const cpY = Math.sin(cpAngle) * cpRadius;
-            
-            const endAngle = angle + rotationBase + 3.0;
-            const endX = Math.cos(endAngle) * maxRadius;
-            const endY = Math.sin(endAngle) * maxRadius;
-            
-            ctx.quadraticCurveTo(cpX, cpY, endX, endY);
-        }
-        ctx.stroke();
-
-        ctx.restore();
-    }
+    
 
     // Generate only a single style's data
-    generateSingleStyle(style) {
-        switch (style) {
-            case 'deep-space':
-                this.generateDeepSpaceStyle();
-                break;
-            case 'nebula':
-                this.generateNebulaStyle();
-                break;
-            case 'alien':
-                this.generateAlienStyle();
-                break;
-            case 'matrix':
-                this.generateMatrixStyle();
-                break;
-            case 'cyber':
-                this.generateCyberStyle();
-                break;
-        }
-    }
+    
 
     // Clear only a specific style's data
-    clearStyleData(style) {
-        switch (style) {
-            case 'deep-space':
-                // Deep space uses: galaxies, blackHoles, planets, and contributes to nebulae/backgroundStars
-                this.galaxies = [];
-                this.blackHoles = [];
-                this.planets = [];
-                this.nebulae = []; // Clear deep-space nebulae
-                this.backgroundStars = []; // Fix memory leak / freeze
-                if (this.activeStyles.has('nebula')) {
-                    this.generateSingleStyle('nebula'); // Restore nebula style if it was active
-                }
-                break;
-            case 'nebula':
-                // Clear nebula clouds
-                this.nebulae = [];
-                if (this.activeStyles.has('deep-space')) {
-                    // Deep space also generates some nebulae, restore them
-                    this.galaxies = [];
-                    this.blackHoles = [];
-                    this.planets = [];
-                    this.generateSingleStyle('deep-space');
-                }
-                break;
-            case 'alien':
-                this.spacecraft = [];
-                break;
-            case 'matrix':
-                this.matrixStreams = [];
-                break;
-            case 'cyber':
-                this.cyberGrid = null; // Clear synthwave grid
-                break;
-        }
-    }
+    
 
-    updateBgUI() {
-        // Update Buttons
-        document.querySelectorAll('.bg-toggle').forEach(btn => {
-            const style = btn.getAttribute('data-style');
-            if (this.activeStyles.has(style)) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
+    
 
-        // Show/hide matrix panel when matrix style is active
-        const matrixPanel = document.getElementById('matrixPanel');
-        if (matrixPanel) {
-            if (this.activeStyles.has('matrix')) {
-                matrixPanel.classList.remove('hidden');
-            } else {
-                matrixPanel.classList.add('hidden');
-            }
-        }
-        
-        // Show/hide cyber panel when cyber style is active
-        const cyberPanel = document.getElementById('cyberPanel');
-        if (cyberPanel) {
-            if (this.activeStyles.has('cyber')) {
-                cyberPanel.classList.remove('hidden');
-            } else {
-                cyberPanel.classList.add('hidden');
-            }
-        }
-
-        // Show/hide battle toggle when alien style is active
-        const battleBtn = document.getElementById('battleToggleBtn');
-        if (battleBtn) {
-            if (this.activeStyles.has('alien')) {
-                battleBtn.style.display = 'inline-block';
-                if (this.settings && this.settings.bgBattles) {
-                    battleBtn.style.backgroundColor = '#ff5555';
-                    battleBtn.style.color = '#000';
-                } else {
-                    battleBtn.style.backgroundColor = 'transparent';
-                    battleBtn.style.color = '#ff5555';
-                }
-            } else {
-                battleBtn.style.display = 'none';
-            }
-        }
-    }
-
-    toggleBgBattles() {
-        if (!this.settings) return;
-        this.settings.bgBattles = !this.settings.bgBattles;
-        
-        const cb = document.getElementById('settingBgBattles');
-        if (cb) cb.checked = this.settings.bgBattles;
-
-        this.updateBgUI();
-        localStorage.setItem('gameSettings', JSON.stringify(this.settings));
-        this.showToast(this.settings.bgBattles ? 'Background Battles Enabled' : 'Background Battles Disabled');
-    }
+    
 
     // Warm up the particle generators to prevent JIT lag on first explosion
-    preloadEffects() {
-        console.log('[Aether] Preloading effects to prevent stutter...');
-        // Generate a small batch of particles to force JIT compilation
-        const dummy = this.generateSupernovaParticles(10);
-
-        // Warm up the render paths (dry run)
-        const ctx = this.ctx;
-        if (ctx) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.createRadialGradient(0, 0, 1, 0, 0, 10);
-            ctx.restore();
-        }
-        console.log('[Aether] Effects preloaded.');
-    }
+    
 
     // Toggle functions for popup panels
-    toggleRotationPanel() {
-        const panel = document.getElementById('rotationPanel');
-        if (panel) {
-            const isHidden = panel.classList.toggle('hidden');
-            if (this.flightMode) this.gamePaused = !isHidden;
-        }
-    }
+    
 
-    toggleTemplatePanel() {
-        const panel = document.getElementById('templatePanel');
-        if (panel.style.display === 'block') {
-            panel.style.display = 'none';
-            if (this.flightMode) this.gamePaused = false;
-        } else {
-            panel.style.display = 'block';
-            if (this.flightMode) this.gamePaused = true;
-        }
-    }
+    
 
     calculateShipStats() {
         if (!this.playerShip || !this.playerShip.equipment) return;
@@ -2080,224 +1272,20 @@ class InterstellarEngine {
         this.playerShip.mapVisibility = mapVisibility;
     }
 
-    toggleFlightMode() {
-        if (this.hazardEffect && (this.hazardEffect.type === 'player_death' || this.hazardEffect.type === 'blackhole' || this.hazardEffect.type === 'planet_impact')) return;
-        this.flightMode = !this.flightMode;
-        this.mode = this.flightMode ? 'flight' : 'draw'; // Sync game mode to allow correct rendering
+    
 
-        // Initial sector generation so the player doesn't fly into a void
-        if (this.flightMode) {
-            this.checkAndGenerateSectors();
-        }
-
-        // Ensure ship is at valid coordinates (Fix NaN or undefined)
-        if (!this.playerShip) {
-            this.playerShip = { 
-                type: 'interceptor', 
-                x: 0, y: 0, z: 0, 
-                vx: 0, vy: 0, vz: 0, 
-                rotation: 0, pitch: 0, roll: 0, 
-                speed: 0, maxSpeed: 50, acceleration: 0.5, rotationSpeed: 0.08, 
-                size: 45, color: '#00f3ff', 
-                shield: 100, maxShield: 100, 
-                hull: 100, maxHull: 100, 
-                cargoCount: 0, cargoCapacity: 100,
-                equipment: {
-                    weapons: ['basic_laser', null, null, null, null],
-                    engine: 'basic_engine',
-                    shield: 'basic_shield',
-                    wings: ['basic_wings', 'basic_wings'],
-                    radar: 'basic_radar'
-                }
-            };
-        }
-        if (isNaN(this.playerShip.x)) this.playerShip.x = 0;
-        if (isNaN(this.playerShip.y)) this.playerShip.y = 0;
-        if (isNaN(this.playerShip.vx)) this.playerShip.vx = 0;
-        if (isNaN(this.playerShip.vy)) this.playerShip.vy = 0;
-
-        this.calculateShipStats();
-
-        // Safety: Clear any active hazard effects when entering/exiting flight mode
-        // EXCEPT nuclear explosions which should play out fully
-        if (this.hazardEffect && this.hazardEffect.type !== 'supernova') {
-            this.hazardEffect = null;
-        }
-        this.camera.shakeX = 0;
-        this.camera.shakeY = 0;
-
-        // Toggle HUD overlay
-        const hud = document.getElementById('flightHUD');
-        const floatingLeaders = document.getElementById('floatingLeaders');
-        const missionSection = document.getElementById('sectionMission');
-
-        if (this.flightMode) {
-            if (hud) hud.classList.remove('hidden');
-            if (floatingLeaders) floatingLeaders.classList.remove('hidden');
-            this.updateFloatingLeaderboard();
-            this.showToast('Flight Mode: ON');
-            this.updateMissionHUD(); // Call the new mission HUD update
-            this.updateFactionHUD(); // Boot Faction HUD
-            // Audio: start engine hum + ambient music
-            gameAudio.startEngineHum();
-            gameAudio.startAmbientMusic();
-        } else {
-            if (hud) hud.classList.add('hidden');
-            if (floatingLeaders) floatingLeaders.classList.add('hidden');
-            this.updateFactionHUD(); // Hide HUD
-            // Audio: stop engine + music
-            gameAudio.stopEngineHum();
-            gameAudio.stopAmbientMusic();
-        }
-
-        // Ensure a background is active
-        if (this.flightMode && this.activeStyles.size === 0) {
-            this.toggleBgStyle('deep-space');
-        }
-
-        this.showToast(this.flightMode ? 'Flight Mode: ON' : 'Flight Mode: OFF');
-
-        // Reset keys to prevent runaway ship
-        this.keysPressed = {};
-
-        // Initialize resize handle for gems section ONCE when entering flight mode
-        if (this.flightMode && this.initGemsSectionResize) {
-            this.initGemsSectionResize();
-        }
-
-        // Toggle ship button, dock button, and layout presets visibility
-        const shipBtn = document.getElementById('selectShipBtn');
-        const dockBtn = document.getElementById('dockBtn');
-        const pauseBtn = document.getElementById('pauseBtn');
-        const layoutPresets = document.getElementById('layoutPresets');
-        
-        console.log(`[HUD] toggleFlightMode: flightMode=${this.flightMode}, shipBtn=${!!shipBtn}, dockBtn=${!!dockBtn}`);
-        
-        if (shipBtn) {
-            shipBtn.style.setProperty('display', this.flightMode ? 'inline-flex' : 'none', 'important');
-        }
-        if (dockBtn) {
-            dockBtn.style.setProperty('display', this.flightMode ? 'inline-flex' : 'none', 'important');
-        }
-        if (pauseBtn) {
-            pauseBtn.style.setProperty('display', this.flightMode ? 'inline-flex' : 'none', 'important');
-            if (!this.flightMode && this.gamePaused) this.togglePause(); // Reset pause state when exiting
-        }
-
-        // Toggle HUD Sections explicitly to ensure they are visible
-        const vitalsEl = document.getElementById('sectionVitals');
-        if (vitalsEl) vitalsEl.style.setProperty('display', 'block', 'important');
-        
-        const shipStatusEl = document.getElementById('sectionShipStatus');
-        if (shipStatusEl) shipStatusEl.style.setProperty('display', 'flex', 'important');
-        
-        const shipDesignEl = document.getElementById('sectionShipDesign');
-        if (shipDesignEl) shipDesignEl.style.setProperty('display', this.flightMode ? 'flex' : 'none', 'important');
-        if (layoutPresets) {
-            layoutPresets.style.setProperty('display', this.flightMode ? 'flex' : 'none', 'important');
-        }
-
-        if (this.flightMode) {
-            this.setLayout(localStorage.getItem('hudLayout') || 'horizontal');
-        }
-
-        this.draw();
-    }
-
-    setLayout(type) {
-        localStorage.setItem('hudLayout', type);
-
-        const W = window.innerWidth;
-        const H = window.innerHeight;
-        
-        // Calculate optimal scale factor 
-        const widthScale = W / 1600;
-        const heightScale = H / 1060;
-        const scale = Math.min(1.0, Math.max(0.40, Math.min(widthScale, heightScale))); 
-        document.documentElement.style.setProperty('--hud-scale', scale);
-
-        // Fallback to horizontal if type is unrecognized
-        if (type !== 'horizontal' && type !== 'vertical') {
-            type = 'horizontal';
-        }
-        
-        const hud = document.getElementById('flightHUD');
-        if (hud) {
-            hud.className = `flight-hud layout-${type}` + (this.flightMode ? '' : ' hidden');
-        }
-
-        const windows = ['sectionVitals', 'sectionRadar', 'sectionControls', 'sectionGems', 'sectionVelocity', 'floatingMap', 'floatingLeaders', 'sectionMap', 'sectionShipDesign', 'sectionShipStatus', 'sectionMission', 'sectionFactions'];
-
-        windows.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.style.transform = '';
-                if (el.classList.contains('minimized-to-taskbar')) {
-                    this.restoreFromTaskbar(id);
-                } else {
-                    const displayType = (id === 'sectionVitals' || id === 'sectionMap' || id === 'sectionRadar') ? 'block' : 'flex';
-                    if (!el.classList.contains('hidden')) {
-                        el.style.setProperty('display', displayType, 'important');
-                    }
-                }
-            }
-        });
-
-        if (!this.resizeListenerAdded) {
-            window.addEventListener('resize', () => {
-                if (localStorage.getItem('hudLayout')) {
-                    this.setLayout(localStorage.getItem('hudLayout'));
-                }
-            });
-            this.resizeListenerAdded = true;
-        }
-    }
+    
 
     // Toggle cockpit section - now minimizes to taskbar
-    toggleCockpitSection(sectionId) {
-        const section = document.getElementById(sectionId);
-        if (!section) return;
-
-        if (section.classList.contains('minimized-to-taskbar')) {
-            // Restore from taskbar
-            this.restoreFromTaskbar(sectionId);
-        } else {
-            // Minimize to taskbar
-            this.minimizeToTaskbar(sectionId);
-        }
-    }
+    
 
     // Window names for taskbar display
-    getWindowName(id) {
-        const names = {
-            'sectionRadar': '📡 Radar',
-            'sectionControls': '🎮 Controls',
-            'sectionGems': '💎 Gems',
-            'sectionVelocity': '🚀 Engines',
-            'sectionShipStatus': '🛡️ Shield',
-            'sectionShipDesign': '🎨 Ship Design',
-            'floatingMap': '🗺️ Map',
-            'floatingLeaders': '🏆 Leaders'
-        };
-        return names[id] || id;
-    }
+    
 
     // Toggle expanded controls modal
-    toggleControlsExpanded() {
-        const modal = document.getElementById('expandedControlsModal');
-        if (modal) {
-            const isActive = modal.classList.toggle('active');
-            if (this.flightMode) this.gamePaused = isActive;
-        }
-    }
+    
 
-    hideControlsExpanded() {
-        const modal = document.getElementById('expandedControlsModal');
-        if (modal) {
-            modal.classList.remove('active');
-            if (this.flightMode) this.gamePaused = false;
-        }
-    }
+    
 
     // Initialize kbd tooltips for flight controls
     initKbdTooltips() {
@@ -2332,216 +1320,24 @@ class InterstellarEngine {
     }
 
     // Minimize window to taskbar
-    minimizeToTaskbar(windowId) {
-        const win = document.getElementById(windowId);
-        if (!win) return;
-
-        // Save current position before hiding
-        if (!this.savedWindowPositions) this.savedWindowPositions = {};
-        this.savedWindowPositions[windowId] = {
-            left: win.style.left,
-            top: win.style.top,
-            width: win.style.width,
-            height: win.style.height,
-            display: win.style.display
-        };
-
-        // Hide window
-        win.classList.add('minimized-to-taskbar');
-        win.style.display = 'none';
-
-        // Add to taskbar
-        const taskbar = document.getElementById('windowTaskbar');
-        if (taskbar) {
-            const item = document.createElement('div');
-            item.className = 'taskbar-item';
-            item.id = 'taskbar-' + windowId;
-            item.textContent = this.getWindowName(windowId);
-            item.onclick = () => this.restoreFromTaskbar(windowId);
-            taskbar.appendChild(item);
-            taskbar.style.display = 'flex';
-        }
-    }
+    
 
     // Restore window from taskbar
-    restoreFromTaskbar(windowId) {
-        const win = document.getElementById(windowId);
-        if (!win) return;
-
-        // Restore position
-        if (this.savedWindowPositions && this.savedWindowPositions[windowId]) {
-            const pos = this.savedWindowPositions[windowId];
-            if (pos.left) {
-                    win.style.position = 'fixed';
-                    win.style.left = pos.left;
-                    win.style.right = 'auto';
-                }
-            if (pos.top) {
-                win.style.top = pos.top;
-                win.style.bottom = 'auto';
-            }
-            if (pos.width) win.style.width = pos.width;
-            if (pos.height) win.style.height = pos.height;
-        }
-
-        // Show window
-        win.classList.remove('minimized-to-taskbar');
-        win.style.display = 'block';
-
-        // Remove from taskbar
-        const taskbarItem = document.getElementById('taskbar-' + windowId);
-        if (taskbarItem) taskbarItem.remove();
-
-        // Hide taskbar if empty
-        const taskbar = document.getElementById('windowTaskbar');
-        if (taskbar && taskbar.children.length === 0) {
-            taskbar.style.display = 'none';
-        }
-    }
+    
 
     // Save current layout to a slot
-    saveLayout() {
-        const slot = prompt('Save to layout slot (1, 2, or 3):', '1');
-        if (!slot || !['1', '2', '3'].includes(slot)) return;
-
-        const windows = ['sectionVitals', 'sectionRadar', 'sectionControls', 'sectionGems', 'sectionVelocity', 'floatingMap', 'floatingLeaders', 'sectionMap', 'sectionShipDesign', 'sectionShipStatus', 'sectionMission', 'sectionFactions'];
-        const layout = {};
-
-        windows.forEach(id => {
-            const win = document.getElementById(id);
-            if (win) {
-                layout[id] = {
-                    left: win.style.left || win.offsetLeft + 'px',
-                    top: win.style.top || win.offsetTop + 'px',
-                    width: win.style.width,
-                    height: win.style.height,
-                    minimized: win.classList.contains('minimized-to-taskbar'),
-                    visible: win.style.display !== 'none' && !win.classList.contains('hidden')
-                };
-            }
-        });
-
-        localStorage.setItem('windowLayout' + slot, JSON.stringify(layout));
-        document.getElementById('layout' + slot + 'Btn')?.classList.add('active');
-        this.showToast('Layout ' + slot + ' saved!');
-    }
+    
 
     // Load layout from a slot
-    loadLayout(slot) {
-        const layoutStr = localStorage.getItem('windowLayout' + slot);
-        if (!layoutStr) {
-            this.showToast('No layout saved in slot ' + slot);
-            return;
-        }
+    
 
-        try {
-            const layout = JSON.parse(layoutStr);
-
-            Object.entries(layout).forEach(([id, pos]) => {
-                const win = document.getElementById(id);
-                if (!win) return;
-
-                // Restore from taskbar first if minimized
-                if (win.classList.contains('minimized-to-taskbar')) {
-                    this.restoreFromTaskbar(id);
-                }
-
-                // Apply position
-                if (pos.left) {
-                    win.style.position = 'fixed';
-                    win.style.left = pos.left;
-                    win.style.right = 'auto';
-                }
-                if (pos.top) {
-                    win.style.top = pos.top;
-                    win.style.bottom = 'auto';
-                }
-                if (pos.width) win.style.width = pos.width;
-                if (pos.height) win.style.height = pos.height;
-
-                // Handle minimized state
-                if (pos.minimized) {
-                    this.minimizeToTaskbar(id);
-                } else if (!pos.visible) {
-                    win.style.display = 'none';
-                } else {
-                    win.style.display = 'block';
-                    win.classList.remove('hidden');
-                }
-            });
-
-            // Update active button
-            ['1', '2', '3'].forEach(s => {
-                document.getElementById('layout' + s + 'Btn')?.classList.toggle('active', s === String(slot));
-            });
-
-            this.showToast('Layout ' + slot + ' loaded!');
-        } catch (e) {
-            console.error('Error loading layout:', e);
-        }
-    }
-
-    toggleGemValues() {
-        this.showGemValues = !this.showGemValues;
-        this.updateFlightHUD(); // Refresh display
-
-        const btn = document.getElementById('btnToggleGemValues');
-        const gemsSection = document.getElementById('sectionGems');
-        const gemsGrid = document.getElementById('gemsGrid');
-
-        if (btn) {
-            btn.style.background = this.showGemValues ? 'rgba(255,215,0,0.3)' : '';
-        }
-
-        // Auto-expand and shift left when showing values, restore when hiding
-        if (gemsSection) {
-            if (this.showGemValues) {
-                // Store original values if not already stored
-                if (!this._originalGemsHeight) {
-                    this._originalGemsHeight = gemsSection.offsetHeight;
-                }
-                if (!this._originalGemsLeft) {
-                    this._originalGemsLeft = gemsSection.style.left || '590px';
-                }
-
-                // Expand height to show all values
-                const expandedHeight = Math.max(320, this._originalGemsHeight + 120);
-                gemsSection.style.height = expandedHeight + 'px';
-
-                // Shift window left to accommodate wider content with $ values
-                gemsSection.style.left = '300px';
-
-                // Widen grid columns to fit value text
-                if (gemsGrid) {
-                    gemsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(160px, 1fr))';
-                }
-            } else {
-                // Restore original height
-                if (this._originalGemsHeight) {
-                    gemsSection.style.height = this._originalGemsHeight + 'px';
-                }
-                // Restore original left position
-                if (this._originalGemsLeft) {
-                    gemsSection.style.left = this._originalGemsLeft;
-                }
-                // Restore original grid column width
-                if (gemsGrid) {
-                    gemsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(110px, 1fr))';
-                }
-            }
-        }
-    }
+    
 
     // Universal resize system for ALL panels
-    makeResizable(elementId) {
-        // Obsolete: Handled centrally by initWindowSystem()
-    }
+    
 
     // Toggle floating window collapse
-    toggleFloatingWindow(windowId) {
-        const win = document.getElementById(windowId);
-        if (win) win.classList.toggle('collapsed');
-    }
+    
 
     // Spacecraft color customization
     setShipColor(color) {
@@ -11491,332 +10287,15 @@ class InterstellarEngine {
         };
     }
 
-    onPointerDown(e) {
-        // Track which button was pressed (0=left, 1=middle, 2=right)
-        this.pointer.button = e.button;
+    
 
-        if (this.showWelcomeOverlay) {
-            const w = this.canvas.width;
-            const h = this.canvas.height;
-            const cardH = 360;
-            const cy = (h - cardH) / 2;
-            const btnW = 220;
-            const btnH = 42;
-            const btnX = w / 2 - btnW / 2;
-            const rewardY = cy + 120 + 4 * 26 + 15;
-            const btnY = rewardY + 30;
+    
 
-            const rect = this.canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+    
 
-            if (mouseX >= btnX && mouseX <= btnX + btnW &&
-                mouseY >= btnY && mouseY <= btnY + btnH) {
-                this.dismissWelcomeOverlay(true);
-            }
-            return; // Block background interactions
-        }
+    
 
-        // Only track canvas interactions
-        this.pointer.onCanvas = (e.target === this.canvas);
-
-        if (this.pointer.onCanvas && document.activeElement && document.activeElement.tagName === 'INPUT') {
-            document.activeElement.blur();
-            this.pointer.onCanvas = false;
-            return;
-        }
-
-        this.pointer.isDown = true;
-        this.pointer.startX = e.clientX;
-        this.pointer.startY = e.clientY;
-        this.pointer.camStartX = this.camera.x;
-        this.pointer.camStartY = this.camera.y;
-        this.pointer.rotStartX = this.rotationX;
-        this.pointer.rotStartY = this.rotationY;
-
-        // Middle mouse button OR Alt+Left = Orbit mode (Blender style)
-        // Shift+Left = Pan mode. Also allow default panning if the splash screen is active (user expects it)
-        this.pointer.orbitMode = (e.button === 1) || (e.button === 0 && e.altKey);
-        this.pointer.panMode = (e.button === 0 && (e.shiftKey || document.body.classList.contains('splash-active')));
-
-        // If orbiting or panning, skip star interactions
-        if (this.pointer.orbitMode || this.pointer.panMode) {
-            return;
-        }
-
-        const world = this.getWorldPos(e);
-        const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
-        const starHit = this.stars.find(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
-
-        // Refresh cluster assignments if we hit a star, in case we drag a group
-        if (starHit) {
-            this.refreshClusterAssignments();
-
-            // In select mode, clicking a star initiates a cluster drag
-            if (this.mode === 'select' && starHit.clusterId) {
-                // Determine the cluster ID to drag (it's either the cluster name string or the star's ID string)
-                this.draggedClusterId = String(starHit.clusterId);
-                this.pointer.lastWorldX = world.x;
-                this.pointer.lastWorldY = world.y;
-                this.saveState();
-                return;
-            }
-
-            // If not in select mode, allow single star drag
-            if (this.mode === 'draw') {
-                this.draggedStar = starHit;
-                this.saveState();
-            }
-        }
-    }
-
-    onPointerMove(e) {
-        if (this.showWelcomeOverlay) {
-            const w = this.canvas.width;
-            const h = this.canvas.height;
-            const cy = h / 2;
-            const btnW = 220;
-            const btnH = 42;
-            const btnX = w / 2 - btnW / 2;
-            const rewardY = cy + 120 + 4 * 26 + 15;
-            const btnY = rewardY + 30;
-
-            const rect = this.canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            if (mouseX >= btnX && mouseX <= btnX + btnW &&
-                mouseY >= btnY && mouseY <= btnY + btnH) {
-                this.canvas.style.cursor = 'pointer';
-            } else {
-                this.canvas.style.cursor = 'default';
-            }
-            return; // Block background interactions
-        }
-
-        const world = this.getWorldPos(e);
-
-        // Hover Logic
-        const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
-        this.hoveredStar = this.stars.find(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
-
-        // Cursor Feedback based on mode
-        let newCursor = 'default';
-        if (this.pointer.orbitMode && this.pointer.isDown) {
-            newCursor = 'grab';
-        } else if (this.pointer.panMode && this.pointer.isDown) {
-            newCursor = 'move';
-        } else if (this.draggedStar || this.draggedClusterId || this.pointer.dragging) {
-            newCursor = 'grabbing';
-        } else if (this.hoveredStar) {
-            newCursor = 'move';
-        } else if (this.mode === 'draw') {
-            newCursor = 'crosshair';
-        }
-        this.canvas.style.cursor = newCursor;
-
-
-        if (!this.pointer.isDown) return;
-
-        const dx = e.clientX - this.pointer.startX;
-        const dy = e.clientY - this.pointer.startY;
-        const distMoved = Math.hypot(dx, dy);
-
-        if (distMoved > 5) {
-            this.pointer.dragging = true;
-        }
-
-        // PRIORITY 1: Orbit mode (Middle mouse or Alt+Left) - ALWAYS rotates in 3D
-        if (this.pointer.orbitMode) {
-            this.rotationY = this.pointer.rotStartY + dx * 0.5;
-            this.rotationX = this.pointer.rotStartX + dy * 0.5;
-            this.draw();
-            // Update UI sliders
-            const rotXSliderEl = document.getElementById('rotXSlider');
-            const rotYSliderEl = document.getElementById('rotYSlider');
-            if (rotXSliderEl) {
-                rotXSliderEl.value = this.rotationX % 360;
-                document.getElementById('rotXValue').textContent = Math.round(this.rotationX % 360) + '°';
-            }
-            if (rotYSliderEl) {
-                rotYSliderEl.value = this.rotationY % 360;
-                document.getElementById('rotYValue').textContent = Math.round(this.rotationY % 360) + '°';
-            }
-            return;
-        }
-
-        // PRIORITY 2: Pan mode (Shift + Left drag) - ALWAYS pans
-        if (this.pointer.panMode) {
-            this.camera.x = this.pointer.camStartX + dx;
-            this.camera.y = this.pointer.camStartY + dy;
-            // When in background mode (not flight mode), we must explicitly trigger a redraw
-            // to ensure smooth dragging if the background animation loop is slow or paused
-            if (!this.flightMode) this.draw();
-            return;
-        }
-
-        // PRIORITY 3: Cluster dragging (in select mode)
-        if (this.draggedClusterId) {
-            // Calculate world delta since last move
-            const deltaWorldX = world.x - this.pointer.lastWorldX;
-            const deltaWorldY = world.y - this.pointer.lastWorldY;
-
-            const draggedIdString = this.draggedClusterId;
-            // Move all stars in the cluster
-            this.stars.forEach(s => {
-                // Use strict comparison on the clusterId string
-                if (String(s.clusterId) === draggedIdString) {
-                    s.x += deltaWorldX;
-                    s.y += deltaWorldY;
-                }
-            });
-
-            // Update last position
-            this.pointer.lastWorldX = world.x;
-            this.pointer.lastWorldY = world.y;
-            return;
-        }
-
-        // PRIORITY 4: Single star dragging
-        if (this.draggedStar) {
-            this.draggedStar.x = world.x;
-            this.draggedStar.y = world.y;
-            return;
-        }
-
-        // PRIORITY 5: Empty space drag = rotate by default (Blender-style)
-        if (this.pointer.dragging) {
-            this.rotationY = this.pointer.rotStartY + dx * 0.5;
-            this.rotationX = this.pointer.rotStartX + dy * 0.5;
-            this.draw();
-            // Update UI sliders if they exist
-            const rotXSliderEl = document.getElementById('rotXSlider');
-            const rotYSliderEl = document.getElementById('rotYSlider');
-            if (rotXSliderEl) {
-                rotXSliderEl.value = this.rotationX % 360;
-                document.getElementById('rotXValue').textContent = Math.round(this.rotationX % 360) + '°';
-            }
-            if (rotYSliderEl) {
-                rotYSliderEl.value = this.rotationY % 360;
-                document.getElementById('rotYValue').textContent = Math.round(this.rotationY % 360) + '°';
-            }
-        }
-    }
-
-    onPointerUp(e) {
-        // Skip star creation if we were orbiting or panning
-        const wasNavigating = this.pointer.orbitMode || this.pointer.panMode;
-
-        // Only process star creation if pointer started on canvas and not navigating
-        if (this.pointer.onCanvas && !wasNavigating) {
-            const world = this.getWorldPos(e);
-            const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
-            const clickedStar = this.stars.find(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
-
-            if (!this.pointer.dragging && !clickedStar) {
-                // Empty Space Clicked - Create Star (ONLY in draw mode)
-                if (this.mode === 'draw') {
-                    this.saveState(); // Save BEFORE action
-
-                    // Get current rotation center BEFORE adding star
-                    // This ensures consistency with how rotate3D renders existing stars
-                    const center = this.getConstellationCenter();
-
-                    // Cache the center for rendering stability after star is added
-                    // This prevents the visual "jump" when constellation center shifts
-                    this._cachedRotationCenter = { x: center.x, y: center.y, z: center.z };
-
-                    // Inverse rotate using the same center that rendering uses
-                    const pos3D = this.inverseRotate3D(world.x, world.y, center.x, center.y);
-
-                    this.createStar(pos3D.x, pos3D.y, pos3D.z);
-
-                    // Clear cached center after a brief delay to allow smooth transition
-                    setTimeout(() => { this._cachedRotationCenter = null; }, 100);
-                }
-            }
-        }
-
-        // Reset interaction state
-        this.pointer.isDown = false;
-        this.pointer.dragging = false;
-        this.pointer.onCanvas = false;
-        this.pointer.orbitMode = false;
-        this.pointer.panMode = false;
-        this.pointer.button = 0;
-        this.draggedStar = null;
-        this.draggedClusterId = null;
-    }
-
-    onRightClick(e) {
-        e.preventDefault(); // Prevent context menu
-        const world = this.getWorldPos(e);
-        const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
-
-        // Check if clicking on a star
-        const clickedStarIndex = this.stars.findIndex(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
-
-        if (clickedStarIndex !== -1) {
-            // Delete the star
-            this.saveState(); // Save for undo
-            this.stars.splice(clickedStarIndex, 1);
-            this.showToast(`Deleted star`);
-            this.draw();
-            return;
-        }
-
-        // Check if clicking on a connection line
-        const lineHitDist = 5 / this.camera.zoom; // 5 pixel tolerance
-        for (let i = 0; i < this.stars.length; i++) {
-            const s1 = this.stars[i];
-            for (let j = i + 1; j < this.stars.length; j++) {
-                const s2 = this.stars[j];
-
-                // Only check connected stars
-                if (Math.hypot(s1.x - s2.x, s1.y - s2.y) > this.config.maxConnectDist) continue;
-
-                // Point-to-line distance formula
-                const lineLen = Math.hypot(s2.x - s1.x, s2.y - s1.y);
-                if (lineLen === 0) continue;
-
-                const t = Math.max(0, Math.min(1, ((world.x - s1.x) * (s2.x - s1.x) + (world.y - s1.y) * (s2.y - s1.y)) / (lineLen * lineLen)));
-                const projX = s1.x + t * (s2.x - s1.x);
-                const projY = s1.y + t * (s2.y - s1.y);
-                const dist = Math.hypot(world.x - projX, world.y - projY);
-
-                if (dist < lineHitDist) {
-                    // Delete both stars that make up this connection
-                    this.saveState(); // Save for undo
-                    const indices = [i, j].sort((a, b) => b - a); // Remove in reverse order
-                    this.stars.splice(indices[0], 1);
-                    this.stars.splice(indices[1], 1);
-                    this.showToast(`Deleted connection`);
-                    this.draw();
-                    return;
-                }
-            }
-        }
-    }
-
-    onWheel(e) {
-        e.preventDefault();
-
-        // Multiplicative/Exponential zoom for smoothness
-        const zoomFactor = 1.05;
-        if (e.deltaY < 0) {
-            // Zoom IN
-            this.camera.zoom *= zoomFactor;
-        } else {
-            // Zoom OUT
-            this.camera.zoom /= zoomFactor;
-        }
-
-        // Clamp zoom
-        this.camera.zoom = Math.max(0.1, Math.min(6, this.camera.zoom));
-        if (!this.flightMode) {
-            this.draw();
-        }
-    }
+    
 
     /* --- Star Creation --- */
 
@@ -20863,6 +19342,10 @@ class InterstellarEngine {
 // Bind utilities to prototype so existing `this.method` calls still work
 Object.assign(InterstellarEngine.prototype, Utils);
 
+applyRenderMixin(InterstellarEngine);
+applyInputMixin(InterstellarEngine);
+applyUIMixin(InterstellarEngine);
+applyFactoryMixin(InterstellarEngine);
 window.game = new InterstellarEngine();
 window.app = window.game; // Bridge for HTML handlers
 

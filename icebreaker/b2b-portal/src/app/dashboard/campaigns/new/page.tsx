@@ -7,13 +7,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const CREATE_SWARM_CAMPAIGN = gql`
-  mutation CreateSwarmCampaign($title: String!, $maxDiscount: String!, $latitude: Float!, $longitude: Float!, $radiusKm: Float!, $totalBudget: Int!, $targetCheckIns: Int!) {
+  mutation CreateSwarmCampaign($title: String!, $description: String!, $maxDiscount: String!, $latitude: Float!, $longitude: Float!, $totalBudget: Int!, $targetCheckIns: Int!) {
     createSwarmCampaign(
       title: $title,
+      description: $description,
       maxDiscount: $maxDiscount,
       latitude: $latitude,
       longitude: $longitude,
-      radiusKm: $radiusKm,
       totalBudget: $totalBudget,
       targetCheckIns: $targetCheckIns
     ) {
@@ -28,8 +28,8 @@ const CREATE_SWARM_CAMPAIGN = gql`
 export default function NewSwarmCampaignPage() {
   const router = useRouter();
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [maxDiscount, setMaxDiscount] = useState('');
-  const [radiusKm, setRadiusKm] = useState('1');
   const [targetCheckIns, setTargetCheckIns] = useState('10');
   
   // Dual-mode budget state
@@ -70,11 +70,11 @@ export default function NewSwarmCampaignPage() {
       const { data } = await createCampaign({
         variables: {
           title,
+          description,
           maxDiscount,
           targetCheckIns: parseInt(targetCheckIns),
           latitude: 37.7749, // Placeholder for Venue coordinates
           longitude: -122.4194,
-          radiusKm: parseFloat(radiusKm),
           totalBudget: totalBudgetCents
         }
       });
@@ -143,15 +143,13 @@ export default function NewSwarmCampaignPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2 text-white/80">Broadcast Radius (km)</label>
-          <input 
-            type="number" 
+          <label className="block text-sm font-medium mb-2 text-white/80">Campaign Description</label>
+          <textarea 
             required
-            min="0.1"
-            step="0.1"
-            value={radiusKm}
-            onChange={(e) => setRadiusKm(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00ffcc] focus:ring-1 focus:ring-[#00ffcc] transition-all" 
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#00ffcc] focus:ring-1 focus:ring-[#00ffcc] transition-all min-h-[100px]" 
+            placeholder="Describe the campaign to users"
           />
         </div>
 

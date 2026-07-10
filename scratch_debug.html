@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug</title>
+</head>
+<body>
+    <script type="module">
+        try {
+            const m = await import('./public/interstellar-game/script.js?v=63');
+            console.log("Import successful");
+        } catch (e) {
+            console.error("IMPORT ERROR:", e);
+        }
+    </script>
+</body>
+</html>

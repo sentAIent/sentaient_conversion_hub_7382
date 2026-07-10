@@ -11,6 +11,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/icebusiness/, ''),
       },
+      '/dashboard': {
+        target: 'https://sentaient-icebusiness-hub.netlify.app',
+        changeOrigin: true,
+      },
     },
   },
   css: {

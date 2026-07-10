@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, RefreshControl, Dimensions, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, RefreshControl, Dimensions, TouchableOpacity, Modal, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming } from 'react-native-reanimated';
+import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../context/CartContext';
 import StoryModal from '../../components/StoryModal';
@@ -202,6 +203,54 @@ export default function FeedScreen() {
       <Text style={styles.storyUsername} numberOfLines={1}>{item.user.username}</Text>
     </TouchableOpacity>
   );
+
+  const renderTikTokItem = ({ item }: { item: any }) => {
+    const videoUrl = (item.type === 'video' && item.mediaUrl) ? item.mediaUrl : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+    return (
+      <View style={{ width, height: Dimensions.get('window').height - 180, backgroundColor: '#000' }}>
+        <FeedVideo url={videoUrl} />
+        
+        <View style={{ position: 'absolute', bottom: 40, left: 16, right: 80 }}>
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16, marginBottom: 8, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>@{item.user?.username}</Text>
+          <Text style={{ color: '#fff', fontSize: 15, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }} numberOfLines={2}>{item.textBody}</Text>
+        </View>
+
+        <View style={{ position: 'absolute', bottom: 40, right: 16, alignItems: 'center' }}>
+          <TouchableOpacity style={{ alignItems: 'center', marginBottom: 24 }} onPress={() => router.push(`/user/${item.user.id}`)}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#333', borderWidth: 1, borderColor: '#fff', overflow: 'hidden' }}>
+              {item.user?.profilePhotoUrl ? (
+                <Image source={{ uri: item.user.profilePhotoUrl }} style={{ width: '100%', height: '100%' }} />
+              ) : (
+                <Ionicons name="person" size={24} color="#666" style={{ alignSelf: 'center', marginTop: 10 }} />
+              )}
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ alignItems: 'center', marginBottom: 20 }} onPress={async () => {
+                if (item.hasLiked) {
+                  await unlikeContent({ variables: { contentId: item.id } });
+                } else {
+                  await likeContent({ variables: { contentId: item.id } });
+                }
+                refetch();
+              }}>
+            <Ionicons name="heart" size={35} color={item.hasLiked ? "#ff3b30" : "#fff"} />
+            <Text style={{ color: '#fff', marginTop: 4, fontWeight: '600' }}>{item.likesCount || 0}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ alignItems: 'center', marginBottom: 20 }} onPress={() => setSelectedPostToComment(item)}>
+            <Ionicons name="chatbubble" size={33} color="#fff" />
+            <Text style={{ color: '#fff', marginTop: 4, fontWeight: '600' }}>{item.commentsCount || 0}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => {
+            const shareUrl = Linking.createURL('v/' + item.id);
+            Share.share({ message: `Check out this local video on Icebreaker: ${shareUrl}` });
+          }}>
+            <Ionicons name="arrow-redo" size={35} color="#fff" />
+            <Text style={{ color: '#fff', marginTop: 4, fontWeight: '600' }}>Share</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
 
   const renderItem = ({ item }: { item: any }) => {
     const isCheckIn = item.__typename === 'CheckIn';
@@ -405,13 +454,18 @@ export default function FeedScreen() {
         <FlatList
           data={items}
           keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+          renderItem={activeTab === 'explore' ? renderTikTokItem : renderItem}
+          contentContainerStyle={activeTab === 'explore' ? { backgroundColor: '#000' } : styles.listContent}
+          pagingEnabled={activeTab === 'explore'}
+          showsVerticalScrollIndicator={false}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          snapToInterval={activeTab === 'explore' ? Dimensions.get('window').height - 180 : undefined}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
           }
           ListHeaderComponent={
-            stories.length > 0 ? (
+            (activeTab === 'following' && stories.length > 0) ? (
               <View style={styles.storiesContainer}>
                 <FlatList
                   horizontal

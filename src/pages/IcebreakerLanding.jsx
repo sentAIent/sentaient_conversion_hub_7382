@@ -5,7 +5,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { 
     Lock, Mail, User, Building, Map, 
-    MessageCircle, Rocket, CheckCircle, Loader2, Plus
+    MessageCircle, Rocket, CheckCircle, Loader2, Plus, Wallet
 } from 'lucide-react';
 
 const IcebreakerLanding = () => {
@@ -100,7 +100,7 @@ const IcebreakerLanding = () => {
                         Icebreaker
                     </h1>
                     <p className="text-xl md:text-2xl text-gray-300 mb-4 leading-relaxed">
-                        The real-world social network powering authentic connections, local discovery, and business growth.
+                        The Local Video & Commerce Super-App powering authentic connections, local discovery, and business growth.
                     </p>
                     <p className="text-sm text-orange-400/90 font-semibold mb-10 tracking-wide uppercase flex items-center gap-2">
                         <span className="inline-block w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
@@ -117,28 +117,28 @@ const IcebreakerLanding = () => {
                                 See who's physically nearby in real-time. Color-coded status dots show exactly what each person is open to — before you approach them.
                             </p>
                         </div>
-                        {/* TOP-RIGHT: For Businesses */}
+                        {/* TOP-RIGHT: Creator Wallet & Instant Payouts */}
                         <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm hover:border-blue-500/40 hover:bg-blue-500/5 transition-all">
-                            <Building className="text-blue-400 mb-3 w-7 h-7" />
-                            <h3 className="text-xl font-semibold mb-2">For Businesses</h3>
+                            <Wallet className="text-blue-400 mb-3 w-7 h-7" />
+                            <h3 className="text-xl font-semibold mb-2">Creator Wallet & Instant Payouts</h3>
                             <p className="text-gray-400 text-sm leading-relaxed">
-                                Create digital storefronts, launch targeted bounties to reward UGC (User-Generated Content) influencers, and drive foot traffic with high-density Geo-Swarms. Put your brand where your customers already are.
+                                Earn real money from local businesses via Bounties.
                             </p>
                         </div>
-                        {/* BOTTOM-LEFT: Real-Time Chat */}
+                        {/* BOTTOM-LEFT: TikTok-Style Local Feed */}
                         <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm hover:border-purple-500/40 hover:bg-purple-500/5 transition-all">
                             <MessageCircle className="text-purple-400 mb-3 w-7 h-7" />
-                            <h3 className="text-xl font-semibold mb-2">Real-Time Chat</h3>
+                            <h3 className="text-xl font-semibold mb-2">TikTok-Style Local Feed</h3>
                             <p className="text-gray-400 text-sm leading-relaxed">
-                                Instant messaging built on dual-write architecture for lightning-fast, reliable communication with read receipts and rich media.
+                                Swipe up to explore your city in short-form video.
                             </p>
                         </div>
-                        {/* BOTTOM-RIGHT: Aether Network */}
+                        {/* BOTTOM-RIGHT: Icebreaker Ecosystem */}
                         <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm hover:border-orange-500/40 hover:bg-orange-500/5 transition-all">
                             <Rocket className="text-orange-400 mb-3 w-7 h-7" />
-                            <h3 className="text-xl font-semibold mb-2">Aether Network</h3>
+                            <h3 className="text-xl font-semibold mb-2">Icebreaker Ecosystem</h3>
                             <p className="text-gray-400 text-sm leading-relaxed">
-                                Empower your sales team. Tap into a network of users ready to engage with your products and services, right now, right here.
+                                One app for payments, socializing, and local discovery. The ultimate Super-App for your city.
                             </p>
                         </div>
 

@@ -33,6 +33,8 @@ const GET_ME = gql`
       proStatus
       proExpiresAt
       privacy
+      currentStreak
+      isFirePremium
     }
   }
 `;
@@ -204,7 +206,11 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       {/* Top Header */}
       <View style={styles.topHeader}>
-        <Text style={styles.headerUsername}>{me?.username || 'Profile'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.headerUsername}>{me?.username || 'Profile'}</Text>
+          {me?.isFirePremium && <Text style={{ marginLeft: 8, fontSize: 14, color: '#ff4500', fontWeight: 'bold' }}>🔥 FIRE</Text>}
+          {me?.currentStreak > 0 && <Text style={{ marginLeft: 8, fontSize: 14, color: '#ff4500', fontWeight: 'bold' }}>🔥 {me.currentStreak}</Text>}
+        </View>
         <TouchableOpacity style={styles.headerIcon}>
           <Ionicons name="menu-outline" size={28} color="#fff" />
         </TouchableOpacity>

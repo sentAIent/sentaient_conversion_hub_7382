@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView, Touc
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { gql, useQuery } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
+import { useCart } from '../../context/CartContext';
 
 const GET_STOREFRONT = gql`
   query GetVenueStorefront($venueId: ID!) {
@@ -25,6 +26,7 @@ export default function StorefrontScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { data, loading, error } = useQuery(GET_STOREFRONT, { variables: { venueId: id } });
+  const { addToCart, cartCount } = useCart();
 
   if (loading) {
     return (
@@ -43,7 +45,14 @@ export default function StorefrontScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{storefront?.name || 'Storefront'}</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity onPress={() => router.push('/cart')} style={styles.cartButton}>
+          <Ionicons name="cart" size={24} color="#fff" />
+          {cartCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{cartCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {!storefront ? (
@@ -70,7 +79,13 @@ export default function StorefrontScreen() {
                 </View>
                 <Text style={styles.productName}>{item.name}</Text>
                 <Text style={styles.productPrice}>${(item.price / 100).toFixed(2)}</Text>
-                <TouchableOpacity style={styles.buyButton}>
+                <TouchableOpacity 
+                  style={styles.buyButton}
+                  onPress={() => {
+                    addToCart({ id: item.id, product: item });
+                    router.push('/cart');
+                  }}
+                >
                   <Text style={styles.buyButtonText}>Buy Now</Text>
                 </TouchableOpacity>
               </View>
@@ -88,6 +103,9 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#222' },
   backButton: { padding: 4 },
+  cartButton: { padding: 4, position: 'relative' },
+  badge: { position: 'absolute', top: -4, right: -4, backgroundColor: '#FF1744', borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center' },
+  badgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   content: { flex: 1, padding: 16 },
   storeDescription: { color: '#aaa', fontSize: 15, marginBottom: 20, textAlign: 'center' },
