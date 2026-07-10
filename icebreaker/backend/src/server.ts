@@ -314,6 +314,7 @@ export const typeDefs = `#graphql
     createStorefront(name: String!, description: String): Storefront
     addProduct(storefrontId: ID!, name: String!, price: Int!, imageUrl: String): Product
     createBounty(title: String!, description: String!, reward: Int!, totalBudget: Int!, latitude: Float!, longitude: Float!): Bounty
+    createBountyCheckout(venueId: String!, title: String!, description: String!, reward: Int!, totalBudget: Int!, latitude: Float!, longitude: Float!): String!
     claimBounty(bountyId: ID!, contentId: ID!): Boolean!
     reviewBountyClaim(claimId: ID!, status: String!): Boolean!
     createSwarmCampaign(title: String!, description: String!, targetCheckIns: Int!, maxDiscount: String!, latitude: Float!, longitude: Float!, totalBudget: Int!): SwarmCampaign
@@ -373,9 +374,7 @@ import { GoogleGenAI } from '@google/genai';
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 
 import Stripe from 'stripe';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_12345', {
-  apiVersion: '2024-06-20' as any,
-});
+import { stripe } from './services/stripe';
 
 async function ensureUserExists(contextUser: any) {
   if (!contextUser || !contextUser.uid) return;
@@ -1261,6 +1260,55 @@ export const resolvers = {
         checkoutUrl: session.url
       };
     },
+    createBountyCheckout: async (_: any, args: any, context: any) => {
+      if (!context.user) throw new Error("Unauthorized");
+      
+      // 1. Create pending bounty in DB
+      const bounty = await prisma.bounty.create({
+        data: {
+          venueId: args.venueId,
+          title: args.title,
+          description: args.description,
+          reward: args.reward,
+          totalBudget: args.totalBudget,
+          latitude: args.latitude,
+          longitude: args.longitude,
+          isActive: false,
+          paymentStatus: "PENDING",
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        }
+      });
+
+      // 2. Create Stripe Checkout Session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `Bounty: ${args.title}`,
+                description: args.description,
+              },
+              unit_amount: args.totalBudget,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `http://localhost:3000/dashboard/bounties?success=true`,
+        cancel_url: `http://localhost:3000/dashboard/bounties?canceled=true`,
+        client_reference_id: bounty.id,
+      });
+
+      // 3. Save Stripe session ID
+      await prisma.bounty.update({
+        where: { id: bounty.id },
+        data: { stripeSessionId: session.id }
+      });
+
+      return session.url;
+    },
     claimBounty: async (_: any, { bountyId, contentId }: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
       
@@ -1743,6 +1791,28 @@ async function startServer() {
       console.error(e);
       res.status(500).json({ error: "Failed to fetch analytics" });
     }
+  });
+
+  app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig as string, process.env.STRIPE_WEBHOOK_SECRET || 'whsec_mock');
+    } catch (err: any) {
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as any;
+      if (session.client_reference_id) {
+        await prisma.bounty.update({
+          where: { id: session.client_reference_id },
+          data: { paymentStatus: 'PAID', isActive: true },
+        });
+      }
+    }
+    res.json({ received: true });
   });
 
   const server = new ApolloServer({

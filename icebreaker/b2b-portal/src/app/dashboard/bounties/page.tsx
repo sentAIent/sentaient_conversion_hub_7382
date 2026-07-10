@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { gql, useMutation } from '@apollo/client';
 import { useQuery } from '@apollo/experimental-nextjs-app-support/ssr';
 import Link from 'next/link';
@@ -43,9 +43,41 @@ const REVIEW_CLAIM_MUTATION = gql`
 export default function BountiesPage() {
   const { data, loading, error } = useQuery<any>(MY_BOUNTIES_QUERY);
   const [expandedBountyId, setExpandedBountyId] = useState<string | null>(null);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [reviewClaim, { loading: reviewing }] = useMutation(REVIEW_CLAIM_MUTATION, {
     refetchQueries: [{ query: MY_BOUNTIES_QUERY }]
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('success') === 'true') {
+      setShowSuccessBanner(true);
+    }
+  }, []);
+
+  const handleFundBounty = async () => {
+    const query = `
+      mutation {
+        createBountyCheckout(
+          venueId: "123", // Use a hardcoded mock string if you don't have the real context
+          title: "Test Bounty",
+          description: "Post a video!",
+          reward: 500,
+          totalBudget: 5000,
+          latitude: 37.7749,
+          longitude: -122.4194
+        )
+      }
+    `;
+    const res = await fetch('http://localhost:4000/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const json = await res.json();
+    if (json.data?.createBountyCheckout) {
+      window.location.href = json.data.createBountyCheckout;
+    }
+  };
 
   const handleReview = async (claimId: string, status: string) => {
     try {
@@ -59,17 +91,30 @@ export default function BountiesPage() {
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
+      {showSuccessBanner && (
+        <div className="bg-green-500/20 border border-green-500 text-green-400 p-4 rounded-xl mb-6 text-center font-bold">
+          🎉 Bounty Funded Successfully! Creators will now see it on the map.
+        </div>
+      )}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">My Bounties</h1>
           <p className="text-white/60">Create and manage your rewards to attract users to your venue.</p>
         </div>
-        <Link 
-          href="/dashboard/bounties/new"
-          className="px-6 py-3 rounded-full bg-gradient-to-r from-[#00ffcc] to-[#3b82f6] text-black font-bold hover:opacity-90 transition-opacity"
-        >
-          + Create Bounty
-        </Link>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleFundBounty}
+            className="px-6 py-3 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 transition-colors"
+          >
+            Fund Test Bounty
+          </button>
+          <Link 
+            href="/dashboard/bounties/new"
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-[#00ffcc] to-[#3b82f6] text-black font-bold hover:opacity-90 transition-opacity"
+          >
+            + Create Bounty
+          </Link>
+        </div>
       </div>
 
       {loading && (

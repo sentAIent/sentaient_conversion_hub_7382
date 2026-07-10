@@ -1,9 +1,7 @@
 import Stripe from 'stripe';
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
-
-export const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2023-10-16' as any, // Cast as any if version mismatch in types
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
+  apiVersion: '2025-01-27.acacia',
 });
 
 /**

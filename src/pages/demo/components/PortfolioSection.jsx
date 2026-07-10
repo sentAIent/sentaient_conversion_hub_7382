@@ -169,9 +169,10 @@ const PortfolioSection = () => {
             </h2>
           </motion.div>
         </div>
+      </div>
 
-        {/* Riot Games Style Slanted Accordion Container */}
-        <div className="w-full max-w-[1400px] mx-auto h-[600px] md:h-[700px] flex overflow-hidden px-4 md:px-12 group/accordion perspective-1000">
+      {/* Riot Games Style Slanted Accordion Container */}
+      <div className="w-[90vw] max-w-[1800px] mx-auto h-[600px] md:h-[700px] flex overflow-hidden px-4 md:px-12 group/accordion perspective-1000">
           {projects.map((project, index) => (
             <button
               key={index}
@@ -184,38 +185,44 @@ const PortfolioSection = () => {
                 
                 {/* Background Image (Scales up slightly on hover) */}
                 <div 
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover/card:scale-110 filter brightness-[0.4] group-hover/card:brightness-[0.8]"
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover/card:scale-110 filter brightness-[0.7] group-hover/card:brightness-[1.1]"
                   style={{ backgroundImage: `url(${project.bgImage})` }}
                 />
                 
                 {/* Gradient overlays for legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent opacity-90 group-hover/card:opacity-70 transition-opacity duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80 md:opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent opacity-70 group-hover/card:opacity-40 transition-opacity duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 md:opacity-0 group-hover/card:opacity-80 transition-opacity duration-700" />
                 
                 {/* App Content inside the un-skewed box */}
-                <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 text-left pointer-events-auto">
+                <div className="absolute inset-0 pointer-events-auto">
                   
-                  {/* Floating Logo (Appears small, grows on hover) */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-40 group-hover/card:opacity-0 transition-opacity duration-300 w-32 h-32 flex items-center justify-center pointer-events-none mix-blend-screen filter grayscale">
+                  {/* Floating Logo (Appears small, grows on hover) - Default State */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90 group-hover/card:opacity-0 transition-opacity duration-300 w-32 h-32 flex items-center justify-center pointer-events-none drop-shadow-2xl">
                     {project.logo && (
                       <img src={project.logo} alt="" className={`w-full h-full object-contain ${project.logoScale}`} />
                     )}
                   </div>
 
-                  {/* Hover Details */}
-                  <div className="transform translate-y-12 opacity-0 group-hover/card:translate-y-0 group-hover/card:opacity-100 transition-all duration-700 ease-out flex flex-col items-start max-w-sm">
+                  {/* Hover Details (Maximized State) - Absolutely centered at the bottom */}
+                  <div className="absolute bottom-[100px] md:bottom-[150px] left-1/2 -translate-x-1/2 w-[90%] max-w-md transform translate-y-12 opacity-0 group-hover/card:translate-y-0 group-hover/card:opacity-100 transition-all duration-700 ease-out flex flex-col items-center text-center">
+                    
+                    {/* Logo when Maximized */}
+                    {project.logo && (
+                      <img src={project.logo} alt="" className={`w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-2xl mb-4 ${project.logoScale}`} />
+                    )}
+
                     {/* Badge */}
                     <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded border border-white/30 text-white/90 backdrop-blur-md mb-4 inline-block">
                       {project.tag}
                     </span>
 
                     {/* Title */}
-                    <h3 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none mb-3 drop-shadow-2xl">
+                    <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-3 drop-shadow-2xl whitespace-normal break-words w-full text-center">
                       {project.title}
                     </h3>
                     
                     {/* Description */}
-                    <p className="text-white/80 font-medium leading-snug mb-8 line-clamp-3 md:line-clamp-none text-sm md:text-base">
+                    <p className="text-white/80 font-medium leading-snug mb-8 line-clamp-3 md:line-clamp-none text-sm md:text-base text-center">
                       {project.description}
                     </p>
                     
@@ -227,8 +234,9 @@ const PortfolioSection = () => {
                 </div>
                 
                 {/* Vertical Text (Default State) */}
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-100 group-hover/card:opacity-0 transition-opacity duration-500 origin-bottom flex flex-col items-center gap-6 pointer-events-none">
-                  <h3 className="text-white/90 text-2xl font-bold uppercase tracking-[0.3em] whitespace-nowrap" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                {/* Fixed positioning to account for the negative inset of the un-skew wrapper */}
+                <div className="absolute bottom-[80px] md:bottom-[130px] left-1/2 -translate-x-1/2 opacity-100 group-hover/card:opacity-0 transition-opacity duration-500 origin-bottom flex flex-col items-center gap-6 pointer-events-none">
+                  <h3 className="text-white/90 text-2xl font-bold uppercase tracking-[0.3em] whitespace-nowrap rotate-180" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
                     {project.title}
                   </h3>
                 </div>
@@ -237,7 +245,6 @@ const PortfolioSection = () => {
             </button>
           ))}
         </div>
-      </div>
 
       {/* Modal Popup overlay */}
       <AnimatePresence>
