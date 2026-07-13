@@ -1,7 +1,7 @@
 import React from 'react';
 import { StripeProvider, useStripe as useStripeNative } from '@stripe/stripe-react-native';
 
-export function StripeWrapper({ children }: { children: React.ReactNode }) {
+export function StripeWrapper({ children }: { children: React.ReactElement | React.ReactElement[] }) {
   return (
     <StripeProvider publishableKey="pk_test_TYooMQauvdEDq54NiTphI7jx">
       {children}

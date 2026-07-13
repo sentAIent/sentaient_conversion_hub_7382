@@ -26,11 +26,9 @@ export default function TabLayout() {
           }),
         },
         tabBarBackground: () => (
-          <BlurView 
-            tint="dark" 
-            intensity={80} 
-            style={StyleSheet.absoluteFillObject} 
-          />
+          Platform.OS === 'ios' ? 
+            <BlurView intensity={80} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} tint="dark" /> :
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)' }} />
         ),
         tabBarShowLabel: false,
         tabBarActiveTintColor: '#fff',
@@ -72,6 +70,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />
         }}
       />
+      <Tabs.Screen name="scan" options={{ title: 'Scan', tabBarIcon: ({ color }) => <Ionicons name="qr-code" size={24} color={color} /> }} />
     </Tabs>
   );
 }

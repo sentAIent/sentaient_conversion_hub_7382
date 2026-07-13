@@ -58,6 +58,8 @@ export function applyFactoryMixin(EngineClass) {
                 const isEquipped = category === 'chassis' ? 
                     (this.factory.currentChassis === item.id) : 
                     (this.factory.equipped[category] === item.id);
+                
+                const isPurchased = this.factory.purchased.has(item.id);
                     
                 const itemDiv = document.createElement('div');
                 itemDiv.className = `factory-item ${isEquipped ? 'equipped' : ''}`;
@@ -68,18 +70,33 @@ export function applyFactoryMixin(EngineClass) {
                 if (item.shield) statsHtml += `<span style="color:#00ff66;margin-right:10px;">SHD ${item.shield > 0 ? '+'+item.shield : item.shield}</span>`;
                 if (item.energy) statsHtml += `<span style="color:#00f3ff;">ENG ${item.energy > 0 ? '+'+item.energy : item.energy}</span>`;
                 
+                let badgeHtml = '';
+                if (isEquipped) {
+                    badgeHtml = '<span style="font-size:10px;color:#00f3ff;border:1px solid #00f3ff;padding:2px 4px;border-radius:4px;">INSTALLED</span>';
+                } else if (isPurchased) {
+                    badgeHtml = '<span style="font-size:10px;color:#88a0b0;border:1px solid #88a0b0;padding:2px 4px;border-radius:4px;">OWNED</span>';
+                } else {
+                    badgeHtml = `<span style="font-size:10px;color:#ffd700;border:1px solid #ffd700;padding:2px 4px;border-radius:4px;">$${item.cost}</span>`;
+                }
+
                 itemDiv.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                         <span style="font-weight: bold; color: ${item.color || '#fff'};">${item.name.toUpperCase()}</span>
-                        ${isEquipped ? '<span style="font-size:10px;color:#00f3ff;border:1px solid #00f3ff;padding:2px 4px;border-radius:4px;">INSTALLED</span>' : ''}
+                        ${badgeHtml}
                     </div>
                     <div style="font-size: 11px; color: #88a0b0; margin-bottom: 8px;">${item.desc || 'Standard issue component.'}</div>
                     <div style="font-size: 10px;">${statsHtml}</div>
                 `;
                 
                 itemDiv.addEventListener('click', () => {
-                    this.factory.equipComponent(category, item.id);
-                    this.switchFactoryCategory(category); // Re-render list to show 'INSTALLED'
+                    const success = this.factory.equipComponent(category, item.id);
+                    if (!success && !this.factory.purchased.has(item.id)) {
+                        // Not enough credits, flash red
+                        itemDiv.style.borderColor = '#ff0055';
+                        setTimeout(() => itemDiv.style.borderColor = '', 300);
+                        return;
+                    }
+                    this.switchFactoryCategory(category); // Re-render list
                     this.updateFactoryUI();
                 });
                 
@@ -88,6 +105,7 @@ export function applyFactoryMixin(EngineClass) {
         },
         
         updateFactoryUI() {
+            document.getElementById('factoryCreditBalance').textContent = Math.floor(this.credits);
             const stats = this.factory.calculateStats();
             document.getElementById('facStatSpeed').textContent = stats.speed;
             document.getElementById('facStatFire').textContent = stats.fire;

@@ -1,0 +1,3178 @@
+
+> fantasy-quant@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.34:3000
+- Environments: .env.local
+✓ Ready in 29.5s
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/ute/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/ute/Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/package-lock.json
+   * /Users/ute/Dev/sentaient_conversion_hub_7382-Website/package-lock.json
+
+⚠ Slow filesystem detected. The benchmark took 804ms. If /Users/ute/Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/.next/dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+
+○ Compiling /api/optimize ...
+✓ Finished writing to filesystem cache in 2.1min
+✓ Finished writing to filesystem cache in 48s
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 6.1min (next.js: 5.8min, application-code: 17.8s)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 6.2min (next.js: 5.8min, application-code: 23.2s)
+✓ Finished writing to filesystem cache in 31.7s
+ GET /dfs 404 in 7.8s (next.js: 4.7s, application-code: 3.1s)
+Starting filteredPool
+Finished filteredPool, Starting alternatives
+Finished alternatives, Starting getPivots
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+ GET / 200 in 3.6s (next.js: 2.2s, application-code: 1401ms)
+Starting filteredPool
+Finished filteredPool, Starting alternatives
+Finished alternatives, Starting getPivots
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+Starting render return
+ GET / 200 in 199ms (next.js: 59ms, application-code: 140ms)
+ GET / 200 in 5.5s (next.js: 1820ms, application-code: 3.6s)
+○ Compiling /api/odds ...
+ GET /api/odds?season=2026&week=1 200 in 14.5s (next.js: 13.1s, application-code: 1439ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 14.6s (next.js: 9.7s, application-code: 4.8s)
+ GET /api/stats?playerName=Christian%20McCaffrey 200 in 4.6s (next.js: 3.0s, application-code: 1600ms)
+ GET /api/stats?playerName=Christian%20McCaffrey 200 in 802ms (next.js: 7ms, application-code: 796ms)
+✓ Compiled in 69.3s
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:170:13
+Expected '</', got 'case'
+  168 |                         </div>
+  169 |             );
+> 170 |             case 'main_prop': return (
+      |             ^^^^
+  171 |               <div key={colId} className="w-16 text-xs text-center hidden sm:block flex-s...
+  172 |                           {mainProp ? (
+  173 |                             <>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+✓ Compiled in 588ms
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:170:13
+Expected '</', got 'case'
+  168 |                         </div>
+  169 |             );
+> 170 |             case 'main_prop': return (
+      |             ^^^^
+  171 |               <div key={colId} className="w-16 text-xs text-center hidden sm:block flex-s...
+  172 |                           {mainProp ? (
+  173 |                             <>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:170:13
+Expected '</', got 'case'
+  168 |                         </div>
+  169 |             );
+> 170 |             case 'main_prop': return (
+      |             ^^^^
+  171 |               <div key={colId} className="w-16 text-xs text-center hidden sm:block flex-s...
+  172 |                           {mainProp ? (
+  173 |                             <>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:170:13
+Expected '</', got 'case'
+  168 |                         </div>
+  169 |             );
+> 170 |             case 'main_prop': return (
+      |             ^^^^
+  171 |               <div key={colId} className="w-16 text-xs text-center hidden sm:block flex-s...
+  172 |                           {mainProp ? (
+  173 |                             <>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+✓ Compiled in 758ms
+ GET / 200 in 613ms (next.js: 168ms, application-code: 445ms)
+✓ Finished writing to filesystem cache in 29.2s
+ GET / 200 in 33.8s (next.js: 6.2s, application-code: 27.6s)
+ GET /api/odds?season=2026&week=1 200 in 6.9s (next.js: 199ms, application-code: 6.7s)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 9.2s (next.js: 2.1s, application-code: 7.1s)
+○ Compiling /api/ingest/mock ...
+ GET /api/ingest/mock 200 in 26.0s (next.js: 22.9s, application-code: 3.1s)
+✓ Compiled in 12.6s
+ GET /api/odds?season=2026&week=1 200 in 4.5s (next.js: 209ms, application-code: 4.3s)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 6.3s (next.js: 1076ms, application-code: 5.3s)
+ GET /api/ingest/mock 200 in 5.9s (next.js: 456ms, application-code: 5.4s)
+ GET / 200 in 3.5s (next.js: 250ms, application-code: 3.2s)
+ GET /api/odds?season=2026&week=1 200 in 2.4s (next.js: 956ms, application-code: 1461ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 4.2s (next.js: 1357ms, application-code: 2.8s)
+✓ Compiled in 733ms
+ GET /api/odds?season=2026&week=1 200 in 1100ms (next.js: 108ms, application-code: 992ms)
+ GET /api/odds?season=2026&week=1 200 in 441ms (next.js: 3ms, application-code: 438ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 2.9s (next.js: 43ms, application-code: 2.9s)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 2.0s (next.js: 1868µs, application-code: 2.0s)
+✓ Compiled in 1120ms
+ GET /api/odds?season=2026&week=1 200 in 696ms (next.js: 26ms, application-code: 670ms)
+ GET /api/odds?season=2026&week=1 200 in 598ms (next.js: 16ms, application-code: 583ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 2.3s (next.js: 2ms, application-code: 2.3s)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 2.3s (next.js: 15ms, application-code: 2.3s)
+ GET / 200 in 921ms (next.js: 388ms, application-code: 533ms)
+ GET /api/odds?season=2026&week=1 200 in 1204ms (next.js: 51ms, application-code: 1153ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 2.7s (next.js: 19ms, application-code: 2.7s)
+ GET /api/stats?playerName=Christian%20McCaffrey 200 in 1668ms (next.js: 50ms, application-code: 1618ms)
+ GET /api/stats?playerName=Christian%20McCaffrey 200 in 694ms (next.js: 3ms, application-code: 691ms)
+ GET / 200 in 789ms (next.js: 309ms, application-code: 481ms)
+ GET /api/odds?season=2026&week=1 500 in 879ms (next.js: 85ms, application-code: 794ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 2.3s (next.js: 48ms, application-code: 2.3s)
+ GET /api/stats?playerName=Christian%20McCaffrey 200 in 1073ms (next.js: 57ms, application-code: 1016ms)
+ GET /api/stats?playerName=Christian%20McCaffrey 200 in 822ms (next.js: 6ms, application-code: 816ms)
+✓ Compiled in 1782ms
+✓ Compiled in 4.7s
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:743:1
+Unterminated string constant
+  741 |     const row = lineup.map(p => p?.player_id || '').join(',');
+  742 |     const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "
+> 743 | " + row;
+      | ^^^^^^^^
+  744 |     const encodedUri = encodeURI(csvContent);
+  745 |     const link = document.createElement("a");
+  746 |     link.setAttribute("href", encodedUri);
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:743:1
+Unterminated string constant
+  741 |     const row = lineup.map(p => p?.player_id || '').join(',');
+  742 |     const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "
+> 743 | " + row;
+      | ^^^^^^^^
+  744 |     const encodedUri = encodeURI(csvContent);
+  745 |     const link = document.createElement("a");
+  746 |     link.setAttribute("href", encodedUri);
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:743:1
+Unterminated string constant
+  741 |     const row = lineup.map(p => p?.player_id || '').join(',');
+  742 |     const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "
+> 743 | " + row;
+      | ^^^^^^^^
+  744 |     const encodedUri = encodeURI(csvContent);
+  745 |     const link = document.createElement("a");
+  746 |     link.setAttribute("href", encodedUri);
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:743:1
+Unterminated string constant
+  741 |     const row = lineup.map(p => p?.player_id || '').join(',');
+  742 |     const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "
+> 743 | " + row;
+      | ^^^^^^^^
+  744 |     const encodedUri = encodeURI(csvContent);
+  745 |     const link = document.createElement("a");
+  746 |     link.setAttribute("href", encodedUri);
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+✓ Compiled in 489ms
+ GET / 200 in 639ms (next.js: 369ms, application-code: 270ms)
+✓ Compiled in 611ms
+✓ Compiled in 31.1s
+ GET / 200 in 4.7s (next.js: 3.6s, application-code: 1081ms)
+ GET / 200 in 315ms (next.js: 20ms, application-code: 295ms)
+ GET / 200 in 129ms (next.js: 4ms, application-code: 126ms)
+✓ Finished filesystem cache database compaction in 16.4s
+ GET /api/odds?season=2026&week=1 200 in 6.2s (next.js: 3.9s, application-code: 2.3s)
+ GET /api/odds?season=2026&week=1 200 in 615ms (next.js: 10ms, application-code: 606ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 8.6s (next.js: 3.5s, application-code: 5.2s)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 1504ms (next.js: 1849µs, application-code: 1502ms)
+[Server HMR] Update failed, full reload needed: SyntaxError: Identifier 'showMultiLineup' has already been declared
+    at eval (<anonymous>)
+[Server HMR] Listener error: SyntaxError: Identifier 'showMultiLineup' has already been declared
+    at eval (<anonymous>)
+✓ Compiled in 6.1s
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  [90m572 |[0m   [36mconst[0m [visibleCols, setVisibleCols] = useState<[33mColumnId[0m[]>([33mDEFAULT_VIEW[0m [36mas[0m [33mColumnId[0m[]);
+  [90m573 |[0m   [36mconst[0m [showColSettings, setShowColSettings] = useState([36mfalse[0m);
+[31m[1m>[0m [90m574 |[0m   [36mconst[0m [showMultiLineup, setShowMultiLineup] = useState([36mfalse[0m);
+  [90m    |[0m                           [31m[1m^^^^^^^^^^^^^^^^^^[0m
+  [90m575 |[0m   [36mconst[0m [customViews, setCustomViews] = useState<[33mRecord[0m<string, [33mColumnId[0m[]>>({});
+  [90m576 |[0m
+  [90m577 |[0m   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  [90m572 |[0m   [36mconst[0m [visibleCols, setVisibleCols] = useState<[33mColumnId[0m[]>([33mDEFAULT_VIEW[0m [36mas[0m [33mColumnId[0m[]);
+  [90m573 |[0m   [36mconst[0m [showColSettings, setShowColSettings] = useState([36mfalse[0m);
+[31m[1m>[0m [90m574 |[0m   [36mconst[0m [showMultiLineup, setShowMultiLineup] = useState([36mfalse[0m);
+  [90m    |[0m          [31m[1m^^^^^^^^^^^^^^^[0m
+  [90m575 |[0m   [36mconst[0m [customViews, setCustomViews] = useState<[33mRecord[0m<string, [33mColumnId[0m[]>>({});
+  [90m576 |[0m
+  [90m577 |[0m   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |          ^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |          ^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |          ^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |          ^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |          ^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |          ^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+ GET / 500 in 4.0s (next.js: 2.5s, application-code: 1486ms)
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  [90m572 |[0m   [36mconst[0m [visibleCols, setVisibleCols] = useState<[33mColumnId[0m[]>([33mDEFAULT_VIEW[0m [36mas[0m [33mColumnId[0m[]);
+  [90m573 |[0m   [36mconst[0m [showColSettings, setShowColSettings] = useState([36mfalse[0m);
+[31m[1m>[0m [90m574 |[0m   [36mconst[0m [showMultiLineup, setShowMultiLineup] = useState([36mfalse[0m);
+  [90m    |[0m                           [31m[1m^^^^^^^^^^^^^^^^^^[0m
+  [90m575 |[0m   [36mconst[0m [customViews, setCustomViews] = useState<[33mRecord[0m<string, [33mColumnId[0m[]>>({});
+  [90m576 |[0m
+  [90m577 |[0m   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  [90m572 |[0m   [36mconst[0m [visibleCols, setVisibleCols] = useState<[33mColumnId[0m[]>([33mDEFAULT_VIEW[0m [36mas[0m [33mColumnId[0m[]);
+  [90m573 |[0m   [36mconst[0m [showColSettings, setShowColSettings] = useState([36mfalse[0m);
+[31m[1m>[0m [90m574 |[0m   [36mconst[0m [showMultiLineup, setShowMultiLineup] = useState([36mfalse[0m);
+  [90m    |[0m          [31m[1m^^^^^^^^^^^^^^^[0m
+  [90m575 |[0m   [36mconst[0m [customViews, setCustomViews] = useState<[33mRecord[0m<string, [33mColumnId[0m[]>>({});
+  [90m576 |[0m
+  [90m577 |[0m   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 45ms (next.js: 23ms, application-code: 22ms)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |          ^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] Uncaught Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27)
+    at <unknown> (Error: (./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:27
+the name `setShowMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |                           ^^^^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:574:10
+the name `showMultiLineup` is defined multiple times
+  572 |   const [visibleCols, setVisibleCols] = useState<ColumnId[]>(DEFAULT_VIEW as ColumnId[]);
+  573 |   const [showColSettings, setShowColSettings] = useState(false);
+> 574 |   const [showMultiLineup, setShowMultiLineup] = useState(false);
+      |          ^^^^^^^^^^^^^^^
+  575 |   const [customViews, setCustomViews] = useState<Record<string, ColumnId[]>>({});
+  576 |
+  577 |   useEffect(() => {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9
+the name `exportMME` is defined multiple times
+  1349 |   };
+  1350 |   
+> 1351 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1352 |     if (mmeLineups.length === 0) return;
+  1353 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1354 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1195:9
+the name `generateMME` is defined multiple times
+  1193 |   };
+  1194 |
+> 1195 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1196 |     setIsGeneratingMME(true);
+  1197 |     setMmeProgress(0);
+  1198 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1096:9
+the name `exportMME` is defined multiple times
+  [90m1094 |[0m   };
+  [90m1095 |[0m   
+[31m[1m>[0m [90m1096 |[0m   [36mconst[0m exportMME = () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^[0m
+  [90m1097 |[0m     [36mif[0m (mmeLineups.length === [35m0[0m) [36mreturn[0m;
+  [90m1098 |[0m     [36mconst[0m headers = [[32m'QB'[0m, [32m'RB'[0m, [32m'RB'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'TE'[0m, [32m'FLEX'[0m, [32m'DST'[0m];
+  [90m1099 |[0m     [36mlet[0m csvContent = [32m"data:text/csv;charset=utf-8,"[0m + headers.join([32m','[0m) + [32m"\n"[0m;
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9
+the name `exportMME` is defined multiple times
+  [90m1349 |[0m   };
+  [90m1350 |[0m   
+[31m[1m>[0m [90m1351 |[0m   [36mconst[0m exportMME = () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^[0m
+  [90m1352 |[0m     [36mif[0m (mmeLineups.length === [35m0[0m) [36mreturn[0m;
+  [90m1353 |[0m     [36mconst[0m headers = [[32m'QB'[0m, [32m'RB'[0m, [32m'RB'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'TE'[0m, [32m'FLEX'[0m, [32m'DST'[0m];
+  [90m1354 |[0m     [36mlet[0m csvContent = [32m"data:text/csv;charset=utf-8,"[0m + headers.join([32m','[0m) + [32m"\n"[0m;
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:940:9
+the name `generateMME` is defined multiple times
+  [90m938 |[0m   };
+  [90m939 |[0m
+[31m[1m>[0m [90m940 |[0m   [36mconst[0m generateMME = [36masync[0m () => {
+  [90m    |[0m         [31m[1m^^^^^^^^^^^[0m
+  [90m941 |[0m     setIsGeneratingMME([36mtrue[0m);
+  [90m942 |[0m     setMmeProgress([35m0[0m);
+  [90m943 |[0m     [36mconst[0m generated: ([33mDFSPlayer[0m | [36mnull[0m)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1195:9
+the name `generateMME` is defined multiple times
+  [90m1193 |[0m   };
+  [90m1194 |[0m
+[31m[1m>[0m [90m1195 |[0m   [36mconst[0m generateMME = [36masync[0m () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^^^[0m
+  [90m1196 |[0m     setIsGeneratingMME([36mtrue[0m);
+  [90m1197 |[0m     setMmeProgress([35m0[0m);
+  [90m1198 |[0m     [36mconst[0m generated: ([33mDFSPlayer[0m | [36mnull[0m)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9
+the name `exportMME` is defined multiple times
+  1349 |   };
+  1350 |   
+> 1351 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1352 |     if (mmeLineups.length === 0) return;
+  1353 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1354 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1195:9
+the name `generateMME` is defined multiple times
+  1193 |   };
+  1194 |
+> 1195 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1196 |     setIsGeneratingMME(true);
+  1197 |     setMmeProgress(0);
+  1198 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9
+the name `exportMME` is defined multiple times
+  1349 |   };
+  1350 |   
+> 1351 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1352 |     if (mmeLineups.length === 0) return;
+  1353 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1354 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1195:9
+the name `generateMME` is defined multiple times
+  1193 |   };
+  1194 |
+> 1195 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1196 |     setIsGeneratingMME(true);
+  1197 |     setMmeProgress(0);
+  1198 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+ GET / 500 in 144ms (next.js: 109ms, application-code: 35ms)
+[browser] Uncaught Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9
+the name `exportMME` is defined multiple times
+  1349 |   };
+  1350 |   
+> 1351 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1352 |     if (mmeLineups.length === 0) return;
+  1353 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1354 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9)
+    at <unknown> (Error: (./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9
+the name `exportMME` is defined multiple times
+  1349 |   };
+  1350 |   
+> 1351 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1352 |     if (mmeLineups.length === 0) return;
+  1353 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1354 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1195:9
+the name `generateMME` is defined multiple times
+  1193 |   };
+  1194 |
+> 1195 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1196 |     setIsGeneratingMME(true);
+  1197 |     setMmeProgress(0);
+  1198 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9
+the name `exportMME` is defined multiple times
+  1349 |   };
+  1350 |   
+> 1351 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1352 |     if (mmeLineups.length === 0) return;
+  1353 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1354 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1195:9
+the name `generateMME` is defined multiple times
+  1193 |   };
+  1194 |
+> 1195 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1196 |     setIsGeneratingMME(true);
+  1197 |     setMmeProgress(0);
+  1198 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1351:9
+the name `exportMME` is defined multiple times
+  1349 |   };
+  1350 |   
+> 1351 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1352 |     if (mmeLineups.length === 0) return;
+  1353 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1354 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1195:9
+the name `generateMME` is defined multiple times
+  1193 |   };
+  1194 |
+> 1195 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1196 |     setIsGeneratingMME(true);
+  1197 |     setMmeProgress(0);
+  1198 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1422:9
+the name `exportMME` is defined multiple times
+  [90m1420 |[0m   };
+  [90m1421 |[0m   
+[31m[1m>[0m [90m1422 |[0m   [36mconst[0m exportMME = () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^[0m
+  [90m1423 |[0m     [36mif[0m (mmeLineups.length === [35m0[0m) [36mreturn[0m;
+  [90m1424 |[0m     [36mconst[0m headers = [[32m'QB'[0m, [32m'RB'[0m, [32m'RB'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'TE'[0m, [32m'FLEX'[0m, [32m'DST'[0m];
+  [90m1425 |[0m     [36mlet[0m csvContent = [32m"data:text/csv;charset=utf-8,"[0m + headers.join([32m','[0m) + [32m"\n"[0m;
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  [90m1675 |[0m   };
+  [90m1676 |[0m   
+[31m[1m>[0m [90m1677 |[0m   [36mconst[0m exportMME = () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^[0m
+  [90m1678 |[0m     [36mif[0m (mmeLineups.length === [35m0[0m) [36mreturn[0m;
+  [90m1679 |[0m     [36mconst[0m headers = [[32m'QB'[0m, [32m'RB'[0m, [32m'RB'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'TE'[0m, [32m'FLEX'[0m, [32m'DST'[0m];
+  [90m1680 |[0m     [36mlet[0m csvContent = [32m"data:text/csv;charset=utf-8,"[0m + headers.join([32m','[0m) + [32m"\n"[0m;
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1266:9
+the name `generateMME` is defined multiple times
+  [90m1264 |[0m   };
+  [90m1265 |[0m
+[31m[1m>[0m [90m1266 |[0m   [36mconst[0m generateMME = [36masync[0m () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^^^[0m
+  [90m1267 |[0m     setIsGeneratingMME([36mtrue[0m);
+  [90m1268 |[0m     setMmeProgress([35m0[0m);
+  [90m1269 |[0m     [36mconst[0m generated: ([33mDFSPlayer[0m | [36mnull[0m)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1521:9
+the name `generateMME` is defined multiple times
+  [90m1519 |[0m   };
+  [90m1520 |[0m
+[31m[1m>[0m [90m1521 |[0m   [36mconst[0m generateMME = [36masync[0m () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^^^[0m
+  [90m1522 |[0m     setIsGeneratingMME([36mtrue[0m);
+  [90m1523 |[0m     setMmeProgress([35m0[0m);
+  [90m1524 |[0m     [36mconst[0m generated: ([33mDFSPlayer[0m | [36mnull[0m)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  1675 |   };
+  1676 |   
+> 1677 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1678 |     if (mmeLineups.length === 0) return;
+  1679 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1680 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  1675 |   };
+  1676 |   
+> 1677 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1678 |     if (mmeLineups.length === 0) return;
+  1679 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1680 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1521:9
+the name `generateMME` is defined multiple times
+  1519 |   };
+  1520 |
+> 1521 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1522 |     setIsGeneratingMME(true);
+  1523 |     setMmeProgress(0);
+  1524 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1521:9
+the name `generateMME` is defined multiple times
+  1519 |   };
+  1520 |
+> 1521 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1522 |     setIsGeneratingMME(true);
+  1523 |     setMmeProgress(0);
+  1524 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  1675 |   };
+  1676 |   
+> 1677 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1678 |     if (mmeLineups.length === 0) return;
+  1679 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1680 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1521:9
+the name `generateMME` is defined multiple times
+  1519 |   };
+  1520 |
+> 1521 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1522 |     setIsGeneratingMME(true);
+  1523 |     setMmeProgress(0);
+  1524 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  1675 |   };
+  1676 |   
+> 1677 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1678 |     if (mmeLineups.length === 0) return;
+  1679 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1680 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1521:9
+the name `generateMME` is defined multiple times
+  1519 |   };
+  1520 |
+> 1521 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1522 |     setIsGeneratingMME(true);
+  1523 |     setMmeProgress(0);
+  1524 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1422:9
+the name `exportMME` is defined multiple times
+  [90m1420 |[0m   };
+  [90m1421 |[0m   
+[31m[1m>[0m [90m1422 |[0m   [36mconst[0m exportMME = () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^[0m
+  [90m1423 |[0m     [36mif[0m (mmeLineups.length === [35m0[0m) [36mreturn[0m;
+  [90m1424 |[0m     [36mconst[0m headers = [[32m'QB'[0m, [32m'RB'[0m, [32m'RB'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'TE'[0m, [32m'FLEX'[0m, [32m'DST'[0m];
+  [90m1425 |[0m     [36mlet[0m csvContent = [32m"data:text/csv;charset=utf-8,"[0m + headers.join([32m','[0m) + [32m"\n"[0m;
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  [90m1675 |[0m   };
+  [90m1676 |[0m   
+[31m[1m>[0m [90m1677 |[0m   [36mconst[0m exportMME = () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^[0m
+  [90m1678 |[0m     [36mif[0m (mmeLineups.length === [35m0[0m) [36mreturn[0m;
+  [90m1679 |[0m     [36mconst[0m headers = [[32m'QB'[0m, [32m'RB'[0m, [32m'RB'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'WR'[0m, [32m'TE'[0m, [32m'FLEX'[0m, [32m'DST'[0m];
+  [90m1680 |[0m     [36mlet[0m csvContent = [32m"data:text/csv;charset=utf-8,"[0m + headers.join([32m','[0m) + [32m"\n"[0m;
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1266:9
+the name `generateMME` is defined multiple times
+  [90m1264 |[0m   };
+  [90m1265 |[0m
+[31m[1m>[0m [90m1266 |[0m   [36mconst[0m generateMME = [36masync[0m () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^^^[0m
+  [90m1267 |[0m     setIsGeneratingMME([36mtrue[0m);
+  [90m1268 |[0m     setMmeProgress([35m0[0m);
+  [90m1269 |[0m     [36mconst[0m generated: ([33mDFSPlayer[0m | [36mnull[0m)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+
+./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1521:9
+the name `generateMME` is defined multiple times
+  [90m1519 |[0m   };
+  [90m1520 |[0m
+[31m[1m>[0m [90m1521 |[0m   [36mconst[0m generateMME = [36masync[0m () => {
+  [90m     |[0m         [31m[1m^^^^^^^^^^^[0m
+  [90m1522 |[0m     setIsGeneratingMME([36mtrue[0m);
+  [90m1523 |[0m     setMmeProgress([35m0[0m);
+  [90m1524 |[0m     [36mconst[0m generated: ([33mDFSPlayer[0m | [36mnull[0m)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 100ms (next.js: 86ms, application-code: 13ms)
+[browser] Uncaught Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  1675 |   };
+  1676 |   
+> 1677 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1678 |     if (mmeLineups.length === 0) return;
+  1679 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1680 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9)
+    at <unknown> (Error: (./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  1675 |   };
+  1676 |   
+> 1677 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1678 |     if (mmeLineups.length === 0) return;
+  1679 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1680 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1521:9
+the name `generateMME` is defined multiple times
+  1519 |   };
+  1520 |
+> 1521 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1522 |     setIsGeneratingMME(true);
+  1523 |     setMmeProgress(0);
+  1524 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1677:9
+the name `exportMME` is defined multiple times
+  1675 |   };
+  1676 |   
+> 1677 |   const exportMME = () => {
+       |         ^^^^^^^^^
+  1678 |     if (mmeLineups.length === 0) return;
+  1679 |     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
+  1680 |     let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:1521:9
+the name `generateMME` is defined multiple times
+  1519 |   };
+  1520 |
+> 1521 |   const generateMME = async () => {
+       |         ^^^^^^^^^^^
+  1522 |     setIsGeneratingMME(true);
+  1523 |     setMmeProgress(0);
+  1524 |     const generated: (DFSPlayer | null)[][] = [];
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+✓ Compiled in 500ms
+⨯ ReferenceError: showMultiLineup is not defined
+    at LineupSlot (src/components/dfs/DFSDashboard.tsx:665:8)
+  663 |
+  664 |       {/* ── MME Modal ── */}
+> 665 |       {showMultiLineup && (
+      |        ^
+  666 |         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 b...
+  667 |           <div className="bg-[#0f1115] border border-white/[0.08] w-full max-w-4xl max-h-...
+  668 |              {
+  digest: '3599638858'
+}
+ GET / 500 in 2.5s (next.js: 888ms, application-code: 1567ms)
+⨯ ReferenceError: showMultiLineup is not defined
+    at LineupSlot (src/components/dfs/DFSDashboard.tsx:665:8)
+  663 |
+  664 |       {/* ── MME Modal ── */}
+> 665 |       {showMultiLineup && (
+      |        ^
+  666 |         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 b...
+  667 |           <div className="bg-[#0f1115] border border-white/[0.08] w-full max-w-4xl max-h-...
+  668 |              {
+  digest: '3599638858'
+}
+ GET / 500 in 121ms (next.js: 6ms, application-code: 115ms)
+[browser] Uncaught ReferenceError: showMultiLineup is not defined
+    at LineupSlot (src/components/dfs/DFSDashboard.tsx:665:8)
+    at <unknown> (src/components/dfs/DFSDashboard.tsx:1394:13)
+    at Array.map (<anonymous>)
+    at DFSDashboard (src/components/dfs/DFSDashboard.tsx:1393:18)
+    at AppShell (src/components/AppShell.tsx:74:11)
+    at Home (src/app/page.tsx:9:10)
+  663 |
+  664 |       {/* ── MME Modal ── */}
+> 665 |       {showMultiLineup && (
+      |        ^
+  666 |         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 b...
+  667 |           <div className="bg-[#0f1115] border border-white/[0.08] w-full max-w-4xl max-h-...
+  668 |             
+✓ Compiled in 1051ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 1199ms (next.js: 479ms, application-code: 720ms)
+ GET /api/odds?season=2026&week=1 200 in 1575ms (next.js: 357ms, application-code: 1218ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 3.6s (next.js: 268ms, application-code: 3.4s)
+✓ Compiled in 1086ms
+⨯ ReferenceError: Layers is not defined
+    at DFSDashboard (src/components/dfs/DFSDashboard.tsx:640:18)
+  638 |                 className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-5...
+  639 |               >
+> 640 |                 <Layers size={12} /> Multi-Entry
+      |                  ^
+  641 |               </button>
+  642 |             </div>
+  643 |             <div className="flex items-center gap-2"> {
+  digest: '2185885308'
+}
+ GET / 200 in 1838ms (next.js: 455ms, application-code: 1384ms)
+ GET / 500 in 1180ms (next.js: 347ms, application-code: 833ms)
+[browser] Uncaught ReferenceError: Layers is not defined
+    at DFSDashboard (src/components/dfs/DFSDashboard.tsx:640:18)
+    at AppShell (src/components/dfs/DFSDashboard.tsx:730:76)
+    at Home (src/app/page.tsx:9:10)
+  638 |                 className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-5...
+  639 |               >
+> 640 |                 <Layers size={12} /> Multi-Entry
+      |                  ^
+  641 |               </button>
+  642 |             </div>
+  643 |             <div className="flex items-center gap-2">
+[browser] Uncaught ReferenceError: Layers is not defined
+    at DFSDashboard (src/components/dfs/DFSDashboard.tsx:640:18)
+    at AppShell (src/components/AppShell.tsx:74:11)
+    at Home (src/app/page.tsx:9:10)
+  638 |                 className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-5...
+  639 |               >
+> 640 |                 <Layers size={12} /> Multi-Entry
+      |                  ^
+  641 |               </button>
+  642 |             </div>
+  643 |             <div className="flex items-center gap-2">
+✓ Finished filesystem cache database compaction in 39.2s
+✓ Compiled in 893ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ReferenceError: Layers is not defined
+    at DFSDashboard (src/components/dfs/DFSDashboard.tsx:676:18)
+  674 |                 className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-5...
+  675 |               >
+> 676 |                 <Layers size={12} /> Multi-Entry
+      |                  ^
+  677 |               </button>
+  678 |             </div>
+  679 |             <div className="flex items-center gap-2"> {
+  digest: '2282617198'
+}
+ GET / 500 in 1548ms (next.js: 182ms, application-code: 1366ms)
+✓ Compiled in 1141ms
+[browser] Uncaught ReferenceError: Layers is not defined
+    at DFSDashboard (src/components/AppShell.tsx:8:25)
+    at AppShell (src/components/AppShell.tsx:8:25)
+    at Home (src/app/page.tsx:9:10)
+   6 | import { Activity, Target } from 'lucide-react';
+   7 |
+>  8 | export default function AppShell() {
+     |                         ^
+   9 |   const [mode, setMode] = useState<'draft' | 'dfs'>('dfs');
+  10 |
+  11 |   return (
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:387:1
+Unterminated string constant
+  385 |     const row = lineup.map(p => p?.player_id || '').join(',');
+  386 |     const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "
+> 387 | " + row;
+      | ^^^^^^^^
+  388 |     const encodedUri = encodeURI(csvContent);
+  389 |     const link = document.createElement("a");
+  390 |     link.setAttribute("href", encodedUri);
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:387:1
+Unterminated string constant
+  385 |     const row = lineup.map(p => p?.player_id || '').join(',');
+  386 |     const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "
+> 387 | " + row;
+      | ^^^^^^^^
+  388 |     const encodedUri = encodeURI(csvContent);
+  389 |     const link = document.createElement("a");
+  390 |     link.setAttribute("href", encodedUri);
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx:387:1
+Unterminated string constant
+  385 |     const row = lineup.map(p => p?.player_id || '').join(',');
+  386 |     const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "
+> 387 | " + row;
+      | ^^^^^^^^
+  388 |     const encodedUri = encodeURI(csvContent);
+  389 |     const link = document.createElement("a");
+  390 |     link.setAttribute("href", encodedUri);
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/dfs/DFSDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+✓ Compiled in 1354ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ReferenceError: Layers is not defined
+    at DFSDashboard (src/components/dfs/DFSDashboard.tsx:729:18)
+  727 |                 className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-5...
+  728 |               >
+> 729 |                 <Layers size={12} /> Multi-Entry
+      |                  ^
+  730 |               </button>
+  731 |             </div>
+  732 |             <div className="flex items-center gap-2"> {
+  digest: '2282617198'
+}
+ GET / 500 in 573ms (next.js: 52ms, application-code: 521ms)
+[browser] Uncaught ReferenceError: Layers is not defined
+    at DFSDashboard (src/components/dfs/DFSDashboard.tsx:729:18)
+    at AppShell (src/components/AppShell.tsx:74:11)
+    at Home (src/app/page.tsx:9:10)
+  727 |                 className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-5...
+  728 |               >
+> 729 |                 <Layers size={12} /> Multi-Entry
+      |                  ^
+  730 |               </button>
+  731 |             </div>
+  732 |             <div className="flex items-center gap-2">
+✓ Compiled in 1865ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 2.7s (next.js: 1540ms, application-code: 1172ms)
+ GET /api/odds?season=2026&week=1 200 in 1671ms (next.js: 85ms, application-code: 1586ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 3.5s (next.js: 456ms, application-code: 3.1s)
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Compiled in 35.2s
+○ Compiling middleware ...
+✓ Finished filesystem cache database compaction in 71s
+ GET / 404 in 17.3s (next.js: 4.8s, proxy.ts: 7.6s, application-code: 4.8s)
+[browser] Uncaught Error: Cannot find the middleware module
+ GET / 200 in 9.5s (next.js: 3.8s, proxy.ts: 1622ms, application-code: 4.1s)
+ GET /api/odds?season=2026&week=1 200 in 7.6s (next.js: 5.8s, proxy.ts: 33ms, application-code: 1779ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 9.2s (next.js: 3.4s, proxy.ts: 30ms, application-code: 5.8s)
+✓ Compiled in 31.5s
+○ Compiling /api/user/settings ...
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 5.7s (next.js: 2.4s, proxy.ts: 185ms, application-code: 3.1s)
+ GET /api/odds?season=2026&week=1 200 in 6.1s (next.js: 476ms, proxy.ts: 20ms, application-code: 5.6s)
+ GET /api/odds?season=2026&week=1 200 in 1343ms (next.js: 251ms, proxy.ts: 12ms, application-code: 1080ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 3.2s (next.js: 77ms, proxy.ts: 33ms, application-code: 3.1s)
+ GET /api/user/settings 401 in 59s (next.js: 59s, proxy.ts: 4ms, application-code: 361ms)
+ POST /api/user/settings 401 in 77s (next.js: 77s, proxy.ts: 7ms, application-code: 235ms)
+ POST /api/user/settings 401 in 2.3min (next.js: 2.3min, proxy.ts: 16ms, application-code: 234ms)
+ GET /api/user/settings 401 in 2.3min (next.js: 2.3min, proxy.ts: 312ms, application-code: 231ms)
+ GET / 200 in 13.5s (next.js: 4.0s, proxy.ts: 164ms, application-code: 9.3s)
+✓ Compiled in 746ms
+ GET /api/user/settings 401 in 5.0s (next.js: 4.7s, proxy.ts: 54ms, application-code: 299ms)
+ POST /api/user/settings 401 in 1138ms (next.js: 1125ms, proxy.ts: 5ms, application-code: 7ms)
+ GET /api/odds?season=2026&week=1 200 in 8.6s (next.js: 7.5s, proxy.ts: 24ms, application-code: 1060ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 9.9s (next.js: 6.3s, proxy.ts: 15ms, application-code: 3.5s)
+✓ Compiled in 34.8s
+✓ Finished writing to filesystem cache in 15.2s
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [function() {
+            return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Dev$2f$sentaient_conversion_hub_7382$2d$Website$2f$fantasy$2d$quant$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_async_to_generator$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])({
+                "DFSDashboard.useCallback[fetchPool]": function() {
+                    var _ref, poolRes, oddsRes, poolJson, oddsJson, e;
+                    return (0, __TURBOPACK__imported__module__$5b$project$5d2f$Dev$2f$sentaient_conversion_hub_7382$2d$Website$2f$fantasy$2d$quant$2f$node_modules$2f$tslib$2f$tslib$2e$es6$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__$5f$_generator__as__$5f3e$__["_"])(this, {
+                        "DFSDashboard.useCallback[fetchPool]": function(_state) {
+                            switch(_state.label){
+                                case 0:
+                                    setLoading(true);
+                                    _state.label = 1;
+                                case 1:
+                                    _state.trys.push([
+                                        1,
+                                        5,
+                                        6,
+                                        7
+                                    ]);
+                                    return [
+                                        4,
+                                        Promise.all([
+                                            fetch("/api/optimize?week=".concat(week, "&season=2023&platform=").concat(platform)),
+                                            fetch("/api/odds?season=2026&week=1")
+                                        ])
+                                    ];
+                                case 2:
+                                    _ref = __TURBOPACK__imported__module__$5b$project$5d2f$Dev$2f$sentaient_conversion_hub_7382$2d$Website$2f$fantasy$2d$quant$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_sliced_to_array$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"].apply(void 0, [
+                                        _state.sent(),
+                                        2
+                                    ]), poolRes = _ref[0], oddsRes = _ref[1];
+                                    return [
+                                        4,
+                                        poolRes.json()
+                                    ];
+                                case 3:
+                                    poolJson = _state.sent();
+                                    return [
+                                        4,
+                                        oddsRes.json()
+                                    ];
+                                case 4:
+                                    oddsJson = _state.sent();
+                                    setPlayerPool(poolJson.data || []);
+                                    setVegasGames(oddsJson.gameLines || []);
+                                    return [
+                                        3,
+                                        7
+                                    ];
+                                case 5:
+                                    e = _state.sent();
+                                    console.error(e);
+                                    return [
+                                        3,
+                                        7
+                                    ];
+                                case 6:
+                                    setLoading(false);
+                                    return [
+                                        7
+                                    ];
+                                case 7:
+                                    return [
+                                        2
+                                    ];
+                            }
+                        }
+                    }["DFSDashboard.useCallback[fetchPool]"]);
+                }
+            }["DFSDashboard.useCallback[fetchPool]"])();
+        }]
+Incoming: [] 
+    at DFSDashboard (src/components/dfs/DFSDashboard.tsx:408:12)
+    at Set.forEach (<anonymous>)
+  406 |   };
+  407 |
+> 408 |   useEffect(() => { 
+      |            ^
+  409 |     // Ignore effect sync error for fetching pool initially
+  410 |     fetchPool(); 
+  411 |     // eslint-disable-next-line react-hooks/exhaustive-deps (src/components/dfs/DFSDashboard.tsx:408:12)
+✓ Compiled in 401ms
+ POST /api/user/settings 401 in 1271ms (next.js: 177ms, proxy.ts: 769ms, application-code: 325ms)
+ GET / 200 in 3.4s (next.js: 265ms, proxy.ts: 24ms, application-code: 3.1s)
+ GET /api/user/settings 401 in 4.4s (next.js: 158ms, proxy.ts: 24ms, application-code: 4.2s)
+ POST /api/user/settings 401 in 4.8s (next.js: 3.7s, proxy.ts: 1056ms, application-code: 17ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 10.4s (next.js: 625ms, proxy.ts: 45ms, application-code: 9.7s)
+ GET /api/odds?season=2026&week=1 200 in 11.1s (next.js: 4.5s, proxy.ts: 49ms, application-code: 6.6s)
+ GET / 200 in 6.4s (next.js: 326ms, proxy.ts: 331ms, application-code: 5.8s)
+ GET /api/user/settings 401 in 5.0s (next.js: 166ms, proxy.ts: 38ms, application-code: 4.8s)
+ POST /api/user/settings 401 in 665ms (next.js: 242ms, proxy.ts: 383ms, application-code: 40ms)
+ GET /api/odds?season=2026&week=1 200 in 7.0s (next.js: 5.1s, proxy.ts: 22ms, application-code: 1875ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 9.5s (next.js: 242ms, proxy.ts: 36ms, application-code: 9.2s)
+ GET / 200 in 5.7s (next.js: 4.4s, proxy.ts: 410ms, application-code: 846ms)
+ GET / 200 in 970ms (next.js: 579ms, proxy.ts: 127ms, application-code: 264ms)
+ GET / 200 in 355ms (next.js: 5ms, proxy.ts: 6ms, application-code: 344ms)
+ GET / 200 in 202ms (next.js: 11ms, proxy.ts: 7ms, application-code: 184ms)
+ GET / 200 in 186ms (next.js: 19ms, proxy.ts: 17ms, application-code: 150ms)
+ GET / 200 in 170ms (next.js: 18ms, proxy.ts: 18ms, application-code: 135ms)
+ GET / 200 in 200ms (next.js: 6ms, proxy.ts: 14ms, application-code: 181ms)
+ GET / 200 in 216ms (next.js: 33ms, proxy.ts: 17ms, application-code: 167ms)
+ GET / 200 in 180ms (next.js: 6ms, proxy.ts: 7ms, application-code: 167ms)
+ GET / 200 in 297ms (next.js: 6ms, proxy.ts: 11ms, application-code: 280ms)
+ GET / 200 in 212ms (next.js: 32ms, proxy.ts: 15ms, application-code: 165ms)
+ GET / 200 in 213ms (next.js: 4ms, proxy.ts: 8ms, application-code: 201ms)
+ GET / 200 in 378ms (next.js: 4ms, proxy.ts: 5ms, application-code: 369ms)
+ GET / 200 in 305ms (next.js: 5ms, proxy.ts: 5ms, application-code: 295ms)
+ GET / 200 in 184ms (next.js: 35ms, proxy.ts: 63ms, application-code: 86ms)
+ GET / 200 in 63ms (next.js: 5ms, proxy.ts: 6ms, application-code: 52ms)
+ GET / 200 in 102ms (next.js: 11ms, proxy.ts: 4ms, application-code: 87ms)
+ GET / 200 in 236ms (next.js: 9ms, proxy.ts: 97ms, application-code: 129ms)
+ GET / 200 in 145ms (next.js: 25ms, proxy.ts: 8ms, application-code: 112ms)
+ GET / 200 in 67ms (next.js: 9ms, proxy.ts: 6ms, application-code: 52ms)
+ GET / 200 in 120ms (next.js: 3ms, proxy.ts: 34ms, application-code: 82ms)
+ GET / 200 in 54ms (next.js: 5ms, proxy.ts: 14ms, application-code: 35ms)
+ GET / 200 in 118ms (next.js: 4ms, proxy.ts: 3ms, application-code: 110ms)
+ GET / 200 in 117ms (next.js: 8ms, proxy.ts: 4ms, application-code: 105ms)
+ GET / 200 in 48ms (next.js: 4ms, proxy.ts: 5ms, application-code: 38ms)
+ GET / 200 in 108ms (next.js: 18ms, proxy.ts: 12ms, application-code: 78ms)
+ GET / 200 in 97ms (next.js: 4ms, proxy.ts: 3ms, application-code: 90ms)
+ GET / 200 in 62ms (next.js: 6ms, proxy.ts: 5ms, application-code: 51ms)
+ GET / 200 in 202ms (next.js: 10ms, proxy.ts: 4ms, application-code: 189ms)
+ GET / 200 in 224ms (next.js: 8ms, proxy.ts: 4ms, application-code: 212ms)
+✓ Finished filesystem cache database compaction in 13.2s
+✓ Compiled in 932ms
+ GET /api/user/settings 401 in 1691ms (next.js: 918ms, proxy.ts: 32ms, application-code: 741ms)
+ POST /api/user/settings 401 in 24ms (next.js: 4ms, proxy.ts: 12ms, application-code: 7ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 4.0s (next.js: 1511ms, proxy.ts: 20ms, application-code: 2.5s)
+ GET /api/odds?season=2026&week=1 200 in 4.6s (next.js: 2.4s, proxy.ts: 16ms, application-code: 2.1s)
+✓ Compiled in 528ms
+✓ Compiled in 987ms
+ GET / 200 in 1998ms (next.js: 55ms, proxy.ts: 40ms, application-code: 1902ms)
+ GET /api/user/settings 401 in 258ms (next.js: 96ms, proxy.ts: 81ms, application-code: 81ms)
+ POST /api/user/settings 401 in 39ms (next.js: 24ms, proxy.ts: 6ms, application-code: 9ms)
+ GET /api/odds?season=2026&week=1 200 in 1484ms (next.js: 54ms, proxy.ts: 54ms, application-code: 1376ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 2.7s (next.js: 12ms, proxy.ts: 56ms, application-code: 2.7s)
+ POST /api/user/settings 401 in 26ms (next.js: 8ms, proxy.ts: 5ms, application-code: 13ms)
+ POST /api/user/settings 401 in 23ms (next.js: 9ms, proxy.ts: 5ms, application-code: 8ms)
+ POST /api/user/settings 401 in 20ms (next.js: 9ms, proxy.ts: 5ms, application-code: 6ms)
+ POST /api/user/settings 401 in 19ms (next.js: 3ms, proxy.ts: 10ms, application-code: 6ms)
+ POST /api/user/settings 401 in 16ms (next.js: 3ms, proxy.ts: 8ms, application-code: 5ms)
+ POST /api/user/settings 401 in 21ms (next.js: 3ms, proxy.ts: 5ms, application-code: 13ms)
+ POST /api/user/settings 401 in 22ms (next.js: 10ms, proxy.ts: 5ms, application-code: 7ms)
+ POST /api/user/settings 401 in 16ms (next.js: 4ms, proxy.ts: 6ms, application-code: 6ms)
+ POST /api/user/settings 401 in 20ms (next.js: 10ms, proxy.ts: 4ms, application-code: 6ms)
+ POST /api/user/settings 401 in 17ms (next.js: 7ms, proxy.ts: 3ms, application-code: 7ms)
+ GET / 200 in 4.8s (next.js: 2.8s, proxy.ts: 404ms, application-code: 1572ms)
+ GET /api/user/settings 401 in 3.7s (next.js: 851ms, proxy.ts: 24ms, application-code: 2.8s)
+ POST /api/user/settings 401 in 509ms (next.js: 109ms, proxy.ts: 299ms, application-code: 101ms)
+ GET /api/odds?season=2026&week=1 200 in 6.3s (next.js: 4.4s, proxy.ts: 34ms, application-code: 1913ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 200 in 7.7s (next.js: 3.1s, proxy.ts: 27ms, application-code: 4.6s)
+✓ Finished writing to filesystem cache in 35.7s
+✓ Finished filesystem cache database compaction in 12.1s
+ GET / 200 in 6.6s (next.js: 1419ms, proxy.ts: 1422ms, application-code: 3.8s)
+ GET / 200 in 228ms (next.js: 66ms, proxy.ts: 6ms, application-code: 156ms)
+ GET /api/user/settings 401 in 4.1s (next.js: 3.8s, proxy.ts: 91ms, application-code: 265ms)
+ POST /api/user/settings 401 in 258ms (next.js: 148ms, proxy.ts: 98ms, application-code: 12ms)
+ GET /api/odds?season=2026&week=1 200 in 5.9s (next.js: 1949ms, proxy.ts: 39ms, application-code: 4.0s)
+⨯ ReferenceError: enrichedArray is not defined
+    at GET (src/app/api/optimize/route.ts:308:36)
+  306 |   }
+  307 |
+> 308 |   return NextResponse.json({ data: enrichedArray || enriched, week, season, platform });
+      |                                    ^
+  309 | }
+  310 |
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 7.3s (next.js: 4.0s, proxy.ts: 42ms, application-code: 3.3s)
+[browser] SyntaxError: Unexpected end of JSON input
+SyntaxError: Unexpected end of JSON input (src/components/dfs/DFSDashboard.tsx:400:15)
+○ Compiling /fantasyquant/landing ...
+✓ Finished writing to filesystem cache in 51s
+✓ Finished writing to filesystem cache in 13.6s
+ GET / 200 in 102s (next.js: 22.4s, proxy.ts: 39.1s, application-code: 40s)
+ POST /api/user/settings 401 in 13.8s (next.js: 1632ms, proxy.ts: 320ms, application-code: 11.9s)
+ GET /api/user/settings 401 in 2.9s (next.js: 1693ms, proxy.ts: 137ms, application-code: 1054ms)
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 111s (next.js: 2.9s, proxy.ts: 18ms, application-code: 108s)
+ GET /api/odds?season=2026&week=1 500 in 112s (next.js: 24.6s, proxy.ts: 692ms, application-code: 86s)
+ GET / 200 in 11.3s (next.js: 1838ms, proxy.ts: 2.2s, application-code: 7.3s)
+ GET /api/user/settings 401 in 942ms (next.js: 295ms, proxy.ts: 136ms, application-code: 511ms)
+ POST /api/user/settings 401 in 4.0s (next.js: 2.0s, proxy.ts: 28ms, application-code: 1908ms)
+ GET /api/odds?season=2026&week=1 200 in 7.8s (next.js: 940ms, proxy.ts: 18ms, application-code: 6.8s)
+⨯ ReferenceError: enrichedArray is not defined
+    at GET (src/app/api/optimize/route.ts:308:36)
+  306 |   }
+  307 |
+> 308 |   return NextResponse.json({ data: enrichedArray || enriched, week, season, platform });
+      |                                    ^
+  309 | }
+  310 |
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 13.5s (next.js: 931ms, proxy.ts: 18ms, application-code: 12.6s)
+[browser] SyntaxError: Unexpected end of JSON input
+SyntaxError: Unexpected end of JSON input (src/components/dfs/DFSDashboard.tsx:400:15)
+[browser] SyntaxError: Unexpected end of JSON input
+SyntaxError: Unexpected end of JSON input (src/components/dfs/DFSDashboard.tsx:400:15)
+ GET /api/user/settings 401 in 3.5s (next.js: 2.4s, proxy.ts: 167ms, application-code: 936ms)
+ POST /api/user/settings 401 in 3.8s (next.js: 3.3s, proxy.ts: 31ms, application-code: 441ms)
+ GET /fantasyquant/landing 200 in 1089ms (next.js: 279ms, proxy.ts: 52ms, application-code: 758ms)
+✓ Finished writing to filesystem cache in 15.2s
+✓ Finished filesystem cache database compaction in 11.3min
+✓ Compiled in 2.4s
+✓ Compiled in 0ms
+ GET / 200 in 19.7s (next.js: 4.6s, proxy.ts: 6.9s, application-code: 8.3s)
+ GET / 200 in 1825ms (next.js: 186ms, proxy.ts: 7ms, application-code: 1632ms)
+ GET / 200 in 444ms (next.js: 4ms, proxy.ts: 8ms, application-code: 432ms)
+ GET / 200 in 52ms (next.js: 5ms, proxy.ts: 5ms, application-code: 43ms)
+ GET / 200 in 35ms (next.js: 7ms, proxy.ts: 5ms, application-code: 22ms)
+ GET / 200 in 74ms (next.js: 7ms, proxy.ts: 4ms, application-code: 63ms)
+ GET / 200 in 38ms (next.js: 4ms, proxy.ts: 5ms, application-code: 30ms)
+ GET / 200 in 222ms (next.js: 37ms, proxy.ts: 4ms, application-code: 181ms)
+ GET / 200 in 110ms (next.js: 28ms, proxy.ts: 4ms, application-code: 77ms)
+ GET / 200 in 102ms (next.js: 4ms, proxy.ts: 12ms, application-code: 85ms)
+ GET / 200 in 60ms (next.js: 4ms, proxy.ts: 7ms, application-code: 49ms)
+ GET / 200 in 247ms (next.js: 4ms, proxy.ts: 7ms, application-code: 236ms)
+ GET / 200 in 203ms (next.js: 176ms, proxy.ts: 4ms, application-code: 24ms)
+ GET / 200 in 181ms (next.js: 4ms, proxy.ts: 9ms, application-code: 168ms)
+ GET / 200 in 85ms (next.js: 4ms, proxy.ts: 29ms, application-code: 53ms)
+ GET / 200 in 100ms (next.js: 15ms, proxy.ts: 8ms, application-code: 77ms)
+ GET / 200 in 46ms (next.js: 4ms, proxy.ts: 6ms, application-code: 36ms)
+ GET / 200 in 69ms (next.js: 11ms, proxy.ts: 4ms, application-code: 55ms)
+ GET / 200 in 32ms (next.js: 3ms, proxy.ts: 3ms, application-code: 26ms)
+ GET / 200 in 67ms (next.js: 3ms, proxy.ts: 3ms, application-code: 61ms)
+ GET / 200 in 40ms (next.js: 3ms, proxy.ts: 3ms, application-code: 34ms)
+ GET / 200 in 61ms (next.js: 3ms, proxy.ts: 5ms, application-code: 53ms)
+ GET / 200 in 35ms (next.js: 10ms, proxy.ts: 3ms, application-code: 22ms)
+ GET / 200 in 87ms (next.js: 4ms, proxy.ts: 4ms, application-code: 79ms)
+ GET / 200 in 38ms (next.js: 8ms, proxy.ts: 7ms, application-code: 23ms)
+ GET / 200 in 90ms (next.js: 3ms, proxy.ts: 5ms, application-code: 83ms)
+ GET / 200 in 41ms (next.js: 7ms, proxy.ts: 5ms, application-code: 29ms)
+ GET / 200 in 42ms (next.js: 11ms, proxy.ts: 4ms, application-code: 27ms)
+ GET / 200 in 126ms (next.js: 14ms, proxy.ts: 3ms, application-code: 108ms)
+ GET / 200 in 79ms (next.js: 15ms, proxy.ts: 18ms, application-code: 45ms)
+ GET / 200 in 487ms (next.js: 3ms, proxy.ts: 3ms, application-code: 481ms)
+ GET / 200 in 41ms (next.js: 8ms, proxy.ts: 4ms, application-code: 30ms)
+ GET / 200 in 90ms (next.js: 10ms, proxy.ts: 4ms, application-code: 76ms)
+ GET / 200 in 50ms (next.js: 4ms, proxy.ts: 13ms, application-code: 33ms)
+ GET / 200 in 37ms (next.js: 3ms, proxy.ts: 3ms, application-code: 31ms)
+ GET / 200 in 157ms (next.js: 6ms, proxy.ts: 3ms, application-code: 148ms)
+ GET / 200 in 62ms (next.js: 3ms, proxy.ts: 3ms, application-code: 57ms)
+ GET / 200 in 36ms (next.js: 9ms, proxy.ts: 4ms, application-code: 23ms)
+ GET / 200 in 98ms (next.js: 5ms, proxy.ts: 5ms, application-code: 88ms)
+ GET / 200 in 48ms (next.js: 5ms, proxy.ts: 10ms, application-code: 33ms)
+ GET / 200 in 704ms (next.js: 7ms, proxy.ts: 12ms, application-code: 685ms)
+ GET / 200 in 648ms (next.js: 133ms, proxy.ts: 119ms, application-code: 396ms)
+ GET / 200 in 43ms (next.js: 8ms, proxy.ts: 7ms, application-code: 28ms)
+ GET / 200 in 80ms (next.js: 3ms, proxy.ts: 4ms, application-code: 73ms)
+ GET / 200 in 40ms (next.js: 5ms, proxy.ts: 6ms, application-code: 29ms)
+ GET / 200 in 107ms (next.js: 9ms, proxy.ts: 5ms, application-code: 93ms)
+ GET / 200 in 62ms (next.js: 3ms, proxy.ts: 10ms, application-code: 49ms)
+ GET / 200 in 48ms (next.js: 5ms, proxy.ts: 10ms, application-code: 33ms)
+✓ Compiled in 1ms
+ GET /api/user/settings 401 in 968ms (next.js: 758ms, proxy.ts: 90ms, application-code: 120ms)
+ POST /api/user/settings 401 in 1795ms (next.js: 1731ms, proxy.ts: 24ms, application-code: 40ms)
+ GET / 200 in 3.7s (next.js: 1282ms, proxy.ts: 206ms, application-code: 2.2s)
+ GET / 200 in 1801ms (next.js: 1701ms, proxy.ts: 7ms, application-code: 93ms)
+ GET / 200 in 81ms (next.js: 6ms, proxy.ts: 5ms, application-code: 70ms)
+ GET /api/odds?season=2026&week=1 200 in 3.9s (next.js: 1420ms, proxy.ts: 107ms, application-code: 2.4s)
+⨯ ReferenceError: enrichedArray is not defined
+    at GET (src/app/api/optimize/route.ts:308:36)
+  306 |   }
+  307 |
+> 308 |   return NextResponse.json({ data: enrichedArray || enriched, week, season, platform });
+      |                                    ^
+  309 | }
+  310 |
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 5.1s (next.js: 920ms, proxy.ts: 138ms, application-code: 4.0s)
+[browser] SyntaxError: Unexpected end of JSON input
+SyntaxError: Unexpected end of JSON input (src/components/dfs/DFSDashboard.tsx:401:15)
+✓ Finished filesystem cache database compaction in 37.0s
+ GET / 200 in 3.9s (next.js: 619ms, proxy.ts: 52ms, application-code: 3.2s)
+ GET /api/user/settings 401 in 2.1s (next.js: 39ms, proxy.ts: 14ms, application-code: 2.0s)
+ POST /api/user/settings 401 in 1011ms (next.js: 472ms, proxy.ts: 252ms, application-code: 286ms)
+ GET /api/odds?season=2026&week=1 200 in 4.1s (next.js: 87ms, proxy.ts: 15ms, application-code: 4.0s)
+⨯ ReferenceError: enrichedArray is not defined
+    at GET (src/app/api/optimize/route.ts:308:36)
+  306 |   }
+  307 |
+> 308 |   return NextResponse.json({ data: enrichedArray || enriched, week, season, platform });
+      |                                    ^
+  309 | }
+  310 |
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 6.1s (next.js: 78ms, proxy.ts: 12ms, application-code: 6.0s)
+[browser] SyntaxError: Failed to execute 'json' on 'Response': Unexpected end of JSON input
+    at DFSDashboard.useCallback[fetchPool] (src/components/dfs/DFSDashboard.tsx:396:38)
+  394 |         fetch(`/api/odds?season=2026&week=1`)
+  395 |       ]);
+> 396 |       const poolJson = await poolRes.json();
+      |                                      ^
+  397 |       const oddsJson = await oddsRes.json();
+  398 |       setPlayerPool(poolJson.data || []);
+  399 |       setVegasGames(oddsJson.gameLines || []); (src/components/dfs/DFSDashboard.tsx:401:15)
+ GET /fantasyquant/landing 200 in 30.3s (next.js: 4.8s, proxy.ts: 12.8s, application-code: 12.6s)
+ GET / 200 in 356ms (next.js: 37ms, proxy.ts: 49ms, application-code: 270ms)
+ GET /api/user/settings 401 in 301ms (next.js: 33ms, proxy.ts: 14ms, application-code: 254ms)
+ POST /api/user/settings 401 in 127ms (next.js: 85ms, proxy.ts: 5ms, application-code: 37ms)
+ GET /api/odds?season=2026&week=1 200 in 1497ms (next.js: 80ms, proxy.ts: 15ms, application-code: 1402ms)
+⨯ ReferenceError: enrichedArray is not defined
+    at GET (src/app/api/optimize/route.ts:308:36)
+  306 |   }
+  307 |
+> 308 |   return NextResponse.json({ data: enrichedArray || enriched, week, season, platform });
+      |                                    ^
+  309 | }
+  310 |
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 3.5s (next.js: 73ms, proxy.ts: 14ms, application-code: 3.4s)
+[browser] SyntaxError: Failed to execute 'json' on 'Response': Unexpected end of JSON input
+    at DFSDashboard.useCallback[fetchPool] (src/components/dfs/DFSDashboard.tsx:396:38)
+  394 |         fetch(`/api/odds?season=2026&week=1`)
+  395 |       ]);
+> 396 |       const poolJson = await poolRes.json();
+      |                                      ^
+  397 |       const oddsJson = await oddsRes.json();
+  398 |       setPlayerPool(poolJson.data || []);
+  399 |       setVegasGames(oddsJson.gameLines || []); (src/components/dfs/DFSDashboard.tsx:401:15)
+ GET /api/stats?playerName=Christian%20McCaffrey 200 in 983ms (next.js: 384ms, proxy.ts: 4ms, application-code: 594ms)
+ GET /api/stats?playerName=Christian%20McCaffrey 200 in 364ms (next.js: 3ms, proxy.ts: 3ms, application-code: 358ms)
+✓ Compiled in 3.1s
+✓ Compiled in 19.1s
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  [90m426 |[0m                           <td className=[32m"py-3 text-gray-400"[0m>{row.half_ppr_pts?.toFixed([35m1[0m...
+  [90m427 |[0m                         </tr>
+[31m[1m>[0m [90m428 |[0m           {activeTab === [32m'analysis'[0m && (
+  [90m    |[0m           [31m[1m^[0m
+  [90m429 |[0m             <>
+  [90m430 |[0m               {[90m/* Stat Cards */[0m}
+  [90m431 |[0m               {!loading && stats.length > [35m0[0m && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+ GET / 500 in 5.7s (next.js: 2.6s, proxy.ts: 1350ms, application-code: 1800ms)
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  [90m426 |[0m                           <td className=[32m"py-3 text-gray-400"[0m>{row.half_ppr_pts?.toFixed([35m1[0m...
+  [90m427 |[0m                         </tr>
+[31m[1m>[0m [90m428 |[0m           {activeTab === [32m'analysis'[0m && (
+  [90m    |[0m           [31m[1m^[0m
+  [90m429 |[0m             <>
+  [90m430 |[0m               {[90m/* Stat Cards */[0m}
+  [90m431 |[0m               {!loading && stats.length > [35m0[0m && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 85ms (next.js: 17ms, proxy.ts: 23ms, application-code: 45ms)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  [90m426 |[0m                           <td className=[32m"py-3 text-gray-400"[0m>{row.half_ppr_pts?.toFixed([35m1[0m...
+  [90m427 |[0m                         </tr>
+[31m[1m>[0m [90m428 |[0m           {activeTab === [32m'analysis'[0m && (
+  [90m    |[0m           [31m[1m^[0m
+  [90m429 |[0m             <>
+  [90m430 |[0m               {[90m/* Stat Cards */[0m}
+  [90m431 |[0m               {!loading && stats.length > [35m0[0m && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  [90m426 |[0m                           <td className=[32m"py-3 text-gray-400"[0m>{row.half_ppr_pts?.toFixed([35m1[0m...
+  [90m427 |[0m                         </tr>
+[31m[1m>[0m [90m428 |[0m           {activeTab === [32m'analysis'[0m && (
+  [90m    |[0m           [31m[1m^[0m
+  [90m429 |[0m             <>
+  [90m430 |[0m               {[90m/* Stat Cards */[0m}
+  [90m431 |[0m               {!loading && stats.length > [35m0[0m && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+ GET / 500 in 432ms (next.js: 200ms, proxy.ts: 101ms, application-code: 131ms)
+ GET / 500 in 326ms (next.js: 266ms, proxy.ts: 8ms, application-code: 52ms)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] Uncaught Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11)
+    at <unknown> (Error: (./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  [90m426 |[0m                           <td className=[32m"py-3 text-gray-400"[0m>{row.half_ppr_pts?.toFixed([35m1[0m...
+  [90m427 |[0m                         </tr>
+[31m[1m>[0m [90m428 |[0m           {activeTab === [32m'analysis'[0m && (
+  [90m    |[0m           [31m[1m^[0m
+  [90m429 |[0m             <>
+  [90m430 |[0m               {[90m/* Stat Cards */[0m}
+  [90m431 |[0m               {!loading && stats.length > [35m0[0m && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+✓ Compiled in 2.4s
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+⨯ ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  [90m426 |[0m                           <td className=[32m"py-3 text-gray-400"[0m>{row.half_ppr_pts?.toFixed([35m1[0m...
+  [90m427 |[0m                         </tr>
+[31m[1m>[0m [90m428 |[0m           {activeTab === [32m'analysis'[0m && (
+  [90m    |[0m           [31m[1m^[0m
+  [90m429 |[0m             <>
+  [90m430 |[0m               {[90m/* Stat Cards */[0m}
+  [90m431 |[0m               {!loading && stats.length > [35m0[0m && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 5.9s (next.js: 5.8s, proxy.ts: 14ms, application-code: 157ms)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+✓ Compiled in 3.3s
+[browser] Uncaught Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11)
+    at <unknown> (Error: (./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11)
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+✓ Compiled in 866ms
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:428:11
+Expected '</', got '{'
+  426 |                           <td className="py-3 text-gray-400">{row.half_ppr_pts?.toFixed(1...
+  427 |                         </tr>
+> 428 |           {activeTab === 'analysis' && (
+      |           ^
+  429 |             <>
+  430 |               {/* Stat Cards */}
+  431 |               {!loading && stats.length > 0 && (
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:430:11
+Expected '</', got '{'
+  428 |
+  429 |
+> 430 |           {activeTab === 'screener' && <div className="text-gray-400 p-8 border border-wh...
+      |           ^
+  431 |           {activeTab === 'board' && <div className="text-gray-400 p-8 border border-white...
+  432 |           {activeTab === 'matchup' && <div className="text-gray-400 p-8 border border-whi...
+  433 |           {activeTab === 'weather' && <div className="text-gray-400 p-8 border border-whi...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:430:11
+Expected '</', got '{'
+  428 |
+  429 |
+> 430 |           {activeTab === 'screener' && <div className="text-gray-400 p-8 border border-wh...
+      |           ^
+  431 |           {activeTab === 'board' && <div className="text-gray-400 p-8 border border-white...
+  432 |           {activeTab === 'matchup' && <div className="text-gray-400 p-8 border border-whi...
+  433 |           {activeTab === 'weather' && <div className="text-gray-400 p-8 border border-whi...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+[browser] ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx:430:11
+Expected '</', got '{'
+  428 |
+  429 |
+> 430 |           {activeTab === 'screener' && <div className="text-gray-400 p-8 border border-wh...
+      |           ^
+  431 |           {activeTab === 'board' && <div className="text-gray-400 p-8 border border-white...
+  432 |           {activeTab === 'matchup' && <div className="text-gray-400 p-8 border border-whi...
+  433 |           {activeTab === 'weather' && <div className="text-gray-400 p-8 border border-whi...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component Browser]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/PlayerDashboard.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Client Component SSR]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/components/AppShell.tsx [Server Component]
+    ./Dev/sentaient_conversion_hub_7382-Website/fantasy-quant/src/app/page.tsx [Server Component] 
+✓ Finished filesystem cache database compaction in 42s
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+○ Compiling / ...
+ GET / 200 in 6.4s (next.js: 3.3s, proxy.ts: 343ms, application-code: 2.8s)
+ GET / 200 in 154ms (next.js: 5ms, proxy.ts: 34ms, application-code: 116ms)
+ GET /api/user/settings 401 in 4.7s (next.js: 4.6s, proxy.ts: 16ms, application-code: 73ms)
+ POST /api/user/settings 401 in 51ms (next.js: 11ms, proxy.ts: 17ms, application-code: 23ms)
+ GET /api/odds?season=2026&week=1 500 in 5.8s (next.js: 4.1s, proxy.ts: 23ms, application-code: 1705ms)
+⨯ ReferenceError: enrichedArray is not defined
+    at GET (src/app/api/optimize/route.ts:308:36)
+  306 |   }
+  307 |
+> 308 |   return NextResponse.json({ data: enrichedArray || enriched, week, season, platform });
+      |                                    ^
+  309 | }
+  310 |
+ GET /api/optimize?week=14&season=2023&platform=dk 500 in 8.3s (next.js: 2.8s, proxy.ts: 28ms, application-code: 5.5s)
+✓ Compiled in 14.8s
+ GET / 200 in 1651ms (next.js: 658ms, proxy.ts: 629ms, application-code: 364ms)
+ GET / 200 in 495ms (next.js: 5ms, proxy.ts: 43ms, application-code: 447ms)
+ GET / 200 in 481ms (next.js: 153ms, proxy.ts: 128ms, application-code: 201ms)

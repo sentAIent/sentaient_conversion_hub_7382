@@ -11,27 +11,30 @@ export class ShipFactory {
             core: null
         };
         
+        this.purchased = new Set();
+        this.purchased.add('interceptor');
+        
         this.availableComponents = {
             chassis: [
-                { id: 'interceptor', name: 'Interceptor', speed: 90, fire: 30, shield: 50, energy: 100, color: '#00f3ff' },
-                { id: 'cruiser', name: 'Cruiser', speed: 60, fire: 70, shield: 120, energy: 150, color: '#ff0055' },
-                { id: 'carrier', name: 'Carrier', speed: 40, fire: 50, shield: 200, energy: 300, color: '#ffd700' }
+                { id: 'interceptor', name: 'Interceptor', speed: 90, fire: 30, shield: 50, energy: 100, color: '#00f3ff', cost: 0 },
+                { id: 'cruiser', name: 'Cruiser', speed: 60, fire: 70, shield: 120, energy: 150, color: '#ff0055', cost: 5000 },
+                { id: 'carrier', name: 'Carrier', speed: 40, fire: 50, shield: 200, energy: 300, color: '#ffd700', cost: 15000 }
             ],
             weapons: [
-                { id: 'w1', name: 'Plasma Repeaters', fire: +20, energy: -10, color: '#ff0055', desc: 'Fast firing plasma bolts' },
-                { id: 'w2', name: 'Railgun', fire: +40, energy: -30, color: '#aa00ff', desc: 'High damage, slow fire rate' }
+                { id: 'w1', name: 'Plasma Repeaters', fire: +20, energy: -10, color: '#ff0055', desc: 'Fast firing plasma bolts', cost: 2000 },
+                { id: 'w2', name: 'Railgun', fire: +40, energy: -30, color: '#aa00ff', desc: 'High damage, slow fire rate', cost: 6000 }
             ],
             shields: [
-                { id: 's1', name: 'Deflector Matrix', shield: +50, energy: -20, color: '#00f3ff', desc: 'Standard shielding array' },
-                { id: 's2', name: 'Aegis Core', shield: +100, energy: -50, color: '#00ff66', desc: 'Heavy duty impact shielding' }
+                { id: 's1', name: 'Deflector Matrix', shield: +50, energy: -20, color: '#00f3ff', desc: 'Standard shielding array', cost: 1500 },
+                { id: 's2', name: 'Aegis Core', shield: +100, energy: -50, color: '#00ff66', desc: 'Heavy duty impact shielding', cost: 5000 }
             ],
             engines: [
-                { id: 'e1', name: 'Ion Thrusters', speed: +20, energy: -10, color: '#00f3ff', desc: 'Increases base speed' },
-                { id: 'e2', name: 'Warp Drive', speed: +50, energy: -40, color: '#aa00ff', desc: 'Allows short bursts of extreme speed' }
+                { id: 'e1', name: 'Ion Thrusters', speed: +20, energy: -10, color: '#00f3ff', desc: 'Increases base speed', cost: 1500 },
+                { id: 'e2', name: 'Warp Drive', speed: +50, energy: -40, color: '#aa00ff', desc: 'Allows short bursts of extreme speed', cost: 8000 }
             ],
             core: [
-                { id: 'c1', name: 'Fusion Reactor', energy: +100, desc: 'Increases total energy capacity' },
-                { id: 'c2', name: 'Antimatter Cell', energy: +250, desc: 'Massive energy reserves for heavy loadouts' }
+                { id: 'c1', name: 'Fusion Reactor', energy: +100, desc: 'Increases total energy capacity', cost: 3000 },
+                { id: 'c2', name: 'Antimatter Cell', energy: +250, desc: 'Massive energy reserves for heavy loadouts', cost: 10000 }
             ]
         };
     }
@@ -41,9 +44,20 @@ export class ShipFactory {
     }
     
     equipComponent(category, itemId) {
+        let itemDef = this.availableComponents[category].find(i => i.id === itemId);
+        if (!itemDef) return false;
+
+        if (!this.purchased.has(itemId)) {
+            if (this.engine.credits >= itemDef.cost) {
+                this.engine.credits -= itemDef.cost;
+                this.purchased.add(itemId);
+            } else {
+                return false; // Not enough credits
+            }
+        }
+
         if (category === 'chassis') {
             this.currentChassis = itemId;
-            // Clear equipped if incompatible? For now just keep them.
         } else {
             // Toggle
             if (this.equipped[category] === itemId) {
@@ -52,6 +66,16 @@ export class ShipFactory {
                 this.equipped[category] = itemId;
             }
         }
+        
+        // Push stats to actual ship
+        if (this.engine.playerShip) {
+            const stats = this.calculateStats();
+            this.engine.playerShip.type = this.currentChassis;
+            this.engine.playerShip.maxSpeed = stats.speed;
+            // Additional stat bindings could be applied here
+        }
+        
+        return true;
     }
     
     calculateStats() {

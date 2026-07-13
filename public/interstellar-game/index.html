@@ -96,6 +96,7 @@
             <button class="btn-small" id="achievementsBtn" onclick="document.getElementById('achievementsModal').classList.remove('hidden'); window.game.populateAchievements();" style="color: #00ffff; border-color: rgba(0,255,255,0.3);">🏅 Medals</button>
             <button class="btn-small" id="shareBtn" onclick="window.game.shareScore()" style="color: #ff00ff; border-color: rgba(255,0,255,0.3);">🚀 Share</button>
             <button class="btn-small" id="storeBtn" onclick="const m = document.getElementById('galacticExchangeModal'); m.style.display='flex'; m.classList.remove('hidden'); m.classList.add('active'); if(window.hapticFeedback) window.hapticFeedback(10);" style="color: #a855f7; border-color: rgba(168, 85, 247, 0.3); font-weight: bold; box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);">💎 STORE</button>
+            <button class="btn-small" id="marketplaceBtn" onclick="app.openMarketplace()" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3); font-weight: bold; box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);">🛒 MARKET</button>
             <button class="btn-small" onclick="document.getElementById('settingsModal').classList.remove('hidden')">⚙️ Settings</button>
             <button class="btn-small" id="dashcamBtn" style="color: #ff3333; border-color: rgba(255,51,51,0.3);">⏺ Dashcam</button>
             <div class="divider"></div>
@@ -252,7 +253,7 @@
             style="width:100%; margin-top:8px;font-size:10px;padding:6px">Reset</button>
     </div>
 
-    <!-- === SPACEX HOLOGRAPHIC SHIP FACTORY === -->
+    <!-- === SPACESHIP FACTORY === -->
     <div id="factoryModal" class="modal-overlay hidden" style="background: rgba(0, 5, 10, 0.95); backdrop-filter: blur(20px); z-index: 1000; align-items: stretch; justify-content: stretch; padding: 20px;">
         <div class="factory-container" style="display: flex; flex-direction: column; width: 100%; height: 100%; border: 1px solid rgba(0, 243, 255, 0.2); border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, rgba(0, 20, 40, 0.6) 0%, rgba(0, 5, 10, 0.8) 100%); box-shadow: 0 0 50px rgba(0, 243, 255, 0.1) inset;">
             
@@ -260,7 +261,7 @@
             <div class="factory-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid rgba(0, 243, 255, 0.2); background: rgba(0, 10, 20, 0.5);">
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00f3ff" stroke-width="2"><path d="M12 2L2 22h20L12 2zm0 3.5L18.5 20h-13L12 5.5z" /></svg>
-                    <h2 style="margin: 0; font-size: 24px; letter-spacing: 4px; color: #fff; text-shadow: 0 0 10px #00f3ff;">SENTAIENT SHIPYARD</h2>
+                    <h2 style="margin: 0; font-size: 24px; letter-spacing: 4px; color: #fff; text-shadow: 0 0 10px #00f3ff;">SPACESHIP FACTORY</h2>
                 </div>
                 <div class="factory-credits" style="font-size: 18px; color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); letter-spacing: 2px;">
                     CREDITS: <span id="factoryCreditBalance">0</span>
@@ -342,17 +343,7 @@
             #factoryApplyBtn:hover { background: rgba(0,243,255,0.4) !important; box-shadow: 0 0 20px rgba(0,243,255,0.4); }
         </style>
     </div>
-            <div style="font-size: 24px; color: #ffd700; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"
-                id="dockCredits">$0</div>
-        </div>
 
-        <div id="upgradeList"
-            style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 300px; padding-right: 4px;">
-            <!-- Generated via JS -->
-        </div>
-
-        <button class="btn-close-modal" onclick="document.getElementById('upgradePanel').classList.add('hidden')">CLOSE DOCK</button>
-    </div>
 
 
     <!-- === BOTTOM BAR === -->
@@ -442,7 +433,7 @@
                 <button class="btn game-btn" id="selectShipBtn" onclick="window.game.showShipModal()"
                     data-tooltip="Choose Your Spaceship" style="display:none">🛸 <span class="hide-mobile">SHIP</span></button>
                 <button class="btn game-btn" id="dockBtn" onclick="window.game.openFactory()"
-                    data-tooltip="SpaceX Shipyard" style="display:none">🛠️ <span class="hide-mobile">FACTORY</span></button>
+                    data-tooltip="Spaceship Factory" style="display:none">🛠️ <span class="hide-mobile">FACTORY</span></button>
                 <button class="btn game-btn" id="pauseBtn" onclick="window.game.togglePause()"
                     data-tooltip="Pause Game" style="display:none">⏸️ <span class="hide-mobile">PAUSE</span></button>
                 <button class="btn game-btn" id="missionsBtn" onclick="window.game.toggleMissionBoard()"
@@ -1170,6 +1161,26 @@
         </div>
     </div>
 
+    <!-- PLAYER MARKETPLACE MODAL -->
+    <div id="marketplaceModal" class="modal-overlay" style="display: none; z-index: 20000; position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); justify-content: center; align-items: center;">
+        <div class="modal-content" style="width: 800px; max-width: 95vw; max-height: 90vh; overflow-y: auto; background: linear-gradient(135deg, rgba(10, 30, 20, 0.95), rgba(20, 50, 30, 0.95)); border: 2px solid #4ade80; box-shadow: 0 0 40px rgba(74, 222, 128, 0.4); border-radius: 12px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(74, 222, 128, 0.3); padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #4ade80; font-size: 28px; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8);">🛒 Player Marketplace</h2>
+                <button class="btn-close-modal" onclick="document.getElementById('marketplaceModal').style.display='none';" style="width: auto; padding: 10px 20px;">CLOSE</button>
+            </div>
+            
+            <!-- Filter Tabs -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="menu-btn selected" id="marketTabBases" onclick="app.setMarketTab('bases')" style="flex: 1; border-color: #4ade80; color: #4ade80;">Planetary Bases</button>
+                <button class="menu-btn" id="marketTabShips" onclick="app.setMarketTab('ships')" style="flex: 1;">Spaceships</button>
+            </div>
+            
+            <div id="marketplaceListings" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <!-- JS populated -->
+            </div>
+        </div>
+    </div>
+
     <!-- BASE BUILDER MODAL -->
     <div class="modal-overlay" id="baseBuilderModal">
         <div class="modal-content" style="width: 800px; max-width: 95vw; background: rgba(10, 20, 30, 0.95); border: 2px solid #228B22; box-shadow: 0 0 30px rgba(34, 139, 34, 0.4);">
@@ -1196,6 +1207,17 @@
                             ❌ Demolish Structure
                         </button>
                     </div>
+                    
+                    <div style="margin-top: 20px; font-size: 11px; color: #888; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                        <strong>Base Administration</strong><br>
+                        <button class="upgrade-btn" onclick="app.abandonCurrentBase()" style="margin-top: 10px; padding: 8px; width: 100%; border-color: #ff4444; color: #ffadad; text-align: center;">
+                            ⚠️ Abandon Entire Base
+                        </button>
+                        <button class="upgrade-btn" id="btnListBaseSale" onclick="app.toggleBaseSale()" style="margin-top: 10px; padding: 8px; width: 100%; border-color: #ffd700; color: #ffd700; text-align: center;">
+                            💰 List Base for Sale
+                        </button>
+                    </div>
+                    
                     <div style="margin-top: 20px; font-size: 11px; color: #888;">
                         Select a tool and click on the planetary grid to construct. Construction requires credits or gems.
                     </div>

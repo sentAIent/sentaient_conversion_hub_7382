@@ -220,11 +220,17 @@ export default function ProfileScreen() {
         
         {/* Profile Info Row (Insta-style) */}
         <View style={styles.profileInfoRow}>
-          <View style={styles.avatarContainer}>
+          <View style={[styles.avatarContainer, me?.isFirePremium && {
+            shadowColor: '#00ffcc',
+            shadowOpacity: 1,
+            shadowRadius: 10,
+            elevation: 10,
+            borderRadius: 45
+          }]}>
             {me?.profilePhotoUrl ? (
-              <Image source={{ uri: me.profilePhotoUrl }} style={styles.avatar} />
+              <Image source={{ uri: me.profilePhotoUrl }} style={[styles.avatar, me?.isFirePremium && { borderColor: '#00ffcc' }]} />
             ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <View style={[styles.avatar, styles.avatarPlaceholder, me?.isFirePremium && { borderColor: '#00ffcc' }]}>
                 <Ionicons name="person" size={40} color="#555" />
               </View>
             )}

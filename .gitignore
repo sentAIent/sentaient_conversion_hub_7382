@@ -20,3 +20,7 @@ firebase-key.json
 dist/
 tmp_legaleagle/
 tmp_legaleagle
+u2net.onnx
+lim_clone/db/logs/*
+lim_clone/db/data/*
+*.onnx

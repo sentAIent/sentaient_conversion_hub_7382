@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { gql } from '@apollo/client';
-import { useQuery } from '@apollo/experimental-nextjs-app-support/ssr';
+import { useQuery } from '@apollo/client/react';
 
 const MY_BOUNTIES_QUERY = gql`
   query MyBounties {
@@ -35,7 +35,7 @@ export default function DashboardOverview() {
       <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <div className="glass rounded-2xl p-6">
           <h3 className="text-white/60 font-medium mb-2">Total Impressions</h3>
           {loading ? (
             <p className="text-4xl font-bold animate-pulse text-white/50">...</p>
@@ -50,7 +50,7 @@ export default function DashboardOverview() {
           </div>
         </div>
         
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+        <div className="glass rounded-2xl p-6 flex flex-col justify-between">
           <div>
             <h3 className="text-white/60 font-medium mb-2">Active Bounties</h3>
             {loading ? (
@@ -72,7 +72,7 @@ export default function DashboardOverview() {
           </div>
         </div>
         
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <div className="glass rounded-2xl p-6">
           <h3 className="text-white/60 font-medium mb-2">Storefront Sales</h3>
           {loading ? (
             <p className="text-4xl font-bold animate-pulse text-white/50">...</p>
@@ -89,7 +89,7 @@ export default function DashboardOverview() {
       </div>
 
       <h2 className="text-xl font-bold mb-4">Hyper-Local Demand Radar</h2>
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex items-center justify-center min-h-[300px]">
+      <div className="glass rounded-2xl p-8 flex items-center justify-center min-h-[300px]">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3b82f6]/20 text-[#3b82f6] mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
@@ -101,7 +101,7 @@ export default function DashboardOverview() {
           <p className="text-white/60 max-w-sm mx-auto mb-6">
             There is a high concentration of tech workers within 1 mile of your venue. 
           </p>
-          <Link href="/dashboard/campaigns/new" className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-[#00ffcc] to-[#3b82f6] text-black font-bold hover:opacity-90 transition-opacity">
+          <Link href="/dashboard/campaigns/new" className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-[#00ffcc] to-[#3b82f6] text-black font-bold hover:shadow-[0_0_20px_rgba(0,255,204,0.5)] transition-all duration-300">
             Launch Swarm Campaign
           </Link>
         </div>

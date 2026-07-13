@@ -10,6 +10,7 @@ import AnalyticsTracker from './components/AnalyticsTracker';
 const Home = React.lazy(() => import('./pages/home'));
 const DemoHome = React.lazy(() => import('./pages/demo'));
 const Demo3DHome = React.lazy(() => import('./pages/demo3d'));
+const Demo3DBackupHome = React.lazy(() => import('./pages/demo3d-backup'));
 const KnowledgeNexusResourceLibrary = React.lazy(() => import('./pages/knowledge-nexus-resource-library'));
 const FreeAIAssessmentPortal = React.lazy(() => import('./pages/free-ai-assessment-portal'));
 const HomepageAIConsultancyHub = React.lazy(() => import('./pages/homepage-ai-consultancy-hub'));
@@ -48,7 +49,8 @@ const ProjectRoutes = () => {
             <RouterRoutes>
               <Route path="/" element={<Home />} />
               <Route path="/demo" element={<DemoHome />} />
-              <Route path="/demo3d" element={<Demo3DHome />} />
+              <Route path="/landing3d" element={<Demo3DHome />} />
+              <Route path="/demo3d-backup" element={<Demo3DBackupHome />} />
               <Route path="/ai" element={<AboutOurApproachIntelligenceCenter />} />
               <Route path="/knowledge-nexus-resource-library" element={<KnowledgeNexusResourceLibrary />} />
               <Route path="/free-ai-assessment-portal" element={<FreeAIAssessmentPortal />} />

@@ -37,8 +37,9 @@
     "@capacitor/local-notifications": "^8.2.0",
     "@dhiwise/component-tagger": "^1.0.10",
     "@radix-ui/react-slot": "^1.2.3",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.1",
+    "@react-three/drei": "^9.114.3",
+    "@react-three/fiber": "^8.17.10",
+    "@react-three/postprocessing": "^2.16.2",
     "@reduxjs/toolkit": "^2.6.1",
     "@revenuecat/purchases-capacitor": "^13.2.1",
     "@stripe/react-stripe-js": "^5.6.0",
@@ -76,7 +77,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss-elevation": "^2.0.0",
     "tailwindcss-fluid-type": "^2.0.7",
-    "three": "^0.185.1"
+    "three": "^0.160.0"
   },
   "scripts": {
     "start": "vite",

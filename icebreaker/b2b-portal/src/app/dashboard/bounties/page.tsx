@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { gql, useMutation } from '@apollo/client';
-import { useQuery } from '@apollo/experimental-nextjs-app-support/ssr';
+import { gql } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import Link from 'next/link';
 
 const MY_BOUNTIES_QUERY = gql`
@@ -41,7 +41,7 @@ const REVIEW_CLAIM_MUTATION = gql`
 `;
 
 export default function BountiesPage() {
-  const { data, loading, error } = useQuery<any>(MY_BOUNTIES_QUERY);
+  const { data, loading, error, refetch } = useQuery<any>(MY_BOUNTIES_QUERY);
   const [expandedBountyId, setExpandedBountyId] = useState<string | null>(null);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [reviewClaim, { loading: reviewing }] = useMutation(REVIEW_CLAIM_MUTATION, {
@@ -92,8 +92,9 @@ export default function BountiesPage() {
   return (
     <div className="p-8 max-w-5xl mx-auto">
       {showSuccessBanner && (
-        <div className="bg-green-500/20 border border-green-500 text-green-400 p-4 rounded-xl mb-6 text-center font-bold">
-          🎉 Bounty Funded Successfully! Creators will now see it on the map.
+        <div className="animate-pulse bg-gradient-to-r from-teal-500/20 to-purple-500/20 border border-teal-500 p-8 rounded-xl text-center glass mb-6">
+          <h2 className="text-3xl font-bold text-teal-400 mb-2">Bounty Funded! 🎉</h2>
+          <p className="text-gray-300">Your bounty is now live on the map.</p>
         </div>
       )}
       <div className="flex justify-between items-center mb-8">
@@ -110,7 +111,7 @@ export default function BountiesPage() {
           </button>
           <Link 
             href="/dashboard/bounties/new"
-            className="px-6 py-3 rounded-full bg-gradient-to-r from-[#00ffcc] to-[#3b82f6] text-black font-bold hover:opacity-90 transition-opacity"
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-[#00ffcc] to-[#3b82f6] text-black font-bold hover:shadow-[0_0_20px_rgba(0,255,204,0.5)] transition-all duration-300"
           >
             + Create Bounty
           </Link>
@@ -118,9 +119,9 @@ export default function BountiesPage() {
       </div>
 
       {loading && (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full max-w-4xl mx-auto mt-8">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 h-32 animate-pulse" />
+            <div key={i} className="h-24 w-full bg-gray-800/50 rounded-lg animate-pulse glass border-white/5" />
           ))}
         </div>
       )}
@@ -134,7 +135,7 @@ export default function BountiesPage() {
       {data?.myBounties && (
         <div className="grid gap-4">
           {data.myBounties.length === 0 ? (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
+            <div className="glass rounded-2xl p-12 text-center">
               <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-white/40">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -153,7 +154,7 @@ export default function BountiesPage() {
             </div>
           ) : (
             data.myBounties.map((bounty: any) => (
-              <div key={bounty.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors">
+              <div key={bounty.id} className="glass rounded-2xl p-6 flex flex-col gap-4 hover:border-white/20 transition-colors">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">

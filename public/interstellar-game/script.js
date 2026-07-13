@@ -170,6 +170,8 @@ class InterstellarEngine {
         // 5. Load Persistent State (PRIORITIZE: Load before ship init to ensure cargoCount check works)
         this.topZIndex = 1000;
         this.credits = this.loadCredits();
+        this.playerInventory = this.loadInventory();
+        this.planetBases = this.loadPlanetBases();  
         this.playerGems = parseInt(localStorage.getItem('playerGems')) || 0;
         this.playerInventory = this.loadInventory();
         this.carriedResources = this.loadCarriedResources();
@@ -622,6 +624,28 @@ class InterstellarEngine {
                 this.toggleFlightMode();
                 e.preventDefault();
                 return;
+            } else if (key === 'f' && this.flightMode) {
+                // Check if near buildable planet
+                if (this.planets && this.planets.length > 0) {
+                    for (const planet of this.planets) {
+                        if (planet.isBuildable) {
+                            const para = (planet.z || 0) * 0.0005;
+                            const depthScale = 1 - para;
+                            const dx = planet.x - this.playerShip.x;
+                            const dy = planet.y - this.playerShip.y;
+                            const visualX = this.playerShip.x + dx * depthScale;
+                            const visualY = this.playerShip.y + dy * depthScale;
+                            const dist = Math.hypot(visualX - this.playerShip.x, visualY - this.playerShip.y);
+                            const effectiveRadius = planet.radius * depthScale;
+                            
+                            // Check if within landing range (orbit radius roughly 1.5x planet radius)
+                            if (dist < effectiveRadius * 1.5 + 50) {
+                                this.openBaseBuilder(planet);
+                                return;
+                            }
+                        }
+                    }
+                }
             }
 
             // Flight mode specific controls
@@ -4987,6 +5011,71 @@ class InterstellarEngine {
             console.error('Failed to save inventory:', e);
         }
     }
+    
+    loadPlanetBases() {
+        try {
+            return JSON.parse(localStorage.getItem('planetBases')) || {};
+        } catch (e) {
+            return {};
+        }
+    }
+    
+    savePlanetBases() {
+        try {
+            localStorage.setItem('planetBases', JSON.stringify(this.planetBases));
+            // Optional: this.syncBaseWithCloud() if needed
+        } catch(e) {
+            console.error('Failed to save planet bases:', e);
+        }
+    }
+    
+    calculateTotalAssets() {
+        let total = this.credits || 0;
+        
+        // Add inventory value
+        for (const [type, count] of Object.entries(this.playerInventory || {})) {
+            const info = this.mineralTypes[type];
+            if (info && info.value) {
+                total += info.value * count;
+            }
+        }
+        
+        // Add ships value
+        if (this.playerShip && this.playerShip.purchased) {
+            this.playerShip.purchased.forEach(shipId => {
+                const shipDef = window.hangarShips && window.hangarShips[shipId];
+                if (shipDef && shipDef.cost) {
+                    total += shipDef.cost;
+                }
+            });
+        }
+        
+        // Add bases value
+        const costMap = {
+            hab: 1000,
+            mine: 2000,
+            def: 1500
+        };
+        for (const base of Object.values(this.planetBases)) {
+            for (const key of Object.keys(base)) {
+                if (key !== 'planetName' && key !== 'isForSale' && key !== 'salePrice') {
+                    const type = base[key];
+                    if (costMap[type]) total += costMap[type];
+                }
+            }
+        }
+        
+        return total;
+    }
+    
+    getMaxBases() {
+        const assets = this.calculateTotalAssets();
+        if (assets >= 500000) return 5;
+        if (assets >= 150000) return 4;
+        if (assets >= 50000) return 3;
+        if (assets >= 10000) return 2;
+        return 1;
+    }
 
     loadCredits() {
         return parseInt(localStorage.getItem('playerCredits')) || 0;
@@ -6616,17 +6705,8 @@ class InterstellarEngine {
                 const effectiveRadius = planet.radius * depthScale;
 
                 if (dist < effectiveRadius + collisionRadius) {
-                    const speed = Math.hypot(ship.vx, ship.vy);
-                    if (planet.type === 'terrestrial' && speed < 5) {
-                        // Planetary Landing Sequence - zero out playerShip velocity
-                        this.playerShip.vx = 0;
-                        this.playerShip.vy = 0;
-                        this.openBaseBuilder(planet);
-                        return;
-                    } else {
-                        this.triggerPlanetImpactEffect(planet);
-                        return; // High speed crash into planet
-                    }
+                    this.triggerPlanetImpactEffect(planet);
+                    return; // Crash into planet
                 }
             }
         }
@@ -10894,6 +10974,9 @@ class InterstellarEngine {
                     x: x,
                     y: y,
                     z: z, // Use the Z we calculated
+                    orbitAngle: angle,
+                    orbitRadius: dist,
+                    orbitSpeed: (Math.random() * 0.001 + 0.0002) * (Math.random() > 0.5 ? 1 : -1),
                     radius: radius,
                     type: type.name,
                     // Randomize colors slightly for variety
@@ -10909,7 +10992,8 @@ class InterstellarEngine {
                     ringAngle: Math.random() * Math.PI,
                     textureSeed: Math.random() * 1000,
                     rotation: Math.random() * Math.PI * 2,
-                    axialTilt: (Math.random() - 0.5) * 0.6
+                    axialTilt: (Math.random() - 0.5) * 0.6,
+                    isBuildable: (type.name === 'terrestrial' && Math.random() > 0.5)
                 });
             }
         });
@@ -11610,6 +11694,17 @@ class InterstellarEngine {
                     this.bgParticles.splice(i, 1);
                 }
             }
+        }
+
+        // Update Planet Orbits
+        if (this.planets && this.planets.length > 0) {
+            this.planets.forEach(p => {
+                if (p.orbitAngle !== undefined) {
+                    p.orbitAngle += p.orbitSpeed;
+                    p.x = Math.cos(p.orbitAngle) * p.orbitRadius;
+                    p.y = Math.sin(p.orbitAngle) * p.orbitRadius;
+                }
+            });
         }
 
         // Update shooting/moving stars positions
@@ -12447,6 +12542,7 @@ class InterstellarEngine {
 
             // HUD Overlays (Absolute Screen Space)
             this.renderTutorialHUDIndicator(ctx);
+            this.renderPlanetPromptHUD(ctx);
         }
 
         ctx.restore(); // Close World Transform (Started at 8918)
@@ -19001,10 +19097,65 @@ class InterstellarEngine {
         var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 243, 255';
     }
+    
+    renderPlanetPromptHUD(ctx) {
+        if (!this.flightMode || !this.playerShip || !this.planets) return;
+        
+        for (const planet of this.planets) {
+            if (planet.isBuildable) {
+                const para = (planet.z || 0) * 0.0005;
+                const depthScale = 1 - para;
+                const dx = planet.x - this.playerShip.x;
+                const dy = planet.y - this.playerShip.y;
+                const visualX = this.playerShip.x + dx * depthScale;
+                const visualY = this.playerShip.y + dy * depthScale;
+                const dist = Math.hypot(visualX - this.playerShip.x, visualY - this.playerShip.y);
+                const effectiveRadius = planet.radius * depthScale;
+                
+                if (dist < effectiveRadius * 1.5 + 50) {
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, 0, 0); // Screen space
+                    ctx.font = '24px monospace';
+                    ctx.fillStyle = '#00f3ff';
+                    ctx.textAlign = 'center';
+                    ctx.shadowColor = '#00f3ff';
+                    ctx.shadowBlur = 10;
+                    ctx.fillText('Press [F] to Establish Base', this.canvas.width / 2, this.canvas.height / 2 + 100);
+                    ctx.font = '14px monospace';
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(`Orbiting ${planet.name}`, this.canvas.width / 2, this.canvas.height / 2 + 130);
+                    ctx.restore();
+                    return; // Only show for closest planet
+                }
+            }
+        }
+    }
 
     // === PLANETARY LANDING & BASE BUILDING ===
     openBaseBuilder(planet) {
-        if (!planet || planet.type !== 'terrestrial') return;
+        if (!planet || !planet.isBuildable) return;
+        
+        const planetName = planet.name || 'Unknown Planet';
+        
+        // Check base limits
+        if (!this.planetBases[planetName]) {
+            const currentBaseCount = Object.keys(this.planetBases).length;
+            const maxBases = this.getMaxBases();
+            if (currentBaseCount >= maxBases) {
+                this.showToast(`Base Limit Reached (Max ${maxBases}). Increase assets to unlock more!`, 3000, true);
+                
+                // Gently place player ship slightly outside atmosphere to avoid crash loop
+                if (this.playerShip) {
+                    this.playerShip.vx = 0;
+                    this.playerShip.vy = 0;
+                }
+                return;
+            }
+            // Initialize new base
+            this.planetBases[planetName] = { planetName: planetName, isForSale: false, salePrice: 0 };
+            this.savePlanetBases();
+        }
+
         this.flightMode = false;
         
         // Safety lock out game engine
@@ -19016,9 +19167,12 @@ class InterstellarEngine {
         this.gamePaused = true;
         this.activeBasePlanet = planet;
         this.baseTool = 'hab';
-
-        // Load or initialize base map (8x8 grid)
-        this.spaceBase = JSON.parse(localStorage.getItem('spaceBase')) || {};
+        
+        const baseData = this.planetBases[planetName];
+        const saleBtn = document.getElementById('btnListBaseSale');
+        if (saleBtn) {
+            saleBtn.innerHTML = (baseData && baseData.isForSale) ? `💰 Listed for $${baseData.salePrice} (Click to Cancel)` : `💰 List Base for Sale`;
+        }
         
         this.drawBaseGrid();
         
@@ -19032,9 +19186,8 @@ class InterstellarEngine {
         this.activeBasePlanet = null;
         this.gamePaused = false;
         
-        // Bounce player out of orbit so they don't immediately trigger it again
+        // Gently place player ship slightly outside atmosphere instead of aggressive bounce
         if (this.playerShip) {
-            this.playerShip.x -= 200;
             this.playerShip.vx = 0;
             this.playerShip.vy = 0;
         }
@@ -19044,6 +19197,44 @@ class InterstellarEngine {
         this.gameLoop();
         gameAudio.playMenuSelect();
     }
+    
+    abandonCurrentBase() {
+        if (!this.activeBasePlanet) return;
+        const planetName = this.activeBasePlanet.name;
+        
+        if (confirm(`Are you sure you want to abandon your base on ${planetName}? All structures will be lost.`)) {
+            delete this.planetBases[planetName];
+            this.savePlanetBases();
+            this.showToast(`Base on ${planetName} abandoned.`, 3000);
+            this.closeBaseBuilder();
+        }
+    }
+    
+    toggleBaseSale() {
+        if (!this.activeBasePlanet) return;
+        const planetName = this.activeBasePlanet.name;
+        const baseData = this.planetBases[planetName];
+        if (!baseData) return;
+        
+        if (baseData.isForSale) {
+            baseData.isForSale = false;
+            baseData.salePrice = 0;
+            this.showToast(`Base removed from marketplace.`, 2000);
+        } else {
+            const price = prompt("Enter listing price for this base:");
+            if (price && !isNaN(price) && parseInt(price) > 0) {
+                baseData.isForSale = true;
+                baseData.salePrice = parseInt(price);
+                this.showToast(`Base listed for $${price}!`, 2000);
+            }
+        }
+        this.savePlanetBases();
+        
+        const btn = document.getElementById('btnListBaseSale');
+        if (btn) {
+            btn.innerHTML = baseData.isForSale ? `💰 Listed for $${baseData.salePrice} (Click to Cancel)` : `💰 List Base for Sale`;
+        }
+    }
 
     selectBaseTool(tool) {
         this.baseTool = tool;
@@ -19052,6 +19243,181 @@ class InterstellarEngine {
             if (el) el.classList.toggle('selected', t === tool);
         });
         gameAudio.playMenuHover();
+    }
+    
+    // =====================================================
+    // PLAYER MARKETPLACE (SIMULATED)
+    // =====================================================
+    openMarketplace() {
+        const modal = document.getElementById('marketplaceModal');
+        if (modal) modal.style.display = 'flex';
+        
+        // Generate Mock Listings if none exist
+        if (!this.mockMarketplaceListings) {
+            this.mockMarketplaceListings = {
+                bases: [
+                    { id: 'b1', owner: 'xX_StarLord_Xx', planetName: 'Kepler-452b', price: 75000, desc: 'Well defended outpost. 3 Turrets.' },
+                    { id: 'b2', owner: 'CosmicTrader99', planetName: 'Proxima b', price: 120000, desc: 'Mining colony. High yield.' },
+                    { id: 'b3', owner: 'DarthV', planetName: 'Mustafar', price: 500000, desc: 'Lava planet base. Extreme heat.' }
+                ],
+                ships: [
+                    { id: 's1', owner: 'SmugglerHan', shipType: 'phantom', price: 150000, desc: 'Slightly used Phantom. Fast.' },
+                    { id: 's2', owner: 'UEG_Fleet', shipType: 'dreadnought', price: 1000000, desc: 'Decommissioned military dreadnought.' }
+                ]
+            };
+        }
+        
+        this.setMarketTab('bases');
+        gameAudio.playMenuSelect();
+    }
+    
+    setMarketTab(tab) {
+        this.currentMarketTab = tab;
+        document.getElementById('marketTabBases').classList.toggle('selected', tab === 'bases');
+        document.getElementById('marketTabShips').classList.toggle('selected', tab === 'ships');
+        
+        this.renderMarketplace();
+    }
+    
+    renderMarketplace() {
+        const container = document.getElementById('marketplaceListings');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (this.currentMarketTab === 'bases') {
+            // Render player's own bases that are for sale
+            for (const [planetName, baseData] of Object.entries(this.planetBases)) {
+                if (baseData.isForSale) {
+                    this.createMarketCard(container, {
+                        id: `self_${planetName}`,
+                        owner: 'YOU',
+                        title: `Base on ${planetName}`,
+                        price: baseData.salePrice,
+                        desc: 'Your active listing.',
+                        isSelf: true
+                    });
+                }
+            }
+            
+            // Render mock bases
+            this.mockMarketplaceListings.bases.forEach(listing => {
+                this.createMarketCard(container, {
+                    id: listing.id,
+                    owner: listing.owner,
+                    title: `Base on ${listing.planetName}`,
+                    price: listing.price,
+                    desc: listing.desc,
+                    type: 'base',
+                    data: listing
+                });
+            });
+        } else if (this.currentMarketTab === 'ships') {
+            this.mockMarketplaceListings.ships.forEach(listing => {
+                this.createMarketCard(container, {
+                    id: listing.id,
+                    owner: listing.owner,
+                    title: `Ship: ${listing.shipType.toUpperCase()}`,
+                    price: listing.price,
+                    desc: listing.desc,
+                    type: 'ship',
+                    data: listing
+                });
+            });
+        }
+    }
+    
+    createMarketCard(container, item) {
+        const card = document.createElement('div');
+        card.style.cssText = `background: rgba(0,0,0,0.6); border: 1px solid ${item.isSelf ? '#ffd700' : '#4ade80'}; border-radius: 8px; padding: 15px; position: relative;`;
+        
+        let html = `
+            <div style="color: #aaa; font-size: 12px; margin-bottom: 5px;">Seller: ${item.owner}</div>
+            <h3 style="color: ${item.isSelf ? '#ffd700' : '#4ade80'}; margin: 0 0 10px 0; font-size: 18px;">${item.title}</h3>
+            <p style="color: #ccc; font-size: 14px; margin-bottom: 15px; min-height: 40px;">${item.desc}</p>
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px;">💰 ${item.price.toLocaleString()} Credits</div>
+        `;
+        
+        if (item.isSelf) {
+            html += `<button class="menu-btn" disabled style="width: 100%; border-color: #555; color: #555;">YOUR LISTING</button>`;
+        } else {
+            if (item.type === 'base') {
+                const wormholeFee = 50000;
+                html += `
+                    <div style="display: flex; gap: 5px; flex-direction: column;">
+                        <button class="menu-btn" onclick="app.buyMarketplaceItem('${item.id}', 'base', ${item.price}, false)" style="width: 100%; border-color: #4ade80; color: #4ade80; padding: 5px;">Buy (${item.price.toLocaleString()})</button>
+                        <button class="menu-btn" onclick="app.buyMarketplaceItem('${item.id}', 'base', ${item.price + wormholeFee}, true)" style="width: 100%; border-color: #a855f7; color: #a855f7; padding: 5px; font-size: 12px;">Buy + Wormhole (+${wormholeFee.toLocaleString()})</button>
+                    </div>
+                `;
+            } else {
+                html += `<button class="menu-btn" onclick="app.buyMarketplaceItem('${item.id}', 'ship', ${item.price})" style="width: 100%; border-color: #4ade80; color: #4ade80;">Buy Ship</button>`;
+            }
+        }
+        
+        card.innerHTML = html;
+        container.appendChild(card);
+    }
+    
+    buyMarketplaceItem(id, type, cost, useWormhole = false) {
+        if (this.credits < cost) {
+            this.showToast(`Not enough credits! Need ${cost.toLocaleString()}`, 3000, true);
+            return;
+        }
+        
+        this.credits -= cost;
+        this.saveCredits();
+        this.updateWalletUI();
+        
+        if (type === 'base') {
+            const index = this.mockMarketplaceListings.bases.findIndex(b => b.id === id);
+            if (index > -1) {
+                const listing = this.mockMarketplaceListings.bases[index];
+                
+                // Add to planetBases
+                this.planetBases[listing.planetName] = {
+                    planetName: listing.planetName,
+                    isForSale: false,
+                    salePrice: 0,
+                    'cell_3_3': 'hab',
+                    'cell_4_4': 'def'
+                };
+                this.savePlanetBases();
+                
+                this.mockMarketplaceListings.bases.splice(index, 1); // Remove from marketplace
+                this.showToast(`Base on ${listing.planetName} purchased!`, 4000);
+                
+                if (useWormhole && this.playerShip) {
+                    // Teleport mechanic
+                    const targetPlanet = this.planets.find(p => p.name === listing.planetName);
+                    if (targetPlanet) {
+                        this.playerShip.x = targetPlanet.x + targetPlanet.radius + 200;
+                        this.playerShip.y = targetPlanet.y;
+                        this.playerShip.vx = 0;
+                        this.playerShip.vy = 0;
+                        this.showToast(`Wormhole Activated! Transported to ${listing.planetName}.`, 5000);
+                        document.getElementById('marketplaceModal').style.display = 'none';
+                    }
+                }
+            }
+        } else if (type === 'ship') {
+            const index = this.mockMarketplaceListings.ships.findIndex(s => s.id === id);
+            if (index > -1) {
+                const listing = this.mockMarketplaceListings.ships[index];
+                
+                // Add to purchased ships
+                if (!this.playerShip.purchased) this.playerShip.purchased = ['fighter'];
+                if (!this.playerShip.purchased.includes(listing.shipType)) {
+                    this.playerShip.purchased.push(listing.shipType);
+                    this.saveShipState();
+                }
+                
+                this.mockMarketplaceListings.ships.splice(index, 1);
+                this.showToast(`${listing.shipType.toUpperCase()} purchased! Equip it in Hangar.`, 4000);
+            }
+        }
+        
+        gameAudio.playUpgrade();
+        this.renderMarketplace();
     }
 
     // =====================================================
@@ -19153,10 +19519,13 @@ class InterstellarEngine {
         if (!grid) return;
         
         grid.innerHTML = '';
+        const planetName = this.activeBasePlanet ? this.activeBasePlanet.name : 'Unknown Planet';
+        const baseData = this.planetBases[planetName] || {};
+        
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 8; x++) {
                 const cellId = `cell_${x}_${y}`;
-                const blockType = this.spaceBase[cellId];
+                const blockType = baseData[cellId];
                 
                 const cell = document.createElement('div');
                 cell.className = 'base-cell';
@@ -19182,12 +19551,16 @@ class InterstellarEngine {
     }
 
     buildBaseBlock(cellId) {
-        const current = this.spaceBase[cellId];
+        const planetName = this.activeBasePlanet ? this.activeBasePlanet.name : 'Unknown Planet';
+        const baseData = this.planetBases[planetName];
+        if (!baseData) return;
+        
+        const current = baseData[cellId];
         
         if (this.baseTool === 'erase') {
             if (current) {
-                delete this.spaceBase[cellId];
-                this.saveSpaceBase();
+                delete baseData[cellId];
+                this.savePlanetBases();
                 this.showToast("Structure demolished.");
                 gameAudio.playMenuSelect();
             }
@@ -19209,10 +19582,10 @@ class InterstellarEngine {
             
             this.credits -= cost;
             this.saveCredits();
-            this.saveSpaceBase();
+            this.savePlanetBases();
             this.updateWalletUI();
             
-            this.spaceBase[cellId] = this.baseTool;
+            baseData[cellId] = this.baseTool;
             this.showToast(`${this.baseTool.toUpperCase()} constructed ($${cost})`);
             gameAudio.playUpgrade();
         }

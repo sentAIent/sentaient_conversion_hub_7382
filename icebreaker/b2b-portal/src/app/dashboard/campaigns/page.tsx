@@ -1,7 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { gql, useQuery } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 
 const GET_MY_CAMPAIGNS = gql`
   query GetMySwarmCampaigns {
@@ -19,7 +20,7 @@ const GET_MY_CAMPAIGNS = gql`
 `;
 
 export default function CampaignsPage() {
-  const { data, loading, error } = useQuery(GET_MY_CAMPAIGNS);
+  const { data, loading, error } = useQuery<any>(GET_MY_CAMPAIGNS);
 
   return (
     <div className="p-8">

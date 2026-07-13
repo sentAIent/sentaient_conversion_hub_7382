@@ -14,6 +14,7 @@ import { GraphQLError } from 'graphql';
 import path from 'path';
 import { sendPushNotification } from './services/pushNotifications';
 import { sendEmail } from './services/email';
+import { runPredictiveMatchmaking } from './jobs/matchmakingCron';
 dotenv.config({ override: true });
 
 const prisma = new PrismaClient();
@@ -328,6 +329,8 @@ export const typeDefs = `#graphql
     
     createPaymentIntent(amount: Int!): String!
     createOrder(items: [OrderItemInput!]!, paymentIntentId: String, shippingAddress: String): Order!
+    exportWatermarkedVideo(contentId: ID!): String!
+    payVenue(venueId: String!, amount: Int!): Boolean!
     cashOutWallet: CashOutResponse!
   }
 
@@ -866,7 +869,7 @@ export const resolvers = {
         if (recentCheckIns) {
           const caller = await prisma.user.findUnique({ where: { id: context.user.uid } });
           if (caller?.pushToken) {
-            await sendPushNotification(caller.pushToken, "Swarm Alert", "3 of your contacts are at a Swarm!");
+            await sendPushNotification({ to: caller.pushToken, title: "Swarm Alert", body: "3 of your contacts are at a Swarm!" });
           }
         }
       }
@@ -1674,6 +1677,72 @@ export const resolvers = {
       
       return order;
     },
+    exportWatermarkedVideo: async (_: any, { contentId }: any, context: any) => {
+      if (!context.user) throw new Error("Unauthorized");
+      
+      // 1. Get the content
+      const content = await prisma.content.findUnique({
+        where: { id: contentId },
+        select: { mediaUrl: true, type: true, user: { select: { username: true } } }
+      });
+
+      if (!content || !content.mediaUrl || content.type !== 'video') {
+        throw new Error("Invalid content for video export");
+      }
+
+      // Simulate heavy video processing (FFmpeg watermarking)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // 2. In a real scenario we would upload the watermarked video to Google Cloud Storage.
+      // For the MVP, we just append a mock token/watermark flag to the URL so the frontend can share it.
+      const exportedUrl = `${content.mediaUrl}?watermarked=true&author=${content.user.username}`;
+      
+      return exportedUrl;
+    },
+    payVenue: async (_: any, { venueId, amount }: any, context: any) => {
+      if (!context.user) throw new Error("Unauthorized");
+      if (amount <= 0) throw new Error("Amount must be positive");
+
+      return await prisma.$transaction(async (tx) => {
+        // Check if user has sufficient funds
+        let userWallet = await tx.wallet.findUnique({ where: { userId: context.user.uid } });
+        if (!userWallet || userWallet.balance < amount) {
+          throw new Error("Insufficient funds");
+        }
+
+        // Check if venue has a wallet (the venueId corresponds to a Storefront or User)
+        // Assume venueId is a storefront. Let's find its owner's wallet.
+        const storefront = await tx.storefront.findUnique({ where: { id: venueId } });
+        if (!storefront) throw new Error("Venue not found");
+
+        let venueWallet = await tx.wallet.findUnique({ where: { userId: storefront.userId } });
+        if (!venueWallet) {
+          venueWallet = await tx.wallet.create({ data: { userId: storefront.userId, balance: 0 } });
+        }
+
+        // Debit User
+        userWallet = await tx.wallet.update({
+          where: { id: userWallet.id },
+          data: { balance: { decrement: amount } }
+        });
+
+        await tx.transaction.create({
+          data: { walletId: userWallet.id, amount: -amount, type: 'purchase', description: `Paid at ${storefront.name}` }
+        });
+
+        // Credit Venue
+        await tx.wallet.update({
+          where: { id: venueWallet.id },
+          data: { balance: { increment: amount } }
+        });
+
+        await tx.transaction.create({
+          data: { walletId: venueWallet.id, amount: amount, type: 'sale', description: `Sale from ${context.user.uid}` }
+        });
+
+        return true;
+      });
+    },
     cashOutWallet: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
       const user = await prisma.user.findUnique({ where: { id: context.user.uid }, include: { wallet: true } });
@@ -1890,6 +1959,8 @@ async function startServer() {
     console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
     console.log(`📊 Admin Dashboard ready at http://localhost:${PORT}/admin`);
   });
+
+  setInterval(runPredictiveMatchmaking, 5 * 60 * 1000);
 }
 
 if (require.main === module) {

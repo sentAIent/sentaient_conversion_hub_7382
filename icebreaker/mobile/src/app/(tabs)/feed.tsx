@@ -142,6 +142,12 @@ const SEND_MESSAGE = gql`
   }
 `;
 
+const EXPORT_VIDEO_MUTATION = gql`
+  mutation ExportWatermarkedVideo($contentId: ID!) {
+    exportWatermarkedVideo(contentId: $contentId)
+  }
+`;
+
 const GET_FOLLOWING = gql`
   query GetFollowingUsers {
     followerFeed {
@@ -177,6 +183,8 @@ export default function FeedScreen() {
   const [likeContent] = useMutation(LIKE_MUTATION);
   const [unlikeContent] = useMutation(UNLIKE_MUTATION);
   const [commentContent] = useMutation(COMMENT_MUTATION);
+  const [exportVideo] = useMutation(EXPORT_VIDEO_MUTATION);
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<'following' | 'explore'>('explore');
   const [refreshing, setRefreshing] = useState(false);
@@ -226,6 +234,7 @@ export default function FeedScreen() {
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={{ alignItems: 'center', marginBottom: 20 }} onPress={async () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 if (item.hasLiked) {
                   await unlikeContent({ variables: { contentId: item.id } });
                 } else {
@@ -246,6 +255,33 @@ export default function FeedScreen() {
           }}>
             <Ionicons name="arrow-redo" size={35} color="#fff" />
             <Text style={{ color: '#fff', marginTop: 4, fontWeight: '600' }}>Share</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={{ alignItems: 'center', marginTop: 20 }} 
+            onPress={async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              try {
+                setExportingId(item.id);
+                const res = await exportVideo({ variables: { contentId: item.id } });
+                const exportedUrl = res.data?.exportWatermarkedVideo;
+                if (exportedUrl) {
+                  Share.share({ message: `Check out this Icebreaker video: ${exportedUrl}` });
+                }
+              } catch (e) {
+                console.error(e);
+                alert('Failed to export video');
+              } finally {
+                setExportingId(null);
+              }
+            }}
+            disabled={exportingId === item.id}
+          >
+            {exportingId === item.id ? (
+              <ActivityIndicator color="#00ffcc" size="small" />
+            ) : (
+              <Ionicons name="logo-tiktok" size={32} color="#00ffcc" />
+            )}
+            <Text style={{ color: '#00ffcc', marginTop: 4, fontWeight: '600', fontSize: 12 }}>Export</Text>
           </TouchableOpacity>
         </View>
       </View>
