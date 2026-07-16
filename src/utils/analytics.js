@@ -21,16 +21,20 @@ const sendToAutopilot = async (eventName, properties = {}) => {
         };
 
         // Fire-and-forget to avoid blocking the UI
+        if (import.meta.env.DEV && AUTOPILOT_API_URL.includes('127.0.0.1')) {
+            // Skip fetching local emulator to prevent ERR_CONNECTION_REFUSED spam
+            return;
+        }
+        
         fetch(AUTOPILOT_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).catch(err => {
-            // Silently fail if endpoint isn't up yet
-            if (import.meta.env.DEV) console.warn("Autopilot ingest failed:", err);
+            // Silently fail if endpoint isn't up yet - no console.warn to prevent spam
         });
     } catch (e) {
-        if (import.meta.env.DEV) console.error("Autopilot dispatch error:", e);
+        // Silently fail
     }
 };
 

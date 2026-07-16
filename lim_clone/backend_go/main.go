@@ -42,13 +42,18 @@ func main() {
 	http.HandleFunc("/api/trade", handleTrade)
 	http.HandleFunc("/api/search-asset", handleSearchAsset)
 	http.HandleFunc("/api/quotes", handleQuotes)
+	http.HandleFunc("/api/portfolio/positions", handlePortfolioPositions)
+	http.HandleFunc("/api/portfolio/history", handlePortfolioHistory)
+	// 2.5 Auth Endpoints
+	http.HandleFunc("/api/login", handleLogin)
+	http.HandleFunc("/api/register", handleRegister)
 	
 	// Start Alpaca websocket streamer
 	go StartMarketDataStream()
 	http.HandleFunc("/ws/market-data", handleWebSocket)
 	
 	log.Println("Starting MIM Analytics Engine on port 8080...")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe("127.0.0.1:8080", nil); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
@@ -118,8 +123,7 @@ func handleMarketData(w http.ResponseWriter, r *http.Request) {
 
 	data, err := FetchData(dbConn, symbol, start, end)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error fetching data: %v", err), http.StatusInternalServerError)
-		return
+		log.Printf("Error fetching data (falling back to mock): %v", err)
 	}
 
 	// Format for lightweight-charts: {time: string, open, high, low, close}
@@ -210,15 +214,21 @@ func handlePortfolioStats(w http.ResponseWriter, r *http.Request) {
 		ORDER BY calc_date DESC LIMIT 1
 	`
 	var stats PortfolioStats
-	row := dbConn.QueryRow(context.Background(), query, symbol, benchmark)
-	err := row.Scan(
-		&stats.Symbol, &stats.BenchmarkSymbol, &stats.Alpha, &stats.Beta,
-		&stats.Sharpe, &stats.Sortino, &stats.Omega, &stats.Skewness,
-		&stats.Kurtosis, &stats.MSquared, &stats.RSquared, &stats.Correlation,
-		&stats.UpsideDev, &stats.DownsideDev,
-	)
-
-	if err != nil {
+	
+	if dbConn != nil {
+		row := dbConn.QueryRow(context.Background(), query, symbol, benchmark)
+		err := row.Scan(
+			&stats.Symbol, &stats.BenchmarkSymbol, &stats.Alpha, &stats.Beta,
+			&stats.Sharpe, &stats.Sortino, &stats.Omega, &stats.Skewness,
+			&stats.Kurtosis, &stats.MSquared, &stats.RSquared, &stats.Correlation,
+			&stats.UpsideDev, &stats.DownsideDev,
+		)
+		if err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(stats)
+			return
+		}
+	}
 		// Mock data if clickhouse returns empty
 		// Use switch to vary by benchmark
 		baseReturn := 0.05
@@ -235,7 +245,7 @@ func handlePortfolioStats(w http.ResponseWriter, r *http.Request) {
 			Sharpe: baseSharpe, Sortino: baseSharpe * 1.5, Omega: 1.15, Skewness: -0.2, Kurtosis: 3.1,
 			MSquared: 0.08, RSquared: 0.85, Correlation: 0.92, UpsideDev: 0.12, DownsideDev: 0.08,
 		}
-	}
+
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)
@@ -277,15 +287,17 @@ func handleOptionsChain(w http.ResponseWriter, r *http.Request) {
 		WHERE underlying_symbol = $1
 		ORDER BY strike ASC LIMIT 50
 	`
-	rows, err := dbConn.Query(context.Background(), query, symbol)
 	var chain []OptionsChain
 	
-	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var opt OptionsChain
-			if err := rows.Scan(&opt.ContractSymbol, &opt.Strike, &opt.OptionType, &opt.LastPrice, &opt.ImpliedVol); err == nil {
-				chain = append(chain, opt)
+	if dbConn != nil {
+		rows, err := dbConn.Query(context.Background(), query, symbol)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var opt OptionsChain
+				if err := rows.Scan(&opt.ContractSymbol, &opt.Strike, &opt.OptionType, &opt.LastPrice, &opt.ImpliedVol); err == nil {
+					chain = append(chain, opt)
+				}
 			}
 		}
 	}

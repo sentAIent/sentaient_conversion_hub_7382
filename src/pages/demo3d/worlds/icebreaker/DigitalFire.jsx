@@ -17,9 +17,7 @@ const DigitalFire = ({ position }) => {
 
   useFrame((state) => {
     if (meshRef.current) {
-      const globalProgress = scroll.offset;
-      const localProgress = THREE.MathUtils.clamp((globalProgress - 0.20) / 0.08, 0, 1);
-      const thawFactor = THREE.MathUtils.smoothstep(localProgress, 0.2, 0.8);
+      const thawFactor = window.icebreakerThaw || 0;
       
       meshRef.current.material.opacity = thawFactor * 0.9;
       // Pulse scale

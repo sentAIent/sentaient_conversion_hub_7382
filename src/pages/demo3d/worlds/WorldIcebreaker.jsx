@@ -1,9 +1,10 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useScroll, Text } from '@react-three/drei';
+import { useScroll, Text, Sky } from '@react-three/drei';
 import * as THREE from 'three';
 import DigitalFire from './icebreaker/DigitalFire';
 import IcebreakerSilhouettes from './icebreaker/IcebreakerSilhouettes';
+import HologramGuide from '../components/HologramGuide';
 
 const HolographicLogo = ({ position }) => {
   const meshRef = useRef();
@@ -23,9 +24,7 @@ const HolographicLogo = ({ position }) => {
       meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 2) * 5.0;
       
       if (meshRef.current.material) {
-        const globalProgress = scroll.offset;
-        const localProgress = THREE.MathUtils.clamp((globalProgress - 0.20) / 0.08, 0, 1);
-        const thawFactor = THREE.MathUtils.smoothstep(localProgress, 0.2, 0.8);
+        const thawFactor = window.icebreakerThaw || 0;
         meshRef.current.material.opacity = thawFactor * 0.9;
         meshRef.current.scale.setScalar(0.01 + thawFactor); 
       }
@@ -67,9 +66,7 @@ const ProceduralPalmTrees = ({ numTrees = 30, radius = 50, centerZ = -500 }) => 
   useFrame(() => {
     if (!trunkRef.current || !leafRef.current) return;
     
-    const globalProgress = scroll.offset;
-    const localProgress = THREE.MathUtils.clamp((globalProgress - 0.20) / 0.08, 0, 1);
-    const thawFactor = THREE.MathUtils.smoothstep(localProgress, 0.2, 0.8);
+    const thawFactor = window.icebreakerThaw || 0;
     
     for (let i = 0; i < numTrees; i++) {
       const tree = treeData[i];
@@ -171,11 +168,81 @@ const gridFragmentShader = `
   }
 `;
 
+const meltVertexShader = `
+  uniform float uThaw;
+  uniform float uTime;
+  varying vec2 vUv;
+  
+  void main() {
+    vUv = uv;
+    vec3 pos = position;
+    
+    // Dali melt effect:
+    // Cylinder local Z corresponds to World Y (because of Math.PI/2 X-rotation).
+    // We want it to sag downwards (negative local Z).
+    
+    float angle = atan(pos.y, pos.x);
+    // Add organic variation based on angle and position along the cylinder
+    float droopVariation = sin(angle * 8.0 + uTime * 2.0) * 0.5 + 0.5;
+    droopVariation += sin(pos.y * 0.05) * 0.5 + 0.5;
+    
+    // Ensure the minimum melt amount is large enough to flatten the entire cave!
+    // Top of the cave is pos.z = -120. Needs to reach +19. So meltAmount must be at least 140.
+    float meltAmount = uThaw * 500.0 * (0.4 + droopVariation * 0.6);
+    
+    pos.z += meltAmount;
+    
+    // Pool outwards exactly at the ocean surface level (World Y = -19)
+    // World Y = -19 means pos.z = 19.0
+    if (pos.z > 19.0) {
+       // Bulge outwards (local X and Y)
+       float bulge = (pos.z - 19.0) * 0.5 * uThaw;
+       vec2 dir = normalize(pos.xy);
+       pos.xy += dir * bulge;
+       // Clamp to ground level so it forms a puddle that blends into the ocean
+       pos.z = 19.0;
+    }
+    
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+  }
+`;
+
+const meltFragmentShader = `
+  uniform sampler2D tMap;
+  uniform float uThaw;
+  varying vec2 vUv;
+  
+  void main() {
+    // Distort UVs as it melts
+    vec2 distortedUv = vUv;
+    distortedUv.y -= uThaw * 0.5; // Texture slides down
+    
+    vec4 texColor = texture2D(tMap, distortedUv);
+    
+    // Fade to vibrant electric blue with greens
+    vec3 waterColor = vec3(0.0, 0.95, 0.8);
+    vec3 finalColor = mix(texColor.rgb, waterColor, clamp(uThaw * 1.5, 0.0, 1.0));
+    
+    // We KEEP alpha at 1.0 so it forms a permanent flat ocean layer on the ground
+    float alpha = 1.0;
+    
+    gl_FragColor = vec4(finalColor, alpha);
+  }
+`;
+
 const AbstractCavern = ({ startZ, endZ }) => {
+  const meshRef = useRef();
+  const materialRef = useRef();
   const [cavernTex, setCavernTex] = useState(null);
   
   const length = Math.abs(endZ - startZ);
   const centerZ = (startZ + endZ) / 2;
+
+  const uniforms = useMemo(() => ({
+    tMap: { value: null },
+    uThaw: { value: 0.0 },
+    uTime: { value: 0.0 }
+  }), []);
 
   useEffect(() => {
     new THREE.TextureLoader().load('/assets/images/ice_cavern.jpg', (tex) => {
@@ -184,20 +251,260 @@ const AbstractCavern = ({ startZ, endZ }) => {
       tex.repeat.set(4, 2);
       tex.colorSpace = THREE.SRGBColorSpace;
       setCavernTex(tex);
+      uniforms.tMap.value = tex;
     });
-  }, []);
+  }, [uniforms]);
+
+  useFrame((state) => {
+    if (materialRef.current) {
+      const thaw = window.icebreakerThaw || 0;
+      uniforms.uThaw.value = thaw;
+      uniforms.uTime.value = state.clock.elapsedTime;
+    }
+  });
 
   if (!cavernTex) return null;
 
   return (
-    <mesh position={[0, 0, centerZ]} rotation={[Math.PI / 2, 0, 0]}>
-      <cylinderGeometry args={[120, 120, length, 64, 64, true]} />
-      <meshBasicMaterial
-        map={cavernTex}
+    <mesh ref={meshRef} position={[0, 0, centerZ]} rotation={[Math.PI / 2, 0, 0]}>
+      {/* High segments for smooth vertex displacement */}
+      <cylinderGeometry args={[120, 120, length, 128, 128, true]} />
+      <shaderMaterial
+        ref={materialRef}
+        vertexShader={meltVertexShader}
+        fragmentShader={meltFragmentShader}
+        uniforms={uniforms}
+        transparent={true}
         side={THREE.BackSide}
       />
     </mesh>
   );
+};
+
+const IcebreakerOcean = ({ position }) => {
+  const meshRef = useRef();
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      const thaw = window.icebreakerThaw || 0;
+      // Start as a tiny puddle, expand to massive ocean
+      const scale = THREE.MathUtils.lerp(0.01, 50, Math.pow(thaw, 2));
+      meshRef.current.scale.setScalar(scale);
+      // Ocean only becomes visible once melting starts
+      meshRef.current.visible = thaw > 0;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={[position[0], position[1] + 1, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+      <circleGeometry args={[20, 64]} />
+      {/* Vibrant electric blue with bright green emissive so it never turns dark */}
+      <meshStandardMaterial color="#00ffff" emissive="#00ff66" emissiveIntensity={0.5} roughness={0.1} metalness={0.2} />
+    </mesh>
+  );
+};
+
+const IslandFloor = ({ position }) => {
+  const meshRef = useRef();
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      const thaw = window.icebreakerThaw || 0;
+      meshRef.current.scale.setScalar(thaw > 0 ? 1 : 0.001);
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={[position[0], position[1] + 1.5, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+      <circleGeometry args={[96, 64]} />
+      <meshStandardMaterial color="#e5d0a1" roughness={0.9} />
+    </mesh>
+  );
+};
+
+const IceCavernFloor = ({ position }) => {
+  const materialRef = useRef();
+  
+  useFrame(() => {
+    if (materialRef.current) {
+      const thaw = window.icebreakerThaw || 0;
+      materialRef.current.opacity = 1.0 - Math.pow(thaw, 2);
+      materialRef.current.transparent = true;
+    }
+  });
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={position}>
+      <planeGeometry args={[1000, 3000]} />
+      <meshStandardMaterial ref={materialRef} color="#001133" roughness={0.1} metalness={0.8} />
+    </mesh>
+  );
+};
+
+const IslandEnvironment = ({ centerZ }) => {
+  const skyMatRef = useRef();
+  const sunRef = useRef();
+  
+  const uniforms = useMemo(() => ({
+    uColorBottom: { value: new THREE.Color("#ffaa55") }, // Bright sun yellow-orange
+    uColorTop: { value: new THREE.Color("#00f3ff") },    // Vibrant electric sky blue
+    uOpacity: { value: 0.0 }
+  }), []);
+  
+  useFrame(() => {
+    const thaw = window.icebreakerThaw || 0;
+    if (skyMatRef.current) {
+      skyMatRef.current.uniforms.uOpacity.value = thaw;
+    }
+    if (sunRef.current) {
+      sunRef.current.intensity = thaw * 0.6;
+    }
+  });
+
+  return (
+    <group>
+      {/* Sunset Sky Dome */}
+      <mesh scale={2000}>
+        <sphereGeometry args={[1, 32, 32]} />
+        <shaderMaterial 
+          ref={skyMatRef}
+          side={THREE.BackSide}
+          transparent
+          depthWrite={false}
+          uniforms={uniforms}
+          vertexShader={`
+            varying vec3 vPosition;
+            void main() {
+              vPosition = position;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `}
+          fragmentShader={`
+            uniform vec3 uColorBottom;
+            uniform vec3 uColorTop;
+            uniform float uOpacity;
+            varying vec3 vPosition;
+            void main() {
+              // Normalize local Y position to create a gradient
+              float h = normalize(vPosition).y;
+              // Map h from [-1, 1] to [0, 1], focusing the gradient on the horizon
+              float mixVal = smoothstep(-0.2, 0.5, h);
+              vec3 finalColor = mix(uColorBottom, uColorTop, mixVal);
+              gl_FragColor = vec4(finalColor, uOpacity);
+            }
+          `}
+        />
+      </mesh>
+      
+      {/* Sun Light matching the sunset */}
+      <directionalLight 
+        ref={sunRef}
+        position={[0, 100, -2000]} 
+        color="#ffaa55" 
+        intensity={0} 
+        castShadow
+      />
+      
+      {/* Extra ambient fill for the island */}
+      <ambientLight intensity={0.6} color="#ffffff" />
+    </group>
+  );
+};
+
+const IcebreakerController = () => {
+  const scroll = useScroll();
+  const [locked, setLocked] = useState(false);
+  const [textLocked, setTextLocked] = useState(false);
+  const [caveLocked, setCaveLocked] = useState(false);
+  const textLockRef = useRef({ triggered: false, timer: 0 });
+  const caveLockRef = useRef({ triggered: false, timer: 0 });
+  
+  useEffect(() => {
+    window.icebreakerThaw = 0;
+    window.icebreakerThawLocked = false;
+    window.icebreakerTextLocked = false;
+    window.icebreakerCaveLocked = false;
+  }, []);
+
+  useFrame((state, delta) => {
+    const p = scroll.offset;
+    
+    // Trigger lock at Stop 1 (Cave Entrance)
+    if (!caveLockRef.current.triggered && p >= 0.22) {
+      caveLockRef.current.triggered = true;
+      setCaveLocked(true);
+      window.icebreakerCaveLocked = true;
+      if (scroll.el) {
+        scroll.el.style.overflow = 'hidden';
+        scroll.el.scrollTop = 0.22 * (scroll.el.scrollHeight - scroll.el.clientHeight);
+      }
+    }
+    
+    if (window.icebreakerCaveLocked) {
+      if (scroll.el) {
+        scroll.el.scrollTop = 0.22 * (scroll.el.scrollHeight - scroll.el.clientHeight);
+      }
+      caveLockRef.current.timer += delta;
+      // Unlock after 1.5 seconds to force a pause
+      if (caveLockRef.current.timer > 1.5) {
+        window.icebreakerCaveLocked = false;
+        setCaveLocked(false);
+        if (scroll.el) scroll.el.style.overflow = 'auto';
+      }
+    }
+
+    // Trigger lock at Stop 2 (Melt)
+    if (!locked && p >= 0.265 && window.icebreakerThaw < 1.0) {
+      setLocked(true);
+      window.icebreakerThawLocked = true;
+      if (scroll.el) {
+        scroll.el.style.overflow = 'hidden';
+        scroll.el.scrollTop = 0.27 * (scroll.el.scrollHeight - scroll.el.clientHeight);
+      }
+    }
+    
+    if (window.icebreakerThawLocked) {
+      // Keep it strictly at 0.27 during the animation
+      if (scroll.el) {
+        scroll.el.scrollTop = 0.27 * (scroll.el.scrollHeight - scroll.el.clientHeight);
+      }
+
+      window.icebreakerThaw += delta * 0.15; // Takes ~6.6 seconds to melt
+      if (window.icebreakerThaw >= 1.0) {
+        window.icebreakerThaw = 1.0;
+        window.icebreakerThawLocked = false;
+        if (scroll.el && !textLocked) scroll.el.style.overflow = 'auto';
+        setLocked(false);
+      }
+    } else {
+      if (p < 0.2) window.icebreakerThaw = 0;
+    }
+    
+    // Trigger text lock at Stop 3
+    if (!textLockRef.current.triggered && p >= 0.285 && window.icebreakerThaw >= 1.0) {
+      textLockRef.current.triggered = true;
+      setTextLocked(true);
+      window.icebreakerTextLocked = true;
+      if (scroll.el) {
+        scroll.el.style.overflow = 'hidden';
+        scroll.el.scrollTop = 0.29 * (scroll.el.scrollHeight - scroll.el.clientHeight);
+      }
+    }
+    
+    if (window.icebreakerTextLocked) {
+      if (scroll.el) {
+        scroll.el.scrollTop = 0.29 * (scroll.el.scrollHeight - scroll.el.clientHeight);
+      }
+      textLockRef.current.timer += delta;
+      // Unlock after 1.5 seconds
+      if (textLockRef.current.timer > 1.5) {
+        window.icebreakerTextLocked = false;
+        setTextLocked(false);
+        if (scroll.el) scroll.el.style.overflow = 'auto';
+      }
+    }
+  });
+  return null;
 };
 
 const WorldIcebreaker = ({ position, rotation, visible = true }) => {
@@ -207,16 +514,19 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
 
   return (
     <group position={position} rotation={rotation} visible={visible}>
+      <IcebreakerController />
+      <IslandEnvironment centerZ={centerZ} />
       <AbstractCavern startZ={startZ} endZ={endZ} />
       
       {/* Ice Cavern Floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -20, 0]}>
-        <planeGeometry args={[1000, 3000]} />
-        <meshStandardMaterial color="#001133" roughness={0.1} metalness={0.8} />
-      </mesh>
+      <IceCavernFloor position={[0, -20, 0]} />
+
+      {/* The expanding ocean and island */}
+      <IcebreakerOcean position={[0, -20, centerZ]} />
+      <IslandFloor position={[0, -20, centerZ]} />
       
       {/* Text Details */}
-      <Text 
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} 
         position={[0, 60, centerZ - 500]} 
         fontSize={25} 
         color="#ffffff" 
@@ -225,25 +535,28 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       >
         ICEBREAKER
       </Text>
-      <Text 
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} 
         position={[0, 30, centerZ - 500]} 
         fontSize={10} 
         color="#00ffff" 
       >
-        THE REAL-WORLD SOCIAL PROTOCOL
+        REAL CONTENT. REAL CONNECTIONS.
       </Text>
 
       {/* Central Holographic Fire / Nexus */}
       <DigitalFire position={[0, -20, centerZ]} />
       
       {/* Holographic Logo Centerpiece */}
-      <HolographicLogo position={[0, 10, centerZ]} />
+      <HolographicLogo position={[0, 30, centerZ]} />
       
       {/* Procedural Tropical Foliage */}
       <ProceduralPalmTrees radius={60} centerZ={centerZ} />
       
       {/* The People */}
       <IcebreakerSilhouettes position={[0, -20, centerZ]} />
+
+      {/* Hologram Guide */}
+      <HologramGuide appId="icebreaker" position={[-80, 20, centerZ - 200]} />
     </group>
   );
 };

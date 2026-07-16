@@ -58,3 +58,4 @@ vollib==1.0.11
 websockets==16.1
 yfinance==1.5.1
 zstandard==0.25.0
+crawl4ai

@@ -5,6 +5,9 @@ import OptionsChain from './components/OptionsChain';
 import TickerTape from './components/TickerTape';
 import SettingsModal from './components/SettingsModal';
 import PortfolioDashboard from './components/PortfolioDashboard';
+import LoginScreen from './components/LoginScreen';
+import SymbolSearch from './components/SymbolSearch';
+import ResearchDashboard from './components/ResearchDashboard';
 
 function App() {
   const chartContainerRef = useRef(null);
@@ -16,6 +19,9 @@ function App() {
   const [accountData, setAccountData] = useState(null);
   const [paperBalance, setPaperBalance] = useState(0.00);
   const [activeView, setActiveView] = useState('terminal');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem('sentaient_jwt');
+  });
 
   // Deep Preferences State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -52,7 +58,7 @@ function App() {
     });
 
     // Fetch initial historical data first (fallback or seed data)
-    fetch(`http://localhost:8080/api/market-data?symbol=${symbol}`)
+    fetch(`http://127.0.0.1:8080/api/market-data?symbol=${symbol}`)
       .then(res => res.json())
       .then(data => {
         if (data && data.length > 0) {
@@ -64,7 +70,7 @@ function App() {
       });
 
     // Establish WebSocket for real-time live streaming from Alpaca
-    const ws = new WebSocket(`ws://localhost:8080/ws/market-data`);
+    const ws = new WebSocket(`ws://127.0.0.1:8080/ws/market-data`);
     ws.onmessage = (event) => {
       // Check if paused
       if (window.isLivePaused) return;
@@ -100,7 +106,7 @@ function App() {
 
   // Fetch live account data from Go backend (Alpaca)
   const fetchAccountData = () => {
-    fetch('http://localhost:8080/api/account')
+    fetch('http://127.0.0.1:8080/api/account')
       .then(res => res.json())
       .then(data => {
         if (data && data.equity !== undefined) {
@@ -150,7 +156,7 @@ function App() {
   const executePaperTrade = async (type) => {
     setStatus(`Executing LIVE PAPER ${type} order for ${symbol}...`);
     try {
-      const response = await fetch('http://localhost:8080/api/trade', {
+      const response = await fetch('http://127.0.0.1:8080/api/trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -178,19 +184,30 @@ function App() {
   return (
     <div className="app-container">
       
+      {!isAuthenticated ? (
+        <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />
+      ) : null}
+
       {/* Ticker Tape */}
       <TickerTape symbols={customTickers} />
 
       {/* Header */}
       <div className="panel header">
+        {/* Left Side: Logo & Brand */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img src="/contango_logo_v11.png" alt="Contango Quant Logo" style={{ height: '77px', marginRight: '12px', objectFit: 'contain' }} />
+          <img src="/contango_quant_logo.png" alt="Contango Quant Logo" style={{ height: '36px', marginRight: '12px', objectFit: 'contain' }} />
           <span className="brand">Contango Quant</span>
+          <span style={{ marginLeft: '12px', fontSize: '0.9rem', color: '#64748b' }}>// XMIM Engine</span>
         </div>
-        <span style={{ marginLeft: '12px', fontSize: '0.9rem', color: '#64748b' }}>// XMIM Engine</span>
         
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '6px', marginRight: '12px' }}>
+        {/* Right Side: All Buttons */}
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          
+          {/* Symbol Search */}
+          <SymbolSearch currentSymbol={symbol} onSymbolChange={setSymbol} />
+
+          {/* Navigation Buttons */}
+          <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '6px' }}>
             <button 
               onClick={() => setActiveView('terminal')}
               style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: activeView === 'terminal' ? '#3b82f6' : 'transparent', color: activeView === 'terminal' ? '#fff' : '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
@@ -204,7 +221,7 @@ function App() {
               Portfolio Dashboard
             </button>
           </div>
-          
+
           <button 
             onClick={() => setIsSettingsOpen(true)}
             style={{ padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#94a3b8' }}
@@ -225,11 +242,47 @@ function App() {
         <div className="portfolio-view">
           <PortfolioDashboard />
         </div>
+      ) : activeView === 'research' ? (
+        <div className="research-view" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '16px', padding: '0 16px' }}>
+            <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '6px' }}>
+              <button 
+                onClick={() => setActiveView('terminal')}
+                style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                NLP Sidebar
+              </button>
+              <button 
+                onClick={() => setActiveView('research')}
+                style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Research Hub
+              </button>
+            </div>
+          </div>
+          <ResearchDashboard symbol={symbol} />
+        </div>
       ) : (
         <>
           {/* Sidebar: NLP Engine */}
           <div className="panel sidebar">
-            <h3>Natural Language Engine</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3>Natural Language Engine</h3>
+              <div style={{ display: 'flex', gap: '2px', background: 'rgba(0,0,0,0.2)', padding: '2px', borderRadius: '6px' }}>
+                <button 
+                  onClick={() => setActiveView('terminal')}
+                  style={{ padding: '2px 8px', borderRadius: '4px', border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: '0.75rem' }}
+                >
+                  NLP
+                </button>
+                <button 
+                  onClick={() => setActiveView('research')}
+                  style={{ padding: '2px 8px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: '0.75rem' }}
+                >
+                  Hub
+                </button>
+              </div>
+            </div>
             <textarea 
               className="query-box" 
               value={query}

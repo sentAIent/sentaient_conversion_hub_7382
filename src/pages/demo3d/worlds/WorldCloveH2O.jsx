@@ -184,7 +184,7 @@ const WorldCloveH2O = ({ position, rotation, visible }) => {
           </mesh>
         )}
         
-        <Text
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
           position={[0, -50, 0]}
           fontSize={60}
           color="#ffffff"
@@ -196,7 +196,7 @@ const WorldCloveH2O = ({ position, rotation, visible }) => {
           CLOVEH2O
         </Text>
         
-        <Text
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
           position={[0, -110, 0]}
           fontSize={24}
           color="#ffffff"

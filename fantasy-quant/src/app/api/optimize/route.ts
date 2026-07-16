@@ -88,7 +88,7 @@ export async function GET(request: Request) {
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
       cookies: {
         getAll() {
@@ -175,9 +175,24 @@ export async function GET(request: Request) {
     .eq('season', season)
     .eq('week', week);
 
+  const { data: signals } = await supabase
+    .from('player_signals')
+    .select('player_id, signal_type, category, description')
+    .in('player_id', playerIds)
+    .eq('season', season);
+    // For Draft, week is null. If we are in DFS, we can check week.
+    // For now we will pull all signals for the season.
+    // In the future we can filter `.or('week.is.null,week.eq.' + week)`
+
   // Build lookup maps
   const advMap = new Map((advStats || []).map((r: any) => [r.player_id, r]));
   const injuryMap = new Map((injuries || []).map((r: any) => [r.player_id, r]));
+  
+  const signalsMap = new Map<string, any[]>();
+  for (const s of (signals || [])) {
+    if (!signalsMap.has(s.player_id)) signalsMap.set(s.player_id, []);
+    signalsMap.get(s.player_id)!.push(s);
+  }
   const propsMap = new Map<string, any[]>();
   for (const p of (vegasProps || [])) {
     if (!propsMap.has(p.player_id)) propsMap.set(p.player_id, []);
@@ -192,7 +207,7 @@ export async function GET(request: Request) {
 
     if (injuryMap.has(row.player_id)) {
       const inj = injuryMap.get(row.player_id);
-      injury_status = inj.report_status;
+      injury_status = inj.injury_status;
       practice_status = inj.practice_status;
       
       const s = (injury_status || '').toLowerCase();
@@ -249,11 +264,19 @@ export async function GET(request: Request) {
       };
     }
 
+    const player_signals = signalsMap.get(row.player_id) || [];
+    let signalBoost = 0;
+    for (const s of player_signals) {
+      if (s.signal_type === 'POSITIVE') signalBoost += 0.5;
+      if (s.signal_type === 'NEGATIVE') signalBoost -= 0.5;
+    }
+
     return {
       ...row,
-      value_score: row.salary > 0 ? +(row.projected_pts / row.salary * 1000).toFixed(2) : 0,
+      value_score: row.salary > 0 ? +((row.projected_pts + signalBoost) / row.salary * 1000).toFixed(2) : 0,
       player_advanced_stats: advMap.has(row.player_id) ? [advMap.get(row.player_id)] : [],
       player_vegas_props: propsMap.get(row.player_id) || [],
+      player_signals: signalsMap.get(row.player_id) || [],
       injury_status,
       practice_status,
       play_probability,

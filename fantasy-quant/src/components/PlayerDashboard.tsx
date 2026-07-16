@@ -11,6 +11,8 @@ import MatchupAnalyzer from './draft/MatchupAnalyzer';
 import WeatherImpact from './draft/WeatherImpact';
 import InjuryTracker from './draft/InjuryTracker';
 import WaiverWire from './draft/WaiverWire';
+import PlayerContracts from './draft/PlayerContracts';
+import { DollarSign } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface StatRow {
@@ -199,6 +201,7 @@ export default function PlayerDashboard({ hideHeader = false }: { hideHeader?: b
               { id: 'weather', icon: CloudRain, label: 'Weather Impact' },
               { id: 'injuries', icon: AlertTriangle, label: 'Injury Tracker' },
               { id: 'waivers', icon: Search, label: 'Waiver Wire' },
+              { id: 'contracts', icon: DollarSign, label: 'Contract History' },
             ].map(({ id, icon: Icon, label }) => (
               <button key={label} onClick={() => setActiveTab(id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${activeTab === id ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]'}`}>
                 <Icon size={16} />
@@ -447,7 +450,7 @@ export default function PlayerDashboard({ hideHeader = false }: { hideHeader?: b
       {activeTab === 'weather' && <WeatherImpact />}
       {activeTab === 'injuries' && <InjuryTracker />}
       {activeTab === 'waivers' && <WaiverWire />}
-
+      {activeTab === 'contracts' && <PlayerContracts playerName={activePlayer} />}
     </main>
       </div>
     </div>

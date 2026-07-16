@@ -5,14 +5,14 @@ import Scene3D from './components/Scene3D';
 
 const Demo3DHome = () => {
   return (
-    <div className="relative w-screen h-screen bg-[#050505] font-sans text-white overflow-hidden">
+    <div className="relative w-screen h-screen bg-gradient-to-b from-[#0a0a1a] to-[#020205] font-sans text-white overflow-hidden">
       <Helmet>
         <title>sentAIent | Quantum Wormhole Experience</title>
         <meta
           name="description"
           content="Explore our portfolio of autonomous marketing, legal analysis, wellness, and interactive entertainment platforms in a scroll-driven wormhole journey."
         />
-        <meta name="theme-color" content="#050505" />
+        <meta name="theme-color" content="#0a0a1a" />
       </Helmet>
 
       {/* Header stays on top */}

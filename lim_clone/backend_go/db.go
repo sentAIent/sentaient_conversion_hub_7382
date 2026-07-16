@@ -42,9 +42,13 @@ func ConnectDB() (driver.Conn, error) {
 
 // FetchData retrieves historical data from the Historis unified view for a specific symbol
 func FetchData(conn driver.Conn, symbol string, start, end time.Time) ([]MarketData, error) {
+	if conn == nil {
+		return nil, fmt.Errorf("database connection is nil")
+	}
+
 	query := `
 		SELECT symbol, timestamp, open, high, low, close, volume 
-		FROM market_data 
+		FROM market_data_1m 
 		WHERE symbol = $1 AND timestamp >= $2 AND timestamp <= $3
 		ORDER BY timestamp ASC
 	`

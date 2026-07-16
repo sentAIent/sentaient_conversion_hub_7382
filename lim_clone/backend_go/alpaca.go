@@ -290,3 +290,115 @@ func handleQuotes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(quotes)
 }
+
+// PortfolioPosition matches the frontend's expected mock structure but populated from Alpaca
+type PortfolioPosition struct {
+	Symbol       string  `json:"symbol"`
+	Qty          float64 `json:"qty"`
+	AvgPrice     float64 `json:"avgPrice"`
+	CurrentPrice float64 `json:"currentPrice"`
+	Pnl          float64 `json:"pnl"`
+}
+
+// handlePortfolioPositions fetches live open positions from Alpaca
+func handlePortfolioPositions(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	if alpacaClient == nil {
+		// Mock Data fallback if not connected
+		mockPositions := []PortfolioPosition{
+			{Symbol: "AAPL", Qty: 150, AvgPrice: 165.20, CurrentPrice: 172.50, Pnl: 1095.00},
+			{Symbol: "MSFT", Qty: 100, AvgPrice: 320.10, CurrentPrice: 335.20, Pnl: 1510.00},
+			{Symbol: "TSLA", Qty: 50, AvgPrice: 240.00, CurrentPrice: 225.50, Pnl: -725.00},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockPositions)
+		return
+	}
+
+	positions, err := alpacaClient.GetPositions()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get positions: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	var result []PortfolioPosition
+	for _, pos := range positions {
+		qty, _ := pos.Qty.Float64()
+		avgPrice, _ := pos.AvgEntryPrice.Float64()
+		currentPrice, _ := pos.CurrentPrice.Float64()
+		pnl, _ := pos.UnrealizedPL.Float64()
+
+		result = append(result, PortfolioPosition{
+			Symbol:       pos.Symbol,
+			Qty:          qty,
+			AvgPrice:     avgPrice,
+			CurrentPrice: currentPrice,
+			Pnl:          pnl,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+type PortfolioHistoryPoint struct {
+	Date  string  `json:"date"`
+	Value float64 `json:"value"`
+}
+
+// handlePortfolioHistory fetches the history of the account value
+func handlePortfolioHistory(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		period = "1M" // default
+	}
+
+	if alpacaClient == nil {
+		// Mock Performance fallback
+		mockPerf := []PortfolioHistoryPoint{
+			{Date: "2023-01", Value: 100000},
+			{Date: "2023-02", Value: 102500},
+			{Date: "2023-03", Value: 101200},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockPerf)
+		return
+	}
+
+	req := alpaca.GetPortfolioHistoryRequest{
+		Period: period,
+	}
+
+	history, err := alpacaClient.GetPortfolioHistory(req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get portfolio history: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	var result []PortfolioHistoryPoint
+	for i, timestamp := range history.Timestamp {
+		// Just returning Unix timestamps as strings or formatted dates
+		// For simplicity, we'll format timestamp as YYYY-MM-DD
+		// Alpaca returns Unix timestamps in seconds
+		// The historical equity is in history.Equity[i]
+		if i < len(history.Equity) {
+			eqFloat, _ := history.Equity[i].Float64()
+			result = append(result, PortfolioHistoryPoint{
+				Date:  fmt.Sprintf("%d", timestamp), // Will format in JS
+				Value: eqFloat,
+			})
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}

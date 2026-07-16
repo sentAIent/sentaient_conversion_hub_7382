@@ -7,7 +7,7 @@ const AnalyticsPanel = ({ symbol }) => {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:8080/api/portfolio-stats?symbol=${symbol}&benchmark=${benchmark}`)
+    fetch(`http://127.0.0.1:8080/api/portfolio-stats?symbol=${symbol}&benchmark=${benchmark}`)
       .then(res => res.json())
       .then(data => {
         setStats(data);

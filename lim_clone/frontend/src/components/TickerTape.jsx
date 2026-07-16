@@ -31,7 +31,7 @@ const TickerTape = ({ symbols }) => {
       if (!symbols || symbols.length === 0) return;
       try {
         const query = symbols.join(',');
-        const res = await fetch(`http://localhost:8080/api/quotes?symbols=${query}`);
+        const res = await fetch(`http://127.0.0.1:8080/api/quotes?symbols=${query}`);
         if (!res.ok) throw new Error("Failed to fetch quotes");
         const data = await res.json();
         setQuotes(data || []);

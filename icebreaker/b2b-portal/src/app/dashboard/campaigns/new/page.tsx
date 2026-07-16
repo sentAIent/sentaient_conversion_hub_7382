@@ -5,6 +5,9 @@ import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from "next/dynamic";
+
+const Excalidraw = dynamic(() => import("@excalidraw/excalidraw").then((mod) => mod.Excalidraw), { ssr: false });
 
 const CREATE_SWARM_CAMPAIGN = gql`
   mutation CreateSwarmCampaign($title: String!, $description: String!, $maxDiscount: String!, $latitude: Float!, $longitude: Float!, $totalBudget: Int!, $targetCheckIns: Int!) {
@@ -31,6 +34,7 @@ export default function NewSwarmCampaignPage() {
   const [description, setDescription] = useState('');
   const [maxDiscount, setMaxDiscount] = useState('');
   const [targetCheckIns, setTargetCheckIns] = useState('10');
+  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   
   // Dual-mode budget state
   const [inputValue, setInputValue] = useState('');
@@ -140,6 +144,17 @@ export default function NewSwarmCampaignPage() {
               placeholder="e.g. 10"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-white/80">Campaign Moodboard (Optional)</label>
+          <div className="w-full bg-white/5 border border-white/10 rounded-xl h-[400px] relative overflow-hidden" style={{ minHeight: "400px" }}>
+             <Excalidraw 
+                theme="dark" 
+                excalidrawAPI={(api: any) => setExcalidrawAPI(api)}
+             />
+          </div>
+          <p className="text-xs text-white/40 mt-2">Sketch out your vision for the content you want influencers to create.</p>
         </div>
 
         <div>

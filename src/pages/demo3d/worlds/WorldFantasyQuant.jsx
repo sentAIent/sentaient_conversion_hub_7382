@@ -1,7 +1,8 @@
 import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useLoader } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
+import DataVisualizer3D from './DataVisualizer3D';
 
 const FootballPlayer = ({ color, number, groupRef, armRef }) => {
   return (
@@ -62,7 +63,7 @@ const FootballPlayer = ({ color, number, groupRef, armRef }) => {
 
       {/* Jersey Number */}
       {number && (
-        <Text position={[0, 10, 2.7]} fontSize={3} color="#ffffff" anchorX="center" anchorY="middle" outlineWidth={0.05} outlineColor="#000">
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 10, 2.7]} fontSize={3} color="#ffffff" anchorX="center" anchorY="middle" outlineWidth={0.05} outlineColor="#000">
           {number}
         </Text>
       )}
@@ -194,88 +195,29 @@ const FootballPlay = ({ position }) => {
   );
 };
 
-const Scoreboard = () => {
-  return (
-    <group position={[0, 300, -300]} rotation={[0.1, 0, 0]}>
-      {/* Main Center Screen */}
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[800, 300, 20]} />
-        <meshStandardMaterial color="#050505" metalness={0.9} roughness={0.1} />
-      </mesh>
-      <mesh position={[0, 0, 10.1]}>
-        <planeGeometry args={[790, 290]} />
-        <meshBasicMaterial color="#001100" />
-      </mesh>
-      
-      {/* Left Angled Screen */}
-      <mesh position={[-580, 0, 150]} rotation={[0, Math.PI / 6, 0]}>
-        <boxGeometry args={[400, 300, 20]} />
-        <meshStandardMaterial color="#050505" metalness={0.9} roughness={0.1} />
-      </mesh>
-      <mesh position={[-571, 0, 155]} rotation={[0, Math.PI / 6, 0]}>
-        <planeGeometry args={[390, 290]} />
-        <meshBasicMaterial color="#001100" />
-      </mesh>
-
-      {/* Right Angled Screen */}
-      <mesh position={[580, 0, 150]} rotation={[0, -Math.PI / 6, 0]}>
-        <boxGeometry args={[400, 300, 20]} />
-        <meshStandardMaterial color="#050505" metalness={0.9} roughness={0.1} />
-      </mesh>
-      <mesh position={[571, 0, 155]} rotation={[0, -Math.PI / 6, 0]}>
-        <planeGeometry args={[390, 290]} />
-        <meshBasicMaterial color="#001100" />
-      </mesh>
-      
-      {/* Structural framing connecting the screens */}
-      <mesh position={[-390, 150, 0]}>
-        <boxGeometry args={[20, 20, 20]} />
-        <meshStandardMaterial color="#222" metalness={1} roughness={0.3} />
-      </mesh>
-      <mesh position={[390, 150, 0]}>
-        <boxGeometry args={[20, 20, 20]} />
-        <meshStandardMaterial color="#222" metalness={1} roughness={0.3} />
-      </mesh>
-
-      {/* Grid overlay for LED effect */}
-      <gridHelper args={[800, 80, '#00ff00', '#004400']} position={[0, 0, 11]} rotation={[Math.PI / 2, 0, 0]} />
-
-      {/* Text on Main Screen */}
-      <Text position={[0, 80, 15]} fontSize={70} color="#ffffff" outlineWidth={0.02} outlineColor="#00ff00" anchorX="center" anchorY="middle">FANTASY QUANT</Text>
-      <Text position={[0, 0, 15]} fontSize={35} color="#00ffff" outlineWidth={0.01} outlineColor="#0088ff" anchorX="center" anchorY="middle">PREDICTING: 42 YD PASS {'->'} TOUCHDOWN</Text>
-      <Text position={[0, -60, 15]} fontSize={22} color="#ffffff" maxWidth={750} textAlign="center" lineHeight={1.5} anchorX="center" anchorY="middle">"This is going to Rice, WR #80, post route contested catch in traffic over the safety and cornerback... TOUCHDOWN!!"</Text>
-
-      {/* Stats on Side Screens */}
-      <Text position={[-580, 40, 165]} rotation={[0, Math.PI / 6, 0]} fontSize={32} color="#00ff00" anchorX="center" anchorY="middle">WIN PROB: 94%</Text>
-      <Text position={[-580, -40, 165]} rotation={[0, Math.PI / 6, 0]} fontSize={32} color="#00ff00" anchorX="center" anchorY="middle">EXPECTED PTS: +6.0</Text>
-      
-      <Text position={[580, 40, 165]} rotation={[0, -Math.PI / 6, 0]} fontSize={28} color="#00ff00" anchorX="center" anchorY="middle">DEF COVERAGE: COVER 2</Text>
-      <Text position={[580, -40, 165]} rotation={[0, -Math.PI / 6, 0]} fontSize={28} color="#00ff00" anchorX="center" anchorY="middle">MISMATCH DETECTED</Text>
-    </group>
-  );
-};
 
 const WorldFantasyQuant = ({ position, rotation, visible }) => {
-  
+  const stadiumTex = useLoader(THREE.TextureLoader, '/fantasy_quant_stadium.jpg');
+  stadiumTex.colorSpace = THREE.SRGBColorSpace;
+  stadiumTex.wrapS = THREE.RepeatWrapping;
+  stadiumTex.repeat.set(-1, 1); // Flip horizontally so it renders correctly on BackSide
 
   return (
     <group visible={visible} position={position} rotation={rotation}>
-      {/* Dark stadium background */}
-      <mesh>
-        <sphereGeometry args={[3000, 32, 32]} />
-        <meshBasicMaterial color="#000205" side={THREE.BackSide} />
+      {/* Photorealistic Stadium Background */}
+      <mesh rotation={[0, -Math.PI / 2, 0]}>
+        <sphereGeometry args={[2500, 64, 64]} />
+        <meshBasicMaterial map={stadiumTex} side={THREE.BackSide} />
       </mesh>
 
-      {/* The Play */}
-      <FootballPlay position={[0, -200, 100]} />
+      {/* The Play - Rotated -90 degrees so the camera sees it from the sidelines (left-to-right pass). Centered so it's directly in front of the camera. */}
+      <FootballPlay position={[0, -125, 0]} rotation={[0, -Math.PI / 2, 0]} />
 
       {/* Lighting */}
-      <ambientLight intensity={0.5} color="#00ff00" />
-      <pointLight color="#00ff00" intensity={3} distance={2000} position={[0, 500, 500]} />
-      <pointLight color="#0088ff" intensity={2} distance={2000} position={[0, 500, -500]} />
+      <ambientLight intensity={0.5} color="#00ffaa" />
+      <pointLight color="#00ffff" intensity={3} distance={2000} position={[0, 500, 500]} />
+      <pointLight color="#ff00aa" intensity={2} distance={2000} position={[0, 500, -500]} />
 
-      {/* Massive Jumbotron */}
-      <Scoreboard />
     </group>
   );
 };

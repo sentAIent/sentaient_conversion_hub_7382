@@ -6,7 +6,7 @@ const OptionsChain = ({ symbol }) => {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:8080/api/options-chain?symbol=${symbol}`)
+    fetch(`http://127.0.0.1:8000/api/options-chain?symbol=${symbol}`)
       .then(res => res.json())
       .then(data => {
         setOptions(data);

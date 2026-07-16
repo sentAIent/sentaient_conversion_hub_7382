@@ -5,6 +5,7 @@ go 1.25.3
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.47.0
 	github.com/alpacahq/alpaca-trade-api-go/v3 v3.11.0
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/shopspring/decimal v1.4.0

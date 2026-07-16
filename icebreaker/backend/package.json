@@ -26,6 +26,7 @@
     "express": "^5.2.1",
     "firebase-admin": "^14.1.0",
     "graphql": "^16.14.2",
+    "meilisearch": "^0.59.0",
     "pg": "^8.22.0",
     "resend": "^6.17.2",
     "stripe": "^22.3.0"

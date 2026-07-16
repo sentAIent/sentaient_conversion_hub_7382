@@ -3,10 +3,13 @@
 import React, { useState } from 'react';
 import PlayerDashboard from '@/components/PlayerDashboard';
 import DFSDashboard from '@/components/dfs/DFSDashboard';
-import { Activity, Target } from 'lucide-react';
+import { Activity, Target, ChevronDown, Trophy, User } from 'lucide-react';
+import { useSubscription, SubscriptionTier } from '@/components/SubscriptionContext';
+import Link from 'next/link';
 
 export default function AppShell() {
   const [mode, setMode] = useState<'draft' | 'dfs'>('dfs');
+  const { tier, setTier, isLoading } = useSubscription();
 
   return (
     <div className="min-h-screen bg-[#070809] text-white font-sans">
@@ -47,6 +50,18 @@ export default function AppShell() {
             DFS Mode
           </button>
         </div>
+        
+        <div className="hidden lg:flex items-center gap-6">
+          <Link href="/odds" className="text-gray-400 hover:text-white text-sm font-semibold flex items-center gap-2 transition-colors">
+            <Target size={16} /> Vegas Odds
+          </Link>
+          <Link href="/social" className="text-gray-400 hover:text-white text-sm font-semibold flex items-center gap-2 transition-colors">
+            <Trophy size={16} /> Social Action
+          </Link>
+          <Link href="/profile" className="text-gray-400 hover:text-white text-sm font-semibold flex items-center gap-2 transition-colors">
+            <User size={16} /> My Bankroll
+          </Link>
+        </div>
 
         <div className="flex gap-3 items-center">
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
@@ -60,9 +75,28 @@ export default function AppShell() {
           <button className="px-4 py-2 text-sm font-medium rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all">
             Log In
           </button>
-          <button className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-500 transition-all">
-            Start Free Trial
-          </button>
+          
+          <div className="relative group">
+            <button className={`px-4 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${
+              tier === 'Free' 
+                ? 'bg-blue-600 hover:bg-blue-500 text-white' 
+                : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30'
+            }`}>
+              {isLoading ? '...' : (tier === 'Free' ? 'Start Free Trial' : `${tier} Tier`)}
+              <ChevronDown size={14} className="opacity-50" />
+            </button>
+            <div className="absolute right-0 top-full mt-1 w-32 bg-gray-900 border border-gray-700 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all overflow-hidden z-50">
+              {(['Free', 'Pro', 'Max'] as SubscriptionTier[]).map((t) => (
+                <button 
+                  key={t}
+                  onClick={() => setTier(t)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 ${t === tier ? 'text-blue-400 font-bold bg-gray-800/50' : 'text-gray-300'}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 

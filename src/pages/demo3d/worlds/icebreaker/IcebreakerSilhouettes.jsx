@@ -118,9 +118,7 @@ const PersonProcedural = ({ position, angle, delay }) => {
     
     uniforms.uTime.value = state.clock.elapsedTime;
     
-    const globalProgress = scroll.offset;
-    const localProgress = THREE.MathUtils.clamp((globalProgress - 0.20) / 0.08, 0, 1);
-    const thawFactor = THREE.MathUtils.smoothstep(localProgress, 0.2, 0.8);
+    const thawFactor = window.icebreakerThaw || 0;
     
     const t = THREE.MathUtils.clamp((thawFactor - delay) * 2.0, 0, 1);
     uniforms.uState.value = t; // 0 = isolated, 1 = party
@@ -129,16 +127,15 @@ const PersonProcedural = ({ position, angle, delay }) => {
     const jump = Math.sin(state.clock.elapsedTime * 8 + delay * 10) * t;
     meshRef.current.position.y = position[1] + (jump > 0 ? jump * 2 : 0) + 15;
     
-    // Move towards center (0, 0, centerZ)
+    // Move towards center
     if (t > 0) {
-       // Manually calculate direction to avoid object allocation in useFrame
-        const targetX = 400;
-        const targetZ = -200;
-        const dx = targetX - position[0];
-        const dz = targetZ - position[2];
-        const len = Math.sqrt(dx * dx + dz * dz) || 1;
-       meshRef.current.position.x = position[0] + (dx / len) * (t * 15);
-       meshRef.current.position.z = position[2] + (dz / len) * (t * 15);
+       // center is at X=0, Z = centerZ (which we can approximate or pass in)
+       // Just move them slightly towards 0, 0 local to the fire
+       const dx = 0 - position[0];
+       const dz = 0 - (position[2] - (-200)); // We'll just move them slightly towards X=0
+       const len = Math.sqrt(dx * dx + dz * dz) || 1;
+       meshRef.current.position.x = position[0] + (dx / len) * (t * 20);
+       meshRef.current.position.z = position[2] + (dz / len) * (t * 20);
     } else {
        meshRef.current.position.x = position[0];
        meshRef.current.position.z = position[2];
@@ -166,13 +163,16 @@ const PersonProcedural = ({ position, angle, delay }) => {
 };
 
 const IcebreakerSilhouettes = ({ position }) => {
-  const numPeople = 12;
+  const numPeople = 60; // Increased to 60 as requested
 
   const peopleData = useMemo(() => {
     const data = [];
     for (let i = 0; i < numPeople; i++) {
-      const angle = (i / numPeople) * Math.PI * 2;
-      const r = 25 + Math.random() * 10;
+      // Disperse randomly inside the cavern instead of a circle
+      const angle = Math.random() * Math.PI * 2;
+      // Use random radius up to cavern walls (approx 100), avoiding exact center fire
+      const r = 30 + Math.random() * 80; 
+      
       data.push({
         position: [
           position[0] + Math.cos(angle) * r,

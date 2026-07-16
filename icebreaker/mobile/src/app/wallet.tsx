@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
-import { gql, useQuery } from '@apollo/client';
+import { gql, useQuery, useMutation } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -20,9 +20,29 @@ const GET_WALLET = gql`
   }
 `;
 
+const CASH_OUT = gql`
+  mutation CashOutWallet {
+    cashOutWallet {
+      status
+      url
+    }
+  }
+`;
+
 export default function WalletScreen() {
   const router = useRouter();
-  const { data, loading, error } = useQuery(GET_WALLET, { fetchPolicy: 'cache-and-network' });
+  const { data, loading, error, refetch } = useQuery(GET_WALLET, { fetchPolicy: 'cache-and-network' });
+  const [cashOut, { loading: cashOutLoading }] = useMutation(CASH_OUT);
+
+  const handleCashOut = async () => {
+    try {
+      await cashOut();
+      alert('Cash out successful! Your funds are on the way.');
+      refetch();
+    } catch (e: any) {
+      alert(e.message || 'An error occurred while cashing out.');
+    }
+  };
 
   if (loading && !data) {
     return (
@@ -49,6 +69,24 @@ export default function WalletScreen() {
         <Text style={styles.balanceValue}>
           ${wallet ? (wallet.balance / 100).toFixed(2) : '0.00'}
         </Text>
+        
+        {wallet && wallet.balance >= 2000 ? (
+          <TouchableOpacity 
+            style={[styles.cashOutButton, cashOutLoading && { opacity: 0.7 }]} 
+            onPress={handleCashOut}
+            disabled={cashOutLoading}
+          >
+            {cashOutLoading ? (
+              <ActivityIndicator color="#000" size="small" />
+            ) : (
+              <Text style={styles.cashOutButtonText}>Cash Out All</Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.cashOutDisabled}>
+            <Text style={styles.cashOutDisabledText}>Minimum $20.00 required to cash out</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.transactionsContainer}>
@@ -129,6 +167,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 48,
     fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  cashOutButton: {
+    backgroundColor: '#00E676',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 24,
+    marginTop: 10,
+  },
+  cashOutButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cashOutDisabled: {
+    paddingVertical: 12,
+    marginTop: 10,
+  },
+  cashOutDisabledText: {
+    color: '#666',
+    fontSize: 14,
   },
   transactionsContainer: {
     flex: 1,

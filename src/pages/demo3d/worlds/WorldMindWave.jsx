@@ -2,6 +2,7 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useScroll, Text } from '@react-three/drei';
 import * as THREE from 'three';
+import HologramGuide from '../components/HologramGuide';
 
 // Cymatic water shader
 const waterVertexShader = `
@@ -16,11 +17,12 @@ const waterVertexShader = `
     // Distance from center of the plane
     vec2 center = vec2(0.5, 0.5);
     float dist = distance(vUv, center);
+    vec2 offset = vUv - center;
     
     // Create cymatic standing waves that intensify as user approaches center
     float wave1 = sin(dist * 100.0 - uTime * 2.0) * 0.5;
     float wave2 = sin(dist * 50.0 + uTime * 4.0) * 0.5;
-    float angular = sin(atan(vUv.y - 0.5, vUv.x - 0.5) * 8.0 + uTime);
+    float angular = sin(atan(offset.y, offset.x + 0.000001) * 8.0 + uTime);
     
     // Combine waves for a geometric mandala-like ripple
     float elevation = (wave1 + wave2) * angular * uScrollProgress;
@@ -49,7 +51,8 @@ const waterFragmentShader = `
     
     // Rings
     float rings = sin(dist * 100.0 - uTime * 2.0);
-    float angular = sin(atan(vUv.y - 0.5, vUv.x - 0.5) * 8.0 + uTime);
+    vec2 offset = vUv - center;
+    float angular = sin(atan(offset.y, offset.x + 0.000001) * 8.0 + uTime);
     
     float intensity = max(0.0, rings * angular) * uScrollProgress;
     
@@ -91,7 +94,7 @@ const HologramText = ({ position, visible }) => {
   
   return (
     <group visible={visible} position={position}>
-      <Text
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
         position={[0, 40, 0]}
         fontSize={24}
         color="#051024"
@@ -102,7 +105,7 @@ const HologramText = ({ position, visible }) => {
       >
         MINDWAVE
       </Text>
-      <Text
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
         position={[0, 20, 0]}
         fontSize={8}
         color="#051024"
@@ -113,7 +116,7 @@ const HologramText = ({ position, visible }) => {
       >
         Intelligent Health & Wellness
       </Text>
-      <Text
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
         position={[0, 8, 0]}
         fontSize={6}
         color="#0a1930"
@@ -135,8 +138,11 @@ const WorldMindWave = ({ position, visible }) => {
   const sunRef = useRef();
   const [logoTex, setLogoTex] = useState(null);
   const [sunTex, setSunTex] = useState(null);
+  const [textLocked, setTextLocked] = useState(false);
+  const textLockRef = useRef({ triggered: false, timer: 0 });
   
   useEffect(() => {
+    window.mindwaveLocked = false;
     new THREE.TextureLoader().load('/mindwave-logo.png', (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
       setLogoTex(tex);
@@ -156,8 +162,34 @@ const WorldMindWave = ({ position, visible }) => {
     uScrollProgress: { value: 0 }
   }), []);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (!visible) return;
+    
+    const p = scroll.offset;
+    
+    // Trigger text lock in MindWave
+    if (!textLockRef.current.triggered && p >= 0.075) {
+      textLockRef.current.triggered = true;
+      setTextLocked(true);
+      window.mindwaveLocked = true;
+      if (scroll.el) {
+        scroll.el.style.overflow = 'hidden';
+        scroll.el.scrollTop = 0.08 * (scroll.el.scrollHeight - scroll.el.clientHeight);
+      }
+    }
+    
+    if (window.mindwaveLocked) {
+      if (scroll.el) {
+        scroll.el.scrollTop = 0.08 * (scroll.el.scrollHeight - scroll.el.clientHeight);
+      }
+      textLockRef.current.timer += delta;
+      // Unlock after 1.5 seconds
+      if (textLockRef.current.timer > 1.5) {
+        window.mindwaveLocked = false;
+        setTextLocked(false);
+        if (scroll.el) scroll.el.style.overflow = 'auto';
+      }
+    }
     
     const time = state.clock.elapsedTime;
     
@@ -179,14 +211,14 @@ const WorldMindWave = ({ position, visible }) => {
     
     // Float and pulse logo
     if (logoRef.current) {
-      logoRef.current.position.y = 25 + Math.sin(time * 2) * 2;
+      logoRef.current.position.y = -7 + Math.sin(time * 2) * 2;
       const scale = 1.0 + Math.sin(time * 4) * 0.05;
       logoRef.current.scale.set(scale, scale, 1);
       logoRef.current.rotation.y = 0; // Keep facing camera
     }
     
     if (sunRef.current) {
-      sunRef.current.position.y = 25 + Math.sin(time * 2) * 2;
+      sunRef.current.position.y = 125 + Math.sin(time * 2) * 2;
       sunRef.current.rotation.z = time * 0.1;
       const sunScale = 1.0 + Math.sin(time * 3) * 0.05;
       sunRef.current.scale.set(sunScale, sunScale, 1);
@@ -253,7 +285,10 @@ const WorldMindWave = ({ position, visible }) => {
       )}
       
       {/* Hologram Description */}
-      <HologramText position={[0, -25, -80]} visible={true} />
+      <HologramText position={[0, -5, -80]} visible={true} />
+      
+      {/* Hologram Guide */}
+      <HologramGuide appId="mindwave" position={[40, 0, -40]} />
     </group>
   );
 };

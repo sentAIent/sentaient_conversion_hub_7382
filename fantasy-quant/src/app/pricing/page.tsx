@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useSubscription, SubscriptionTier } from '@/components/SubscriptionContext'
 
 const TIERS = [
   {
@@ -54,32 +55,24 @@ export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleCheckout = async (priceId: string | null) => {
-    if (!priceId) return // Free tier
+  const { setTier } = useSubscription()
+
+  const handleCheckout = async (tierName: string, priceId: string | null) => {
+    if (!priceId) {
+      setTier('Free')
+      router.push('/')
+      return
+    }
     
     setLoading(priceId)
     setError(null)
 
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Checkout failed')
-      }
-
-      if (data.url) {
-        window.location.href = data.url
-      }
-    } catch (err: any) {
-      setError(err.message)
+    // Mock API call delay
+    setTimeout(() => {
+      setTier(tierName as SubscriptionTier)
       setLoading(null)
-    }
+      router.push('/')
+    }, 800)
   }
 
   return (
@@ -136,8 +129,8 @@ export default function PricingPage() {
               </ul>
 
               <button
-                onClick={() => handleCheckout(tier.priceId)}
-                disabled={loading !== null || !tier.priceId}
+                onClick={() => handleCheckout(tier.name, tier.priceId)}
+                disabled={loading !== null}
                 className={`w-full py-3 px-4 rounded-xl font-bold text-sm transition-colors flex justify-center items-center ${
                   tier.popular
                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/50'

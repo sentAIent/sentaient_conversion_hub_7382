@@ -26,11 +26,6 @@ const HTMLStations = () => {
       const opacity1 = progress > 0.20 && progress < 0.28 ? 1 : 0;
       station1Ref.current.style.opacity = opacity1;
     }
-    // Mindwave: 6% to 12%
-    if (station2Ref.current) {
-      const opacity2 = progress > 0.05 && progress < 0.12 ? 1 : 0;
-      station2Ref.current.style.opacity = opacity2;
-    }
   });
 
   return (
@@ -53,28 +48,16 @@ const HTMLStations = () => {
         <p className="text-xl text-gray-300 leading-relaxed font-light">The Real-World Social Protocol. Connect instantly through proximity.</p>
         <button className="mt-8 px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm font-medium tracking-wide transition-all border border-white/10 pointer-events-auto cursor-pointer">Explore Protocol</button>
       </div>
-
-      {/* Station 2: MindWave */}
-      <div ref={station2Ref} style={{ position: 'absolute', top: '40%', left: '10%', color: 'white', opacity: 0, transition: 'opacity 0.3s' }} className="w-[450px] p-10 bg-[#050505]/80 backdrop-blur-xl border border-blue-500/50 rounded-3xl shadow-[0_0_50px_rgba(59,130,246,0.2)]">
-        <div className="flex items-center gap-6 mb-6">
-            <div className="w-20 h-20 bg-[#111] rounded-2xl flex items-center justify-center border border-white/10 p-2 shadow-inner">
-                <img src="/mindwave-logo.png" alt="MindWave" className="w-full h-full object-contain scale-150" />
-            </div>
-            <h2 className="text-5xl font-bold">MindWave</h2>
-        </div>
-        <p className="text-xl text-gray-300 leading-relaxed font-light">Cognitive Entrainment OS. Sync your brainwaves and elevate your consciousness.</p>
-        <button className="mt-8 px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm font-medium tracking-wide transition-all border border-white/10 pointer-events-auto cursor-pointer">Initialize Sequence</button>
-      </div>
     </div>
   );
 };
 
 const Scene3D = () => {
   return (
-    <Canvas gl={{ antialias: false }}>
-      <color attach="background" args={['#020202']} />
+    <Canvas gl={{ antialias: false, alpha: true }}>
+      {/* Background color removed for transparency */}
       
-      <ScrollControls pages={20} damping={0.2} distance={1.2}>
+      <ScrollControls pages={10} damping={0.2} distance={1.2}>
         
         {/* The 3D World */}
         <React.Suspense fallback={null}>

@@ -15,7 +15,14 @@ import path from 'path';
 import { sendPushNotification } from './services/pushNotifications';
 import { sendEmail } from './services/email';
 import { runPredictiveMatchmaking } from './jobs/matchmakingCron';
+import { MeiliSearch } from 'meilisearch';
+
 dotenv.config({ override: true });
+
+const meiliClient = new MeiliSearch({
+  host: process.env.MEILISEARCH_HOST || 'http://localhost:7700',
+  apiKey: process.env.MEILISEARCH_MASTER_KEY || 'generate_a_random_secure_key_here_for_production'
+});
 
 const prisma = new PrismaClient();
 
@@ -265,7 +272,13 @@ export const typeDefs = `#graphql
     storefrontSales: Int!
   }
 
+  type SearchResult {
+    bounties: [Bounty!]!
+    venues: [User!]!
+  }
+
   type Query {
+    globalSearch(query: String!): SearchResult!
     me: User
     activeCheckIns: [CheckIn!]!
     myMeetingRequests: [MeetingRequest!]!
@@ -430,6 +443,25 @@ export const resolvers = {
     }
   },
   Query: {
+    globalSearch: async (_: any, { query }: any) => {
+      try {
+        const [bountyRes, venueRes] = await Promise.all([
+          meiliClient.index('bounties').search(query),
+          meiliClient.index('venues').search(query)
+        ]);
+        
+        const bountyIds = bountyRes.hits.map((h: any) => h.id);
+        const venueIds = venueRes.hits.map((h: any) => h.id);
+        
+        const bounties = await prisma.bounty.findMany({ where: { id: { in: bountyIds } } });
+        const venues = await prisma.user.findMany({ where: { id: { in: venueIds } } });
+        
+        return { bounties, venues };
+      } catch(e) {
+        console.error("Meilisearch error:", e);
+        return { bounties: [], venues: [] };
+      }
+    },
     me: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
       await ensureUserExists(context.user);
@@ -1234,6 +1266,15 @@ export const resolvers = {
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         }
       });
+
+      try {
+        await meiliClient.index('bounties').addDocuments([{
+          id: bounty.id,
+          title: bounty.title,
+          description: bounty.description,
+          venueId: bounty.venueId,
+        }]);
+      } catch (e) { console.error("Meilisearch sync error:", e); }
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],

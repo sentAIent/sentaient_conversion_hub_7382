@@ -106,14 +106,18 @@ export function AuthProvider({ children }) {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
-                    // Fetch additional data from Firestore
+                    // Fetch additional data from Firestore with a 2.5s timeout
                     const userDocPromise = getDoc(doc(db, "users", user.uid));
                     const subDocPromise = getDoc(doc(db, "subscriptions", user.uid));
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 2500));
 
-                    const [userDoc, subDoc] = await Promise.all([userDocPromise, subDocPromise]);
+                    const [userDoc, subDoc] = await Promise.race([
+                        Promise.all([userDocPromise, subDocPromise]),
+                        timeoutPromise
+                    ]);
                     
-                    const userData = userDoc.exists() ? userDoc.data() : {};
-                    const subData = subDoc.exists() ? subDoc.data() : {};
+                    const userData = userDoc && userDoc.exists() ? userDoc.data() : {};
+                    const subData = subDoc && subDoc.exists() ? subDoc.data() : {};
                     
                     // Merge subscription data to ensure we have the 'lifetime' or 'plan' tier 
                     // accessible directly on currentUser object

@@ -49,6 +49,8 @@ body {
   grid-column: 1 / -1;
   grid-row: 2 / 3;
   display: flex;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
   padding: 0 24px;
   font-weight: 600;
@@ -59,7 +61,7 @@ body {
 }
 
 .header span.brand {
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #94a3b8, #f1f5f9, #94a3b8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

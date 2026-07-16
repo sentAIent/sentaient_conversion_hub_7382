@@ -25,17 +25,90 @@ const mockPerformance = [
 ];
 
 const PortfolioDashboard = () => {
-  const [positions, setPositions] = useState(mockPositions);
-  const [allocation, setAllocation] = useState(mockAllocation);
-  const [performance, setPerformance] = useState(mockPerformance);
+  const [positions, setPositions] = useState([]);
+  const [allocation, setAllocation] = useState([]);
+  const [performance, setPerformance] = useState([]);
   const [totalEquity, setTotalEquity] = useState(0);
+  const [timeframe, setTimeframe] = useState('1M');
+  const [orderSymbol, setOrderSymbol] = useState('');
+  const [orderQty, setOrderQty] = useState('');
+  const [orderStatus, setOrderStatus] = useState(null);
+
+  const handleTrade = async (side) => {
+    if (!orderSymbol || !orderQty) {
+      setOrderStatus({ type: 'error', msg: 'Symbol and Qty required' });
+      return;
+    }
+    try {
+      const res = await fetch('http://127.0.0.1:8080/api/trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol: orderSymbol.toUpperCase(), side, qty: orderQty })
+      });
+      if (res.ok) {
+        setOrderStatus({ type: 'success', msg: `Successfully placed ${side} order for ${orderQty} ${orderSymbol.toUpperCase()}` });
+        // Refresh positions
+        const posRes = await fetch('http://127.0.0.1:8080/api/portfolio/positions');
+        const posData = await posRes.json();
+        setPositions(posData || []);
+        const total = (posData || []).reduce((acc, pos) => acc + (pos.qty * pos.currentPrice), 0);
+        setTotalEquity(total + 25000);
+        const alloc = (posData || []).map(p => ({
+          name: p.symbol,
+          value: p.qty * p.currentPrice
+        }));
+        setAllocation(alloc);
+      } else {
+        const errData = await res.json().catch(() => ({ error: 'Unknown server error' }));
+        setOrderStatus({ type: 'error', msg: `Failed: ${errData.error || 'Unknown error'}` });
+      }
+    } catch (err) {
+      setOrderStatus({ type: 'error', msg: `Error: ${err.message}` });
+    }
+  };
 
   useEffect(() => {
-    // In the future, this will fetch real Alpaca portfolio data
-    // For now, calculate total equity from mock positions
-    const total = positions.reduce((acc, pos) => acc + (pos.qty * pos.currentPrice), 0);
-    setTotalEquity(total + 25000); // add $25k cash
-  }, [positions]);
+    const fetchPortfolio = async () => {
+      try {
+        const posRes = await fetch('http://127.0.0.1:8080/api/portfolio/positions');
+        const posData = await posRes.json();
+        setPositions(posData || []);
+
+        const total = (posData || []).reduce((acc, pos) => acc + (pos.qty * pos.currentPrice), 0);
+        setTotalEquity(total + 25000); // add some mock cash
+
+        const alloc = (posData || []).map(p => ({
+          name: p.symbol,
+          value: p.qty * p.currentPrice
+        }));
+        setAllocation(alloc);
+      } catch (err) {
+        console.error("Failed to fetch positions", err);
+      }
+    };
+    fetchPortfolio();
+  }, []);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const histRes = await fetch(`http://127.0.0.1:8080/api/portfolio/history?period=${timeframe}`);
+        const histData = await histRes.json();
+        
+        const formattedHistory = (histData || []).map(pt => {
+          const d = new Date(parseInt(pt.date) * 1000);
+          return {
+            date: d.toLocaleDateString(),
+            value: pt.value
+          };
+        });
+        setPerformance(formattedHistory);
+      } catch (err) {
+        console.error("Failed to fetch history", err);
+      }
+    };
+    fetchHistory();
+  }, [timeframe]);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', height: '100%', paddingBottom: '24px' }}>
@@ -45,7 +118,28 @@ const PortfolioDashboard = () => {
         
         {/* Performance Chart */}
         <div style={{ background: 'rgba(30, 41, 59, 0.7)', borderRadius: '12px', padding: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#e2e8f0', fontSize: '1.1rem' }}>Portfolio Performance (YTD)</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ margin: '0', color: '#e2e8f0', fontSize: '1.1rem' }}>Portfolio Performance</h3>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {['1W', '1M', '1A'].map(tf => (
+                <button 
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  style={{
+                    background: timeframe === tf ? '#3b82f6' : 'rgba(255,255,255,0.05)',
+                    border: 'none',
+                    color: timeframe === tf ? '#fff' : '#94a3b8',
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
+          </div>
           <div style={{ height: '300px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={performance} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
@@ -97,6 +191,46 @@ const PortfolioDashboard = () => {
       {/* Right Column: Metrics & Allocation */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
+        {/* Order Entry */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.7)', borderRadius: '12px', padding: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <h3 style={{ margin: '0 0 16px 0', color: '#e2e8f0', fontSize: '1.1rem' }}>Order Entry</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <input 
+                type="text" 
+                placeholder="Symbol (e.g. AAPL)" 
+                value={orderSymbol} 
+                onChange={(e) => setOrderSymbol(e.target.value)}
+                style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #475569', background: '#0f172a', color: '#fff' }}
+              />
+              <input 
+                type="number" 
+                placeholder="Qty" 
+                value={orderQty} 
+                onChange={(e) => setOrderQty(e.target.value)}
+                style={{ width: '80px', padding: '8px', borderRadius: '6px', border: '1px solid #475569', background: '#0f172a', color: '#fff' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={() => handleTrade('BUY')}
+                style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', background: '#10b981', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
+                BUY
+              </button>
+              <button 
+                onClick={() => handleTrade('SELL')}
+                style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
+                SELL
+              </button>
+            </div>
+            {orderStatus && (
+              <div style={{ marginTop: '8px', padding: '8px', borderRadius: '4px', fontSize: '0.85rem', background: orderStatus.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)', color: orderStatus.type === 'error' ? '#ef4444' : '#10b981' }}>
+                {orderStatus.msg}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Risk Metrics */}
         <div style={{ background: 'rgba(30, 41, 59, 0.7)', borderRadius: '12px', padding: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
           <h3 style={{ margin: '0 0 16px 0', color: '#e2e8f0', fontSize: '1.1rem' }}>Risk Metrics</h3>

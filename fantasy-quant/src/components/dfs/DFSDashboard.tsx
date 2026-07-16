@@ -8,8 +8,11 @@ import {
 import {
   Zap, Target, TrendingUp, Users, DollarSign, AlertTriangle,
   CheckCircle, Loader2, X, Plus, ChevronDown, ChevronUp,
-  RefreshCw, Download, Search, BarChart2, Settings, Cpu, Layers, Share2
+  RefreshCw, Download, Search, BarChart2, Settings, Cpu, Layers, Share2, AlertCircle, FileSpreadsheet, Upload, Copy, ChevronRight, Lock
 } from 'lucide-react';
+import Link from 'next/link';
+import { BetButton } from '../social/BetButton';
+import { useSubscription } from '@/components/SubscriptionContext';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export type DashboardLayout = {
@@ -33,6 +36,7 @@ export type DFSPlayer = {
   player_vegas_props?: { prop_type: string; line: number; over_odds: number; under_odds: number }[];
   injury_status?: string;
   play_probability?: number;
+  player_signals?: { signal_type: 'POSITIVE' | 'NEGATIVE', description: string }[];
 };
 
 // DraftKings slot structure
@@ -94,8 +98,9 @@ const InjuryBadge = ({ status, prob }: { status?: string, prob?: number }) => {
 };
 
 // ─── Player Row ───────────────────────────────────────────────────────────────
-const PlayerRow = ({ player, onAdd, isInLineup, isDisabled, layout, isLive, actualPts }: {
-  player: DFSPlayer; onAdd: () => void; isInLineup: boolean; isDisabled: boolean; layout: DashboardLayout; isLive?: boolean; actualPts?: { pts: number, source: string };
+const PlayerRow = ({ player, onAdd, isInLineup, isDisabled, layout, isLive, actualPts, tier, exposureLimit, onExposureChange }: {
+  player: DFSPlayer; onAdd: () => void; isInLineup: boolean; isDisabled: boolean; layout: DashboardLayout; isLive?: boolean; actualPts?: { pts: number, source: string }; tier: string;
+  exposureLimit?: number; onExposureChange?: (val: number) => void;
 }) => {
 
   const p = player.players;
@@ -123,20 +128,73 @@ const PlayerRow = ({ player, onAdd, isInLineup, isDisabled, layout, isLive, actu
                {player.players.data_source}
              </span>
           )}
+          {player.player_signals && player.player_signals.length > 0 && (
+            <div className={`flex gap-0.5 ml-2 relative ${tier === 'Free' ? 'cursor-not-allowed group/lock' : 'cursor-help group/signals'}`}>
+              <div className={`flex gap-0.5 ${tier === 'Free' ? 'blur-sm select-none opacity-50' : ''}`}>
+                {player.player_signals.map((s, idx) => (
+                  <span key={idx} className={`text-[11px] font-bold ${s.signal_type === 'POSITIVE' ? 'text-green-400' : 'text-orange-400'}`}>
+                    {s.signal_type === 'POSITIVE' ? '!' : '?'}
+                  </span>
+                ))}
+              </div>
+              
+              {tier === 'Free' ? (
+                <>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Lock size={12} className="text-blue-400" />
+                  </div>
+                  {/* Tooltip for Locked Signals */}
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 w-48 bg-gray-900 border border-blue-900/50 rounded-lg p-3 shadow-2xl opacity-0 group-hover/lock:opacity-100 pointer-events-none z-50 transition-opacity text-center">
+                    <div className="text-xs font-bold text-white mb-1">Premium Analytics</div>
+                    <div className="text-[10px] text-gray-400 mb-2">Upgrade to Pro to unlock advanced matchup signals.</div>
+                    <Link href="/pricing" className="inline-block px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded pointer-events-auto">
+                      View Plans
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                /* Tooltip for Unlocked Signals */
+                <div className="absolute left-0 bottom-full mb-1 w-64 bg-gray-900 border border-gray-700 rounded-lg p-2 shadow-2xl opacity-0 group-hover/signals:opacity-100 pointer-events-none z-50 transition-opacity">
+                  <div className="text-xs font-bold text-white mb-1">Premium Analytics Signals</div>
+                  <ul className="text-[10px] space-y-1">
+                    {player.player_signals.map((s, idx) => (
+                      <li key={idx} className="flex gap-1.5 items-start">
+                        <span className={`font-bold ${s.signal_type === 'POSITIVE' ? 'text-green-400' : 'text-orange-400'}`}>
+                          {s.signal_type === 'POSITIVE' ? '!' : '?'}
+                        </span>
+                        <span className="text-gray-300">{s.description}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           <InjuryBadge status={player.injury_status} prob={player.play_probability} />
         </div>
         <div className="text-xs text-gray-600">{p?.team}</div>
       </div>
 
       {layout.vegasProps && (mainProp ? (
-        <div className="text-xs text-center hidden sm:block w-16">
-          <div className="text-gray-400">{mainProp.prop_type.replace('_', ' ')}</div>
-          <div className="text-white font-semibold">{mainProp.line}</div>
-          <div className={mainProp.over_odds < 0 ? 'text-green-500' : 'text-red-400'}>
-            o{mainProp.over_odds > 0 ? '+' : ''}{mainProp.over_odds}
+        <div className="text-xs text-center hidden sm:flex flex-col items-center justify-center w-20">
+          <div className="text-gray-400 mb-1">{mainProp.prop_type.replace('_', ' ').toUpperCase()}</div>
+          <div className="flex gap-2 items-center">
+            <span className="text-white font-semibold">{mainProp.line}</span>
+            <BetButton
+              bet={{
+                targetId: player.player_id,
+                targetName: player.players?.name || 'Player',
+                betType: 'player_prop',
+                market: mainProp.prop_type,
+                line: mainProp.line,
+                selection: 'OVER',
+                odds: mainProp.over_odds
+              }}
+              size="sm"
+            />
           </div>
         </div>
-      ) : <div className="w-16 hidden sm:block" />)}
+      ) : <div className="w-20 hidden sm:block" />)}
 
       {layout.advStats && (advStats?.target_share != null ? (
         <div className="text-xs text-center hidden md:block w-14">
@@ -178,6 +236,21 @@ const PlayerRow = ({ player, onAdd, isInLineup, isDisabled, layout, isLive, actu
       {layout.valueScore && (
         <div className="hidden lg:flex items-center w-12 justify-center">
           <ValueBadge score={player.value_score} />
+        </div>
+      )}
+
+      {onExposureChange && (
+        <div className="w-16 flex items-center justify-center ml-2 hidden sm:flex">
+          <input 
+            type="number"
+            min="0"
+            max="100"
+            placeholder="Max%"
+            value={exposureLimit ?? ''}
+            onChange={(e) => onExposureChange(parseInt(e.target.value) || 0)}
+            className="w-12 bg-gray-900 border border-gray-700 rounded px-1 py-1 text-xs text-center text-white focus:outline-none focus:border-emerald-500"
+            title="Max Exposure %"
+          />
         </div>
       )}
 
@@ -237,6 +310,8 @@ const LineupSlot = ({ slot, player, onRemove }: {
 
 // ─── Main DFS Dashboard ───────────────────────────────────────────────────────
 export default function DFSDashboard() {
+  const { tier } = useSubscription();
+  const [optimizerLoading, setOptimizerLoading] = useState(false);
   const [platform, setPlatform] = useState<'dk' | 'fd'>('dk');
   const [week, setWeek] = useState(14);
   const [posFilter, setPosFilter] = useState<string>('ALL');
@@ -294,12 +369,14 @@ export default function DFSDashboard() {
     numLineups: 20,
     maxExposure: 30, // 30%
     forceQBStack: true,
-    forceRunback: false
+    forceRunback: false,
+    analyzeOwnership: true
   });
   const [mmeLineups, setMmeLineups] = useState<(DFSPlayer | null)[][]>([]);
   const [sharingIdx, setSharingIdx] = useState<number | null>(null);
   const [isGeneratingMME, setIsGeneratingMME] = useState(false);
   const [mmeProgress, setMmeProgress] = useState(0);
+  const [playerExposures, setPlayerExposures] = useState<Record<string, number>>({});
 
   const [dashboardLayout, setDashboardLayout] = useState<DashboardLayout>({
     vegasProps: true,
@@ -655,7 +732,8 @@ export default function DFSDashboard() {
         
         // Enforce max exposure limits dynamically
         exposureCounts.forEach((count, pid) => {
-          if (count / maxIters >= mmeConfig.maxExposure / 100) {
+          const limit = playerExposures[pid] ?? mmeConfig.maxExposure;
+          if (count / maxIters >= limit / 100) {
             currentExcluded.add(pid);
           }
         });
@@ -724,16 +802,39 @@ export default function DFSDashboard() {
         for (let j = 0; j < slots.length; j++) {
           if (newLineup[j]) continue;
           const slot = slots[j];
-          const eligible = playerPool.filter(p => {
-            if (used.has(p.player_id)) return false;
-            if (currentExcluded.has(p.player_id)) return false;
-            const pos = p.players?.position;
-            if (slot === pos) return true;
-            if (slot === 'FLEX' && ['RB', 'WR', 'TE'].includes(pos)) return true;
-            return false;
-          }).sort((a, b) => b.projected_pts - a.projected_pts);
           
-          const topN = eligible.slice(0, 3);
+          // Pre-calculate randomized, correlated, and ownership-adjusted projections
+          const scoredPool = playerPool.map(p => {
+            if (used.has(p.player_id) || currentExcluded.has(p.player_id)) {
+                return { ...p, adjustedProj: -1 };
+            }
+            const pos = p.players?.position;
+            const fits = slot === pos || (slot === 'FLEX' && ['RB', 'WR', 'TE'].includes(pos));
+            if (!fits) return { ...p, adjustedProj: -1 };
+
+            // Apply variance (random normal-ish distribution simulation)
+            const variance = 0.85 + (Math.random() * 0.3); // 85% to 115% of projection
+            let adjustedProj = p.projected_pts * variance;
+
+            // Apply ownership penalty if configured
+            if (mmeConfig.analyzeOwnership) {
+                // e.g. ownership of 20% -> subtract 2 points (basic heuristic)
+                adjustedProj -= (p.projected_ownership / 10);
+            }
+
+            // Apply correlation (runback)
+            if (mmeConfig.forceRunback) {
+                const qb = newLineup.find(lu => lu?.players?.position === 'QB');
+                if (qb && p.players?.position === 'WR' && p.players?.team !== qb.players?.team) {
+                    // Small bump for opposing WR (runback)
+                    adjustedProj *= 1.1;
+                }
+            }
+            
+            return { ...p, adjustedProj };
+          }).filter(p => p.adjustedProj > 0).sort((a, b) => b.adjustedProj - a.adjustedProj);
+          
+          const topN = scoredPool.slice(0, 3);
           const player = topN[Math.floor(Math.random() * topN.length)];
           
           if (player) {
@@ -743,7 +844,7 @@ export default function DFSDashboard() {
               used.add(player.player_id);
               budgetLeft -= player.salary;
             } else {
-               for (const fallback of eligible) {
+               for (const fallback of scoredPool) {
                     if (fallback.salary <= budgetLeft - minCostRemaining) {
                         newLineup[j] = fallback;
                         used.add(fallback.player_id);
@@ -934,6 +1035,9 @@ export default function DFSDashboard() {
                     layout={dashboardLayout}
                     isLive={isLive}
                     actualPts={liveStats[player.player_id]}
+                    tier={tier}
+                    exposureLimit={playerExposures[player.player_id]}
+                    onExposureChange={(val) => setPlayerExposures(prev => ({...prev, [player.player_id]: val}))}
                   />
                 ))}
               </div>
@@ -954,9 +1058,12 @@ export default function DFSDashboard() {
                 onAdd={() => addPlayer(player)}
                 isInLineup={lineupPlayerIds.has(player.player_id)}
                 isDisabled={false}
-                    layout={dashboardLayout}
-                    isLive={isLive}
-                    actualPts={liveStats[player.player_id]}
+                layout={dashboardLayout}
+                isLive={isLive}
+                actualPts={liveStats[player.player_id]}
+                tier={tier}
+                exposureLimit={playerExposures[player.player_id]}
+                onExposureChange={(val) => setPlayerExposures(prev => ({...prev, [player.player_id]: val}))}
               />
             ))
           )}
@@ -1153,6 +1260,17 @@ export default function DFSDashboard() {
                                 </div>
                                 <input type="checkbox" className="hidden" checked={mmeConfig.forceRunback} onChange={e => setMmeConfig({...mmeConfig, forceRunback: e.target.checked})} />
                             </label>
+                            
+                            <div className="flex items-center justify-between group cursor-pointer" onClick={() => setMmeConfig({...mmeConfig, analyzeOwnership: !mmeConfig.analyzeOwnership})}>
+                                <div>
+                                    <h4 className="text-sm font-bold text-gray-200">Analyze Ownership</h4>
+                                    <p className="text-[10px] text-gray-500 mt-1">Deduct points based on expected ownership to favor contrarian plays.</p>
+                                </div>
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${mmeConfig.analyzeOwnership ? 'bg-indigo-500 border-indigo-400' : 'bg-white/[0.04] border-white/[0.1] group-hover:border-white/[0.2]'}`}>
+                                    {mmeConfig.analyzeOwnership && <CheckCircle size={12} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={mmeConfig.analyzeOwnership} onChange={e => setMmeConfig({...mmeConfig, analyzeOwnership: e.target.checked})} />
+                            </div>
                         </div>
                     </div>
                     

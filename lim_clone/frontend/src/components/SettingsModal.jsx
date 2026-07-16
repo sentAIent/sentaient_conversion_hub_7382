@@ -18,7 +18,7 @@ const SettingsModal = ({ isOpen, onClose, customTickers, setCustomTickers }) => 
       setIsSearching(true);
       setError('');
       try {
-        const res = await fetch(`http://localhost:8080/api/search-asset?q=${searchQuery}`);
+        const res = await fetch(`http://127.0.0.1:8080/api/search-asset?q=${searchQuery}`);
         if (!res.ok) {
           if (res.status === 404) throw new Error("Ticker not found or invalid.");
           throw new Error("Search failed.");
