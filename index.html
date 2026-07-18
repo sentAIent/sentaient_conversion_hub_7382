@@ -39,78 +39,46 @@
 
     <!-- LightSpeed Full Stack RUM, Analytics & Pixel Tracker -->
     <script>
-      (function() {
-        // IMPORTANT: Replace with your actual Supabase URL and Anon Key
-        const SUPABASE_URL = "https://zbwnpclnxamiynwpdbed.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpid25wY2xueGFtaXlud3BkYmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzk5NDgsImV4cCI6MjA5OTcxNTk0OH0.0GkslQpzdsatDNI5qLuccamMAG_PATIpAW988FIUuO8";
-    
-        const currentSite = window.location.hostname;
-        
-        // Generate or retrieve persistent session ID
-        let sessionId = localStorage.getItem('ls_session_id');
-        if (!sessionId) {
-          sessionId = 'sess_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-          localStorage.setItem('ls_session_id', sessionId);
-        }
-    
-        // Determine device type
-        const ua = navigator.userAgent;
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-        const deviceType = isMobile ? 'Mobile' : 'Desktop';
-    
-        // Helper for Supabase fetch
-        function sendToSupabase(endpoint, payload) {
-          fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            },
-            body: JSON.stringify(payload)
-          }).catch(err => console.error(`LightSpeed ${endpoint} Error:`, err));
-        }
-    
-        // 1. Track Marketing Analytics (Pixel)
-        sendToSupabase('web_analytics', {
-          site: currentSite,
-          session_id: sessionId,
-          path: window.location.pathname,
-          referrer: document.referrer || 'Direct',
-          user_agent: ua,
-          device_type: deviceType,
-          screen_resolution: `${window.screen.width}x${window.screen.height}`,
-          language: navigator.language
-        });
-    
-        // 2. Track Page Load Time
-        window.addEventListener("load", () => {
-          setTimeout(() => {
-            const navEntry = performance.getEntriesByType("navigation")[0];
-            if (navEntry) {
-              sendToSupabase('metrics', {
-                site: currentSite,
-                metric_name: "page_load_time",
-                value: navEntry.loadEventEnd - navEntry.startTime,
-                metadata: { path: window.location.pathname, session_id: sessionId }
+      window.LIGHTSPEED_CONFIG = {
+        source: "sentaient.com", // This tells it to track Sentaient!
+        supabaseUrl: "https://zbwnpclnxamiynwpdbed.supabase.co",
+        anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpid25wY2xueGFtaXlud3BkYmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzk5NDgsImV4cCI6MjA5OTcxNTk0OH0.0GkslQpzdsatDNI5qLuccamMAG_PATIpAW988FIUuO8"
+      };
+      // The actual tracker code:
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          try {
+            const config = window.LIGHTSPEED_CONFIG;
+            let loadTimeMs = 0;
+            
+            const navEntries = performance.getEntriesByType("navigation");
+            if (navEntries.length > 0 && navEntries[0].loadEventEnd > 0) {
+              loadTimeMs = navEntries[0].loadEventEnd - navEntries[0].startTime;
+            } else {
+              const timing = performance.timing;
+              loadTimeMs = timing.loadEventEnd - timing.navigationStart;
+            }
+            if (loadTimeMs > 0 && loadTimeMs <= 60000) {
+              fetch(`${config.supabaseUrl}/rest/v1/metrics`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': config.anonKey,
+                  'Authorization': `Bearer ${config.anonKey}`
+                },
+                body: JSON.stringify({
+                  site: config.source,
+                  metric_name: 'page_load_time',
+                  value: loadTimeMs
+                }),
+                keepalive: true
               });
             }
-          }, 0);
-        });
-    
-        // 3. Track JavaScript Errors (Incidents)
-        window.addEventListener("error", (event) => {
-          sendToSupabase('incidents', {
-            type: 'error',
-            title: 'Frontend JS Exception',
-            explanation: `${event.message} at ${event.filename}:${event.lineno}`,
-            fix_action: 'Investigate Code',
-            source: currentSite
-          });
-        });
-    
-        console.log(`LightSpeed Monitoring & Analytics Active for ${currentSite}`);
-      })();
+          } catch (e) {
+            console.error("Lightspeed Tracker Error:", e);
+          }
+        }, 0);
+      });
     </script>
 
     <!-- Google Analytics (Placeholder) -->
