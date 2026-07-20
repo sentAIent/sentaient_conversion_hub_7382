@@ -1,5 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { secureStorage } from '../../utils/secureStorage';
 import { db } from '@/config/firebase';
 import { collection, onSnapshot, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
 
@@ -26,12 +27,12 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize and Sync to local storage
   useEffect(() => {
-    const saved = localStorage.getItem('activeWorkspace');
-    if (saved) setActiveWorkspace(saved);
+    const saved = secureStorage.getItem('activeWorkspace');
+    if (saved) {setActiveWorkspace(saved);}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('activeWorkspace', activeWorkspace);
+    secureStorage.setItem('activeWorkspace', activeWorkspace);
   }, [activeWorkspace]);
 
   // Sync Brands with Firestore

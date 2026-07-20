@@ -5,6 +5,7 @@ import AssessmentIntro from './components/AssessmentIntro';
 import AssessmentProgress from './components/AssessmentProgress';
 import QuestionCard from './components/QuestionCard';
 import AssessmentResults from './components/AssessmentResults';
+import { secureStorage } from '../../utils/secureStorage';
 
 const FreeAIAssessmentPortal = () => {
   const [currentStep, setCurrentStep] = useState('intro'); // 'intro', 'assessment', 'results'
@@ -399,20 +400,20 @@ const FreeAIAssessmentPortal = () => {
   // Save progress to localStorage
   useEffect(() => {
     if (currentStep === 'assessment') {
-      localStorage.setItem('ai-assessment-progress', JSON.stringify({
+      secureStorage.setJSON('ai-assessment-progress', {
         currentQuestionIndex,
         answers,
         timestamp: Date.now()
-      }));
+      });
     }
   }, [currentQuestionIndex, answers, currentStep]);
 
   // Load progress from localStorage on mount
   useEffect(() => {
-    const savedProgress = localStorage.getItem('ai-assessment-progress');
+    const savedProgress = secureStorage.getJSON('ai-assessment-progress');
     if (savedProgress) {
       try {
-        const { currentQuestionIndex: savedIndex, answers: savedAnswers, timestamp } = JSON.parse(savedProgress);
+        const { currentQuestionIndex: savedIndex, answers: savedAnswers, timestamp } = savedProgress;
         // Only restore if saved within last 24 hours
         if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
           setCurrentQuestionIndex(savedIndex);

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { FiSave, FiUploadCloud, FiClock, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { secureStorage } from '../../utils/secureStorage';
 import toast from 'react-hot-toast';
 import { useWorkspace } from '@/components/providers/WorkspaceProvider';
 import AVSelector from './AVSelector';
@@ -18,11 +20,9 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
   const [savedPresets, setSavedPresets] = useState<{name: string, data: any}[]>([]);
 
   useEffect(() => {
-    const loaded = localStorage.getItem('mindwave_custom_presets');
-    if (loaded) {
-      try {
-        setSavedPresets(JSON.parse(loaded));
-      } catch (e) {}
+    const loaded = secureStorage.getJSON('mindwave_custom_presets');
+    if (loaded && Array.isArray(loaded)) {
+      setSavedPresets(loaded);
     }
   }, []);
 
@@ -35,7 +35,7 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
     };
     const updated = [...savedPresets, newPreset];
     setSavedPresets(updated);
-    localStorage.setItem('mindwave_custom_presets', JSON.stringify(updated));
+    secureStorage.setJSON('mindwave_custom_presets', updated);
     setMindwavePreset(`custom_${name}`);
     toast.success("Preset saved!");
   };

@@ -152,7 +152,7 @@ app.post("/proxy/gemini", async (req, res) => {
 
 // Dashboard Stats
 async function loadDashboardStats() {
-  const apiBase = localStorage.getItem(KEYS.apiBase) || 'http://localhost:8082'; // Ensure port is 8082
+  const apiBase = (typeof localStorage !== 'undefined' && typeof window !== 'undefined') ? (localStorage.getItem('apiBase') || 'http://localhost:8082') : 'http://localhost:8082'; // Ensure port is 8082
   console.log("DEBUG: Attempting to fetch stats from:", `${apiBase}/staged`);
   
   try {

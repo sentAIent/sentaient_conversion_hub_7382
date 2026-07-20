@@ -3,7 +3,7 @@
   [headers.values]
     # Restrict where resources can be loaded from to prevent XSS attacks.
     # Allowing 'self', Supabase (for backend), and inline scripts/styles which are common in Vite/React apps.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; font-src 'self' data: https:;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.posthog.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.posthog.com; img-src 'self' data: https:; font-src 'self' data: https:;"
     
     # Enforce HTTPS on all connections to the site for the next year (including subdomains)
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"

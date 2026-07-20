@@ -24,3 +24,4 @@ u2net.onnx
 lim_clone/db/logs/*
 lim_clone/db/data/*
 *.onnx
+app-debug.apk

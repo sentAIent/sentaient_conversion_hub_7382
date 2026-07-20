@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { secureStorage } from '../utils/secureStorage';
 
 const AuthContext = createContext();
 
@@ -131,9 +132,9 @@ export function AuthProvider({ children }) {
                                        mergedSubscription.isProPilot === true;
 
                     if (isLifetime) {
-                        localStorage.setItem('sentaient_lifetime_access', 'true');
+                        secureStorage.setItem('sentaient_lifetime_access', 'true');
                     } else {
-                        localStorage.removeItem('sentaient_lifetime_access');
+                        secureStorage.removeItem('sentaient_lifetime_access');
                     }
 
                     setCurrentUser({ 
@@ -144,11 +145,11 @@ export function AuthProvider({ children }) {
                 } catch (err) {
                     console.error("Error fetching user data:", err);
                     setCurrentUser(user);
-                    localStorage.removeItem('sentaient_lifetime_access');
+                    secureStorage.removeItem('sentaient_lifetime_access');
                 }
             } else {
                 setCurrentUser(null);
-                localStorage.removeItem('sentaient_lifetime_access');
+                secureStorage.removeItem('sentaient_lifetime_access');
             }
             setLoading(false);
         });
