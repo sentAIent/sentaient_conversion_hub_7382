@@ -36,23 +36,8 @@ export default function Analytics() {
     fetchData();
   }, [selectedApp]);
 
-  // Mock data for when table is empty (wow factor)
-  const mockTrend = [
-    { time: '08:00', views: 120 }, { time: '09:00', views: 250 }, { time: '10:00', views: 340 },
-    { time: '11:00', views: 280 }, { time: '12:00', views: 500 }, { time: '13:00', views: 420 },
-    { time: '14:00', views: 610 }, { time: '15:00', views: 800 }
-  ];
-  
-  const mockReferrers = [
-    { name: 'Google', value: 45 }, { name: 'Direct', value: 30 }, { name: 'Twitter', value: 15 }, { name: 'LinkedIn', value: 10 }
-  ];
-
-  const mockDevices = [
-    { name: 'Mobile', value: 65 }, { name: 'Desktop', value: 35 }
-  ];
-  const COLORS = ['#00ffcc', '#ff00cc', '#00ccff', '#ffcc00'];
-
   const hasData = analytics.length > 0;
+  const COLORS = ['#00ffcc', '#ff00cc', '#00ccff', '#ffcc00'];
 
   // Data Processing
   let realTrend = [];
@@ -127,65 +112,85 @@ export default function Analytics() {
       </div>
       
       <div className="widgets-grid" style={{ marginBottom: '2rem' }}>
-        <div className="widget glass" style={{ gridColumn: '1 / -1', height: '350px' }}>
+        <div className="widget glass" style={{ gridColumn: '1 / -1', height: '350px', position: 'relative' }}>
           <h3>Traffic Trends (Page Views)</h3>
-          <ResponsiveContainer width="100%" height="85%">
-            <LineChart data={hasData ? realTrend : mockTrend} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="time" stroke="var(--text-muted)" />
-              <YAxis stroke="var(--text-muted)" />
-              <Tooltip 
-                contentStyle={{ backgroundColor: 'rgba(20,20,20,0.8)', border: '1px solid var(--border-glass)', borderRadius: '8px' }}
-                itemStyle={{ color: 'var(--accent)' }}
-              />
-              <Line type="monotone" dataKey="views" stroke="#00ccff" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-            </LineChart>
-          </ResponsiveContainer>
+          {!hasData ? (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              No trend data available yet.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="85%">
+              <LineChart data={realTrend} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="time" stroke="var(--text-muted)" />
+                <YAxis stroke="var(--text-muted)" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'rgba(20,20,20,0.8)', border: '1px solid var(--border-glass)', borderRadius: '8px' }}
+                  itemStyle={{ color: 'var(--accent)' }}
+                />
+                <Line type="monotone" dataKey="views" stroke="#00ccff" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 
       <div className="widgets-grid">
-        <div className="widget glass" style={{ height: '300px' }}>
+        <div className="widget glass" style={{ height: '300px', position: 'relative' }}>
           <h3>Top Referrers</h3>
-          <ResponsiveContainer width="100%" height="80%">
-            <BarChart data={hasData ? realReferrers : mockReferrers} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-              <XAxis type="number" stroke="var(--text-muted)" />
-              <YAxis dataKey="name" type="category" stroke="var(--text-muted)" width={80} />
-              <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ backgroundColor: 'rgba(20,20,20,0.9)', borderColor: 'var(--border-glass)' }} />
-              <Bar dataKey="value" fill="#ff00cc" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {!hasData ? (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              No referrer data available yet.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="80%">
+              <BarChart data={realReferrers} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                <XAxis type="number" stroke="var(--text-muted)" />
+                <YAxis dataKey="name" type="category" stroke="var(--text-muted)" width={80} />
+                <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ backgroundColor: 'rgba(20,20,20,0.9)', borderColor: 'var(--border-glass)' }} />
+                <Bar dataKey="value" fill="#ff00cc" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
-        <div className="widget glass" style={{ height: '300px', display: 'flex', flexDirection: 'column' }}>
+        <div className="widget glass" style={{ height: '300px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
           <h3>Device Breakdown</h3>
-          <ResponsiveContainer width="100%" height="80%">
-            <PieChart>
-              <Pie
-                data={hasData ? realDevices : mockDevices}
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {(hasData ? realDevices : mockDevices).map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ backgroundColor: 'rgba(20,20,20,0.9)', borderColor: 'var(--border-glass)' }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: 'auto' }}>
-            <span style={{ color: COLORS[0] }}>● Mobile ({mobilePerc}%)</span>
-            <span style={{ color: COLORS[1] }}>● Desktop ({desktopPerc}%)</span>
-          </div>
+          {!hasData ? (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              No device data available yet.
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height="80%">
+                <PieChart>
+                  <Pie
+                    data={realDevices}
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {realDevices.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: 'rgba(20,20,20,0.9)', borderColor: 'var(--border-glass)' }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: 'auto' }}>
+                <span style={{ color: COLORS[0] }}>● Mobile ({mobilePerc}%)</span>
+                <span style={{ color: COLORS[1] }}>● Desktop ({desktopPerc}%)</span>
+              </div>
+            </>
+          )}
         </div>
         
         <div className="widget glass" style={{ height: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
           <h3 style={{ position: 'absolute', top: '1.5rem', left: '1.5rem' }}>Active Live Visitors</h3>
           <div style={{ fontSize: '4rem', fontWeight: 'bold', color: '#00ffcc', textShadow: '0 0 20px rgba(0, 255, 204, 0.5)' }}>
-            {hasData ? liveVisitors : 42}
+            {liveVisitors}
           </div>
           <p className="subtitle">Right now</p>
           {!hasData && (

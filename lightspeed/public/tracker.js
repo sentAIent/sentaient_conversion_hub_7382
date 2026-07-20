@@ -48,6 +48,6 @@
       } catch (e) {
         console.error("Lightspeed Tracker Error:", e);
       }
-    }, 0);
+    }, 1000);
   });
 })();
