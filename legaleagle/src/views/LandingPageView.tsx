@@ -130,30 +130,66 @@ export const LandingPageView: React.FC = () => {
             </section>
 
             {/* Testimonials (Placeholders) */}
+            {/* Testimonials */}
             <section className="py-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-bold mb-4">Trusted by Legal Professionals</h2>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="p-8 rounded-2xl bg-slate-900 border border-slate-800 relative">
-                                <MessageSquare className="absolute top-8 right-8 w-6 h-6 text-slate-800" />
-                                <div className="flex items-center gap-1 mb-6 text-yellow-500">
-                                    {[1, 2, 3, 4, 5].map(star => <CheckCircle2 key={star} className="w-4 h-4 fill-current" />)}
-                                </div>
-                                <p className="text-slate-300 mb-6 italic">
-                                    "Legal Eagle has completely transformed how our firm handles initial contract reviews. It catches nuanced liabilities that even senior partners occasionally miss."
-                                </p>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-slate-800" />
-                                    <div>
-                                        <div className="font-semibold text-slate-200">Legal Professional {i}</div>
-                                        <div className="text-sm text-slate-500">Partner, Top Law Firm</div>
-                                    </div>
+                        {/* Testimonial 1 */}
+                        <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 relative">
+                            <MessageSquare className="absolute top-8 right-8 w-6 h-6 text-slate-800" />
+                            <div className="flex items-center gap-1 mb-6 text-yellow-500">
+                                {[1, 2, 3, 4, 5].map(star => <CheckCircle2 key={star} className="w-4 h-4 fill-current" />)}
+                            </div>
+                            <p className="text-slate-300 mb-6 italic">
+                                "Legal Eagle has completely transformed how our firm handles initial contract reviews. It catches nuanced liabilities that even senior partners occasionally miss."
+                            </p>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-400">ES</div>
+                                <div>
+                                    <h4 className="font-semibold text-sm">Elena S.</h4>
+                                    <p className="text-xs text-slate-400">Managing Partner, Corporate Law</p>
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Testimonial 2 */}
+                        <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 relative">
+                            <MessageSquare className="absolute top-8 right-8 w-6 h-6 text-slate-800" />
+                            <div className="flex items-center gap-1 mb-6 text-yellow-500">
+                                {[1, 2, 3, 4, 5].map(star => <CheckCircle2 key={star} className="w-4 h-4 fill-current" />)}
+                            </div>
+                            <p className="text-slate-300 mb-6 italic">
+                                "As a startup founder, I used to dread MSAs. Now I run them through Legal Eagle first. It gives me the confidence to push back on one-sided terms immediately."
+                            </p>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-400">MJ</div>
+                                <div>
+                                    <h4 className="font-semibold text-sm">Marcus J.</h4>
+                                    <p className="text-xs text-slate-400">Founder & CEO, Techflow</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Testimonial 3 */}
+                        <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 relative">
+                            <MessageSquare className="absolute top-8 right-8 w-6 h-6 text-slate-800" />
+                            <div className="flex items-center gap-1 mb-6 text-yellow-500">
+                                {[1, 2, 3, 4, 5].map(star => <CheckCircle2 key={star} className="w-4 h-4 fill-current" />)}
+                            </div>
+                            <p className="text-slate-300 mb-6 italic">
+                                "The integration is seamless. We plugged Legal Eagle into our enterprise workflow and it reduced our preliminary review time by over 70% in the first month."
+                            </p>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-400">SW</div>
+                                <div>
+                                    <h4 className="font-semibold text-sm">Sarah W.</h4>
+                                    <p className="text-xs text-slate-400">General Counsel, Acme Corp</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

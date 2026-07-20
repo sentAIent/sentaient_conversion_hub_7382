@@ -30,6 +30,7 @@ const IcebreakerAdmin = React.lazy(() => import('./pages/IcebreakerAdmin'));
 const IcebreakerLocalApp = React.lazy(() => import('./pages/IcebreakerLocalApp'));
 const InterstellarLanding = React.lazy(() => import('./pages/InterstellarLanding'));
 const MindwaveLanding = React.lazy(() => import('./pages/MindwaveLanding'));
+const LightspeedHardware = React.lazy(() => import('./pages/LightspeedHardware'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -77,6 +78,8 @@ const ProjectRoutes = () => {
               <Route path="/icewaitlist" element={<IcebreakerAdmin />} />
               <Route path="/iceadmin" element={<IcebreakerAdmin />} />
               <Route path="/icebreaker/*" element={<IcebreakerLocalApp />} />
+              
+              <Route path="/lightspeed/hardware" element={<LightspeedHardware />} />
 
               <Route path="/portfolio" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />

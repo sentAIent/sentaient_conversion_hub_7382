@@ -14,3 +14,4 @@ export { PlaybookView } from './PlaybookView';
 export { AuditLogView } from './AuditLogView';
 export { AcceptInviteView } from './AcceptInviteView';
 export { CasesView } from './CasesView';
+export { WebSearchView } from './WebSearchView';

@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  # The Android Emulator container
+  android:
+    image: budtmo/docker-android:emulator_11.0
+    privileged: true
+    ports:
+      - "6080:6080"
+      - "5554:5554"
+      - "5555:5555"
+      - "4723:4723"
+    environment:
+      - DEVICE=Nexus 5
+      - APPIUM=true
+    # Note: KVM must be available on the host system to run this container.
+    # /dev/kvm is mounted automatically due to privileged mode on supported hosts.
+
+  # Uptime Kuma for infrastructure monitoring and status pages
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    volumes:
+      - ./uptime-kuma-data:/app/data
+    ports:
+      - "3001:3001"
+    restart: always

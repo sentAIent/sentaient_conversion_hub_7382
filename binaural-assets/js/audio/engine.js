@@ -6,6 +6,7 @@ import { showPricingModal } from '../ui/pricing-3tier.js';
 import { isPremiumUser } from '../services/stripe-simple.js';
 import { isHapticsEnabled, hapticPulse } from '../utils/haptics.js';
 import { SpatialEngine } from './spatial-engine.js';
+import { ambientSynth } from './ambient-synth.js';
 
 let uiCallback = null;
 
@@ -57,6 +58,7 @@ async function setupWorklet() {
             const blob = new Blob([recorderWorkletCode], { type: "application/javascript" });
             const url = URL.createObjectURL(blob);
             await state.audioCtx.audioWorklet.addModule(url);
+            await state.audioCtx.audioWorklet.addModule('js/audio/binaural-processor.js');
             state.workletInitialized = true;
             console.log('[Worklet] Successfully initialized');
         } catch (e) {
@@ -94,36 +96,19 @@ export async function startAudio() {
         // Removed MediaStreamDestination here to prevent Safari Muting Bug
 
         // Create Nodes
-        state.oscLeft = state.audioCtx.createOscillator();
-        state.oscRight = state.audioCtx.createOscillator();
-
-        // StereoPanner fallback for older browsers just in case
-        if (state.audioCtx.createStereoPanner) {
-            state.panLeft = state.audioCtx.createStereoPanner();
-            state.panRight = state.audioCtx.createStereoPanner();
-            state.panLeft.pan.value = -1;
-            state.panRight.pan.value = 1;
-        } else {
-            // Simple panner fallback if needed (rare now)
-            state.panLeft = state.audioCtx.createPanner();
-            state.panLeft.panningModel = 'equalpower';
-            state.panLeft.setPosition(-1, 0, 0);
-            state.panRight = state.audioCtx.createPanner();
-            state.panRight.panningModel = 'equalpower';
-            state.panRight.setPosition(1, 0, 0);
-        }
-
         state.beatsGain = state.audioCtx.createGain();
         state.masterAtmosGain = state.audioCtx.createGain();
         state.masterGain = state.audioCtx.createGain();
 
-        // HARMONICS: Add support for overtones
-        state.oscLeft2 = state.audioCtx.createOscillator();
-        state.oscRight2 = state.audioCtx.createOscillator();
-        state.oscLeft3 = state.audioCtx.createOscillator();
-        state.oscRight3 = state.audioCtx.createOscillator();
-        state.harmonicsGain = state.audioCtx.createGain();
-        state.harmonicsGain.gain.value = state.harmonicsLevel || 0;
+        if (state.workletInitialized) {
+            try {
+                state.binauralNode = new AudioWorkletNode(state.audioCtx, 'binaural-processor', {
+                    outputChannelCount: [2]
+                });
+            } catch(e) {
+                console.error("Binaural Worklet failed to create", e);
+            }
+        }
 
         // Master Balance Panner
         if (state.audioCtx.createStereoPanner) {
@@ -141,17 +126,9 @@ export async function startAudio() {
 
 
         // Connections
-        state.oscLeft.connect(state.panLeft);
-        state.oscRight.connect(state.panRight);
-
-        // HARMONICS: Route through their gain node into the main panners
-        state.oscLeft2.connect(state.harmonicsGain).connect(state.panLeft);
-        state.oscRight2.connect(state.harmonicsGain).connect(state.panRight);
-        state.oscLeft3.connect(state.harmonicsGain).connect(state.panLeft);
-        state.oscRight3.connect(state.harmonicsGain).connect(state.panRight);
-
-        state.panLeft.connect(state.beatsGain);
-        state.panRight.connect(state.beatsGain);
+        if (state.binauralNode) {
+            state.binauralNode.connect(state.beatsGain);
+        }
         state.beatsGain.connect(state.masterGain);
         state.masterAtmosGain.connect(state.masterGain);
 
@@ -208,8 +185,6 @@ export async function startAudio() {
         const baseFreq = parseFloat(els.baseSlider ? els.baseSlider.value : 200) || 200;
         const beatFreq = parseFloat(els.beatSlider ? els.beatSlider.value : 10) || 10;
         console.log(`[Audio] startAudio reading sliders: Base=${baseFreq}Hz, Beat=${beatFreq}Hz`);
-        if (state.oscLeft) state.oscLeft.frequency.value = baseFreq;
-        if (state.oscRight) state.oscRight.frequency.value = baseFreq + beatFreq;
 
         const volVal = parseFloat(els.volSlider ? els.volSlider.value : 0.5);
         const safeVol = isNaN(volVal) ? 0.5 : volVal;
@@ -220,7 +195,14 @@ export async function startAudio() {
         const atmosVal = parseFloat(els.atmosMasterSlider ? els.atmosMasterSlider.value : 0.8);
         const safeAtmos = isNaN(atmosVal) ? 0.8 : atmosVal;
 
+        state.isPlaying = true;
         updateFrequencies();
+        applyAudioMode();
+        
+        // Start Ambient Synth
+        await ambientSynth.init(state.audioCtx);
+        ambientSynth.start();
+
         const now = state.audioCtx.currentTime;
 
         // Initial Gain Ramp
@@ -233,14 +215,6 @@ export async function startAudio() {
 
         state.masterGain.gain.cancelScheduledValues(now);
         state.masterGain.gain.setValueAtTime(safeMaster, now);
-
-        state.oscLeft.start(now);
-        state.oscRight.start(now);
-        state.oscLeft2.start(now);
-        state.oscRight2.start(now);
-        state.oscLeft3.start(now);
-        state.oscRight3.start(now);
-        state.isPlaying = true;
 
         // Setup Media Session for lock screen controls
         setupMediaSession();
@@ -362,8 +336,10 @@ function startDailyLimitCheck() {
             pauseVisuals(); // Stop visuals to reset UI button
             stopAudio(false); // Fade out
 
-            // Show paywall
-            showPricingModal();
+            // Show new viral paywall
+            import('../ui/paywall-modal.js').then(module => {
+                module.showPaywall();
+            });
         }
     }, 1000);
 }
@@ -376,7 +352,7 @@ function clearMediaSession() {
 }
 
 export function stopAudio(immediate = false) {
-    if (!state.oscLeft) return;
+    if (!state.binauralNode && !state.oscLeft) return; // Keep oscLeft for backwards compat during transition
     if (state.isRecording) stopRecording();
 
     // Stop daily limit check
@@ -421,10 +397,9 @@ export function stopAudio(immediate = false) {
         state.masterGain.gain.setValueAtTime(0, now);
 
         // Stop oscillators immediately (no timeout)
-        if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); }
-        if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); }
-        state.oscLeft = null;
-        state.oscRight = null;
+        if (state.binauralNode) { try { state.binauralNode.disconnect(); } catch (e) { } state.binauralNode = null; }
+        if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); state.oscLeft = null; }
+        if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); state.oscRight = null; }
 
         // Cleanup isochronic nodes
         if (state.isochronicLFO) { try { state.isochronicLFO.stop(); } catch (e) { } state.isochronicLFO.disconnect(); state.isochronicLFO = null; }
@@ -447,9 +422,9 @@ export function stopAudio(immediate = false) {
         if (state.stopTimeout) clearTimeout(state.stopTimeout);
 
         state.stopTimeout = setTimeout(() => {
-            if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); }
-            if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); }
-            state.oscLeft = null; state.oscRight = null;
+            if (state.binauralNode) { try { state.binauralNode.disconnect(); } catch (e) { } state.binauralNode = null; }
+            if (state.oscLeft) { try { state.oscLeft.stop(); } catch (e) { } state.oscLeft.disconnect(); state.oscLeft = null; }
+            if (state.oscRight) { try { state.oscRight.stop(); } catch (e) { } state.oscRight.disconnect(); state.oscRight = null; }
 
             // Cleanup isochronic nodes
             if (state.isochronicLFO) { try { state.isochronicLFO.stop(); } catch (e) { } state.isochronicLFO.disconnect(); state.isochronicLFO = null; }
@@ -505,70 +480,16 @@ export function setAudioMode(mode) {
 }
 
 function applyAudioMode() {
-    if (!state.audioCtx || !state.oscLeft || !state.oscRight) return;
+    if (!state.audioCtx || !state.binauralNode) return;
 
-    const now = state.audioCtx.currentTime;
-    const baseFreq = parseFloat(els.baseSlider?.value || 200);
-    const beatFreq = parseFloat(els.beatSlider?.value || 10);
-
-    // Clean up previous isochronic nodes if switching away
-    if (state.isochronicLFO) {
-        state.isochronicLFO.stop();
-        state.isochronicLFO.disconnect();
-        state.isochronicLFO = null;
-    }
-    if (state.isochronicGain) {
-        state.isochronicGain.disconnect();
-        state.isochronicGain = null;
+    if (state.binauralNode.port) {
+        state.binauralNode.port.postMessage({
+            type: 'setMode',
+            mode: state.audioMode || 'binaural'
+        });
     }
 
-    switch (state.audioMode) {
-        case 'binaural':
-            // Standard binaural: left ear = base, right ear = base + beat
-            state.oscLeft.frequency.setValueAtTime(baseFreq, now);
-            state.oscRight.frequency.setValueAtTime(baseFreq + beatFreq, now);
-            state.panLeft.pan.setValueAtTime(-1, now);
-            state.panRight.pan.setValueAtTime(1, now);
-            break;
-
-        case 'monaural':
-            // Monaural: both ears hear the same mixed beat (no headphones needed)
-            // Both oscillators at same frequencies, let the interference happen
-            state.oscLeft.frequency.setValueAtTime(baseFreq, now);
-            state.oscRight.frequency.setValueAtTime(baseFreq + beatFreq, now);
-            // Center both pans so the beat is heard in mono
-            state.panLeft.pan.setValueAtTime(0, now);
-            state.panRight.pan.setValueAtTime(0, now);
-            break;
-
-        case 'isochronic':
-            // Isochronic: single tone pulsing at beat frequency (no headphones needed)
-            // Set both oscillators to base frequency
-            state.oscLeft.frequency.setValueAtTime(baseFreq, now);
-            state.oscRight.frequency.setValueAtTime(baseFreq, now);
-            // Center panning
-            state.panLeft.pan.setValueAtTime(0, now);
-            state.panRight.pan.setValueAtTime(0, now);
-
-            // Create LFO to modulate gain (pulse effect)
-            state.isochronicLFO = state.audioCtx.createOscillator();
-            state.isochronicGain = state.audioCtx.createGain();
-
-            state.isochronicLFO.type = 'square'; // Sharp on/off pulses
-            state.isochronicLFO.frequency.setValueAtTime(beatFreq, now);
-
-            // LFO controls gain amplitude (0 to 1)
-            state.isochronicGain.gain.setValueAtTime(0.5, now);
-
-            // Connect LFO to modulate the beatsGain
-            state.isochronicLFO.connect(state.isochronicGain);
-            state.isochronicGain.connect(state.beatsGain.gain);
-
-            state.isochronicLFO.start(now);
-            break;
-    }
-
-    console.log(`[Audio] Applied mode: ${state.audioMode}`);
+    console.log(`[Audio] Applied mode (Worklet): ${state.audioMode}`);
 }
 
 export function getAudioMode() {
@@ -1006,14 +927,14 @@ export function updateFrequencies() {
     console.log(`[Freq] Update: Base=${base}Hz, Beat=${beat}Hz`);
     if (els.baseValue) els.baseValue.textContent = `${base.toFixed(1)} Hz`;
     if (els.beatValue) els.beatValue.textContent = `${beat.toFixed(1)} Hz`;
-    if (state.oscLeft && state.isPlaying) state.oscLeft.frequency.setValueAtTime(base, state.audioCtx.currentTime);
-    if (state.oscRight && state.isPlaying) state.oscRight.frequency.setValueAtTime(base + beat, state.audioCtx.currentTime);
-
-    // Update Harmonics
-    if (state.oscLeft2 && state.isPlaying) state.oscLeft2.frequency.setValueAtTime(base * 2, state.audioCtx.currentTime);
-    if (state.oscRight2 && state.isPlaying) state.oscRight2.frequency.setValueAtTime((base + beat) * 2, state.audioCtx.currentTime);
-    if (state.oscLeft3 && state.isPlaying) state.oscLeft3.frequency.setValueAtTime(base * 3, state.audioCtx.currentTime);
-    if (state.oscRight3 && state.isPlaying) state.oscRight3.frequency.setValueAtTime((base + beat) * 3, state.audioCtx.currentTime);
+    
+    if (state.binauralNode && state.isPlaying) {
+        state.binauralNode.port.postMessage({
+            type: 'setFrequencies',
+            baseFreq: base,
+            beatFreq: beat
+        });
+    }
 
     // Auto Visual Speed Calculation
     if (state.visualSpeedAuto) {

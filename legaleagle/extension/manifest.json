@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Legal Eagle Eye",
+  "version": "1.0.0",
+  "description": "Send selected text directly to Legal Eagle for analysis.",
+  "permissions": ["contextMenus", "sidePanel", "storage", "scripting", "activeTab", "clipboardRead"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Legal Eagle Eye"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

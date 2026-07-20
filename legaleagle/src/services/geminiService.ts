@@ -6,6 +6,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { useSettingsStore } from '@/store';
 import type { GeminiResponse } from '@/types';
 
 /**
@@ -40,6 +41,48 @@ export const callGemini = async (
     customModel?: string,
     abortSignal?: AbortSignal
 ): Promise<GeminiResponse | Record<string, unknown>> => {
+    const { useLocalAI, localAiEndpoint } = useSettingsStore.getState();
+
+    if (useLocalAI && localAiEndpoint) {
+        if (abortSignal?.aborted) throw new Error('AbortError');
+        
+        const combinedPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+        try {
+            const response = await fetch(localAiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'llama3',
+                    prompt: combinedPrompt,
+                    stream: false,
+                    format: isJson ? 'json' : undefined
+                }),
+                signal: abortSignal
+            });
+
+            if (!response.ok) {
+                throw new Error(`Local API error (${response.status})`);
+            }
+
+            const data = await response.json();
+            const textResult = data.response || '';
+            
+            if (isJson) {
+                try {
+                    const cleanText = textResult.replace(/```json|```/g, '').trim();
+                    return JSON.parse(cleanText);
+                } catch (e) {
+                    // Fallback if parsing fails
+                    return { text: textResult };
+                }
+            }
+            return { text: textResult, sources: [] };
+        } catch (error) {
+            console.error('Local AI Error:', error);
+            throw new Error('Failed to connect to Local AI endpoint. Ensure Ollama is running and CORS is configured.');
+        }
+    }
+
     const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!geminiKey && !isSupabaseConfigured) {
         throw new Error('Neither Gemini API key nor Supabase is configured. Cannot call the AI backend.');

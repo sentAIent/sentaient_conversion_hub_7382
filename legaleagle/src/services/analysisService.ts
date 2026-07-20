@@ -11,7 +11,12 @@ import {
     getSWOTAnalysisPrompt,
     getChatAssistantPrompt,
     getDeepAnalysisPrompt,
-    getQuickScanPrompt
+    getQuickScanPrompt,
+    getChunkAnalysisUserPrompt,
+    getSWOTUserPrompt,
+    getContractGenerationUserPrompt,
+    getChatMessageUserPrompt,
+    getLegalMemoUserPrompt
 } from '@/constants/prompts';
 import {
     SAMPLE_RECOMMENDATIONS,
@@ -100,29 +105,7 @@ export const generateContract = async (
         throw new Error('Gemini API key not configured.');
     }
 
-    const perspectiveInstruction = perspective === 'Company'
-        ? `You are drafting on behalf of the COMPANY/BUSINESS. Draft terms that robustly protect the company's interests: limit liability, preserve termination rights, protect IP, and minimize obligations.`
-        : perspective === 'User'
-        ? `You are drafting on behalf of the USER/INDIVIDUAL. Draft balanced terms that protect the individual: cap penalties, ensure clear termination rights, limit data sharing, and include consumer-protective provisions.`
-        : `You are drafting a neutral, balanced agreement. Terms should be fair and equitable to all parties.`;
-
-    const depthInstruction = analysisDepth === 'quick'
-        ? `DRAFTING STYLE: Keep it simple and concise. Use plain language. Include only essential clauses. Avoid excessive legalese. Aim for brevity and clarity over comprehensiveness.`
-        : analysisDepth === 'deep'
-        ? `DRAFTING STYLE: Be exhaustive and comprehensive. Include every standard protective clause, extensive representations and warranties, detailed indemnification provisions, force majeure, audit rights, step-in rights, detailed dispute resolution, and any jurisdiction-specific requirements. Use precise formal legal language throughout. Leave no edge case unaddressed.`
-        : `DRAFTING STYLE: Use professional legal language. Include all standard protective clauses, standard representations and warranties, and industry-standard provisions. Thorough but not exhaustive.`;
-
-    const prompt = `You are an expert corporate attorney. Generate a professional legal contract draft based on the following request.
-Use markdown formatting (headings, bullet points, bold text) to structure the document professionally.
-
-PERSPECTIVE: ${perspectiveInstruction}
-
-${depthInstruction}
-
-USER REQUEST:
-${promptText}
-
-Only output the contract text. Do not include any conversational filler or meta-commentary.`;
+    const prompt = getContractGenerationUserPrompt(promptText, perspective, analysisDepth);
 
     try {
         const result = await callGemini(prompt, "You are a professional legal contract generator. Tailor every clause to the specified perspective and drafting depth.", false) as GeminiResponse;
@@ -133,6 +116,38 @@ Only output the contract text. Do not include any conversational filler or meta-
     }
 };
 
+/**
+ * Generates a formal Legal Memo using the analyzed document and recommendations.
+ */
+export const generateLegalMemo = async (
+    documentText: string,
+    recommendations: Recommendation[],
+    abortSignal?: AbortSignal
+): Promise<string> => {
+    if (!isApiConfigured()) {
+        throw new Error('Gemini API key not configured.');
+    }
+
+    // Only pass unaccepted issues to save tokens
+    const unacceptedRecs = recommendations.filter(r => !r.accepted).map(r => ({
+        title: r.title,
+        severity: r.severity,
+        currentText: r.currentText,
+        proposedText: r.proposedText,
+        legalBasis: r.legalBasis
+    }));
+
+    const prompt = getLegalMemoUserPrompt(documentText, unacceptedRecs);
+    const systemPrompt = "You are an Elite Legal AI Co-Counsel drafting a formal legal memorandum.";
+
+    try {
+        const result = await callGemini(prompt, systemPrompt, false, 'gemini-2.5-pro', abortSignal) as GeminiResponse;
+        return result.text || '';
+    } catch (error) {
+        console.error('Gemini API Error (Generate Memo):', error);
+        throw new Error('Failed to generate legal memo.');
+    }
+};
 
 /**
  * Analyze a single chunk of the document with retry logic
@@ -150,20 +165,7 @@ const analyzeChunk = async (
 ): Promise<AnalysisChunkResult | null> => {
     const partiesStr = parties.map(p => `${p.name} (${p.role}, ${p.domicile})`).join(', ');
 
-    const prompt = `
-Document Context:
-Entities: ${partiesStr}.
-My Perspective: Representing the ${perspective}.
-Analysis Depth: ${depth.toUpperCase()}
-Contract Type: ${contractType}
-
-TEXT TO ANALYZE:
-"""
-${chunk}
-"""
-
-Analyze this section thoroughly and return your findings.
-${playbookText ? `\nCRITICAL CUSTOM PLAYBOOK RULES:\nYou MUST evaluate the text against the following custom company playbook rules and explicitly flag any deviations as Critical risks:\n"""\n${playbookText}\n"""\n` : ''}`;
+    const prompt = getChunkAnalysisUserPrompt(chunk, perspective, contractType, depth, partiesStr, playbookText);
 
     let systemPrompt;
     switch (depth) {
@@ -210,14 +212,7 @@ const generateSWOT = async (recommendations: Recommendation[], abortSignal?: Abo
         .map(r => `- ${r.severity}: ${r.title} (${r.section})`)
         .join('\n');
 
-    const prompt = `
-Based on these identified contract issues, generate a strategic SWOT analysis:
-
-IDENTIFIED ISSUES:
-${issuesSummary || 'No significant issues identified.'}
-
-Provide actionable insights for legal negotiation strategy.
-`;
+    const prompt = getSWOTUserPrompt(issuesSummary);
 
     try {
         if (abortSignal?.aborted) throw new Error('AbortError');
@@ -252,7 +247,8 @@ export const analyzeDocument = async (
     analysisDepth: AnalysisDepth = 'standard',
     contractType: ContractType = 'General',
     abortSignal?: AbortSignal,
-    playbookText?: string
+    playbookText?: string,
+    onRateLimit?: (isRateLimited: boolean, retryInSeconds: number) => void
 ): Promise<{
     recommendations: Recommendation[];
     swot: SwotAnalysis;
@@ -371,25 +367,52 @@ export const analyzeDocument = async (
     for (let i = 0; i < chunks.length; i++) {
         if (abortSignal?.aborted) throw new Error('AbortError');
         const chunk = chunks[i];
-        try {
-            const result = await analyzeChunk(chunk, i, perspective, parties, analysisDepth, contractType, model, abortSignal, playbookText);
-            
-            if (abortSignal?.aborted) throw new Error('AbortError');
-            
-            completed++;
-            onProgress?.({ current: completed, total: chunks.length });
+        
+        let chunkSuccess = false;
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
+        
+        while (!chunkSuccess) {
+            try {
+                const result = await analyzeChunk(chunk, i, perspective, parties, analysisDepth, contractType, model, abortSignal, playbookText);
+                
+                if (abortSignal?.aborted) throw new Error('AbortError');
+                
+                chunkSuccess = true;
+                completed++;
+                onProgress?.({ current: completed, total: chunks.length });
 
-            if (result && result.recommendations && result.recommendations.length > 0) {
-                allRecommendations.push(...result.recommendations);
-                onRecommendationsUpdate?.([...allRecommendations]);
+                if (result && result.recommendations && result.recommendations.length > 0) {
+                    allRecommendations.push(...result.recommendations);
+                    onRecommendationsUpdate?.([...allRecommendations]);
+                }
+            } catch (error: any) {
+                if (error.message === 'AbortError' || abortSignal?.aborted) {
+                    throw new Error('AbortError');
+                }
+                
+                const isRateLimit = error.status === 429 || (error.message && error.message.includes('429'));
+                
+                if (isRateLimit && retryCount < MAX_RETRIES) {
+                    retryCount++;
+                    const waitSeconds = 15 * retryCount; // 15s, 30s, 45s
+                    console.warn(`Chunk ${i} hit 429 rate limit. Waiting ${waitSeconds}s before retry ${retryCount}...`);
+                    
+                    // Countdown loop for UI updates
+                    for (let s = waitSeconds; s > 0; s--) {
+                        if (abortSignal?.aborted) throw new Error('AbortError');
+                        if (onRateLimit) onRateLimit(true, s);
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+                    if (onRateLimit) onRateLimit(false, 0);
+                    // Loop continues and retries the same chunk
+                } else {
+                    failedChunks++;
+                    lastError = error;
+                    console.error(`Chunk ${i} failed`, error);
+                    break; // Break retry loop, move to next chunk
+                }
             }
-        } catch (error: any) {
-            if (error.message === 'AbortError' || abortSignal?.aborted) {
-                throw new Error('AbortError');
-            }
-            failedChunks++;
-            lastError = error;
-            console.error(`Chunk ${i} failed`, error);
         }
     }
 
@@ -441,16 +464,7 @@ export const sendChatMessage = async (
 
     const partiesStr = parties.map(p => `${p.name} (${p.role})`).join(', ');
 
-    const prompt = `
-USER QUESTION: ${message}
-
-DOCUMENT CONTENT:
-"""
-${documentSummary}
-"""
-
-Provide a thorough, well-cited legal analysis answering this question.
-`;
+    const prompt = getChatMessageUserPrompt(message, documentSummary);
 
     const systemPrompt = getChatAssistantPrompt(
         `Contract between ${partiesStr}`,
@@ -459,4 +473,32 @@ Provide a thorough, well-cited legal analysis answering this question.
 
     const result = await callGemini(prompt, systemPrompt, false);
     return result as GeminiResponse;
+};
+
+/**
+ * Analyze a crawled web document (Terms of Service, Privacy Policy, etc.)
+ */
+export const analyzeWebDocument = async (
+    markdownText: string,
+    abortSignal?: AbortSignal
+): Promise<string> => {
+    if (!isApiConfigured()) {
+        throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
+    }
+
+    const documentSummary = markdownText.length > 30000
+        ? markdownText.substring(0, 30000) + '...[truncated]'
+        : markdownText;
+
+    const prompt = `Please review the following crawled web document (which may be a Terms of Service, Privacy Policy, or similar legal text):\n\n${documentSummary}\n\nExtract and summarize the following in structured Markdown format:\n1. Overall Summary\n2. Key Liabilities & Risks\n3. Hidden Clauses or "Gotchas"\n4. User Rights & Data Usage`;
+
+    const systemPrompt = "You are an Elite Legal AI reviewing web-crawled documents to protect the user's interests. Be concise, highly accurate, and use clear markdown formatting.";
+
+    try {
+        const result = await callGemini(prompt, systemPrompt, false, 'gemini-2.5-pro', abortSignal) as GeminiResponse;
+        return result.text || '';
+    } catch (error) {
+        console.error('Gemini API Error (Analyze Web Doc):', error);
+        throw new Error('Failed to analyze the web document.');
+    }
 };

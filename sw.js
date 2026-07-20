@@ -1,10 +1,9 @@
-const CACHE_NAME = 'mindwave-offline-v2';
+const CACHE_NAME = 'mindwave-offline-v3';
 
 // Core assets to pre-cache
 const CORE_ASSETS = [
     '/',
     '/mindwave.html',
-    '/binaural-assets/css/mindwave_v3.css',
     '/binaural-assets/css/visual-active.css',
     '/binaural-assets/css/sophisticated-ui.css',
     '/binaural-assets/js/state.js',
@@ -14,7 +13,10 @@ const CORE_ASSETS = [
     '/binaural-assets/js/ui/controls_v3.js',
     '/binaural-assets/js/main_vFINAL.js',
     '/binaural-assets/js/services/biofeedback.js',
-    '/binaural-assets/js/visuals/visualizer_lazy.js'
+    '/binaural-assets/js/visuals/visualizer_lazy.js',
+    '/binaural-assets/js/audio/ambient-synth.js',
+    '/binaural-assets/js/services/biometrics.js',
+    '/binaural-assets/js/utils/pwa-install.js'
 ];
 
 self.addEventListener('install', (event) => {

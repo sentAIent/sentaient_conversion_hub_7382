@@ -17,6 +17,9 @@ import { initGallery } from './gallery-modal.js';
 import { getReferralCount, shareReferral } from '../services/referral.js';
 import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
 import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
+import { ambientSynth } from '../audio/ambient-synth.js';
+import { biometrics } from '../services/biometrics.js';
+
 // ... (existing code)
 import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
 import { loadUserPreferences, saveUserPreferences } from '../services/persistence.js?v=NUCLEAR_FIX_V2';
@@ -2441,7 +2444,7 @@ async function applyNextAIStage() {
     }
 }
 
-async function applyAIPreset(result) {
+export async function applyAIPreset(result) {
     console.log('[AI] Applying Preset:', result.preset, 'Visuals:', result.visuals, 'Intensity:', result.intensity);
 
     // Lock visuals to prevent accidental overrides during "Force Mode"
@@ -2528,6 +2531,8 @@ export async function applyAIIntent(intent) {
     const result = calculateFrequencyFromGoal(intent);
     if (result) {
         await applyAIPreset(result);
+        ambientSynth.setMood(intent); // Tune generative music to Solfeggio roots
+        biometrics.setIntent(intent); // Update biometrics adaptive engine
         return result.insight;
     }
     return null;

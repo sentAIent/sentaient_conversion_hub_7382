@@ -5,6 +5,69 @@
  * with comprehensive citations and multi-jurisdictional support.
  */
 
+import { RECOMMENDATION_SCHEMA, SWOT_SCHEMA } from './schemas';
+
+export const getChunkAnalysisUserPrompt = (chunk: string, perspective: string, contractType: string, depth: string, partiesStr: string, playbookText?: string) => `
+Document Context:
+Entities: ${partiesStr}.
+My Perspective: Representing the ${perspective}.
+Analysis Depth: ${depth.toUpperCase()}
+Contract Type: ${contractType}
+
+TEXT TO ANALYZE:
+"""
+${chunk}
+"""
+
+Analyze this section thoroughly and return your findings.
+${playbookText ? `\nCRITICAL CUSTOM PLAYBOOK RULES:\nYou MUST evaluate the text against the following custom company playbook rules and explicitly flag any deviations as Critical risks:\n"""\n${playbookText}\n"""\n` : ''}`;
+
+export const getSWOTUserPrompt = (issuesSummary: string) => `
+Based on these identified contract issues, generate a strategic SWOT analysis:
+
+IDENTIFIED ISSUES:
+${issuesSummary || 'No significant issues identified.'}
+
+Provide actionable insights for legal negotiation strategy.
+`;
+
+export const getContractGenerationUserPrompt = (promptText: string, perspective: string, analysisDepth: string) => {
+    const perspectiveInstruction = perspective === 'Company'
+        ? `You are drafting on behalf of the COMPANY/BUSINESS. Draft terms that robustly protect the company's interests: limit liability, preserve termination rights, protect IP, and minimize obligations.`
+        : perspective === 'User'
+        ? `You are drafting on behalf of the USER/INDIVIDUAL. Draft balanced terms that protect the individual: cap penalties, ensure clear termination rights, limit data sharing, and include consumer-protective provisions.`
+        : `You are drafting a neutral, balanced agreement. Terms should be fair and equitable to all parties.`;
+
+    const depthInstruction = analysisDepth === 'quick'
+        ? `DRAFTING STYLE: Keep it simple and concise. Use plain language. Include only essential clauses. Avoid excessive legalese. Aim for brevity and clarity over comprehensiveness.`
+        : analysisDepth === 'deep'
+        ? `DRAFTING STYLE: Be exhaustive and comprehensive. Include every standard protective clause, extensive representations and warranties, detailed indemnification provisions, force majeure, audit rights, step-in rights, detailed dispute resolution, and any jurisdiction-specific requirements. Use precise formal legal language throughout. Leave no edge case unaddressed.`
+        : `DRAFTING STYLE: Use professional legal language. Include all standard protective clauses, standard representations and warranties, and industry-standard provisions. Thorough but not exhaustive.`;
+
+    return `You are an expert corporate attorney. Generate a professional legal contract draft based on the following request.
+Use markdown formatting (headings, bullet points, bold text) to structure the document professionally.
+
+PERSPECTIVE: ${perspectiveInstruction}
+
+${depthInstruction}
+
+USER REQUEST:
+${promptText}
+
+Only output the contract text. Do not include any conversational filler or meta-commentary.`;
+};
+
+export const getChatMessageUserPrompt = (message: string, documentSummary: string) => `
+USER QUESTION: ${message}
+
+DOCUMENT CONTENT:
+"""
+${documentSummary}
+"""
+
+Provide a thorough, well-cited legal analysis answering this question.
+`;
+
 /**
  * Primary contract analysis prompt for chunk-by-chunk review.
  * Generates recommendations with full legal citations.
@@ -42,19 +105,7 @@ Return a JSON object with one key: "recommendations" (Array of objects).
 
 For each issue identified, provide:
 
-{
-  "section": "Section number and title from contract",
-  "severity": "Critical" | "High" | "Medium" | "Low",
-  "category": "Issue category (e.g., 'Risk Mitigation', 'Financial Terms', 'IP Rights', 'Termination Rights', 'Dispute Resolution', 'Compliance', 'Representations & Warranties')",
-  "title": "Professional issue summary (formal, suitable for legal memo)",
-  "roastTitle": "Memorable/snarky title (for engagement, optional)",
-  "currentText": "EXACT verbatim text from document - must match precisely",
-  "proposedText": "Complete legally robust rewrite ready for insertion",
-  "legalBasis": "Detailed legal analysis citing: (1) Specific statutes (USC, state codes), (2) Case law with court and year, (3) Regulatory guidance where applicable, (4) Industry standards or best practices",
-  "roastComment": "Plain English critique explaining why this is problematic (optional)",
-  "scoreImpact": 15 for Critical, 10 for High, 5 for Medium, 2 for Low,
-  "citation": "Primary legal authority (e.g., 'Delaware Court of Chancery, In re Appraisal of Dell Inc., 2020')"
-}
+${RECOMMENDATION_SCHEMA}
 
 ## Severity Guidelines
 - **Critical (15 pts)**: Unenforceable clauses, liability exposure without caps, violations of law, unconscionability risks. **Flag ANY ambiguity that could lead to material loss.**
@@ -144,30 +195,7 @@ Based on the identified contract issues and accepted fixes, synthesize a compreh
 ## Output Format
 Return a JSON object with one key: "swot" containing:
 
-{
-  "swot": {
-    "strengths": [
-      "List of contractual strengths and protective provisions",
-      "Cite specific clauses that favor the client",
-      "Note any advantageous terms achieved"
-    ],
-    "weaknesses": [
-      "List of remaining vulnerabilities",
-      "Unresolved ambiguities",
-      "One-sided provisions against client"
-    ],
-    "opportunities": [
-      "Negotiation leverage points",
-      "Industry-standard improvements to propose",
-      "Risk mitigation strategies available"
-    ],
-    "threats": [
-      "Potential litigation exposure",
-      "Regulatory compliance risks",
-      "Enforcement challenges"
-    ]
-  }
-}
+${SWOT_SCHEMA}
 
 Each array should contain 3-5 specific, actionable items written in professional legal language.
 `;
@@ -255,4 +283,26 @@ For the overall risk score provided, explain:
 
 Use specific legal references and quantify exposure where possible.
 Provide a prioritized remediation roadmap.
+`;
+
+/**
+ * Generate a formal Legal Memo from the analysis
+ */
+export const getLegalMemoUserPrompt = (documentText: string, recommendations: any[]) => `
+You are an Elite Legal AI generating a formal Legal Memorandum.
+
+Based on the contract text and the identified issues below, generate a professional, structured legal memo addressed to the client.
+
+CONTRACT SUMMARY / CONTEXT:
+${documentText.length > 2000 ? documentText.substring(0, 2000) + '...' : documentText}
+
+KEY ISSUES (JSON):
+${JSON.stringify(recommendations, null, 2)}
+
+REQUIREMENTS:
+1. Use professional, formal legal tone (e.g., "MEMORANDUM", "TO:", "FROM:", "DATE:", "SUBJECT:").
+2. Include an Executive Summary.
+3. Detail the key risks and explicitly cite the contract clauses (if provided) and relevant legal principles.
+4. Conclude with actionable next steps.
+5. Format entirely in Markdown. Do NOT include conversational filler, just the memo.
 `;

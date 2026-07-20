@@ -9,7 +9,7 @@ const KEY_USAGE = 'mindwave_daily_usage';
 const KEY_DATE = 'mindwave_daily_date';
 
 const LIMITS_SECONDS = {
-    free: 15 * 60,       // 15 minutes
+    free: 10 * 60,       // 10 minutes (soft catch)
     zen: 120 * 60,       // 2 hours
     nirvana: Infinity,   // Unlimited
     lifetime: Infinity   // Unlimited

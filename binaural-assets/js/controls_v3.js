@@ -1539,7 +1539,7 @@ export function setupUI() {
         if (e.target.closest('#matrixSettingsToggle')) return;
         setVisualMode('matrix', null, true);
     });
-    if (els.snowflakeBtn) els.snowflakeBtn.addEventListener('click', () => setVisualMode('cymatics', null, true));
+    if (els.snowflakeBtn) els.snowflakeBtn.addEventListener('click', () => setVisualMode('snowflake', null, true));
 
     // Matrix Mini-Toggle Logic
     const matrixSettingsToggle = document.getElementById('matrixSettingsToggle');

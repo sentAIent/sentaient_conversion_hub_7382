@@ -44,52 +44,96 @@
         supabaseUrl: "https://zbwnpclnxamiynwpdbed.supabase.co",
         anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpid25wY2xueGFtaXlud3BkYmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzk5NDgsImV4cCI6MjA5OTcxNTk0OH0.0GkslQpzdsatDNI5qLuccamMAG_PATIpAW988FIUuO8"
       };
-      // The actual tracker code:
-      window.addEventListener('load', () => {
-        setTimeout(() => {
-          try {
-            const config = window.LIGHTSPEED_CONFIG;
-            let loadTimeMs = 0;
-            
-            const navEntries = performance.getEntriesByType("navigation");
-            if (navEntries.length > 0 && navEntries[0].loadEventEnd > 0) {
-              loadTimeMs = navEntries[0].loadEventEnd - navEntries[0].startTime;
-            } else {
-              const timing = performance.timing;
-              loadTimeMs = timing.loadEventEnd - timing.navigationStart;
-            }
-            if (loadTimeMs > 0 && loadTimeMs <= 60000) {
-              fetch(`${config.supabaseUrl}/rest/v1/metrics`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': config.anonKey,
-                  'Authorization': `Bearer ${config.anonKey}`
-                },
-                body: JSON.stringify({
-                  site: config.source,
-                  metric_name: 'page_load_time',
-                  value: loadTimeMs
-                }),
-                keepalive: true
-              });
-            }
-          } catch (e) {
-            console.error("Lightspeed Tracker Error:", e);
+
+      (function() {
+        try {
+          const config = window.LIGHTSPEED_CONFIG;
+          
+          let sessionId = localStorage.getItem('ls_session_id');
+          if (!sessionId) {
+            sessionId = 'sess_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('ls_session_id', sessionId);
           }
-        }, 0);
-      });
+
+          const ua = navigator.userAgent;
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+          const deviceType = isMobile ? 'Mobile' : 'Desktop';
+
+          function sendToSupabase(endpoint, payload) {
+            fetch(`${config.supabaseUrl}/rest/v1/${endpoint}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "apikey": config.anonKey,
+                "Authorization": `Bearer ${config.anonKey}`
+              },
+              body: JSON.stringify(payload),
+              keepalive: true
+            }).catch(err => console.error(`LightSpeed ${endpoint} Error:`, err));
+          }
+
+          // 1. Track Marketing Analytics (Pixel)
+          sendToSupabase('web_analytics', {
+            site: config.source,
+            session_id: sessionId,
+            path: window.location.pathname,
+            referrer: document.referrer || 'Direct',
+            user_agent: ua,
+            device_type: deviceType,
+            screen_resolution: `${window.screen.width}x${window.screen.height}`,
+            language: navigator.language
+          });
+
+          // 2. Track Page Load Time (RUM)
+          window.addEventListener('load', () => {
+            setTimeout(() => {
+              try {
+                let loadTimeMs = 0;
+                const navEntries = performance.getEntriesByType("navigation");
+                if (navEntries.length > 0 && navEntries[0].loadEventEnd > 0) {
+                  loadTimeMs = navEntries[0].loadEventEnd - navEntries[0].startTime;
+                } else {
+                  const timing = performance.timing;
+                  loadTimeMs = timing.loadEventEnd - timing.navigationStart;
+                }
+                
+                if (loadTimeMs > 0 && loadTimeMs <= 60000) {
+                  sendToSupabase('metrics', {
+                    site: config.source,
+                    metric_name: 'page_load_time',
+                    value: loadTimeMs,
+                    metadata: { path: window.location.pathname, session_id: sessionId }
+                  });
+                }
+              } catch(e) {}
+            }, 0);
+          });
+
+          // 3. Track JavaScript Errors (Incidents)
+          window.addEventListener("error", (event) => {
+            sendToSupabase('incidents', {
+              type: 'error',
+              title: 'Frontend JS Exception',
+              explanation: `${event.message} at ${event.filename}:${event.lineno}`,
+              fix_action: 'Investigate Code',
+              source: config.source
+            });
+          });
+
+        } catch (e) {
+          console.error("Lightspeed Tracker Error:", e);
+        }
+      })();
     </script>
 
-    <!-- Google Analytics (Placeholder) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PLACEHOLDER"></script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BZL3614FTX"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-PLACEHOLDER');
+      gtag('config', 'G-BZL3614FTX');
     </script>
-    -->
 
     <link rel="icon" href="/favicon.ico" />
     <link rel="manifest" href="/manifest.json" />

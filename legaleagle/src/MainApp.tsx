@@ -4,8 +4,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { getDemoById } from '@/data/demos';
 
 // Components
-import { Sidebar, DisclaimerModal } from '@/components';
+import { Sidebar, DisclaimerModal, SettingsModal } from '@/components';
 import { TopHeader } from '@/components/layout/TopHeader';
+import { PricingModal } from '@/components/pricing/PricingModal';
 import { AuthModal } from '@/components/auth/AuthModal';
 import toast from 'react-hot-toast';
 import { parseDocument } from '@/utils/documentParser';
@@ -26,13 +27,15 @@ import {
     WorkspaceView,
     PlaybookView,
     AuditLogView,
-    CasesView
+    CasesView,
+    WebSearchView
 } from '@/views';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { OfflineBanner } from '@/components/features/OfflineBanner';
 
 // Services
-import { analyzeDocument, sendChatMessage, calculateScore, generateContract } from '@/services';
+import { analyzeDocument, sendChatMessage, calculateScore, generateContract, generateLegalMemo } from '@/services';
+import { exportToWord, exportToPdf } from '@/services/exportService';
 import { supabase } from '@/lib/supabase';
 
 // Hooks
@@ -43,6 +46,9 @@ import { THEMES, INITIAL_TEXT } from '@/constants';
 
 // Utils
 import { findFuzzyMatch, formatDate } from '@/utils';
+
+// Stores
+import { useUIStore, useDocumentStore, useAnalysisStore, useSettingsStore } from '@/store';
 
 // Types
 import type {
@@ -58,43 +64,73 @@ import type {
 
 export default function MainApp() {
     const { profile } = useAuth();
-    // App State
-    const [hasAcceptedDisclaimer, setHasAcceptedDisclaimer] = useState(false);
-    const [activeTab, setActiveTabRaw] = useState('editor');
-    const [prevTab, setPrevTab] = useState<string | null>(null);
-    const setActiveTab = (tab: string) => {
-        setActiveTabRaw(prev => {
-            setPrevTab(prev);
-            return tab;
-        });
-    };
-    const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
-    const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
-    const [isRoastMode, setIsRoastMode] = useState(false);
-    const [perspective, setPerspective] = useState('User');
-    const [activeDemoId, setActiveDemoId] = useState<string | null>(null);
-    const [contractType, setContractType] = useState<any>('nda');
-    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [analysisDepth, setAnalysisDepth] = useState<AnalysisDepth>('standard');
-    const [heatmapEnabled, setHeatmapEnabled] = useState(false);
-    const [currentTheme, setCurrentTheme] = useState<Theme>(THEMES.navy);
+    // UI State
+    const currentTheme = useUIStore(s => s.currentTheme);
+    const setCurrentTheme = useUIStore(s => s.setCurrentTheme);
+    const activeTab = useUIStore(s => s.activeTab);
+    const prevTab = useUIStore(s => s.prevTab);
+    const setActiveTab = useUIStore(s => s.setActiveTab);
+    const isRoastMode = useUIStore(s => s.isRoastMode);
+    const setIsRoastMode = useUIStore(s => s.setIsRoastMode);
+    const isPricingModalOpen = useUIStore(s => s.isPricingModalOpen);
+    const setIsPricingModalOpen = useUIStore(s => s.setIsPricingModalOpen);
+    const isMobileMenuOpen = useUIStore(s => s.isMobileMenuOpen);
+    const setIsMobileMenuOpen = useUIStore(s => s.setIsMobileMenuOpen);
+    const isAuthModalOpen = useUIStore(s => s.isAuthModalOpen);
+    const setIsAuthModalOpen = useUIStore(s => s.setIsAuthModalOpen);
+    const showEmailModal = useUIStore(s => s.showEmailModal);
+    const setShowEmailModal = useUIStore(s => s.setShowEmailModal);
+    const setIsSettingsModalOpen = useSettingsStore(s => s.setIsSettingsModalOpen);
+    const hasAcceptedDisclaimer = useUIStore(s => s.hasAcceptedDisclaimer);
+    const setHasAcceptedDisclaimer = useUIStore(s => s.setHasAcceptedDisclaimer);
 
-    // Document state
-    const [documentText, setDocumentText] = useState(INITIAL_TEXT);
-    const [documentName, setDocumentName] = useState("Draft_Agreement.txt");
+    // Document State
+    const documentText = useDocumentStore(s => s.documentText);
+    const setDocumentText = useDocumentStore(s => s.setDocumentText);
+    const documentName = useDocumentStore(s => s.documentName);
+    const setDocumentName = useDocumentStore(s => s.setDocumentName);
+    const activeCaseId = useDocumentStore(s => s.activeCaseId);
+    const setActiveCaseId = useDocumentStore(s => s.setActiveCaseId);
+    const activeHistoryId = useDocumentStore(s => s.activeHistoryId);
+    const setActiveHistoryId = useDocumentStore(s => s.setActiveHistoryId);
+    const activeDemoId = useDocumentStore(s => s.activeDemoId);
+    const setActiveDemoId = useDocumentStore(s => s.setActiveDemoId);
+    const contractType = useDocumentStore(s => s.contractType);
+    const setContractType = useDocumentStore(s => s.setContractType);
+    const perspective = useDocumentStore(s => s.perspective);
+    const setPerspective = useDocumentStore(s => s.setPerspective);
+    const parties = useDocumentStore(s => s.parties);
+    const setParties = useDocumentStore(s => s.setParties);
 
-    // Analysis state
-    const [score, setScore] = useState(0);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [analysisComplete, setAnalysisComplete] = useState(false);
-    const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-    const [swotData, setSwotData] = useState<SwotAnalysis | null>(null);
-    const [selectedRecId, setSelectedRecId] = useState<number | null>(null);
-    const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
-    const [scanProgress, setScanProgress] = useState<ScanProgress>({ current: 0, total: 0 });
-    // Undo stack: each entry stores the doc text + recommendations state before a revision was applied
-    const [undoHistory, setUndoHistory] = useState<Array<{ documentText: string; recommendations: Recommendation[] }>>([]);
+    // Analysis State
+    const score = useAnalysisStore(s => s.score);
+    const setScore = useAnalysisStore(s => s.setScore);
+    const isAnalyzing = useAnalysisStore(s => s.isAnalyzing);
+    const setIsAnalyzing = useAnalysisStore(s => s.setIsAnalyzing);
+    const isRateLimited = useAnalysisStore(s => s.isRateLimited);
+    const setIsRateLimited = useAnalysisStore(s => s.setIsRateLimited);
+    const rateLimitCountdown = useAnalysisStore(s => s.rateLimitCountdown);
+    const setRateLimitCountdown = useAnalysisStore(s => s.setRateLimitCountdown);
+    const analysisComplete = useAnalysisStore(s => s.analysisComplete);
+    const setAnalysisComplete = useAnalysisStore(s => s.setAnalysisComplete);
+    const recommendations = useAnalysisStore(s => s.recommendations);
+    const setRecommendations = useAnalysisStore(s => s.setRecommendations);
+    const swotData = useAnalysisStore(s => s.swotData);
+    const setSwotData = useAnalysisStore(s => s.setSwotData);
+    const selectedRecId = useAnalysisStore(s => s.selectedRecId);
+    const setSelectedRecId = useAnalysisStore(s => s.setSelectedRecId);
+    const changeLog = useAnalysisStore(s => s.changeLog);
+    const setChangeLog = useAnalysisStore(s => s.setChangeLog);
+    const scanProgress = useAnalysisStore(s => s.scanProgress);
+    const setScanProgress = useAnalysisStore(s => s.setScanProgress);
+    const undoHistory = useAnalysisStore(s => s.undoHistory);
+    const setUndoHistory = useAnalysisStore(s => s.setUndoHistory);
+    const heatmapEnabled = useAnalysisStore(s => s.heatmapEnabled);
+    const setHeatmapEnabled = useAnalysisStore(s => s.setHeatmapEnabled);
+    const analysisDepth = useAnalysisStore(s => s.analysisDepth);
+    const setAnalysisDepth = useAnalysisStore(s => s.setAnalysisDepth);
+    const addToChangeLog = useAnalysisStore(s => s.addToChangeLog);
+
     const [cloudHistory, setCloudHistory] = useState<any[]>([]);
 
     // Auto-save logic
@@ -112,16 +148,8 @@ export default function MainApp() {
         return () => clearTimeout(timer);
     }, [documentText, activeHistoryId, profile?.id]);
 
-    // Email modal state
-    const [showEmailModal, setShowEmailModal] = useState(false);
     const [emailDraft, setEmailDraft] = useState('');
-    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
-    // Parties state
-    const [parties, setParties] = useState<Party[]>([
-        { id: 1, name: 'Company A', role: 'Provider', domicile: 'Wyoming' },
-        { id: 2, name: 'Client B', role: 'Client', domicile: 'Texas' }
-    ]);
+    const [autoAnalyzePending, setAutoAnalyzePending] = useState(false);
 
     // Chat state
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
@@ -173,9 +201,47 @@ export default function MainApp() {
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
         const demoId = queryParams.get('demo');
+        const textParam = queryParams.get('text');
+        const modeParam = queryParams.get('mode');
         
         if (demoId) {
             loadDemo(demoId);
+            return;
+        }
+
+        // If opened inside the Chrome extension side panel (detected via iframe or modeParam), 
+        // NEVER load old localStorage state.
+        // We always want a fresh slate so the user can immediately paste or analyze new text.
+        const isIframe = window !== window.parent;
+        
+        if (modeParam === 'extension' || isIframe) {
+            if (textParam) {
+                setDocumentText(decodeURIComponent(textParam));
+                setDocumentName("Analyzed from Web.txt");
+                setAutoAnalyzePending(true);
+            } else {
+                setDocumentText("");
+                setDocumentName("");
+                setRecommendations([]);
+                setAnalysisComplete(false);
+                setScore(100);
+                setActiveTab('editor');
+            }
+            
+            // Clean up the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        }
+
+        if (textParam) {
+            setDocumentText(decodeURIComponent(textParam));
+            setDocumentName("Analyzed from Web.txt");
+            setAutoAnalyzePending(true);
+            
+            // Clean up the URL to prevent re-triggering if they refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Return early so we don't load any stale local storage state
             return;
         }
 
@@ -201,9 +267,9 @@ export default function MainApp() {
 
                 // Never restore demo state on initial load - keep it as draft agreement
                 if (!parsed.activeDemoId) {
-                    if (parsed.documentText) setDocumentText(parsed.documentText);
-                    if (parsed.documentName) setDocumentName(parsed.documentName);
-                    if (parsed.recommendations) setRecommendations(parsed.recommendations);
+                    if (parsed.documentText && !textParam) setDocumentText(parsed.documentText);
+                    if (parsed.documentName && !textParam) setDocumentName(parsed.documentName);
+                    if (parsed.recommendations && !textParam) setRecommendations(parsed.recommendations);
                     if (parsed.score) setScore(parsed.score);
                     if (parsed.swotData) setSwotData(parsed.swotData);
                     if (parsed.changeLog) setChangeLog(parsed.changeLog);
@@ -409,8 +475,12 @@ export default function MainApp() {
     };
 
     const handleAnalyze = async (useDemoPlaybook: boolean = false) => {
-
+        const { documents, documentText } = useDocumentStore.getState();
         if (!documentText) return;
+
+        const contextText = documents.length > 1
+            ? documents.map(d => `--- DOCUMENT: ${d.name} ---\n${d.text}`).join('\n\n')
+            : documentText;
 
         setIsAnalyzing(true);
         setAnalysisComplete(false);
@@ -436,7 +506,7 @@ export default function MainApp() {
 
         try {
             const result = await analyzeDocument(
-                documentText,
+                contextText,
                 perspective,
                 parties,
                 (progress) => setScanProgress(progress),
@@ -447,7 +517,11 @@ export default function MainApp() {
                 analysisDepth,
                 contractType,
                 abortControllerRef.current.signal,
-                playbookText
+                playbookText,
+                (isLimited, seconds) => {
+                    setIsRateLimited(isLimited);
+                    setRateLimitCountdown(seconds);
+                }
             );
             setRecommendations(result.recommendations);
             setSwotData(result.swot);
@@ -522,8 +596,18 @@ export default function MainApp() {
             }
         } finally {
             setIsAnalyzing(false);
+            setIsRateLimited(false);
+            setRateLimitCountdown(0);
         }
     };
+
+    // Trigger auto-analysis if pending
+    useEffect(() => {
+        if (autoAnalyzePending && documentText && !isAnalyzing) {
+            setAutoAnalyzePending(false);
+            handleAnalyze();
+        }
+    }, [autoAnalyzePending, documentText, isAnalyzing]);
 
     // Handle chat messages
     const handleSendMessage = async () => {
@@ -559,19 +643,6 @@ export default function MainApp() {
         } finally {
             setIsChatThinking(false);
         }
-    };
-
-    // Add to change log
-    const addToChangeLog = (rec: Recommendation) => {
-        const entry: ChangeLogEntry = {
-            id: Date.now(),
-            title: rec.title,
-            original: rec.currentText,
-            new: rec.proposedText,
-            user: "Current User",
-            timestamp: formatDate(new Date())
-        };
-        setChangeLog(prev => [entry, ...prev]);
     };
 
     // Accept a recommendation (with undo snapshot)
@@ -745,6 +816,84 @@ Legal Team`;
         }
     };
 
+    // Handle export Word
+    const handleExportWord = async () => {
+        if (!documentText) return;
+        const toastId = toast.loading('Generating .docx file...');
+        try {
+            await exportToWord(documentText, recommendations, documentName);
+            toast.success('Document exported successfully!', { id: toastId });
+        } catch (e) {
+            console.error("Export Word failed", e);
+            toast.error("Failed to export to Word.", { id: toastId });
+        }
+    };
+
+    // Handle Play Briefing
+    const [isPlayingBriefing, setIsPlayingBriefing] = useState(false);
+    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    const handlePlayBriefing = async () => {
+        if (!documentText) return;
+        
+        if (isPlayingBriefing && audioRef.current) {
+            audioRef.current.pause();
+            setIsPlayingBriefing(false);
+            return;
+        }
+
+        if (audioUrl && audioRef.current) {
+            audioRef.current.play();
+            setIsPlayingBriefing(true);
+            return;
+        }
+
+        const toastId = toast.loading('Generating Commute Briefing...');
+        try {
+            const { audioService } = await import('@/services');
+            // Briefing script
+            const textToSpeak = `Here is your Commute Briefing for ${documentName}. The document has ${recommendations.length} identified issues. The overall risk score is ${score}. Please review the critical issues before proceeding.`;
+            
+            const url = await audioService.generateSpeech(textToSpeak);
+            setAudioUrl(url);
+            
+            const audio = new Audio(url);
+            audioRef.current = audio;
+            
+            audio.onended = () => setIsPlayingBriefing(false);
+            audio.play();
+            
+            setIsPlayingBriefing(true);
+            toast.success('Playing Briefing...', { id: toastId });
+        } catch (e) {
+            console.error("Play Briefing failed", e);
+            toast.error("Failed to generate Commute Briefing.", { id: toastId });
+        }
+    };
+
+    // Handle export Memo
+    const handleExportMemo = async () => {
+        if (!documentText) return;
+        const toastId = toast.loading('Generating Legal Memo...');
+        try {
+            const memoText = await generateLegalMemo(documentText, recommendations);
+            
+            const blob = new Blob([memoText], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${documentName.replace(/\.[^/.]+$/, "")}_Legal_Memo.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            toast.success('Legal Memo generated successfully!', { id: toastId });
+        } catch (e) {
+            console.error("Export Memo failed", e);
+            toast.error("Failed to generate Legal Memo.", { id: toastId });
+        }
+    };
+
     // Update score when recommendations change
     useEffect(() => {
         if (!analysisComplete) return;
@@ -785,8 +934,11 @@ Legal Team`;
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
             />
-            {/* Dummy PricingModal integration to use the variables */}
-            {isPricingModalOpen && <div onClick={() => setIsPricingModalOpen(false)}></div>}
+            <PricingModal 
+                isOpen={isPricingModalOpen} 
+                onClose={() => setIsPricingModalOpen(false)} 
+            />
+            <SettingsModal />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col relative overflow-hidden min-h-0">
@@ -797,8 +949,24 @@ Legal Team`;
                     setIsRoastMode={setIsRoastMode}
                     onOpenAuth={() => setIsAuthModalOpen(true)}
                     onOpenPricing={() => setIsPricingModalOpen(true)}
+                    onOpenSettings={() => setIsSettingsModalOpen(true)}
                 />
                 <OfflineBanner currentTheme={currentTheme} />
+                
+                {/* Rate Limit Overlay */}
+                {isRateLimited && (
+                    <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-50 bg-amber-500 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3">
+                        <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <div>
+                            <p className="font-bold">API Rate Limit Paused</p>
+                            <p className="text-sm">Resuming in {rateLimitCountdown} seconds...</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Hidden File Input */}
                 <input
                     type="file"
@@ -826,11 +994,19 @@ Legal Team`;
                         setActiveTab={setActiveTab}
                         onTriggerUpload={() => fileInputRef.current?.click()}
                         handleSave={handleSave}
+                        handlePlayBriefing={handlePlayBriefing}
+                        handleExportWord={handleExportWord}
+                        handleExportMemo={handleExportMemo}
                         onClearDocument={handleClearDocument}
                         currentTheme={currentTheme}
                         scanProgress={scanProgress}
-                        onAddAnnotation={() => {}}
-                        contractType={contractType}
+                        onAddAnnotation={(rec) => {
+                            setRecommendations(prev => [...prev, rec]);
+                            toast.success('Annotation added');
+                        }}
+                        onDeleteAnnotation={(id) => {
+                            setRecommendations(prev => prev.filter(r => r.id !== id));
+                        }}
                         setContractType={setContractType}
                         perspective={perspective}
                         setPerspective={setPerspective}
@@ -851,7 +1027,9 @@ Legal Team`;
 
                 {activeTab === 'analysis' && (
                     <AnalysisView
-                        onDeleteAnnotation={() => {}}
+                        onDeleteAnnotation={(id) => {
+                            setRecommendations(prev => prev.filter(r => r.id !== id));
+                        }}
                         recommendations={recommendations}
                         selectedRecId={selectedRecId}
                         setSelectedRecId={setSelectedRecId}
@@ -910,8 +1088,22 @@ Legal Team`;
                             
                             setActiveTab('editor');
                         }}
-                        handleExportPdf={() => {}}
-                        handleExportWord={() => {}}
+                        handleExportPdf={async () => {
+                            try {
+                                await exportToPdf(documentText, documentName);
+                                toast.success('Exported to PDF');
+                            } catch (e) {
+                                toast.error('Failed to export PDF');
+                            }
+                        }}
+                        handleExportWord={async () => {
+                            try {
+                                await exportToWord(documentText, recommendations, documentName);
+                                toast.success('Exported to Word');
+                            } catch (e) {
+                                toast.error('Failed to export Word');
+                            }
+                        }}
                     />
                 )}
                 {activeTab === 'clauses' && (
@@ -983,6 +1175,8 @@ Legal Team`;
                 {activeTab === 'audit' && <AuditLogView currentTheme={currentTheme} />}
 
                 {activeTab === 'cases' && <CasesView currentTheme={currentTheme} onLoadDemo={loadDemo} />}
+
+                {activeTab === 'search' && <WebSearchView theme={currentTheme} />}
 
                 {activeTab === 'admin' && (
                     <AdminAnalyticsView currentTheme={currentTheme} />

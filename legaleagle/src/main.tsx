@@ -19,7 +19,7 @@ if (posthogKey) {
     });
 } else {
     // Prevent posthog from crashing or complaining
-    posthog.init('phc_dummy_api_key_replace_me', {
+    posthog.init(import.meta.env.VITE_POSTHOG_KEY || 'phc_dummy_api_key_replace_me', {
         api_host: 'https://us.i.posthog.com',
         autocapture: false,
         disable_session_recording: true,

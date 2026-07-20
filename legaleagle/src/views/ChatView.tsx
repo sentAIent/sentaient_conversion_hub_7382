@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, Sparkles, Users, Send, LogOut, Volume2, VolumeX } from 'lucide-react';
+import { Scale, Sparkles, Users, Send, LogOut, Volume2, VolumeX, Copy, Check } from 'lucide-react';
 import { renderFormattedText } from '@/utils/formatting';
 import { toggleSpeak, stop, isTTSSupported } from '@/utils/tts';
 import type { Theme, ChatMessage } from '@/types';
@@ -26,6 +26,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
     currentTheme
 }) => {
     const [speakingId, setSpeakingId] = useState<string | number | null>(null);
+    const [copiedId, setCopiedId] = useState<string | number | null>(null);
+
+    const handleCopy = async (msg: ChatMessage) => {
+        try {
+            await navigator.clipboard.writeText(msg.content);
+            setCopiedId(msg.id);
+            setTimeout(() => setCopiedId(null), 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -95,9 +106,30 @@ export const ChatView: React.FC<ChatViewProps> = ({
                                 : <p className="text-slate-800">{msg.content}</p>
                             }
 
-                            {/* TTS Button for AI messages */}
-                            {msg.role === 'ai' && isTTSSupported() && (
-                                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                            {/* Message Actions */}
+                            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                                <button
+                                    onClick={() => handleCopy(msg)}
+                                    className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all ${copiedId === msg.id
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        }`}
+                                    title="Copy message"
+                                >
+                                    {copiedId === msg.id ? (
+                                        <>
+                                            <Check className="w-3.5 h-3.5" />
+                                            <span>Copied</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="w-3.5 h-3.5" />
+                                            <span>Copy</span>
+                                        </>
+                                    )}
+                                </button>
+                                
+                                {msg.role === 'ai' && isTTSSupported() && (
                                     <button
                                         onClick={() => handleSpeak(msg)}
                                         className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all ${speakingId === msg.id
@@ -118,13 +150,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
                                             </>
                                         )}
                                     </button>
-                                    {speakingId === msg.id && (
-                                        <span className="text-xs text-blue-600 animate-pulse">
-                                            Speaking...
-                                        </span>
-                                    )}
-                                </div>
-                            )}
+                                )}
+                                {speakingId === msg.id && (
+                                    <span className="text-xs text-blue-600 animate-pulse ml-2">
+                                        Speaking...
+                                    </span>
+                                )}
+                            </div>
 
                             {/* Sources */}
                             {msg.sources && msg.sources.length > 0 && (
