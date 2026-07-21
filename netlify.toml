@@ -42,16 +42,9 @@
   force = true
 
 [[redirects]]
-  from = "/lightspeed"
-  to = "https://sentaient-lightspeed.netlify.app/"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/lightspeed/*"
-  to = "https://sentaient-lightspeed.netlify.app/:splat"
+  to = "/lightspeed/index.html"
   status = 200
-  force = true
 
 
 
