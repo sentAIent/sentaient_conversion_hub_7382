@@ -34,6 +34,7 @@ export interface InvoiceData {
   
   items: LineItem[];
   
+  clientEmail?: string;
   notes: string;
   terms: string;
   

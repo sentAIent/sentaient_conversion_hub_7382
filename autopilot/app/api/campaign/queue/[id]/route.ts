@@ -27,6 +27,16 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const payload = await req.json();
     const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://localhost:8080";
     
+    // If user selected "Post Now" (scheduleDelay === 0), approve it for immediate publishing
+    if (payload.scheduleDelay === 0) {
+      payload.status = 'approved_for_publishing';
+    } else {
+      payload.status = 'scheduled';
+      payload.scheduled_time = payload.scheduleMode === 'custom' 
+        ? new Date(payload.customScheduleTime).toISOString() 
+        : new Date(Date.now() + (payload.scheduleDelay || 0) * 60000).toISOString();
+    }
+
     const response = await fetch(`${orchestratorUrl}/queue/${params.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

@@ -29,7 +29,7 @@
   "shortcuts": [
     {
       "name": "Deep Focus",
-      "url": "/mindwave-beta.html?preset=focus",
+      "url": "/mindwave.html?preset=focus",
       "icons": [
         {
           "src": "/binaural-assets/icons/icon-192x192.png",
@@ -39,7 +39,7 @@
     },
     {
       "name": "Zen Meditation",
-      "url": "/mindwave-beta.html?preset=zen",
+      "url": "/mindwave.html?preset=zen",
       "icons": [
         {
           "src": "/binaural-assets/icons/icon-192x192.png",

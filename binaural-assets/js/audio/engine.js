@@ -58,7 +58,8 @@ async function setupWorklet() {
             const blob = new Blob([recorderWorkletCode], { type: "application/javascript" });
             const url = URL.createObjectURL(blob);
             await state.audioCtx.audioWorklet.addModule(url);
-            await state.audioCtx.audioWorklet.addModule('js/audio/binaural-processor.js');
+            const workletUrl = new URL('./binaural-processor.js', import.meta.url).href;
+            await state.audioCtx.audioWorklet.addModule(workletUrl);
             state.workletInitialized = true;
             console.log('[Worklet] Successfully initialized');
         } catch (e) {
@@ -78,6 +79,17 @@ export async function startAudio() {
     if (state.isStarting) return;
     state.isStarting = true;
     console.log("[Audio] Starting engine...");
+
+    // Enable Native Capacitor Background Mode
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            const { BackgroundMode } = await import('@capacitor-community/background-mode');
+            await BackgroundMode.enable();
+            console.log("[Audio] Capacitor BackgroundMode enabled");
+        } catch (e) {
+            console.error("[Audio] Failed to enable BackgroundMode:", e);
+        }
+    }
 
     try {
         // Force new context creation inside user gesture if needed
@@ -363,6 +375,14 @@ export function stopAudio(immediate = false) {
 
     // Mark as not playing IMMEDIATELY for accurate button sync
     state.isPlaying = false;
+
+    // Disable Native Capacitor Background Mode
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        import('@capacitor-community/background-mode').then(({ BackgroundMode }) => {
+            BackgroundMode.disable();
+            console.log("[Audio] Capacitor BackgroundMode disabled");
+        }).catch(e => console.error("[Audio] Failed to disable BackgroundMode:", e));
+    }
 
     // Stop any active sweep
     if (state.sweepInterval) {

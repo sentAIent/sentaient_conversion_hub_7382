@@ -1,0 +1,40 @@
+name: Supabase Multi-Project Keep-Alive
+
+on:
+  schedule:
+    # Runs at 00:00 (midnight) every Monday and Thursday
+    - cron: '0 0 * * 1,4'
+  workflow_dispatch: # Allows you to run this manually from the GitHub Actions tab if needed
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    
+    # The matrix defines the list of your Supabase projects.
+    # GitHub will spawn a parallel job for EVERY item in this array automatically.
+    strategy:
+      matrix:
+        project:
+          - internal-dev-project-ref
+          - external-client-a-ref
+          - production-app-ref
+      # fail-fast: false ensures that if one project fails to ping, it still pings the others.
+      fail-fast: false
+
+    steps:
+      - name: Ping Supabase Project (${{ matrix.project }})
+        run: |
+          echo "Pinging Supabase project: ${{ matrix.project }} to prevent project pause..."
+          
+          # Hitting the public REST endpoint with a simple GET request.
+          # This registers as database activity and resets the 7-day pause timer.
+          # No authentication required for this basic health check ping.
+          
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://${{ matrix.project }}.supabase.co/rest/v1/)
+          
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 401 ]; then
+            echo "Ping successful! Project ${{ matrix.project }} is awake."
+          else
+            echo "Warning: Received HTTP code $HTTP_CODE from ${{ matrix.project }}."
+            # We don't fail the action here, because even a 400+ code means the server is awake and responded.
+          fi

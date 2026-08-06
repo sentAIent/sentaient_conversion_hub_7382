@@ -1,27 +1,21 @@
 "use client";
 
-import { useMemo } from 'react';
-import { generateCashFlowForecast } from '@/lib/cashFlowForecasting';
-import { Transaction } from '@/lib/categorizationEngine';
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 
-const mockTransactions: Transaction[] = [
-  { id: '1', date: new Date().toISOString(), merchant: 'Stripe Client Payment', amount: 4500.00 },
-  { id: '2', date: new Date().toISOString(), merchant: 'AWS Services', amount: -120.00 },
-  { id: '3', date: new Date().toISOString(), merchant: 'Uber Trip', amount: -35.50 },
-  { id: '4', date: new Date(Date.now() - 86400000).toISOString(), merchant: 'Starbucks Coffee', amount: -8.50 },
-  { id: '5', date: new Date(Date.now() - 86400000 * 2).toISOString(), merchant: 'Github Pro', amount: -4.00 },
-  { id: '6', date: new Date(Date.now() - 86400000 * 5).toISOString(), merchant: 'Amazon Office Desk', amount: -299.99 },
-  { id: '7', date: new Date(Date.now() - 86400000 * 10).toISOString(), merchant: 'PayPal Transfer', amount: 1500.00 },
-  { id: '8', date: new Date(Date.now() - 86400000 * 15).toISOString(), merchant: 'Local Hardware Store', amount: -45.00 },
-];
+interface CashFlowWidgetProps {
+  currentBalance: number;
+  monthlyRunRate: number;
+}
 
-export default function CashFlowWidget() {
-  const currentAssetBalance = 14500.20; // Example mock
+export default function CashFlowWidget({ currentBalance, monthlyRunRate }: CashFlowWidgetProps) {
   
-  const forecast = useMemo(() => {
-    return generateCashFlowForecast(mockTransactions, currentAssetBalance);
-  }, [currentAssetBalance]);
+  const forecast = {
+    monthlyRunRate,
+    currentBalance,
+    thirtyDayProjection: currentBalance + monthlyRunRate,
+    sixtyDayProjection: currentBalance + (monthlyRunRate * 2),
+    ninetyDayProjection: currentBalance + (monthlyRunRate * 3)
+  };
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">

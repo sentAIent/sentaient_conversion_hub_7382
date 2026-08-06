@@ -1,20 +1,9 @@
 import React from 'react';
-import {
-    FileText,
-    MessageSquare,
-    History,
-    Users,
-    PenTool,
-    BookMarked,
-    Crown,
-    Activity,
-    Building,
-    BookOpen,
-    Briefcase,
-    Globe,
-    Settings,
-    Plus,
-    FileText as FileTextIcon
+import { 
+    FileText, History, Settings, 
+    MessageSquare, Users, BookOpen, Crown,
+    Activity, Shield, Network, Globe, Plus, FileText as FileTextIcon,
+    ShieldAlert, PenTool, BookMarked, Briefcase, Building, CreditCard, Database
 } from 'lucide-react';
 import { useDocumentStore } from '@/store';
 import type { Theme, AnalysisDepth } from '@/types';
@@ -59,14 +48,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'clauses', label: 'Clause Library', icon: BookMarked, showScore: false },
         { id: 'chat', label: 'Chat', icon: MessageSquare, showScore: false },
         { id: 'cases', label: 'Dashboard', icon: Briefcase, showScore: false },
+        { id: 'due-diligence', label: 'Due Diligence', icon: ShieldAlert, showScore: false, path: '/due-diligence' },
+        { id: 'scraper', label: 'Web Scraper', icon: Globe, showScore: false, path: '/scraper' },
+        { id: 'contract-team', label: 'Agent Team', icon: Users, showScore: false, path: '/contract-team' },
         { id: 'history', label: 'History', icon: History, showScore: false },
         { id: 'context', label: 'Business Context', icon: Building, showScore: false },
         { id: 'workspace', label: 'Team', icon: Users, showScore: false },
         { id: 'audit', label: 'Activity Logs', icon: Activity, showScore: false },
         { id: 'playbook', label: 'Knowledge Base', icon: BookOpen, showScore: false },
-        { id: 'search', label: 'AI Search', icon: Globe, showScore: false },
+        { id: 'search', label: 'AI Search', icon: Globe, showScore: false, path: '/research' },
+        { id: 'knowledge-base', label: 'Knowledge Base', icon: Database, showScore: false, path: '/knowledge-base' },
+        { id: 'graph', label: 'Knowledge Graph', icon: Network, showScore: false, path: '/graph' },
+        { id: 'admin', label: 'Admin', icon: Shield, showScore: false, path: '/admin' },
+        { id: 'billing', label: 'Billing & Tiers', icon: CreditCard, showScore: false, path: '/billing' },
         { id: 'pricing', label: 'Pricing', icon: Crown, showScore: false },
-        { id: 'settings', label: 'Settings', icon: Settings, showScore: false }
+        { id: 'settings', label: 'Settings', icon: Settings, showScore: false },
+        { id: 'privacy', label: 'Privacy Policy', icon: Shield, showScore: false, path: '/privacy' },
+        { id: 'tos', label: 'Terms of Service', icon: FileText, showScore: false, path: '/tos' }
     ];
 
     const isLightSidebar = currentTheme.id === 'light' || currentTheme.id === 'corporate';
@@ -97,7 +95,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <React.Fragment key={item.id}>
                             <button
                                 onClick={() => {
-                                    if (item.id === 'settings') {
+                                    if (item.path) {
+                                        window.location.href = item.path;
+                                    } else if (item.id === 'settings') {
                                         onOpenSettings();
                                     } else if (item.id !== 'analysis' || analysisComplete) {
                                         setActiveTab(item.id);

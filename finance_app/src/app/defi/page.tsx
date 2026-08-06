@@ -1,24 +1,51 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { MOCK_DEFI_POSITIONS, calculateDeFiMetrics } from '@/lib/defiMockEngine';
 import ProtocolWidget from '@/components/ProtocolWidget';
 import { Wallet, TrendingUp, DollarSign, Activity } from 'lucide-react';
-import ComingSoonOverlay from '@/components/ComingSoonOverlay';
+import { ethers } from 'ethers';
 
 export default function DefiDashboard() {
+  const [liveEthBalance, setLiveEthBalance] = useState<string>("0.00");
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const metrics = useMemo(() => calculateDeFiMetrics(MOCK_DEFI_POSITIONS), []);
+
+  useEffect(() => {
+    async function fetchBalance() {
+      if ((window as any).ethereum) {
+        try {
+          const provider = new ethers.BrowserProvider((window as any).ethereum);
+          const accounts = await provider.send("eth_requestAccounts", []);
+          if (accounts.length > 0) {
+            setWalletAddress(accounts[0]);
+            const balance = await provider.getBalance(accounts[0]);
+            setLiveEthBalance(ethers.formatEther(balance));
+          }
+        } catch (error) {
+          console.error("Failed to fetch balance:", error);
+        }
+      }
+    }
+    fetchBalance();
+  }, []);
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">DeFi & Staking Tracker</h1>
           <p className="text-gray-500 mt-1">Monitor your yield-generating assets across all chains.</p>
         </div>
+        {walletAddress && (
+          <div className="text-right">
+            <p className="text-sm text-gray-500 font-medium">Connected Wallet</p>
+            <p className="text-gray-900 font-mono text-sm">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</p>
+            <p className="text-blue-600 font-bold">{parseFloat(liveEthBalance).toFixed(4)} ETH</p>
+          </div>
+        )}
       </div>
 
-      <ComingSoonOverlay>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard 
           title="Total Value Locked" 
@@ -89,7 +116,6 @@ export default function DefiDashboard() {
           </div>
         </div>
       </div>
-      </ComingSoonOverlay>
     </div>
   );
 }

@@ -1,0 +1,59 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "lightspeed",
+    "languages": ["javascript", "typescript", "html", "css"],
+    "frameworks": ["react", "vite", "supabase"],
+    "description": "Lightspeed Platform",
+    "analyzedAt": "2026-07-22T20:00:00Z",
+    "gitCommitHash": "mock-hash"
+  },
+  "nodes": [
+    {
+      "id": "file:src/pages/Cybersecurity.jsx",
+      "type": "file",
+      "name": "Cybersecurity.jsx",
+      "summary": "Cybersecurity Dashboard",
+      "tags": ["frontend", "dashboard"],
+      "filePath": "src/pages/Cybersecurity.jsx"
+    },
+    {
+      "id": "file:supabase/functions/scan-security-audits/index.ts",
+      "type": "file",
+      "name": "scan-security-audits",
+      "summary": "Perimeter Scanner Edge Function",
+      "tags": ["backend", "security", "edge-function"],
+      "filePath": "supabase/functions/scan-security-audits/index.ts"
+    },
+    {
+      "id": "file:supabase/functions/recon-assets/index.ts",
+      "type": "file",
+      "name": "recon-assets",
+      "summary": "Defensive Reconnaissance Edge Function",
+      "tags": ["backend", "security", "edge-function"],
+      "filePath": "supabase/functions/recon-assets/index.ts"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/pages/Cybersecurity.jsx",
+      "target": "file:supabase/functions/scan-security-audits/index.ts",
+      "type": "calls"
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:frontend",
+      "name": "Frontend",
+      "description": "React Application UI",
+      "nodeIds": ["file:src/pages/Cybersecurity.jsx"]
+    },
+    {
+      "id": "layer:backend",
+      "name": "Backend Edge Functions",
+      "description": "Supabase Deno Edge Functions",
+      "nodeIds": ["file:supabase/functions/scan-security-audits/index.ts", "file:supabase/functions/recon-assets/index.ts"]
+    }
+  ],
+  "tour": []
+}

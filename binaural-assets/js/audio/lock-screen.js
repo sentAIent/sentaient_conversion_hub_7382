@@ -6,20 +6,51 @@
 import { state } from '../state.js';
 import { handlePlayClick } from '../ui/controls_v3.js';
 
-export function initLockScreenControls() {
+export async function initLockScreenControls() {
+    // 1. Try Native Capacitor MediaSession first
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            console.log('[MediaSession] Initializing Native Capacitor lock screen controls.');
+            const { MediaSession } = await import('@capacitor-community/media-session');
+            
+            await updateMediaMetadata();
+
+            MediaSession.addListener('play', () => {
+                console.log('[Native MediaSession] Play action triggered');
+                if (!state.isPlaying) {
+                    handlePlayClick();
+                    updateMediaPlaybackState();
+                }
+            });
+
+            MediaSession.addListener('pause', () => {
+                console.log('[Native MediaSession] Pause action triggered');
+                if (state.isPlaying) {
+                    handlePlayClick();
+                    updateMediaPlaybackState();
+                }
+            });
+            return;
+        } catch (error) {
+            console.error('[MediaSession] Failed to init native media session plugin:', error);
+            // Fallthrough to web logic if it fails
+        }
+    }
+
+    // 2. Web fallback
     if (!('mediaSession' in navigator)) {
         console.warn('[MediaSession] API not supported.');
         return;
     }
 
-    console.log('[MediaSession] Initializing lock screen controls.');
+    console.log('[MediaSession] Initializing Web lock screen controls.');
 
     // Update metadata
-    updateMediaMetadata();
+    await updateMediaMetadata();
 
     // Set action handlers
     navigator.mediaSession.setActionHandler('play', () => {
-        console.log('[MediaSession] Play action triggered');
+        console.log('[Web MediaSession] Play action triggered');
         if (!state.isPlaying) {
             handlePlayClick();
             updateMediaPlaybackState();
@@ -27,29 +58,45 @@ export function initLockScreenControls() {
     });
 
     navigator.mediaSession.setActionHandler('pause', () => {
-        console.log('[MediaSession] Pause action triggered');
+        console.log('[Web MediaSession] Pause action triggered');
         if (state.isPlaying) {
             handlePlayClick();
             updateMediaPlaybackState();
         }
     });
 
-    // We don't really have "next" and "previous" tracks in a generative app,
-    // but we could use them to cycle through presets or soundscapes if desired.
     navigator.mediaSession.setActionHandler('previoustrack', null);
     navigator.mediaSession.setActionHandler('nexttrack', null);
 }
 
-export function updateMediaMetadata() {
-    if (!('mediaSession' in navigator)) return;
-
+export async function updateMediaMetadata() {
     let title = 'Mindwave Generative Audio';
     let artist = 'Binaural Beats Engine';
 
-    // Enhance metadata based on active state
     if (state.activePresetType) {
         title = state.activePresetType.charAt(0).toUpperCase() + state.activePresetType.slice(1) + ' Session';
     }
+
+    // Native Capacitor Metadata
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            const { MediaSession } = await import('@capacitor-community/media-session');
+            await MediaSession.setMetadata({
+                title: title,
+                artist: artist,
+                album: 'Mindwave State of the Art',
+                artwork: [
+                    { src: '/binaural-assets/img/icon-512x512.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+            return;
+        } catch (e) {
+            console.error('[MediaSession] Native metadata failed', e);
+        }
+    }
+
+    // Web Fallback
+    if (!('mediaSession' in navigator)) return;
 
     navigator.mediaSession.metadata = new MediaMetadata({
         title: title,
@@ -66,7 +113,21 @@ export function updateMediaMetadata() {
     });
 }
 
-export function updateMediaPlaybackState() {
+export async function updateMediaPlaybackState() {
+    // Native Capacitor State
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            const { MediaSession } = await import('@capacitor-community/media-session');
+            await MediaSession.setPlaybackState({
+                playbackState: state.isPlaying ? 'playing' : 'paused'
+            });
+            return;
+        } catch (e) {
+            console.error('[MediaSession] Native state failed', e);
+        }
+    }
+
+    // Web Fallback
     if (!('mediaSession' in navigator)) return;
     navigator.mediaSession.playbackState = state.isPlaying ? 'playing' : 'paused';
 }

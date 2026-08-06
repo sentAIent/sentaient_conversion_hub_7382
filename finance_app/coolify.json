@@ -1,0 +1,19 @@
+{
+  "$schema": "https://coollabs.io/schema/coolify.json",
+  "name": "Liquid Finance App",
+  "description": "Production deployment of Liquid using Docker Compose",
+  "type": "docker-compose",
+  "compose_file": "docker-compose.prod.yml",
+  "build_command": "pnpm build",
+  "start_command": "pnpm start",
+  "env_vars": [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "PLAID_CLIENT_ID",
+    "PLAID_SECRET",
+    "METABASE_SECRET_KEY",
+    "METABASE_SITE_URL",
+    "DOCUMENSO_API_KEY",
+    "DOCUMENSO_API_URL"
+  ]
+}

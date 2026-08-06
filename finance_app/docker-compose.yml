@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # --- CORE SERVICES (Always On locally) ---
+  stirling-pdf:
+    image: frooodle/s-pdf:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - DOCKER_ENABLE_SECURITY=false
+      - SYSTEM_DEFAULTLOCALE=en-US
+      - UI_APPNAME=Liquid PDF Processing
+      - UI_HOME_DESCRIPTION=Internal Document Engine
+      - SYSTEM_ROOTURI=
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  actual-server:
+    image: actualbudget/actual-server:latest
+    ports:
+      - "5006:5006"
+    volumes:
+      - ./actual-data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # --- ENTERPRISE SERVICES (Cloud / Profile only) ---
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - "3001:3000"
+    command:
+      - "gotenberg"
+      - "--api-port=3000"
+    profiles:
+      - enterprise
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  metabase:
+    image: metabase/metabase:latest
+    ports:
+      - "3002:3000"
+    environment:
+      - MB_DB_TYPE=postgres
+      # Prevent Metabase from consuming too much host RAM on limited systems
+      - JAVA_OPTS=-Xmx1g
+      # Will be set in cloud environments:
+      # - MB_DB_DBNAME=postgres
+      # - MB_DB_PORT=5432
+      # - MB_DB_USER=postgres
+      # - MB_DB_PASS=password
+      # - MB_DB_HOST=db
+    profiles:
+      - enterprise
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+
+  documenso:
+    image: documenso/documenso:latest
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXTAUTH_URL=http://localhost:3003
+      - NEXT_PUBLIC_APP_URL=http://localhost:3003
+      # Requires DB:
+      # - DATABASE_URL=postgresql://user:password@db:5432/documenso
+    profiles:
+      - enterprise
+    deploy:
+      resources:
+        limits:
+          memory: 1G

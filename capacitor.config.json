@@ -1,6 +1,6 @@
 {
-  "appId": "com.sentaient.interstellar",
-  "appName": "Interstellar",
+  "appId": "com.sentaient.mindwave",
+  "appName": "MindWave",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {

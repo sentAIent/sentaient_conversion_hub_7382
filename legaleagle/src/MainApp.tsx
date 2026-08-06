@@ -8,6 +8,7 @@ import { Sidebar, DisclaimerModal, SettingsModal } from '@/components';
 import { TopHeader } from '@/components/layout/TopHeader';
 import { PricingModal } from '@/components/pricing/PricingModal';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { EulaModal } from '@/components/features/EulaModal';
 import toast from 'react-hot-toast';
 import { parseDocument } from '@/utils/documentParser';
 
@@ -939,7 +940,12 @@ Legal Team`;
                 onClose={() => setIsPricingModalOpen(false)} 
             />
             <SettingsModal />
-
+            <DisclaimerModal 
+                isOpen={!hasAcceptedDisclaimer} 
+                onAccept={() => setHasAcceptedDisclaimer(true)} 
+            />
+            <EulaModal />
+            
             {/* Main Content */}
             <div className="flex-1 flex flex-col relative overflow-hidden min-h-0">
                 <TopHeader 

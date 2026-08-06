@@ -1,5 +1,6 @@
 import { state, els } from '../state.js';
 import { updateFrequencies } from '../audio/engine.js';
+import { aiCoach } from './ai-coach.js';
 
 export class BiometricService {
     constructor() {
@@ -98,13 +99,23 @@ export class BiometricService {
         if (this.activeIntent === 'relax' || this.activeIntent === 'sleep' || this.activeIntent === 'healing') {
             if (hr > 80) {
                 // High heart rate, gently pull them down into Theta (4-7Hz)
-                const currentBeat = parseFloat(els.beatSlider.value);
-                if (currentBeat > 6) {
-                    els.beatSlider.value = (currentBeat - 0.2).toFixed(2); // Slow drift down
-                    if (els.beatVal) els.beatVal.textContent = els.beatSlider.value + 'Hz';
-                    updateFrequencies();
-                }
+                console.log('[Biometrics] High HR detected in relax mode. Pulling frequency down.');
+                updateFrequencies({ preset: 'theta' });
+            } else if (hr < 60) {
+                // Very low heart rate, pushing deeper into Delta (1-4Hz) for sleep
+                console.log('[Biometrics] Low HR detected in relax mode. Deepening frequency.');
+                updateFrequencies({ preset: 'delta' });
             }
+        }
+
+        // --- BURNOUT DETECTOR ---
+        // If HR is high and they have a high task load, trigger Burnout Intervention
+        const taskCount = window.leantime ? (window.leantime.getCachedTickets() || []).length : 0;
+        const intervention = aiCoach.checkBurnout(hr, taskCount);
+        if (intervention) {
+            import('../ui/controls_v3.js').then(m => {
+                m.applyAIIntent(intervention.intent);
+            });
         }
         
         // If user wants energy/focus, and HR is low, raise it slightly

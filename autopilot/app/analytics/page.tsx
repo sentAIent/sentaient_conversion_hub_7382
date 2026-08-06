@@ -1,20 +1,44 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function AnalyticsDashboard() {
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAnalytics() {
+      try {
+        const response = await fetch('/api/campaign/analytics');
+        const resData = await response.json();
+        if (resData.success && !resData.data.error) {
+          setStats(resData.data);
+        }
+      } catch (e) {
+        console.error("Failed to load analytics", e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchAnalytics();
+  }, []);
+
   const macroStats = [
-    { label: 'Total Impressions', value: '4.2M', trend: '+12.5%', isUp: true },
-    { label: 'Engagement Rate', value: '8.4%', trend: '+1.2%', isUp: true },
+    { label: 'Total Impressions', value: stats?.aggregate_views?.toLocaleString() || '0', trend: '+12.5%', isUp: true },
+    { label: 'Engagement Rate', value: stats?.average_engagement_rate ? `${stats.average_engagement_rate.toFixed(1)}%` : '0%', trend: '+1.2%', isUp: true },
     { label: 'Audience Growth', value: '12,403', trend: '+24.8%', isUp: true },
     { label: 'Conversion Clicks', value: '8,901', trend: '-2.1%', isUp: false },
   ];
 
-  const recentPosts = [
-    { id: '1', platform: 'Instagram', account: '@CloveH2O_Main', caption: '🌊 Dive into pure hydration...', impressions: '125K', engagement: '11.2%' },
-    { id: '2', platform: 'TikTok', account: '@CloveH2O_Main', caption: 'The secret to glowing skin? 💧', impressions: '840K', engagement: '15.4%' },
-    { id: '3', platform: 'Twitter/X', account: '@Founder_Personal', caption: 'Just launched our new product line!', impressions: '45K', engagement: '4.8%' },
-    { id: '4', platform: 'LinkedIn', account: '@Mindwave_Official', caption: 'Excited to announce our Q3 results.', impressions: '12K', engagement: '6.1%' },
-  ];
+  const recentPosts = stats?.top_performing_campaign ? [
+    { 
+      id: '1', 
+      platform: 'Cross-Platform', 
+      account: '@SentAIent', 
+      caption: stats.top_performing_campaign.viral_angle || "Viral Hit", 
+      impressions: stats.top_performing_campaign.views?.toLocaleString() || '0', 
+      engagement: 'High' 
+    }
+  ] : [];
 
   return (
     <div className="min-h-screen p-8 md:p-12 bg-transparent text-white relative">

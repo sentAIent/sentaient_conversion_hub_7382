@@ -25,8 +25,8 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({ currentT
     // Infrastructure State
     const [dockerStatus, setDockerStatus] = useState<'checking' | 'running' | 'stopped' | 'error'>('checking');
     const [dockerErrorMsg, setDockerErrorMsg] = useState('');
-    const ADMIN_API_KEY = 'super-secret-local-key';
-    const DOCKER_API_URL = 'http://localhost:11236';
+    const ADMIN_API_KEY = import.meta.env.VITE_DOCKER_API_KEY || 'super-secret-local-key';
+    const DOCKER_API_URL = import.meta.env.VITE_DOCKER_API_URL || 'http://localhost:11236';
 
     const fetchLogs = async () => {
         let localFailures = [];

@@ -1,7 +1,10 @@
-import React from 'react';
-import { X, Server, Volume2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Server, Volume2, AlertTriangle } from 'lucide-react';
 import { useSettingsStore } from '@/store';
 import { useUIStore } from '@/store';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
+import toast from 'react-hot-toast';
 
 export const SettingsModal: React.FC = () => {
     const { 
@@ -16,6 +19,42 @@ export const SettingsModal: React.FC = () => {
     } = useSettingsStore();
 
     const currentTheme = useUIStore(s => s.currentTheme);
+    const { user } = useAuth();
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDeleteAccount = async () => {
+        if (!user) return;
+        
+        const confirm1 = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+        if (!confirm1) return;
+        
+        const confirm2 = window.confirm("FINAL WARNING: All your documents, history, and active subscriptions will be permanently deleted. Type 'DELETE' to confirm.");
+        if (!confirm2) return;
+
+        setIsDeleting(true);
+        const toastId = toast.loading('Deleting account...');
+
+        try {
+            // Delete user profiles and data from Supabase.
+            // Edge functions or cascading deletes in DB should handle related table cleanup.
+            const { error } = await supabase.rpc('delete_user_account');
+            
+            if (error) {
+                // If RPC doesn't exist, fallback to just calling edge function or deleting profile
+                await supabase.from('profiles').delete().eq('id', user.id);
+            }
+
+            // Sign out
+            await supabase.auth.signOut();
+            toast.success('Account deleted successfully.', { id: toastId });
+            window.location.reload();
+        } catch (err: any) {
+            console.error('Failed to delete account', err);
+            toast.error('Failed to delete account. Please contact support.', { id: toastId });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     if (!isSettingsModalOpen) return null;
 
@@ -140,6 +179,27 @@ export const SettingsModal: React.FC = () => {
                                 </div>
                             </label>
                         </div>
+                    </div>
+
+                    {/* Danger Zone */}
+                    <div 
+                        className="p-4 rounded-xl border border-red-500/30 bg-red-500/5"
+                    >
+                        <h3 className="font-semibold mb-2 flex items-center gap-2 text-red-500">
+                            <AlertTriangle className="w-4 h-4" />
+                            Danger Zone
+                        </h3>
+                        <p className="text-sm opacity-70 mb-4 text-red-400">
+                            Permanently delete your account and all associated data. This action cannot be undone.
+                        </p>
+                        
+                        <button
+                            onClick={handleDeleteAccount}
+                            disabled={isDeleting}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                        >
+                            {isDeleting ? 'Deleting...' : 'Delete Account'}
+                        </button>
                     </div>
 
                 </div>

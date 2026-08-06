@@ -42,6 +42,7 @@ export default function JournalingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTrade, setEditingTrade] = useState<JournaledTrade | undefined>();
   const [isLoading, setIsLoading] = useState(true);
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function JournalingPage() {
     }
     
     fetchTrades();
-  }, [supabase]);
+  }, []);
 
   const metrics = useMemo(() => calculateJournalMetrics(trades), [trades]);
 
@@ -107,6 +108,8 @@ export default function JournalingPage() {
       fees: tradeData.fees
     };
 
+    let savedId = '';
+    
     if (editingTrade) {
       const { error } = await supabase
         .from('trades')
@@ -115,6 +118,7 @@ export default function JournalingPage() {
         
       if (!error) {
         setTrades(trades.map(t => t.id === editingTrade.id ? { ...tradeData, id: t.id } : t));
+        savedId = editingTrade.id;
       }
     } else {
       const { data, error } = await supabase
@@ -125,6 +129,20 @@ export default function JournalingPage() {
         
       if (!error && data) {
         setTrades([{ ...tradeData, id: data.id }, ...trades]);
+        savedId = data.id;
+      }
+    }
+
+    // Attempt to sync to Actual Budget Ledger
+    if (savedId) {
+      try {
+        await fetch('/api/ledger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...tradeData, id: savedId })
+        });
+      } catch (err) {
+        console.warn('Failed to sync to ledger', err);
       }
     }
   };

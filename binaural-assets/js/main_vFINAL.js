@@ -146,5 +146,9 @@ window.toggleObserverEffect = function(isObserved) {
 // Handle payment return (if redirected from Stripe)
 handlePaymentSuccess();
 
+// Initialize backend maintenance service (Supabase pings)
+import { supabaseMaintenance } from './services/supabase-maintenance.js';
+supabaseMaintenance.init();
+
 // Kickoff Bootloader Sequence
 import './core/bootloader.js';

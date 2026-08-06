@@ -1,0 +1,25 @@
+name: Keep Supabase Edge Functions Alive
+
+on:
+  schedule:
+    # Runs at 00:00 on Monday and Thursday (twice a week)
+    - cron: '0 0 * * 1,4'
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Edge Function
+        run: |
+          # Replace the URL below with your actual Supabase Edge Function URL
+          # Or use a GitHub Secret: ${{ secrets.SUPABASE_EDGE_FUNCTION_URL }}
+          # Example:
+          # curl -i -X GET "${{ secrets.SUPABASE_EDGE_FUNCTION_URL }}" \
+          #      -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          
+          echo "Pinging Supabase to prevent inactivity shutdown..."
+          
+          # Placeholder curl command
+          curl -i -X GET "https://YOUR_PROJECT_REF.supabase.co/functions/v1/YOUR_FUNCTION_NAME" \
+               -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" || true

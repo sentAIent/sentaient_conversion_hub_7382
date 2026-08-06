@@ -1,54 +1,77 @@
 import { NextResponse } from 'next/server';
-import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
+import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode } from 'plaid';
+import { createClient } from '@/lib/supabase/server';
 
-// Note: To use this in production, you must set these environment variables in .env.local
 const configuration = new Configuration({
-  basePath: PlaidEnvironments.sandbox,
+  basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
   baseOptions: {
     headers: {
-      'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID || 'mock_client_id',
-      'PLAID-SECRET': process.env.PLAID_SECRET || 'mock_secret',
+      'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID,
+      'PLAID-SECRET': process.env.PLAID_SECRET,
     },
   },
 });
 
-const client = new PlaidApi(configuration);
+const plaidClient = new PlaidApi(configuration);
 
 export async function POST(request: Request) {
+  const { action, public_token } = await request.json();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const { action } = await request.json();
-
     if (action === 'create_link_token') {
-      // In a real app, you would fetch this from the user's session
-      const clientUserId = 'user_good'; 
+      const tokenResponse = await plaidClient.linkTokenCreate({
+        user: { client_user_id: user.id },
+        client_name: 'Finance App',
+        products: [Products.Transactions],
+        country_codes: [CountryCode.Us],
+        language: 'en',
+      });
+      return NextResponse.json(tokenResponse.data);
+    } 
+    else if (action === 'exchange_public_token') {
+      const exchangeResponse = await plaidClient.itemPublicTokenExchange({
+        public_token: public_token,
+      });
 
-      if (!process.env.PLAID_CLIENT_ID) {
-         // Return a mock token for frontend development if no keys exist
-         return NextResponse.json({ link_token: 'mock-link-token-123' });
+      const accessToken = exchangeResponse.data.access_token;
+      const itemId = exchangeResponse.data.item_id;
+      
+      // Get institution name
+      const itemResponse = await plaidClient.itemGet({ access_token: accessToken });
+      const institutionId = itemResponse.data.item.institution_id;
+      let institutionName = 'Unknown Institution';
+      if (institutionId) {
+        const instResponse = await plaidClient.institutionsGetById({
+          institution_id: institutionId,
+          country_codes: [CountryCode.Us],
+        });
+        institutionName = instResponse.data.institution.name;
       }
 
-      const request = {
-        user: { client_user_id: clientUserId },
-        client_name: 'AutoPilot Financials',
-        products: ['auth', 'transactions'],
-        country_codes: ['US'],
-        language: 'en',
-      };
-      
-      const createTokenResponse = await client.linkTokenCreate(request as any);
-      return NextResponse.json(createTokenResponse.data);
-    }
+      // Save to Supabase
+      const { error } = await supabase.from('plaid_items').insert({
+        user_id: user.id,
+        item_id: itemId,
+        access_token: accessToken,
+        institution_name: institutionName
+      });
 
-    if (action === 'exchange_public_token') {
-      // Handle exchanging the public token for an access token
-      // const exchangeResponse = await client.itemPublicTokenExchange({ public_token: ... });
-      return NextResponse.json({ success: true, message: "Mock public token exchanged." });
-    }
+      if (error) {
+        throw new Error('Failed to save to database');
+      }
 
+      return NextResponse.json({ success: true });
+    }
+    
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-
-  } catch (error) {
-    console.error('Error in Plaid API route:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Plaid API Error:', error.response?.data || error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

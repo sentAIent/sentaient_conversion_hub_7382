@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { InvoiceData, defaultInvoiceData, LineItem, CustomField } from '@/lib/invoiceTypes';
-import { Settings2, Download, Printer, Save, FileUp, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Settings2, Printer, Download, FileUp, Plus, Trash2, Cloud, CloudDownload, Calendar, Briefcase, Mail, MapPin, Building, Type, PenTool, ImageIcon } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+
 
 export default function AdvancedInvoicingPage() {
   const [data, setData] = useState<InvoiceData>(defaultInvoiceData);
@@ -12,6 +14,15 @@ export default function AdvancedInvoicingPage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
+
+  const supabase = createClient();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [isSigning, setIsSigning] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [cloudInvoices, setCloudInvoices] = useState<any[]>([]);
+  
+  const invoicePreviewRef = useRef<HTMLDivElement>(null);
 
   const getCurrencySymbol = (currency: string) => {
     switch (currency) {
@@ -142,6 +153,147 @@ export default function AdvancedInvoicingPage() {
     reader.readAsText(file);
   };
 
+  const saveToCloud = async () => {
+    setIsSaving(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert("Please log in to save to cloud");
+      setIsSaving(false);
+      return;
+    }
+    
+    const payload = {
+      user_id: user.id,
+      invoice_number: data.invoiceNumber || `INV-${Date.now()}`,
+      date: data.date,
+      due_date: data.dueDate,
+      data: data
+    };
+
+    const { error } = await supabase
+      .from('invoices')
+      .upsert(payload, { onConflict: 'user_id, invoice_number' });
+
+    if (error) {
+      console.error("Failed to save", error);
+      alert("Failed to save to cloud");
+    } else {
+      alert("Saved to cloud!");
+    }
+    setIsSaving(false);
+  };
+
+  const downloadPDF = async () => {
+    if (!invoicePreviewRef.current) return;
+    
+    try {
+      setIsPrinting(true);
+      
+      const htmlContent = invoicePreviewRef.current.outerHTML;
+      
+      const response = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ html: htmlContent }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice-${data.invoiceNumber || 'Draft'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      alert('Failed to generate PDF. Make sure Stirling-PDF is running locally.');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
+  const requestSignature = async () => {
+    if (!invoicePreviewRef.current) return;
+    
+    if (!data.clientEmail) {
+      alert("Please enter a client email address to send the document for signature.");
+      return;
+    }
+    
+    try {
+      setIsSigning(true);
+      
+      // 1. Get HTML
+      const htmlContent = invoicePreviewRef.current.outerHTML;
+      
+      // 2. Generate PDF via Stirling API first
+      const pdfResponse = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html: htmlContent }),
+      });
+      
+      if (!pdfResponse.ok) throw new Error('Failed to generate PDF');
+      
+      const blob = await pdfResponse.blob();
+      
+      // 3. Send PDF to Documenso
+      const formData = new FormData();
+      formData.append('file', blob, `Invoice-${data.invoiceNumber || 'Draft'}.pdf`);
+      formData.append('signers', data.clientEmail);
+      
+      const documensoResponse = await fetch('/api/documenso', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const result = await documensoResponse.json();
+      
+      if (!documensoResponse.ok) {
+        throw new Error(result.error || 'Failed to request signature');
+      }
+      
+      alert(result.message || 'Signature request sent successfully!');
+      
+    } catch (err: any) {
+      console.error('Documenso error:', err);
+      alert(err.message || 'Failed to request signature.');
+    } finally {
+      setIsSigning(false);
+    }
+  };
+
+  const loadFromCloud = async () => {
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, date, due_date, data')
+      .order('date', { ascending: false });
+      
+    if (data) {
+      setCloudInvoices(data);
+      setShowLoadModal(true);
+    } else {
+      alert("Could not load invoices from cloud.");
+    }
+  };
+
+  const selectCloudInvoice = (inv: any) => {
+    setData(inv.data);
+    setShowDiscount(inv.data.discountValue > 0);
+    setShowTax(inv.data.taxValue > 0);
+    setShowShipping(inv.data.shippingValue > 0);
+    setShowLoadModal(false);
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 pb-20">
       {/* LEFT COLUMN: Editor */}
@@ -154,8 +306,17 @@ export default function AdvancedInvoicingPage() {
               Invoice Editor
             </h1>
             <div className="flex gap-2">
-              <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">
-                <Printer className="w-4 h-4" /> Print PDF
+              <button onClick={loadFromCloud} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-md transition-colors border border-blue-200">
+                <CloudDownload className="w-4 h-4" /> Load Cloud
+              </button>
+              <button onClick={saveToCloud} disabled={isSaving} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50">
+                <Cloud className="w-4 h-4" /> {isSaving ? 'Saving...' : 'Save Cloud'}
+              </button>
+              <button onClick={downloadPDF} disabled={isPrinting} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors border border-gray-200 disabled:opacity-50">
+                <Printer className="w-4 h-4" /> {isPrinting ? 'Generating...' : 'Print PDF'}
+              </button>
+              <button onClick={requestSignature} disabled={isSigning} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded-md transition-colors border border-green-200 disabled:opacity-50">
+                <PenTool className="w-4 h-4" /> {isSigning ? 'Sending...' : 'Request Signature'}
               </button>
               <button onClick={exportJson} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors border border-gray-200">
                 <Download className="w-4 h-4" /> Export
@@ -231,6 +392,7 @@ export default function AdvancedInvoicingPage() {
               <div className="space-y-4">
                 <h3 className="font-semibold text-gray-800">Bill To (Client Details)</h3>
                 <input type="text" placeholder="Client Name" value={data.buyer.name} onChange={e => updateBuyer('name', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm sm:text-sm" />
+                <input type="email" placeholder="Client Email (for signatures)" value={data.clientEmail || ''} onChange={e => updateField('clientEmail', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm sm:text-sm" />
                 <input type="text" placeholder="Client Address" value={data.buyer.address} onChange={e => updateBuyer('address', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm sm:text-sm" />
                 <div className="grid grid-cols-2 gap-3">
                   <input type="text" placeholder="City" value={data.buyer.city} onChange={e => updateBuyer('city', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm sm:text-sm" />
@@ -369,7 +531,7 @@ export default function AdvancedInvoicingPage() {
       {/* RIGHT COLUMN: Live Preview */}
       <div className="w-full lg:w-[800px] flex-shrink-0">
         <div className="sticky top-6">
-          <div className="bg-white shadow-xl rounded-sm border border-gray-200 p-12 print:shadow-none print:border-none print:p-0 min-h-[1056px] text-gray-800 relative bg-[url('https://www.transparenttextures.com/patterns/clean-gray-paper.png')] print:bg-none print:w-[8.5in] print:h-auto">
+          <div ref={invoicePreviewRef} className="bg-white shadow-xl rounded-sm border border-gray-200 p-12 print:shadow-none print:border-none print:p-0 min-h-[1056px] text-gray-800 relative bg-[url('https://www.transparenttextures.com/patterns/clean-gray-paper.png')] print:bg-none print:w-[8.5in] print:h-auto">
             
             {/* Header */}
             <div className="flex justify-between items-start mb-16">
@@ -507,6 +669,44 @@ export default function AdvancedInvoicingPage() {
           </div>
         </div>
       </div>
+      
+      {/* Load Modal */}
+      {showLoadModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <CloudDownload className="w-5 h-5 text-blue-500" />
+                Load Cloud Invoices
+              </h2>
+              <button onClick={() => setShowLoadModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              {cloudInvoices.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No invoices found in cloud.</p>
+              ) : (
+                <div className="space-y-3">
+                  {cloudInvoices.map(inv => (
+                    <div 
+                      key={inv.id} 
+                      onClick={() => selectCloudInvoice(inv)}
+                      className="border border-gray-200 rounded-lg p-3 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors flex justify-between items-center"
+                    >
+                      <div>
+                        <p className="font-semibold text-gray-900">{inv.invoice_number}</p>
+                        <p className="text-sm text-gray-500">Date: {inv.date} | Due: {inv.due_date}</p>
+                      </div>
+                      <div className="text-sm font-medium text-gray-500">
+                        Select →
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

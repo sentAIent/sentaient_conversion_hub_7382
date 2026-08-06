@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LightSpeed - AI CTO Dashboard</title>
+    <!-- Alibaba Page Agent for in-browser autonomy -->
+    <script src="https://unpkg.com/@alibaba/page-agent@latest/dist/page-agent.umd.js"></script>
+    <script>
+      window.onload = () => {
+        if (window.PageAgent) {
+          window.pageAgent = new window.PageAgent({
+            apiKey: localStorage.getItem('GEMINI_API_KEY') || 'INSERT_API_KEY_HERE', 
+            model: 'gemini-1.5-pro' // or Claude/OpenAI
+          });
+          window.pageAgent.mount();
+        }
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>

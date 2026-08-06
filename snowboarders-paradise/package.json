@@ -1,0 +1,30 @@
+{
+  "name": "snowboarders-paradise",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@expo/metro-runtime": "~57.0.7",
+    "@react-three/cannon": "^6.6.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@react-three/postprocessing": "^3.0.4",
+    "@supabase/supabase-js": "^2.109.0",
+    "expo": "~57.0.8",
+    "expo-gl": "^57.0.2",
+    "expo-status-bar": "~57.0.1",
+    "postprocessing": "^6.39.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-web": "^0.21.2",
+    "simplex-noise": "^4.0.3",
+    "three": "^0.185.1"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "private": true
+}

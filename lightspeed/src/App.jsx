@@ -11,9 +11,17 @@ import ErrorReference from './pages/ErrorReference';
 import AppDirectory from './pages/AppDirectory';
 import Settings from './pages/Settings';
 import Analytics from './pages/Analytics';
+import AppRegistry from './pages/AppRegistry';
 import ClientPortal from './pages/ClientPortal';
+import AIHardware from './pages/AIHardware';
+import ComplianceDashboard from './pages/ComplianceDashboard';
+import Login from './pages/Login';
+import MobileAdminDashboard from './pages/MobileAdminDashboard';
+import ChatOpsSidebar from './components/ChatOpsSidebar';
+import { useAuth } from './contexts/AuthContext';
 
 function App() {
+  const { user, role, loading, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [errors, setErrors] = useState([]);
   const [clientToken, setClientToken] = useState(null);
@@ -28,6 +36,12 @@ function App() {
         return; // Skip other setup for client portal
       }
     }
+    
+    // Check for mobile route
+    if (path.startsWith('/mobile')) {
+      setCurrentPage('mobile-dashboard');
+    }
+
     // 1. Fetch initial incidents
     const fetchIncidents = async () => {
       const { data, error } = await supabase
@@ -92,6 +106,10 @@ function App() {
         return <AppDirectory errors={errors} onFix={handleFixError} />;
       case 'cybersecurity':
         return <Cybersecurity />;
+      case 'compliance':
+        return <ComplianceDashboard />;
+      case 'registry':
+        return <AppRegistry />;
       case 'performance':
         return <Performance />;
       case 'incidents':
@@ -100,12 +118,24 @@ function App() {
         return <ErrorReference errors={errors} onFix={handleFixError} />;
       case 'analytics':
         return <Analytics />;
+      case 'ai-hardware':
+        return <AIHardware />;
       case 'settings':
         return <Settings />;
+      case 'mobile-dashboard':
+        return <MobileAdminDashboard />;
       default:
         return <Dashboard errors={errors} onFix={handleFixError} />;
     }
   };
+
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'white' }}>Loading Enterprise Security Platform...</div>;
+  }
+
+  if (!user && !clientToken) {
+    return <Login />;
+  }
 
   if (clientToken) {
     // Render ClientPortal without sidebar and header
@@ -118,79 +148,94 @@ function App() {
 
   return (
     <div className="app-container">
-      <header className="top-nav">
-        <div className="logo">LightSpeed</div>
-        <div className="nav-actions">
-          <div className="status-indicator safe"></div>
-          <span>System Healthy</span>
-        </div>
-      </header>
+      {currentPage !== 'mobile-dashboard' && (
+        <header className="top-nav">
+          <div className="logo">LightSpeed</div>
+          <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="status-indicator safe"></div>
+            <span>System Healthy</span>
+            {user && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem', paddingLeft: '1rem', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ color: 'var(--text-muted)' }}>{user.email} ({role || 'Guest'})</span>
+                <button onClick={logout} className="glass-button" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>Logout</button>
+              </div>
+            )}
+          </div>
+        </header>
+      )}
       
       <div className="main-content">
-        <aside className="sidebar">
-          <nav>
-            <a 
-              href="#dashboard" 
-              className={currentPage === 'dashboard' ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); setCurrentPage('dashboard'); }}
-            >
-              Dashboard
-            </a>
-            <a 
-              href="#directory" 
-              className={currentPage === 'directory' ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); setCurrentPage('directory'); }}
-            >
-              App Directory
-            </a>
-            <a 
-              href="#cybersecurity" 
-              className={currentPage === 'cybersecurity' ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); setCurrentPage('cybersecurity'); }}
-            >
-              Cybersecurity
-            </a>
-            <a 
-              href="#performance" 
-              className={currentPage === 'performance' ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); setCurrentPage('performance'); }}
-            >
-              Performance
-            </a>
-            <a 
-              href="#incidents" 
-              className={currentPage === 'incidents' ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); setCurrentPage('incidents'); }}
-            >
-              Incidents
-            </a>
-            <a 
-              href="#errors" 
-              className={currentPage === 'errors' ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); setCurrentPage('errors'); }}
-            >
-              Error Reference
-            </a>
-            <a 
-              href="#analytics" 
-              className={currentPage === 'analytics' ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); setCurrentPage('analytics'); }}
-            >
-              Analytics
-            </a>
-            <a 
-              href="#settings" 
-              className={currentPage === 'settings' ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); setCurrentPage('settings'); }}
-            >
-              Settings
-            </a>
-          </nav>
-        </aside>
+        {currentPage !== 'mobile-dashboard' && (
+          <aside className="sidebar">
+            <nav>
+              {(!role || role === 'ciso') && (
+                <a href="#dashboard" className={currentPage === 'dashboard' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('dashboard'); }}>
+                  Dashboard
+                </a>
+              )}
+              
+              {(!role || role === 'devops') && (
+                <a href="#directory" className={currentPage === 'directory' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('directory'); }}>
+                  App Directory
+                </a>
+              )}
+
+              {(!role || role === 'ciso' || role === 'secops') && (
+                <a href="#cybersecurity" className={currentPage === 'cybersecurity' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('cybersecurity'); }}>
+                  Cybersecurity
+                </a>
+              )}
+
+              {(!role || role === 'ciso' || role === 'secops') && (
+                <a href="#compliance" className={currentPage === 'compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('compliance'); }}>
+                  Compliance
+                </a>
+              )}
+
+              {(!role || role === 'devops') && (
+                <a href="#performance" className={currentPage === 'performance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('performance'); }}>
+                  Performance
+                </a>
+              )}
+
+              {(!role || role === 'ciso' || role === 'devops') && (
+                <a href="#registry" className={currentPage === 'registry' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('registry'); }}>
+                  App Registry
+                </a>
+              )}
+
+              {(!role || role === 'secops') && (
+                <a href="#incidents" className={currentPage === 'incidents' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('incidents'); }}>
+                  Incidents
+                </a>
+              )}
+
+              {(!role || role === 'secops') && (
+                <a href="#errors" className={currentPage === 'errors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('errors'); }}>
+                  Error Reference
+                </a>
+              )}
+
+              {(!role || role === 'devops') && (
+                <a href="#analytics" className={currentPage === 'analytics' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('analytics'); }}>
+                  Analytics
+                </a>
+              )}
+
+              {(!role || role === 'ciso' || role === 'devops') && (
+                <a href="#settings" className={currentPage === 'settings' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('settings'); }}>
+                  Settings
+                </a>
+              )}
+            </nav>
+          </aside>
+        )}
         
-        <main className="dashboard">
+        <main className={currentPage === 'mobile-dashboard' ? "mobile-main-override" : "dashboard"}>
           {renderPage()}
         </main>
+        
+        {currentPage !== 'mobile-dashboard' && <ChatOpsSidebar />}
       </div>
     </div>
   );

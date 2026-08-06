@@ -5,28 +5,38 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://localhost:8080";
     
-    // Save the metadata and the public video URL to Firestore scheduled_posts
+    // Construct the payload for the Redis queue
+    const scheduleDelay = body.scheduleDelay || 0;
     const postData = {
-      brandId: body.brand || "sentaient",
-      campaignId: body.campaign_id,
+      campaign_id: body.campaign_id || Date.now().toString(),
+      brand: body.brand || "sentaient",
       script: body.script,
       caption: body.caption || "",
-      videoUrl: body.video_url || "/mock.mp4",
-      status: "scheduled",
-      scheduledFor: body.scheduleMode === 'custom' 
+      video_url: body.video_url || "/mock.mp4",
+      status: scheduleDelay === 0 ? "approved_for_publishing" : "scheduled",
+      scheduled_time: body.scheduleMode === 'custom' 
         ? new Date(body.customScheduleTime).toISOString() 
-        : new Date(Date.now() + (body.scheduleDelay || 120) * 60000).toISOString(),
+        : new Date(Date.now() + scheduleDelay * 60000).toISOString(),
       platformAccounts: body.platformAccounts || {},
-      createdAt: serverTimestamp()
+      created_at: new Date().toISOString()
     };
     
-    const docRef = await addDoc(collection(db, "scheduled_posts"), postData);
+    // Push to the Orchestrator's Queue
+    const res = await fetch(`${orchestratorUrl}/queue/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(postData)
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to add to Orchestrator queue");
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Campaign scheduled successfully!",
-      firestoreId: docRef.id
+      message: "Campaign scheduled successfully in Orchestrator!"
     });
 
   } catch (error: any) {

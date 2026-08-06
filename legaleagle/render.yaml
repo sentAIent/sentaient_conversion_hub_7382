@@ -1,0 +1,27 @@
+services:
+  # Frontend Static Site
+  - type: web
+    name: legaleagle-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+
+  # Backend Node/Python API
+  - type: web
+    name: legaleagle-backend
+    env: docker
+    rootDir: docker-manager
+    envVars:
+      - key: PORT
+        value: "3001"
+      - key: NODE_ENV
+        value: production

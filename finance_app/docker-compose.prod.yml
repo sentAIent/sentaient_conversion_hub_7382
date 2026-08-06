@@ -1,0 +1,87 @@
+version: '3.8'
+
+# Production Compose File for Liquid on Coolify/Dokku
+# Ensure you set the correct environment variables in your deployment UI.
+
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile # Requires a standard Next.js Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - PLAID_CLIENT_ID=${PLAID_CLIENT_ID}
+      - PLAID_SECRET=${PLAID_SECRET}
+      - PLAID_ENV=production
+      - METABASE_SITE_URL=${METABASE_SITE_URL}
+      - METABASE_SECRET_KEY=${METABASE_SECRET_KEY}
+      - DOCUMENSO_API_URL=${DOCUMENSO_API_URL}
+      - DOCUMENSO_API_KEY=${DOCUMENSO_API_KEY}
+    depends_on:
+      - stirling-pdf
+    restart: unless-stopped
+
+  stirling-pdf:
+    image: frooodle/s-pdf:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - DOCKER_ENABLE_SECURITY=false
+      - SYSTEM_DEFAULTLOCALE=en-US
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    restart: unless-stopped
+
+  # Note: Metabase, Documenso, and Actual Budget are heavy.
+  # We recommend deploying them as separate Coolify Apps/Services
+  # rather than tying them to the main web container's lifecycle,
+  # but they are included here for a monolithic cloud deployment.
+  
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: always
+    ports:
+      - "3000:3000"
+    command:
+      - "gotenberg"
+      - "--api-port=3000"
+      
+  metabase:
+    image: metabase/metabase:latest
+    restart: always
+    ports:
+      - "3002:3000"
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=${MB_DB_DBNAME}
+      - MB_DB_PORT=${MB_DB_PORT:-5432}
+      - MB_DB_USER=${MB_DB_USER}
+      - MB_DB_PASS=${MB_DB_PASS}
+      - MB_DB_HOST=${MB_DB_HOST}
+      - JAVA_OPTS=-Xmx1g
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+    restart: unless-stopped
+
+  actual-server:
+    image: actualbudget/actual-server:latest
+    ports:
+      - "5006:5006"
+    volumes:
+      - actual-data-prod:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: unless-stopped
+
+volumes:
+  actual-data-prod:

@@ -85,7 +85,8 @@ app.post("/proxy/gemini", async (req, res) => {
   const { 
     model = "gemini-2.5-flash", 
     prompt = "", 
-    systemPrompt = "You are a helpful AI assistant." 
+    systemPrompt = "You are a helpful AI assistant.",
+    screenshotBase64 = null
   } = req.body;
 
   // Environment Check
@@ -95,6 +96,19 @@ app.post("/proxy/gemini", async (req, res) => {
   }
 
   try {
+    let finalSystemPrompt = systemPrompt;
+    
+    // Inject analytics loop intelligence
+    try {
+        const analyticsData = await redis.get("system:analytics_snapshot");
+        if (analyticsData) {
+            const parsedAnalytics = JSON.parse(analyticsData);
+            finalSystemPrompt += `\n\n[CRITICAL MARKETING INTELLIGENCE]: Past performance data indicates our top campaign generated ${parsedAnalytics.top_performing_campaign.views} views using the viral angle: "${parsedAnalytics.top_performing_campaign.viral_angle}". Incorporate learnings from this success into the new strategy.`;
+        }
+    } catch (e) {
+        console.error("DEBUG: Failed to fetch analytics snapshot, proceeding without it.", e);
+    }
+
     const modelName = model.startsWith("models/") ? model : `models/${model}`;
     const apiUrl = `${GEMINI_BASE}/${modelName}:generateContent?key=${process.env.GEMINI_API_KEY}`;
     
@@ -102,13 +116,26 @@ app.post("/proxy/gemini", async (req, res) => {
     console.log("DEBUG: Model:", modelName);
     console.log("DEBUG: URL (hidden key):", apiUrl.replace(process.env.GEMINI_API_KEY, "HIDDEN"));
 
+    // Prepare Multimodal Payload
+    const parts = [{ text: `${finalSystemPrompt}\n\n${prompt}` }];
+    
+    if (screenshotBase64) {
+        console.log("DEBUG: Injecting screenshot into Gemini payload for Vision analysis.");
+        parts.push({
+            inlineData: {
+                mimeType: "image/png",
+                data: screenshotBase64
+            }
+        });
+    }
+
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ 
             role: "user", 
-            parts: [{ text: `${systemPrompt}\n\n${prompt}` }] 
+            parts: parts 
         }],
       }),
     });
@@ -180,7 +207,7 @@ app.get('/proxy/key-status', (req, res) => {
     res.json({ configured: hasKey });
 });
 
-// 5. Staging Count Endpoint (Adding missing route)
+// 5. Staging Count Endpoint
 app.get("/staged", async (req, res) => {
     try {
         // Fetch all campaign keys from Redis
@@ -189,6 +216,20 @@ app.get("/staged", async (req, res) => {
     } catch (err) {
         console.error("DEBUG: Failed to fetch staged count:", err);
         res.status(500).json({ error: "Could not retrieve count" });
+    }
+});
+
+// Analytics Snapshot Endpoint
+app.get("/analytics", async (req, res) => {
+    try {
+        const data = await redis.get("system:analytics_snapshot");
+        if (data) {
+            res.json(JSON.parse(data));
+        } else {
+            res.json({ error: "No analytics data available yet." });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -238,6 +279,27 @@ app.put("/queue/:id", async (req, res) => {
         
         await redis.set(`queue:${id}`, JSON.stringify(updated));
         res.json({ success: true, item: updated });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 7. Queue Approval Endpoint
+app.post("/queue/:id/approve", async (req, res) => {
+    try {
+        const id = req.params.id;
+        const data = await redis.get(`queue:${id}`);
+        if (!data) return res.status(404).json({ error: "Queue item not found" });
+        
+        const existing = JSON.parse(data);
+        const updated = { 
+            ...existing, 
+            status: 'approved_for_publishing',
+            approved_at: new Date().toISOString()
+        };
+        
+        await redis.set(`queue:${id}`, JSON.stringify(updated));
+        res.json({ success: true, status: 'approved_for_publishing' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

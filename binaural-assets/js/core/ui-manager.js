@@ -18,6 +18,7 @@ import { leantime } from '../services/leantime.js';
 import { calculateFrequencyFromGoal } from '../services/ai-intent-service.js';
 import { applyAIPreset } from '../ui/controls_v3.js';
 import { startAudio } from '../audio/engine.js';
+import { aiCoach } from '../services/ai-coach.js';
 import { state } from '../state.js';
 
 // Pre-define dynamic imports for performance modeling
@@ -198,18 +199,90 @@ export function initCoreUI() {
                 tasksModal.classList.add('hidden');
                 
                 // Trigger Focus Audio
-                const intent = 'focus'; // Default to focus for tasks
-                const result = calculateFrequencyFromGoal(intent);
-                if (result) {
-                    await applyAIPreset(result);
-                    if (!state.isPlaying) startAudio();
-                }
-                
-                // Start Pomodoro
+                applyAIIntent('focus');
                 leantime.startPomodoro(25, title);
             });
         });
     }
+
+    // --- AI COACH INTEGRATION ---
+    const aiCoachBtn = document.getElementById('aiCoachBtn');
+    const aiSettingsModal = document.getElementById('aiSettingsModal');
+    const aiInsightsModal = document.getElementById('aiInsightsModal');
+    const aiGeminiKeyInput = document.getElementById('aiGeminiKey');
+    const aiChatHistory = document.getElementById('aiChatHistory');
+    const aiChatInput = document.getElementById('aiChatInput');
+
+    if (aiCoachBtn) {
+        aiCoachBtn.addEventListener('click', () => {
+            if (!aiCoach.getKey()) {
+                aiSettingsModal.classList.remove('hidden');
+            } else {
+                aiInsightsModal.classList.remove('hidden');
+            }
+        });
+    }
+
+    document.getElementById('aiCancelSettings')?.addEventListener('click', () => {
+        aiSettingsModal.classList.add('hidden');
+    });
+
+    document.getElementById('aiSaveSettings')?.addEventListener('click', () => {
+        const key = aiGeminiKeyInput.value.trim();
+        if (key) {
+            aiCoach.setKey(key);
+            aiSettingsModal.classList.add('hidden');
+            aiInsightsModal.classList.remove('hidden');
+        }
+    });
+
+    document.getElementById('aiCloseInsights')?.addEventListener('click', () => {
+        aiInsightsModal.classList.add('hidden');
+    });
+
+    document.getElementById('aiPlayBriefingBtn')?.addEventListener('click', async () => {
+        document.getElementById('leantimeTasksModal').classList.add('hidden');
+        await aiCoach.playMorningBriefing();
+        setTimeout(() => {
+            applyAIIntent('focus');
+        }, 1000);
+    });
+
+    document.getElementById('aiChatSend')?.addEventListener('click', async () => {
+        const question = aiChatInput.value.trim();
+        if (!question) return;
+
+        // Add user msg
+        aiChatHistory.innerHTML += `
+            <div class="bg-blue-500/20 p-3 rounded-xl rounded-tr-none border border-blue-500/30 text-white w-5/6 ml-auto">
+                ${question}
+            </div>
+        `;
+        aiChatInput.value = '';
+        aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+
+        // Context
+        const context = {
+            tickets: window.leantime ? window.leantime.getCachedTickets() : [],
+            heartRate: biometrics.heartRate
+        };
+
+        const answer = await aiCoach.askInsights(question, context);
+
+        // Add bot msg
+        aiChatHistory.innerHTML += `
+            <div class="bg-[var(--accent)]/10 p-3 rounded-xl rounded-tl-none border border-[var(--accent)]/30 text-[var(--text-secondary)] w-5/6 mt-2">
+                ${answer}
+            </div>
+        `;
+        aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+    });
+
+    aiChatInput?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('aiChatSend').click();
+        }
+    });
     
     // If onboarding is already complete, play a standard greeting
     if (onboardingComplete) {

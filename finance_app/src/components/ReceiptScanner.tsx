@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { UploadCloud, CheckCircle2, Scan, RefreshCw } from 'lucide-react';
-import { mockScanReceipt, OCRExtractionResult, EXPENSE_CATEGORIES } from '@/lib/expenseMockEngine';
+import { OCRExtractionResult, EXPENSE_CATEGORIES } from '@/lib/expenseMockEngine';
 
 interface ReceiptScannerProps {
   onSave: (expense: Omit<OCRExtractionResult, 'confidence'>) => void;
@@ -25,9 +25,35 @@ export default function ReceiptScanner({ onSave }: ReceiptScannerProps) {
       setIsScanning(true);
       setScanResult(null);
       
-      const result = await mockScanReceipt(selectedFile);
-      setScanResult(result);
-      setIsScanning(false);
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const response = await fetch('/api/ocr', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to scan receipt');
+        }
+
+        const data = await response.json();
+        
+        setScanResult({
+          merchant: data.merchant_name || 'Unknown Merchant',
+          date: data.date || new Date().toISOString().split('T')[0],
+          amount: data.amount || 0,
+          tax: 0,
+          category: data.category || 'Other',
+          confidence: data.confidence || 0.9,
+        });
+      } catch (err) {
+        console.error(err);
+        alert('Failed to scan receipt with AI.');
+      } finally {
+        setIsScanning(false);
+      }
     }
   };
 

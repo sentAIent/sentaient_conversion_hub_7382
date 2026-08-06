@@ -336,3 +336,9 @@ h1 {
   color: var(--text-primary);
 }
 
+
+.mobile-main-override {
+  flex-grow: 1;
+  padding: 0;
+  overflow: hidden;
+}

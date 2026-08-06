@@ -1,18 +1,27 @@
 "use client";
 
 import Link from 'next/link';
-import { LayoutDashboard, Receipt, Bitcoin, Calculator, ChevronDown, FileText, Target, Layers, FileSpreadsheet, Camera } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { LayoutDashboard, Receipt, Bitcoin, Calculator, ChevronDown, FileText, Target, Layers, FileSpreadsheet, Camera, PieChart, Building2 } from 'lucide-react';
 import { useEntity } from '@/context/EntityContext';
 import { useState } from 'react';
 
 export default function Sidebar() {
   const { entities, activeEntity, setActiveEntity } = useEntity();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const pathname = usePathname();
+
+  const getLinkClass = (path: string) => {
+    const isActive = pathname === path || (path !== '/' && pathname?.startsWith(path));
+    return `flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors ${
+      isActive ? 'bg-gray-800 text-blue-400 font-medium' : 'text-gray-300'
+    }`;
+  };
 
   return (
     <div className="flex flex-col w-64 bg-gray-900 text-white min-h-screen print-hide">
       <div className="p-6">
-        <h2 className="text-2xl font-bold text-blue-400">FinanceAuto</h2>
+        <h2 className="text-2xl font-bold text-blue-400">Liquid</h2>
       </div>
       
       {/* Entity Switcher */}
@@ -47,39 +56,47 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
-        <Link href="/" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/" className={getLinkClass('/')}>
           <LayoutDashboard size={20} />
           <span>Dashboard</span>
         </Link>
-        <Link href="/accounting" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/banking" className={getLinkClass('/banking')}>
+          <Building2 size={20} />
+          <span>Banking & Sync</span>
+        </Link>
+        <Link href="/analytics" className={getLinkClass('/analytics')}>
+          <PieChart size={20} />
+          <span>Analytics & Statements</span>
+        </Link>
+        <Link href="/accounting" className={getLinkClass('/accounting')}>
           <Receipt size={20} />
           <span>Accounting (P&L)</span>
         </Link>
-        <Link href="/invoicing" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/invoicing" className={getLinkClass('/invoicing')}>
           <FileText size={20} />
           <span>Invoicing</span>
         </Link>
-        <Link href="/expenses" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/expenses" className={getLinkClass('/expenses')}>
           <Camera size={20} />
           <span>Expenses & Receipts</span>
         </Link>
-        <Link href="/advanced-invoicing" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/advanced-invoicing" className={getLinkClass('/advanced-invoicing')}>
           <FileSpreadsheet size={20} />
           <span>Advanced Invoicing</span>
         </Link>
-        <Link href="/crypto" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/crypto" className={getLinkClass('/crypto')}>
           <Bitcoin size={20} />
           <span>Crypto Tracking</span>
         </Link>
-        <Link href="/taxes" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/taxes" className={getLinkClass('/taxes')}>
           <Calculator size={20} />
           <span>Tax Estimates</span>
         </Link>
-        <Link href="/journaling" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/journaling" className={getLinkClass('/journaling')}>
           <Target size={20} />
           <span>Trade Journal</span>
         </Link>
-        <Link href="/defi" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <Link href="/defi" className={getLinkClass('/defi')}>
           <Layers size={20} />
           <span>DeFi & Staking</span>
         </Link>

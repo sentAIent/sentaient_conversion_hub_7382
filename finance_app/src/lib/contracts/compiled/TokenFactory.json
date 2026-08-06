@@ -1,0 +1,39 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        { "internalType": "string", "name": "name", "type": "string" },
+        { "internalType": "string", "name": "symbol", "type": "string" },
+        { "internalType": "uint256", "name": "initialSupply", "type": "uint256" },
+        { "internalType": "uint8", "name": "decimals_", "type": "uint8" },
+        { "internalType": "bool", "name": "isSubscriber", "type": "bool" }
+      ],
+      "name": "createStandardToken",
+      "outputs": [
+        { "internalType": "address", "name": "", "type": "address" }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "string", "name": "name", "type": "string" },
+        { "internalType": "string", "name": "symbol", "type": "string" },
+        { "internalType": "uint256", "name": "initialSupply", "type": "uint256" },
+        { "internalType": "uint8", "name": "decimals_", "type": "uint8" },
+        { "internalType": "bool", "name": "mintable_", "type": "bool" },
+        { "internalType": "uint256", "name": "buyTax_", "type": "uint256" },
+        { "internalType": "uint256", "name": "sellTax_", "type": "uint256" },
+        { "internalType": "address", "name": "taxWallet_", "type": "address" },
+        { "internalType": "bool", "name": "isSubscriber", "type": "bool" }
+      ],
+      "name": "createAdvancedToken",
+      "outputs": [
+        { "internalType": "address", "name": "", "type": "address" }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b5060405161002038038061002083398101604052810190610010919061002d565b603f8061003b6000396000f3fe6080604052600080fdfea26469706673582212209d8d73b22b07548db4b830d10e5d03edce61ecbb71ee91438a0808b4ef2c7a9164736f6c63430008140033"
+}

@@ -25,3 +25,27 @@ services:
     ports:
       - "3001:3001"
     restart: always
+
+  # Flowise for visual LLM orchestrations
+  flowise:
+    image: flowiseai/flowise
+    restart: always
+    environment:
+        - PORT=3000
+        - FLOWISE_USERNAME=admin
+        - FLOWISE_PASSWORD=lightspeed_admin
+    ports:
+        - '3000:3000'
+    volumes:
+        - ~/.flowise:/root/.flowise
+
+  # ALLaMA for Security Orchestration, Automation, and Response (SOAR)
+  allama:
+    image: ghcr.io/digitranslab/allama:latest
+    restart: always
+    environment:
+        - PORT=3002
+    ports:
+        - '3002:3002'
+    volumes:
+        - ./allama-data:/app/data

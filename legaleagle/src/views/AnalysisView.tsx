@@ -11,9 +11,12 @@ import {
     Award,
     CheckCircle2,
     Trash2,
-    User
+    User,
+    Download
 } from 'lucide-react';
 import { ScoreCircle, SwotCard } from '@/components/ui';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import type { Theme, Recommendation, SwotAnalysis } from '@/types';
 
 interface AnalysisViewProps {
@@ -98,6 +101,30 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
         const total = Object.values(dist).reduce((a, b) => a + b, 0);
         return { dist, total };
     }, [recommendations]);
+
+    const handleExportPDF = async () => {
+        const element = document.getElementById('analysis-summary-view');
+        if (!element) return;
+        
+        try {
+            const canvas = await html2canvas(element, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            
+            // Add watermark
+            pdf.setTextColor(150, 150, 150);
+            pdf.setFontSize(10);
+            pdf.text('Powered by Legal Eagle', 10, pdf.internal.pageSize.getHeight() - 10);
+            
+            pdf.save('legal_eagle_analysis.pdf');
+        } catch (error) {
+            console.error('Error generating PDF', error);
+        }
+    };
 
     return (
         <div className="flex flex-1 h-full min-h-0 bg-slate-50 overflow-hidden relative">
@@ -444,7 +471,18 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                                 </div>
                             </div>
                         ) : swotData ? (
-                            <div className="max-w-4xl w-full mx-auto space-y-8">
+                            <div id="analysis-summary-view" className="max-w-4xl w-full mx-auto space-y-8 bg-slate-50 p-6 rounded-lg">
+                                {/* Action Bar */}
+                                <div className="flex justify-end mb-4">
+                                    <button 
+                                        onClick={handleExportPDF}
+                                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors shadow-sm text-sm font-medium"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        Export Report
+                                    </button>
+                                </div>
+
                                 {/* Risk Distribution */}
                                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                                     <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
