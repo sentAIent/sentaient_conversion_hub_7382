@@ -1,0 +1,67 @@
+services:
+  # The Main Express API for the UI to talk to
+  - type: web
+    name: autopilot-api
+    env: node
+    region: ohio
+    plan: starter
+    buildCommand: "npm install"
+    startCommand: "node campaign-api.js"
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: autopilot-redis
+          property: connectionString
+      # Add other keys like GEMINI_API_KEY in the Render dashboard
+
+  # The Background Worker that publishes to social media
+  - type: worker
+    name: autopilot-publisher
+    env: node
+    region: ohio
+    plan: starter
+    buildCommand: "npm install"
+    startCommand: "node worker.js"
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: autopilot-redis
+          property: connectionString
+
+  # The Autonomous Playwright Crawler
+  - type: worker
+    name: autopilot-crawler
+    env: docker # Uses Docker so we can install Chromium dependencies
+    region: ohio
+    plan: standard # Playwright needs more RAM
+    dockerfilePath: Dockerfile.crawler
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: autopilot-redis
+          property: connectionString
+
+  # The Analytics Feedback Loop
+  - type: worker
+    name: autopilot-analytics
+    env: node
+    region: ohio
+    plan: free # Can run on free tier since it just runs a cron job
+    buildCommand: "npm install"
+    startCommand: "node analytics-sync.js"
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: autopilot-redis
+          property: connectionString
+
+  # The Redis Database to handle the Queue
+  - type: redis
+    name: autopilot-redis
+    region: ohio
+    plan: starter
+    maxmemoryPolicy: noeviction

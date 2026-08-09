@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import CalendarView from '@/components/studio/CalendarView';
+import toast from 'react-hot-toast';
 
 export default function QueuePage() {
   const [scheduledItems, setScheduledItems] = useState<any[]>([]);
@@ -160,7 +161,23 @@ export default function QueuePage() {
                     <div className="text-right">
                       <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Status</p>
                       <div className="flex items-center gap-2">
-                        {activeTab === 'upcoming' ? (
+                        {item.status === 'failed' ? (
+                          <>
+                            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                            <p className="text-sm font-semibold text-red-500 group-hover:text-red-400 transition-colors">Failed</p>
+                            <button 
+                              onClick={async (e) => { 
+                                e.preventDefault(); 
+                                toast.loading("Retrying...");
+                                await fetch('/api/campaign/retry', { method: 'POST', body: JSON.stringify({ id: item.id }) }); 
+                                window.location.reload();
+                              }} 
+                              className="ml-2 px-3 py-1 bg-red-500/20 text-red-300 text-xs rounded-lg hover:bg-red-500/40 border border-red-500/30 transition-colors"
+                            >
+                              Retry
+                            </button>
+                          </>
+                        ) : activeTab === 'upcoming' ? (
                           <>
                             <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
                             <p className="text-sm font-semibold text-yellow-400 group-hover:text-yellow-300 transition-colors">{item.status}</p>

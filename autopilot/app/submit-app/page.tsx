@@ -11,7 +11,9 @@ export default function SubmitAppPage() {
     url: '',
     goal: 'marketing',
     username: '',
-    password: ''
+    password: '',
+    assassinationMode: false,
+    competitorUrl: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,6 +28,8 @@ export default function SubmitAppPage() {
         brand: formData.appName,
         inputValue: formData.url,
         goal: formData.goal,
+        assassination_mode: formData.assassinationMode,
+        competitor_url: formData.competitorUrl,
         credentials: {
           username: formData.username,
           password: formData.password
@@ -172,6 +176,40 @@ export default function SubmitAppPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="bg-red-950/20 p-6 rounded-2xl border border-red-500/20 backdrop-blur-sm relative overflow-hidden">
+              <h3 className="text-xl font-semibold mb-2 flex items-center text-red-400">
+                God Mode: Competitor Assassination
+              </h3>
+              <p className="text-sm text-red-300/70 mb-4">
+                Enable to scrape a competitor's site and generate aggressive A/B marketing copy proving your superiority.
+              </p>
+              
+              <label className="flex items-center cursor-pointer mb-4">
+                <div className="relative">
+                  <input type="checkbox" className="sr-only" checked={formData.assassinationMode} onChange={(e) => setFormData({...formData, assassinationMode: e.target.checked})} />
+                  <div className={`block w-14 h-8 rounded-full transition-colors ${formData.assassinationMode ? 'bg-red-500' : 'bg-black/50'}`}></div>
+                  <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${formData.assassinationMode ? 'transform translate-x-6' : ''}`}></div>
+                </div>
+                <div className="ml-3 text-gray-300 font-medium">
+                  Enable God Mode
+                </div>
+              </label>
+
+              {formData.assassinationMode && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-sm font-medium text-red-300 mb-2">Competitor URL</label>
+                  <input 
+                    type="url" 
+                    required={formData.assassinationMode}
+                    value={formData.competitorUrl}
+                    onChange={e => setFormData({...formData, competitorUrl: e.target.value})}
+                    placeholder="https://competitor-app.com"
+                    className="w-full bg-black/50 border border-red-500/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all placeholder:text-red-900/50"
+                  />
+                </div>
+              )}
             </div>
 
             <button 

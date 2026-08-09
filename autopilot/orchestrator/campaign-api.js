@@ -305,6 +305,29 @@ app.post("/queue/:id/approve", async (req, res) => {
     }
 });
 
+// 8. Queue Retry Endpoint
+app.post("/queue/retry", async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ error: "Missing id" });
+
+        const data = await redis.get(`queue:${id}`);
+        if (!data) return res.status(404).json({ error: "Queue item not found" });
+        
+        const existing = JSON.parse(data);
+        const updated = { 
+            ...existing, 
+            status: 'staged', // Reset to staged so it can be re-crawled/processed
+            error: null
+        };
+        
+        await redis.set(`queue:${id}`, JSON.stringify(updated));
+        res.json({ success: true, status: 'staged' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ==========================================
 // Final Server Listener
 // ==========================================
