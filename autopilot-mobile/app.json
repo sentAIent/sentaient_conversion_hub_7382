@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "sentaient-conversion-hub",
+    "slug": "sentaient-platform",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon-only.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d1117"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sentaient.conversionhub"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon-only.png",
+        "backgroundColor": "#0d1117"
+      },
+      "package": "com.sentaient.conversionhub"
+    },
+    "web": {
+      "favicon": "./favicon.ico",
+      "bundler": "metro"
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ]
+  }
+}

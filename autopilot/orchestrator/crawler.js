@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv';
 import { createClient } from 'redis';
 import fs from 'fs';
 import path from 'path';
+import { scoreVariant } from './predictive_model.js';
 
 dotenv.config();
 
@@ -261,6 +262,11 @@ async function crawlApp(key, item) {
 
             // A/B Testing Output
             item.generated_scripts = parsedAnalysis.scripts || [];
+            
+            // Generate predictive scores for each variant
+            item.generated_scripts.forEach(script => {
+                script.predicted_viral_score = scoreVariant(script.text);
+            });
             
             // For backwards compatibility with the old UI before we update AssetEditor
             if (item.generated_scripts.length > 0) {

@@ -1,0 +1,27 @@
+/* Visual Button Active State */
+.visual-btn.active {
+    background-color: var(--accent);
+    /* Fallback or variable */
+    background-color: rgb(var(--accent) / 0.2);
+    /* If using RGB vars, otherwise use standard variable */
+    color: var(--accent);
+    /* Assuming accent is a color value */
+    border-color: var(--accent);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+/* Specific override if --accent is a color code and not separate RGB components */
+.visual-btn.active {
+    background-color: rgba(var(--color-accent), 0.2);
+    /* Adjust based on tailwind config if possible, but fallback to CSS var */
+    /* Let's try to match the button glow effect seen elsewhere */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border-color: var(--accent);
+    color: white;
+    filter: drop-shadow(0 0 8px var(--accent));
+}
+
+/* Ensure icons inherit color properly if needed */
+.visual-btn.active span {
+    /* No spec needed if parent has color */
+}

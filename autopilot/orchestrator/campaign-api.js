@@ -234,10 +234,30 @@ app.get("/analytics", async (req, res) => {
 });
 
 // 6. Queue Management
+let campaignQueue = null;
+(async () => {
+    try {
+        const { Queue } = await import('bullmq');
+        campaignQueue = new Queue('campaigns', { 
+            connection: { 
+                url: process.env.REDIS_URL || 'redis://localhost:6379',
+                password: process.env.REDIS_PASSWORD
+            } 
+        });
+    } catch (e) {
+        console.warn("DEBUG: BullMQ not installed or failed to initialize, falling back to basic queueing.");
+    }
+})();
+
 app.post("/queue/add", async (req, res) => {
     try {
         const payload = req.body;
         await redis.set(`queue:${payload.campaign_id}`, JSON.stringify(payload));
+        
+        if (campaignQueue) {
+            await campaignQueue.add('processCampaign', payload, { jobId: payload.campaign_id });
+        }
+        
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });

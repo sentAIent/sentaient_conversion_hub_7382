@@ -1,0 +1,69 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Inter;
+}
+
+* {
+  box-sizing: border-box;
+  line-height: normal;
+  font-family: inherit;
+  margin: unset;
+}
+ß
+
+/* background-image: url('https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2606&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Replace with your image path */
+
+.hero-section {
+      background-image: url("../../../../assets/images/Touch-of-God_Human-AI-robot_1800x900.png");
+      background-size: cover; /* Ensures the image covers the entire element */
+      background-position: center; /* Centers the image */
+      background-repeat: no-repeat; /* Prevents image repetition */
+      height: 100vh; /* Makes the hero section take full viewport height */
+      width: 100vw; /* Makes the hero section take full viewport width */
+      display: flex; /* Use flexbox for content alignment */
+      justify-content: center; /* Center content horizontally */
+      align-items: center; /* Center content vertically */
+      position: relative; /* Essential for positioning overlay or text */
+      margin-bottom: 10vh;
+    }
+
+.hero-content {
+  text-align: center;
+  color: white; /* Example: white text for a dark background image */
+  z-index: 2; /* Ensure content is above any potential overlays */
+  margin-top: 15vh;
+  margin-bottom: 15vh;
+  width: 50%;
+  padding: 20px;
+}
+
+.hero-content h1 {
+  font-size: 5em;
+  margin-bottom: 40px;
+}
+
+.hero-content p {
+  font-size: 1.2em;
+  margin-bottom: 60px;
+}
+
+.hero-content button {
+  padding: 20px 30px;
+  background-color: #66a9ff; /* Example button style */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.hero-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3); /* Black overlay with 50% opacity */
+  z-index: 1; /* Place the overlay behind the content */
+}
