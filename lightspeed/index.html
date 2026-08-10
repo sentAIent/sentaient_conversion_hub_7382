@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LightSpeed - AI CTO Dashboard</title>
+    <link rel="manifest" href="/manifest.json" />
     <!-- Alibaba Page Agent for in-browser autonomy -->
     <script src="https://unpkg.com/@alibaba/page-agent@latest/dist/page-agent.umd.js"></script>
     <script>
@@ -16,7 +17,21 @@
           window.pageAgent.mount();
         }
       };
+      
+      // Register Service Worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('SW registered: ', registration);
+          }).catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+        });
+      }
     </script>
+    <!-- jsPDF for client side PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   </head>
   <body>
     <div id="root"></div>

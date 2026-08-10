@@ -45,20 +45,33 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Stale-While-Revalidate Strategy
+// Network-First with aggressive fallback
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
     
     // Skip cross-origin requests
     if (!event.request.url.startsWith(self.location.origin)) return;
 
+    // Check if offline
+    if (!navigator.onLine) {
+        event.respondWith(
+            caches.open(CACHE_NAME).then((cache) => {
+                // Ignore search params so ?share= works offline
+                return cache.match(event.request, { ignoreSearch: true });
+            })
+        );
+        return;
+    }
+
     event.respondWith(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.match(event.request).then((cachedResponse) => {
+            return cache.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
                 const fetchPromise = fetch(event.request).then((networkResponse) => {
                     // Update the cache with the new network response
                     if (networkResponse.ok) {
-                        cache.put(event.request, networkResponse.clone());
+                        // Don't cache URLs with query parameters separately, keep the clean URL
+                        const cacheRequest = new Request(event.request.url.split('?')[0]);
+                        cache.put(cacheRequest, networkResponse.clone());
                     }
                     return networkResponse;
                 }).catch(() => {

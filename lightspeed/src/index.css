@@ -1,19 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-dark: #0a0e17;
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --bg-glass-hover: rgba(255, 255, 255, 0.08);
-  --border-glass: rgba(255, 255, 255, 0.05);
+  --bg-dark: #050505;
+  --bg-glass: rgba(18, 18, 18, 0.4);
+  --bg-glass-hover: rgba(255, 255, 255, 0.05);
+  --border-glass: rgba(255, 255, 255, 0.08);
   
-  --text-primary: #f8f9fa;
-  --text-secondary: #adb5bd;
-  --text-muted: #868e96;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
   
-  --accent: #3b82f6;
+  --accent: #0ea5e9;
+  --accent-glow: rgba(14, 165, 233, 0.4);
   --success: #10b981;
+  --success-glow: rgba(16, 185, 129, 0.4);
   --warning: #f59e0b;
-  --danger: #ef4444;
+  --danger: #f43f5e;
+  --danger-glow: rgba(244, 63, 94, 0.4);
 }
 
 * {
@@ -23,15 +26,16 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-primary);
-  line-height: 1.5;
+  line-height: 1.6;
   background-image: 
-    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.15) 0%, transparent 50%);
+    radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 40%);
   background-attachment: fixed;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 .app-container {
@@ -54,12 +58,13 @@ body {
 }
 
 .logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #60a5fa, #34d399);
+  font-size: 1.75rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #38bdf8, #34d399);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: -0.5px;
+  letter-spacing: -1px;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.3));
 }
 
 .nav-actions {
@@ -115,9 +120,10 @@ body {
 }
 
 .sidebar a.active {
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
-  border-left: 3px solid #60a5fa;
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border-left: 3px solid #38bdf8;
+  box-shadow: inset 20px 0 20px -20px var(--accent-glow);
 }
 
 .dashboard {
@@ -140,16 +146,19 @@ h1 {
 
 .widget.glass {
   background: var(--bg-glass);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-glass);
-  border-radius: 16px;
-  padding: 1.5rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 20px;
+  padding: 1.75rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .widget.glass:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px var(--accent-glow);
+  border-color: rgba(14, 165, 233, 0.3);
   background: var(--bg-glass-hover);
 }
 
@@ -244,18 +253,19 @@ h1 {
 
 .progress-bar-container {
   width: 100%;
-  height: 8px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
   overflow: hidden;
   margin-top: 1rem;
 }
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-  border-radius: 4px;
-  transition: width 1s ease-in-out;
+  background: linear-gradient(90deg, #0ea5e9, #8b5cf6);
+  border-radius: 9999px;
+  transition: width 1.5s cubic-bezier(0.65, 0, 0.35, 1);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .fade-in {

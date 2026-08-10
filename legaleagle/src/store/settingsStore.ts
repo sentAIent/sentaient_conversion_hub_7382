@@ -7,12 +7,14 @@ interface SettingsState {
     localAiEndpoint: string;
     ttsProvider: TTSProvider;
     isSettingsModalOpen: boolean;
+    enablePiiRedaction: boolean;
     
     // Actions
     setUseLocalAI: (useLocal: boolean) => void;
     setLocalAiEndpoint: (endpoint: string) => void;
     setTtsProvider: (provider: TTSProvider) => void;
     setIsSettingsModalOpen: (isOpen: boolean) => void;
+    setEnablePiiRedaction: (enable: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -20,9 +22,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     localAiEndpoint: 'http://localhost:11434/api/generate',
     ttsProvider: 'browser',
     isSettingsModalOpen: false,
+    enablePiiRedaction: true,
 
     setUseLocalAI: (useLocal) => set({ useLocalAI: useLocal }),
     setLocalAiEndpoint: (endpoint) => set({ localAiEndpoint: endpoint }),
     setTtsProvider: (provider) => set({ ttsProvider: provider }),
     setIsSettingsModalOpen: (isOpen) => set({ isSettingsModalOpen: isOpen }),
+    setEnablePiiRedaction: (enable) => set({ enablePiiRedaction: enable }),
 }));

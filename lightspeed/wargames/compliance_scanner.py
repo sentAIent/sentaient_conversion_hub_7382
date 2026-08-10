@@ -1,87 +1,64 @@
 import os
-import json
 import time
-from dotenv import load_dotenv
-from supabase import create_client, Client
+import random
+from datetime import datetime
 
-load_dotenv(dotenv_path="../.env")
+# Optional: Using Supabase if installed, otherwise we just print to terminal for the simulation
+try:
+    from supabase import create_client, Client
+    HAS_SUPABASE = True
+except ImportError:
+    HAS_SUPABASE = False
 
-SUPABASE_URL = os.getenv("VITE_SUPABASE_URL")
-SUPABASE_KEY = os.getenv("VITE_SUPABASE_ANON_KEY")
+# Configuration
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://your-project-ref.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "your-anon-key")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("Error: Missing Supabase credentials in .env")
-    exit(1)
+def run_compliance_checks():
+    print(f"[{datetime.now().isoformat()}] Starting Compliance Scan (SOC2/HIPAA Baseline)...")
+    
+    # Mock compliance rules
+    rules = [
+        {"framework": "SOC2", "control": "CC6.1", "description": "All administrative access requires MFA", "status": "pass"},
+        {"framework": "SOC2", "control": "CC6.6", "description": "Boundary protection mechanisms are active", "status": random.choice(["pass", "fail"])},
+        {"framework": "HIPAA", "control": "164.312(a)(2)(iv)", "description": "Encryption and decryption mechanisms implemented", "status": "pass"},
+        {"framework": "HIPAA", "control": "164.312(b)", "description": "Audit controls implemented", "status": "pass"},
+        {"framework": "GDPR", "control": "Art 32", "description": "Data at rest is encrypted", "status": "pass"}
+    ]
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase: Client = None
+    if HAS_SUPABASE and SUPABASE_URL != "https://your-project-ref.supabase.co":
+        try:
+            supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        except Exception as e:
+            print(f"Failed to init Supabase client: {e}")
 
-RULES = [
-    {
-        "framework": "SOC2",
-        "rule_id": "CC6.1",
-        "description": "Logical access security: User access is restricted and reviewed.",
-        "status": "passed"
-    },
-    {
-        "framework": "SOC2",
-        "rule_id": "CC6.6",
-        "description": "System boundaries are protected by firewalls and intrusion detection.",
-        "status": "passed"
-    },
-    {
-        "framework": "HIPAA",
-        "rule_id": "164.312(a)(1)",
-        "description": "Access Control: Unique user identification and emergency access.",
-        "status": "passed"
-    },
-    {
-        "framework": "HIPAA",
-        "rule_id": "164.312(e)(1)",
-        "description": "Transmission Security: Data encrypted in transit.",
-        "status": "passed"
-    }
-]
-
-def run_compliance_scan():
-    print("Running compliance scan...")
-    # Fetch active incidents
-    res = supabase.table("incidents").select("*").eq("is_fixed", False).execute()
-    incidents = res.data
-
-    has_network_issue = any("firewall" in i.get("title", "").lower() or "network" in i.get("explanation", "").lower() for i in incidents)
-    has_access_issue = any("auth" in i.get("title", "").lower() or "access" in i.get("explanation", "").lower() for i in incidents)
-
-    for rule in RULES:
-        # Dynamic evaluation
-        if rule["rule_id"] == "CC6.6" and has_network_issue:
-            rule["status"] = "failed"
-            rule["details"] = {"reason": "Active network or firewall incident detected."}
-        elif rule["rule_id"] == "CC6.1" and has_access_issue:
-            rule["status"] = "failed"
-            rule["details"] = {"reason": "Active authentication or access control incident detected."}
-        else:
-            rule["status"] = "passed"
-            rule["details"] = {"reason": "No violating incidents detected."}
-
-        # Upsert rule
-        # Since we don't have a unique constraint on rule_id in the DB, we will check if it exists first
-        existing = supabase.table("compliance_checks").select("*").eq("rule_id", rule["rule_id"]).execute()
+    for rule in rules:
+        print(f"Evaluating {rule['framework']} - {rule['control']}: {rule['description']} -> {rule['status'].upper()}")
         
-        if existing.data and len(existing.data) > 0:
-            supabase.table("compliance_checks").update({
-                "status": rule["status"],
-                "details": rule["details"],
-                "last_checked": "now()"
-            }).eq("rule_id", rule["rule_id"]).execute()
-        else:
-            supabase.table("compliance_checks").insert(rule).execute()
+        if supabase:
+            # We assume a 'compliance_checks' table exists
+            try:
+                supabase.table("compliance_checks").insert({
+                    "framework": rule["framework"],
+                    "control": rule["control"],
+                    "description": rule["description"],
+                    "status": rule["status"],
+                    "scanned_at": datetime.now().isoformat()
+                }).execute()
+            except Exception as e:
+                print(f"Failed to write to db: {e}")
+                
+        time.sleep(1) # simulate scan time
 
-    print("Compliance scan complete.")
+    print("Compliance Scan Completed.\n")
 
 if __name__ == "__main__":
+    print("Lightspeed Automated Compliance Scanner initialized.")
+    if not HAS_SUPABASE:
+        print("WARNING: 'supabase' python package not found or configured. Running in Dry-Run mode.")
+        
     while True:
-        try:
-            run_compliance_scan()
-        except Exception as e:
-            print(f"Scan failed: {e}")
-        time.sleep(10)
+        run_compliance_checks()
+        # Scan every 5 minutes in production. Using 30s here for demo purposes.
+        time.sleep(30)

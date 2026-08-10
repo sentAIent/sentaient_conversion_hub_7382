@@ -1,14 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Sky, Stars, Fog, Sparkles } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing';
+import { OrbitControls, Sky, Stars, Fog, Sparkles, Environment } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette, ChromaticAberration, DepthOfField } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import * as THREE from 'three';
 import { fetchMountainWeather } from './services/weatherService';
 import { TrackManager } from './components/TrackManager';
-import { Physics } from '@react-three/cannon';
+import { NPCs } from './components/NPCs';
 import { SkyShader } from './components/SkyShader';
 import { Leaderboard } from './components/Leaderboard';
 import { VideoStudio } from './components/VideoStudio';
@@ -17,8 +17,75 @@ import { SafetyHUD } from './components/SafetyHUD';
 import { Player } from './components/Player';
 import { UnitProvider, useUnits } from './components/UnitContext';
 import { SyncModal } from './components/SyncModal';
+import { ComplianceGate } from './components/ComplianceGate';
+import { Store } from './components/Store';
+import { QualityProvider, useQuality } from './components/QualityContext';
+import { CustomizationProvider, useCustomization } from './components/CustomizationContext';
 
 // Removed slow CPU SnowParticles
+
+if (typeof window !== 'undefined') {
+  window.mobileControls = { 
+    left: false, right: false, brake: false, skate: false, 
+    jump: false, melee: false, throw: false, grab: false, toggleCombat: false 
+  };
+}
+
+function MobileTouchControls() {
+  const setControl = (key, value) => {
+    if (window.mobileControls) window.mobileControls[key] = value;
+  };
+
+  return (
+    <View style={styles.mobileControlsContainer} pointerEvents="box-none">
+      {/* Left side: D-Pad / Steering */}
+      <View style={styles.dpad} pointerEvents="box-none">
+        <TouchableOpacity 
+          style={styles.controlBtn}
+          onPressIn={() => setControl('left', true)}
+          onPressOut={() => setControl('left', false)}
+        ><Text style={styles.controlText}>◀</Text></TouchableOpacity>
+        
+        <View style={styles.dpadCenter}>
+          <TouchableOpacity 
+            style={[styles.controlBtn, { backgroundColor: 'rgba(255,0,0,0.3)' }]}
+            onPressIn={() => setControl('brake', true)}
+            onPressOut={() => setControl('brake', false)}
+          ><Text style={styles.controlText}>BRAKE</Text></TouchableOpacity>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.controlBtn}
+          onPressIn={() => setControl('right', true)}
+          onPressOut={() => setControl('right', false)}
+        ><Text style={styles.controlText}>▶</Text></TouchableOpacity>
+      </View>
+
+      {/* Right side: Actions */}
+      <View style={styles.actionButtons} pointerEvents="box-none">
+        <TouchableOpacity 
+          style={[styles.actionBtn, { backgroundColor: 'rgba(0, 208, 255, 0.4)' }]}
+          onPressIn={() => setControl('jump', true)}
+          onPressOut={() => setControl('jump', false)}
+        ><Text style={styles.actionText}>JUMP / SPIN</Text></TouchableOpacity>
+        
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity 
+            style={[styles.actionBtn, { backgroundColor: 'rgba(255, 0, 119, 0.4)' }]}
+            onPressIn={() => setControl('melee', true)}
+            onPressOut={() => setControl('melee', false)}
+          ><Text style={styles.actionText}>ATTACK</Text></TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionBtn, { backgroundColor: 'rgba(255, 153, 0, 0.4)' }]}
+            onPressIn={() => setControl('grab', true)}
+            onPressOut={() => setControl('grab', false)}
+          ><Text style={styles.actionText}>TRICK</Text></TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 function SnowboardApp() {
   const [activeTab, setActiveTab] = useState('EXPLORE'); // EXPLORE, STUDIO
@@ -29,6 +96,7 @@ function SnowboardApp() {
   const [arMode, setArMode] = useState(false); // AR Mode Toggle
   const [studioMountainBg, setStudioMountainBg] = useState(false); // Studio BG toggle
   const [gameStarted, setGameStarted] = useState(false);
+  const [showStore, setShowStore] = useState(false);
   
   // Camera & Gameplay settings
   const [showCameraSettings, setShowCameraSettings] = useState(false);
@@ -37,6 +105,8 @@ function SnowboardApp() {
   const [camHeight, setCamHeight] = useState(3);
 
   const { isMetric, setIsMetric, formatTemp, formatSnowfall } = useUnits();
+  const qualitySettings = useQuality();
+  const { equipGear } = useCustomization();
 
   useEffect(() => {
     const loadWeather = async () => {
@@ -58,26 +128,46 @@ function SnowboardApp() {
       {/* Conditionally Render 3D Cinematic Background */}
       {show3DCanvas && (
         <View style={styles.canvasContainer}>
-          <Canvas camera={{ position: [0, 15, 40], fov: 60 }}>
+          <Canvas shadows={qualitySettings.shadows} dpr={qualitySettings.resolutionMultiplier} camera={{ position: [0, 15, 40], fov: 60 }}>
             <Suspense fallback={null}>
-              <fog attach="fog" args={['#0b1120', 20, 80]} />
-              <ambientLight intensity={0.4} />
-              <directionalLight position={[20, 40, -20]} intensity={1.5} castShadow />
-              <directionalLight position={[-20, 10, 20]} intensity={0.3} color="#aaddff" />
+              <fog attach="fog" args={['#01010a', 10, qualitySettings.volumetricFog ? 150 : 80]} />
+              <ambientLight intensity={0.02} color="#05051a" />
+              <color attach="background" args={['#01010a']} />
+              <hemisphereLight args={['#111133', '#000000', 0.1]} />
+              <Sky sunPosition={[50, 10, -50]} turbidity={0.5} rayleigh={2.0} mieCoefficient={0.01} mieDirectionalG={0.9} />              
               
+              {qualitySettings.volumetricFog && <fog attach="fog" args={['#05051a', 10, 200]} />}
               <SkyShader />
               
-              <Physics gravity={[0, -9.81 * 3, 0]}>
-                <TrackManager />
-                <Player gameStarted={gameStarted} goggleColor={goggleColor} camDistance={camDistance} camHeight={camHeight} />
-              </Physics>
+              {/* Sunlight (God Rays source) */}
+              <directionalLight 
+                position={[100, 50, -50]} 
+                intensity={3.5} 
+                color="#ffeedd" 
+                castShadow 
+                shadow-mapSize={[2048, 2048]}
+                shadow-camera-left={-100}
+                shadow-camera-right={100}
+                shadow-camera-top={100}
+                shadow-camera-bottom={-100}
+              />
+              <directionalLight 
+                position={[-50, 20, 50]} 
+                intensity={0.8} 
+                color="#88bbff" 
+              />
               
-              <Sparkles count={1500} scale={200} size={4} speed={0.8} opacity={0.4} color="#ffffff" />
+              <TrackManager />
+              <Player gameStarted={gameStarted} goggleColor={goggleColor} camDistance={camDistance} camHeight={camHeight} />
+              <NPCs />
+              
+              {qualitySettings.particles > 0 && (
+                <Sparkles count={qualitySettings.particles} scale={400} size={5} speed={0.5} opacity={0.6} color="#ffffff" />
+              )}
               
               <EffectComposer>
-                <Bloom luminanceThreshold={0.5} luminanceSmoothing={0.9} intensity={2.5} />
-                <Vignette eskil={false} offset={0.1} darkness={1.1} />
-                <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.002, 0.002]} />
+                <Bloom luminanceThreshold={0.8} intensity={1.5} />
+                <DepthOfField focusDistance={0.05} focalLength={0.1} bokehScale={2} />
               </EffectComposer>
             </Suspense>
           </Canvas>
@@ -103,6 +193,26 @@ function SnowboardApp() {
                   <Text style={styles.mountainName}>The Endless Run</Text>
                 </View>
                 <View style={{alignItems: 'flex-end', gap: 10}}>
+                  <TouchableOpacity 
+                    style={[styles.arToggleBtn, { backgroundColor: '#222' }]} 
+                    onPress={() => {
+                      const qs = ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'];
+                      const idx = qs.indexOf(qualitySettings.quality);
+                      qualitySettings.setQuality(qs[(idx + 1) % qs.length]);
+                    }}
+                  >
+                    <Text style={[styles.arToggleText, { color: '#00ffff' }]}>
+                      Graphics: {qualitySettings.quality}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.arToggleBtn, { backgroundColor: '#331111' }]} 
+                    onPress={() => equipGear('avatar', 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Xbot.glb')}
+                  >
+                    <Text style={[styles.arToggleText, { color: '#ff5555' }]}>
+                      Swap Avatar
+                    </Text>
+                  </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.arToggleBtn, arMode && styles.arToggleBtnActive]} 
                     onPress={() => setArMode(!arMode)}
@@ -193,6 +303,7 @@ function SnowboardApp() {
           </View>
           ) : (
             <View style={styles.gameOverlay}>
+              <MobileTouchControls />
               <TouchableOpacity 
                 style={styles.exitBtn} 
                 onPress={() => setGameStarted(false)}
@@ -218,6 +329,9 @@ function SnowboardApp() {
         />
       )}
 
+      {/* STORE UI */}
+      {showStore && <Store onClose={() => setShowStore(false)} />}
+
       {/* GLOBAL BOTTOM NAV BAR */}
       <View style={styles.bottomNav}>
         <TouchableOpacity 
@@ -229,6 +343,15 @@ function SnowboardApp() {
           </Text>
         </TouchableOpacity>
         
+        <TouchableOpacity 
+          style={styles.navTab}
+          onPress={() => setShowStore(true)}
+        >
+          <Text style={[styles.navTabText, showStore && styles.navTabTextActive]}>
+            🛒 STORE
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.navTab}
           onPress={() => setActiveTab('STUDIO')}
@@ -245,9 +368,15 @@ function SnowboardApp() {
 
 export default function App() {
   return (
-    <UnitProvider>
-      <SnowboardApp />
-    </UnitProvider>
+    <QualityProvider>
+      <CustomizationProvider>
+        <ComplianceGate>
+          <UnitProvider>
+            <SnowboardApp />
+          </UnitProvider>
+        </ComplianceGate>
+      </CustomizationProvider>
+    </QualityProvider>
   );
 }
 
@@ -456,5 +585,54 @@ const styles = StyleSheet.create({
   },
   navTabTextActive: {
     color: '#00d0ff',
+  },
+  mobileControlsContainer: {
+    position: 'absolute',
+    bottom: 120, // Moved up to avoid iOS home indicator and browser toolbars
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  dpad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dpadCenter: {
+    marginHorizontal: 10,
+  },
+  controlBtn: {
+    width: 60,
+    height: 60,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  controlText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  actionButtons: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  actionBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '900',
   }
 });

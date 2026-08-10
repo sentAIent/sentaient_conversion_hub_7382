@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS incidents (
   is_fixed boolean DEFAULT false,
   source text, -- e.g., 'sentaient.com', 'ios_app'
   correlation_id text, -- Used to group similar alerts
-  proposed_fix_iac text -- Used for auto-remediations
+  proposed_fix_iac text, -- Used for auto-remediations
+  organization_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'
 );
 
 -- Enable Row Level Security (RLS) but allow anon reads (for our dashboard)
@@ -33,7 +34,8 @@ CREATE TABLE IF NOT EXISTS metrics (
   site text NOT NULL, -- 'sentaient.com' or 'cloveh2o.com'
   metric_name text NOT NULL, -- e.g., 'page_load_time', 'uptime_ping'
   value numeric NOT NULL,
-  metadata jsonb -- For any extra tracking info like user agent
+  metadata jsonb, -- For any extra tracking info like user agent
+  organization_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'
 );
 
 ALTER TABLE metrics ENABLE ROW LEVEL SECURITY;
@@ -62,7 +64,8 @@ CREATE TABLE IF NOT EXISTS apps (
   name text NOT NULL,
   type text NOT NULL, -- e.g., 'Website', 'Mobile'
   url text, -- The URL to monitor for uptime/performance
-  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  organization_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'
 );
 
 ALTER TABLE apps ENABLE ROW LEVEL SECURITY;
@@ -122,7 +125,7 @@ CREATE POLICY "Allow public read access on web_analytics"
 -- 6. Security Audits Table
 CREATE TABLE IF NOT EXISTS security_audits (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  app_id text REFERENCES apps(id) ON DELETE CASCADE,
+  app_id uuid REFERENCES apps(id) ON DELETE CASCADE,
   task_name text NOT NULL,
   status text DEFAULT 'Pending' CHECK (status IN ('Completed', 'In Progress', 'Pending')),
   stage text,
@@ -242,7 +245,8 @@ CREATE TABLE IF NOT EXISTS compliance_checks (
   status text NOT NULL CHECK (status IN ('passed', 'failed', 'warning')),
   details jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-  last_checked timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+  last_checked timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  organization_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'
 );
 
 ALTER TABLE compliance_checks ENABLE ROW LEVEL SECURITY;

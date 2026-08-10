@@ -44,11 +44,55 @@ export default function ComplianceDashboard() {
     ? Math.round((hipaaChecks.filter(c => c.status === 'passed').length / hipaaChecks.length) * 100) 
     : 100;
 
+  const exportPDF = () => {
+    if (!window.jspdf) {
+      alert("PDF library is still loading. Please try again in a moment.");
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text("Compliance Audit Report", 14, 22);
+    
+    doc.setFontSize(11);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+    doc.text(`Overall SOC2 Score: ${soc2Score}%`, 14, 36);
+    doc.text(`Overall HIPAA Score: ${hipaaScore}%`, 14, 42);
+
+    const tableColumn = ["Framework", "Rule ID", "Description", "Status", "Last Checked"];
+    const tableRows = [];
+
+    checks.forEach(check => {
+      const rowData = [
+        check.framework,
+        check.rule_id,
+        check.description,
+        check.status.toUpperCase(),
+        new Date(check.last_checked).toLocaleString()
+      ];
+      tableRows.push(rowData);
+    });
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 50,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [41, 128, 185] },
+    });
+
+    doc.save(`compliance_report_${new Date().getTime()}.pdf`);
+  };
+
   return (
     <div className="page-content fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Compliance Automation</h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
+          <button className="glass-button" onClick={exportPDF} style={{ padding: '0.5rem 1rem' }}>
+            Export PDF Report
+          </button>
           <span className="badge safe" style={{ padding: '0.5rem 1rem' }}>Auto-Scanner Active</span>
         </div>
       </div>

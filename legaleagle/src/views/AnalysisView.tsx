@@ -26,6 +26,8 @@ interface AnalysisViewProps {
     score: number;
     swotData: SwotAnalysis | null;
     isAnalyzing?: boolean;
+    loadingMessage?: string;
+    loadingSubtext?: string;
     isRoastMode: boolean;
     perspective: string;
     setPerspective: (p: string) => void;
@@ -53,6 +55,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     score,
     swotData,
     isAnalyzing = false,
+    loadingMessage = 'Re-analyzing document...',
+    loadingSubtext = 'Updating insights based on your selected perspective and depth.',
     isRoastMode,
     perspective,
     setPerspective,
@@ -466,8 +470,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                             <div className="flex h-full items-center justify-center text-center p-8 opacity-70">
                                 <div>
                                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                                    <h2 className="text-xl font-bold text-slate-600">Re-analyzing document...</h2>
-                                    <p className="text-sm text-slate-500 mt-2">Updating insights based on your selected perspective and depth.</p>
+                                    <h2 className="text-xl font-bold text-slate-600">{loadingMessage}</h2>
+                                    <p className="text-sm text-slate-500 mt-2">{loadingSubtext}</p>
                                 </div>
                             </div>
                         ) : swotData ? (

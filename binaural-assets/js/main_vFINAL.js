@@ -150,5 +150,65 @@ handlePaymentSuccess();
 import { supabaseMaintenance } from './services/supabase-maintenance.js';
 supabaseMaintenance.init();
 
+import { deleteUserAccount } from './services/firebase.js';
+
+// Setup Compliance & Viral Features
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Delete Account
+    const deleteBtn = document.getElementById('deleteAccountBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to delete your account? This action is permanent and cannot be undone.")) {
+                if (confirm("FINAL WARNING: All your data, presets, and purchases will be lost forever. Proceed?")) {
+                    try {
+                        await deleteUserAccount();
+                        alert("Account deleted successfully.");
+                        window.location.reload();
+                    } catch (e) {
+                        alert("Failed to delete account. You may need to log out and log back in to verify your identity before deleting. Error: " + e.message);
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Share Soundscape
+    const shareBtn = document.getElementById('shareSoundscapeBtn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+            import('./state.js').then(({ state }) => {
+                const shareParam = `${state.baseFrequency}_${state.beatFrequency}_${state.activePresetType || 'custom'}`;
+                const shareUrl = new URL(window.location.href);
+                shareUrl.searchParams.set('share', shareParam);
+                
+                navigator.clipboard.writeText(shareUrl.toString()).then(() => {
+                    const originalText = shareBtn.innerHTML;
+                    shareBtn.innerHTML = `<span class="flex-1 text-left text-[var(--accent)]">Link Copied!</span>`;
+                    setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
+                });
+            });
+        });
+    }
+
+    // 3. Parse Share Link on Load
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareData = urlParams.get('share');
+    if (shareData) {
+        const [base, beat, preset] = shareData.split('_');
+        import('./state.js').then(({ state }) => {
+            if (base) state.baseFrequency = parseFloat(base);
+            if (beat) state.beatFrequency = parseFloat(beat);
+            if (preset && preset !== 'custom') state.activePresetType = preset;
+            
+            // Try to force update UI when controls are ready
+            setTimeout(() => {
+                if (window.updateFrequencies) {
+                    window.updateFrequencies(state.baseFrequency, state.beatFrequency);
+                }
+            }, 1000);
+        });
+    }
+});
+
 // Kickoff Bootloader Sequence
 import './core/bootloader.js';

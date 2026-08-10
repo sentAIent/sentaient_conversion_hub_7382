@@ -1,6 +1,5 @@
-export { DisclaimerModal } from './DisclaimerModal';
-export { SettingsModal } from './SettingsModal';
-export * from './FileDropzone';
-export * from './CopilotToggle';
-export * from './MilestoneReview';
+export * from './DisclaimerModal';
+export * from './SettingsModal';
 export * from './EulaModal';
+export * from './OfflineBanner';
+export * from './ThemeGalleryModal';

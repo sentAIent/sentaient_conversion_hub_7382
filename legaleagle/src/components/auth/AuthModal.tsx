@@ -9,8 +9,10 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const [isSignUp, setIsSignUp] = useState(false);
+    const [isSSO, setIsSSO] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [domain, setDomain] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -24,7 +26,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         setMessage(null);
 
         try {
-            if (isSignUp) {
+            if (isSSO) {
+                if (!domain) throw new Error('Please enter your company domain.');
+                // Trigger SSO
+                const { error } = await supabase.auth.signInWithSSO({
+                    domain: domain,
+                });
+                if (error) throw error;
+                // SSO redirects to IdP, so we don't close modal here
+            } else if (isSignUp) {
                 const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
                 setMessage('Account created successfully! You can now log in.');
@@ -47,7 +57,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 {/* Header */}
                 <div className="flex justify-between items-center p-6 border-b bg-slate-50">
                     <h2 className="text-xl font-bold text-slate-800">
-                        {isSignUp ? 'Create Account' : 'Welcome Back'}
+                        {isSSO ? 'Enterprise Login' : isSignUp ? 'Create Account' : 'Welcome Back'}
                     </h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
                         <X className="w-5 h-5" />
@@ -68,36 +78,55 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     )}
 
                     <form onSubmit={handleAuth} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                    placeholder="you@lawfirm.com"
-                                />
+                        {isSSO ? (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Company Domain</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        required
+                                        value={domain}
+                                        onChange={(e) => setDomain(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                        placeholder="lawfirm.com"
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            type="email"
+                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                            placeholder="you@lawfirm.com"
+                                        />
+                                    </div>
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                    placeholder="••••••••"
-                                    minLength={6}
-                                />
-                            </div>
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            type="password"
+                                            required
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                            placeholder="••••••••"
+                                            minLength={6}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         <button
                             type="submit"
@@ -105,18 +134,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                            {isSignUp ? 'Sign Up' : 'Sign In'}
+                            {isSSO ? 'Continue with SSO' : isSignUp ? 'Sign Up' : 'Sign In'}
                         </button>
                     </form>
 
-                    <div className="mt-6 text-center text-sm text-slate-500">
-                        {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-                        <button
-                            onClick={() => setIsSignUp(!isSignUp)}
-                            className="text-blue-600 font-bold hover:underline"
-                        >
-                            {isSignUp ? 'Sign In' : 'Sign Up'}
-                        </button>
+                    <div className="mt-6 flex flex-col gap-2 text-center text-sm text-slate-500">
+                        <div>
+                            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                            <button
+                                onClick={() => { setIsSignUp(!isSignUp); setIsSSO(false); }}
+                                className="text-blue-600 font-bold hover:underline"
+                            >
+                                {isSignUp ? 'Sign In' : 'Sign Up'}
+                            </button>
+                        </div>
+                        <div>
+                            <button
+                                onClick={() => { setIsSSO(!isSSO); setIsSignUp(false); }}
+                                className="text-slate-600 font-medium hover:underline flex items-center justify-center gap-1 w-full mt-2"
+                            >
+                                {isSSO ? 'Use Email/Password instead' : 'Log in with Enterprise SSO'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

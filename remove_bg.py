@@ -1,18 +1,16 @@
-import sys
-from rembg import remove
 from PIL import Image
-
-input_path = sys.argv[1]
-output_path = sys.argv[2]
-favicon_path = sys.argv[3]
-
-with open(input_path, 'rb') as i:
-    input_data = i.read()
-    output_data = remove(input_data)
-    with open(output_path, 'wb') as o:
-        o.write(output_data)
-
-img = Image.open(output_path)
-icon_sizes = [(16, 16), (32, 32), (48, 48), (64, 64)]
-img.save(favicon_path, format='ICO', sizes=icon_sizes)
-print("Done!")
+img_path = "/Users/infinitealpha/.gemini/antigravity/brain/eeaebfcf-4ac5-4d67-893e-e04d1dcfb1a5/autopilot_logo_metallic_green_1786255081890.jpg"
+out_path = "/Users/infinitealpha/.gemini/antigravity/brain/eeaebfcf-4ac5-4d67-893e-e04d1dcfb1a5/autopilot_logo_final_transparent.png"
+img = Image.open(img_path).convert("RGBA")
+data = img.getdata()
+new_data = []
+for item in data:
+    max_val = max(item[0], item[1], item[2])
+    if max_val < 25:
+        alpha = 0
+    else:
+        alpha = int((max_val - 25) * (255 / 230.0))
+        alpha = min(255, int(alpha * 1.5))
+    new_data.append((item[0], item[1], item[2], alpha))
+img.putdata(new_data)
+img.save(out_path, "PNG")

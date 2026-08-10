@@ -8,6 +8,7 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useSettingsStore } from '@/store';
 import type { GeminiResponse } from '@/types';
+import { redactPII, restorePII } from '@/utils/piiRedactor';
 
 /**
  * Check if the API is configured
@@ -41,7 +42,23 @@ export const callGemini = async (
     customModel?: string,
     abortSignal?: AbortSignal
 ): Promise<GeminiResponse | Record<string, unknown>> => {
-    const { useLocalAI, localAiEndpoint } = useSettingsStore.getState();
+    const { useLocalAI, localAiEndpoint, enablePiiRedaction } = useSettingsStore.getState();
+
+    // Perform redaction if enabled
+    let finalPrompt = prompt;
+    let finalSystemPrompt = systemPrompt;
+    let piiMapping: Record<string, string> = {};
+
+    if (enablePiiRedaction) {
+        const promptRedaction = redactPII(prompt);
+        finalPrompt = promptRedaction.redactedText;
+        
+        const systemPromptRedaction = redactPII(systemPrompt);
+        finalSystemPrompt = systemPromptRedaction.redactedText;
+        
+        // Combine mappings
+        piiMapping = { ...promptRedaction.mapping, ...systemPromptRedaction.mapping };
+    }
 
     if (useLocalAI && localAiEndpoint) {
         if (abortSignal?.aborted) throw new Error('AbortError');
@@ -63,10 +80,13 @@ export const callGemini = async (
             if (!response.ok) {
                 throw new Error(`Local API error (${response.status})`);
             }
-
             const data = await response.json();
-            const textResult = data.response || '';
+            let textResult = data.response || '';
             
+            if (enablePiiRedaction) {
+                textResult = restorePII(textResult, piiMapping);
+            }
+
             if (isJson) {
                 try {
                     const cleanText = textResult.replace(/```json|```/g, '').trim();
@@ -116,7 +136,7 @@ export const callGemini = async (
                 if (geminiKey) {
                     // Direct API call for local development/testing
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-                    const combinedPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+                    const combinedPrompt = finalSystemPrompt ? `${finalSystemPrompt}\n\n${finalPrompt}` : finalPrompt;
 
                     const requestBody: any = {
                         contents: [{ parts: [{ text: combinedPrompt }] }],
@@ -149,7 +169,7 @@ export const callGemini = async (
                     });
 
                     const invokePromise = supabase.functions.invoke('analyze-document', {
-                        body: { prompt, systemPrompt, isJson, customModel: model },
+                        body: { prompt: finalPrompt, systemPrompt: finalSystemPrompt, isJson, customModel: model },
                     });
 
                     const { data, error } = await Promise.race([invokePromise, abortPromise]);
@@ -173,6 +193,10 @@ export const callGemini = async (
 
                     textResult = data.text;
                     sourcesResult = data.sources || [];
+                }
+
+                if (enablePiiRedaction) {
+                    textResult = restorePII(textResult, piiMapping);
                 }
 
                 if (isJson) {

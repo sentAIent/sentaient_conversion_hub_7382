@@ -7,7 +7,7 @@ import { state } from '../state.js';
 // Module-level variables (populated after init)
 let app, auth, db, storage;
 let initializeApp, getAuth, getFirestore, getStorage;
-let onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile;
+let onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile, deleteUser;
 let collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, addDoc, where, limit, collectionGroup;
 let ref, uploadBytes, getDownloadURL, deleteObject;
 
@@ -112,6 +112,7 @@ export async function initFirebase() {
         signOut = firebaseAuth.signOut;
         sendPasswordResetEmail = firebaseAuth.sendPasswordResetEmail;
         updateProfile = firebaseAuth.updateProfile;
+        deleteUser = firebaseAuth.deleteUser;
 
         getFirestore = firebaseFirestore.getFirestore;
         const initializeFirestore = firebaseFirestore.initializeFirestore;
@@ -341,6 +342,17 @@ export async function logoutUser() {
     }
     if (!auth) return;
     return signOut(auth);
+}
+
+export async function deleteUserAccount() {
+    if (isMock) {
+        localStorage.removeItem('mindwave_mock_user');
+        state.currentUser = null;
+        authCallbacks.forEach(cb => cb(null));
+        return Promise.resolve();
+    }
+    if (!auth || !auth.currentUser) throw new Error("No user is currently signed in");
+    return deleteUser(auth.currentUser);
 }
 
 export async function resetPassword(email) {
@@ -644,6 +656,7 @@ export {
     doc,
     setDoc,
     deleteDoc,
+    deleteUserAccount,
     collection,
     query,
     orderBy,

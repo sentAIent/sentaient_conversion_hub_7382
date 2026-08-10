@@ -49,7 +49,7 @@ export const KnowledgeGraphView: React.FC = () => {
         setAnalysisDepth={() => {}}
         onAnalyze={() => {}}
         isRoastMode={false}
-        onOpenSettings={() => {}}
+        
       />
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-8 py-6">

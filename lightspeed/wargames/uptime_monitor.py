@@ -1,9 +1,11 @@
 import os
 import time
 import requests
+import statistics
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
+from collections import defaultdict
 
 load_dotenv()
 
@@ -16,6 +18,9 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# Rolling history of latencies for predictive analytics
+latency_history = defaultdict(list)
+
 def check_site(app):
     app_id = app.get('id')
     url = app.get('url')
@@ -24,7 +29,6 @@ def check_site(app):
         return
         
     try:
-        # Ensure url has scheme
         if not url.startswith('http'):
             url = f'https://{url}'
             
@@ -37,6 +41,29 @@ def check_site(app):
         
         print(f"Checked {app_id} ({url}): Status {status_code}, {latency_ms}ms")
         
+        # Predictive Analytics: Track running window of last 20 requests
+        latency_history[app_id].append(latency_ms)
+        if len(latency_history[app_id]) > 20:
+            latency_history[app_id].pop(0)
+            
+        # If we have enough data, calculate standard deviation
+        if len(latency_history[app_id]) >= 10:
+            avg_latency = statistics.mean(latency_history[app_id])
+            std_dev = statistics.stdev(latency_history[app_id])
+            
+            # If current latency is > 2 standard deviations above mean, predict impending failure
+            if std_dev > 10 and latency_ms > (avg_latency + (2 * std_dev)):
+                print(f"⚠️ PREDICTIVE ALERT for {app_id}: Latency spike ({latency_ms}ms vs avg {avg_latency:.1f}ms). Possible impending node failure.")
+                supabase.table("incidents").insert({
+                    "type": "performance",
+                    "title": f"[{url}] Predictive Latency Spike",
+                    "explanation": f"Latency jumped to {latency_ms}ms (historic avg: {avg_latency:.1f}ms). A node failure or high load may be imminent.",
+                    "fix_action": "Auto-scaling web nodes / shifting traffic",
+                    "is_fixed": False,
+                    "source": app_id,
+                    "correlation_id": f"perf_{app_id}_{int(time.time())}"
+                }).execute()
+
         # Insert metric
         supabase.table("metrics").insert({
             "site": app_id,
@@ -56,7 +83,7 @@ def check_site(app):
         }).execute()
 
 def monitor_loop(interval_seconds=60):
-    print(f"Starting uptime monitor... Checking every {interval_seconds} seconds.")
+    print(f"Starting uptime monitor with Predictive Analytics... Checking every {interval_seconds} seconds.")
     while True:
         try:
             # Fetch apps
@@ -75,6 +102,5 @@ def monitor_loop(interval_seconds=60):
         time.sleep(interval_seconds)
 
 if __name__ == "__main__":
-    # Check interval can be configured via env var, default 60s
     interval = int(os.getenv("UPTIME_CHECK_INTERVAL", "60"))
     monitor_loop(interval)

@@ -118,7 +118,7 @@ export const MultiAgentReviewView: React.FC = () => {
                 setAnalysisDepth={() => {}}
                 onAnalyze={() => {}}
                 isRoastMode={false}
-                onOpenSettings={() => {}}
+                
             />
             
             <main className="flex-1 flex flex-col h-full overflow-hidden">

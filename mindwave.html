@@ -1392,6 +1392,25 @@ window.resetGalaxySettings = function() {
 </svg>
 <span class="flex-1 text-left">Download App</span>
 </button>
+<!-- Share Soundscape Button -->
+<button class="w-full py-4.5 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-[var(--accent)]/20 hover:border-[var(--accent)] text-xs font-bold flex items-center gap-5 text-[var(--text-muted)] hover:text-white transition-all" id="shareSoundscapeBtn">
+<svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="16">
+<circle cx="18" cy="5" r="3"></circle>
+<circle cx="6" cy="12" r="3"></circle>
+<circle cx="18" cy="19" r="3"></circle>
+<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+</svg>
+<span class="flex-1 text-left">Share Soundscape</span>
+</button>
+<!-- Delete Account Button (Compliance) -->
+<button class="w-full py-4.5 px-4 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 hover:border-red-500 text-xs font-bold flex items-center gap-5 text-red-400 hover:text-red-300 transition-all mt-6" id="deleteAccountBtn">
+<svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="16">
+<path d="M3 6h18"></path>
+<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+</svg>
+<span class="flex-1 text-left">Delete Account</span>
+</button>
 </div>
 </div>
 <div class="h-20"></div> <!-- Final Spacer -->
@@ -5405,5 +5424,39 @@ window.resetGalaxySettings = function() {
             }, 300); // Wait for controls_v3 to initialize
         });
     </script>
+<!-- GDPR Cookie Consent Banner -->
+<div id="cookieConsentBanner" class="hidden fixed bottom-0 left-0 right-0 bg-[#0f172a] border-t border-white/10 p-4 z-[10000] flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-300">
+    <div class="flex-1 max-w-4xl">
+        We use cookies to analyze site usage, enhance your experience, and provide personalized features. By clicking "Accept", you consent to our use of cookies. Read our <a href="/mindwave/privacy.html" class="text-[var(--accent)] hover:underline" target="_blank">Privacy Policy</a>.
+    </div>
+    <div class="flex gap-3">
+        <button id="rejectCookiesBtn" class="px-4 py-2 rounded-lg border border-white/20 hover:bg-white/5 transition-colors font-medium">Decline</button>
+        <button id="acceptCookiesBtn" class="px-4 py-2 rounded-lg bg-[var(--accent)] text-black hover:brightness-110 transition-colors font-bold">Accept</button>
+    </div>
+</div>
+
+<script>
+    // Simple cookie consent logic (Web only)
+    document.addEventListener('DOMContentLoaded', () => {
+        const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+        if (!isNative && !localStorage.getItem('mw_cookie_consent')) {
+            const banner = document.getElementById('cookieConsentBanner');
+            if (banner) banner.classList.remove('hidden');
+            banner.classList.add('flex');
+            
+            document.getElementById('acceptCookiesBtn')?.addEventListener('click', () => {
+                localStorage.setItem('mw_cookie_consent', 'accepted');
+                banner.classList.add('hidden');
+                banner.classList.remove('flex');
+            });
+            document.getElementById('rejectCookiesBtn')?.addEventListener('click', () => {
+                localStorage.setItem('mw_cookie_consent', 'rejected');
+                banner.classList.add('hidden');
+                banner.classList.remove('flex');
+            });
+        }
+    });
+</script>
+
 </body>
 </html>

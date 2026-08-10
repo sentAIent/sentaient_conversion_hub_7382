@@ -10,7 +10,7 @@ import { AdminDashboardView } from './views/AdminDashboardView';
 import { DueDiligenceView } from './views/DueDiligenceView';
 import { WebScraperView } from './views/WebScraperView';
 import { MultiAgentReviewView } from './views/MultiAgentReviewView';
-import { RoastView } from './views/RoastView';
+
 import { BillingView } from './views/BillingView';
 import { KnowledgeBaseView } from './views/KnowledgeBaseView';
 import { BenchmarksDashboardView } from './views/BenchmarksDashboardView';
@@ -30,7 +30,7 @@ const App: React.FC = () => {
           <Route path="/due-diligence" element={<DueDiligenceView />} />
           <Route path="/scraper" element={<WebScraperView />} />
           <Route path="/contract-team" element={<MultiAgentReviewView />} />
-          <Route path="/roast" element={<RoastView />} />
+
           <Route path="/billing" element={<BillingView />} />
           <Route path="/knowledge-base" element={<KnowledgeBaseView />} />
           <Route path="/benchmarks" element={<BenchmarksDashboardView />} />

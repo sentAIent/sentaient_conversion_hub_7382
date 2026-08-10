@@ -90,7 +90,7 @@ export default function Sidebar() {
         </Link>
         <Link href="/taxes" className={getLinkClass('/taxes')}>
           <Calculator size={20} />
-          <span>Tax Estimates</span>
+          <span>Tax Strategies</span>
         </Link>
         <Link href="/journaling" className={getLinkClass('/journaling')}>
           <Target size={20} />

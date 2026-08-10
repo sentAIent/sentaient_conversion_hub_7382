@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Server, Volume2, AlertTriangle } from 'lucide-react';
+import { X, Server, Volume2, AlertTriangle, Lock } from 'lucide-react';
 import { useSettingsStore } from '@/store';
 import { useUIStore } from '@/store';
 import { supabase } from '@/lib/supabase';
@@ -15,7 +15,9 @@ export const SettingsModal: React.FC = () => {
         localAiEndpoint,
         setLocalAiEndpoint,
         ttsProvider,
-        setTtsProvider
+        setTtsProvider,
+        enablePiiRedaction,
+        setEnablePiiRedaction
     } = useSettingsStore();
 
     const currentTheme = useUIStore(s => s.currentTheme);
@@ -177,6 +179,32 @@ export const SettingsModal: React.FC = () => {
                                     <div className="font-medium text-sm">Local API (Coqui/OpenedAI)</div>
                                     <div className="text-xs opacity-60">High quality voices. Requires local TTS server running.</div>
                                 </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Security Settings */}
+                    <div className="space-y-4 pt-4 border-t">
+                        <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                            <Lock className="w-5 h-5 text-blue-600" />
+                            Security & Compliance
+                        </h3>
+
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label className="text-sm font-medium text-slate-700">Pre-LLM PII Redaction</label>
+                                <p className="text-xs text-slate-500">
+                                    Automatically scrub emails, phone numbers, and SSNs before sending to the AI.
+                                </p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    className="sr-only peer" 
+                                    checked={enablePiiRedaction}
+                                    onChange={(e) => setEnablePiiRedaction(e.target.checked)}
+                                />
+                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                         </div>
                     </div>

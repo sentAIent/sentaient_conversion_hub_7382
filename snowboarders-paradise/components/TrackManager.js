@@ -1,252 +1,198 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
-import { useLoader } from '@react-three/fiber';
-import { useBox } from '@react-three/cannon';
+import { useFrame, useThree } from '@react-three/fiber';
+import { getTerrainHeight, getObstacleData } from '../utils/terrainUtils';
 
-export function TrackManager() {
-  const angle = 15 * (Math.PI / 180);
-  const depth = 30000; // 30km track!
-  const thickness = 100;
-  const width = 800; // nice and wide
+const CHUNK_SIZE = 1000;
+const CHUNK_WIDTH = 800;
+const CHUNK_RESOLUTION_X = 32;
+const CHUNK_RESOLUTION_Z = 64;
+const VISIBLE_CHUNKS = 5;
 
-  // A dummy object representing the track's coordinate system
-  // We use this to compute the world coordinates of everything on the track
-  const trackCoord = useMemo(() => {
-    const d = new THREE.Object3D();
-    d.position.set(0, -5, 0); // Ground is slightly below player spawn
-    d.rotation.set(-angle, 0, 0); // Tilt downhill towards -Z
-    d.updateMatrixWorld();
-    return d;
-  }, [angle]);
+const createSnowMaterial = () => {
+  return new THREE.MeshStandardMaterial({
+    color: '#ffffff',
+    roughness: 0.8,
+    metalness: 0.1,
+  });
+};
 
-  return (
-    <group>
-      <DownhillSlope trackCoord={trackCoord} width={width} depth={depth} />
-      
-      {/* Obstacles */}
-      {Array.from({ length: 50 }).map((_, i) => (
-        <Kicker key={`kicker-${i}`} trackCoord={trackCoord} index={i} />
-      ))}
-      {Array.from({ length: 20 }).map((_, i) => (
-        <GrindRail key={`rail-${i}`} trackCoord={trackCoord} index={i} />
-      ))}
+const snowMaterial = createSnowMaterial();
 
-      {/* Trees scattered around the top edges of the halfpipe */}
-      <InstancedTrees trackCoord={trackCoord} count={300} width={width} />
-    </group>
-  );
-}
-
-import { useTrimesh } from '@react-three/cannon';
-
-function DownhillSlope({ trackCoord, width, depth }) {
-  const snowTexture = useLoader(THREE.TextureLoader, require('../assets/snow_texture.jpg'));
-  
-  // Create seamless repetition
-  const tex = snowTexture.clone();
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(20, 200);
-
-  const { geo, vertices, indices } = useMemo(() => {
-    const g = new THREE.PlaneGeometry(width, depth, 32, 600);
-    const pos = g.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      
-      let z = 0;
-      
-      // 1. Natural Halfpipe Shape to keep player on track
-      const centerDist = Math.abs(x);
-      if (centerDist > 150) {
-        z += Math.pow(centerDist - 150, 1.3) * 0.4;
-      }
-      
-      // 2. Procedural Bumps and Moguls
-      z += Math.sin(y * 0.05) * 2 * Math.cos(x * 0.05);
-      z += Math.sin(y * 0.01) * 8; // Large undulating hills
-      
-      pos.setZ(i, z);
-    }
-    g.computeVertexNormals();
-    
-    return {
-      geo: g,
-      vertices: g.attributes.position.array,
-      indices: g.index.array
-    };
-  }, [width, depth]);
-
-  const boxPos = useMemo(() => {
-    const p = new THREE.Vector3(0, 0, -depth/2 + 2000); 
-    p.applyMatrix4(trackCoord.matrixWorld);
-    return [p.x, p.y, p.z];
-  }, [trackCoord, depth]);
-
-  const rot = useMemo(() => {
-    const d = trackCoord.clone();
-    d.rotateX(-Math.PI / 2); // PlaneGeometry is XY, rotate to lay flat
-    return d.rotation.toArray().slice(0, 3);
-  }, [trackCoord]);
-
-  const [ref] = useTrimesh(() => ({
-    args: [vertices, indices],
-    position: boxPos,
-    rotation: rot,
-    material: { friction: 0.01, restitution: 0.1 }
-  }));
-
-  return (
-    <mesh ref={ref} geometry={geo} receiveShadow>
-      <meshStandardMaterial map={tex} roughness={0.8} metalness={0.1} />
-    </mesh>
-  );
-}
-
-function SideWall({ trackCoord, side, width, depth }) {
-  const wallThickness = 100;
-  const wallHeight = 400; // Tall walls so player can't jump out
-  const boxPos = useMemo(() => {
-    const xPos = side === 'left' ? -width/2 - wallThickness/2 : width/2 + wallThickness/2;
-    const p = new THREE.Vector3(xPos, wallHeight/2, -depth/2 + 2000);
-    p.applyMatrix4(trackCoord.matrixWorld);
-    return [p.x, p.y, p.z];
-  }, [trackCoord, side, width, depth]);
-
-  const [ref] = useBox(() => ({
-    type: 'Static',
-    args: [wallThickness, wallHeight, depth],
-    position: boxPos,
-    rotation: trackCoord.rotation.toArray().slice(0, 3),
-    material: { friction: 0.1, restitution: 0.5 }
-  }));
-  
-  return (
-    <mesh ref={ref} visible={false}>
-      <boxGeometry args={[wallThickness, wallHeight, depth]} />
-      <meshStandardMaterial color="#1f1e24" />
-    </mesh>
-  );
-}
-
-function Kicker({ trackCoord, index }) {
-  const localZ = -400 - (index * 400); 
-  const xPos = index % 3 === 0 ? 0 : (index % 2 === 0 ? -200 : 200);
-  
-  const boxPos = useMemo(() => {
-    // Sink it slightly into the surface to guarantee no collision lip
-    const p = new THREE.Vector3(xPos, 2, localZ);
-    p.applyMatrix4(trackCoord.matrixWorld);
-    return [p.x, p.y, p.z];
-  }, [trackCoord, xPos, localZ]);
-
-  const rot = useMemo(() => {
-    const d = trackCoord.clone();
-    d.rotateX(20 * Math.PI / 180); // Tilt up relative to the slope
-    return d.rotation.toArray().slice(0, 3);
-  }, [trackCoord]);
-
-  const [ref] = useBox(() => ({
-    type: 'Static',
-    args: [60, 10, 80],
-    position: boxPos,
-    rotation: rot,
-    material: { friction: 0.0, restitution: 0.2 } // 0 friction to prevent sticking
-  }));
-
-  return (
-    <mesh ref={ref} receiveShadow>
-      <boxGeometry args={[60, 10, 80]} />
-      <meshStandardMaterial color="#00ffcc" emissive="#00aaff" emissiveIntensity={1.5} roughness={0.2} />
-    </mesh>
-  );
-}
-
-function GrindRail({ trackCoord, index }) {
-  const localZ = -1000 - (index * 1200); 
-  const xPos = index % 2 === 0 ? -80 : 80;
-  
-  const boxPos = useMemo(() => {
-    const p = new THREE.Vector3(xPos, 8, localZ);
-    p.applyMatrix4(trackCoord.matrixWorld);
-    return [p.x, p.y, p.z];
-  }, [trackCoord, xPos, localZ]);
-
-  const rot = useMemo(() => {
-    return trackCoord.rotation.toArray().slice(0, 3);
-  }, [trackCoord]);
-
-  // Cylinder args: radiusTop, radiusBottom, height
-  const [ref] = useBox(() => ({
-    type: 'Static',
-    args: [3, 3, 200], // very long box for collision
-    position: boxPos,
-    rotation: rot,
-    material: { friction: 0.0, restitution: 0.1 }
-  }));
-
-  return (
-    <mesh ref={ref} receiveShadow>
-      <boxGeometry args={[3, 3, 200]} />
-      <meshStandardMaterial color="#ff0055" metalness={0.9} roughness={0.1} emissive="#ff0055" emissiveIntensity={1.0} />
-    </mesh>
-  );
-}
-
-function InstancedTrees({ trackCoord, count, width }) {
+function Trees({ instances }) {
   const meshRef = useRef();
   
-  // Make detailed trees using multiple overlapping cones
   const { treeGeo, treeMat } = useMemo(() => {
-    const geom = new THREE.BufferGeometry();
-    const c1 = new THREE.ConeGeometry(30, 80, 8);
-    c1.translate(0, 40, 0);
-    const c2 = new THREE.ConeGeometry(25, 60, 8);
-    c2.translate(0, 80, 0);
-    const c3 = new THREE.ConeGeometry(15, 40, 8);
-    c3.translate(0, 110, 0);
+    const geo = new THREE.CylinderGeometry(0, 30, 150, 16, 20);
+    geo.translate(0, 75, 0);
     
-    // Merge geometries (simplified for BufferGeometry without external libs, using groups)
-    // Actually, InstancedMesh only takes one geometry. We can just use a taller, more detailed single cone,
-    // or manually merge attributes. To keep it simple and high-performance without importing mergeBufferGeometries:
-    const baseGeo = new THREE.ConeGeometry(25, 120, 12);
-    baseGeo.translate(0, 60, 0); // origin at base
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      if (y > 0 && y < 140) {
+        const layer = y % 20;
+        if (layer < 10) {
+          pos.setX(i, pos.getX(i) * 1.2);
+          pos.setZ(i, pos.getZ(i) * 1.2);
+        }
+      }
+    }
+    geo.computeVertexNormals();
     
-    const mat = new THREE.MeshStandardMaterial({ color: '#092518', roughness: 0.9, metalness: 0 });
-    return { treeGeo: baseGeo, treeMat: mat };
+    const mat = new THREE.MeshStandardMaterial({ 
+      color: '#082211', 
+      roughness: 0.9, 
+      metalness: 0.0,
+    });
+    return { treeGeo: geo, treeMat: mat };
   }, []);
   
   useEffect(() => {
     if (!meshRef.current) return;
     const dummy = new THREE.Object3D();
     
-    for (let i = 0; i < count; i++) {
-      const localZ = -500 - (i * (30000 / count)); 
-      const side = i % 2 === 0 ? 1 : -1;
-      
-      // Place trees specifically on the high edges of the halfpipe
-      const xPos = side * (250 + Math.random() * 100); 
-      
-      const centerDist = Math.abs(xPos);
-      let zOffset = 0;
-      if (centerDist > 150) zOffset = Math.pow(centerDist - 150, 1.3) * 0.4;
-      
-      const p = new THREE.Vector3(xPos, zOffset - 5, localZ);
-      p.applyMatrix4(trackCoord.matrixWorld);
-      
-      dummy.position.copy(p);
-      dummy.rotation.copy(trackCoord.rotation);
-      
-      const s = 1.0 + Math.random() * 1.5;
-      dummy.scale.set(s, s, s);
-      
+    instances.forEach((inst, i) => {
+      dummy.position.set(...inst.position);
+      dummy.rotation.set(0, Math.random() * Math.PI, 0);
+      dummy.scale.set(inst.scale, inst.scale, inst.scale);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
-    }
+    });
     meshRef.current.instanceMatrix.needsUpdate = true;
-  }, [trackCoord, count, width]);
+  }, [instances]);
+  
+  return (
+    <instancedMesh ref={meshRef} args={[treeGeo, treeMat, instances.length]} castShadow receiveShadow />
+  );
+}
+
+function Kickers({ instances }) {
+  const meshRef = useRef();
+  const kickerGeo = useMemo(() => new THREE.BoxGeometry(60, 10, 80), []);
+  const kickerMat = useMemo(() => new THREE.MeshStandardMaterial({ 
+    color: "#664422", 
+    roughness: 0.8, 
+    metalness: 0.1 
+  }), []);
+
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const dummy = new THREE.Object3D();
+    
+    instances.forEach((inst, i) => {
+      dummy.position.set(...inst.position);
+      dummy.rotation.set(20 * (Math.PI / 180), inst.rotationY, 0);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [instances]);
 
   return (
-    <instancedMesh ref={meshRef} args={[treeGeo, treeMat, count]} castShadow receiveShadow />
+    <instancedMesh ref={meshRef} args={[kickerGeo, kickerMat, instances.length]} castShadow receiveShadow />
+  );
+}
+
+function TerrainChunk({ zOffset }) {
+  const { geometry, treeData, kickerData } = useMemo(() => {
+    const geo = new THREE.PlaneGeometry(CHUNK_WIDTH, CHUNK_SIZE, CHUNK_RESOLUTION_X, CHUNK_RESOLUTION_Z);
+    geo.rotateX(-Math.PI / 2);
+    geo.translate(0, 0, zOffset);
+
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const zWorld = pos.getZ(i); 
+      
+      const y = getTerrainHeight(x, zWorld);
+      pos.setY(i, y);
+    }
+    geo.computeVertexNormals();
+    
+    const trees = [];
+    const kickers = [];
+    
+    for (let ox = -CHUNK_WIDTH/2; ox <= CHUNK_WIDTH/2; ox += 30) {
+      for (let oz = zOffset - CHUNK_SIZE/2; oz <= zOffset + CHUNK_SIZE/2; oz += 30) {
+        const obs = getObstacleData(ox, oz);
+        if (obs) {
+          const oy = getTerrainHeight(ox, oz);
+          if (obs.type === 'tree') {
+            trees.push({ position: [ox, oy, oz], scale: obs.scale });
+          } else if (obs.type === 'kicker') {
+            kickers.push({ position: [ox, oy, oz], rotationY: obs.rotationY });
+          }
+        }
+      }
+    }
+    
+    return { geometry: geo, treeData: trees, kickerData: kickers };
+  }, [zOffset]);
+  
+  return (
+    <group>
+      <mesh geometry={geometry} material={snowMaterial} receiveShadow castShadow />
+      {treeData.length > 0 && <Trees instances={treeData} />}
+      {kickerData.length > 0 && <Kickers instances={kickerData} />}
+    </group>
+  );
+}
+
+export function TrackManager() {
+  const [activeChunks, setActiveChunks] = useState([]);
+  const { camera } = useThree();
+  const lastUpdateZ = useRef(0);
+  const snowParticles = useRef();
+
+  const snowGeo = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    const count = 2000;
+    const positions = new Float32Array(count * 3);
+    for(let i=0; i<count*3; i+=3) {
+      positions[i] = (Math.random() - 0.5) * 100;
+      positions[i+1] = (Math.random() - 0.5) * 40;
+      positions[i+2] = (Math.random() - 0.5) * 100;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    return geo;
+  }, []);
+
+  useFrame((state) => {
+    const currentZ = state.camera.position.z;
+    
+    if (snowParticles.current) {
+      snowParticles.current.position.set(state.camera.position.x, state.camera.position.y, state.camera.position.z - 20);
+      const positions = snowParticles.current.geometry.attributes.position.array;
+      for (let i = 1; i < positions.length; i += 3) {
+        positions[i] -= 0.2; 
+        if (positions[i] < -20) positions[i] = 20;
+      }
+      snowParticles.current.geometry.attributes.position.needsUpdate = true;
+    }
+
+    if (Math.abs(currentZ - lastUpdateZ.current) > CHUNK_SIZE / 4 || activeChunks.length === 0) {
+      lastUpdateZ.current = currentZ;
+      const currentChunkIndex = Math.floor(currentZ / CHUNK_SIZE);
+      
+      const newChunks = [];
+      for (let i = -1; i < VISIBLE_CHUNKS; i++) {
+        const chunkZOffset = (currentChunkIndex - i) * CHUNK_SIZE;
+        newChunks.push(chunkZOffset);
+      }
+      
+      setActiveChunks(newChunks);
+    }
+  });
+
+  return (
+    <group>
+      <points ref={snowParticles}>
+        <bufferGeometry attach="geometry" {...snowGeo} />
+        <pointsMaterial attach="material" size={0.3} color="#ffffff" transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </points>
+      {activeChunks.map((zOffset) => (
+        <TerrainChunk key={zOffset} zOffset={zOffset} />
+      ))}
+    </group>
   );
 }

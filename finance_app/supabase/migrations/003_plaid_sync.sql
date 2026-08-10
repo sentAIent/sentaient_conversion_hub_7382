@@ -14,6 +14,9 @@ ALTER TABLE public.plaid_webhooks ENABLE ROW LEVEL SECURITY;
 -- Only service role can access webhooks
 CREATE POLICY "Service role full access on webhooks"
     ON public.plaid_webhooks
+    AS PERMISSIVE
+    FOR ALL
+    TO service_role
     USING (true)
     WITH CHECK (true);
 

@@ -18,7 +18,9 @@ export const metadata: Metadata = {
   description: "Automated Finance & Accounting",
 };
 
+import { Toaster } from "react-hot-toast";
 import { EntityProvider } from "@/context/EntityContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function RootLayout({
   children,
@@ -31,7 +33,10 @@ export default function RootLayout({
         <EntityProvider>
           <Sidebar />
           <main className="flex-1 p-8 overflow-y-auto">
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+            <Toaster position="top-right" />
           </main>
         </EntityProvider>
       </body>

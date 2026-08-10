@@ -2,6 +2,7 @@
 // Handles interactions with ethers.js for deploying contracts via the TokenFactory
 
 import { ethers } from 'ethers';
+import toast from 'react-hot-toast';
 import TokenFactoryJSON from '../contracts/compiled/TokenFactory.json';
 
 export async function deployEVMToken(params: {
@@ -33,6 +34,8 @@ export async function deployEVMToken(params: {
   const platformFee = params.isSubscriber ? ethers.parseEther("0") : ethers.parseEther("0.01");
   
   try {
+    toast.loading("Confirm transaction in MetaMask...", { id: "deployToast" });
+    
     // 4. Send Transaction
     let tx;
     if (params.mode === 'Basic') {
@@ -60,14 +63,17 @@ export async function deployEVMToken(params: {
       );
     }
     
+    toast.loading("Transaction submitted, waiting for confirmation...", { id: "deployToast" });
     // 5. Wait for confirmation
     const receipt = await tx.wait();
     
     // 6. Find the TokenCreated event to get the new token address
     const event = receipt.logs.find((log: any) => log.fragment?.name === 'TokenCreated');
+    toast.success("Token deployed successfully!", { id: "deployToast" });
     return event?.args?.tokenAddress || "0xMockAddressEVMDeployer123456789";
-  } catch (error) {
+  } catch (error: any) {
     console.error("Deployment failed:", error);
+    toast.error(`Deployment failed: ${error.message || "User rejected"}`, { id: "deployToast" });
     // Return mock for development/sandbox if wallet rejects or fails
     return "0xMockAddressEVMDeployer123456789";
   }

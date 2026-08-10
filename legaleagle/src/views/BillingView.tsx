@@ -30,7 +30,7 @@ export const BillingView: React.FC = () => {
                     setAnalysisDepth={() => {}}
                     onAnalyze={() => {}}
                     isRoastMode={false}
-                    onOpenSettings={() => {}}
+                    
                 />
                 <main className="flex-1 flex items-center justify-center">
                     <div className="bg-white p-12 rounded-2xl border shadow-lg text-center max-w-md animate-in zoom-in duration-500">
@@ -69,7 +69,7 @@ export const BillingView: React.FC = () => {
                     setAnalysisDepth={() => {}}
                     onAnalyze={() => {}}
                     isRoastMode={false}
-                    onOpenSettings={() => {}}
+                    
                 />
                 <main className="flex-1 overflow-y-auto p-12 flex justify-center items-center">
                     <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
@@ -173,7 +173,7 @@ export const BillingView: React.FC = () => {
                 setAnalysisDepth={() => {}}
                 onAnalyze={() => {}}
                 isRoastMode={false}
-                onOpenSettings={() => {}}
+                
             />
             
             <main className="flex-1 overflow-y-auto p-12">

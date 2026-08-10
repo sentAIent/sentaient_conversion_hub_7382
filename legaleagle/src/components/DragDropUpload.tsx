@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { UploadCloud, File, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, File, X, CheckCircle2 } from 'lucide-react';
+import { logAuditAction } from '@/services/auditService';
+import { useAuth } from '@/context/AuthContext';
 
 interface DragDropUploadProps {
   onUpload: (files: File[]) => void;
@@ -8,6 +10,7 @@ interface DragDropUploadProps {
 export const DragDropUpload: React.FC<DragDropUploadProps> = ({ onUpload }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<{file: File, progress: number, complete: boolean}[]>([]);
+  const { user } = useAuth();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -24,7 +27,7 @@ export const DragDropUpload: React.FC<DragDropUploadProps> = ({ onUpload }) => {
     setUploadedFiles(prev => [...prev, ...newFiles]);
 
     // Mock upload progress
-    newFiles.forEach((fileObj, index) => {
+    newFiles.forEach((fileObj) => {
       let currentProgress = 0;
       const interval = setInterval(() => {
         currentProgress += Math.random() * 20;
@@ -43,6 +46,9 @@ export const DragDropUpload: React.FC<DragDropUploadProps> = ({ onUpload }) => {
           // Trigger onUpload when all are complete (mocking simple for now)
           setTimeout(() => {
               onUpload(files);
+              if (user) {
+                  logAuditAction(null, user.id, 'DOCUMENT_UPLOAD', { filename: fileObj.file.name, size: fileObj.file.size });
+              }
           }, 500);
         } else {
           setUploadedFiles(prev => {
@@ -75,6 +81,9 @@ export const DragDropUpload: React.FC<DragDropUploadProps> = ({ onUpload }) => {
 
   const removeFile = (fileName: string) => {
     setUploadedFiles(prev => prev.filter(f => f.file.name !== fileName));
+    if (user) {
+        logAuditAction(null, user.id, 'DOCUMENT_DELETED', { filename: fileName });
+    }
   };
 
   return (
