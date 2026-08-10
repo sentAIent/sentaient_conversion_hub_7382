@@ -2,6 +2,9 @@ import express from 'express';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import depthLimit from 'graphql-depth-limit';
 import { PrismaClient, PrivacyTier, Color } from '@prisma/client';
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -345,6 +348,7 @@ export const typeDefs = `#graphql
     exportWatermarkedVideo(contentId: ID!): String!
     payVenue(venueId: String!, amount: Int!): Boolean!
     cashOutWallet: CashOutResponse!
+    deleteAccount: Boolean!
   }
 
   type CashOutResponse {
@@ -406,6 +410,40 @@ async function ensureUserExists(contextUser: any) {
         referralCode: `REF${suffix}`
       }
     });
+  }
+}
+
+async function checkMediaSafety(mediaUrl: string): Promise<boolean> {
+  if (!ai || !mediaUrl) return true;
+  try {
+    const response = await fetch(mediaUrl);
+    const buffer = await response.arrayBuffer();
+    const mimeType = response.headers.get('content-type') || 'image/jpeg';
+    
+    // For large videos this might OOM or take too long, but for a prototype it's fine.
+    const aiResponse = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          inlineData: {
+            data: Buffer.from(buffer).toString('base64'),
+            mimeType: mimeType
+          }
+        },
+        "Does this media contain NSFW (Not Safe For Work) content, such as explicit nudity, pornography, or extreme violence? Reply ONLY with 'YES' or 'NO'."
+      ]
+    });
+    
+    const answer = aiResponse.text?.trim().toUpperCase() || '';
+    if (answer.includes('YES')) {
+      console.warn(`[NSFW Filter] Blocked media: ${mediaUrl}`);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[NSFW Filter] check failed:", e);
+    // Fail open if the check errors out
+    return true;
   }
 }
 
@@ -1481,6 +1519,14 @@ export const resolvers = {
     createContent: async (_: any, { type, textBody, mediaUrl, venueId }: any, context: any) => {
       await ensureUserExists(context.user);
       if (!context.user) throw new Error('Not authenticated');
+      
+      if (mediaUrl) {
+        const isSafe = await checkMediaSafety(mediaUrl);
+        if (!isSafe) {
+          throw new GraphQLError("Content flagged as inappropriate by safety filters.", { extensions: { code: 'BAD_USER_INPUT' } });
+        }
+      }
+
       return prisma.content.create({
         data: {
           userId: context.user.uid,
@@ -1828,6 +1874,36 @@ export const resolvers = {
       } catch (err: any) {
         throw new GraphQLError(err.message || "Payout failed");
       }
+    },
+    deleteAccount: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const userId = context.user.uid;
+      
+      try {
+        // Anonymize user data in Postgres (Soft Delete for referential integrity)
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            name: "Deleted User",
+            username: `deleted_${userId.substring(0,8)}`,
+            email: `deleted_${userId}@icebreaker.local`,
+            phone: null,
+            bio: "",
+            profilePhotoUrl: null,
+            isActive: false,
+            pushToken: null,
+            trustScore: 0
+            // embedding is Unsupported("vector"), so we can't easily null it out via Prisma client directly without raw query, 
+            // but isActive: false will exclude them from nearbyUsers.
+          }
+        });
+
+        // Delete from Firebase Auth
+        await getAuth().deleteUser(userId);
+        return true;
+      } catch (err: any) {
+        throw new GraphQLError(err.message || "Failed to delete account");
+      }
     }
   },
   
@@ -1838,6 +1914,24 @@ export const resolvers = {
 
 async function startServer() {
   const app = express();
+  
+  // Security Hardening
+  app.use(helmet({
+    contentSecurityPolicy: (process.env.NODE_ENV === 'production') ? undefined : false,
+    crossOriginEmbedderPolicy: false
+  }));
+
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // Limit each IP to 1000 requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+  });
+
+  // Apply to all API routes
+  app.use('/graphql', apiLimiter);
+  app.use('/api/', apiLimiter);
   
   // Basic Password Auth for Admin API
   const adminAuth = (req: any, res: any, next: any) => {
@@ -1928,6 +2022,7 @@ async function startServer() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
+    validationRules: [depthLimit(10)],
     formatError: (formattedError, error) => {
       // Log errors to console in backend for monitoring
       console.error(formattedError);

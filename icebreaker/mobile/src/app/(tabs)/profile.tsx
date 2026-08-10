@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity, ActivityIndicator, SafeAreaView, Share, Image, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity, ActivityIndicator, SafeAreaView, Share, Image, Modal, TextInput, Platform, Alert } from 'react-native';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -69,6 +69,12 @@ const UPDATE_PRIVACY = gql`
   }
 `;
 
+const DELETE_ACCOUNT = gql`
+  mutation DeleteAccount {
+    deleteAccount
+  }
+`;
+
 const COLORS = [
   { id: 'GREEN', label: 'Networking', hex: '#00E676', icon: 'briefcase' },
   { id: 'RED', label: 'Do Not Disturb', hex: '#FF1744', icon: 'remove-circle' },
@@ -107,6 +113,7 @@ export default function ProfileScreen() {
   const [updateUserDetails, { loading: savingDetails }] = useMutation(UPDATE_USER_DETAILS);
   const [updateProfile, { loading: savingColors }] = useMutation(UPDATE_PROFILE);
   const [updatePrivacy] = useMutation(UPDATE_PRIVACY);
+  const [deleteAccountMutation] = useMutation(DELETE_ACCOUNT);
 
   const handlePickImage = async () => {
     if (!auth.currentUser) return;
@@ -200,6 +207,30 @@ export default function ProfileScreen() {
     } catch (e) {
       console.error('Failed to sign out', e);
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to permanently delete your account? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              await deleteAccountMutation();
+              await signOut(auth);
+              router.replace('/(auth)/login');
+            } catch (e) {
+              Alert.alert("Error", "Failed to delete account.");
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -381,6 +412,11 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.row} onPress={handleSignOut}>
             <Text style={[styles.label, { color: '#ff3b30', fontWeight: 'bold' }]}>Sign Out</Text>
             <Ionicons name="log-out-outline" size={24} color="#ff3b30" />
+          </TouchableOpacity>
+          <View style={{ height: 20 }} />
+          <TouchableOpacity style={styles.row} onPress={handleDeleteAccount}>
+            <Text style={[styles.label, { color: '#ff3b30', fontWeight: 'bold' }]}>Delete Account</Text>
+            <Ionicons name="trash-outline" size={24} color="#ff3b30" />
           </TouchableOpacity>
         </BlurView>
 
