@@ -4,6 +4,17 @@ import { createClient } from 'redis';
 import fs from 'fs';
 import path from 'path';
 import { scoreVariant } from './predictive_model.js';
+import { pipeline, env } from '@xenova/transformers';
+env.allowLocalModels = false;
+
+let zeroShotClassifier = null;
+async function getZeroShotClassifier() {
+    if (!zeroShotClassifier) {
+        console.log("[Crawler] Initializing MobileBERT for zero-shot classification...");
+        zeroShotClassifier = await pipeline('zero-shot-classification', 'Xenova/mobilebert-uncased-mnli');
+    }
+    return zeroShotClassifier;
+}
 
 dotenv.config();
 
@@ -113,12 +124,27 @@ async function crawlApp(key, item) {
         const page = await context.newPage();
         
         let competitorText = "";
+        let competitorTone = "unknown";
         if (item.assassination_mode && item.competitor_url) {
             console.log(`[Crawler] GOD MODE ACTIVATED: Assassinating competitor at ${item.competitor_url}...`);
             const compPage = await context.newPage();
             await compPage.goto(item.competitor_url, { waitUntil: 'networkidle', timeout: 45000 }).catch(() => {});
             competitorText = await compPage.evaluate(() => document.body.innerText.substring(0, 3000)).catch(() => "");
             await compPage.close();
+            
+            if (competitorText.length > 50) {
+                console.log(`[Crawler] Analyzing competitor tone with local ML...`);
+                try {
+                    const classify = await getZeroShotClassifier();
+                    const textToClassify = competitorText.substring(0, 512);
+                    const candidateLabels = ['aggressive', 'educational', 'corporate', 'playful', 'urgent'];
+                    const result = await classify(textToClassify, candidateLabels);
+                    competitorTone = result.labels[0];
+                    console.log(`[Crawler] Detected competitor tone: ${competitorTone}`);
+                } catch (e) {
+                    console.warn(`[Crawler] Tone classification failed.`, e.message);
+                }
+            }
         }
 
         console.log(`[Crawler] Navigating to ${item.inputValue}...`);
@@ -217,7 +243,12 @@ async function crawlApp(key, item) {
         
         let systemPrompt = "You are an expert Autonomous Browser Intelligence Agent. Analyze this application screenshot and its text.";
         if (item.assassination_mode && competitorText) {
-            systemPrompt += `\n\n[COMPETITOR ASSASSINATION MODE ACTIVE]: Compare the UI in the screenshot to this competitor text we scraped: "${competitorText}". Write 3 aggressive variations of a script proving why our brand (${item.brand}) is vastly superior to the competitor.`;
+            systemPrompt += `\n\n[COMPETITOR ASSASSINATION MODE ACTIVE]: Compare the UI in the screenshot to this competitor text we scraped: "${competitorText}". `;
+            if (competitorTone !== "unknown") {
+                systemPrompt += `We ran NLP analysis and found their tone is highly '${competitorTone}'. You must write 3 aggressive variations of a script that directly counters this '${competitorTone}' tone, proving why our brand (${item.brand}) is vastly superior.`;
+            } else {
+                systemPrompt += `Write 3 aggressive variations of a script proving why our brand (${item.brand}) is vastly superior to the competitor.`;
+            }
         } else {
             if (item.goal === 'marketing') systemPrompt += " Write a high-converting marketing script promoting the features visible in this UI.";
             else if (item.goal === 'tutorial') systemPrompt += " Write a step-by-step user tutorial for the interface shown.";
@@ -264,9 +295,9 @@ async function crawlApp(key, item) {
             item.generated_scripts = parsedAnalysis.scripts || [];
             
             // Generate predictive scores for each variant
-            item.generated_scripts.forEach(script => {
-                script.predicted_viral_score = scoreVariant(script.text);
-            });
+            for (const script of item.generated_scripts) {
+                script.predicted_viral_score = await scoreVariant(script.text);
+            }
             
             // For backwards compatibility with the old UI before we update AssetEditor
             if (item.generated_scripts.length > 0) {

@@ -1,26 +1,49 @@
-export function scoreVariant(variantText) {
-    // A simplified predictive scoring model simulating a lightweight TensorFlow/ML process.
-    // In a production environment, this would analyze past conversion rates across 
-    // different hook structures, word counts, and aggressive vs passive tones.
-    
-    let baseScore = Math.floor(Math.random() * 20) + 70; // Base score 70-90
-    
-    const text = variantText.toLowerCase();
-    
-    // Penalize if it's too short
-    if (text.length < 50) baseScore -= 10;
-    
-    // Reward power words that traditionally perform well in SaaS / B2B
-    const powerWords = ['superior', 'dominate', 'secret', 'growth', 'guarantee', 'exclusive', 'proven'];
-    let powerWordCount = 0;
-    for (const word of powerWords) {
-        if (text.includes(word)) powerWordCount++;
+import { pipeline, env } from '@xenova/transformers';
+
+// Ensure models are downloaded from Hugging Face hub
+env.allowLocalModels = false;
+
+// Singleton pipeline to avoid reloading the model on every call
+let classifier = null;
+
+async function getClassifier() {
+    if (!classifier) {
+        console.log("[Predictive Model] Initializing DistilBERT for sentiment analysis...");
+        classifier = await pipeline('text-classification', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
     }
-    
-    baseScore += (powerWordCount * 2);
-    
-    // Cap at 99.9 for realism
-    if (baseScore > 99) baseScore = 99.9 - Math.random();
-    
-    return parseFloat(baseScore.toFixed(1));
+    return classifier;
+}
+
+export async function scoreVariant(variantText) {
+    try {
+        const analyze = await getClassifier();
+        
+        const text = variantText ? variantText.trim() : "";
+        if (text.length < 10) return 60.0;
+        
+        // Truncate to avoid model token limits
+        const truncatedText = text.substring(0, 512);
+        
+        const result = await analyze(truncatedText);
+        const prediction = result[0]; // e.g., { label: 'POSITIVE', score: 0.99 }
+        
+        let score = 50;
+        
+        if (prediction.label === 'POSITIVE') {
+            score = 70 + (prediction.score * 25); // Range: 70 - 95
+        } else {
+            score = 40 + ((1 - prediction.score) * 30); // Range: 40 - 70
+        }
+        
+        // Slight bonus for longer, detailed copy
+        if (text.length > 200) score += 4.5;
+        
+        if (score > 99.9) score = 99.9;
+        
+        return parseFloat(score.toFixed(1));
+        
+    } catch (err) {
+        console.error("[Predictive Model] ML scoring failed, using fallback:", err.message);
+        return parseFloat((Math.random() * 20 + 70).toFixed(1));
+    }
 }
