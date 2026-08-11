@@ -4,6 +4,7 @@ import { createClient } from 'redis';
 import fs from 'fs';
 import path from 'path';
 import { scoreVariant } from './predictive_model.js';
+import { getEmbedding, cosineSimilarity, cropToImportantUI, translateText, removeBackground } from './ml_engine.js';
 import { pipeline, env } from '@xenova/transformers';
 env.allowLocalModels = false;
 
@@ -236,10 +237,53 @@ async function crawlApp(key, item) {
             videoUrl: finalVideoPath ? `http://localhost:9000/sentaient-assets/staging/${path.basename(finalVideoPath)}` : null,
         };
 
-        // --- GEMINI VISION ANALYSIS ---
-        console.log(`[Crawler] Sending screenshot to Gemini Vision for understanding...`);
-        const screenshotBuffer = fs.readFileSync(screenshotPath);
-        const screenshotBase64 = screenshotBuffer.toString('base64');
+        // --- ML ENGINE: SEMANTIC DEDUPLICATION ---
+        console.log(`[Crawler] Generating semantic embeddings for deduplication...`);
+        let duplicateFound = false;
+        try {
+            const currentEmbedding = await getEmbedding(pageText);
+            const recentCrawls = await redis.keys("embedding:*");
+            for (const embKey of recentCrawls) {
+                const storedEmbStr = await redis.get(embKey);
+                if (storedEmbStr) {
+                    const storedEmb = JSON.parse(storedEmbStr);
+                    const similarity = cosineSimilarity(currentEmbedding, storedEmb.vector);
+                    if (similarity > 0.95 && storedEmb.scripts) {
+                        console.log(`[Crawler] Semantic duplicate detected! Similarity: ${similarity.toFixed(3)}. Cloning previous scripts to save API costs.`);
+                        item.generated_scripts = storedEmb.scripts;
+                        item.generated_copy = item.generated_scripts[0]?.text || "Duplicate cloned.";
+                        item.strategy_breakdown = item.generated_scripts[0]?.strategy_breakdown || null;
+                        duplicateFound = true;
+                        break;
+                    }
+                }
+            }
+            if (!duplicateFound) {
+                // Store embedding for future deduplication. We'll update the scripts later.
+                item.current_embedding = currentEmbedding; 
+            }
+        } catch(e) {
+            console.error(`[Crawler] Deduplication error:`, e.message);
+        }
+
+        if (duplicateFound) {
+            console.log(`[Crawler] Skipping Gemini analysis due to semantic deduplication.`);
+        } else {
+            // --- ML ENGINE: SMART CROPPING & BACKGROUND REMOVAL ---
+            console.log(`[Crawler] Running ML Object Detection for smart cropping...`);
+            const croppedScreenshotPath = await cropToImportantUI(screenshotPath);
+            
+            console.log(`[Crawler] Attempting to extract isolated asset and remove background...`);
+            const noBgAsset = await removeBackground(croppedScreenshotPath);
+            if (noBgAsset) {
+                console.log(`[Crawler] Successfully extracted transparent asset: ${noBgAsset}`);
+                assetUrls.transparentAssetUrl = `http://localhost:9000/sentaient-assets/staging/${path.basename(noBgAsset)}`;
+            }
+
+            // --- GEMINI VISION ANALYSIS ---
+            console.log(`[Crawler] Sending cropped screenshot to Gemini Vision for understanding...`);
+            const screenshotBuffer = fs.readFileSync(croppedScreenshotPath);
+            const screenshotBase64 = screenshotBuffer.toString('base64');
         
         let systemPrompt = "You are an expert Autonomous Browser Intelligence Agent. Analyze this application screenshot and its text.";
         if (item.assassination_mode && competitorText) {
@@ -294,9 +338,25 @@ async function crawlApp(key, item) {
             // A/B Testing Output
             item.generated_scripts = parsedAnalysis.scripts || [];
             
-            // Generate predictive scores for each variant
+            // Generate predictive scores and translations for each variant
             for (const script of item.generated_scripts) {
                 script.predicted_viral_score = await scoreVariant(script.text);
+                
+                // --- ML ENGINE: EDGE TRANSLATION ---
+                console.log(`[Crawler] Translating script variant to global languages...`);
+                script.translations = {
+                    es: await translateText(script.text, 'es'),
+                    fr: await translateText(script.text, 'fr'),
+                    de: await translateText(script.text, 'de')
+                };
+            }
+            
+            // Save the generated scripts to the embedding cache for future deduplication
+            if (item.current_embedding) {
+                await redis.setEx(`embedding:${item.brand}_${Date.now()}`, 86400, JSON.stringify({
+                    vector: item.current_embedding,
+                    scripts: item.generated_scripts
+                }));
             }
             
             // For backwards compatibility with the old UI before we update AssetEditor
@@ -315,6 +375,7 @@ async function crawlApp(key, item) {
             item.generated_copy = "AI Analysis failed to generate.";
             item.strategy_breakdown = null;
         }
+        } // End of else block (if !duplicateFound)
         // ------------------------------
 
         // Mark as fully complete (or ready for user review)
