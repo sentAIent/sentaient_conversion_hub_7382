@@ -1,25 +1,96 @@
 [
   {
-    "brand": "LightSpeed",
-    "cron": "0 5-21/2 * * *", 
-    "url": "https://lightspeed-demo.app",
+    "brand": "MindWave",
+    "cron": "0 6-22/4 * * *", 
+    "url": "https://mindwave.app",
     "assassination_mode": true,
-    "competitor_url": "https://stripe.com",
+    "competitor_url": "https://calm.com",
     "goal": "marketing"
   },
   {
-    "brand": "Fantasy Quant",
-    "cron": "0 6,12,18 * * *", 
+    "brand": "Interstellar",
+    "cron": "10 6-22/4 * * *", 
+    "url": "https://interstellar.game",
+    "assassination_mode": true,
+    "competitor_url": "https://eveonline.com",
+    "goal": "marketing"
+  },
+  {
+    "brand": "Icebreaker",
+    "cron": "20 6-22/4 * * *", 
+    "url": "https://icebreaker.social",
+    "assassination_mode": true,
+    "competitor_url": "https://tinder.com",
+    "goal": "marketing"
+  },
+  {
+    "brand": "Legal Eagle",
+    "cron": "30 6-22/4 * * *", 
+    "url": "https://legaleagle.ai",
+    "assassination_mode": true,
+    "competitor_url": "https://legalzoom.com",
+    "goal": "marketing"
+  },
+  {
+    "brand": "AutoPilot",
+    "cron": "40 6-22/4 * * *", 
+    "url": "https://autopilot-ai.com",
+    "assassination_mode": true,
+    "competitor_url": "https://hootsuite.com",
+    "goal": "marketing"
+  },
+  {
+    "brand": "FantasyQuant",
+    "cron": "50 6-22/4 * * *", 
     "url": "https://fantasyquant.app",
     "assassination_mode": false,
     "goal": "marketing"
   },
   {
-    "brand": "Snowboarder's Paradise",
-    "cron": "0 9,15,20 * * *", 
-    "url": "https://snowboardersparadise.com",
+    "brand": "ContangoQuant",
+    "cron": "0 7-23/4 * * *", 
+    "url": "https://contangoquant.finance",
+    "assassination_mode": true,
+    "competitor_url": "https://bloomberg.com",
+    "goal": "marketing"
+  },
+  {
+    "brand": "LightSpeed",
+    "cron": "10 7-23/4 * * *", 
+    "url": "https://lightspeed-demo.app",
+    "assassination_mode": true,
+    "competitor_url": "https://datadoghq.com",
+    "goal": "marketing"
+  },
+  {
+    "brand": "Liquid",
+    "cron": "20 7-23/4 * * *", 
+    "url": "https://liquidfinance.app",
+    "assassination_mode": true,
+    "competitor_url": "https://quickbooks.intuit.com",
+    "goal": "marketing"
+  },
+  {
+    "brand": "Snowboarders Only",
+    "cron": "30 7-23/4 * * *", 
+    "url": "https://snowboardersonly.com",
     "assassination_mode": true,
     "competitor_url": "https://burton.com",
+    "goal": "marketing"
+  },
+  {
+    "brand": "Matrix",
+    "cron": "40 7-23/4 * * *", 
+    "url": "https://matrix-ai.dev",
+    "assassination_mode": true,
+    "competitor_url": "https://github.com/features/copilot",
+    "goal": "marketing"
+  },
+  {
+    "brand": "Helu",
+    "cron": "50 7-23/4 * * *", 
+    "url": "https://helu-avatar.ai",
+    "assassination_mode": false,
     "goal": "marketing"
   }
 ]
