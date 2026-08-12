@@ -14,3 +14,12 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - redis
+
+  scheduler:
+    build: 
+      context: ./orchestrator
+    command: ["node", "scheduler.js"]
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
