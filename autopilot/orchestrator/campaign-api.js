@@ -4,6 +4,11 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import { createClient } from 'redis';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -343,6 +348,33 @@ app.post("/queue/retry", async (req, res) => {
         
         await redis.set(`queue:${id}`, JSON.stringify(updated));
         res.json({ success: true, status: 'staged' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==========================================
+// 9. Master Schedule Admin Endpoints
+// ==========================================
+app.get("/admin/schedules", (req, res) => {
+    try {
+        const configPath = path.join(__dirname, 'marketing_schedules.json');
+        if (fs.existsSync(configPath)) {
+            const data = fs.readFileSync(configPath, 'utf8');
+            res.json(JSON.parse(data));
+        } else {
+            res.json([]);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post("/admin/schedules", (req, res) => {
+    try {
+        const configPath = path.join(__dirname, 'marketing_schedules.json');
+        fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

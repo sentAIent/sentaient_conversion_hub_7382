@@ -16,6 +16,64 @@ const redis = createClient({
 
 redis.on('error', (err) => console.error('[Scheduler] Redis Error', err));
 
+let activeCronJobs = [];
+
+function loadAndSchedule(configPath) {
+    try {
+        // Destroy existing jobs to prevent duplicates during hot-reload
+        if (activeCronJobs.length > 0) {
+            console.log(`[Scheduler] File change detected! Destroying ${activeCronJobs.length} active jobs...`);
+            for (const job of activeCronJobs) {
+                job.stop();
+            }
+            activeCronJobs = [];
+        }
+
+        const schedules = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        console.log(`[Scheduler] Loaded ${schedules.length} individual marketing schedules.`);
+
+        for (const app of schedules) {
+            if (!cron.validate(app.cron)) {
+                console.error(`[Scheduler] Invalid cron expression for ${app.brand}: ${app.cron}`);
+                continue;
+            }
+
+            console.log(`[Scheduler] Scheduling [${app.brand}] with CRON: ${app.cron} (Timezone: America/Los_Angeles)`);
+            
+            const job = cron.schedule(app.cron, async () => {
+                console.log(`[Scheduler] ⏰ CRON TRIGGERED for ${app.brand}! Injecting payload into queue...`);
+                
+                const payload = {
+                    campaign_id: `cron_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                    brand: app.brand,
+                    campaignType: 'browser_agent',
+                    inputValue: app.url,
+                    assassination_mode: app.assassination_mode || false,
+                    competitor_url: app.competitor_url || null,
+                    goal: app.goal || 'marketing',
+                    status: 'approved_for_publishing',
+                    created_at: new Date().toISOString(),
+                    source: 'autonomous_cron_scheduler'
+                };
+
+                try {
+                    await redis.set(`queue:${payload.campaign_id}`, JSON.stringify(payload));
+                    console.log(`[Scheduler] Successfully queued automated campaign for ${app.brand}.`);
+                } catch (err) {
+                    console.error(`[Scheduler] Failed to queue campaign for ${app.brand}:`, err);
+                }
+            }, {
+                scheduled: true,
+                timezone: "America/Los_Angeles"
+            });
+
+            activeCronJobs.push(job);
+        }
+    } catch (e) {
+        console.error("[Scheduler] Error parsing marketing_schedules.json during reload:", e.message);
+    }
+}
+
 async function startScheduler() {
     await redis.connect();
     console.log("[Scheduler] Connected to Redis.");
@@ -26,45 +84,15 @@ async function startScheduler() {
         process.exit(1);
     }
 
-    const schedules = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    console.log(`[Scheduler] Loaded ${schedules.length} individual marketing schedules.`);
+    // Initial Load
+    loadAndSchedule(configPath);
 
-    for (const app of schedules) {
-        if (!cron.validate(app.cron)) {
-            console.error(`[Scheduler] Invalid cron expression for ${app.brand}: ${app.cron}`);
-            continue;
+    // Watch for JSON changes (Hot Reloading)
+    fs.watchFile(configPath, { interval: 1000 }, (curr, prev) => {
+        if (curr.mtime !== prev.mtime) {
+            loadAndSchedule(configPath);
         }
-
-        console.log(`[Scheduler] Scheduling [${app.brand}] with CRON: ${app.cron} (Timezone: America/Los_Angeles)`);
-        
-        cron.schedule(app.cron, async () => {
-            console.log(`[Scheduler] ⏰ CRON TRIGGERED for ${app.brand}! Injecting payload into queue...`);
-            
-            const payload = {
-                campaign_id: `cron_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-                brand: app.brand,
-                campaignType: 'browser_agent',
-                inputValue: app.url,
-                assassination_mode: app.assassination_mode || false,
-                competitor_url: app.competitor_url || null,
-                goal: app.goal || 'marketing',
-                status: 'approved_for_publishing', // Instantly approved for autonomous processing
-                created_at: new Date().toISOString(),
-                source: 'autonomous_cron_scheduler'
-            };
-
-            try {
-                // Save to Redis queue
-                await redis.set(`queue:${payload.campaign_id}`, JSON.stringify(payload));
-                console.log(`[Scheduler] Successfully queued automated campaign for ${app.brand}.`);
-            } catch (err) {
-                console.error(`[Scheduler] Failed to queue campaign for ${app.brand}:`, err);
-            }
-        }, {
-            scheduled: true,
-            timezone: "America/Los_Angeles"
-        });
-    }
+    });
 }
 
 startScheduler();
