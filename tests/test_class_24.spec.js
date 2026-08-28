@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 test('Class 24 Layer 2 UI and Shader Test', async ({ page }) => {
     page.on('console', msg => console.log('BROWSER: ' + msg.text()));

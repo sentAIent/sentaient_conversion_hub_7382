@@ -54,7 +54,11 @@ const HTMLStations = () => {
 
 const Scene3D = () => {
   return (
-    <Canvas gl={{ antialias: false, alpha: true }}>
+    <Canvas 
+      dpr={[1, 1.5]} 
+      performance={{ min: 0.5 }} 
+      gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
+    >
       {/* Background color removed for transparency */}
       
       <ScrollControls pages={10} damping={0.2} distance={1.2}>

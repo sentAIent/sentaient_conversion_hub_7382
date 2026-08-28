@@ -88,19 +88,35 @@ const Header = () => {
             </button>
             
             {currentUser ? (
-              <button 
-                onClick={async () => {
-                  try {
-                    await logout();
-                    navigate('/');
-                  } catch (err) {
-                    console.error("Failed to log out", err);
-                  }
-                }}
-                className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
-              >
-                <span>Log Out</span>
-              </button>
+              <>
+                <button 
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to nuke all your local data? This is irreversible.")) {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      // Also clear indexedDB if needed, but local/session is a start
+                      window.location.reload();
+                    }
+                  }}
+                  className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-orange-600/10 text-orange-500 hover:bg-orange-600/20 border border-orange-500/20"
+                >
+                  <Icon name="Trash2" size={16} />
+                  <span>Nuke My Data</span>
+                </button>
+                <button 
+                  onClick={async () => {
+                    try {
+                      await logout();
+                      navigate('/');
+                    } catch (err) {
+                      console.error("Failed to log out", err);
+                    }
+                  }}
+                  className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
+                >
+                  <span>Log Out</span>
+                </button>
+              </>
             ) : (
               <Link 
                 to="/login"
@@ -165,20 +181,35 @@ const Header = () => {
               </button>
               
               {currentUser ? (
-                <button 
-                  onClick={async () => {
-                    setIsMobileMenuOpen(false);
-                    try {
-                      await logout();
-                      navigate('/');
-                    } catch (err) {
-                      console.error("Failed to log out", err);
-                    }
-                  }}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
-                >
-                  <span>Log Out</span>
-                </button>
+                <>
+                  <button 
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to nuke all your local data? This is irreversible.")) {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        window.location.reload();
+                      }
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-orange-600/10 text-orange-500 hover:bg-orange-600/20 border border-orange-500/20"
+                  >
+                    <Icon name="Trash2" size={18} />
+                    <span>Nuke My Data</span>
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      setIsMobileMenuOpen(false);
+                      try {
+                        await logout();
+                        navigate('/');
+                      } catch (err) {
+                        console.error("Failed to log out", err);
+                      }
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
+                  >
+                    <span>Log Out</span>
+                  </button>
+                </>
               ) : (
                 <Link 
                   to="/login"

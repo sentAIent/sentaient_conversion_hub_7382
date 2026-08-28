@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Icon from '../AppIcon';
 import logo from './sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png';
 
@@ -52,8 +53,8 @@ const Footer = () => {
                 <div className="pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-foreground/20">
                     <p>© {new Date().getFullYear()} sentAIent. All rights reserved.</p>
                     <div className="flex space-x-6">
-                        <a href="#" className="hover:text-accent transition-colors">Privacy Policy</a>
-                        <a href="#" className="hover:text-accent transition-colors">Terms of Service</a>
+                        <Link to="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link>
+                        <Link to="/terms" className="hover:text-accent transition-colors">Terms of Service</Link>
                     </div>
                 </div>
             </div>

@@ -13,6 +13,16 @@ import { ActivityIndicator, View } from 'react-native';
 import { CartProvider } from '../context/CartContext';
 import { StripeWrapper } from '../components/StripeWrapper';
 import { InstallPrompt } from '../components/InstallPrompt';
+import * as Sentry from '@sentry/react-native';
+import { PostHogProvider } from 'posthog-react-native';
+
+const posthogApiKey = process.env.EXPO_PUBLIC_POSTHOG_API_KEY || 'phc_placeholder_key_for_mobile';
+const posthogHost = process.env.EXPO_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || "https://examplePublicKey@o0.ingest.sentry.io/0",
+  tracesSampleRate: 1.0,
+});
 
 const httpLink = createHttpLink({
   uri: __DEV__
@@ -22,12 +32,14 @@ const httpLink = createHttpLink({
 
 const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors) {
-    graphQLErrors.forEach(({ message, locations, path }) =>
-      console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`)
-    );
+    graphQLErrors.forEach(({ message, locations, path }) => {
+      console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`);
+      Sentry.captureException(new Error(`GraphQL Error: ${message}`));
+    });
   }
   if (networkError) {
     console.log(`[Network error]: ${networkError}`);
+    Sentry.captureException(networkError);
     // In production, trigger a toast notification here
   }
 });
@@ -70,6 +82,12 @@ export default function Layout() {
       if (path?.startsWith('v/')) {
          // example: icebreaker://v/123 -> open video
          router.push(`/(tabs)/explore?videoId=${path.split('/')[1]}`);
+      } else if (path?.startsWith('u/')) {
+         // example: icebreaker://u/123 -> open profile
+         router.push(`/user/${path.split('/')[1]}`);
+      } else if (path?.startsWith('b/')) {
+         // example: icebreaker://b/123 -> open bounty
+         router.push(`/bounty/${path.split('/')[1]}`);
       }
     });
     return () => subscription.remove();
@@ -80,6 +98,7 @@ export default function Layout() {
     persistCache({
       cache,
       storage: AsyncStorage,
+      maxSize: 5242880, // 5MB
     }).then(() => {
       setClientReady(true);
     });
@@ -124,20 +143,22 @@ export default function Layout() {
 
   return (
     <ErrorBoundary>
-      <InstallPrompt />
-      <StripeWrapper>
-        <ApolloProvider client={client}>
-          <CartProvider>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="schedule" options={{ presentation: 'modal', headerShown: false }} />
-              <Stack.Screen name="rating" options={{ presentation: 'transparentModal', headerShown: false }} />
-              <Stack.Screen name="cart" options={{ presentation: 'modal', headerShown: false }} />
-            </Stack>
-          </CartProvider>
-        </ApolloProvider>
-      </StripeWrapper>
+      <PostHogProvider apiKey={posthogApiKey} options={{ host: posthogHost }}>
+        <InstallPrompt />
+        <StripeWrapper>
+          <ApolloProvider client={client}>
+            <CartProvider>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="schedule" options={{ presentation: 'modal', headerShown: false }} />
+                <Stack.Screen name="rating" options={{ presentation: 'transparentModal', headerShown: false }} />
+                <Stack.Screen name="cart" options={{ presentation: 'modal', headerShown: false }} />
+              </Stack>
+            </CartProvider>
+          </ApolloProvider>
+        </StripeWrapper>
+      </PostHogProvider>
     </ErrorBoundary>
   );
 }

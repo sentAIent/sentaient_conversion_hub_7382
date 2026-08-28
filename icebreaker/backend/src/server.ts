@@ -18,11 +18,46 @@ import path from 'path';
 import { sendPushNotification } from './services/pushNotifications';
 import { sendEmail } from './services/email';
 import { runPredictiveMatchmaking } from './jobs/matchmakingCron';
-import { MeiliSearch } from 'meilisearch';
+const { Meilisearch } = require('meilisearch');
+
+import { checkToxicity, checkNSFWImage } from './services/aiModeration';
+import { HfInference } from '@huggingface/inference';
+import * as Sentry from '@sentry/node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
+import { PostHog } from 'posthog-node';
+import { createClient } from 'redis';
 
 dotenv.config({ override: true });
 
-const meiliClient = new MeiliSearch({
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
+});
+
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+
+if (process.env.REDIS_URL) {
+  redisClient.connect().catch(e => console.warn("Redis connection failed, continuing without cache.", e.message));
+}
+
+const posthogClient = new PostHog(
+  process.env.POSTHOG_API_KEY || 'phc_placeholder_key_for_backend',
+  { host: process.env.POSTHOG_HOST || 'https://app.posthog.com' }
+);
+
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN || "https://examplePublicKey@o0.ingest.sentry.io/0",
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  tracesSampleRate: 1.0, 
+  profilesSampleRate: 1.0, 
+});
+
+const meiliClient = new Meilisearch({
   host: process.env.MEILISEARCH_HOST || 'http://localhost:7700',
   apiKey: process.env.MEILISEARCH_MASTER_KEY || 'generate_a_random_secure_key_here_for_production'
 });
@@ -349,6 +384,11 @@ export const typeDefs = `#graphql
     payVenue(venueId: String!, amount: Int!): Boolean!
     cashOutWallet: CashOutResponse!
     deleteAccount: Boolean!
+    blockUser(userId: ID!): Boolean!
+    reportContent(reportedContentId: ID, reportedUserId: ID, reason: String!): Boolean!
+    
+    enhanceText(text: String!): String!
+    transcribeAudio(audioUrl: String!): String!
   }
 
   type CashOutResponse {
@@ -395,6 +435,8 @@ const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GE
 
 import Stripe from 'stripe';
 import { stripe } from './services/stripe';
+
+const hf = new HfInference(process.env.HF_TOKEN || '');
 
 async function ensureUserExists(contextUser: any) {
   if (!contextUser || !contextUser.uid) return;
@@ -536,11 +578,17 @@ export const resolvers = {
       await trackActivity(context.user.uid);
       
       const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+      
+      const blocked = await prisma.block.findMany({
+        where: { blockerId: context.user.uid }
+      });
+      const blockedUserIds = blocked.map(b => b.blockedUserId);
+
       const checkIns = await prisma.checkIn.findMany({
         where: {
           isActive: true,
           createdAt: { gte: twelveHoursAgo },
-          userId: { not: context.user.uid }
+          userId: { not: context.user.uid, notIn: blockedUserIds }
         },
         include: { user: { include: { opennessProfile: true } } }
       });
@@ -628,11 +676,27 @@ export const resolvers = {
     followerFeed: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
       
+      const cacheKey = `followerFeed:${context.user.uid}`;
+      try {
+        if (redisClient.isReady) {
+          const cached = await redisClient.get(cacheKey);
+          if (cached) return JSON.parse(cached);
+        }
+      } catch(e) {
+        console.error("Redis get error:", e);
+      }
+      
       const following = await prisma.follows.findMany({
         where: { followerId: context.user.uid, status: 'ACCEPTED' },
         select: { followingId: true }
       });
-      const followingIds = following.map(f => f.followingId);
+      
+      const blocked = await prisma.block.findMany({
+        where: { blockerId: context.user.uid }
+      });
+      const blockedUserIds = blocked.map(b => b.blockedUserId);
+      
+      const followingIds = following.map(f => f.followingId).filter(id => !blockedUserIds.includes(id));
       
       const checkIns = await prisma.checkIn.findMany({
         where: { userId: { in: followingIds }, isActive: true },
@@ -654,10 +718,28 @@ export const resolvers = {
       });
 
       const items = [...checkIns, ...contents].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      
+      try {
+        if (redisClient.isReady) {
+          await redisClient.setEx(cacheKey, 60, JSON.stringify(items)); // Cache for 60 seconds
+        }
+      } catch(e) {
+        console.error("Redis set error:", e);
+      }
       return items;
     },
     exploreFeed: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      
+      const cacheKey = `exploreFeed:global`;
+      try {
+        if (redisClient.isReady) {
+          const cached = await redisClient.get(cacheKey);
+          if (cached) return JSON.parse(cached);
+        }
+      } catch(e) {
+        console.error("Redis get error:", e);
+      }
       
       const mockVideos = Array.from({ length: 10 }).map((_, i) => ({
         __typename: 'Content',
@@ -685,6 +767,14 @@ export const resolvers = {
         hasLiked: false,
       }));
 
+      try {
+        if (redisClient.isReady) {
+          await redisClient.setEx(cacheKey, 300, JSON.stringify(mockVideos)); // Cache for 5 minutes
+        }
+      } catch(e) {
+        console.error("Redis set error:", e);
+      }
+      
       return mockVideos;
     },
     followerStories: async (_: any, __: any, context: any) => {
@@ -1520,10 +1610,17 @@ export const resolvers = {
       await ensureUserExists(context.user);
       if (!context.user) throw new Error('Not authenticated');
       
+      if (textBody) {
+        const { isToxic, reason } = await checkToxicity(textBody);
+        if (isToxic) {
+          throw new GraphQLError(`Content flagged for toxicity (${reason}).`, { extensions: { code: 'BAD_USER_INPUT' } });
+        }
+      }
+
       if (mediaUrl) {
-        const isSafe = await checkMediaSafety(mediaUrl);
-        if (!isSafe) {
-          throw new GraphQLError("Content flagged as inappropriate by safety filters.", { extensions: { code: 'BAD_USER_INPUT' } });
+        const { isNSFW } = await checkNSFWImage(mediaUrl);
+        if (isNSFW) {
+          throw new GraphQLError("Image flagged as inappropriate (NSFW).", { extensions: { code: 'BAD_USER_INPUT' } });
         }
       }
 
@@ -1537,6 +1634,34 @@ export const resolvers = {
           sourceFlag: 'in_app_text',
         }
       });
+    },
+
+    commentContent: async (_: any, { contentId, text }: any, context: any) => {
+      await ensureUserExists(context.user);
+      if (!context.user) throw new Error('Not authenticated');
+
+      const { isToxic, reason } = await checkToxicity(text);
+      if (isToxic) {
+        throw new GraphQLError(`Comment flagged for toxicity (${reason}).`, { extensions: { code: 'BAD_USER_INPUT' } });
+      }
+
+      const comment = await prisma.comment.create({
+        data: { userId: context.user.uid, contentId, text },
+        include: { user: true }
+      });
+      
+      const content = await prisma.content.findUnique({ where: { id: contentId } });
+      if (content && content.userId !== context.user.uid) {
+        await prisma.notification.create({
+          data: {
+            userId: content.userId,
+            actorId: context.user.uid,
+            type: 'COMMENT',
+            message: `commented: ${text}`
+          }
+        });
+      }
+      return comment;
     },
 
     autoMonetizeContent: async (_: any, { contentId, venueId }: any, context: any) => {
@@ -1632,26 +1757,7 @@ export const resolvers = {
       });
       return true;
     },
-    commentContent: async (_: any, { contentId, text }: any, context: any) => {
-      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
-      const comment = await prisma.comment.create({
-        data: { userId: context.user.uid, contentId, text },
-        include: { user: true }
-      });
-      
-      const content = await prisma.content.findUnique({ where: { id: contentId } });
-      if (content && content.userId !== context.user.uid) {
-        await prisma.notification.create({
-          data: {
-            userId: content.userId,
-            actorId: context.user.uid,
-            type: 'COMMENT',
-            message: `commented: ${text}`
-          }
-        });
-      }
-      return comment;
-    },
+
     sendMessage: async (_: any, { receiverId, text, sharedContentId }: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
       const myId = context.user.uid;
@@ -1904,6 +2010,96 @@ export const resolvers = {
       } catch (err: any) {
         throw new GraphQLError(err.message || "Failed to delete account");
       }
+    },
+    blockUser: async (_: any, { userId }: { userId: string }, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const blockerId = context.user.uid;
+      
+      try {
+        await prisma.block.upsert({
+          where: { blockerId_blockedUserId: { blockerId, blockedUserId: userId } },
+          create: { blockerId, blockedUserId: userId },
+          update: {}
+        });
+        
+        // Remove following relationship if it exists
+        await prisma.follows.deleteMany({
+          where: {
+            OR: [
+              { followerId: blockerId, followingId: userId },
+              { followerId: userId, followingId: blockerId }
+            ]
+          }
+        });
+        
+        return true;
+      } catch (err: any) {
+        throw new GraphQLError(err.message || "Failed to block user");
+      }
+    },
+    reportContent: async (_: any, { reportedContentId, reportedUserId, reason }: { reportedContentId?: string, reportedUserId?: string, reason: string }, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
+      const reporterId = context.user.uid;
+      
+      if (!reportedContentId && !reportedUserId) {
+         throw new GraphQLError("Must provide either reportedContentId or reportedUserId");
+      }
+
+      try {
+        await prisma.report.create({
+          data: {
+            reporterId,
+            reportedContentId,
+            reportedUserId,
+            reason
+          }
+        });
+        return true;
+      } catch (err: any) {
+        throw new GraphQLError(err.message || "Failed to report content");
+      }
+    },
+
+    enhanceText: async (_: any, { text }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized");
+      const user = await prisma.user.findUnique({ where: { id: context.user.uid } });
+      if (!user || (!user.proStatus && !user.isFirePremium)) {
+        throw new GraphQLError("Premium feature. Please upgrade your subscription.", { extensions: { code: 'FORBIDDEN' } });
+      }
+
+      try {
+        const out = await hf.textGeneration({
+          model: 'mistralai/Mistral-7B-Instruct-v0.2',
+          inputs: `[INST] Enhance and polish the following text, making it engaging and professional. Only output the improved text.\n\nText: ${text} [/INST]`,
+          parameters: { max_new_tokens: 150, temperature: 0.7 }
+        });
+        return out.generated_text.trim();
+      } catch (err: any) {
+        console.error("Text enhancement failed:", err);
+        throw new GraphQLError("Failed to enhance text at this time.");
+      }
+    },
+
+    transcribeAudio: async (_: any, { audioUrl }: any, context: any) => {
+      if (!context.user) throw new GraphQLError("Unauthorized");
+      const user = await prisma.user.findUnique({ where: { id: context.user.uid } });
+      if (!user || (!user.proStatus && !user.isFirePremium)) {
+        throw new GraphQLError("Premium feature. Please upgrade your subscription.", { extensions: { code: 'FORBIDDEN' } });
+      }
+
+      try {
+        const response = await fetch(audioUrl);
+        const buffer = await response.arrayBuffer();
+        
+        const out = await hf.automaticSpeechRecognition({
+          model: 'openai/whisper-large-v3',
+          data: buffer
+        });
+        return out.text;
+      } catch (err: any) {
+        console.error("Audio transcription failed:", err);
+        throw new GraphQLError("Failed to transcribe audio.");
+      }
     }
   },
   
@@ -2019,6 +2215,68 @@ async function startServer() {
     res.json({ received: true });
   });
 
+  const JWT_SECRET = process.env.JWT_SECRET || 'fallback_native_jwt_secret_do_not_use_in_prod';
+
+  app.post('/api/auth/native-register', async (req, res) => {
+    try {
+      const { email, password, name, username } = req.body;
+      if (!email || !password || !name || !username) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const existingUser = await prisma.user.findFirst({
+        where: { OR: [{ email }, { username }] }
+      });
+
+      if (existingUser) {
+        return res.status(400).json({ error: 'User already exists' });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 10);
+      const user = await prisma.user.create({
+        data: {
+          id: `native-${Date.now()}`,
+          email,
+          name,
+          username,
+          passwordHash,
+          referralCode: `REF${Math.floor(Math.random() * 100000)}`
+        }
+      });
+
+      const token = jwt.sign({ uid: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+      res.json({ token, user: { id: user.id, email: user.email, name: user.name, username: user.username } });
+    } catch (e: any) {
+      console.error(e);
+      res.status(500).json({ error: 'Registration failed' });
+    }
+  });
+
+  app.post('/api/auth/native-login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Missing email or password' });
+      }
+
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const isValid = await bcrypt.compare(password, user.passwordHash);
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const token = jwt.sign({ uid: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+      res.json({ token, user: { id: user.id, email: user.email, name: user.name, username: user.username } });
+    } catch (e: any) {
+      console.error(e);
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
   const server = new ApolloServer({
     typeDefs,
     resolvers,
@@ -2078,10 +2336,19 @@ async function startServer() {
         const token = req.headers.authorization?.split('Bearer ')[1];
         if (token) {
           try {
-            const decodedToken = await getAuth().verifyIdToken(token);
-            return { user: decodedToken };
-          } catch (e) {
-            console.error('Error verifying auth token', e);
+            // Check if it's a native JWT
+            const decodedJwt = jwt.verify(token, process.env.JWT_SECRET || 'fallback_native_jwt_secret_do_not_use_in_prod') as any;
+            if (decodedJwt && decodedJwt.uid) {
+              return { user: decodedJwt };
+            }
+          } catch (jwtError) {
+            // Fallback to Firebase verifyIdToken
+            try {
+              const decodedToken = await getAuth().verifyIdToken(token);
+              return { user: decodedToken };
+            } catch (fbError) {
+              console.error('Error verifying auth token (both JWT and Firebase failed)');
+            }
           }
         }
         // Fallback for dev purposes without auth token

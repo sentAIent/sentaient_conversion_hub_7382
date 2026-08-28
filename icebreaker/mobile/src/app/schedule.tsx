@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeBack } from '../hooks/useSafeBack';
+
 import { gql, useMutation } from '@apollo/client';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +17,9 @@ const SEND_REQUEST = gql`
 `;
 
 export default function ScheduleScreen() {
-  const { receiverId } = useLocalSearchParams<{ receiverId: string }>();
+  const safeBack = useSafeBack();
+
+  const { receiverId } = useLocalSearchParams() as { receiverId: string };
   const router = useRouter();
   
   const [locationName, setLocationName] = useState('');
@@ -39,7 +43,7 @@ export default function ScheduleScreen() {
         }
       });
       Alert.alert("Request Sent", "They will receive a notification.");
-      (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'));
+      (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'));
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }
@@ -88,7 +92,7 @@ export default function ScheduleScreen() {
           <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send Request'}</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.cancelButton} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} disabled={loading}>
+        <TouchableOpacity style={styles.cancelButton} onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} disabled={loading}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
         

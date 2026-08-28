@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView } from
 import { gql, useQuery, useMutation } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useSafeBack } from '../hooks/useSafeBack';
+
 
 const GET_ALERTS = gql`
   query GetAlerts {
@@ -28,6 +30,8 @@ const MARK_READ = gql`
 `;
 
 export default function AlertsScreen() {
+  const safeBack = useSafeBack();
+
   const { data, loading, error, refetch } = useQuery(GET_ALERTS);
   const [markRead] = useMutation(MARK_READ);
   const router = useRouter();
@@ -69,7 +73,7 @@ export default function AlertsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>

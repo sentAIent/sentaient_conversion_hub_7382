@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeBack } from '../../hooks/useSafeBack';
+
 import { gql, useMutation } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -19,6 +21,8 @@ const CREATE_CONTENT = gql`
 `;
 
 export default function BountyScreen() {
+  const safeBack = useSafeBack();
+
   const { id, venueId } = useLocalSearchParams();
   const router = useRouter();
   
@@ -63,7 +67,7 @@ export default function BountyScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Claim Bounty</Text>

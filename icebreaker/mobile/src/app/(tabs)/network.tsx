@@ -156,7 +156,7 @@ export default function NetworkScreen() {
         <View style={styles.cardBody}>
           <Text style={styles.detailText}><Ionicons name="location" size={14} color="#aaa"/> {item.locationName}</Text>
           <Text style={styles.detailText}><Ionicons name="time" size={14} color="#aaa"/> {new Date(Number(item.proposedTime)).toLocaleString([], {month:'short', day:'numeric', hour: '2-digit', minute:'2-digit'})}</Text>
-          <Text style={styles.statusText(item.status)}>{item.status}</Text>
+          <Text style={[styles.statusText, { color: item.status === 'ACCEPTED' ? '#00E676' : item.status === 'DECLINED' ? '#FF1744' : '#FFD600' }]}>{item.status}</Text>
         </View>
         
         {isReceived && isPending && (
@@ -312,13 +312,12 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 18, fontWeight: '700', color: '#fff', marginLeft: 10 },
   cardBody: { padding: 16 },
   detailText: { color: '#ccc', fontSize: 15, marginBottom: 8 },
-  statusText: (status: string) => ({
-    color: status === 'ACCEPTED' ? '#00E676' : status === 'DECLINED' ? '#FF1744' : '#FFD600',
-    fontWeight: '700',
+  statusText: {
     marginTop: 5,
     fontSize: 14,
-    letterSpacing: 1
-  }),
+    letterSpacing: 1,
+    fontWeight: '700',
+  },
   actionRow: { flexDirection: 'row', padding: 16, paddingTop: 0, gap: 10 },
   btnAccept: { flex: 1, backgroundColor: 'rgba(0, 230, 118, 0.2)', borderWidth: 1, borderColor: '#00E676', padding: 12, borderRadius: 10, alignItems: 'center' },
   btnDecline: { flex: 1, backgroundColor: 'rgba(255, 23, 68, 0.2)', borderWidth: 1, borderColor: '#FF1744', padding: 12, borderRadius: 10, alignItems: 'center' },

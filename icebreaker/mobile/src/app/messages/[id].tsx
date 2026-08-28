@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeBack } from '../../hooks/useSafeBack';
+
 import { gql, useQuery, useMutation, useApolloClient } from '@apollo/client';
 import { collection, query, onSnapshot } from 'firebase/firestore';
 import { db } from '../../utils/firebase';
@@ -64,6 +66,8 @@ const MARK_READ = gql`
 `;
 
 export default function ChatScreen() {
+  const safeBack = useSafeBack();
+
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const [inputText, setInputText] = useState('');
@@ -161,7 +165,7 @@ export default function ChatScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
+          <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Error</Text>
@@ -247,7 +251,7 @@ export default function ChatScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerUserInfo} onPress={() => router.push(`/user/${otherUser?.id}`)}>

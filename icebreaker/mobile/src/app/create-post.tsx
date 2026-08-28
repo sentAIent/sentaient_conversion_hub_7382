@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator,
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useSafeBack } from '../hooks/useSafeBack';
+
 import { gql, useMutation } from '@apollo/client';
 import * as Haptics from 'expo-haptics';
 
@@ -27,7 +29,15 @@ const AUTO_MONETIZE_CONTENT = gql`
   }
 `;
 
+const ENHANCE_TEXT = gql`
+  mutation EnhanceText($text: String!) {
+    enhanceText(text: $text)
+  }
+`;
+
 export default function CreatePostScreen() {
+  const safeBack = useSafeBack();
+
   const router = useRouter();
   const [description, setDescription] = useState('');
   const [venueId, setVenueId] = useState('');
@@ -37,10 +47,28 @@ export default function CreatePostScreen() {
   
   const [createContent, { loading: creating }] = useMutation(CREATE_CONTENT);
   const [autoMonetize, { loading: monetizing }] = useMutation(AUTO_MONETIZE_CONTENT);
+  const [enhanceText, { loading: enhancing }] = useMutation(ENHANCE_TEXT);
   
   const [tags, setTags] = useState<any[]>([]);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const handleEnhance = async () => {
+    if (!description.trim()) {
+      setErrorMsg('Please enter some text to enhance.');
+      return;
+    }
+    setErrorMsg('');
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const res = await enhanceText({ variables: { text: description } });
+      setDescription(res.data.enhanceText);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to enhance text.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
 
   const handleSimulatePost = async () => {
     if (!description || !venueId) {
@@ -83,7 +111,7 @@ export default function CreatePostScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Simulate Post</Text>
@@ -116,6 +144,20 @@ export default function CreatePostScreen() {
             value={description}
             onChangeText={setDescription}
           />
+          <TouchableOpacity 
+            style={styles.enhanceBtn} 
+            onPress={handleEnhance}
+            disabled={enhancing}
+          >
+            {enhancing ? (
+              <ActivityIndicator color="#00D2FF" size="small" />
+            ) : (
+              <>
+                <Ionicons name="sparkles" size={16} color="#00D2FF" />
+                <Text style={styles.enhanceBtnText}>Enhance with AI (Pro)</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
 
         {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
@@ -141,7 +183,7 @@ export default function CreatePostScreen() {
               <Text style={styles.noTagsText}>The AI couldn't find any matching products in this venue's storefront.</Text>
             )}
             
-            <TouchableOpacity style={styles.doneBtn} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))}>
+            <TouchableOpacity style={styles.doneBtn} onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))}>
               <Text style={styles.doneBtnText}>Awesome</Text>
             </TouchableOpacity>
           </BlurView>
@@ -186,5 +228,7 @@ const styles = StyleSheet.create({
   successDesc: { color: '#ddd', fontSize: 15, lineHeight: 22, marginBottom: 10 },
   noTagsText: { color: '#FF9100', fontSize: 14, fontStyle: 'italic', marginTop: 10 },
   doneBtn: { backgroundColor: '#fff', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 20 },
-  doneBtnText: { color: '#000', fontSize: 16, fontWeight: 'bold' }
+  doneBtnText: { color: '#000', fontSize: 16, fontWeight: 'bold' },
+  enhanceBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 10, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 12, backgroundColor: 'rgba(0, 210, 255, 0.1)' },
+  enhanceBtnText: { color: '#00D2FF', fontSize: 14, fontWeight: 'bold' }
 });

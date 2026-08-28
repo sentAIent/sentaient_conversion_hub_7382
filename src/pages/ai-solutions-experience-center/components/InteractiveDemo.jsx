@@ -108,6 +108,12 @@ const InteractiveDemo = ({ type, isActive }) => {
     }
   };
 
+  const handleReportContent = (messageId) => {
+    // In production, this would trigger a backend flag mechanism
+    console.log(`Content reported for message ID: ${messageId}`);
+    alert("This response has been flagged for manual review. Thank you for keeping Sentaient safe.");
+  };
+
   if (!isActive) {
     return (
       <div className="bg-muted rounded-lg p-8 text-center">
@@ -145,10 +151,22 @@ const InteractiveDemo = ({ type, isActive }) => {
                 }`}
             >
               <p className="text-sm whitespace-pre-line">{message?.content}</p>
-              <p className={`text-xs mt-1 ${message?.type === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                }`}>
-                {message?.timestamp?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
+              <div className="flex items-center justify-between mt-1">
+                <p className={`text-xs ${message?.type === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                  }`}>
+                  {message?.timestamp?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+                {message?.type === 'bot' && (
+                  <button 
+                    onClick={() => handleReportContent(message.id)}
+                    className="text-muted-foreground hover:text-error transition-colors flex items-center space-x-1"
+                    title="Report inappropriate content"
+                  >
+                    <Icon name="AlertTriangle" size={12} />
+                    <span className="text-[10px]">Report</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}

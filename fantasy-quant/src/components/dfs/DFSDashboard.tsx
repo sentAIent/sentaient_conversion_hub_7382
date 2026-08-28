@@ -8,11 +8,12 @@ import {
 import {
   Zap, Target, TrendingUp, Users, DollarSign, AlertTriangle,
   CheckCircle, Loader2, X, Plus, ChevronDown, ChevronUp,
-  RefreshCw, Download, Search, BarChart2, Settings, Cpu, Layers, Share2, AlertCircle, FileSpreadsheet, Upload, Copy, ChevronRight, Lock
+  RefreshCw, Download, Search, BarChart2, Settings, Cpu, Layers, Share2, AlertCircle, FileSpreadsheet, Upload, Copy, ChevronRight, Lock, Brain
 } from 'lucide-react';
 import Link from 'next/link';
 import { BetButton } from '../social/BetButton';
 import { useSubscription } from '@/components/SubscriptionContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export type DashboardLayout = {
@@ -37,6 +38,7 @@ export type DFSPlayer = {
   injury_status?: string;
   play_probability?: number;
   player_signals?: { signal_type: 'POSITIVE' | 'NEGATIVE', description: string }[];
+  projections_breakdown?: Record<string, number>;
 };
 
 // DraftKings slot structure
@@ -66,7 +68,8 @@ function matchupGrade(rankVsPosition: number | null): { grade: string; color: st
 
 // ─── Value Score Badge ────────────────────────────────────────────────────────
 const ValueBadge = ({ score }: { score: number }) => {
-  const tier = score >= 0.7 ? 'elite' : score >= 0.55 ? 'good' : score >= 0.4 ? 'avg' : 'poor';
+  const safeScore = score || 0;
+  const tier = safeScore >= 0.7 ? 'elite' : safeScore >= 0.55 ? 'good' : safeScore >= 0.4 ? 'avg' : 'poor';
   const colors = {
     elite: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     good: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
@@ -75,7 +78,7 @@ const ValueBadge = ({ score }: { score: number }) => {
   };
   return (
     <span className={`text-xs font-bold px-2 py-0.5 rounded border ${colors[tier]}`}>
-      {score.toFixed(2)}x
+      {safeScore.toFixed(2)}x
     </span>
   );
 };
@@ -93,6 +96,9 @@ const InjuryBadge = ({ status, prob }: { status?: string, prob?: number }) => {
   }
   if (s === 'questionable') {
     return <span className="ml-1.5 px-1 py-0.5 text-[8px] font-bold bg-yellow-500/20 text-yellow-400 rounded" title={`Questionable (~${(prob! * 100).toFixed(0)}% to play)`}>Q ({(prob! * 100).toFixed(0)}%)</span>;
+  }
+  if (s === 'resting') {
+    return <span className="ml-1.5 px-1 py-0.5 text-[8px] font-bold bg-purple-500/20 text-purple-400 rounded" title="Resting for Playoffs">REST</span>;
   }
   return <span className="ml-1.5 px-1 py-0.5 text-[8px] font-bold bg-gray-500/20 text-gray-400 rounded">{status.substring(0, 1).toUpperCase()}</span>;
 };
@@ -213,7 +219,7 @@ const PlayerRow = ({ player, onAdd, isInLineup, isDisabled, layout, isLive, actu
       )}
 
       {layout.projPts && (
-        <div className="text-xs text-center w-14">
+        <div className="text-xs text-center w-14 relative group/proj cursor-help">
           <div className="text-gray-500">{isLive ? 'Act/Proj' : 'Proj'}</div>
           {isLive ? (
              <div className="flex flex-col items-center">
@@ -221,7 +227,22 @@ const PlayerRow = ({ player, onAdd, isInLineup, isDisabled, layout, isLive, actu
                <div className="text-[9px] text-gray-500 font-bold">[{actualPts?.source || '...'}]</div>
              </div>
           ) : (
-             <div className="text-blue-400 font-bold">{player.projected_pts.toFixed(1)}</div>
+             <div className="text-blue-400 font-bold">{(player.projected_pts || 0).toFixed(1)}</div>
+          )}
+          
+          {/* Projection Breakdown Tooltip */}
+          {player.projections_breakdown && !isLive && (
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-32 bg-gray-900 border border-gray-700 rounded-lg p-2 shadow-2xl opacity-0 group-hover/proj:opacity-100 pointer-events-none z-50 transition-opacity">
+              <div className="text-[10px] font-bold text-gray-400 mb-1 border-b border-gray-700 pb-1">PROJECTIONS</div>
+              <ul className="text-[10px] space-y-1 text-left">
+                {Object.entries(player.projections_breakdown).map(([source, pts]) => (
+                  <li key={source} className="flex justify-between">
+                    <span className={source === 'AVG' ? 'text-blue-400 font-bold' : 'text-gray-300'}>{source}</span>
+                    <span className={source === 'AVG' ? 'text-blue-400 font-bold' : 'text-white'}>{(pts || 0).toFixed(1)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       )}
@@ -310,10 +331,18 @@ const LineupSlot = ({ slot, player, onRemove }: {
 
 // ─── Main DFS Dashboard ───────────────────────────────────────────────────────
 export default function DFSDashboard() {
+  return (
+    <ErrorBoundary fallbackMessage="Failed to render DFS Dashboard.">
+      <DFSDashboardContent />
+    </ErrorBoundary>
+  );
+}
+
+function DFSDashboardContent() {
   const { tier } = useSubscription();
   const [optimizerLoading, setOptimizerLoading] = useState(false);
   const [platform, setPlatform] = useState<'dk' | 'fd'>('dk');
-  const [week, setWeek] = useState(14);
+  const [week, setWeek] = useState(1);
   const [posFilter, setPosFilter] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'projected_pts' | 'value_score' | 'projected_ownership' | 'salary'>('projected_pts');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
@@ -323,6 +352,7 @@ export default function DFSDashboard() {
   const [optimizing, setOptimizing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [stackMode, setStackMode] = useState(false);
+  const [deepLearningMode, setDeepLearningMode] = useState(false);
   const [lockedPlayers, setLockedPlayers] = useState<Set<string>>(new Set());
   const [excludedPlayers, setExcludedPlayers] = useState<Set<string>>(new Set());
 
@@ -369,6 +399,7 @@ export default function DFSDashboard() {
     numLineups: 20,
     maxExposure: 30, // 30%
     forceQBStack: true,
+    capTE: true,
     forceRunback: false,
     analyzeOwnership: true
   });
@@ -467,7 +498,7 @@ export default function DFSDashboard() {
     setLoading(true);
     try {
       const [poolRes, oddsRes] = await Promise.all([
-        fetch(`/api/optimize?week=${week}&season=2023&platform=${platform}`),
+        fetch(`/api/optimize?week=${week}&season=2026&platform=${platform}`),
         fetch(`/api/odds?season=2026&week=1`)
       ]);
       let poolJson: any = {};
@@ -475,6 +506,8 @@ export default function DFSDashboard() {
       
       try {
         if (poolRes.ok) poolJson = await poolRes.json();
+        else console.error("Pool fetch not ok:", await poolRes.text());
+        console.log("DFS fetch result poolJson:", poolJson);
       } catch (e) { console.error("Failed to parse pool JSON:", e); }
       
       try {
@@ -532,7 +565,7 @@ export default function DFSDashboard() {
     }
     if (searchTerm) {
       const s = searchTerm.toLowerCase();
-      displayPool = displayPool.filter(p => p.players?.name.toLowerCase().includes(s) || p.players?.team.toLowerCase().includes(s));
+      displayPool = displayPool.filter(p => p.players?.name?.toLowerCase().includes(s) || p.players?.team?.toLowerCase().includes(s));
     }
     
     if (hideOut) {
@@ -584,7 +617,7 @@ export default function DFSDashboard() {
   const clearLineup = () => setLineup(new Array(9).fill(null));
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const evaluateLateSwap = () => {
+  const evaluateLateSwap = (strategy: 'greedy' | 'comeback' = 'greedy') => {
     if (!isLive) return;
     
     const lockedSlots: number[] = [];
@@ -601,23 +634,37 @@ export default function DFSDashboard() {
     
     const budgetLeft = 50000 - lockedSalary;
     const ptsNeeded = lateSwapTarget - lockedPts;
-    console.log('Pts needed for target:', ptsNeeded);
+    console.log(`Pts needed: ${ptsNeeded}, Strategy: ${strategy}`);
     
     const newLineup = [...lineup];
     let swappedCount = 0;
     
-    // Simple greedy pivot: swap unlocked players for higher ceiling players
+    // Variance-Aware pivot
     for (let i = 0; i < newLineup.length; i++) {
       if (newLineup[i] && !lockedSlots.includes(i)) {
         const currentP = newLineup[i]!;
-        // Find a replacement in playerPool with same pos, affordable, and higher ceiling (projected_pts * 1.2)
-        const pivot = playerPool.find(p => 
-           p.player_id !== currentP.player_id && 
-           (p.players?.position === slots[i] || (slots[i] === 'FLEX' && ['RB','WR','TE'].includes(p.players?.position || ''))) &&
-           p.salary <= budgetLeft - (newLineup.filter((_, idx) => !lockedSlots.includes(idx) && idx !== i).reduce((sum, p) => sum + (p ? p.salary : 0), 0)) &&
-           p.projected_pts > currentP.projected_pts &&
-           parseFloat((p.projected_ownership * 100).toFixed(1)) < 15 // contrarian pivot
-        );
+        
+        let pivot;
+        if (strategy === 'comeback') {
+          // Comeback Mode: Prioritize high ceiling-to-median ratio and low ownership (< 10%)
+          pivot = playerPool.find(p => 
+             p.player_id !== currentP.player_id && 
+             (p.players?.position === slots[i] || (slots[i] === 'FLEX' && ['RB','WR','TE'].includes(p.players?.position || ''))) &&
+             p.salary <= budgetLeft - (newLineup.filter((_, idx) => !lockedSlots.includes(idx) && idx !== i).reduce((sum, p) => sum + (p ? p.salary : 0), 0)) &&
+             // High variance check: ceiling is at least 30% higher than median
+             (p.ceiling_pts / p.projected_pts >= 1.3) &&
+             parseFloat((p.projected_ownership * 100).toFixed(1)) < 10 // extremely contrarian
+          );
+        } else {
+          // Greedy Pivot
+          pivot = playerPool.find(p => 
+             p.player_id !== currentP.player_id && 
+             (p.players?.position === slots[i] || (slots[i] === 'FLEX' && ['RB','WR','TE'].includes(p.players?.position || ''))) &&
+             p.salary <= budgetLeft - (newLineup.filter((_, idx) => !lockedSlots.includes(idx) && idx !== i).reduce((sum, p) => sum + (p ? p.salary : 0), 0)) &&
+             p.projected_pts > currentP.projected_pts &&
+             parseFloat((p.projected_ownership * 100).toFixed(1)) < 15
+          );
+        }
         
         if (pivot) {
           newLineup[i] = pivot;
@@ -628,9 +675,9 @@ export default function DFSDashboard() {
     
     if (swappedCount > 0) {
       setLineup(newLineup);
-      alert(`Late Swap Executed: Pivoted ${swappedCount} players for higher upside!`);
+      alert(`Late Swap Executed [${strategy.toUpperCase()}]: Pivoted ${swappedCount} players for higher upside!`);
     } else {
-      alert("No optimal pivots found within budget constraints.");
+      alert(`No optimal pivots found within budget constraints [${strategy.toUpperCase()}].`);
     }
   };
 
@@ -715,170 +762,67 @@ export default function DFSDashboard() {
 
   const generateMME = async () => {
     setIsGeneratingMME(true);
-    setMmeProgress(0);
-    const generated: (DFSPlayer | null)[][] = [];
-    
-    // Simulate web worker / non-blocking by chunking the loop
-    const maxIters = mmeConfig.numLineups;
-    const exposureCounts = new Map<string, number>();
-    
-    const runBatch = (startIdx: number) => {
-      const endIdx = Math.min(startIdx + 5, maxIters); // do 5 lineups at a time
-      
-      for (let i = startIdx; i < endIdx; i++) {
-        // Base constraints
-        const currentExcluded = new Set(excludedPlayers);
-        const currentLocked = new Set(lockedPlayers);
-        
-        // Enforce max exposure limits dynamically
-        exposureCounts.forEach((count, pid) => {
-          const limit = playerExposures[pid] ?? mmeConfig.maxExposure;
-          if (count / maxIters >= limit / 100) {
-            currentExcluded.add(pid);
-          }
-        });
-        
-        const newLineup: (DFSPlayer | null)[] = new Array(9).fill(null);
-        const used = new Set<string>();
-        let budgetLeft = cap;
+    setMmeProgress(10); // Start progress
 
-        // Auto-fill locked players
-        currentLocked.forEach(pid => {
-          if (!used.has(pid)) {
-            const p = playerPool.find(x => x.player_id === pid);
-            if (p) {
-              for (let j = 0; j < slots.length; j++) {
-                if (!newLineup[j]) {
-                  const pos = p.players?.position;
-                  const slot = slots[j];
-                  const fits = slot === pos || (slot === 'FLEX' && ['RB', 'WR', 'TE'].includes(pos));
-                  if (fits) {
-                    newLineup[j] = p;
-                    used.add(pid);
-                    budgetLeft -= p.salary;
-                    break;
-                  }
-                }
+    try {
+      const res = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          week,
+          season: 2026,
+          platform,
+          nLineups: mmeConfig.numLineups,
+          maxExposure: mmeConfig.maxExposure / 100,
+          stackQbWr: mmeConfig.forceQBStack,
+          capTe: mmeConfig.capTE,
+          excludedPlayers: Array.from(excludedPlayers),
+          lockedPlayers: Array.from(lockedPlayers)
+        })
+      });
+
+      if (!res.ok) throw new Error("Optimizer failed");
+      const data = await res.json();
+      
+      if (data.success && data.data && data.data.lineups) {
+        setMmeProgress(80);
+        
+        const generated: (DFSPlayer | null)[][] = [];
+        
+        for (const lu of data.data.lineups) {
+          const newLineup: (DFSPlayer | null)[] = new Array(9).fill(null);
+          const usedIds = new Set<string>();
+          
+          for (let j = 0; j < slots.length; j++) {
+            const slot = slots[j];
+            const matchingPlayer = lu.players.find((p: any) => {
+              if (usedIds.has(p.player_id)) return false;
+              if (slot === p.position) return true;
+              if (slot === 'FLEX' && ['RB', 'WR', 'TE'].includes(p.position)) return true;
+              return false;
+            });
+            
+            if (matchingPlayer) {
+              const fullPlayer = playerPool.find(p => p.player_id === matchingPlayer.player_id);
+              if (fullPlayer) {
+                newLineup[j] = fullPlayer;
+                usedIds.add(matchingPlayer.player_id);
               }
             }
           }
-        });
-
-        // ── Stacking Rules ──
-        if (mmeConfig.forceQBStack) {
-            let qb = newLineup.find(p => p?.players?.position === 'QB');
-            if (!qb) {
-                const qbs = playerPool.filter(p => p.players?.position === 'QB' && !currentExcluded.has(p.player_id));
-                qb = qbs[Math.floor(Math.random() * Math.min(15, qbs.length))];
-                if (qb) {
-                    const qbIndex = slots.indexOf('QB');
-                    newLineup[qbIndex] = qb;
-                    used.add(qb.player_id);
-                    budgetLeft -= qb.salary;
-                }
-            }
-
-            if (qb) {
-                const qbTeam = qb.players?.team;
-                const hasStack = newLineup.some(p => p && p.players?.team === qbTeam && ['WR', 'TE'].includes(p.players.position));
-                if (!hasStack) {
-                    const stackMates = playerPool.filter(p => p.players?.team === qbTeam && ['WR', 'TE'].includes(p.players.position) && !used.has(p.player_id) && !currentExcluded.has(p.player_id));
-                    if (stackMates.length > 0) {
-                        const mate = stackMates[Math.floor(Math.random() * Math.min(3, stackMates.length))];
-                        for (let j = 0; j < slots.length; j++) {
-                            if (!newLineup[j] && (slots[j] === mate.players?.position || slots[j] === 'FLEX')) {
-                                newLineup[j] = mate;
-                                used.add(mate.player_id);
-                                budgetLeft -= mate.salary;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+          generated.push(newLineup);
         }
         
-        // ── Fill Remaining Slots ──
-        for (let j = 0; j < slots.length; j++) {
-          if (newLineup[j]) continue;
-          const slot = slots[j];
-          
-          // Pre-calculate randomized, correlated, and ownership-adjusted projections
-          const scoredPool = playerPool.map(p => {
-            if (used.has(p.player_id) || currentExcluded.has(p.player_id)) {
-                return { ...p, adjustedProj: -1 };
-            }
-            const pos = p.players?.position;
-            const fits = slot === pos || (slot === 'FLEX' && ['RB', 'WR', 'TE'].includes(pos));
-            if (!fits) return { ...p, adjustedProj: -1 };
-
-            // Apply variance (random normal-ish distribution simulation)
-            const variance = 0.85 + (Math.random() * 0.3); // 85% to 115% of projection
-            let adjustedProj = p.projected_pts * variance;
-
-            // Apply ownership penalty if configured
-            if (mmeConfig.analyzeOwnership) {
-                // e.g. ownership of 20% -> subtract 2 points (basic heuristic)
-                adjustedProj -= (p.projected_ownership / 10);
-            }
-
-            // Apply correlation (runback)
-            if (mmeConfig.forceRunback) {
-                const qb = newLineup.find(lu => lu?.players?.position === 'QB');
-                if (qb && p.players?.position === 'WR' && p.players?.team !== qb.players?.team) {
-                    // Small bump for opposing WR (runback)
-                    adjustedProj *= 1.1;
-                }
-            }
-            
-            return { ...p, adjustedProj };
-          }).filter(p => p.adjustedProj > 0).sort((a, b) => b.adjustedProj - a.adjustedProj);
-          
-          const topN = scoredPool.slice(0, 3);
-          const player = topN[Math.floor(Math.random() * topN.length)];
-          
-          if (player) {
-            const minCostRemaining = (slots.length - j - 1) * 2500;
-            if (player.salary <= budgetLeft - minCostRemaining) {
-              newLineup[j] = player;
-              used.add(player.player_id);
-              budgetLeft -= player.salary;
-            } else {
-               for (const fallback of scoredPool) {
-                    if (fallback.salary <= budgetLeft - minCostRemaining) {
-                        newLineup[j] = fallback;
-                        used.add(fallback.player_id);
-                        budgetLeft -= fallback.salary;
-                        break;
-                    }
-               }
-            }
-          }
-        }
-        
-        // Record exposure
-        newLineup.forEach(p => {
-            if (p) {
-                exposureCounts.set(p.player_id, (exposureCounts.get(p.player_id) || 0) + 1);
-            }
-        });
-        
-        generated.push(newLineup);
-      }
-      
-      setMmeProgress(Math.floor((endIdx / maxIters) * 100));
-      
-      if (endIdx < maxIters) {
-        setTimeout(() => runBatch(endIdx), 100);
-      } else {
         setMmeLineups(generated);
-        setIsGeneratingMME(false);
+        setMmeProgress(100);
       }
-    };
-    
-    setTimeout(() => runBatch(0), 100);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGeneratingMME(false);
+    }
   };
-  
+
   const exportMME = () => {
     if (mmeLineups.length === 0) return;
     const headers = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DST'];
@@ -1131,6 +1075,18 @@ export default function DFSDashboard() {
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${stackMode ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-white/[0.03] border-white/[0.06] text-gray-500'}`}>
               <Zap size={12} /> Stack Builder
             </button>
+            <button 
+              onClick={() => {
+                if (tier === 'Free') {
+                  alert('Deep Learning Mode is a Pro feature. Please upgrade your plan.');
+                  return;
+                }
+                setDeepLearningMode(m => !m)
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all relative ${deepLearningMode ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' : 'bg-white/[0.03] border-white/[0.06] text-gray-500'}`}>
+              <Brain size={12} /> Deep Learning
+              {tier === 'Free' && <Lock size={10} className="absolute -top-1 -right-1 text-blue-400" />}
+            </button>
           </div>
         </div>
 
@@ -1259,6 +1215,17 @@ export default function DFSDashboard() {
                                     <div className="text-[10px] text-gray-500">Include an opposing WR/TE to counter the QB stack.</div>
                                 </div>
                                 <input type="checkbox" className="hidden" checked={mmeConfig.forceRunback} onChange={e => setMmeConfig({...mmeConfig, forceRunback: e.target.checked})} />
+                            </label>
+
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${mmeConfig.capTE ? 'bg-indigo-500 border-indigo-400' : 'bg-white/[0.04] border-white/[0.1] group-hover:border-white/[0.2]'}`}>
+                                    {mmeConfig.capTE && <CheckCircle size={12} className="text-white" />}
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-sm text-gray-300 font-semibold">Max 1 TE</div>
+                                    <div className="text-[10px] text-gray-500">Prevent the optimizer from drafting a TE in the FLEX spot.</div>
+                                </div>
+                                <input type="checkbox" className="hidden" checked={mmeConfig.capTE} onChange={e => setMmeConfig({...mmeConfig, capTE: e.target.checked})} />
                             </label>
                             
                             <div className="flex items-center justify-between group cursor-pointer" onClick={() => setMmeConfig({...mmeConfig, analyzeOwnership: !mmeConfig.analyzeOwnership})}>

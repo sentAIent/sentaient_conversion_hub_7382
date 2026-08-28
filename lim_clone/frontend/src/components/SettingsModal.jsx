@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import BrokerVaultModal from './BrokerVaultModal';
 
 const SettingsModal = ({ isOpen, onClose, customTickers, setCustomTickers }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState('');
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
 
   // Debounced Search Effect
   useEffect(() => {
@@ -112,7 +114,28 @@ const SettingsModal = ({ isOpen, onClose, customTickers, setCustomTickers }) => 
             )}
           </div>
         </div>
+
+        <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#f8fafc' }}>🔐 Multi-Broker & Exchange Vault</h4>
+            <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+              Manage encrypted API keys for Alpaca, IBKR, Coinbase, Binance, Tradier.
+            </p>
+          </div>
+          <button 
+            onClick={() => setIsVaultOpen(true)}
+            style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid #3b82f6', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+          >
+            Manage Vault
+          </button>
+        </div>
+
       </div>
+
+      <BrokerVaultModal 
+        isOpen={isVaultOpen} 
+        onClose={() => setIsVaultOpen(false)} 
+      />
     </div>
   );
 };

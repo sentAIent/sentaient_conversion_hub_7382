@@ -16,7 +16,7 @@ const GET_UPLOAD_URL = gql`
 export default function CameraScreen() {
   const device = useCameraDevice('back');
   const { hasPermission, requestPermission } = useCameraPermission();
-  const cameraRef = useRef<Camera>(null);
+  const cameraRef = useRef<any>(null);
   
   const [isUploading, setIsUploading] = useState(false);
   const [getUploadUrl] = useMutation(GET_UPLOAD_URL);
@@ -79,7 +79,6 @@ export default function CameraScreen() {
         style={StyleSheet.absoluteFill}
         device={device}
         isActive={!isUploading}
-        photo={true}
       />
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.captureButton} onPress={handleCaptureAndUpload} disabled={isUploading}>

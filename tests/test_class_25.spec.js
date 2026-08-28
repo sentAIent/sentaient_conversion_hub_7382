@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 test('Class 25 loads cleanly without WebGL errors', async ({ page }) => {
     let hasError = false;

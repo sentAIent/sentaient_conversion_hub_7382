@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { initAnalytics, trackPageView } from '../utils/analytics';
+import { telemetry } from '../services/TelemetryEngine';
 
 const SEO_MAP = {
     '/': 'sentAIent | Advanced Intelligent Technology',
@@ -22,6 +23,7 @@ const AnalyticsTracker = () => {
     useEffect(() => {
         // Track page view
         trackPageView(location.pathname + location.search);
+        telemetry.trackPageView();
         
         // Update document title for SEO
         const title = SEO_MAP[location.pathname] || 'sentAIent | Autonomous AI Solutions';

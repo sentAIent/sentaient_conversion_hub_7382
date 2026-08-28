@@ -56,17 +56,34 @@ export default function AIAssistant() {
     setInput('')
     setIsTyping(true)
 
-    // Simulate AI response
-    setTimeout(() => {
+    // Call the real API
+    try {
+      const response = await fetch('/api/agent/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg.content }),
+      });
+      const data = await response.json();
+      
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: getMockResponse(userMsg.content),
+        content: data.text || 'I encountered an error trying to process your request.',
         timestamp: new Date()
-      }
-      setMessages(prev => [...prev, aiMsg])
-      setIsTyping(false)
-    }, 1500)
+      };
+      setMessages(prev => [...prev, aiMsg]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'There was a connection error connecting to JARVIS. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMsg]);
+    } finally {
+      setIsTyping(false);
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -79,20 +96,6 @@ export default function AIAssistant() {
   const clearChat = () => {
     setMessages([])
     setIsOpen(false)
-  }
-
-  const getMockResponse = (query: string): string => {
-    const q = query.toLowerCase()
-    if (q.includes('prop') || q.includes('odds')) {
-      return "Based on recent movement, **Lamar Jackson OVER 55.5 Rushing Yds (-115)** shows a 4.2% positive EV edge according to our variance models."
-    }
-    if (q.includes('dfs') || q.includes('lineup') || q.includes('stack')) {
-      return "For GPPs this week, I'd recommend a **Patrick Mahomes + Travis Kelce** stack with a runback from the Raiders. Ownership on Kelce is projected to be surprisingly low (~8%)."
-    }
-    if (q.includes('contract') || q.includes('salary')) {
-      return "You can view detailed contract terms in the Draft section. Did you know Christian McCaffrey has $24M fully guaranteed at signing on his new 2-year deal?"
-    }
-    return "I'm still learning! In the future, I will be connected to real-time NFL data, Vegas odds, and your DFS lineup history to give you hyper-personalized advice."
   }
 
   if (!isOpen) {

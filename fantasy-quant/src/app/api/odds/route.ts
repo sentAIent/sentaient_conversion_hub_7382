@@ -103,11 +103,15 @@ export async function POST() {
   }
 
   try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 5000);
+    
     // Fetch current DK game lines
     const r = await fetch(
       `https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds?apiKey=${ODDS_API_KEY}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&bookmakers=draftkings`,
-      { next: { revalidate: 0 } }
+      { next: { revalidate: 0 }, signal: controller.signal }
     );
+    clearTimeout(id);
 
     if (!r.ok) {
       return NextResponse.json({ error: `Odds API error: ${r.status}` }, { status: 502 });

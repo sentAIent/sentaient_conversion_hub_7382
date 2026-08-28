@@ -119,15 +119,34 @@ async def main():
         player_id = resolve_player_id(player_name)
         
         if player_id:
+            # Query local ML service for sentiment
+            signal_type = sig.get("signal_type")
+            try:
+                import requests
+                res = requests.post(
+                    "http://localhost:8000/api/ml/sentiment", 
+                    json={"text": sig.get("description", "")},
+                    timeout=2
+                )
+                if res.status_code == 200:
+                    data = res.json()
+                    # Mapping the response back to POSITIVE/NEGATIVE
+                    if data.get("label") == "positive":
+                        signal_type = "POSITIVE"
+                    elif data.get("label") == "negative":
+                        signal_type = "NEGATIVE"
+            except Exception as e:
+                print(f"Failed to query local ML service for sentiment: {e}")
+
             db_signals.append({
                 "player_id": player_id,
                 "season": season,
                 "week": week,
-                "signal_type": sig.get("signal_type"),
+                "signal_type": signal_type,
                 "category": sig.get("category"),
                 "description": sig.get("description")
             })
-            print(f"Mapped {player_name} -> {player_id}")
+            print(f"Mapped {player_name} -> {player_id} with {signal_type}")
         else:
             print(f"Player not found in DB: {player_name}")
             

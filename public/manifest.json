@@ -1,82 +1,39 @@
 {
-  "name": "MindWave: Binaural Beats Studio",
-  "short_name": "MindWave",
-  "description": "High-fidelity binaural beats and isochronic tones for deep focus, sleep, and meditation.",
-  "start_url": "/mindwave-beta.html",
-  "display": "browser",
-  "background_color": "#050510",
-  "theme_color": "#8b5cf6",
+  "name": "Sentaient AI Companion",
+  "short_name": "Sentaient",
+  "description": "Your proactive AI companion and autonomous coding agent.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#10141e",
+  "theme_color": "#00f3ff",
   "icons": [
     {
-      "src": "assets/icons/icon-48.webp",
-      "type": "image/png",
-      "sizes": "48x48",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-72.webp",
-      "type": "image/png",
-      "sizes": "72x72",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-96.webp",
-      "type": "image/png",
-      "sizes": "96x96",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-128.webp",
-      "type": "image/png",
-      "sizes": "128x128",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-192.webp",
-      "type": "image/png",
+      "src": "/pwa-192x192.png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "assets/icons/icon-256.webp",
-      "type": "image/png",
-      "sizes": "256x256",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-512.webp",
-      "type": "image/png",
+      "src": "/pwa-512x512.png",
       "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "orientation": "portrait",
-  "categories": [
-    "health",
-    "lifestyle",
-    "productivity"
-  ],
-  "screenshots": [],
-  "shortcuts": [
+  "prefer_related_applications": true,
+  "related_applications": [
     {
-      "name": "Deep Focus",
-      "url": "/mindwave-beta.html?preset=focus",
-      "icons": [
-        {
-          "src": "/binaural-assets/icons/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.sentaient.app",
+      "id": "com.sentaient.app"
     },
     {
-      "name": "Zen Meditation",
-      "url": "/mindwave-beta.html?preset=zen",
-      "icons": [
-        {
-          "src": "/binaural-assets/icons/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/id123456789"
     }
   ]
 }

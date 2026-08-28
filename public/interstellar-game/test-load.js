@@ -3,7 +3,6 @@ const puppeteer = require('puppeteer');
 (async () => {
     try {
         const browser = await puppeteer.launch({ 
-            executablePath: './node_modules/.bin/chromium',
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();

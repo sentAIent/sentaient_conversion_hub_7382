@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeBack } from '../hooks/useSafeBack';
+
 import { gql, useMutation } from '@apollo/client';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +17,9 @@ const SUBMIT_RATING = gql`
 `;
 
 export default function RatingScreen() {
-  const { targetUserId } = useLocalSearchParams<{ targetUserId: string }>();
+  const safeBack = useSafeBack();
+
+  const { targetUserId } = useLocalSearchParams() as { targetUserId: string };
   const router = useRouter();
   
   const [rating, setRating] = useState<number>(0);
@@ -35,7 +39,7 @@ export default function RatingScreen() {
         }
       });
       Alert.alert("Success", "Thanks for your feedback! Trust Score updated.");
-      (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'));
+      (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'));
     } catch (e: any) {
       Alert.alert("Error", e.message);
     }
@@ -71,7 +75,7 @@ export default function RatingScreen() {
           <Text style={styles.buttonText}>{loading ? 'Submitting...' : 'Submit Feedback'}</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.cancelButton} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} disabled={loading}>
+        <TouchableOpacity style={styles.cancelButton} onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} disabled={loading}>
           <Text style={styles.cancelButtonText}>Skip for now</Text>
         </TouchableOpacity>
       </View>

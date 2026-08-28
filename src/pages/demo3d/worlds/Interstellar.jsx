@@ -175,6 +175,10 @@ const FighterSwarm = ({ position }) => {
     }));
   }, [numLasers]);
 
+  const tempVec = useMemo(() => new THREE.Vector3(), []);
+  const tempVec2 = useMemo(() => new THREE.Vector3(), []);
+  const tempColor1 = useMemo(() => new THREE.Color(), []);
+  
   useFrame((state, delta) => {
     if (!meshRefBlue.current || !meshRefRed.current || !laserMeshRef.current || !trailMeshRef.current) return;
     
@@ -197,8 +201,8 @@ const FighterSwarm = ({ position }) => {
           }
         }
 
-        const toTarget = new THREE.Vector3().subVectors(fighter.target, fighter.pos);
-        const dist = toTarget.length();
+        tempVec.subVectors(fighter.target, fighter.pos);
+        const dist = tempVec.length();
         
         // Shooting
         if (dist > 150 && dist < 800 && Math.random() < 0.03) {
@@ -206,14 +210,14 @@ const FighterSwarm = ({ position }) => {
           if (inactiveLaser) {
             inactiveLaser.active = true;
             inactiveLaser.pos.copy(fighter.pos);
-            inactiveLaser.vel.copy(toTarget).normalize().multiplyScalar(2500); 
+            inactiveLaser.vel.copy(tempVec).normalize().multiplyScalar(2500); 
             inactiveLaser.color.set(fighter.team === 0 ? '#00ffff' : '#ff3300');
             inactiveLaser.life = 0.8;
           }
         }
 
         // 3D steering
-        const force = toTarget.normalize().multiplyScalar(400 * delta);
+        const force = tempVec.normalize().multiplyScalar(400 * delta);
         fighter.vel.add(force);
         fighter.vel.clampLength(0, 600);
         fighter.pos.addScaledVector(fighter.vel, delta);
@@ -229,8 +233,8 @@ const FighterSwarm = ({ position }) => {
         dummy.lookAt(lookTarget);
         
         // Add some roll when turning
-        const turnForce = force.clone().cross(fighter.vel).y;
-        dummy.rotateZ(turnForce * 0.01);
+        tempVec2.copy(force).cross(fighter.vel);
+        dummy.rotateZ(tempVec2.y * 0.01);
 
         dummy.scale.set(30, 30, 30); 
       } else {
@@ -254,10 +258,12 @@ const FighterSwarm = ({ position }) => {
       
       if (fighter.team === 0) {
         meshRefBlue.current.setMatrixAt(fighter.meshIndex, dummy.matrix);
-        meshRefBlue.current.setColorAt(fighter.meshIndex, fighter.state === 0 ? new THREE.Color('#00aaff') : new THREE.Color('#ffaa00'));
+        tempColor1.set(fighter.state === 0 ? '#00aaff' : '#ffaa00');
+        meshRefBlue.current.setColorAt(fighter.meshIndex, tempColor1);
       } else {
         meshRefRed.current.setMatrixAt(fighter.meshIndex, dummy.matrix);
-        meshRefRed.current.setColorAt(fighter.meshIndex, fighter.state === 0 ? new THREE.Color('#ff0033') : new THREE.Color('#ffaa00'));
+        tempColor1.set(fighter.state === 0 ? '#ff0033' : '#ffaa00');
+        meshRefRed.current.setColorAt(fighter.meshIndex, tempColor1);
       }
       
       // Update Trails Instanced Mesh
@@ -269,7 +275,8 @@ const FighterSwarm = ({ position }) => {
           dummy.scale.set(tScale, tScale, tScale);
           dummy.updateMatrix();
           trailMeshRef.current.setMatrixAt(trailCount, dummy.matrix);
-          trailMeshRef.current.setColorAt(trailCount, fighter.team === 0 ? new THREE.Color('#00ffff') : new THREE.Color('#ff5500'));
+          tempColor1.set(fighter.team === 0 ? '#00ffff' : '#ff5500');
+          trailMeshRef.current.setColorAt(trailCount, tempColor1);
           trailCount++;
         }
       });

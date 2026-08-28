@@ -8,6 +8,12 @@ import PortfolioDashboard from './components/PortfolioDashboard';
 import LoginScreen from './components/LoginScreen';
 import SymbolSearch from './components/SymbolSearch';
 import ResearchDashboard from './components/ResearchDashboard';
+import StrategyMarketplace from './components/StrategyMarketplace';
+import NodeEditorCanvas from './components/NodeEditorCanvas';
+import AutoHedgeSwarm from './components/AutoHedgeSwarm';
+import KYCWizard from './components/KYCWizard';
+import SocialLeaderboard from './components/SocialLeaderboard';
+import StrategyStudio from './components/StrategyStudio';
 
 function App() {
   const chartContainerRef = useRef(null);
@@ -218,7 +224,37 @@ function App() {
               onClick={() => setActiveView('portfolio')}
               style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: activeView === 'portfolio' ? '#3b82f6' : 'transparent', color: activeView === 'portfolio' ? '#fff' : '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
             >
-              Portfolio Dashboard
+              Portfolio
+            </button>
+            <button 
+              onClick={() => setActiveView('studio')}
+              style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: activeView === 'studio' ? '#3b82f6' : 'transparent', color: activeView === 'studio' ? '#fff' : '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              Quant Studio
+            </button>
+            <button 
+              onClick={() => setActiveView('canvas')}
+              style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: activeView === 'canvas' ? '#3b82f6' : 'transparent', color: activeView === 'canvas' ? '#fff' : '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              Strategy Canvas
+            </button>
+            <button 
+              onClick={() => setActiveView('marketplace')}
+              style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: activeView === 'marketplace' ? '#3b82f6' : 'transparent', color: activeView === 'marketplace' ? '#fff' : '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              Marketplace
+            </button>
+            <button 
+              onClick={() => setActiveView('kyc')}
+              style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: activeView === 'kyc' ? '#3b82f6' : 'transparent', color: activeView === 'kyc' ? '#fff' : '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              KYC Planner
+            </button>
+            <button 
+              onClick={() => setActiveView('leaderboard')}
+              style={{ padding: '4px 12px', borderRadius: '4px', border: 'none', background: activeView === 'leaderboard' ? '#3b82f6' : 'transparent', color: activeView === 'leaderboard' ? '#fff' : '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              Leaderboard
             </button>
           </div>
 
@@ -241,6 +277,27 @@ function App() {
       {activeView === 'portfolio' ? (
         <div className="portfolio-view">
           <PortfolioDashboard />
+        </div>
+      ) : activeView === 'studio' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <StrategyStudio />
+        </div>
+      ) : activeView === 'canvas' ? (
+        <div className="portfolio-view" style={{ display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}>
+          <NodeEditorCanvas />
+          <AutoHedgeSwarm />
+        </div>
+      ) : activeView === 'marketplace' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <StrategyMarketplace />
+        </div>
+      ) : activeView === 'kyc' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <KYCWizard />
+        </div>
+      ) : activeView === 'leaderboard' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <SocialLeaderboard />
         </div>
       ) : activeView === 'research' ? (
         <div className="research-view" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -346,6 +403,9 @@ function App() {
                   SELL MKT
                 </button>
               </div>
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '0.72rem', color: '#64748b', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '6px' }}>
+              ⚖️ <em>Simulated Paper Trading Environment. Contango Quant is an algorithmic modeling & analytics platform and does not provide investment advice.</em>
             </div>
           </div>
         </>

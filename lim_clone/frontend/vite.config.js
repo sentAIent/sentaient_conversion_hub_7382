@@ -7,5 +7,19 @@ export default defineConfig({
   server: {
     port: 3050,
     strictPort: true,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('lightweight-charts')) {
+              return 'vendor-charts';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
   }
 })

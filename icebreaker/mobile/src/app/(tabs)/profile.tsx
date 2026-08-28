@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView, TouchableOpacity, ActivityIndicator, SafeAreaView, Share, Image, Modal, TextInput, Platform, Alert } from 'react-native';
+import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -97,7 +98,7 @@ export default function ProfileScreen() {
   const [editBio, setEditBio] = useState('');
   const [editPhotoUrl, setEditPhotoUrl] = useState('');
 
-  const { data: meData, refetch } = useQuery(GET_ME, {
+  const { data: meData, refetch, loading: meLoading } = useQuery(GET_ME, {
     onCompleted: (data) => {
       if (data?.me) {
         setEditName(data.me.name || '');
@@ -232,6 +233,37 @@ export default function ProfileScreen() {
       ]
     );
   };
+
+  if (meLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.topHeader}>
+          <SkeletonLoader width={100} height={20} />
+          <SkeletonLoader width={28} height={28} />
+        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.profileInfoRow}>
+            <View style={styles.avatarContainer}>
+              <SkeletonLoader width={90} height={90} borderRadius={45} />
+            </View>
+            <View style={styles.statsContainer}>
+              {[1,2,3].map(i => (
+                <View key={i} style={styles.statBox}>
+                  <SkeletonLoader width={30} height={20} style={{ marginBottom: 4 }} />
+                  <SkeletonLoader width={50} height={12} />
+                </View>
+              ))}
+            </View>
+          </View>
+          <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
+            <SkeletonLoader width={150} height={16} style={{ marginBottom: 8 }} />
+            <SkeletonLoader width={200} height={12} style={{ marginBottom: 4 }} />
+            <SkeletonLoader width={180} height={12} />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>

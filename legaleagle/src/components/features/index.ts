@@ -1,5 +1,3 @@
-export * from './DisclaimerModal';
-export * from './SettingsModal';
+export { DisclaimerModal } from './DisclaimerModal';
+export { SettingsModal } from './SettingsModal';
 export * from './EulaModal';
-export * from './OfflineBanner';
-export * from './ThemeGalleryModal';

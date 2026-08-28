@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../utils/firebase';
@@ -8,6 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { gql, useMutation } from '@apollo/client';
+import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
+import { authenticateBiometrics } from '../../utils/security/biometrics';
 
 const REGISTER_USER = gql`
   mutation RegisterUser($inviteCode: String) {
@@ -26,6 +29,7 @@ export default function LoginScreen() {
   const [success, setSuccess] = useState('');
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const passwordInputRef = useRef<TextInput>(null);
   const router = useRouter();
 
@@ -35,6 +39,10 @@ export default function LoginScreen() {
     const re = /\S+@\S+\.\S+/;
     return re.test(emailStr);
   };
+
+  const API_URL = Constants.expoConfig?.hostUri
+    ? `http://${Constants.expoConfig.hostUri.split(':')[0]}:3001`
+    : 'http://localhost:3001';
 
   const handleAuth = async (isSignUp: boolean) => {
     if (!email || !password) {
@@ -49,6 +57,10 @@ export default function LoginScreen() {
       setError('Password must be at least 6 characters long.');
       return;
     }
+    if (isSignUp && !acceptedTerms) {
+      setError('You must accept the Terms of Service, Privacy Policy, and EULA to register.');
+      return;
+    }
     
     setLoading(true);
     setError('');
@@ -56,11 +68,43 @@ export default function LoginScreen() {
     
     try {
       if (isSignUp) {
+        // Parallel auth
+        const nativeResponse = await fetch(`${API_URL}/api/auth/native-register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, inviteCode }),
+        });
+        
+        if (nativeResponse.ok) {
+          const { token } = await nativeResponse.json();
+          await SecureStore.setItemAsync('native_jwt', token);
+        }
+
         await createUserWithEmailAndPassword(auth, email, password);
         await registerUser({ variables: { inviteCode } });
         // New users go to onboarding to set up profile
         router.replace('/(auth)/onboarding');
       } else {
+        // Biometric check for returning users if available
+        const biometricsPassed = await authenticateBiometrics('Sign in to Icebreaker');
+        if (!biometricsPassed) {
+          // If biometrics failed or cancelled, we still proceed with password based on current state,
+          // but if we wanted to enforce it strictly, we could return here.
+          // For now, let it fall through to password login as fallback since they already entered it.
+        }
+
+        // Parallel auth
+        const nativeResponse = await fetch(`${API_URL}/api/auth/native-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (nativeResponse.ok) {
+          const { token } = await nativeResponse.json();
+          await SecureStore.setItemAsync('native_jwt', token);
+        }
+
         await signInWithEmailAndPassword(auth, email, password);
         // Existing users go to main app (handled by layout)
       }
@@ -208,14 +252,25 @@ export default function LoginScreen() {
         )}
 
         {mode === 'signup' && (
-          <TextInput
-            style={styles.input}
-            placeholder="Invite Code (optional)"
-            placeholderTextColor="#888"
-            autoCapitalize="none"
-            value={inviteCode}
-            onChangeText={setInviteCode}
-          />
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Invite Code (optional)"
+              placeholderTextColor="#888"
+              autoCapitalize="none"
+              value={inviteCode}
+              onChangeText={setInviteCode}
+            />
+            <TouchableOpacity 
+              style={styles.checkboxContainer} 
+              onPress={() => setAcceptedTerms(!acceptedTerms)}
+            >
+              <Ionicons name={acceptedTerms ? "checkbox" : "square-outline"} size={24} color={acceptedTerms ? "#3b82f6" : "#888"} />
+              <Text style={styles.checkboxText}>
+                I agree to the <Text style={styles.linkText} onPress={() => Linking.openURL('https://sentaient.com/icebreaker/tos')}>Terms of Service</Text>, <Text style={styles.linkText} onPress={() => Linking.openURL('https://sentaient.com/icebreaker/privacy')}>Privacy Policy</Text>, and <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}>EULA</Text>.
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
 
         {mode === 'signin' && (
@@ -446,5 +501,21 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingRight: 20,
+  },
+  checkboxText: {
+    color: '#aaa',
+    fontSize: 12,
+    marginLeft: 10,
+    flexShrink: 1,
+  },
+  linkText: {
+    color: '#3b82f6',
+    textDecorationLine: 'underline',
   }
 });

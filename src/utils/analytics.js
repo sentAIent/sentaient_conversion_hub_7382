@@ -44,7 +44,7 @@ export const initAnalytics = () => {
         ReactGA.initialize(GA_MEASUREMENT_ID);
         
         if (POSTHOG_API_KEY.includes('PLACEHOLDER')) {
-            console.log('[Analytics] PostHog placeholder key detected - skipping initialization');
+            // console.log('[Analytics] PostHog placeholder key detected - skipping initialization');
             return;
         }
 
@@ -56,8 +56,90 @@ export const initAnalytics = () => {
                 if (import.meta.env.DEV) posthog.opt_out_capturing(); // Optional: Disable in dev
             }
         });
+
+        // Global Error Tracking (Item 25)
+        window.addEventListener('error', (event) => {
+            trackError('global_error', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                error: event.error ? event.error.stack : null
+            });
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            trackError('unhandled_promise_rejection', {
+                reason: event.reason ? (event.reason.stack || event.reason.toString()) : 'Unknown reason'
+            });
+        });
+
+        // Init Latency Monitor (Item 26)
+        initLatencyMonitor();
     } catch (error) {
         console.warn("Analytics initialization failed:", error);
+    }
+};
+
+export const trackError = (errorName, errorProperties = {}) => {
+    try {
+        posthog.capture('$exception', {
+            error_name: errorName,
+            ...errorProperties
+        });
+    } catch (e) {
+        console.warn("Failed to track error:", e);
+    }
+};
+
+// Session Telemetry & Latency Monitor (Item 26)
+export const initLatencyMonitor = () => {
+    if (!window.PerformanceObserver) return;
+    
+    try {
+        // Track Largest Contentful Paint (LCP)
+        new PerformanceObserver((entryList) => {
+            const entries = entryList.getEntries();
+            const lastEntry = entries[entries.length - 1];
+            trackEvent('web_vitals_lcp', { value: lastEntry.renderTime || lastEntry.loadTime });
+        }).observe({ type: 'largest-contentful-paint', buffered: true });
+
+        // Track First Input Delay (FID)
+        new PerformanceObserver((entryList) => {
+            const firstInput = entryList.getEntries()[0];
+            trackEvent('web_vitals_fid', { value: firstInput.processingStart - firstInput.startTime });
+        }).observe({ type: 'first-input', buffered: true });
+
+        // Track Cumulative Layout Shift (CLS)
+        let clsValue = 0;
+        new PerformanceObserver((entryList) => {
+            for (const entry of entryList.getEntries()) {
+                if (!entry.hadRecentInput) {
+                    clsValue += entry.value;
+                    trackEvent('web_vitals_cls', { value: clsValue });
+                }
+            }
+        }).observe({ type: 'layout-shift', buffered: true });
+        
+        // Track API Latency via monkey-patching fetch
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            const startTime = performance.now();
+            try {
+                const response = await originalFetch.apply(this, args);
+                const duration = performance.now() - startTime;
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('/api/')) {
+                    trackEvent('api_latency', { url: args[0], duration_ms: duration, status: response.status });
+                }
+                return response;
+            } catch (error) {
+                const duration = performance.now() - startTime;
+                trackEvent('api_latency_error', { url: args[0], duration_ms: duration });
+                throw error;
+            }
+        };
+    } catch (e) {
+        console.warn("Failed to init latency monitor", e);
     }
 };
 

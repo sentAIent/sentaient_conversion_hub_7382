@@ -104,6 +104,7 @@ model User {
   emailVerified        Boolean                     @default(false)
   phone                String?                     @unique
   phoneVerified        Boolean                     @default(false)
+  passwordHash         String?
   pushToken            String?
   profilePhotoUrl      String?
   bio                  String?
@@ -164,6 +165,12 @@ model User {
   sentMessages     Message[]       @relation("SentMessages")
   receivedMessages Message[]       @relation("ReceivedMessages")
   orders           Order[]
+  
+  // Compliance Relations
+  blocksInitiated  Block[]         @relation("Blocker")
+  blocksReceived   Block[]         @relation("BlockedUser")
+  reportsMade      Report[]        @relation("Reporter")
+  reportsReceived  Report[]        @relation("ReportedUser")
 }
 
 model CheckIn {
@@ -228,6 +235,7 @@ model Content {
   likes            Like[]
   comments         Comment[]
   sharedInMessages Message[]     @relation("SharedContent")
+  reports          Report[]
 }
 
 model Meeting {
@@ -486,4 +494,35 @@ model OrderItem {
 
   order   Order   @relation(fields: [orderId], references: [id])
   product Product @relation(fields: [productId], references: [id])
+}
+
+// ==========================================
+// Compliance Models
+// ==========================================
+
+model Block {
+  id            String   @id @default(uuid()) @db.Uuid
+  blockerId     String
+  blockedUserId String
+  createdAt     DateTime @default(now())
+
+  blocker       User     @relation("Blocker", fields: [blockerId], references: [id])
+  blockedUser   User     @relation("BlockedUser", fields: [blockedUserId], references: [id])
+
+  @@unique([blockerId, blockedUserId])
+}
+
+model Report {
+  id                String   @id @default(uuid()) @db.Uuid
+  reporterId        String
+  reportedUserId    String?
+  reportedContentId String?  @db.Uuid
+  reason            String
+  status            String   @default("PENDING") // PENDING, REVIEWED, RESOLVED, DISMISSED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  reporter          User     @relation("Reporter", fields: [reporterId], references: [id])
+  reportedUser      User?    @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  reportedContent   Content? @relation(fields: [reportedContentId], references: [id])
 }

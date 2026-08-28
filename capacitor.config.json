@@ -15,5 +15,25 @@
   "ios": {
     "contentInset": "automatic",
     "backgroundColor": "#000000"
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    },
+    "Haptics": {
+      "enabled": true
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "CapacitorHttp": {
+      "enabled": true,
+      "certPinning": {
+        "api.sentaient.com": ["sha256/...", "sha256/..."],
+        "api.supabase.com": ["sha256/...", "sha256/..."]
+      }
+    }
   }
 }

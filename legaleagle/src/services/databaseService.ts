@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+// @ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 
 export const saveAnalysisHistory = async (userId: string, data: any) => {

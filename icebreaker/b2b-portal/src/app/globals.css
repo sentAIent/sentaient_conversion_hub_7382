@@ -26,5 +26,26 @@ body {
 }
 
 .glass {
-  @apply bg-black/50 backdrop-blur-md border border-white/10 shadow-[0_0_15px_rgba(0,255,204,0.1)];
+  @apply bg-black/40 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+}
+
+.glass-heavy {
+  @apply bg-black/60 backdrop-blur-2xl border border-white/30 shadow-[0_8px_32px_0_rgba(0,255,204,0.15)];
+}
+
+.neon-shadow {
+  @apply shadow-[0_0_15px_rgba(0,255,204,0.5)];
+}
+
+.neon-shadow-heavy {
+  @apply shadow-[0_0_30px_rgba(0,255,204,0.8)];
+}
+
+.success-glow {
+  animation: glowPulse 2s infinite alternate;
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 10px rgba(0, 255, 204, 0.4); border-color: rgba(0, 255, 204, 0.4); }
+  100% { box-shadow: 0 0 30px rgba(0, 255, 204, 0.9); border-color: rgba(0, 255, 204, 0.9); }
 }

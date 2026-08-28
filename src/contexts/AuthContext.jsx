@@ -6,7 +6,9 @@ import {
     signOut,
     sendPasswordResetEmail,
     updateProfile,
-    sendEmailVerification
+    sendEmailVerification,
+    setPersistence,
+    browserSessionPersistence
 } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -23,7 +25,9 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     function signup(email, password, username) {
-        return createUserWithEmailAndPassword(auth, email, password).then((result) => {
+        return setPersistence(auth, browserSessionPersistence)
+            .then(() => createUserWithEmailAndPassword(auth, email, password))
+            .then((result) => {
             // Send email verification
             sendEmailVerification(result.user).catch(err => console.error("Error sending verification email", err));
 
@@ -52,6 +56,7 @@ export function AuthProvider({ children }) {
                 // Subscription
                 subscription: {
                     isProPilot: false,
+                    isAiCompanionActive: false,
                     planId: null,
                     startDate: null,
                     endDate: null,
@@ -87,7 +92,8 @@ export function AuthProvider({ children }) {
     }
 
     function login(email, password) {
-        return signInWithEmailAndPassword(auth, email, password);
+        return setPersistence(auth, browserSessionPersistence)
+            .then(() => signInWithEmailAndPassword(auth, email, password));
     }
 
     function logout() {
@@ -131,11 +137,16 @@ export function AuthProvider({ children }) {
                                        mergedSubscription.planId === 'lifetime' || 
                                        mergedSubscription.isProPilot === true;
 
+                    const isAiCompanionActive = mergedSubscription.isAiCompanionActive === true || 
+                                                mergedSubscription.planId === 'prod_ai_companion_monthly';
+
                     if (isLifetime) {
                         secureStorage.setItem('sentaient_lifetime_access', 'true');
                     } else {
                         secureStorage.removeItem('sentaient_lifetime_access');
                     }
+                    
+                    mergedSubscription.isAiCompanionActive = isAiCompanionActive;
 
                     setCurrentUser({ 
                         ...user, 

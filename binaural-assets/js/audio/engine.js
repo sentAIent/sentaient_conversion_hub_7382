@@ -80,17 +80,6 @@ export async function startAudio() {
     state.isStarting = true;
     console.log("[Audio] Starting engine...");
 
-    // Enable Native Capacitor Background Mode
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-        try {
-            const { BackgroundMode } = await import('@capacitor-community/background-mode');
-            await BackgroundMode.enable();
-            console.log("[Audio] Capacitor BackgroundMode enabled");
-        } catch (e) {
-            console.error("[Audio] Failed to enable BackgroundMode:", e);
-        }
-    }
-
     try {
         // Force new context creation inside user gesture if needed
         if (!state.audioCtx || state.audioCtx.state === 'closed') {
@@ -375,14 +364,6 @@ export function stopAudio(immediate = false) {
 
     // Mark as not playing IMMEDIATELY for accurate button sync
     state.isPlaying = false;
-
-    // Disable Native Capacitor Background Mode
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-        import('@capacitor-community/background-mode').then(({ BackgroundMode }) => {
-            BackgroundMode.disable();
-            console.log("[Audio] Capacitor BackgroundMode disabled");
-        }).catch(e => console.error("[Audio] Failed to disable BackgroundMode:", e));
-    }
 
     // Stop any active sweep
     if (state.sweepInterval) {

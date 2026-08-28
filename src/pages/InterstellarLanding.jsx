@@ -24,15 +24,19 @@ const InterstellarLanding = () => {
   const prev = () => setCurrent((c) => (c - 1 + CAROUSEL_ITEMS.length) % CAROUSEL_ITEMS.length);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#0B0C10] via-[#12141A] to-[#1A1C24] text-white relative overflow-hidden">
+      {/* Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-primary/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-conversion/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+
       {/* Navbar (Minimal) */}
-      <nav className="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center">
+      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-2xl border-b border-white/10 px-6 py-4 flex justify-between items-center shadow-2xl">
         <div className="flex items-center gap-3" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <img src="/interstellar_logo_final.png" alt="Interstellar Logo" className="h-8 object-contain" />
         </div>
         <button 
           onClick={() => navigate('/interstellar')}
-          className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-full font-bold text-sm shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all"
+          className="px-6 py-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 rounded-full font-bold text-sm shadow-[0_0_15px_rgba(var(--primary),0.4)] transition-all"
         >
           Launch Experience
         </button>

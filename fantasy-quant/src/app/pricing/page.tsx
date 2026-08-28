@@ -67,12 +67,58 @@ export default function PricingPage() {
     setLoading(priceId)
     setError(null)
 
-    // Mock API call delay
-    setTimeout(() => {
-      setTier(tierName as SubscriptionTier)
-      setLoading(null)
-      router.push('/')
-    }, 800)
+    try {
+      // Import dynamically to avoid SSR issues with Capacitor
+      const { Capacitor } = await import('@capacitor/core');
+      
+      if (Capacitor.isNativePlatform()) {
+        // We are inside an iOS or Android WebView
+        const { Purchases } = await import('@revenuecat/purchases-capacitor');
+        
+        // Match the tier to a RevenueCat package identifier
+        const rcPackageIdentifier = tierName.toLowerCase(); 
+        
+        try {
+          const offerings = await Purchases.getOfferings();
+          if (offerings.current !== null && offerings.current.availablePackages.length !== 0) {
+            const packageToBuy = offerings.current.availablePackages.find(p => p.identifier.includes(rcPackageIdentifier));
+            
+            if (packageToBuy) {
+              const { customerInfo } = await Purchases.purchasePackage({ aPackage: packageToBuy });
+              
+              if (customerInfo.entitlements.active[rcPackageIdentifier] !== undefined) {
+                setTier(tierName as SubscriptionTier);
+                router.push('/?payment_success=true');
+              }
+            } else {
+              throw new Error("Package not found");
+            }
+          }
+        } catch (e: any) {
+          if (!e.userCancelled) {
+            setError(e.message || "Native purchase failed");
+          }
+        }
+      } else {
+        // We are on the Web, use Stripe
+        const res = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tier: tierName.toLowerCase() })
+        });
+        
+        const data = await res.json();
+        if (data.url) {
+          router.push(data.url);
+        } else {
+          throw new Error(data.error || 'Checkout failed');
+        }
+      }
+    } catch (e: any) {
+      setError(e.message || "An error occurred");
+    } finally {
+      setLoading(null);
+    }
   }
 
   return (

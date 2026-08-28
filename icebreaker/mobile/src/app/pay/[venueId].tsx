@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeBack } from '../../hooks/useSafeBack';
+import { SwipeButton } from '../../components/SwipeButton';
+
 import { gql, useMutation } from '@apollo/client';
 import * as Haptics from 'expo-haptics';
 import Animated, { ZoomIn } from 'react-native-reanimated';
@@ -12,6 +15,8 @@ const PAY_VENUE_MUTATION = gql`
 `;
 
 export default function PayScreen() {
+  const safeBack = useSafeBack();
+
   const { venueId } = useLocalSearchParams();
   const router = useRouter();
   const [amountStr, setAmountStr] = useState('');
@@ -25,7 +30,7 @@ export default function PayScreen() {
       if (amount <= 0 || isNaN(amount)) return;
       await payVenue({ variables: { venueId, amount } });
       setSuccess(true);
-      setTimeout(() => router.back(), 2000);
+      setTimeout(() => safeBack(), 2000);
     } catch (e) {
       console.error(e);
       alert('Payment failed');
@@ -53,9 +58,9 @@ export default function PayScreen() {
         value={amountStr}
         onChangeText={setAmountStr}
       />
-      <TouchableOpacity style={styles.payButton} onPress={handlePay} disabled={loading}>
-        {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.payButtonText}>Swipe to Pay</Text>}
-      </TouchableOpacity>
+      <View style={{ alignItems: 'center' }}>
+        <SwipeButton onSwipeComplete={handlePay} loading={loading} />
+      </View>
       {error && <Text style={{ color: 'red', marginTop: 10 }}>Error processing payment.</Text>}
     </View>
   );

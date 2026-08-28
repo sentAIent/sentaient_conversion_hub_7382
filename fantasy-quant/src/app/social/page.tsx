@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Trophy, TrendingUp, Users, ArrowUpRight, ArrowDownRight, Clock, Copy, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useBetSlip } from '@/components/social/BetSlipContext'
+import { createClient } from '@/utils/supabase/client'
 
 type FeedItem = {
   id: string
@@ -27,7 +28,42 @@ const MOCK_FEED: FeedItem[] = [
 
 export default function SocialPage() {
   const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard'>('feed')
+  const [feed, setFeed] = useState<FeedItem[]>(MOCK_FEED)
   const { openBetSlip } = useBetSlip()
+  const supabase = createClient()
+
+  useEffect(() => {
+    // Subscribe to new paper bets
+    const channel = supabase
+      .channel('public:paper_bets')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'paper_bets' },
+        (payload) => {
+          const newBet = payload.new;
+          // Format into our FeedItem structure
+          const feedItem: FeedItem = {
+            id: newBet.id,
+            user: newBet.user_id.substring(0, 8), // Masked for demo
+            market: newBet.market || 'Unknown',
+            target: newBet.target_name || 'Unknown',
+            selection: newBet.selection || 'OVER',
+            line: newBet.line,
+            wager: newBet.wager_amount,
+            timeAgo: 'Just now',
+            result: 'pending'
+          }
+          
+          setFeed(prev => [feedItem, ...prev])
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase])
+
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 max-w-4xl mx-auto space-y-6">
@@ -68,7 +104,7 @@ export default function SocialPage() {
             Live Global Action
           </div>
 
-          {MOCK_FEED.map(item => (
+          {feed.map(item => (
             <div key={item.id} className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 flex gap-4 hover:border-gray-700 transition-colors">
               <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center font-bold text-gray-400 flex-shrink-0">
                 {item.user.substring(0, 2).toUpperCase()}
@@ -128,6 +164,11 @@ export default function SocialPage() {
           <button className="w-full py-4 bg-gray-900 border border-gray-800 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-colors font-semibold">
             Load More Action
           </button>
+          
+          <div className="text-center pt-4">
+            <p className="text-xs text-gray-600 font-bold uppercase tracking-widest">Simulated Paper Trading Only</p>
+            <p className="text-xs text-gray-600 mt-1 max-w-md mx-auto">No real money is wagered. "Coins" hold no real-world cash value and cannot be redeemed.</p>
+          </div>
         </div>
       )}
 

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import DataAuditModal from './DataAuditModal';
 
 const AnalyticsPanel = ({ symbol }) => {
   const [stats, setStats] = useState(null);
   const [benchmark, setBenchmark] = useState('^GSPC'); // Default S&P 500
   const [loading, setLoading] = useState(false);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -22,7 +24,15 @@ const AnalyticsPanel = ({ symbol }) => {
   return (
     <div className="panel" style={{ marginTop: '16px', overflowY: 'auto', maxHeight: '400px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <h3>Advanced Analytics</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 style={{ margin: 0 }}>Advanced Analytics</h3>
+          <button 
+            onClick={() => setIsAuditOpen(true)}
+            style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(59,130,246,0.4)', background: 'rgba(59,130,246,0.15)', color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}
+          >
+            🔬 Audit Math
+          </button>
+        </div>
         <select 
           value={benchmark} 
           onChange={(e) => setBenchmark(e.target.value)}
@@ -52,6 +62,12 @@ const AnalyticsPanel = ({ symbol }) => {
           <StatBox label="Kurtosis" value={stats.kurtosis.toFixed(2)} />
         </div>
       )}
+
+      <DataAuditModal 
+        isOpen={isAuditOpen} 
+        onClose={() => setIsAuditOpen(false)} 
+        symbol={symbol} 
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 test('Check Class 23 for errors', async ({ page }) => {
   const logs = [];

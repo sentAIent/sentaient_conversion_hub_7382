@@ -7,35 +7,7 @@ import { state } from '../state.js';
 import { handlePlayClick } from '../ui/controls_v3.js';
 
 export async function initLockScreenControls() {
-    // 1. Try Native Capacitor MediaSession first
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-        try {
-            console.log('[MediaSession] Initializing Native Capacitor lock screen controls.');
-            const { MediaSession } = await import('@capacitor-community/media-session');
-            
-            await updateMediaMetadata();
 
-            MediaSession.addListener('play', () => {
-                console.log('[Native MediaSession] Play action triggered');
-                if (!state.isPlaying) {
-                    handlePlayClick();
-                    updateMediaPlaybackState();
-                }
-            });
-
-            MediaSession.addListener('pause', () => {
-                console.log('[Native MediaSession] Pause action triggered');
-                if (state.isPlaying) {
-                    handlePlayClick();
-                    updateMediaPlaybackState();
-                }
-            });
-            return;
-        } catch (error) {
-            console.error('[MediaSession] Failed to init native media session plugin:', error);
-            // Fallthrough to web logic if it fails
-        }
-    }
 
     // 2. Web fallback
     if (!('mediaSession' in navigator)) {
@@ -77,23 +49,7 @@ export async function updateMediaMetadata() {
         title = state.activePresetType.charAt(0).toUpperCase() + state.activePresetType.slice(1) + ' Session';
     }
 
-    // Native Capacitor Metadata
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-        try {
-            const { MediaSession } = await import('@capacitor-community/media-session');
-            await MediaSession.setMetadata({
-                title: title,
-                artist: artist,
-                album: 'Mindwave State of the Art',
-                artwork: [
-                    { src: '/binaural-assets/img/icon-512x512.png', sizes: '512x512', type: 'image/png' }
-                ]
-            });
-            return;
-        } catch (e) {
-            console.error('[MediaSession] Native metadata failed', e);
-        }
-    }
+
 
     // Web Fallback
     if (!('mediaSession' in navigator)) return;
@@ -114,18 +70,7 @@ export async function updateMediaMetadata() {
 }
 
 export async function updateMediaPlaybackState() {
-    // Native Capacitor State
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-        try {
-            const { MediaSession } = await import('@capacitor-community/media-session');
-            await MediaSession.setPlaybackState({
-                playbackState: state.isPlaying ? 'playing' : 'paused'
-            });
-            return;
-        } catch (e) {
-            console.error('[MediaSession] Native state failed', e);
-        }
-    }
+
 
     // Web Fallback
     if (!('mediaSession' in navigator)) return;

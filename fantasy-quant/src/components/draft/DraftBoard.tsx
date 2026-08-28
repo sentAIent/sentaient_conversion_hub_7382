@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface DraftPlayer {
   id: string;
@@ -12,19 +13,36 @@ interface DraftPlayer {
 }
 
 export default function DraftBoard() {
+  return (
+    <ErrorBoundary fallbackMessage="Failed to load Draft Board module.">
+      <DraftBoardContent />
+    </ErrorBoundary>
+  );
+}
+
+function DraftBoardContent() {
   const [players, setPlayers] = useState<DraftPlayer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/screener')
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         setPlayers(data.data || []);
+      })
+      .catch(err => {
+        console.error('Failed to fetch screener data:', err);
+        setPlayers([]); // Ensure it's not undefined
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  const getAdp = (p: DraftPlayer) => p.player_adp?.find(a => a.format === 'PPR')?.adp || 999;
+  const getAdp = (p: DraftPlayer) => p.player_adp?.find(a => a.format?.toLowerCase() === 'ppr')?.adp || 999;
 
   const drafted = [...players].sort((a, b) => getAdp(a) - getAdp(b)).filter(p => getAdp(p) !== 999).slice(0, 120);
 

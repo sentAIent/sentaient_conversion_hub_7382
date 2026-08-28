@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { stripHtml } from '../utils/sanitize';
+import { z } from 'zod';
 import { 
     Lock, Mail, User, Building, Map, 
     MessageCircle, Rocket, CheckCircle, Loader2, Plus, Wallet
 } from 'lucide-react';
+
+const emailSchema = z.string().email('Please enter a valid email address.');
 
 const IcebreakerLanding = () => {
     const navigate = useNavigate();
@@ -72,22 +76,30 @@ const IcebreakerLanding = () => {
         setWaitlistError('');
         setWaitlistLoading(true);
         try {
+            const sanitizedEmail = stripHtml(waitlistEmail).trim();
+            emailSchema.parse(sanitizedEmail);
+
             await addDoc(collection(db, 'icebreaker_waitlist'), {
-                email: waitlistEmail,
+                email: sanitizedEmail,
                 timestamp: new Date()
             });
             setWaitlistSuccess(true);
             setWaitlistEmail('');
         } catch (err) {
             console.error('Error joining waitlist:', err);
-            setWaitlistError('Could not save — please try again.');
+            if (err instanceof z.ZodError) {
+                setWaitlistError(err.errors[0].message);
+            } else {
+                setWaitlistError('Could not save — please try again.');
+            }
         } finally {
             setWaitlistLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white flex flex-col md:flex-row font-sans">
+        <div className="min-h-screen bg-[#050505] text-white flex flex-col font-sans">
+            <div className="flex-1 flex flex-col md:flex-row">
             
             {/* Left Side: Marketing */}
             <div className="w-full md:w-3/5 p-8 md:p-16 flex flex-col justify-start relative overflow-hidden bg-gradient-to-br from-blue-900/20 via-black to-teal-900/20">
@@ -167,43 +179,6 @@ const IcebreakerLanding = () => {
                                     <span className="text-white text-xs font-bold tracking-wide whitespace-nowrap">View App Demo</span>
                                 </span>
                             </button>
-                        </div>
-                    </div>
-
-                    {/* Color Status System */}
-                    <div className="bg-white/3 border border-white/10 rounded-2xl p-6 mb-8">
-                        <h3 className="text-lg font-bold mb-1 text-white flex items-center gap-2">
-                            <span className="inline-block w-2 h-2 rounded-full bg-green-400"></span>
-                            Engagement Color System
-                        </h3>
-                        <p className="text-gray-400 text-xs mb-4 leading-relaxed">
-                            Set your status in-app with one tap. Others nearby see your dot color before approaching — no awkward guessing, just honest signals.
-                        </p>
-                        <div className="grid grid-cols-1 gap-2">
-                            <div className="flex items-start gap-3">
-                                <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span>
-                                <p className="text-sm"><span className="text-green-400 font-semibold">Green — Business &amp; Networking</span> <span className="text-gray-400">· Open to professional connections, pitches, partnerships, or career conversations right now.</span></p>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.8)]"></span>
-                                <p className="text-sm"><span className="text-orange-400 font-semibold">Orange — Friendship</span> <span className="text-gray-400">· Looking to meet new people, hang out, and make genuine social connections in the real world.</span></p>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
-                                <p className="text-sm"><span className="text-red-400 font-semibold">Red — Love / Dating / Flirting</span> <span className="text-gray-400">· Open to romantic connection. A clear, consensual signal so everyone knows the vibe before approaching.</span></p>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]"></span>
-                                <p className="text-sm"><span className="text-blue-400 font-semibold">Blue — Do Not Disturb</span> <span className="text-gray-400">· Visible on the map but not open to new contact right now. Respects your space without going invisible.</span></p>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]"></span>
-                                <p className="text-sm"><span className="text-yellow-400 font-semibold">Yellow — Custom</span> <span className="text-gray-400">· You write it. Set any message from your settings — "looking for a chess partner", "ask me about my startup", anything goes.</span></p>
-                            </div>
-                            <div className="flex items-start gap-3 mt-1 pt-2 border-t border-white/10">
-                                <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-gray-600 border border-gray-500"></span>
-                                <p className="text-sm"><span className="text-gray-300 font-semibold">Ghost / Invisible Mode</span> <span className="text-gray-400">· Location hidden. You browse the map but nobody sees you. One tap in the app to go dark — instant privacy, any time.</span></p>
-                            </div>
                         </div>
                     </div>
 
@@ -367,6 +342,46 @@ const IcebreakerLanding = () => {
                         </p>
                     </div>
 
+                </div>
+            </div>
+            </div>
+
+            {/* Footer with Engagement Color System */}
+            <div className="w-full p-8 md:p-12 bg-black border-t border-white/10">
+                <div className="max-w-7xl mx-auto">
+                    <h3 className="text-lg font-bold mb-2 text-white flex items-center gap-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-green-400"></span>
+                        Engagement Color System
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-6 leading-relaxed max-w-3xl">
+                        Set your status in-app with one tap. Others nearby see your dot color before approaching — no awkward guessing, just honest signals.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="flex items-start gap-3 bg-white/5 border border-white/10 p-4 rounded-xl">
+                            <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span>
+                            <p className="text-sm"><span className="text-green-400 font-semibold block mb-1 flex items-center gap-1.5"><span className="text-lg">💼</span> Green — Business &amp; Networking</span> <span className="text-gray-400">Open to professional connections, pitches, partnerships, or career conversations right now.</span></p>
+                        </div>
+                        <div className="flex items-start gap-3 bg-white/5 border border-white/10 p-4 rounded-xl">
+                            <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.8)]"></span>
+                            <p className="text-sm"><span className="text-orange-400 font-semibold block mb-1 flex items-center gap-1.5"><span className="text-lg">👋</span> Orange — Friendship</span> <span className="text-gray-400">Looking to meet new people, hang out, and make genuine social connections in the real world.</span></p>
+                        </div>
+                        <div className="flex items-start gap-3 bg-white/5 border border-white/10 p-4 rounded-xl">
+                            <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                            <p className="text-sm"><span className="text-red-400 font-semibold block mb-1 flex items-center gap-1.5"><span className="text-lg">❤️</span> Red — Love / Dating / Flirting</span> <span className="text-gray-400">Open to romantic connection. A clear, consensual signal so everyone knows the vibe before approaching.</span></p>
+                        </div>
+                        <div className="flex items-start gap-3 bg-white/5 border border-white/10 p-4 rounded-xl">
+                            <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]"></span>
+                            <p className="text-sm"><span className="text-blue-400 font-semibold block mb-1 flex items-center gap-1.5"><span className="text-lg">🎧</span> Blue — Do Not Disturb</span> <span className="text-gray-400">Visible on the map but not open to new contact right now. Respects your space without going invisible.</span></p>
+                        </div>
+                        <div className="flex items-start gap-3 bg-white/5 border border-white/10 p-4 rounded-xl">
+                            <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]"></span>
+                            <p className="text-sm"><span className="text-yellow-400 font-semibold block mb-1 flex items-center gap-1.5"><span className="text-lg">✍️</span> Yellow — Custom</span> <span className="text-gray-400">You write it. Set any message from your settings — "looking for a chess partner", "ask me about my startup", anything goes.</span></p>
+                        </div>
+                        <div className="flex items-start gap-3 bg-white/5 border border-white/10 p-4 rounded-xl">
+                            <span className="mt-1 flex-shrink-0 w-3 h-3 rounded-full bg-gray-600 border border-gray-500"></span>
+                            <p className="text-sm"><span className="text-gray-300 font-semibold block mb-1 flex items-center gap-1.5"><span className="text-lg">👻</span> Ghost / Invisible Mode</span> <span className="text-gray-400">Location hidden. You browse the map but nobody sees you. One tap in the app to go dark — instant privacy, any time.</span></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

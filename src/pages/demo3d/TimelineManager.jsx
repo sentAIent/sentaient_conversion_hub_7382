@@ -125,6 +125,10 @@ const getPosFromProgress = (p) => {
   return SCROLL_TIMELINE[0];
 };
 
+// Reusable objects for useFrame
+const tempQuat = new THREE.Quaternion();
+const tempEuler = new THREE.Euler();
+
 export const CameraController = () => {
   const scroll = useScroll();
   const lightRef = useRef();
@@ -157,8 +161,9 @@ export const CameraController = () => {
     state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetPos.z, 0.2);
     
     // Use slerp for rotations for smoother pitching
-    const targetQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(targetPos.rx, targetPos.ry, 0));
-    state.camera.quaternion.slerp(targetQuat, 0.15);
+    tempEuler.set(targetPos.rx, targetPos.ry, 0);
+    tempQuat.setFromEuler(tempEuler);
+    state.camera.quaternion.slerp(tempQuat, 0.15);
     
     // Slight banking based on scroll speed
     const velocity = scroll.delta * 10;

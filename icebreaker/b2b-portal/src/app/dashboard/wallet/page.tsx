@@ -3,6 +3,7 @@
 import { gql } from '@apollo/client';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { useState } from 'react';
+import confetti from 'canvas-confetti';
 
 const GET_WALLET = gql`
   query GetWallet {
@@ -49,6 +50,12 @@ export default function WalletPage() {
         window.location.href = result.onboardingUrl;
       } else if (result.status === 'SUCCESS') {
         setSuccessMsg(result.message);
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#00ffcc', '#ffffff', '#3b82f6']
+        });
         refetch();
       }
     } catch (err) {
@@ -71,7 +78,7 @@ export default function WalletPage() {
         <div className="text-6xl font-black tracking-tighter text-[#00ffcc]">${balanceUsd}</div>
         
         {error && <div className="text-red-500 bg-red-500/10 px-4 py-2 rounded-lg">{error.message}</div>}
-        {successMsg && <div className="text-green-400 bg-green-400/10 px-4 py-2 rounded-lg">{successMsg}</div>}
+        {successMsg && <div className="text-teal-400 glass px-6 py-4 rounded-xl border border-teal-500 success-glow neon-shadow font-bold text-center w-full">{successMsg}</div>}
 
         <button 
           onClick={handleCashOut}

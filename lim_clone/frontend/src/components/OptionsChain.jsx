@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import VolatilitySurface3D from './VolatilitySurface3D';
 
 const OptionsChain = ({ symbol }) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState('chain');
 
   useEffect(() => {
     setLoading(true);
@@ -19,10 +21,44 @@ const OptionsChain = ({ symbol }) => {
   }, [symbol]);
 
   return (
-    <div className="panel" style={{ marginTop: '16px', overflowY: 'auto', maxHeight: '400px' }}>
-      <h3 style={{ marginBottom: '12px' }}>Live Options Chain (Calls & Puts)</h3>
+    <div className="panel" style={{ marginTop: '16px', overflowY: 'auto', maxHeight: '550px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '10px' }}>
+        <h3 style={{ margin: 0 }}>Options Chain & Skew Analytics</h3>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            onClick={() => setViewMode('chain')}
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              borderRadius: '4px',
+              background: viewMode === 'chain' ? '#3b82f6' : '#1e293b',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            📋 Options Chain
+          </button>
+          <button 
+            onClick={() => setViewMode('3d')}
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              borderRadius: '4px',
+              background: viewMode === '3d' ? '#3b82f6' : '#1e293b',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            📊 3D Surface Skew
+          </button>
+        </div>
+      </div>
 
-      {loading ? (
+      {viewMode === '3d' ? (
+        <VolatilitySurface3D symbol={symbol} />
+      ) : loading ? (
         <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Loading options data...</div>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>

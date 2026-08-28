@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeBack } from '../../hooks/useSafeBack';
+import { SkeletonLoader } from '../../components/SkeletonLoader';
+
 import { gql, useQuery } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../../context/CartContext';
@@ -23,6 +26,8 @@ const GET_STOREFRONT = gql`
 `;
 
 export default function StorefrontScreen() {
+  const safeBack = useSafeBack();
+
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { data, loading, error } = useQuery(GET_STOREFRONT, { variables: { venueId: id } });
@@ -30,9 +35,30 @@ export default function StorefrontScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#fff" />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <SkeletonLoader width={24} height={24} borderRadius={12} />
+          <SkeletonLoader width={120} height={20} />
+          <SkeletonLoader width={24} height={24} borderRadius={12} />
+        </View>
+        <View style={styles.content}>
+          <SkeletonLoader width={200} height={16} style={{ alignSelf: 'center', marginBottom: 20 }} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={styles.productCard}>
+              <SkeletonLoader width="100%" height={150} borderRadius={8} style={{ marginBottom: 10 }} />
+              <SkeletonLoader width={100} height={16} style={{ marginBottom: 4 }} />
+              <SkeletonLoader width={60} height={14} style={{ marginBottom: 12 }} />
+              <SkeletonLoader width="100%" height={36} borderRadius={6} />
+            </View>
+            <View style={styles.productCard}>
+              <SkeletonLoader width="100%" height={150} borderRadius={8} style={{ marginBottom: 10 }} />
+              <SkeletonLoader width={100} height={16} style={{ marginBottom: 4 }} />
+              <SkeletonLoader width={60} height={14} style={{ marginBottom: 12 }} />
+              <SkeletonLoader width="100%" height={36} borderRadius={6} />
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -41,7 +67,7 @@ export default function StorefrontScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{storefront?.name || 'Storefront'}</Text>

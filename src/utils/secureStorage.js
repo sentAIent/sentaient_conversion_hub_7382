@@ -1,60 +1,62 @@
 // A utility to wrap localStorage with input sanitization to prevent XSS.
 
+import DOMPurify from 'dompurify';
+import { Preferences } from '@capacitor/preferences';
+
 const sanitize = (value) => {
   if (typeof value !== 'string') return value;
-  // Basic sanitization to prevent script tags and dangerous attributes
-  return value
-    .replace(/<script[^>]*?>.*?<\/script>/gi, '')
-    .replace(/<[\/\!]*?[^<>]*?>/gi, '')
-    .replace(/<style[^>]*?>.*?<\/style>/gi, '')
-    .replace(/<![\s\S]*?--[ \t\n\r]*>/gi, '');
+  return DOMPurify.sanitize(value, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: []
+  });
 };
 
 export const secureStorage = {
-  setItem: (key, value) => {
+  setItem: async (key, value) => {
     try {
-      localStorage.setItem(key, value);
+      await Preferences.set({ key, value });
     } catch (e) {
-      console.error(`Error setting localStorage key "${key}":`, e);
+      console.error(`Error setting Preferences key "${key}":`, e);
     }
   },
   
-  getItem: (key) => {
+  getItem: async (key) => {
     try {
-      const value = localStorage.getItem(key);
+      const { value } = await Preferences.get({ key });
       if (value === null) return null;
       return sanitize(value);
     } catch (e) {
-      console.error(`Error getting localStorage key "${key}":`, e);
+      console.error(`Error getting Preferences key "${key}":`, e);
       return null;
     }
   },
   
-  removeItem: (key) => {
+  removeItem: async (key) => {
     try {
-      localStorage.removeItem(key);
+      await Preferences.remove({ key });
     } catch (e) {
-      console.error(`Error removing localStorage key "${key}":`, e);
+      console.error(`Error removing Preferences key "${key}":`, e);
     }
   },
   
-  setJSON: (key, obj) => {
+  setJSON: async (key, obj) => {
     try {
-      localStorage.setItem(key, JSON.stringify(obj));
+      await Preferences.set({ key, value: JSON.stringify(obj) });
     } catch (e) {
-      console.error(`Error setting JSON localStorage key "${key}":`, e);
+      console.error(`Error setting JSON Preferences key "${key}":`, e);
     }
   },
   
-  getJSON: (key) => {
+  getJSON: async (key) => {
     try {
-      const value = localStorage.getItem(key);
+      const { value } = await Preferences.get({ key });
       if (value === null) return null;
       const sanitized = sanitize(value);
       return JSON.parse(sanitized);
     } catch (e) {
-      console.error(`Error parsing JSON from localStorage key "${key}":`, e);
+      console.error(`Error parsing JSON from Preferences key "${key}":`, e);
       return null;
     }
   }
 };
+

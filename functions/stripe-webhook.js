@@ -1,5 +1,13 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const rateLimit = require('express-rate-limit');
+
+// Basic rate limiter to prevent abuse
+const webhookLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
@@ -24,8 +32,11 @@ const db = admin.firestore();
  */
 
 const stripe = require('stripe')(functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY);
+const app = require('express')();
 
-exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+app.use(webhookLimiter);
+
+app.post('/', async (req, res) => {
     const sig = req.headers['stripe-signature'];
     const webhookSecret = functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -83,6 +94,8 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         res.status(500).send(`Error processing webhook: ${error.message}`);
     }
 });
+
+exports.stripeWebhook = functions.https.onRequest(app);
 
 /**
  * Handle successful checkout

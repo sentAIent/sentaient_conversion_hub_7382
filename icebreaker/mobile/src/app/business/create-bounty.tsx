@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, TextInput, ScrollView, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeBack } from '../../hooks/useSafeBack';
+
 import { gql, useMutation } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -15,6 +17,8 @@ const CREATE_BOUNTY = gql`
 `;
 
 export default function CreateBountyScreen() {
+  const safeBack = useSafeBack();
+
   const router = useRouter();
   
   const [title, setTitle] = useState('');
@@ -62,7 +66,7 @@ export default function CreateBountyScreen() {
       });
 
       alert('Bounty created successfully!');
-      (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'));
+      (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'));
     } catch (e: any) {
       alert(e.message);
     }
@@ -71,7 +75,7 @@ export default function CreateBountyScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Drop a Bounty</Text>

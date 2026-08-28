@@ -24,9 +24,13 @@ const MindwaveLanding = () => {
   const prev = () => setCurrent((c) => (c - 1 + CAROUSEL_ITEMS.length) % CAROUSEL_ITEMS.length);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#0B0C10] via-[#12141A] to-[#1A1C24] text-white relative overflow-hidden">
+      {/* Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-primary/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-conversion/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+
       {/* Navbar (Minimal) */}
-      <nav className="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-md border-b border-white/10 px-6 py-4 flex justify-between items-center">
+      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-2xl border-b border-white/10 px-6 py-4 flex justify-between items-center shadow-2xl">
         <div className="flex items-center gap-3" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           {/* using the Mindwave hero slide as a temp logo icon placeholder if we don't have a standalone png, or we can just use text */}
           <span className="font-bold text-xl tracking-wider text-purple-400">MINDWAVE</span>

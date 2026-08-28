@@ -1,10 +1,44 @@
 import { defineConfig } from 'vite';
 import path from 'path';
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-swc';
+import { VitePWA } from 'vite-plugin-pwa';
+import { sri } from 'vite-plugin-sri3';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    sri(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'Sentaient AI Companion',
+        short_name: 'Sentaient',
+        description: 'Your proactive AI companion',
+        theme_color: '#000000',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,glb,json}'],
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        navigateFallback: '/index.html'
+      }
+    })
+  ],
   server: {
+    hmr: {
+      clientPort: 5173
+    },
     proxy: {
       '/icebusiness': {
         target: 'https://sentaient-icebusiness-hub.netlify.app',
@@ -31,6 +65,7 @@ export default defineConfig({
     drop: ['console', 'debugger'],
   },
   build: {
+    target: 'esnext',
     emptyOutDir: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
@@ -45,8 +80,11 @@ export default defineConfig({
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'vendor';
           }
-          if (id.includes('binaural-assets/js/vendor/three.module.js')) {
+          if (id.includes('node_modules/three')) {
             return 'three';
+          }
+          if (id.includes('node_modules/framer-motion')) {
+            return 'framer-motion';
           }
         }
       }

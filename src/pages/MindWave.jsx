@@ -16,10 +16,14 @@ const MindWave = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="text-center">
+            <div className="min-h-screen bg-gradient-to-br from-[#0B0C10] via-[#12141A] to-[#1A1C24] flex items-center justify-center relative overflow-hidden">
+                {/* Background Glows */}
+                <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-primary/10 rounded-full blur-[150px] pointer-events-none"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] bg-conversion/10 rounded-full blur-[150px] pointer-events-none"></div>
+                
+                <div className="text-center relative z-10">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-secondary">Loading MindWave...</p>
+                    <p className="text-white/60">Loading MindWave...</p>
                 </div>
             </div>
         );

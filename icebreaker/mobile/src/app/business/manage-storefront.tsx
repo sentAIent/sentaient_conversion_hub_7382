@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, TextInput, FlatList, Image, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeBack } from '../../hooks/useSafeBack';
+
 import { gql, useQuery, useMutation } from '@apollo/client';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -48,6 +50,8 @@ const ADD_PRODUCT = gql`
 `;
 
 export default function ManageStorefrontScreen() {
+  const safeBack = useSafeBack();
+
   const router = useRouter();
   
   // 1. Get Me to know the user ID
@@ -103,7 +107,7 @@ export default function ManageStorefrontScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Manage Storefront</Text>

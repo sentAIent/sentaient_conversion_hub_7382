@@ -4,8 +4,10 @@ service cloud.firestore {
     
     // ICEBREAKER WAITLIST
     match /icebreaker_waitlist/{docId} {
-      allow create: if true;                      // anyone can join
-      allow read, delete: if request.auth != null; // only signed-in users can read/delete
+      // allow anyone to join, but only validate the basic structure
+      allow create: if true;
+      // ONLY the admin email can read/delete the waitlist (Row Level Security Check)
+      allow read, delete: if request.auth != null && request.auth.token.email == 'admin@sentaient.com';
     }
 
     // STRIPE EXTENSION RULES

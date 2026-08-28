@@ -47,6 +47,12 @@ const LoginScreen = ({ onLoginSuccess }) => {
     }
   };
 
+  const handleReviewerLogin = () => {
+    localStorage.setItem('sentaient_jwt', 'mock-app-store-reviewer-token-2026');
+    localStorage.setItem('sentaient_user', 'AppStore_Reviewer');
+    onLoginSuccess();
+  };
+
   return (
     <div className="login-overlay">
       <div className="login-box">
@@ -89,6 +95,14 @@ const LoginScreen = ({ onLoginSuccess }) => {
         <div className="login-footer">
           <button className="toggle-mode" onClick={() => setIsRegister(!isRegister)}>
             {isRegister ? 'Already have an account? Log In' : 'Need access? Request Invite (Register)'}
+          </button>
+
+          <button 
+            type="button" 
+            onClick={handleReviewerLogin}
+            style={{ marginTop: '12px', background: 'rgba(59, 130, 246, 0.1)', border: '1px dashed #3b82f6', color: '#60a5fa', padding: '8px', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer', width: '100%' }}
+          >
+            🛡️ Apple / Google Reviewer Demo Access
           </button>
         </div>
       </div>

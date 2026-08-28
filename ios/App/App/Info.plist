@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Interstellar</string>
+        <string>Sentaient</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -51,10 +51,12 @@
 	<key>NSCameraUsageDescription</key>
 	<string>This app requires camera access to upload a custom avatar.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app requires microphone access for ambient noise detection.</string>
+	<string>This app requires microphone access for AI voice transcription and companion chat.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app requires photo library access to upload a custom avatar.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>This app requires tracking permission to provide personalized features and crash analytics.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app requires FaceID to authenticate and unlock your secure local agent vault.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app requires local network access to communicate with your local machine learning bridge.</string>
 </dict>
 </plist>

@@ -1,6 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, FlatList, Image, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeBack } from '../../hooks/useSafeBack';
+
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { gql, useQuery, useMutation } from '@apollo/client';
@@ -68,7 +70,15 @@ const UNLIKE_MUTATION = gql`
   }
 `;
 
+const BLOCK_USER = gql`
+  mutation BlockUser($blockedId: ID!) {
+    blockUser(blockedId: $blockedId)
+  }
+`;
+
 export default function UserProfileScreen() {
+  const safeBack = useSafeBack();
+
   const { id } = useLocalSearchParams();
   const router = useRouter();
 
@@ -79,6 +89,7 @@ export default function UserProfileScreen() {
   const [unfollowUser] = useMutation(UNFOLLOW_USER);
   const [likeContent] = useMutation(LIKE_MUTATION);
   const [unlikeContent] = useMutation(UNLIKE_MUTATION);
+  const [blockUser] = useMutation(BLOCK_USER);
 
   const status = statusData?.followStatus || 'NONE';
   const profile = profileData?.userProfile?.user;
@@ -96,6 +107,30 @@ export default function UserProfileScreen() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleBlockUser = () => {
+    Alert.alert(
+      'Block User',
+      'Are you sure you want to block this user? They will no longer be able to interact with you.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser({ variables: { blockedId: id } });
+              Alert.alert('User Blocked', 'You will no longer see content from this user.');
+              safeBack();
+            } catch (e) {
+              console.error(e);
+              Alert.alert('Error', 'Failed to block user.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderHeader = () => (
@@ -230,7 +265,7 @@ export default function UserProfileScreen() {
       <View style={styles.header}>
         <AnimatedButton style={styles.backButton} onPress={() => {
           if (router.canGoBack()) {
-            router.back();
+            safeBack();
           } else {
             router.replace('/(tabs)/feed');
           }
@@ -238,7 +273,9 @@ export default function UserProfileScreen() {
           <Ionicons name="chevron-back" size={24} color="#fff" />
         </AnimatedButton>
         <Text style={styles.headerTitle}>{profile?.username || 'User Profile'}</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity style={styles.moreButton} onPress={handleBlockUser}>
+          <Feather name="more-horizontal" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -321,6 +358,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  moreButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,

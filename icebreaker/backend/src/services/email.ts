@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_123');
 const FROM_EMAIL = 'Icebreaker <icebreaker@sentaient.com>';
 
 export async function sendEmail(to: string[], subject: string, html: string) {

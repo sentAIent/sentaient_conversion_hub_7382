@@ -3,128 +3,45 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Contango Quant | Next-Gen Financial Analytics</title>
+    <title>Sentaient Cognitive Agent Studio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Contango Quant – Advanced AI-powered quantitative analytics, real-time market data, and portfolio management tools." />
-    <meta name="keywords" content="Quantitative Finance, Algorithmic Trading, AI Trading, Portfolio Management, Contango Quant, Market Data, Financial Analytics" />
+    <meta name="description" content="Advanced AI-powered cognitive agents, real-time edge processing, and privacy-first local models." />
+    <meta name="keywords" content="Cognitive Agents, AI Trading, Portfolio Management, SentAIent, Matrix Chat, Edge AI, Privacy" />
     
+    <!-- Strict Content Security Policy (CSP) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://*.firebaseio.com https://*.googleapis.com https://api.stripe.com https://www.google-analytics.com https://www.google.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://js.stripe.com https://www.google.com/recaptcha/; worker-src 'self' blob:;" />
+    
+    <!-- Security Headers (HSTS, etc. handled by CDN/Server, but adding meta where possible) -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <!-- OpenGraph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://sentaient.com/" />
-    <meta property="og:title" content="Contango Quant | Next-Gen Financial Analytics" />
-    <meta property="og:description" content="Advanced AI-powered quantitative analytics, real-time market data, and portfolio management tools." />
-    <meta property="og:image" content="https://contangoquant.com/contango_quant_logo.png" />
+    <meta property="og:title" content="Sentaient Cognitive Agent Studio" />
+    <meta property="og:description" content="Advanced AI-powered cognitive agents and privacy-first local edge models." />
+    <meta property="og:image" content="/og_share_image.jpg" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://contangoquant.com/" />
-    <meta property="twitter:title" content="Contango Quant | Next-Gen Financial Analytics" />
-    <meta property="twitter:description" content="Advanced AI-powered quantitative analytics, real-time market data, and portfolio management tools." />
-    <meta property="twitter:image" content="https://contangoquant.com/contango_quant_logo.png" />
+    <meta property="twitter:url" content="https://sentaient.com/" />
+    <meta property="twitter:title" content="Sentaient Cognitive Agent Studio" />
+    <meta property="twitter:description" content="Advanced AI-powered cognitive agents and privacy-first local edge models." />
+    <meta property="twitter:image" content="/og_share_image.jpg" />
 
     <!-- Structured Data JSON-LD -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "Contango Quant",
-      "url": "https://contangoquant.com/",
-      "logo": "https://contangoquant.com/contango_quant_logo.png",
-      "description": "Advanced AI-powered quantitative analytics, real-time market data, and portfolio management tools.",
+      "name": "Sentaient",
+      "url": "https://sentaient.com/",
+      "logo": "https://sentaient.com/logo.png",
+      "description": "Advanced AI-powered cognitive agents and privacy-first local edge models.",
       "sameAs": []
     }
     </script>
 
 
-    <!-- LightSpeed Full Stack RUM, Analytics & Pixel Tracker -->
-    <script>
-      window.LIGHTSPEED_CONFIG = {
-        source: "sentaient.com", // This tells it to track Sentaient!
-        supabaseUrl: "https://zbwnpclnxamiynwpdbed.supabase.co",
-        anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpid25wY2xueGFtaXlud3BkYmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzk5NDgsImV4cCI6MjA5OTcxNTk0OH0.0GkslQpzdsatDNI5qLuccamMAG_PATIpAW988FIUuO8"
-      };
-
-      (function() {
-        try {
-          const config = window.LIGHTSPEED_CONFIG;
-          
-          let sessionId = localStorage.getItem('ls_session_id');
-          if (!sessionId) {
-            sessionId = 'sess_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('ls_session_id', sessionId);
-          }
-
-          const ua = navigator.userAgent;
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-          const deviceType = isMobile ? 'Mobile' : 'Desktop';
-
-          function sendToSupabase(endpoint, payload) {
-            fetch(`${config.supabaseUrl}/rest/v1/${endpoint}`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "apikey": config.anonKey,
-                "Authorization": `Bearer ${config.anonKey}`
-              },
-              body: JSON.stringify(payload),
-              keepalive: true
-            }).catch(err => console.error(`LightSpeed ${endpoint} Error:`, err));
-          }
-
-          // 1. Track Marketing Analytics (Pixel)
-          sendToSupabase('web_analytics', {
-            site: config.source,
-            session_id: sessionId,
-            path: window.location.pathname,
-            referrer: document.referrer || 'Direct',
-            user_agent: ua,
-            device_type: deviceType,
-            screen_resolution: `${window.screen.width}x${window.screen.height}`,
-            language: navigator.language
-          });
-
-          // 2. Track Page Load Time (RUM)
-          window.addEventListener('load', () => {
-            setTimeout(() => {
-              try {
-                let loadTimeMs = 0;
-                const navEntries = performance.getEntriesByType("navigation");
-                if (navEntries.length > 0 && navEntries[0].loadEventEnd > 0) {
-                  loadTimeMs = navEntries[0].loadEventEnd - navEntries[0].startTime;
-                } else {
-                  const timing = performance.timing;
-                  loadTimeMs = timing.loadEventEnd - timing.navigationStart;
-                }
-                
-                if (loadTimeMs > 0 && loadTimeMs <= 60000) {
-                  sendToSupabase('metrics', {
-                    site: config.source,
-                    metric_name: 'page_load_time',
-                    value: loadTimeMs,
-                    metadata: { path: window.location.pathname, session_id: sessionId }
-                  });
-                }
-              } catch(e) {}
-            }, 1000);
-          });
-
-          // 3. Track JavaScript Errors (Incidents)
-          window.addEventListener("error", (event) => {
-            sendToSupabase('incidents', {
-              type: 'error',
-              title: 'Frontend JS Exception',
-              explanation: `${event.message} at ${event.filename}:${event.lineno}`,
-              fix_action: 'Investigate Code',
-              source: config.source
-            });
-          });
-
-        } catch (e) {
-          console.error("Lightspeed Tracker Error:", e);
-        }
-      })();
-    </script>
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BZL3614FTX"></script>
@@ -136,6 +53,7 @@
     </script>
 
     <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png">
     <link rel="manifest" href="/manifest.json" />
     <!-- DEPLOYMENT VERIFICATION: v2.0.1 -->
 </head>

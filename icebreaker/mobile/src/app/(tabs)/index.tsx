@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { triggerHaptic } from '../../utils/haptics';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { AnimatedButton } from '../../components/AnimatedButton';
+import { PermissionExplanation } from '../../components/PermissionExplanation';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 
@@ -66,6 +67,7 @@ export default function MapScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedTier, setSelectedTier] = useState('exact');
   const [selectedSwarm, setSelectedSwarm] = useState<any | null>(null);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   
   const { data: networkData } = useQuery(GET_NETWORK_DATA, { 
     variables: { 
@@ -81,15 +83,26 @@ export default function MapScreen() {
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      let { status } = await Location.getForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        return;
+        setShowLocationPrompt(true);
+      } else {
+        let loc = await Location.getCurrentPositionAsync({});
+        setLocation(loc);
       }
-      let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc);
     })();
   }, []);
+
+  const requestLocation = async () => {
+    setShowLocationPrompt(false);
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      setErrorMsg('Permission to access location was denied');
+      return;
+    }
+    let loc = await Location.getCurrentPositionAsync({});
+    setLocation(loc);
+  };
 
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.6);
@@ -114,15 +127,38 @@ export default function MapScreen() {
     };
   });
 
+  const applyFuzzing = (lat: number, lng: number, tier: string) => {
+    if (tier === 'exact') return { lat, lng };
+    if (tier === 'ghost') return { lat: 0, lng: 0 };
+    
+    // 1 degree latitude is approx 111km
+    const offsetBase = tier === 'neighborhood' ? 0.01 : 0.1; // ~1km or ~11km
+    
+    const latOffset = (Math.random() * 2 - 1) * offsetBase;
+    const lngOffset = (Math.random() * 2 - 1) * offsetBase;
+    
+    return {
+      lat: lat + latOffset,
+      lng: lng + lngOffset
+    };
+  };
+
   const handleCheckIn = async () => {
     triggerHaptic('heavy');
     if (!location) return;
+
+    const { lat: fuzzedLat, lng: fuzzedLng } = applyFuzzing(
+      location.coords.latitude,
+      location.coords.longitude,
+      selectedTier
+    );
+
     try {
       await checkIn({
         variables: {
           location: {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
+            latitude: fuzzedLat,
+            longitude: fuzzedLng,
             privacyTier: selectedTier
           }
         }
@@ -155,6 +191,14 @@ export default function MapScreen() {
     { featureType: 'water', elementType: 'labels.text.stroke', stylers: [{ color: '#17263c' }] }
   ];
 
+  if (errorMsg) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>{errorMsg}</Text>
+      </View>
+    );
+  }
+
   if (!location) {
     return (
       <View style={styles.loadingContainer}>
@@ -171,6 +215,14 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
+      <PermissionExplanation
+        visible={showLocationPrompt}
+        onAccept={requestLocation}
+        onDecline={() => {
+          setShowLocationPrompt(false);
+          setErrorMsg('Location is required for the map feature.');
+        }}
+      />
       <MapView 
         style={styles.map}
         customMapStyle={darkMapStyle}

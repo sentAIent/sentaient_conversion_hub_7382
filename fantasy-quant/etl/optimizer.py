@@ -93,6 +93,7 @@ def optimize_lineup(
     excluded_player_ids: set = None,  # for exposure limiting in multi-lineup
     required_player_ids: set = None,  # forced inclusions
     prev_lineups: list = None,  # to avoid duplicate lineups
+    cap_te: bool = True,
 ) -> dict | None:
     """Generate a single optimized lineup using ILP."""
     config = PLATFORM_CONFIG[platform]
@@ -144,6 +145,12 @@ def optimize_lineup(
         pos_players = [p for p in eligible if p['position'] == pos]
         prob += lpSum(x[p['player_id']] for p in pos_players) >= min_count
         prob += lpSum(x[p['player_id']] for p in pos_players) <= max_count
+
+    # Hard cap TEs to 1 (No 2-TE lineups for GPPs)
+    if cap_te:
+        te_players = [p for p in eligible if p['position'] == 'TE']
+        if te_players:
+            prob += lpSum(x[p['player_id']] for p in te_players) <= 1
 
     # Stack constraint (QB + at least 1 WR/TE from same team)
     if stack_team:
@@ -202,9 +209,12 @@ def generate_multi_lineup(
     n_lineups: int = 20,
     mode: str = 'gpp',
     stack_qb: bool = True,
+    cap_te: bool = True,
     max_player_exposure: float = 0.60,  # player in at most 60% of lineups
     max_ownership_sum: float = None,
     is_json: bool = False,
+    excluded_ids: set = None,
+    locked_ids: set = None,
 ) -> list[dict]:
     """
     Generate N diversified lineups with exposure limits.
@@ -236,6 +246,8 @@ def generate_multi_lineup(
     for i in range(n_lineups):
         # Determine players to exclude based on exposure limits
         overexposed = {pid for pid, count in player_appearances.items() if count >= max_appearances}
+        if excluded_ids:
+            overexposed = overexposed.union(excluded_ids)
 
         # Rotate stack team
         stack_team = top_teams[i % min(5, len(top_teams))] if stack_qb else None
@@ -247,7 +259,9 @@ def generate_multi_lineup(
             stack_team=stack_team,
             max_ownership=max_ownership_sum,
             excluded_player_ids=overexposed,
+            required_player_ids=locked_ids,
             prev_lineups=lineups,
+            cap_te=cap_te,
         )
 
         if not lineup:
@@ -298,19 +312,50 @@ if __name__ == "__main__":
     import json
     
     is_json = '--json' in sys.argv
-    args = [a for a in sys.argv if a != '--json']
+    stack_qb = '--stack-qb-wr' in sys.argv
+    cap_te = '--cap-te' in sys.argv
+    
+    args = [a for a in sys.argv if a not in ('--json', '--stack-qb-wr', '--cap-te')]
     
     week = int(args[1]) if len(args) > 1 else 14
-    season = int(args[2]) if len(args) > 2 else 2023
+    season = int(args[2]) if len(args) > 2 else 2026
     platform = args[3] if len(args) > 3 else 'dk'
     n = int(args[4]) if len(args) > 4 else 5
-    max_exposure = float(args[5]) if len(args) > 5 else 0.60
+    
+    # Check for --max-exposure=0.60 format
+    max_exposure = 0.60
+    excluded_ids = set()
+    locked_ids = set()
+    for a in sys.argv:
+        if a.startswith('--max-exposure='):
+            max_exposure = float(a.split('=')[1])
+        elif a.startswith('--excluded='):
+            val = a.split('=')[1]
+            if val: excluded_ids = set(val.split(','))
+        elif a.startswith('--locked='):
+            val = a.split('=')[1]
+            if val: locked_ids = set(val.split(','))
+            
     max_own = float(args[6]) if len(args) > 6 else None
 
     if not is_json:
-        print(f"\nGenerating {n} {platform.upper()} GPP lineups for Week {week}, {season}...\n")
+        print(f"\nGenerating {n} {platform.upper()} GPP lineups for Week {week}, {season}...")
+        if stack_qb: print("Enforcing QB + WR/TE stacking.")
+        print(f"Max exposure cap: {max_exposure*100}%")
         
-    lineups = generate_multi_lineup(week=week, season=season, platform=platform, n_lineups=n, max_player_exposure=max_exposure, max_ownership_sum=max_own, is_json=is_json)
+    lineups = generate_multi_lineup(
+        week=week, 
+        season=season, 
+        platform=platform, 
+        n_lineups=n, 
+        stack_qb=stack_qb,
+        cap_te=cap_te,
+        max_player_exposure=max_exposure, 
+        max_ownership_sum=max_own, 
+        is_json=is_json,
+        excluded_ids=excluded_ids,
+        locked_ids=locked_ids
+    )
     result = format_lineup_output(lineups)
 
     if is_json:

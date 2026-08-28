@@ -2,8 +2,8 @@
 // Restored Mindwave Lotus Features
 (function() {
     const resumeAudio = () => {
-        if (window.gameAudio && window.gameAudio.ctx && window.gameAudio.ctx.state === 'suspended') {
-            window.gameAudio.ctx.resume();
+        if (this.audio && this.audio.ctx && this.audio.ctx.state === 'suspended') {
+            this.audio.ctx.resume();
         }
     };
     document.addEventListener('click', resumeAudio, { capture: true, passive: true });
@@ -18,16 +18,19 @@ v5.0 - Pre-Placement Color Model
  */
 
 // === PROCEDURAL AUDIO ENGINE ===
-import { AudioEngine } from './audio.js?v=ray_fix_v35';
+import { AudioSystem } from './js/engine/AudioSystem.js';
 import * as Utils from './utils.js';
 import { equipmentDB, baseModules, mineralTypes, galaxyZones, hangarShips } from './js/core/constants.js';
-import { applyRenderMixin } from './js/mixins/RenderMixin.js';
-import { applyInputMixin } from './js/mixins/InputMixin.js';
-import { applyUIMixin } from './js/mixins/UIMixin.js';
+import { Renderer } from './js/engine/Renderer.js';
+import { Physics } from './js/engine/Physics.js';
+// import { applyInputMixin } from './js/mixins/InputMixin.js';
+import { Multiplayer } from './js/engine/Multiplayer.js';
+import { InputManager } from './js/engine/InputManager.js';
+import { UIManager } from './js/engine/UIManager.js';
 import { applyFactoryMixin } from './js/mixins/FactoryMixin.js';
 
 
-window.gameAudio = new AudioEngine();
+// this.audio = new AudioEngine();
 
 // Track user interaction to prevent navigator.vibrate intervention warnings
 window.hasUserInteracted = false;
@@ -153,6 +156,17 @@ class InterstellarEngine {
         this.cyberColor1 = '#ff007f'; // Vortex Rings
         this.cyberColor2 = '#00ffff'; // Spirals
         this.cyberRainbowMode = false;
+
+        // Input Management
+        this.inputManager = new InputManager(this);
+        this.uiManager = new UIManager(this);
+        this.renderer = new Renderer(this);
+        this.physics = new Physics(this);
+        this.audio = new AudioSystem();
+        this.keys = this.inputManager.keys;
+
+        // Multiplayer integration
+        this.multiplayer = new Multiplayer(this);
 
         // Generic Background Mode Options
         this.starColors = ['#ffffff', '#aaddff', '#ffddaa']; // 3 customizable star colors
@@ -378,7 +392,7 @@ class InterstellarEngine {
         this._hangarLoopRunning = false;
 
         // Performance
-        // this.initWebGL(); // Disabled for now to focus on monetization
+        // this.renderer.initWebGL(); // Disabled for now to focus on monetization
         this.init();
         this.initFactory();
     }
@@ -552,8 +566,8 @@ class InterstellarEngine {
                     this.togglePause();
                 }
                 // Suspend audio context to save battery and mute audio
-                if (window.gameAudio && window.gameAudio.ctx) {
-                    window.gameAudio.ctx.suspend().catch(e => console.warn(e));
+                if (this.audio && this.audio.ctx) {
+                    this.audio.ctx.suspend().catch(e => console.warn(e));
                 }
                 
                 // Schedule local push notification for offline earnings reminder
@@ -570,8 +584,8 @@ class InterstellarEngine {
                 }
             } else {
                 // Resume audio context
-                if (window.gameAudio && window.gameAudio.ctx) {
-                    window.gameAudio.ctx.resume().catch(e => console.warn(e));
+                if (this.audio && this.audio.ctx) {
+                    this.audio.ctx.resume().catch(e => console.warn(e));
                 }
             }
         });
@@ -621,7 +635,7 @@ class InterstellarEngine {
                 e.preventDefault();
                 return;
             } else if (key === 'x') {
-                this.toggleFlightMode();
+                this.uiManager.toggleFlightMode();
                 e.preventDefault();
                 return;
             } else if (key === 'f' && this.flightMode) {
@@ -704,7 +718,7 @@ class InterstellarEngine {
             }
         });
         // Initial mode setup
-        this.setMode('draw');
+        this.uiManager.setMode('draw');
         // Initial color state setup
         this.updateColorModeUI();
 
@@ -712,10 +726,10 @@ class InterstellarEngine {
         this.matrixColorCustomized = false;
 
         // UI Events
-        this.initWindowSystem();
+        this.uiManager.initWindowSystem();
 
         // Apply saved HUD layout 
-        setTimeout(() => this.setLayout(localStorage.getItem('hudLayout') || 'horizontal'), 500);
+        setTimeout(() => this.uiManager.setLayout(localStorage.getItem('hudLayout') || 'horizontal'), 500);
 
         // Initialize kbd tooltips for flight controls
         this.initKbdTooltips();
@@ -863,8 +877,8 @@ class InterstellarEngine {
                 loadingPrompt.style.opacity = '1';
                 // Add click handler to start the game
                 loadingPrompt.onclick = () => {
-                    if (window.gameAudio && window.gameAudio.init) {
-                        window.gameAudio.init(); // Initialize Audio Context on user interaction synchronously
+                    if (this.audio && this.audio.init) {
+                        this.audio.init(); // Initialize Audio Context on user interaction synchronously
                     }
                     loadingScreen.style.opacity = '0';
                     setTimeout(() => {
@@ -914,7 +928,7 @@ class InterstellarEngine {
             this.showToast('⏸️ Game Paused');
             this.pauseStartTime = Date.now();
             if (pb) pb.innerHTML = '▶️ <span class="hide-mobile">RESUME</span>';
-            if (window.gameAudio) window.gameAudio.stopEngineHum();
+            if (this.audio) this.audio.stopEngineHum();
         } else {
             this.showToast('▶️ Game Resumed');
             if (this.pauseStartTime) {
@@ -925,7 +939,7 @@ class InterstellarEngine {
                 if (this.quantumJump && this.quantumJump.startTime) this.quantumJump.startTime += delta;
             }
             if (pb) pb.innerHTML = '⏸️ <span class="hide-mobile">PAUSE</span>';
-            if (window.gameAudio && !window.gameAudio.engineHumMuted) window.gameAudio.startEngineHum();
+            if (this.audio && !this.audio.engineHumMuted) this.audio.startEngineHum();
         }
     }
 
@@ -1197,7 +1211,7 @@ class InterstellarEngine {
             });
             
             try {
-                this.generateSingleStyle(style);
+                this.renderer.generateSingleStyle(style);
             } catch (e) {
                 console.error(`[BG Error] generateSingleStyle(${style}) failed:`, e);
             }
@@ -1210,7 +1224,7 @@ class InterstellarEngine {
             });
         }
 
-        this.updateBgUI();
+        this.renderer.updateBgUI();
     }
 
     
@@ -2719,230 +2733,7 @@ class InterstellarEngine {
         ctx.restore();
     }
 
-    updatePlayerShip() {
-        const ship = this.playerShip;
-        const keys = this.keysPressed;
-
-        // DISABLE ALL CONTROLS during major hazard effects (not missile hits)
-        if (this.hazardEffect && this.hazardEffect.type !== 'missile_hit') {
-            this.camera.x = -ship.x * this.camera.zoom;
-            this.camera.y = -ship.y * this.camera.zoom;
-            return;
-        }
-
-        // Rotation (Yaw - left/right)
-        if (keys['a'] || keys['arrowleft']) ship.rotation -= ship.rotationSpeed;
-        if (keys['d'] || keys['arrowright']) ship.rotation += ship.rotationSpeed;
-
-        // Joystick Yaw
-        if (this.joyInputX) {
-            ship.rotation += this.joyInputX * ship.rotationSpeed;
-        }
-
-        // Mouse Steering (Right-Click Drag)
-        if (this.mouseRightDown && this.mouseLastX !== undefined) {
-            const deltaX = this.mouseX - this.mouseLastX;
-            const deltaY = this.mouseY - this.mouseLastY;
-            ship.rotation += deltaX * 0.005;
-            ship.pitch += deltaY * 0.005;
-            ship.pitch = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, ship.pitch));
-            this.mouseLastX = this.mouseX;
-            this.mouseLastY = this.mouseY;
-        }
-
-        // 3D Pitch rotation
-        if (keys['r']) ship.pitch = Math.min(Math.PI / 3, ship.pitch + 0.02);
-        if (keys['f']) ship.pitch = Math.max(-Math.PI / 3, ship.pitch - 0.02);
-
-        // 3D Roll rotation
-        if (keys['z']) ship.roll = Math.min(Math.PI / 2, ship.roll + 0.03);
-        if (keys['x']) ship.roll = Math.max(-Math.PI / 2, ship.roll - 0.03);
-
-        // Acceleration
-        const cos = Math.cos(ship.rotation);
-        const sin = Math.sin(ship.rotation);
-
-        // Viper Boost & Apex Overclock Multiplier
-        let abilityAccelMult = 1.0;
-
-        // Apex Overclock Timeout Logic
-        if (ship.overclockActive && Date.now() - (ship.overclockStartTime || 0) > 5000) {
-            ship.overclockActive = false;
-            this.showToast('Overclock Disengaged.');
-        }
-
-        if (ship.type === 'viper' && ship.boostActive) {
-            abilityAccelMult = 2.0;
-        } else if (ship.type === 'apex' && ship.overclockActive) {
-            abilityAccelMult = 2.0;
-        }
-
-        const enginesActive = !ship.enginesDisabled;
-        let currentThrust = 0;
-
-        if ((keys['w'] || keys['arrowup']) && enginesActive) {
-            ship.vx += cos * ship.acceleration * abilityAccelMult;
-            ship.vy += sin * ship.acceleration * abilityAccelMult;
-            currentThrust += ship.acceleration * abilityAccelMult;
-        }
-        if ((keys['s'] || keys['arrowdown']) && enginesActive) {
-            ship.vx -= cos * ship.acceleration * 0.5 * abilityAccelMult;
-            ship.vy -= sin * ship.acceleration * 0.5 * abilityAccelMult;
-            currentThrust += ship.acceleration * 0.5 * abilityAccelMult;
-        }
-
-        // Joystick Thrust
-        if (this.joyInputY && Math.abs(this.joyInputY) > 0.1) {
-            const thrust = -this.joyInputY * ship.acceleration;
-            ship.vx += cos * thrust;
-            ship.vy += sin * thrust;
-            currentThrust += Math.abs(thrust);
-        }
-
-        ship.currentThrust = currentThrust;
-
-        // 3D movement (Q/E)
-        if (keys['q']) ship.vz += ship.acceleration;
-        if (keys['e']) ship.vz -= ship.acceleration;
-
-        // --- PHYSICS & SPEED CLAMPING ---
-        let effectiveMaxSpeed = ship.maxSpeed;
-
-        // Shift = manual speed boost (increases effective max speed, not position multiplier)
-        if (keys['shift']) {
-            effectiveMaxSpeed *= 1.8;
-        }
-
-        // Skill: Viper Boost (Ship Specific)
-        if (ship.type === 'viper' && ship.boostActive) {
-            effectiveMaxSpeed *= 2.0;
-        } 
-        // Skill: Apex Overclock (Ship Specific)
-        else if (ship.type === 'apex' && ship.overclockActive) {
-            effectiveMaxSpeed *= 1.5;
-        }
-
-        // Skill: Global Afterburner (raises the speed cap)
-        if (this.globalAbilityActive && this.globalAbilityActive.afterburner) {
-            effectiveMaxSpeed *= 3.0 + (this.playerSkills.afterburner * 0.5);
-        }
-
-        // Power-Up: Speed Boost
-        if (ship.speedBoost && Date.now() < ship.speedBoost) {
-            effectiveMaxSpeed *= 1.5;
-        }
-
-        // Penalty: Towing base reduces max speed
-        if (this.spaceBase && this.spaceBase.isTowing) {
-            effectiveMaxSpeed *= 0.5;
-        }
-
-        ship.x += ship.vx;
-        ship.y += ship.vy;
-        ship.z += ship.vz;
-
-        ship.speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy + ship.vz * ship.vz);
-
-        // Safety: Prevent NaN if speed is zero or malformed
-        if (ship.speed > effectiveMaxSpeed && ship.speed > 0) {
-            const ratio = effectiveMaxSpeed / ship.speed;
-            ship.vx *= ratio;
-            ship.vy *= ratio;
-            ship.vz *= ratio;
-            ship.speed = effectiveMaxSpeed;
-        }
-
-        const friction = 0.998;
-        ship.vx *= friction;
-        ship.vy *= friction;
-        ship.vz *= friction;
-
-        // Speed Lines Generation
-        if (ship.speed > 5 && Math.random() < 0.3) {
-            const lineCount = Math.floor(ship.speed / 15) + 1;
-            for (let i = 0; i < lineCount; i++) {
-                this.speedLines.push({
-                    x: ship.x + (Math.random() - 0.5) * 600,
-                    y: ship.y + (Math.random() - 0.5) * 600,
-                    z: ship.z + (Math.random() - 0.5) * 600,
-                    vx: -ship.vx * 0.4,
-                    vy: -ship.vy * 0.4,
-                    life: 0.8 + Math.random() * 0.4,
-                    decay: 0.04 + Math.random() * 0.04
-                });
-            }
-        }
-
-        // Engine Exhaust Particles
-        this.engineParticles = this.engineParticles || [];
-        if (currentThrust > 0 && Math.random() < 0.6 + currentThrust/2) {
-            const spread = Math.random() * 0.4 - 0.2;
-            const exAngle = ship.rotation + Math.PI + spread;
-            const exSpeed = 2 + currentThrust * 2 + Math.random() * 2;
-            this.engineParticles.push({
-                x: ship.x - Math.cos(ship.rotation) * 20,
-                y: ship.y - Math.sin(ship.rotation) * 20,
-                vx: Math.cos(exAngle) * exSpeed + ship.vx * 0.2,
-                vy: Math.sin(exAngle) * exSpeed + ship.vy * 0.2,
-                life: 1.0,
-                color: ship.type === 'viper' ? 'rgba(0, 255, 255, ' : 'rgba(255, 100, 0, ',
-                size: 3 + Math.random() * 3 + currentThrust
-            });
-        }
-        
-        for (let i = this.engineParticles.length - 1; i >= 0; i--) {
-            const p = this.engineParticles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.size *= 0.95;
-            p.life -= 0.03;
-            if (p.life <= 0 || p.size < 0.1) {
-                this.engineParticles.splice(i, 1);
-            }
-        }
-
-        // Speed Lines Update
-        this.speedLines.forEach(line => {
-            line.x += line.vx;
-            line.y += line.vy;
-            line.life -= (line.decay || 0.05);
-
-            if (ship.type === 'hauler') {
-                const dx = ship.x - line.x;
-                const dy = ship.y - line.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 400 && dist > 1) {
-                    const pull = 1.2 * (1 - dist / 400);
-                    line.vx += (dx / Math.max(0.1, dist)) * pull;
-                    line.vy += (dy / Math.max(0.1, dist)) * pull;
-                }
-            }
-        });
-        this.speedLines = this.speedLines.filter(line => line.life > 0);
-
-        // Sanity Check for NaN - Recovery Mechanism
-        if (isNaN(ship.x) || isNaN(ship.y) || isNaN(ship.z)) {
-            console.warn("⚠️ CRITICAL: Ship coordinates corrupt (NaN). Emergency reset invoked.");
-            ship.x = 0; ship.y = 0; ship.z = 0;
-            ship.vx = 0; ship.vy = 0; ship.vz = 0;
-        }
-
-        // Camera follow
-        this.camera.x = -ship.x * this.camera.zoom;
-        this.camera.y = -ship.y * this.camera.zoom;
-
-        this.checkAndGenerateSectors();
-
-        // Muzzle Flash Decay
-        if (ship.muzzleFlash > 0) {
-            ship.muzzleFlash -= 0.1;
-        }
-
-        // Weapon Firing (Spacebar)
-        if (keys[' ']) {
-            this.shoot();
-        }
-    }
+    // Moved updatePlayerShip to Physics.js
 
     shoot() {
         const now = Date.now();
@@ -3020,241 +2811,16 @@ class InterstellarEngine {
 
         if (firedAny) {
             ship.muzzleFlash = 1.0;
-            gameAudio.playLaser();
+            this.audio.playLaser();
         }
     }
 
-    updateProjectiles() {
-        // Iterate backwards to allow removal
-        for (let i = this.projectiles.length - 1; i >= 0; i--) {
-            const p = this.projectiles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.life--;
-
-            if (p.life <= 0) {
-                this.projectiles.splice(i, 1);
-                continue;
-            }
-
-            // check collisions with Space Mines
-            let hit = false;
-            for (let j = this.spaceMines.length - 1; j >= 0; j--) {
-                const mine = this.spaceMines[j];
-                const dx = p.x - mine.x;
-                const dy = p.y - mine.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                const hitRadius = mine.radius || mine.size || 20;
-
-                if (dist < hitRadius + (p.width || 4)) {
-                    // HIT!
-                    this.createExplosion(p.x, p.y, 'hit');
-                    if (mine.health === undefined) mine.health = 50; // Default health
-                    mine.health -= (p.damage || 25); // Use projectile damage
-                    hit = true;
-
-                    if (mine.health <= 0) {
-                        this.destroySpaceMine(j);
-                    }
-                    break; // One hit per projectile
-                }
-            }
-
-            if (hit) {
-                this.projectiles.splice(i, 1);
-                continue;
-            }
-
-            // Check collisions with Missile Bases
-            for (let k = this.missileBases.length - 1; k >= 0; k--) {
-                const base = this.missileBases[k];
-                const dx = p.x - base.x;
-                const dy = p.y - base.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < base.size * 1.5 + p.width) { // Base hitbox is generous
-                    // HIT!
-                    this.createExplosion(p.x, p.y, 'hit');
-                    base.health -= (p.damage || 25);
-                    hit = true;
-
-                    // Flash base red
-                    base.hitFlash = 10;
-
-                    if (base.health <= 0) {
-                        this.destroyMissileBase(k);
-                    }
-                    break;
-                }
-            }
-
-            if (hit) {
-                this.projectiles.splice(i, 1);
-                continue;
-            }
-
-            // Check collisions with Enemy Missiles
-            for (let m = this.enemyMissiles.length - 1; m >= 0; m--) {
-                const missile = this.enemyMissiles[m];
-                const dx = p.x - missile.x;
-                const dy = p.y - missile.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < missile.size * 3 + p.width + 10) { // Generous leeway for hitting fast-moving missiles
-                    // HIT!
-                    this.createExplosion(p.x, p.y, 'hit');
-                    missile.health -= (p.damage || 25);
-                    hit = true;
-
-                    if (missile.health <= 0) {
-                        this.createExplosion(missile.x, missile.y, 'destruction');
-                        this.enemyMissiles.splice(m, 1);
-                        
-                        // Small reward for shooting down a missile
-                        this.playerGems += 2;
-                        localStorage.setItem('playerGems', this.playerGems);
-                        this.showToast(`💥 Missile Intercepted! +2 Gems`, 1000);
-                    }
-                    break;
-                }
-            }
-
-            if (hit) {
-                this.projectiles.splice(i, 1);
-                continue;
-            }
-
-            // Check collisions with Enemy Ships
-            for (let e = this.enemyShips.length - 1; e >= 0; e--) {
-                const enemy = this.enemyShips[e];
-                const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
-                const dx = p.x - enemy.x;
-                const dy = p.y - enemy.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < typeDef.size + p.width) {
-                    this.createExplosion(p.x, p.y, 'hit');
-                    enemy.health -= (p.damage || 25);
-                    enemy.hitFlash = 10;
-                    hit = true;
-                    this.playerStats.shotsHit++;
-
-                    // Faction Wars: Reputation Adjustments
-                    if (enemy.faction) {
-                        this.factionRep[enemy.faction] = Math.max(-100, (this.factionRep[enemy.faction] || 0) - 2);
-                        // Friendly boost to rivals
-                        Object.keys(this.factionRep).forEach(f => {
-                            if (f !== enemy.faction) this.factionRep[f] = Math.min(100, (this.factionRep[f] || 0) + 1);
-                        });
-                        localStorage.setItem('factionRep', JSON.stringify(this.factionRep));
-                    }
-
-                    if (enemy.health <= 0) {
-                        this.destroyEnemyShip(e);
-                    }
-                    break;
-                }
-            }
-
-            if (hit) {
-                this.projectiles.splice(i, 1);
-                continue;
-            }
-
-            // Check collisions with Background Spacecraft
-            if (this.activeStyles.has('alien') && this.spacecraft && this.spacecraft.length > 0) {
-                const bgZoom = Math.pow(this.camera.zoom, 0.4);
-
-                const pScreenX = this.canvas.width / 2 + (p.x - this.playerShip.x) * this.camera.zoom;
-                const pScreenY = this.canvas.height / 2 + (p.y - this.playerShip.y) * this.camera.zoom;
-
-                for (let sIdx = this.spacecraft.length - 1; sIdx >= 0; sIdx--) {
-                    const sc = this.spacecraft[sIdx];
-                    if (sc.flownOut) continue;
-
-                    const para = sc.parallax || 0.4;
-                    const scScreenX = this.canvas.width / 2 + (sc.x - this.playerShip.x * para) * bgZoom;
-                    const scScreenY = this.canvas.height / 2 + (sc.y - this.playerShip.y * para) * bgZoom;
-
-                    const dx = pScreenX - scScreenX;
-                    const dy = pScreenY - scScreenY;
-                    const dist = Math.hypot(dx, dy);
-
-                    const scRadius = (sc.size || 20) * 1.5 * bgZoom;
-
-                    if (dist < scRadius + 5) {
-                        const hitWorldX = this.playerShip.x + (pScreenX - this.canvas.width / 2) / this.camera.zoom;
-                        const hitWorldY = this.playerShip.y + (pScreenY - this.canvas.height / 2) / this.camera.zoom;
-
-                        this.createExplosion(hitWorldX, hitWorldY, 'hit');
-                        
-                        if (sc.health === undefined) {
-                            sc.health = sc.shipClass === 'mothership' ? 250 : (sc.shipClass === 'destroyer' ? 120 : (sc.shipClass === 'cruiser' ? 80 : 40));
-                            sc.maxHealth = sc.health;
-                        }
-
-                        sc.health -= (p.damage || 25);
-                        hit = true;
-
-                        if (sc.health <= 0) {
-                            this.createExplosion(hitWorldX, hitWorldY, 'destruction');
-                            this.spacecraft.splice(sIdx, 1);
-                            this.respawnSpacecraftBackground();
-                        }
-                        break;
-                    }
-                }
-            }
-
-            if (hit) {
-                this.projectiles.splice(i, 1);
-                continue;
-            }
-
-            // Check collision with Boss
-            if (this.activeBoss) {
-                const boss = this.activeBoss;
-                const bTypeDef = InterstellarEngine.BOSS_TYPES[boss.type];
-                const dx = p.x - boss.x;
-                const dy = p.y - boss.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < bTypeDef.size + p.width) {
-                    this.createExplosion(p.x, p.y, 'hit');
-                    this.damageBoss(25);
-                    hit = true;
-                }
-            }
-
-            if (hit) {
-                this.projectiles.splice(i, 1);
-                continue;
-            }
-
-            // CHECK COLLISIONS WITH BLACK HOLES (Sucked in)
-            for (let b = 0; b < this.hazardBlackHoles.length; b++) {
-                const bh = this.hazardBlackHoles[b];
-                const dx = p.x - bh.x;
-                const dy = p.y - bh.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                // If projectile enters the black hole horizon region, it vanishes
-                if (dist < bh.size * 1.8) {
-                    this.projectiles.splice(i, 1);
-                    hit = true;
-                    break;
-                }
-            }
-
-            if (hit) continue;
-        }
-    }
+    // Moved updateProjectiles to Physics.js
 
     createExplosion(x, y, type) {
         // Audio: explosion
-        if (type === 'hit') gameAudio.playExplosionSmall();
-        else gameAudio.playExplosionBig();
+        if (type === 'hit') this.audio.playExplosionSmall();
+        else this.audio.playExplosionBig();
 
         // Simple particle explosion
         if (this.settings.particles !== false) {
@@ -3540,2210 +3106,7 @@ class InterstellarEngine {
         }
     }
 
-    updateEnemyShips() {
-        if (!this.flightMode || !this.playerShip) return;
-
-        const ship = this.playerShip;
-        const now = Date.now();
-        const isPlayerCloaked = ship.isCloaked || ship.type === 'spectre';
-
-        for (const enemy of this.enemyShips) {
-            const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
-
-            // EMP FREEZE CHECK: Skip all AI logic while disabled
-            if (enemy.disabled) {
-                if (now >= enemy.disabledUntil) {
-                    enemy.disabled = false; // Auto-unfreeze when timer expires
-                } else {
-                    // Apply friction to gradually stop the ship while frozen
-                    enemy.vx *= 0.9;
-                    enemy.vy *= 0.9;
-                    enemy.x += enemy.vx;
-                    enemy.y += enemy.vy;
-                    continue; // Skip remaining AI logic
-                }
-            }
-
-            // Default patrol target is in front of current patrol angle (not player)
-            let targetX = enemy.x + Math.cos(enemy.patrolAngle || 0) * 500;
-            let targetY = enemy.y + Math.sin(enemy.patrolAngle || 0) * 500;
-            let targetShip = ship;
-            let distToTarget = Infinity;
-            let isTargetingPlayer = false;
-
-            // 1. Check player as target only when faction is hostile
-            const ecmFactor = 1 - (this.playerShip.ecmStrength || 0) * 0.1;
-            const effectiveAggroRange = typeDef.aggroRange * ecmFactor;
-            const isHostileToPlayer = (this.factionRep[enemy.faction] || 0) < 0;
-
-            if (isHostileToPlayer && !isPlayerCloaked) {
-                const dToPlayer = Math.hypot(enemy.x - ship.x, enemy.y - ship.y);
-                if (dToPlayer < effectiveAggroRange) {
-                    distToTarget = dToPlayer;
-                    targetX = ship.x;
-                    targetY = ship.y;
-                    targetShip = ship;
-                    isTargetingPlayer = true;
-                }
-            }
-
-            // 2. Evaluate rival factions as targets (only if closer than current)
-            for (const other of this.enemyShips) {
-                if (!other.faction || other.faction === enemy.faction || other === enemy) continue;
-                const d = Math.hypot(enemy.x - other.x, enemy.y - other.y);
-                if (d < distToTarget) {
-                    distToTarget = d;
-                    targetX = other.x;
-                    targetY = other.y;
-                    targetShip = other;
-                    isTargetingPlayer = false;
-                }
-            }
-
-            const angleToTarget = (distToTarget < Infinity)
-                ? Math.atan2(targetY - enemy.y, targetX - enemy.x)
-                : (enemy.patrolAngle || 0);
-
-            // STALKING HYSTERESIS: Once aggroed, stay aggroed until target is far away
-            const stalkStopDist = effectiveAggroRange * 3.0;
-            if (distToTarget < effectiveAggroRange && distToTarget < Infinity) {
-                enemy.isStalking = true;
-            } else if (distToTarget > stalkStopDist || distToTarget === Infinity) {
-                enemy.isStalking = false;
-            }
-
-            // Determine AI state
-            if (enemy.health < typeDef.health * 0.2) {
-                enemy.state = 'flee';
-            } else if (distToTarget === Infinity) {
-                enemy.state = 'patrol';
-            } else if (distToTarget < typeDef.attackRange) {
-                enemy.state = 'attack';
-            } else if (enemy.isStalking) {
-                enemy.state = 'chase';
-            } else {
-                enemy.state = 'patrol';
-            }
-
-            // Execute state behavior
-            let targetAngle = enemy.patrolAngle;
-            let thrust = 0;
-
-            switch (enemy.state) {
-                case 'patrol':
-                    enemy.patrolTimer++;
-                    if (enemy.patrolTimer > 180 + Math.random() * 120) {
-                        enemy.patrolAngle += (Math.random() - 0.5) * Math.PI;
-                        enemy.patrolTimer = 0;
-                    }
-                    targetAngle = enemy.patrolAngle;
-                    thrust = typeDef.maxSpeed * 0.4;
-                    break;
-
-                case 'chase':
-                    targetAngle = angleToTarget;
-                    thrust = typeDef.maxSpeed;
-                    break;
-
-                case 'attack':
-                    targetAngle = angleToTarget;
-                    // Stop thrusting if already within close range to prevent perpetual orbit
-                    thrust = distToTarget > typeDef.attackRange * 0.5
-                        ? typeDef.maxSpeed * 0.3
-                        : 0; // Hover in place and shoot, don't spiral
-
-                    // Check if player is invulnerable (grace period on spawn)
-                    const isTargetInvulnerable = targetShip === this.playerShip && this.playerShip.invulnerableUntil && performance.now() < this.playerShip.invulnerableUntil;
-
-                    // Fire weapons
-                    if (!isTargetInvulnerable) {
-                        if (enemy.burstRemaining > 0) {
-                            if (now - enemy.burstTimer > (typeDef.burstDelay || 0)) {
-                                this.fireEnemyBullet(enemy, typeDef, targetShip);
-                                enemy.burstRemaining--;
-                                enemy.burstTimer = now;
-                            }
-                        } else if (now - enemy.lastFireTime > typeDef.fireRate) {
-                            if (typeDef.burstCount) {
-                                enemy.burstRemaining = typeDef.burstCount;
-                                enemy.burstTimer = now;
-                            } else {
-                                this.fireEnemyBullet(enemy, typeDef, targetShip);
-                            }
-                            enemy.lastFireTime = now;
-                        }
-                    }
-                    break;
-
-                case 'flee':
-                    targetAngle = angleToTarget + Math.PI; // Run away
-                    thrust = typeDef.maxSpeed;
-                    break;
-            }
-
-            // Smooth rotation toward target angle
-            let angleDiff = targetAngle - enemy.rotation;
-            angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
-            enemy.rotation += angleDiff * 0.06;
-
-            // Apply thrust
-            enemy.vx += Math.cos(enemy.rotation) * typeDef.acceleration;
-            enemy.vy += Math.sin(enemy.rotation) * typeDef.acceleration;
-
-            // Clamp speed
-            const speed = Math.hypot(enemy.vx, enemy.vy);
-            if (speed > thrust) {
-                const scale = thrust / speed;
-                enemy.vx *= scale;
-                enemy.vy *= scale;
-            }
-
-            // Apply friction
-            enemy.vx *= 0.98;
-            enemy.vy *= 0.98;
-
-            // Move
-            enemy.x += enemy.vx;
-            enemy.y += enemy.vy;
-
-            // Decay hit flash
-            if (enemy.hitFlash > 0) enemy.hitFlash--;
-        }
-
-        // Spawn new enemies
-        this.spawnEnemyShips();
-    }
-
-    fireEnemyBullet(enemy, typeDef, targetShip) {
-        // targetShip defaults to player if not provided
-        const target = targetShip || this.playerShip;
-        gameAudio.playEnemyLaser();
-
-        // Lead the target's movement for smarter aiming
-        const dist = Math.hypot(target.x - enemy.x, target.y - enemy.y);
-        const timeToHit = dist / typeDef.bulletSpeed;
-        const leadX = target.x + (target.vx || 0) * timeToHit * 0.3;
-        const leadY = target.y + (target.vy || 0) * timeToHit * 0.3;
-        const leadAngle = Math.atan2(leadY - enemy.y, leadX - enemy.x);
-
-        // Add slight inaccuracy
-        const spread = (Math.random() - 0.5) * 0.15;
-
-        const dmgMult = enemy.diffMultiplier || 1.0;
-        this.enemyBullets.push({
-            x: enemy.x + Math.cos(leadAngle) * (typeDef.size + 5),
-            y: enemy.y + Math.sin(leadAngle) * (typeDef.size + 5),
-            vx: Math.cos(leadAngle + spread) * typeDef.bulletSpeed,
-            vy: Math.sin(leadAngle + spread) * typeDef.bulletSpeed,
-            rotation: leadAngle + spread,
-            damage: typeDef.bulletDamage * dmgMult,
-            life: 80, // ~1.3 seconds
-            color: typeDef.color,
-            faction: enemy.faction, // Track which faction fired this bullet
-            width: 3,
-            length: 25
-        });
-    }
-
-    updateEnemyBullets() {
-        if (!this.flightMode || !this.playerShip) return;
-
-        const ship = this.playerShip;
-
-        for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
-            const b = this.enemyBullets[i];
-            b.x += b.vx;
-            b.y += b.vy;
-            b.life--;
-
-            if (b.life <= 0) {
-                this.enemyBullets.splice(i, 1);
-                continue;
-            }
-
-            let bulletDestroyed = false;
-
-            // Bullets from FRIENDLY factions should not damage the player (rep > 0)
-            // Only damage player if the faction is hostile (rep < 0) or has no faction tag
-            const bulletFactionRep = b.faction ? (this.factionRep[b.faction] || 0) : -1;
-            if (bulletFactionRep < 0) {
-                const dist = Math.hypot(b.x - ship.x, b.y - ship.y);
-                if (dist < 30) {
-                    this.createExplosion(b.x, b.y, 'hit');
-                    this.damagePlayer(b.damage);
-                    this.enemyBullets.splice(i, 1);
-                    bulletDestroyed = true;
-                    continue;
-                }
-            }
-
-            // Check collision with other factions (Enemies)
-            for (let j = this.enemyShips.length - 1; j >= 0; j--) {
-                const enemy = this.enemyShips[j];
-                // Faction check: Terran bullets hit non-terran, Enemy bullets hit different factions
-                if (b.faction && enemy.faction && b.faction !== enemy.faction) {
-                    const eDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
-                    const distEnemy = Math.hypot(b.x - enemy.x, b.y - enemy.y);
-                    if (distEnemy < (eDef.size || 20) + 5) {
-                        this.createExplosion(b.x, b.y, 'hit');
-                        enemy.health -= b.damage;
-                        if (enemy.health <= 0) {
-                            this.destroyEnemyShip(j);
-                        } else {
-                            enemy.hitFlash = 10;
-                        }
-                        this.enemyBullets.splice(i, 1);
-                        bulletDestroyed = true;
-                        break;
-                    }
-                }
-            }
-
-            if (bulletDestroyed) continue;
-
-            // Check collision with Boss
-            if (this.activeBoss && b.faction === 'terran') {
-                const boss = this.activeBoss;
-                const bDef = InterstellarEngine.BOSS_TYPES[boss.type];
-                const distBoss = Math.hypot(b.x - boss.x, b.y - boss.y);
-                if (distBoss < bDef.size + 10) {
-                    this.createExplosion(b.x, b.y, 'hit');
-                    boss.health -= b.damage;
-                    boss.hitFlash = 15;
-                    this.enemyBullets.splice(i, 1);
-                    bulletDestroyed = true;
-                    // Check boss death is handled in updateBoss()
-                }
-            }
-        }
-    }
-
-    destroyEnemyShip(index) {
-        const enemy = this.enemyShips[index];
-        const typeDef = InterstellarEngine.ENEMY_TYPES[enemy.type];
-
-        // Big explosion
-        this.createExplosion(enemy.x, enemy.y, 'destruction');
-
-        // Award gems (Buffed for mid-to-high tier)
-        const gemMult = typeDef.rarity === 'boss' ? 1.5 : (typeDef.rank >= 2 ? 1.2 : 1.0);
-        this.playerGems += Math.ceil(typeDef.gemDrop * gemMult);
-        localStorage.setItem('playerGems', this.playerGems);
-
-        // Increment kill counter
-        this.enemyKills++;
-        this.playerStats.kills++;
-        this.saveStats();
-
-        // Track mission progress
-        if (this.activeMission) {
-            if (this.activeMission.type === 'kill' && this.activeMission.targetType === enemy.type) {
-                this.activeMission.progress++;
-                this.updateMissionHUD();
-                this.checkMissionComplete();
-            } else if (this.activeMission.type === 'kill_any') {
-                this.activeMission.progress++;
-                this.updateMissionHUD();
-                this.checkMissionComplete();
-            }
-        }
-
-        // Drop mineral loot
-        const lootTypes = ['diamond', 'ruby', 'sapphire', 'gold', 'platinum'];
-        const lootType = lootTypes[Math.floor(Math.random() * lootTypes.length)];
-        this.spawnLoot(enemy.x, enemy.y, lootType, Math.ceil(typeDef.gemDrop / 3));
-
-        // Drop power-up (15% chance, guaranteed for boss)
-        if (Math.random() < 0.15 || typeDef.rarity === 'boss') {
-            const puTypes = ['shield_boost', 'hull_repair', 'weapon_overdrive', 'speed_boost'];
-            const puType = puTypes[Math.floor(Math.random() * puTypes.length)];
-            this.powerUps.push({
-                x: enemy.x,
-                y: enemy.y,
-                type: puType,
-                phase: Math.random() * Math.PI * 2,
-                size: 20
-            });
-        }
-
-        this.showToast(`💥 ${typeDef.name} destroyed! +${typeDef.gemDrop} Gems`, 2000);
-
-        this.enemyShips.splice(index, 1);
-    }
-
-    // === BOSS FIGHT SYSTEM ===
-
-    static BOSS_TYPES = {
-        dreadnought: {
-            name: 'Dreadnought',
-            health: 500,
-            size: 50,
-            speed: 1.2,
-            acceleration: 0.02,
-            fireRate: 1500,
-            bulletSpeed: 6,
-            bulletDamage: 20,
-            gemReward: 100,
-            color: '#ff2222',
-            glowColor: 'rgba(255, 34, 34, 0.7)',
-            mechanic: 'shield_arc' // Frontal shield, attack from behind
-        },
-        hivequeen: {
-            name: 'Hive Queen',
-            health: 400,
-            size: 45,
-            speed: 1.0,
-            acceleration: 0.015,
-            fireRate: 2500,
-            bulletSpeed: 5,
-            bulletDamage: 15,
-            gemReward: 150,
-            color: '#44ff44',
-            glowColor: 'rgba(68, 255, 68, 0.7)',
-            mechanic: 'spawn_swarm' // Spawns scouts every 5s
-        },
-        voidreaper: {
-            name: 'Void Reaper',
-            health: 600,
-            size: 55,
-            speed: 2.0,
-            acceleration: 0.04,
-            fireRate: 2000,
-            bulletSpeed: 5,
-            bulletDamage: 30,
-            gemReward: 200,
-            color: '#9944ff',
-            glowColor: 'rgba(153, 68, 255, 0.7)',
-            mechanic: 'teleport' // Teleports when hit, fires homing bolts
-        }
-    };
-
-    spawnBoss(bossType) {
-        if (this.activeBoss) return; // Only one boss at a time
-
-        const typeDef = InterstellarEngine.BOSS_TYPES[bossType];
-        if (!typeDef) return;
-
-        const ship = this.playerShip;
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 1200;
-
-        this.activeBoss = {
-            x: ship.x + Math.cos(angle) * dist,
-            y: ship.y + Math.sin(angle) * dist,
-            vx: 0,
-            vy: 0,
-            rotation: Math.atan2(ship.y - (ship.y + Math.sin(angle) * dist), ship.x - (ship.x + Math.cos(angle) * dist)),
-            type: bossType,
-            health: typeDef.health,
-            maxHealth: typeDef.health,
-            lastFireTime: 0,
-            lastSpawnTime: 0,
-            hitFlash: 0,
-            shieldAngle: 0,
-            teleportCooldown: 0,
-            phase: 1 // 1 = full power, 2 = enraged at 50% HP
-        };
-
-        this.showToast(`⚠️ BOSS INCOMING: ${typeDef.name}! ⚠️`, 4000);
-        gameAudio.playBossAlert();
-    }
-
-    updateBoss() {
-        if (!this.activeBoss || !this.flightMode || !this.playerShip) return;
-
-        const boss = this.activeBoss;
-        const ship = this.playerShip;
-        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
-        const now = Date.now();
-        const distToPlayer = Math.hypot(boss.x - ship.x, boss.y - ship.y);
-        const angleToPlayer = Math.atan2(ship.y - boss.y, ship.x - boss.x);
-
-        // Enrage at 50% HP
-        if (boss.health < typeDef.health * 0.5) boss.phase = 2;
-        const enraged = boss.phase === 2;
-        const speedMult = enraged ? 1.5 : 1.0;
-        const fireRateMult = enraged ? 0.7 : 1.0;
-
-        // Check if player is cloaked
-        const isPlayerCloaked = ship.isCloaked || ship.type === 'spectre';
-
-        // === BOSS-SPECIFIC MECHANICS ===
-        switch (boss.type) {
-            case 'dreadnought':
-                // Rotating shield - blocks frontal shots
-                boss.shieldAngle += 0.02;
-                // Chase player
-                if (!isPlayerCloaked) {
-                    let aDiff = angleToPlayer - boss.rotation;
-                    aDiff = Math.atan2(Math.sin(aDiff), Math.cos(aDiff));
-                    boss.rotation += aDiff * 0.03;
-                }
-                break;
-
-            case 'hivequeen':
-                // Spawn scout swarm every 5 seconds (3s if enraged)
-                const spawnInterval = enraged ? 3000 : 5000;
-                if (now - boss.lastSpawnTime > spawnInterval && !isPlayerCloaked) {
-                    const spawnCount = enraged ? 3 : 2;
-                    for (let i = 0; i < spawnCount; i++) {
-                        const sAngle = boss.rotation + (Math.random() - 0.5) * Math.PI;
-                        const sDist = typeDef.size * 2;
-                        const scoutDef = InterstellarEngine.ENEMY_TYPES.scout;
-                        this.enemyShips.push({
-                            x: boss.x + Math.cos(sAngle) * sDist,
-                            y: boss.y + Math.sin(sAngle) * sDist,
-                            vx: 0, vy: 0,
-                            rotation: sAngle,
-                            type: 'scout',
-                            faction: 'xenon', // Boss scouts are Xenon — always hostile to player
-                            health: scoutDef.health,
-                            maxHealth: scoutDef.health,
-                            state: 'chase',
-                            patrolAngle: sAngle,
-                            patrolTimer: 0,
-                            lastFireTime: 0,
-                            burstRemaining: 0,
-                            burstTimer: 0,
-                            hitFlash: 0,
-                            isStalking: true, // Immediately aggressive — skip patrol phase
-                            spawnTime: now
-                        });
-                    }
-                    boss.lastSpawnTime = now;
-
-                    this.showToast('🐛 Hive Queen spawned reinforcements!', 1500);
-                }
-                if (!isPlayerCloaked) {
-                    let aDiff = angleToPlayer - boss.rotation;
-                    aDiff = Math.atan2(Math.sin(aDiff), Math.cos(aDiff));
-                    boss.rotation += aDiff * 0.02;
-                }
-                break;
-
-            case 'voidreaper':
-                // Teleport handled in damageBoss()
-                if (!isPlayerCloaked) {
-                    let aDiff = angleToPlayer - boss.rotation;
-                    aDiff = Math.atan2(Math.sin(aDiff), Math.cos(aDiff));
-                    boss.rotation += aDiff * 0.04;
-                }
-                break;
-        }
-
-        // Movement — chase player
-        if (!isPlayerCloaked && distToPlayer > 300) {
-            boss.vx += Math.cos(angleToPlayer) * typeDef.acceleration * speedMult;
-            boss.vy += Math.sin(angleToPlayer) * typeDef.acceleration * speedMult;
-        } else if (distToPlayer < 200) {
-            // Back away if too close
-            boss.vx -= Math.cos(angleToPlayer) * typeDef.acceleration * 0.5;
-            boss.vy -= Math.sin(angleToPlayer) * typeDef.acceleration * 0.5;
-        }
-
-        const speed = Math.hypot(boss.vx, boss.vy);
-        const maxSpeed = typeDef.speed * speedMult;
-        if (speed > maxSpeed) {
-            boss.vx *= maxSpeed / speed;
-            boss.vy *= maxSpeed / speed;
-        }
-        boss.vx *= 0.98;
-        boss.vy *= 0.98;
-        boss.x += boss.vx;
-        boss.y += boss.vy;
-
-        // Fire weapons
-        if (!isPlayerCloaked && distToPlayer < 800 && now - boss.lastFireTime > typeDef.fireRate * fireRateMult) {
-            this.fireBossBullet(boss, typeDef);
-            boss.lastFireTime = now;
-        }
-
-        // Boss-player collision
-        if (distToPlayer < typeDef.size + 30) {
-            this.damagePlayer(30);
-        }
-
-        // Decay hit flash
-        if (boss.hitFlash > 0) boss.hitFlash--;
-        if (boss.teleportCooldown > 0) boss.teleportCooldown--;
-    }
-
-    fireBossBullet(boss, typeDef) {
-        const ship = this.playerShip;
-        const angleToPlayer = Math.atan2(ship.y - boss.y, ship.x - boss.x);
-
-        // Boss fires 2-3 bullets in a spread
-        const bulletCount = boss.phase === 2 ? 3 : 2;
-        const spreadAngle = 0.2;
-
-        for (let i = 0; i < bulletCount; i++) {
-            const offset = (i - (bulletCount - 1) / 2) * spreadAngle;
-            const angle = angleToPlayer + offset;
-
-            this.enemyBullets.push({
-                x: boss.x + Math.cos(angle) * (typeDef.size + 10),
-                y: boss.y + Math.sin(angle) * (typeDef.size + 10),
-                vx: Math.cos(angle) * typeDef.bulletSpeed,
-                vy: Math.sin(angle) * typeDef.bulletSpeed,
-                rotation: angle,
-                damage: typeDef.bulletDamage,
-                life: 100,
-                color: typeDef.color,
-                width: 4,
-                length: 30
-            });
-        }
-    }
-
-    damageBoss(amount) {
-        if (!this.activeBoss) return;
-
-        const boss = this.activeBoss;
-        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
-
-        // Dreadnought shield check — blocks frontal damage
-        if (boss.type === 'dreadnought') {
-            const hitAngle = Math.atan2(this.playerShip.y - boss.y, this.playerShip.x - boss.x);
-            let shieldDiff = hitAngle - boss.rotation;
-            shieldDiff = Math.atan2(Math.sin(shieldDiff), Math.cos(shieldDiff));
-            // Shield covers front 120 degrees
-            if (Math.abs(shieldDiff) < Math.PI / 3) {
-                this.showToast('🛡️ Shield blocked!', 1000);
-                return;
-            }
-        }
-
-        // Void Reaper teleport on hit
-        if (boss.type === 'voidreaper' && boss.teleportCooldown <= 0) {
-            const tAngle = Math.random() * Math.PI * 2;
-            boss.x += Math.cos(tAngle) * 300;
-            boss.y += Math.sin(tAngle) * 300;
-            boss.teleportCooldown = 60; // ~1 second cooldown
-        }
-
-        boss.health -= amount;
-        boss.hitFlash = 10;
-
-        if (boss.health <= 0) {
-            this.destroyBoss();
-        }
-    }
-
-    destroyBoss() {
-        if (!this.activeBoss) return;
-
-        const boss = this.activeBoss;
-        const typeDef = InterstellarEngine.BOSS_TYPES[boss.type];
-
-        // Massive explosion
-        for (let i = 0; i < 5; i++) {
-            setTimeout(() => {
-                if (this.activeBoss === null && i > 0) return;
-                this.createExplosion(
-                    boss.x + (Math.random() - 0.5) * typeDef.size * 2,
-                    boss.y + (Math.random() - 0.5) * typeDef.size * 2,
-                    'destruction'
-                );
-            }, i * 200);
-        }
-
-        // Award gems
-        this.playerGems += typeDef.gemReward;
-        localStorage.setItem('playerGems', this.playerGems);
-
-        // Track boss kills
-        this.bossesDefeated++;
-        localStorage.setItem('bossesDefeated', this.bossesDefeated);
-
-        // Rich loot drop
-        const rareLoots = ['antimatter', 'darkmatter', 'neodymium', 'lanthanum'];
-        const lootType = rareLoots[Math.floor(Math.random() * rareLoots.length)];
-        this.spawnLoot(boss.x, boss.y, lootType, 20);
-
-        this.showToast(`🏆 BOSS DEFEATED: ${typeDef.name}! +${typeDef.gemReward} Gems! 🏆`, 5000);
-
-        // Track mission
-        if (this.activeMission && this.activeMission.type === 'boss') {
-            this.activeMission.progress++;
-            this.updateMissionHUD();
-            this.checkMissionComplete();
-        }
-
-        this.activeBoss = null;
-    }
-
-    // === MISSION SYSTEM ===
-
-    static MISSION_TEMPLATES = [
-        // TIER 1: BASICS — Teach the player how to exist in the game
-        {
-            type: 'collect', name: 'First Steps', tier: 1,
-            desc: 'Fly into {goal} glowing gems floating nearby',
-            briefing: 'See those colorful crystals floating around you? Those are gems! Just fly your ship into them to pick them up — no buttons needed, just touch them. Use W to go forward, A/D to turn, SHIFT to go faster.',
-            hint: '💡 Just fly INTO the gems • W = forward • A/D = turn • SHIFT = fast',
-            goal: 5, reward: 500
-        },
-        {
-            type: 'collect', name: 'Resource Expedition', tier: 1,
-            desc: 'Pick up {goal} gems — fly further out for rarer ones',
-            briefing: 'Gems come in different types: common ones are dull, rare ones glow brighter and are worth more. Fly away from where you started to find better gems. Check your Radar (circle in top-left) to see gem dots nearby.',
-            hint: '💡 Fly further from start = better gems • Radar shows nearby gems',
-            goal: 15, reward: 750
-        },
-        {
-            type: 'survive', name: 'Stay Alive', tier: 1,
-            desc: 'Fly around for {goal} seconds without dying',
-            briefing: 'Your ship can be destroyed! Red triangles on your radar are space mines — avoid them. If you see red dots moving toward you, those are enemies — fly away for now. Your health bar is in the Ship Status window. Timer starts when you accept this mission.',
-            hint: '🛡️ Red triangles = mines (avoid!) • Red dots = enemies • SHIFT = escape fast',
-            goal: 30, reward: 600
-        },
-
-        // TIER 2: COMBAT — Teach the player how to fight
-        {
-            type: 'kill', name: 'Weapons Training', tier: 2, targetType: 'scout',
-            desc: 'Press SPACE to shoot and destroy {goal} Scout ships',
-            briefing: 'Your ship has guns! Hold SPACE to fire lasers. When you accept this mission, Scout ships will spawn nearby — look for red dots on your radar. Fly toward them and hold SPACE to shoot. Scouts are weak and die in a few hits.',
-            hint: '⚔️ Hold SPACE to shoot! • Red dots on radar = enemies • Fly toward them',
-            goal: 3, reward: 1500
-        },
-        {
-            type: 'kill', name: 'Fighter Patrol', tier: 2, targetType: 'fighter',
-            desc: 'Destroy {goal} Fighters — they shoot back!',
-            briefing: 'Fighters are tougher than Scouts and will fire at you! Keep your ship moving while shooting (hold W + SPACE together). If your health drops low, fly away with SHIFT to boost. Destroyed enemies drop bonus gems!',
-            hint: '⚔️ W + SPACE = fly and shoot • SHIFT = escape if low health',
-            goal: 3, reward: 2000
-        },
-        {
-            type: 'kill_any', name: 'Space Cleaner', tier: 2,
-            desc: 'Destroy {goal} enemies of any kind (SPACE to fire)',
-            briefing: 'Kill any enemies you find — Scouts, Fighters, anything counts. Enemies appear as red dots on your radar. After killing enemies, spend your gems on upgrades! Click the 🛠️ UPGRADES button in the menu bar to make your ship stronger.',
-            hint: '⚔️ Any enemy counts • SPACE = fire • 🛠️ UPGRADES button = power up your ship',
-            goal: 8, reward: 2500
-        },
-        {
-            type: 'sabotage', name: 'Operation: Sabotage', tier: 2,
-            desc: 'Clear {goal} Space Mines from the sector',
-            briefing: 'Space mines (red triangles) are drifting everywhere. Use your lasers (SPACE) to detonate them from a safe distance. This clears the way for our freighters. Be careful: their explosion radius is large!',
-            hint: '💣 Shoot red triangles • Stay back! • Large explosion radius',
-            goal: 10, reward: 1800
-        },
-
-        // TIER 3: ADVANCED — Challenge the player
-        {
-            type: 'collect', name: 'Deep Mining', tier: 3,
-            desc: 'Collect {goal} gems — explore far from spawn',
-            briefing: 'You need a lot of gems for this one. Press M to open your Galaxy Map and see the full universe. Fly far from center to find richer gem fields. Pro tip: the Hauler ship (in Hangar 🚀) has a Tractor Beam that magnetically pulls gems toward you!',
-            hint: '💎 M = Galaxy Map • Hauler ship = magnet for gems • Fly far out',
-            goal: 30, reward: 5000
-        },
-        {
-            type: 'survive', name: 'Endurance Run', tier: 3,
-            desc: 'Stay alive for {goal} seconds — things get dangerous',
-            briefing: 'The further you fly from where you started, the more dangerous space gets — more mines, turrets, and enemies appear. For this mission, just survive! You can dodge with R/F (pitch up/down) and Z/X (barrel roll). Timer runs from when you accept.',
-            hint: '🛡️ R/F = pitch • Z/X = barrel roll • Fly away from danger • Stay alive!',
-            goal: 60, reward: 6000
-        },
-        {
-            type: 'siege', name: 'Operation: Fortress Siege', tier: 3,
-            desc: 'Destroy {goal} Missile Launch Bases',
-            briefing: 'Standard enemy patrols are one thing, but their stationary Missile Bases are the real threat. They fire long-range heat-seeking missiles. Destroy the bases to weaken their hold on this sector. Use SHIFT to outrun the missiles!',
-            hint: '🛡️ Destroy red circular bases • Outrun missiles with SHIFT • High reward',
-            goal: 2, reward: 8000
-        },
-        {
-            type: 'defense', name: 'Operation: Citadel Guard', tier: 3,
-            desc: 'Protect your Planetary Base from Mauler Siege Fleet',
-            briefing: 'Enemy forces have located your base! A squadron of armored Maulers is moving in to dismantle your structures. Return to your base coordinates immediately and hold the line. Use your base turrets for support!',
-            hint: '🛡️ Defend your Base • Maulers are slow but tough • Look for base icon on radar',
-            goal: 4, reward: 7500
-        },
-
-        // TIER 4: BOSS FIGHTS — The ultimate challenge
-        {
-            type: 'boss', name: 'Boss: Dreadnought', tier: 4, bossType: 'dreadnought',
-            desc: 'A massive warship spawns — destroy it! (SPACE to fire)',
-            briefing: 'When you accept, a Dreadnought boss will spawn near you. It has front shields — fly BEHIND it to deal damage! Hold SPACE to fire. Use SHIFT to boost past its missiles. This is a real fight — make sure your ship is upgraded first!',
-            hint: '👑 Fly BEHIND it! • Front shields block shots • SHIFT dodges missiles',
-            goal: 1, reward: 18000
-        },
-        {
-            type: 'boss', name: 'Boss: Hive Queen', tier: 4, bossType: 'hivequeen',
-            desc: 'A giant alien queen spawns — destroy it!',
-            briefing: 'The Hive Queen spawns swarms of small drones. Kill the drones first (SPACE to fire), then focus on the Queen. She moves unpredictably so be patient. Reward: 150 gems — the biggest payout yet!',
-            hint: '👑 Kill drones first • Then focus the Queen • Be patient!',
-            goal: 1, reward: 22000
-        },
-        {
-            type: 'boss', name: 'Boss: Void Reaper', tier: 4, bossType: 'voidreaper',
-            desc: 'The deadliest boss in the game — can you beat it?',
-            briefing: 'The Void Reaper teleports and fires devastating energy beams. Keep your distance and only attack during its cooldown windows. This is the hardest fight in the game. Reward: 200 gems!',
-            hint: '👑 It teleports! • Attack during cooldowns only • Hardest boss!',
-            goal: 1, reward: 30000
-        },
-        {
-            type: 'kill_any', name: 'Legendary Rampage', tier: 4,
-            desc: 'Destroy {goal} enemies — try different ships from the Hangar!',
-            briefing: 'All-out war. Destroy everything. Each ship in the Hangar (🚀 SHIP button) has a unique special ability — try them all! The Viper has speed boost, the Titan has armor, the Flux can phase through damage. Pick your favorite and dominate!',
-            hint: '⚔️ 🚀 SHIP button = switch ships • Each ship has a unique ability!',
-            goal: 15, reward: 15000
-        }
-    ];
-
-    generateMissionBoard() {
-        // Progressive mission board: show one from each available tier
-        // Tier unlocking: Tier 1 always, Tier 2 after 2 missions, Tier 3 after 5, Tier 4 after 8
-        const completed = this.missionsCompleted || 0;
-        const templates = InterstellarEngine.MISSION_TEMPLATES;
-
-        let maxTier = 1;
-        if (completed >= 2) maxTier = 2;
-        if (completed >= 5) maxTier = 3;
-        if (completed >= 8) maxTier = 4;
-
-        // Group by tier
-        const available = templates.filter(t => t.tier <= maxTier);
-        const shuffled = [...available].sort(() => Math.random() - 0.5);
-
-        // Pick 3, trying to get variety across tiers
-        const picked = [];
-        const usedTiers = new Set();
-        for (const m of shuffled) {
-            if (picked.length >= 3) break;
-            if (!usedTiers.has(m.tier) || picked.length < 3) {
-                picked.push(m);
-                usedTiers.add(m.tier);
-            }
-        }
-        return picked.slice(0, 3);
-    }
-
-    acceptMission(missionTemplate) {
-        if (this.activeMission) {
-            this.showToast('⚠️ Complete or abandon current mission first!', 2000);
-            return;
-        }
-
-        this.activeMission = {
-            ...missionTemplate,
-            progress: 0,
-            startTime: Date.now(),
-            desc: missionTemplate.desc.replace('{goal}', missionTemplate.goal)
-        };
-
-        this.showToast(`📋 Mission Accepted: ${this.activeMission.name}`, 3000);
-
-        // Spawn boss for boss missions
-        if (missionTemplate.type === 'boss' && missionTemplate.bossType) {
-            setTimeout(() => this.spawnBoss(missionTemplate.bossType), 2000);
-        }
-
-        // Spawn mission targets dynamically so the player doesn't wander blindly
-        if (missionTemplate.type === 'kill') {
-            const spawnCount = missionTemplate.goal + 2; // Extra to be safe
-            for (let i = 0; i < spawnCount; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.sqrt(Math.random() * (25000000 - 4000000) + 4000000); // 2k to 5k range
-                this.enemyShips.push({
-                    x: this.playerShip.x + Math.cos(angle) * dist,
-                    y: this.playerShip.y + Math.sin(angle) * dist,
-                    vx: 0,
-                    vy: 0,
-                    type: missionTemplate.targetType,
-                    health: InterstellarEngine.ENEMY_TYPES[missionTemplate.targetType]?.maxHealth || 100,
-                    lastFire: 0
-                });
-            }
-            this.showToast('⚠️ Mission Targets detected on radar!', 5000);
-        } else if (missionTemplate.type === 'mine') {
-            for (let i = 0; i < missionTemplate.goal + 5; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.sqrt(Math.random() * (12250000 - 2250000) + 2250000);
-                this.minerals.push({
-                    x: this.playerShip.x + Math.cos(angle) * dist,
-                    y: this.playerShip.y + Math.sin(angle) * dist,
-                    vx: (Math.random() - 0.5) * 2,
-                    vy: (Math.random() - 0.5) * 2,
-                    type: 'diamond',
-                    color: '#00ffff',
-                    value: 50,
-                    size: 8
-                });
-            }
-            this.showToast('📡 Mineral clusters marked on radar!', 5000);
-        } else if (missionTemplate.type === 'defense') {
-            // Defense mission spawns targets near the player's BASE
-            const baseX = this.spaceBase?.x || 0;
-            const baseY = this.spaceBase?.y || 0;
-            const spawnCount = missionTemplate.goal;
-            for (let i = 0; i < spawnCount; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.sqrt(Math.random() * (1000000 - 360000) + 360000); // Close range for siege
-                this.enemyShips.push({
-                    x: baseX + Math.cos(angle) * dist,
-                    y: baseY + Math.sin(angle) * dist,
-                    vx: 0,
-                    vy: 0,
-                    rotation: 0,
-                    patrolAngle: 0,
-                    type: 'hauler', // Using hauler as a 'Mauler' reference for mission
-                    health: 200,
-                    maxHealth: 200,
-                    lastFire: 0,
-                    faction: 'mauler',
-                    state: 'chase' // Make them aggressive
-                });
-            }
-            this.showToast('🚨 BASE UNDER ATTACK! Strategic defenses required.', 5000);
-        }
-
-        this.hideMissionBoardUI();
-
-        // If the player is in the hangar, seamlessly enter flight mode!
-        if (!this.flightMode) {
-            if (typeof this.hideShipModal === 'function') this.hideShipModal();
-            this.flightMode = true; // Force ON safely
-            if (this.playerShip) {
-                this.playerShip.invulnerableUntil = performance.now() + 3000;
-            }
-            const hud = document.getElementById('flightHUD');
-            const floatingLeaders = document.getElementById('floatingLeaders');
-            if (hud) hud.classList.remove('hidden');
-            if (floatingLeaders) floatingLeaders.classList.remove('hidden');
-        }
-        this.updateMissionHUD();
-    }
-
-    abandonMission() {
-        if (!this.activeMission) return;
-        this.showToast(`❌ Mission abandoned: ${this.activeMission.name}`, 2000);
-        if (this.activeBoss && this.activeMission.type === 'boss') {
-            this.activeBoss = null; // Remove boss
-        }
-        this.activeMission = null;
-        this.updateMissionHUD();
-    }
-
-    checkMissionComplete() {
-        if (!this.activeMission) return;
-
-        const m = this.activeMission;
-
-        // Check survival timer
-        if (m.type === 'survive') {
-            const elapsed = (Date.now() - m.startTime) / 1000;
-            m.progress = Math.floor(elapsed);
-        }
-
-        if (m.progress >= m.goal) {
-            // Mission complete!
-            this.playerGems += m.reward;
-            localStorage.setItem('playerGems', this.playerGems);
-            this.missionsCompleted++;
-            localStorage.setItem('missionsCompleted', this.missionsCompleted);
-            if (this.updateGemsUI) this.updateGemsUI();
-
-            // Launch the cinematic achievement overlay
-            this.showMissionCompleteOverlay(m);
-            gameAudio.playMissionComplete();
-            this.activeMission = null;
-            this.updateMissionHUD();
-        }
-    }
-
-    showMissionCompleteOverlay(mission) {
-        // Remove any existing overlay
-        const existing = document.getElementById('missionCompleteOverlay');
-        if (existing) existing.remove();
-
-        // Determine performance rank
-        const elapsed = (Date.now() - mission.startTime) / 1000;
-        let rank, rankColor, rankGlow;
-        if (elapsed < 30) { rank = 'S'; rankColor = '#ffd700'; rankGlow = 'rgba(255,215,0,0.8)'; }
-        else if (elapsed < 60) { rank = 'A'; rankColor = '#00ff88'; rankGlow = 'rgba(0,255,136,0.6)'; }
-        else if (elapsed < 120) { rank = 'B'; rankColor = '#00ccff'; rankGlow = 'rgba(0,204,255,0.5)'; }
-        else { rank = 'C'; rankColor = '#aaaaaa'; rankGlow = 'rgba(170,170,170,0.4)'; }
-
-        // Build the overlay
-        const overlay = document.createElement('div');
-        overlay.id = 'missionCompleteOverlay';
-        overlay.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 99999; pointer-events: none;
-            display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 70%);
-            animation: mco-fadein 0.3s ease-out;
-        `;
-
-        // Particle canvas for celebration effects
-        const particleCanvas = document.createElement('canvas');
-        particleCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
-        overlay.appendChild(particleCanvas);
-
-        // Central achievement card
-        const card = document.createElement('div');
-        card.style.cssText = `
-            position: relative; z-index: 2;
-            background: linear-gradient(145deg, rgba(10,20,40,0.95), rgba(5,10,25,0.98));
-            border: 2px solid ${rankColor};
-            border-radius: 16px; padding: 40px 60px;
-            text-align: center; font-family: 'Orbitron', 'Exo 2', monospace;
-            box-shadow: 0 0 60px ${rankGlow}, 0 0 120px ${rankGlow}, inset 0 0 40px rgba(0,0,0,0.5);
-            animation: mco-card-enter 0.6s cubic-bezier(0.2,0.8,0.2,1.2);
-            max-width: 480px; min-width: 360px;
-        `;
-
-        // Mission type icon
-        let typeIcon = '🎯';
-        if (mission.type === 'kill' || mission.type === 'kill_any') typeIcon = '⚔️';
-        else if (mission.type === 'boss') typeIcon = '👑';
-        else if (mission.type === 'collect') typeIcon = '💎';
-        else if (mission.type === 'survive') typeIcon = '🛡️';
-
-        card.innerHTML = `
-            <div style="font-size: 12px; color: #555; letter-spacing: 6px; margin-bottom: 8px; text-transform: uppercase;">Mission Complete</div>
-            <div style="font-size: 48px; margin-bottom: 4px; filter: drop-shadow(0 0 10px ${rankGlow});">${typeIcon}</div>
-            <div style="font-size: 22px; color: #fff; font-weight: 900; letter-spacing: 2px; margin-bottom: 4px;
-                text-shadow: 0 0 20px rgba(255,255,255,0.3);">${mission.name}</div>
-            <div style="font-size: 13px; color: #aaa; margin-bottom: 20px; font-style: italic;">${mission.desc}</div>
-
-            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;">
-                <div>
-                    <div style="font-size: 10px; color: #556; letter-spacing: 3px; margin-bottom: 4px;">RANK</div>
-                    <div id="mco-rank" style="font-size: 42px; font-weight: 900; color: ${rankColor};
-                        text-shadow: 0 0 30px ${rankGlow}, 0 0 60px ${rankGlow};
-                        animation: mco-rank-pulse 1s ease-in-out infinite alternate;
-                        opacity: 0; transform: scale(3);">${rank}</div>
-                </div>
-                <div>
-                    <div style="font-size: 10px; color: #556; letter-spacing: 3px; margin-bottom: 4px;">REWARD</div>
-                    <div style="font-size: 32px; color: #ffd700; font-weight: bold;
-                        text-shadow: 0 0 20px rgba(255,215,0,0.5);">
-                        💎 <span id="mco-gem-counter">0</span>
-                    </div>
-                </div>
-                <div>
-                    <div style="font-size: 10px; color: #556; letter-spacing: 3px; margin-bottom: 4px;">TIME</div>
-                    <div style="font-size: 22px; color: #8af; font-weight: bold;">${elapsed.toFixed(1)}s</div>
-                </div>
-            </div>
-
-            <div style="height: 3px; background: linear-gradient(90deg, transparent, ${rankColor}, transparent);
-                margin: 15px auto; width: 80%; border-radius: 2px;"></div>
-
-            <div style="font-size: 11px; color: #667; letter-spacing: 2px; margin-top: 8px;">
-                TOTAL MISSIONS: ${this.missionsCompleted}
-            </div>
-        `;
-        overlay.appendChild(card);
-        document.body.appendChild(overlay);
-
-        // Inject keyframe animations
-        if (!document.getElementById('mco-styles')) {
-            const style = document.createElement('style');
-            style.id = 'mco-styles';
-            style.textContent = `
-                @keyframes mco-fadein { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes mco-fadeout { from { opacity: 1; } to { opacity: 0; } }
-                @keyframes mco-card-enter {
-                    0% { opacity: 0; transform: scale(0.5) translateY(40px); }
-                    60% { opacity: 1; transform: scale(1.05) translateY(-5px); }
-                    100% { transform: scale(1) translateY(0); }
-                }
-                @keyframes mco-rank-pulse {
-                    from { text-shadow: 0 0 20px currentColor; }
-                    to { text-shadow: 0 0 40px currentColor, 0 0 80px currentColor; }
-                }
-                @keyframes mco-rank-slam {
-                    0% { opacity: 0; transform: scale(3); }
-                    50% { opacity: 1; transform: scale(0.8); }
-                    70% { transform: scale(1.15); }
-                    100% { opacity: 1; transform: scale(1); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        // Animate rank letter slam-in after 0.5s
-        setTimeout(() => {
-            const rankEl = document.getElementById('mco-rank');
-            if (rankEl) {
-                rankEl.style.animation = 'mco-rank-slam 0.5s cubic-bezier(0.2,0.8,0.2,1) forwards, mco-rank-pulse 1s ease-in-out infinite alternate 0.5s';
-            }
-        }, 500);
-
-        // Animate gem counter tick-up
-        const gemTarget = mission.reward;
-        let gemCurrent = 0;
-        const gemInterval = setInterval(() => {
-            gemCurrent += Math.ceil(gemTarget / 30);
-            if (gemCurrent >= gemTarget) {
-                gemCurrent = gemTarget;
-                clearInterval(gemInterval);
-            }
-            const counter = document.getElementById('mco-gem-counter');
-            if (counter) counter.textContent = gemCurrent;
-        }, 40);
-
-        // Particle celebration system on canvas
-        const resizeCanvas = () => {
-            particleCanvas.width = window.innerWidth;
-            particleCanvas.height = window.innerHeight;
-        };
-        resizeCanvas();
-
-        const particles = [];
-        const pCtx = particleCanvas.getContext('2d');
-        const sparkColors = ['#ffd700', '#ff6b9d', '#00ff88', '#00ccff', '#ff44ff', '#ffaa00'];
-
-        // Burst particles from center
-        for (let i = 0; i < 120; i++) {
-            const angle = (Math.PI * 2 * i) / 120 + (Math.random() - 0.5) * 0.5;
-            const speed = 3 + Math.random() * 8;
-            particles.push({
-                x: window.innerWidth / 2,
-                y: window.innerHeight / 2,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 2,
-                size: 2 + Math.random() * 4,
-                color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
-                life: 1.0,
-                decay: 0.008 + Math.random() * 0.012,
-                gravity: 0.05 + Math.random() * 0.05,
-                type: Math.random() > 0.5 ? 'spark' : 'star'
-            });
-        }
-
-        // Side confetti streams
-        for (let i = 0; i < 60; i++) {
-            const side = Math.random() > 0.5 ? 0 : window.innerWidth;
-            particles.push({
-                x: side,
-                y: window.innerHeight * Math.random() * 0.6,
-                vx: (side === 0 ? 1 : -1) * (2 + Math.random() * 4),
-                vy: -1 + Math.random() * 3,
-                size: 3 + Math.random() * 5,
-                color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
-                life: 1.0,
-                decay: 0.006 + Math.random() * 0.008,
-                gravity: 0.08,
-                type: 'confetti',
-                rotation: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 0.3
-            });
-        }
-
-        let animFrame;
-        const animateParticles = () => {
-            pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.x += p.vx;
-                p.vy += p.gravity;
-                p.y += p.vy;
-                p.life -= p.decay;
-                if (p.rotation !== undefined) p.rotation += p.rotSpeed;
-
-                if (p.life <= 0) { particles.splice(i, 1); continue; }
-
-                pCtx.globalAlpha = p.life;
-
-                if (p.type === 'spark') {
-                    pCtx.beginPath();
-                    pCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-                    pCtx.fillStyle = p.color;
-                    pCtx.shadowBlur = 15;
-                    pCtx.shadowColor = p.color;
-                    pCtx.fill();
-                    pCtx.shadowBlur = 0;
-                } else if (p.type === 'star') {
-                    pCtx.save();
-                    pCtx.translate(p.x, p.y);
-                    pCtx.fillStyle = p.color;
-                    pCtx.shadowBlur = 10;
-                    pCtx.shadowColor = p.color;
-                    pCtx.font = `${p.size * 3}px serif`;
-                    pCtx.fillText('✦', 0, 0);
-                    pCtx.restore();
-                    pCtx.shadowBlur = 0;
-                } else if (p.type === 'confetti') {
-                    pCtx.save();
-                    pCtx.translate(p.x, p.y);
-                    pCtx.rotate(p.rotation);
-                    pCtx.fillStyle = p.color;
-                    pCtx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
-                    pCtx.restore();
-                }
-            }
-            pCtx.globalAlpha = 1;
-
-            if (particles.length > 0) {
-                animFrame = requestAnimationFrame(animateParticles);
-            }
-        };
-        animateParticles();
-
-        // Auto-dismiss after 5 seconds with fade-out
-        setTimeout(() => {
-            if (overlay.parentNode) {
-                overlay.style.animation = 'mco-fadeout 0.8s ease-in forwards';
-                setTimeout(() => {
-                    cancelAnimationFrame(animFrame);
-                    overlay.remove();
-                }, 800);
-            }
-        }, 5000);
-    }
-
-    updateMissionHUD() {
-        const section = document.getElementById('sectionMission');
-        const content = document.getElementById('missionContent');
-        if (!section || !content) return;
-
-        if (this.activeMission && this.flightMode) {
-            section.style.display = 'flex';
-            // Make mission window VERY prominent with pulsing glow
-            section.style.border = '2px solid #00ffcc';
-            section.style.boxShadow = '0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.2), inset 0 0 15px rgba(0,255,204,0.1)';
-            section.style.animation = 'missionPulse 2s ease-in-out infinite';
-            section.style.zIndex = '50';
-            // Inject keyframe if not present
-            if (!document.getElementById('missionPulseStyle')) {
-                const style = document.createElement('style');
-                style.id = 'missionPulseStyle';
-                style.textContent = `
-                    @keyframes missionPulse {
-                        0%, 100% { box-shadow: 0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.2); border-color: #00ffcc; }
-                        50% { box-shadow: 0 0 30px rgba(0,255,204,0.8), 0 0 60px rgba(0,255,204,0.4); border-color: #66ffdd; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            const m = this.activeMission;
-            const pct = Math.min(100, Math.round((m.progress / m.goal) * 100));
-            
-            // Use the mission-specific hint if available, fall back to generic
-            let tip = '';
-            if (m.hint) {
-                tip = `<div style="color: #00eaff; font-size: 11px; margin-top: 8px; font-style: italic; font-weight: bold; line-height: 1.4; background: rgba(0,234,255,0.08); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #00eaff;">${m.hint}</div>`;
-            } else if (m.type === 'kill' || m.type === 'kill_any' || m.type === 'boss') {
-                tip = '<div style="color: #ff6b6b; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(255,50,50,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #ff6b6b;">🎯 Hold [SPACE] to Fire Weapons</div>';
-            } else if (m.type === 'collect') {
-                tip = '<div style="color: #f17eff; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(241,126,255,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #f17eff;">💎 Fly over glowing gems to collect</div>';
-            } else if (m.type === 'survive') {
-                tip = '<div style="color: #ffaa00; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(255,170,0,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #ffaa00;">⚠️ Dodge hazards — stay alive!</div>';
-            }
-            
-            content.innerHTML = `
-                <div style="color: #00ffcc; font-weight: bold; font-size: 14px; margin-bottom: 4px; text-shadow: 0 0 8px rgba(0,255,204,0.4);">${m.name}</div>
-                <div style="color: #ddd; margin-bottom: 8px; font-size: 12px; line-height: 1.4;">${m.desc}</div>
-                <div style="background: rgba(0,0,0,0.4); border-radius: 6px; padding: 8px; margin-bottom: 4px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
-                        <span>PROGRESS</span>
-                        <span style="color: #00ff88; font-weight: bold;">${m.progress} / ${m.goal}</span>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.1); border-radius: 3px; height: 8px; overflow: hidden;">
-                        <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #00ff88, #00ffcc); border-radius: 3px; transition: width 0.3s ease; box-shadow: 0 0 8px rgba(0,255,136,0.5);"></div>
-                    </div>
-                </div>
-                ${tip}
-            `;
-        } else {
-            section.style.display = 'none';
-            section.style.border = '';
-            section.style.boxShadow = '';
-            section.style.animation = '';
-        }
-    }
-
-    toggleMissionBoard() {
-        this.missionBoardOpen = !this.missionBoardOpen;
-        if (this.missionBoardOpen) {
-            this.showMissionBoardUI();
-            if (this.flightMode) this.gamePaused = true;
-        } else {
-            this.hideMissionBoardUI();
-            if (this.flightMode) this.gamePaused = false;
-        }
-    }
-
-    showMissionBoardUI() {
-        // Remove existing
-        let overlay = document.getElementById('missionBoardOverlay');
-        if (overlay) overlay.remove();
-
-        const missions = this.generateMissionBoard();
-
-        overlay = document.createElement('div');
-        overlay.id = 'missionBoardOverlay';
-        overlay.className = 'modal-overlay';
-        // Add active in next frame for transition
-        setTimeout(() => overlay.classList.add('active'), 10);
-
-        this.gamePaused = true;
-
-        let html = `
-        <div class="modal" style="width: 500px; max-width: 95vw;">
-            <div class="modal-close-corner">
-                <button class="btn-secondary" onclick="window.game.hideMissionBoardUI()">EXIT MISSIONS</button>
-            </div>
-            <h2 style="color: #00ffcc; text-shadow: 0 0 10px rgba(0, 255, 204, 0.5); font-family: 'Cinzel', serif; margin-top: 0; text-align: center;">MISSION BOARD</h2>
-            <p style="color: #888; font-size: 11px; text-align: center; margin: 0 0 20px;">Missions Completed: ${this.missionsCompleted} | Bosses Defeated: ${this.bossesDefeated}</p>
-            <div style="overflow-y: auto; max-height: 400px; padding-right: 10px;">
-        `;
-
-        if (this.activeMission) {
-            html += `<div style="background: rgba(255,170,0,0.15); border: 1px solid #ffaa00; border-radius: 8px; padding: 15px; margin-bottom: 10px;">`;
-            html += `<div style="color: #ffaa00; font-size: 14px; font-weight: bold; margin-bottom: 5px;">ACTIVE: ${this.activeMission.name}</div>`;
-            html += `<div style="color: #ccc; font-size: 12px; margin: 4px 0;">${this.activeMission.desc}</div>`;
-            if (this.activeMission.hint) {
-                html += `<div style="color: #00eaff; font-size: 10px; margin: 8px 0; font-style: italic;">${this.activeMission.hint}</div>`;
-            }
-            html += `<div style="color: #00ff88; font-size: 12px; margin-top: 10px; font-weight: bold;">Progress: ${this.activeMission.progress}/${this.activeMission.goal}</div>`;
-            html += `<button onclick="window.game.abandonMission(); window.game.hideMissionBoardUI();" class="btn-small" style="
-                margin-top: 12px; width: 100%; background: rgba(255,50,50,0.2); color: #ff4444; border-color: #ff4444;
-            ">ABANDON MISSION</button></div>`;
-        } else {
-            const tierColors = { 1: '#00ff88', 2: '#ffaa00', 3: '#ff6b9d', 4: '#ff44ff' };
-            const tierLabels = { 1: 'BASICS', 2: 'COMBAT', 3: 'ADVANCED', 4: 'ELITE' };
-            missions.forEach((m, i) => {
-                const desc = m.desc.replace('{goal}', m.goal);
-                const tierCol = tierColors[m.tier] || '#00ffcc';
-                const tierLabel = tierLabels[m.tier] || 'MISSION';
-                html += `<div style="background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.2); border-radius: 8px; padding: 15px; margin-bottom: 10px; transition: all 0.2s ease;">`;
-                html += `<div style="display: flex; justify-content: space-between; align-items: flex-start;">`;
-                html += `<div style="flex:1; padding-right: 15px;"><div style="display:flex; align-items:center; gap:8px; margin-bottom: 6px;"><span style="font-size:9px; color:${tierCol}; background:rgba(0,0,0,0.5); padding:3px 8px; border-radius:4px; border:1px solid ${tierCol}; letter-spacing:1px; font-weight: bold;">${tierLabel}</span><span style="color: #00ffcc; font-size: 14px; font-weight: bold;">${m.name}</span></div>`;
-                html += `<div style="color: #aaa; font-size: 12px; margin-top: 5px;">${desc}</div>`;
-                if (m.briefing) {
-                    html += `<div style="color: #7ab; font-size: 11px; margin-top: 8px; line-height: 1.5; border-left: 2px solid rgba(0,255,204,0.3); padding-left: 10px;">${m.briefing}</div>`;
-                }
-                html += `</div>`;
-                html += `<div style="text-align: right; min-width: 90px;"><div style="font-size: 10px; color: #667; letter-spacing: 1px; margin-bottom: 4px;">REWARD</div><div style="color: #ffd700; font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(255,215,0,0.5);">💎 ${m.reward}</div>`;
-                html += `<button onclick="window.game.acceptMission(window.game._boardMissions[${i}])" class="btn-small" style="
-                    margin-top: 10px; width: 100%; border-color: #00ffcc; color: #00ffcc;
-                ">ACCEPT</button></div></div></div>`;
-            });
-        }
-
-        html += `</div></div>`; // Close overflow div and modal
-
-        overlay.innerHTML = html;
-        document.body.appendChild(overlay);
-
-        // Store missions for button callbacks
-        this._boardMissions = missions;
-    }
-
-    hideMissionBoardUI() {
-        const overlay = document.getElementById('missionBoardOverlay');
-        if (overlay) {
-            overlay.classList.remove('active');
-            setTimeout(() => {
-                overlay.remove();
-            }, 300);
-        }
-        this.missionBoardOpen = false;
-        this.gamePaused = false;
-    }
-
-    spawnLoot(x, y, type, amount) {
-        this.playerInventory[type] = (this.playerInventory[type] || 0) + amount;
-        // Use the same {text, color, time} shape as renderCollectionNotifications expects
-        this.collectionNotifications.push({
-            text: `+${amount} ${type.toUpperCase()}`,
-            color: '#ffd700',
-            time: Date.now()
-        });
-    }
-
-    renderProjectiles(ctx) {
-        this.projectiles.forEach(p => {
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.rotation);
-
-            // Draw Laser Bolt (Glowing)
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 10;
-            ctx.fillStyle = '#ffffff'; // Core
-
-            ctx.beginPath();
-            ctx.rect(-p.length / 2, -p.width / 2, p.length, p.width);
-            ctx.fill();
-
-            // Outer glow
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = p.color;
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath();
-            ctx.rect(-p.length / 2 - 2, -p.width / 2 - 2, p.length + 4, p.width + 4);
-            ctx.fill();
-
-            ctx.globalAlpha = 1;
-            ctx.restore();
-        });
-    }
-
-    updateDamageParticles() {
-        // Spawn particles based on health
-        const ship = this.playerShip;
-        if (!ship) return;
-
-        const healthRatio = ship.hullHealth / ship.maxHull;
-
-        // Thresholds
-        // < 0.7: Light Smoke (White/Gray)
-        // < 0.4: Dark Smoke (Gray/Black)
-        // < 0.2: Fire/Sparks (Orange/Red)
-
-        if (healthRatio < 0.7) {
-            // Spawn Rate increases as health drops
-            // 0.7 -> 1% chance
-            // 0.1 -> 20% chance
-            const spawnChance = 0.05 + (0.7 - healthRatio) * 0.5;
-
-            if (Math.random() < spawnChance) {
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.random() * 20;
-
-                let type = 'smoke_light';
-                let color = '#cccccc';
-                let life = 60 + Math.random() * 60;
-                let size = 5 + Math.random() * 10;
-                let vx = (Math.random() - 0.5) * 1;
-                let vy = (Math.random() - 0.5) * 1;
-
-                if (healthRatio < 0.4 && Math.random() < 0.6) {
-                    type = 'smoke_dark';
-                    color = '#666666';
-                    size = 10 + Math.random() * 15;
-                }
-
-                if (healthRatio < 0.2 && Math.random() < 0.4) {
-                    type = 'spark';
-                    color = Math.random() > 0.5 ? '#ffaa00' : '#ff4400';
-                    life = 20 + Math.random() * 20;
-                    size = 2 + Math.random() * 3;
-                    vx = (Math.random() - 0.5) * 4;
-                    vy = (Math.random() - 0.5) * 4;
-                }
-
-                this.damageParticles.push({
-                    x: ship.x + Math.cos(angle) * dist,
-                    y: ship.y + Math.sin(angle) * dist,
-                    vx: ship.vx * 0.8 + vx, // Inherit some ship velocity
-                    vy: ship.vy * 0.8 + vy,
-                    size: size,
-                    life: life,
-                    maxLife: life,
-                    color: color,
-                    type: type
-                });
-            }
-        }
-
-        // Update
-        this.damageParticles.forEach(p => {
-            p.x += p.vx;
-            p.y += p.vy;
-            p.life--;
-            p.size += 0.05; // Expands
-
-            if (p.type.includes('smoke')) {
-                p.vx *= 0.95;
-                p.vy *= 0.95;
-            }
-        });
-
-        this.damageParticles = this.damageParticles.filter(p => p.life > 0);
-    }
-
-    renderDamageEffects(ctx) {
-        if (this.damageParticles.length === 0) return;
-
-        this.damageParticles.forEach(p => {
-            ctx.save();
-            ctx.translate(p.x, p.y);
-
-            const alpha = p.life / p.maxLife;
-            ctx.globalAlpha = alpha * 0.6;
-            ctx.fillStyle = p.color;
-
-            ctx.beginPath();
-            ctx.arc(0, 0, p.size / this.camera.zoom, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        });
-    }
-
-    // Inventory Management
-    showGemGuide() {
-        const modal = document.getElementById('gemGuideModal');
-        if (modal) {
-            modal.classList.add('active');
-            if (this.flightMode) this.gamePaused = true;
-        }
-    }
-
-    hideGemGuide() {
-        const modal = document.getElementById('gemGuideModal');
-        if (modal) {
-            modal.classList.remove('active');
-            if (this.flightMode) this.gamePaused = false;
-        }
-    }
-
-    loadInventory() {
-        try {
-            const saved = localStorage.getItem('playerInventory');
-            return saved ? JSON.parse(saved) : {};
-        } catch (e) {
-            return {};
-        }
-    }
-
-
-    saveInventory() {
-        try {
-            localStorage.setItem('playerInventory', JSON.stringify(this.playerInventory));
-        } catch (e) {
-            console.error('Failed to save inventory:', e);
-        }
-    }
-    
-    loadPlanetBases() {
-        try {
-            return JSON.parse(localStorage.getItem('planetBases')) || {};
-        } catch (e) {
-            return {};
-        }
-    }
-    
-    savePlanetBases() {
-        try {
-            localStorage.setItem('planetBases', JSON.stringify(this.planetBases));
-            // Optional: this.syncBaseWithCloud() if needed
-        } catch(e) {
-            console.error('Failed to save planet bases:', e);
-        }
-    }
-    
-    calculateTotalAssets() {
-        let total = this.credits || 0;
-        
-        // Add inventory value
-        for (const [type, count] of Object.entries(this.playerInventory || {})) {
-            const info = this.mineralTypes[type];
-            if (info && info.value) {
-                total += info.value * count;
-            }
-        }
-        
-        // Add ships value
-        if (this.playerShip && this.playerShip.purchased) {
-            this.playerShip.purchased.forEach(shipId => {
-                const shipDef = window.hangarShips && window.hangarShips[shipId];
-                if (shipDef && shipDef.cost) {
-                    total += shipDef.cost;
-                }
-            });
-        }
-        
-        // Add bases value
-        const costMap = {
-            hab: 1000,
-            mine: 2000,
-            def: 1500
-        };
-        for (const base of Object.values(this.planetBases)) {
-            for (const key of Object.keys(base)) {
-                if (key !== 'planetName' && key !== 'isForSale' && key !== 'salePrice') {
-                    const type = base[key];
-                    if (costMap[type]) total += costMap[type];
-                }
-            }
-        }
-        
-        return total;
-    }
-    
-    getMaxBases() {
-        const assets = this.calculateTotalAssets();
-        if (assets >= 500000) return 5;
-        if (assets >= 150000) return 4;
-        if (assets >= 50000) return 3;
-        if (assets >= 10000) return 2;
-        return 1;
-    }
-
-    loadCredits() {
-        return parseInt(localStorage.getItem('playerCredits')) || 0;
-    }
-
-    saveCredits() {
-        localStorage.setItem('playerCredits', this.credits);
-        // Sync with React bridge if it's a purchase/spend
-        this.syncWithCloud();
-    }
-
-    loadFactionRep() {
-        try {
-            const saved = localStorage.getItem('factionRep');
-            return saved ? JSON.parse(saved) : { xenon: -20, mauler: -20, terran: 0 };
-        } catch (e) {
-            console.error('[Storage] FactionRep parse failed, resetting.', e);
-            return { xenon: -20, mauler: -20, terran: 0 };
-        }
-    }
-
-    saveFactionRep() {
-        localStorage.setItem('factionRep', JSON.stringify(this.factionRep));
-    }
-
-    repairHull() {
-        const cost = 2000;
-        if (this.credits < cost) {
-            this.showToast("❌ Insufficient credits for repair!");
-            return;
-        }
-
-        this.credits -= cost;
-        this.playerShip.hullHealth = this.playerShip.maxHull; // Full restore
-        this.saveCredits();
-        this.updateShipStatus();
-        this.showToast("🔧 HULL REPAIRED! Systems back online.");
-
-        // Play a sound effect if available
-        console.log('[Repair] Hull restored for 2000 credits');
-    }
-
-    loadUpgrades() {
-        try {
-            return JSON.parse(localStorage.getItem('playerUpgrades')) || { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0, ecm: 0, flares: 0 };
-        } catch (e) {
-            return { speed: 0, armor: 0, weapons: 0, shield: 0, cargo: 0, radar: 0, tractor: 0, ecm: 0, flares: 0 };
-        }
-    }
-
-    saveUpgrades() {
-        localStorage.setItem('playerUpgrades', JSON.stringify(this.playerShip.upgrades));
-        this.syncWithCloud();
-    }
-
-    saveGems() {
-        localStorage.setItem('playerGems', this.playerGems);
-        this.updateGemsUI();
-    }
-
-    loadStats() {
-        try {
-            return JSON.parse(localStorage.getItem('playerStats')) || {
-                kills: 0,
-                deaths: 0,
-                shotsFired: 0,
-                shotsHit: 0
-            };
-        } catch (e) {
-            return {
-                kills: 0,
-                deaths: 0,
-                shotsFired: 0,
-                shotsHit: 0
-            };
-        }
-    }
-
-    saveStats() {
-        localStorage.setItem('playerStats', JSON.stringify(this.playerStats));
-        this.syncWithCloud();
-    }
-
-    // === SPACE BASE RESOURCE SYSTEM ===
-    loadCarriedResources() {
-        try {
-            return JSON.parse(localStorage.getItem('carriedResources')) || {};
-        } catch (e) {
-            return {};
-        }
-    }
-
-    saveCarriedResources() {
-        localStorage.setItem('carriedResources', JSON.stringify(this.carriedResources));
-        this.syncBaseWithCloud();
-    }
-
-    loadSpaceBase() {
-        try {
-            return JSON.parse(localStorage.getItem('spaceBase')) || null;
-        } catch (e) {
-            return null;
-        }
-    }
-
-    saveSpaceBase() {
-        localStorage.setItem('spaceBase', JSON.stringify(this.spaceBase));
-        this.syncBaseWithCloud();
-    }
-
-    syncBaseWithCloud() {
-        window.parent.postMessage({
-            type: 'SAVE_GAME_DATA',
-            data: {
-                carriedResources: this.carriedResources,
-                spaceBase: this.spaceBase
-            }
-        }, '*');
-    }
-
-    // Apply 25% death penalty to carried resources
-    applyDeathPenalty() {
-        let lostResources = {};
-        let totalLost = 0;
-
-        for (const [type, qty] of Object.entries(this.carriedResources)) {
-            if (qty > 0) {
-                const loss = Math.floor(qty * 0.25);
-                if (loss > 0) {
-                    this.carriedResources[type] -= loss;
-                    lostResources[type] = loss;
-                    totalLost += loss;
-                }
-            }
-        }
-
-        if (totalLost > 0) {
-            this.saveCarriedResources();
-            // Build loss message
-            const lostNames = Object.entries(lostResources)
-                .map(([type, qty]) => `${qty} ${this.mineralTypes[type]?.name || type}`)
-                .join(', ');
-            this.showToast(`💀 Lost 25% cargo: ${lostNames}`);
-            console.log('[Death Penalty] Lost resources:', lostResources);
-        }
-
-        return lostResources;
-    }
-
-    // Deposit resources from ship to base vault
-    depositResources(resourceType, amount) {
-        if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Deploy your base first!');
-            return false;
-        }
-
-        const available = this.carriedResources[resourceType] || 0;
-        const toDeposit = Math.min(amount, available);
-
-        if (toDeposit <= 0) {
-            this.showToast('⚠️ No resources to deposit!');
-            return false;
-        }
-
-        this.carriedResources[resourceType] -= toDeposit;
-        this.spaceBase.resources[resourceType] = (this.spaceBase.resources[resourceType] || 0) + toDeposit;
-
-        this.saveCarriedResources();
-        this.saveSpaceBase();
-
-        this.showToast(`📦 Deposited ${toDeposit} ${this.mineralTypes[resourceType]?.name || resourceType}`);
-        return true;
-    }
-
-    // Withdraw resources from base to ship
-    withdrawResources(resourceType, amount) {
-        if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Deploy your base first!');
-            return false;
-        }
-
-        const available = this.spaceBase.resources[resourceType] || 0;
-        const toWithdraw = Math.min(amount, available);
-
-        if (toWithdraw <= 0) {
-            this.showToast('⚠️ No resources in vault!');
-            return false;
-        }
-
-        this.spaceBase.resources[resourceType] -= toWithdraw;
-        this.carriedResources[resourceType] = (this.carriedResources[resourceType] || 0) + toWithdraw;
-
-        this.saveCarriedResources();
-        this.saveSpaceBase();
-
-        this.showToast(`📤 Withdrew ${toWithdraw} ${this.mineralTypes[resourceType]?.name || resourceType}`);
-        return true;
-    }
-
-    // === SPACE BASE DEPLOYMENT & MODULES ===
-
-    // Deploy base at current location
-    deployBase() {
-        if (this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Base already deployed! Toggle towing to move it.');
-            return false;
-        }
-
-        // Need command center first
-        if (!this.hasModule('command')) {
-            // Build command center automatically on first deployment
-            if (this.credits >= 1000) {
-                this.credits -= 1000;
-                this.saveCredits();
-                this.spaceBase.modules.push({ type: 'command', level: 1, builtAt: Date.now() });
-                this.showToast('🏛️ Command Center built!');
-            } else {
-                this.showToast('⚠️ Need 1,000 credits to build Command Center!');
-                return false;
-            }
-        }
-
-        this.spaceBase.x = this.playerShip.x;
-        this.spaceBase.y = this.playerShip.y;
-        this.spaceBase.isDeployed = true;
-        this.spaceBase.isTowing = false;
-        this.saveSpaceBase();
-
-        this.showToast('🏠 Base deployed at current location!');
-        return true;
-    }
-
-    // Toggle towing mode (pick up base to move it)
-    toggleTowing() {
-        if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ No base deployed yet!');
-            return false;
-        }
-
-        // Must be near base to pick it up
-        if (!this.spaceBase.isTowing) {
-            const dist = Math.hypot(
-                this.playerShip.x - this.spaceBase.x,
-                this.playerShip.y - this.spaceBase.y
-            );
-            if (dist > 500) {
-                this.showToast('⚠️ Too far from base! Get closer to tow.');
-                return false;
-            }
-        }
-
-        this.spaceBase.isTowing = !this.spaceBase.isTowing;
-        this.saveSpaceBase();
-
-        if (this.spaceBase.isTowing) {
-            this.showToast('🔗 Towing base! Speed reduced 50%.');
-        } else {
-            this.spaceBase.x = this.playerShip.x;
-            this.spaceBase.y = this.playerShip.y;
-            this.showToast('📍 Base anchored at new location!');
-        }
-        return true;
-    }
-
-    // Check if player has a specific module
-    hasModule(moduleType) {
-        return this.spaceBase.modules.some(m => m.type === moduleType);
-    }
-
-    // Build a new module
-    buildModule(moduleType) {
-        const moduleDef = this.baseModules[moduleType];
-        if (!moduleDef) {
-            this.showToast('⚠️ Unknown module type!');
-            return false;
-        }
-
-        if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Deploy your base first!');
-            return false;
-        }
-
-        // Check prerequisite
-        if (moduleDef.required && !this.hasModule(moduleDef.required)) {
-            this.showToast(`⚠️ Requires ${this.baseModules[moduleDef.required].name} first!`);
-            return false;
-        }
-
-        // Check credits
-        if (this.credits < moduleDef.cost) {
-            this.showToast(`⚠️ Need ${moduleDef.cost} credits!`);
-            return false;
-        }
-
-        // Check resource costs
-        if (moduleDef.resourceCost) {
-            for (const [res, amount] of Object.entries(moduleDef.resourceCost)) {
-                const available = (this.spaceBase.resources[res] || 0) + (this.carriedResources[res] || 0);
-                if (available < amount) {
-                    this.showToast(`⚠️ Need ${amount} ${this.mineralTypes[res]?.name || res}!`);
-                    return false;
-                }
-            }
-
-            // Deduct resources (from carried first, then vault)
-            for (const [res, amount] of Object.entries(moduleDef.resourceCost)) {
-                let remaining = amount;
-                if (this.carriedResources[res]) {
-                    const fromCarried = Math.min(this.carriedResources[res], remaining);
-                    this.carriedResources[res] -= fromCarried;
-                    remaining -= fromCarried;
-                }
-                if (remaining > 0 && this.spaceBase.resources[res]) {
-                    this.spaceBase.resources[res] -= remaining;
-                }
-            }
-            this.saveCarriedResources();
-        }
-
-        // Deduct credits
-        this.credits -= moduleDef.cost;
-        this.saveCredits();
-
-        // Build module
-        this.spaceBase.modules.push({ type: moduleType, level: 1, builtAt: Date.now() });
-        this.saveSpaceBase();
-
-        this.showToast(`${moduleDef.icon} ${moduleDef.name} built!`);
-        return true;
-    }
-
-    // Check if player is near base (for docking)
-    isNearBase() {
-        if (!this.spaceBase.isDeployed || this.spaceBase.isTowing) return false;
-        const dist = Math.hypot(
-            this.playerShip.x - this.spaceBase.x,
-            this.playerShip.y - this.spaceBase.y
-        );
-        return dist < 300;
-    }
-
-    // Get base status summary
-    getBaseStatus() {
-        return {
-            isDeployed: this.spaceBase.isDeployed,
-            isTowing: this.spaceBase.isTowing,
-            moduleCount: this.spaceBase.modules.length,
-            modules: this.spaceBase.modules.map(m => ({
-                type: m.type,
-                name: this.baseModules[m.type]?.name || m.type,
-                icon: this.baseModules[m.type]?.icon || '?',
-                level: m.level
-            })),
-            vaultResources: { ...this.spaceBase.resources }
-        };
-    }
-
-    // Toggle base management panel
-    toggleBasePanel() {
-        const panel = document.getElementById('basePanelPopup');
-        if (panel) {
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-            if (panel.style.display === 'block') {
-                this.updateBasePanelUI();
-                if (this.flightMode) this.gamePaused = true;
-            } else {
-                if (this.flightMode) this.gamePaused = false;
-            }
-        } else {
-            this.showToast('🏠 Base Menu: ' + this.spaceBase.modules.length + ' modules built');
-            // Log available modules for debugging
-            console.log('[Base] Status:', this.getBaseStatus());
-        }
-    }
-
-    // Update base panel UI (if HTML panel exists)
-    updateBasePanelUI() {
-        const moduleList = document.getElementById('baseModuleList');
-        if (moduleList) {
-            const modules = this.spaceBase.modules;
-            moduleList.innerHTML = modules.map(m => {
-                const def = this.baseModules[m.type];
-                return `<div class="base-module">${def?.icon || '?'} ${def?.name || m.type} (Lv.${m.level})</div>`;
-            }).join('') || '<div class="base-module-empty">No modules built</div>';
-        }
-
-        const vaultList = document.getElementById('baseVaultList');
-        if (vaultList) {
-            const resources = Object.entries(this.spaceBase.resources)
-                .filter(([_, qty]) => qty > 0);
-            vaultList.innerHTML = resources.map(([type, qty]) => {
-                const def = this.mineralTypes[type];
-                return `<div class="vault-item" style="color:${def?.color || '#fff'}">
-                    ${def?.name || type}: ${qty}
-                </div>`;
-            }).join('') || '<div class="vault-empty">Vault empty</div>';
-        }
-    }
-
-    // Deposit all carried resources to base vault
-    depositAllResources() {
-        if (!this.spaceBase.isDeployed) {
-            this.showToast('⚠️ Deploy base first!');
-            return false;
-        }
-
-        if (!this.isNearBase()) {
-            this.showToast('⚠️ Get closer to base!');
-            return false;
-        }
-
-        let totalDeposited = 0;
-        const deposited = [];
-
-        for (const [type, qty] of Object.entries(this.carriedResources)) {
-            if (qty > 0) {
-                this.spaceBase.resources[type] = (this.spaceBase.resources[type] || 0) + qty;
-                deposited.push(`${qty} ${this.mineralTypes[type]?.name || type}`);
-                totalDeposited += qty;
-                this.carriedResources[type] = 0;
-            }
-        }
-
-        if (totalDeposited > 0) {
-            this.playerShip.cargoCount = 0; // Reset total count
-            this.saveCarriedResources();
-            this.saveSpaceBase();
-            this.showToast(`📦 Deposited: ${deposited.slice(0, 3).join(', ')}${deposited.length > 3 ? '...' : ''}`);
-            console.log('[Base] Deposited all:', deposited);
-
-            // Recharge Flares on deposit
-            if (this.playerShip && this.playerShip.maxFlares > 0) {
-                this.playerShip.flares = this.playerShip.maxFlares;
-                this.showToast('🔥 Flares Recharged!');
-            }
-        } else {
-            this.showToast('⚠️ No resources to deposit!');
-        }
-
-        return totalDeposited > 0;
-    }
-
-    // --- Bridge SDK Implementation ---
-    requestLoadData() {
-        console.log('[Bridge] Requesting data from cloud...');
-        window.parent.postMessage({ type: 'REQUEST_LOAD_DATA' }, '*');
-    }
-
-    syncWithCloud() {
-        console.log('[Bridge] Syncing credits/upgrades to cloud...');
-        window.parent.postMessage({
-            type: 'SAVE_GAME_DATA',
-            data: {
-                aetherCredits: this.credits,
-                upgrades: this.playerShip.upgrades
-            }
-        }, '*');
-    }
-
-    handleBridgeMessage(event) {
-        const { type, data } = event.data;
-        if (type === 'LOAD_GAME_DATA') {
-            console.log('[Bridge] Received cloud data:', data);
-            if (data.aetherCredits !== undefined) {
-                this.credits = data.aetherCredits;
-                this.saveCredits(); // Update local as fallback
-            }
-            if (data.upgrades) {
-                this.playerShip.upgrades = data.upgrades;
-                // Re-calculate ship stats based on new upgrades
-                this.playerShip.maxSpeed = 50 * (1 + (data.upgrades.speed || 0) * 0.2);
-                this.playerShip.acceleration = 0.5 * (1 + (data.upgrades.speed || 0) * 0.1);
-                this.playerShip.maxHull = 100 * (1 + (data.upgrades.armor || 0) * 0.2);
-                this.playerShip.maxShield = 50 * (1 + (data.upgrades.shield || 0) * 0.2);
-                this.playerShip.radarRange = 2000 * (1 + (data.upgrades.radar || 0) * 0.3);
-                this.playerShip.tractorRadius = 25 * (1 + (data.upgrades.tractor || 0) * 0.5);
-                this.saveUpgrades(); // Update local as fallback
-            }
-            if (data.subscription) {
-                this.subscription = data.subscription;
-                this.isPro = !!data.subscription.isProPilot;
-                console.log('[Bridge] Subscription status updated. Pro Pilot:', this.isPro);
-                if (this.isPro) {
-                    this.showToast("🚀 Nirvana Pilot Active - 20% Bonus gems enabled!", 5000);
-                }
-            }
-        }
-    }
-
-    sellAllGems() {
-        console.log('[Sell All] Button clicked!');
-        let totalValue = 0;
-        let count = 0;
-        for (const [type, qty] of Object.entries(this.playerInventory)) {
-            if (qty > 0) {
-                const val = this.mineralTypes[type].value;
-                totalValue += val * qty;
-                count += qty;
-                this.playerInventory[type] = 0;
-            }
-        }
-
-        if (totalValue > 0) {
-            // Apply Pro Pilot Bonus (20%)
-            if (this.isPro) {
-                const bonus = Math.floor(totalValue * 0.2);
-                totalValue += bonus;
-                console.log('[Pro Bonus] Applied +', bonus, 'credits');
-            }
-
-            this.credits += totalValue;
-
-            // Also award permanent gems (1 gem per 10 credit value = 10%)
-            const gemsAwarded = Math.floor(totalValue / 10);
-            this.playerGems += gemsAwarded;
-            localStorage.setItem('playerGems', this.playerGems);
-
-            this.saveCredits();
-            this.saveInventory();
-            this.showToast(`Sold ${count} ores for $${totalValue.toLocaleString()} and earned ${gemsAwarded} Gems!`);
-            console.log('[Sell All] Success:', count, 'gems for $', totalValue, 'Gems:', gemsAwarded);
-
-            // Update UI immediately
-            this.updateWalletUI();
-            this.updateInventoryUI();
-            if (this.updateGemsUI) this.updateGemsUI();
-        } else {
-            this.showToast('No ores to sell');
-            console.log('[Sell All] No gems in inventory');
-        }
-    }
-
-    updateGemsUI() {
-        // Update the Hangar Gem counter if it exists
-        const hangarGemsEl = document.getElementById('hangarGemBalance');
-        if (hangarGemsEl) {
-            hangarGemsEl.textContent = this.playerGems.toLocaleString();
-        }
-        
-        // Update the HUD Gem counter
-        const hudGemsEl = document.getElementById('hudGemsValue');
-        if (hudGemsEl) {
-            hudGemsEl.textContent = '💎' + this.playerGems.toLocaleString();
-        }
-
-        // Update Top Bar Cargo Display
-        const cargoEl = document.getElementById('cargoStatus');
-        if (cargoEl && this.playerShip) {
-            const count = this.playerShip.cargoCount || 0;
-            const max = Math.round(this.playerShip.maxCargo || 1000);
-            cargoEl.textContent = `📦 ${count}/${max}`;
-            if (count >= max) {
-                cargoEl.style.color = '#ff3300';
-                cargoEl.style.fontWeight = 'bold';
-            } else {
-                cargoEl.style.color = '#00ff88';
-                cargoEl.style.fontWeight = 'normal';
-            }
-        }
-    }
-
-    updateWalletUI() {
-        const creditsEl = document.getElementById('walletValue');
-        if (creditsEl && !creditsEl.querySelector('input')) {
-            creditsEl.textContent = '$' + this.credits.toLocaleString();
-        }
-        const shopCreditsEl = document.getElementById('walletValueShop');
-        if (shopCreditsEl && !shopCreditsEl.querySelector('input')) {
-            shopCreditsEl.textContent = '$' + this.credits.toLocaleString();
-        }
-        const creditsDisplay = document.getElementById('creditsDisplay'); // Legacy support
-        if (creditsDisplay && !creditsDisplay.querySelector('input')) {
-            creditsDisplay.textContent = '$' + this.credits.toLocaleString();
-        }
-    }
-
-    updateInventoryUI() {
-        const gemsGrid = document.getElementById('gemsGrid');
-        const gemsTotalEl = document.getElementById('gemsTotal');
-
-        if (!gemsGrid) return;
-
-        let totalValue = 0;
-        let html = '';
-
-        // Calculate total value
-        Object.entries(this.playerInventory || {}).forEach(([type, count]) => {
-            const info = this.mineralTypes[type];
-            if (info) totalValue += count * info.value;
-        });
-
-        // Display ALL types
-        Object.keys(this.mineralTypes).forEach(type => {
-            const info = this.mineralTypes[type];
-            const count = (this.playerInventory && this.playerInventory[type]) || 0;
-
-            const itemValue = count * info.value;
-            const valueDisplay = this.showGemValues ? `<span style="color:${info.color}; font-weight:bold; margin-left:6px;">$${Math.round(itemValue).toLocaleString()}</span>` : '';
-
-            const opacity = count > 0 ? 1 : 0.5;
-            const bgAlpha = count > 0 ? 0.6 : 0.2;
-
-            html += `
-                        <div class="gem-item" style="border:1px solid ${info.color}44; background: rgba(0,0,0,${bgAlpha}); opacity: ${opacity};">
-                            <div style="${this.styleGem(type)}"></div>
-                            <span style="color:${info.color}">${info.name}</span>
-                            <span class="gem-count">×${count}</span>
-                            ${valueDisplay}
-                        </div>
-                    `;
-        });
-
-        gemsGrid.innerHTML = html;
-
-        if (gemsTotalEl) {
-            gemsTotalEl.textContent = `$${totalValue.toLocaleString()}`;
-        }
-    }
-
-    upgradeShip(type) {
-        const upgradeCosts = [1000, 2500, 5000, 10000, 25000]; // Function of level maybe?
-        const currentLevel = this.playerShip.upgrades[type] || 0;
-
-        if (currentLevel >= 5) {
-            this.showToast('Max level reached!');
-            return;
-        }
-
-        const cost = upgradeCosts[currentLevel];
-        if (this.credits >= cost) {
-            this.credits -= cost;
-            this.playerShip.upgrades[type]++;
-            this.saveCredits();
-            this.saveUpgrades();
-
-            // Apply effects immediately
-            const lvl = this.playerShip.upgrades[type];
-            if (type === 'speed') {
-                this.playerShip.maxSpeed = 50 * (1 + lvl * 0.2);
-                this.playerShip.acceleration = 0.5 * (1 + lvl * 0.1);
-            } else if (type === 'armor') {
-                this.playerShip.maxHull = 100 * (1 + lvl * 0.2);
-                this.playerShip.hullHealth = this.playerShip.maxHull; // Repair on upgrade
-            } else if (type === 'shield') {
-                this.playerShip.maxShield = 50 * (1 + lvl * 0.2);
-                this.playerShip.shield = this.playerShip.maxShield;
-            } else if (type === 'radar') {
-                this.playerShip.radarRange = 2000 * (1 + lvl * 0.3);
-            } else if (type === 'tractor') {
-                this.playerShip.tractorRadius = 25 * (1 + lvl * 0.5);
-            } else if (type === 'ecm') {
-                this.playerShip.ecmStrength = lvl; // 0-5
-            } else if (type === 'flares') {
-                this.playerShip.maxFlares = lvl * 2;
-                this.playerShip.flares = this.playerShip.maxFlares;
-            } else if (type === 'cargo') {
-                this.playerShip.maxCargo = 1000 * (1 + lvl * 1.0);
-            } else if (type === 'weapons') {
-                // No immediate ship stat change, used in shoot() and updateProjectiles()
-                console.log(`[Upgrades] Photon Cannons upgraded to level ${lvl}`);
-            }
-
-            this.showToast(`${type.toUpperCase()} Upgraded to Level ${lvl + 1} !`);
-            this.updateUpgradeUI(); // Assuming we'll create this method
-        } else {
-            this.showToast(`Not enough credits! Need $${cost.toLocaleString()} `);
-        }
-    }
+    // Moved updateEnemyShips to Physics.js
 
     // Spawn minerals around the player - ADDICTIVE GAMEPLAY DESIGN
     spawnMinerals() {
@@ -5984,7 +3347,7 @@ class InterstellarEngine {
                 this.playerShip.zenBuffer = Date.now() + 5000; // 5 seconds of peace
                 this.updateShipStatus();
                 this.showToast('🪷 Mindwave Lotus: INTEGRITY RESTORED / ZEN BUFFER ACTIVE', 3000);
-                if (typeof gameAudio !== 'undefined' && gameAudio.playUpgrade) gameAudio.playUpgrade(); // Special sound
+                if (this.audio && this.audio.playUpgrade) this.audio.playUpgrade(); // Special sound
                 
                 // Add value to wallet and register it
                 this.credits += (mineral.value || 1000);
@@ -6043,8 +3406,8 @@ class InterstellarEngine {
             }
 
             // Audio: collect jingle
-            if (typeof gameAudio !== 'undefined' && gameAudio.playCollect) {
-                gameAudio.playCollect();
+            if (this.audio && this.audio.playCollect) {
+                this.audio.playCollect();
             }
 
             // Remove mineral
@@ -6131,73 +3494,9 @@ class InterstellarEngine {
     }
 
     // Update minerals (check collection, spawn new ones)
-    updateMinerals() {
-        if (!this.flightMode) return;
+    // Moved updateMinerals to Physics.js
 
-        // Apply active ship abilities (Magnet, Gravity, etc)
-        this.applyShipAbilities();
-
-        // Check for collections
-        for (const mineral of [...this.minerals]) {
-            this.collectMineral(mineral);
-        }
-
-        // Spawn new minerals
-        this.spawnMinerals();
-
-        // Lotus respawn: max 5 at a time, spawn them frequently to ensure they are found
-        const lotusCount = this.minerals.filter(m => m.type === 'lotus').length;
-        const now = Date.now();
-        if (lotusCount < 5) {
-            if (!this.lastLotusRespawn || now - this.lastLotusRespawn > 5000) {
-                this.lastLotusRespawn = now;
-                // Spawn just enough to bring count up to 5
-                const toSpawn = 5 - lotusCount;
-                for (let i = 0; i < toSpawn; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const dist = Math.sqrt(Math.random() * (1210000 - 90000) + 90000); // Spawn much closer so player sees them
-                    this.minerals.push({
-                        id: 'lotus-' + now + '-' + i,
-                        x: this.playerShip.x + Math.cos(angle) * dist,
-                        y: this.playerShip.y + Math.sin(angle) * dist,
-                        z: this.playerShip.z || 0,
-                        type: 'lotus',
-                        name: 'Mindwave Lotus',
-                        size: 25,
-                        color: '#ff69b4',
-                        value: 1000,
-                        phase: Math.random() * Math.PI * 2
-                    });
-                }
-            }
-        }
-
-        // Update notifications (fade out after 2 seconds)
-        this.collectionNotifications = this.collectionNotifications.filter(n => now - n.time < 2000);
-
-        // Update Mauler Debris
-        this.updateMaulerDebris();
-    }
-
-    updatePowerUps() {
-        if (!this.flightMode) return;
-
-        const ship = this.playerShip;
-        if (!ship) return;
-
-        for (let i = this.powerUps.length - 1; i >= 0; i--) {
-            const pu = this.powerUps[i];
-            const dx = pu.x - ship.x;
-            const dy = pu.y - ship.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            // Pickup radius for powerups
-            if (dist < ship.pickupRadius || dist < 60) {
-                this.collectPowerUp(pu);
-                this.powerUps.splice(i, 1);
-            }
-        }
-    }
+    // Moved updatePowerUps to Physics.js
 
     collectPowerUp(pu) {
         if (pu.type === 'shield_boost') {
@@ -6222,51 +3521,7 @@ class InterstellarEngine {
         if (this.updateShipStatus) this.updateShipStatus();
     }
 
-    updateMaulerDebris() {
-        if (!this.maulerDebris) return;
-        const ship = this.playerShip;
-        const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy * (ship.vz || 0)); // Approx 2D speed for now
-
-        // Threshold to detach debris
-        const detachSpeed = 20;
-        const isFast = ship.speed > detachSpeed;
-
-        this.maulerDebris.forEach(p => {
-            if (!p.detached) {
-                if (isFast) {
-                    // Detach!
-                    p.detached = true;
-                    // Fling it opposite to ship direction slightly
-                    p.vx = -ship.vx * 0.5 + (Math.random() - 0.5) * 5;
-                    p.vy = -ship.vy * 0.5 + (Math.random() - 0.5) * 5;
-                } else {
-                    // Stay attached - hover around ship
-                    // Move towards target offset
-                    const targetX = ship.x + p.offsetX;
-                    const targetY = ship.y + p.offsetY;
-
-                    // Smooth follow
-                    p.x += (targetX - p.x) * 0.1;
-                    p.y += (targetY - p.y) * 0.1;
-
-                    // Rotate with ship (optional, simpler to just offset)
-                    // Apply slight rotation to offsets
-                    const rot = 0.02;
-                    const oldOx = p.offsetX;
-                    p.offsetX = p.offsetX * Math.cos(rot) - p.offsetY * Math.sin(rot);
-                    p.offsetY = oldOx * Math.sin(rot) + p.offsetY * Math.cos(rot);
-                }
-            } else {
-                // Detached physics - drift away
-                p.x += p.vx;
-                p.y += p.vy;
-                p.life -= 0.02; // Fade out
-            }
-        });
-
-        // Remove dead particles
-        this.maulerDebris = this.maulerDebris.filter(p => !p.detached || p.life > 0);
-    }
+    // Moved updateMaulerDebris to Physics.js
 
     // --- SHIP ABILITY SYSTEM ---
     applyShipAbilities() {
@@ -6500,349 +3755,7 @@ class InterstellarEngine {
     }
 
     // Update hazards - check collisions and spawn new ones
-    updateHazards() {
-        if (!this.flightMode) return;
-
-        // If an effect is active, skip collision checks
-        if (this.hazardEffect) {
-            return;
-        }
-
-        // Give 3 seconds of invincibility after respawn to prevent immediate re-death loops
-        if (this.playerShip.invulnerableUntil && performance.now() < this.playerShip.invulnerableUntil) {
-            return;
-        }
-
-        // --- TRAINING TRACK PROGRESSION ---
-        if (this.trainingActive) {
-            this.updateTraining();
-        }
-        // Legacy tutorial hook (kept for backward compat)
-        if (this.tutorialActive) {
-            this.updateTutorial();
-        }
-
-        const ship = this.playerShip;
-        const collisionRadius = 30;
-
-        // Distress Beacons Generation & Logic
-        if (!this.distressBeacons) this.distressBeacons = [];
-        // Spawn chance based on time (about once every few minutes)
-        if (Math.random() < 0.0002 && this.distressBeacons.length < 2) {
-            this.distressBeacons.push({
-                x: ship.x + (Math.random() - 0.5) * 8000,
-                y: ship.y + (Math.random() - 0.5) * 8000,
-                active: true,
-                id: Date.now()
-            });
-            this.showToast('📡 DISTRESS BEACON DETECTED ON RADAR', 3000);
-        }
-
-        for (let i = this.distressBeacons.length - 1; i >= 0; i--) {
-            const beacon = this.distressBeacons[i];
-            const dist = Math.hypot(beacon.x - ship.x, beacon.y - ship.y);
-            if (dist < 150 && beacon.active) {
-                beacon.active = false;
-                this.distressBeacons.splice(i, 1);
-                // Reward player
-                this.credits = (this.credits || 0) + 1500;
-                localStorage.setItem('playerCredits', this.credits);
-                this.showToast('✅ CIVILIAN RESCUED: +$1500!', 3000);
-                if (typeof gameAudio !== 'undefined' && gameAudio.playCollect) gameAudio.playCollect();
-            }
-        }
-
-        // Check mine collisions
-        for (const mine of this.spaceMines) {
-            const dist = Math.hypot(mine.x - ship.x, mine.y - ship.y);
-            if (dist < mine.size + collisionRadius) {
-                this.triggerSupernovaEffect(mine);
-                this.spaceMines = this.spaceMines.filter(m => m !== mine);
-                return;
-            }
-        }
-
-        // Check Sun (Galaxy) collisions (Vaporization and Heat)
-        if (this.galaxies) {
-            for (const sun of this.galaxies) {
-                const zoom = this.camera.zoom;
-                const wrapRadius = Math.max(15000, 60000 / Math.max(1, Math.pow(zoom, 0.6)));
-                let gdx = sun.x - ship.x;
-                let gdy = sun.y - ship.y;
-                if (!this.bgWarpMode) {
-                    while (gdx > wrapRadius) gdx -= wrapRadius * 2;
-                    while (gdx < -wrapRadius) gdx += wrapRadius * 2;
-                    while (gdy > wrapRadius) gdy -= wrapRadius * 2;
-                    while (gdy < -wrapRadius) gdy += wrapRadius * 2;
-                }
-
-                const para = (sun.z || 0) * 0.0005;
-                const depthScale = 1 - para;
-                const cx = ship.x + gdx * depthScale;
-                const cy = ship.y + gdy * depthScale;
-                
-                const dx = ship.x - cx;
-                const dy = ship.y - cy;
-                const dist = Math.hypot(dx, dy);
-
-                const scale = (sun.size / 42) * depthScale;
-                const innerRadius = 15 * scale; // Instant death zone (solid core)
-                
-                // State-of-the-art ray tracing collision for the 16-point starburst
-                let shipAngle = Math.atan2(dy, dx);
-                let relAngle = shipAngle - (sun.angle || 0);
-                
-                // Normalize to -PI to PI
-                while (relAngle <= -Math.PI) relAngle += Math.PI * 2;
-                while (relAngle > Math.PI) relAngle -= Math.PI * 2;
-                
-                // The pattern repeats every Math.PI / 4 (45 degrees).
-                let localAngle = relAngle % (Math.PI / 4);
-                if (localAngle < 0) localAngle += Math.PI / 4;
-                
-                // Shift so 0 is the long ray, and +/- 22.5 is the short ray
-                if (localAngle > Math.PI / 8) {
-                    localAngle -= Math.PI / 4;
-                }
-                const absAngle = Math.abs(localAngle); // 0 to 22.5 deg
-                
-                let effectiveRadius = 15;
-                
-                // Long ray (peaks at 0, length 42, angular width ~0.26 rad)
-                if (absAngle < 0.26) {
-                    const rLong = 42 - (27 * (absAngle / 0.26));
-                    effectiveRadius = Math.max(effectiveRadius, rLong);
-                }
-                
-                // Short ray (peaks at PI/8, length 32, angular width ~0.13 rad)
-                const distToShort = Math.abs(absAngle - (Math.PI / 8));
-                if (distToShort < 0.13) {
-                    const rShort = 32 - (17 * (distToShort / 0.13));
-                    effectiveRadius = Math.max(effectiveRadius, rShort);
-                }
-                
-                const heatRadius = effectiveRadius * scale;
-                
-                if (dist < innerRadius + collisionRadius) {
-                    this.showToast('☀️ VAPORIZED BY THE SUN!');
-                    
-                    // Vaporize instantly
-                    this.damagePlayer(Infinity, true, false); 
-                    
-                    // Override the hazard effect for a cinematic whiteout vaporization
-                    if (this.hazardEffect) {
-                        this.hazardEffect.type = 'supernova'; // Massive whiteout
-                        this.hazardEffect.duration = 4000;
-                    }
-                    return;
-                } else if (dist < heatRadius + collisionRadius) {
-                    // Ship loses shield first, then health
-                    this.damagePlayer(0.5, false, Math.random() > 0.05); // Silent 95% of the time to avoid audio spam
-                    
-                    // Melting particles
-                    if (Math.random() < 0.4 && this.damageParticles) {
-                        this.damageParticles.push({
-                            x: ship.x + (Math.random() - 0.5) * 30,
-                            y: ship.y + (Math.random() - 0.5) * 30,
-                            vx: ship.vx * 0.8 + (Math.random() - 0.5) * 4,
-                            vy: ship.vy * 0.8 + (Math.random() - 0.5) * 4,
-                            life: 30 + Math.random() * 20,
-                            color: Math.random() < 0.5 ? '#ff4400' : '#ffaa00',
-                            size: 4 + Math.random() * 6
-                        });
-                    }
-
-                    if (Math.random() < 0.02) {
-                        this.showToast('🔥 SHIELDS MELTING! TOUCHING SOLAR FLARES!', 1000);
-                    }
-                }
-            }
-        }
-
-        // Check black hole collisions
-        for (const bh of this.hazardBlackHoles) {
-            const dist = Math.hypot(bh.x - ship.x, bh.y - ship.y);
-            
-            // True Gravity Well
-            const gravityRadius = bh.size * 5;
-            if (dist < gravityRadius && dist > 1) {
-                const pullStrength = (1 - (dist / gravityRadius)) * 0.5;
-                ship.vx += ((bh.x - ship.x) / Math.max(0.1, dist)) * pullStrength;
-                ship.vy += ((bh.y - ship.y) / Math.max(0.1, dist)) * pullStrength;
-            }
-
-            if (dist < bh.size * 0.5 + collisionRadius) {
-                this.triggerBlackHoleEffect(bh);
-                this.hazardBlackHoles = this.hazardBlackHoles.filter(b => b !== bh);
-                return;
-            }
-        }
-
-        // Check missile base collisions (ramming the base)
-        for (const base of this.missileBases) {
-            const dist = Math.hypot(base.x - ship.x, base.y - ship.y);
-            if (dist < base.size * 1.5 + collisionRadius) {
-                this.triggerMissileBaseDestructionEffect(base);
-                this.missileBases = this.missileBases.filter(b => b !== base);
-                return;
-            }
-        }
-
-        // Check planet collisions (deep space background planets)
-        // Only check if deep space style is active and planets exist
-        if (this.planets && this.planets.length > 0) {
-            for (const planet of this.planets) {
-                const para = (planet.z || 0) * 0.0005;
-                const depthScale = 1 - para;
-                const dx = planet.x - ship.x;
-                const dy = planet.y - ship.y;
-                
-                const visualX = ship.x + dx * depthScale;
-                const visualY = ship.y + dy * depthScale;
-                
-                // Effective visual distance between ship and parallaxed planet
-                const dist = Math.hypot(visualX - ship.x, visualY - ship.y);
-                const effectiveRadius = planet.radius * depthScale;
-
-                if (dist < effectiveRadius + collisionRadius) {
-                    this.triggerPlanetImpactEffect(planet);
-                    return; // Crash into planet
-                }
-            }
-        }
-
-        // === UPDATE MISSILE BASES ===
-        const now = Date.now();
-        for (const base of this.missileBases) {
-            const distToPlayer = Math.hypot(base.x - ship.x, base.y - ship.y);
-
-            // Update turret angle to track player
-            const angleToPlayer = Math.atan2(ship.y - base.y, ship.x - base.x);
-
-            // Smooth turret rotation
-            let angleDiff = angleToPlayer - base.turretAngle;
-            angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
-            base.turretAngle += angleDiff * 0.05;
-
-            // Update alert level based on player proximity
-            // SPECTRE: Cloak - Enemies ignore you if cloaked (passive for Spectre)
-            // ECM: Reduce effective detection range (10% per level)
-            const ecmFactor = 1 - (this.playerShip.ecmStrength || 0) * 0.1;
-            const effectiveDetectionRange = base.detectionRange * ecmFactor;
-            
-            const isSpectre = ship.type === 'spectre';
-            if (distToPlayer < effectiveDetectionRange && !ship.isCloaked && !isSpectre) {
-                // AGGRESSIVE ALERT: Scales faster
-                base.alertLevel = Math.min(1, base.alertLevel + 0.05);
-
-                // Fire missile if ready and player in range
-                if (now - base.lastFireTime > base.fireRate && base.alertLevel > 0.4) {
-                    this.fireMissile(base);
-                    base.lastFireTime = now;
-                }
-            } else {
-                // PERSISTENT ALERT: Slow decay (takes ~16s to drop from 1 to 0 at 60fps)
-                base.alertLevel = Math.max(0, base.alertLevel - 0.001);
-            }
-        }
-
-        // === UPDATE HEAT-SEEKING MISSILES ===
-        for (const missile of this.enemyMissiles) {
-            const isSpectre = ship.type === 'spectre';
-            
-            // TARGET ACQUISITION: Check for flare distraction first
-            let targetX = ship.x;
-            let targetY = ship.y;
-            let isDistracted = false;
-
-            if (this.decoyFlares.length > 0) {
-                // Find closest flare within distraction radius
-                let closestFlare = null;
-                let minDist = 800; // Flare attraction radius
-                for (const flare of this.decoyFlares) {
-                    const d = Math.hypot(flare.x - missile.x, flare.y - missile.y);
-                    if (d < minDist) {
-                        minDist = d;
-                        closestFlare = flare;
-                    }
-                }
-                if (closestFlare) {
-                    targetX = closestFlare.x;
-                    targetY = closestFlare.y;
-                    isDistracted = true;
-                }
-            }
-
-            if ((!ship.isCloaked && !isSpectre) || isDistracted) {
-                // Calculate angle to target (player or flare)
-                const angleToTarget = Math.atan2(targetY - missile.y, targetX - missile.x);
-
-                // Smooth turning (heat-seeking behavior)
-                let angleDiff = angleToTarget - missile.angle;
-                angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
-
-                // Turn rate decreases over time (fuel running out)
-                const turnRate = 0.12 * (missile.life / missile.maxLife);
-                missile.angle += angleDiff * turnRate;
-            }
-
-            // Accelerate missile
-            // AGGRESSIVE MISSILES: Faster base speed and better acceleration
-            const speed = missile.speed * (1.2 + 0.6 * (missile.life / missile.maxLife));
-            missile.vx = Math.cos(missile.angle) * speed;
-            missile.vy = Math.sin(missile.angle) * speed;
-            missile.x += missile.vx;
-            missile.y += missile.vy;
-
-            // Decrease life
-            // AGGRESSIVE MISSILES: Longer lived (less decay per frame)
-            missile.life -= 10; // ~60 fps (lasts ~8 seconds instead of 5)
-
-            // Add trail particle
-            if (Math.random() < 0.5) {
-                missile.trail.push({
-                    x: missile.x - missile.vx * 0.5,
-                    y: missile.y - missile.vy * 0.5,
-                    life: 20,
-                    size: 3 + Math.random() * 4
-                });
-            }
-
-            // Update trail particles
-            missile.trail = missile.trail.filter(p => {
-                p.life -= 1;
-                p.size *= 0.95;
-                return p.life > 0;
-            });
-
-            // Check collision with player
-            const distToPlayer = Math.hypot(missile.x - ship.x, missile.y - ship.y);
-            if (distToPlayer < 35) {
-                // Missile hit! Trigger explosion effect
-                this.triggerMissileHitEffect(missile);
-                missile.life = 0;
-            }
-        }
-
-        // Remove dead missiles (from life running out OR EMP kill)
-        this.enemyMissiles = this.enemyMissiles.filter(m => m.life > 0 && !m.dead);
-
-        // === UPDATE DECOY FLARES ===
-        for (let i = this.decoyFlares.length - 1; i >= 0; i--) {
-            const flare = this.decoyFlares[i];
-            flare.x += flare.vx;
-            flare.y += flare.vy;
-            flare.vx *= 0.95; // Drag
-            flare.vy *= 0.95;
-            flare.life--;
-            if (flare.life <= 0) {
-                this.decoyFlares.splice(i, 1);
-            }
-        }
-
-        // Spawn new hazards
-        this.spawnHazards();
-    }
+    // Moved updateHazards to Physics.js
 
     fireDecoyFlare() {
         if (!this.flightMode) return;
@@ -6939,15 +3852,15 @@ class InterstellarEngine {
         if (this.playerShip.shield > 0 && !ignoreShield) {
             const shieldDamage = Math.min(this.playerShip.shield, amount);
             this.playerShip.shield -= shieldDamage;
-            if (!silent && typeof gameAudio !== 'undefined' && gameAudio.playShieldHit) gameAudio.playShieldHit();
+            if (!silent && this.audio && this.audio.playShieldHit) this.audio.playShieldHit();
             const remainingDamage = amount - shieldDamage;
             if (remainingDamage > 0) {
                 this.playerShip.hullHealth = Math.max(0, this.playerShip.hullHealth - remainingDamage);
-                if (!silent && typeof gameAudio !== 'undefined' && gameAudio.playHullHit) gameAudio.playHullHit();
+                if (!silent && this.audio && this.audio.playHullHit) this.audio.playHullHit();
             }
         } else {
             this.playerShip.hullHealth = Math.max(0, this.playerShip.hullHealth - amount);
-            if (!silent && typeof gameAudio !== 'undefined' && gameAudio.playHullHit) gameAudio.playHullHit();
+            if (!silent && this.audio && this.audio.playHullHit) this.audio.playHullHit();
         }
 
         this.updateShipStatus();
@@ -7049,7 +3962,7 @@ class InterstellarEngine {
             document.getElementById('skillGems').innerText = this.playerGems;
             document.getElementById(`skillLvl_${skillKey}`).innerText = `${this.playerSkills[skillKey]}/3`;
             this.showToast(`✨ Skill Upgraded! Level ${this.playerSkills[skillKey]}`);
-            if (window.gameAudio) window.gameAudio.playCollect();
+            if (this.audio) this.audio.playCollect();
         } else {
             this.showToast('⚠️ Insufficient Gems for Upgrade.');
         }
@@ -7065,7 +3978,7 @@ class InterstellarEngine {
         this.skillCooldowns.emp = now;
         this.showToast('⚡ SYSTEM: EMP BURST DEPLOYED!', 2000);
         
-        if (typeof window.gameAudio !== 'undefined' && window.gameAudio.playEMP) window.gameAudio.playEMP();
+        if (this.audio && this.audio.playEMP) this.audio.playEMP();
         this.hazardEffect = { type: 'emp', startTime: now, duration: 1500 };
 
         const radius = 500 + (lvl * 250);
@@ -7091,7 +4004,7 @@ class InterstellarEngine {
         this.skillCooldowns.afterburner = now;
         this.globalAbilityActive.afterburner = true;
         this.showToast('🔥 SYSTEM: AFTERBURNER ENGAGED!', 2000);
-        if (typeof window.gameAudio !== 'undefined' && window.gameAudio.playAfterburner) window.gameAudio.playAfterburner();
+        if (this.audio && this.audio.playAfterburner) this.audio.playAfterburner();
         
         // Push ship slightly instantly
         this.playerShip.vx += Math.cos(this.playerShip.rotation) * 20;
@@ -7111,7 +4024,7 @@ class InterstellarEngine {
 
         this.skillCooldowns.quantum = now;
         this.showToast('🌌 SYSTEM: QUANTUM JUMP SUCCESSFUL', 2000);
-        if (window.gameAudio) window.gameAudio.playBossAlert();
+        if (this.audio) this.audio.playBossAlert();
 
         const jumpDist = 1200 + (lvl * 400); // 1600 - 2400 units
         this.playerShip.x += Math.cos(this.playerShip.rotation) * jumpDist;
@@ -7228,8 +4141,8 @@ class InterstellarEngine {
         }
 
         // Engine hum is now muted later during the actual explosion phase
-        if (window.gameAudio) {
-            if (window.gameAudio.playPlayerDeath) window.gameAudio.playPlayerDeath();
+        if (this.audio) {
+            if (this.audio.playPlayerDeath) this.audio.playPlayerDeath();
         }
 
         // NOVA: Volatile Core (AoE explosion on death)
@@ -7636,599 +4549,7 @@ class InterstellarEngine {
     }
 
     // Update active hazard effect
-    updateHazardEffect() {
-        if (!this.hazardEffect) return;
-
-        try {
-            const now = performance.now();
-            let elapsed = now - this.hazardEffect.startTime;
-            const duration = Math.max(1, this.hazardEffect.duration || 8000);
-
-            // CRITICAL FIX: If the effect hasn't rendered at least one frame yet
-            // but elapsed time already exceeds duration (e.g., due to alert() pausing JS),
-            // reset the startTime to NOW so the animation plays from the beginning.
-            if (!this.hazardEffect._hasRenderedFrame && elapsed > duration * 0.5) {
-                console.log('[Hazard] Resetting startTime - elapsed', elapsed.toFixed(0), 'ms before first render frame');
-                this.hazardEffect.startTime = now;
-                elapsed = 0;
-            }
-
-            const progress = Math.max(0, Math.min(1.0, elapsed / duration));
-
-            if (isNaN(progress)) {
-                console.error('[Hazard] Progress is NaN! Force-clearing effect.');
-                this.hazardEffect = null;
-                return;
-            }
-
-            // BLACK HOLE: Teleport during white phase (80%) - not at end
-            // This prevents the glitch where old universe shows before new one loads
-            if (this.hazardEffect.type === 'blackhole' && progress >= 0.8 && !this.hazardEffect.hasTeleported) {
-                // Teleport player to destination while screen is still white
-                this.playerShip.x = this.hazardEffect.destX;
-                this.playerShip.y = this.hazardEffect.destY;
-                this.hazardEffect.hasTeleported = true;
-
-                // Clear old minerals/hazards so new ones spawn at new location
-                this.minerals = this.minerals.filter(m => {
-                    const dx = m.x - this.playerShip.x;
-                    const dy = m.y - this.playerShip.y;
-                    return Math.hypot(dx, dy) < 3000; // Keep only close ones
-                });
-
-                console.log('[Hazard] Teleported during white phase to:', this.hazardEffect.destX, this.hazardEffect.destY);
-                console.log('[Debug] Ship type after black hole:', this.playerShip.type);
-            }
-
-            // Update effect-specific logic BEFORE completion check
-            if (this.hazardEffect.type === 'supernova' || this.hazardEffect.type === 'missile_base_destruction') {
-                this.updateSupernovaEffect(progress);
-            } else if (this.hazardEffect.type === 'blackhole') {
-                this.updateBlackHoleEffectState(progress);
-            } else if (this.hazardEffect.type === 'planet_impact') {
-                this.updatePlanetImpactEffect(progress);
-            } else if (this.hazardEffect.type === 'player_death') {
-                this.updatePlayerDeathEffect(progress);
-            }
-
-            // Effect complete - now safe to restore controls
-            // Check for completion AFTER state has been updated to final frame
-            if (progress >= 1 || (this.hazardEffect.deathTimestamp && now > this.hazardEffect.deathTimestamp)) {
-                // Clear the hazard effect FIRST to allow controls through
-                if (this.hazardEffect.type === 'boost') {
-                    this.playerShip.boostActive = false;
-                }
-                
-                // UNIVERSAL RESPAWN FAILSAFE: Ensure health/shield are always restored after any death-causing hazard
-                const finishedHazardType = this.hazardEffect.type;
-                if (this.playerShip.hullHealth <= 0) {
-                    this.playerShip.shield = this.playerShip.maxShield;
-                    this.playerShip.hullHealth = this.playerShip.maxHull;
-                    this.playerShip.invulnerableUntil = performance.now() + 3000;
-
-                    // RESTORE ENGINE AUDIO AFTER RESPAWN
-                    if (window.gameAudio) window.gameAudio.startEngineHum();
-
-                    // Universal respawn means the player stays exactly where they died.
-                    // (Teleportation code removed for all hazard types per user request)
-                    this.showToast('🚀 Systems restored after critical impact.');
-                }
-
-                this.hazardEffect = null;
-
-                // Reset camera to prevent permanent drift (Missing Ship bug)
-                this.camera.shakeX = 0;
-                this.camera.shakeY = 0;
-
-                // Reset ALL input states to clean slate
-                this.keysPressed = {};
-                this.joyInputX = 0;
-                this.joyInputY = 0;
-                this.joystickActive = false;
-
-                // Reset mouse states that might block input
-                this.mouseRightDown = false;
-                this.mouseLastX = undefined;
-                this.mouseLastY = undefined;
-
-                // Ensure velocity is completely zeroed out after any hazard/death sequence
-                this.playerShip.vx = 0;
-                this.playerShip.vy = 0;
-                this.playerShip.vz = 0;
-                this.shipSpeed = 0;
-                this.targetShipSpeed = 0;
-                if (this.flightControls) {
-                    this.flightControls.targetSpeed = 0;
-                    this.flightControls.currentSpeed = 0;
-                }
-
-                // Focus canvas to ensure keyboard events are captured
-                if (this.canvas) {
-                    this.canvas.focus();
-                }
-
-                // Show toast so user knows they can move again
-                this.showToast('Controls restored!');
-
-                console.log('[Hazard] Effect complete - ALL CONTROLS RE-ENABLED');
-                return;
-            }
-
-        } catch (e) {
-            console.error('[Hazard] Critical error during effect update:', e);
-            this.hazardEffect = null; // Kill the effect to prevent permanent lock
-        }
-    }
-
-    // ====================================================================
-    // --- FLIGHT ACADEMY: TRAINING TRACK SYSTEM (7-Lesson Progressive Course) ---
-    // ====================================================================
-
-    // Lesson definitions — each lesson teaches a specific flight skill
-    getTrainingLessons() {
-        return [
-            {
-                id: 'throttle',
-                name: 'Throttle Up',
-                icon: '🚀',
-                subtitle: 'Learn to fly forward and brake',
-                briefing: 'Use W to accelerate forward.\nUse S to brake and slow down.\nFly through each gate to proceed.',
-                keys: [{ key: 'W', action: 'Accelerate' }, { key: 'S', action: 'Brake' }],
-                gates: (() => {
-                    // 3 gates in a straight line ahead
-                    const g = [];
-                    for (let i = 0; i < 3; i++) {
-                        g.push({ x: (i + 1) * 800, y: 0, size: 200, reached: false });
-                    }
-                    return g;
-                })(),
-                gems: [],
-                showArrow: true,
-                medals: { gold: 8, silver: 14, bronze: 22 },
-                reward: { gold: 1200, silver: 800, bronze: 500 }
-            },
-            {
-                id: 'steering',
-                name: 'Steering',
-                icon: '🔄',
-                subtitle: 'Master turning and curved flight paths',
-                briefing: 'Use A to turn left, D to turn right.\nCombine with W to fly curves.\nNavigate the slalom course!',
-                keys: [{ key: 'A', action: 'Turn Left' }, { key: 'D', action: 'Turn Right' }, { key: 'W', action: 'Accelerate' }],
-                gates: (() => {
-                    // 5 gates in an S-curve
-                    const g = [];
-                    for (let i = 0; i < 5; i++) {
-                        const angle = (i * Math.PI) / 4;
-                        g.push({
-                            x: Math.cos(angle) * (600 + i * 400) + i * 300,
-                            y: Math.sin(angle) * (600 + i * 300),
-                            size: 180 - i * 10,
-                            reached: false
-                        });
-                    }
-                    return g;
-                })(),
-                gems: [],
-                showArrow: true,
-                medals: { gold: 15, silver: 25, bronze: 40 },
-                reward: { gold: 1800, silver: 1200, bronze: 800 }
-            },
-            {
-                id: 'boost',
-                name: 'Boost Control',
-                icon: '⚡',
-                subtitle: 'Use afterburners for maximum speed',
-                briefing: 'Hold SHIFT while flying to boost (2× speed).\nReach the distant gates before time runs out!\nRelease SHIFT to regain control for turns.',
-                keys: [{ key: 'SHIFT', action: 'Boost (2×)' }, { key: 'W', action: 'Accelerate' }],
-                gates: (() => {
-                    // 3 very distant gates — need boost to reach in time
-                    return [
-                        { x: 2000, y: 0, size: 250, reached: false },
-                        { x: 4500, y: -800, size: 220, reached: false },
-                        { x: 7000, y: 400, size: 200, reached: false }
-                    ];
-                })(),
-                gems: [],
-                showArrow: true,
-                medals: { gold: 12, silver: 20, bronze: 35 },
-                reward: { gold: 2200, silver: 1500, bronze: 1000 }
-            },
-            {
-                id: 'precision',
-                name: 'Precision Flying',
-                icon: '🎯',
-                subtitle: 'Tight maneuvers through small gates',
-                briefing: 'Combine all controls for precision flight.\nGates are smaller — aim carefully!\nControl your speed for tight turns.',
-                keys: [{ key: 'W/S', action: 'Speed' }, { key: 'A/D', action: 'Steer' }],
-                gates: (() => {
-                    // 5 small gates in a zigzag
-                    const g = [];
-                    for (let i = 0; i < 5; i++) {
-                        g.push({
-                            x: (i + 1) * 600,
-                            y: (i % 2 === 0 ? 1 : -1) * (300 + i * 80),
-                            size: 120 - i * 8,
-                            reached: false
-                        });
-                    }
-                    return g;
-                })(),
-                gems: [],
-                showArrow: true,
-                medals: { gold: 18, silver: 30, bronze: 45 },
-                reward: { gold: 3000, silver: 2000, bronze: 1200 }
-            },
-            {
-                id: 'collection',
-                name: 'Gem Collection',
-                icon: '💎',
-                subtitle: 'Learn to collect resources while flying',
-                briefing: 'Fly near gems to auto-collect them!\nCollect all 8 gems in the training zone.\nYour ship pulls gems in on contact.',
-                keys: [{ key: 'FLY', action: 'Near gems to collect' }],
-                gates: [
-                    { x: 0, y: 0, size: 120, reached: true }, // Start marker (pre-reached)
-                    { x: 3000, y: 0, size: 200, reached: false }  // Finish gate
-                ],
-                gems: (() => {
-                    // 8 gems scattered in a path
-                    const g = [];
-                    const types = ['iron', 'copper', 'gold', 'silver', 'titanium', 'ruby', 'emerald', 'diamond'];
-                    for (let i = 0; i < 8; i++) {
-                        g.push({
-                            x: 300 + i * 330,
-                            y: Math.sin(i * 0.8) * 200,
-                            type: types[i],
-                            collected: false
-                        });
-                    }
-                    return g;
-                })(),
-                showArrow: false,
-                collectTarget: 8,
-                medals: { gold: 20, silver: 35, bronze: 50 },
-                reward: { gold: 4000, silver: 2500, bronze: 1500 }
-            },
-            {
-                id: 'radar',
-                name: 'Radar Navigation',
-                icon: '📡',
-                subtitle: 'Navigate using instruments only',
-                briefing: 'No HUD arrow this time!\nUse the RADAR and MAP panels to find the waypoint.\nThe destination is far away — trust your instruments.',
-                keys: [{ key: 'RADAR', action: 'Check bearing' }, { key: 'MAP', action: 'See position' }],
-                gates: (() => {
-                    // Single far waypoint — player must navigate by radar
-                    const angle = Math.random() * Math.PI * 2;
-                    return [
-                        { x: Math.cos(angle) * 6000, y: Math.sin(angle) * 6000, size: 300, reached: false }
-                    ];
-                })(),
-                gems: [],
-                showArrow: false, // No HUD arrow — must use radar!
-                medals: { gold: 25, silver: 40, bronze: 60 },
-                reward: { gold: 5000, silver: 3500, bronze: 2000 }
-            },
-            {
-                id: 'final',
-                name: 'Final Exam',
-                icon: '🏆',
-                subtitle: 'Full course — prove your skills',
-                briefing: 'The ultimate test!\n8 gates with varying sizes and distances.\nCollect gems along the way for bonus time.\nUse everything you\'ve learned!',
-                keys: [{ key: 'ALL', action: 'Use every skill' }],
-                gates: (() => {
-                    // 8-gate course with mixed challenges
-                    const g = [];
-                    let cx = 0, cy = 0;
-                    const angles = [0.2, -0.6, 0.9, -0.3, 1.2, -0.8, 0.5, -0.4];
-                    const dists = [1000, 1200, 800, 1500, 900, 2000, 1100, 1400];
-                    const sizes = [200, 160, 140, 180, 120, 250, 130, 200];
-                    let heading = 0;
-                    for (let i = 0; i < 8; i++) {
-                        heading += angles[i];
-                        cx += Math.cos(heading) * dists[i];
-                        cy += Math.sin(heading) * dists[i];
-                        g.push({ x: cx, y: cy, size: sizes[i], reached: false });
-                    }
-                    return g;
-                })(),
-                gems: (() => {
-                    // 5 bonus gems along the course
-                    const g = [];
-                    const types = ['gold', 'diamond', 'ruby', 'emerald', 'platinum'];
-                    let cx = 0, cy = 0;
-                    const angles = [0.2, -0.6, 0.9, -0.3, 1.2];
-                    const dists = [1000, 1200, 800, 1500, 900];
-                    let heading = 0;
-                    for (let i = 0; i < 5; i++) {
-                        heading += angles[i];
-                        cx += Math.cos(heading) * dists[i];
-                        cy += Math.sin(heading) * dists[i];
-                        g.push({
-                            x: cx + (Math.random() - 0.5) * 300,
-                            y: cy + (Math.random() - 0.5) * 300,
-                            type: types[i],
-                            collected: false
-                        });
-                    }
-                    return g;
-                })(),
-                showArrow: true,
-                medals: { gold: 30, silver: 50, bronze: 75 },
-                reward: { gold: 8000, silver: 5000, bronze: 2500 }
-            },
-            {
-                id: 'weaponry',
-                name: 'Weapon Systems',
-                icon: '⚔️',
-                subtitle: 'Learn to use your ship lasers',
-                briefing: 'Hold SPACE to fire your primary lasers.\nDestroy the target mines to clear a path!\nGates will only open when the nearby mine is destroyed.',
-                keys: [{ key: 'SPACE', action: 'Fire Lasers' }, { key: 'W/A/D', action: 'Flight' }],
-                gates: (() => {
-                    const g = [];
-                    for (let i = 0; i < 4; i++) {
-                        g.push({ x: (i + 1) * 800, y: 0, size: 200, reached: false, targetDestroyed: false });
-                    }
-                    return g;
-                })(),
-                targets: (() => {
-                    const t = [];
-                    for (let i = 0; i < 4; i++) {
-                        t.push({ x: (i + 1) * 800, y: (Math.random() - 0.5) * 100, type: 'training_mine', id: i });
-                    }
-                    return t;
-                })(),
-                showArrow: true,
-                medals: { gold: 15, silver: 25, bronze: 40 },
-                reward: { gold: 6000, silver: 4000, bronze: 2000 }
-            },
-            {
-                id: 'shielding',
-                name: 'Defense & Shields',
-                icon: '🛡️',
-                subtitle: 'Learn to manage your ship integrity',
-                briefing: 'Your blue bar is your SHIELD. It absorbs damage first.\nThe red bar is your HULL. If it reaches zero, you die!\nFly through the damage zone and watch your shield deplete.',
-                keys: [{ key: 'W/A/D', action: 'Maneuver' }],
-                gates: (() => {
-                    const g = [];
-                    for (let i = 0; i < 3; i++) {
-                        g.push({ x: (i + 1) * 1000, y: Math.sin(i) * 300, size: 250, reached: false });
-                    }
-                    return g;
-                })(),
-                hazardZone: { x: 1500, y: 0, radius: 1000, damage: 0.2 },
-                showArrow: true,
-                medals: { gold: 20, silver: 35, bronze: 55 },
-                reward: { gold: 6500, silver: 4500, bronze: 2500 }
-            },
-            {
-                id: 'hazards',
-                name: 'Hazard Navigation',
-                icon: '🌀',
-                subtitle: 'Evasive maneuvers near anomalies',
-                briefing: 'Black Holes pull you in! Stay away from the event horizon.\nSpace Mines have a large blast radius.\nNavigate the hazard-filled course safely.',
-                keys: [{ key: 'SHIFT', action: 'Boost to escape pull' }],
-                gates: (() => {
-                    const g = [];
-                    for (let i = 0; i < 4; i++) {
-                        g.push({ x: (i + 1) * 1200, y: (i % 2 === 0 ? 400 : -400), size: 180, reached: false });
-                    }
-                    return g;
-                })(),
-                hazards: [
-                    { x: 1200, y: 0, type: 'blackhole', radius: 400 },
-                    { x: 2400, y: 0, type: 'mine', radius: 150 },
-                    { x: 3600, y: 0, type: 'blackhole', radius: 500 }
-                ],
-                showArrow: true,
-                medals: { gold: 25, silver: 45, bronze: 70 },
-                reward: { gold: 7500, silver: 5000, bronze: 3000 }
-            }
-        ];
-    }
-
-    // Load/save training progress
-    loadTrainingProgress() {
-        try {
-            return JSON.parse(localStorage.getItem('trainingProgress')) || {};
-        } catch (e) { return {}; }
-    }
-    saveTrainingProgress() {
-        try {
-            localStorage.setItem('trainingProgress', JSON.stringify(this.trainingProgress));
-        } catch (e) { }
-    }
-
-    // Start a specific training lesson
-    startTraining(lessonIndex) {
-        if (this.hazardEffect) {
-            this.showToast('⚠️ Wait for the current event to finish!');
-            return;
-        }
-
-        // Ensure flight mode is active
-        if (!this.flightMode) {
-            this.toggleFlightMode();
-        }
-
-        const lessons = this.getTrainingLessons();
-        if (lessonIndex < 0 || lessonIndex >= lessons.length) return;
-
-        const lesson = lessons[lessonIndex];
-
-        // Deep-clone gates and gems so re-running a lesson regenerates them
-        this.trainingLesson = JSON.parse(JSON.stringify(lesson));
-        // Re-generate gates for lessons with random elements
-        if (lesson.id === 'radar') {
-            const freshLessons = this.getTrainingLessons();
-            this.trainingLesson.gates = JSON.parse(JSON.stringify(freshLessons[lessonIndex].gates));
-        }
-        this.trainingLessonIndex = lessonIndex;
-        this.trainingActive = true;
-        this.trainingGateIndex = lesson.id === 'collection' ? 1 : 0; // Skip pre-reached gate for collection
-        this.trainingGemsCollected = 0;
-        this.trainingTimer = 0;
-        this.trainingStartTime = 0; // Set when briefing ends
-        this.trainingBriefing = true;
-        this.trainingBriefingStart = performance.now();
-        this.trainingComplete = false;
-        this.trainingMedal = null;
-
-        // Reset ship position and velocity
-        this.playerShip.x = 0;
-        this.playerShip.y = 0;
-        this.playerShip.z = 0;
-        this.playerShip.vx = 0;
-        this.playerShip.vy = 0;
-        this.playerShip.vz = 0;
-        this.playerShip.rotation = 0;
-
-        // Stop old tutorial if running
-        this.tutorialActive = false;
-
-        console.log(`[Training] Starting lesson ${lessonIndex + 1}: ${lesson.name}`);
-    }
-
-    // Dismiss briefing and start timer
-    dismissTrainingBriefing() {
-        this.trainingBriefing = false;
-        this.trainingStartTime = performance.now();
-    }
-
-    // Per-frame training update
-    updateTraining() {
-        if (!this.trainingActive || !this.trainingLesson) return;
-
-        // During briefing, check for any key press to dismiss
-        if (this.trainingBriefing) {
-            const timeSinceBriefing = performance.now() - this.trainingBriefingStart;
-            if (timeSinceBriefing > 1500) { // Minimum 1.5s display
-                // Check if any movement key is pressed
-                const keys = this.keysPressed;
-                if (keys['w'] || keys['a'] || keys['s'] || keys['d'] || keys[' '] || keys['enter']) {
-                    this.dismissTrainingBriefing();
-                }
-            }
-            return; // Don't update game logic during briefing
-        }
-
-        // Update timer
-        this.trainingTimer = (performance.now() - this.trainingStartTime) / 1000;
-
-        const lesson = this.trainingLesson;
-        const ship = this.playerShip;
-
-        // --- Check gem collection for lessons with gems ---
-        if (lesson.gems && lesson.gems.length > 0) {
-            for (const gem of lesson.gems) {
-                if (gem.collected) continue;
-                const dx = ship.x - gem.x;
-                const dy = ship.y - gem.y;
-                const dist = Math.hypot(dx, dy);
-                if (dist < ship.size + 20) {
-                    gem.collected = true;
-                    this.trainingGemsCollected++;
-                    // Add to actual inventory
-                    if (!this.playerInventory[gem.type]) this.playerInventory[gem.type] = 0;
-                    this.playerInventory[gem.type]++;
-                    this.saveInventory();
-                    this.collectionNotifications.push({
-                        text: `+ ${this.mineralTypes[gem.type]?.name || gem.type}`,
-                        color: this.mineralTypes[gem.type]?.color || '#fff',
-                        time: Date.now()
-                    });
-                }
-            }
-        }
-
-        // --- Check weaponry targets ---
-        if (lesson.id === 'weaponry' && lesson.targets) {
-            this.bullets.forEach(bullet => {
-                lesson.targets.forEach(target => {
-                    if (target.destroyed) return;
-                    const dx = bullet.x - target.x;
-                    const dy = bullet.y - target.y;
-                    if (Math.hypot(dx, dy) < 40) {
-                        target.destroyed = true;
-                        bullet.life = 0;
-                        this.showToast('💥 Target Destroyed!');
-                        // Mark associated gate as targetDestroyed
-                        if (lesson.gates[target.id]) {
-                            lesson.gates[target.id].targetDestroyed = true;
-                        }
-                    }
-                });
-            });
-        }
-
-        // --- Check shielding hazard zone ---
-        if (lesson.id === 'shielding' && lesson.hazardZone) {
-            const hz = lesson.hazardZone;
-            const dist = Math.hypot(ship.x - hz.x, ship.y - hz.y);
-            if (dist < hz.radius) {
-                // Apply damage using standard damage system
-                const dmg = hz.damage || 0.1;
-                this.damagePlayer(dmg);
-            }
-        }
-
-        // --- Check hazard navigation ---
-        if (lesson.id === 'hazards' && lesson.hazards) {
-            lesson.hazards.forEach(h => {
-                const dist = Math.hypot(ship.x - h.x, ship.y - h.y);
-                if (h.type === 'blackhole' && dist < h.radius) {
-                    const pull = (1 - dist / h.radius) * 1.5;
-                    const angle = Math.atan2(h.y - ship.y, h.x - ship.x);
-                    ship.vx += Math.cos(angle) * pull;
-                    ship.vy += Math.sin(angle) * pull;
-                    if (dist < 50) {
-                        this.showToast('🌀 Sucked into the void! Restarting...');
-                        this.startTraining(this.trainingLessonIndex);
-                    }
-                } else if (h.type === 'mine' && dist < h.radius) {
-                    this.showToast('💣 MINE DETONATED!');
-                    this.damagePlayer(20);
-                    h.x = -99999; // Move away
-                }
-            });
-        }
-
-        // --- Check gate progression ---
-        if (lesson.id === 'collection') {
-            // Collection lesson: need all gems first, then fly to finish gate
-            if (this.trainingGemsCollected >= (lesson.collectTarget || lesson.gems.length)) {
-                const finishGate = lesson.gates[lesson.gates.length - 1];
-                const dx = ship.x - finishGate.x;
-                const dy = ship.y - finishGate.y;
-                if (Math.hypot(dx, dy) < finishGate.size * 1.2) {
-                    finishGate.reached = true;
-                    this.completeTrainingLesson();
-                }
-            }
-        } else {
-            // Standard gate progression
-            const gate = lesson.gates[this.trainingGateIndex];
-            if (gate) {
-                // For weaponry, must destroy target first
-                if (lesson.id === 'weaponry' && !gate.targetDestroyed) {
-                    // Do nothing, wait for target
-                } else {
-                    const dx = ship.x - gate.x;
-                    const dy = ship.y - gate.y;
-                    const dist = Math.hypot(dx, dy);
-                    if (dist < gate.size * 1.2) {
-                        gate.reached = true;
-                        this.trainingGateIndex++;
-                        if (this.trainingGateIndex >= lesson.gates.length) {
-                            this.completeTrainingLesson();
-                        } else {
-                            const total = lesson.gates.length;
-                            const current = this.trainingGateIndex;
-                            this.showToast(`✅ Gate ${current}/${total} — Keep going!`);
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // Moved updateHazardEffect to Physics.js
 
     // Complete a training lesson — score and reward
     completeTrainingLesson() {
@@ -8537,7 +4858,7 @@ class InterstellarEngine {
     // Open the Flight Academy selector UI
     openFlightAcademy() {
         if (!this.flightMode) {
-            this.toggleFlightMode();
+            this.uiManager.toggleFlightMode();
         }
 
         const lessons = this.getTrainingLessons();
@@ -9718,11 +6039,11 @@ class InterstellarEngine {
             effect.flashIntensity = Math.sin((progress - 0.2) / 0.3 * Math.PI) * 0.5; // Pulsing red
         } else if (progress < 0.7) {
             if (effect.phase !== 'explosion') {
-                if (window.gameAudio) {
-                    if (window.gameAudio.playPlayerExplosion) window.gameAudio.playPlayerExplosion();
-                    else window.gameAudio.playExplosionBig();
+                if (this.audio) {
+                    if (this.audio.playPlayerExplosion) this.audio.playPlayerExplosion();
+                    else this.audio.playExplosionBig();
                     // Mute hum and engines momentarily (2.5 seconds) following the explosion
-                    window.gameAudio.muteHumTemporarily(2500); 
+                    this.audio.muteHumTemporarily(2500); 
                 }
                 // Massive expanding energy sphere
                 this.activePulsePing = {
@@ -11378,7 +7699,7 @@ class InterstellarEngine {
 
         // Always update active hazard effects (like supernova) even out of flight mode
         if (this.hazardEffect) {
-            this.updateHazardEffect();
+            this.physics.updateHazardEffect();
         }
 
         // Update flight game physics (ALWAYS 60 FPS)
@@ -11394,29 +7715,32 @@ class InterstellarEngine {
                 });
 
                 if (!this.gamePaused && !isPopupOpen) {
-                    this.checkAndGenerateSectors();
-                    this.updatePlayerShip();
-                    this.updateProjectiles();
-                    this.updateDamageParticles();
-                    this.updateMinerals();
-                    this.updatePowerUps();
-                    this.updateHazards();
-                    this.updateSpaceBase();
-                    this.updateEnemyShips();
-                    this.updateEnemyBullets();
-                    this.updateBoss();
+                    this.physics.update();
+                    this.multiplayer.update(this.deltaTime, time);
                 }
 
                 // Update engine hum pitch based on both actual speed and active thrust (acceleration/RPM feel)
                 const isDead = this.playerShip.hullHealth <= 0 || (this.hazardEffect && ['player_death', 'planet_impact', 'supernova', 'missile_base_destruction'].includes(this.hazardEffect.type));
                 
                 if (isDead) {
-                    gameAudio.stopEngineHum();
+                    this.audio.stopEngineHum();
                 } else {
-                    gameAudio.startEngineHum();
+                    this.audio.startEngineHum();
                     const actualSpeed = Math.sqrt(this.playerShip.vx*this.playerShip.vx + this.playerShip.vy*this.playerShip.vy);
                     const thrustInput = this.playerShip.currentThrust || 0;
-                    gameAudio.updateEngineHum(actualSpeed, thrustInput);
+                    this.audio.updateEngineHum(actualSpeed, thrustInput);
+                }
+                
+                // Hazard proximity audio (Black Holes)
+                let nearestBHDist = Infinity;
+                if (this.hazardBlackHoles && this.hazardBlackHoles.length > 0) {
+                    this.hazardBlackHoles.forEach(bh => {
+                        const d = Math.hypot(bh.x - this.playerShip.x, bh.y - this.playerShip.y);
+                        if (d < nearestBHDist) nearestBHDist = d;
+                    });
+                }
+                if (this.audio.updateHazardAudio) {
+                    this.audio.updateHazardAudio(nearestBHDist, 0, Infinity);
                 }
 
                 if (this.activeMission && this.activeMission.type === 'survive') this.checkMissionComplete();
@@ -11569,7 +7893,7 @@ class InterstellarEngine {
                                     targetFaction: target.faction
                                 });
                                 // Keep volume low for background battles
-                                if (Math.random() < 0.2) gameAudio.playEnemyLaser();
+                                if (Math.random() < 0.2) this.audio.playEnemyLaser();
                             }
                         }
                     } else {
@@ -12006,7 +8330,7 @@ class InterstellarEngine {
 
         try {
             if (this.webglReady) {
-                this.renderWebGL(time);
+                this.renderer.renderWebGL(time);
             }
             this.draw(time);
         } catch (e) {
@@ -12050,7 +8374,7 @@ class InterstellarEngine {
 
         // SYNTWHAVE GRID BACKGROUND
         if (this.activeStyles.has('cyber') && this.cyberGrid) {
-            this.drawCyberGrid(ctx, canvas, time);
+            this.renderer.drawCyberGrid(ctx, canvas, time);
         }
 
         // Static Background Stars (Screen Space)
@@ -12537,6 +8861,7 @@ class InterstellarEngine {
 
             // Damage Effects (Under ship? Or over? Over looks better for smoke)
             this.renderPlayerShip(ctx, time);
+            this.multiplayer.render(ctx, this.camera);
             this.renderDamageEffects(ctx);
             this.renderCollectionNotifications(ctx);
 
@@ -18515,11 +14840,11 @@ class InterstellarEngine {
     updateBinauralFrequencies() {
         const baseSlider = document.getElementById('binauralBaseValue');
         const beatSlider = document.getElementById('binauralBeatValue');
-        if (baseSlider && beatSlider && window.gameAudio) {
+        if (baseSlider && beatSlider && this.audio) {
             const base = parseFloat(baseSlider.value);
             const beat = parseFloat(beatSlider.value);
             console.log("[Music UI] Updating Binaural Frequencies:", base, beat);
-            window.gameAudio.updateBinauralFrequencies(base, beat);
+            this.audio.updateBinauralFrequencies(base, beat);
             
             // Update labels
             const baseLabel = document.getElementById('baseFreqDisplay');
@@ -18547,21 +14872,21 @@ class InterstellarEngine {
             }
 
             // Sync sliders & buttons with audio state
-            if (window.gameAudio) {
+            if (this.audio) {
                 const masterSlider = document.getElementById('masterVolumeSlider');
-                if (masterSlider) masterSlider.value = window.gameAudio.volume;
+                if (masterSlider) masterSlider.value = this.audio.volume;
                 const masterBtn = document.getElementById('masterMuteToggleBtn');
-                if (masterBtn) masterBtn.textContent = `Mute: ${window.gameAudio.masterMuted ? 'ON' : 'OFF'}`;
+                if (masterBtn) masterBtn.textContent = `Mute: ${this.audio.masterMuted ? 'ON' : 'OFF'}`;
 
                 const musicSlider = document.getElementById('musicVolumeSlider');
-                if (musicSlider) musicSlider.value = window.gameAudio.musicVolume;
+                if (musicSlider) musicSlider.value = this.audio.musicVolume;
                 const musicBtn = document.getElementById('muteToggleBtn');
-                if (musicBtn) musicBtn.textContent = `Mute: ${window.gameAudio.muted ? 'ON' : 'OFF'}`;
+                if (musicBtn) musicBtn.textContent = `Mute: ${this.audio.muted ? 'ON' : 'OFF'}`;
 
                 const engineSlider = document.getElementById('engineVolumeSlider');
-                if (engineSlider) engineSlider.value = window.gameAudio.engineVolume;
+                if (engineSlider) engineSlider.value = this.audio.engineVolume;
                 const engineBtn = document.getElementById('engineMuteBtn');
-                if (engineBtn) engineBtn.textContent = `Mute: ${window.gameAudio.engineHumMuted ? 'ON' : 'OFF'}`;
+                if (engineBtn) engineBtn.textContent = `Mute: ${this.audio.engineHumMuted ? 'ON' : 'OFF'}`;
             }
         } else {
             console.error("[Music UI] Error: musicSettingsModal not found in DOM");
@@ -18575,8 +14900,8 @@ class InterstellarEngine {
             modal.classList.remove('active');
             if (window.game && !this._wasPausedBeforeMusic && window.game.gamePaused) {
                 window.game.gamePaused = false;
-                if (window.gameAudio && !window.gameAudio.engineHumMuted) {
-                    window.gameAudio.startEngineHum();
+                if (this.audio && !this.audio.engineHumMuted) {
+                    this.audio.startEngineHum();
                 }
             }
             
@@ -18614,28 +14939,28 @@ class InterstellarEngine {
 
     setMusicVolume(vol) {
         const parsed = parseFloat(vol);
-        window.gameAudio.setMusicVolume(parsed);
+        this.audio.setMusicVolume(parsed);
         localStorage.setItem('audioMusicVolume', parsed);
     }
 
     setMasterVolume(vol) {
         const parsed = parseFloat(vol);
-        window.gameAudio.setMasterVolume(parsed);
+        this.audio.setMasterVolume(parsed);
     }
 
     setEngineVolume(vol) {
         const parsed = parseFloat(vol);
-        window.gameAudio.setEngineVolume(parsed);
+        this.audio.setEngineVolume(parsed);
     }
 
     toggleMasterMute() {
-        const isMuted = window.gameAudio.toggleMasterMute();
+        const isMuted = this.audio.toggleMasterMute();
         const btn = document.getElementById('masterMuteToggleBtn');
         if (btn) btn.textContent = `Mute: ${isMuted ? 'ON' : 'OFF'}`;
     }
 
     toggleMute() {
-        const isMuted = window.gameAudio.toggleMute();
+        const isMuted = this.audio.toggleMute();
         const btn1 = document.getElementById('muteToggleBtn');
         if (btn1) btn1.textContent = `Mute: ${isMuted ? 'ON' : 'OFF'}`;
         const btn2 = document.getElementById('audioMuteBtn');
@@ -18643,25 +14968,25 @@ class InterstellarEngine {
     }
 
     toggleEngineHum() {
-        const isHumMuted = window.gameAudio.toggleEngineHum();
+        const isHumMuted = this.audio.toggleEngineHum();
         const btn = document.getElementById('engineHumBtn');
         if (btn) btn.innerHTML = isHumMuted ? '🚀 <span class="hide-mobile">HUM: OFF</span>' : '🚀 <span class="hide-mobile">HUM: ON</span>';
         const muteBtn = document.getElementById('engineMuteBtn');
         if (muteBtn) muteBtn.textContent = `Mute: ${isHumMuted ? 'ON' : 'OFF'}`;
         if (!isHumMuted) {
-            window.gameAudio.startEngineHum();
+            this.audio.startEngineHum();
         }
     }
 
     toggleSfx() {
-        const isSfxMuted = window.gameAudio.toggleSfx();
+        const isSfxMuted = this.audio.toggleSfx();
         const btn = document.getElementById('sfxMuteBtn');
         if (btn) btn.innerHTML = isSfxMuted ? '💥 <span class="hide-mobile">SFX: OFF</span>' : '💥 <span class="hide-mobile">SFX: ON</span>';
     }
 
 
     stopAllMusic() {
-        window.gameAudio.stopAllMusic();
+        this.audio.stopAllMusic();
         this._highlightMusicButton(null);
     }
 
@@ -18671,7 +14996,7 @@ class InterstellarEngine {
         document.getElementById('binauralBaseVal').textContent = baseFreq + 'Hz';
         document.getElementById('binauralBeatSlider').value = beatFreq;
         document.getElementById('binauralBeatVal').textContent = beatFreq + 'Hz';
-        window.gameAudio.playBinauralLoop(baseFreq, beatFreq);
+        this.audio.playBinauralLoop(baseFreq, beatFreq);
         if (this.showToast) this.showToast(`Binaural Beats: ${beatFreq}Hz`, 2000);
     }
 
@@ -18684,7 +15009,7 @@ class InterstellarEngine {
         // Debounce audio node creation to prevent AudioContext crash while dragging
         if (this.binauralDebounceTimer) clearTimeout(this.binauralDebounceTimer);
         this.binauralDebounceTimer = setTimeout(() => {
-            window.gameAudio.updateBinauralFrequencies(base, beat);
+            this.audio.updateBinauralFrequencies(base, beat);
         }, 300);
     }
 
@@ -18699,10 +15024,10 @@ class InterstellarEngine {
         if (savedMusicVol) {
             const slider = document.getElementById('musicVolumeSlider');
             if (slider) slider.value = savedMusicVol;
-            window.gameAudio.setMusicVolume(savedMusicVol);
+            this.audio.setMusicVolume(savedMusicVol);
         } else {
             const slider = document.getElementById('musicVolumeSlider');
-            if (slider) window.gameAudio.setMusicVolume(slider.value);
+            if (slider) this.audio.setMusicVolume(slider.value);
         }
 
         // Init Master Volume
@@ -18710,9 +15035,9 @@ class InterstellarEngine {
         const masterSlider = document.getElementById('masterVolumeSlider');
         if (savedMasterVol) {
             if (masterSlider) masterSlider.value = savedMasterVol;
-            window.gameAudio.setMasterVolume(savedMasterVol);
+            this.audio.setMasterVolume(savedMasterVol);
         } else if (masterSlider) {
-            window.gameAudio.setMasterVolume(masterSlider.value);
+            this.audio.setMasterVolume(masterSlider.value);
         }
 
         // Init Engine Volume
@@ -18720,13 +15045,13 @@ class InterstellarEngine {
         const engineSlider = document.getElementById('engineVolumeSlider');
         if (savedEngineVol) {
             if (engineSlider) engineSlider.value = savedEngineVol;
-            window.gameAudio.setEngineVolume(savedEngineVol);
+            this.audio.setEngineVolume(savedEngineVol);
         } else if (engineSlider) {
-            window.gameAudio.setEngineVolume(engineSlider.value);
+            this.audio.setEngineVolume(engineSlider.value);
         }
         
         // Init Engine Mute UI
-        const isHumMuted = window.gameAudio.engineHumMuted;
+        const isHumMuted = this.audio.engineHumMuted;
         const engineMuteBtn = document.getElementById('engineMuteBtn');
         if (engineMuteBtn) engineMuteBtn.textContent = `Mute: ${isHumMuted ? 'ON' : 'OFF'}`;
 
@@ -18877,7 +15202,7 @@ class InterstellarEngine {
         if (this.showToast) this.showToast(`Loading: ${playlist[startIndex].name}`, 2000);
         
         this.currentPlaylistCategory = category;
-        window.gameAudio.playStreamingMusic(urls, startIndex);
+        this.audio.playStreamingMusic(urls, startIndex);
         
         this.updateNowPlayingName(startIndex);
     }
@@ -18903,19 +15228,19 @@ class InterstellarEngine {
     }
 
     togglePlayPause() {
-        if (window.gameAudio.isStreamingPlaying) {
-            window.gameAudio.pauseStream();
+        if (this.audio.isStreamingPlaying) {
+            this.audio.pauseStream();
         } else {
-            window.gameAudio.resumeStream();
+            this.audio.resumeStream();
         }
     }
 
     nextTrack() {
-        window.gameAudio.playNextTrack();
+        this.audio.playNextTrack();
     }
 
     prevTrack() {
-        window.gameAudio.playPreviousTrack();
+        this.audio.playPreviousTrack();
     }
 
     updateMediaControlsUI(isPlaying) {
@@ -18926,8 +15251,8 @@ class InterstellarEngine {
     }
 
     seekAudio(offset) {
-        if (window.gameAudio) {
-            window.gameAudio.seekStream(offset);
+        if (this.audio) {
+            this.audio.seekStream(offset);
         }
     }
 
@@ -18936,10 +15261,10 @@ class InterstellarEngine {
     }
 
     scrubberReleased(val) {
-        if (window.gameAudio) {
+        if (this.audio) {
             const pct = parseFloat(val) / 100;
-            if (window.gameAudio.currentStreamingAudio && isFinite(window.gameAudio.currentStreamingAudio.duration)) {
-                window.gameAudio.setStreamTime(pct * window.gameAudio.currentStreamingAudio.duration);
+            if (this.audio.currentStreamingAudio && isFinite(this.audio.currentStreamingAudio.duration)) {
+                this.audio.setStreamTime(pct * this.audio.currentStreamingAudio.duration);
             }
         }
         this.isScrubbing = false;
@@ -19176,7 +15501,7 @@ class InterstellarEngine {
         
         this.drawBaseGrid();
         
-        gameAudio.playMenuHover();
+        this.audio.playMenuHover();
     }
 
     closeBaseBuilder() {
@@ -19193,9 +15518,9 @@ class InterstellarEngine {
         }
 
         // Restart loop
-        this.toggleFlightMode();
+        this.uiManager.toggleFlightMode();
         this.gameLoop();
-        gameAudio.playMenuSelect();
+        this.audio.playMenuSelect();
     }
     
     abandonCurrentBase() {
@@ -19242,7 +15567,7 @@ class InterstellarEngine {
             const el = document.getElementById('baseTool_' + t);
             if (el) el.classList.toggle('selected', t === tool);
         });
-        gameAudio.playMenuHover();
+        this.audio.playMenuHover();
     }
     
     // =====================================================
@@ -19268,7 +15593,7 @@ class InterstellarEngine {
         }
         
         this.setMarketTab('bases');
-        gameAudio.playMenuSelect();
+        this.audio.playMenuSelect();
     }
     
     setMarketTab(tab) {
@@ -19416,7 +15741,7 @@ class InterstellarEngine {
             }
         }
         
-        gameAudio.playUpgrade();
+        this.audio.playUpgrade();
         this.renderMarketplace();
     }
 
@@ -19562,7 +15887,7 @@ class InterstellarEngine {
                 delete baseData[cellId];
                 this.savePlanetBases();
                 this.showToast("Structure demolished.");
-                gameAudio.playMenuSelect();
+                this.audio.playMenuSelect();
             }
         } else {
             // Mapping for costs based on baseModules configuration
@@ -19587,7 +15912,7 @@ class InterstellarEngine {
             
             baseData[cellId] = this.baseTool;
             this.showToast(`${this.baseTool.toUpperCase()} constructed ($${cost})`);
-            gameAudio.playUpgrade();
+            this.audio.playUpgrade();
         }
         
         this.drawBaseGrid(); 
@@ -19715,9 +16040,9 @@ class InterstellarEngine {
 // Bind utilities to prototype so existing `this.method` calls still work
 Object.assign(InterstellarEngine.prototype, Utils);
 
-applyRenderMixin(InterstellarEngine);
-applyInputMixin(InterstellarEngine);
-applyUIMixin(InterstellarEngine);
+// applyRenderMixin(InterstellarEngine);
+// applyInputMixin(InterstellarEngine);
+// applyUIMixin(InterstellarEngine);
 applyFactoryMixin(InterstellarEngine);
 window.game = new InterstellarEngine();
 window.app = window.game; // Bridge for HTML handlers
@@ -19789,7 +16114,7 @@ class Dashcam {
     }
 }
 
-window.dashcam = new Dashcam(document.getElementById('canvas'), window.gameAudio);
+window.dashcam = new Dashcam(document.getElementById('canvas'), this.audio);
 
 const dashcamBtn = document.getElementById('dashcamBtn');
 if (dashcamBtn) {
@@ -19812,8 +16137,8 @@ const pitchLabel = document.getElementById('pitchValueLabel');
 const harmonicsLabel = document.getElementById('harmonicsValueLabel');
 
 if (pitchSlider && harmonicsSlider && pitchLabel && harmonicsLabel) {
-    pitchSlider.value = window.gameAudio.engineBasePitch || 60;
-    harmonicsSlider.value = window.gameAudio.engineHarmonics || 3;
+    pitchSlider.value = this.audio.engineBasePitch || 60;
+    harmonicsSlider.value = this.audio.engineHarmonics || 3;
     pitchLabel.innerText = `${pitchSlider.value} Hz`;
     harmonicsLabel.innerText = `${harmonicsSlider.value} Hz`;
 
@@ -19822,7 +16147,7 @@ if (pitchSlider && harmonicsSlider && pitchLabel && harmonicsLabel) {
         const h = parseFloat(harmonicsSlider.value);
         pitchLabel.innerText = `${p} Hz`;
         harmonicsLabel.innerText = `${h} Hz`;
-        window.gameAudio.setEngineHarmonicsSettings(p, h);
+        this.audio.setEngineHarmonicsSettings(p, h);
     };
 
     pitchSlider.addEventListener('input', updateEngineParams);

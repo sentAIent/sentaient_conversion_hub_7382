@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from "next/dynamic";
 
-const Excalidraw = dynamic(() => import("@excalidraw/excalidraw").then((mod) => mod.Excalidraw), { ssr: false });
+const Excalidraw = dynamic<any>(() => import("@excalidraw/excalidraw").then((mod) => mod.Excalidraw), { ssr: false });
 
 const CREATE_SWARM_CAMPAIGN = gql`
   mutation CreateSwarmCampaign($title: String!, $description: String!, $maxDiscount: String!, $latitude: Float!, $longitude: Float!, $totalBudget: Int!, $targetCheckIns: Int!) {

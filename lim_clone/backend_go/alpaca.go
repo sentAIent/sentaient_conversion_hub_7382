@@ -52,7 +52,17 @@ func handleAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if alpacaClient == nil {
-		http.Error(w, "Alpaca client not initialized", http.StatusInternalServerError)
+		resp := AccountData{
+			ID:             "MOCK-ACCOUNT-12345",
+			Status:         "ACTIVE",
+			Equity:         100000.00,
+			BuyingPower:    200000.00,
+			Cash:           100000.00,
+			Currency:       "USD",
+			IsPaperTrading: true,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
 		return
 	}
 
@@ -100,7 +110,25 @@ func handleTrade(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if alpacaClient == nil {
-		http.Error(w, "Alpaca client not initialized", http.StatusInternalServerError)
+		var req TradeRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		mockOrder := map[string]interface{}{
+			"id":             fmt.Sprintf("mock-order-%d", rand.Intn(1000000)),
+			"client_order_id": fmt.Sprintf("client-order-%d", rand.Intn(1000000)),
+			"symbol":         req.Symbol,
+			"qty":            req.Qty,
+			"side":           req.Side,
+			"type":           "market",
+			"time_in_force":  "gtc",
+			"status":         "filled",
+			"filled_qty":     req.Qty,
+			"filled_avg_price": "150.00",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockOrder)
 		return
 	}
 

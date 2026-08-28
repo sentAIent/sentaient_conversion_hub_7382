@@ -14,6 +14,7 @@ const IcebreakerAdmin = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
+    const [mfaVerified, setMfaVerified] = useState(false);
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -36,11 +37,20 @@ const IcebreakerAdmin = () => {
     useEffect(() => {
         const unsub = onAuthStateChanged(auth, (u) => {
             setUser(u);
-            setAuthLoading(false);
             if (u) {
-                fetchWaitlist();
-                fetchAnalytics();
+                // Check if MFA is enrolled and verified for this session
+                // In Firebase, multiFactor.enrolledFactors indicates MFA is setup
+                const isMfaEnrolled = u.multiFactor?.enrolledFactors?.length > 0;
+                setMfaVerified(isMfaEnrolled);
+                
+                if (isMfaEnrolled) {
+                    fetchWaitlist();
+                    fetchAnalytics();
+                }
+            } else {
+                setMfaVerified(false);
             }
+            setAuthLoading(false);
         });
         return unsub;
     }, []);
@@ -204,18 +214,22 @@ const IcebreakerAdmin = () => {
         );
     }
 
-    if (!user) {
+    if (!user || !mfaVerified) {
         return (
             <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white font-sans">
                 <div className="text-center bg-white/5 border border-white/10 rounded-2xl p-10">
                     <Shield className="w-12 h-12 text-red-400 mx-auto mb-4" />
                     <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-                    <p className="text-gray-400 mb-6">You must be signed in to view this page.</p>
+                    <p className="text-gray-400 mb-6">
+                        {!user 
+                            ? "You must be signed in to view this page." 
+                            : "Admin access requires Multi-Factor Authentication (MFA). Please enable 2FA on your account."}
+                    </p>
                     <button
-                        onClick={() => navigate('/icelogin')}
+                        onClick={() => !user ? navigate('/icelogin') : handleSignOut()}
                         className="px-6 py-2 bg-gradient-to-r from-blue-600 to-teal-500 rounded-full font-bold text-sm"
                     >
-                        Go to Login
+                        {!user ? "Go to Login" : "Sign Out & Setup MFA"}
                     </button>
                 </div>
             </div>

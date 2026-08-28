@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { gql } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client/react';
 import Link from 'next/link';
+import confetti from 'canvas-confetti';
 
 const MY_BOUNTIES_QUERY = gql`
   query MyBounties {
@@ -51,6 +52,12 @@ export default function BountiesPage() {
   useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('success') === 'true') {
       setShowSuccessBanner(true);
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#00ffcc', '#3b82f6', '#9333ea']
+      });
     }
   }, []);
 
@@ -92,7 +99,7 @@ export default function BountiesPage() {
   return (
     <div className="p-8 max-w-5xl mx-auto">
       {showSuccessBanner && (
-        <div className="animate-pulse bg-gradient-to-r from-teal-500/20 to-purple-500/20 border border-teal-500 p-8 rounded-xl text-center glass mb-6">
+        <div className="bg-gradient-to-r from-teal-500/20 to-purple-500/20 border border-teal-500 p-8 rounded-xl text-center glass mb-6 success-glow neon-shadow">
           <h2 className="text-3xl font-bold text-teal-400 mb-2">Bounty Funded! 🎉</h2>
           <p className="text-gray-300">Your bounty is now live on the map.</p>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, PressableProps, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, PressableProps, StyleProp, ViewStyle, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,7 +8,9 @@ import Animated, {
 import { triggerHaptic } from '../utils/haptics';
 
 interface AnimatedButtonProps extends PressableProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  title?: string;
+  variant?: 'primary' | 'secondary' | 'outline' | string;
   style?: StyleProp<ViewStyle>;
   hapticType?: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' | 'none';
 }
@@ -17,6 +19,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
   children,
+  title,
+  variant,
   style,
   onPress,
   onPressIn,
@@ -49,13 +53,53 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 
   return (
     <AnimatedPressable
-      style={[style, animatedStyle]}
+      style={[
+        variant && styles.base,
+        variant === 'primary' && styles.primary,
+        variant === 'secondary' && styles.secondary,
+        style, 
+        animatedStyle
+      ]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
       {...rest}
     >
-      {children}
+      {children ? children : (
+        <Text style={[
+          variant && styles.textBase,
+          variant === 'primary' && styles.textPrimary,
+          variant === 'secondary' && styles.textSecondary,
+        ]}>
+          {title}
+        </Text>
+      )}
     </AnimatedPressable>
   );
 };
+
+const styles = StyleSheet.create({
+  base: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primary: {
+    backgroundColor: '#00ffcc',
+  },
+  secondary: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  textBase: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  textPrimary: {
+    color: '#000',
+  },
+  textSecondary: {
+    color: '#fff',
+  }
+});

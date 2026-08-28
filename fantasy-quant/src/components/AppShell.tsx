@@ -3,12 +3,18 @@
 import React, { useState } from 'react';
 import PlayerDashboard from '@/components/PlayerDashboard';
 import DFSDashboard from '@/components/dfs/DFSDashboard';
-import { Activity, Target, ChevronDown, Trophy, User } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const ScenarioEngine = dynamic(
+  () => import('@/components/analytics/ScenarioEngine').then(mod => mod.ScenarioEngine),
+  { ssr: false, loading: () => <div className="p-8 text-center text-white">Loading Scenario Engine...</div> }
+);
+import { Activity, Target, ChevronDown, Trophy, User, Sparkles } from 'lucide-react';
 import { useSubscription, SubscriptionTier } from '@/components/SubscriptionContext';
 import Link from 'next/link';
 
 export default function AppShell() {
-  const [mode, setMode] = useState<'draft' | 'dfs'>('dfs');
+  const [mode, setMode] = useState<'draft' | 'dfs' | 'scenario'>('dfs');
   const { tier, setTier, isLoading } = useSubscription();
 
   return (
@@ -49,6 +55,17 @@ export default function AppShell() {
             <Target size={15} />
             DFS Mode
           </button>
+          <button
+            onClick={() => setMode('scenario')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+              mode === 'scenario'
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            <Sparkles size={15} />
+            Scenario Engine
+          </button>
         </div>
         
         <div className="hidden lg:flex items-center gap-6">
@@ -67,10 +84,12 @@ export default function AppShell() {
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
             mode === 'draft'
               ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-              : 'bg-purple-500/10 border-purple-500/20 text-purple-400'
+              : mode === 'dfs'
+              ? 'bg-purple-500/10 border-purple-500/20 text-purple-400'
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
           }`}>
-            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${mode === 'draft' ? 'bg-blue-400' : 'bg-purple-400'}`} />
-            {mode === 'draft' ? 'Season Long' : 'GPP Optimizer'}
+            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${mode === 'draft' ? 'bg-blue-400' : mode === 'dfs' ? 'bg-purple-400' : 'bg-emerald-400'}`} />
+            {mode === 'draft' ? 'Season Long' : mode === 'dfs' ? 'GPP Optimizer' : 'Quant Analysis'}
           </div>
           <button className="px-4 py-2 text-sm font-medium rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all">
             Log In
@@ -104,8 +123,12 @@ export default function AppShell() {
       <div className="transition-all duration-300">
         {mode === 'draft' ? (
           <PlayerDashboard hideHeader />
-        ) : (
+        ) : mode === 'dfs' ? (
           <DFSDashboard />
+        ) : (
+          <div className="p-6 max-w-7xl mx-auto">
+            <ScenarioEngine />
+          </div>
         )}
       </div>
     </div>

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 import { SubscriptionProvider } from "@/components/SubscriptionContext";
 import { BetSlipProvider } from "@/components/social/BetSlipContext";
 import { BetSlip } from "@/components/social/BetSlip";
-import AIAssistant from "@/components/chat/AIAssistant";
+import JarvisChat from "@/components/chat/JarvisChat";
 
 export default function RootLayout({
   children,
@@ -37,7 +37,7 @@ export default function RootLayout({
           <BetSlipProvider>
             {children}
             <BetSlip />
-            <AIAssistant />
+            <JarvisChat />
           </BetSlipProvider>
         </SubscriptionProvider>
       </body>

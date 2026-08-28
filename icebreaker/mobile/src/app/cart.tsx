@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndi
 import { useCart } from '../context/CartContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useSafeBack } from '../hooks/useSafeBack';
+
 import { useStripe } from '../components/StripeWrapper';
 import { gql, useMutation } from '@apollo/client';
 
@@ -22,6 +24,8 @@ const CREATE_ORDER = gql`
 `;
 
 export default function CartScreen() {
+  const safeBack = useSafeBack();
+
   const { items, cartCount, updateQuantity, clearCart } = useCart();
   const router = useRouter();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -50,7 +54,7 @@ export default function CartScreen() {
         billingDetailsCollectionConfiguration: {
           address: 'full',
           name: 'always',
-        },
+        } as any,
       });
       
       if (initError) {
@@ -85,7 +89,7 @@ export default function CartScreen() {
       
       Alert.alert('Success', 'Your order is confirmed!');
       clearCart();
-      (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'));
+      (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'));
       
     } catch (e: any) {
       console.error(e);
@@ -126,7 +130,7 @@ export default function CartScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))} style={styles.closeBtn}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))} style={styles.closeBtn}>
           <Ionicons name="close" size={28} color="#f8fafc" />
         </TouchableOpacity>
         <Text style={styles.title}>Your Cart ({cartCount})</Text>
@@ -137,7 +141,7 @@ export default function CartScreen() {
         <View style={styles.emptyContainer}>
           <Ionicons name="cart-outline" size={64} color="#334155" />
           <Text style={styles.emptyText}>Your cart is empty.</Text>
-          <TouchableOpacity style={styles.continueBtn} onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/feed'))}>
+          <TouchableOpacity style={styles.continueBtn} onPress={() => (router.canGoBack() ? safeBack() : router.replace('/(tabs)/feed'))}>
             <Text style={styles.continueBtnText}>Continue Browsing</Text>
           </TouchableOpacity>
         </View>

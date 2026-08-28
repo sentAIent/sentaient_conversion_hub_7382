@@ -39,38 +39,38 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Map',
-          tabBarIcon: ({ color, size }) => <Ionicons name="map-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size }: { color: string, size: number }) => <Ionicons name="map-outline" size={size} color={color} />
         }}
       />
       <Tabs.Screen
         name="feed"
         options={{
           title: 'Feed',
-          tabBarIcon: ({ color, size }) => <Ionicons name="albums-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size }: { color: string, size: number }) => <Ionicons name="albums-outline" size={size} color={color} />
         }}
       />
       <Tabs.Screen
         name="network"
         options={{
           title: 'Messages',
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubbles-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size }: { color: string, size: number }) => <Ionicons name="chatbubbles-outline" size={size} color={color} />
         }}
       />
       <Tabs.Screen
         name="camera"
         options={{
           title: 'Camera',
-          tabBarIcon: ({ color, size }) => <Ionicons name="camera-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size }: { color: string, size: number }) => <Ionicons name="camera-outline" size={size} color={color} />
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size }: { color: string, size: number }) => <Ionicons name="person-outline" size={size} color={color} />
         }}
       />
-      <Tabs.Screen name="scan" options={{ title: 'Scan', tabBarIcon: ({ color }) => <Ionicons name="qr-code" size={24} color={color} /> }} />
+      <Tabs.Screen name="scan" options={{ title: 'Scan', tabBarIcon: ({ color }: { color: string }) => <Ionicons name="qr-code" size={24} color={color} /> }} />
     </Tabs>
   );
 }

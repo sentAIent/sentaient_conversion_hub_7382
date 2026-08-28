@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, RefreshControl, Dimensions, TouchableOpacity, Modal, Share } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, RefreshControl, Dimensions, TouchableOpacity, Modal, Share, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { Ionicons, Feather } from '@expo/vector-icons';
@@ -134,6 +134,12 @@ const COMMENT_MUTATION = gql`
   }
 `;
 
+const REPORT_CONTENT = gql`
+  mutation ReportContent($contentId: ID!, $reason: String!) {
+    reportContent(contentId: $contentId, reason: $reason)
+  }
+`;
+
 const SEND_MESSAGE = gql`
   mutation SendMessage($receiverId: ID!, $sharedContentId: ID!) {
     sendMessage(receiverId: $receiverId, sharedContentId: $sharedContentId) {
@@ -183,6 +189,7 @@ export default function FeedScreen() {
   const [likeContent] = useMutation(LIKE_MUTATION);
   const [unlikeContent] = useMutation(UNLIKE_MUTATION);
   const [commentContent] = useMutation(COMMENT_MUTATION);
+  const [reportContent] = useMutation(REPORT_CONTENT);
   const [exportVideo] = useMutation(EXPORT_VIDEO_MUTATION);
   const [exportingId, setExportingId] = useState<string | null>(null);
 
@@ -216,7 +223,15 @@ export default function FeedScreen() {
     const videoUrl = (item.type === 'video' && item.mediaUrl) ? item.mediaUrl : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
     return (
       <View style={{ width, height: Dimensions.get('window').height - 180, backgroundColor: '#000' }}>
-        <FeedVideo url={videoUrl} />
+        <FeedVideo 
+          url={videoUrl} 
+          onLike={async () => {
+            if (!item.hasLiked) {
+              await likeContent({ variables: { contentId: item.id } });
+              refetch();
+            }
+          }}
+        />
         
         <View style={{ position: 'absolute', bottom: 40, left: 16, right: 80 }}>
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16, marginBottom: 8, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>@{item.user?.username}</Text>
@@ -307,14 +322,59 @@ export default function FeedScreen() {
           <TouchableOpacity onPress={() => router.push(`/user/${item.user.id}`)}>
             <Text style={styles.username}>{item.user.username}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.moreOptionsBtn}>
+          <TouchableOpacity 
+            style={styles.moreOptionsBtn}
+            onPress={() => {
+              Alert.alert(
+                'Post Options',
+                '',
+                [
+                  {
+                    text: 'Report Post',
+                    style: 'destructive',
+                    onPress: () => {
+                      Alert.alert(
+                        'Confirm Report',
+                        'Are you sure you want to report this post?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Report',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                await reportContent({ variables: { contentId: item.id, reason: 'Inappropriate content reported by user.' } });
+                                Alert.alert('Reported', 'Thank you. Our team will review this post.');
+                              } catch (e) {
+                                console.error(e);
+                                Alert.alert('Error', 'Failed to report post.');
+                              }
+                            }
+                          }
+                        ]
+                      );
+                    }
+                  },
+                  { text: 'Cancel', style: 'cancel' }
+                ]
+              );
+            }}
+          >
             <Feather name="more-horizontal" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
         {isMedia && item.mediaUrl && (
           item.type === 'video' ? (
             <View style={styles.postImageContainer}>
-              <FeedVideo url={item.mediaUrl} />
+              <FeedVideo 
+                url={item.mediaUrl} 
+                onLike={async () => {
+                  if (!item.hasLiked) {
+                    await likeContent({ variables: { contentId: item.id } });
+                    refetch();
+                  }
+                }}
+              />
             </View>
           ) : (
             <PostImage 
@@ -368,6 +428,7 @@ export default function FeedScreen() {
           <View style={styles.leftActionGroup}>
             <AnimatedButton 
               onPress={async () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 if (item.hasLiked) {
                   await unlikeContent({ variables: { contentId: item.id } });
                 } else {
@@ -480,9 +541,16 @@ export default function FeedScreen() {
 
       {!loading && !error && items.length === 0 && (
         <View style={styles.center}>
-          <Ionicons name="people-outline" size={64} color="#444" />
-          <Text style={styles.emptyText}>Your feed is empty.</Text>
-          <Text style={styles.subEmptyText}>Follow some people to see their posts here!</Text>
+          <View style={{
+            width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.05)',
+            justifyContent: 'center', alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
+          }}>
+            <Ionicons name="compass-outline" size={60} color="#00ffcc" />
+          </View>
+          <Text style={[styles.emptyText, { fontSize: 24, color: '#fff', fontWeight: 'bold' }]}>Nothing here yet</Text>
+          <Text style={[styles.subEmptyText, { color: '#888', marginTop: 10, textAlign: 'center', paddingHorizontal: 40 }]}>
+            {activeTab === 'following' ? "Follow creators to see their content." : "Check back later for new content."}
+          </Text>
         </View>
       )}
 
@@ -581,20 +649,53 @@ const PostImage: React.FC<{ url: string, onLike?: () => void }> = ({ url, onLike
   );
 }
 
-const FeedVideo: React.FC<{ url: string }> = ({ url }) => {
+const FeedVideo: React.FC<{ url: string, onLike?: () => void }> = ({ url, onLike }) => {
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+  const doubleTapRef = useRef(null);
+
   const player = useVideoPlayer(url, player => {
     player.loop = true;
     player.muted = true;
     player.play();
   });
+
+  const onDoubleTap = useCallback((event: any) => {
+    if (event.nativeEvent.state === State.ACTIVE) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      scale.value = withSpring(1, { damping: 12 });
+      opacity.value = withSpring(1);
+      
+      if (onLike) {
+        onLike();
+      }
+
+      setTimeout(() => {
+        opacity.value = withTiming(0, { duration: 300 });
+        scale.value = withDelay(100, withTiming(0, { duration: 300 }));
+      }, 800);
+    }
+  }, [onLike, scale, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: Math.max(scale.value, 0) }],
+    opacity: opacity.value,
+  }));
   
   return (
-    <VideoView 
-      player={player} 
-      style={styles.postImageInside} 
-      nativeControls={false}
-      contentFit="cover"
-    />
+    <TapGestureHandler ref={doubleTapRef} onHandlerStateChange={onDoubleTap} numberOfTaps={2}>
+      <Animated.View style={styles.postImageContainer}>
+        <VideoView 
+          player={player} 
+          style={styles.postImageInside} 
+          nativeControls={false}
+          contentFit="cover"
+        />
+        <Animated.View style={[animatedStyle, { position: 'absolute', zIndex: 10, alignSelf: 'center', top: '50%', marginTop: -50 }]}>
+          <Ionicons name="heart" size={100} color="#ff3b30" />
+        </Animated.View>
+      </Animated.View>
+    </TapGestureHandler>
   );
 };
 
@@ -1105,10 +1206,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     marginLeft: 10,
-    shadowColor: '#fff',
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 0 },
+    ...Platform.select({
+      ios: {
+        shadowColor: '#fff',
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 0 },
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0px 0px 4px rgba(255,255,255,0.2)'
+      }
+    }),
   },
   buyButtonText: {
     color: '#000',

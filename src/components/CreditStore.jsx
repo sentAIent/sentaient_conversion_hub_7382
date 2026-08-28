@@ -72,7 +72,7 @@ const creditPacks = [
 const CreditStore = ({ isOpen, onClose }) => {
     const { currentUser } = useAuth();
     const [loading, setLoading] = useState(null);
-    const [showProPilot, setShowProPilot] = useState(false);
+    const [activeTab, setActiveTab] = useState('credits'); // 'credits' | 'proPilot' | 'aiCompanion'
 
     const handlePurchase = async (pack) => {
         if (!currentUser) {
@@ -151,6 +151,46 @@ const CreditStore = ({ isOpen, onClose }) => {
         }
     };
 
+    const handleAiCompanionSubscribe = async () => {
+        if (!currentUser) {
+            window.location.href = '/login';
+            return;
+        }
+
+        setLoading('aiCompanion');
+        try {
+            // Check if user is on a desktop environment using Tauri checks
+            const isDesktop = window.__TAURI__ !== undefined;
+            if (!isDesktop && process.env.NODE_ENV === 'production') {
+                 alert('The AI Companion requires the Interstellar Desktop Client to access your local Screenpipe instance. Please install the desktop app to subscribe.');
+                 setLoading(null);
+                 return;
+            }
+
+            const stripe = await stripePromise;
+            if (!stripe) throw new Error('Stripe failed to load');
+
+            const { error } = await stripe.redirectToCheckout({
+                lineItems: [{ price: 'price_ai_companion_monthly', quantity: 1 }],
+                mode: 'subscription',
+                successUrl: `${CHECKOUT_SUCCESS_URL}?subscription=ai_companion`,
+                cancelUrl: CHECKOUT_CANCEL_URL,
+                clientReferenceId: currentUser.uid,
+                metadata: {
+                    type: 'ai_companion',
+                    isAiCompanionActive: 'true'
+                }
+            });
+
+            if (error) throw error;
+        } catch (err) {
+            console.error('Subscription error:', err);
+            alert('Unable to process AI Companion subscription. Please try again.');
+        } finally {
+            setLoading(null);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -182,17 +222,30 @@ const CreditStore = ({ isOpen, onClose }) => {
                                 <span className="opacity-75">credits</span>
                             </div>
                         )}
-                        <button
-                            onClick={() => setShowProPilot(!showProPilot)}
-                            className="text-sm bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2"
-                        >
-                            <span>⭐</span>
-                            {showProPilot ? 'Show Credit Packs' : 'Nirvana Pilot Subscription'}
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setActiveTab('proPilot')}
+                                className={`text-sm px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'proPilot' ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}
+                            >
+                                <span>⭐</span> Nirvana Pilot
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('aiCompanion')}
+                                className={`text-sm px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'aiCompanion' ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}
+                            >
+                                <span>🤖</span> AI Companion
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('credits')}
+                                className={`text-sm px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'credits' ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}
+                            >
+                                <span>💎</span> Credits
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {showProPilot ? (
+                {activeTab === 'proPilot' && (
                     /* Nirvana Pilot Subscription */
                     <div className="p-6">
                         <div className="bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-accent rounded-2xl p-8 text-center">
@@ -233,7 +286,53 @@ const CreditStore = ({ isOpen, onClose }) => {
                             </Button>
                         </div>
                     </div>
-                ) : (
+                )}
+                
+                {activeTab === 'aiCompanion' && (
+                    /* AI Companion Subscription */
+                    <div className="p-6">
+                        <div className="bg-gradient-to-br from-secondary/10 to-primary/10 border-2 border-primary rounded-2xl p-8 text-center">
+                            <div className="text-6xl mb-4">🤖</div>
+                            <h3 className="text-3xl font-bold text-foreground mb-2">AI Ship Companion</h3>
+                            <p className="text-muted-foreground mb-6">Your personal co-pilot powered by Screenpipe & Gemini</p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                <div className="bg-background/50 rounded-xl p-4">
+                                    <div className="text-2xl mb-2">👁️</div>
+                                    <div className="font-bold text-foreground">Screen-Aware</div>
+                                    <div className="text-sm text-muted-foreground">Sees exactly what you see</div>
+                                </div>
+                                <div className="bg-background/50 rounded-xl p-4">
+                                    <div className="text-2xl mb-2">🎙️</div>
+                                    <div className="font-bold text-foreground">Voice Context</div>
+                                    <div className="text-sm text-muted-foreground">Listens to your commands</div>
+                                </div>
+                                <div className="bg-background/50 rounded-xl p-4">
+                                    <div className="text-2xl mb-2">🧠</div>
+                                    <div className="font-bold text-foreground">Infinite Memory</div>
+                                    <div className="text-sm text-muted-foreground">Never forgets a mission</div>
+                                </div>
+                            </div>
+
+                            <div className="text-4xl font-bold text-primary mb-2">
+                                $4.99<span className="text-lg text-muted-foreground">/month</span>
+                            </div>
+
+                            <Button
+                                variant="default"
+                                size="lg"
+                                className="bg-primary hover:bg-primary/90 text-white px-12 mt-4"
+                                loading={loading === 'aiCompanion'}
+                                onClick={handleAiCompanionSubscribe}
+                            >
+                                Activate AI Co-Pilot
+                            </Button>
+                            <p className="text-xs text-muted-foreground mt-4">*Requires Interstellar Desktop Client</p>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'credits' && (
                     /* Credit Packs Grid - 7 Packs */
                     <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                         {creditPacks.map((pack) => (
