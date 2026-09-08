@@ -1,19 +1,4 @@
 import { NextResponse } from 'next/server';
-import * as admin from 'firebase-admin';
-
-// Initialize Firebase Admin (prevent duplicate initialization)
-if (!admin.apps.length) {
-  try {
-    // In production, we would use a service account key JSON file
-    // For this demonstration/mock, we initialize with default credentials if available
-    // or standard mindwave project configuration
-    admin.initializeApp({
-      projectId: "mindwave-3725b" // Assuming standard mindwave project
-    });
-  } catch (error) {
-    console.warn("Firebase admin initialization failed or missing credentials. Will mock the database write.", error);
-  }
-}
 
 export async function POST(req: Request) {
   try {
@@ -53,7 +38,7 @@ export async function POST(req: Request) {
     console.log(`[Publish API] Preparing to write to Orchestrator: queue/${campaign_id}`);
     
     try {
-      const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://localhost:8080";
+      const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://127.0.0.1:8080";
       const orchestratorResponse = await fetch(`${orchestratorUrl}/queue/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

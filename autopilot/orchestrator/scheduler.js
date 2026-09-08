@@ -33,24 +33,22 @@ function loadAndSchedule(configPath) {
         console.log(`[Scheduler] Loaded ${schedules.length} individual marketing schedules.`);
 
         for (const app of schedules) {
-            if (!cron.validate(app.cron)) {
-                console.error(`[Scheduler] Invalid cron expression for ${app.brand}: ${app.cron}`);
+            const cronExp = app.generate_cron;
+            if (!cronExp || !cron.validate(cronExp)) {
+                console.error(`[Scheduler] Invalid cron expression for ${app.brand_id}: ${cronExp}`);
                 continue;
             }
 
-            console.log(`[Scheduler] Scheduling [${app.brand}] with CRON: ${app.cron} (Timezone: America/Los_Angeles)`);
+            console.log(`[Scheduler] Scheduling [${app.brand_id}] with CRON: ${cronExp} (Timezone: America/Los_Angeles)`);
             
-            const job = cron.schedule(app.cron, async () => {
-                console.log(`[Scheduler] ⏰ CRON TRIGGERED for ${app.brand}! Injecting payload into queue...`);
+            const job = cron.schedule(cronExp, async () => {
+                console.log(`[Scheduler] ⏰ CRON TRIGGERED for ${app.brand_id}! Injecting payload into queue...`);
                 
                 const payload = {
                     campaign_id: `cron_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-                    brand: app.brand,
-                    campaignType: 'browser_agent',
-                    inputValue: app.url,
-                    assassination_mode: app.assassination_mode || false,
-                    competitor_url: app.competitor_url || null,
-                    goal: app.goal || 'marketing',
+                    brand: app.brand_id,
+                    prompt_template: app.prompt_template,
+                    platformAccounts: app.platforms ? app.platforms.reduce((acc, p) => ({ ...acc, [p]: [`@${app.brand_id}_Main`] }), {}) : {},
                     status: 'approved_for_publishing',
                     created_at: new Date().toISOString(),
                     source: 'autonomous_cron_scheduler'
@@ -58,9 +56,9 @@ function loadAndSchedule(configPath) {
 
                 try {
                     await redis.set(`queue:${payload.campaign_id}`, JSON.stringify(payload));
-                    console.log(`[Scheduler] Successfully queued automated campaign for ${app.brand}.`);
+                    console.log(`[Scheduler] Successfully queued automated campaign for ${app.brand_id}.`);
                 } catch (err) {
-                    console.error(`[Scheduler] Failed to queue campaign for ${app.brand}:`, err);
+                    console.error(`[Scheduler] Failed to queue campaign for ${app.brand_id}:`, err);
                 }
             }, {
                 scheduled: true,

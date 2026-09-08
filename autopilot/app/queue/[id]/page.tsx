@@ -36,6 +36,9 @@ export default function EditQueueItemPage() {
   return (
     <div className="min-h-screen bg-transparent p-4 md:p-8 text-white relative">
       <div className="max-w-7xl mx-auto relative z-10">
+        <Link href="/queue" className="mb-6 inline-flex items-center text-gray-400 hover:text-white transition-colors font-medium">
+          &larr; Back to Queue
+        </Link>
         <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between text-center md:text-left gap-4">
           <div>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#60a9ff] drop-shadow-sm">

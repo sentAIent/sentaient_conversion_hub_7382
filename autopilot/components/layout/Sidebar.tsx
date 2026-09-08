@@ -14,6 +14,8 @@ export default function Sidebar() {
     { name: 'Library', href: '/library', icon: '📚' },
     { name: 'Queue', href: '/queue', icon: '⏳' },
     { name: 'Analytics', href: '/analytics', icon: '📈' },
+    { name: 'SOCIALYZE', href: '/socialyze', icon: '👁️' },
+    { name: 'Admin', href: '/admin', icon: '🛡️' },
   ];
 
   return (
@@ -59,7 +61,12 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto pt-8 border-t border-white/10">
+      <div className="mt-8 space-y-2 text-center text-xs text-gray-500 flex flex-col gap-1">
+        <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
+        <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
+      </div>
+
+      <div className="mt-6 pt-6 border-t border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#60a9ff] to-purple-500 flex items-center justify-center font-bold shadow-lg">
             A

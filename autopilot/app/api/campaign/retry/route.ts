@@ -8,7 +8,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Missing campaign id' }, { status: 400 });
     }
 
-    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://localhost:8080";
+    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://127.0.0.1:8080";
     const response = await fetch(`${orchestratorUrl}/queue/retry`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

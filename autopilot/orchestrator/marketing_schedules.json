@@ -1,96 +1,142 @@
 [
   {
-    "brand": "MindWave",
-    "cron": "0 6-22/4 * * *", 
-    "url": "https://mindwave.app",
-    "assassination_mode": true,
-    "competitor_url": "https://calm.com",
-    "goal": "marketing"
+    "brand_id": "CloveH2O",
+    "prompt_template": "Create a new viral hook marketing campaign for CloveH2O highlighting the premium benefits of clove infused water.",
+    "platforms": [
+      "Instagram",
+      "TikTok"
+    ],
+    "publish_cron": "0 0 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "Interstellar",
-    "cron": "10 6-22/4 * * *", 
-    "url": "https://interstellar.game",
-    "assassination_mode": true,
-    "competitor_url": "https://eveonline.com",
-    "goal": "marketing"
+    "brand_id": "MindWave",
+    "prompt_template": "Create an educational post about how 40Hz gamma binaural beats improve deep focus.",
+    "platforms": [
+      "YouTube",
+      "TikTok"
+    ],
+    "publish_cron": "0 2 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "Icebreaker",
-    "cron": "20 6-22/4 * * *", 
-    "url": "https://icebreaker.social",
-    "assassination_mode": true,
-    "competitor_url": "https://tinder.com",
-    "goal": "marketing"
+    "brand_id": "sentaient",
+    "prompt_template": "Write a contrarian build-in-public log about agentic AI velocity over prompt engineering.",
+    "platforms": [
+      "Twitter/X",
+      "LinkedIn"
+    ],
+    "publish_cron": "0 4 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "Legal Eagle",
-    "cron": "30 6-22/4 * * *", 
-    "url": "https://legaleagle.ai",
-    "assassination_mode": true,
-    "competitor_url": "https://legalzoom.com",
-    "goal": "marketing"
+    "brand_id": "interstellar",
+    "prompt_template": "Draft an awe-inspiring post tracking the latest space exploration milestone.",
+    "platforms": [
+      "Instagram",
+      "Twitter/X"
+    ],
+    "publish_cron": "0 6 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "AutoPilot",
-    "cron": "40 6-22/4 * * *", 
-    "url": "https://autopilot-ai.com",
-    "assassination_mode": true,
-    "competitor_url": "https://hootsuite.com",
-    "goal": "marketing"
+    "brand_id": "snowboardersonly",
+    "prompt_template": "Generate an extreme sports reel script highlighting untouched powder runs.",
+    "platforms": [
+      "Instagram",
+      "TikTok"
+    ],
+    "publish_cron": "0 8 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "FantasyQuant",
-    "cron": "50 6-22/4 * * *", 
-    "url": "https://fantasyquant.app",
-    "assassination_mode": false,
-    "goal": "marketing"
+    "brand_id": "icebreaker",
+    "prompt_template": "Create a witty party game hook to end awkward silences.",
+    "platforms": [
+      "TikTok",
+      "Instagram"
+    ],
+    "publish_cron": "0 10 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "ContangoQuant",
-    "cron": "0 7-23/4 * * *", 
-    "url": "https://contangoquant.finance",
-    "assassination_mode": true,
-    "competitor_url": "https://bloomberg.com",
-    "goal": "marketing"
+    "brand_id": "contangoquant",
+    "prompt_template": "Write an analytical deep dive on current commodities futures trends.",
+    "platforms": [
+      "LinkedIn",
+      "Twitter/X"
+    ],
+    "publish_cron": "0 12 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "LightSpeed",
-    "cron": "10 7-23/4 * * *", 
-    "url": "https://lightspeed-demo.app",
-    "assassination_mode": true,
-    "competitor_url": "https://datadoghq.com",
-    "goal": "marketing"
+    "brand_id": "fantasyquant",
+    "prompt_template": "Produce a competitive fantasy sports data analysis highlighting undervalued players.",
+    "platforms": [
+      "Twitter/X",
+      "TikTok"
+    ],
+    "publish_cron": "0 14 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "Liquid",
-    "cron": "20 7-23/4 * * *", 
-    "url": "https://liquidfinance.app",
-    "assassination_mode": true,
-    "competitor_url": "https://quickbooks.intuit.com",
-    "goal": "marketing"
+    "brand_id": "autopilotapp",
+    "prompt_template": "Draft a productivity hack post on automating daily routines.",
+    "platforms": [
+      "LinkedIn",
+      "Instagram"
+    ],
+    "publish_cron": "0 16 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "Snowboarders Only",
-    "cron": "30 7-23/4 * * *", 
-    "url": "https://snowboardersonly.com",
-    "assassination_mode": true,
-    "competitor_url": "https://burton.com",
-    "goal": "marketing"
+    "brand_id": "liquid",
+    "prompt_template": "Create a refreshing wellness tip about optimal daily hydration tracking.",
+    "platforms": [
+      "Instagram",
+      "TikTok"
+    ],
+    "publish_cron": "0 18 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "Matrix",
-    "cron": "40 7-23/4 * * *", 
-    "url": "https://matrix-ai.dev",
-    "assassination_mode": true,
-    "competitor_url": "https://github.com/features/copilot",
-    "goal": "marketing"
+    "brand_id": "lightspeed",
+    "prompt_template": "Write a fast-paced feature highlight for the minimalist LightSpeed browser.",
+    "platforms": [
+      "Twitter/X",
+      "TikTok"
+    ],
+    "publish_cron": "0 20 * * *",
+    "generate_cron": "0 * * * *"
   },
   {
-    "brand": "Helu",
-    "cron": "50 7-23/4 * * *", 
-    "url": "https://helu-avatar.ai",
-    "assassination_mode": false,
-    "goal": "marketing"
+    "brand_id": "matrix",
+    "prompt_template": "Produce an organized networking guide on how to leverage a personal CRM.",
+    "platforms": [
+      "LinkedIn",
+      "Twitter/X"
+    ],
+    "publish_cron": "0 21 * * *",
+    "generate_cron": "0 * * * *"
+  },
+  {
+    "brand_id": "legaleagle",
+    "prompt_template": "Draft a trustworthy legal tech post on AI-powered contract analysis.",
+    "platforms": [
+      "LinkedIn",
+      "Twitter/X"
+    ],
+    "publish_cron": "0 22 * * *",
+    "generate_cron": "0 * * * *"
+  },
+  {
+    "brand_id": "heluaiavatars",
+    "prompt_template": "Generate a mind-blowing showcase script of next-gen digital twin avatars.",
+    "platforms": [
+      "TikTok",
+      "Instagram"
+    ],
+    "publish_cron": "0 23 * * *",
+    "generate_cron": "0 * * * *"
   }
 ]

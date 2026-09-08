@@ -1,0 +1,13 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package json first to leverage Docker cache
+COPY package*.json ./
+RUN npm install
+
+# Copy all source files
+COPY . .
+
+# Command is overridden by docker-compose for each specific worker
+CMD ["node", "worker.js"]

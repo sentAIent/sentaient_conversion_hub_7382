@@ -1,13 +1,12 @@
 {
   "meta": {
-    "version": "1.0.0",
-    "last_updated": "2026-06-09",
+    "version": "1.1.0",
+    "last_updated": "2026-08-14",
     "owner": "SentAIent",
-    "description": "Master brand configuration file for the SentAIent Orchestrator. All agents read from this file to ensure 100% brand compliance across every asset."
+    "description": "Master brand configuration file for the SentAIent Orchestrator. Includes all 12 apps + SentAIent + CloveH2O."
   },
 
   "brands": {
-
     "CloveH2O": {
       "id": "CloveH2O",
       "name": "CloveH2O",
@@ -17,34 +16,12 @@
       "voice": {
         "tone": ["clean", "confident", "science-backed", "approachable", "direct"],
         "avoid": ["luxury gatekeeping", "pseudoscience", "excessive hype", "aggressive sales language"],
-        "sample_hooks": [
-          "Two ingredients. Zero shortcuts.",
-          "The spice that changed history. Now in your water.",
-          "Premium hydration doesn't have to cost $8.",
-          "Non-GMO cloves. RO purified water. That's it.",
-          "Ancient wellness. Modern price."
-        ],
+        "sample_hooks": ["Two ingredients. Zero shortcuts.", "The spice that changed history. Now in your water."],
         "cta_style": "soft urgency — invite, don't push"
       },
       "visual": {
-        "palette": {
-          "primary": "#B85C2A",
-          "primary_deep": "#8A3D18",
-          "primary_mid": "#D4784A",
-          "primary_light": "#EFA882",
-          "primary_pale": "#FDF0E8",
-          "accent_green": "#3A7A4A",
-          "background": "#FFFFFF",
-          "off_white": "#FAFAF8",
-          "ink": "#1A1209",
-          "text_secondary": "#5C4030",
-          "text_tertiary": "#9A7A68"
-        },
-        "typography": {
-          "heading": "Playfair Display — serif, weight 400–700, italic for emphasis",
-          "body": "DM Sans — weight 200–500",
-          "eyebrow": "DM Sans 500, 0.7rem, 0.2em letter-spacing, uppercase"
-        },
+        "palette": {"primary": "#B85C2A", "background": "#FFFFFF", "ink": "#1A1209"},
+        "typography": {"heading": "Playfair Display", "body": "DM Sans"},
         "style": "clean white background, warm amber accents, glassmorphic cards on white, editorial layout",
         "image_direction": "bright, natural light, clean surfaces, amber/clove color pops, no dark moody aesthetics",
         "logo": "droplet + ripple mark, blue on white, wordmark: Clove H2O",
@@ -53,46 +30,14 @@
       "product": {
         "flagship": "Original Clove Infusion 500mL",
         "price_point": "$3.49 single / $33.99 12-pack",
-        "key_claims": [
-          "Non-GMO certified cloves",
-          "Reverse osmosis purified water",
-          "Zero sugar, zero calories",
-          "No preservatives or artificial flavors",
-          "Cold infusion process",
-          "Third-party lab tested"
-        ],
-        "benefits": [
-          "290,000+ ORAC antioxidant score",
-          "Natural anti-inflammatory via eugenol",
-          "Digestive support",
-          "Oral health",
-          "Blood sugar balance",
-          "Antimicrobial properties"
-        ],
-        "ingredients": ["Reverse Osmosis Water", "Non-GMO Whole Cloves"]
+        "key_claims": ["Non-GMO certified cloves", "Reverse osmosis purified water", "Zero sugar, zero calories"]
       },
       "content": {
-        "formats": ["16:9 hero", "9:16 Reels/TikTok", "1:1 feed post", "email header", "product label"],
-        "platforms": ["Instagram", "TikTok", "YouTube Shorts", "Email"],
-        "content_pillars": [
-          "Science & benefits education",
-          "Ingredient transparency",
-          "Lifestyle / hydration ritual",
-          "Price-value contrast vs competitors",
-          "Founder story"
-        ],
+        "formats": ["16:9 hero", "9:16 Reels/TikTok", "1:1 feed post"],
+        "platforms": ["Instagram", "TikTok", "YouTube Shorts"],
+        "content_pillars": ["Science & benefits education", "Ingredient transparency", "Lifestyle / hydration ritual"],
         "post_cadence": "daily",
-        "hashtags": ["#CloveH2O", "#FunctionalHydration", "#CleanWater", "#NonGMO", "#WellnessWater", "#CloveWater"]
-      },
-      "founders": {
-        "brian_leonard": {
-          "role": "Co-Founder, Technology & Strategy",
-          "background": "Quantitative trading, AI development, fintech entrepreneurship"
-        },
-        "michael_hughes": {
-          "role": "Co-Founder, Food & Beverage Operations",
-          "background": "25+ years F&B industry, supply chain, retail distribution, product formulation"
-        }
+        "hashtags": ["#CloveH2O", "#FunctionalHydration", "#CleanWater"]
       }
     },
 
@@ -103,56 +48,27 @@
       "url": "https://sentaient.com/mindwave",
       "archetype": "The Sage — calm, cerebral, evidence-aware, anti-hype",
       "voice": {
-        "tone": ["calm", "intelligent", "minimalist", "science-curious", "non-commercial"],
-        "avoid": ["wellness woo", "aggressive monetization language", "overclaiming", "noise"],
-        "sample_hooks": [
-          "Your brain has a frequency. Find it.",
-          "40Hz gamma. Deep focus. Free.",
-          "Sleep isn't a luxury. Neither is the science behind it.",
-          "No subscription. No ads. Just signal."
-        ],
+        "tone": ["calm", "intelligent", "minimalist", "science-curious"],
+        "avoid": ["wellness woo", "aggressive monetization language", "noise"],
+        "sample_hooks": ["Your brain has a frequency. Find it.", "40Hz gamma. Deep focus. Free."],
         "cta_style": "frictionless — one click, instant access, no commitment"
       },
       "visual": {
-        "palette": {
-          "primary": "#7B5EA7",
-          "primary_deep": "#4A2D7A",
-          "primary_light": "#B89FD4",
-          "accent": "#1AB8C4",
-          "background": "#0A0A12",
-          "surface": "#12121E",
-          "text": "#E8E4F0",
-          "text_dim": "rgba(232,228,240,0.55)"
-        },
-        "typography": {
-          "heading": "Space Grotesk or Inter — modern, geometric",
-          "body": "Inter — weight 300–400"
-        },
-        "style": "OLED dark, deep purple/teal gradients, subtle waveform visualizations, glassmorphic dark panels",
+        "palette": {"primary": "#7B5EA7", "accent": "#1AB8C4", "background": "#0A0A12"},
+        "typography": {"heading": "Space Grotesk", "body": "Inter"},
+        "style": "OLED dark, deep purple/teal gradients, subtle waveform visualizations",
         "image_direction": "dark ambient, brain/neural imagery, waveforms, deep space aesthetics",
         "avoid": ["bright white backgrounds", "warm colors", "busy layouts"]
       },
       "product": {
         "flagship": "Binaural beats web app — free",
-        "frequencies": ["Delta 0.5–4Hz sleep", "Theta 4–8Hz meditation", "Alpha 8–13Hz relaxed focus", "Beta 13–30Hz active thinking", "Gamma 40Hz peak performance"],
-        "price_point": "Free",
-        "key_claims": [
-          "Scientifically studied frequency ranges",
-          "No account required",
-          "No ads",
-          "Works on any device"
-        ]
+        "frequencies": ["Delta 0.5–4Hz sleep", "Theta 4–8Hz meditation", "Alpha 8–13Hz relaxed focus", "Beta 13–30Hz active thinking", "Gamma 40Hz peak performance"]
       },
       "content": {
-        "formats": ["9:16 Reels/TikTok", "1:1 feed", "YouTube long-form", "email"],
+        "formats": ["9:16 Reels/TikTok", "1:1 feed", "YouTube long-form"],
         "platforms": ["YouTube", "TikTok", "Reddit", "Instagram"],
-        "content_pillars": [
-          "Neuroscience education",
-          "Use-case demos (study, sleep, workout)",
-          "Frequency explainers",
-          "User transformation stories"
-        ],
-        "hashtags": ["#MindWave", "#BinauralBeats", "#FocusMusic", "#SleepSounds", "#Neuroscience", "#BrainWaves"]
+        "content_pillars": ["Neuroscience education", "Use-case demos", "Frequency explainers"],
+        "hashtags": ["#MindWave", "#BinauralBeats", "#FocusMusic", "#BrainWaves"]
       }
     },
 
@@ -164,63 +80,163 @@
       "archetype": "The Outsider — sharp, builder-first, no-BS, contrarian to AI hype",
       "voice": {
         "tone": ["direct", "technical", "builder-focused", "confident", "anti-fluff"],
-        "avoid": ["corporate AI speak", "buzzword stacking", "vague capability claims", "fake urgency"],
-        "sample_hooks": [
-          "We don't demo AI. We deploy it.",
-          "Autonomous systems. Real output. No prompting theater.",
-          "Built for operators, not observers.",
-          "The gap between AI demo and AI product is where we live."
-        ],
+        "avoid": ["corporate AI speak", "buzzword stacking", "fake urgency"],
+        "sample_hooks": ["We don't demo AI. We deploy it.", "Autonomous systems. Real output."],
         "cta_style": "peer-to-peer — direct invitation, no sales pressure"
       },
       "visual": {
-        "palette": {
-          "primary": "#00D4FF",
-          "primary_deep": "#0099BB",
-          "accent": "#FF6B35",
-          "background": "#050508",
-          "surface": "#0D0D14",
-          "text": "#F0F0F8",
-          "text_dim": "rgba(240,240,248,0.6)"
-        },
-        "typography": {
-          "heading": "Space Grotesk — geometric, technical weight",
-          "body": "JetBrains Mono or Inter"
-        },
+        "palette": {"primary": "#00D4FF", "accent": "#FF6B35", "background": "#050508"},
+        "typography": {"heading": "Space Grotesk", "body": "JetBrains Mono"},
         "style": "terminal/IDE aesthetic, OLED black, electric cyan accents, code-block UI elements",
         "image_direction": "dark technical interfaces, agentic workflow diagrams, clean code aesthetics",
         "avoid": ["stock tech imagery", "robot clichés", "blue gradient corporate AI"]
       },
       "content": {
-        "formats": ["9:16 build logs/demos", "GitHub README style posts", "technical Twitter threads", "YouTube build videos"],
+        "formats": ["9:16 build logs/demos", "GitHub README style posts"],
         "platforms": ["Twitter/X", "YouTube", "LinkedIn", "GitHub"],
-        "content_pillars": [
-          "Build-in-public logs",
-          "Agentic system architecture",
-          "Tool comparisons",
-          "Founder POV / contrarian takes",
-          "Product launches"
-        ],
-        "hashtags": ["#SentAIent", "#AgenticAI", "#BuildInPublic", "#AIAgents", "#LLM", "#AIAutomation"]
+        "content_pillars": ["Build-in-public logs", "Agentic system architecture", "Tool comparisons"],
+        "hashtags": ["#SentAIent", "#AgenticAI", "#BuildInPublic", "#AIAgents"]
       }
-    }
+    },
 
+    "Interstellar": {
+      "id": "interstellar",
+      "name": "Interstellar",
+      "tagline": "Explore the cosmos. Space exploration tracker.",
+      "url": "https://sentaient.com/interstellar",
+      "archetype": "The Explorer",
+      "voice": {"tone": ["epic", "scientific", "awe-inspiring"]},
+      "visual": {"palette": {"primary": "#FFFFFF", "background": "#000000", "accent": "#4B0082"}},
+      "content": {"platforms": ["Instagram", "TikTok", "X"], "hashtags": ["#Space", "#Astronomy", "#Interstellar"]}
+    },
+
+    "SnowboardersOnly": {
+      "id": "snowboardersonly",
+      "name": "Snowboarders Only",
+      "tagline": "Snowboarder's Paradise. Ride the powder.",
+      "url": "https://sentaient.com/snowboarders",
+      "archetype": "The Maverick",
+      "voice": {"tone": ["adrenaline", "extreme", "community-driven"]},
+      "visual": {"palette": {"primary": "#00FFFF", "background": "#F0F8FF", "accent": "#FF4500"}},
+      "content": {"platforms": ["Instagram", "TikTok", "YouTube Shorts"], "hashtags": ["#Snowboarding", "#WinterSports", "#Powder"]}
+    },
+
+    "Icebreaker": {
+      "id": "icebreaker",
+      "name": "Icebreaker",
+      "tagline": "Never have an awkward silence again.",
+      "url": "https://sentaient.com/icebreaker",
+      "archetype": "The Jester",
+      "voice": {"tone": ["witty", "social", "fun"]},
+      "visual": {"palette": {"primary": "#FFD700", "background": "#1E90FF", "accent": "#FF69B4"}},
+      "content": {"platforms": ["TikTok", "Instagram"], "hashtags": ["#PartyGames", "#SocialApp", "#Icebreaker"]}
+    },
+
+    "ContangoQuant": {
+      "id": "contangoquant",
+      "name": "Contango Quant",
+      "tagline": "Quantitative analysis for commodities and futures.",
+      "url": "https://sentaient.com/contango",
+      "archetype": "The Sage",
+      "voice": {"tone": ["analytical", "professional", "data-driven"]},
+      "visual": {"palette": {"primary": "#008000", "background": "#FFFFFF", "accent": "#000000"}},
+      "content": {"platforms": ["LinkedIn", "X"], "hashtags": ["#Quant", "#Trading", "#Finance"]}
+    },
+
+    "FantasyQuant": {
+      "id": "fantasyquant",
+      "name": "Fantasy Quant",
+      "tagline": "Data-driven dominance for your fantasy leagues.",
+      "url": "https://sentaient.com/fantasyquant",
+      "archetype": "The Magician",
+      "voice": {"tone": ["competitive", "analytical", "winning"]},
+      "visual": {"palette": {"primary": "#8A2BE2", "background": "#000000", "accent": "#32CD32"}},
+      "content": {"platforms": ["X", "TikTok", "Instagram"], "hashtags": ["#FantasyFootball", "#FantasySports", "#DataAnalytics"]}
+    },
+
+    "AutoPilotApp": {
+      "id": "autopilotapp",
+      "name": "AutoPilot",
+      "tagline": "Automate your daily routines effortlessly.",
+      "url": "https://sentaient.com/autopilot",
+      "archetype": "The Creator",
+      "voice": {"tone": ["efficient", "productive", "empowering"]},
+      "visual": {"palette": {"primary": "#4169E1", "background": "#F5F5F5", "accent": "#FFA500"}},
+      "content": {"platforms": ["LinkedIn", "X", "Instagram"], "hashtags": ["#Productivity", "#Automation", "#LifeHacks"]}
+    },
+
+    "Liquid": {
+      "id": "liquid",
+      "name": "Liquid",
+      "tagline": "Fluid hydration tracking and analytics.",
+      "url": "https://sentaient.com/liquid",
+      "archetype": "The Caregiver",
+      "voice": {"tone": ["refreshing", "health-conscious", "supportive"]},
+      "visual": {"palette": {"primary": "#00BFFF", "background": "#FFFFFF", "accent": "#00FA9A"}},
+      "content": {"platforms": ["Instagram", "TikTok"], "hashtags": ["#Hydration", "#Health", "#Wellness"]}
+    },
+
+    "LightSpeed": {
+      "id": "lightspeed",
+      "name": "LightSpeed",
+      "tagline": "The fastest minimalist browser for iOS.",
+      "url": "https://sentaient.com/lightspeed",
+      "archetype": "The Hero",
+      "voice": {"tone": ["fast", "minimalist", "cutting-edge"]},
+      "visual": {"palette": {"primary": "#FF4500", "background": "#000000", "accent": "#FFFFFF"}},
+      "content": {"platforms": ["X", "YouTube Shorts", "TikTok"], "hashtags": ["#Browser", "#Tech", "#Speed"]}
+    },
+
+    "Matrix": {
+      "id": "matrix",
+      "name": "Matrix",
+      "tagline": "Connect the dots. Advanced personal CRM.",
+      "url": "https://sentaient.com/matrix",
+      "archetype": "The Ruler",
+      "voice": {"tone": ["organized", "powerful", "network-oriented"]},
+      "visual": {"palette": {"primary": "#00FF00", "background": "#000000", "accent": "#3CB371"}},
+      "content": {"platforms": ["LinkedIn", "X"], "hashtags": ["#Networking", "#CRM", "#Productivity"]}
+    },
+
+    "LegalEagle": {
+      "id": "legaleagle",
+      "name": "Legal Eagle",
+      "tagline": "AI-powered contract analysis in your pocket.",
+      "url": "https://sentaient.com/legaleagle",
+      "archetype": "The Sage",
+      "voice": {"tone": ["authoritative", "trustworthy", "precise"]},
+      "visual": {"palette": {"primary": "#B22222", "background": "#FDF5E6", "accent": "#DAA520"}},
+      "content": {"platforms": ["LinkedIn", "X"], "hashtags": ["#LegalTech", "#AI", "#Contracts"]}
+    },
+
+    "HeluAIAvatars": {
+      "id": "heluaiavatars",
+      "name": "Helu AI Avatars",
+      "tagline": "Next-gen digital twins and avatars.",
+      "url": "https://sentaient.com/helu",
+      "archetype": "The Magician",
+      "voice": {"tone": ["futuristic", "creative", "mind-blowing"]},
+      "visual": {"palette": {"primary": "#FF1493", "background": "#191970", "accent": "#00FFFF"}},
+      "content": {"platforms": ["TikTok", "Instagram", "YouTube Shorts"], "hashtags": ["#AI", "#Avatars", "#DigitalTwin"]}
+    }
   },
 
   "orchestrator_config": {
     "routing_rules": [
-      {
-        "trigger_keywords": ["cloveh2o", "clove water", "clove h2o", "clove infused"],
-        "brand": "cloveh2o"
-      },
-      {
-        "trigger_keywords": ["mindwave", "binaural", "beats", "frequency", "focus music"],
-        "brand": "mindwave"
-      },
-      {
-        "trigger_keywords": ["sentaient", "orchestrator", "agentic", "ai system", "campaign engine"],
-        "brand": "sentaient"
-      }
+      {"trigger_keywords": ["cloveh2o", "clove water"], "brand": "CloveH2O"},
+      {"trigger_keywords": ["mindwave", "binaural"], "brand": "MindWave"},
+      {"trigger_keywords": ["sentaient", "orchestrator"], "brand": "SentAIent"},
+      {"trigger_keywords": ["interstellar", "space"], "brand": "Interstellar"},
+      {"trigger_keywords": ["snowboard", "powder"], "brand": "SnowboardersOnly"},
+      {"trigger_keywords": ["icebreaker", "party game"], "brand": "Icebreaker"},
+      {"trigger_keywords": ["contango", "quant"], "brand": "ContangoQuant"},
+      {"trigger_keywords": ["fantasy", "football"], "brand": "FantasyQuant"},
+      {"trigger_keywords": ["autopilot", "automate"], "brand": "AutoPilotApp"},
+      {"trigger_keywords": ["liquid", "hydration"], "brand": "Liquid"},
+      {"trigger_keywords": ["lightspeed", "browser"], "brand": "LightSpeed"},
+      {"trigger_keywords": ["matrix", "crm"], "brand": "Matrix"},
+      {"trigger_keywords": ["legal", "contract"], "brand": "LegalEagle"},
+      {"trigger_keywords": ["helu", "avatar"], "brand": "HeluAIAvatars"}
     ],
     "confidence_threshold": 0.90,
     "fallback_on_low_confidence": "human_approval_queue",

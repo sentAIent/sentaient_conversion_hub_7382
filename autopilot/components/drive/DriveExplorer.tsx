@@ -1,8 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { db, storage } from '@/config/firebase';
-import { collection, onSnapshot, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { supabase } from '@/lib/supabase';
 import { DriveFolder, DriveFile } from '@/types/drive';
 import { DriveBreadcrumbs } from './DriveBreadcrumbs';
 import { FolderModal } from './FolderModal';
@@ -26,29 +24,47 @@ export function DriveExplorer({ brandId }: DriveExplorerProps) {
   // Fetch Folders
   useEffect(() => {
     if (!brandId) return;
-    const q = query(collection(db, 'drive_folders'), where('brandId', '==', brandId));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedFolders: DriveFolder[] = [];
-      snapshot.forEach(doc => {
-        fetchedFolders.push({ id: doc.id, ...doc.data() } as DriveFolder);
-      });
-      setFolders(fetchedFolders);
-    });
-    return () => unsubscribe();
+    
+    const fetchFolders = async () => {
+      const { data } = await supabase.from('drive_folders').select('*').eq('brandId', brandId);
+      if (data) setFolders(data.map(d => ({ ...d, parentFolderId: d.parentId }) as any));
+    };
+
+    fetchFolders();
+
+    const subscription = supabase
+      .channel(`public:drive_folders:brandId=eq.${brandId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'drive_folders', filter: `brandId=eq.${brandId}` }, payload => {
+        fetchFolders();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [brandId]);
 
   // Fetch Files
   useEffect(() => {
     if (!brandId) return;
-    const q = query(collection(db, 'drive_files'), where('brandId', '==', brandId));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedFiles: DriveFile[] = [];
-      snapshot.forEach(doc => {
-        fetchedFiles.push({ id: doc.id, ...doc.data() } as DriveFile);
-      });
-      setFiles(fetchedFiles);
-    });
-    return () => unsubscribe();
+    
+    const fetchFiles = async () => {
+      const { data } = await supabase.from('drive_files').select('*').eq('brandId', brandId);
+      if (data) setFiles(data as any);
+    };
+
+    fetchFiles();
+
+    const subscription = supabase
+      .channel(`public:drive_files:brandId=eq.${brandId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'drive_files', filter: `brandId=eq.${brandId}` }, payload => {
+        fetchFiles();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [brandId]);
 
   // Derived state for current view
@@ -57,51 +73,43 @@ export function DriveExplorer({ brandId }: DriveExplorerProps) {
 
   // Handlers
   const handleCreateFolder = async (name: string) => {
-    await addDoc(collection(db, 'drive_folders'), {
+    await supabase.from('drive_folders').insert({
       name,
       brandId,
-      parentFolderId: currentFolder,
-      createdAt: new Date().toISOString(), // Use simple ISO string for now, could use serverTimestamp()
+      parentId: currentFolder,
     });
   };
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = async (file: File) => {
     if (!file) return;
 
-    // Add to uploading UI state
-    setUploadingFiles(prev => [...prev, { name: file.name, progress: 0 }]);
+    setUploadingFiles(prev => [...prev, { name: file.name, progress: 10 }]);
     
-    // Create storage reference
-    const storageRef = ref(storage, `brands/${brandId}/${currentFolder || 'root'}/${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const filePath = `brands/${brandId}/${currentFolder || 'root'}/${file.name}`;
+      const { error } = await supabase.storage.from('drive_files').upload(filePath, file, { upsert: true });
+      
+      if (error) throw error;
 
-    uploadTask.on('state_changed', 
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploadingFiles(prev => prev.map(u => u.name === file.name ? { ...u, progress } : u));
-      },
-      (error) => {
-        console.error("Upload failed", error);
+      setUploadingFiles(prev => prev.map(u => u.name === file.name ? { ...u, progress: 100 } : u));
+      
+      const { data: { publicUrl } } = supabase.storage.from('drive_files').getPublicUrl(filePath);
+      
+      await supabase.from('drive_files').insert({
+        name: file.name,
+        brandId,
+        folderId: currentFolder,
+        downloadUrl: publicUrl,
+        size: file.size,
+        type: file.type,
+      });
+    } catch (error) {
+      console.error("Upload failed", error);
+    } finally {
+      setTimeout(() => {
         setUploadingFiles(prev => prev.filter(u => u.name !== file.name));
-      },
-      async () => {
-        // Upload completed
-        const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-        
-        // Save metadata to Firestore
-        await addDoc(collection(db, 'drive_files'), {
-          name: file.name,
-          brandId,
-          folderId: currentFolder,
-          downloadUrl,
-          size: file.size,
-          type: file.type,
-          createdAt: new Date().toISOString(),
-        });
-        
-        setUploadingFiles(prev => prev.filter(u => u.name !== file.name));
-      }
-    );
+      }, 500);
+    }
   };
 
   const getFileIcon = (type: string) => {

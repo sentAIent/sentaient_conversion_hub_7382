@@ -1,8 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Task } from '@/types/task';
-import { db } from '@/config/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import { useWorkspace } from '../providers/WorkspaceProvider';
 import { format, addDays, differenceInDays, startOfWeek, isSameDay } from 'date-fns';
 
@@ -14,19 +13,22 @@ export function GanttView() {
   // Create 14 days timeline
   const days = Array.from({ length: 14 }, (_, i) => addDays(startDate, i));
 
-  // Sync with Firestore
+  // Sync with Supabase
   useEffect(() => {
     if (!activeWorkspace) return;
-    const unsubscribe = onSnapshot(collection(db, 'tasks'), (snapshot) => {
-      const fetchedTasks: Task[] = [];
-      snapshot.forEach(doc => {
-        fetchedTasks.push({ id: doc.id, ...doc.data() } as Task);
-      });
-      // Filter by active workspace
-      const workspaceTasks = fetchedTasks.filter(t => t.brandId === activeWorkspace);
-      
-      // Fallback mock data with dates if empty
-      if (workspaceTasks.length === 0) {
+    
+    const fetchTasks = async () => {
+      const { data, error } = await supabase.from('tasks').select('*').eq('brandId', activeWorkspace);
+      if (data && data.length > 0) {
+        setTasks(data.map((t: any) => ({
+          ...t,
+          brandId: t.brandId,
+          order: t.order,
+          startDate: t.startDate,
+          dueDate: t.dueDate
+        })) as Task[]);
+      } else {
+        // Fallback mock data with dates if empty
         setTasks([
           { 
             id: '1', title: 'Design Summer Promo Header', status: 'Design', brandId: activeWorkspace, platforms: ['twitter'], order: 1,
@@ -41,11 +43,21 @@ export function GanttView() {
             startDate: format(addDays(new Date(), 5), 'yyyy-MM-dd'), dueDate: format(addDays(new Date(), 10), 'yyyy-MM-dd')
           },
         ]);
-      } else {
-        setTasks(workspaceTasks);
       }
-    });
-    return () => unsubscribe();
+    };
+
+    fetchTasks();
+
+    const subscription = supabase
+      .channel(`public:tasks:brandId=eq.${activeWorkspace}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `brandId=eq.${activeWorkspace}` }, payload => {
+        fetchTasks();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [activeWorkspace]);
 
   return (

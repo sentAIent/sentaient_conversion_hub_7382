@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: sentaient_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-sentaient_secret}
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-sentaient_secret}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: sentaient_api
+    ports:
+      - "18080:8080"
+    environment:
+      - REDIS_URL=redis://default:${REDIS_PASSWORD:-sentaient_secret}@redis:6379
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET:-sentaient_jwt_secret}
+      - NODE_ENV=production
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+    init: true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: sentaient_scheduler
+    environment:
+      - REDIS_URL=redis://default:${REDIS_PASSWORD:-sentaient_secret}@redis:6379
+    command: ["node", "scheduler.js"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+    init: true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  generator_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: sentaient_generator_worker
+    environment:
+      - REDIS_URL=redis://default:${REDIS_PASSWORD:-sentaient_secret}@redis:6379
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    command: ["node", "generation-worker.js"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+    init: true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  publisher_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: sentaient_publisher_worker
+    environment:
+      - REDIS_URL=redis://default:${REDIS_PASSWORD:-sentaient_secret}@redis:6379
+    command: ["node", "publisher-worker.js"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+    init: true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+volumes:
+  redis_data:

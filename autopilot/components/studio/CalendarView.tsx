@@ -68,7 +68,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                   href={`/queue/${item.id}`} 
                   key={idx}
                   className={`block px-2 py-1.5 rounded-lg border text-xs font-medium cursor-pointer hover:brightness-125 transition-all truncate ${getStatusColor(item)}`}
-                  title={item.caption}
+                  title={item.caption || item.generated_copy || item.text || "No caption"}
                 >
                   {new Date(item.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {item.brand}
                 </Link>

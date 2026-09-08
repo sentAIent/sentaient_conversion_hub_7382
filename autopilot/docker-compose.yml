@@ -2,20 +2,56 @@ version: "3.8"
 
 services:
   redis:
+    container_name: autopilot_local_redis
     image: redis:alpine
-    ports:
-      - "6379:6379"
 
-  orchestrator:
-    build: 
+  api:
+    container_name: sentaient_campaign_api
+    build:
       context: ./orchestrator
+      dockerfile: Dockerfile.api
+    restart: always
+    ports:
+      - "18080:8080"
     environment:
       - REDIS_URL=redis://redis:6379
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - FRONTEND_URL=http://localhost:3000
     depends_on:
       - redis
 
+  crawler:
+    container_name: autopilot_crawler
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+
+  autopilot_video_farm:
+    build:
+      context: ./video-farm
+      dockerfile: Dockerfile
+    container_name: sentaient_video_farm
+    restart: always
+    ports:
+      - "8006:8006"
+    environment:
+      - USE_MOCK_INFERENCE=true
+      
+  autopilot_remotion_engine:
+    build:
+      context: ./remotion-engine
+      dockerfile: Dockerfile
+    container_name: sentaient_remotion_engine
+    restart: always
+    ports:
+      - "8007:8007"
+
   scheduler:
+    container_name: autopilot_scheduler
     build: 
       context: ./orchestrator
     command: ["node", "scheduler.js"]
@@ -23,3 +59,19 @@ services:
       - REDIS_URL=redis://redis:6379
     depends_on:
       - redis
+
+  frontend:
+    container_name: autopilot_frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - ORCHESTRATOR_URL=http://api:8080
+      - PYTHON_ENGINE_URL=http://host.docker.internal:8005
