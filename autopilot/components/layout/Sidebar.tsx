@@ -62,8 +62,8 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-8 space-y-2 text-center text-xs text-gray-500 flex flex-col gap-1">
-        <Link href="/autopilot/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
-        <Link href="/autopilot/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
+        <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
+        <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
       </div>
 
       <div className="mt-6 pt-6 border-t border-white/10">
