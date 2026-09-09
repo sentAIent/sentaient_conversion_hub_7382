@@ -54,6 +54,18 @@
   status = 200
 
 [[redirects]]
+  from = "/autopilot"
+  to = "https://sentaient-autopilot-hub.netlify.app/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/autopilot/*"
+  to = "https://sentaient-autopilot-hub.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
