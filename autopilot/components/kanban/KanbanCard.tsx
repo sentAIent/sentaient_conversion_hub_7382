@@ -3,7 +3,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/types/task';
-import { Calendar, MoreVertical, Twitter, Instagram, Linkedin, Youtube, GripVertical } from 'lucide-react';
+import { Calendar, MoreVertical, Twitter, Instagram, Linkedin, Play, GripVertical } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface KanbanCardProps {
@@ -15,7 +15,7 @@ const getPlatformIcon = (platform: string) => {
     case 'twitter': return <Twitter size={14} className="text-blue-400" />;
     case 'instagram': return <Instagram size={14} className="text-pink-500" />;
     case 'linkedin': return <Linkedin size={14} className="text-blue-600" />;
-    case 'youtube': return <Youtube size={14} className="text-red-500" />;
+    case 'youtube': return <Play size={14} className="text-red-500" />;
     default: return null;
   }
 };
