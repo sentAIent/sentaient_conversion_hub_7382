@@ -46,7 +46,7 @@
     "@reduxjs/toolkit": "^2.6.1",
     "@revenuecat/purchases-capacitor": "^13.2.1",
     "@sentry/capacitor": "^4.3.0",
-    "@sentry/react": "^10.69.0",
+    "@sentry/react": "10.69.0",
     "@stripe/react-stripe-js": "^5.6.0",
     "@stripe/stripe-js": "^8.7.0",
     "@studio-freight/lenis": "^1.0.42",
@@ -97,7 +97,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "node scripts/generate-sitemap.js && vite build --sourcemap && cd legaleagle && npm ci --legacy-peer-deps && npm run build && mkdir -p ../dist/legaleagle && cp -R dist/* ../dist/legaleagle/ && cd ../lightspeed && npm ci --legacy-peer-deps && npm run build && mkdir -p ../dist/lightspeed && cp -R dist/* ../dist/lightspeed/",
+    "build": "vite build --sourcemap && cd legaleagle && npm ci --legacy-peer-deps && npm run build && mkdir -p ../dist/legaleagle && cp -R dist/* ../dist/legaleagle/ && cd ../lightspeed && npm ci --legacy-peer-deps && npm run build && mkdir -p ../dist/lightspeed && cp -R dist/* ../dist/lightspeed/",
     "serve": "vite preview",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css,md}\"",
     "format:fix": "prettier --write \"src/**/*.{js,jsx,css,md}\"",
