@@ -1,0 +1,35 @@
+name: CI / Security Checks
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Root - Install dependencies
+        run: npm ci
+        
+      - name: Root - NPM Audit
+        run: npm audit --audit-level=high
+        
+      - name: Orchestrator - Install dependencies
+        working-directory: ./orchestrator
+        run: npm ci
+
+      - name: Orchestrator - NPM Audit
+        working-directory: ./orchestrator
+        run: npm audit --audit-level=high
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps

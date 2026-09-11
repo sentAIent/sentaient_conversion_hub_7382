@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/config/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://localhost:8080";
+    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://127.0.0.1:8080";
     
     // Construct the payload for the Redis queue
     const scheduleDelay = body.scheduleDelay || 0;

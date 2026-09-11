@@ -1,8 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { secureStorage } from '../../utils/secureStorage';
-import { db } from '@/config/firebase';
-import { collection, onSnapshot, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 export type Brand = {
   id: string;
@@ -35,31 +34,46 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     secureStorage.setItem('activeWorkspace', activeWorkspace);
   }, [activeWorkspace]);
 
-  // Sync Brands with Firestore
+  // Sync Brands with Supabase
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'brands'), (snapshot) => {
-      const fetchedBrands: Brand[] = [];
-      snapshot.forEach((doc) => {
-        fetchedBrands.push({ id: doc.id, ...doc.data() } as Brand);
-      });
-      // Fallback if DB is empty to prevent UI breaking
-      if (fetchedBrands.length === 0) {
+    const fetchBrands = async () => {
+      const { data, error } = await supabase.from('brands').select('*');
+      if (error || !data || data.length === 0) {
         setBrands([
           { id: 'sentaient', name: 'SentAIent Demo', role: 'Agency Admin', assets: 142, activeCampaigns: 3 },
           { id: 'cloveh2o', name: 'CloveH2O Global', role: 'Client', assets: 84, activeCampaigns: 12 },
           { id: 'mindwave', name: 'Mindwave Official', role: 'Internal', assets: 312, activeCampaigns: 5 },
         ]);
       } else {
-        setBrands(fetchedBrands);
+        // Map camelCase for UI since DB might use different casing (though we used camelCase in quotes)
+        setBrands(data.map(b => ({
+          id: b.id,
+          name: b.name,
+          role: b.role,
+          assets: b.assets || 0,
+          activeCampaigns: b.activeCampaigns || 0
+        })));
       }
-    });
+    };
+    
+    fetchBrands();
 
-    return () => unsubscribe();
+    const subscription = supabase
+      .channel('public:brands')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'brands' }, payload => {
+        fetchBrands(); // Refresh on any change
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
   const addBrand = async (brandData: Omit<Brand, 'id' | 'assets' | 'activeCampaigns'>) => {
     const slug = brandData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    await setDoc(doc(db, 'brands', slug), {
+    await supabase.from('brands').insert({
+      id: slug,
       name: brandData.name,
       role: brandData.role,
       assets: 0,

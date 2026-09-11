@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://localhost:8080";
+    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://127.0.0.1:8080";
     const response = await fetch(`${orchestratorUrl}/queue/${params.id}`, { cache: 'no-store' });
     
     if (!response.ok) {
@@ -25,7 +25,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const payload = await req.json();
-    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://localhost:8080";
+    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://127.0.0.1:8080";
     
     // If user selected "Post Now" (scheduleDelay === 0), approve it for immediate publishing
     if (payload.scheduleDelay === 0) {

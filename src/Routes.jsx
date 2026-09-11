@@ -5,9 +5,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './pages/NotFound';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import AnalyticsTracker from './components/AnalyticsTracker';
-import MobileAppManager from './components/MobileAppManager';
-import ComplianceGate from './components/ComplianceGate';
 
 const Home = React.lazy(() => import('./pages/home'));
 const DemoHome = React.lazy(() => import('./pages/demo'));
@@ -22,23 +19,9 @@ const AboutOurApproachIntelligenceCenter = React.lazy(() => import('./pages/abou
 const Pricing = React.lazy(() => import('./pages/pricing'));
 const CheckoutSuccess = React.lazy(() => import('./pages/checkout-success'));
 const ITravel = React.lazy(() => import('./pages/iTravel'));
-const Interstellar = React.lazy(() => import('./pages/Interstellar'));
-const MindWave = React.lazy(() => import('./pages/MindWave'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const HomeAlt = React.lazy(() => import('./pages/home-alt'));
-const IcebreakerLanding = React.lazy(() => import('./pages/IcebreakerLanding'));
-const IcebreakerAdmin = React.lazy(() => import('./pages/IcebreakerAdmin'));
-const IcebreakerLocalApp = React.lazy(() => import('./pages/IcebreakerLocalApp'));
-const IcebreakerTutorial = React.lazy(() => import('./pages/IcebreakerTutorial'));
-const InterstellarLanding = React.lazy(() => import('./pages/InterstellarLanding'));
-const MindwaveLanding = React.lazy(() => import('./pages/MindwaveLanding'));
-const LightspeedHardware = React.lazy(() => import('./pages/LightspeedHardware'));
-const AgentMarketplace = React.lazy(() => import('./pages/AgentMarketplace'));
-const TermsOfService = React.lazy(() => import('./pages/TermsOfService'));
-const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
-const MatrixChatDemo = React.lazy(() => import('./pages/MatrixChatDemo'));
-const SportsAnalytics = React.lazy(() => import('./pages/SportsAnalytics'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -51,9 +34,6 @@ const ProjectRoutes = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ComplianceGate>
-          <MobileAppManager />
-          <AnalyticsTracker />
           <ErrorBoundary>
             <ScrollToTop />
             <React.Suspense fallback={<PageLoader />}>
@@ -77,34 +57,18 @@ const ProjectRoutes = () => {
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/matrix-edge-ai" element={<MatrixChatDemo />} />
               
               {/* App Routes (Public for Marketing Phase) */}
-              <Route path="/interstellar" element={<Interstellar />} />
-              <Route path="/interstellar/landing" element={<InterstellarLanding />} />
-              <Route path="/mindwave" element={<MindWave />} />
-              <Route path="/mindwave/landing" element={<MindwaveLanding />} />
               
-              <Route path="/icelogin" element={<IcebreakerLanding />} />
-              <Route path="/icewaitlist" element={<IcebreakerAdmin />} />
-              <Route path="/iceadmin" element={<IcebreakerAdmin />} />
-              <Route path="/icebreaker/tutorial" element={<IcebreakerTutorial />} />
-              <Route path="/icebreaker/*" element={<IcebreakerLocalApp />} />
               
-              <Route path="/lightspeed/hardware" element={<LightspeedHardware />} />
-              <Route path="/marketplace" element={<AgentMarketplace />} />
-              <Route path="/sports-analytics" element={<SportsAnalytics />} />
               
               {/* Legal Pages */}
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
 
               <Route path="/portfolio" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
             </RouterRoutes>
           </React.Suspense>
           </ErrorBoundary>
-        </ComplianceGate>
       </AuthProvider>
     </BrowserRouter>
   );

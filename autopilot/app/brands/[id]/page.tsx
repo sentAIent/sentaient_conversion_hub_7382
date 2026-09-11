@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkspace } from '@/components/providers/WorkspaceProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { supabase } from '@/lib/supabase';
 import { DriveExplorer } from '@/components/drive/DriveExplorer';
 
 export default function BrandDetail({ params }: { params: { id: string } }) {
@@ -21,10 +20,11 @@ export default function BrandDetail({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (!params.id) return;
-    const unsubscribe = onSnapshot(doc(db, 'brands', params.id), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setBrandData({ id: docSnap.id, ...data });
+    
+    const fetchBrand = async () => {
+      const { data, error } = await supabase.from('brands').select('*').eq('id', params.id).single();
+      if (data) {
+        setBrandData(data);
         if (!isEditingGuidelines) {
           setEditForm({
             targetAudience: data.targetAudience || 'Tech-savvy professionals aged 25-45 looking for AI automation tools. High emphasis on productivity and ROI.',
@@ -32,7 +32,6 @@ export default function BrandDetail({ params }: { params: { id: string } }) {
           });
         }
       } else if (brand) {
-        // Fallback to provider data if doc doesn't exist yet but is in context
         setBrandData(brand);
         if (!isEditingGuidelines) {
           setEditForm({
@@ -41,9 +40,21 @@ export default function BrandDetail({ params }: { params: { id: string } }) {
           });
         }
       }
-    });
-    return () => unsubscribe();
-  }, [params.id, brand]);
+    };
+
+    fetchBrand();
+
+    const subscription = supabase
+      .channel(`public:brands:id=eq.${params.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'brands', filter: `id=eq.${params.id}` }, payload => {
+        fetchBrand();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [params.id, brand, isEditingGuidelines]);
 
   if (!brandData) {
     return (
@@ -59,10 +70,10 @@ export default function BrandDetail({ params }: { params: { id: string } }) {
   const handleSaveGuidelines = async () => {
     if (!brandData?.id) return;
     try {
-      await updateDoc(doc(db, 'brands', brandData.id), {
+      await supabase.from('brands').update({
         targetAudience: editForm.targetAudience,
         toneOfVoice: editForm.toneOfVoice
-      });
+      }).eq('id', brandData.id);
       setIsEditingGuidelines(false);
     } catch (e) {
       console.error('Failed to save guidelines:', e);

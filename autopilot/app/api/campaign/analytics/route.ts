@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://localhost:8080";
+    const orchestratorUrl = process.env.ORCHESTRATOR_URL || "http://127.0.0.1:8080";
     const response = await fetch(`${orchestratorUrl}/analytics`, { cache: 'no-store' });
     
     if (!response.ok) {

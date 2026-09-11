@@ -9,7 +9,7 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
   const { activeWorkspace } = useWorkspace();
   const [isApproved, setIsApproved] = useState(false);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
-  const [script, setScript] = useState(assetData.script || assetData.generated_scripts?.[0]?.text || '');
+  const [script, setScript] = useState(assetData.script || assetData.generated_scripts?.[0]?.text || assetData.generated_copy || '');
   
   useEffect(() => {
     if (assetData.generated_scripts && assetData.generated_scripts.length > activeVariantIndex) {
@@ -17,7 +17,7 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
     }
   }, [activeVariantIndex, assetData.generated_scripts]);
 
-  const [caption, setCaption] = useState(assetData.caption || '');
+  const [caption, setCaption] = useState(assetData.caption || assetData.generated_copy || assetData.text || '');
   const [visualStyle, setVisualStyle] = useState(assetData.visual_style || 'ai_image');
   const [audioBeats, setAudioBeats] = useState(assetData.audio_beats || 'none');
   const [audioAtmos, setAudioAtmos] = useState(assetData.audio_atmos || 'none');
@@ -94,12 +94,17 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
   const [scheduleMode, setScheduleMode] = useState<'preset' | 'custom'>('preset');
   const [customScheduleTime, setCustomScheduleTime] = useState('');
   
-  const availableAccounts = [
-    '@CloveH2O_Main',
-    '@Mindwave_Official',
-    '@SentAIent_Demo',
-    '@Founder_Personal'
-  ];
+  const [availableAccountsMap, setAvailableAccountsMap] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    // Fetch user's configured social accounts
+    fetch('http://localhost:18080/admin/accounts')
+      .then(res => res.json())
+      .then(data => {
+        setAvailableAccountsMap(data);
+      })
+      .catch(err => console.error("Error fetching accounts:", err));
+  }, []);
 
   // Determine prepopulated accounts based on workspace
   const workspaceAccountMap: Record<string, string> = {
@@ -116,7 +121,7 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
   const [platformAccounts, setPlatformAccounts] = useState<Record<string, string[]>>(
     assetData.platformAccounts || {
       'Instagram': defaultAccountsForPlatform,
-      'Twitter/X': defaultAccountsForPlatform
+      'X': defaultAccountsForPlatform
     }
   );
   
@@ -486,8 +491,10 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
             <div>
               <label className="block text-sm font-medium text-gray-200 mb-4">Multi-Account Platform Targeting</label>
               <div className="flex flex-col gap-4">
-                {['Twitter/X', 'Instagram', 'TikTok', 'LinkedIn'].map(platform => {
+                {['X', 'Instagram', 'TikTok', 'LinkedIn'].map(platform => {
                   const isPlatformActive = !!platformAccounts[platform];
+                  const accountsForPlatform = availableAccountsMap[platform] || defaultAccountsForPlatform;
+
                   return (
                     <div key={platform} className={`p-4 rounded-xl border transition-all ${isPlatformActive ? 'bg-white/10 border-blue-500/50' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
                       <div className="flex items-center gap-4">
@@ -495,12 +502,12 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
                           onClick={() => togglePlatform(platform)}
                           className={`flex-shrink-0 w-32 py-2 text-sm font-bold rounded-lg transition-all ${isPlatformActive ? 'bg-[#60a9ff] text-white shadow-lg shadow-blue-500/20' : 'bg-black/20 text-gray-400'}`}
                         >
-                          {platform}
+                          {platform === 'X' ? 'Twitter/X' : platform}
                         </button>
                         
                         {isPlatformActive && (
                           <div className="flex flex-wrap gap-2">
-                            {availableAccounts.map(account => {
+                            {accountsForPlatform.map(account => {
                               const isAccountSelected = platformAccounts[platform].includes(account);
                               return (
                                 <button
@@ -512,6 +519,10 @@ export default function AssetEditor({ assetData, isEditing = false }: { assetDat
                                 </button>
                               );
                             })}
+                            
+                            {accountsForPlatform.length === 0 && (
+                               <span className="text-xs text-gray-500 italic mt-1">No accounts added in settings.</span>
+                            )}
                           </div>
                         )}
                       </div>

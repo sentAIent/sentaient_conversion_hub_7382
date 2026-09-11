@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const payload = await req.json();
-    const { inputValue, campaignType, brand, inputType } = payload;
+    const { inputValue, campaignType, brand, inputType, media, videoEngine = 'mpt' } = payload;
 
     // Simulate connecting to the n8n webhook and architecting strategy
     // In production, this would be an actual fetch call to n8n or campaign-api.js
     
     // LIVE PRODUCTION: Route the request to the campaign-api orchestrator
-    const backendUrl = process.env.ORCHESTRATOR_URL || 'http://localhost:8080';
+    const backendUrl = process.env.ORCHESTRATOR_URL || 'http://127.0.0.1:8080';
     
     let id = `mock_camp_${Date.now()}`;
     try {
@@ -21,7 +21,9 @@ export async function POST(req: Request) {
           inputValue,
           campaignType,
           brand,
-          inputType: inputValue.includes('http') ? 'url' : 'text'
+          inputType,
+          mediaUrl: media?.url || null,
+          videoEngine
         })
       });
 
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Generate the actual campaign strategy using the orchestrator's Gemini proxy
-    const prompt = `You are an expert AI Marketing Strategist for ${brand}. 
+    let prompt = `You are an expert AI Marketing Strategist for ${brand}. 
 Create a high-converting ${campaignType} script based on this input: "${inputValue}".
 Provide the response in clear sections:
 [VISUAL_DIRECTION]: Describe the camera angles and visual style.
@@ -47,12 +49,25 @@ Provide the response in clear sections:
 [AUDIO_ATMOS]: Choose EXACTLY ONE from: none, rain, forest, space, ocean
 [AUDIO_MUSIC]: Choose EXACTLY ONE from: none, ambient_journey, lofi_chill, cinematic_swell`;
 
+    if (media) {
+      prompt += `\n\n[CRITICAL]: The user has provided an attached reference file (type: ${media.mimeType}). Please thoroughly analyze it and incorporate its style, theme, or content into your strategy.`;
+    }
+
     let generatedText = "";
     try {
+      const geminiPayload: any = { prompt };
+      
+      if (media && media.base64) {
+        geminiPayload.mediaFiles = [{
+          mimeType: media.mimeType,
+          base64: media.base64
+        }];
+      }
+
       const generateResponse = await fetch(`${backendUrl}/proxy/gemini`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify(geminiPayload)
       });
 
       if (!generateResponse.ok) {
@@ -94,8 +109,9 @@ Provide the response in clear sections:
       audio_beats: audioBeatsMatch ? audioBeatsMatch[1].trim().toLowerCase() : "528hz",
       audio_atmos: audioAtmosMatch ? audioAtmosMatch[1].trim().toLowerCase() : "forest",
       audio_music: audioMusicMatch ? audioMusicMatch[1].trim().toLowerCase() : "ambient_journey",
-      // In production, this would poll the OpenMontage service. For the studio preview, we provide a mock render.
+      // In production, this would poll the OpenMontage or MPT service. For the studio preview, we provide a mock render.
       video_url: "/mock.mp4", 
+      video_engine: videoEngine,
       brand,
       type: campaignType
     };

@@ -1,46 +1,66 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/config/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     
-    // 1. Send the data to our Python ML Engine
-    const pythonEngineUrl = "http://localhost:8000/produce";
+    // 1. Call the Video Farm to generate B-roll
+    const videoFarmUrl = "http://autopilot_video_farm:8006/generate/video";
     
-    console.log("Triggering Python ML Engine...");
-    const pythonResponse = await fetch(pythonEngineUrl, {
+    console.log("Triggering Video Farm for B-Roll...");
+    const videoFarmResponse = await fetch(videoFarmUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        script: body.script,
-        visual_direction: body.visual_direction,
-        visual_style: body.visual_style || body.visualStyle || 'ai_image',
-        campaign_type: body.campaign_type || body.campaignType || 'short_form_video',
-        audio_beats: body.audio_beats || 'none',
-        audio_atmos: body.audio_atmos || 'none',
-        audio_music: body.audio_music || 'none',
-        audio_voiceover: body.audio_voiceover !== undefined ? body.audio_voiceover : true,
-        campaign_id: body.campaign_id || `camp_${Date.now()}`
+        prompt: body.visual_direction || "Cinematic marketing b-roll",
+        model: "open-sora", // Defaulting to open-sora for testing
+        duration_seconds: 5,
+        resolution: "1080x1920"
       }),
     });
 
-    if (!pythonResponse.ok) {
-      const errText = await pythonResponse.text();
-      throw new Error(`Python Engine failed: ${errText}`);
+    if (!videoFarmResponse.ok) {
+      const errText = await videoFarmResponse.text();
+      throw new Error(`Video Farm failed: ${errText}`);
     }
 
-    const pythonData = await pythonResponse.json();
+    const videoFarmData = await videoFarmResponse.json();
+    const rawBrollUrl = videoFarmData.video_url;
+
+    // 2. Call the Remotion Engine to compile the video
+    const remotionEngineUrl = "http://autopilot_remotion_engine:8007/render";
     
+    console.log("Triggering Remotion Engine for compilation...");
+    const remotionResponse = await fetch(remotionEngineUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        clips: [rawBrollUrl],
+        captions: [body.script || ""],
+        audio_url: null, // TTS can be injected here later
+        brand_color: "#60a9ff"
+      }),
+    });
+
+    if (!remotionResponse.ok) {
+      const errText = await remotionResponse.text();
+      throw new Error(`Remotion Engine failed: ${errText}`);
+    }
+
+    const remotionData = await remotionResponse.json();
+
     return NextResponse.json({
       success: true,
-      message: "Assets compiled successfully!",
-      assets: pythonData.assets,
-      // Fallback for older UI code
-      videoUrl: pythonData.assets?.final_video
+      message: "Assets compiled successfully via Remotion & Video Farm!",
+      assets: {
+        final_video: remotionData.url,
+        broll_clips: [rawBrollUrl]
+      },
+      videoUrl: remotionData.url
     });
 
   } catch (error: any) {

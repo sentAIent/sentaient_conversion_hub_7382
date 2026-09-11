@@ -8,4 +8,6 @@
 /legaleagle/* /legaleagle/index.html 200
 /icelogin /index.html 200
 /icewaitlist /index.html 200
+/autopilot https://sentaient-autopilot-hub.netlify.app/autopilot/ 200!
+/autopilot/* https://sentaient-autopilot-hub.netlify.app/autopilot/:splat 200!
 /* /index.html 200

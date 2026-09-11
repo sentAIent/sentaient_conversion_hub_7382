@@ -2,45 +2,16 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { createClient } from 'redis';
-import { publishToTikTok, publishToMeta, publishToX } from './social-publishers.js';
+import { publishToTikTok, publishToMeta, publishToX, publishToLinkedIn } from './social-publishers.js';
 
-const redis = createClient({ 
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
-    password: process.env.REDIS_PASSWORD
-});
-
-redis.on('error', (err) => console.error('[Worker Redis] Client Error', err));
-
-async function startWorker() {
-    await redis.connect();
-    console.log("[Worker] Autonomous Queue Worker started. Polling every 60 seconds...");
-
-    // Poll every 60 seconds
-    setInterval(pollQueue, 60000);
-    // Initial poll
-    pollQueue();
-}
-
-async function pollQueue() {
+const makePublishTask = async (platform, publishFn, ...args) => {
     try {
-        console.log(`[Worker] Polling queue at ${new Date().toISOString()}...`);
-        const keys = await redis.keys("queue:*");
-        
-        for (const key of keys) {
-            const dataStr = await redis.get(key);
-            if (!dataStr) continue;
-            
-            const item = JSON.parse(dataStr);
-            
-            if (item.status === 'approved_for_publishing') {
-                console.log(`[Worker] Found approved item: ${key}. Processing...`);
-                await processItem(key, item);
-            }
-        }
-    } catch (err) {
-        console.error("[Worker] Error polling queue:", err);
+        const res = await publishFn(...args);
+        return { platform, success: true, ...res };
+    } catch (error) {
+        return { platform, success: false, error: error.message };
     }
-}
+};
 
 async function processItem(key, item) {
     try {
@@ -48,43 +19,88 @@ async function processItem(key, item) {
         item.status = 'publishing';
         await redis.set(key, JSON.stringify(item));
 
-        // Determine platform (mock logic - in a real app, platform would be specified in the item)
-        const platform = item.target_platform || 'tiktok'; // Default to TikTok for now
-        let result;
+        const platformsToPublish = item.platformAccounts || {};
+        const platformKeys = Object.keys(platformsToPublish).filter(k => platformsToPublish[k] && platformsToPublish[k].length > 0);
 
-        if (platform === 'tiktok') {
-            // Need a valid video URL. If none exists, we throw.
-            if (!item.video_url || item.video_url.includes('mock.mp4')) {
-                throw new Error("Cannot publish mock.mp4 to TikTok. A real video URL is required.");
-            }
-            result = await publishToTikTok(item.video_url, item.caption || '');
-        } else if (platform === 'meta') {
-            result = await publishToMeta(item.image_url, item.caption || '');
-        } else if (platform === 'x') {
-            result = await publishToX(item.script || item.caption, item.media_url);
-        } else {
-            throw new Error(`Unsupported platform: ${platform}`);
+        if (platformKeys.length === 0) {
+            throw new Error("No target platforms selected for publishing.");
         }
 
-        // Mark as published
-        item.status = 'published';
-        item.publish_result = result;
-        item.published_at = new Date().toISOString();
-        await redis.set(key, JSON.stringify(item));
+        // Initialize publish_results tracking if not present
+        if (!item.publish_results) {
+            item.publish_results = {};
+        }
+
+        const promises = [];
         
-        console.log(`[Worker] Successfully published ${key} to ${platform}`);
+        for (const platform of platformKeys) {
+            // Skip if already successfully published on a previous try
+            if (item.publish_results[platform] && item.publish_results[platform].success) {
+                console.log(`[Worker] Skipping ${platform} for ${key} - already published.`);
+                continue;
+            }
+            
+            // Queue platform tasks concurrently
+            if (platform === 'TikTok') {
+                promises.push(makePublishTask(platform, publishToTikTok, item.video_url || item.media_url, item.caption || ''));
+            } else if (platform === 'Instagram' || platform === 'Meta') {
+                promises.push(makePublishTask(platform, publishToMeta, item.image_url || item.media_url, item.caption || ''));
+            } else if (platform === 'X') {
+                promises.push(makePublishTask(platform, publishToX, item.script || item.caption, item.media_url));
+            } else if (platform === 'LinkedIn') {
+                // In production, authorUrn might need to be resolved. For demo, we parse from handle.
+                const authorUrn = platformsToPublish['LinkedIn'][0].replace('@', '');
+                promises.push(makePublishTask(platform, publishToLinkedIn, item.script || item.caption, authorUrn));
+            }
+        }
+        
+        if (promises.length === 0) {
+             // Everything already published
+             item.status = 'published';
+             await redis.set(key, JSON.stringify(item));
+             return;
+        }
+
+        const results = await Promise.all(promises);
+        
+        let allSuccess = true;
+        let anySuccess = false;
+
+        for (const result of results) {
+            const platform = result.platform;
+            item.publish_results[platform] = result;
+            
+            if (result.success) {
+                anySuccess = true;
+                console.log(`[Worker] Successfully published ${key} to ${platform}`);
+            } else {
+                allSuccess = false;
+                console.error(`[Worker] Failed to publish ${key} to ${platform}:`, result.error);
+            }
+        }
+
+        if (allSuccess) {
+            item.status = 'published';
+            item.published_at = new Date().toISOString();
+        } else if (anySuccess) {
+            item.status = 'partially_published';
+            throw new Error("Partial failure during multi-platform publishing.");
+        } else {
+            throw new Error("Failed to publish to any selected platforms.");
+        }
+
+        await redis.set(key, JSON.stringify(item));
 
     } catch (err) {
-        console.error(`[Worker] Failed to publish ${key}:`, err.message);
+        console.error(`[Worker] Publish Error for ${key}:`, err.message);
         
-        // Exponential backoff logic would go here in a production system. 
-        // For now, we move it back to approved_for_publishing or set it to failed based on retry count.
         item.retry_count = (item.retry_count || 0) + 1;
         if (item.retry_count > 3) {
-            item.status = 'failed';
+            item.status = item.status === 'partially_published' ? 'partial_failure' : 'failed';
             item.error = err.message;
         } else {
-            item.status = 'approved_for_publishing'; // Re-queue
+            // Re-queue for platforms that failed
+            item.status = 'approved_for_publishing'; 
         }
         await redis.set(key, JSON.stringify(item));
     }

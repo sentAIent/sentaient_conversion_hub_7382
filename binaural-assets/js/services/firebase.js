@@ -656,7 +656,6 @@ export {
     doc,
     setDoc,
     deleteDoc,
-    deleteUserAccount,
     collection,
     query,
     orderBy,

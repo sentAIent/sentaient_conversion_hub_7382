@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import CampaignForm from '@/components/studio/CampaignForm';
 import AssetEditor from '@/components/studio/AssetEditor';
+import AccountSettings from '@/components/AccountSettings';
 
 export default function ContentGenerationStudio() {
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,7 @@ export default function ContentGenerationStudio() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Input Form */}
           <div className="lg:col-span-4">
+            <AccountSettings />
             <CampaignForm onGenerate={generateCampaign} isLoading={isLoading} />
             
             {error && (

@@ -16,8 +16,7 @@ import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { Task, TaskStatus } from '@/types/task';
 import { KanbanColumn } from './KanbanColumn';
 import { KanbanCard } from './KanbanCard';
-import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { supabase } from '@/lib/supabase';
 import { useWorkspace } from '../providers/WorkspaceProvider';
 
 const COLUMNS: TaskStatus[] = ['Design', 'Queue/Processing', 'Scheduled', 'Completed'];
@@ -27,31 +26,41 @@ export function KanbanBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
-  // Sync with Firestore
+  // Sync with Supabase
   useEffect(() => {
     if (!activeWorkspace) return;
-    const unsubscribe = onSnapshot(collection(db, 'tasks'), (snapshot) => {
-      const fetchedTasks: Task[] = [];
-      snapshot.forEach(doc => {
-        fetchedTasks.push({ id: doc.id, ...doc.data() } as Task);
-      });
-      // Filter by active workspace
-      const workspaceTasks = fetchedTasks.filter(t => t.brandId === activeWorkspace);
-      // Sort by order
-      workspaceTasks.sort((a, b) => (a.order || 0) - (b.order || 0));
-      
-      // Fallback mock data if none exists
-      if (workspaceTasks.length === 0) {
+    
+    const fetchTasks = async () => {
+      const { data, error } = await supabase.from('tasks').select('*').eq('brandId', activeWorkspace);
+      if (data && data.length > 0) {
+        const workspaceTasks = data.map((t: any) => ({
+          ...t,
+          brandId: t.brandId,
+          order: t.order
+        })) as Task[];
+        workspaceTasks.sort((a, b) => (a.order || 0) - (b.order || 0));
+        setTasks(workspaceTasks);
+      } else {
         setTasks([
           { id: '1', title: 'Design Summer Promo Header', status: 'Design', brandId: activeWorkspace, platforms: ['twitter', 'instagram'], order: 1 },
           { id: '2', title: 'Edit Video Hook Variations', status: 'Queue/Processing', brandId: activeWorkspace, platforms: ['youtube'], order: 2 },
           { id: '3', title: 'Schedule B2B LinkedIn Post', status: 'Scheduled', brandId: activeWorkspace, platforms: ['linkedin'], order: 3 },
         ]);
-      } else {
-        setTasks(workspaceTasks);
       }
-    });
-    return () => unsubscribe();
+    };
+
+    fetchTasks();
+
+    const subscription = supabase
+      .channel(`public:tasks:brandId=eq.${activeWorkspace}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `brandId=eq.${activeWorkspace}` }, payload => {
+        fetchTasks();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [activeWorkspace]);
 
   const sensors = useSensors(
@@ -119,11 +128,11 @@ export function KanbanBoard() {
     // For now we assume local state handles it instantly for UI responsiveness
     const activeTask = tasks.find(t => t.id === active.id);
     if (activeTask && activeTask.id && activeTask.id.length > 5) {
-      // It's a real firestore doc
+      // It's a real doc
       try {
-        await updateDoc(doc(db, 'tasks', activeTask.id), {
+        await supabase.from('tasks').update({
           status: activeTask.status
-        });
+        }).eq('id', activeTask.id);
       } catch (err) {
         console.error('Failed to update task status in DB', err);
       }

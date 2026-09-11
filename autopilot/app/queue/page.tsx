@@ -18,16 +18,30 @@ export default function QueuePage() {
         const data = await response.json();
         
         if (data.success && data.items) {
-          const mappedItems = data.items.map((item: any) => ({
+          const mappedItems = data.items.map((item: any) => {
+            let platformsStr = "";
+            let accountsStr = "";
+            
+            if (item.platformAccounts) {
+               platformsStr = Object.keys(item.platformAccounts).join(", ");
+               accountsStr = Object.values(item.platformAccounts).flat().join(", ");
+            } else if (item.targetAccounts) {
+               accountsStr = item.targetAccounts.join(", ");
+               platformsStr = item.platforms ? item.platforms.join(", ") : "";
+            }
+
+            return {
             id: item.campaign_id,
             brand: item.brand,
-            type: item.content_type,
+            type: item.content_type || "Campaign",
             status: item.status,
-            scheduledTime: item.scheduled_time, // keeping raw for filtering
-            scheduledTimeStr: new Date(item.scheduled_time).toLocaleString(),
-            caption: item.text || item.caption || "No caption",
+            scheduledTime: item.scheduled_time || item.created_at || new Date().toISOString(),
+            scheduledTimeStr: new Date(item.scheduled_time || item.created_at || new Date()).toLocaleString(),
+            caption: item.text || item.caption || item.generated_copy || "No caption",
+            platformsStr,
+            accountsStr,
             rawItem: item
-          }));
+          }});
           
           setScheduledItems(mappedItems);
         } else {
@@ -145,6 +159,18 @@ export default function QueuePage() {
                         {item.type}
                       </span>
                     </div>
+                    {item.platformsStr && (
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="text-xs font-semibold bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded border border-purple-500/30">
+                          {item.platformsStr}
+                        </span>
+                        {item.accountsStr && (
+                          <span className="text-xs text-gray-400">
+                            {item.accountsStr}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <p className="text-gray-300 text-sm font-mono line-clamp-2 max-w-2xl group-hover:text-white transition-colors">{item.caption}</p>
                   </div>
 

@@ -25,7 +25,7 @@ export default function SchedulesAdmin() {
   const fetchSchedules = async () => {
     try {
       // Fetching from orchestrator API
-      const res = await fetch('http://localhost:8080/admin/schedules');
+      const res = await fetch('http://localhost:18080/admin/schedules');
       if (!res.ok) throw new Error('Failed to fetch schedules');
       const data = await res.json();
       setSchedules(data);
@@ -39,7 +39,7 @@ export default function SchedulesAdmin() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch('http://localhost:8080/admin/schedules', {
+      const res = await fetch('http://localhost:18080/admin/schedules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schedules)
