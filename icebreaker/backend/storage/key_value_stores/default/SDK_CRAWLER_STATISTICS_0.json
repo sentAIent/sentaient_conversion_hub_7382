@@ -1,0 +1,50 @@
+{
+  "requestsFinished": 0,
+  "requestsFailed": 1,
+  "requestsRetries": 1,
+  "requestsFailedPerMinute": 1,
+  "requestsFinishedPerMinute": 0,
+  "requestMinDurationMillis": null,
+  "requestMaxDurationMillis": 0,
+  "requestTotalFailedDurationMillis": 3281,
+  "requestTotalFinishedDurationMillis": 0,
+  "crawlerStartedAt": "2026-08-30T03:54:35.330Z",
+  "crawlerFinishedAt": "2026-08-30T03:55:00.974Z",
+  "statsPersistedAt": "2026-08-30T03:55:00.975Z",
+  "crawlerRuntimeMillis": 32561,
+  "crawlerLastStartTimestamp": 1788062068414,
+  "requestRetryHistogram": [
+    null,
+    null,
+    null,
+    1
+  ],
+  "statsId": "0",
+  "requestAvgFailedDurationMillis": 3281,
+  "requestAvgFinishedDurationMillis": null,
+  "requestTotalDurationMillis": 3281,
+  "requestsTotal": 1,
+  "requestsWithStatusCode": {},
+  "errors": {
+    "/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/src/services/scraper.ts:39:9": {
+      "missing error code": {
+        "PrismaClientInitializationError": {
+          "": {
+            "count": 1
+          }
+        }
+      }
+    }
+  },
+  "retryErrors": {
+    "/Users/ute/Dev/sentaient_conversion_hub_7382-Website/icebreaker/backend/src/services/scraper.ts:39:9": {
+      "missing error code": {
+        "PrismaClientInitializationError": {
+          "": {
+            "count": 3
+          }
+        }
+      }
+    }
+  }
+}

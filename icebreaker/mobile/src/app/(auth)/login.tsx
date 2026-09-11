@@ -42,7 +42,7 @@ export default function LoginScreen() {
 
   const API_URL = Constants.expoConfig?.hostUri
     ? `http://${Constants.expoConfig.hostUri.split(':')[0]}:3001`
-    : 'http://localhost:3001';
+    : 'https://sentaient.com';
 
   const handleAuth = async (isSignUp: boolean) => {
     if (!email || !password) {

@@ -65,7 +65,6 @@ export default function BountiesPage() {
     const query = `
       mutation {
         createBountyCheckout(
-          venueId: "123", // Use a hardcoded mock string if you don't have the real context
           title: "Test Bounty",
           description: "Post a video!",
           reward: 500,
@@ -75,7 +74,7 @@ export default function BountiesPage() {
         )
       }
     `;
-    const res = await fetch('http://localhost:4000/graphql', {
+    const res = await fetch('https://api.sentaient.com/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })

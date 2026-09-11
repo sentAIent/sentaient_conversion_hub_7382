@@ -10,6 +10,7 @@ import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getMessaging } from 'firebase-admin/messaging';
 import { getFirestore } from 'firebase-admin/firestore';
+import { initCronJobs } from './services/cron';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dotenv from 'dotenv';
@@ -366,7 +367,7 @@ export const typeDefs = `#graphql
     createStorefront(name: String!, description: String): Storefront
     addProduct(storefrontId: ID!, name: String!, price: Int!, imageUrl: String): Product
     createBounty(title: String!, description: String!, reward: Int!, totalBudget: Int!, latitude: Float!, longitude: Float!): Bounty
-    createBountyCheckout(venueId: String!, title: String!, description: String!, reward: Int!, totalBudget: Int!, latitude: Float!, longitude: Float!): String!
+    createBountyCheckout(title: String!, description: String!, reward: Int!, totalBudget: Int!, latitude: Float!, longitude: Float!): String!
     claimBounty(bountyId: ID!, contentId: ID!): Boolean!
     reviewBountyClaim(claimId: ID!, status: String!): Boolean!
     createSwarmCampaign(title: String!, description: String!, targetCheckIns: Int!, maxDiscount: String!, latitude: Float!, longitude: Float!, totalBudget: Int!): SwarmCampaign
@@ -741,41 +742,43 @@ export const resolvers = {
         console.error("Redis get error:", e);
       }
       
-      const mockVideos = Array.from({ length: 10 }).map((_, i) => ({
+      const realVideos = await prisma.content.findMany({
+        where: { type: 'video', isMoment: false },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        include: {
+          user: true,
+          likes: true,
+          comments: true,
+        }
+      });
+
+      const formattedVideos = realVideos.map(video => ({
         __typename: 'Content',
-        id: `mock-video-${i}`,
-        userId: `mock-user-${i}`,
-        type: 'video',
-        mediaUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-        textBody: `Explore this amazing video! #${i}`,
-        sourceFlag: 'mock',
-        isMoment: false,
-        createdAt: new Date(Date.now() - i * 3600000),
-        user: {
-          id: `mock-user-${i}`,
-          name: `Creator ${i}`,
-          username: `creator_${i}`,
-          email: `creator${i}@example.com`,
-          trustScore: 5.0,
-          streakCount: 0,
-          referralCode: `MOCK${i}`,
-          profilePhotoUrl: `https://i.pravatar.cc/150?u=${i}`,
-        },
-        productTags: [],
-        likesCount: Math.floor(Math.random() * 1000),
-        commentsCount: Math.floor(Math.random() * 100),
-        hasLiked: false,
+        id: video.id,
+        userId: video.userId,
+        type: video.type,
+        mediaUrl: video.mediaUrl,
+        textBody: video.textBody,
+        sourceFlag: video.sourceFlag,
+        isMoment: video.isMoment,
+        createdAt: video.createdAt,
+        user: video.user,
+        productTags: [], // Handle tags later if needed
+        likesCount: video.likes.length,
+        commentsCount: video.comments.length,
+        hasLiked: false, // Compute properly based on context.user if needed
       }));
 
       try {
         if (redisClient.isReady) {
-          await redisClient.setEx(cacheKey, 300, JSON.stringify(mockVideos)); // Cache for 5 minutes
+          await redisClient.setEx(cacheKey, 300, JSON.stringify(formattedVideos)); // Cache for 5 minutes
         }
       } catch(e) {
         console.error("Redis set error:", e);
       }
       
-      return mockVideos;
+      return formattedVideos;
     },
     followerStories: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError("Unauthorized", { extensions: { code: 'UNAUTHENTICATED' } });
@@ -1418,8 +1421,8 @@ export const resolvers = {
           quantity: 1,
         }],
         mode: 'payment',
-        success_url: `http://localhost:3005/dashboard/bounties?payment_success=true`,
-        cancel_url: `http://localhost:3005/dashboard/bounties/new?canceled=true`,
+        success_url: `https://sentaient.com/dashboard/bounties?payment_success=true`,
+        cancel_url: `https://sentaient.com/dashboard/bounties/new?canceled=true`,
       });
 
       const updatedBounty = await prisma.bounty.update({
@@ -1438,7 +1441,7 @@ export const resolvers = {
       // 1. Create pending bounty in DB
       const bounty = await prisma.bounty.create({
         data: {
-          venueId: args.venueId,
+          venueId: context.user.uid,
           title: args.title,
           description: args.description,
           reward: args.reward,
@@ -1468,8 +1471,8 @@ export const resolvers = {
           },
         ],
         mode: 'payment',
-        success_url: `http://localhost:3000/dashboard/bounties?success=true`,
-        cancel_url: `http://localhost:3000/dashboard/bounties?canceled=true`,
+        success_url: `https://sentaient.com/dashboard/bounties?success=true`,
+        cancel_url: `https://sentaient.com/dashboard/bounties?canceled=true`,
         client_reference_id: bounty.id,
       });
 
@@ -1591,8 +1594,8 @@ export const resolvers = {
           quantity: 1,
         }],
         mode: 'payment',
-        success_url: `http://localhost:3005/dashboard/campaigns?payment_success=true`,
-        cancel_url: `http://localhost:3005/dashboard/campaigns/new?canceled=true`,
+        success_url: `https://sentaient.com/dashboard/campaigns?payment_success=true`,
+        cancel_url: `https://sentaient.com/dashboard/campaigns/new?canceled=true`,
       });
 
       const updatedCampaign = await prisma.swarmCampaign.update({
@@ -2358,6 +2361,8 @@ async function startServer() {
   );
   
   const PORT = process.env.PORT || 4000;
+  await initCronJobs();
+
   app.listen(PORT, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
     console.log(`📊 Admin Dashboard ready at http://localhost:${PORT}/admin`);

@@ -1,0 +1,11 @@
+appId: com.sentaient.icebreaker
+---
+- launchApp
+- assertVisible: "Login"
+- tapOn: "Login"
+- assertVisible: "Email"
+- inputText: "test@example.com"
+- tapOn: "Password"
+- inputText: "password123"
+- tapOn: "Sign In"
+- assertVisible: "Check In Here"

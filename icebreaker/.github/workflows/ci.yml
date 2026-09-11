@@ -1,0 +1,34 @@
+name: Icebreaker Security & CI Pipeline
+
+on:
+  push:
+    branches: [ "main", "staging" ]
+  pull_request:
+    branches: [ "main", "staging" ]
+
+jobs:
+  strict-dependencies:
+    name: Enforce npm ci (Dependency Lockfile Strictness)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: [backend, b2b-portal, mobile]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: 'icebreaker/${{ matrix.directory }}/package-lock.json'
+
+      - name: Install Dependencies strictly from lockfile
+        working-directory: icebreaker/${{ matrix.directory }}
+        # CRITICAL: npm ci ensures we never accidentally resolve malicious floating patches
+        run: npm ci
+
+      # In a real workflow we would follow this with testing/building
+      - name: Verify Build
+        working-directory: icebreaker/${{ matrix.directory }}
+        run: npm run build --if-present

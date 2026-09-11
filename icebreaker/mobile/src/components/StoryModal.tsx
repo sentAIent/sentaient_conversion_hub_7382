@@ -41,7 +41,7 @@ export default function StoryModal({ visible, onClose, story }: StoryModalProps)
   return (
     <Modal visible={visible} animationType="fade" transparent={true}>
       <View style={styles.container}>
-        {/* Progress bar mock */}
+        {/* Progress bar */}
         <View style={styles.progressBarContainer}>
           <Animated.View style={[styles.progressBarFill, { width: progressWidth }]} />
         </View>

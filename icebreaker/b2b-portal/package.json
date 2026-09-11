@@ -12,6 +12,8 @@
     "@apollo/client": "^4.2.5",
     "@apollo/experimental-nextjs-app-support": "^0.14.5",
     "@excalidraw/excalidraw": "^0.18.1",
+    "ag-grid-community": "^36.1.0",
+    "ag-grid-react": "^36.1.0",
     "canvas-confetti": "^1.9.4",
     "graphql": "^16.14.2",
     "next": "16.2.10",

@@ -1,0 +1,7 @@
+appId: com.sentaient.icebreaker
+---
+- launchApp
+- assertVisible: "Check In Here"
+- tapOn: "Check In Here"
+- assertVisible: "Checked in securely!"
+- tapOn: "OK"

@@ -1,0 +1,59 @@
+src/__tests__/Map.test.tsx(5,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(6,29): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(9,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(10,12): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(11,12): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(14,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(29,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(30,8): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(48,23): error TS2304: Cannot find name 'jest'.
+src/__tests__/Map.test.tsx(51,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/__tests__/Map.test.tsx(52,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/__tests__/Map.test.tsx(56,5): error TS2304: Cannot find name 'expect'.
+src/__tests__/Network.test.tsx(5,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(6,29): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(9,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(10,12): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(11,12): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(14,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(15,8): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(33,23): error TS2304: Cannot find name 'jest'.
+src/__tests__/Network.test.tsx(36,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/__tests__/Network.test.tsx(37,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/__tests__/Network.test.tsx(43,5): error TS2304: Cannot find name 'expect'.
+src/__tests__/Network.test.tsx(47,5): error TS2304: Cannot find name 'expect'.
+src/app/(tabs)/_layout.tsx(42,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(42,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(49,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(49,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(56,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(56,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(63,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(63,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(70,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(70,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+src/app/(tabs)/_layout.tsx(73,73): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/app/(tabs)/camera.tsx(19,28): error TS2749: 'Camera' refers to a value, but is being used as a type here. Did you mean 'typeof Camera'?
+src/app/(tabs)/camera.tsx(82,9): error TS2322: Type '{ ref: RefObject<Camera>; style: AbsoluteFillStyle; device: CameraDevice; isActive: boolean; photo: boolean; }' is not assignable to type 'IntrinsicAttributes & CameraViewProps'.
+  Property 'photo' does not exist on type 'IntrinsicAttributes & CameraViewProps'.
+src/app/(tabs)/index.tsx(173,27): error TS2339: Property 'center' does not exist on type '{ container: { flex: number; backgroundColor: string; }; loadingContainer: { flex: number; backgroundColor: string; justifyContent: "center"; alignItems: "center"; }; loadingText: { color: string; marginTop: number; fontSize: number; fontWeight: "600"; }; ... 25 more ...; swarmTargetText: { ...; }; }'.
+src/app/(tabs)/index.tsx(174,29): error TS2339: Property 'errorText' does not exist on type '{ container: { flex: number; backgroundColor: string; }; loadingContainer: { flex: number; backgroundColor: string; justifyContent: "center"; alignItems: "center"; }; loadingText: { color: string; marginTop: number; fontSize: number; fontWeight: "600"; }; ... 25 more ...; swarmTargetText: { ...; }; }'.
+src/app/alerts.tsx(6,29): error TS2307: Cannot find module '../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/bounty/[id].tsx(4,29): error TS2307: Cannot find module '../../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/business/create-bounty.tsx(4,29): error TS2307: Cannot find module '../../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/business/create-swarm.tsx(4,29): error TS2307: Cannot find module '../../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/business/manage-storefront.tsx(4,29): error TS2307: Cannot find module '../../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/cart.tsx(6,29): error TS2307: Cannot find module '../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/create-post.tsx(6,29): error TS2307: Cannot find module '../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/messages/[id].tsx(4,29): error TS2307: Cannot find module '../../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/pay/[venueId].tsx(4,29): error TS2307: Cannot find module '../../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/rating.tsx(4,29): error TS2307: Cannot find module '../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/rating.tsx(22,28): error TS2347: Untyped function calls may not accept type arguments.
+src/app/schedule.tsx(4,29): error TS2307: Cannot find module '../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/schedule.tsx(22,26): error TS2347: Untyped function calls may not accept type arguments.
+src/app/user/[id].tsx(4,29): error TS2307: Cannot find module '../../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/venue/[id].tsx(4,29): error TS2307: Cannot find module '../../../hooks/useSafeBack' or its corresponding type declarations.
+src/app/wallet.tsx(6,29): error TS2307: Cannot find module '../../hooks/useSafeBack' or its corresponding type declarations.
+src/components/app-tabs.web.tsx(36,62): error TS2709: Cannot use namespace 'TabTriggerSlotProps' as a type.
+src/components/app-tabs.web.tsx(50,38): error TS2709: Cannot use namespace 'TabListProps' as a type.
+src/components/external-link.tsx(5,66): error TS2709: Cannot use namespace 'Href' as a type.

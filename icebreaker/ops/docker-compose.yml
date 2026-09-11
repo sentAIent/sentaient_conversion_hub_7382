@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Meilisearch - Fast, typo-tolerant search engine
+  meilisearch:
+    image: getmeili/meilisearch:v1.9
+    container_name: icebreaker-meilisearch
+    environment:
+      - MEILI_ENV=production
+      - MEILI_MASTER_KEY=${MEILISEARCH_MASTER_KEY:-a_very_secure_master_key_change_in_prod}
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili_data:/meili_data
+    restart: unless-stopped
+
+  # NocoDB - Admin CRM connected to Supabase
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: icebreaker-nocodb
+    environment:
+      - NC_DB=${DATABASE_URL}
+      - NC_PUBLIC_URL=${NOCODB_PUBLIC_URL:-http://localhost:8080}
+      - NC_AUTH_JWT_SECRET=${NC_AUTH_JWT_SECRET:-generate_a_random_jwt_secret}
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+
+  # Databasement - Backup Manager for Supabase
+  databasement:
+    image: davidcrty/databasement:latest
+    container_name: icebreaker-databasement
+    environment:
+      - APP_ENV=production
+      - APP_KEY=${DATABASEMENT_APP_KEY:-base64:randomly_generated_app_key_here}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=${SUPABASE_DB_HOST}
+      - DB_PORT=${SUPABASE_DB_PORT:-5432}
+      - DB_DATABASE=${SUPABASE_DB_NAME:-postgres}
+      - DB_USERNAME=${SUPABASE_DB_USER}
+      - DB_PASSWORD=${SUPABASE_DB_PASSWORD}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  meili_data:

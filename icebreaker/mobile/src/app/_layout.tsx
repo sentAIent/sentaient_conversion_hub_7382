@@ -27,7 +27,7 @@ Sentry.init({
 const httpLink = createHttpLink({
   uri: __DEV__
     ? 'http://localhost:4000/graphql' // Local dev backend
-    : 'https://icebreaker-b5u1.onrender.com/graphql', // Production backend
+    : 'https://api.sentaient.com/graphql', // Production backend
 });
 
 const errorLink = onError(({ graphQLErrors, networkError }) => {

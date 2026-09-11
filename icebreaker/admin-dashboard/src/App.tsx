@@ -27,7 +27,7 @@ function Dashboard({ password }: { password: string }) {
   useEffect(() => {
     const apiUri = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? 'http://localhost:4000/graphql'
-      : 'https://icebreaker-b5u1.onrender.com/graphql';
+      : 'https://api.sentaient.com/graphql';
 
     const fetchAnalytics = async (retries = 3, delay = 1000) => {
       try {

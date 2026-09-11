@@ -1,5 +1,9 @@
 import Stripe from 'stripe';
 
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn("⚠️ STRIPE_SECRET_KEY is not set. Stripe functionality will fail.");
+}
+
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
   apiVersion: '2026-06-24.dahlia',
 });
@@ -18,8 +22,8 @@ export async function createConnectAccount(userId: string, email: string) {
     // Generate onboarding link
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: `${process.env.FRONTEND_URL || 'http://localhost:3005'}/dashboard/billing/refresh`,
-      return_url: `${process.env.FRONTEND_URL || 'http://localhost:3005'}/dashboard/billing/success`,
+      refresh_url: `${process.env.FRONTEND_URL || 'https://sentaient.com'}/dashboard/billing/refresh`,
+      return_url: `${process.env.FRONTEND_URL || 'https://sentaient.com'}/dashboard/billing/success`,
       type: 'account_onboarding',
     });
 
@@ -55,8 +59,8 @@ export async function createCheckoutSession(
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL || 'http://localhost:3005'}/store/success?orderId=${orderId}`,
-      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3005'}/store/cancel`,
+      success_url: `${process.env.FRONTEND_URL || 'https://sentaient.com'}/store/success?orderId=${orderId}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'https://sentaient.com'}/store/cancel`,
       payment_intent_data: {
         application_fee_amount: Math.round(amountCents * 0.1), // 10% platform fee
         transfer_data: {
