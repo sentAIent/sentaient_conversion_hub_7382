@@ -5,7 +5,7 @@ const CustomizationContext = createContext();
 export function CustomizationProvider({ children }) {
   // Base skeleton/model URL (Option A: Use standard Soldier from three.js examples)
   // For the prototype, we use a public Three.js example model URL
-  const defaultAvatarUrl = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
+  const defaultAvatarUrl = "";
   
   const [avatarUrl, setAvatarUrl] = useState(defaultAvatarUrl);
   

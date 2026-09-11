@@ -21,6 +21,7 @@ import { ComplianceGate } from './components/ComplianceGate';
 import { Store } from './components/Store';
 import { QualityProvider, useQuality } from './components/QualityContext';
 import { CustomizationProvider, useCustomization } from './components/CustomizationContext';
+import { SettingsModal } from './components/SettingsModal';
 
 // Removed slow CPU SnowParticles
 
@@ -97,6 +98,12 @@ function SnowboardApp() {
   const [studioMountainBg, setStudioMountainBg] = useState(false); // Studio BG toggle
   const [gameStarted, setGameStarted] = useState(false);
   const [showStore, setShowStore] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [recordingSettings, setRecordingSettings] = useState({
+    autoRecordTricks: true,
+    autoRecordWipeouts: true,
+    quality: '1080p'
+  });
   
   // Camera & Gameplay settings
   const [showCameraSettings, setShowCameraSettings] = useState(false);
@@ -329,8 +336,9 @@ function SnowboardApp() {
         />
       )}
 
-      {/* STORE UI */}
+      {/* STORE & SETTINGS UI */}
       {showStore && <Store onClose={() => setShowStore(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} settings={recordingSettings} onUpdate={setRecordingSettings} />}
 
       {/* GLOBAL BOTTOM NAV BAR */}
       <View style={styles.bottomNav}>
@@ -358,6 +366,15 @@ function SnowboardApp() {
         >
           <Text style={[styles.navTabText, activeTab === 'STUDIO' && styles.navTabTextActive]}>
             🎬 STUDIO
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navTab}
+          onPress={() => setShowSettings(true)}
+        >
+          <Text style={[styles.navTabText, showSettings && styles.navTabTextActive]}>
+            ⚙️ SETTINGS
           </Text>
         </TouchableOpacity>
       </View>

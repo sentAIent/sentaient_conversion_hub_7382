@@ -4,9 +4,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles/tailwind.css";
 import "./styles/index.css";
-import { initTelemetry } from "./utils/telemetry";
 
-initTelemetry();
 
 import * as Sentry from "@sentry/react";
 // Initialize Sentry

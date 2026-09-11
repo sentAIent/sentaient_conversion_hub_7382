@@ -1,28 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { MockBackend } from '../utils/mockBackend';
 
 export function ComplianceGate({ children }) {
   const [isCompliant, setIsCompliant] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [checkedAge, setCheckedAge] = useState(false);
   const [checkedTerms, setCheckedTerms] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = window.localStorage.getItem('sp_compliance_accepted');
-      if (saved === 'true') {
-        setIsCompliant(true);
-      }
+      const accepted = window.localStorage.getItem("sp_compliance_accepted") === "true";
+      setIsCompliant(accepted);
     }
+    setIsLoaded(true);
   }, []);
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (checkedAge && checkedTerms) {
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('sp_compliance_accepted', 'true');
-      }
+      await MockBackend.logComplianceAgreement({
+        age_coppa: true,
+        terms_gdpr: true
+      });
       setIsCompliant(true);
     }
   };
+
+  if (!isLoaded) {
+    return null; // Wait for client to check localStorage to avoid hydration flash
+  }
 
   if (isCompliant) {
     return children;
