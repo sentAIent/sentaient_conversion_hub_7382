@@ -26,3 +26,8 @@ lim_clone/db/data/*
 *.onnx
 app-debug.apk
 lightspeed/.env
+
+# Internal AI Workspace
+odysseus-workspace/data
+odysseus-workspace/logs
+
