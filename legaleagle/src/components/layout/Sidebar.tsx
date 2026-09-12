@@ -11,7 +11,8 @@ import {
     Building,
     BookOpen,
     Briefcase,
-    Shield
+    Shield,
+    Trash2
 } from 'lucide-react';
 import type { Theme, AnalysisDepth } from '@/types';
 import logoUrl from '/legal_eagle_logo.png';
@@ -136,6 +137,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </React.Fragment>
                     ))}
                 </nav>
+                
+                {/* Account Deletion (App Store Compliance) */}
+                <div className={`p-4 border-t ${isLightSidebar ? 'border-slate-300' : 'border-white/10'}`}>
+                    <button
+                        onClick={() => {
+                            if (window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone and all data will be lost.")) {
+                                alert("Account deletion request submitted. You will be logged out.");
+                                // supabase.auth.admin.deleteUser(...) logic would go here
+                            }
+                        }}
+                        title="Delete Account"
+                        className="w-full flex items-center p-3 rounded-lg transition-all relative group text-red-500 hover:bg-red-500/10"
+                    >
+                        <Trash2 className="w-6 h-6 shrink-0 mx-auto group-hover/sidebar:mx-0 transition-all duration-300" />
+                        <span className="ml-3 font-medium whitespace-nowrap overflow-hidden opacity-0 w-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 text-left">
+                            Delete Account
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     );

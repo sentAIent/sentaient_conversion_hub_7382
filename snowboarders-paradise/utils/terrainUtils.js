@@ -33,6 +33,19 @@ const MOUNTAIN_WIDTH = 800;
 const HALFPIPE_RADIUS = 150;
 const OVERALL_SLOPE = 15 * (Math.PI / 180); // 15 degree base slope
 
+export function getBiome(x, z) {
+  // Use a very low frequency noise to determine biome
+  const biomeNoise = noise2D(x * 0.0002, z * 0.0002);
+  
+  if (biomeNoise > 0.3) {
+    return 'rocky';
+  } else if (biomeNoise < -0.3) {
+    return 'ice';
+  } else {
+    return 'powder';
+  }
+}
+
 /**
  * Gets the height of the terrain at a specific (x, z) coordinate.
  * Note: Z is negative as the player moves forward down the mountain.
@@ -52,14 +65,23 @@ export function getTerrainHeight(x, z) {
     y += Math.pow(centerDist - HALFPIPE_RADIUS, 1.3) * 0.4;
   }
   
-  // 3. Macro noise (large hills and valleys)
-  // Scale down the coordinates to sample the noise
+  // 3. Layered Macro and Micro noise based on biome
+  const biome = getBiome(x, z);
   const macroNoise = noise2D(x * 0.001, z * 0.001);
-  y += macroNoise * 50; // Much smoother hills
-  
-  // 4. Micro noise (small bumps, moguls)
   const microNoise = noise2D(x * 0.01, z * 0.01);
-  y += microNoise * 10;
+  const jaggedNoise = Math.abs(noise2D(x * 0.005, z * 0.005));
+
+  if (biome === 'powder') {
+    y += macroNoise * 50; // smooth hills
+    y += microNoise * 5;  // very little bumps
+  } else if (biome === 'ice') {
+    y += macroNoise * 40;
+    y -= jaggedNoise * 20; // jagged chutes
+    y += microNoise * 2;
+  } else if (biome === 'rocky') {
+    y += macroNoise * 60;
+    y += microNoise * 25; // very bumpy
+  }
 
   return y;
 }
@@ -94,6 +116,12 @@ export function getTerrainNormal(x, z, delta = 1.0) {
 export function getObstacleData(x, z) {
     // Deterministic random based on position
     const val = noise2D(x * 123.456, z * 789.012);
+    const biome = getBiome(x, z);
+    
+    // Rocks in rocky biomes
+    if (biome === 'rocky' && val > 0.8) {
+        return { type: 'rock', scale: 1 + (val - 0.8) * 15 };
+    }
     
     // Only spawn trees on the outer edges (centerDist > 100) to keep the middle clear
     if (Math.abs(x) > 100 && val > 0.95) {

@@ -10,10 +10,13 @@ const CHUNK_RESOLUTION_Z = 64;
 const VISIBLE_CHUNKS = 5;
 
 const createSnowMaterial = () => {
-  return new THREE.MeshStandardMaterial({
+  return new THREE.MeshPhysicalMaterial({
     color: '#ffffff',
     roughness: 0.8,
     metalness: 0.1,
+    clearcoat: 0.5,
+    transmission: 0.1,
+    thickness: 1.5,
   });
 };
 
@@ -66,6 +69,45 @@ function Trees({ instances }) {
   );
 }
 
+function Rocks({ instances }) {
+  const meshRef = useRef();
+  const rockGeo = useMemo(() => {
+    const geo = new THREE.DodecahedronGeometry(10, 1);
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      pos.setX(i, pos.getX(i) * (0.8 + Math.random() * 0.4));
+      pos.setY(i, pos.getY(i) * (0.8 + Math.random() * 0.4));
+      pos.setZ(i, pos.getZ(i) * (0.8 + Math.random() * 0.4));
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }, []);
+  
+  const rockMat = useMemo(() => new THREE.MeshStandardMaterial({ 
+    color: "#555555", 
+    roughness: 0.9, 
+    metalness: 0.1 
+  }), []);
+
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const dummy = new THREE.Object3D();
+    
+    instances.forEach((inst, i) => {
+      dummy.position.set(...inst.position);
+      dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+      dummy.scale.set(inst.scale, inst.scale * 0.7, inst.scale); // Squashed rocks
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [instances]);
+
+  return (
+    <instancedMesh ref={meshRef} args={[rockGeo, rockMat, instances.length]} castShadow receiveShadow />
+  );
+}
+
 function Kickers({ instances }) {
   const meshRef = useRef();
   const kickerGeo = useMemo(() => new THREE.BoxGeometry(60, 10, 80), []);
@@ -94,7 +136,7 @@ function Kickers({ instances }) {
 }
 
 function TerrainChunk({ zOffset }) {
-  const { geometry, treeData, kickerData } = useMemo(() => {
+  const { geometry, treeData, kickerData, rockData } = useMemo(() => {
     const geo = new THREE.PlaneGeometry(CHUNK_WIDTH, CHUNK_SIZE, CHUNK_RESOLUTION_X, CHUNK_RESOLUTION_Z);
     geo.rotateX(-Math.PI / 2);
     geo.translate(0, 0, zOffset);
@@ -111,6 +153,7 @@ function TerrainChunk({ zOffset }) {
     
     const trees = [];
     const kickers = [];
+    const rocks = [];
     
     for (let ox = -CHUNK_WIDTH/2; ox <= CHUNK_WIDTH/2; ox += 30) {
       for (let oz = zOffset - CHUNK_SIZE/2; oz <= zOffset + CHUNK_SIZE/2; oz += 30) {
@@ -121,12 +164,14 @@ function TerrainChunk({ zOffset }) {
             trees.push({ position: [ox, oy, oz], scale: obs.scale });
           } else if (obs.type === 'kicker') {
             kickers.push({ position: [ox, oy, oz], rotationY: obs.rotationY });
+          } else if (obs.type === 'rock') {
+            rocks.push({ position: [ox, oy, oz], scale: obs.scale });
           }
         }
       }
     }
     
-    return { geometry: geo, treeData: trees, kickerData: kickers };
+    return { geometry: geo, treeData: trees, kickerData: kickers, rockData: rocks };
   }, [zOffset]);
   
   return (
@@ -134,6 +179,7 @@ function TerrainChunk({ zOffset }) {
       <mesh geometry={geometry} material={snowMaterial} receiveShadow castShadow />
       {treeData.length > 0 && <Trees instances={treeData} />}
       {kickerData.length > 0 && <Kickers instances={kickerData} />}
+      {rockData.length > 0 && <Rocks instances={rockData} />}
     </group>
   );
 }
@@ -186,8 +232,8 @@ export function TrackManager() {
 
   return (
     <group>
-      <points ref={snowParticles}>
-        <bufferGeometry attach="geometry" {...snowGeo} />
+      <points ref={snowParticles} geometry={snowGeo}>
+        
         <pointsMaterial attach="material" size={0.3} color="#ffffff" transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} />
       </points>
       {activeChunks.map((zOffset) => (

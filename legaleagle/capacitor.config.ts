@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.legaleagle.app',
+  appId: 'com.sentaient.legaleagle',
   appName: 'LegalEagle',
   webDir: 'dist',
   plugins: {

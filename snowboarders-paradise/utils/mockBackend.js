@@ -58,6 +58,32 @@ export const MockBackend = {
     return { success: true };
   },
 
+  getGhostRuns: async () => {
+    const generateMockRun = (offsetX) => {
+      const frames = [];
+      let x = offsetX;
+      let y = 10;
+      let z = 0;
+      for (let i = 0; i < 600; i++) {
+        z += 0.5;
+        y = Math.sin(i * 0.1) * 2 + 10;
+        x += Math.sin(i * 0.05) * 0.2;
+        frames.push({
+          x, y, z,
+          rotX: 0,
+          rotY: Math.sin(i * 0.05) * 0.1,
+          rotZ: 0
+        });
+      }
+      return frames;
+    };
+    return [
+      generateMockRun(-5),
+      generateMockRun(5),
+      generateMockRun(10)
+    ];
+  },
+
   deleteUserData: async () => {
     if (typeof window === 'undefined') return;
     

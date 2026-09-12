@@ -22,6 +22,8 @@ import { Store } from './components/Store';
 import { QualityProvider, useQuality } from './components/QualityContext';
 import { CustomizationProvider, useCustomization } from './components/CustomizationContext';
 import { SettingsModal } from './components/SettingsModal';
+import { GraphicsTierProvider, useGraphicsTier } from './components/GraphicsTierManager';
+import { GhostRiders } from './components/GhostRiders';
 
 // Removed slow CPU SnowParticles
 
@@ -89,6 +91,8 @@ function MobileTouchControls() {
 }
 
 function SnowboardApp() {
+  const graphicsTier = useGraphicsTier();
+  const isHigh = graphicsTier === "high";
   const [activeTab, setActiveTab] = useState('EXPLORE'); // EXPLORE, STUDIO
   const [weather, setWeather] = useState(null);
   const [activeRegion, setActiveRegion] = useState('ALASKA');
@@ -97,6 +101,8 @@ function SnowboardApp() {
   const [arMode, setArMode] = useState(false); // AR Mode Toggle
   const [studioMountainBg, setStudioMountainBg] = useState(false); // Studio BG toggle
   const [gameStarted, setGameStarted] = useState(false);
+  useGameAudio({ speed: gameStarted ? 30 : 0, isAirborne: false, isCarving: false });
+
   const [showStore, setShowStore] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [recordingSettings, setRecordingSettings] = useState({
@@ -135,28 +141,29 @@ function SnowboardApp() {
       {/* Conditionally Render 3D Cinematic Background */}
       {show3DCanvas && (
         <View style={styles.canvasContainer}>
-          <Canvas shadows={qualitySettings.shadows} dpr={qualitySettings.resolutionMultiplier} camera={{ position: [0, 15, 40], fov: 60 }}>
+          <Canvas shadows={isHigh} dpr={isHigh ? [1, 2] : 1} camera={{ position: [0, 15, 40], fov: 60 }}>
             <Suspense fallback={null}>
               <fog attach="fog" args={['#01010a', 10, qualitySettings.volumetricFog ? 150 : 80]} />
-              <ambientLight intensity={0.02} color="#05051a" />
+              <ambientLight intensity={isHigh ? 0.05 : 0.2} color="#05051a" />
               <color attach="background" args={['#01010a']} />
-              <hemisphereLight args={['#111133', '#000000', 0.1]} />
+              <hemisphereLight intensity={isHigh ? 0.4 : 0.6} groundColor="black" />
               <Sky sunPosition={[50, 10, -50]} turbidity={0.5} rayleigh={2.0} mieCoefficient={0.01} mieDirectionalG={0.9} />              
               
-              {qualitySettings.volumetricFog && <fog attach="fog" args={['#05051a', 10, 200]} />}
+              {isHigh && <fog attach="fog" args={['#05051a', 10, 150]} />}
               <SkyShader />
               
               {/* Sunlight (God Rays source) */}
               <directionalLight 
                 position={[100, 50, -50]} 
-                intensity={3.5} 
+                intensity={isHigh ? 3.5 : 2.0} 
                 color="#ffeedd" 
-                castShadow 
-                shadow-mapSize={[2048, 2048]}
+                castShadow={isHigh}
+                shadow-mapSize={isHigh ? [4096, 4096] : [1024, 1024]}
                 shadow-camera-left={-100}
                 shadow-camera-right={100}
                 shadow-camera-top={100}
                 shadow-camera-bottom={-100}
+                shadow-camera-far={200}
               />
               <directionalLight 
                 position={[-50, 20, 50]} 
@@ -167,15 +174,19 @@ function SnowboardApp() {
               <TrackManager />
               <Player gameStarted={gameStarted} goggleColor={goggleColor} camDistance={camDistance} camHeight={camHeight} />
               <NPCs />
+              <GhostRiders />
               
               {qualitySettings.particles > 0 && (
                 <Sparkles count={qualitySettings.particles} scale={400} size={5} speed={0.5} opacity={0.6} color="#ffffff" />
               )}
               
-              <EffectComposer>
-                <Bloom luminanceThreshold={0.8} intensity={1.5} />
-                <DepthOfField focusDistance={0.05} focalLength={0.1} bokehScale={2} />
-              </EffectComposer>
+              {isHigh && (
+                <EffectComposer disableNormalPass>
+                  <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.9} height={300} intensity={1.5} />
+                  <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={2} height={480} />
+                  <Vignette eskil={false} offset={0.1} darkness={1.1} />
+                </EffectComposer>
+              )}
             </Suspense>
           </Canvas>
         </View>
@@ -385,7 +396,8 @@ function SnowboardApp() {
 
 export default function App() {
   return (
-    <QualityProvider>
+    <GraphicsTierProvider>
+      <QualityProvider>
       <CustomizationProvider>
         <ComplianceGate>
           <UnitProvider>
@@ -394,6 +406,7 @@ export default function App() {
         </ComplianceGate>
       </CustomizationProvider>
     </QualityProvider>
+    </GraphicsTierProvider>
   );
 }
 

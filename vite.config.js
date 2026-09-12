@@ -7,7 +7,7 @@ import { sri } from 'vite-plugin-sri3';
 export default defineConfig({
   plugins: [
     react(),
-    sri(),
+    // sri(), // Temporarily disabled: crashes behind network proxies when fetching external CDN hashes
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {

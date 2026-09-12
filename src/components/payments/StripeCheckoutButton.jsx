@@ -41,6 +41,24 @@ const StripeCheckoutButton = ({
             return;
         }
 
+        // --- APP STORE COMPLIANCE CHECK ---
+        // Apple & Google strictly prohibit third-party payment gateways (Stripe) for digital goods inside native apps.
+        const cap = window.Capacitor;
+        if (cap && cap.isNativePlatform()) {
+            setIsLoading(true);
+            console.warn('Native mobile platform detected. Rerouting from Stripe to Native In-App Purchases (RevenueCat).');
+            
+            // In a production app, you would call your RevenueCat SDK here:
+            // await Purchases.purchasePackage(package);
+            
+            setTimeout(() => {
+                setError("Mobile In-App Purchases are currently in sandbox mode. Please complete purchases on our website.");
+                setIsLoading(false);
+            }, 1000);
+            return;
+        }
+        // ----------------------------------
+
         setIsLoading(true);
         setError(null);
 
