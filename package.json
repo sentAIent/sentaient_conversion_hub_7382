@@ -97,7 +97,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build && cd legaleagle && npm ci --legacy-peer-deps && npm run build && mkdir -p ../dist/legaleagle && cp -R dist/* ../dist/legaleagle/ && cd ../lightspeed && npm ci --legacy-peer-deps && npm run build && mkdir -p ../dist/lightspeed && cp -R dist/* ../dist/lightspeed/",
+    "build": "vite build",
     "serve": "vite preview",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css,md}\"",
     "format:fix": "prettier --write \"src/**/*.{js,jsx,css,md}\"",
