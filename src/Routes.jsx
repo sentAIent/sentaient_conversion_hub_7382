@@ -25,6 +25,8 @@ const PrivacyTerms = React.lazy(() => import('./pages/PrivacyTerms'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const HomeAlt = React.lazy(() => import('./pages/home-alt'));
+const AutopilotPrivacy = React.lazy(() => import('./pages/AutopilotPrivacy'));
+const AutopilotTerms = React.lazy(() => import('./pages/AutopilotTerms'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -70,6 +72,8 @@ const ProjectRoutes = () => {
               
               
               {/* Legal Pages */}
+              <Route path="/autopilot/privacy" element={<AutopilotPrivacy />} />
+              <Route path="/autopilot/terms" element={<AutopilotTerms />} />
 
               <Route path="/portfolio" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
