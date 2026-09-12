@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Interstellar Map | Pre-Placement Cartographer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=hangar_polish">
+    
+    <style id="viewport-hammer">
+        /* --- GLOBAL VIEWPORT HAMMER (Phase 25 Majestic) --- */
+        html, body {
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: #000000 !important;
+            position: fixed !important;
+        }
+        .container, .main-content, .app-wrapper, .centered-layout {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: block !important;
+        }
+    </style>
+    <script>
+        (function() {
+            const VERSION_KEY = 'v25_majestic_restoration';
+            try {
+                if (!localStorage.getItem(VERSION_KEY)) {
+                    console.log("🧨 [Nuclear] Purging caches for Majestic Restoration...");
+                    localStorage.clear();
+                    localStorage.setItem(VERSION_KEY, 'true');
+                    setTimeout(() => location.reload(true), 500);
+                }
+            } catch (e) { console.error(e); }
+        })();
+    </script>
+</head>
+
+<body>
+
+    <!-- === MAJESTIC SPLASH LOADER === -->
+    <div id="loadingScreen" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: opacity 1.5s; font-family: 'Orbitron', sans-serif;">
+        <div id="loadingContent" style="text-align:center;">
+            <div id="loadingTitle" style="color:#00f3ff; letter-spacing:15px; font-size:42px; font-weight:bold; margin-bottom:10px; text-shadow:0 0 30px rgba(0, 243, 255, 0.6);">INTERSTELLAR</div>
+            <div id="loadingStatus" style="font-size:12px; color:#5c7a8a; letter-spacing:6px; margin-bottom:50px;">MAJESTIC RESTORATION IN PROGRESS</div>
+            <div style="width:300px; height:2px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; margin: 0 auto;">
+                <div id="loadingProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #00f3ff, #00ffaa); box-shadow:0 0 20px #00f3ff; transition: width 0.4s;"></div>
+            </div>
+            <div id="loadingLog" style="margin-top:25px; font-size:10px; color:#444; font-family:monospace; height:20px; text-transform: uppercase; letter-spacing: 2px;"></div>
+        </div>
+        <div id="loadingPrompt" style="position:absolute; bottom:80px; color:#00ffaa; letter-spacing:8px; font-size:14px; cursor:pointer; opacity:0; font-weight: bold; animation: pulse 2s infinite;">[ PRESS TO FLY ]</div>
+    </div>
+
+    <!-- === HIGH-FIDELITY HUD OVERLAY === -->
+    <div class="holo-hud"></div>
+
+    <div id="toast" class="toast">Action Successful</div>
+
+    <!-- === TOP BAR === -->
+    <div class="top-bar">
+        <h1>Interstellar Spacetime</h1>
+
+        <div class="top-bar-center" style="display:flex !important; flex:1 !important; justify-content:center !important; align-items:center !important;">
+            <div style="display:flex; gap:15px; align-items:center; background: rgba(0,0,0,0.4); padding: 5px 20px; border-radius: 20px; border: 1px solid rgba(0,243,255,0.1);">
+                <span style="font-size:9px; color:rgba(0,243,255,0.6); letter-spacing:3px; font-weight:bold;">CELESTIAL LAYERS</span>
+                <button class="bg-toggle btn-small" data-style="deep-space" onclick="window.game.toggleBgStyle('deep-space')">VOID</button>
+                <button class="bg-toggle btn-small" data-style="nebula" onclick="window.game.toggleBgStyle('nebula')">NEBULA</button>
+                <button class="bg-toggle btn-small" data-style="alien" onclick="window.game.toggleBgStyle('alien')">ALIEN</button>
+                <button class="bg-toggle btn-small" data-style="cyber" onclick="window.game.toggleBgStyle('cyber')">CYBER</button>
+            </div>
+        </div>
+
+
+        <div class="top-bar-right">
+            <!-- SPECTRAL PALETTE DOCK -->
+            <div class="palette-dock" style="display:flex; gap:10px; align-items:center; padding:0 15px; border-left: 1px solid rgba(255,255,255,0.1);">
+                <span style="font-size:8px; color:var(--accent); letter-spacing:2px; font-weight:bold; opacity: 0.8;">SPECTRAL ANALYZER</span>
+                <input type="color" id="starColor1" class="color-picker-mini" value="#ffffff" title="Primary Spectral" onchange="window.game.proceduralManager.generateStaticStars()">
+                <input type="color" id="starColor2" class="color-picker-mini" value="#aaddff" title="Aether spectral" onchange="window.game.proceduralManager.generateStaticStars()">
+                <input type="color" id="starColor3" class="color-picker-mini" value="#ffddaa" title="Nova Spectral" onchange="window.game.proceduralManager.generateStaticStars()">
+                <button class="btn-small" onclick="window.game.proceduralManager.generateStaticStars()" style="font-size: 8px; padding: 2px 10px; border:none; background:rgba(0, 243, 255, 0.1); color:var(--accent);">RE-SCAN</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- NUCLEAR MODE TOGGLE -->
+            <div style="display:flex; align-items:center; gap:8px; margin:0 5px;">
+                <span style="font-size:8px; color:#ff3366; letter-spacing:1px; font-weight:bold;">NUCLEAR FILTER</span>
+                <label class="switch-futuristic">
+                    <input type="checkbox" id="nuclearModeToggle" onchange="window.NUCLEAR_FILTER = this.checked; if(window.game && window.game.hudManager) window.game.hudManager.showToast(this.checked ? '☢️ NUCLEAR FILTER: ONLINE' : '🌌 BACKGROUND RESTORED')">
+                    <span class="slider-futuristic"></span>
+                </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <button class="btn-small" title="Export Save Data" onclick="app.exportSaveData()" style="color: #00ffaa; border-color: rgba(0,255,170,0.3);">💾 SAVE</button>
+            <button class="btn-small" title="Import Save Data" onclick="app.triggerImportSaveData()" style="color: #ffaa00; border-color: rgba(255,170,0,0.3);">📂 LOAD</button>
+            
+            <div class="bar-divider"></div>
+
+            <button class="btn-small" id="hangarBtn" onclick="app.showShipModal()">🚀 HANGAR</button>
+            <button class="btn-small" id="rotationToggle" onclick="app.toggleRotationPanel()">ORDNANCE</button>
+            
+            <div class="bar-divider"></div>
+
+            <button class="btn-small" onclick="window.game.hudManager.showEmpireOverview()" style="color: #00ffaa; font-weight: bold; border-color: rgba(0,255,170,0.4);">🌐 EMPIRE</button>
+            <button class="btn-small" onclick="app.toggleAdminPanel()">👑 ADMIN</button>
+        </div>
+    </div>
+
+
+    <!-- === MATRIX CONTROLS POPUP === -->
+    <div id="matrixPanel" class="popup-panel hidden">
+        <h3>Matrix</h3>
+        <label style="font-size:10px">Speed: <span id="matrixSpeedValue">1.0x</span></label>
+        <input type="range" id="matrixSpeedSlider" min="0.1" max="8" step="0.1" value="1" style="width:100%">
+
+        <label style="font-size:10px;margin-top:6px;display:block">Length: <span
+                id="matrixLengthValue">1.0x</span></label>
+        <input type="range" id="matrixLengthSlider" min="0.2" max="3" step="0.1" value="1" style="width:100%">
+
+        <label style="font-size:10px;margin-top:6px;display:block">Angle: <span id="matrixAngleValue">0°</span></label>
+        <input type="range" id="matrixAngleSlider" min="0" max="360" step="5" value="0" style="width:100%">
+
+        <div style="display:flex; gap:4px; margin-top:8px; align-items:center">
+            <input type="color" id="matrixColorPicker" class="color-picker-mini" value="#00ff00"
+                style="width:24px;height:24px">
+            <button class="btn-small" id="matrixRainbowBtn" onclick="app.toggleMatrixRainbow()"
+                style="font-size:10px;padding:6px">🌈</button>
+        </div>
+    </div>
+
+
+    <!-- === FULLSCREEN MAP MODAL === -->
+    <div id="expandedMapModal" class="fullscreen-modal hidden">
+        <div class="map-controls">
+            <button class="btn-small" onclick="app.closeExpandedMap()">CLOSE MAP</button>
+            <span id="mapZoomLevel">Zoom: 1.0x</span>
+        </div>
+        <canvas id="fullscreenMapCanvas"></canvas>
+    </div>
+
+    <!-- === 3D HANGAR OVERHAUL === -->
+    <div id="shipModal" class="modal-overlay hangar-overlay">
+        <div class="hangar-container">
+            <div class="hangar-header">
+                <h2>INTERSTELLAR COMMAND CENTER</h2>
+                <div class="hangar-status-bar">
+                    <div class="hangar-status">NODE: 7A-X | SYSTEMS: <span class="blink">OPTIMAL</span></div>
+                    <div class="hangar-tabs">
+                        <button class="h-tab active" id="tab-ships" onclick="window.game.setHangarTab('ships')">🚀 SHIPS</button>
+                        <button class="h-tab" id="tab-skins" onclick="window.game.setHangarTab('skins')">🎨 SKINS</button>
+                        <button class="h-tab" id="tab-collection" onclick="window.game.setHangarTab('collection')">💎 COLLECTION</button>
+                    </div>
+                    <div class="hangar-gems">PRECIOUS BALANCE: <span id="hangarGemBalance" style="color: #00ff00; font-weight: bold;">0</span></div>
+                </div>
+            </div>
+
+            <div class="hangar-content-area">
+                <div class="hangar-viewport">
+                <div id="hangarTrack" class="hangar-track">
+                    <!-- Bays will be dynamically populated/modified -->
+                    <!-- Docking Bay 1: Interceptor -->
+                    <div class="docking-bay" id="bay-interceptor">
+                        <div class="bay-floor"></div>
+                        <div class="bay-walls">
+                            <div class="wall wall-back">
+                                <div class="ship-specs">
+                                    <h3>MODEL: INTERCEPTOR</h3>
+                                    <div class="spec-line"><span class="label">SPEED:</span> <span class="val">90</span>
+                                    </div>
+                                    <div class="spec-line"><span class="label">ARMOR:</span> <span
+                                            class="val">NONE</span></div>
+                                    <div class="spec-line"><span class="label">POWER:</span> <span class="val">NIMBLE
+                                            DASH</span></div>
+                                    <p class="spec-desc">The standard scout of the Interstellar Fleet. Unmatched
+                                        maneuverability in tight asteroid fields.</p>
+                                </div>
+                            </div>
+                            <div class="wall wall-side left"></div>
+                            <div class="wall wall-side right"></div>
+                        </div>
+                        <div class="ship-hologram">
+                            <canvas id="preview-interceptor" width="200" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Additional bays will be added in JS but defining structure here -->
+                </div>
+            </div>
+
+            <div class="hangar-nav">
+                <button class="nav-btn prev" onclick="window.game.prevHangarBay()">◀ PREV BAY</button>
+                <div id="bayIndicator" class="bay-indicator">BAY 1 / 7</div>
+                <button class="nav-btn next" onclick="window.game.nextHangarBay()">NEXT BAY ▶</button>
+
+                <div class="color-selector-container">
+                    <label>SHIP LIVERY</label>
+                    <div class="color-options">
+                        <div class="color-option" style="background-color: #00f3ff;" data-color="#00f3ff"
+                            onclick="window.game.setHangarColor('#00f3ff')"></div>
+                        <div class="color-option" style="background-color: #ff0055;" data-color="#ff0055"
+                            onclick="window.game.setHangarColor('#ff0055')"></div>
+                        <div class="color-option" style="background-color: #ffd700;" data-color="#ffd700"
+                            onclick="window.game.setHangarColor('#ffd700')"></div>
+                        <div class="color-option" style="background-color: #00ff66;" data-color="#00ff66"
+                            onclick="window.game.setHangarColor('#00ff66')"></div>
+                        <div class="color-option" style="background-color: #aa00ff;" data-color="#aa00ff"
+                            onclick="window.game.setHangarColor('#aa00ff')"></div>
+                        <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"
+                            onclick="window.game.setHangarColor('#ffffff')"></div>
+                        <input type="color" id="hangarColorPicker" class="color-option-custom" value="#00f3ff"
+                            onchange="window.game.setHangarColor(this.value)"
+                            oninput="window.game.setHangarColor(this.value)">
+                    </div>
+                </div>
+            </div>
+
+                <div class="hangar-sidebar">
+                    <div id="shipStatsBox" class="stats-box">
+                        <div class="stats-label">MODEL: <span id="stat-model">---</span></div>
+                        <div class="stats-row"><span class="label">SPEED</span> <div class="bar-bg"><div id="bar-speed" class="bar-fill"></div></div></div>
+                        <div class="stats-row"><span class="label">ARMOR</span> <div class="bar-bg"><div id="bar-armor" class="bar-fill"></div></div></div>
+                        <div class="stats-row"><span class="label">SHIELD</span> <div class="bar-bg"><div id="bar-shield" class="bar-fill"></div></div></div>
+                        <div class="special-ability">
+                            <span class="label">SPECIAL ABILITY</span>
+                            <div id="stat-ability">---</div>
+                            <p id="stat-desc">---</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skins Overlays (Initially hidden) -->
+            <div id="skinsPanel" class="hangar-overlay-content hidden">
+                <h3>SHIP LIVERIES</h3>
+                <div class="skins-grid" id="skinsGrid">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <!-- Collection Overlay (Initially hidden) -->
+            <div id="collectionPanel" class="hangar-overlay-content hidden">
+                <h3>PRECIOUS COLLECTION</h3>
+                <div class="collection-gems" id="collectionGems">
+                    <!-- Luxury Gems display -->
+                </div>
+            </div>
+
+            <div class="modal-actions hangar-actions">
+                <button class="btn-primary" onclick="window.game.selectShip()">SELECT SHIP</button>
+                <button class="btn-secondary" onclick="window.game.hideShipModal()">EXIT HANGAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === ROTATION CONTROLS POPUP === -->
+    <div id="rotationPanel" class="popup-panel hidden">
+        <h3>3D</h3>
+        <label style="font-size:10px">X: <span id="rotXValue">0°</span></label>
+        <input type="range" id="rotXSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <label style="font-size:10px;margin-top:6px;display:block">Y: <span id="rotYValue">0°</span></label>
+        <input type="range" id="rotYSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <label style="font-size:10px;margin-top:6px;display:block">Z: <span id="rotZValue">0°</span></label>
+        <input type="range" id="rotZSlider" min="-180" max="180" step="1" value="0" style="width:100%">
+        <button class="btn-small" onclick="app.resetRotation()"
+            style="width:100%; margin-top:8px;font-size:10px;padding:6px">Reset</button>
+    </div>
+
+    <!-- === UPGRADE STATION POPUP === -->
+    <div id="upgradePanel" class="popup-panel hidden"
+        style="width: 220px; max-height: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; z-index: 200;">
+        <h3
+            style="text-align: center; font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--accent); padding-bottom: 8px;">
+            Interstellar Dock</h3>
+
+        <div
+            style="margin-bottom: 15px; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+            <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">AVAILABLE CREDITS</div>
+            <div style="font-size: 24px; color: #ffd700; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);"
+                id="dockCredits">$0</div>
+        </div>
+
+        <div id="upgradeList"
+            style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 300px; padding-right: 4px;">
+            <!-- Generated via JS -->
+        </div>
+
+        <button class="btn-small" onclick="document.getElementById('upgradePanel').classList.add('hidden')"
+            style="width: 100%; margin-top: 15px; padding: 10px; font-weight: bold;">CLOSE DOCK</button>
+    </div>
+
+
+    <!-- === BOTTOM BAR === -->
+    <div class="bottom-bar">
+        <div class="bottom-bar-left">
+            <div class="bar-group">
+                <button class="btn active" id="drawModeBtn" onclick="app.setMode('draw')" data-tooltip="Draw Stars">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+                    </svg>
+                </button>
+                <button class="btn" id="selectModeBtn" onclick="app.setMode('select')" data-tooltip="Select/Drag">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M7 19h10V4H7v15zm-2-2V6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v11c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="bottom-bar-center">
+            <div class="bar-group">
+                <button class="btn" onclick="app.showShipModal()" data-tooltip="Hangar" style="color: #ffd700;">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2L2 22h20L12 2zm0 3.5L18.5 20h-13L12 5.5z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.undo()" data-tooltip="Undo">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.requestClear()" data-tooltip="Clear">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <button class="btn" onclick="app.downloadSVG()" data-tooltip="Export SVG">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.downloadPNG()" data-tooltip="Export PNG">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                    </svg>
+                </button>
+                <button class="btn" onclick="app.triggerLoadSVG()" data-tooltip="Load SVG">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <select id="videoDuration"
+                    style="background: var(--glass); border: 1px solid var(--glass-border); color: var(--text); padding: 4px 6px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                    <option value="3000">3s</option>
+                    <option value="5000" selected>5s</option>
+                    <option value="10000">10s</option>
+                </select>
+                <button class="btn" id="exportVideoBtn" onclick="app.exportVideo()" data-tooltip="Record Video">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="bar-group">
+                <button class="btn" onclick="app.toggleTemplatePanel()" data-tooltip="Templates">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H5v-4h9v4zm5 0h-4v-4h4v4zm0-5H5V5h14v7z" />
+                    </svg>
+                </button>
+            </div>
+
+
+
+            <!-- Window Taskbar - minimized windows appear here -->
+            <div id="windowTaskbar" class="window-taskbar" style="display:none"></div>
+
+            <!-- Layout Presets -->
+            <div id="layoutPresets" class="layout-presets" style="display:none">
+                <button class="layout-btn" onclick="app.saveLayout()" title="Save Current Layout">💾 Save</button>
+                <button class="layout-btn" id="layout1Btn" onclick="app.loadLayout(1)" title="Load Layout 1">1</button>
+                <button class="layout-btn" id="layout2Btn" onclick="app.loadLayout(2)" title="Load Layout 2">2</button>
+                <button class="layout-btn" id="layout3Btn" onclick="app.loadLayout(3)" title="Load Layout 3">3</button>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-bar-right">
+        <div class="bar-group">
+            <button class="zoom-btn" onclick="app.adjustZoom(-0.1)">-</button>
+            <button class="zoom-btn" onclick="app.resetView()">⟲</button>
+            <button class="zoom-btn" onclick="app.adjustZoom(0.1)">+</button>
+        </div>
+    </div>
+    <!-- GAME CONTROLS BAR - Fixed sub-bar always visible below top bar -->
+    <div id="gameControlsBar" style="
+        position: fixed;
+        top: var(--bar-height, 50px);
+        left: 0;
+        right: 0;
+        height: 42px;
+        background: rgba(5, 12, 20, 0.75);
+        backdrop-filter: blur(16px) saturate(1.2);
+        -webkit-backdrop-filter: blur(16px) saturate(1.2);
+        border-bottom: 1px solid rgba(0, 255, 150, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* EDGE-TO-EDGE DOCKING */
+        gap: 4px;
+        padding: 0 20px; /* Viewport breathing room */
+        z-index: 99;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    ">
+        <div class="game-controls-section" style="margin-left:0; border:none; background:none; box-shadow:none; animation:none; padding:0; gap: clamp(2px, 0.8vw, 8px);">
+            <span class="game-label">🎮 PLAY GAME</span>
+            <button class="btn game-btn" onclick="app.toggleFlightMode()"
+                data-tooltip="Enter Flight Mode - Use WASD to fly!">🚀 FLY</button>
+            <button class="btn game-btn" id="selectShipBtn" onclick="window.game.showShipModal()"
+                data-tooltip="Choose Your Spaceship" style="display:none">🛸 <span class="hide-mobile">SHIP</span></button>
+            <button class="btn game-btn" id="dockBtn" onclick="window.game.toggleUpgradePanel()"
+                data-tooltip="Upgrade Your Ship" style="display:none">🛠️ <span class="hide-mobile">UPGRADES</span></button>
+            <button class="btn game-btn" id="missionsBtn" onclick="window.game.toggleMissionBoard()"
+                data-tooltip="View Available Missions">📋 <span class="hide-mobile">MISSIONS</span></button>
+            <button class="btn game-btn" id="academyBtn" onclick="app.openFlightAcademy()"
+                data-tooltip="Flight Academy — Training Simulators">🎓 <span class="hide-mobile">ACADEMY</span></button>
+            <button class="btn game-btn" id="mobile-toggle-btn" onclick="app.toggleMobileControls()"
+                data-tooltip="Toggle Mobile Joystick Controls">🎮 JOYSTICK</button>
+            <div style="display:inline-block; width:1px; height:24px; background:rgba(255,255,255,0.2); margin:0 6px; vertical-align:middle; flex-shrink:0;"></div>
+            <button class="btn game-btn" id="layoutHorizBtn" onclick="window.game.setLayout('horizontal')"
+                data-tooltip="Horizontal HUD Layout">↔️ WIDE</button>
+            <button class="btn game-btn" id="layoutVertBtn" onclick="window.game.setLayout('vertical')"
+                data-tooltip="Vertical HUD Layout">↕️ TALL</button>
+            <div style="display:inline-block; width:1px; height:24px; background:rgba(255,255,255,0.2); margin:0 6px; vertical-align:middle; flex-shrink:0;"></div>
+            <button class="btn game-btn" id="audioMuteBtn"
+                onclick="if(window.gameAudio){ gameAudio.init(); const m = gameAudio.toggleMute(); this.textContent = m ? '🔇 MUTED' : '🔊 AUDIO'; }"
+                data-tooltip="Toggle Audio">🔊 AUDIO</button>
+        </div>
+        <!-- Window Taskbar - minimized windows appear here -->
+        <div id="windowTaskbar" class="window-taskbar" style="display:none"></div>
+        <!-- Layout Presets -->
+        <div id="layoutPresets" class="layout-presets" style="display:none">
+            <button class="layout-btn" onclick="app.saveLayout()" title="Save Current Layout">💾 Save</button>
+            <button class="layout-btn" id="layout1Btn" onclick="app.loadLayout(1)" title="Load Layout 1">1</button>
+            <button class="layout-btn" id="layout2Btn" onclick="app.loadLayout(2)" title="Load Layout 2">2</button>
+            <button class="layout-btn" id="layout3Btn" onclick="app.loadLayout(3)" title="Load Layout 3">3</button>
+        </div>
+    </div>
+
+    <!-- Template Selection Panel -->
+    <div id="templatePanel" class="hud-panel"
+        style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); width: 400px; max-height: 400px; display: none; overflow-y: auto; z-index: 100;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="font-size: 14px; margin: 0; color: var(--accent); text-transform: uppercase;">
+                Constellation Templates</h2>
+            <button class="btn-small" onclick="document.getElementById('templatePanel').style.display='none'"
+                style="min-width: 24px; padding: 2px 6px;">✕</button>
+        </div>
+
+        <div
+            style="margin-bottom: 10px; display: flex; align-items: center; gap: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+            <label style="font-size: 12px; color: var(--text); display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="templateRainbowMode" style="margin-right: 5px; accent-color: var(--accent);">
+                Rainbow Mode
+            </label>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <span style="font-size: 12px; color: var(--text);">Color:</span>
+                <input type="color" id="templateColorPicker" value="#00ffff"
+                    style="border: none; width: 24px; height: 24px; cursor: pointer; background: none;">
+            </div>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Zodiac Signs</h3>
+            <div id="zodiacTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Animals</h3>
+            <div id="animalTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+
+        <div>
+            <h3
+                style="font-size: 12px; color: var(--text-dim); margin: 5px 0; border-bottom: 1px solid var(--glass-border);">
+                Mythology</h3>
+            <div id="mythTemplates" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Hidden file input for loading SVG -->
+    <input type="file" id="svgFileInput" accept=".svg" style="display: none;" onchange="app.loadSVG(event)">
+
+    <!-- Zoom controls now integrated in bottom-bar -->
+
+    <div class="stats" id="stats">
+        Mode: Draw | Stars: 0 | Constellations: 0 | Zoom: 1.00x
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="clearModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Implode Universe?</h2>
+            <p style="color: #888; margin-bottom: 20px;">This will remove all stars. This action cannot be undone
+                easily.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="app.closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="app.confirmClear()"
+                    style="background-color: #ff3333; border-color: #cc0000; color: white;">Implode</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <!-- Flight Mode HUD Overlay -->
+    <div id="flightHUD" class="flight-hud hidden">
+        <!-- Vitals & Cargo - Top Left -->
+        <div class="cockpit-section" id="leftInfo">
+            <div class="cockpit-header">
+                <h4>📊 Status Monitor</h4>
+                <button class="window-btn" onclick="app.toggleCockpitSection('leftInfo')">−</button>
+            </div>
+            <div class="cockpit-content">
+                <div style="margin-bottom: 8px;">
+                    <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">CREDITS</div>
+                    <div style="font-size: 20px; color: #ffd700; font-weight: bold;" id="walletValue">$0</div>
+                </div>
+                <div>
+                    <div style="font-size: 10px; color: #5c7a8a; letter-spacing: 2px;">CARGO CAPACITY</div>
+                    <div style="font-size: 20px; color: #00ff88; font-weight: bold;" id="cargoStatus">📦 0/1000</div>
+                </div>
+            </div>
+        </div>
+            <!-- CONTROLS - Top Right -->
+            <div id="sectionControls" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>🎮 Flight Control</h4>
+                    <div style="display:flex; gap:4px;">
+                        <button class="window-btn" onclick="app.toggleControlsExpanded()"
+                            title="Expand Controls">⛶</button>
+                        <button class="window-btn" onclick="app.toggleCockpitSection('sectionControls')">−</button>
+                    </div>
+                </div>
+                <div class="cockpit-content">
+                    <!-- MOVEMENT -->
+                    <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">MOVEMENT</div>
+                    <div class="controls-grid"
+                        style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:8px;">
+                        <kbd data-key="W" data-cmd="Thrust Forward"
+                            data-desc="Accelerate in the direction you're facing">W</kbd>
+                        <kbd data-key="S" data-cmd="Thrust Backward" data-desc="Decelerate or reverse thrust">S</kbd>
+                        <kbd data-key="A" data-cmd="Roll Left" data-desc="Rotate spacecraft counter-clockwise">A</kbd>
+                        <kbd data-key="D" data-cmd="Roll Right" data-desc="Rotate spacecraft clockwise">D</kbd>
+                        <kbd data-key="Q" data-cmd="Strafe Up"
+                            data-desc="Move upward without changing direction">Q</kbd>
+                        <kbd data-key="E" data-cmd="Strafe Down"
+                            data-desc="Move downward without changing direction">E</kbd>
+                        <kbd data-key="Shift" data-cmd="Boost" data-desc="Hold to double your speed"
+                            style="grid-column: span 2; font-size:9px;">⇧ BOOST</kbd>
+                    </div>
+
+                    <!-- COMBAT -->
+                    <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">COMBAT</div>
+                    <div style="display:grid; grid-template-columns: 1fr; gap:5px; margin-bottom:8px;">
+                        <kbd data-key=" " data-cmd="Fire Weapons"
+                            data-desc="Fire your ship's photon cannons at enemies"
+                            style="text-align:center; padding:6px; background:rgba(255,50,50,0.15); border-color:rgba(255,100,100,0.4); color:#ff6b6b; font-weight:bold;">
+                            ␣ SPACE — FIRE WEAPONS
+                        </kbd>
+                    </div>
+
+                    <!-- 3D ROTATION -->
+                    <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">3D ROTATION</div>
+                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:8px;">
+                        <kbd data-key="R" data-cmd="Pitch Up" data-desc="Tilt nose upward (3D rotation)">R</kbd>
+                        <kbd data-key="F" data-cmd="Pitch Down" data-desc="Tilt nose downward (3D rotation)">F</kbd>
+                        <kbd data-key="Z" data-cmd="Bank Left" data-desc="3D barrel roll left">Z</kbd>
+                        <kbd data-key="X" data-cmd="Bank Right" data-desc="3D barrel roll right">X</kbd>
+                    </div>
+
+                    <!-- SYSTEM -->
+                    <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px;">SYSTEM</div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:5px; margin-bottom:10px;">
+                        <kbd data-key="Escape" data-cmd="Exit Flight" data-desc="Return to drawing mode"
+                            style="font-size:9px;">ESC</kbd>
+                        <kbd data-key="M" data-cmd="Toggle Map" data-desc="Open the full-screen galaxy map"
+                            style="font-size:9px;">M MAP</kbd>
+                    </div>
+
+                    <div style="font-size:8px; color:#445; text-align:center; margin-bottom:8px; line-height:1.4;">
+                        💡 Fly near gems to auto-collect · Use radar to track enemies
+                    </div>
+
+                    <!-- Leftover core features in Flight Control -->
+                    <button class="btn-small" style="width:100%; padding:8px; margin-bottom: 5px;"
+                        onclick="app.toggleAutopilot()">
+                        <span id="autopilotStatus">✈️ Engage Autopilot</span>
+                    </button>
+
+                    <button class="btn-small"
+                        style="width:100%; padding:8px; background: linear-gradient(135deg, rgba(0,100,255,0.25), rgba(0,255,100,0.2)); border-color: #00f3ff; box-shadow: 0 0 12px rgba(0,243,255,0.3); letter-spacing: 1px;"
+                        onclick="app.openFlightAcademy()">
+                        🎓 FLIGHT ACADEMY
+                    </button>
+                </div>
+            </div>
+
+            <!-- SHIP DESIGN - New Standalone Window -->
+            <div id="sectionShipDesign" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>🎨 Ship Design</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionShipDesign')">−</button>
+                </div>
+                <div class="cockpit-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label style="font-size: 12px; color: #aaa;">Paint:</label>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <input type="color" id="shipColorPicker" value="#00f3ff"
+                                style="width: 30px; height: 30px; border:none; background:none; cursor:pointer;">
+                            <button class="btn-small" onclick="app.resetShipColor()">↺</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 3D Rotation Controls -->
+                    <div style="border-top: 1px solid rgba(0,243,255,0.2); margin-top: 10px; padding-top: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="font-size: 12px; color: #aaa;">🔄 3D Rotation</label>
+                            <button class="btn-small" onclick="app.resetShipRotation()" title="Reset Rotation">↺</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 6px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                <span>Yaw (Z)</span>
+                                <span id="yawValue">0°</span>
+                            </div>
+                            <input type="range" id="yawSlider" min="-180" max="180" value="0" style="width: 100%; cursor: pointer;" oninput="app.setShipRotation('yaw', this.value)">
+                        </div>
+
+                        <div style="margin-bottom: 6px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                <span>Pitch (X)</span>
+                                <span id="pitchValue">0°</span>
+                            </div>
+                            <input type="range" id="pitchSlider" min="-90" max="90" value="0" style="width: 100%; cursor: pointer;" oninput="app.setShipRotation('pitch', this.value)">
+                        </div>
+
+                        <div style="margin-bottom: 6px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                                 <span>Roll (Y)</span>
+                                <span id="rollValue">0°</span>
+                            </div>
+                            <input type="range" id="rollSlider" min="-180" max="180" value="0" style="width: 100%; cursor: pointer;" oninput="app.setShipRotation('roll', this.value)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHIP STATUS - Below Flight Control -->
+            <div id="sectionShipStatus" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>🛡️ Ship Status</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionShipStatus')">−</button>
+                </div>
+                <div class="cockpit-content">
+                    <!-- Shield Bar -->
+                    <!-- ATOMIC OVER-SHIELD (Phase 18 High-Tier) -->
+                    <div class="stat-bar-container" id="atomicShieldContainer">
+                        <div class="stat-header">
+                            <span style="color: #00ffaa; letter-spacing: 2px;">⚡ ATOMIC OVER-SHIELD</span>
+                            <span id="atomicShieldText">500 / 500</span>
+                        </div>
+                        <div class="stat-bar-bg" style="border-color: rgba(0, 255, 170, 0.4); height: 16px;">
+                            <div id="atomicShieldBar" class="stat-bar-fill" style="width: 100%; background: linear-gradient(90deg, #00ff88, #00ffcc); box-shadow: 0 0 15px rgba(0, 255, 150, 0.6);"></div>
+                        </div>
+                    </div>
+
+                    <!-- Shield Bar -->
+                    <div class="stat-bar-container">
+                        <div class="stat-header">
+                            <span>PLASMA SHIELD</span>
+                            <span id="shieldText">50 / 50</span>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div id="shieldBar" class="stat-bar-fill" style="width: 100%; background: linear-gradient(90deg, #00aaff, #00ffff); box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- Health Bar -->
+                    <div class="stat-bar-container">
+                        <div class="stat-header">
+                            <span>HULL INTEGRITY</span>
+                            <span id="hullText">100%</span>
+                        </div>
+                        <div class="stat-bar-bg" style="border-color: rgba(255,51,102,0.3);">
+                            <div id="hullBar" class="stat-bar-fill fill-health" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Damage Warning -->
+                    <div id="damageWarning"
+                        style="display: none; text-align: center; padding: 8px; background: rgba(255,0,0,0.2); border: 1px solid rgba(255,0,0,0.5); border-radius: 4px; color: #ff4444; font-size: 12px; font-weight: bold; animation: blink 0.5s infinite;">
+                        ⚠️ TAKING DAMAGE ⚠️
+                    </div>
+
+                    <button id="quickRepairBtn" onclick="app.repairHull()"
+                        style="display: none; width: 100%; margin-top: 10px; padding: 10px; background: rgba(0,255,100,0.2); border: 1px solid #00ff66; border-radius: 4px; color: #00ff66; font-weight: bold; cursor: pointer; animation: pulse-green 2s infinite;">
+                        🔧 QUICK REPAIR ($2,000)
+                    </button>
+                </div>
+            </div>
+
+            <!-- ABILITIES (Phase 14) -->
+            <div id="sectionAbilities" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>✨ Abilities</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionAbilities')">−</button>
+                </div>
+                <div class="cockpit-content">
+                    <div style="margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                            <span>GRAVITY WELL (Key 4)</span>
+                            <span id="ability4Text">READY</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.5); border-radius: 4px; height: 12px; overflow: hidden; border: 1px solid rgba(255,100,255,0.4);">
+                            <div id="ability4Bar" style="height: 100%; width: 100%; background: linear-gradient(90deg, #aa00ff, #ff00ff); transition: width 0.1s linear;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                            <span>CHRONO-SHIFT (Key 5)</span>
+                            <span id="ability5Text">READY</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.5); border-radius: 4px; height: 12px; overflow: hidden; border: 1px solid rgba(100,255,255,0.4);">
+                            <div id="ability5Bar" style="height: 100%; width: 100%; background: linear-gradient(90deg, #00aaff, #00ffff); transition: width 0.1s linear;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Sections remain as children of flight-hud -->
+            <!-- RADAR - Bottom Left-Center (Pos 2) -->
+            <div id="sectionRadar" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>📡 Radar</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionRadar')">−</button>
+                </div>
+                <div class="cockpit-content" style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="radar-container" style="margin-bottom:10px;">
+                        <canvas id="radarCanvas" class="radar-canvas" width="120" height="120"></canvas>
+                        <div class="radar-sweep"></div>
+                    </div>
+                    <div class="radar-coords" id="radarCoords" style="font-family:monospace; color:#0ff;">X: 0 Y: 0
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENGINES - Bottom Center (Pos 3) -->
+            <div id="sectionVelocity" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>⚡ Engines</h4>
+                </div>
+                <div class="cockpit-content">
+                    <div class="velocity-display"
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:5px;">
+                        <div class="speed-unit" style="color:var(--text-dim); font-size:11px; margin-bottom:5px;">
+                            VELOCITY</div>
+                        <div class="speed-gauge" style="position:relative;">
+                            <canvas id="speedGaugeCanvas" width="80" height="80"></canvas>
+                            <div id="speedNumber" class="speed-number"
+                                style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold; font-size:18px;">
+                                0</div>
+                        </div>
+                        <div class="cockpit-zoom-controls"
+                            style="margin-top:5px; display:flex; align-items:center; gap:8px;">
+                            <button class="zoom-btn" onclick="app.flightZoom(-0.2)"
+                                style="width:24px; height:24px; line-height:22px;">−</button>
+                            <span id="zoomDisplay" class="zoom-value"
+                                style="background:rgba(0,0,0,0.5); padding:2px 8px; border-radius:4px; font-size:12px;">1.0x</span>
+                            <button class="zoom-btn" onclick="app.flightZoom(0.2)"
+                                style="width:24px; height:24px; line-height:22px;">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAP - Bottom Far Left (Pos 1) -->
+            <div id="sectionMap" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4>🗺️ Map</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionMap')">−</button>
+                </div>
+                <div class="cockpit-content" style="display:flex; flex-direction:column; align-items:center;">
+                    <canvas id="inlineMapCanvas" class="map-canvas" width="150" height="100"></canvas>
+                    <div style="font-size:9px; color:#888; margin-top:4px;">Click for full map</div>
+                </div>
+            </div>
+
+            <!-- MISSION TRACKER (Left Side, Below Map) -->
+            <div id="sectionMission" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4 style="color: #00ffcc;">📋 Mission</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionMission')">−</button>
+                </div>
+                <div class="cockpit-content" id="missionContent" style="display:flex; flex-direction:column; gap:6px; font-size:11px; padding: 10px;">
+                    No Active Mission.
+                </div>
+            </div>
+
+            <!-- FACTION WARS TRACKER (Left Side, Below Missions) -->
+            <div id="sectionFactions" class="cockpit-section">
+                <div class="cockpit-header">
+                    <h4 style="color: #ffaa00;">⚔️ Faction Rep</h4>
+                    <button class="window-btn" onclick="app.toggleCockpitSection('sectionFactions')">−</button>
+                </div>
+                <div class="cockpit-content" id="factionsContent" style="display:flex; flex-direction:column; gap:4px; font-size:11px; padding: 10px;">
+                    <!-- Faction bars injected here -->
+                </div>
+            </div>
+
+
+            <!-- GEMS - Bottom Right (Pos 4 - Constrained) -->
+            <div id="sectionGems" class="cockpit-section gems-section">
+                <div class="cockpit-header" style="justify-content:space-between; padding-right:8px;">
+                    <h4>💎 Precious Elements</h4>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="gems-total" style="font-size:11px; color:#aaa;">Est: <span id="gemsTotal"
+                                style="color:#0ff;">$0</span></div>
+                        <div style="font-size:11px; color:#aaa;">Credits: <span id="walletValue"
+                                style="color:#0f0;">0</span>
+                        </div>
+
+                        <div style="display:flex; gap:4px;">
+                            <button class="window-btn" onclick="app.showGemGuide()" title="Gem Guide"
+                                style="color: #ffd700;">?</button>
+                            <button class="window-btn" id="btnToggleGemValues" onclick="app.toggleGemValues()"
+                                title="Toggle Values"
+                                style="color: #00ff00; text-shadow: 0 0 10px #00ff00; font-weight: bold;">$</button>
+                            <button class="window-btn" onclick="app.toggleCockpitSection('sectionGems')">−</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="cockpit-content" style="padding:5px; overflow-y:auto; flex:1;">
+                    <div id="gemsGrid" class="gems-grid"
+                        style="grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <div class="resize-handle"
+                    style="position:absolute; right:0; bottom:0; width:12px; height:12px; cursor:nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(0,243,255,0.3) 50%);">
+                </div>
+            </div>
+
+    <!-- Floating Map Window (Bottom Left, above cockpit) -->
+    <div id="floatingMap" class="floating-window map-window hidden">
+        <div class="window-header">
+            <h4>🗺️ Universe Map</h4>
+            <div class="window-controls">
+                <button class="window-btn" onclick="app.openExpandedMap()" title="Expand Map">⛶</button>
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingMap')" title="Collapse">−</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <canvas id="mapCanvas" class="map-canvas" width="180" height="120"></canvas>
+            <div class="map-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#0f0"></div>You
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ff0"></div>Stars
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#f0f"></div>Gems
+                </div>
+            </div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <!-- Floating Leaders Window (Bottom Right, above cockpit) -->
+    <div id="floatingLeaders" class="floating-window leaders-window hidden">
+        <div class="window-header">
+            <h4>🏆 Leaders</h4>
+            <div class="window-controls">
+                <button class="window-btn" onclick="app.toggleFloatingWindow('floatingLeaders')"
+                    title="Collapse">−</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div id="floatingLeadersList" class="leaders-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+
+
+    <!-- Gem Guide Modal -->
+    <div id="gemGuideModal" class="modal-overlay" style="display: none;">
+        <div class="modal" style="max-width: 500px;">
+            <h2 style="color: #ffd700;">💎 Gem & Mineral Guide</h2>
+            <div id="gemGuideContent"
+                style="text-align: left; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Collect geological treasures across the
+                    universe to fund your ship's evolution.</p>
+
+                <div class="guide-section">
+                    <h3 style="color: #00f3ff; font-size: 14px;">🛠️ Industrial Grade</h3>
+                    <p style="font-size: 11px;">(Iron, Copper, Coal, Titanium, Silicon)<br>Common materials found in
+                        asteroid belts. Reliable but low value. Good for early-game grinding.</p>
+                </div>
+
+                <div class="guide-section" style="margin-top: 10px;">
+                    <h3 style="color: #ffd700; font-size: 14px;">🥇 Precious Metals</h3>
+                    <p style="font-size: 11px;">(Silver, Gold, Platinum, Palladium)<br>High-value metals that fetch a
+                        good price at docking stations. Often found near gas giants.</p>
+                </div>
+
+                <div class="guide-section" style="margin-top: 10px;">
+                    <h3 style="color: #ff00ff; font-size: 14px;">🔮 Crystal Clusters</h3>
+                    <p style="font-size: 11px;">(Quartz, Diamond, Emerald, Ruby, Sapphire)<br>Rare crystalline
+                        structures found in deep space. Extreme value and aesthetic brilliance.</p>
+                </div>
+
+                <div class="guide-section" style="margin-top: 10px;">
+                    <h3 style="color: #00ff00; font-size: 14px;">☢️ Nuclear Elements</h3>
+                    <p style="font-size: 11px;">(Uranium, Plutonium, Helium-3)<br>Dangerous but highly sought after for
+                        reactor fuel. High risk, high reward.</p>
+                </div>
+
+                <div class="guide-section" style="margin-top: 10px;">
+                    <h3 style="color: #ffffff; font-size: 14px;">✨ Exotic Matter</h3>
+                    <p style="font-size: 11px;">(Dark Matter, Antimatter, Neodymium)<br>Anomalous substances found near
+                        black holes and supernovae. The most valuable materials in the galaxy.</p>
+                </div>
+
+                <div class="usage-section"
+                    style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                    <h3 style="color: #00ff66;">💰 How to use?</h3>
+                    <ul style="font-size: 12px; color: #ccc; padding-left: 20px;">
+                        <li>Fly over a glowing gem to collect it.</li>
+                        <li>Gems automagically sell for **Credits** when they enter your hold.</li>
+                        <li>Open the **Interstellar Dock (🛠️ UPGRADES)** to spend credits.</li>
+                        <li>Upgrade your **Engines**, **Armor**, **Shields**, and **Radar** to survive deeper space!
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn-secondary" onclick="app.hideGemGuide()">CLOSE GUIDE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === ADMIN PANEL (God Mode) === -->
+    <div id="adminPanel" class="popup-panel hidden"
+        style="width: 280px; top: 20%; right: 20px; border: 1px solid #ff00ff; box-shadow: 0 0 15px rgba(255,0,255,0.3);">
+        <h3 style="color: #ff00ff; border-bottom: 1px solid #ff00ff;">⚡ ADMIN TOOLS</h3>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                <span style="color: #ffd700;">PREMIUM STATUS</span>
+                <input type="checkbox" id="adminPremiumToggle" style="accent-color: #ffd700;">
+            </label>
+            <div style="font-size: 10px; color: #888;">Unlocks Nirvana ships & features</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <button id="adminAddCreditsBtn" class="btn-small" style="border-color: #00ff00; color: #00ff00;">💰
+                +$10k</button>
+            <button id="adminAddMineralsBtn" class="btn-small" style="border-color: #00ffff; color: #00ffff;">💎
+                Gems</button>
+        </div>
+
+        <div style="font-size:9px; color:#556; letter-spacing:2px; margin-bottom:4px; margin-top:10px;">SYSTEM STATUS</div>
+        <div style="display:flex; gap:8px; margin-bottom:15px; align-items:center; color:#888; font-size:10px;">
+            <span>AI CORE: <span style="color:#00ff00;">STABLE</span></span>
+            <div class="divider"></div>
+            <span>SYNC: <span style="color:#00f3ff;">100%</span></span>
+        </div>
+        
+        <!-- Palette moved to Top Bar -->
+
+        <button id="adminUnlockShipsBtn" class="btn-small"
+            style="width: 100%; margin-bottom: 8px; border-color: #ff5500; color: #ff5500;">
+            🔓 UNLOCK ALL SHIPS
+        </button>
+
+        <div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+            <div style="font-size: 10px; color: #aaa;">DEBUG INFO:</div>
+            <div id="adminDebugInfo" style="font-family: monospace; font-size: 10px; color: #fff;">-</div>
+        </div>
+
+        <button id="adminCloseBtn" class="btn-small" style="width: 100%; margin-top: 10px;">CLOSE</button>
+    </div>
+
+    <!-- === EXPANDED CONTROLS MODAL === -->
+    <div id="expandedControlsModal" class="modal-overlay">
+        <div class="modal" style="max-width: 600px; width: 90%;">
+            <h2 style="color: var(--accent); margin-bottom: 20px;">🎮 Flight Controls Reference</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3
+                        style="color: #ff5500; font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,85,0,0.3); padding-bottom: 6px;">
+                        Movement</h3>
+                    <div class="control-ref-item"><kbd>W</kbd><span><strong>Thrust Forward</strong><br>Accelerate in the
+                            direction you're facing</span></div>
+                    <div class="control-ref-item"><kbd>S</kbd><span><strong>Thrust Backward</strong><br>Decelerate or
+                            reverse thrust</span></div>
+                    <div class="control-ref-item"><kbd>Q</kbd><span><strong>Strafe Up</strong><br>Move upward without
+                            changing direction</span></div>
+                    <div class="control-ref-item"><kbd>E</kbd><span><strong>Strafe Down</strong><br>Move downward
+                            without changing direction</span></div>
+                </div>
+                <div>
+                    <h3
+                        style="color: #00f3ff; font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,243,255,0.3); padding-bottom: 6px;">
+                        Rotation</h3>
+                    <div class="control-ref-item"><kbd>A</kbd><span><strong>Roll Left</strong><br>Rotate spacecraft
+                            counter-clockwise</span></div>
+                    <div class="control-ref-item"><kbd>D</kbd><span><strong>Roll Right</strong><br>Rotate spacecraft
+                            clockwise</span></div>
+                    <div class="control-ref-item"><kbd>R</kbd><span><strong>Pitch Up</strong><br>Tilt nose upward (3D
+                            rotation)</span></div>
+                    <div class="control-ref-item"><kbd>F</kbd><span><strong>Pitch Down</strong><br>Tilt nose downward
+                            (3D rotation)</span></div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="color: #ffd700; font-size: 14px; margin-bottom: 12px;">Special Controls</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="control-ref-item"><kbd>U</kbd><span><strong>Upgrade Dock</strong><br>Open the upgrade
+                            station</span></div>
+                    <div class="control-ref-item"><kbd>ESC</kbd><span><strong>Exit Flight</strong><br>Return to drawing
+                            mode</span></div>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 25px;">
+                <button class="btn-secondary" onclick="app.hideControlsExpanded()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Tooltip Element -->
+    <div id="kbdTooltip" class="kbd-tooltip"></div>
+
+    <!-- Main Application Logic (Module) -->
+    <!-- Mobile Joystick -->
+    <div id="joystick-container"
+        style="display: none; position: fixed; bottom: 30px; left: 30px; width: 120px; height: 120px; z-index: 1000;">
+        <div id="joystick-base"
+            style="width: 100%; height: 100%; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 50%; position: relative; touch-action: none;">
+            <div id="joystick-stick"
+                style="width: 50px; height: 50px; background: rgba(0, 255, 255, 0.5); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #00ffff;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Style for Mobile Visibility & UI Polish -->
+    <!-- Interstellar Engine CORE (Phase 18) -->
+    <script src="./game-config.js?v=v23_final_nuclear_stable"></script>
+    <script src="./audio-engine.js?v=v23_final_nuclear_stable"></script>
+    
+    <!-- === SYSTEM MANAGERS === -->
+    <script src="./js/systems/Effects.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/MarketplaceManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/ParticleManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/ProceduralGen.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/core/Input.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/core/Admin.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/core/EngineCore.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/core/GameLoop.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/core/Storage.js?v=v23_final_nuclear_stable"></script>
+
+    <!-- === ENTITY MANAGERS === -->
+    <script src="./js/entities/Combat.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/entities/CapitalShip.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/entities/Player.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/entities/Hazards.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/entities/Drones.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/entities/MegaStructures.js?v=v23_final_nuclear_stable"></script>
+
+    <!-- === SYSTEM MANAGERS === -->
+    <script src="./js/systems/Physics.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/renderers/CelestialRenderer.js?v=v25_majestic_fix"></script>
+    <script src="./js/systems/renderers/CombatRenderer.js?v=v25_majestic_fix"></script>
+    <script src="./js/systems/renderers/EntityRenderer.js?v=v25_majestic_fix"></script>
+    <script src="./js/systems/renderers/FXRenderer.js?v=v25_majestic_fix"></script>
+    <script src="./js/systems/renderers/HazardRenderer.js?v=v25_majestic_fix"></script>
+    <script src="./js/systems/renderers/TrainingRenderer.js?v=v25_majestic_fix"></script>
+    <script src="./js/systems/renderers/ConstellationRenderer.js?v=v25_majestic_fix"></script>
+    <script src="./js/systems/Renderer.js?v=v25_majestic_fix"></script>
+    <script src="./js/systems/Missions.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/BaseBuilder.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/AIManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/BossManager.js?v=v23_final_nuclear_stable"></script>
+    
+    <!-- Empire Expansion Managers (Phases 9-11) -->
+    <script src="./js/systems/LogManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/NarrativeManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/FleetManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/SurfaceManager.js?v=v23_final_nuclear_stable"></script>
+
+    <!-- === UI SYSTEMS === -->
+    <script src="./js/ui/NotificationManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/ui/HUD.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/ui/UIManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/SectorManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/ResourceManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/HangarManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/ColonyManager.js?v=v23_final_nuclear_stable"></script>
+    <script src="./js/systems/LogisticsManager.js?v=v24_restoration_stable"></script>
+    <script src="./js/systems/AcademyManager.js?v=v24_restoration_stable"></script>
+    <script src="./js/systems/CinematicManager.js?v=v24_restoration_stable"></script>
+    
+    <!-- === MAIN ENTRY POINT === -->
+    <script src="./script.js?v=v24_restoration_stable"></script>
+    <!-- BASE BUILDER MODAL -->
+    <div class="modal-overlay" id="baseBuilderModal" style="display: none;">
+        <div class="modal-content majestic-modal" style="width: 900px; max-width: 95vw; height: 85vh; border: none !important;">
+            <div class="majestic-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <h2 style="margin: 0; color: #00ffaa; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;">🌍 TERRESTRIAL OUTPOST</h2>
+                    <div id="colonyHud" style="display: flex; gap: 15px; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(95, 212, 102, 0.3); font-family: 'Orbitron', sans-serif; font-size: 13px;">
+                        <span id="colonyPop" title="Population">👥 0/0</span>
+                        <span id="colonyPower" title="Power Grid">⚡ 0 MW</span>
+                        <span id="colonyResearch" title="Research Points">🧪 0</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="menu-btn" onclick="window.game.colonyManager.openAcademy()" style="padding: 5px 15px; border-color: #00f3ff; color: #00f3ff; background: rgba(0, 243, 255, 0.1);">🔬 RESEARCH LAB</button>
+                    <button class="menu-btn" onclick="window.game.closeBaseBuilder()" style="padding: 5px 15px;">LEAVE ORBIT</button>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 20px;">
+                <!-- Tools / Inventory -->
+                <div style="flex: 1; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px;">
+                    <h3 style="color: #ccc; font-size: 16px; margin-top: 0; margin-bottom: 15px;">Construct Options</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="upgrade-btn selected" id="baseTool_hab" onclick="window.game.baseBuilder.selectBaseTool('hab')" style="text-align: left; padding: 10px;">
+                            🏠 Habitat (Population)
+                        </button>
+                        <button class="upgrade-btn" id="baseTool_power" onclick="window.game.baseBuilder.selectBaseTool('power')" style="text-align: left; padding: 10px;">
+                            ⚡ Solar Array (Power)
+                        </button>
+                        <button class="upgrade-btn" id="baseTool_research" onclick="window.game.baseBuilder.selectBaseTool('research')" style="text-align: left; padding: 10px;">
+                            🧪 Research Lab (RP/m)
+                        </button>
+                        <button class="upgrade-btn" id="baseTool_mine" onclick="window.game.baseBuilder.selectBaseTool('mine')" style="text-align: left; padding: 10px;">
+                            ⛏️ Collector (Passive)
+                        </button>
+                        <button class="upgrade-btn" id="baseTool_def" onclick="window.game.baseBuilder.selectBaseTool('def')" style="text-align: left; padding: 10px;">
+                            🛡️ Defense Turret
+                        </button>
+                        <button class="upgrade-btn" id="baseTool_erase" onclick="window.game.baseBuilder.selectBaseTool('erase')" style="text-align: left; padding: 10px; border-color: #ff4444; color: #ffadad;">
+                            ❌ Demolish Structure
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Grid -->
+                <div style="flex: 2; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid rgba(95,212,102,0.2); padding: 20px; border-radius: 8px;">
+                    <div id="baseGridContainer" style="display: grid; grid-template-columns: repeat(8, 45px); grid-template-rows: repeat(8, 45px); gap: 4px;">
+                        <!-- JS injected -->
+                    </div>
+                </div>
+            </div>
+            <!-- Research Lab (Internal to Base Builder) -->
+            <div id="academyPanel" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 10, 15, 0.98); z-index: 100; border-radius: 8px; padding: 25px; display: none; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #00f3ff; padding-bottom: 15px; margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: #00f3ff;">🔬 Interstellar Research Lab</h2>
+                    <button class="menu-btn" onclick="document.getElementById('academyPanel').style.display='none'">BACK TO COMMAND</button>
+                </div>
+                <div id="researchTree" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Research items injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLIGHT ACADEMY MODAL (Global) -->
+    <!-- FLIGHT ACADEMY MODAL (Global) -->
+    <div class="modal-overlay" id="flightAcademyModal" style="display: none;">
+        <!-- CONTENT INJECTED BY HUD.JS -->
+    </div>
+
+</body>
+
+</html>

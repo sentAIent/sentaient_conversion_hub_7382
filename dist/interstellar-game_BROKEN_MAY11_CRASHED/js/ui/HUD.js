@@ -1,0 +1,2451 @@
+class HUDManager {
+    constructor(game) {
+        try {
+            this.game = game;
+            this.activeLayout = localStorage.getItem('hudLayout') || 'compact';
+            this.initGlobalListeners();
+            
+            this.activeModal = null; // Track current active singleton modal
+            
+            window.__HUD_READY = true;
+            console.log("✅ HUDManager: Class integrity verified. Flag set: window.__HUD_READY = true");
+            
+            // Standardize Modal Close Button UX
+            if (!document.getElementById('hudModalStyles')) {
+                const style = document.createElement('style');
+                style.id = 'hudModalStyles';
+                style.textContent = `
+                    .modal-close-btn {
+                        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+                    }
+                    .modal-close-btn:hover {
+                        background: #00f3ff !important;
+                        color: #000 !important;
+                        transform: scale(1.15) rotate(90deg) !important;
+                        box-shadow: 0 0 15px #00f3ff;
+                    }
+                    .modal-close-btn:active {
+                        transform: scale(0.95);
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        } catch (bootErr) {
+            console.error("❌ CRITICAL: HUDManager failed to initialize!", bootErr);
+            window.__HUD_BOOT_ERROR = bootErr.message;
+        }
+    }
+
+    initGlobalListeners() {
+        // MAJESTIC UX: Click-outside-to-close for all fullscreen modals
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('fullscreen-modal')) {
+                e.target.style.display = 'none';
+                console.log(`[HUD] Majestic Dismiss: Closed modal ${e.target.id}`);
+            }
+        });
+    }
+
+    closeAllModals() {
+        console.log("📍 [HUD] Enforcing singleton UI state: Closing all active modals...");
+        
+        // Modal DOM IDs
+        const modals = [
+            'empireModal', 'shipModal', 'flightAcademyModal', 'expandedMapModal', 
+            'expandedControlsModal', 'marketplaceModal', 'prestigeModal', 
+            'ascensionOverlay', 'baseBuilderModal', 'academyPanel', 'tradeModal'
+        ];
+
+        modals.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = 'none';
+                el.classList.add('hidden');
+                el.classList.remove('active');
+            }
+        });
+
+        // Panel classes/IDs (popups)
+        const popups = ['adminPanel', 'matrixPanel', 'ordnancePanel', 'logBookPanel', 'academyPanel', 'colonyHud'];
+        popups.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+
+        // Cleanup any temporary overlays
+        const overlays = document.querySelectorAll('.ui-temporary-overlay');
+        overlays.forEach(o => o.remove());
+
+        this.activeModal = null;
+    }
+
+    bringToFront(modalId) {
+        const el = document.getElementById(modalId);
+        if (!el) return;
+        
+        // High z-index range for active modals
+        const BASE_Z = 10000;
+        
+        // Reset others to a slightly lower level if they were active
+        const modals = ['empireModal', 'shipModal', 'flightAcademyModal', 'expandedMapModal', 'baseBuilderModal'];
+        modals.forEach(id => {
+            const other = document.getElementById(id);
+            if (other) other.style.zIndex = BASE_Z - 1;
+        });
+
+        el.style.zIndex = BASE_Z;
+        el.style.display = 'flex';
+        el.classList.remove('hidden');
+        el.classList.add('active');
+        this.activeModal = modalId;
+    }
+
+    setLayout(type) {
+        localStorage.setItem('hudLayout', type);
+        this.activeLayout = type;
+        
+        const container = document.body;
+        if (!container) return;
+
+        // Reset all layout classes
+        container.classList.remove('layout-compact', 'layout-expanded', 'layout-minimal', 'layout-cinematic');
+        container.classList.add(`layout-${type}`);
+
+        // Positioning logic for specific elements based on layout
+        this.applyLayoutPositioning(type);
+    }
+
+    applyLayoutPositioning(type) {
+        const setCoords = (id, coords) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            Object.entries(coords).forEach(([k, v]) => el.style[k] = v);
+        };
+
+        const sections = ['sectionVitals', 'sectionMission', 'sectionRadar', 'sectionFactions', 'walletValue', 'joystick-container'];
+        const setVisibility = (s, visible) => {
+            const el = document.getElementById(s);
+            if (el) el.style.opacity = visible ? '1' : '0';
+        };
+
+        if (type === 'cinematic') {
+            sections.forEach(s => setVisibility(s, false));
+            // Add Letterbox Bars if not present
+            let bars = document.getElementById('cinematicBars');
+            if (!bars) {
+                bars = document.createElement('div');
+                bars.id = 'cinematicBars';
+                bars.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; display:flex; flex-direction:column; justify-content:space-between; animation: barsIn 1s forwards;';
+                bars.innerHTML = `
+                    <div style="height: 10%; background: #000;"></div>
+                    <div style="height: 10%; background: #000;"></div>
+                `;
+                document.body.appendChild(bars);
+                
+                if (!document.getElementById('cinematicStyles')) {
+                    const style = document.createElement('style');
+                    style.id = 'cinematicStyles';
+                    style.innerHTML = '@keyframes barsIn { from { height: 0; } to { height: 100%; } }';
+                    document.head.appendChild(style);
+                }
+            }
+            bars.style.display = 'flex';
+            bars.style.opacity = '1';
+        } else {
+            sections.forEach(s => setVisibility(s, true));
+            const bars = document.getElementById('cinematicBars');
+            if (bars) {
+                bars.style.opacity = '0';
+                setTimeout(() => { if (this.activeLayout !== 'cinematic') bars.style.display = 'none'; }, 1000);
+            }
+
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+
+            if (type === 'compact' || type === 'expanded') {
+                this.game.uiManager?.autoArrangeHUD();
+            }
+        }
+    }
+
+    styleGem(type) {
+        const info = MINERAL_TYPES[type] || { color: '#fff' };
+        return `
+            width: 12px;
+            height: 12px;
+            background: ${info.color};
+            border-radius: 2px;
+            box-shadow: 0 0 8px ${info.color};
+            display: inline-block;
+            margin-right: 8px;
+        `;
+    }
+
+    stylePlanet(type) {
+        const colors = {
+            'terrestrial': '#44aaff',
+            'gas_giant': '#ffaa44',
+            'ice_giant': '#88ffff',
+            'lava': '#ff4400',
+            'toxic': '#55ff55'
+        };
+        return colors[type] || '#ffffff';
+    }
+
+    updateSurfaceUI() {
+        if (!this.game.surfaceMode) return;
+        const planet = this.game.surfaceManager.activeSurface;
+        if (!planet) return;
+
+        let surfaceOverlay = document.getElementById('surfaceOverlay');
+        if (!surfaceOverlay) {
+            surfaceOverlay = document.createElement('div');
+            surfaceOverlay.id = 'surfaceOverlay';
+            surfaceOverlay.style.cssText = `
+                position: fixed; top: 120px; left: 20px;
+                padding: 15px; background: rgba(0, 10, 20, 0.85);
+                border-left: 4px solid #00ffaa; border-radius: 0 10px 10px 0;
+                color: #fff; font-family: Orbitron, sans-serif;
+                z-index: 1000; display: flex; flex-direction: column; gap: 8px;
+                backdrop-filter: blur(5px); animation: slideIn 0.5s forwards;
+            `;
+            document.body.appendChild(surfaceOverlay);
+            
+            if (!document.getElementById('surfaceOverlayStyles')) {
+                const style = document.createElement('style');
+                style.id = 'surfaceOverlayStyles';
+                style.textContent = `@keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }`;
+                document.head.appendChild(style);
+            }
+        }
+
+        surfaceOverlay.style.display = 'flex';
+        surfaceOverlay.innerHTML = `
+            <div style="font-size: 10px; color: #00ffaa; letter-spacing: 2px;">📍 SURFACE TELEMETRY</div>
+            <div style="font-size: 16px; font-weight: bold;">${planet.name.toUpperCase()}</div>
+            <div style="font-size: 11px; color: #aaa;">Atmosphere: ${planet.type.replace('_', ' ')}</div>
+            <div style="margin-top: 10px; display: flex; gap: 10px;">
+                <button class="btn-small" onclick="window.game.baseBuilder.openBaseBuilder(window.game.surfaceManager.activeSurface)" style="border-color: #00ffaa; color: #00ffaa;">🏗️ CONSTRUCTION BRIDGE</button>
+                <button class="btn-small" onclick="window.game.surfaceManager.takeOff()" style="border-color: #ffaa00; color: #ffaa00;">🚀 TAKE OFF</button>
+            </div>
+        `;
+    }
+
+    toggleBgStyle(style) {
+        // Source of truth logic is in script.js (InterstellarEngine)
+        if (this.game && this.game.toggleBgStyle) {
+            this.game.toggleBgStyle(style);
+        } else {
+            // Fallback for standalone HUD usage or late-init
+            if (!this.game.activeStyles) return;
+            if (this.game.activeStyles.has(style)) this.game.activeStyles.delete(style);
+            else this.game.activeStyles.add(style);
+            this.updateBgUI();
+        }
+    }
+
+    updateBgUI() {
+        // Synchronize hardcoded top-bar buttons
+        const buttons = document.querySelectorAll('.bg-toggle');
+        buttons.forEach(btn => {
+            const style = btn.getAttribute('data-style');
+            let isActive = false;
+            
+            if (this.game.activeStyles) {
+                // Check for exact match or base-style match (e.g., 'nebula' button active if 'nebula-blue' is in set)
+                this.game.activeStyles.forEach(activeStyle => {
+                    if (activeStyle === style || activeStyle.startsWith(style + '-')) {
+                        isActive = true;
+                    }
+                });
+            }
+
+            if (isActive) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Also check if legacy list exists (for backward compatibility)
+        const container = document.getElementById('bgStylesList');
+        if (!container) return;
+
+        const styles = ['deep-space', 'nebula', 'alien', 'matrix'];
+        container.innerHTML = styles.map(s => `
+            <div onclick="window.game.toggleBgStyle('${s}')" 
+                 style="padding:5px; margin:2px; border:1px solid ${this.game.activeStyles.has(s) ? '#00ffcc' : '#444'}; 
+                        background:${this.game.activeStyles.has(s) ? 'rgba(0,255,204,0.2)' : 'transparent'}; cursor:pointer; font-size:10px;">
+                ${s.replace('-', ' ').toUpperCase()}
+            </div>
+        `).join('');
+    }
+
+
+    updateWalletUI() {
+        if (!this.game) return;
+        const creditsEl = document.getElementById('walletValue');
+        const credits = typeof this.game.credits === 'number' ? this.game.credits : 0;
+        
+        if (creditsEl) {
+            creditsEl.textContent = credits.toLocaleString();
+        }
+        const creditsDisplay = document.getElementById('creditsDisplay'); // Legacy support
+        if (creditsDisplay) {
+            creditsDisplay.textContent = credits.toLocaleString();
+        }
+    }
+
+    showEmpireOverview() {
+        try {
+            this.closeAllModals(); // Enforce singleton
+            
+            let modal = document.getElementById('empireModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'empireModal';
+                modal.className = 'fullscreen-modal';
+                document.body.appendChild(modal);
+            }
+
+            this.bringToFront('empireModal');
+            
+            // Phase 19: Robust Click-Outside-to-Close
+            modal.onclick = (e) => {
+                const isBackdrop = e.target.id === 'empireModal' || e.target.classList.contains('fullscreen-modal');
+                if (isBackdrop) this.closeAllModals();
+            };
+            
+            const bases = this.game.spaceBases || [];
+            const baseHTML = (bases.length > 0) ? bases.map(base => {
+                const hasShield = Object.values(base).some(v => v === 'shield' || v === 'shield_gen');
+                const hasLogistics = Object.values(base).some(v => v === 'log');
+                const stabilityColor = (base.stability || 100) > 70 ? '#00ffaa' : ((base.stability || 100) > 30 ? '#ffaa00' : '#ff4444');
+                const isCapital = base.planetName === this.game.baseBuilder?.capitalBaseName;
+                
+                let creditRate = 0;
+                let rpRate = 0;
+                Object.values(base).forEach(v => {
+                    if (v === 'mine' || v === 'extractor') creditRate += (v === 'mine' ? 10 : 25);
+                    if (v === 'research' || v === 'research_lab') rpRate += (v === 'research' ? 1 : 2);
+                });
+
+                return `
+                <div style="background: ${isCapital ? 'rgba(255,215,0,0.15)' : 'rgba(0,255,170,0.1)'}; border: 1px solid ${isCapital ? '#ffd700' : '#00ffaa'}; padding: 20px; border-radius: 10px; display:flex; flex-direction:column; gap:10px; transition: transform 0.3s; position:relative;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    ${isCapital ? '<div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#ffd700; color:#000; font-size:8px; padding:2px 8px; border-radius:10px; font-weight:bold; letter-spacing:1px; box-shadow:0 0 10px #ffd700;">IMPERIAL CAPITAL</div>' : ''}
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <h3 style="color: ${isCapital ? '#ffd700' : '#fff'}; margin: 0; font-family:Orbitron; letter-spacing:1px;">${base.planetName}</h3>
+                        <span style="font-size:9px; color:${isCapital ? '#ffd700' : '#00ffaa'}; background:rgba(0,255,170,0.1); padding:2px 6px; border-radius:10px;">${isCapital ? 'CORE HUB' : 'FRONTIER OUTPOST'}</span>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:5px; text-align:center;">
+                            <div style="font-size:8px; color:#888; letter-spacing:1px;">REVENUE</div>
+                            <div style="color:#ffd700; font-weight:bold;">$${creditRate}/min</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:5px; text-align:center;">
+                            <div style="font-size:8px; color:#888; letter-spacing:1px;">RESEARCH</div>
+                            <div style="color:#00f3ff; font-weight:bold;">+${rpRate} RP</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px; border-radius:5px; font-size:10px;">
+                        <span style="color:${hasShield ? '#00ffaa' : '#ff4444'}">${hasShield ? '🛡️ SHIELDED' : '⚠️ VULNERABLE'}</span>
+                        <span style="color:${stabilityColor}">❤️ ${base.stability || 100}%</span>
+                    </div>
+                    <button class="btn-small" onclick="window.game.jumpToCoordinates(${base.x}, ${base.y}); window.game.hudManager.closeAllModals();" style="width:100%; border-color:#00ffaa; color:#00ffaa;">COMMAND BRIDGE</button>
+                </div>`;
+            }).join('') : null;
+
+            modal.innerHTML = `
+                <div class="modal-content majestic-modal" style="width: 1000px; max-width: 95vw; height: 85vh; position:relative; display: flex; flex-direction: column; overflow: hidden; border: none !important;">
+                    <!-- PINNED CLOSE BUTTON -->
+                    <button class="modal-close-btn" onclick="window.game.hudManager.closeAllModals()" 
+                        style="position:absolute; top:20px; right:20px; background:rgba(0,255,170,0.1); border:1px solid #00ffaa; color:#00ffaa; width:45px; height:45px; border-radius:50%; font-size:24px; cursor:pointer; z-index:99999; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(0,255,170,0.4);"
+                    >✕</button>
+                    
+                    <!-- MAJESTIC HEADER -->
+                    <div class="majestic-header">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="width:12px; height:12px; background:#00ffaa; border-radius:50%; box-shadow: 0 0 15px #00ffaa; animation: pulsate 2s infinite;"></div>
+                            <h1 style="margin:0; font-family:Orbitron; letter-spacing:6px; color:#00ffaa; font-size:22px;">IMPERIAL COMMAND BRIDGE</h1>
+                        </div>
+                    </div>
+                        <div style="font-size:9px; color:#555; letter-spacing:2px;">SECURE QUANTUM LINK [PHASE 30.1]</div>
+                    </div>
+
+                    <div style="background: rgba(0,255,170,0.05); border: 1px solid rgba(0,255,170,0.2); border-radius: 12px; padding: 30px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+                        ${(() => {
+                            const cm = this.game.colonyManager;
+                            const rank = (cm && cm.getEmpireRank) ? cm.getEmpireRank() : { name: 'VANGUARD', color: '#888888', level: 1 };
+                            const popCount = (this.game.spaceBases || []).reduce((s, b) => s + (b.population || 0), 0);
+                            const lastTax = this.game.lastImperialTax || 0;
+                            const energyMultiplier = this.game.energyMultiplier || 1.0;
+                            const energyPercent = Math.round(energyMultiplier * 100);
+                            
+                            // Defensive check for Badge renderer
+                            const badgeSVG = (cm && typeof cm.renderRankBadge === 'function') 
+                                ? cm.renderRankBadge(rank.level) 
+                                : '<div style="width:100px; height:100px; border:1px solid #333; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#555;">[RANK]</div>';
+
+                            return `
+                                <div style="display:flex; align-items:center; gap:30px;">
+                                    ${badgeSVG}
+                                    <div style="text-align:left;">
+                                        <div style="font-size:9px; color:#aaa; letter-spacing:4px; margin-bottom:5px;">AUTHORITY RANK</div>
+                                        <div style="font-size:28px; color:${rank.color}; font-weight:bold; font-family:Orbitron; letter-spacing:4px; text-shadow: 0 0 15px ${rank.color}88;">${rank.name}</div>
+                                    </div>
+                                </div>
+                                <div style="width:1px; height:80px; background:linear-gradient(to bottom, transparent, rgba(0,255,170,0.3), transparent);"></div>
+                                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:50px;">
+                                    <div style="text-align:center;">
+                                        <div style="font-size:10px; color:#5c7a8a; letter-spacing:2px; margin-bottom:10px;">CREDIT REVENUE</div>
+                                        <div style="color:#ffd700; font-size:22px; font-weight:bold; font-family:monospace;">+$${lastTax.toLocaleString()}</div>
+                                    </div>
+                                    <div style="text-align:center;">
+                                        <div style="font-size:10px; color:#5c7a8a; letter-spacing:2px; margin-bottom:10px;">EMPIRE POPULATION</div>
+                                        <div style="color:#00ffaa; font-size:22px; font-weight:bold; font-family:monospace;">${popCount.toLocaleString()}</div>
+                                    </div>
+                                    <div style="text-align:center;">
+                                        <div style="font-size:10px; color:#5c7a8a; letter-spacing:2px; margin-bottom:10px;">GRID STABILITY</div>
+                                        <div style="color:#00f3ff; font-size:22px; font-weight:bold; font-family:monospace;">${energyPercent}%</div>
+                                    </div>
+                                </div>
+                            `;
+                        })()}
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:30px; min-height: 400px; flex: 1; overflow-y: auto; padding: 10px;">
+                        <!-- COLUMN 1: OUTPOSTS -->
+                        <div style="border-right: 1px solid rgba(255,255,255,0.05); padding-right: 20px;">
+                            <h2 style="color:#00ffaa; font-size:13px; letter-spacing:2px; display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                                <span style="font-size:18px;">🪐</span> SECTOR OUTPOSTS
+                            </h2>
+                            <div style="display:flex; flex-direction:column; gap:15px;">
+                                ${baseHTML || this.renderScanningState('Terrestrial Scans in Progress...')}
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 2: ENGINEERING & LOGISTICS -->
+                        <div style="border-right: 1px solid rgba(255,255,255,0.05); padding-right: 20px;">
+                            <h2 style="color:#ffd700; font-size:13px; letter-spacing:2px; margin-bottom:20px;">🏗️ CORE ENGINEERING</h2>
+                            <div style="margin-bottom:40px; border:1px solid rgba(255,215,0,0.1); border-radius:8px; padding:15px; background:rgba(0,0,0,0.2);">
+                                ${this.renderMegaProjectOptions() || this.renderScanningState('Engineering Hub Synching...')}
+                            </div>
+                            <h2 style="color:#00f3ff; font-size:13px; letter-spacing:2px; margin-bottom:20px;">🚛 LOGISTICS TRUNK</h2>
+                            <div style="border:1px solid rgba(0,243,255,0.1); border-radius:8px; padding:15px; background:rgba(0,0,0,0.2);">
+                                ${this.renderLogisticsTerminal() || this.renderScanningState('Freight Schedules Awaiting Data...')}
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 3: MILESTONES & LEGACY -->
+                        <div>
+                            <h2 style="color:#ffd700; font-size:13px; letter-spacing:2px; margin-bottom:20px;">✨ ETERNAL LEGACY</h2>
+                            <div style="margin-bottom:40px;">
+                                ${this.renderLegacyStats()}
+                            </div>
+                            <h2 style="color:#00ffaa; font-size:13px; letter-spacing:2px; margin-bottom:20px;">🏆 MILESTONES</h2>
+                            <div style="display:grid; grid-template-columns: 1fr; gap:10px; margin-bottom:40px;">
+                                ${this.renderMilestones()}
+                            </div>
+                            <h2 style="color:#FF4500; font-size:13px; letter-spacing:2px; margin-bottom:20px;">🌐 DIPLOMACY</h2>
+                            <div>
+                                ${this.renderDiplomacyStats()}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 23: TRAINING SIMULATOR ACCESS -->
+                    <div style="margin-top: 20px; padding: 25px; background: rgba(0, 243, 255, 0.05); border: 1px solid rgba(0, 243, 255, 0.2); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+                        <div>
+                            <div style="font-size: 10px; color: #00f3ff; letter-spacing: 3px; font-weight: bold;">TRAINING REGISTRY</div>
+                            <div style="font-family: Orbitron; font-size: 14px; color: #fff; margin-top: 5px;">PHASE 23 VOLUMETRIC SIMULATOR</div>
+                        </div>
+                        <button class="btn-small" onclick="window.game.hudManager.launchTrainingSim()" style="padding: 12px 30px; border-color: #00f3ff; color: #00f3ff; font-weight: bold; background: rgba(0, 243, 255, 0.1); cursor: pointer;">INITIALIZE SIM</button>
+                    </div>
+                </div>
+                <!-- CSS Keyframes for the modal -->
+                <style>
+                    @keyframes pulsate { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+                    @keyframes scanline { 0% { top: 0%; } 100% { top: 100%; } }
+                </style>
+
+            `;
+        } catch (err) {
+            console.error("❌ [HUD] Empire Overview Render Failure:", err);
+            modal.innerHTML = `<div style="padding:40px; color:#ff4444; text-align:center;">
+                <h3>COGNITIVE SYNC FAILURE</h3>
+                <p>${err.message}</p>
+                <button class="btn-small" onclick="window.game.hudManager.closeAllModals()">ABORT</button>
+            </div>`;
+        }
+    }
+
+    showAcademyOverview() {
+        this.closeAllModals();
+        const modal = document.getElementById('flightAcademyModal');
+        if (!modal) {
+            console.error("[HUD] flightAcademyModal not found in DOM.");
+            return;
+        }
+        this.bringToFront('flightAcademyModal');
+        const am = this.game.academyManager;
+        if (!am) return;
+
+        const lessons = am.lessons || [];
+        const currentIndex = am.currentLessonIndex || 0;
+        const currentLesson = lessons[currentIndex];
+        
+        const completedCount = lessons.filter(l => l.completed).length;
+        const progressPercent = Math.round((completedCount / (lessons.length || 1)) * 100);
+        
+        // Majestic Rank Title for Academy
+        let rankTitle = "CADET PILOT";
+        let rankColor = "#888";
+        if (progressPercent >= 100) { rankTitle = "MASTER PILOT"; rankColor = "#ffd700"; }
+        else if (progressPercent >= 70) { rankTitle = "COMMANDER"; rankColor = "#00ffaa"; }
+        else if (progressPercent >= 40) { rankTitle = "VANGUARD"; rankColor = "#00f3ff"; }
+        else if (progressPercent >= 10) { rankTitle = "PILOT-IN-TRAINING"; rankColor = "#aaa"; }
+
+        modal.innerHTML = `
+            <div class="modal-content majestic-modal" style="width: 1100px; max-width: 95vw; height: 85vh; position:relative; box-shadow: 0 0 60px rgba(0,243,255,0.3); display: flex; flex-direction: column; overflow: hidden; font-family: 'Exo 2', sans-serif; border: none !important;">
+                <!-- STANDARD MAJESTIC CLOSER -->
+                <button class="modal-close-btn" onclick="window.game.hudManager.closeAllModals()" 
+                    style="position:absolute; top:20px; right:20px; background:rgba(0,243,255,0.1); border:1px solid #00f3ff; color:#00f3ff; width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer; z-index:100; display: flex; align-items: center; justify-content: center;"
+                >✕</button>
+                
+                <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                    <!-- MAJESTIC HEADER -->
+                    <div class="majestic-header">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <h1 style="margin:0; font-family:Orbitron; letter-spacing:6px; color:#00f3ff; font-size:26px;">FLIGHT ACADEMY</h1>
+                                <div style="font-size:10px; color:#555; letter-spacing:3px; margin-top:5px;">H.E.G.E.M.O.N. PILOT CERTIFICATION PROGRAM</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:10px; color:#888; letter-spacing:2px; margin-bottom:5px;">ACADEMY RANK</div>
+                                <div style="font-family:Orbitron; color:${rankColor}; font-size:16px; letter-spacing:2px; text-shadow: 0 0 10px ${rankColor}44;">${rankTitle}</div>
+                            </div>
+                        </div>
+
+                        <!-- PROGRESS BAR -->
+                        <div style="margin-top:25px;">
+                            <div style="display:flex; justify-content:space-between; font-size:10px; color:#888; margin-bottom:8px; font-family:Orbitron;">
+                                <span>CURRICULUM PROGRESS</span>
+                                <span>${progressPercent}%</span>
+                            </div>
+                            <div style="width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; position:relative;">
+                                <div style="height:100%; width:${progressPercent}%; background:linear-gradient(90deg, #00f3ff, #00ffaa); box-shadow: 0 0 15px #00f3ff; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SPLIT CONTENT -->
+                    <div style="flex: 1; display: flex; overflow: hidden;">
+                        
+                        <!-- LEFT: LESSON LIST -->
+                        <div style="width: 350px; border-right: 1px solid rgba(0,243,255,0.1); overflow-y: auto; padding: 30px; background: rgba(0,0,0,0.2);">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${lessons.map((l, i) => `
+                                    <div class="academy-lesson-item" onclick="window.game.academyManager.selectLesson(${i})"
+                                        style="padding:15px; background: ${i === currentIndex ? 'rgba(0,243,255,0.1)' : 'rgba(255,255,255,0.03)'}; 
+                                               border: 1px solid ${i === currentIndex ? '#00f3ff' : 'rgba(0,243,255,0.1)'};
+                                               border-radius:10px; cursor:pointer; transition: all 0.2s ease;
+                                               opacity: ${l.completed ? '0.6' : '1'};
+                                               display: flex; align-items: center; gap: 15px;"
+                                        onmouseover="this.style.background='rgba(0,243,255,0.15)'; this.style.borderColor='#00f3ff';"
+                                        onmouseout="this.style.background='${i === currentIndex ? 'rgba(0,243,255,0.1)' : 'rgba(255,255,255,0.03)'}'; this.style.borderColor='${i === currentIndex ? '#00f3ff' : 'rgba(0,243,255,0.1)'}';"
+                                    >
+                                        <div style="width:30px; height:30px; border-radius:50%; background:${l.completed ? '#00ffaa' : 'rgba(255,255,255,0.05)'}; 
+                                                    display:flex; align-items:center; justify-content:center; color:${l.completed ? '#000' : '#888'}; font-size:12px; font-weight:bold;">
+                                            ${l.completed ? '✓' : i + 1}
+                                        </div>
+                                        <div style="flex:1;">
+                                            <div style="font-size:12px; font-weight:bold; color:${i === currentIndex ? '#fff' : '#aaa'}; font-family:Orbitron; letter-spacing:1px;">${l.title.toUpperCase()}</div>
+                                            <div style="font-size:9px; color:${l.completed ? '#00ffaa' : '#555'}; margin-top:2px;">${l.completed ? 'MODULE VERIFIED' : 'PENDING SIMULATION'}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: LESSON DETAIL -->
+                        <div style="flex: 1; overflow-y: auto; padding: 50px; background: radial-gradient(circle at top right, rgba(0,243,255,0.03), transparent);">
+                            ${currentLesson ? `
+                                <div style="max-width: 600px;">
+                                    <div style="font-size: 10px; color: #00f3ff; letter-spacing: 5px; margin-bottom: 15px; font-weight: bold;">MODULE ${currentIndex + 1} // ${currentLesson.id.toUpperCase()}</div>
+                                    <h2 style="font-family: Orbitron; font-size: 32px; color: #fff; margin: 0 0 25px 0; letter-spacing: 2px;">${currentLesson.title}</h2>
+                                    
+                                    <p style="color: #8af; font-size: 16px; line-height: 1.8; margin-bottom: 40px; font-family: 'Exo 2';">
+                                        ${currentLesson.desc}
+                                    </p>
+
+                                    <div style="background: rgba(0,243,255,0.05); border: 2px solid rgba(0,243,255,0.2); border-radius: 15px; padding: 30px; margin-bottom: 40px;">
+                                        <div style="font-size: 11px; color: #00f3ff; letter-spacing: 3px; font-weight: bold; margin-bottom: 15px;">PRIMARY SIMULATION GOAL</div>
+                                        <div style="font-size: 18px; color: #fff; line-height: 1.5; font-family: Orbitron;">${am.getObjectiveForLesson(currentLesson.id)}</div>
+                                    </div>
+
+                                    <div style="display:flex; gap:20px;">
+                                        <button class="btn-main" onclick="window.game.academyManager.startLesson(${currentIndex})"
+                                            style="flex:1; height:60px; font-size:16px; letter-spacing:4px; font-family:Orbitron; cursor:pointer;"
+                                        >
+                                            ${currentLesson.completed ? 'RESTART MODULE' : 'INITIALIZE SIMULATION'}
+                                        </button>
+                                    </div>
+                                    
+                                    <div style="margin-top:30px; font-size:10px; color:#444; letter-spacing:1px; text-transform:uppercase;">
+                                        Certification Credits on Completion: <span style="color:#00ffaa;">$500</span> + High-Performance Rating
+                                    </div>
+                                </div>
+                            ` : `
+                                <div style="display:flex; align-items:center; justify-content:center; height:100%; color:#444; flex-direction:column; gap:20px;">
+                                    <div style="font-size:48px;">🎓</div>
+                                    <div style="font-family:Orbitron; letter-spacing:2px;">SELECT A MODULE TO BEGIN INITIALIZATION</div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderLogisticsTerminal() {
+        const fm = this.game.fleetManager;
+        if (!fm) return this.renderScanningState('Fleet Data Offline...');
+
+        const counts = fm.getEscortCounts();
+        const maxSlots = fm.getMaxSlots();
+        const totalActive = fm.escorts.length;
+        const currentCommand = fm.activeCommand || 'defend';
+
+        return `
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <!-- CAPACITY BAR -->
+                <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:10px; border:1px solid rgba(0,243,255,0.1);">
+                    <div style="display:flex; justify-content:space-between; font-size:10px; color:#5c7a8a; margin-bottom:8px; font-family:Orbitron;">
+                        <span>FLEET CAPACITY</span>
+                        <span>${totalActive} / ${maxSlots} UNITS</span>
+                    </div>
+                    <div style="width:100%; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; overflow:hidden;">
+                        <div style="width:${(totalActive/maxSlots)*100}%; height:100%; background:linear-gradient(90deg, #00f3ff, #00ffaa); box-shadow:0 0 10px #00f3ff;"></div>
+                    </div>
+                </div>
+
+                <!-- QUICK COMMANDS -->
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                    ${['defend', 'attack', 'guard'].map(cmd => `
+                        <button onclick="window.game.hudManager.issueFleetCommand('${cmd}')" 
+                            style="padding:8px; background:${currentCommand === cmd ? 'rgba(0,243,255,0.2)' : 'rgba(255,255,255,0.05)'}; 
+                                   border:1px solid ${currentCommand === cmd ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; 
+                                   color:${currentCommand === cmd ? '#fff' : '#888'}; font-size:9px; border-radius:5px; cursor:pointer; font-family:Orbitron; letter-spacing:1px; transition:all 0.2s;">
+                            ${cmd.toUpperCase()}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <!-- HIRING HUB -->
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="font-size:9px; color:#ffd700; letter-spacing:2px; margin-bottom:5px; font-weight:bold;">ASSET ACQUISITION</div>
+                    ${Object.entries(fm.SALARY_MAP).map(([type, salary]) => {
+                        const cost = fm.getHiringCost(type);
+                        const canAfford = this.game.credits >= cost;
+                        const atCap = totalActive >= maxSlots;
+                        return `
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                                <div style="text-align:left;">
+                                    <div style="font-size:11px; color:#fff; font-family:Orbitron;">${type.toUpperCase()}</div>
+                                    <div style="font-size:8px; color:#5c7a8a;">$${cost.toLocaleString()} // $${salary}/min</div>
+                                </div>
+                                <button onclick="window.game.hudManager.hireFleetEscort('${type}')" 
+                                    style="padding:5px 12px; background:${canAfford && !atCap ? 'rgba(0,255,170,0.1)' : 'rgba(255,255,255,0.05)'}; 
+                                           border:1px solid ${canAfford && !atCap ? '#00ffaa' : '#333'}; 
+                                           color:${canAfford && !atCap ? '#00ffaa' : '#555'}; font-size:9px; border-radius:4px; cursor:${canAfford && !atCap ? 'pointer' : 'not-allowed'};"
+                                    ${!canAfford || atCap ? 'disabled' : ''}>
+                                    ${atCap ? 'CAP' : 'HIRE'}
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    hireFleetEscort(type) {
+        if (!this.game.fleetManager) return;
+        const success = this.game.fleetManager.hireEscort(type);
+        if (success) {
+            this.showEmpireOverview(); // Refresh UI
+            if (window.gameAudio) window.gameAudio.playMenuSelect();
+        }
+    }
+
+    issueFleetCommand(cmd) {
+        if (!this.game.fleetManager) return;
+        this.game.fleetManager.issueCommand(cmd);
+        this.showEmpireOverview(); // Refresh UI
+        if (window.gameAudio) window.gameAudio.playMenuHover();
+    }
+
+    renderScanningState(text) {
+        return `
+            <div style="padding:20px; text-align:center; background:rgba(255,255,255,0.02); border:1px dashed #444; border-radius:8px;">
+                <div class="blink" style="font-size:9px; color:#888; letter-spacing:1px;">${text.toUpperCase()}</div>
+                <div style="width:100%; height:2px; background:rgba(0,255,170,0.1); margin-top:10px; position:relative; overflow:hidden;">
+                    <div style="position:absolute; width:30%; height:100%; background:#00ffaa; animation: scanline 2s infinite;"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    launchTrainingSim() {
+        this.closeAllModals();
+        this.showToast("INITIALIZING VOLUMETRIC TRAINING ENVIRONMENT...", 4000, "info");
+        
+        setTimeout(() => {
+            this.game.trainingActive = true;
+            if (this.game.proceduralManager && this.game.proceduralManager.spawnTrainingField) {
+                this.game.proceduralManager.spawnTrainingField();
+            } else {
+                console.warn("[HUD] ProceduralManager.spawnTrainingField not found. Fallback activation.");
+                this.game.notificationManager.add("SIMULATION ERROR: VOLUMETRIC DATA MISMATCH", { type: 'error' });
+            }
+        }, 1500);
+    }
+
+    renderLegacyStats() {
+        const stats = this.game.legacyStats || {};
+        const systems = stats.systemsClaimed || 0;
+        const artifacts = stats.artifactsFound || 0;
+
+        if (systems === 0 && artifacts === 0) {
+            return `<div style="color:#666; font-size:10px; font-style:italic; text-align:center; padding:10px;">Legacy history pending stabilization...</div>`;
+        }
+
+        return `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:11px;">
+                <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; border-left:2px solid #ffd700;">
+                    <span style="color:#888;">Systems Claimed:</span> <span style="color:#ffd700; font-weight:bold;">${systems}</span>
+                </div>
+                <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; border-left:2px solid #ffd700;">
+                    <span style="color:#888;">Artifacts Found:</span> <span style="color:#ffd700; font-weight:bold;">${artifacts}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    renderDiplomacyStats() {
+        const am = this.game.aiManager;
+        if (!am) return this.renderScanningState('Faction Comms Offline...');
+
+        return Object.entries(am.factions).map(([key, f]) => {
+            const rep = f.rating || 0;
+            const stance = f.stance || "NEUTRAL";
+            const color = stance === "FRIENDLY" ? "#00ffaa" : (stance === "HOSTILE" ? "#ff4444" : "#00f3ff");
+            
+            // Normalize -100..100 to 0..100 for progress bar
+            const progress = ((rep + 100) / 200) * 100;
+
+            return `
+                <div style="margin-bottom:15px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:12px; border-radius:10px; position:relative; overflow:hidden;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div style="text-align:left;">
+                            <div style="font-size:11px; color:#fff; font-family:Orbitron; letter-spacing:1px;">${f.name.toUpperCase()}</div>
+                            <div style="font-size:8px; color:${f.color}; letter-spacing:2px; font-weight:bold;">${stance} // RATING: ${rep}</div>
+                        </div>
+                        <div style="font-size:12px; opacity:0.5;">📡</div>
+                    </div>
+                    <div style="width:100%; height:3px; background:rgba(0,0,0,0.3); border-radius:2px; overflow:hidden;">
+                        <div style="width:${progress}%; height:100%; background:${color}; box-shadow:0 0 8px ${color}; transition: width 0.5s ease;"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    renderMegaProjectOptions() {
+        const sector = this.game.sectorManager?.getCurrentSectorData();
+        if (!sector || !sector.megaProject) return '<div style="color:#444; font-size:10px;">SYSTEM OFFLINE</div>';
+
+        const mp = sector.megaProject;
+        let html = '';
+
+        if (mp.status === 'null') {
+            html = `
+                <div style="background:rgba(255,140,0,0.1); border:1px solid #ffaa00; padding:15px; border-radius:8px; text-align:center;">
+                    <div style="font-size:11px; color:#ffaa00; letter-spacing:1px; margin-bottom:10px;">STELLAR ENGINEERING BLANK</div>
+                    <div style="display:flex; gap:10px; justify-content:center;">
+                        <button class="btn-small" onclick="window.game.hudManager.startMegaProject('dyson_swarm')" style="border-color:#00f3ff; color:#00f3ff;">DYSON SWARM</button>
+                        <button class="btn-small" onclick="window.game.hudManager.startMegaProject('ring_world')" style="border-color:#bd00ff; color:#bd00ff;">RING WORLD</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            const progressColor = mp.status === 'complete' ? '#00ffaa' : '#00f3ff';
+            const reqs = mp.requiredMinerals;
+
+            html = `
+                <div style="background:rgba(0,243,255,0.05); border:1px solid ${progressColor}; padding:15px; border-radius:8px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span style="font-size:11px; color:${progressColor}; letter-spacing:1px;">${mp.type.toUpperCase()} PROGRESS</span>
+                        <span style="font-size:12px; color:#fff; font-family:monospace;">${mp.progress}%</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:rgba(0,0,0,0.3); border-radius:4px; margin-bottom:15px; overflow:hidden; border:1px solid rgba(0,243,255,0.2);">
+                        <div style="width:${mp.progress}%; height:100%; background:${progressColor}; box-shadow:0 0 10px ${progressColor}; transition:width 0.5s;"></div>
+                    </div>
+
+                    ${mp.status !== 'complete' ? `
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:5px;">
+                        ${Object.entries(reqs).map(([type, amount]) => `
+                            <button class="btn-micro" onclick="window.game.hudManager.contributeToProject('${type}')" 
+                                    style="font-size:9px; padding:4px; ${amount === 0 ? 'opacity:0.3; pointer-events:none;' : ''}">
+                                ${type.toUpperCase()}: ${amount}
+                            </button>
+                        `).join('')}
+                    </div>` : '<div style="font-size:10px; color:#00ffaa; text-align:center;">PROJECT OPERATIONAL</div>'}
+                </div>
+            `;
+        }
+
+        // Add "nearby scan" section from the other version
+        const ship = this.game.playerShip;
+        if (ship) {
+            const structures = this.game.warpGateManager?.gates || [];
+            const nearbyStars = (this.game.stars || []).filter(s => Math.hypot(s.x - ship.x, s.y - ship.y) < 3000);
+            const nearbyPlanets = (this.game.planets || []).filter(p => Math.hypot(p.x - ship.x, p.y - ship.y) < 3000);
+
+            if (nearbyStars.length > 0 || nearbyPlanets.length > 0) {
+                html += '<div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">';
+                html += '<div style="font-size:9px; color:#888; margin-bottom:8px;">LOCAL ENG. OPPORTUNITIES</div>';
+                
+                nearbyStars.forEach(s => {
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <span style="font-size:10px; color:#FFD700;">DYSON: ${s.name}</span>
+                            <button class="btn-micro" onclick="window.game.hudManager.buildMegaStructure('dyson', '${s.name}', ${s.x}, ${s.y})" ${this.game.credits < 50000 ? 'disabled' : ''}>BUILD</button>
+                        </div>
+                    `;
+                });
+                nearbyPlanets.forEach(p => {
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <span style="font-size:10px; color:#00FF7F;">RING: ${p.name}</span>
+                            <button class="btn-micro" onclick="window.game.hudManager.buildMegaStructure('ring', '${p.name}', ${p.x}, ${p.y})" ${this.game.credits < 50000 ? 'disabled' : ''}>BUILD</button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+        }
+
+        return html;
+    }
+
+    renderMilestones() {
+        if (!this.game) return '';
+        const bases = this.game.spaceBases || [];
+        const gems = this.game.playerInventory || {};
+        const rank = this.game.colonyManager?.getEmpireRank?.() || { level: 1 };
+        
+        return [
+            { title: 'Sovereign', req: 'Established Hub', completed: bases.length > 0, icon: '👑' },
+            { title: 'Industrialist', req: '5 Space Bases', completed: bases.length >= 5, icon: '🏭' },
+            { title: 'Gilded', req: '$250k Credits', completed: this.game.credits >= 250000, icon: '💰' },
+            { title: 'Majestic', req: 'Rank Level 3+', completed: rank.level >= 3, icon: '🛡️' }
+        ].map(m => this.renderMilestoneCard(m.title, m.req, m.completed, m.icon)).join('');
+    }
+
+    renderMilestoneCard(title, req, completed, icon) {
+        const opacity = completed ? 1 : 0.3;
+        const color = completed ? '#00ffaa' : '#555';
+        return `
+        <div style="background:rgba(0,0,0,0.4); border:1px solid ${color}; padding:10px; border-radius:8px; text-align:center; opacity:${opacity}; transition:all 0.5s;">
+            <div style="font-size:20px; margin-bottom:5px;">${icon}</div>
+            <div style="font-size:10px; color:#fff; font-weight:bold;">${title.toUpperCase()}</div>
+            <div style="font-size:8px; color:#888;">${req}</div>
+            ${completed ? '<div style="font-size:8px; color:#00ffaa; margin-top:5px;">COMPLETED</div>' : ''}
+        </div>
+        `;
+    }
+
+    showVictoryOverlay(awardedNexusCredits = 0) {
+        this.closeAllModals();
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'victoryOverlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.95); z-index: 100000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #fff; font-family: Orbitron, sans-serif; text-align: center;
+            animation: victoryFadeIn 2s ease-out;
+        `;
+        
+        this.activeModal = 'victoryOverlay';
+
+        const totalPop = this.game.spaceBases.reduce((sum, b) => sum + (b.population || 0), 0);
+
+        overlay.innerHTML = `
+            <h1 style="font-size: 60px; color: #00ffaa; text-shadow: 0 0 30px #00ffaa; margin-bottom: 10px;">GALACTIC ASCENSION</h1>
+            <p style="font-size: 18px; color: #8ba; margin-bottom: 40px;">Your empire has reached the ultimate stage of evolution.</p>
+            
+            <div style="background: rgba(0,255,170,0.1); border: 2px solid #00ffaa; padding: 30px; border-radius: 20px; width: 450px; backdrop-filter:blur(10px);">
+                <h3 style="margin-bottom: 20px; letter-spacing:3px;">EMPIRE LEGACY</h3>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; color:#aaa;"><span>Bases Established:</span> <span>${this.game.spaceBases.length}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; color:#aaa;"><span>Total Population:</span> <span>${totalPop}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; color:#aaa;"><span>Credits Earned:</span> <span>$${Math.floor(this.game.credits || 0).toLocaleString()}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px; color:#aaa;"><span>Final Rank:</span> <span style="color:#00ffaa; font-weight:bold;">HEGEMON</span></div>
+                
+                <div style="border-top:1px solid rgba(0,255,170,0.3); padding-top:20px; margin-top:20px; margin-bottom:30px;">
+                    <div style="font-size:12px; color:#00ffaa; margin-bottom:5px;">NEXUS CREDITS AWARDED</div>
+                    <div style="font-size:32px; font-weight:bold; color:#fff;">🌀 ${awardedNexusCredits.toLocaleString()}</div>
+                    <div style="font-size:10px; color:#777; margin-top:5px;">Permanent currency for the next cosmic cycle.</div>
+                </div>
+
+                <button class="btn-main" onclick="window.interstellarEngine.commenceNewCycle()" style="width: 100%; height: 50px; font-size: 18px;">COMMENCE NEW CYCLE</button>
+            </div>
+            
+            <style>
+                @keyframes victoryFadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
+            </style>
+        `;
+
+        document.body.appendChild(overlay);
+    }
+
+    updateInventoryUI() {
+        const gemsGrid = document.getElementById('gemsGrid');
+        const gemsTotalEl = document.getElementById('gemsTotal');
+
+        if (!gemsGrid) return;
+
+        let totalValue = 0;
+        let html = '';
+
+        // Calculate total value
+        Object.entries(this.game.playerInventory || {}).forEach(([type, count]) => {
+            const info = MINERAL_TYPES[type];
+            if (info) totalValue += count * info.value;
+        });
+
+        // Display ALL types
+        Object.keys(MINERAL_TYPES).forEach(type => {
+            const info = MINERAL_TYPES[type];
+            const count = (this.game.playerInventory && this.game.playerInventory[type]) || 0;
+            const marketData = this.game.marketplaceManager?.priceIndex[type] || { currentPrice: info.value };
+
+            const itemValue = count * marketData.currentPrice;
+            const priceTrend = marketData.currentPrice > info.value ? 
+                `<span style="color:#00ff88; font-size:9px;">▲</span>` : 
+                (marketData.currentPrice < info.value ? `<span style="color:#ff4444; font-size:9px;">▼</span>` : '');
+            
+            const valueDisplay = this.game.showGemValues ? `<span style="color:${info.color}; font-weight:bold; margin-left:6px;">$${Math.round(itemValue).toLocaleString()} ${priceTrend}</span>` : '';
+
+            const opacity = count > 0 ? 1 : 0.5;
+            const bgAlpha = count > 0 ? 0.6 : 0.2;
+
+            const isLuxury = ['diamond', 'sapphire', 'platinum', 'emerald', 'ruby', 'exotic', 'antimatter'].includes(type);
+            const luxuryStyle = isLuxury ? `border: 2px solid ${info.color}; box-shadow: 0 0 15px ${info.color}88; background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);` : `border:1px solid ${info.color}44; background: rgba(0,0,0,${bgAlpha});`;
+
+            html += `
+                        <div class="gem-item" style="${luxuryStyle} opacity: ${opacity}; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden;">
+                            ${isLuxury ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent); animation: shimmer 2s infinite;"></div>` : ''}
+                            <div style="display: flex; align-items: center;">
+                                <div style="${this.styleGem(type)}"></div>
+                                <span style="color:${info.color}; font-weight: ${isLuxury ? 'bold' : 'normal'}; letter-spacing: 1px;">${info.name.toUpperCase()}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="gem-count" style="font-family: monospace; color: #fff; font-size: 14px;">×${count}</span>
+                                ${valueDisplay}
+                            </div>
+                        </div>
+                    `;
+
+        });
+
+        gemsGrid.innerHTML = html;
+
+        if (gemsTotalEl) {
+            gemsTotalEl.textContent = `$${totalValue.toLocaleString()}`;
+        }
+    }
+
+    updateShipStatus() {
+
+        const ship = this.game.playerShip;
+        if (!ship) return;
+
+        // --- ATOMIC OVER-SHIELD (PHASE 18) ---
+        const atomicBar = document.getElementById('atomicShieldBar');
+        const atomicText = document.getElementById('atomicShieldText');
+        const atomicContainer = document.getElementById('atomicShieldContainer');
+
+        if (atomicBar && atomicText) {
+            if (ship.atomicShield > 0) {
+                if (atomicContainer) atomicContainer.style.display = 'block';
+                const atomicPercent = (ship.atomicShield / ship.maxAtomicShield) * 100;
+                atomicBar.style.width = atomicPercent + '%';
+                atomicText.textContent = `${Math.round(ship.atomicShield)} / ${Math.round(ship.maxAtomicShield)}`;
+                
+                // Nuclear pulsing animation
+                atomicBar.style.boxShadow = `0 0 ${10 + Math.sin(Date.now()/200)*5}px rgba(0, 255, 150, 0.8)`;
+            } else {
+                if (atomicContainer) atomicContainer.style.display = 'none';
+            }
+        }
+
+        // --- PLASMA SHIELD ---
+        const shieldBar = document.getElementById('shieldBar');
+        const shieldText = document.getElementById('shieldText');
+
+        if (shieldBar && shieldText) {
+            const shieldPercent = (ship.shield / ship.maxShield) * 100;
+            shieldBar.style.width = shieldPercent + '%';
+            shieldText.textContent = `${Math.round(ship.shield)} / ${Math.round(ship.maxShield)}`;
+
+            // Change color based on shield level
+            if (shieldPercent < 25) {
+                shieldBar.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)';
+                shieldBar.style.boxShadow = '0 0 15px rgba(255, 50, 50, 0.8)';
+            } else if (shieldPercent < 50) {
+                shieldBar.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)';
+                shieldBar.style.boxShadow = '0 0 10px rgba(255, 170, 0, 0.6)';
+            } else {
+                shieldBar.style.background = 'linear-gradient(90deg, #00aaff, #00ffff)';
+                shieldBar.style.boxShadow = '0 0 10px rgba(0, 255, 255, 0.5)';
+            }
+        }
+
+        // Update health bar (reflects actual hull health)
+        const hullBar = document.getElementById('hullBar');
+        const hullText = document.getElementById('hullText');
+
+        if (hullBar && hullText) {
+            const hullPercent = Math.max(0, Math.min(100, (this.game.playerShip.hullHealth / this.game.playerShip.maxHull) * 100));
+            hullBar.style.width = `${hullPercent}%`;
+            hullText.textContent = `${Math.round(hullPercent)}%`;
+
+            // Color feedback based on health
+            if (hullPercent <= 25) {
+                hullBar.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)';
+                hullBar.style.boxShadow = '0 0 15px rgba(255, 0, 0, 0.8)';
+            } else if (hullPercent <= 50) {
+                hullBar.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)';
+                hullBar.style.boxShadow = '0 0 10px rgba(255, 170, 0, 0.6)';
+            } else {
+                hullBar.style.background = 'linear-gradient(90deg, #00cc55, #00ff88)';
+                hullBar.style.boxShadow = '0 0 10px rgba(0, 255, 100, 0.5)';
+            }
+        }
+
+        // Show/hide damage warning
+        const damageWarning = document.getElementById('damageWarning');
+        if (damageWarning) {
+            const isTakingDamage = this.game.hazardEffect && (this.game.hazardEffect.type === 'missile_hit' || this.game.hazardEffect.type === 'planet_impact');
+            damageWarning.style.display = isTakingDamage ? 'block' : 'none';
+        }
+
+        // Quick Repair Button visibility (Monetization Hook)
+        const repairBtn = document.getElementById('quickRepairBtn');
+        if (repairBtn) {
+            const hullPercent = (this.game.playerShip.hullHealth / this.game.playerShip.maxHull) * 100;
+            // Show if hull is < 30% and player has enough credits
+            if (hullPercent < 30 && this.game.credits >= 2000) {
+                repairBtn.style.display = 'block';
+            } else {
+                repairBtn.style.display = 'none';
+            }
+        }
+        
+        this.updateNebulaHUD(ship);
+        this.renderLandingPrompt();
+        
+        // --- PHASE 25: TELEMETRY SYNC ---
+        this.updateFactionHUD();
+        this.updateInlineMap();
+    }
+
+
+    renderLandingPrompt() {
+        if (!this.game.flightMode || this.game.surfaceMode) {
+            const el = document.getElementById('landingPrompt');
+            if (el) el.style.display = 'none';
+            return;
+        }
+
+        const planet = this.game.surfaceManager?.findNearbyPlanet();
+        let promptEl = document.getElementById('landingPrompt');
+
+        if (planet) {
+            if (!promptEl) {
+                promptEl = document.createElement('div');
+                promptEl.id = 'landingPrompt';
+                promptEl.style.cssText = `
+                    position: fixed; bottom: 200px; left: 50%; transform: translateX(-50%);
+                    padding: 20px 40px; background: rgba(0, 20, 40, 0.9);
+                    border: 2px solid #00ffaa; border-radius: 12px;
+                    color: #fff; font-family: Orbitron; text-align: center;
+                    z-index: 1000; box-shadow: 0 0 30px rgba(0, 255, 170, 0.3);
+                    display: flex; flex-direction: column; gap: 10px;
+                    animation: promptSlideUp 0.5s ease-out;
+                `;
+                document.body.appendChild(promptEl);
+                
+                if (!document.getElementById('landingStyles')) {
+                    const style = document.createElement('style');
+                    style.id = 'landingStyles';
+                    style.textContent = `@keyframes promptSlideUp { from { transform: translate(-50%, 50px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }`;
+                    document.head.appendChild(style);
+                }
+            }
+
+            const speedRatio = Math.min(1.0, this.game.playerShip.speed / 10);
+            const canLand = this.game.playerShip.speed <= 10;
+            
+            promptEl.style.display = 'flex';
+            promptEl.style.borderColor = canLand ? '#00ffaa' : '#ffaa00';
+            promptEl.innerHTML = `
+                <div style="font-size: 10px; color: ${canLand ? '#00ffaa' : '#ffaa00'}; letter-spacing: 2px;">NEARBY PLANETARY BODY</div>
+                <div style="font-size: 20px; font-weight: bold;">${planet.name.toUpperCase()}</div>
+                <div style="font-size: 11px; color: #888;">Atmosphere: ${planet.type.replace('_', ' ')}</div>
+                <div style="margin-top: 5px;">
+                    ${canLand ? 
+                        `<button class="btn-main" onclick="window.game.surfaceManager.initiateLanding()" style="padding: 10px 40px;">[ L ] LAND SHIP</button>` : 
+                        `<div style="color:#ffaa00; font-size:12px; font-weight:bold;">⚠️ REDUCE SPEED TO LAND (${Math.round(this.game.playerShip.speed * 10)} / 100)</div>`
+                    }
+                </div>
+            `;
+        } else if (promptEl) {
+            promptEl.style.display = 'none';
+        }
+    }
+
+    updateNebulaHUD(ship) {
+        let warningEl = document.getElementById('nebulaWarning');
+        if (!warningEl && this.game.inNebulaHazard) {
+            warningEl = document.createElement('div');
+            warningEl.id = 'nebulaWarning';
+            warningEl.style.cssText = `
+                position: fixed; top: 120px; left: 50%; transform: translateX(-50%);
+                padding: 10px 30px; background: rgba(0,0,0,0.8); border: 2px solid #ff3366;
+                color: #ff3366; font-family: Orbitron; font-size: 14px; letter-spacing: 2px;
+                z-index: 1000; display: flex; align-items: center; gap: 15px;
+                box-shadow: 0 0 20px rgba(255, 51, 102, 0.3); border-radius: 5px;
+                animation: WarningPulse 1.5s infinite alternate;
+            `;
+            document.body.appendChild(warningEl);
+            
+            // Add global CSS for the pulse if not exists
+            if (!document.getElementById('nebulaStyles')) {
+                const style = document.createElement('style');
+                style.id = 'nebulaStyles';
+                style.textContent = `
+                    @keyframes WarningPulse { from { opacity: 0.6; } to { opacity: 1; } }
+                    @keyframes HUDGlitch { 
+                        0% { transform: translate(0,0); }
+                        10% { transform: translate(-2px, 1px); filter: hue-rotate(10deg); }
+                        20% { transform: translate(2px, -1px); }
+                        30% { transform: translate(-1px, 2px); filter: hue-rotate(-10deg); }
+                        40% { transform: translate(0,0); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        if (warningEl) {
+            if (this.game.inNebulaHazard) {
+                const type = (this.game.nebulaHazardType || 'UNKNOWN').toUpperCase();
+                warningEl.style.display = 'flex';
+                warningEl.innerHTML = `<span style="font-size: 20px;">⚠️</span> <span>NEBULA INTERFERENCE: ${type} ATMO</span>`;
+                
+                // Apply glitch to HUD container
+                const hud = document.getElementById('hud');
+                if (hud && this.game.nebulaHazardType === 'static') {
+                    const intensity = this.game.uiStaticIntensity || 0;
+                    if (Math.random() < intensity) {
+                        hud.style.animation = 'HUDGlitch 0.1s steps(2)';
+                    } else {
+                        hud.style.animation = 'none';
+                    }
+                }
+            } else {
+                warningEl.style.display = 'none';
+                const hud = document.getElementById('hud');
+                if (hud) hud.style.animation = 'none';
+            }
+        }
+    }
+
+    updateMissionHUD() {
+        const section = document.getElementById('sectionMission');
+        const content = document.getElementById('missionContent');
+        if (!section || !content) return;
+
+        if (this.game.activeMission && this.game.flightMode) {
+            section.style.display = 'flex';
+            // Make mission window VERY prominent with pulsing glow
+            section.style.border = '2px solid #00ffcc';
+            section.style.boxShadow = '0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.2), inset 0 0 15px rgba(0,255,204,0.1)';
+            section.style.animation = 'missionPulse 2s ease-in-out infinite';
+            section.style.zIndex = '50';
+            // Inject keyframe if not present
+            if (!document.getElementById('missionPulseStyle')) {
+                const style = document.createElement('style');
+                style.id = 'missionPulseStyle';
+                style.textContent = `
+                    @keyframes missionPulse {
+                        0%, 100% { box-shadow: 0 0 20px rgba(0,255,204,0.5), 0 0 40px rgba(0,255,204,0.2); border-color: #00ffcc; }
+                        50% { box-shadow: 0 0 30px rgba(0,255,204,0.8), 0 0 60px rgba(0,255,204,0.4); border-color: #66ffdd; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            const m = this.game.activeMission;
+            const pct = Math.min(100, Math.round((m.progress / m.goal) * 100));
+            
+            // Use the mission-specific hint if available, fall back to generic
+            let tip = '';
+            if (m.hint) {
+                tip = `<div style="color: #00eaff; font-size: 11px; margin-top: 8px; font-style: italic; font-weight: bold; line-height: 1.4; background: rgba(0,234,255,0.08); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #00eaff;">${m.hint}</div>`;
+            } else if (m.type === 'kill' || m.type === 'kill_any' || m.type === 'boss') {
+                tip = '<div style="color: #ff6b6b; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(255,50,50,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #ff6b6b;">🎯 Hold [SPACE] to Fire Weapons</div>';
+            } else if (m.type === 'collect') {
+                tip = '<div style="color: #f17eff; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(241,126,255,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #f17eff;">💎 Fly over glowing gems to collect</div>';
+            } else if (m.type === 'survive') {
+                tip = '<div style="color: #ffaa00; font-size: 11px; margin-top: 8px; font-weight: bold; background: rgba(255,170,0,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #ffaa00;">⚠️ Dodge hazards — stay alive!</div>';
+            }
+            
+            content.innerHTML = `
+                <div style="color: #00ffcc; font-weight: bold; font-size: 14px; margin-bottom: 4px; text-shadow: 0 0 8px rgba(0,255,204,0.4);">${m.name}</div>
+                <div style="color: #ddd; margin-bottom: 8px; font-size: 12px; line-height: 1.4;">${m.desc}</div>
+                <div style="background: rgba(0,0,0,0.4); border-radius: 6px; padding: 8px; margin-bottom: 4px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                        <span>PROGRESS</span>
+                        <span style="color: #00ff88; font-weight: bold;">${m.progress} / ${m.goal}</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 3px; height: 8px; overflow: hidden;">
+                        <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #00ff88, #00ffcc); border-radius: 3px; transition: width 0.3s ease; box-shadow: 0 0 8px rgba(0,255,136,0.5);"></div>
+                    </div>
+                </div>
+                ${tip}
+            `;
+        } else {
+            section.style.display = 'none';
+            section.style.border = '';
+            section.style.boxShadow = '';
+        }
+
+        // --- PHASE 8: Dynamic Territorial Overlay ---
+        if (this.game.sectorManager && this.game.sectorManager.currentSector) {
+            const sectorKey = `${this.game.sectorManager.currentSector.x},${this.game.sectorManager.currentSector.y}`;
+            const sector = this.game.sectorManager.sectors.get(sectorKey);
+            
+            if (sector) {
+                const faction = sector.faction || 'neutral';
+                const influence = Math.round(sector.influence || 0);
+                
+                // Defensive lookup for faction color
+                let factionColor = '#888';
+                if (this.game.aiManager && this.game.aiManager.factions) {
+                    const fData = this.game.aiManager.factions[faction] || this.game.aiManager.factions[faction.toUpperCase()];
+                    if (fData) factionColor = fData.color;
+                }
+
+                content.innerHTML = `
+                    <div style="margin-bottom:20px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); border-radius:8px; overflow:hidden;">
+                        <div style="background:rgba(255,255,255,0.05); padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:10px; color:#aaa; letter-spacing:1px; text-transform:uppercase;">Sector Territory</div>
+                        <div style="padding:12px; text-align:center;">
+                            <div style="font-size:16px; font-weight:bold; color:${factionColor}; text-shadow:0 0 10px ${factionColor}; margin-bottom:5px;">${faction.toUpperCase()}</div>
+                            <div style="background:rgba(255,255,255,0.1); height:6px; border-radius:3px; overflow:hidden; margin:10px 0;">
+                                <div style="width:${influence}%; height:100%; background:${factionColor}; box-shadow:0 0 15px ${factionColor}; transition:width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                            </div>
+                            <div style="font-size:9px; color:#666;">INFLUENCE: ${influence}%</div>
+                        </div>
+                    </div>
+                    <div style="padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); font-size:9px; color:#444; margin-bottom:10px; letter-spacing:1px;">GLOBAL FACTION STANDING</div>
+                ` + content.innerHTML;
+            }
+        }
+    }
+
+    updateFlightHUD() {
+        const ship = this.game.playerShip;
+        if (!ship) return;
+
+        const velEl = document.getElementById('speedNumber');
+        if (velEl) velEl.textContent = Math.round(ship.speed || 0).toLocaleString();
+
+        this.drawSpeedGauge(ship.speed || 0, ship.maxSpeed || 10);
+
+        const coordsEl = document.getElementById('radarCoords');
+        if (coordsEl) {
+            coordsEl.textContent = `X: ${Math.round(ship.x || 0).toLocaleString()} Y: ${Math.round(ship.y || 0).toLocaleString()}`;
+        }
+
+        // --- NEW: TELEMETRY SYNC (Phase 25) ---
+        const starCountEl = document.getElementById('hudStarCount');
+        if (starCountEl) {
+            const count = (this.game.stars?.length || 0) + (this.game.backgroundStars?.length || 0);
+            starCountEl.textContent = count.toLocaleString();
+        }
+
+        const mineralCountEl = document.getElementById('hudMineralCount');
+        if (mineralCountEl) {
+            const count = (this.game.minerals?.length || 0) + (this.game.gems?.length || 0);
+            mineralCountEl.textContent = count.toLocaleString();
+        }
+
+
+        // Update ability recharge displays if present
+        for (let i = 1; i <= 3; i++) {
+            const refill = document.getElementById(`ability-refill-${i}`);
+            if (refill) {
+                // Simplified recharge logic for HUD visibility
+                refill.style.height = '100%';
+            }
+        }
+
+        // Phase 14: Gravity Well (Key 4)
+        if (this.game.playerSkills && this.game.playerSkills.blackHole) {
+            const bar4 = document.getElementById('ability4Bar');
+            const txt4 = document.getElementById('ability4Text');
+            if (bar4 && txt4) {
+                const now = Date.now();
+                const timePassed = now - (this.game.lastBlackHoleTime || 0);
+                const cd = this.game.blackHoleCooldown || 30000;
+                if (timePassed < cd) {
+                    const pct = (timePassed / cd) * 100;
+                    bar4.style.width = pct + '%';
+                    bar4.style.background = 'linear-gradient(90deg, #660066, #990099)';
+                    txt4.textContent = Math.ceil((cd - timePassed)/1000) + 's';
+                    txt4.style.color = '#ff66ff';
+                } else {
+                    bar4.style.width = '100%';
+                    bar4.style.background = 'linear-gradient(90deg, #aa00ff, #ff00ff)';
+                    txt4.textContent = 'READY';
+                    txt4.style.color = '#fff';
+                }
+            }
+        } else {
+            const bar4 = document.getElementById('ability4Bar');
+            const txt4 = document.getElementById('ability4Text');
+            if (bar4) bar4.style.width = '0%';
+            if (txt4) {
+                txt4.textContent = 'LOCKED';
+                txt4.style.color = '#555';
+            }
+        }
+
+        // Phase 14: Chrono-Shift (Key 5)
+        if (this.game.playerSkills && this.game.playerSkills.chronoShift) {
+            const bar5 = document.getElementById('ability5Bar');
+            const txt5 = document.getElementById('ability5Text');
+            if (bar5 && txt5) {
+                const now = Date.now();
+                const timePassed = now - (this.game.lastChronoTime || 0);
+                const cd = this.game.chronoCooldown || 45000;
+                if (timePassed < cd) {
+                    const pct = (timePassed / cd) * 100;
+                    bar5.style.width = pct + '%';
+                    bar5.style.background = 'linear-gradient(90deg, #005577, #0088aa)';
+                    txt5.textContent = Math.ceil((cd - timePassed)/1000) + 's';
+                    txt5.style.color = '#00ffff';
+                } else {
+                    bar5.style.width = '100%';
+                    bar5.style.background = 'linear-gradient(90deg, #00aaff, #00ffff)';
+                    txt5.textContent = 'READY';
+                    txt5.style.color = '#fff';
+                }
+            }
+        } else {
+            const bar5 = document.getElementById('ability5Bar');
+            const txt5 = document.getElementById('ability5Text');
+            if (bar5) bar5.style.width = '0%';
+            if (txt5) {
+                txt5.textContent = 'LOCKED';
+                txt5.style.color = '#555';
+            }
+        }
+        
+        this.updateShipStatus();
+    }
+
+    drawSpeedGauge(speed, maxSpeed) {
+        const canvas = document.getElementById('speedGaugeCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const radius = Math.min(w, h) / 2 - 5;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Background arc
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0.8 * Math.PI, 0.2 * Math.PI);
+        ctx.strokeStyle = 'rgba(0, 243, 255, 0.1)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Speed arc
+        const ratio = Math.min(1, speed / maxSpeed);
+        const endAngle = 0.8 * Math.PI + (ratio * 1.4 * Math.PI);
+        
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0.8 * Math.PI, endAngle);
+        ctx.strokeStyle = 'var(--accent)';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(0, 243, 255, 0.5)';
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Ticks
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 10; i++) {
+            const angle = 0.8 * Math.PI + (i / 10 * 1.4 * Math.PI);
+            const x1 = cx + Math.cos(angle) * (radius - 2);
+            const y1 = cy + Math.sin(angle) * (radius - 2);
+            const x2 = cx + Math.cos(angle) * radius;
+            const y2 = cy + Math.sin(angle) * radius;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+    }
+
+    updateFleetHUD() {
+        let panel = document.getElementById('fleetStatusPanel');
+        const fleetManager = this.game.fleetManager;
+        if (!fleetManager) return;
+        
+        const escorts = fleetManager.escorts;
+        const activeCommand = fleetManager.activeCommand;
+
+        if (!this.game.flightMode || (escorts.length === 0 && !this.game.hudHidden)) {
+            if (panel) panel.style.display = 'none';
+            return;
+        }
+
+        if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'fleetStatusPanel';
+            panel.style.cssText = `
+                position: fixed; bottom: 110px; left: 16px;
+                background: rgba(5, 10, 20, 0.85);
+                border: 1px solid rgba(0, 243, 255, 0.3);
+                border-radius: 10px; padding: 10px 12px;
+                font-family: Orbitron, sans-serif;
+                color: #fff; z-index: 1000; min-width: 180px;
+                backdrop-filter: blur(8px);
+                box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+            `;
+            document.body.appendChild(panel);
+        }
+
+        if (this.game.hudHidden) { panel.style.display = 'none'; return; }
+        panel.style.display = 'block';
+
+        const classIcons = { 'scout': '🚤', 'interceptor': '⚡', 'defender': '🛡️', 'support': '🛠️' };
+        const cmdColors = { attack: '#ff4444', defend: '#00aaff', patrol: '#ffaa00', retreat: '#ff00ff' };
+
+        const escortHTML = escorts.map(e => {
+            const hpPct = (e.health / e.maxHealth) * 100;
+            const hpColor = hpPct > 60 ? '#00ff88' : hpPct > 30 ? '#ffaa00' : '#ff4444';
+            return `
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                <span style="font-size:12px;">${classIcons[e.type] || '✦'}</span>
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; font-size:7px; color:#aaa; margin-bottom:2px;">
+                        <span>${e.type.toUpperCase()}</span>
+                        <span>${Math.round(hpPct)}%</span>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.1); height:3px; border-radius:2px; overflow:hidden;">
+                        <div style="width:${hpPct}%; height:100%; background:${hpColor};"></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        const nextPayroll = Math.max(0, Math.ceil(fleetManager.payrollTimer / 1000));
+
+        panel.innerHTML = `
+            <div style="font-size:8px; color:rgba(0, 243, 255, 0.6); letter-spacing:2px; margin-bottom:8px; display:flex; justify-content:space-between;">
+                <span>ACTIVE FLEET</span>
+                <span style="color:${cmdColors[activeCommand]}; animation: blink 1s infinite;">▶ ${activeCommand.toUpperCase()}</span>
+            </div>
+            ${escortHTML}
+            <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:8px; padding-top:6px; font-size:7px; color:#555;">
+                <div style="display:flex; justify-content:space-between;">
+                    <span>NEXT PAYROLL:</span>
+                    <span style="color:${nextPayroll < 10 ? '#ff4444' : '#888'}">${nextPayroll}s</span>
+                </div>
+                <div style="margin-top:4px;">[F1-F4] TACTICAL COMMANDS</div>
+            </div>
+        `;
+    }
+
+    startMegaProject(type) {
+        if (this.game.credits < 50000) {
+            this.showToast('Insufficient Credits. $50k required for construction permit.', 3000, 'warning');
+            return;
+        }
+        this.game.credits -= 50000;
+        this.game.sectorManager.startProject(type);
+        this.updateWalletUI();
+        this.closeAllModals(); // Refresh UI on next open
+    }
+
+    contributeToProject(mineralType) {
+        const inv = this.game.playerInventory || {};
+        const count = inv[mineralType] || 0;
+        
+        if (count <= 0) {
+            this.showToast(`No ${mineralType.toUpperCase()} in cargo.`, 2000, 'warning');
+            return;
+        }
+
+        const contributed = this.game.sectorManager.contributeToMegaProject(mineralType, Math.min(count, 50));
+        if (contributed > 0) {
+            inv[mineralType] -= contributed;
+            this.game.saveInventory();
+            this.updateInventoryUI();
+            this.showToast(`Contributed ${contributed} ${mineralType.toUpperCase()}`, 1500, 'success');
+        }
+    }
+
+    renderLogBook() {
+        this.closeAllModals();
+        
+        let modal = document.getElementById('logBookModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'logBookModal';
+            modal.className = 'fullscreen-modal';
+            modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,5,10,0.95); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(10px);';
+            document.body.appendChild(modal);
+        }
+
+        modal.style.display = 'flex';
+        this.activeModal = 'logBookModal';
+        
+        const logs = this.game.logManager?.entries || [];
+
+        modal.innerHTML = `
+            <div style="width:700px; height:80vh; background:rgba(10,20,30,0.8); border:2px solid #00f3ff; border-radius:15px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 0 40px rgba(0,243,255,0.2);">
+                <div style="padding:20px; border-bottom:1px solid rgba(0,243,255,0.3); display:flex; justify-content:space-between; align-items:center; background:rgba(0,243,255,0.05);">
+                    <h2 style="margin:0; font-family:Orbitron; color:#00f3ff; letter-spacing:4px; font-size:18px;">📜 GALACTIC CHRONICLE</h2>
+                    <button onclick="window.game.hudManager.closeAllModals()" style="background:none; border:none; color:#00f3ff; font-size:24px; cursor:pointer;">✕</button>
+                </div>
+                <div style="flex:1; overflow-y:auto; padding:20px; font-family: monospace;">
+                    ${logs.map(l => `
+                        <div style="margin-bottom:12px; padding:10px; border-left:3px solid ${this.getLogColor(l.status)}; background:rgba(255,255,255,0.02);">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:10px; color:#666;">
+                                <span style="color:#00f3ff">[ ${l.category} ]</span>
+                                <span>${l.timestamp}</span>
+                            </div>
+                            <div style="font-size:13px; color:#ddd;">${l.text}</div>
+                        </div>
+                    `).join('') || '<div style="color:#666; text-align:center; padding-top:40px;">No entries recorded in current logs.</div>'}
+                </div>
+                <div style="padding:15px; border-top:1px solid rgba(0,243,255,0.1); display:flex; justify-content:flex-end;">
+                    <button class="btn-small" onclick="window.game.logManager.clearLogs(); window.game.hudManager.renderLogBook();" style="border-color:#ff4444; color:#ff4444;">CLEAR CHRONICLE</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getLogColor(status) {
+        switch(status) {
+            case 'success': return '#00ff88';
+            case 'warning': return '#ffaa00';
+            case 'error': return '#ff4444';
+            default: return '#00f3ff';
+        }
+    }
+
+    pulseLogIndicator() {
+        const btn = document.getElementById('logBookToggle');
+        if (btn) btn.classList.add('pulse');
+        setTimeout(() => btn?.classList.remove('pulse'), 1000);
+    }
+
+    updateFloatingLeaderboard() {
+        const list = document.getElementById('floatingLeadersList');
+        if (!list) return;
+
+        const players = [
+            { name: 'YOU (AETHER)', score: this.game.credits || 0, me: true },
+            { name: 'XENON OVERLORD', score: 500000 },
+            { name: 'TERRAN ADMIRAL', score: 250000 },
+            { name: 'VOID STALKER', score: 100000 },
+            { name: 'MAULER KING', score: 75000 }
+        ].sort((a, b) => b.score - a.score);
+
+        list.innerHTML = players.map((p, i) => {
+            let rankColor = '#5c7a8a';
+            let rankGlow = 'rgba(92, 122, 138, 0.2)';
+            let rankIcon = '🛸';
+            
+            if (i === 0) { rankColor = '#ffd700'; rankGlow = 'rgba(255, 215, 0, 0.4)'; rankIcon = '👑'; }
+            if (i === 1) { rankColor = '#c0c0c0'; rankGlow = 'rgba(192, 192, 192, 0.3)'; rankIcon = '🥈'; }
+            if (i === 2) { rankColor = '#cd7f32'; rankGlow = 'rgba(205, 127, 50, 0.2)'; rankIcon = '🥉'; }
+            
+            return `
+                <div class="leader-row ${p.me ? 'you' : ''}" style="
+                    margin-bottom: 8px; 
+                    border-left: 4px solid ${rankColor};
+                    box-shadow: -5px 0 15px ${rankGlow};
+                    background: linear-gradient(90deg, ${rankGlow}, transparent);
+                    display: flex;
+                    align-items: center;
+                    padding: 10px 15px;
+                    border-radius: 4px 12px 12px 4px;
+                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                ">
+                    <span class="leader-rank" style="color: ${rankColor}; font-weight: 900; font-size: 14px; min-width: 35px; text-shadow: 0 0 10px ${rankColor};">
+                        ${rankIcon}
+                    </span>
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <span class="leader-name" style="text-transform: uppercase; letter-spacing: 2px; font-size: 11px; font-weight: 700; color: #e0faff;">
+                            ${p.name}
+                        </span>
+                        <span style="font-size: 8px; color: ${rankColor}; opacity: 0.8; letter-spacing: 1px;">RANK ${i+1} ACROSS ALL SECTORS</span>
+                    </div>
+                    <span class="leader-wealth" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #00ffaa; font-weight: 900; text-shadow: 0 0 10px rgba(0, 255, 170, 0.3);">
+                        $${Math.floor(p.score).toLocaleString()}
+                    </span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // --- NEW: PHASE 4 STABILIZATION ALERTS ---
+    showCriticalAlert(msg, duration = 5000) {
+        let alertEl = document.getElementById('criticalAlertSlot');
+        if (!alertEl) {
+            alertEl = document.createElement('div');
+            alertEl.id = 'criticalAlertSlot';
+            alertEl.style = `
+                position: fixed; top: 120px; left: 50%; transform: translateX(-50%);
+                background: linear-gradient(90deg, transparent, rgba(255, 50, 50, 0.4), transparent);
+                border-top: 2px solid #ff3366; border-bottom: 2px solid #ff3366;
+                color: #ff3366; font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: bold;
+                padding: 20px 80px; pointer-events: none; z-index: 10000;
+                text-shadow: 0 0 20px #ff3366; letter-spacing: 5px;
+                animation: criticalAlertPing 1s infinite alternate, criticalAlertScale 0.3s ease-out;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                backdrop-filter: blur(5px);
+            `;
+            
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes criticalAlertPing { from { opacity: 0.6; } to { opacity: 1; } }
+                @keyframes criticalAlertScale { from { transform: translateX(-50%) scale(1.5); opacity:0; } to { transform: translateX(-50%) scale(1); opacity:1; } }
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(alertEl);
+        }
+
+        alertEl.style.display = 'flex';
+        alertEl.innerHTML = `
+            <div style="font-size: 10px; letter-spacing: 3px; color: rgba(255,51,102,0.8); margin-bottom: 5px;">TACTICAL ALERT SYSTEM</div>
+            <div>⚠️ CRITICAL THREAT ⚠️</div>
+            <div style="font-size: 15px; letter-spacing: 2px; margin-top: 10px; color: #fff; text-shadow:none;">${msg.toUpperCase()}</div>
+        `;
+
+        if (this._alertTimeout) clearTimeout(this._alertTimeout);
+        this._alertTimeout = setTimeout(() => {
+            alertEl.style.display = 'none';
+        }, duration);
+
+        if (window.gameAudio && window.gameAudio.playAlert) window.gameAudio.playAlert();
+        else if (window.gameAudio) window.gameAudio.playMenuHover(); // Fallback
+    }
+
+    showToast(msg, duration = 3500, type = 'info') {
+        if (this.game.notificationManager) {
+            this.game.notificationManager.add(msg, { 
+                type, 
+                duration, 
+                tag: 'COMMS' 
+            });
+        }
+    }
+
+    showMissionComplete(mission, reward) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85); z-index: 100000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: Orbitron, sans-serif; pointer-events: none;
+            animation: missionOverlayIn 0.8s forwards;
+            backdrop-filter: blur(8px);
+        `;
+        
+        overlay.innerHTML = `
+            <div style="text-align:center; transform: scale(0.8); animation: missionTextPop 0.5s 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                <div style="color: #00ffcc; font-size: 14px; letter-spacing: 4px; margin-bottom: 10px; opacity: 0.8;">MISSION ACCOMPLISHED</div>
+                <h1 style="color: #fff; font-size: 48px; margin: 0; text-shadow: 0 0 20px #00ffcc; letter-spacing: 2px;">${mission.name.toUpperCase()}</h1>
+                
+                <div style="margin-top: 40px; display: flex; gap: 20px; justify-content: center;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px 30px; border-radius: 10px; border: 1px solid #00ffcc44;">
+                        <div style="font-size: 10px; color: #aaa; margin-bottom: 5px;">CREDITS</div>
+                        <div style="font-size: 24px; color: #fff;">$${reward.credits.toLocaleString()}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px; color: #00ffcc; font-size: 12px; letter-spacing: 2px; animation: blink 1s infinite;">HUB SYNCHRONIZING...</div>
+            </div>
+            
+            <style>
+                @keyframes missionOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes missionTextPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+                @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+            </style>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        setTimeout(() => {
+            overlay.style.transition = 'opacity 1s';
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 1000);
+        }, 4000);
+    }
+
+    showPreciousToast(msg, gemType) {
+        console.log('[Precious Toast]', msg);
+        const pToast = document.createElement('div');
+        pToast.style.cssText = `
+            position: fixed; top: 15%; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(20,20,20,0.95), rgba(40,40,40,0.95));
+            border: 2px solid #ffd700; color: #ffd700;
+            padding: 20px 40px; border-radius: 12px; z-index: 100000;
+            font-family: Orbitron; text-align: center;
+            box-shadow: 0 0 30px #ffd70066, inset 0 0 15px #ffd70022;
+            animation: preciousToastIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                       shimmer 2s infinite;
+            letter-spacing: 2px; font-weight: bold;
+        `;
+        
+        const colors = {
+            diamond: '#ffffff', sapphire: '#00ccff', emerald: '#00ff88', ruby: '#ff4444'
+        };
+        const color = colors[gemType] || '#ffd700';
+        pToast.style.borderColor = color;
+        pToast.style.color = color;
+        pToast.style.boxShadow = `0 0 30px ${color}66, inset 0 0 15px ${color}22`;
+
+        pToast.innerHTML = `
+            <div style="font-size: 10px; opacity: 0.7; margin-bottom: 5px;">PRECIOUS COLLECTION ACQUIRED</div>
+            <div style="font-size: 18px;">${msg}</div>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden;">
+                <div style="position: absolute; width: 200%; height: 100%; top: 0; left: -100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transform: skewX(-20deg); animation: shimmerSlide 3s infinite;"></div>
+            </div>
+        `;
+
+        if (!document.getElementById('preciousStyles')) {
+            const style = document.createElement('style');
+            style.id = 'preciousStyles';
+            style.textContent = `
+                @keyframes preciousToastIn { from { opacity: 0; transform: translateX(-50%) scale(0.8) translateY(-20px); } }
+                @keyframes shimmerSlide { from { left: -100%; } to { left: 100%; } }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(pToast);
+        
+        setTimeout(() => {
+            pToast.style.transition = 'all 0.5s ease-out';
+            pToast.style.opacity = '0';
+            pToast.style.transform = 'translateX(-50%) translateY(-50px) scale(0.9)';
+            setTimeout(() => pToast.remove(), 500);
+        }, 4000);
+    }
+
+    // === NEXUS TERMINAL (Phase 17-1) ===
+    showNexusTerminal() {
+        let modal = document.getElementById('nexusModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'nexusModal';
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+                width:600px; max-height:80vh; background:rgba(10, 0, 20, 0.95);
+                border:2px solid #ff00ff; border-radius:15px; padding:30px;
+                color:white; font-family:Orbitron, sans-serif; z-index:10001;
+                overflow-y:auto; box-shadow:0 0 50px rgba(255, 0, 255, 0.3);
+                display:flex; flex-direction:column;
+            `;
+            document.body.appendChild(modal);
+        }
+
+        modal.style.display = 'flex';
+        this.renderNexusTerminal();
+    }
+
+    renderNexusTerminal() {
+        const modal = document.getElementById('nexusModal');
+        const credits = this.game.nexusCredits || 0;
+        const upgrades = this.game.nexusUpgrades || {};
+
+        const upgradeOptions = [
+            { id: 'ancient_alloy', name: 'Ancient Alloy', desc: 'Permanent +10% Base Hull Strength', cost: 10, icon: '🛡️' },
+            { id: 'nexus_drill', name: 'Nexus Drill', desc: 'Permanent +15% Mining Drone Speed', cost: 15, icon: '⛏️' },
+            { id: 'void_reactor', name: 'Void Reactor', desc: 'Permanent +5% Energy Efficiency', cost: 20, icon: '🔋' }
+        ];
+
+        modal.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #ff00ff; padding-bottom:10px;">
+                <h1 style="color:#ff00ff; margin:0; font-size:24px;">THE NEXUS TERMINAL</h1>
+                <button onclick="document.getElementById('nexusModal').style.display='none'" style="background:none; border:none; color:#ff00ff; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+
+            <div style="background:rgba(255,0,255,0.1); padding:15px; border-radius:10px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#ff00ff; font-size:12px;">AVAILABLE NEXUS CREDITS</span>
+                <span style="font-size:24px; font-weight:bold;">🌀 ${credits.toLocaleString()}</span>
+            </div>
+
+            <div style="display:grid; gap:15px;">
+                ${upgradeOptions.map(u => {
+                    const level = upgrades[u.id] || 0;
+                    const nextCost = u.cost * (level + 1);
+                    const canAfford = credits >= nextCost;
+                    return `
+                        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,0,255,0.3); padding:15px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <div style="font-size:24px;">${u.icon}</div>
+                                <div>
+                                    <div style="font-weight:bold; color:#fff;">${u.name.toUpperCase()} (Lvl ${level})</div>
+                                    <div style="font-size:10px; color:#aaa;">${u.desc}</div>
+                                </div>
+                            </div>
+                            <button onclick="window.game.hudManager.buyNexusUpgrade('${u.id}', ${nextCost})" 
+                                    style="padding:8px 15px; background:${canAfford ? '#ff00ff' : '#333'}; color:white; border:none; border-radius:5px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; font-size:12px;"
+                                    ${canAfford ? '' : 'disabled'}>
+                                BUY [🌀 ${nextCost}]
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <p style="font-size:10px; color:#666; margin-top:30px; line-height:1.4;">
+                Nexus upgrades are permanent and persist through all cosmic cycles. 
+                Earn Nexus Credits by reaching Galactic Ascension.
+            </p>
+        `;
+    }
+
+    buyNexusUpgrade(id, cost) {
+        if (this.game.nexusCredits >= cost) {
+            this.game.nexusCredits -= cost;
+            this.game.nexusUpgrades[id] = (this.game.nexusUpgrades[id] || 0) + 1;
+            
+            localStorage.setItem('nexusCredits', this.game.nexusCredits);
+            localStorage.setItem('nexusUpgrades', JSON.stringify(this.game.nexusUpgrades));
+            
+            this.game.applyNexusUpgrades();
+            this.renderNexusTerminal();
+            this.showToast(`Nexus Link Established: ${id.replace('_', ' ')} upgraded!`, 3000, 'success');
+            
+            if (window.gameAudio) window.gameAudio.playMenuSelect();
+        }
+    }
+
+    // === WARP GATE INTERFACE (Phase 17-1) ===
+    updateWarpUI() {
+        const activeGate = this.game.warpGateManager?.activeGate;
+        const warpBox = document.getElementById('warpInteractionBox');
+        
+        if (activeGate) {
+            if (!warpBox) {
+                const box = document.createElement('div');
+                box.id = 'warpInteractionBox';
+                box.style.cssText = `
+                    position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+                    background:rgba(5, 10, 20, 0.95); border:2px solid #00f3ff;
+                    padding:30px; border-radius:20px; color:white; font-family:Orbitron;
+                    z-index:9000; text-align:center; box-shadow:0 0 40px rgba(0, 243, 255, 0.4);
+                    backdrop-filter: blur(10px); width: 450px;
+                `;
+                document.body.appendChild(box);
+                
+                if (activeGate.structType === 'outpost') {
+                    this.renderOutpostInteraction(box, activeGate);
+                } else {
+                    this.renderSectorMap(box);
+                }
+            }
+        } else if (warpBox) {
+            warpBox.remove();
+        }
+    }
+
+    renderOutpostInteraction(container, outpost) {
+        container.innerHTML = `
+            <div style="color:#00f3ff; font-size:14px; margin-bottom:5px; letter-spacing:3px; font-weight:bold;">${outpost.name.toUpperCase()}</div>
+            <div style="font-size:10px; color:#666; margin-bottom:20px; text-transform:uppercase;">Deep Space Logistics & Trade Node Established</div>
+            
+            <div style="background:rgba(0,243,255,0.05); border:1px solid rgba(0,243,255,0.2); padding:20px; border-radius:15px; margin-bottom:25px;">
+                <div style="font-size:11px; color:#fff; margin-bottom:10px;">MARKET STATUS: <span style="color:#00ff88;">OPERATIONAL</span></div>
+                <p style="font-size:9px; color:#888; line-height:1.5;">Docking permits confirmed. Connect to the local grid to liquidate cargo for credits and acquire advanced ship modules.</p>
+            </div>
+
+            <button class="btn-main" onclick="window.game.hudManager.showTradeTerminal(); document.getElementById('warpInteractionBox').remove();" style="width:100%; padding:15px; font-size:14px; letter-spacing:2px;">ENTER MARKET TERMINAL</button>
+            <button onclick="document.getElementById('warpInteractionBox').remove()" style="margin-top:15px; background:none; border:none; color:#555; cursor:pointer; font-size:10px; font-family:Orbitron;">DISMISS</button>
+        `;
+    }
+
+    renderSectorMap(container) {
+        if (!this.game.sectorManager) return;
+
+        const current = this.game.sectorManager.currentSector;
+        const grid = [];
+        
+        // Generate 3x3 grid around current sector
+        for (let y = current.y - 1; y <= current.y + 1; y++) {
+            for (let x = current.x - 1; x <= current.x + 1; x++) {
+                grid.push({ x, y });
+            }
+        }
+
+        container.innerHTML = `
+            <div style="color:#00f3ff; font-size:14px; margin-bottom:5px; letter-spacing:3px; font-weight:bold;">GALACTIC NAVIGATION MESH</div>
+            <div style="font-size:10px; color:#666; margin-bottom:20px; text-transform:uppercase;">Select Sector Coordinates to Synchronize Warp</div>
+            
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:25px;">
+                ${grid.map(s => {
+                    const isCurrent = s.x === current.x && s.y === current.y;
+                    const data = this.game.sectorManager.getSectorData(s.x, s.y);
+                    const diff = data.difficulty.toFixed(1);
+                    const color = isCurrent ? '#00f3ff' : '#444';
+                    const bg = isCurrent ? 'rgba(0, 243, 255, 0.2)' : 'rgba(255, 255, 255, 0.03)';
+                    
+                    return `
+                        <div onclick="${isCurrent ? '' : `window.game.warpGateManager.jumpTo(${s.x}, ${s.y}); this.parentElement.parentElement.remove();`}" 
+                             style="padding:15px 10px; background:${bg}; border:1px solid ${color}; border-radius:8px; 
+                                    cursor:${isCurrent ? 'default' : 'pointer'}; transition:all 0.2s; position:relative; overflow:hidden;">
+                            ${isCurrent ? '<div style="position:absolute; top:5px; right:5px; font-size:8px; color:#00f3ff;">LOCAL</div>' : ''}
+                            <div style="font-size:12px; font-weight:bold; color:${isCurrent ? '#fff' : '#aaa'};">[${s.x}, ${s.y}]</div>
+                            <div style="font-size:8px; color:#666; margin-top:5px;">DIFF: ${diff}x</div>
+                            <div style="font-size:7px; color:${data.style.includes('nebula') ? '#a0f' : '#0f0'}; margin-top:2px;">${data.style.toUpperCase().replace('-', ' ')}</div>
+                            ${!isCurrent ? `<div class="hover-tip" style="position:absolute; bottom:0; left:0; width:100%; height:2px; background:#00f3ff; transform:scaleX(0); transition:transform 0.2s;"></div>` : ''}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            
+            <button onclick="this.parentElement.remove()" 
+                    style="background:rgba(255,255,255,0.05); border:1px solid #333; color:#888; padding:8px 20px; border-radius:5px; cursor:pointer; font-size:10px; font-family:Orbitron; width:100%;">
+                CANCEL SYNCHRONIZATION
+            </button>
+
+            <style>
+                #warpInteractionBox div:hover .hover-tip { transform: scaleX(1) !important; }
+                #warpInteractionBox div:hover { background: rgba(0, 243, 255, 0.08) !important; border-color: #00f3ff !important; }
+            </style>
+        `;
+    }
+
+    buildMegaStructure(type, targetName, x, y) {
+        const cost = 50000;
+        if (this.game.credits >= cost) {
+            this.game.credits -= cost;
+            this.updateWalletUI();
+
+            if (type === 'dyson') {
+                this.game.warpGateManager.addDysonSwarm(targetName, x, y);
+                this.showToast(`Dyson Swarm Construction Sequence Initiated around ${targetName}!`, 5000, 'success');
+            } else if (type === 'ring') {
+                this.game.warpGateManager.addRingWorld(targetName, x, y);
+                this.showToast(`Ring World Anchor established around ${targetName}!`, 5000, 'success');
+            }
+
+            if (window.gameAudio) window.gameAudio.playEMP(); 
+            this.showEmpireOverview(); // Refresh modal content
+        } else {
+            this.showToast("Insufficient treasury for Mega-Project!", 3000, "error");
+        }
+    }
+
+
+    // === TRADE TERMINAL (Phase 5) ===
+    showTradeTerminal(outpost) {
+        this.closeAllModals();
+        this.renderTradeUI(outpost);
+    }
+
+    renderTradeUI(outpost) {
+        let modal = document.getElementById('tradeModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'tradeModal';
+            modal.className = 'fullscreen-modal';
+            document.body.appendChild(modal);
+        }
+        modal.style.display = 'flex';
+        this.activeModal = 'tradeModal';
+
+        const credits = this.game.credits || 0;
+        const ship = this.game.playerShip;
+        if (!ship) return;
+
+        // --- LEFT COLUMN: CARGO LIQUIDATION ---
+        const inv = this.game.playerInventory || {};
+        const sector = this.game.sectorManager?.getCurrentSectorData();
+        const market = sector?.market || { industrial: 1.0, precious: 1.0, crystal: 1.0, nuclear: 1.0, exotic: 1.0 };
+        
+        let totalCargoValue = 0;
+        const cargoHTML = Object.entries(inv).map(([type, count]) => {
+            if (count <= 0) return '';
+            const info = MINERAL_TYPES[type];
+            const marketData = this.game.marketplaceManager?.priceIndex[type] || { currentPrice: info.value, volHistory: [100], dailyVol: 100 };
+            
+            const multiplier = market[info.zone || 'industrial'] || 1.0;
+            const price = marketData.currentPrice * multiplier;
+            
+            // Slippage Preview
+            const mav = marketData.volHistory.reduce((a, b) => a + b, 0) / marketData.volHistory.length;
+            const volThreshold = mav * 0.2;
+            let slippage = 0;
+            if (count > volThreshold) {
+                const excess = count - volThreshold;
+                slippage = Math.min(0.5, excess / (mav * 2));
+            }
+            const effectivePrice = price * (1 - slippage);
+            const val = effectivePrice * count;
+            totalCargoValue += val;
+
+            const trendIcon = marketData.currentPrice > info.value ? '▲' : (marketData.currentPrice < info.value ? '▼' : '•');
+            const trendColor = marketData.currentPrice > info.value ? '#00ff88' : (marketData.currentPrice < info.value ? '#ff4444' : '#888');
+            const vix = Math.round((marketData.dailyVol / mav) * 100);
+
+            return `
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:12px; border-radius:10px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:12px; height:12px; background:${info.color}; border-radius:2px; box-shadow:0 0 10px ${info.color}66;"></div>
+                        <span style="color:#fff; font-size:12px; font-weight:bold;">${info.name.toUpperCase()} (x${count})</span>
+                    </div>
+                    <span style="color:${trendColor}; font-size:11px;">${trendIcon} $${Math.round(price).toLocaleString()}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:8px; color:#666;">
+                    <span>MAV: ${Math.round(mav)}</span>
+                    <span>VIX (VOL): ${vix}%</span>
+                    <span style="${slippage > 0 ? 'color:#ffaa00;' : ''}">SLIPPAGE: -${Math.round(slippage * 100)}%</span>
+                </div>
+                <div style="text-align:right; margin-top:5px; color:#fff; font-family:monospace; font-size:13px;">$${Math.round(val).toLocaleString()}</div>
+            </div>`;
+        }).join('');
+
+        modal.innerHTML = `
+            <div class="hud-panel" style="width: 800px; height: 85vh; border-top: 2px solid #00f3ff; position:relative; overflow: hidden; display: flex; flex-direction: column; background: rgba(5,15,25,0.95); box-shadow: 0 0 40px rgba(0,243,255,0.1);">
+                <!-- PINNED CLOSE BUTTON -->
+                <button class="modal-close-btn" onclick="document.getElementById('tradeModal').style.display='none'" 
+                    style="position:absolute; top:20px; right:20px; background:rgba(0,243,255,0.1); border:1px solid #00f3ff; color:#00f3ff; width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer; z-index:100; display: flex; align-items: center; justify-content: center;"
+                >✕</button>
+                
+                <div style="flex: 1; overflow-y: auto; padding: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                
+                <!-- LEFT: CARGO -->
+                <div>
+                    <h2 style="color:#00f3ff; font-family:Orbitron; letter-spacing:3px; margin-bottom:20px;">📦 SHIP CARGO</h2>
+                    <div style="overflow-y:auto; max-height:400px; margin-bottom:20px; padding-right:10px;">
+                        ${cargoHTML || '<div style="color:#444; font-size:12px; text-align:center; padding:40px;">CARGO BAY EMPTY</div>'}
+                    </div>
+                    <div style="border-top:1px solid rgba(0,243,255,0.2); padding-top:20px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-size:10px; color:#5c7a8a;">GROSS VALUATION</div>
+                            <div style="font-size:24px; color:#fff; font-family:monospace;">$${totalCargoValue.toLocaleString()}</div>
+                        </div>
+                        <button class="btn-main" onclick="window.game.hudManager.sellAllCargo()" ${totalCargoValue <= 0 ? 'disabled' : ''} style="padding:15px 30px;">LIQUIDATE CARGO</button>
+                    </div>
+
+                    <h2 style="color:#00f3ff; font-family:Orbitron; letter-spacing:3px; margin-top:40px; margin-bottom:20px;">📦 LOGISTICS & SUPPLIES</h2>
+                    <div style="display:grid; gap:8px;">
+                        ${(typeof window.SUPPLY_TYPES !== 'undefined') ? Object.keys(window.SUPPLY_TYPES).map(type => this.renderSupplyOption(type)).join('') : '<div style="color:#444; font-size:10px;">SUPPLIES UNAVAILABLE</div>'}
+                    </div>
+
+                </div>
+
+                <!-- RIGHT: SERVICES & UPGRADES -->
+                <div>
+                    <h2 style="color:#00f3ff; font-family:Orbitron; letter-spacing:3px; margin-bottom:20px;">🛠️ HUB SERVICES</h2>
+                    
+                    <div style="background:rgba(0,243,255,0.05); border:1px solid rgba(0,243,255,0.2); padding:15px; border-radius:12px; margin-bottom:20px;">
+                        <h3 style="color:#fff; font-size:11px; margin-bottom:10px;">HULL REPAIR STATION</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="color:#888; font-size:10px;">Condition: ${Math.round(ship.hullHealth)}%</span>
+                            <span style="color:#00ff88; font-family:monospace;">COST: $${Math.round((ship.maxHull - ship.hullHealth) * 75)}</span>
+                        </div>
+                        <button class="btn-small" onclick="window.game.hudManager.repairHull()" style="width:100%;" ${ship.hullHealth >= ship.maxHull - 1 ? 'disabled' : ''}>PERFORM MAINTENANCE</button>
+                    </div>
+
+                    <h3 style="color:#fff; font-size:11px; margin-bottom:10px;">TACTICAL MODULES</h3>
+                    <div style="display:grid; gap:8px; overflow-y:auto; max-height:150px; margin-bottom:20px; padding-right:5px;">
+                        ${this.game.marketplaceManager ? Object.keys(this.game.marketplaceManager.MODULE_CATALOG).map(id => this.renderModuleOption(id)).join('') : ''}
+                    </div>
+
+                    <h3 style="color:#fff; font-size:11px; margin-bottom:10px;">SQUADRON RECRUITMENT</h3>
+                    <div style="display:grid; gap:8px;">
+                        ${this.renderWingmanHireOption('scout', 'Scout Drone', 'Basic recon & light support', 1000)}
+                        ${this.renderWingmanHireOption('interceptor', 'Interceptor', 'High-speed attack craft', 5000)}
+                        ${this.renderWingmanHireOption('defender', 'Bulwark Defender', 'Heavy shields & defensive AI', 12000)}
+                    </div>
+                    
+                    <div style="margin-top:20px; text-align:right; border-top:1px solid rgba(0,243,255,0.2); padding-top:15px;">
+                        <span style="color:#5c7a8a; font-size:10px;">WALLET BALANCE: </span>
+                        <span style="color:#00f3ff; font-size:20px; font-weight:bold;">$${credits.toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderSupplyOption(type) {
+        const supply = (window.SUPPLY_TYPES || {})[type];
+        if (!supply) return '';
+
+        const canAfford = this.game.credits >= supply.cost;
+        const count = (this.game.playerSupplies ? this.game.playerSupplies[type] : 0) || 0;
+
+        return `
+        <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="font-size:18px;">${supply.icon}</div>
+                <div>
+                    <div style="color:#fff; font-size:10px; font-weight:bold;">${supply.name.toUpperCase()} (x${count})</div>
+                    <div style="color:#5c7a8a; font-size:8px;">${supply.desc}</div>
+                </div>
+            </div>
+            <button class="btn-small" onclick="window.game.marketplaceManager.buySupply('${type}'); window.game.hudManager.renderTradeUI();" ${!canAfford ? 'disabled' : ''} style="font-size:9px;">HIRE ($${supply.cost})</button>
+        </div>`;
+    }
+
+    renderWingmanHireOption(type, name, desc, cost) {
+        const canAfford = this.game.credits >= cost;
+        const fleetManager = this.game.fleetManager;
+        const currentFleetSize = fleetManager ? fleetManager.escorts.length : 0;
+        const maxSlots = fleetManager ? fleetManager.getMaxSlots() : 1;
+        const isFleetFull = currentFleetSize >= maxSlots;
+        
+        return `
+        <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid rgba(255,255,255,0.1);">
+            <div>
+                <div style="color:#fff; font-size:10px; font-weight:bold;">${name.toUpperCase()}</div>
+                <div style="color:#5c7a8a; font-size:8px;">${desc}</div>
+            </div>
+            <button class="btn-small" onclick="window.game.fleetManager.hireEscort('${type}'); window.game.hudManager.renderTradeUI();" ${!canAfford || isFleetFull ? 'disabled' : ''} style="font-size:9px; border-color:${!canAfford || isFleetFull ? '#444' : '#00ff88'}">
+                ${isFleetFull ? 'CAPACITY FULL' : `HIRE ($${cost.toLocaleString()})`}
+            </button>
+        </div>`;
+    }
+
+    renderModuleOption(id) {
+        const module = this.game.marketplaceManager.MODULE_CATALOG[id];
+        const isInstalled = this.game.marketplaceManager.installedModules.has(id);
+        const canAfford = this.game.credits >= module.cost;
+        
+        return `
+        <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid ${isInstalled ? module.color : 'rgba(255,255,255,0.1)'}; opacity:${isInstalled ? 0.8 : 1};">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="font-size:18px;">${module.icon}</div>
+                <div>
+                    <div style="color:${isInstalled ? module.color : '#fff'}; font-size:10px; font-weight:bold;">${module.name.toUpperCase()}</div>
+                    <div style="color:#5c7a8a; font-size:8px;">${module.desc}</div>
+                </div>
+            </div>
+            ${isInstalled ? 
+                `<span style="color:${module.color}; font-size:10px; font-weight:bold;">INSTALLED</span>` :
+                `<button class="btn-small" onclick="window.game.buyModule('${id}')" ${!canAfford ? 'disabled' : ''} style="font-size:9px;">$${module.cost.toLocaleString()}</button>`
+            }
+        </div>`;
+    }
+
+    buyWingman(type, cost) {
+        if (this.game.credits >= cost) {
+            const currentFleetSize = (this.game.playerWingmen || []).length;
+            if (currentFleetSize >= 3) {
+                this.showToast("SQUADRON CAPACITY REACHED (MAX 3)", 3000, 'error');
+                return;
+            }
+
+            this.game.credits -= cost;
+            if (this.game.hireWingman) {
+                this.game.hireWingman(type);
+            }
+            this.showToast(`RECRUITED ${type.toUpperCase()} TO SQUADRON`, 3000, 'success');
+            this.updateWalletUI();
+            this.renderTradeUI(); // Refresh modal
+        } else {
+            this.showToast("INSUFFICIENT CREDITS FOR RECRUITMENT", 3000, 'error');
+        }
+    }
+
+    sellAllCargo() {
+        let totalValue = 0;
+        const inv = this.game.playerInventory || {};
+        const sector = this.game.sectorManager?.getCurrentSectorData();
+        const market = sector?.market || { industrial: 1.0, precious: 1.0, crystal: 1.0, nuclear: 1.0, exotic: 1.0 };
+
+        Object.entries(inv).forEach(([type, count]) => {
+            const info = MINERAL_TYPES[type];
+            if (info && count > 0) {
+                const multiplier = market[info.zone || 'industrial'] || 1.0;
+                totalValue += (info.value * multiplier) * count;
+                inv[type] = 0;
+            }
+        });
+
+        if (totalValue > 0) {
+            this.game.credits += totalValue;
+            this.game.logManager?.addEntry('ECONOMY', `Liquidated cargo for $${Math.floor(totalValue).toLocaleString()}`, 'success');
+            this.showToast(`CARGO LIQUIDATED: +$${totalValue.toLocaleString()}`, 3000, 'success');
+            if (window.gameAudio) window.gameAudio.playCreditEarn();
+            this.updateWalletUI();
+            this.renderTradeUI(); // Refresh modal
+        }
+    }
+
+    repairHull() {
+        const cost = Math.round((100 - this.game.playerShip.hullHealth) * 75);
+        if (this.game.credits >= cost) {
+            this.game.credits -= cost;
+            this.game.playerShip.hullHealth = 100;
+            this.showToast("HULL INTEGRITY RESTORED TO 100%", 3000, 'success');
+            this.updateWalletUI();
+            this.renderTradeUI();
+        } else {
+            this.showToast("INSUFFICIENT CREDITS FOR REPAIRS", 3000, 'error');
+        }
+    }
+
+    buyUpgrade(id, cost) {
+        if (this.game.credits >= cost) {
+            this.game.credits -= cost;
+            const ship = this.game.playerShip;
+            if (id === 'hull') ship.maxHull = (ship.maxHull || 100) * 1.2;
+            if (id === 'shield') ship.maxShield = (ship.maxShield || 50) * 1.15;
+            if (id === 'speed') ship.maxSpeed = (ship.maxSpeed || 5) * 1.1;
+            
+            this.showToast(`SHIP ENHANCEMENT APPLIED: ${id.toUpperCase()}`, 3000, 'success');
+            this.updateWalletUI();
+            this.renderTradeUI();
+        }
+    }
+    updateFactionHUD() {
+        const container = document.getElementById('factionsContent');
+        if (!container) return;
+
+        const reps = this.game.factionRep || { xenon: 0, mauler: 0, terran: 0 };
+        let html = '';
+
+        Object.entries(reps).forEach(([faction, rep]) => {
+            const percentage = Math.max(0, Math.min(100, (rep + 100) / 2)); // Map -100..100 to 0..100
+            const color = rep > 20 ? '#00ff88' : (rep < -20 ? '#ff3366' : '#ffd700');
+            
+            html += `
+                <div class="faction-row" style="margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 2px;">
+                        <span style="text-transform: uppercase; color: var(--text-dim);">${faction}</span>
+                        <span style="color: ${color}; font-weight: bold;">${rep > 0 ? '+' : ''}${Math.round(rep)}</span>
+                    </div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="height: 100%; width: ${percentage}%; background: ${color}; box-shadow: 0 0 8px ${color}; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html || '<div style="color: var(--text-dim); font-style: italic;">Calibrating sensors...</div>';
+    }
+
+    renderCollectionOverlay(ctx) {
+        if (!ctx || !this.game?.playerShip) return;
+        // World-space collection markers
+        this.game.minerals?.forEach(min => {
+            if (min.discovered) {
+                const type = min.type || 'common';
+                ctx.save();
+                ctx.fillStyle = MINERAL_TYPES[type]?.color || '#fff';
+                ctx.beginPath();
+                ctx.arc(min.x, min.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        });
+    }
+
+    showAscensionOverlay() {
+        if (this.activeModal) this.closeAllModals();
+
+        const totalPop = (this.game.spaceBases || []).reduce((s, b) => s + (b.population || 0), 0);
+        const rank = this.game.colonyManager?.getEmpireRank() || { name: 'VANGUARD', level: 1 };
+        const reward = Math.floor((totalPop / 100) + (rank.level * 50));
+
+        const overlay = document.createElement('div');
+        overlay.id = 'ascensionOverlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, rgba(0, 243, 255, 0.1) 0%, rgba(0, 5, 15, 0.98) 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10000; font-family: 'Orbitron', sans-serif; color: #fff;
+            animation: ascensionFadeIn 3s ease-out;
+        `;
+
+        overlay.innerHTML = `
+            <style>
+                @keyframes ascensionFadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes textGlow { from { text-shadow: 0 0 10px rgba(0,243,255,0.5); } to { text-shadow: 0 0 30px rgba(0,243,255,1); } }
+                .stat-box { background: rgba(0,243,255,0.05); border: 1px solid rgba(0,243,255,0.2); padding: 20px; border-radius: 10px; text-align: center; min-width: 200px; }
+            </style>
+            
+            <div style="text-align: center; margin-bottom: 50px;">
+                <h1 style="font-size: 48px; letter-spacing: 12px; color: #00f3ff; margin: 0; animation: textGlow 2s infinite alternate;">ASCENSION ATTAINED</h1>
+                <p style="font-size: 14px; color: rgba(0,243,255,0.6); margin-top: 10px; letter-spacing: 4px;">THE SOVEREIGNTY PROTOCOL IS COMPLETE</p>
+            </div>
+
+            <div style="display: flex; gap: 30px; margin-bottom: 60px;">
+                <div class="stat-box">
+                    <div style="font-size: 10px; color: #888; margin-bottom: 5px;">EMPIRE POPULATION</div>
+                    <div style="font-size: 24px; color: #00ffaa;">${totalPop.toLocaleString()}</div>
+                </div>
+                <div class="stat-box">
+                    <div style="font-size: 10px; color: #888; margin-bottom: 5px;">FINAL RANK</div>
+                    <div style="font-size: 24px; color: ${rank.color || '#fff'};">${rank.name}</div>
+                </div>
+                <div class="stat-box" style="border-color: #ffd700;">
+                    <div style="font-size: 10px; color: #888; margin-bottom: 5px;">NEXUS YIELD</div>
+                    <div style="font-size: 24px; color: #ffd700;">+${reward} CR</div>
+                </div>
+            </div>
+
+            <div style="max-width: 600px; text-align: center; line-height: 1.8; color: #aaa; font-size: 14px; margin-bottom: 60px;">
+                Your presence in this sector has reached its zenith. By collapsing the current spacetime nexus, you will carry your legacy forward into the next cycle of the Eternal Frontier.
+            </div>
+
+            <button class="btn-main" onclick="window.game.commenceNewCycle()" 
+                    style="width: 300px; height: 60px; font-size: 18px; background: rgba(0,243,255,0.1); border: 2px solid #00f3ff; color: #00f3ff; cursor: pointer; transition: all 0.3s;"
+                    onmouseover="this.style.background='rgba(0,243,255,0.2)'; this.style.boxShadow='0 0 30px rgba(0,243,255,0.4)';"
+                    onmouseout="this.style.background='rgba(0,243,255,0.1)'; this.style.boxShadow='none';">
+                COMMENCE NEW CYCLE
+            </button>
+        `;
+
+        document.body.appendChild(overlay);
+        if (window.gameAudio) window.gameAudio.playVictory();
+    }
+    
+    updateInlineMap() {
+        const canvas = document.getElementById('inlineMapCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Clear with deep space background
+        ctx.fillStyle = '#050a10';
+        ctx.fillRect(0, 0, w, h);
+
+        // Tactical Radial Scan (Restored & Refined)
+        ctx.strokeStyle = 'rgba(0, 243, 255, 0.12)';
+        ctx.lineWidth = 1;
+        const centerX = w / 2;
+        const centerY = h / 2;
+        
+        // Concentric Scan Rings
+        for(let r = 30; r < w; r += 30) {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        // Cardinal Axis Lines
+        ctx.beginPath();
+        ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
+        ctx.moveTo(centerX, 0); ctx.lineTo(centerX, h);
+        ctx.stroke();
+
+        const ship = this.game.playerShip;
+        if (!ship) return;
+
+        const scale = 0.04; 
+        const cx = w/2;
+        const cy = h/2;
+
+        // Draw Scanlines
+        ctx.fillStyle = 'rgba(0, 243, 255, 0.03)';
+        for(let i=0; i<h; i+=4) {
+            ctx.fillRect(0, i, w, 1);
+        }
+
+        // Draw Ships/Entities
+        if (this.game.stars) {
+            this.game.stars.forEach(s => {
+                const dx = (s.x - ship.x) * scale;
+                const dy = (s.y - ship.y) * scale;
+                if (Math.abs(dx) < w/2 && Math.abs(dy) < h/2) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(cx + dx, cy + dy, 1.5, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Draw Player (Pulse)
+        const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+        ctx.fillStyle = `rgba(0, 243, 255, ${0.5 + pulse * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 3, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Player direction arrow
+        ctx.strokeStyle = 'var(--accent)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        const angle = ship.rotation || 0;
+        ctx.lineTo(cx + Math.cos(angle) * 8, cy + Math.sin(angle) * 8);
+        ctx.stroke();
+        // Draw Nearby Minerals (Magenta dots)
+        if (this.game.minerals) {
+            ctx.fillStyle = '#ff00ff';
+            this.game.minerals.forEach(m => {
+                const dx = (m.x - ship.x) * scale;
+                const dy = (m.y - ship.y) * scale;
+                if (isFinite(dx) && isFinite(dy) && Math.abs(dx) < w/2 && Math.abs(dy) < h/2) {
+                    ctx.beginPath();
+                    ctx.arc(cx + dx, cy + dy, 2, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            });
+        }
+        // Border glow
+        ctx.strokeStyle = '#00f3ff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, w, h);
+    }
+}
+
+window.HUDManager = HUDManager;
+
+// === DEFENSIVE GLOBAL REGISTRATION ===
+if (typeof window !== 'undefined') {
+    window.HUDManager = HUDManager;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = HUDManager;
+}

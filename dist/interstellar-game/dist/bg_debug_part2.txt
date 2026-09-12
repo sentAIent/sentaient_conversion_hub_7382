@@ -1,0 +1,70 @@
+                }
+
+                // Tractor beam (for saucers)
+                if (s.beamActive && s.shipClass === 'saucer') {
+                    const beamPulse = Math.sin(time * 5) * 0.2 + 0.6;
+                    ctx.globalAlpha = beamPulse * 0.5;
+                    const beamGrad = ctx.createLinearGradient(0, size * 0.2, 0, size * 3);
+                    beamGrad.addColorStop(0, s.beamColor || '#88ff88');
+                    beamGrad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = beamGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(-size * 0.3, size * 0.2);
+                    ctx.lineTo(-size * 0.8, size * 3);
+                    ctx.lineTo(size * 0.8, size * 3);
+                    ctx.lineTo(size * 0.3, size * 0.2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+
+                // Rotate for directional ships (not saucers)
+                if (s.shipClass !== 'saucer') {
+                    ctx.rotate(angle);
+                }
+
+                // Engine trails (for non-saucers)
+                if (s.shipClass !== 'saucer' && s.shipClass !== 'probe') {
+                    ctx.globalAlpha = 0.7;
+                    const trailLength = size * 2;
+                    const engineSpacing = size * 0.25;
+                    const engineCount = s.engineCount || 2;
+
+                    for (let i = 0; i < engineCount; i++) {
+                        const offsetY = (i - (engineCount - 1) / 2) * engineSpacing;
+                        const flicker = 0.7 + Math.sin(time * 15 + s.detailSeed + i) * 0.3;
+                        const trailGrad = ctx.createLinearGradient(-size * 0.7, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
+                        trailGrad.addColorStop(0, s.engineGlow || '#ffffff');
+                        trailGrad.addColorStop(0.15, s.engineColor || '#00aaff');
+                        trailGrad.addColorStop(1, 'transparent');
+
+                        ctx.fillStyle = trailGrad;
+                        ctx.beginPath();
+                        ctx.moveTo(-size * 0.65, offsetY - 4);
+                        ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.7 - trailLength * flicker, offsetY);
+                        ctx.quadraticCurveTo(-size * 0.7 - trailLength * 0.5 * flicker, offsetY, -size * 0.65, offsetY + 4);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+
+                // Hull gradient
+                const hullGrad = ctx.createLinearGradient(0, -size * 0.5, 0, size * 0.5);
+                hullGrad.addColorStop(0, s.hullHighlight || '#ccc');
+                hullGrad.addColorStop(0.3, s.hullColor || '#888');
+                hullGrad.addColorStop(1, s.hullShadow || '#333');
+                ctx.fillStyle = hullGrad;
+                ctx.strokeStyle = s.hullHighlight || '#ddd';
+                ctx.lineWidth = 1.5 / zoom;
+
+                // === SHIP RENDERING: 13 Star Wars-Quality Spacecraft ===
+                if (s.shipClass === 'saucer') {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, size, size * 0.25, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    const domeGrad = ctx.createRadialGradient(-size * 0.1, -size * 0.15, 0, 0, -size * 0.05, size * 0.4);
+                    domeGrad.addColorStop(0, '#ffffff');
+                    domeGrad.addColorStop(0.3, s.domeColor || '#88ffff');
+                    domeGrad.addColorStop(1, 'rgba(0,50,50,0.8)');

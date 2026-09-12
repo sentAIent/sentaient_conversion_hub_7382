@@ -17,7 +17,7 @@ firebase-key.json
 # Local Netlify folder
 .netlify
 
-dist/
+
 tmp_legaleagle/
 tmp_legaleagle
 u2net.onnx

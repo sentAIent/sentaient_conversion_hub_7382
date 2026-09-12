@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "echo \"Deploying prebuilt dist...\""
   publish = "dist"
 
 [build.environment]

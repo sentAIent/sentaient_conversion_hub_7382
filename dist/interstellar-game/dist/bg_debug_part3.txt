@@ -1,0 +1,145 @@
+    drawDeepSpaceSpecific() {
+        if (!this.config.showBackground) return;
+
+        const ctx = this.ctx;
+        const time = performance.now() * 0.0005;
+
+        // 1. Galaxies
+        if (this.galaxies && this.galaxies.length > 0) {
+            this.galaxies.forEach(g => {
+                if (g.flownOut) return; // Skip if flown out during warp
+                ctx.save();
+                // Position comes from flyObject during disengage
+                ctx.translate(g.x, g.y);
+
+                // During disengage: use scale and alpha from flyObject
+                if (this.warpDisengaging && g.warpScale !== undefined) {
+                    ctx.scale(g.warpScale, g.warpScale);
+                    ctx.globalAlpha = g.warpAlpha || 0;
+                }
+
+                ctx.rotate(g.angle + time * 0.1);
+
+                const spiralGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+                spiralGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
+                spiralGradient.addColorStop(0.2, g.color);
+                spiralGradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = spiralGradient;
+                ctx.beginPath();
+                for (let i = 0; i < 3; i++) {
+                    ctx.rotate(Math.PI * 2 / 3);
+                    ctx.ellipse(0, 0, g.size, g.size / 4, 0, 0, Math.PI * 2); // Corrected ellipse center
+                }
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        // 2. Black Holes
+        if (this.blackHoles && this.blackHoles.length > 0) {
+            this.blackHoles.forEach(bh => {
+                if (bh.flownOut) return; // Skip if flown out during warp
+                ctx.save();
+
+                // Position comes from flyObject during disengage
+                ctx.translate(bh.x, bh.y);
+
+                // During disengage: use scale and alpha from flyObject
+                if (this.warpDisengaging && bh.warpScale !== undefined) {
+                    ctx.scale(bh.warpScale, bh.warpScale);
+                    ctx.globalAlpha = bh.warpAlpha || 0;
+                }
+
+                // Accretion disk
+                ctx.beginPath();
+                ctx.strokeStyle = 'orange';
+                ctx.lineWidth = 2;
+                ctx.arc(0, 0, bh.size * 1.5, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Event Horizon
+                ctx.beginPath();
+                ctx.fillStyle = 'black';
+                ctx.arc(0, 0, bh.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Glow
+                ctx.shadowColor = 'purple';
+                ctx.shadowBlur = 20;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.restore();
+            });
+        }
+
+        // 3. Planets (with zoom-based detail and proper Saturn-style rings)
+        if (this.planets && this.planets.length > 0) {
+            const zoom = this.camera.zoom;
+            this.planets.forEach(p => {
+                if (p.flownOut) return; // Skip if flown out during warp
+                ctx.save();
+
+                // Position comes from flyObject during disengage
+                ctx.translate(p.x, p.y);
+
+                // During disengage: use scale and alpha from flyObject
+                if (this.warpDisengaging && p.warpScale !== undefined) {
+                    ctx.scale(p.warpScale, p.warpScale);
+                    ctx.globalAlpha = p.warpAlpha || 0;
+                }
+
+                // Axial rotation over time
+                const rotationSpeed = p.rotationSpeed || 0.05;
+                ctx.rotate(p.axialTilt + time * rotationSpeed);
+
+                // Size is handled by world scale, but we use effective screen radius for detail tiers
+                const screenRadius = p.radius * zoom;
+                const detailLevel = Math.min(3, Math.floor(screenRadius / 30)); // 0-3 detail levels
+
+                // === SATURN-STYLE RINGS: Draw back half first ===
+                if (p.hasRings) {
+                    this.drawPlanetRingsHalf(ctx, p, 'back');
+                }
+
+                // Atmospheric glow (outer)
+                if (p.hasAtmosphere) {
+                    const atmosGrad = ctx.createRadialGradient(0, 0, p.radius * 0.95, 0, 0, p.radius * 1.15);
+                    const atmosAlpha = (0.5 + Math.sin(time * 2 + p.textureSeed) * 0.1).toFixed(2);
+                    atmosGrad.addColorStop(0, 'transparent');
+                    atmosGrad.addColorStop(0.5, p.atmosphereColor + Math.floor(atmosAlpha * 64).toString(16).padStart(2, '0'));
+                    atmosGrad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = atmosGrad;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.radius * 1.15, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Planet body with 3D gradient
+                const bodyGrad = ctx.createRadialGradient(
+                    -p.radius * 0.3, -p.radius * 0.3, 0,
+                    0, 0, p.radius
+                );
+                bodyGrad.addColorStop(0, p.secondaryColor);
+                bodyGrad.addColorStop(0.4, p.baseColor);
+                bodyGrad.addColorStop(0.8, p.tertiaryColor);
+                bodyGrad.addColorStop(1, '#000000');
+
+                ctx.fillStyle = bodyGrad;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Surface texture (procedural bands/patterns based on zoom)
+                if (detailLevel >= 1) {
+                    ctx.globalAlpha = 0.3;
+                    ctx.strokeStyle = p.tertiaryColor;
+                    ctx.lineWidth = 2 / zoom;
+
+                    // Draw bands for gas giants
+                    if (p.type === 'gas-giant' || p.type === 'ice-giant') {
+                        for (let i = -4; i <= 4; i++) {
+                            const bandY = p.radius * (i * 0.15);
+                            const bandWidth = Math.sqrt(p.radius * p.radius - bandY * bandY);
+                            if (bandWidth > 0) {
