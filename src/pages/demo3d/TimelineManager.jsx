@@ -5,12 +5,10 @@ import * as THREE from 'three';
 
 // Import Worlds
 import WorldIcebreaker from './worlds/WorldIcebreaker';
+import WorldAutopilot from './worlds/WorldAutopilot';
 import WorldMindWave from './worlds/WorldMindWave';
 import LegalEagle from './worlds/LegalEagle';
 import Interstellar from './worlds/Interstellar';
-import WorldOrbitalCommand from './worlds/WorldOrbitalCommand';
-import WorldDroneSwarm from './worlds/WorldDroneSwarm';
-import WorldAutopilot from './worlds/WorldAutopilot';
 import WorldCloveH2O from './worlds/WorldCloveH2O';
 import WorldFantasyQuant from './worlds/WorldFantasyQuant';
 import ContangoQuant from './worlds/ContangoQuant';
@@ -54,33 +52,26 @@ export const SCROLL_TIMELINE = [
   { p: 0.42, x: 0, y: -3980, z: -7150, rx: 0, ry: 0 }, // PAUSE Interstellar
   { p: 0.44, x: 0, y: -3980, z: -8250, rx: 0, ry: 0 }, // Exit Interstellar
   
-  // Legal Eagle (Center at Z=-10250)
+// Legal Eagle (Center at Z=-10550)
   { p: 0.46, x: 0, y: -3980, z: -8750, rx: 0, ry: 0 }, 
-  { p: 0.48, x: 0, y: -3980, z: -10250, rx: 0, ry: 0 }, // Arrive Legal Eagle
-  { p: 0.52, x: 0, y: -3980, z: -10250, rx: 0, ry: 0 }, // PAUSE Legal Eagle
-  { p: 0.55, x: 0, y: -3980, z: -11250, rx: 0, ry: 0 }, // Exit Legal Eagle
+  { p: 0.48, x: 0, y: -3980, z: -10550, rx: 0, ry: 0 }, // Arrive Legal Eagle
+  { p: 0.51, x: 0, y: -3980, z: -10550, rx: 0, ry: 0 }, // PAUSE Legal Eagle
+  { p: 0.53, x: 0, y: -3980, z: -11550, rx: 0, ry: 0 }, // Exit Legal Eagle
   
-  // Orbital Command (Center at Z=-13550)
-  { p: 0.56, x: 0, y: -4000, z: -11550, rx: 0, ry: 0 }, 
-  { p: 0.58, x: 0, y: -4000, z: -13150, rx: 0, ry: 0 }, // Arrive Orbital Command
-  { p: 0.60, x: 0, y: -4000, z: -13150, rx: 0, ry: 0 }, // PAUSE Orbital Command
+  // Autopilot Wormhole
+  { p: 0.55, x: 0, y: -3980, z: -12550, rx: 0, ry: 0 }, 
   
-  // Branch out laterally to Drone Swarm
-  { p: 0.61, x: 0, y: -4000, z: -13550, rx: 0, ry: -Math.PI / 2 }, // Turn Right
-  { p: 0.63, x: 4000, y: -4000, z: -13550, rx: 0, ry: -Math.PI / 2 }, // Arrive Drone Swarm
-  { p: 0.65, x: 4000, y: -4000, z: -13550, rx: 0, ry: -Math.PI / 2 }, // PAUSE Drone Swarm
+  // Autopilot (Center at Z=-13550)
+  { p: 0.57, x: 0, y: -3980, z: -13550, rx: 0, ry: 0 }, // Arrive Autopilot
+  { p: 0.60, x: 0, y: -3980, z: -13550, rx: 0, ry: 0 }, // PAUSE Autopilot
+  { p: 0.62, x: 0, y: -3980, z: -14550, rx: 0, ry: 0 }, // Exit Autopilot
 
-  // Continue laterally to Autopilot
-  { p: 0.655, x: 4000, y: -4000, z: -13550, rx: 0, ry: -Math.PI / 2 }, 
-  { p: 0.67, x: 7000, y: -4000, z: -13550, rx: 0, ry: -Math.PI / 2 }, // Arrive Autopilot
-  { p: 0.68, x: 7000, y: -4000, z: -13550, rx: 0, ry: -Math.PI / 2 }, // PAUSE Autopilot
+  // CloveH2O Wormhole
+  { p: 0.64, x: 0, y: -3980, z: -15550, rx: 0, ry: 0 }, 
 
-  // Diagonal return to main timeline (CloveH2O)
-  { p: 0.685, x: 7000, y: -4000, z: -13550, rx: 0, ry: Math.atan2(-7000, -2600) }, // Turn diagonally towards CloveH2O
-  { p: 0.705, x: 0, y: -4000, z: -16150, rx: 0, ry: 0 }, // Arrive CloveH2O, align forward
-  
   // CloveH2O (Center at Z=-16550)
-  { p: 0.72, x: 0, y: -4000, z: -16150, rx: 0, ry: 0 }, // PAUSE CloveH2O
+  { p: 0.66, x: 0, y: -4000, z: -16550, rx: 0, ry: 0 }, // Arrive CloveH2O
+  { p: 0.72, x: 0, y: -4000, z: -16550, rx: 0, ry: 0 }, // PAUSE CloveH2O
   
   // FantasyQuant Waterslide (Drop straight down from CloveH2O Z=-16550)
   { p: 0.74, x: 0, y: -4500, z: -16550, rx: -1.5, ry: 0 }, // Pitch down and drop
@@ -145,12 +136,8 @@ export const CameraController = () => {
       progress = 0.08; // Hard clamp for MindWave text pause
     } else if (window.interstellarLocked) {
       progress = 0.42; // Hard clamp for Interstellar pause
-    } else if (window.orbitalLocked) {
-      progress = 0.60; // Hard clamp for Orbital pause
-    } else if (window.swarmLocked) {
-      progress = 0.65; // Hard clamp for Swarm pause
     } else if (window.autopilotLocked) {
-      progress = 0.68; // Hard clamp for Autopilot pause
+      progress = 0.585; // Hard clamp for Autopilot pause
     } else if (window.contangoLocked) {
       progress = 0.93; // Hard clamp for Contango pause
     }
@@ -223,15 +210,11 @@ export const TimelineManager = () => {
       wormhole_sound: p > 0.28 && p < 0.42,
       interstellar: p > 0.28 && p < 0.48, 
       w_legal: p > 0.43 && p < 0.54,
-      legal: p > 0.48 && p < 0.58,
-      w_orbital: p > 0.53 && p < 0.65,
-      orbital: p > 0.56 && p < 0.63,
-      w_swarm: p > 0.59 && p < 0.67,
-      swarm: p > 0.61 && p < 0.67,
-      w_autopilot: p > 0.64 && p < 0.70,
-      autopilot: p > 0.65 && p < 0.71,
-      w_clove: p > 0.67 && p < 0.72,
-      clove: p > 0.69 && p < 0.76,
+      legal: p > 0.46 && p < 0.55,
+      w_autopilot: p > 0.52 && p < 0.59,
+      autopilot: p > 0.55 && p < 0.63,
+      w_clove: p > 0.61 && p < 0.67,
+      clove: p > 0.64 && p < 0.76,
       w_fantasy: p > 0.71 && p < 0.83,
       fantasy: p > 0.73 && p < 0.88,
       w_contango: p > 0.84 && p < 0.91,
@@ -262,6 +245,8 @@ export const TimelineManager = () => {
       {/* Icebreaker Cavern */}
       <WorldIcebreaker position={[0, -4000, -2550]} visible={activeZones.icebreaker} />
       
+      <WormholeGeneric position={[0, -4000, -5050]} rotation={[Math.PI/2, 0, 0]} length={3500} color="#ff00ff" speed={20.0} visible={activeZones.wormhole_sound} />
+
       {/* Interstellar */}
       <Interstellar position={[0, -4000, -7550]} rotation={[0, 0, 0]} visible={activeZones.interstellar} />
 
@@ -269,22 +254,11 @@ export const TimelineManager = () => {
       
       <LegalEagle position={[0, -4000, -10550]} rotation={[0, 0, 0]} visible={activeZones.legal} />
 
-      <WormholeGeneric position={[0, -4000, -11750]} rotation={[Math.PI/2, 0, 0]} length={2000} color="#00ffcc" visible={activeZones.w_orbital} />
+      <WormholeGeneric position={[0, -4000, -12050]} rotation={[Math.PI/2, 0, 0]} length={2000} color="#00ffff" speed={40.0} visible={activeZones.w_autopilot} />
 
-      <WorldOrbitalCommand position={[0, -4000, -13550]} rotation={[0, 0, 0]} visible={activeZones.orbital} />
+      <WorldAutopilot position={[0, -4000, -13550]} rotation={[0, 0, 0]} visible={activeZones.autopilot} />
 
-      {/* Lateral Wormhole to Drone Swarm */}
-      <WormholeGeneric position={[2000, -4000, -13550]} rotation={[Math.PI/2, -Math.PI/2, 0]} length={2000} color="#00ffff" speed={40.0} visible={activeZones.w_swarm} />
-
-      <WorldDroneSwarm position={[5000, -4000, -13550]} rotation={[0, 0, 0]} visible={activeZones.swarm} />
-
-      {/* Lateral Wormhole to Autopilot */}
-      <WormholeGeneric position={[5500, -4000, -13550]} rotation={[Math.PI/2, -Math.PI/2, 0]} length={1500} color="#ff00ff" speed={40.0} visible={activeZones.w_autopilot} />
-
-      <WorldAutopilot position={[7500, -4000, -13550]} rotation={[0, -Math.PI/2, 0]} visible={activeZones.autopilot} />
-
-      {/* Diagonal return Wormhole to CloveH2O */}
-      <WormholeGeneric position={[3500, -4000, -14850]} rotation={[Math.PI/2, Math.atan2(7000, -2600), 0]} length={3800} color="#ff00ff" speed={40.0} visible={activeZones.w_clove} />
+      <WormholeGeneric position={[0, -4000, -15050]} rotation={[Math.PI/2, 0, 0]} length={2000} color="#ff00ff" speed={40.0} visible={activeZones.w_clove} />
 
       <WorldCloveH2O position={[0, -4000, -16550]} rotation={[0, 0, 0]} visible={activeZones.clove} />
 

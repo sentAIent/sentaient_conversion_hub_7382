@@ -103,7 +103,7 @@ const WormholeIce = ({ position, rotation = [0, 0, 0], length = 4000, visible = 
   return (
     <group position={position} rotation={rotation} visible={visible}>
       <mesh>
-        <cylinderGeometry args={[60, 400, length + 200, 32, 64, true]} />
+        <cylinderGeometry args={[120, 120, length + 200, 32, 64, true]} />
         <shaderMaterial
           ref={materialRef}
           vertexShader={iceVertexShader}
