@@ -1,0 +1,2 @@
+import{r as t,j as r}from"./vendor-BLNacwW6.js";function c(){const[a,o]=t.useState("http://localhost:8081/");return t.useEffect(()=>{let e=window.location.pathname;e.startsWith("/icebreaker")&&(e=e.replace("/icebreaker","")),e===""&&(e="/");const i=window.location.search;o(`http://localhost:8081${e}${i}`)},[]),r.jsx("div",{style:{width:"100vw",height:"100vh",overflow:"hidden"},children:r.jsx("iframe",{src:a,style:{width:"100%",height:"100%",border:"none"},title:"Icebreaker Local Dev App"})})}export{c as default};
+//# sourceMappingURL=IcebreakerLocalApp-L8peIjVO.js.map

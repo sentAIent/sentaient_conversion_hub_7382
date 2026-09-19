@@ -1,0 +1,2 @@
+import{a3 as t}from"./main-BtB3osTm.js";import"./preload-helper-CS1eXPs2.js";import"./vendor-DUpYkZk-.js";import"./index-D6JA1fEd.js";class m extends t{constructor(){super()}isAvailable(){throw new Error("Method not implemented.")}verifyIdentity(e){throw new Error("Method not implemented.")}getCredentials(e){throw new Error("Method not implemented.")}setCredentials(e){throw new Error("Method not implemented.")}deleteCredentials(e){throw new Error("Method not implemented.")}}export{m as NativeBiometricWeb};
+//# sourceMappingURL=web-CxCYTEYu.js.map
