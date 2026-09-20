@@ -99,4 +99,3 @@ import{_ as m}from"./preload-helper-CS1eXPs2.js";import{E as u}from"./bootloader
             " style="background: none; border: none; color: #38bdf8; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: underline;">Already upgraded? Log In</button>
         </div>
     `,document.body.appendChild(e)}export{v as initPWAInstall};
-//# sourceMappingURL=pwa-install-NWAswbnh.js.map

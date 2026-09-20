@@ -19,9 +19,9 @@ const AboutOurApproachIntelligenceCenter = React.lazy(() => import('./pages/abou
 const Pricing = React.lazy(() => import('./pages/pricing'));
 const CheckoutSuccess = React.lazy(() => import('./pages/checkout-success'));
 const ITravel = React.lazy(() => import('./pages/iTravel'));
-const ScenerySimulator = React.lazy(() => import('./components/ScenerySimulator'));
-const IntegrationsDemo = React.lazy(() => import('./components/IntegrationsDemo'));
-const PrivacyTerms = React.lazy(() => import('./pages/PrivacyTerms'));
+// const ScenerySimulator = React.lazy(() => import('./components/ScenerySimulator'));
+// const IntegrationsDemo = React.lazy(() => import('./components/IntegrationsDemo'));
+// const PrivacyTerms = React.lazy(() => import('./pages/PrivacyTerms'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const HomeAlt = React.lazy(() => import('./pages/home-alt'));
@@ -44,9 +44,9 @@ const ProjectRoutes = () => {
             <React.Suspense fallback={<PageLoader />}>
             <RouterRoutes>
               <Route path="/" element={<Home />} />
-              <Route path="/simulator" element={<ScenerySimulator />} />
-              <Route path="/integrations" element={<IntegrationsDemo />} />
-              <Route path="/privacy" element={<PrivacyTerms />} />
+              {/* <Route path="/simulator" element={<ScenerySimulator />} /> */}
+              {/* <Route path="/integrations" element={<IntegrationsDemo />} /> */}
+              {/* <Route path="/privacy" element={<PrivacyTerms />} /> */}
               <Route path="/trust-transparency-hub" element={<TrustTransparencyHub />} />
               <Route path="/ai" element={<AboutOurApproachIntelligenceCenter />} />
               <Route path="/knowledge-nexus-resource-library" element={<KnowledgeNexusResourceLibrary />} />
