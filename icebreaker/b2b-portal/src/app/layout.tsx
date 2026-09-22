@@ -12,11 +12,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Icebreaker Business | B2B Commerce Portal",
     description: "Drive hyper-local demand with Swarm Campaigns and Bounties.",
-    url: "https://business.icebreaker.app",
+    url: "https://sentaient.com",
     siteName: "Icebreaker Business",
     images: [
       {
-        url: "https://business.icebreaker.app/og-image.png", // Ensure this image exists or replace with actual
+        url: "https://sentaient.com/og-image.png", // Ensure this image exists or replace with actual
         width: 1200,
         height: 630,
       },
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Icebreaker Business | B2B Commerce Portal",
     description: "Drive hyper-local demand with Swarm Campaigns and Bounties.",
-    images: ["https://business.icebreaker.app/og-image.png"],
+    images: ["https://sentaient.com/og-image.png"],
   },
   robots: {
     index: true,
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://business.icebreaker.app",
+    canonical: "https://sentaient.com",
   },
 };
 

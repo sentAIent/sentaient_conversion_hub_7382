@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "Icebreaker",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,16 @@
     "ios": {
       "icon": "./assets/icon.png",
       "bundleIdentifier": "com.sentaient.icebreaker",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Icebreaker needs your location to find Geo-Swarms and local venue bounties near you.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Icebreaker needs location access to alert you when a Geo-Swarm happens nearby.",
+        "NSCameraUsageDescription": "Icebreaker requires camera access so you can capture and submit videos to claim bounties.",
+        "NSMicrophoneUsageDescription": "Icebreaker requires microphone access to record audio with your bounty videos.",
+        "NSPhotoLibraryUsageDescription": "Icebreaker needs access to your photos so you can upload saved videos for bounties.",
+        "NSFaceIDUsageDescription": "Icebreaker uses Face ID to securely authenticate your account and payments."
+      },
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.sentaient.icebreaker",
@@ -19,7 +28,17 @@
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/icon.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "USE_BIOMETRIC"
+      ],
+      "versionCode": 1
     },
     "web": {
       "output": "static",

@@ -1419,6 +1419,13 @@ export const resolvers = {
             unit_amount: totalBudget,
           },
           quantity: 1,
+        , {
+          price_data: {
+            currency: 'usd',
+            product_data: { name: 'Icebreaker Platform Fee (15%)' },
+            unit_amount: Math.round(totalBudget * 0.15),
+          },
+          quantity: 1,
         }],
         mode: 'payment',
         success_url: `https://sentaient.com/dashboard/bounties?payment_success=true`,
@@ -1590,6 +1597,13 @@ export const resolvers = {
               description: description || 'Payment for swarm campaign budget',
             },
             unit_amount: totalBudget,
+          },
+          quantity: 1,
+        , {
+          price_data: {
+            currency: 'usd',
+            product_data: { name: 'Icebreaker Platform Fee (15%)' },
+            unit_amount: Math.round(totalBudget * 0.15),
           },
           quantity: 1,
         }],
@@ -2113,6 +2127,8 @@ export const resolvers = {
 
 async function startServer() {
   const app = express();
+import { globalLimiter } from './middleware/rateLimit';
+app.use(globalLimiter);
   
   // Security Hardening
   app.use(helmet({
