@@ -100,13 +100,13 @@ class TelemetryCoach {
         
         const telemetryPayload = {
             client_name: "Commander " + Math.floor(Math.random() * 9999),
-            topic: \`Analyze my gameplay: Flight Time: \${flightTime}s, Score: \${this.metrics.score}, Accuracy: \${this.metrics.accuracy.toFixed(1)}%, Maneuvers: \${this.metrics.maneuvers}. Provide a 3-paragraph tactical scouting report.\`
+            topic: `Analyze my gameplay: Flight Time: ${flightTime}s, Score: ${this.metrics.score}, Accuracy: ${this.metrics.accuracy.toFixed(1)}%, Maneuvers: ${this.metrics.maneuvers}. Provide a 3-paragraph tactical scouting report.`
         };
 
         try {
             status.innerText = 'Submitting telemetry...';
             
-            const response = await fetch(\`\${this.backendUrl}/api/jobs\`, {
+            const response = await fetch(`${this.backendUrl}/api/jobs`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(telemetryPayload)
@@ -117,9 +117,23 @@ class TelemetryCoach {
             const jobData = await response.json();
             
             if (jobData.payment_url) {
-                status.innerText = 'Awaiting payment...';
-                window.open(jobData.payment_url, '_blank');
-                this.pollJobStatus(jobData.id);
+                // IMPORTANT: App Store Compliance Check
+                const isNativeMobile = window.Capacitor && window.Capacitor.isNativePlatform();
+                
+                if (isNativeMobile) {
+                    status.innerText = 'Triggering Native In-App Purchase...';
+                    // Trigger RevenueCat purchase
+                    // e.g., await Purchases.purchasePackage(package);
+                    console.log("Triggering RevenueCat for package: ai_coach_050");
+                    // Mocking native payment success for now
+                    setTimeout(() => {
+                        this.pollJobStatus(jobData.id);
+                    }, 2000);
+                } else {
+                    status.innerText = 'Awaiting payment...';
+                    window.open(jobData.payment_url, '_blank');
+                    this.pollJobStatus(jobData.id);
+                }
             } else if (jobData.status === 'declined') {
                 status.innerText = 'Agent declined job: Margin too low.';
                 btn.innerText = 'Try Again';
