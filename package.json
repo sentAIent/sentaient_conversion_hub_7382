@@ -130,7 +130,7 @@
     "@tailwindcss/line-clamp": "^0.1.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/dompurify": "^3.0.5",
-    "@vitejs/plugin-react": "4.3.4",
+    "@vitejs/plugin-react": "6.1.1",
     "autoprefixer": "^10.4.2",
     "baseline-browser-mapping": "^2.9.12",
     "firebase-tools": "^13.31.2",
