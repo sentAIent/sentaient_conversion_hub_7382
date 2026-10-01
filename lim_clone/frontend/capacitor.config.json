@@ -1,0 +1,6 @@
+{
+  "appId": "com.contango.quant",
+  "appName": "Contango Quant",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

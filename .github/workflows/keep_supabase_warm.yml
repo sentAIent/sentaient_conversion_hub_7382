@@ -1,0 +1,33 @@
+name: Keep Supabase Functions Warm
+
+on:
+  schedule:
+    # Runs at 00:00 UTC on Monday and Thursday (twice a week)
+    - cron: '0 0 * * 1,4'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  ping_functions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Edge Function
+        run: |
+          # Replace with your actual edge function URLs and Anon keys or set them as GitHub Secrets
+          FUNCTION_URL="${{ secrets.SUPABASE_FUNCTION_URL }}"
+          ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          
+          if [ -z "$FUNCTION_URL" ]; then
+            echo "Warning: secrets.SUPABASE_FUNCTION_URL is not set. Please add it to your GitHub Repository Secrets."
+            # Fallback placeholder to illustrate command
+            FUNCTION_URL="https://your-project-ref.supabase.co/functions/v1/hello-world"
+          fi
+          
+          if [ -z "$ANON_KEY" ]; then
+            echo "Warning: secrets.SUPABASE_ANON_KEY is not set. Please add it to your GitHub Repository Secrets."
+            ANON_KEY="your-anon-key-here"
+          fi
+
+          echo "Pinging function at $FUNCTION_URL..."
+          curl -s -o /dev/null -w "%{http_code}" -X GET "$FUNCTION_URL" \
+            -H "Authorization: Bearer $ANON_KEY" \
+            -H "Content-Type: application/json"

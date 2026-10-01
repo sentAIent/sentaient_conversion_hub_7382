@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sentaient Bridge</title>
+    <style>
+        body {
+            width: 300px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a1b26;
+            color: #c0caf5;
+            padding: 16px;
+            margin: 0;
+        }
+        h2 {
+            margin-top: 0;
+            color: #7aa2f7;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #9ece6a;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-dot.offline {
+            background-color: #f7768e;
+        }
+        p {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .platform-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 16px;
+        }
+        .platform-list li {
+            padding: 8px;
+            background-color: #24283b;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .active { color: #9ece6a; }
+        .inactive { color: #565f89; }
+    </style>
+</head>
+<body>
+    <h2><span id="statusIndicator" class="status-dot"></span> Sentaient Bridge</h2>
+    <p>Monitoring active social media sessions to feed local Sentaient models.</p>
+    
+    <ul class="platform-list">
+        <li><span>X (Twitter)</span> <span id="statusX" class="inactive">Waiting...</span></li>
+        <li><span>Instagram</span> <span id="statusIg" class="inactive">Waiting...</span></li>
+        <li><span>TikTok</span> <span id="statusTk" class="inactive">Waiting...</span></li>
+    </ul>
+
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+name: Ping Supabase Edge Functions
+
+on:
+  schedule:
+    # Runs at 00:00 on Monday and Thursday (twice a week)
+    - cron: '0 0 * * 1,4'
+  workflow_dispatch: # Allows manual triggering from the GitHub UI
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Edge Function
+        run: |
+          curl -i --request POST 'https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/<YOUR_FUNCTION_NAME>' \
+          --header 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
+          --header 'Content-Type: application/json' \
+          --data '{"ping": true}'

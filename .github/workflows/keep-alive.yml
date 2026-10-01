@@ -1,0 +1,20 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Runs at 12:00 PM UTC on Mondays and Thursdays (Twice a week)
+    - cron: '0 12 * * 1,4'
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database REST API
+        # We ping the REST API endpoint of a core table (e.g., users or any table) 
+        # with a limit of 1 to ensure it counts as external database activity.
+        # Replace 'User' with the name of an actual table in your Supabase DB if it differs.
+        run: |
+          curl -s "${{ secrets.SUPABASE_URL }}/rest/v1/User?select=id&limit=1" \
+          -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}"

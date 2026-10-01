@@ -1,0 +1,9 @@
+{
+  "$schema": "https://icons.leularia.com/schema.json",
+  "collections": ["lucide", "heroicons"],
+  "outDir": "src/components/icons",
+  "framework": "react",
+  "mcp": {
+    "enabled": true
+  }
+}

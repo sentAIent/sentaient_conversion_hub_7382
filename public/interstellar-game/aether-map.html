@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aether Map | Pre-Placement Cartographer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Exo+2:wght@300;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #020205;
+            --glass: rgba(16, 20, 30, 0.65);
+            --glass-border: rgba(100, 220, 255, 0.15);
+            --accent: #00f3ff;
+            --accent-glow: rgba(0, 243, 255, 0.4);
+            --text-main: #e0faff;
+            --text-dim: #5c7a8a;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-deep);
+            font-family: 'Exo 2', sans-serif;
+            color: var(--text-main);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            touch-action: none;
+            /* Prevents scrolling on mobile while drawing */
+        }
+
+        /* --- HUD UI --- */
+        .hud {
+            position: absolute;
+            z-index: 10;
+            padding: 16px;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-panel {
+            pointer-events: auto;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Top Left Info */
+        .info-panel {
+            align-self: flex-start;
+            padding: 20px 24px;
+            max-width: 320px;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            color: var(--accent);
+            text-shadow: 0 0 15px var(--accent-glow);
+            letter-spacing: 2px;
+        }
+
+        p.subtitle {
+            margin: 8px 0 0;
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* Top Right Color Controls (Active Star Color) */
+        #colorControls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            align-self: flex-start;
+            padding: 15px;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #colorControls h2 {
+            font-size: 16px;
+            margin: 0 0 10px 0;
+            color: var(--accent);
+            text-shadow: none;
+            text-transform: uppercase;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .color-input-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        #colorInput {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--glass-border);
+            padding: 0;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        /* Customize the color swatch appearance within the native input */
+        #colorInput::-webkit-color-swatch {
+            border: 2px solid white;
+            border-radius: 6px;
+        }
+
+        #colorInput::-moz-color-swatch {
+            border: 2px solid white;
+            border-radius: 6px;
+        }
+
+        /* General Small Button Styling */
+        .btn-small {
+            flex-grow: 1;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-small:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Active Color Mode Indicator */
+        .color-mode-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg-deep);
+            box-shadow: 0 0 10px var(--accent);
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .color-mode-indicator.active {
+            opacity: 1;
+        }
+
+        #rainbowBtn.active {
+            background: #ff0077;
+            border-color: #ff0077;
+            color: #fff;
+            box-shadow: 0 0 15px #ff0077;
+        }
+
+        /* Bottom Center Tools */
+        .toolbar {
+            align-self: center;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 16px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+            color: var(--text-main);
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+        }
+
+        .btn:hover {
+            background: rgba(0, 243, 255, 0.1);
+            border-color: var(--accent-glow);
+            transform: translateY(-2px);
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Active button style for selection mode */
+        .btn.active {
+            background: var(--accent);
+            color: var(--bg-deep);
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent);
+            transform: none;
+        }
+
+        .btn.active:hover {
+            background: var(--accent);
+            color: var(--bg-deep);
+        }
+
+
+        /* Tooltip */
+        .btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            border: 1px solid #333;
+        }
+
+        .btn:hover::after {
+            opacity: 1;
+        }
+
+        /* Zoom Controls (Right) */
+        .zoom-controls {
+            position: absolute;
+            right: 20px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        /* Stats */
+        .stats {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 11px;
+            font-family: monospace;
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+
+        /* Modal & Toast (unchanged) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: #0f1219;
+            border: 1px solid var(--accent);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.15);
+            max-width: 300px;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: #fff;
+            font-family: 'Cinzel', serif;
+        }
+
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            border-color: #666;
+            color: #fff;
+        }
+
+        .toast {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(0, 243, 255, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="toast" class="toast">Action Successful</div>
+
+    <div class="hud">
+        <div class="hud-panel info-panel">
+            <h1>Interstellar Spacetime</h1>
+            <p class="subtitle">
+                Click empty space to create stars (Draw Mode).<br>
+                Stars use the active color or random rainbow mode.<br>
+                Select tool allows for cluster drag and panning.
+            </p>
+        </div>
+
+        <div id="colorControls" class="hud-panel">
+            <h2>New Star Color</h2>
+
+            <div class="btn-group">
+                <!-- Color input sets the fixed color mode -->
+                <div class="color-input-container">
+                    <input type="color" id="colorInput" value="#00f3ff" onchange="app.setFixedColor(this.value)">
+                    <div id="fixedModeIndicator" class="color-mode-indicator active"></div>
+                </div>
+
+                <button class="btn-small" id="rainbowBtn" onclick="app.setRainbowMode()">
+                    <span style="font-size: 16px;">🌈</span> Rainbow Mode
+                </button>
+            </div>
+            <p style="font-size: 10px; margin-top: 15px; color: var(--text-dim);">
+                <span id="currentColorModeText">Color Mode: Fixed (#00f3ff)</span>
+            </p>
+        </div>
+
+        <div id="bgControls" class="hud-panel"
+            style="top: 20px; left: 50%; transform: translateX(-50%); position: absolute; padding: 15px; max-width: 280px;">
+            <h2 style="font-size: 16px; margin: 0 0 10px 0; color: var(--accent); text-transform: uppercase;">Background
+                Style</h2>
+            <select id="bgStyleSelect" onchange="app.setBgStyle(this.value)"
+                style="width: 100%; padding: 8px; background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 8px; margin-bottom: 8px;">
+                <option value="deep-space">Deep Space</option>
+                <option value="nebula">Nebula</option>
+                <option value="alien">Alien</option>
+                <option value="cyber">Cyber Matrix</option>
+            </select>
+
+            <div id="matrixThemeDisplay"
+                style="font-size: 11px; color: var(--accent); margin-bottom: 8px; min-height: 15px;"></div>
+
+            <button class="btn-small" onclick="app.generateBackground()" style="width: 100%;">
+                Regenerate Background
+            </button>
+        </div>
+
+        <div class="hud-panel toolbar">
+            <button class="btn" id="drawModeBtn" onclick="app.setMode('draw')" data-tooltip="Draw Mode (Create Stars)">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+                </svg>
+            </button>
+            <button class="btn" id="selectModeBtn" onclick="app.setMode('select')"
+                data-tooltip="Drag Star/Cluster Mode">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M7 19h10V4H7v15zm-2-2V6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v11c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2zM4 21c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-2H4v2z" />
+                </svg>
+            </button>
+            <div style="width: 12px; border-left: 1px solid rgba(255,255,255,0.1);"></div>
+            <button class="btn" onclick="app.undo()" data-tooltip="Undo (Ctrl+Z)">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+                </svg>
+            </button>
+            <button class="btn" onclick="app.requestClear()" data-tooltip="Clear Universe">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z" />
+                </svg>
+            </button>
+            <button class="btn" onclick="app.downloadSVG()" data-tooltip="Export SVG">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="zoom-controls">
+        <button class="zoom-btn" onclick="app.adjustZoom(0.1)">+</button>
+        <button class="zoom-btn" onclick="app.resetView()" data-tooltip="Reset View">⟲</button>
+        <button class="zoom-btn" onclick="app.adjustZoom(-0.1)">-</button>
+    </div>
+
+    <div class="stats" id="stats">
+        Mode: Draw | Stars: 0 | Constellations: 0 | Zoom: 1.00x
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="clearModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Implode Universe?</h2>
+            <p style="color: #888; margin-bottom: 20px;">This will remove all stars. This action cannot be undone
+                easily.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="app.closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="app.confirmClear()">Implode</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        /**
+         * Aether Map Engine v5.0 - Pre-Placement Color Model
+         */
+        class AetherEngine {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d', { alpha: false });
+
+                // Configuration
+                this.config = {
+                    maxConnectDist: 180,
+                    starBaseRad: 3.5,
+                    minGroupSize: 3,
+                    bgColor: '#020205',
+                };
+
+                // State
+                this.stars = [];
+                this.camera = { x: 0, y: 0, zoom: 1, targetZoom: 1 };
+                this.history = [];
+                this.mode = 'draw'; // 'draw' or 'select'
+
+                // NEW COLOR STATE
+                this.activeColor = '#00f3ff';
+                this.colorMode = 'fixed'; // 'fixed' or 'rainbow'
+                this.bgStyle = 'deep-space'; // Default background style
+
+                // Interaction State
+                this.pointer = { x: 0, y: 0, startX: 0, startY: 0, isDown: false, dragging: false, lastWorldX: 0, lastWorldY: 0 };
+                this.hoveredStar = null;
+                this.draggedStar = null;
+                this.draggedClusterId = null; // Used only for dragging entire clusters
+
+                // Generators
+                this.initNameGenerators();
+
+                // Performance
+                this.backgroundStars = [];
+
+                this.init();
+            }
+
+            initNameGenerators() {
+                this.prefixes = ["Alpha", "Beta", "Gamma", "Delta", "Neo", "Proto", "Hyper", "Cyber", "Dark", "Lost", "Royal", "Azure", "Crimson", "Void", "Solar", "Lunar", "Emerald", "Obsidian"];
+                this.roots = ["Orion", "Cygnus", "Draco", "Lyra", "Vela", "Hydra", "Cetus", "Lupus", "Pavo", "Volans", "Aries", "Leo", "Gemini", "Ursa", "Vortex", "Helix", "Prism", "Shard", "Echo", "Serpens", "Phoenix"];
+                this.suffixes = ["Major", "Minor", "Prime", "Zero", "Cluster", "Nebula", "Expanse", "Quadrant", "Sector", "Knot", "Web", "Crown", "Trident", "Gate", "Symphony", "Paradox"];
+            }
+
+            init() {
+                window.addEventListener('resize', () => this.resize());
+                this.resize();
+
+                // Pointer Events
+                this.canvas.addEventListener('pointerdown', e => this.onPointerDown(e));
+                window.addEventListener('pointermove', e => this.onPointerMove(e));
+                window.addEventListener('pointerup', e => this.onPointerUp(e));
+                this.canvas.addEventListener('wheel', e => this.onWheel(e), { passive: false });
+
+                // Keyboard
+                window.addEventListener('keydown', e => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') this.undo();
+                });
+
+                // Initial mode setup
+                this.setMode('draw');
+                // Initial color state setup
+                this.updateColorModeUI();
+
+                this.animate = this.animate.bind(this);
+                requestAnimationFrame(this.animate);
+            }
+
+            /**
+             * Resizes the canvas to fill its container and redraws the background.
+             * The call to generateStaticBackground is here, so we must ensure the definition comes first.
+             */
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                // This line now calls the function defined immediately below for guaranteed availability
+                this.backgroundStars = this.generateStaticBackground();
+                this.generateBackground(); // Ensure dynamic background is also regenerated
+                this.draw();
+            }
+
+            /**
+             * FIX: Added the missing function to generate static background stars.
+             * This method is now positioned explicitly before other methods that rely on it
+             * (like resize) to ensure availability in sensitive execution environments.
+             */
+            generateStaticBackground() {
+                const bgStars = [];
+                const count = 300; // number of background stars
+                for (let i = 0; i < count; i++) {
+                    bgStars.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 0.5 + 0.1,
+                        alpha: Math.random() * 0.5 + 0.2
+                    });
+                }
+                return bgStars;
+            }
+
+            setMode(newMode) {
+                this.mode = newMode;
+                document.getElementById('drawModeBtn').classList.remove('active');
+                document.getElementById('selectModeBtn').classList.remove('active');
+
+                if (newMode === 'draw') {
+                    document.getElementById('drawModeBtn').classList.add('active');
+                    this.canvas.style.cursor = 'crosshair';
+                } else if (newMode === 'select') {
+                    document.getElementById('selectModeBtn').classList.add('active');
+                    this.canvas.style.cursor = 'pointer';
+                }
+            }
+
+            /* --- NEW COLOR CONTROLS --- */
+
+            getRainbowHex() {
+                return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            }
+
+            setFixedColor(hexColor) {
+                this.activeColor = hexColor;
+                this.colorMode = 'fixed';
+                this.updateColorModeUI();
+                this.showToast(`Active color set to ${hexColor}`);
+            }
+
+            setRainbowMode() {
+                this.colorMode = 'rainbow';
+                this.updateColorModeUI();
+                this.showToast("Active color set to Rainbow Mode 🌈");
+            }
+
+            setBgStyle(style) {
+                this.bgStyle = style;
+                this.generateBackground();
+
+                // Update UI visibility
+                const themeDisplay = document.getElementById('matrixThemeDisplay');
+                if (style === 'cyber') {
+                    themeDisplay.style.display = 'block';
+                } else {
+                    themeDisplay.style.display = 'none';
+                }
+            }
+
+            updateColorModeUI() {
+                const fixedIndicator = document.getElementById('fixedModeIndicator');
+                const rainbowBtn = document.getElementById('rainbowBtn');
+                const colorText = document.getElementById('currentColorModeText');
+                const colorInput = document.getElementById('colorInput');
+
+                colorInput.value = this.activeColor; // Keep input updated
+
+                if (this.colorMode === 'fixed') {
+                    fixedIndicator.classList.add('active');
+                    rainbowBtn.classList.remove('active');
+                    fixedIndicator.style.background = this.activeColor;
+                    colorText.innerText = `Color Mode: Fixed (${this.activeColor})`;
+                } else {
+                    fixedIndicator.classList.remove('active');
+                    rainbowBtn.classList.add('active');
+                    colorText.innerText = "Color Mode: Rainbow (Random per star)";
+                }
+            }
+
+            /* --- Input Handling --- */
+
+            getWorldPos(e) {
+                return {
+                    x: (e.clientX - this.canvas.width / 2 - this.camera.x) / this.camera.zoom,
+                    y: (e.clientY - this.canvas.height / 2 - this.camera.y) / this.camera.zoom
+                };
+            }
+
+            onPointerDown(e) {
+                this.pointer.isDown = true;
+                this.pointer.startX = e.clientX;
+                this.pointer.startY = e.clientY;
+                this.pointer.camStartX = this.camera.x;
+                this.pointer.camStartY = this.camera.y;
+
+                const world = this.getWorldPos(e);
+                const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
+                const starHit = this.stars.find(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
+
+                // Refresh cluster assignments if we hit a star, in case we drag a group
+                if (starHit) {
+                    this.refreshClusterAssignments();
+
+                    // In select mode, clicking a star initiates a cluster drag
+                    if (this.mode === 'select' && starHit.clusterId) {
+                        // Determine the cluster ID to drag (it's either the cluster name string or the star's ID string)
+                        this.draggedClusterId = String(starHit.clusterId);
+                        this.pointer.lastWorldX = world.x;
+                        this.pointer.lastWorldY = world.y;
+                        this.saveState();
+                        return;
+                    }
+
+                    // If not in select mode, allow single star drag
+                    if (this.mode === 'draw') {
+                        this.draggedStar = starHit;
+                        this.saveState();
+                    }
+                }
+            }
+
+            onPointerMove(e) {
+                const world = this.getWorldPos(e);
+
+                // Hover Logic
+                const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
+                this.hoveredStar = this.stars.find(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
+
+                // Cursor Feedback
+                let newCursor = 'default';
+                if (this.draggedStar || this.draggedClusterId || this.pointer.dragging) {
+                    newCursor = 'grabbing';
+                } else if (this.hoveredStar) {
+                    newCursor = 'move';
+                } else if (this.mode === 'draw') {
+                    newCursor = 'crosshair';
+                }
+                this.canvas.style.cursor = newCursor;
+
+
+                if (!this.pointer.isDown) return;
+
+                const dx = e.clientX - this.pointer.startX;
+                const dy = e.clientY - this.pointer.startY;
+                const distMoved = Math.hypot(dx, dy);
+
+                if (distMoved > 5) {
+                    this.pointer.dragging = true;
+                }
+
+                if (this.draggedClusterId) {
+                    // Calculate world delta since last move
+                    const deltaWorldX = world.x - this.pointer.lastWorldX;
+                    const deltaWorldY = world.y - this.pointer.lastWorldY;
+
+                    const draggedIdString = this.draggedClusterId;
+                    // Move all stars in the cluster
+                    this.stars.forEach(s => {
+                        // Use strict comparison on the clusterId string
+                        if (String(s.clusterId) === draggedIdString) {
+                            s.x += deltaWorldX;
+                            s.y += deltaWorldY;
+                        }
+                    });
+
+                    // Update last position
+                    this.pointer.lastWorldX = world.x;
+                    this.pointer.lastWorldY = world.y;
+
+                } else if (this.draggedStar) {
+                    this.draggedStar.x = world.x;
+                    this.draggedStar.y = world.y;
+                } else if (this.pointer.dragging) {
+                    // Pan View
+                    this.camera.x = this.pointer.camStartX + dx;
+                    this.camera.y = this.pointer.camStartY + dy;
+                }
+            }
+
+            onPointerUp(e) {
+                const world = this.getWorldPos(e);
+                const hitDist = (this.config.starBaseRad * 4) / this.camera.zoom;
+                const clickedStar = this.stars.find(s => Math.hypot(s.x - world.x, s.y - world.y) < hitDist);
+
+                if (!this.pointer.dragging && !clickedStar) {
+                    // Empty Space Clicked - Create Star (ONLY in draw mode)
+                    if (this.mode === 'draw') {
+                        this.saveState();
+                        this.createStar(world.x, world.y);
+                    }
+                }
+
+                // Reset interaction state
+                this.pointer.isDown = false;
+                this.pointer.dragging = false;
+                this.draggedStar = null;
+                this.draggedClusterId = null;
+            }
+
+            onWheel(e) {
+                e.preventDefault();
+                const zoomSpeed = 0.0015;
+                const newZoom = Math.max(0.1, Math.min(6, this.camera.zoom - e.deltaY * zoomSpeed));
+
+                const worldPos = this.getWorldPos(e);
+                this.camera.zoom = newZoom;
+
+                this.camera.x = e.clientX - this.canvas.width / 2 - worldPos.x * this.camera.zoom;
+                this.camera.y = e.clientY - this.canvas.height / 2 - worldPos.y * this.camera.zoom;
+            }
+
+            /* --- Star Creation --- */
+
+            createStar(x, y) {
+                let starColor = this.activeColor;
+                if (this.colorMode === 'rainbow') {
+                    starColor = this.getRainbowHex();
+                }
+
+                this.stars.push({
+                    x, y,
+                    id: Math.floor(Date.now() + Math.random() * 1000).toString(),
+                    phase: Math.random() * Math.PI * 2,
+                    color: starColor,
+                    clusterId: null, // Will be calculated in refreshClusterAssignments()
+                });
+                this.draw();
+            }
+
+            /**
+             * Re-calculates connections and assigns cluster names/IDs to all star objects.
+             * Guarantees that s.clusterId is always a string (either the constellation name or the star's unique string ID).
+             */
+            refreshClusterAssignments() {
+                const { lines, clusters } = this.calculateGeometry();
+
+                // Map to hold assignments: { starId: clusterName/starId }
+                const assignmentMap = new Map();
+
+                // 1. Assign deterministic name (string) to all members of large clusters (>= minGroupSize)
+                clusters.forEach(c => {
+                    if (c.length >= this.config.minGroupSize) {
+                        const name = this.getConstellationName(c);
+                        c.forEach(star => {
+                            assignmentMap.set(star.id, name);
+                        });
+                    }
+                });
+
+                // 2. Apply assignments back to the main stars array
+                this.stars.forEach(s => {
+                    // If a star is part of a large cluster, use the mapped string name. Otherwise, use its unique string ID (s.id).
+                    s.clusterId = assignmentMap.get(s.id) || s.id;
+                });
+
+                return { lines, clusters };
+            }
+
+            /* --- Utility Methods --- */
+
+            getStarColor(s) {
+                return s.color || '#e0faff'; // Fallback to default if somehow color is missing
+            }
+
+            hexToRgb(hex) {
+                const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+                hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? [
+                    parseInt(result[1], 16),
+                    parseInt(result[2], 16),
+                    parseInt(result[3], 16)
+                ] : [224, 240, 255]; // Default blue/white
+            }
+
+
+            /* --- Core Logic (State Management) --- */
+
+            saveState() {
+                // Save a deep copy of the stars array before an action that changes it
+                const newState = JSON.stringify(this.stars.map(s => ({
+                    x: s.x,
+                    y: s.y,
+                    id: String(s.id),
+                    phase: s.phase,
+                    color: s.color,
+                })));
+                if (this.history.length > 25) this.history.shift();
+                this.history.push(newState);
+            }
+
+            undo() {
+                if (this.history.length === 0) {
+                    this.showToast("Nothing to undo");
+                    return;
+                }
+                // Load the previous state
+                this.history.pop();
+                const prevState = this.history.pop();
+                if (prevState) {
+                    this.stars = JSON.parse(prevState);
+                    this.history.push(prevState); // Put it back so the next undo works from this state
+                } else {
+                    this.stars = []; // If history is now empty
+                }
+
+                this.draw();
+                this.showToast("Undone");
+            }
+
+            requestClear() {
+                document.getElementById('clearModal').classList.add('active');
+            }
+
+            closeModal() {
+                document.getElementById('clearModal').classList.remove('active');
+            }
+
+            confirmClear() {
+                this.saveState();
+                this.stars = [];
+                this.camera = { x: 0, y: 0, zoom: 1 };
+                this.closeModal();
+                this.draw();
+                this.showToast("Universe Imploded");
+            }
+
+            resetView() {
+                this.camera = { x: 0, y: 0, zoom: 1 };
+            }
+
+            adjustZoom(delta) {
+                this.camera.zoom = Math.max(0.1, Math.min(6, this.camera.zoom + delta));
+            }
+
+            getConstellationName(group) {
+                const sortedIds = group.map(s => String(s.id)).sort((a, b) => a.localeCompare(b));
+                let seed = 0;
+                sortedIds.forEach((id, i) => {
+                    for (let j = 0; j < id.length; j++) {
+                        seed += id.charCodeAt(j) * (j + 1) * (i + 1);
+                    }
+                });
+                seed = Math.floor(seed);
+
+                const pre = this.prefixes[seed % this.prefixes.length];
+                const root = this.roots[(seed * 13) % this.roots.length];
+                const suf = this.suffixes[(seed * 7) % this.suffixes.length];
+
+                const type = seed % 3;
+                if (type === 0) return `${pre} ${root}`;
+                if (type === 1) return `${root} ${suf}`;
+                return `The ${pre} ${root} ${suf}`;
+            }
+
+            setBgStyle(style) {
+                this.bgStyle = style;
+                this.generateBackground();
+
+                // Update UI visibility
+                const themeDisplay = document.getElementById('matrixThemeDisplay');
+                if (style === 'cyber') {
+                    themeDisplay.style.display = 'block';
+                } else {
+                    themeDisplay.style.display = 'none';
+                }
+            }
+
+            // ... (updateColorModeUI omitted)
+
+            generateBackground() {
+                // this.bgStyle = 'deep-space'; // REMOVED: Do not reset style on regeneration
+                if (!this.bgStyle) this.bgStyle = 'deep-space'; // Default only if undefined
+                this.showBackground = true;
+                this.staticStars = [];
+                this.galaxies = [];
+                this.blackHoles = [];
+                this.shootingStars = [];
+                this.backgroundStars = [];
+                this.nebulae = [];
+                this.spacecraft = []; // Alien ships
+                this.matrixStreams = []; // Cyber Matrix
+
+                // State for duplicate prevention
+                try {
+                    // DEBUG: CLEAR HISTORY ONCE
+                    // localStorage.removeItem('matrixThemeHistory');
+                    const savedHistory = localStorage.getItem('matrixThemeHistory');
+                    this.themeHistory = savedHistory ? JSON.parse(savedHistory) : [];
+                    this.lastMatrixFamily = localStorage.getItem('matrixLastFamily') || '';
+                } catch (e) {
+                    this.themeHistory = [];
+                    this.lastMatrixFamily = '';
+                }
+
+                // Track last 5 themes
+                this.generateStaticStars();
+
+                switch (this.bgStyle) {
+                    case 'nebula':
+                        this.generateNebulaStyle();
+                        break;
+                    case 'alien':
+                        this.generateAlienStyle();
+                        break;
+                    case 'cyber':
+                        this.generateCyberStyle();
+                        break;
+                    case 'deep-space':
+                    default:
+                        this.generateDeepSpaceStyle();
+                        break;
+                }
+            }
+
+            generateStaticStars() {
+                const count = 150;
+                let colors = ['#ffffff'];
+
+                if (this.bgStyle === 'alien') colors = ['#00ff00', '#aa00ff'];
+                if (this.bgStyle === 'cyber') colors = ['#00f3ff'];
+                if (this.bgStyle === 'nebula') colors = ['#ffffff', '#ffeebb', '#ccffff'];
+
+                for (let i = 0; i < count; i++) {
+                    this.staticStars.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 1.5 + 0.5,
+                        alpha: Math.random() * 0.5 + 0.1,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+
+            generateDeepSpaceStyle() {
+                const range = this.worldSize;
+                const half = range / 2;
+
+                // 1. Background Stars (Faint, static)
+                const count = 2000;
+                for (let i = 0; i < count; i++) {
+                    this.backgroundStars.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        r: Math.random() * 0.8 + 0.1,
+                        alpha: Math.random() * 0.3 + 0.05
+                    });
+                }
+
+                // 2. Galaxies
+                const galaxyCount = 10;
+                for (let i = 0; i < galaxyCount; i++) {
+                    this.galaxies.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        color: ['#ff0055', '#5500ff', '#00aaff'][Math.floor(Math.random() * 3)],
+                        angle: Math.random() * Math.PI * 2,
+                        size: 100 + Math.random() * 300
+                    });
+                }
+
+                // 3. Black Holes
+                this.blackHoles.push({
+                    x: (Math.random() * range) - half,
+                    y: (Math.random() * range) - half,
+                    size: 50 + Math.random() * 100
+                });
+
+                // 4. Nebulae
+                const nebulaCount = 20;
+                for (let i = 0; i < nebulaCount; i++) {
+                    this.nebulae.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        size: 1000 + Math.random() * 2000,
+                        color: ['#4400cc', '#0033aa', '#cc0066', '#330033'][Math.floor(Math.random() * 4)],
+                        alpha: 0.05 + Math.random() * 0.15
+                    });
+                }
+            }
+
+            generateNebulaStyle() {
+                const range = this.worldSize;
+                const half = range / 2;
+
+                // Dense Nebulae
+                const nebulaCount = 40;
+                for (let i = 0; i < nebulaCount; i++) {
+                    this.nebulae.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        size: 1000 + Math.random() * 2000,
+                        color: ['#ff0055', '#ffaa00', '#00ffaa', '#0055ff'][Math.floor(Math.random() * 4)],
+                        alpha: 0.1 + Math.random() * 0.2
+                    });
+                }
+                // Fewer stars
+                for (let i = 0; i < 1000; i++) {
+                    this.backgroundStars.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        r: Math.random() * 1.5 + 0.5,
+                        alpha: Math.random() * 0.5 + 0.2
+                    });
+                }
+            }
+
+            generateAlienStyle() {
+                const range = this.worldSize;
+                const half = range / 2;
+
+                // Green/Purple Theme (Randomized Mix)
+                const theme = Math.random();
+                let color1, color2;
+                if (theme < 0.33) { color1 = '#00ff00'; color2 = '#ccff00'; } // Lime/Green
+                else if (theme < 0.66) { color1 = '#aa00ff'; color2 = '#ff00aa'; } // Purple/Pink
+                else { color1 = '#00ffff'; color2 = '#0000ff'; } // Cyan/Blue
+
+                for (let i = 0; i < 1500; i++) {
+                    this.backgroundStars.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        r: Math.random() * 0.8 + 0.2,
+                        alpha: Math.random() * 0.4 + 0.1,
+                        color: Math.random() > 0.5 ? color1 : color2
+                    });
+                }
+
+                // Alien Spacecraft
+                const craftCount = 20;
+                for (let i = 0; i < craftCount; i++) {
+                    const craftColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    this.spacecraft.push({
+                        x: (Math.random() * range) - half,
+                        y: (Math.random() * range) - half,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        size: 20 + Math.random() * 40,
+                        type: Math.floor(Math.random() * 3),
+                        color: craftColor
+                    });
+                }
+            }
+
+            generateCyberStyle() {
+                // Matrix Rain Setup (Screen Space)
+                this.matrixStreams = [];
+                const fontSize = 14;
+                const columns = Math.ceil(this.canvas.width / fontSize);
+
+                // Base Themes
+                // Top 20 Curated Cyber Colors + Rainbow Surge
+                const themes = [
+                    { name: 'System Yellow', color: '#FFFF00', family: 'yellow' },
+                    { name: 'Neon Pink', color: '#FF1493', family: 'pink' },
+                    { name: 'Chrome Static', color: '#C0C0C0', family: 'mono' }, // Silver
+                    { name: 'Royal Data', color: '#4169E1', family: 'blue' }, // Royal Blue
+                    { name: 'Navy Blue', color: '#000080', family: 'blue' },
+                    { name: 'White Noise', color: '#FFFFFF', family: 'mono' },
+                    { name: 'Golden Key', color: '#FFD700', family: 'yellow' }, // Gold
+                    { name: 'Firewall Orange', color: '#FF4500', family: 'pink' },
+                    { name: 'Cyan Future', color: '#00FFFF', family: 'blue' },
+                    { name: 'Lime Access', color: '#32CD32', family: 'green' },
+                    { name: 'Purple Haze', color: '#800080', family: 'purple' },
+                    { name: 'Crimson Error', color: '#DC143C', family: 'pink' },
+                    { name: 'Teal Glitch', color: '#008080', family: 'green' },
+                    { name: 'Magenta Core', color: '#FF00FF', family: 'pink' },
+                    { name: 'Violet Mainframe', color: '#EE82EE', family: 'purple' },
+                    { name: 'Emerald Link', color: '#50C878', family: 'green' },
+                    { name: 'Sapphire Stream', color: '#0F52BA', family: 'blue' },
+                    { name: 'Ruby Firewall', color: '#E0115F', family: 'pink' },
+                    { name: 'Amber Alert', color: '#FFBF00', family: 'yellow' },
+                    { name: 'Ice Blue', color: '#A5F2F3', family: 'blue' },
+                    { name: 'sentAIent Blue', color: '#60A9FF', family: 'blue' },
+                    { name: 'Rainbow Surge', color: 'rainbow', family: 'rainbow' }
+                ];
+
+                // History Buffer Logic (Last 5 themes) + Family Check
+                // Filter out ANY theme that is in the history buffer OR matches the last family
+                const lastFamily = this.lastMatrixFamily || '';
+
+                let availableThemes = themes.filter(t => !this.themeHistory.includes(t.name));
+
+                // Try to filter by family too, but ensure we don't empty the pool
+                const familyFiltered = availableThemes.filter(t => t.family !== lastFamily);
+                if (familyFiltered.length > 0) {
+                    availableThemes = familyFiltered;
+                }
+
+                // Fallback: If we ran out of themes (unlikely), just avoid the very last one
+                let pool = availableThemes;
+                if (pool.length === 0) {
+                    const lastTheme = this.themeHistory[this.themeHistory.length - 1];
+                    pool = themes.filter(t => t.name !== lastTheme);
+                }
+
+                const themeIndex = Math.floor(Math.random() * pool.length);
+                const theme = pool[themeIndex];
+
+                // Update History
+                this.themeHistory.push(theme.name);
+                if (this.themeHistory.length > 5) {
+                    this.themeHistory.shift(); // Keep only last 5
+                }
+                this.lastMatrixFamily = theme.family; // Track family
+
+                // Persist to LocalStorage
+                try {
+                    localStorage.setItem('matrixThemeHistory', JSON.stringify(this.themeHistory));
+                    localStorage.setItem('matrixLastFamily', this.lastMatrixFamily);
+                } catch (e) {
+                    console.warn('LocalStorage failed', e);
+                }
+
+                console.log(`[Matrix] Selected: ${theme.name} (${theme.family}), History: ${JSON.stringify(this.themeHistory)}, Pool Size: ${pool.length}`);
+
+                this.matrixTheme = theme;
+
+                // Discrete Speed Levels: Crawl, Slow, Normal, Fast, Hyper, Ludicrous
+                const speedLevels = [
+                    { name: 'Crawl', value: 0.2 },
+                    { name: 'Slow', value: 0.5 },
+                    { name: 'Normal', value: 1.0 },
+                    { name: 'Fast', value: 2.0 },
+                    { name: 'Hyper', value: 4.0 },
+                    { name: 'Ludicrous', value: 8.0 }
+                ];
+                const selectedSpeed = speedLevels[Math.floor(Math.random() * speedLevels.length)];
+                this.matrixSpeedMultiplier = selectedSpeed.value;
+
+                this.showToast(`Cyber Theme: ${theme.name} (Speed: ${selectedSpeed.name}) [v14]`);
+
+                // Update UI Display
+                const displayEl = document.getElementById('matrixThemeDisplay');
+                if (displayEl) {
+                    displayEl.innerText = `Theme: ${theme.name} | Family: ${theme.family.charAt(0).toUpperCase() + theme.family.slice(1)}`;
+                }
+
+                for (let i = 0; i < columns; i++) {
+                    const depth = Math.random(); // 0 to 1
+                    const size = Math.floor(10 + depth * 14); // 10px to 24px
+                    // Apply speed multiplier with per-stream variance
+                    const speed = (2 + depth * 8 + Math.random() * 2) * this.matrixSpeedMultiplier;
+
+                    // Massive Trails: 600 to 1500 characters (3x longer)
+                    const len = 600 + Math.floor(Math.random() * 9000);
+                    const chars = [];
+                    for (let j = 0; j < len; j++) {
+                        chars.push(String.fromCharCode(0x30A0 + Math.random() * 96));
+                    }
+
+                    // Handle Rainbow Theme
+                    let streamColor = theme.color;
+                    if (theme.name === 'Rainbow Surge') {
+                        // Calculate hue based on column index (i) to cycle through the spectrum
+                        const hue = (i * 360 / columns) % 360;
+                        streamColor = `hsl(${hue}, 100%, 50%)`; // Full saturation, mid lightness
+                    }
+
+                    this.matrixStreams.push({
+                        x: i * fontSize, // Fixed columns
+                        speed: speed,
+                        chars: chars,
+                        color: streamColor,
+                        size: size,
+                        opacity: 0.3 + depth * 0.7 // Closer = brighter
+                    });
+                }
+            }
+
+            /* --- Rendering --- */
+
+            animate(time) {
+                this.draw(time);
+                requestAnimationFrame(this.animate);
+            }
+
+            draw(time) {
+                const { ctx, canvas } = this;
+
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.fillStyle = this.config.bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Static Background Stars (Screen Space)
+                if (this.config.showBackground) {
+                    const paraX = this.camera.x * 0.05;
+                    const paraY = this.camera.y * 0.05;
+
+                    this.staticStars.forEach(s => {
+                        let sx = (s.x + paraX) % canvas.width;
+                        let sy = (s.y + paraY) % canvas.height;
+                        if (sx < 0) sx += canvas.width;
+                        if (sy < 0) sy += canvas.height;
+
+                        ctx.fillStyle = s.color;
+                        ctx.globalAlpha = s.alpha;
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    ctx.globalAlpha = 1.0;
+
+                    // Cyber Matrix Rain (Screen Space)
+                    if (this.bgStyle === 'cyber' && this.matrixStreams) {
+                        ctx.textAlign = 'center';
+                        this.matrixStreams.forEach(stream => {
+                            // Update
+                            stream.y += stream.speed;
+                            if (stream.y - (stream.chars.length * stream.size) > canvas.height) {
+                                stream.y = -stream.size; // Reset to top
+                            }
+
+                            // Draw
+                            ctx.font = `${stream.size}px monospace`;
+
+                            stream.chars.forEach((char, i) => {
+                                const charY = stream.y - (i * stream.size);
+                                if (charY < -stream.size || charY > canvas.height + stream.size) return;
+
+                                // Improved visibility: Fade out only near the end of the tail
+                                // Using Math.pow to keep alpha higher for longer
+                                const relativePos = 1 - (i / stream.chars.length);
+                                const alpha = Math.pow(relativePos, 0.5) * stream.opacity;
+
+                                ctx.globalAlpha = alpha;
+                                // FORCE UNIFORM COLOR: Head character matches stream color
+                                ctx.fillStyle = stream.color;
+                                ctx.shadowBlur = 0;
+
+                                ctx.fillText(char, stream.x, charY);
+                            });
+                        });
+                        ctx.shadowBlur = 0;
+                        ctx.globalAlpha = 1.0;
+                    }
+                }
+
+                // World Transform
+                ctx.translate(canvas.width / 2 + this.camera.x, canvas.height / 2 + this.camera.y);
+                ctx.scale(this.camera.zoom, this.camera.zoom);
+
+                // Calculations & Cluster ID Assignment
+                const { lines, clusters } = this.refreshClusterAssignments();
+
+                // 0. Draw Deep Space Background
+                this.drawDeepSpace();
+
+                // 1. Draw Grid Lines (Glow Pass + Core Pass)
+                if (lines.length > 0) {
+                    ctx.lineCap = 'round';
+                    ctx.shadowBlur = 10;
+
+                    lines.forEach(l => {
+                        const alpha = Math.max(0, 1 - (l.dist / this.config.maxConnectDist));
+                        // Line color based on s1's star color
+                        const starColor = this.getStarColor(l.s1);
+                        const [r, g, b] = this.hexToRgb(starColor);
+
+                        ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
+                        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.3})`;
+                        ctx.lineWidth = 3 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.moveTo(l.s1.x, l.s1.y);
+                        ctx.lineTo(l.s2.x, l.s2.y);
+                        ctx.stroke();
+                    });
+                    ctx.shadowBlur = 0;
+
+                    lines.forEach(l => {
+                        const alpha = Math.max(0, 1 - (l.dist / this.config.maxConnectDist));
+                        const starColor = this.getStarColor(l.s1);
+
+                        ctx.strokeStyle = starColor;
+                        ctx.globalAlpha = alpha * 0.8;
+                        ctx.lineWidth = 1 / this.camera.zoom;
+                        ctx.beginPath();
+                        ctx.moveTo(l.s1.x, l.s1.y);
+                        ctx.lineTo(l.s2.x, l.s2.y);
+                        ctx.stroke();
+                    });
+                    ctx.globalAlpha = 1.0;
+                }
+
+                // 6. Draw Text Labels
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.font = `600 ${14 / this.camera.zoom}px 'Exo 2'`;
+
+                clusters.forEach(c => {
+                    // Only draw names for clusters that meet the minimum size threshold AND have a generated name
+                    const name = String(c[0].clusterId);
+                    if (c.length < this.config.minGroupSize || name === String(c[0].id)) return;
+
+                    // Centroid Calculation
+                    let cx = 0, cy = 0;
+                    c.forEach(s => { cx += s.x; cy += s.y; });
+                    cx /= c.length; cy /= c.length;
+
+                    const avgColor = this.getStarColor(c[0]);
+
+                    // Draw Text Label
+                    ctx.fillStyle = avgColor;
+                    ctx.shadowColor = "black";
+                    ctx.shadowBlur = 4;
+                    ctx.fillText(name, cx, cy + (30 / this.camera.zoom));
+                    ctx.shadowBlur = 0;
+                });
+
+                // 7. Draw Stars
+                const timeNow = performance.now();
+                this.stars.forEach(s => {
+                    const isHover = (s === this.hoveredStar);
+
+                    const twinkle = Math.sin(timeNow * 0.003 + s.phase) * 0.2 + 0.8;
+                    const scale = isHover ? 1.5 : 1.0;
+                    const radius = this.config.starBaseRad * twinkle * scale / this.camera.zoom;
+                    const starColor = this.getStarColor(s);
+                    const [r, g, b] = this.hexToRgb(starColor);
+
+                    // Draw Glow
+                    const glowRad = radius * 6;
+                    const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, glowRad);
+                    grad.addColorStop(0, `rgba(255, 255, 255, ${isHover ? 0.9 : 0.6})`);
+                    grad.addColorStop(0.2, `rgba(${r}, ${g}, ${b}, 0.3)`);
+                    grad.addColorStop(1, "rgba(0,0,0,0)");
+
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, glowRad, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw Core (Star Shape)
+                    ctx.fillStyle = starColor;
+                    this.drawStarShape(ctx, s.x, s.y, radius);
+                });
+
+                // Update HUD
+                const statEl = document.getElementById('stats');
+                const constellationCount = clusters.filter(c => c.length >= this.config.minGroupSize).length;
+                if (statEl) statEl.innerText = `Mode: ${this.mode.charAt(0).toUpperCase() + this.mode.slice(1)} | Stars: ${this.stars.length} | Constellations: ${constellationCount} | Zoom: ${this.camera.zoom.toFixed(2)}x`;
+            }
+
+            drawDeepSpace() {
+                if (!this.config.showBackground) return;
+
+                const ctx = this.ctx;
+                const time = performance.now() * 0.0005;
+
+                // 1. Background Stars
+                this.backgroundStars.forEach(s => {
+                    ctx.fillStyle = s.color || "white";
+                    ctx.globalAlpha = s.alpha;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+
+                // 1.5 Nebulae
+                ctx.globalCompositeOperation = 'screen';
+                this.nebulae.forEach(n => {
+                    const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.size);
+                    grad.addColorStop(0, n.color);
+                    grad.addColorStop(1, 'transparent');
+
+                    ctx.globalAlpha = n.alpha;
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1;
+
+                // 2. Galaxies
+                this.galaxies.forEach(g => {
+                    ctx.save();
+                    ctx.translate(g.x, g.y);
+                    ctx.rotate(g.angle + time * 0.1);
+
+                    const spiralGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+                    spiralGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
+                    spiralGradient.addColorStop(0.2, g.color);
+                    spiralGradient.addColorStop(1, 'transparent');
+
+                    ctx.fillStyle = spiralGradient;
+                    ctx.beginPath();
+                    // Draw spiral arms
+                    for (let i = 0; i < 3; i++) {
+                        ctx.rotate(Math.PI * 2 / 3);
+                        ctx.ellipse(g.size / 2, 0, g.size, g.size / 4, 0, 0, Math.PI * 2);
+                    }
+                    ctx.fill();
+                    ctx.restore();
+                });
+
+                // 3. Black Holes
+                this.blackHoles.forEach(bh => {
+                    ctx.save();
+                    ctx.translate(bh.x, bh.y);
+
+                    // Accretion disk
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'orange';
+                    ctx.lineWidth = 2;
+                    ctx.arc(0, 0, bh.size * 1.5, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Event Horizon
+                    ctx.beginPath();
+                    ctx.fillStyle = 'black';
+                    ctx.arc(0, 0, bh.size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Glow
+                    ctx.shadowColor = 'purple';
+                    ctx.shadowBlur = 20;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    ctx.restore();
+                });
+
+                // 4. Spacecraft (Alien)
+                if (this.bgStyle === 'alien') {
+                    this.spacecraft.forEach(s => {
+                        ctx.save();
+                        ctx.translate(s.x, s.y);
+                        const angle = Math.atan2(s.vy, s.vx);
+                        ctx.rotate(angle);
+
+                        ctx.fillStyle = s.color || '#00ff00';
+                        ctx.shadowColor = s.color || '#00ff00';
+
+                        if (s.type === 0) { // Saucer
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, s.size, s.size / 3, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                            ctx.arc(0, -s.size / 4, s.size / 4, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else if (s.type === 1) { // Dart
+                            ctx.beginPath();
+                            ctx.moveTo(s.size, 0);
+                            ctx.lineTo(-s.size, s.size / 2);
+                            ctx.lineTo(-s.size / 2, 0);
+                            ctx.lineTo(-s.size, -s.size / 2);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else { // Orb
+                            ctx.shadowBlur = 10;
+                            ctx.beginPath();
+                            ctx.arc(0, 0, s.size / 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        ctx.restore();
+                    });
+                }
+            }
+
+            drawStarShape(ctx, x, y, r) {
+                ctx.beginPath();
+                const pr = r * 0.5;
+                ctx.moveTo(x, y - r);
+                ctx.lineTo(x + pr, y - pr);
+                ctx.lineTo(x + r, y);
+                ctx.lineTo(x + pr, y + pr);
+                ctx.lineTo(x, y + r);
+                ctx.lineTo(x - pr, y + pr);
+                ctx.lineTo(x - r, y);
+                ctx.lineTo(x - pr, y - pr);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            calculateGeometry() {
+                const lines = [];
+                const adj = {};
+                this.stars.forEach(s => adj[s.id] = []);
+
+                for (let i = 0; i < this.stars.length; i++) {
+                    for (let j = i + 1; j < this.stars.length; j++) {
+                        const s1 = this.stars[i];
+                        const s2 = this.stars[j];
+                        const dist = Math.hypot(s1.x - s2.x, s1.y - s2.y);
+
+                        if (dist < this.config.maxConnectDist) {
+                            lines.push({ s1, s2, dist });
+                            adj[s1.id].push(s2.id);
+                            adj[s2.id].push(s1.id);
+                        }
+                    }
+                }
+
+                // BFS for clusters
+                const clusters = [];
+                const visited = new Set();
+                this.stars.forEach(star => {
+                    if (!visited.has(star.id)) {
+                        const cluster = [];
+                        const queue = [star.id];
+                        visited.add(star.id);
+                        while (queue.length) {
+                            const id = queue.shift();
+                            const s = this.stars.find(x => x.id === id);
+                            if (s) cluster.push(s);
+                            adj[id].forEach(nid => {
+                                if (!visited.has(nid)) {
+                                    visited.add(nid);
+                                    queue.push(nid);
+                                }
+                            });
+                        }
+                        if (cluster.length > 0) clusters.push(cluster);
+                    }
+                });
+
+                return { lines, clusters };
+            }
+
+            showToast(msg) {
+                const t = document.getElementById('toast');
+                t.innerText = msg;
+                t.classList.add('visible');
+                setTimeout(() => t.classList.remove('visible'), 2000);
+            }
+
+            downloadSVG() {
+                if (this.stars.length === 0) {
+                    this.showToast("Universe is empty!");
+                    return;
+                }
+
+                // Ensure cluster IDs are assigned for naming in SVG
+                this.refreshClusterAssignments();
+
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                this.stars.forEach(s => {
+                    minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
+                    maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y);
+                });
+
+                const pad = 100;
+                const w = (maxX - minX) + pad * 2;
+                const h = (maxY - minY) + pad * 2;
+                const vbX = minX - pad;
+                const vbY = minY - pad;
+
+                const { lines, clusters } = this.calculateGeometry();
+
+                let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbX} ${vbY} ${w} ${h}" style="background:#020205">
+            <rect x="${vbX}" y="${vbY}" width="${w}" height="${h}" fill="#020205"/>`;
+
+                // Lines
+                lines.forEach(l => {
+                    const op = (1 - (l.dist / this.config.maxConnectDist)).toFixed(2);
+                    const [r, g, b] = this.hexToRgb(this.getStarColor(l.s1));
+                    svg += `<line x1="${l.s1.x}" y1="${l.s1.y}" x2="${l.s2.x}" y2="${l.s2.y}" stroke="rgb(${r}, ${g}, ${b})" stroke-width="1.5" stroke-linecap="round" opacity="${op * 0.8}"/>`;
+                });
+
+                // Labels
+                clusters.forEach(c => {
+                    const name = String(c[0].clusterId);
+                    if (c.length < this.config.minGroupSize || name === String(c[0].id)) return;
+
+                    let cx = 0, cy = 0; c.forEach(s => { cx += s.x; cy += s.y }); cx /= c.length; cy /= c.length;
+                    const color = this.getStarColor(c[0]);
+                    svg += `<text x="${cx}" y="${cy + 30}" font-family="sans-serif" font-size="14" fill="${color}" text-anchor="middle" font-weight="600">${name}</text>`;
+                });
+
+                // Stars
+                this.stars.forEach(s => {
+                    const color = this.getStarColor(s);
+                    const r = this.config.starBaseRad * 1.5;
+
+                    // Star Shape
+                    const pr = r * 0.5;
+                    const pathData = `M${s.x} ${s.y - r} L${s.x + pr} ${s.y - pr} L${s.x + r} ${s.y} L${s.x + pr} ${s.y + pr} L${s.x} ${s.y + r} L${s.x - pr} ${s.y + pr} L${s.x - r} ${s.y} L${s.x - pr} ${s.y - pr} Z`;
+                    svg += `<path d="${pathData}" fill="${color}" opacity="0.8"/>`;
+
+                    // Core dot
+                    svg += `<circle cx="${s.x}" cy="${s.y}" r="1.5" fill="white" />`;
+                });
+
+                svg += `</svg>`;
+
+                const blob = new Blob([svg], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `AetherMap-${Date.now()}.svg`;
+                link.click();
+                this.showToast("Map Exported");
+            }
+        }
+
+        const app = new AetherEngine();
+    </script>
+</body>
+
+</html>

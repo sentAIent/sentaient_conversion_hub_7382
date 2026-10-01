@@ -1,100 +1,229 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../AppIcon';
 import logo from './sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png';
 
 const Header = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeTab, setActiveTab] = useState('Home');
   const location = useLocation();
   const navigate = useNavigate();
-  const auth = useAuth();
+  const auth = useAuth(); // It might be null if rendered outside AuthProvider, but we wrapped it in Routes.jsx
   const currentUser = auth?.currentUser;
+  const logout = auth?.logout;
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navItems = [
-    { name: 'Home', action: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); setActiveTab('Home'); } },
-    { name: 'Platforms', action: () => { document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth' }); setActiveTab('Platforms'); } },
-    { name: 'Agent Studio', action: () => { navigate('/agent-studio'); setActiveTab('Agent Studio'); } },
+  const navigationItems = [
+    {
+      name: 'Home',
+      path: '/portfolio',
+      icon: 'Home'
+    },
+    {
+      name: 'Our Platforms',
+      path: '/portfolio', // In the future, this can link to #platforms if we add scroll IDs
+      icon: 'Layout'
+    }
   ];
 
+  const isActivePath = (path) => location.pathname === path;
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   return (
-    <motion.header 
-      className="fixed top-0 left-0 right-0 z-50 flex justify-center mt-6 px-4"
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div 
-        className={`relative flex items-center justify-between w-full max-w-6xl px-6 py-3 rounded-full transition-all duration-500 ease-out border ${
-          isScrolled 
-            ? 'bg-[#0a0a0a]/70 backdrop-blur-xl border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]'
-            : 'bg-transparent border-transparent'
-        }`}
-      >
-        {/* Logo */}
-        <Link to="/" className="flex-shrink-0 flex items-center gap-2 group relative z-10" onClick={() => setActiveTab('Home')}>
-          <div className="relative">
-            <img src={logo} alt="sentAIent" className="h-10 md:h-12 w-auto object-contain transition-transform duration-500 group-hover:scale-105" />
-            <div className="absolute -top-1 -right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
-          </div>
-        </Link>
-
-        {/* Center Pill Nav */}
-        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center space-x-1 p-1 rounded-full bg-white/5 border border-white/5 backdrop-blur-md">
-          {navItems.map((item) => {
-            const isActive = activeTab === item.name;
-            return (
-              <button
-                key={item.name}
-                onClick={item.action}
-                className={`relative px-5 py-2 text-sm font-medium tracking-wide transition-colors duration-300 rounded-full ${
-                  isActive ? 'text-white' : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="header-active-tab"
-                    className="absolute inset-0 bg-white/10 rounded-full"
-                    initial={false}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10">{item.name}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Right Actions */}
-        <div className="flex items-center gap-3 relative z-10">
-          <button 
-            onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-            className="hidden md:flex px-5 py-2 text-sm font-medium text-white bg-white/10 hover:bg-white/20 rounded-full border border-white/10 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+      ? 'bg-[#050505]/95 backdrop-blur-md shadow-lg border-b border-white/5'
+      : 'bg-transparent'
+      }`}>
+      <div className="w-full">
+        <div className="flex items-center justify-between h-16 px-6 lg:px-8">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center space-x-3 transition-transform duration-300"
           >
-            Contact
+            <div className="relative">
+              <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center">
+                  <img src={logo} alt="sentAIent" className="h-24 md:h-32 w-auto object-contain opacity-90" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-2">
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-gray-400 hover:text-white hover:bg-white/5"
+            >
+              <Icon name="Home" size={16} />
+              <span>Home</span>
+            </button>
+            <button
+              onClick={() => document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-gray-400 hover:text-white hover:bg-white/5"
+            >
+              <Icon name="Layout" size={16} />
+              <span>Our Platforms</span>
+            </button>
+            
+            <button 
+              onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+              className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-white/10 text-white hover:bg-white/20 border border-white/10"
+            >
+              <span>Contact Us</span>
+            </button>
+            
+            {currentUser ? (
+              <>
+                <button 
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to nuke all your local data? This is irreversible.")) {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      // Also clear indexedDB if needed, but local/session is a start
+                      window.location.reload();
+                    }
+                  }}
+                  className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-orange-600/10 text-orange-500 hover:bg-orange-600/20 border border-orange-500/20"
+                >
+                  <Icon name="Trash2" size={16} />
+                  <span>Nuke My Data</span>
+                </button>
+                <button 
+                  onClick={async () => {
+                    try {
+                      await logout();
+                      navigate('/');
+                    } catch (err) {
+                      console.error("Failed to log out", err);
+                    }
+                  }}
+                  className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
+                >
+                  <span>Log Out</span>
+                </button>
+              </>
+            ) : (
+              <Link 
+                to="/login"
+                className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20"
+              >
+                <span>Login</span>
+              </Link>
+            )}
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={toggleMobileMenu}
+            className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors duration-300"
+            aria-label="Toggle mobile menu"
+          >
+            <Icon
+              name={isMobileMenuOpen ? "X" : "Menu"}
+              size={24}
+              className="transition-transform duration-300"
+            />
           </button>
-          
-          {currentUser ? (
-            <Link to="/agent-studio" className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center shadow-lg hover:shadow-blue-500/25 transition-all">
-              <Icon name="User" size={18} className="text-white" />
-            </Link>
-          ) : (
-            <Link to="/login" className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-full transition-all duration-300 shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)]">
-              <Icon name="LogIn" size={16} />
-              <span className="hidden sm:inline">Sign In</span>
-            </Link>
-          )}
+        </div>
+
+        {/* Mobile Menu */}
+        <div
+          className={`lg:hidden transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+            }`}
+        >
+          <div className="px-6 py-4 bg-[#0A0A0B] border-t border-white/5">
+            <nav className="space-y-2">
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 text-gray-400 hover:text-white hover:bg-white/5"
+              >
+                <Icon name="Home" size={18} />
+                <span>Home</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 text-gray-400 hover:text-white hover:bg-white/5"
+              >
+                <Icon name="Layout" size={18} />
+                <span>Our Platforms</span>
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-500"
+              >
+                <span>Contact Us</span>
+              </button>
+              
+              {currentUser ? (
+                <>
+                  <button 
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to nuke all your local data? This is irreversible.")) {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        window.location.reload();
+                      }
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-orange-600/10 text-orange-500 hover:bg-orange-600/20 border border-orange-500/20"
+                  >
+                    <Icon name="Trash2" size={18} />
+                    <span>Nuke My Data</span>
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      setIsMobileMenuOpen(false);
+                      try {
+                        await logout();
+                        navigate('/');
+                      } catch (err) {
+                        console.error("Failed to log out", err);
+                      }
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
+                  >
+                    <span>Log Out</span>
+                  </button>
+                </>
+              ) : (
+                <Link 
+                  to="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-white/10 text-white hover:bg-white/20 border border-white/10"
+                >
+                  <span>Login</span>
+                </Link>
+              )}
+            </nav>
+          </div>
         </div>
       </div>
-    </motion.header>
+    </header>
   );
 };
 

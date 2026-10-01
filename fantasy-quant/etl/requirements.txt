@@ -1,0 +1,11 @@
+pulp
+supabase
+python-dotenv
+pandas
+pyarrow
+fastapi
+uvicorn[standard]
+transformers
+torch
+pydantic
+requests
