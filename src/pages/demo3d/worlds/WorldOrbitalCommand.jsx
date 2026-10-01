@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { Text, Float, useScroll, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
+import SuspenseLoader from '../../../components/ui/skeletons/SuspenseLoader';
 
 const Satellite = ({ position }) => {
   const satRef = useRef();
@@ -130,7 +131,7 @@ const WorldOrbitalCommand = ({ position, rotation, visible }) => {
       </mesh>
 
       <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.5}>
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<SuspenseLoader message="ACQUIRING ORBITAL LOCK..." />}>
           <LogoMesh />
         </React.Suspense>
         

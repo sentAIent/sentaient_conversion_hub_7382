@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Sparkles, ScrollControls, Scroll, useScroll } from '@react-three/drei';
 import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
 import { CameraController, TimelineManager } from '../TimelineManager';
+import SuspenseLoader from '../../../components/ui/skeletons/SuspenseLoader';
 
 // --- HTML Overlays (Stations) ---
 const HTMLStations = () => {
@@ -64,7 +65,7 @@ const Scene3D = () => {
       <ScrollControls pages={10} damping={0.2} distance={1.2}>
         
         {/* The 3D World */}
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={<SuspenseLoader message="CALIBRATING QUANTUM GRID..." />}>
           <CameraController />
           <TimelineManager />
         </React.Suspense>
