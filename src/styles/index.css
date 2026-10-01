@@ -67,3 +67,10 @@ body {
   background-color: rgba(0, 0, 0, 0.3); /* Black overlay with 50% opacity */
   z-index: 1; /* Place the overlay behind the content */
 }
+/* Capacitor Safe Areas for True Cross-Platform Parity */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
