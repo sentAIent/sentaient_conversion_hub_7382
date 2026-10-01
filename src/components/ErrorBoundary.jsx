@@ -14,13 +14,7 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     error.__ErrorBoundary = true;
     window.__COMPONENT_ERROR__?.(error, errorInfo);
-    if (window.Sentry) {
-        window.Sentry.captureException(error, { extra: errorInfo });
-    } else {
-        import("@sentry/react").then((Sentry) => {
-            Sentry.captureException(error, { extra: errorInfo });
-        }).catch(console.error);
-    }
+    // console.log("Error caught by ErrorBoundary:", error, errorInfo);
   }
 
   render() {

@@ -30,14 +30,12 @@ const AutopilotTerms = React.lazy(() => import('./pages/AutopilotTerms'));
 const ContangoOldPage = React.lazy(() => import('./pages/ContangoOldPage'));
 const AgentStudio = React.lazy(() => import('./pages/AgentStudio'));
 
-import CanvasSkeleton from './components/ui/skeletons/CanvasSkeleton';
-
 // Loading fallback component
 const PageLoader = () => (
-  <CanvasSkeleton message="ROUTING TO DESTINATION..." />
+  <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
 );
-
-import AnimatedRoutes from './components/AnimatedRoutes';
 
 const ProjectRoutes = () => {
   return (
@@ -46,7 +44,7 @@ const ProjectRoutes = () => {
           <ErrorBoundary>
             <ScrollToTop />
             <React.Suspense fallback={<PageLoader />}>
-            <AnimatedRoutes>
+            <RouterRoutes>
               <Route path="/" element={<Home />} />
               <Route path="/simulator" element={<ScenerySimulator />} />
               <Route path="/integrations" element={<IntegrationsDemo />} />
@@ -84,7 +82,7 @@ const ProjectRoutes = () => {
 
               <Route path="/portfolio" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
-            </AnimatedRoutes>
+            </RouterRoutes>
           </React.Suspense>
           </ErrorBoundary>
       </AuthProvider>
