@@ -74,7 +74,7 @@
     "jsdom": "^29.1.1",
     "lucide-react": "^1.16.0",
     "posthog-js": "^1.335.5",
-    "puppeteer": "^24.43.1",
+    "puppeteer": "^25.12.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-ga4": "^3.0.1",
