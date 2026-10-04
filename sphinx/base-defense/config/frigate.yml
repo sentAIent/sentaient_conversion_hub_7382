@@ -1,0 +1,30 @@
+mqtt:
+  host: mqtt
+
+cameras:
+  front_door: # <--- Name of your camera
+    ffmpeg:
+      inputs:
+        - path: rtsp://username:password@192.168.1.100:554/stream1 # <--- Your camera RTSP stream
+          roles:
+            - detect
+            - rtmp
+    detect:
+      width: 1280
+      height: 720
+      fps: 5
+    objects:
+      track:
+        - person
+        - car
+        - dog
+    record:
+      enabled: True
+      retain:
+        days: 7
+        mode: motion
+    snapshots:
+      enabled: True
+      timestamp: False
+      bounding_box: True
+      crop: False

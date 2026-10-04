@@ -1,0 +1,17 @@
+Starting Metro Bundler
+
+Web Bundled 2712196ms index.js (652 modules)
+
+› Assets (1):
+assets/game_logo.a37c27a2a7eef63aa3bd63af0f872570.jpg (901KB)
+
+› web bundles (2):
+_expo/static/js/web/index-05cf5f740be4940ee24d78934fa05221.js (3.9MB)
+_expo/static/js/web/vision_bundle-15e80af0fd97369846410e9608f36f07.js (141KB)
+
+› Files (3):
+favicon.ico (15KB)
+index.html (1.2KB)
+metadata.json (49B)
+
+Exported: dist

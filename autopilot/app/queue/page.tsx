@@ -55,6 +55,8 @@ export default function QueuePage() {
     }
     
     fetchQueue();
+    const interval = setInterval(fetchQueue, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const now = new Date().getTime();

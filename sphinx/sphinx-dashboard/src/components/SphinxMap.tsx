@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import Map, { Source, Layer, Popup } from 'react-map-gl/maplibre';
+import Map, { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { useSettings, LocationState } from '../lib/useSettings';
@@ -8,6 +8,8 @@ import SettingsPanel from './SettingsPanel';
 import { GeocodingSearch } from './GeocodingSearch';
 import { OfflineDownloaderModal } from './OfflineDownloaderModal';
 import { DirectionsPanel } from './DirectionsPanel';
+import { DroneFeed } from './DroneFeed';
+import { RadioPanel } from './RadioPanel';
 import { DirectionsResult } from '../lib/directionsService';
 import { isPointInPolygon } from '../lib/geofence';
 
@@ -60,7 +62,24 @@ export default function SphinxMap() {
     updateSettings({ ...settings, layers: newLayers });
   };
 
-  
+  const [droneData, setDroneData] = useState<any>(null);
+  const [crimeData, setCrimeData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:3117');
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'drone_telemetry') {
+          setDroneData(data);
+        } else if (data.type === 'crime_incidents') {
+          setCrimeData(data.data);
+        }
+      } catch(e) {}
+    };
+    return () => ws.close();
+  }, []);
+
   const [viewState, setViewState] = useState({
     longitude: -77.0369,
     latitude: 38.9072,
@@ -866,6 +885,22 @@ const [legendScale, setLegendScale] = useState(1);
             </div>
           </Popup>
         )}
+        {settings.layers.drone && droneData && (
+          <Marker
+            longitude={droneData.lon}
+            latitude={droneData.lat}
+            anchor="center"
+          >
+            <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center border-2 border-cyan-400 animate-pulse cursor-pointer">
+              <span className="text-xl">🛸</span>
+            </div>
+          </Marker>
+        )}
+        {settings.layers.crime_live && crimeData.map((incident: any) => (
+          <Marker key={incident.id} longitude={incident.lon} latitude={incident.lat} anchor="bottom">
+            <div className={`w-4 h-4 rounded-full border-2 cursor-pointer animate-pulse ${incident.severity === 'high' ? 'bg-red-500/50 border-red-500' : 'bg-orange-500/50 border-orange-500'}`} title={incident.type} />
+          </Marker>
+        ))}
       </Map>
 
       {alerts.length > 0 && (
@@ -1175,35 +1210,8 @@ const [legendScale, setLegendScale] = useState(1);
         </div>
       )}
 
-      <OfflineDownloaderModal 
-        isOpen={isDownloaderOpen} 
-        onClose={() => setIsDownloaderOpen(false)} 
-        bbox={downloadBbox} 
-        clientId={clientId} 
-      />
-      <SettingsPanel 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-        settings={settings} 
-        updateSettings={updateSettings} 
-        currentViewState={{ lat: viewState.latitude, lon: viewState.longitude, zoom: viewState.zoom }}
-        onJumpTo={handleJumpTo}
-      />
-
-      <div className="absolute bottom-6 right-6 z-10 flex gap-[0.5vw]">
-        <button 
-          onClick={() => setTimeframe('live')}
-          className={`px-4 py-2 font-mono text-xs tracking-wider border rounded transition-colors ${timeframe === 'live' ? 'bg-cyan-900/50 border-cyan-400 text-cyan-400' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500'}`}
-        >
-          LIVE FEED
-        </button>
-        <button 
-          onClick={() => setTimeframe('historical')}
-          className={`px-4 py-2 font-mono text-xs tracking-wider border rounded transition-colors ${timeframe === 'historical' ? 'bg-orange-900/50 border-orange-400 text-orange-400' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500'}`}
-        >
-          HISTORICAL
-        </button>
-      </div>
+      {settings.layers.drone && <DroneFeed />}
+      {settings.layers.radio && <RadioPanel onClose={() => updateSettings({ layers: { ...settings.layers, radio: false } })} />}
     </div>
   );
 }

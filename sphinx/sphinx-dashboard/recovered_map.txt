@@ -1,0 +1,380 @@
+> src/components/SphinxMap.tsx
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import Map, { Source, Layer, Popup } from 'react-map-gl';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { ShieldAlert, Activity, Eye, Radio, Plane, Droplets, Flame, Earth } from 'lucide-react';
+
+interface SelectedFeature {
+  longitude: number;
+  latitude: number;
+  properties: any;
+  layerId: string;
+}
+
+export default function SphinxMap() {
+  const [viewState, setViewState] = useState({
+    longitude: -77.0369,
+    latitude: 38.9072,
+    zoom: 13,
+    pitch: 45,
+    bearing: 0
+  });
+
+  const [aircraftFeatures, setAircraftFeatures] = useState<any[]>([]);
+  const [surveillanceFeatures, setSurveillanceFeatures] = useState<any[]>([]);
+  const [cellTowerFeatures, setCellTowerFeatures] = useState<any[]>([]);
+  const [springFeatures, setSpringFeatures] = useState<any[]>([]);
+  const [disasterFeatures, setDisasterFeatures] = useState<any[]>([]);
+  const [earthquakeFeatures, setEarthquakeFeatures] = useState<any[]>([]);
+  const [anomalyCount, setAnomalyCount] = useState(0);
+  
+  const [timeframe, setTimeframe] = useState<'live' | 'historical'>('live');
+  const [selectedFeature, setSelectedFeature] = useState<SelectedFeature | null>(null);
+  
+  const mapRef = useRef<any>(null);
+  const bboxRef = useRef<string>("");
+
+  const updateBbox = useCallback(() => {
+    if (!mapRef.current) return;
+    const map = (mapRef.current as { getMap: () => any }).getMap();
+    if (!map) return;
+    const bounds = map.getBounds();
+    if (bounds) {
+      bboxRef.current = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+    }
+  }, []);
+
+  const loadAircraft = useCallback(async () => {
+    if (!bboxRef.current) return;
+    try {
+      const res = await fetch(`http://localhost:3117/api/osint/aircraft?bbox=${bboxRef.current}`);
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      setAircraftFeatures(data.aircraft || []);
+      const anomalies = (data.aircraft || []).filter((a: any) => a.properties?.anomaly);
+      setAnomalyCount(anomalies.length);
+    } catch (error) {
+      console.error('[Sphinx GL] Failed to fetch aircraft data', error);
+    }
+  }, []);
+
+  const loadWatchtowerData = useCallback(async () => {
+    if (!bboxRef.current) return;
+    try {
+      const [camRes, cellRes, springRes] = await Promise.all([
+        fetch(`http://localhost:3117/api/osint/cameras?bbox=${bboxRef.current}`),
+        fetch(`http://localhost:3117/api/osint/celltowers?bbox=${bboxRef.current}`),
+        fetch(`http://localhost:3117/api/osint/springs?bbox=${bboxRef.current}`)
+      ]);
+      
+      if (camRes.ok) setSurveillanceFeatures((await camRes.json()).features || []);
+      if (cellRes.ok) setCellTowerFeatures((await cellRes.json()).features || []);
+      if (springRes.ok) setSpringFeatures((await springRes.json()).features || []);
+    } catch (error) {
+      console.error('[Sphinx GL] Failed to fetch watchtower data', error);
+    }
+  }, []);
+
+  const loadDisastersData = useCallback(async () => {
+    try {
+      const [disasterRes, quakeRes] = await Promise.all([
+        fetch(`http://localhost:3117/api/osint/disasters?timeframe=${timeframe}`),
+        fetch(`http://localhost:3117/api/osint/earthquakes?timeframe=${timeframe}`)
+      ]);
+      
+      if (disasterRes.ok) setDisasterFeatures((await disasterRes.json()).features || []);
+      if (quakeRes.ok) setEarthquakeFeatures((await quakeRes.json()).features || []);
+    } catch (error) {
+      console.error('[Sphinx GL] Failed to fetch disaster data', error);
+    }
+  }, [timeframe]);
+
+  useEffect(() => {
+    let aircraftInterval: ReturnType<typeof setInterval>;
+    let watchtowerInterval: ReturnType<typeof setInterval>;
+    let disastersInterval: ReturnType<typeof setInterval>;
+
+    if (mapRef.current) {
+      updateBbox();
+      
+      // Initial loads
+      loadAircraft();
+      loadWatchtowerData();
+      loadDisastersData();
+
+      // Polling loops
+      aircraftInterval = setInterval(() => loadAircraft(), 30000); 
+      watchtowerInterval = setInterval(() => loadWatchtowerData(), 60000);
+      disastersInterval = setInterval(() => loadDisastersData(), 120000); 
+    }
+
+    return () => {
+      clearInterval(aircraftInterval);
+      clearInterval(watchtowerInterval);
+      clearInterval(disastersInterval);
+    };
+  }, [loadAircraft, loadWatchtowerData, loadDisastersData, updateBbox]);
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setViewState((prev) => ({
+          ...prev,
+          longitude: pos.coords.longitude,
+          latitude: pos.coords.latitude,
+          zoom: 13
+        }));
+      },
+      (err) => console.warn('Could not get geolocation:', err),
+      { enableHighAccuracy: true }
+    );
+  }, []);
+
+  const onMapClick = (e: any) => {
+    const features = e.features;
+    if (features && features.length > 0) {
+      const feature = features[0];
+      setSelectedFeature({
+        longitude: e.lngLat.lng,
+        latitude: e.lngLat.lat,
+        properties: feature.properties,
+        layerId: feature.layer.id
+      });
+    } else {
+      setSelectedFeature(null);
+    }
+  };
+
+  return (
+    <div className="relative w-full h-screen bg-black">
+      <Map
+        ref={mapRef}
+        {...viewState}
+        onMove={e => {
+          setViewState(e.viewState);
+          updateBbox();
+        }}
+        onMoveEnd={() => {
+          loadAircraft();
+          loadWatchtowerData();
+        }}
+        mapLib={maplibregl}
+        onClick={onMapClick}
+        interactiveLayerIds={[
+          'flock-cameras-layer', 
+          'cctv-cameras-layer', 
+          'aircraft-layer', 
+          'cell-tower-layer',
+          'spring-layer',
+          'disaster-layer',
+          'earthquake-layer'
+        ]}
+        mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+      >
+        
+        {/* Watchtower Cameras Source & Layers */}
+        <Source id="surveillance-cameras" type="geojson" data={{ type: 'FeatureCollection', features: surveillanceFeatures }}>
+          <Layer 
+            id="flock-cameras-layer" 
+            type="circle" 
+            filter={['==', 'type', 'flock']} 
+            paint={{
+              'circle-radius': 6,
+              'circle-color': '#ff0000',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff'
+            }} 
+          />
+          <Layer 
+            id="cctv-cameras-layer" 
+            type="circle" 
+            filter={['==', 'type', 'cctv']} 
+            paint={{
+              'circle-radius': 5,
+              'circle-color': '#0088ff',
+              'circle-stroke-width': 1,
+              'circle-stroke-color': '#ffffff'
+            }} 
+          />
+        </Source>
+
+        {/* Cell Towers Source & Layers */}
+        <Source id="cell-towers" type="geojson" data={{ type: 'FeatureCollection', features: cellTowerFeatures }}>
+          <Layer 
+            id="cell-tower-layer" 
+            type="circle" 
+            paint={{
+              'circle-radius': 7,
+              'circle-color': '#d946ef',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#4a044e',
+              'circle-opacity': 0.8
+            }} 
+          />
+        </Source>
+
+        {/* Springs Source & Layers */}
+        <Source id="springs" type="geojson" data={{ type: 'FeatureCollection', features: springFeatures }}>
+          <Layer 
+            id="spring-layer" 
+            type="circle" 
+            paint={{
+              'circle-radius': 5,
+              'circle-color': '#3b82f6',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#93c5fd',
+              'circle-opacity': 0.8
+            }} 
+          />
+        </Source>
+
+        {/* Disasters Source & Layers */}
+        <Source id="disasters" type="geojson" data={{ type: 'FeatureCollection', features: disasterFeatures }}>
+          <Layer 
+            id="disaster-layer" 
+            type="circle" 
+            paint={{
+              'circle-radius': 8,
+              'circle-color': '#ef4444',
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#fca5a5',
+              'circle-opacity': 0.9
+            }} 
+          />
+        </Source>
+
+        {/* Earthquakes Source & Layers */}
+        <Source id="earthquakes" type="geojson" data={{ type: 'FeatureCollection', features: earthquakeFeatures }}>
+          <Layer 
+            id="earthquake-layer" 
+            type="circle" 
+            paint={{
+              'circle-radius': [
+                'interpolate', ['linear'], ['get', 'mag'],
+                0, 3,
+                10, 20
+              ],
+              'circle-color': '#f97316',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#fdba74',
+              'circle-opacity': 0.7
+            }} 
+          />
+        </Source>
+
+        {/* Aircraft Source & Layers */}
+        <Source id="aircraft" type="geojson" data={{ type: 'FeatureCollection', features: aircraftFeatures }}>
+          <Layer 
+            id="aircraft-layer" 
+            type="circle" 
+            paint={{
+              'circle-radius': 4,
+              'circle-color': [
+                'case',
+                ['==', ['get', 'anomaly'], true],
+                '#ff0000',
+                '#ffff00'
+              ],
+              'circle-opacity': 0.8
+            }} 
+          />
+        </Source>
+
+        {/* Interactive Popup */}
+        {selectedFeature && (
+          <Popup
+            longitude={selectedFeature.longitude}
+            latitude={selectedFeature.latitude}
+            anchor="bottom"
+            onClose={() => setSelectedFeature(null)}
+            closeOnClick={false}
+            className="sphinx-popup"
+          >
+            <div className="bg-black/90 border border-cyan-900/50 p-3 rounded-md text-xs font-mono w-48 shadow-[0_0_10px_rgba(0,255,255,0.1)]">
+              {selectedFeature.layerId === 'aircraft-layer' ? (
+                <>
+                  <div className="text-cyan-400 font-bold border-b border-cyan-900/50 pb-1 mb-2">TARGET: AIRCRAFT</div>
+                  <div className="text-gray-300">Callsign: <span className="text-white">{selectedFeature.properties.callsign as string}</span></div>
+                  <div className="text-gray-300">Altitude: <span className="text-white">{selectedFeature.properties.altitude as string}m</span></div>
+                </>
+              ) : selectedFeature.layerId === 'cell-tower-layer' ? (
+                <>
+                  <div className="text-purple-400 font-bold border-b border-purple-900/50 pb-1 mb-2">TARGET: CELL TOWER</div>
+                  <div className="text-gray-300">Radio: <span className="text-white">{selectedFeature.properties.radio as string}</span></div>
+                  <div className="text-gray-300">Net/Cell: <span className="text-white">{selectedFeature.properties.net} / {selectedFeature.properties.cell}</span></div>
+                </>
+              ) : selectedFeature.layerId === 'spring-layer' ? (
+                <>
+                  <div className="text-blue-400 font-bold border-b border-blue-900/50 pb-1 mb-2">NATURAL SPRING</div>
+                  <div className="text-gray-300">Name: <span className="text-white">{selectedFeature.properties.name as string}</span></div>
+                  <div className="text-gray-300">Drinking: <span className="text-white">{selectedFeature.properties.drinking_water as string}</span></div>
+                </>
+              ) : selectedFeature.layerId === 'disaster-layer' ? (
+                <>
+                  <div className="text-red-400 font-bold border-b border-red-900/50 pb-1 mb-2">SEVERE WEATHER</div>
+                  <div className="text-gray-300">Event: <span className="text-white">{selectedFeature.properties.title as string}</span></div>
+                  <div className="text-gray-300">Type: <span className="text-white">{selectedFeature.properties.categories as string}</span></div>
+                </>
+              ) : selectedFeature.layerId === 'earthquake-layer' ? (
+                <>
+                  <div className="text-orange-400 font-bold border-b border-orange-900/50 pb-1 mb-2">SEISMIC EVENT</div>
+                  <div className="text-gray-300">Location: <span className="text-white">{selectedFeature.properties.place as string}</span></div>
+                  <div className="text-gray-300">Magnitude: <span className="text-white font-bold">{selectedFeature.properties.mag}</span></div>
+                </>
+              ) : (
+                <>
+                  <div className="text-blue-400 font-bold border-b border-blue-900/50 pb-1 mb-2">WATCHTOWER NODE</div>
+                  <div className="text-gray-300">Type: <span className="text-white">{selectedFeature.properties.type as string}</span></div>
+                </>
+              )}
+            </div>
+          </Popup>
+        )}
+      </Map>
+      
+      {/* Timeframe Toggle UI */}
+      <div className="absolute bottom-4 right-4 z-10 bg-black/80 border border-cyan-900/50 p-2 rounded-lg backdrop-blur-md flex space-x-2 shadow-[0_0_15px_rgba(0,255,255,0.1)]">
+        <button
+          onClick={() => setTimeframe('live')}
+          className={`px-4 py-2 font-mono text-xs rounded transition-colors ${timeframe === 'live' ? 'bg-cyan-900/50 text-cyan-400 border border-cyan-500/50 shadow-[0_0_10px_rgba(0,255,255,0.2)]' : 'text-cyan-700 hover:text-cyan-500'}`}
+        >
+          LIVE
+        </button>
+        <button
+          onClick={() => setTimeframe('historical')}
+          className={`px-4 py-2 font-mono text-xs rounded transition-colors ${timeframe === 'historical' ? 'bg-cyan-900/50 text-cyan-400 border border-cyan-500/50 shadow-[0_0_10px_rgba(0,255,255,0.2)]' : 'text-cyan-700 hover:text-cyan-500'}`}
+        >
+          HISTORICAL
+        </button>
+      </div>
+
+      {/* HUD Overlay */}
+      <div className="absolute top-4 left-4 z-10 bg-black/80 border border-cyan-900/50 p-4 rounded-lg backdrop-blur-md text-cyan-500 font-mono text-sm w-80 shadow-[0_0_15px_rgba(0,255,255,0.1)] pointer-events-none">
+        <h1 className="text-xl font-bold text-cyan-400 mb-2 border-b border-cyan-900/50 pb-2 tracking-widest">SPHINX OS</h1>
+        <div className="space-y-2 mt-4">
+          <div className="flex justify-between items-center">
+            <span className="flex items-center"><Droplets size={14} className="mr-2"/> SPRINGS</span>
+            <span className="text-blue-400">{springFeatures.length}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="flex items-center"><Radio size={14} className="mr-2"/> TOWERS</span>
+            <span className="text-purple-400">{cellTowerFeatures.length}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="flex items-center"><Earth size={14} className="mr-2"/> SEISMIC</span>
+            <span className="text-orange-400">{earthquakeFeatures.length}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="flex items-center"><Flame size={14} className="mr-2"/> WEATHER</span>
+            <span className="text-red-400">{disasterFeatures.length}</span>
+          </div>
+          <div className="flex justify-between items-center pt-2 border-t border-cyan-900/30">
+            <span className="flex items-center"><Plane size={14} className="mr-2"/> AIRCRAFT</span>
+            <span className="text-cyan-400">{aircraftFeatures.length}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

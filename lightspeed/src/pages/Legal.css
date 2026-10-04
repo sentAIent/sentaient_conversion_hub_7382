@@ -1,0 +1,24 @@
+.legal-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  color: var(--text-primary);
+}
+
+.legal-container h1 {
+  color: var(--accent);
+  border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+}
+
+.legal-container h2 {
+  color: var(--text-primary);
+  margin-top: 40px;
+}
+
+.legal-container p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 15px;
+}

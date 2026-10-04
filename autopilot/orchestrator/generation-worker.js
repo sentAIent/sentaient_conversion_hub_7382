@@ -10,6 +10,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Configuration
 const API_BASE = 'http://localhost:8080';
+let activeGenerations = 0;
+const MAX_CONCURRENCY = 2;
 
 async function generateAndQueueCampaign(schedule) {
     const { brand_id, prompt_template, platforms } = schedule;
@@ -114,7 +116,16 @@ async function startWorker() {
             console.log(`[GenWorker] Scheduling generation tasks for brand '${brand_id}' on cron '${generate_cron}'`);
             
             cron.schedule(generate_cron, async () => {
-                await generateAndQueueCampaign(schedule);
+                if (activeGenerations >= MAX_CONCURRENCY) {
+                    console.warn(`[GenWorker] Max concurrency (${MAX_CONCURRENCY}) reached. Skipping schedule for ${brand_id}.`);
+                    return;
+                }
+                activeGenerations++;
+                try {
+                    await generateAndQueueCampaign(schedule);
+                } finally {
+                    activeGenerations--;
+                }
             });
             activeJobs++;
         } else {

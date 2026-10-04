@@ -22,7 +22,7 @@ export function ComplianceGate({ children }) {
         age_coppa: true,
         terms_gdpr: true
       });
-      setIsCompliant(true);
+      window.localStorage.setItem('sp_compliance_accepted', 'true'); setIsCompliant(true);
     }
   };
 

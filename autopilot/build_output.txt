@@ -1,0 +1,180 @@
+​
+Netlify Build                                                 
+────────────────────────────────────────────────────────────────
+​
+❯ Version
+  @netlify/build 36.4.8
+​
+❯ Flags
+  dry: false
+​
+❯ Current directory
+  /Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/autopilot
+​
+❯ Config file
+  /Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/autopilot/netlify.toml
+​
+❯ Context
+  production
+​
+❯ Using Next.js Runtime - v5.15.13
+​
+build.command from netlify.toml                               
+────────────────────────────────────────────────────────────────
+​
+$ npm run build
+
+> sentaient-marketing-studio@0.1.0 build
+> next build
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings
+
+./components/kanban/KanbanCard.tsx
+Attempted import error: 'Twitter' is not exported from '__barrel_optimize__?names=Calendar,GripVertical,Instagram,Linkedin,MoreVertical,Play,Twitter!=!lucide-react' (imported as 'Twitter').
+
+Import trace for requested module:
+./components/kanban/KanbanCard.tsx
+./components/kanban/KanbanBoard.tsx
+./app/tasks/page.tsx
+
+./components/kanban/KanbanCard.tsx
+Attempted import error: 'Instagram' is not exported from '__barrel_optimize__?names=Calendar,GripVertical,Instagram,Linkedin,MoreVertical,Play,Twitter!=!lucide-react' (imported as 'Instagram').
+
+Import trace for requested module:
+./components/kanban/KanbanCard.tsx
+./components/kanban/KanbanBoard.tsx
+./app/tasks/page.tsx
+
+./components/kanban/KanbanCard.tsx
+Attempted import error: 'Linkedin' is not exported from '__barrel_optimize__?names=Calendar,GripVertical,Instagram,Linkedin,MoreVertical,Play,Twitter!=!lucide-react' (imported as 'Linkedin').
+
+Import trace for requested module:
+./components/kanban/KanbanCard.tsx
+./components/kanban/KanbanBoard.tsx
+./app/tasks/page.tsx
+
+./components/kanban/KanbanCard.tsx
+Attempted import error: 'Twitter' is not exported from '__barrel_optimize__?names=Calendar,GripVertical,Instagram,Linkedin,MoreVertical,Play,Twitter!=!lucide-react' (imported as 'Twitter').
+
+Import trace for requested module:
+./components/kanban/KanbanCard.tsx
+./components/kanban/KanbanBoard.tsx
+./app/tasks/page.tsx
+
+./components/kanban/KanbanCard.tsx
+Attempted import error: 'Instagram' is not exported from '__barrel_optimize__?names=Calendar,GripVertical,Instagram,Linkedin,MoreVertical,Play,Twitter!=!lucide-react' (imported as 'Instagram').
+
+Import trace for requested module:
+./components/kanban/KanbanCard.tsx
+./components/kanban/KanbanBoard.tsx
+./app/tasks/page.tsx
+
+./components/kanban/KanbanCard.tsx
+Attempted import error: 'Linkedin' is not exported from '__barrel_optimize__?names=Calendar,GripVertical,Instagram,Linkedin,MoreVertical,Play,Twitter!=!lucide-react' (imported as 'Linkedin').
+
+Import trace for requested module:
+./components/kanban/KanbanCard.tsx
+./components/kanban/KanbanBoard.tsx
+./app/tasks/page.tsx
+
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/27) ...
+   Generating static pages (6/27) 
+   Generating static pages (13/27) 
+   Generating static pages (20/27) 
+ ✓ Generating static pages (27/27) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    380 B          81.6 kB
+├ ○ /_not-found                          875 B          82.1 kB
+├ ○ /admin                               2.79 kB          84 kB
+├ ○ /admin/accounts                      3.4 kB         90.5 kB
+├ ○ /admin/connections                   8 kB           89.2 kB
+├ ○ /admin/schedules                     8.39 kB        89.6 kB
+├ ○ /analytics                           2.16 kB        83.3 kB
+├ λ /api/campaign/analytics              0 B                0 B
+├ λ /api/campaign/generate               0 B                0 B
+├ λ /api/campaign/produce                0 B                0 B
+├ λ /api/campaign/publish                0 B                0 B
+├ λ /api/campaign/queue                  0 B                0 B
+├ λ /api/campaign/queue/[id]             0 B                0 B
+├ λ /api/campaign/repurpose              0 B                0 B
+├ λ /api/campaign/retry                  0 B                0 B
+├ λ /api/campaign/schedule               0 B                0 B
+├ λ /api/checkout_sessions               0 B                0 B
+├ λ /api/upload                          0 B                0 B
+├ ○ /brands                              2.87 kB         148 kB
+├ λ /brands/[id]                         7.41 kB         153 kB
+├ ○ /library                             2.04 kB        83.2 kB
+├ ○ /pricing                             6.81 kB         152 kB
+├ ○ /privacy                             142 B          81.3 kB
+├ ○ /queue                               3.56 kB        96.3 kB
+├ λ /queue/[id]                          1.29 kB         167 kB
+├ ○ /socialyze                           6.03 kB        93.1 kB
+├ ○ /studio                              6.71 kB         167 kB
+├ ○ /submit-app                          10.3 kB        91.5 kB
+├ ○ /tasks                               28.6 kB         174 kB
+└ ○ /terms                               142 B          81.3 kB
++ First Load JS shared by all            81.2 kB
+  ├ chunks/472-612ef24fb6ae50f4.js       28.1 kB
+  ├ chunks/fd9d1056-9056fdd0caa72b5a.js  51.1 kB
+  ├ chunks/main-app-e2bb989bc531bbaf.js  230 B
+  └ chunks/webpack-2f2ec663ca8ecdaf.js   1.8 kB
+
+
+λ  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+○  (Static)  automatically rendered as static HTML (uses no initial props)
+
+​
+(build.command completed in 29m 9.1s)
+​
+Plugin "@netlify/plugin-nextjs" internal error                
+────────────────────────────────────────────────────────────────
+​
+  Error message
+  Error: ENOENT: no such file or directory, lstat '/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/autopilot/.next/standalone/node_modules/next/dist/cli'
+​
+  Plugin details
+  Package:        @netlify/plugin-nextjs
+  Version:        5.15.13
+  Repository:     git+https://github.com/opennextjs/opennextjs-netlify.git
+  npm link:       https://www.npmjs.com/package/@netlify/plugin-nextjs
+  Report issues:  https://github.com/opennextjs/opennextjs-netlify/issues
+​
+  Error location
+  In "onBuild" event in "@netlify/plugin-nextjs" from netlify.toml and package.json
+      at async lstat (node:internal/fs/promises:1028:18)
+      at async Promise.all (index 0)
+      at async checkPaths (node:internal/fs/cp/cp:76:39)
+      at async copyDir (node:internal/fs/cp/cp:328:35)
+      at async mkDirAndCopy (node:internal/fs/cp/cp:318:3)
+      at async copyDir (node:internal/fs/cp/cp:329:19)
+      at async mkDirAndCopy (node:internal/fs/cp/cp:318:3)
+      at async copyDir (node:internal/fs/cp/cp:329:19)
+      at async mkDirAndCopy (node:internal/fs/cp/cp:318:3)
+      at async copyDir (node:internal/fs/cp/cp:329:19)
+​
+  Error properties
+  {
+    errno: [33m-2[39m,
+    code: [32m'ENOENT'[39m,
+    syscall: [32m'lstat'[39m,
+    path: [32m'/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/autopilot/.next/standalone/node_modules/next/dist/cli'[39m
+  }
+​
+  Resolved config
+  build:
+    base: /Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/autopilot
+    command: npm run build
+    commandOrigin: config
+    publish: /Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/autopilot/.next
+    publishOrigin: ui
+  plugins:
+    - inputs: {}
+      origin: config
+      package: "@netlify/plugin-nextjs"

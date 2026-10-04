@@ -1,0 +1,19 @@
+0 verbose cli /Users/infinitealpha/.nvm/versions/node/v22.23.2/bin/node /Users/infinitealpha/.nvm/versions/node/v22.23.2/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@10.9.8
+2 info using node@v22.23.2
+3 silly config load:file:/Users/infinitealpha/.nvm/versions/node/v22.23.2/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/snowboarders-paradise/.npmrc
+5 silly config load:file:/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/snowboarders-paradise/tmp_home/.npmrc
+6 silly config load:file:/Users/infinitealpha/.nvm/versions/node/v22.23.2/etc/npmrc
+7 verbose title npm exec expo start --web --port 8081
+8 verbose argv "exec" "--" "expo" "start" "--web" "--port" "8081"
+9 verbose logfile logs-max:10 dir:/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/snowboarders-paradise/tmp_home/.npm/_logs/2026-09-10T18_48_41_827Z-
+10 verbose logfile /Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/snowboarders-paradise/tmp_home/.npm/_logs/2026-09-10T18_48_41_827Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET 403 https://registry.npmjs.org/npm 7347ms
+13 verbose cwd /Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/snowboarders-paradise
+14 verbose os Darwin 21.6.0
+15 verbose node v22.23.2
+16 verbose npm  v10.9.8
+17 verbose exit 126
+18 verbose code 126

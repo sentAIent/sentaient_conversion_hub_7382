@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LightSpeed - AI CTO Dashboard</title>
+    <link rel="manifest" href="/lightspeed/manifest.json" />
+    <!-- Alibaba Page Agent for in-browser autonomy -->
+    <script src="https://unpkg.com/@alibaba/page-agent@latest/dist/page-agent.umd.js"></script>
+    <script>
+      window.onload = () => {
+        if (window.PageAgent) {
+          window.pageAgent = new window.PageAgent({
+            apiKey: localStorage.getItem('GEMINI_API_KEY') || 'INSERT_API_KEY_HERE', 
+            model: 'gemini-1.5-pro' // or Claude/OpenAI
+          });
+          window.pageAgent.mount();
+        }
+      };
+      
+      // Register Service Worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('SW registered: ', registration);
+          }).catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+        });
+      }
+    </script>
+    <!-- jsPDF for client side PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script type="module" crossorigin src="/lightspeed/assets/index-461f04b1.js"></script>
+    <link rel="stylesheet" href="/lightspeed/assets/index-89d4c618.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    
+  </body>
+</html>

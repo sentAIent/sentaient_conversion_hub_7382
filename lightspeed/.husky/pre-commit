@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running Pre-commit Checks..."
+
+# Run git-secrets (assuming it is installed globally or in path)
+if command -v git-secrets >/dev/null 2>&1; then
+  git-secrets --pre_commit_hook -- "$@"
+else
+  echo "⚠️ git-secrets not found in path. Skipping secret scan."
+fi
+
+# Run linting and formatting
+npm run lint
+npm run format:check

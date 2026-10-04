@@ -66,6 +66,18 @@
   force = true
 
 [[redirects]]
+  from = "/sphinx"
+  to = "https://sphinx.sentaient.com"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/sphinx/*"
+  to = "https://sphinx.sentaient.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

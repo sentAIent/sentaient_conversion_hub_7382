@@ -1,0 +1,42 @@
+[
+  {
+    "id": "contract_001_predatory_nda",
+    "contractType": "Non-Disclosure Agreement (NDA)",
+    "perspective": "User",
+    "text": "The Receiving Party agrees to hold all Confidential Information in strict confidence and shall not disclose it to any third party for a period of 50 years. The Receiving Party agrees that all intellectual property developed during the term of this agreement shall become the sole property of the Disclosing Party, regardless of whether Confidential Information was used. The Receiving Party shall indemnify the Disclosing Party for any and all claims arising out of this agreement, regardless of fault.",
+    "expected_risks": [
+      {
+        "concept": "Overly broad IP assignment",
+        "severity_min": "High"
+      },
+      {
+        "concept": "Unreasonable term duration (50 years)",
+        "severity_min": "Medium"
+      },
+      {
+        "concept": "Unilateral, faultless indemnification",
+        "severity_min": "Critical"
+      }
+    ]
+  },
+  {
+    "id": "contract_002_auto_renewal",
+    "contractType": "SaaS Agreement",
+    "perspective": "User",
+    "text": "This Agreement shall automatically renew for successive one-year terms unless either party provides written notice of non-renewal at least 180 days prior to the end of the current term. The Provider reserves the right to increase fees at any time without prior notice. Customer may only terminate for cause if Provider fails to cure a material breach within 90 days of written notice.",
+    "expected_risks": [
+      {
+        "concept": "Unreasonable notice period for non-renewal (180 days)",
+        "severity_min": "Medium"
+      },
+      {
+        "concept": "Unilateral fee increases without notice",
+        "severity_min": "High"
+      },
+      {
+        "concept": "Excessive cure period for material breach (90 days)",
+        "severity_min": "Medium"
+      }
+    ]
+  }
+]

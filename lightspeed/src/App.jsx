@@ -19,6 +19,11 @@ import Login from './pages/Login';
 import MobileAdminDashboard from './pages/MobileAdminDashboard';
 import ChatOpsSidebar from './components/ChatOpsSidebar';
 import { useAuth } from './contexts/AuthContext';
+import PhishingSimulator from './pages/PhishingSimulator';
+import WalletDashboard from './pages/WalletDashboard';
+import VendorCRM from './pages/VendorCRM';
+import ComplianceBoard from './pages/ComplianceBoard';
+import { useAuth } from './contexts/AuthContext';
 
 function App() {
   const { user, role, loading, logout } = useAuth();
@@ -107,7 +112,13 @@ function App() {
       case 'cybersecurity':
         return <Cybersecurity />;
       case 'compliance':
-        return <ComplianceDashboard />;
+        return <ComplianceBoard />;
+      case 'phishing':
+        return <PhishingSimulator />;
+      case 'wallet':
+        return <WalletDashboard />;
+      case 'vendor':
+        return <VendorCRM />;
       case 'registry':
         return <AppRegistry />;
       case 'performance':
@@ -189,6 +200,24 @@ function App() {
               {(!role || role === 'ciso' || role === 'secops') && (
                 <a href="#compliance" className={currentPage === 'compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('compliance'); }}>
                   Compliance
+                </a>
+              )}
+
+              {(!role || role === 'ciso' || role === 'secops') && (
+                <a href="#phishing" className={currentPage === 'phishing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('phishing'); }}>
+                  Phishing Simulator
+                </a>
+              )}
+
+              {(!role || role === 'ciso') && (
+                <a href="#wallet" className={currentPage === 'wallet' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('wallet'); }}>
+                  Solvent Wallet
+                </a>
+              )}
+
+              {(!role || role === 'ciso' || role === 'secops') && (
+                <a href="#vendor" className={currentPage === 'vendor' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentPage('vendor'); }}>
+                  Vendor CRM
                 </a>
               )}
 

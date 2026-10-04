@@ -1,0 +1,13 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+pydantic==2.10.5
+supabase==2.11.0
+psutil==6.1.1
+crawlee==0.4.1
+beautifulsoup4==4.12.3
+langgraph==0.2.14
+mem0ai==0.1.20
+ray==2.36.0
+vllm==0.6.1
+browser-use==0.1.2
+posthog==3.6.8

@@ -1,0 +1,72 @@
+.ai-insights-panel {
+  background: rgba(10, 25, 47, 0.7);
+  border: 1px solid rgba(100, 255, 218, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.ai-insights-panel h3 {
+  color: var(--accent);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.loading-text, .no-insights {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.insight-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--accent);
+  padding: 0.75rem;
+  border-radius: 0 4px 4px 0;
+}
+
+.insight-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.badge.rca { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+.badge.prediction { background: rgba(100, 255, 218, 0.2); color: var(--accent); }
+.badge.anomaly { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+
+.confidence {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.insight-content {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin: 0 0 0.5rem 0;
+}
+
+.insight-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}

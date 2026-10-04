@@ -1,0 +1,50 @@
+281 |                 </button>
+282 |                 <div className="w-3 h-0.5 bg-amber-600 shrink-0"></div>
+283 |                 {!isLegendCollapsed && <span className="whitespace-nowrap">Trails/Paths</span>}
+284 |               </span>
+285 |               <span className="text-amber-500 font-bold ml-2">{visibleCounts.trails}</span>
+286 |             </div>
+287 | 
+288 |             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.disasters ? 'opacity-50' : ''}`} onClick={() => toggleLayer('disasters')} onMouseEnter={() => setHoveredLegendLayer('disasters')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+289 |               <span className="flex items-center gap-3">
+290 |                 <button className="text-gray-400 hover:text-white shrink-0">
+291 |                   {settings.layers.disasters ? <Eye size={16} /> : <EyeOff size={16} />}
+292 |                 </button>
+293 |                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shrink-0"></div>
+294 |                 {!isLegendCollapsed && <span className="whitespace-nowrap">Disasters / Events</span>}
+295 |               </span>
+296 |               <span className="text-red-500 font-bold ml-2">{visibleCounts.disasters}</span>
+297 |             </div>
+298 | 
+299 |             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.earthquakes ? 'opacity-50' : ''}`} onClick={() => toggleLayer('earthquakes')} onMouseEnter={() => setHoveredLegendLayer('earthquakes')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+300 |               <span className="flex items-center gap-3">
+301 |                 <button className="text-gray-400 hover:text-white shrink-0">
+302 |                   {settings.layers.earthquakes ? <Eye size={16} /> : <EyeOff size={16} />}
+303 |                 </button>
+304 |                 <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse shrink-0"></div>
+305 |                 {!isLegendCollapsed && <span className="whitespace-nowrap">Earthquakes</span>}
+306 |               </span>
+307 |               <span className="text-orange-500 font-bold ml-2">{visibleCounts.earthquakes}</span>
+308 |             </div>
+309 | 
+310 |         </div>
+311 |       </div>
+312 |       
+313 |       
+314 |       </div>
+315 |       </Map>
+316 | 
+317 |       {pinCreationMode && (
+318 |         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: '#1e1e1e', padding: '25px', borderRadius: '8px', zIndex: 1000, color: 'white', minWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', border: '1px solid #333' }}>
+319 |           <h3 style={{ marginTop: 0, marginBottom: 20, borderBottom: '1px solid #444', paddingBottom: 10 }}>Create Custom Pin</h3>
+320 |           <div style={{ display: 'flex', flexDirection: 'column' }}>
+321 |             <div style={{ marginBottom: 15, display: 'flex', flexDirection: 'column', gap: 5 }}>
+322 |               <label>Latitude</label>
+323 |               <input type="text" value={pinCreationMode.lat} readOnly style={{ padding: '8px', backgroundColor: '#2d2d2d', color: '#888', border: '1px solid #444', borderRadius: '4px' }} />
+324 |             </div>
+325 |             <div style={{ marginBottom: 15, display: 'flex', flexDirection: 'column', gap: 5 }}>
+326 |               <label>Longitude</label>
+327 |               <input type="text" value={pinCreationMode.lon} readOnly style={{ padding: '8px', backgroundColor: '#2d2d2d', color: '#888', border: '1px solid #444', borderRadius: '4px' }} />
+328 |             </div>
+329 |             <div style={{ marginBottom: 15, display: 'flex', flexDirection: 'column', gap: 5 }}>
+330 |               <label>Label</label>

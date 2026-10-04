@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { google } from 'googleapis';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -77,7 +78,7 @@ export async function publishToTikTok(videoUrl, caption, handle) {
 /**
  * Publishes content to Meta (Instagram/Facebook)
  */
-export async function publishToMeta(imageUrl, caption, handle) {
+export async function publishToMeta(mediaUrl, caption, handle, isVideo = false) {
     const creds = getCredentials('Instagram', handle) || getCredentials('Meta', handle);
     const accessToken = creds.accessToken || process.env.META_ACCESS_TOKEN;
     const igAccountId = creds.accountId || process.env.IG_ACCOUNT_ID;
@@ -88,14 +89,22 @@ export async function publishToMeta(imageUrl, caption, handle) {
     }
 
     try {
+        const payload = {
+            caption: caption,
+            access_token: accessToken
+        };
+        
+        if (isVideo) {
+            payload.video_url = mediaUrl;
+            payload.media_type = 'REELS';
+        } else {
+            payload.image_url = mediaUrl;
+        }
+
         const containerRes = await fetch(`https://graph.facebook.com/v19.0/${igAccountId}/media`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                image_url: imageUrl,
-                caption: caption,
-                access_token: accessToken
-            })
+            body: JSON.stringify(payload)
         });
         const containerData = await containerRes.json();
         
@@ -120,6 +129,55 @@ export async function publishToMeta(imageUrl, caption, handle) {
         return { success: true, platform: 'meta', publish_id: publishData.id, status: 'published' };
     } catch (error) {
         console.error("Meta Publish Error:", error);
+        throw error;
+    }
+}
+
+/**
+ * Publishes content to YouTube Shorts
+ */
+export async function publishToYouTube(videoUrl, title, description, handle) {
+    const creds = getCredentials('YouTube', handle);
+    const accessToken = creds.accessToken || process.env.YOUTUBE_ACCESS_TOKEN;
+    const refreshToken = creds.refreshToken || process.env.YOUTUBE_REFRESH_TOKEN;
+    const clientId = process.env.YOUTUBE_CLIENT_ID;
+    const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+
+    if (!accessToken) {
+        console.warn(`[YouTube API] Missing YouTube credentials for ${handle}. Simulating success.`);
+        return { success: true, platform: 'youtube', status: 'simulated_success' };
+    }
+
+    try {
+        const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+        oauth2Client.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
+
+        const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+        
+        // Fetch the video from URL and pass as stream
+        const response = await fetch(videoUrl);
+        
+        const insertRes = await youtube.videos.insert({
+            part: 'snippet,status',
+            requestBody: {
+                snippet: {
+                    title: title,
+                    description: description + ' #shorts',
+                    categoryId: '22' // People & Blogs
+                },
+                status: {
+                    privacyStatus: 'public',
+                    selfDeclaredMadeForKids: false
+                }
+            },
+            media: {
+                body: response.body
+            }
+        });
+
+        return { success: true, platform: 'youtube', publish_id: insertRes.data.id, status: 'published' };
+    } catch (error) {
+        console.error("YouTube Publish Error:", error);
         throw error;
     }
 }
@@ -163,7 +221,6 @@ export async function publishToX(text, mediaUrl, handle) {
  * Publishes content to LinkedIn
  */
 export async function publishToLinkedIn(text, authorUrn) {
-    // authorUrn acts as the handle here, but typically we might map 'LinkedIn:@name' -> urn & token
     const creds = getCredentials('LinkedIn', authorUrn);
     const accessToken = creds.accessToken || process.env.LINKEDIN_ACCESS_TOKEN;
     const resolvedUrn = creds.authorUrn || authorUrn;

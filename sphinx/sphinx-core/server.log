@@ -1,0 +1,6 @@
+◇ injected env (1) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+[Sphinx Memory] Initializing ChromaDB connection...
+[Sphinx] Central Core Initializing...
+[Sphinx] Server running on http://localhost:3117
+[Sphinx] Ready to receive sensory inputs and voice commands.
+[Sphinx Memory] Could not connect to ChromaDB. Is it running?
