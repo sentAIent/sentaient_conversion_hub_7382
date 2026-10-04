@@ -28,6 +28,7 @@ export default function ScenerySimulator() {
     if (!customPrompt.trim()) return;
 
     setIsGenerating(true);
+    // AI acts as a Synesthesia Expert and outputs visuals, ambience, and music prompts
     const parsedData = await parseScenePrompt(customPrompt);
     
     setActiveScene({
@@ -42,19 +43,28 @@ export default function ScenerySimulator() {
     });
     
     setIsGenerating(false);
+
+    // Auto-generate the perfect matching soundtrack in the background!
+    if (parsedData.musicGenerationPrompt) {
+      handleGenerateMusic(parsedData.musicGenerationPrompt);
+    }
   };
 
-  const handleGenerateMusic = async () => {
+  const handleGenerateMusic = async (overridePrompt = null) => {
     setIsGeneratingMusic(true);
-    const prompt = customPrompt.trim() 
-      ? `Cinematic background music for ${customPrompt}` 
-      : `Relaxing atmospheric music for ${activeScene.title}`;
+    
+    // Use the Synesthesia LLM's specific prompt if available, else fallback to generic
+    const prompt = typeof overridePrompt === 'string' 
+      ? overridePrompt
+      : (customPrompt.trim() 
+          ? `Cinematic background music for ${customPrompt}` 
+          : `Relaxing atmospheric music for ${activeScene.title}`);
     
     const result = await generateMusic(prompt);
     if (result.success) {
       setMusicUrl(result.audioUrl);
     } else {
-      alert("Failed to generate music: " + result.error);
+      console.error("Failed to generate music: " + result.error);
     }
     setIsGeneratingMusic(false);
   };
