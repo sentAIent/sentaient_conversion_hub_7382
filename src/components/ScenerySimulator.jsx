@@ -6,6 +6,7 @@ import AmbientAudioEngine from './AmbientAudioEngine';
 import StreetViewSimulation from './StreetViewSimulation';
 
 import AtmosphereMixer from './AtmosphereMixer';
+import { SoftPaywall } from './payments/SoftPaywall';
 
 export default function ScenerySimulator() {
   const [activeScene, setActiveScene] = useState(curatedScenes[0]);
@@ -13,6 +14,10 @@ export default function ScenerySimulator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [musicUrl, setMusicUrl] = useState(null);
   const [isGeneratingMusic, setIsGeneratingMusic] = useState(false);
+  
+  // Paywall State
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState('');
   
   // Audio state lifted up so the mixer can control it
   const [activeAudioParams, setActiveAudioParams] = useState(curatedScenes[0].audioParams);
@@ -26,6 +31,11 @@ export default function ScenerySimulator() {
   const handlePromptSubmit = async (e) => {
     e.preventDefault();
     if (!customPrompt.trim()) return;
+
+    // FREEMIUM BLOCK: Custom Scene AI requires Premium
+    setPaywallFeature('Synesthesia Scene AI');
+    setShowPaywall(true);
+    return;
 
     setIsGenerating(true);
     // AI acts as a Synesthesia Expert and outputs visuals, ambience, and music prompts
@@ -51,6 +61,11 @@ export default function ScenerySimulator() {
   };
 
   const handleGenerateMusic = async (overridePrompt = null) => {
+    // FREEMIUM BLOCK: MiniMax AI Audio requires Premium
+    setPaywallFeature('MiniMax AI Soundtrack');
+    setShowPaywall(true);
+    return;
+
     setIsGeneratingMusic(true);
     
     // Use the Synesthesia LLM's specific prompt if available, else fallback to generic
@@ -156,6 +171,15 @@ export default function ScenerySimulator() {
         </div>
 
       </div>
+      
+      {/* Freemium Soft Paywall Modal */}
+      <SoftPaywall 
+        isVisible={showPaywall} 
+        onClose={() => setShowPaywall(false)} 
+        featureName={paywallFeature}
+        requiredCredits={10}
+        userCredits={0}
+      />
     </div>
   );
 }
