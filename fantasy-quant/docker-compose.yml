@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - THE_ODDS_API_KEY=${THE_ODDS_API_KEY}
+      - NEXT_PUBLIC_MEILISEARCH_HOST=http://meilisearch:7700
+      - MEILISEARCH_MASTER_KEY=sentaient-quant-master-key
+    depends_on:
+      - meilisearch
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  databasement:
+    image: davidcrty/databasement:latest
+    ports:
+      - "3002:3002"
+    environment:
+      # We connect this to the Supabase Postgres DB (host.docker.internal)
+      DB_URL: "postgresql://postgres:postgres@host.docker.internal:54322/postgres"
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  nocodb:
+    image: nocodb/nocodb:latest
+    ports:
+      - "8080:8080"
+    environment:
+      NC_DB: "pg://host.docker.internal:54322?u=postgres&p=postgres&d=postgres"
+      NC_AUTH_JWT_SECRET: "sentaient-quant-nocodb-secret-very-secure"
+    volumes:
+      - nc_data:/usr/app/data/
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.9
+    environment:
+      - MEILI_MASTER_KEY=sentaient-quant-master-key
+      - MEILI_ENV=development
+    ports:
+      - "7701:7700"
+    volumes:
+      - meili_data:/meili_data
+    restart: always
+
+  ml-engine:
+    build:
+      context: ./etl
+      dockerfile: Dockerfile  # We'll create this if needed, or use a command
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./etl:/app
+    command: >
+      bash -c "pip install -r requirements.txt && uvicorn ml_service:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    restart: always
+
+volumes:
+  nc_data:
+  meili_data:

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  maxun:
+    image: getmaxun/maxun:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - API_KEY=sentaient_internal_maxun_key
+      # Sentaient internal self-hosted Maxun
+    restart: unless-stopped
+    volumes:
+      - maxun-data:/app/data
+
+volumes:
+  maxun-data:

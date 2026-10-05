@@ -19,14 +19,16 @@ const AboutOurApproachIntelligenceCenter = React.lazy(() => import('./pages/abou
 const Pricing = React.lazy(() => import('./pages/pricing'));
 const CheckoutSuccess = React.lazy(() => import('./pages/checkout-success'));
 const ITravel = React.lazy(() => import('./pages/iTravel'));
-// const ScenerySimulator = React.lazy(() => import('./components/ScenerySimulator'));
-// const IntegrationsDemo = React.lazy(() => import('./components/IntegrationsDemo'));
-// const PrivacyTerms = React.lazy(() => import('./pages/PrivacyTerms'));
+const ScenerySimulator = React.lazy(() => import('./components/ScenerySimulator'));
+const IntegrationsDemo = React.lazy(() => import('./components/IntegrationsDemo'));
+const PrivacyTerms = React.lazy(() => import('./pages/PrivacyTerms'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const HomeAlt = React.lazy(() => import('./pages/home-alt'));
 const AutopilotPrivacy = React.lazy(() => import('./pages/AutopilotPrivacy'));
 const AutopilotTerms = React.lazy(() => import('./pages/AutopilotTerms'));
+const ContangoOldPage = React.lazy(() => import('./pages/ContangoOldPage'));
+const AgentStudio = React.lazy(() => import('./pages/AgentStudio'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -44,9 +46,10 @@ const ProjectRoutes = () => {
             <React.Suspense fallback={<PageLoader />}>
             <RouterRoutes>
               <Route path="/" element={<Home />} />
-              {/* <Route path="/simulator" element={<ScenerySimulator />} /> */}
-              {/* <Route path="/integrations" element={<IntegrationsDemo />} /> */}
-              {/* <Route path="/privacy" element={<PrivacyTerms />} /> */}
+              <Route path="/simulator" element={<ScenerySimulator />} />
+              <Route path="/integrations" element={<IntegrationsDemo />} />
+              <Route path="/privacy" element={<PrivacyTerms />} />
+              <Route path="/tos" element={<PrivacyTerms />} />
               <Route path="/trust-transparency-hub" element={<TrustTransparencyHub />} />
               <Route path="/ai" element={<AboutOurApproachIntelligenceCenter />} />
               <Route path="/knowledge-nexus-resource-library" element={<KnowledgeNexusResourceLibrary />} />
@@ -60,6 +63,8 @@ const ProjectRoutes = () => {
               <Route path="/trust-transparency-hub" element={<TrustTransparencyHub />} />
               <Route path="/about-our-approach-intelligence-center" element={<AboutOurApproachIntelligenceCenter />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/contango-old" element={<ContangoOldPage />} />
+              <Route path="/agent-studio" element={<AgentStudio />} />
               <Route path="/checkout-success" element={<CheckoutSuccess />} />
               <Route path="/itravel" element={<ITravel />} />
               

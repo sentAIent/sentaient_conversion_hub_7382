@@ -1,52 +1,40 @@
 /**
- * Basic Telemetry and Latency Monitor for UX/Performance Tracking.
- * Logs session duration and UI interaction latency.
- * In a real-world scenario, this should pipe to PostHog, DataDog, or Firebase Analytics.
+ * Client-Side Telemetry & SRE Monitoring
  */
+export function initTelemetry() {
+  if (typeof window === 'undefined') return;
 
-class TelemetryService {
-  constructor() {
-    this.sessionStartTime = Date.now();
-    this.interactions = [];
+  // 1. Process Memory & OOM Prevention (Only supported in Chromium)
+  if (performance && performance.memory) {
+    setInterval(() => {
+      const memory = performance.memory;
+      const heapUsedPercent = memory.usedJSHeapSize / memory.jsHeapSizeLimit;
+      
+      if (heapUsedPercent > 0.85) {
+        console.warn(`[OOM Warning] JS Heap used is ${Math.round(heapUsedPercent * 100)}%. Approaching limit.`);
+        // In a real implementation, send this to Sentry or Datadog
+        // Sentry.captureMessage("High Memory Usage Detected", "warning");
+      }
+    }, 30000); // Check every 30s
   }
 
-  logInteraction(eventName, metadata = {}) {
-    const time = Date.now();
-    this.interactions.push({ eventName, time, metadata });
+  // 2. Session Telemetry & Latency Monitor
+  // Measure how long the main event loop takes to detect heavy blocking operations
+  let lastTime = performance.now();
+  
+  function monitorEventLoop() {
+    const now = performance.now();
+    const delta = now - lastTime;
     
-    // Simulate sending telemetry batch
-    if (this.interactions.length > 10) {
-      this.flush();
+    // If the event loop was blocked for more than 100ms (10 frames at 60fps)
+    if (delta > 100) {
+      console.warn(`[Latency Spike] Main thread was blocked for ${Math.round(delta)}ms`);
+      // Sentry.captureMessage(`Latency Spike: ${Math.round(delta)}ms`, "warning");
     }
+    
+    lastTime = now;
+    requestAnimationFrame(monitorEventLoop);
   }
-
-  measureLatency(operationName, fn) {
-    const start = performance.now();
-    const result = fn();
-    if (result instanceof Promise) {
-      return result.then(res => {
-        const end = performance.now();
-        this.logInteraction('latency_metric', { operation: operationName, durationMs: end - start });
-        return res;
-      });
-    } else {
-      const end = performance.now();
-      this.logInteraction('latency_metric', { operation: operationName, durationMs: end - start });
-      return result;
-    }
-  }
-
-  flush() {
-    // console.log('[Telemetry] Flushing telemetry data:', this.interactions);
-    // TODO: Send to backend analytics service
-    this.interactions = [];
-  }
+  
+  requestAnimationFrame(monitorEventLoop);
 }
-
-export const telemetry = new TelemetryService();
-
-// Auto-track session end
-window.addEventListener('beforeunload', () => {
-  telemetry.logInteraction('session_end', { durationMs: Date.now() - telemetry.sessionStartTime });
-  telemetry.flush();
-});

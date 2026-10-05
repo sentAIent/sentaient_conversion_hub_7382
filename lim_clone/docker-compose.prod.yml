@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # 1. React Web & Mobile PWA Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3050:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_GO_API_URL=http://localhost:8080
+    depends_on:
+      - backend-python
+      - backend-go
+
+  # 2. Python FastAPI Quant & AI Gateway
+  backend-python:
+    build:
+      context: ./backend_python
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - CONTANGO_VAULT_KEY=${CONTANGO_VAULT_KEY:-contango_quant_master_secret_2026_aes256_secure_key}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./backend_python/broker_vault.json:/app/broker_vault.json
+      - ./backend_python/alerts_config.json:/app/alerts_config.json
+
+  # 3. High-Speed Go Analytics & OMS Engine
+  backend-go:
+    build:
+      context: ./backend_go
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_API_SECRET=${ALPACA_API_SECRET}
+      - ALPACA_IS_PAPER=true
+      - CLICKHOUSE_HOST=clickhouse:9000
+    depends_on:
+      - clickhouse
+
+  # 4. ClickHouse Database
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: lim_clickhouse_prod
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    volumes:
+      - ./db/data:/var/lib/clickhouse
+      - ./db/logs:/var/log/clickhouse-server
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144

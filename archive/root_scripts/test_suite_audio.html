@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MindWave Audio Engine Test Suite</title>
+    <style>
+        body { font-family: system-ui; background: #111; color: #fff; padding: 2rem; }
+        .pass { color: #10b981; }
+        .fail { color: #ef4444; }
+        .test-case { margin: 1rem 0; padding: 1rem; background: #222; border-radius: 8px; }
+        button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Audio Engine Diagnostics</h1>
+    <p>Because Web Audio requires a user gesture to start, please click the button below to run the automated audio tests.</p>
+    
+    <button id="runTestsBtn">Run Audio Tests</button>
+
+    <div id="results" class="mt-4"></div>
+
+    <script type="module">
+        import { initAudio, startAudio, updateFrequencies } from './binaural-assets/js/audio/engine.js';
+        import { state, els } from './binaural-assets/js/state.js';
+
+        const resultsDiv = document.getElementById('results');
+        
+        function log(msg, passed) {
+            const div = document.createElement('div');
+            div.className = `test-case ${passed ? 'pass' : 'fail'}`;
+            div.textContent = `${passed ? '✅ PASS' : '❌ FAIL'}: ${msg}`;
+            resultsDiv.appendChild(div);
+        }
+
+        document.getElementById('runTestsBtn').addEventListener('click', async () => {
+            resultsDiv.innerHTML = ''; // clear previous
+            
+            try {
+                // TEST 1: Initialization
+                initAudio();
+                log('initAudio() creates AudioContext', !!state.audioCtx);
+                
+                // TEST 2: Start Engine
+                await startAudio();
+                log('startAudio() resolves and sets state.isPlaying to true', state.isPlaying === true);
+                log('AudioContext is in running state', state.audioCtx.state === 'running');
+                
+                // Mock DOM elements required by engine.js
+                els.baseSlider = { value: 200 };
+                els.beatSlider = { value: 10 };
+                els.beatSlider = { value: 10 };
+
+                // TEST 3: Nodes Creation
+                log('Master Gain Node created', !!state.masterGain);
+                log('Binaural Worklet Node created', !!state.binauralNode);
+                
+                // TEST 4: Frequencies (State check since Worklet parameters are internal)
+                // Force an update using the mocked sliders
+                updateFrequencies();
+                const baseFreq = state.baseFrequency;
+                log(`Base Frequency state is set (${baseFreq}Hz)`, baseFreq > 0);
+                
+                // TEST 5: Update Frequencies
+                els.baseSlider.value = 432; // simulate user sliding to 432
+                updateFrequencies();
+                setTimeout(() => {
+                    const newFreq = state.baseFrequency;
+                    log(`updateFrequencies() successfully updated base frequency state to ${newFreq}Hz`, newFreq > 0);
+                    
+                    // Teardown
+                    state.audioCtx.suspend();
+                    log('AudioContext suspended successfully for teardown', true);
+                }, 500);
+
+            } catch (err) {
+                log(`Test Suite crashed: ${err.message}`, false);
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>

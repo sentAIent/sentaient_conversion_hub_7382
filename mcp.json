@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gitnexus": {
+      "command": "npx",
+      "args": ["-y", "gitnexus", "mcp"],
+      "env": {
+        "GITNEXUS_DIR": "./"
+      }
+    }
+  }
+}

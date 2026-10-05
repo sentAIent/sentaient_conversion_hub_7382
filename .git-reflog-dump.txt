@@ -1,0 +1,175 @@
+2507133e HEAD@{0}: rebase (finish): returning to refs/heads/main
+2507133e HEAD@{1}: rebase (continue): feat: Cybersecurity, GDPR deletion, and Gemini NSFW filtering
+26bf5206 HEAD@{2}: pull --rebase (start): checkout 26bf5206e82e90c959e2a7d61e09d9bf73efa8b4
+42b22d9a HEAD@{3}: reset: moving to HEAD
+42b22d9a HEAD@{4}: commit: feat: Cybersecurity, GDPR deletion, and Gemini NSFW filtering
+7ccbd734 HEAD@{5}: reset: moving to 7ccbd73435c3067156e3e6a5166a19694b18aabf
+7ccbd734 HEAD@{6}: reset: moving to HEAD^
+bedc6588 HEAD@{7}: commit (amend): feat: Spaceship Factory marketplace and multi-base integration
+c11e995f HEAD@{8}: rebase (finish): returning to refs/heads/main
+c11e995f HEAD@{9}: rebase (continue): feat: Spaceship Factory marketplace and multi-base integration
+7ccbd734 HEAD@{10}: pull --rebase (start): checkout 7ccbd73435c3067156e3e6a5166a19694b18aabf
+640a626c HEAD@{11}: commit: feat: Spaceship Factory marketplace and multi-base integration
+db81afb4 HEAD@{12}: commit: fix: change all sub-app 301 redirects to 200 proxies and add asset path fallbacks
+a73b1035 HEAD@{13}: commit: Update Legal Eagle, MindWave, and route to /landing3d
+0fd39a26 HEAD@{14}: reset: moving to HEAD~1
+c7604d03 HEAD@{15}: commit: Update Legal Eagle, MindWave, and route to /landing3d
+0fd39a26 HEAD@{16}: commit: feat: implement igloo.inc style 3d landing page at /demo3d
+df449793 HEAD@{17}: pull --rebase origin main (finish): returning to refs/heads/main
+df449793 HEAD@{18}: pull --rebase origin main (pick): feat: implement Riot Games style slanted portfolio accordion and video hero carousel on /demo route
+b690172b HEAD@{19}: pull --rebase origin main (start): checkout b690172b06d63e56ae00b46ad3e031f15eb04477
+c9ba4ce3 HEAD@{20}: commit: feat: implement Riot Games style slanted portfolio accordion and video hero carousel on /demo route
+56920a7f HEAD@{21}: commit: fix: change Netlify 301 redirects to 200 rewrites for icebusiness proxying
+29d4cb0b HEAD@{22}: commit: feat: Clarify Bounties are for UGC influencers in landing pages
+f4c5261f HEAD@{23}: commit: fix: Remove broken mindwave.html redirect in public/_redirects causing 404s
+e7e895cf HEAD@{24}: commit: feat: Add waitlist email broadcast system using Resend
+e11a0a98 HEAD@{25}: commit: feat: implement Autopilot backend ingestion API and frontend telemetry routing
+7e63f2a3 HEAD@{26}: commit: feat: integrate GA4 tracking and add landing pages for Interstellar and Mindwave
+085a069c HEAD@{27}: commit: fix: bypass Sentaient auth gate for Mindwave and Interstellar in portfolio so marketing users can access them directly
+73554fbc HEAD@{28}: commit: fix: allow /icelogin to bypass Sentaient auth gate in PortfolioSection
+44971bb6 HEAD@{29}: pull --rebase origin main (finish): returning to refs/heads/main
+44971bb6 HEAD@{30}: pull --rebase origin main (pick): fix: change Icebreaker portfolio path to /icelogin to show 'Launch Experience' button
+34b709c9 HEAD@{31}: pull --rebase origin main (start): checkout 34b709c9329c7dbd8924eaa1cfd0f42fef6af346
+ed5adbf3 HEAD@{32}: commit: fix: change Icebreaker portfolio path to /icelogin to show 'Launch Experience' button
+d4ca2452 HEAD@{33}: commit: fix(admin): route waitlist through backend GraphQL to bypass firestore rules
+8be320bb HEAD@{34}: commit: fix(admin): use correct icebreaker firebase project fallbacks
+4b8d0126 HEAD@{35}: commit: fix: Type annotations for firebase in admin-dashboard to fix build
+d5eedffb HEAD@{36}: commit: feat: Add waitlist panel to the existing admin dashboard
+8e8c65e8 HEAD@{37}: commit: fix: restore external /iceadmin proxy and move waitlist panel to /icewaitlist to prevent overwriting existing admin dashboard
+3dff656b HEAD@{38}: pull --rebase origin main (finish): returning to refs/heads/main
+3dff656b HEAD@{39}: pull --rebase origin main (pick): fix: change /icebreaker to 301 redirect to prevent React Native Web routing 404s
+9e861439 HEAD@{40}: pull --rebase origin main (start): checkout 9e86143966d4c1fc3032f1e3cc216a05c4269f59
+ca2c2dbd HEAD@{41}: commit: fix: change /icebreaker to 301 redirect to prevent React Native Web routing 404s
+6d1a0326 HEAD@{42}: commit: fix: change Icebreaker hero launch link to /icelogin
+dbfdb957 HEAD@{43}: commit (merge): fix: resolve _redirects merge conflict - remove iceadmin proxy, add icelogin/iceadmin SPA rules
+31890528 HEAD@{44}: rebase (abort): returning to refs/heads/main
+1858fd2f HEAD@{45}: pull --rebase origin main (start): checkout 1858fd2fcb3d9ebc9aee2f95969d673e86a848a6
+31890528 HEAD@{46}: reset: moving to HEAD
+31890528 HEAD@{47}: commit: feat: Icebreaker landing page, admin waitlist panel, and routing fixes
+ec4cbdeb HEAD@{48}: pull --rebase (finish): returning to refs/heads/main
+ec4cbdeb HEAD@{49}: pull --rebase (pick): fix: add actionCodeSettings to password reset and update success toast to mention spam
+1c2ae081 HEAD@{50}: pull --rebase (start): checkout 1c2ae0816d81dc683cac4808e96a5826df81fabe
+ed151e1d HEAD@{51}: commit: fix: add actionCodeSettings to password reset and update success toast to mention spam
+936a1b7a HEAD@{52}: commit: chore: handle unauthorized firebase domain error in login toast
+46c01cb3 HEAD@{53}: commit: chore: update icebusiness landing page subtitle and fix logo path resolution with direct import
+02827a83 HEAD@{54}: commit: fix: bypass auth for external URLs — CloveH2O opens cloveh2o.com directly without login redirect
+f95a58ad HEAD@{55}: commit: fix: show 'Launch Website' for CloveH2O portfolio card, others keep 'Launch Experience'
+b5041bbd HEAD@{56}: commit: fix: bypass universal link launching app on click, restore overlay image and change opacity to 25%
+2cfb6a3e HEAD@{57}: commit: chore: configure proxy rules directly inside root and public _redirects files
+f5356413 HEAD@{58}: commit: marketing: make Interstellar and MindWave routes public by removing ProtectedRoute wrapper
+3b4a1f41 HEAD@{59}: commit: chore: configure local dev proxy server in vite.config.js and delete public/_redirects
+46b9cdbc HEAD@{60}: commit: feat: implement password reset flow, visibility toggle, and client validations on mobile login
+9dc6489b HEAD@{61}: commit: chore: update B2B Netlify publish dir to dist
+8f015e91 HEAD@{62}: commit: chore: add sub-project netlify.toml for b2b-portal
+fd943255 HEAD@{63}: commit: fix: resolve B2B portal TS errors, build with apollo client react subpath imports, set expo web build
+aeaf9084 HEAD@{64}: commit: fix: change AutoPilot color to premium cool silver and center logos vertically in hero
+acb1866b HEAD@{65}: commit: feat: configure frontends to point to live Render backend in production
+632c335c HEAD@{66}: commit: design: change AutoPilot theme color to dark gray matching its logo
+a17a4fc7 HEAD@{67}: commit: fix: correct start script path under dist/server.js
+8deb181f HEAD@{68}: commit: fix: remove orphaned gitlink for tmp_legaleagle and add it to gitignore
+9b8f059c HEAD@{69}: commit: feat: add build script to mobile package.json for Netlify
+3fc9f257 HEAD@{70}: commit: fix: downgrade graphql to v16 to match @apollo/server peer dependency requirements
+2ad694f6 HEAD@{71}: commit: chore: ignore compiled JS artifacts
+67d27175 HEAD@{72}: commit: fix: normalize hero carousel logo icon sizes with per-slide scale values
+61ea9123 HEAD@{73}: commit: feat: add animated app logo icons to hero carousel slides
+d624f392 HEAD@{74}: commit: feat: replace hero with app screenshot carousel (5 slides, autoplay, new-tab launch links)
+e8ea91b0 HEAD@{75}: commit: feat: backend build config and Render deployment setup
+eae43388 HEAD@{76}: commit: Deploy proxy rules and Next.js config for Netlify
+d331a9cd HEAD@{77}: reset: moving to origin/main
+4d94521b HEAD@{78}: rebase (abort): returning to refs/heads/main
+d331a9cd HEAD@{79}: pull origin main --rebase (start): checkout d331a9cdc0fd80db97150812adcf876d0987bd87
+4d94521b HEAD@{80}: commit: HOTFIX: restore missing imports and add Suspense for lazy loaded routes
+53189117 HEAD@{81}: revert: Revert "Fix hero styling, remove spacing, lazy load routes"
+a7178fbc HEAD@{82}: commit: Fix hero styling, remove spacing, lazy load routes
+b687847b HEAD@{83}: pull --rebase origin main (finish): returning to refs/heads/main
+b687847b HEAD@{84}: pull --rebase origin main (pick): Fix Netlify root and legaleagle redirects
+22f32e07 HEAD@{85}: pull --rebase origin main (start): checkout 22f32e07cb68e86812815b7a38f9f846bde288a2
+540001cf HEAD@{86}: commit: Fix Netlify root and legaleagle redirects
+50812818 HEAD@{87}: commit: content: Update category tags and header text in Portfolio section
+7beaffb3 HEAD@{88}: commit: style: Reduce Icebreaker logo scale further to perfectly match other logos
+5c8d29e9 HEAD@{89}: commit: fix: Prevent Firebase init from crashing React app if API key is invalid
+1b1f1187 HEAD@{90}: commit: style: Fix Icebreaker logo sizing to match other logos in Portfolio and Footer
+32ed6a87 HEAD@{91}: commit: HOTFIX: Inject Firebase config directly to fix blank page crash
+aeb944fb HEAD@{92}: commit: fix: remove dist from git and add to gitignore to fix netlify build env vars
+24f871e6 HEAD@{93}: commit: Fix Firebase invalid-api-key error by moving config to init.js fallback
+d4e7cb90 HEAD@{94}: commit: Hotfix: Restore mindwave.html as main route
+fee6b642 HEAD@{95}: commit: Deploy latest swarm campaign updates
+53acdb0f HEAD@{96}: commit: Configure multi-app routing and Netlify deployment
+1cd938cd HEAD@{97}: commit: feat: Add bulletproof auth lock to LegalEagle and update launch experience to open in new tab
+4182b797 HEAD@{98}: commit: Remove DhiWise rocket-web.js tracking script
+3ee26142 HEAD@{99}: commit: Ensure footer links open in new tab
+64ac2fac HEAD@{100}: commit: Force PWA to open in browser tab instead of standalone app window
+f107874a HEAD@{101}: commit: Trigger Netlify build
+0f03e497 HEAD@{102}: commit: Revert Interstellar logo from main sentaient favicons and mobile app icons
+7ee9a43f HEAD@{103}: commit: Update logo and icons across web and mobile
+14b4391e HEAD@{104}: commit: UI Updates: Swapped hero background to galaxy and fixed footer bento grid sizes
+835de1a7 HEAD@{105}: pull --rebase origin main (finish): returning to refs/heads/main
+835de1a7 HEAD@{106}: pull --rebase origin main (pick): UI Updates: Cleaned hero, adjusted logo scaling, and removed footer collage
+0691b60b HEAD@{107}: pull --rebase origin main (start): checkout 0691b60be330bb159d510d0edd020b5ac50cc81b
+4a554205 HEAD@{108}: commit: UI Updates: Cleaned hero, adjusted logo scaling, and removed footer collage
+c1b2b779 HEAD@{109}: pull --rebase origin main (finish): returning to refs/heads/main
+c1b2b779 HEAD@{110}: pull --rebase origin main (pick): feat: Update Interstellar logo and Legal Eagle background color
+e8a81f38 HEAD@{111}: pull --rebase origin main (start): checkout e8a81f385435aff19dad4bf6febbbb5a7d1201b4
+9d471d5c HEAD@{112}: commit: feat: Update Interstellar logo and Legal Eagle background color
+94193207 HEAD@{113}: commit: feat: complete SEO package with OpenGraph, JSON-LD, sitemap, and analytics
+c12ed5cd HEAD@{114}: commit: style: airbrush hallucinated text from hero image without cropping
+91fbef86 HEAD@{115}: commit: fix: remove hallucinated text from hero image
+a3d542e1 HEAD@{116}: commit: fix: redirect /portfolio to / and fix header logo link
+aa9e2f12 HEAD@{117}: commit: feat: redesign homepage hero and route structure
+7df7e3aa HEAD@{118}: commit: Remove 'From Vision to Transformation Reality' section from portfolio
+8174dedf HEAD@{119}: commit: Fix Portfolio route: Restore React app to index.html and move MindWave to mindwave.html
+babf588d HEAD@{120}: commit: Fix typescript baseUrl deprecation error
+0568d459 HEAD@{121}: commit: Update Legal Eagle logo in Sidebar
+c079db8e HEAD@{122}: pull: Fast-forward
+b2b33b0b HEAD@{123}: pull --rebase origin main (finish): returning to refs/heads/main
+b2b33b0b HEAD@{124}: pull --rebase origin main (pick): feat: implement phase 2 backend APIs, map UI enhancements, and native haptics
+6d9161f4 HEAD@{125}: pull --rebase origin main (start): checkout 6d9161f4607ab512a9a26bbf0e1eaad5cabb91b7
+42da2143 HEAD@{126}: commit: feat: implement phase 2 backend APIs, map UI enhancements, and native haptics
+81d91a30 HEAD@{127}: pull --rebase (finish): returning to refs/heads/main
+81d91a30 HEAD@{128}: pull --rebase (pick): feat: update UI modals, add Cyber menu, and fix onWheel zoom
+f064cff6 HEAD@{129}: pull --rebase (start): checkout f064cff612afd4650d211f108c3182bc36a549e7
+d89a4921 HEAD@{130}: commit: feat: update UI modals, add Cyber menu, and fix onWheel zoom
+caf55e5c HEAD@{131}: pull --rebase origin main (finish): returning to refs/heads/main
+caf55e5c HEAD@{132}: pull --rebase origin main (pick): Auto commit unstaged changes
+3a82a26d HEAD@{133}: pull --rebase origin main (pick): Update interstellar engine with Cyber UI, Hyperspace visuals, and native bridge
+b5e8d6b7 HEAD@{134}: pull --rebase origin main (start): checkout b5e8d6b7a183b9de36d6b5df0e701bb013a3efe1
+ffcf30d1 HEAD@{135}: commit: Auto commit unstaged changes
+8e85ba39 HEAD@{136}: merge webgl-engine-upgrade: Fast-forward
+8372e977 HEAD@{137}: checkout: moving from webgl-engine-upgrade to main
+8e85ba39 HEAD@{138}: commit: Update interstellar engine with Cyber UI, Hyperspace visuals, and native bridge
+8372e977 HEAD@{139}: checkout: moving from main to webgl-engine-upgrade
+8372e977 HEAD@{140}: pull --rebase origin main (finish): returning to refs/heads/main
+8372e977 HEAD@{141}: pull --rebase origin main (pick): Update interstellar game engine and native monetization
+772a7788 HEAD@{142}: pull --rebase origin main (start): checkout 772a77880b40aa11304814d47598ff538466787f
+2a002ae7 HEAD@{143}: reset: moving to HEAD
+2a002ae7 HEAD@{144}: commit: Update interstellar game engine and native monetization
+1eb356a9 HEAD@{145}: commit: Fix nebula drawing scaling and add legacy ships to alien background
+c6980b6d HEAD@{146}: commit: Move matrix panel to top right and bump versions to fix caching
+53bf9a37 HEAD@{147}: commit: Fix background rendering and power-ups
+ce0b2c37 HEAD@{148}: commit: feat: Add Power-Ups and Consumables drops to enemies
+b8611213 HEAD@{149}: pull --rebase (finish): returning to refs/heads/main
+b8611213 HEAD@{150}: pull --rebase (pick): feat: Add Engine Harmonics, Dashcam, fix Firebase
+49a9d5d6 HEAD@{151}: pull --rebase (start): checkout 49a9d5d681c2ee489f01360c5dcf341515428808
+49b06361 HEAD@{152}: reset: moving to HEAD
+49b06361 HEAD@{153}: commit: feat: Add Engine Harmonics, Dashcam, fix Firebase
+78dcb4e1 HEAD@{154}: commit: feat: compliance updates
+ff8af8d8 HEAD@{155}: reset: moving to origin/main
+0382ab54 HEAD@{156}: commit (merge): Merge
+d8ca0e57 HEAD@{157}: commit: Merge
+f4799342 HEAD@{158}: reset: moving to HEAD~1
+024fb7bb HEAD@{159}: commit (merge): Merge
+f4799342 HEAD@{160}: rebase (abort): returning to refs/heads/main
+ff8af8d8 HEAD@{161}: pull origin main --rebase (start): checkout ff8af8d8bc01dd846bb863642f08f1ca7647b260
+f4799342 HEAD@{162}: reset: moving to HEAD
+f4799342 HEAD@{163}: rebase (abort): returning to refs/heads/main
+ff8af8d8 HEAD@{164}: pull --rebase (start): checkout ff8af8d8bc01dd846bb863642f08f1ca7647b260
+f4799342 HEAD@{165}: commit: chore: save local scratch and dist files
+79d7de8d HEAD@{166}: commit: feat: add compliance modals, legal pages, and fix audio RPM
+9bd107ca HEAD@{167}: commit (merge): Resolve merge conflicts
+36d67578 HEAD@{168}: pull --rebase (start): checkout 36d67578ec3a38b2c09ddf256c464cbf040355ff
+ac9bbac1 HEAD@{169}: commit: Update build and config files
+97a5fd07 HEAD@{170}: commit: Fix interstellar game physics, ambient audio, and UI layout
+2cd3841f HEAD@{171}: checkout: moving from restore-working-late-april-v2 to main
+c1ca5ecd HEAD@{172}: reset: moving to HEAD
+c1ca5ecd HEAD@{173}: commit: Fix Matrix color picker logic, repair rainbow synchronization, resolve performance leaks, and link Matrix colors to global UI
+2cd3841f HEAD@{174}: checkout: moving from main to restore-working-late-april-v2

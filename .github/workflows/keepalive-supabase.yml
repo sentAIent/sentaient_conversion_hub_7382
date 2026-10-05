@@ -1,0 +1,23 @@
+name: Supabase Edge Functions Keep-Alive
+
+on:
+  schedule:
+    # Run twice a week: e.g., Monday and Thursday at 12:00 UTC
+    # Format: minute hour day-of-month month day-of-week
+    - cron: '0 12 * * 1,4'
+  workflow_dispatch: # Allows you to manually trigger the workflow from the Actions tab
+
+jobs:
+  ping_edge_functions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Edge Function
+        run: |
+          # Replace YOUR_PROJECT_REF and function-name with your actual Supabase details.
+          # If your function requires authentication, you can pass an Authorization header.
+          # Example: curl -X POST https://YOUR_PROJECT_REF.supabase.co/functions/v1/function-name
+          
+          # Ping Function 1
+          # curl -s -o /dev/null -w "%{http_code}" https://YOUR_PROJECT_REF.supabase.co/functions/v1/function-name || true
+          
+          echo "Add your curl commands here to ping the edge functions!"

@@ -1,0 +1,6 @@
+{
+  "projectType": "vite",
+  "iconDir": "src/components/icons",
+  "defaultSize": 24,
+  "defaultColor": "currentColor"
+}
