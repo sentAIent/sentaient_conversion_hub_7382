@@ -150,27 +150,44 @@
         // GLOBAL UI TOGGLES (Proxies to controls_v3.js)
         window.switchLeftTab = function(targetId, btn) {
             console.log('[HTML] switchLeftTab clicked:', targetId);
+            const panel = document.getElementById('leftPanel');
+            if (panel) {
+                const pills = panel.querySelectorAll('.tab-pill, .global-tab-btn');
+                pills.forEach(p => p.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                const cleanId = targetId.toLowerCase().replace('left-', '').replace('tab-', '');
+                panel.querySelectorAll('.tab-panel').forEach(p => {
+                    const cleanPanelId = p.id.toLowerCase().replace('left-', '').replace('tab-', '');
+                    if (p.id === targetId || cleanPanelId === cleanId) { p.classList.remove('hidden'); p.classList.add('active'); }
+                    else { p.classList.add('hidden'); p.classList.remove('active'); }
+                });
+            }
             if (window.controls && window.controls.switchLeftTab) {
                 window.controls.switchLeftTab(targetId, btn);
             } else {
-                if (btn && btn.parentNode) {
-                    const pills = btn.parentNode.querySelectorAll('.tab-pill');
-                    pills.forEach(p => p.classList.remove('active'));
-                    btn.classList.add('active');
-                }
                 window._pendingLeftTab = targetId;
             }
         };
         window.switchRightTab = function(targetId, btn) {
             console.log('[HTML] switchRightTab clicked:', targetId);
+            const panel = document.getElementById('rightPanel');
+            if (panel) {
+                const pills = panel.querySelectorAll('.tab-pill, .global-tab-btn');
+                pills.forEach(p => p.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                const cleanId = targetId.toLowerCase().replace('right-', '').replace('tab-', '');
+                panel.querySelectorAll('.tab-panel').forEach(p => {
+                    const cleanPanelId = p.id.toLowerCase().replace('right-', '').replace('tab-', '');
+                    const isMatch = p.id === targetId || cleanPanelId === cleanId ||
+                                    (cleanId === 'atmos' && cleanPanelId === 'atmosphere') ||
+                                    (cleanId === 'atmosphere' && cleanPanelId === 'atmos');
+                    if (isMatch) { p.classList.remove('hidden'); p.classList.add('active'); }
+                    else { p.classList.add('hidden'); p.classList.remove('active'); }
+                });
+            }
             if (window.controls && window.controls.switchRightTab) {
                 window.controls.switchRightTab(targetId, btn);
             } else {
-                if (btn && btn.parentNode) {
-                    const pills = btn.parentNode.querySelectorAll('.tab-pill');
-                    pills.forEach(p => p.classList.remove('active'));
-                    btn.classList.add('active');
-                }
                 window._pendingRightTab = targetId;
             }
         };
@@ -218,6 +235,55 @@ window.resetGalaxySettings = function() {
                 const panel = document.getElementById('cyberSettingsPanel');
                 if (panel) panel.classList.toggle('hidden');
             }
+        };
+
+        // Resilient audio button proxies ensuring immediate reactivity
+        window.applyPreset = window.applyPreset || function(presetKey, btn) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.applyPreset) m.applyPreset(presetKey, btn);
+            }).catch(e => console.error('[Proxy] applyPreset error:', e));
+        };
+        window.applyComboPreset = window.applyComboPreset || function(comboId, btn) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.applyComboPreset) m.applyComboPreset(comboId, btn);
+            }).catch(e => console.error('[Proxy] applyComboPreset error:', e));
+        };
+        window.handlePlayClick = window.handlePlayClick || function(btn) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.handlePlayClick) m.handlePlayClick(btn);
+            }).catch(e => console.error('[Proxy] handlePlayClick error:', e));
+        };
+        window.handleHyperGammaClick = window.handleHyperGammaClick || function(btn) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.handleHyperGammaClick) m.handleHyperGammaClick(btn);
+            }).catch(e => console.error('[Proxy] handleHyperGammaClick error:', e));
+        };
+        window.startSweepPreset = window.startSweepPreset || function(key) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.startSweepPreset) m.startSweepPreset(key);
+            }).catch(e => console.error('[Proxy] startSweepPreset error:', e));
+        };
+        window.stopSweep = window.stopSweep || function() {
+            import('./binaural-assets/js/audio/engine.js').then(m => {
+                if (m.stopSweep) m.stopSweep();
+            }).catch(e => console.error('[Proxy] stopSweep error:', e));
+        };
+        window.playMeditationStory = window.playMeditationStory || function(storyId, element) {
+            import('./binaural-assets/js/content/stories.js').then(m => {
+                if (m.playStory) m.playStory(storyId, false);
+            }).catch(e => console.error('[Proxy] playMeditationStory error:', e));
+        };
+        window.triggerDjSound = window.triggerDjSound || function(padIndex) {
+            const padMap = { 0: 'pad', 1: 'drone', 2: 'crystal', 3: 'choir', 4: 'shimmer', 5: 'subbass', 6: 'heartbeat', 7: 'tibetan' };
+            const soundId = padMap[padIndex] || padIndex;
+            import('./binaural-assets/js/audio/dj-synth.js').then(m => {
+                if (m.triggerOneShot) m.triggerOneShot(soundId);
+            }).catch(e => console.error('[Proxy] triggerDjSound error:', e));
+        };
+        window.showInfoModal = window.showInfoModal || function(key) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (window.showInfoModal) window.showInfoModal(key);
+            }).catch(e => console.error('[Proxy] showInfoModal error:', e));
         };
 
     </script>
@@ -342,6 +408,7 @@ window.resetGalaxySettings = function() {
 <script src="binaural-assets/js/services/biometrics.js" type="module"></script>
 <script src="binaural-assets/js/services/leantime.js" type="module"></script>
 <script src="binaural-assets/js/services/ai-coach.js" type="module"></script>
+<script src="binaural-assets/js/services/solar-service.js" type="module"></script>
 
 <!-- LAZY LOADING MANAGER -->
 <script type="module" src="./binaural-assets/js/main_vFINAL.js?v=V136_COACH"></script>
@@ -521,8 +588,8 @@ window.resetGalaxySettings = function() {
 <!-- Global Dimmer Overlay -->
 <div class="fixed inset-0 bg-black pointer-events-none z-0" id="dimmerOverlay" style="opacity: 0;"></div>
 <canvas class="fixed inset-0 w-full h-full z-0" id="visualizer"></canvas>
-<!-- 2D Cyber Canvas Overlay -->
-<canvas class="fixed inset-0 w-full h-full pointer-events-none z-0 hidden mix-blend-screen opacity-70" id="cyberCanvas"></canvas>
+<!-- 2D Matrix Canvas Overlay -->
+<canvas class="fixed inset-0 w-full h-full pointer-events-none z-0 hidden mix-blend-screen opacity-70" id="matrixCanvas"></canvas>
 <!-- IMMERSIVE OVERLAY CONTAINER -->
 <!-- FIX: relative positioning allows natural scrolling -->
 <div class="relative w-full min-h-screen z-10 flex flex-col pointer-events-none" id="appOverlay">
@@ -539,7 +606,7 @@ window.resetGalaxySettings = function() {
 <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
 <!-- Visual Export Actions -->
 <div class="flex items-center gap-1 shrink-0">
-<button class="p-2 rounded-full bg-transparent hover:bg-cyan-500/20 transition-all text-cyan-400" id="snapshotBtn" title="Capture Snapshot">
+<button class="p-2 rounded-full bg-transparent hover:bg-[var(--accent)]/20 transition-all" id="snapshotBtn" style="color: var(--accent);" title="Capture Snapshot">
 <svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg">
   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
   <circle cx="12" cy="13" r="4"></circle>
@@ -550,7 +617,7 @@ window.resetGalaxySettings = function() {
 <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
 <!-- Action Icons -->
 <div class="flex items-center gap-1 shrink-0">
-<button class="p-2 rounded-full bg-transparent hover:bg-[var(--accent)]/20 transition-all" id="lockUIBtn" title="Lock Menus">
+<button class="p-2 rounded-full bg-transparent hover:bg-[var(--accent)]/20 transition-all" id="lockUIBtn" style="color: var(--accent);" title="Lock Menus">
 <svg fill="none" height="18" id="lockIcon" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg">
 <rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect>
 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -579,6 +646,19 @@ window.resetGalaxySettings = function() {
 </button>
 <button class="p-2 rounded-full bg-transparent hover:bg-[var(--accent)]/20 transition-all relative group" id="vibeBtn" style="color: var(--accent);" title="Export Viral Vibe">
 <svg class="w-6 h-6 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+</button>
+<button class="p-2 rounded-full bg-transparent hover:bg-[var(--accent)]/20 transition-all relative group" id="solarBtn" onclick="window.openSolarModal && window.openSolarModal()" style="color: var(--accent);" title="Solar Photobiology & Sunlight Exposure">
+<svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg" class="transform group-hover:scale-110 transition-transform">
+<circle cx="12" cy="12" r="5"></circle>
+<line x1="12" y1="1" x2="12" y2="3"></line>
+<line x1="12" y1="21" x2="12" y2="23"></line>
+<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+<line x1="1" y1="12" x2="3" y2="12"></line>
+<line x1="21" y1="12" x2="23" y2="12"></line>
+<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+</svg>
 </button>
 <button class="p-2 rounded-full bg-transparent hover:bg-[var(--accent)]/20 transition-all" id="tutorialBtn" onclick="window.startOnboarding(true)" style="color: var(--accent);" title="Tutorial">
 <svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg">
@@ -658,7 +738,7 @@ window.resetGalaxySettings = function() {
 <circle cx="60" cy="60" fill="none" opacity="0.3" r="54" stroke="var(--border)" stroke-width="4"></circle>
 <circle cx="60" cy="60" fill="none" id="timerProgress" r="54" stroke="var(--accent)" stroke-dasharray="339.292" stroke-dashoffset="339.292" stroke-linecap="round" stroke-width="4"></circle>
 </svg>
-<button class="glass-card w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_50px_var(--accent-glow)] hover:scale-105 active:scale-95 transition-all bg-white/5 border border-[var(--accent)]/30 backdrop-blur-xl group relative z-10 shrink-0" id="playBtn">
+<button class="glass-card w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_50px_var(--accent-glow)] hover:scale-105 active:scale-95 transition-all bg-white/5 border border-[var(--accent)]/30 backdrop-blur-xl group relative z-10 shrink-0" id="playBtn" onclick="window.handlePlayClick ? window.handlePlayClick(this) : null">
 <svg class="w-6 h-6 text-[var(--accent)] group-hover:text-white transition-colors ml-1" fill="currentColor" id="playIcon" viewbox="0 0 24 24">
 <polygon points="5 3 19 12 5 21 5 3"></polygon>
 </svg>
@@ -929,7 +1009,7 @@ window.resetGalaxySettings = function() {
 <aside class="fixed top-0 left-0 h-full w-80 glass-lux border-r border-white/10 -translate-x-full transition-transform duration-500 z-40 flex flex-col pointer-events-auto ui-fade-target" id="leftPanel">
 <div class="relative w-full px-6 py-6 border-b border-white/5 flex flex-col justify-center items-center shrink-0 min-h-[120px] gap-4">
 <a class="hover:opacity-80 transition-opacity block" href="#" onclick="window.location.reload()">
-<img alt="MindWave Logo" class="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.2)] rounded-lg relative z-10" src="./mindwave-logo.png"/>
+<img alt="MindWave Logo" class="h-96 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.2)] rounded-lg relative z-10" src="./mindwave-logo.png"/>
 </a>
 <!-- AI GOAL INPUT SECTION -->
 <div class="w-full px-6 animate-[fade-in_0.5s_ease]" id="aiGoalSection">
@@ -1749,50 +1829,50 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 </div>
-<!-- Cyber Settings (2D) -->
-<div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="cyberSettingsPanel">
-<div class="flex justify-between items-center px-0.5">
-<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Cyber Config</span>
-<div class="flex items-center bg-black/20 rounded p-0.5 gap-0.5">
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="random" id="cyberModeRandom">RND</button>
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="mindwave" id="cyberModeMindwave">MW</button>
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="custom" id="cyberModeCustom">TXT</button>
-</div>
-</div>
-<input class="w-full bg-black/40 border border-white/10 rounded text-[10px] text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] uppercase font-mono" id="cyberTextInput" maxlength="32" placeholder="CUSTOM TEXT" type="text"/>
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-4">
-<input class="w-6 h-6 rounded cursor-pointer bg-transparent border-none p-0" id="cyberColorPicker" type="color" value="#00FF41"/>
-<div class="flex gap-1">
-<button class="p-1 rounded bg-white/5 text-[var(--text-muted)] hover:text-white" id="cyberRandomColorBtn"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line></svg></button>
-<button class="p-1 rounded bg-white/5 text-[var(--accent)]" id="cyberVibrationToggle"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path></svg></button>
-</div>
-</div>
-<label class="premium-toggle scale-75 origin-right">
-<input checked="" id="cyberRainbowToggle" type="checkbox"/>
-<span class="toggle-slider"></span>
-</label>
-</div>
-</div>
-<!-- Matrix Settings (3D) -->
+<!-- Matrix Settings (2D) -->
 <div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="matrixSettingsPanel">
 <div class="flex justify-between items-center px-0.5">
-<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Matrix Engine</span>
+<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Matrix Config</span>
 <div class="flex items-center bg-black/20 rounded p-0.5 gap-0.5">
 <button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-matrix-mode="random" id="matrixModeRandom">RND</button>
 <button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-matrix-mode="mindwave" id="matrixModeMindwave">MW</button>
 <button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-matrix-mode="custom" id="matrixModeCustom">TXT</button>
 </div>
 </div>
-<input class="w-full bg-black/40 border border-white/10 rounded text-[10px] text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] uppercase font-mono" id="matrixTextInput" maxlength="32" placeholder="ENCRYPTED MESSAGE" type="text"/>
+<input class="w-full bg-black/40 border border-white/10 rounded text-[10px] text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] uppercase font-mono" id="matrixTextInput" maxlength="32" placeholder="CUSTOM TEXT" type="text"/>
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-4">
 <input class="w-6 h-6 rounded cursor-pointer bg-transparent border-none p-0" id="matrixColorPicker" type="color" value="#00FF41"/>
+<div class="flex gap-1">
+<button class="p-1 rounded bg-white/5 text-[var(--text-muted)] hover:text-white" id="matrixRandomColorBtn"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line></svg></button>
+<button class="p-1 rounded bg-white/5 text-[var(--accent)]" id="matrixVibrationToggle"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path></svg></button>
+</div>
+</div>
+<label class="premium-toggle scale-75 origin-right">
+<input checked="" id="matrixRainbowToggle" type="checkbox"/>
+<span class="toggle-slider"></span>
+</label>
+</div>
+</div>
+<!-- Cyber Settings (3D) -->
+<div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="cyberSettingsPanel">
+<div class="flex justify-between items-center px-0.5">
+<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Cyber Engine</span>
+<div class="flex items-center bg-black/20 rounded p-0.5 gap-0.5">
+<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="random" id="cyberModeRandom">RND</button>
+<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="mindwave" id="cyberModeMindwave">MW</button>
+<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="custom" id="cyberModeCustom">TXT</button>
+</div>
+</div>
+<input class="w-full bg-black/40 border border-white/10 rounded text-[10px] text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] uppercase font-mono" id="cyberTextInput" maxlength="32" placeholder="ENCRYPTED MESSAGE" type="text"/>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<input class="w-6 h-6 rounded cursor-pointer bg-transparent border-none p-0" id="cyberColorPicker" type="color" value="#00FF41"/>
 <div class="flex gap-1 items-center">
-<button class="p-1 rounded bg-white/5 text-[var(--text-muted)] hover:text-white" id="matrixRandomColorBtn" title="Random Solid Color"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line></svg></button>
+<button class="p-1 rounded bg-white/5 text-[var(--text-muted)] hover:text-white" id="cyberRandomColorBtn" title="Random Solid Color"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line></svg></button>
 <div class="w-px h-4 bg-white/10 mx-1"></div>
 <label class="premium-toggle scale-75 origin-left" title="Toggle Rainbow Mode">
-<input checked="" id="matrixRainbowToggleRight" type="checkbox"/>
+<input checked="" id="cyberRainbowToggleRight" type="checkbox"/>
 <span class="toggle-slider"></span>
 </label>
 <span class="text-[9px] font-mono uppercase tracking-widest text-[var(--text-muted)]">Rainbow</span>

@@ -613,7 +613,7 @@ export function setupUI() {
             state.atmosVolume = restoredPrefs.volumes.atmos;
 
             if (els.masterVolSlider) els.masterVolSlider.value = state.masterVolume;
-            if (els.beatSlider) els.beatSlider.value = state.binauralVolume;
+            if (els.volSlider) els.volSlider.value = state.binauralVolume;
             if (els.atmosMasterSlider) els.atmosMasterSlider.value = state.atmosVolume;
 
             // Trigger updates to engine
@@ -1819,6 +1819,7 @@ export function setupUI() {
     window.startSweepPreset = startSweepPresetUI; // NEW
     window.stopSweep = stopSweepUI; // NEW
     window.handleHyperGammaClick = handleHyperGammaClick; // NEW
+    window.handlePlayClick = handlePlayClick;
 
     // PAYWALL HELPER: Handles Auth + Purchase
     const checkAccessAndPurchase = async (tier) => {
@@ -1908,7 +1909,9 @@ export function setupUI() {
                 { el: els.oceanBtn, mode: 'waves' },
                 { el: els.mandalaBtn, mode: 'mandala' },
                 { el: els.cyberBtn, mode: 'cyber' },
-                { el: els.matrixBtn, mode: 'matrix' }
+                { el: els.matrixBtn, mode: 'matrix' },
+                { el: els.snowflakeBtn, mode: 'snowflake' },
+                { el: els.tsunamiBtn, mode: 'tsunami' }
             ];
             buttons.forEach(({ el, mode }) => {
                 if (!el) return;
@@ -2956,7 +2959,7 @@ function closeStatsModal() {
 
 let activeSweepPreset = null; // Track which preset button is active
 
-function startSweepPresetUI(presetKey) {
+async function startSweepPresetUI(presetKey) {
     // If clicking the same journey that's active, stop it (toggle off)
     if (activeSweepPreset === presetKey) {
         stopSweepUI();
@@ -2964,8 +2967,7 @@ function startSweepPresetUI(presetKey) {
     }
 
     if (!state.isPlaying) {
-        showToast('▶️ Start audio first to use journeys', 'warning');
-        return;
+        await handlePlayClick();
     }
 
     // If another journey is active, stop it first
@@ -3786,7 +3788,7 @@ export function initMixer() {
         // Vol slider with value update
         const volInput = item.querySelector('input[data-type="vol"]');
         const volVal = item.querySelector('[data-val="vol"]');
-        volInput.addEventListener('input', async (e) => {
+        if (volInput) volInput.addEventListener('input', async (e) => {
             const v = parseFloat(e.target.value);
             volVal.textContent = Math.round(v * 200) + '%';
 
@@ -3830,7 +3832,7 @@ export function initMixer() {
         // Tone slider with value update
         const toneInput = item.querySelector('input[data-type="tone"]');
         const toneVal = item.querySelector('[data-val="tone"]');
-        toneInput.addEventListener('input', (e) => {
+        if (toneInput) toneInput.addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             toneVal.textContent = Math.round(v * 100) + '%';
             updateSoundscape(s.id, 'tone', v);
@@ -3840,7 +3842,7 @@ export function initMixer() {
         // Speed slider with value update
         const speedInput = item.querySelector('input[data-type="speed"]');
         const speedVal = item.querySelector('[data-val="speed"]');
-        speedInput.addEventListener('input', (e) => {
+        if (speedInput) speedInput.addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             speedVal.textContent = Math.round(v * 100) + '%';
             updateSoundscape(s.id, 'speed', v);
@@ -4438,6 +4440,7 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
 // Expose to global scope for HTML onclick handlers & AI Generator
 window.applyPreset = applyPreset;
 window.applyComboPreset = applyComboPreset;
+window.handlePlayClick = handlePlayClick;
 window.setVisualMode = setVisualMode;
 window.updateHarmonicsLevel = updateHarmonicsLevel;
 
@@ -4702,10 +4705,11 @@ export function initThemeModal() {
             const isLocked = theme.threshold && refCount < theme.threshold;
 
             const card = document.createElement('div');
-            const currentTheme = document.body.dataset.theme;
+            const currentTheme = document.body && document.body.dataset ? document.body.dataset.theme : (document.body && document.body.getAttribute ? document.body.getAttribute('data-theme') : 'default');
             card.className = `theme-card group ${currentTheme === key ? 'active' : ''} ${isLocked ? 'locked opacity-60' : ''} `;
             card.style.setProperty('--theme-bg', theme.bg);
-            card.dataset.themeId = key;
+            if (card.dataset) card.dataset.themeId = key;
+            if (card.setAttribute) card.setAttribute('data-theme-id', key);
 
             // Card HTML
             const displayName = key === 'default' ? 'Emerald' : key;
@@ -4910,7 +4914,7 @@ export function showThemeGallery() {
     if (!modal || !card) return;
 
     // Simplified: Just update active state and show
-    const currentTheme = document.body.dataset.theme;
+    const currentTheme = document.body && document.body.dataset ? document.body.dataset.theme : (document.body && document.body.getAttribute ? document.body.getAttribute('data-theme') : 'default');
     document.querySelectorAll('.theme-card').forEach(card => {
         if (card.dataset.themeId === currentTheme) {
             card.classList.add('active');

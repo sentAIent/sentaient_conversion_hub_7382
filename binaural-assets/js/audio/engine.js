@@ -37,6 +37,65 @@ class RecorderProcessor extends AudioWorkletProcessor {
 registerProcessor('recorder-processor', RecorderProcessor);
 `;
 
+const binauralProcessorCode = `
+class BinauralProcessor extends AudioWorkletProcessor {
+    constructor() {
+        super();
+        this.phaseLeft = 0;
+        this.phaseRight = 0;
+        this.isoPhase = 0;
+        this.mode = 'binaural';
+        this.baseFreq = 200;
+        this.beatFreq = 10;
+        this.port.onmessage = (event) => {
+            if (event.data.type === 'setFrequencies') {
+                this.baseFreq = event.data.baseFreq;
+                this.beatFreq = event.data.beatFreq;
+            } else if (event.data.type === 'setMode') {
+                this.mode = event.data.mode;
+            }
+        };
+    }
+    process(inputs, outputs, parameters) {
+        const output = outputs[0];
+        const channelLeft = output[0];
+        const channelRight = output[1];
+        if (!channelLeft || !channelRight) return true;
+        const sampleRate = globalThis.sampleRate || 44100;
+        const TWO_PI = Math.PI * 2;
+        for (let i = 0; i < channelLeft.length; i++) {
+            const freqLeft = this.baseFreq;
+            const freqRight = this.mode === 'isochronic' ? this.baseFreq : this.baseFreq + this.beatFreq;
+            const phaseIncLeft = (freqLeft * TWO_PI) / sampleRate;
+            const phaseIncRight = (freqRight * TWO_PI) / sampleRate;
+            this.phaseLeft += phaseIncLeft;
+            this.phaseRight += phaseIncRight;
+            if (this.phaseLeft > TWO_PI) this.phaseLeft -= TWO_PI;
+            if (this.phaseRight > TWO_PI) this.phaseRight -= TWO_PI;
+            const sampleLeft = Math.sin(this.phaseLeft);
+            const sampleRight = Math.sin(this.phaseRight);
+            if (this.mode === 'binaural') {
+                channelLeft[i] = sampleLeft;
+                channelRight[i] = sampleRight;
+            } else if (this.mode === 'monaural') {
+                const mix = (sampleLeft + sampleRight) * 0.5;
+                channelLeft[i] = mix;
+                channelRight[i] = mix;
+            } else if (this.mode === 'isochronic') {
+                const isoPhaseInc = (this.beatFreq * TWO_PI) / sampleRate;
+                this.isoPhase += isoPhaseInc;
+                if (this.isoPhase > TWO_PI) this.isoPhase -= TWO_PI;
+                const pulse = Math.sin(this.isoPhase) > 0 ? 1 : 0;
+                channelLeft[i] = sampleLeft * pulse;
+                channelRight[i] = sampleRight * pulse;
+            }
+        }
+        return true;
+    }
+}
+registerProcessor('binaural-processor', BinauralProcessor);
+`;
+
 export function initAudio() {
     if (!state.audioCtx) {
         window.__debugAudioCtx = state.audioCtx = new AudioContext();
@@ -58,8 +117,9 @@ async function setupWorklet() {
             const blob = new Blob([recorderWorkletCode], { type: "application/javascript" });
             const url = URL.createObjectURL(blob);
             await state.audioCtx.audioWorklet.addModule(url);
-            const workletUrl = new URL('./binaural-processor.js', import.meta.url).href;
-            await state.audioCtx.audioWorklet.addModule(workletUrl);
+            const binauralBlob = new Blob([binauralProcessorCode], { type: "application/javascript" });
+            const binauralUrl = URL.createObjectURL(binauralBlob);
+            await state.audioCtx.audioWorklet.addModule(binauralUrl);
             state.workletInitialized = true;
             console.log('[Worklet] Successfully initialized');
         } catch (e) {
@@ -108,6 +168,23 @@ export async function startAudio() {
                 });
             } catch(e) {
                 console.error("Binaural Worklet failed to create", e);
+            }
+        }
+        if (!state.binauralNode) {
+            try {
+                const merger = state.audioCtx.createChannelMerger(2);
+                state.oscLeft = state.audioCtx.createOscillator();
+                state.oscRight = state.audioCtx.createOscillator();
+                state.oscLeft.type = 'sine';
+                state.oscRight.type = 'sine';
+                state.oscLeft.connect(merger, 0, 0);
+                state.oscRight.connect(merger, 0, 1);
+                merger.connect(state.beatsGain);
+                state.oscLeft.start();
+                state.oscRight.start();
+                console.log('[Audio] Dual oscillator fallback connected');
+            } catch (err) {
+                console.warn('[Audio] Dual oscillator fallback failed:', err);
             }
         }
 
@@ -935,6 +1012,10 @@ export function updateFrequencies() {
             baseFreq: base,
             beatFreq: beat
         });
+    } else if (state.oscLeft && state.oscRight && state.isPlaying && state.audioCtx) {
+        const now = state.audioCtx.currentTime;
+        state.oscLeft.frequency.setTargetAtTime(base, now, 0.05);
+        state.oscRight.frequency.setTargetAtTime(base + beat, now, 0.05);
     }
 
     // Auto Visual Speed Calculation

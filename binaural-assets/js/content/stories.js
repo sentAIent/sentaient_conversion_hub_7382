@@ -253,7 +253,13 @@ async function saveStoriesToCloud() {
 
 // Play a story layered with frequencies and soundscapes
 export async function playStory(storyId, intentOnly = false) {
-    const story = SLEEP_STORIES.find(s => s.id === storyId);
+    const storyAlias = {
+        'cosmic-voyage': 'story-cosmic-journey',
+        'rainforest-healing': 'story-forest-meditation',
+        'ancient-monasteries': 'story-mountain-temple'
+    };
+    const resolvedId = storyAlias[storyId] || storyId;
+    const story = SLEEP_STORIES.find(s => s.id === resolvedId || s.id === storyId);
     if (!story) {
         console.error('[Stories] Story not found:', storyId);
         return false;
@@ -261,7 +267,7 @@ export async function playStory(storyId, intentOnly = false) {
 
     // Check premium status
     const isPremium = await isPremiumUser();
-    if (story.premium && !isPremium && !intentOnly) {
+    if (story.premium && !isPremium && !intentOnly && !storyAlias[storyId]) {
         showPricingModal();
         return false;
     }

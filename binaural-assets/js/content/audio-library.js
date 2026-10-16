@@ -35,6 +35,9 @@ let audioLibraryState = {
 export async function initAudioLibrary() {
     // 1. Setup IndexedDB (Always available as fallback/cache)
     const dbPromise = new Promise((resolve, reject) => {
+        if (typeof indexedDB === 'undefined') {
+            return resolve();
+        }
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {

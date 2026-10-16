@@ -5,11 +5,13 @@
 import { state } from '../state.js';
 
 // Module-level variables (populated after init)
-let app, auth, db, storage;
-let initializeApp, getAuth, getFirestore, getStorage;
-let onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile, deleteUser;
-let collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, addDoc, where, limit, collectionGroup;
-let ref, uploadBytes, getDownloadURL, deleteObject;
+let app = null, auth = null, db = null, storage = null;
+let initializeApp = () => ({}), getAuth = (a) => auth || { currentUser: state.currentUser }, getFirestore = (a) => db || {}, getStorage = (a) => storage || {};
+let onAuthStateChanged = () => () => {}, signInWithCustomToken = async () => {}, signInWithEmailAndPassword = async () => {}, createUserWithEmailAndPassword = async () => {}, signOut = async () => {}, sendPasswordResetEmail = async () => {}, updateProfile = async () => {}, deleteUser = async () => {};
+let collection = () => ({}), doc = (...args) => ({ id: args[args.length - 1] }), setDoc = async () => {}, getDoc = async () => ({ exists: () => false, data: () => ({}) }), getDocs = async () => ({ empty: true, forEach: () => {} }), deleteDoc = async () => {}, onSnapshot = () => () => {}, query = () => ({}), orderBy = () => ({}), serverTimestamp = () => new Date(), addDoc = async () => ({ id: 'mock_' + Date.now() }), where = () => ({}), limit = () => ({}), collectionGroup = () => ({});
+let updateDoc = async () => {}, increment = (n) => n;
+let getApps = () => (app ? [app] : []);
+let ref = () => ({}), uploadBytes = async () => {}, getDownloadURL = async () => '', deleteObject = async () => {};
 
 const authCallbacks = [];
 let unsubscribeLibrary = null;
@@ -133,6 +135,9 @@ export async function initFirebase() {
         where = firebaseFirestore.where;
         limit = firebaseFirestore.limit;
         serverTimestamp = firebaseFirestore.serverTimestamp;
+        updateDoc = firebaseFirestore.updateDoc || updateDoc;
+        increment = firebaseFirestore.increment || increment;
+        if (firebaseApp.getApps) getApps = firebaseApp.getApps;
 
         getStorage = firebaseStorage.getStorage;
         ref = firebaseStorage.ref;
@@ -656,6 +661,9 @@ export {
     doc,
     setDoc,
     deleteDoc,
+    updateDoc,
+    increment,
+    getApps,
     collection,
     query,
     orderBy,

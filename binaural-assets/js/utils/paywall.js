@@ -4,7 +4,7 @@
  */
 
 import { isPremiumUser } from '../services/stripe-simple.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+import { getAuth } from '../services/firebase.js';
 
 // Free tier limits
 const FREE_TIER = {

@@ -343,7 +343,7 @@ export const state = {
     fadeTimeout: null,
 
     // Safety
-    disclaimerAccepted: false,
+    disclaimerAccepted: typeof localStorage !== 'undefined' && localStorage.getItem('mindwave_disclaimer_accepted') === 'true',
 
     // NEW: Audio Mode (binaural, isochronic, monaural)
     audioMode: 'binaural',
