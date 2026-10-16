@@ -84,10 +84,10 @@ window.controls = {
         this.syncSidebar('galaxyPanel');
     },
     toggleCyberSettings: function(btn) {
-        this.syncSidebar('matrixPanel');
+        this.syncSidebar('cyberSettingsPanel');
     },
     toggleMatrixSettings: function(btn) {
-        window.controls.syncSidebar('matrixPanel');
+        window.controls.syncSidebar('matrixSettingsPanel');
     },
     toggleSnowflakeSettings: function(btn) {
         const panel = document.getElementById('snowflakeSettingsPanel');
@@ -3330,8 +3330,8 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         // Contextual Sync: Reveal corresponding Sidebar panel if mode is active
         const contextualMap = {
             'galaxy': 'galaxyPanel',
-            'cyber': 'matrixPanel',
-            'matrix': 'matrixPanel',
+            'cyber': 'cyberSettingsPanel',
+            'matrix': 'matrixSettingsPanel',
             'snowflake': 'snowflakeSettingsPanel',
             'tsunami': 'tsunamiSettingsPanel',
             'cymatics': 'cymaticsPanel',
@@ -6391,7 +6391,7 @@ function setupCyberControls() {
             if (viz) {
                 window._cyberPrevColor = cyberColorPicker.value;
                 if (viz.setCyberColor) viz.setCyberColor(e.target.value);
-                const rainbow = document.getElementById('cyberRainbowToggle');
+                const rainbow = document.getElementById('cyberRainbowToggle') || document.getElementById('cyberRainbowToggleRight');
                 if (rainbow) rainbow.checked = false;
             }
         });
@@ -6443,7 +6443,7 @@ function setupCyberControls() {
     }
 
     // Rainbow Toggle
-    const rainbowToggle = document.getElementById('cyberRainbowToggle');
+    const rainbowToggle = document.getElementById('cyberRainbowToggle') || document.getElementById('cyberRainbowToggleRight');
     if (rainbowToggle) {
         rainbowToggle.addEventListener('change', (e) => {
             const viz = getVisualizer();
