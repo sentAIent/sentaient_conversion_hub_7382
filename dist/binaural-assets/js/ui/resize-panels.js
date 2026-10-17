@@ -335,7 +335,7 @@ export function updateBottomBarWidth() {
     bottomBar.style.pointerEvents = 'none';
 
     // Re-enable pointer events on direct children only
-    Array.from(bottomBar.children).forEach(child => {
+    Array.from(bottomBar.children || []).forEach(child => {
         child.style.pointerEvents = 'auto';
     });
 

@@ -1,0 +1,211 @@
+/* binaural-assets/css/tutorial.css */
+
+/* Highlight effect for UI elements when a tutorial step points to them */
+.tutorial-highlight {
+    position: relative;
+    z-index: 10000 !important;
+    box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.4), 0 0 20px rgba(45, 212, 191, 0.6) !important;
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease;
+}
+
+/* Background overlay when highlighting elements */
+.tutorial-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 5, 10, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s;
+    pointer-events: none;
+}
+.tutorial-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* The Glassmorphic Side Panel */
+.tutorial-panel {
+    position: fixed;
+    top: 0;
+    right: -450px;
+    width: 400px;
+    max-width: 90vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+    z-index: 10001; /* Above highlight */
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    overflow-y: auto;
+}
+.tutorial-panel.open {
+    right: 0;
+}
+
+.tutorial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.tutorial-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #2dd4bf, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+.tutorial-close-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.tutorial-close-btn:hover {
+    color: white;
+}
+
+/* Table of Contents (TOC) */
+.tutorial-toc {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.tutorial-step {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+.tutorial-step:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(45, 212, 191, 0.3);
+}
+
+.tutorial-step.active {
+    background: rgba(45, 212, 191, 0.1);
+    border-color: #2dd4bf;
+    box-shadow: inset 4px 0 0 #2dd4bf;
+}
+
+.tutorial-step.completed .step-icon {
+    background: #2dd4bf;
+    color: #0f172a;
+    border-color: #2dd4bf;
+}
+
+.step-icon {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.step-content h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    color: #e2e8f0;
+}
+.step-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+/* Active Step Details Panel (Shows when a step is clicked) */
+.tutorial-details {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+.tutorial-details.active {
+    display: block;
+}
+.tutorial-details h3 {
+    margin: 0 0 1rem 0;
+    color: #2dd4bf;
+    font-size: 1.2rem;
+}
+.tutorial-details p {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.tutorial-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+.tutorial-btn {
+    background: #2dd4bf;
+    color: #0f172a;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+.tutorial-btn:hover {
+    background: #3b82f6;
+    color: white;
+}
+.tutorial-btn.secondary {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+.tutorial-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .tutorial-panel {
+        width: 100%;
+        max-width: 100%;
+        right: -100%;
+    }
+}

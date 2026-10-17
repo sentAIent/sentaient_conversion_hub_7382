@@ -23,15 +23,15 @@ async function loadVisualizerModule() {
     console.log(`[LazyViz] Loading visualizer module... Version: ${VISUALIZER_VERSION}`);
     const startTime = performance.now();
 
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isDev = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port === '5173';
 
     if (isDev) {
-        // Dev: Standard import. Vite handles its own HMR and caching. 
-        // Using Date.now() here breaks Vite's module graph and causes the import to hang forever!
-        loadPromise = import('./visualizer_vGOLD_SYNC.js?v=9997').then(module => {
+        // Dev: Bypasses browser dynamic import cache completely using dynamic timestamp
+        // Added /* @vite-ignore */ to prevent Vite from intercepting and throwing a 500 error for public directory imports
+        loadPromise = import(/* @vite-ignore */ '/binaural-assets/js/visuals/visualizer_v4.js?v=' + Date.now()).then(module => {
             visualizerModule = module;
             const loadTime = (performance.now() - startTime).toFixed(0);
-            console.log(`[LazyViz] Local Dev Visualizer loaded in ${loadTime}ms`);
+            console.log(`[LazyViz] Local Dev Visualizer loaded in ${loadTime}ms (forced cache-bust)`);
             
             pendingActions.forEach(action => action());
             pendingActions.length = 0;
@@ -43,7 +43,7 @@ async function loadVisualizerModule() {
     } else {
         // Production: First try Vite-hashed production chunk (with fallback retry)
         // Note: Using standard import() allows Vite static analysis to hash/optimize production chunks.
-        loadPromise = import('./visualizer_vGOLD_SYNC.js')
+        loadPromise = import('./visualizer_v4.js')
             .then(module => {
                 visualizerModule = module;
                 const loadTime = (performance.now() - startTime).toFixed(0);
@@ -56,7 +56,7 @@ async function loadVisualizerModule() {
             .catch(err => {
                 console.warn('[LazyViz] Production Vite chunk import failed or cached. Retrying with cache-buster...', err);
                 // Fallback attempt: Force load the raw static file with cache-busting query parameter
-                return new Function(`return import('/binaural-assets/js/visuals/visualizer_vGOLD_SYNC.js?v=${VISUALIZER_VERSION}_' + Date.now())`)()
+                return new Function(`return import('/binaural-assets/js/visuals/visualizer_v4.js?v=${VISUALIZER_VERSION}_' + Date.now())`)()
                     .then(module => {
                         visualizerModule = module;
                         console.log('[LazyViz] Fallback cache-busted visualizer loaded successfully.');
@@ -96,7 +96,6 @@ export function getVisualizer() {
     // Fallback to global attachment if module-level lookup fails
     if (window.viz3D) return window.viz3D;
     
-    console.warn('[LazyViz] getVisualizer: No instance found in module or global scope.');
     return null;
 }
 

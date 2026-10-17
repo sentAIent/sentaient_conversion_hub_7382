@@ -6,8 +6,7 @@
 
 import { state } from '../state.js';
 import { trackGlobalEvent } from './analytics-service.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { getAuth, getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from './firebase.js';
 
 // Stripe Payment Links - with fallbacks for static file serving
 // Note: Files in public/ don't get Vite env processing, so we need fallbacks
@@ -45,34 +44,12 @@ export const PRICING_TIERS = {
     },
     zen: {
         name: 'Zen',
-        description: 'Committed practitioner',
-        monthlyPrice: 19.99,
-        annualPrice: 149, // Save 38%
-        stripe: {
-            monthly: ENV.VITE_STRIPE_ZEN_MONTHLY_LINK || 'https://buy.stripe.com/eVq7sD9rW6vJ2yT7ibgfu00',
-            annual: ENV.VITE_STRIPE_ZEN_ANNUAL_LINK || 'https://buy.stripe.com/eVqdR17jO9HV1uP8mfgfu01'
-        },
-        features: {
-            presets: 15,
-            sessionLimit: null, // unlimited
-            dailySessions: null, // unlimited
-            journeyLessons: 15,
-            sleepStories: 10,
-            visualizer: 'advanced',
-            customMixes: true,
-            analytics: true,
-            ads: false,
-            offline: true
-        }
-    },
-    nirvana: {
-        name: 'Nirvana',
         description: 'Enlightened mastery',
         monthlyPrice: 39.99,
         annualPrice: 349, // Save 27%
         stripe: {
-            monthly: ENV.VITE_STRIPE_NIRVANA_MONTHLY_LINK || 'https://buy.stripe.com/14A8wH0VqbQ34H1cCvgfu03',
-            annual: ENV.VITE_STRIPE_NIRVANA_ANNUAL_LINK || 'https://buy.stripe.com/5kQ28jcE8dYbddxcCvgfu04'
+            monthly: ENV.VITE_STRIPE_ZEN_MONTHLY_LINK || 'https://buy.stripe.com/14A8wH0VqbQ34H1cCvgfu03',
+            annual: ENV.VITE_STRIPE_ZEN_ANNUAL_LINK || 'https://buy.stripe.com/5kQ28jcE8dYbddxcCvgfu04'
         },
         features: {
             presets: null, // all presets (40+)
@@ -93,7 +70,40 @@ export const PRICING_TIERS = {
             exportMp3: true,
             healthIntegrations: true,
             community: true,
-            pricelock: true
+            pricelock: true,
+            commercialUse: false
+        }
+    },
+    thrive: {
+        name: 'Thrive',
+        description: 'For Creators & Professionals',
+        monthlyPrice: 88.00,
+        annualPrice: 880,
+        stripe: {
+            monthly: ENV.VITE_STRIPE_THRIVE_MONTHLY_LINK || 'https://buy.stripe.com/test_thrive',
+            annual: ENV.VITE_STRIPE_THRIVE_ANNUAL_LINK || 'https://buy.stripe.com/test_thrive_annual'
+        },
+        features: {
+            presets: null,
+            sessionLimit: null,
+            dailySessions: null,
+            journeyLessons: 30,
+            sleepStories: 50,
+            visualizer: 'premium',
+            customMixes: true,
+            analytics: true,
+            ads: false,
+            offline: true,
+            aiRecommendations: true,
+            breathingExercises: true,
+            videoBackgrounds: true,
+            prioritySupport: true,
+            earlyAccess: true,
+            exportMp3: true,
+            healthIntegrations: true,
+            community: true,
+            pricelock: true,
+            commercialUse: true
         }
     },
     lifetime: {
@@ -191,6 +201,15 @@ export function goToCheckout(tier, billingPeriod = 'monthly', discountCode = nul
 
     // Redirect to Stripe or show a helpful error
     try {
+        // APPLE COMPLIANCE: If native iOS, we MUST use RevenueCat / Native IAP, not Stripe URLs
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+            console.log('[IAP] Native platform detected. Triggering RevenueCat in-app purchase...');
+            // STUB: RevenueCat checkout integration
+            // e.g., await Purchases.purchasePackage(package)
+            alert("App Store Checkout (RevenueCat) triggered! Please configure your Apple Developer API keys in RevenueCat to finalize purchases.");
+            return;
+        }
+
         // Basic URL validation
         new URL(checkoutUrl);
 
@@ -324,9 +343,9 @@ export async function getUserTier() {
     const tier = subscription.tier || subscription.plan;
 
     // Map old plans to new tiers
-    if (tier === 'nirvana' || tier === 'buddha' || subscription.monthlyPrice >= 29) {
-        return 'nirvana';
-    } else if (tier === 'zen' || tier === 'yogi' || subscription.monthlyPrice >= 9) {
+    if (tier === 'thrive' || tier === 'enlightened' || subscription.monthlyPrice >= 80) {
+        return 'thrive';
+    } else if (tier === 'zen' || tier === 'nirvana' || subscription.monthlyPrice >= 29) {
         return 'zen';
     }
 
@@ -355,9 +374,9 @@ export async function getSubscriberCount() {
 }
 
 /**
- * Get the current active pricing conditions for both Zen and Nirvana
- * - Zen: 40% off for first 500
- * - Nirvana: 20% off for first 500
+ * Get the current active pricing conditions for both Zen and Thrive
+ * - Zen: 20% off for first 500
+ * - Thrive: standard pricing
  */
 export async function getActiveTierPricing() {
     const count = await getSubscriberCount();
@@ -368,14 +387,14 @@ export async function getActiveTierPricing() {
         isFull,
         spotsLeft,
         zen: {
-            monthlyPrice: isFull ? "$19.99" : "$11.99",
-            annualPrice: isFull ? "$149" : "$89",
-            coupon: isFull ? null : (ENV.VITE_ZEN_PROMO_CODE || 'ZEN40')
-        },
-        nirvana: {
             monthlyPrice: isFull ? "$39.99" : "$31.99",
             annualPrice: isFull ? "$349" : "$279",
-            coupon: isFull ? null : (ENV.VITE_NIRVANA_PROMO_CODE || 'NIRVANA20')
+            coupon: isFull ? null : (ENV.VITE_ZEN_PROMO_CODE || 'ZEN20')
+        },
+        thrive: {
+            monthlyPrice: "$88.00",
+            annualPrice: "$880",
+            coupon: null
         }
     };
 }

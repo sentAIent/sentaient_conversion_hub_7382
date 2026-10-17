@@ -1,6 +1,6 @@
 console.log("CONTROLS V3 LOADED - ID: NUCLEAR_CHECK_777");
 import { state, els, THEMES, SOUNDSCAPES, PRESET_COMBOS } from '../state.js';
-import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS, updateHarmonicsLevel } from '../audio/engine.js';
+import { startAudio, stopAudio, updateFrequencies, updateBeatsVolume, updateMasterVolume, updateMasterBalance, updateAtmosMaster, updateSoundscape, registerUICallback, fadeIn, fadeOut, cancelFadeOut, cancelStopAudio, resetAllSoundscapes, isVolumeHigh, playCompletionChime, setAudioMode, getAudioMode, startSweep, stopSweep, startSweepPreset, isSweepActive, isAudioPlaying, SWEEP_PRESETS, updateHarmonicsLevel, toggleSpatialOrbit } from '../audio/engine.js';
 import { initVisualizer, toggleVisual, setVisualSpeed, setVisualColor, setVisualBrightness, setVisualLogoOpacity, pauseVisuals, resumeVisuals, getVisualizer, isVisualsPaused, preloadVisualizer } from '../visuals/visualizer_lazy.js';
 import { startRecording, stopRecording, startExport, cancelExport, updateExportPreview } from '../export/recorder.js';
 import { openAuthModal, renderLibraryList } from './auth-controller.js';
@@ -17,6 +17,9 @@ import { initGallery } from './gallery-modal.js';
 import { getReferralCount, shareReferral } from '../services/referral.js';
 import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } from '../services/ai-intent-service.js';
 import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
+import { ambientSynth } from '../audio/ambient-synth.js';
+import { biometrics } from '../services/biometrics.js';
+
 // ... (existing code)
 import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
 import { loadUserPreferences, saveUserPreferences } from '../services/persistence.js?v=NUCLEAR_FIX_V2';
@@ -61,7 +64,7 @@ window.controls = {
         if (rightPanel) rightPanel.classList.remove('translate-x-full');
 
         // Switch to correct Tab depending on the panel requested
-        if (panelId === 'cymaticsPanel' || panelId === 'snowflakeSettingsPanel') {
+        if (panelId === 'cymaticsPanel') {
             const activeTabBtn = document.querySelector('.tab-pill[onclick*="active"]');
             if (activeTabBtn) activeTabBtn.click();
             else this.switchRightTab('active');
@@ -81,13 +84,21 @@ window.controls = {
         this.syncSidebar('galaxyPanel');
     },
     toggleCyberSettings: function(btn) {
-        this.syncSidebar('matrixPanel');
+        this.syncSidebar('cyberSettingsPanel');
     },
     toggleMatrixSettings: function(btn) {
-        this.syncSidebar('matrixPanel');
+        window.controls.syncSidebar('matrixSettingsPanel');
     },
     toggleSnowflakeSettings: function(btn) {
-        this.syncSidebar('snowflakeSettingsPanel');
+        const panel = document.getElementById('snowflakeSettingsPanel');
+        if (panel) panel.classList.toggle('hidden');
+    },
+    toggleTsunamiSettings: function(btn) {
+        const panel = document.getElementById('tsunamiSettingsPanel');
+        if (panel) panel.classList.toggle('hidden');
+    },
+    toggleCymaticsSettings: function(btn) {
+        this.switchRightTab('active');
     },
     setMatrixMode: function(mode) {
         const viz = getVisualizer();
@@ -237,6 +248,8 @@ window.toggleMatrixSettings = window.controls.toggleMatrixSettings;
 window.toggleGalaxySun = window.controls.toggleGalaxySun;
 window.resetGalaxySettings = window.controls.resetGalaxySettings;
 window.toggleSnowflakeSettings = window.controls.toggleSnowflakeSettings;
+window.toggleTsunamiSettings = window.controls.toggleTsunamiSettings;
+window.toggleCymaticsSettings = window.controls.toggleCymaticsSettings;
 window.setMatrixMode = window.controls.setMatrixMode;
 
 // Activate any pending tabs queued before controls loaded
@@ -276,7 +289,9 @@ window.addEventListener('mindwave:visual-mode-sync', (e) => {
         { id: 'cyberBtn', mode: 'cyber' },
         { id: 'matrixBtn', mode: 'matrix' },
         { id: 'snowflakeBtn', mode: 'snowflake' },
-            ];
+        { id: 'tsunamiBtn', mode: 'tsunami' },
+        { id: 'cymaticsBtn', mode: 'cymatics' }
+    ];
 
     buttons.forEach(({ id, mode }) => {
         const btn = document.getElementById(id);
@@ -371,6 +386,7 @@ export function setupUI() {
     els.visualColorPicker = document.getElementById('visualColorPicker');
     els.randomColorBtn = document.getElementById('randomColorBtn');
     els.prevColorBtn = document.getElementById('prevColorBtn');
+    els.saveColorBtn = document.getElementById('saveColorBtn');
     els.vibrationToggleBtn = document.getElementById('vibrationToggleBtn');
     els.colorPreview = document.getElementById('colorPreview');
     els.profileBtn = document.getElementById('profileBtn');
@@ -378,7 +394,10 @@ export function setupUI() {
     els.videoModal = document.getElementById('videoModal');
     els.playbackVideo = document.getElementById('playbackVideo');
     els.videoToggleBtn = document.getElementById('videoToggleBtn');
+    els.snapshotBtn = document.getElementById('snapshotBtn');
+    els.visualRecordBtn = document.getElementById('visualRecordBtn');
     els.saveMixBtn = document.getElementById('saveMixBtn');
+    els.spatialOrbitToggleBtn = document.getElementById('spatialOrbitToggleBtn');
     els.historyBtn = document.getElementById('historyBtn');
     els.journeyBtn = document.getElementById('journeyBtn');
     els.libraryPanel = document.getElementById('libraryPanel');
@@ -417,8 +436,43 @@ export function setupUI() {
     els.cyberBtn = document.getElementById('cyberBtn');
     els.matrixBtn = document.getElementById('matrixBtn');
     els.snowflakeBtn = document.getElementById('snowflakeBtn');
+    els.tsunamiBtn = document.getElementById('tsunamiBtn');
     els.oceanBtn = document.getElementById('oceanBtn'); // New ID for island/waves
+    els.cymaticsBtn = document.getElementById('cymaticsBtn'); // Now Fractal Patterns
     
+    els.cymaticsRainbowToggle = document.getElementById('cymaticsRainbowToggle');
+
+    const stopAllCymaticsBtn = document.getElementById('stopAllCymaticsBtn');
+    if (stopAllCymaticsBtn) {
+        stopAllCymaticsBtn.addEventListener('click', () => {
+            const viz = window.getVisualizer ? window.getVisualizer() : null;
+            if (viz) {
+                viz.activeModes.delete('cymatics');
+                if (viz.activeModes.size === 0) {
+                    // Fallback to particles so the screen doesn't just go black
+                    if (window.setVisualMode) window.setVisualMode('particles', null, true);
+                    else {
+                        viz.activeModes.add('particles');
+                        viz.updateVisibility();
+                    }
+                } else {
+                    viz.updateVisibility();
+                }
+                
+                // Deselect all active cymatics buttons in UI
+                document.querySelectorAll('.cymatic-btn').forEach(b => {
+                    b.classList.remove('border-cyan-400', 'shadow-[0_0_15px_rgba(34,211,238,0.4)]');
+                    b.classList.add('border-white/10');
+                });
+            }
+        });
+    }
+
+
+    // Cymatics / Galaxy / Matrix Controls
+    els.cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
+    els.cymaticNextBtn = document.getElementById('cymaticNextBtn');
+    els.cymaticsAutoRotate = document.getElementById('cymaticsAutoRotate');
 
     els.matrixTextInput = document.getElementById('matrixTextInput');
     els.matrixVibrationToggle = document.getElementById('matrixVibrationToggle');
@@ -559,7 +613,7 @@ export function setupUI() {
             state.atmosVolume = restoredPrefs.volumes.atmos;
 
             if (els.masterVolSlider) els.masterVolSlider.value = state.masterVolume;
-            if (els.beatSlider) els.beatSlider.value = state.binauralVolume;
+            if (els.volSlider) els.volSlider.value = state.binauralVolume;
             if (els.atmosMasterSlider) els.atmosMasterSlider.value = state.atmosVolume;
 
             // Trigger updates to engine
@@ -807,6 +861,26 @@ export function setupUI() {
         if (els.playbackAudio) { els.playbackAudio.pause(); }
     });
 
+    if (els.spatialOrbitToggleBtn) {
+        els.spatialOrbitToggleBtn.addEventListener('click', () => {
+            const isActive = els.spatialOrbitToggleBtn.textContent.includes('ON');
+            const newState = !isActive;
+            
+            toggleSpatialOrbit(newState);
+            saveStateToLocal();
+            
+            if (newState) {
+                els.spatialOrbitToggleBtn.textContent = 'ORBIT ON';
+                els.spatialOrbitToggleBtn.classList.remove('bg-white/5', 'text-[var(--text-muted)]');
+                els.spatialOrbitToggleBtn.classList.add('bg-cyan-500/20', 'border-cyan-400', 'text-cyan-300');
+            } else {
+                els.spatialOrbitToggleBtn.textContent = 'ORBIT OFF';
+                els.spatialOrbitToggleBtn.classList.remove('bg-cyan-500/20', 'border-cyan-400', 'text-cyan-300');
+                els.spatialOrbitToggleBtn.classList.add('bg-white/5', 'text-[var(--text-muted)]');
+            }
+        });
+    }
+
     if (els.videoToggleBtn) {
         els.videoToggleBtn.addEventListener('click', () => {
             state.videoEnabled = !state.videoEnabled;
@@ -820,6 +894,51 @@ export function setupUI() {
                 els.videoToggleBtn.style.backgroundColor = "";
                 els.videoToggleBtn.style.boxShadow = "";
                 console.log('[Controls] Video recording disabled');
+            }
+        });
+    }
+
+    // Visual Export Actions
+    if (els.snapshotBtn) {
+        els.snapshotBtn.addEventListener('click', () => {
+            const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
+            if (viz && viz.captureSnapshot) {
+                viz.captureSnapshot();
+                showToast('Snapshot Saved', 'success');
+            } else {
+                showToast('Visualizer not ready', 'error');
+            }
+        });
+    }
+
+    if (els.visualRecordBtn) {
+        els.visualRecordBtn.addEventListener('click', () => {
+            const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
+            if (!viz) {
+                showToast('Visualizer not ready', 'error');
+                return;
+            }
+
+            const isRecording = window.isVisualRecordingActive;
+            const ping = document.getElementById('visualRecordPing');
+
+            if (isRecording) {
+                if (viz.stopRecording) viz.stopRecording();
+                window.isVisualRecordingActive = false;
+                els.visualRecordBtn.classList.remove('text-red-400');
+                els.visualRecordBtn.classList.add('text-red-500');
+                if (ping) ping.classList.add('hidden');
+                showToast('Visual Recording Saved', 'success');
+            } else {
+                if (viz.startRecording && viz.startRecording()) {
+                    window.isVisualRecordingActive = true;
+                    els.visualRecordBtn.classList.remove('text-red-500');
+                    els.visualRecordBtn.classList.add('text-red-400');
+                    if (ping) ping.classList.remove('hidden');
+                    showToast('Visual Recording Started', 'success');
+                } else {
+                    showToast('Failed to start recording', 'error');
+                }
             }
         });
     }
@@ -886,19 +1005,13 @@ export function setupUI() {
     const updateDimmerUI = (val) => {
         if (els.globalDimmerSlider) els.globalDimmerSlider.value = val;
         if (els.dimmerValue) els.dimmerValue.textContent = `${Math.round(val * 100)}%`;
+        if (els.dimmerOverlay) els.dimmerOverlay.style.opacity = val.toString();
         
-        // REMOVED dimmerOverlay to keep Lotus independent of global screen dimmer.
-        // WebGL dimmerPlane handles everything else.
-        if (els.dimmerOverlay) els.dimmerOverlay.style.opacity = '0';
-        
-        // Also dim the physical WebGL scene behind it (but leave the Lotus unaffected!)
-        if (state) {
-            state.screenDimmer = val;
+        // Also dim the physical WebGL scene behind it
+        const vizCanvas = document.getElementById('visualizerCanvas') || document.getElementById('visualizer');
+        if (vizCanvas) {
+            vizCanvas.style.opacity = Math.max(0, 1.0 - val).toString();
         }
-        
-        // Dim the background video to match
-        const bgVideo = document.getElementById('bgVideo');
-        if (bgVideo) bgVideo.style.filter = `brightness(${1 - val})`;
     };
 
     if (els.globalDimmerSlider) {
@@ -1151,7 +1264,12 @@ export function setupUI() {
     if (els.snowflakeBtn) {
         els.snowflakeBtn.addEventListener('click', () => {
             setVisualMode('snowflake', null, true);
-            
+            if (window.setCymaticMedium) window.setCymaticMedium(3); // Auto-set to ICE medium
+        });
+    }
+    if (els.tsunamiBtn) {
+        els.tsunamiBtn.addEventListener('click', () => {
+            setVisualMode('tsunami', null, true);
         });
     }
     // Duplicate oceanBtn listener removed (was causing double-toggle ON→OFF)
@@ -1161,9 +1279,94 @@ export function setupUI() {
     });
 
     // ── Cymatics panel controls ────────────────────────────────────
-    
-    
-    
+    window.toggleCymaticsPanel = function() {
+        const panel = document.getElementById('cymaticsPanel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+            panel.style.display = panel.classList.contains('hidden') ? '' : 'flex';
+        }
+    };
+
+    window.setCymaticMedium = function(mediumIdx) {
+        state.cymaticMedium = mediumIdx;
+        
+        // Update button UI
+        const buttons = document.querySelectorAll('.cym-medium-btn');
+        buttons.forEach((btn, idx) => {
+            if (idx === mediumIdx) {
+                btn.classList.add('active', 'border-purple-400');
+                btn.style.backgroundColor = 'rgba(168, 85, 247, 0.2)';
+            } else {
+                btn.classList.remove('active', 'border-purple-400');
+                btn.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+            }
+        });
+        
+        const mediumNames = ['Water', 'Sand', 'Ether', 'Ice/Crystal'];
+        showToast(`Simulation Medium: ${mediumNames[mediumIdx]}`, 'info');
+
+        // Instant Engine Update
+        const viz = getVisualizer();
+        if (viz && viz.cymaticMaterial) {
+            viz.cymaticMaterial.uniforms.uMedium.value = mediumIdx;
+        }
+    };
+
+    window.selectCymaticPattern = function(idx) {
+        console.log(`[Controls] Selecting Pattern: ${idx}`);
+        
+        // UI Highlighting Sync
+        const btns = document.querySelectorAll('.cymatics-pattern-btn');
+        btns.forEach((btn) => {
+            const clickAttr = btn.getAttribute('onclick');
+            let btnIdx = -1;
+            if (clickAttr) {
+                const match = clickAttr.match(/selectCymaticPattern\((\d+)\)/);
+                if (match) {
+                    btnIdx = parseInt(match[1]);
+                }
+            }
+            
+            if (btnIdx === idx) {
+                btn.classList.add('active', 'border-purple-400/80', 'bg-purple-400/10');
+                btn.style.color = '#ffffff';
+            } else {
+                btn.classList.remove('active', 'border-purple-400/80', 'bg-purple-400/10');
+                btn.style.color = ''; 
+            }
+        });
+
+        const viz = getVisualizer();
+        if (viz) {
+            // AUTO-ACTIVATE cymatics mode if not already active
+            if (!viz.activeModes || !viz.activeModes.has('cymatics')) {
+                console.log('[Controls] Auto-activating Cymatics mode for pattern selection');
+                setVisualMode('cymatics', null, true);
+            }
+            // Small delay to ensure initCymatics completes before setting pattern
+            const applyPattern = () => {
+                if (viz.cymaticMaterial && typeof viz.setCymaticPatternByIndex === 'function') {
+                    viz.setCymaticPatternByIndex(idx);
+                } else {
+                    // Retry once after initialization
+                    setTimeout(() => {
+                        if (typeof viz.setCymaticPatternByIndex === 'function') {
+                            viz.setCymaticPatternByIndex(idx);
+                        }
+                    }, 200);
+                }
+            };
+            // If cymatics was just activated, wait for init; otherwise apply immediately
+            if (viz.cymaticMaterial) {
+                applyPattern();
+            } else {
+                setTimeout(applyPattern, 100);
+            }
+        } else {
+            console.error("[Controls] Visualizer not available");
+        }
+    };
+
     const cymaticPrevBtn = document.getElementById('cymaticPrevBtn');
     const cymaticNextBtn = document.getElementById('cymaticNextBtn');
     if (cymaticPrevBtn) cymaticPrevBtn.addEventListener('click', () => { const viz=getVisualizer(); if(viz?.prevCymatic) viz.prevCymatic(); });
@@ -1183,14 +1386,10 @@ export function setupUI() {
 
         // Instant Engine Sync
         const viz = getVisualizer();
-        if (viz) {
-            if (viz.setCymaticParam) {
-                viz.setCymaticParam(key.replace('cymatic', ''), val);
-            } else if (viz.cymaticMaterial) {
-                const uniformKey = 'u' + key.replace('cymatic', ''); 
-                if (viz.cymaticMaterial.uniforms[uniformKey]) {
-                    viz.cymaticMaterial.uniforms[uniformKey].value = val;
-                }
+        if (viz && viz.cymaticMaterial) {
+            const uniformKey = 'u' + key.replace('cymatic', ''); 
+            if (viz.cymaticMaterial.uniforms[uniformKey]) {
+                viz.cymaticMaterial.uniforms[uniformKey].value = val;
             }
         }
         
@@ -1242,27 +1441,11 @@ export function setupUI() {
         });
     }
 
-    const cymaticsCol1Picker = document.getElementById('cymaticsCol1Picker');
-    if (cymaticsCol1Picker) {
-        cymaticsCol1Picker.addEventListener('input', () => {
+    const cymaticsColorPicker = document.getElementById('cymaticsColorPicker');
+    if (cymaticsColorPicker) {
+        cymaticsColorPicker.addEventListener('input', () => {
             const viz = getVisualizer();
-            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsCol1Picker.value);
-        });
-    }
-
-    const cymaticsCol2Picker = document.getElementById('cymaticsCol2Picker');
-    if (cymaticsCol2Picker) {
-        cymaticsCol2Picker.addEventListener('input', () => {
-            const viz = getVisualizer();
-            if (viz?.setCymaticColor2) viz.setCymaticColor2(cymaticsCol2Picker.value);
-        });
-    }
-
-    const cymaticsCol3Picker = document.getElementById('cymaticsCol3Picker');
-    if (cymaticsCol3Picker) {
-        cymaticsCol3Picker.addEventListener('input', () => {
-            const viz = getVisualizer();
-            if (viz?.setCymaticColor3) viz.setCymaticColor3(cymaticsCol3Picker.value);
+            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsColorPicker.value);
         });
     }
 
@@ -1273,14 +1456,10 @@ export function setupUI() {
             const v = parseFloat(cymaticsIntensitySlider.value);
             if (cymaticsIntensityVal) cymaticsIntensityVal.textContent = v === 0 ? 'Auto' : Math.round(v * 100) + '%';
             const viz = getVisualizer();
-            if (viz) {
+            if (viz?.cymaticMaterial) {
                 // Manual override: clamp auto-update in render loop
                 viz._cymaticIntensityOverride = v > 0 ? v : null;
-                if (viz.setCymaticParam) {
-                    viz.setCymaticParam('intensity', v > 0 ? v : 0.5);
-                } else if (viz.cymaticMaterial) {
-                    viz.cymaticMaterial.uniforms.uIntensity.value = v > 0 ? v : 0.5;
-                }
+                viz.cymaticMaterial.uniforms.uIntensity.value = v > 0 ? v : 0.5;
             }
         });
     }
@@ -1295,12 +1474,8 @@ export function setupUI() {
             updateHarmonicsLevel(v); // Update Audio
             
             const viz = getVisualizer();
-            if (viz) {
-                if (viz.setCymaticParam) {
-                    viz.setCymaticParam('harmonics', v);
-                } else if (viz.cymaticMaterial) {
-                    viz.cymaticMaterial.uniforms.uHarmonics.value = v;
-                }
+            if (viz && viz.cymaticMaterial) {
+                viz.cymaticMaterial.uniforms.uHarmonics.value = v;
             }
         });
     }
@@ -1413,11 +1588,15 @@ export function setupUI() {
 
     // Color Controls
     // Color history for back button
-    let previousColor = null;
+    let colorHistory = [];
     let currentColor = '#60a9ff'; // Default
 
-    function updateColorWithHistory(newColor) {
-        previousColor = currentColor;
+    function updateColorWithHistory(newColor, isBack = false) {
+        if (!isBack && currentColor !== newColor) {
+            colorHistory.push(currentColor);
+            if (colorHistory.length > 50) colorHistory.shift();
+        }
+        
         currentColor = newColor;
 
         if (els.colorPreview) els.colorPreview.style.backgroundColor = newColor;
@@ -1431,9 +1610,13 @@ export function setupUI() {
         if (els.sessionLabel) els.sessionLabel.style.color = newColor;
         if (els.visualsLabel) els.visualsLabel.style.color = newColor;
 
-        // Show back button if we have a previous color
-        if (els.prevColorBtn && previousColor) {
-            els.prevColorBtn.classList.remove('hidden');
+        // Show back button if we have history
+        if (els.prevColorBtn) {
+            if (colorHistory.length > 0) {
+                els.prevColorBtn.classList.remove('hidden');
+            } else {
+                els.prevColorBtn.classList.add('hidden');
+            }
         }
     }
 
@@ -1457,114 +1640,38 @@ export function setupUI() {
 
     if (els.prevColorBtn) {
         els.prevColorBtn.addEventListener('click', () => {
-            if (previousColor) {
-                // Swap colors
-                const temp = currentColor;
-                currentColor = previousColor;
-                previousColor = temp;
-
-                if (els.colorPreview) els.colorPreview.style.backgroundColor = currentColor;
-                if (els.visualColorPicker) els.visualColorPicker.value = currentColor;
-
-                const viz = getVisualizer();
-                if (viz) viz.setColor(currentColor);
+            if (colorHistory.length > 0) {
+                const prevColor = colorHistory.pop();
+                updateColorWithHistory(prevColor, true);
             }
         });
     }
 
-    // MW LOTUS GLOW LOGIC
-    const glowBtns = document.querySelectorAll('.glow-btn');
-    if (glowBtns.length > 0) {
-        glowBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const mode = e.currentTarget.getAttribute('data-glow-mode');
-                if (state) {
-                    state.lotusState = mode;
-                }
-                
-                // Update active class
-                glowBtns.forEach(b => {
-                    b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-                    b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-                });
-                
-                e.currentTarget.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-                e.currentTarget.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-            });
-        });
-    }
-
-    const lotusOpacitySlider = document.getElementById('lotusOpacitySlider');
-    const lotusOpacityVal = document.getElementById('lotusOpacityVal');
-    if (lotusOpacitySlider) {
-        lotusOpacitySlider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            if (lotusOpacityVal) lotusOpacityVal.textContent = Math.round(val * 100) + '%';
-            
-            if (state) {
-                state.lotusOpacity = val;
-                state.lotusState = 'manual';
+    if (els.saveColorBtn) {
+        els.saveColorBtn.addEventListener('click', async () => {
+            if (!state.currentUser) {
+                alert('Please log in to save your favorite colors.');
+                return;
             }
-            
-            // Auto-switch UI to DIM or FULL if they match, else unhighlight all mode buttons
-            glowBtns.forEach(b => {
-                b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-                b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-            });
-        });
-    }
-
-    const lotusHeartbeatSlider = document.getElementById('lotusHeartbeatSlider');
-    const lotusHeartbeatVal = document.getElementById('lotusHeartbeatVal');
-    if (lotusHeartbeatSlider) {
-        lotusHeartbeatSlider.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            if (lotusHeartbeatVal) lotusHeartbeatVal.textContent = val + ' BPM';
-            
-            if (state) {
-                state.lotusHeartbeatBpm = val;
-                state.lotusState = 'heartbeat';
-                state.lotusHeartbeatSync = false;
-                if (lotusAudioSyncBtn) {
-                    lotusAudioSyncBtn.classList.remove('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
+            try {
+                // We'll dynamically import getDoc, setDoc, doc from firebase.js
+                const fb = await import('../services/firebase.js');
+                const docRef = fb.doc(fb.db, 'users', state.currentUser.uid, 'profile', 'data');
+                const docSnap = await fb.getDoc(docRef);
+                let favorites = [];
+                if (docSnap.exists() && docSnap.data().favoriteColors) {
+                    favorites = docSnap.data().favoriteColors;
                 }
-            }
-            
-            // Auto-switch UI to heartbeat
-            glowBtns.forEach(b => {
-                b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-                b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-                if (b.getAttribute('data-glow-mode') === 'heartbeat') {
-                    b.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-                    b.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-                }
-            });
-        });
-    }
-
-    const lotusAudioSyncBtn = document.getElementById('lotusAudioSyncBtn');
-    if (lotusAudioSyncBtn) {
-        lotusAudioSyncBtn.addEventListener('click', () => {
-            if (state) {
-                state.lotusHeartbeatSync = !state.lotusHeartbeatSync;
-                if (state.lotusHeartbeatSync) {
-                    lotusAudioSyncBtn.classList.add('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-                    if (lotusHeartbeatVal) lotusHeartbeatVal.textContent = 'SYNC';
+                if (!favorites.includes(currentColor)) {
+                    favorites.push(currentColor);
+                    await fb.setDoc(docRef, { favoriteColors: favorites, updatedAt: fb.serverTimestamp() }, { merge: true });
+                    alert(`Color ${currentColor} saved to favorites!`);
                 } else {
-                    lotusAudioSyncBtn.classList.remove('active', 'bg-[var(--accent)]/15', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-                    if (lotusHeartbeatVal && lotusHeartbeatSlider) lotusHeartbeatVal.textContent = lotusHeartbeatSlider.value + ' BPM';
+                    alert(`Color ${currentColor} is already in your favorites!`);
                 }
-                state.lotusState = 'heartbeat';
-                
-                // Auto-switch UI to heartbeat
-                glowBtns.forEach(b => {
-                    b.classList.remove('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-                    b.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-                    if (b.getAttribute('data-glow-mode') === 'heartbeat') {
-                        b.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
-                        b.classList.add('active', 'bg-[var(--accent)]/15', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'shadow-[0_0_12px_var(--accent-glow)]');
-                    }
-                });
+            } catch (err) {
+                console.error('Error saving favorite color:', err);
+                alert('Failed to save color to profile.');
             }
         });
     }
@@ -1712,6 +1819,7 @@ export function setupUI() {
     window.startSweepPreset = startSweepPresetUI; // NEW
     window.stopSweep = stopSweepUI; // NEW
     window.handleHyperGammaClick = handleHyperGammaClick; // NEW
+    window.handlePlayClick = handlePlayClick;
 
     // PAYWALL HELPER: Handles Auth + Purchase
     const checkAccessAndPurchase = async (tier) => {
@@ -1756,9 +1864,15 @@ export function setupUI() {
         }
 
         try {
-            // Default only Cymatics active on load - SUPERSEDES ALL
-            console.log('[Controls] Force-engaging Cymatics Default');
-            setVisualMode('cymatics', true, false); 
+            // Default loadout on startup: Snow, Matrix, Ocean (waves), Tsunami
+            const defaultLoadout = ['snowflake', 'matrix', 'waves', 'tsunami'];
+            console.log('[Controls] Ensuring default visual loadout:', defaultLoadout);
+            if (viz.activeModes) {
+                defaultLoadout.forEach(mode => {
+                    if (!viz.activeModes.has(mode)) viz.toggleMode(mode);
+                });
+                if (viz.activeModes.has('cymatics')) viz.toggleMode('cymatics');
+            } 
             
             // Sync Color Picker explicitly to the loaded geometry engine
             const colorPicker = document.getElementById('visualColorPicker');
@@ -1801,7 +1915,10 @@ export function setupUI() {
                 { el: els.oceanBtn, mode: 'waves' },
                 { el: els.mandalaBtn, mode: 'mandala' },
                 { el: els.cyberBtn, mode: 'cyber' },
-                { el: els.matrixBtn, mode: 'matrix' }
+                { el: els.matrixBtn, mode: 'matrix' },
+                { el: els.snowflakeBtn, mode: 'snowflake' },
+                { el: els.tsunamiBtn, mode: 'tsunami' },
+                { el: els.cymaticsBtn, mode: 'cymatics' }
             ];
             buttons.forEach(({ el, mode }) => {
                 if (!el) return;
@@ -1878,14 +1995,16 @@ export function setupUI() {
         }, { once: true });
     }
 
-    // Defer visualizer loading until after UI is fully settled using idle time
-    console.log('[Controls] Deferring visualizer preload to unblock boot path...');
-    // Only preload on idle to prevent the "Stall"
-    if (window.requestIdleCallback) {
-        window.requestIdleCallback(() => preloadVisualizer(), { timeout: 2000 });
-    } else {
-        setTimeout(() => preloadVisualizer(), 500); // 500ms delay fallback
-    }
+    // Defer visualizer loading until after UI is fully settled
+    setTimeout(() => {
+        console.log('[Controls] Deferring visualizer preload to unblock boot path...');
+        // Only preload on idle or first interaction to prevent the "Stall"
+        if (window.requestIdleCallback) {
+            window.requestIdleCallback(() => preloadVisualizer());
+        } else {
+            setTimeout(() => preloadVisualizer(), 2000); // 2s delay fallback
+        }
+    }, 2000);
 
     // WATCHDOG: Force reveal visualizer if it hasn't loaded after 10 seconds
     setTimeout(() => {
@@ -1943,10 +2062,26 @@ export function setupUI() {
 window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
 
 
+// --- NATIVE BACKGROUND AUDIO HACK ---
+// A silent looping audio element forces WKWebView to keep the JS engine alive
+window.bgAudioHack = null;
+export function initBackgroundAudioHack() {
+    if (window.bgAudioHack) return;
+    const audio = document.createElement('audio');
+    audio.id = 'bgAudioHack';
+    audio.loop = true;
+    audio.crossOrigin = 'anonymous';
+    audio.volume = 0.01;
+    // Tiny Base64 silent WAV
+    audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    document.body.appendChild(audio);
+    window.bgAudioHack = audio;
+}
+
 // --- PLAY BUTTON HANDLER ---
 let lastPlayClickTime = 0;
 
-async function handlePlayClick() {
+export async function handlePlayClick() {
     // Debounce: Prevent double-triggers (e.g. ghost clicks)
     const now = Date.now();
     if (now - lastPlayClickTime < 300) {
@@ -1977,6 +2112,16 @@ async function handlePlayClick() {
         // 1. Mark as stopping so UI knows we are "paused" even if audio is fading
         state.isStopping = true;
 
+        // Pause all independent HTML media
+        document.querySelectorAll('audio, video').forEach(media => {
+            if (!media.paused) {
+                media.dataset.wasPlaying = 'true';
+                media.pause();
+            } else {
+                media.dataset.wasPlaying = 'false';
+            }
+        });
+
         // 2. Pause visuals when stopping audio
         pauseVisuals();
         console.log('[Controls] Visuals paused.');
@@ -2002,12 +2147,25 @@ async function handlePlayClick() {
     } else {
         // STARTING
         try {
+            // Resume any previously playing independent HTML media
+            document.querySelectorAll('audio, video').forEach(media => {
+                if (media.dataset.wasPlaying === 'true') {
+                    media.play().catch(e => console.warn('Media resume failed:', e));
+                }
+            });
+
             // 1. Resume visuals FIRST so they're ready when audio starts
             resumeVisuals();
 
             // 2. Start audio and fade in
             await startAudio();
             fadeIn(1.5);
+            
+            // Start the background audio hack to prevent WKWebView suspension
+            if (!window.bgAudioHack) initBackgroundAudioHack();
+            if (window.bgAudioHack) {
+                window.bgAudioHack.play().catch(e => console.warn('Background hack blocked by browser:', e));
+            }
 
             // 3. Sync buttons IMMEDIATELY to show pause state
             syncAllButtons();
@@ -2054,6 +2212,16 @@ async function handleAudioToggle() {
         // 1. Mark as stopping so UI shows stopped state immediately
         state.isAudioStopping = true;
 
+        // Pause all independent HTML media
+        document.querySelectorAll('audio, video').forEach(media => {
+            if (!media.paused) {
+                media.dataset.wasPlaying = 'true';
+                media.pause();
+            } else {
+                media.dataset.wasPlaying = 'false';
+            }
+        });
+
         // 2. Force UI update immediately to show Play icon
         syncAllButtons();
 
@@ -2070,6 +2238,13 @@ async function handleAudioToggle() {
     } else {
         // Start audio only
         try {
+            // Resume any previously playing independent HTML media
+            document.querySelectorAll('audio, video').forEach(media => {
+                if (media.dataset.wasPlaying === 'true') {
+                    media.play().catch(e => console.warn('Media resume failed:', e));
+                }
+            });
+
             await startAudio();
             fadeIn(1.5);
 
@@ -2279,7 +2454,7 @@ async function applyNextAIStage() {
     }
 }
 
-async function applyAIPreset(result) {
+export async function applyAIPreset(result) {
     console.log('[AI] Applying Preset:', result.preset, 'Visuals:', result.visuals, 'Intensity:', result.intensity);
 
     // Lock visuals to prevent accidental overrides during "Force Mode"
@@ -2317,7 +2492,7 @@ async function applyAIPreset(result) {
     // 5. Enable soundscapes with intensity mapping
     result.soundscapes.forEach(id => {
         const scVol = 0.5 * (result.intensity || 1.0);
-        updateSoundscape(id, 'vol', Math.min(1.0, scVol));
+        updateSoundscape(id, true, Math.min(1.0, scVol));
     });
 
     // 6. Enable visuals if suggested (Total Immersion)
@@ -2366,6 +2541,8 @@ export async function applyAIIntent(intent) {
     const result = calculateFrequencyFromGoal(intent);
     if (result) {
         await applyAIPreset(result);
+        ambientSynth.setMood(intent); // Tune generative music to Solfeggio roots
+        biometrics.setIntent(intent); // Update biometrics adaptive engine
         return result.insight;
     }
     return null;
@@ -2789,7 +2966,7 @@ function closeStatsModal() {
 
 let activeSweepPreset = null; // Track which preset button is active
 
-function startSweepPresetUI(presetKey) {
+async function startSweepPresetUI(presetKey) {
     // If clicking the same journey that's active, stop it (toggle off)
     if (activeSweepPreset === presetKey) {
         stopSweepUI();
@@ -2797,8 +2974,7 @@ function startSweepPresetUI(presetKey) {
     }
 
     if (!state.isPlaying) {
-        showToast('▶️ Start audio first to use journeys', 'warning');
-        return;
+        await handlePlayClick();
     }
 
     // If another journey is active, stop it first
@@ -2810,6 +2986,23 @@ function startSweepPresetUI(presetKey) {
     if (success) {
         activeSweepPreset = presetKey;
         updateSweepStatusUI(true, presetKey);
+
+        const presetInfo = SWEEP_PRESETS[presetKey];
+        if (presetInfo) {
+            // Apply visuals
+            if (presetInfo.visuals && window.setVisualMode) {
+                window.setVisualMode(presetInfo.visuals);
+            }
+            // Apply color
+            if (presetInfo.color) {
+                const viz = getVisualizer();
+                if (viz && viz.setColor) viz.setColor(presetInfo.color);
+            }
+            // Apply cymatics
+            if (presetInfo.cymaticClass !== undefined && window.setCymaticState) {
+                window.setCymaticState(presetInfo.cymaticClass, presetInfo.cymaticVariation);
+            }
+        }
         const preset = SWEEP_PRESETS[presetKey];
         if (preset) {
             showToast(`${preset.icon} ${preset.name} started`, 'success');
@@ -3063,7 +3256,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     if (mode === 'cymatics') console.log('%c[Visuals] CYMATICS MODE ACTIVATED', 'color: #a855f7; font-weight: bold; font-size: 14px;');
     let viz = getVisualizer();
     let activeModes = new Set();
-
+    const state = window.MindWaveState || {};
 
     // 1. Manual Override Check (Unlock AI Lock)
     if (isManual && state.aiVisualsLocked) {
@@ -3084,11 +3277,17 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         if (isManual) { showToast('Initializing Visualizer...', 'info'); }
 
         // Queue the click action instead of silently dropping it!
+        let retries = 0;
+        const maxRetries = 20; // 10 seconds total wait
         const checkViz = setInterval(() => {
+            retries++;
             const v = getVisualizer();
             if (v && v.initialized) {
                 clearInterval(checkViz);
                 setVisualMode(mode, forceState, false); // Re-execute silently
+            } else if (retries >= maxRetries) {
+                clearInterval(checkViz);
+                console.error('[Controls] Visualizer failed to load after ' + (maxRetries * 500) + 'ms. Aborting mode switch.');
             }
         }, 500);
 
@@ -3106,7 +3305,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         modes.forEach(m => {
             const becomingActive = forceState !== false && !viz.activeModes.has(m);
 
-            // No exclusivity logic - Cymatics can remain as an overlay
+            // EXCLUSIVITY LOGIC REMOVED to allow mixing Cymatics with other visuals
 
             if (forceState !== null) {
                 const isActive = viz.activeModes.has(m);
@@ -3138,9 +3337,10 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
         // Contextual Sync: Reveal corresponding Sidebar panel if mode is active
         const contextualMap = {
             'galaxy': 'galaxyPanel',
-            'cyber': 'matrixPanel',
-            'matrix': 'matrixPanel',
-            'snowflake': 'cymaticsPanel',
+            'cyber': 'cyberSettingsPanel',
+            'matrix': 'matrixSettingsPanel',
+            'snowflake': 'snowflakeSettingsPanel',
+            'tsunami': 'tsunamiSettingsPanel',
             'cymatics': 'cymaticsPanel',
             'particles': 'visualsPanel',
             'lava': 'visualsPanel',
@@ -3175,6 +3375,7 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             { el: els.cyberBtn, mode: 'cyber' },
             { el: els.matrixBtn, mode: 'matrix' },
             { el: els.snowflakeBtn, mode: 'snowflake' },
+            { el: els.tsunamiBtn, mode: 'tsunami' },
             { el: els.cymaticsBtn, mode: 'cymatics' }
         ];
 
@@ -3203,12 +3404,14 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
     const cyberPanel = document.getElementById('cyberSettingsPanel');
     const galaxyPanel = document.getElementById('galaxySettingsPanel');
     const snowflakePanel = document.getElementById('snowflakeSettingsPanel');
+    const tsunamiPanel = document.getElementById('tsunamiSettingsPanel');
     const contextualWrapper = document.getElementById('contextualVisualSettings');
 
     const matrixActive = activeModes.has('matrix');
     const cyberActive = activeModes.has('cyber');
     const galaxyActive = activeModes.has('galaxy');
     const snowflakeActive = activeModes.has('snowflake');
+    const tsunamiActive = activeModes.has('tsunami');
 
     let anySubPanelVisible = false;
 
@@ -3256,6 +3459,16 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             anySubPanelVisible = true;
         } else {
             snowflakePanel.classList.add('hidden');
+        }
+    }
+    
+    // Tsunami Panel Toggle
+    if (tsunamiPanel) {
+        if (tsunamiActive) {
+            tsunamiPanel.classList.remove('hidden');
+            anySubPanelVisible = true;
+        } else {
+            tsunamiPanel.classList.add('hidden');
         }
     }
 
@@ -3471,6 +3684,12 @@ export function setTheme(themeName) {
                 el.style.color = '';
             });
         }
+        if (typeof updateJourneyStyles === 'function') updateJourneyStyles();
+    }
+    
+    // Always call enforceLightThemeStyles to update global injected CSS
+    if (typeof enforceLightThemeStyles === 'function') {
+        enforceLightThemeStyles();
     }
 }
 
@@ -3482,34 +3701,79 @@ function enforceLightThemeStyles() {
     const themeName = localStorage.getItem('mindwave_theme') || 'default';
     const isLightTheme = document.body.dataset.themeType === 'light';
 
-    if (!isLightTheme) return;
+    let styleTag = document.getElementById('light-theme-overrides');
+    if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'light-theme-overrides';
+        document.head.appendChild(styleTag);
+    }
+
+    if (!isLightTheme) {
+        styleTag.textContent = '';
+        return;
+    }
 
     const t = THEMES[themeName];
     if (!t) return;
 
-    const leftPanel = document.getElementById('leftPanel');
-    const rightPanel = document.getElementById('rightPanel');
+    // Apply global overrides for light themes to override Tailwind dark defaults
+    styleTag.textContent = `
+        [data-theme-type="light"] body,
+        [data-theme-type="light"] .text-white,
+        [data-theme-type="light"] .text-gray-200,
+        [data-theme-type="light"] .text-gray-300,
+        [data-theme-type="light"] .text-gray-400,
+        [data-theme-type="light"] .text-white\\/70,
+        [data-theme-type="light"] .text-white\\/50 {
+            color: var(--text-main) !important;
+        }
+        
+        [data-theme-type="light"] .glass-lux,
+        [data-theme-type="light"] .glass-panel,
+        [data-theme-type="light"] .bg-black\\/50,
+        [data-theme-type="light"] .bg-gray-900\\/50,
+        [data-theme-type="light"] .bg-white\\/5,
+        [data-theme-type="light"] .bg-white\\/10 {
+            background-color: var(--bg-panel) !important;
+        }
 
-    // Apply light backgrounds
-    if (leftPanel) leftPanel.style.backgroundColor = t.panel;
-    if (rightPanel) rightPanel.style.backgroundColor = t.panel;
+        [data-theme-type="light"] .border-white\\/10,
+        [data-theme-type="light"] .border-gray-800 {
+            border-color: var(--border-main) !important;
+        }
+
+        [data-theme-type="light"] svg.lucide, 
+        [data-theme-type="light"] svg.text-white {
+            stroke: var(--text-main) !important;
+            color: var(--text-main) !important;
+        }
+        
+        /* Specific overrides for accent colors to not be overwritten */
+        [data-theme-type="light"] .text-\\[var\\(--accent\\)\\],
+        [data-theme-type="light"] .text-\\[var\\(--accent-secondary\\)\\] {
+            color: var(--accent) !important;
+        }
+        
+        /* Fix theme modal text visibility */
+        [data-theme-type="light"] #themeModalCard,
+        [data-theme-type="light"] .theme-card-title,
+        [data-theme-type="light"] .theme-card-desc,
+        [data-theme-type="light"] .theme-card-content,
+        [data-theme-type="light"] #themeModalCard h2,
+        [data-theme-type="light"] #themeModalCard h3,
+        [data-theme-type="light"] #themeModalCard .opacity-70 {
+            color: var(--text-main) !important;
+        }
+        
+        [data-theme-type="light"] .text-amber-500 {
+            color: #f59e0b !important;
+        }
+    `;
 
     // Fix preset button text - make it DARK
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.style.backgroundColor = 'rgba(255,255,255,0.8)';
         btn.style.borderColor = t.border;
-        btn.querySelectorAll('*').forEach(child => {
-            child.style.color = t.text;
-        });
-    });
-
-    // Fix all text labels in sidebars
-    const textElements = document.querySelectorAll('#leftPanel span, #leftPanel label, #rightPanel span, #rightPanel label');
-    textElements.forEach(el => {
-        // Don't override accent-colored headers
-        if (!el.style.color.includes('var(--accent)') && !el.classList.contains('text-\\[var\\(--accent\\)\\]')) {
-            el.style.color = t.text;
-        }
     });
 }
 
@@ -3531,7 +3795,7 @@ export function initMixer() {
         // Vol slider with value update
         const volInput = item.querySelector('input[data-type="vol"]');
         const volVal = item.querySelector('[data-val="vol"]');
-        volInput.addEventListener('input', async (e) => {
+        if (volInput) volInput.addEventListener('input', async (e) => {
             const v = parseFloat(e.target.value);
             volVal.textContent = Math.round(v * 200) + '%';
 
@@ -3575,7 +3839,7 @@ export function initMixer() {
         // Tone slider with value update
         const toneInput = item.querySelector('input[data-type="tone"]');
         const toneVal = item.querySelector('[data-val="tone"]');
-        toneInput.addEventListener('input', (e) => {
+        if (toneInput) toneInput.addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             toneVal.textContent = Math.round(v * 100) + '%';
             updateSoundscape(s.id, 'tone', v);
@@ -3585,7 +3849,7 @@ export function initMixer() {
         // Speed slider with value update
         const speedInput = item.querySelector('input[data-type="speed"]');
         const speedVal = item.querySelector('[data-val="speed"]');
-        speedInput.addEventListener('input', (e) => {
+        if (speedInput) speedInput.addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             speedVal.textContent = Math.round(v * 100) + '%';
             updateSoundscape(s.id, 'speed', v);
@@ -3597,13 +3861,17 @@ export function initMixer() {
 }
 
 function saveStateToLocal() {
+    const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
     const s = {
         base: els.baseSlider.value,
         beat: els.beatSlider.value,
         beatsVol: els.volSlider.value,
         masterVol: els.masterVolSlider.value,
         atmosMaster: els.atmosMasterSlider.value,
-        soundscapes: state.soundscapeSettings
+        soundscapes: state.soundscapeSettings,
+        visualMode: viz ? Array.from(viz.activeModes) : ['cymatics'],
+        cymaticClass: viz?.cymaticsCore?.activeClassId || 22,
+        cymaticVariation: viz?.cymaticsCore?.activeVariationId || 0
     };
     localStorage.setItem('mindwave_state_v2', JSON.stringify(s));
 }
@@ -3655,9 +3923,14 @@ function restoreStateFromLocal() {
         const saved = localStorage.getItem('mindwave_state_v2');
         if (saved) {
             const s = JSON.parse(saved);
+            // Visual mode and cymatics state are preserved
+
             loadSettings({ settings: s });
         } else {
-            applyPreset('alpha', null, false); // Don't auto-start during page load
+            // Instead of applyPreset which overrides visuals, just set default audio state
+            if (els.baseSlider) els.baseSlider.value = 200;
+            if (els.beatSlider) els.beatSlider.value = 10;
+            updateFrequencies();
         }
     } catch (e) { console.warn("Failed to restore state", e); }
 }
@@ -3710,6 +3983,21 @@ export function loadSettings(payload) {
 
     if (settings.visualMode) {
         setVisualMode(settings.visualMode);
+    }
+
+    if (settings.cymaticClass !== undefined) {
+        let attempts = 0;
+        const checkViz = setInterval(() => {
+            attempts++;
+            const viz = typeof window.getVisualizer === 'function' ? window.getVisualizer() : null;
+            if (viz && viz.initialized && viz.applyCymaticClassAndVariation) {
+                clearInterval(checkViz);
+                viz.applyCymaticClassAndVariation(settings.cymaticClass, settings.cymaticVariation || 0);
+            } else if (attempts > 20) { // 10 seconds max
+                clearInterval(checkViz);
+                console.warn('[Controls] Visualizer never loaded. Aborting cymatic class application.');
+            }
+        }, 500);
     }
 
     if (settings.theme) {
@@ -4041,14 +4329,20 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     // 1. Update UI Buttons & Sync Presence
     if (els.presetButtons) {
         els.presetButtons.forEach(b => {
-            b.classList.remove('bg-white/10', 'border-white/20');
+            b.classList.remove('preset-active', 'bg-white/10', 'border-white/20');
+            b.style.boxShadow = '';
+            b.style.background = '';
+            b.style.borderColor = '';
             b.classList.add('bg-white/5', 'border-white/10');
         });
 
         const targetBtn = btnElement || document.querySelector(`.preset-btn[onclick*="'${type}'"]`);
         if (targetBtn) {
             targetBtn.classList.remove('bg-white/5', 'border-white/10');
-            targetBtn.classList.add('bg-white/10', 'border-white/20');
+            targetBtn.classList.add('preset-active');
+            targetBtn.style.borderColor = 'var(--accent)';
+            targetBtn.style.background = 'color-mix(in srgb, var(--accent) 15%, transparent)';
+            targetBtn.style.boxShadow = '0 0 20px var(--accent-glow), inset 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent)';
         }
     }
 
@@ -4069,26 +4363,49 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     let color = '#ffffff';
 
     switch (type) {
-        case 'delta': base = 100; beat = 2.5; color = '#6366f1'; break;
-        case 'theta': base = 144; beat = 5.5; color = '#a855f7'; break;
-        case 'alpha': base = 120; beat = 10; color = '#60a5fa'; break;
-        case 'beta': base = 200; beat = 20; color = '#facc15'; break;
-        case 'gamma': base = 200; beat = 40; color = '#f472b6'; break;
+        
+        // --- CUSTOM DEEP DIVE FREQUENCIES ---
+        case 'freq-0.5': base = 100; beat = 0.5; color = '#8b0000'; window.setCymaticState?.(9, 0); break;
+        case 'freq-1.5': base = 105; beat = 1.5; color = '#0000cd'; window.setCymaticState?.(3, 1); break;
+        case 'freq-2.5': base = 110; beat = 2.5; color = '#2e8b57'; window.setCymaticState?.(20, 1); break;
+        case 'freq-3.0': base = 111; beat = 3.0; color = '#8b0000'; window.setCymaticState?.(22, 10); break;
+        case 'freq-4.5': base = 120; beat = 4.5; color = '#191970'; window.setCymaticState?.(13, 6); break;
+        case 'freq-5.5': base = 130; beat = 5.5; color = '#ff4500'; window.setCymaticState?.(5, 4); break;
+        case 'freq-6.5': base = 140; beat = 6.5; color = '#006400'; window.setCymaticState?.(11, 3); break;
+        case 'freq-7.83': base = 144; beat = 7.83; color = '#00ff7f'; window.setCymaticState?.(22, 9); break;
+        case 'freq-8.5': base = 150; beat = 8.5; color = '#00ced1'; window.setCymaticState?.(8, 7); break;
+        case 'freq-10.0': base = 160; beat = 10.0; color = '#ffb6c1'; window.setCymaticState?.(19, 4); break;
+        case 'freq-11.5': base = 170; beat = 11.5; color = '#39ff14'; window.setCymaticState?.(6, 8); break;
+        case 'freq-12.0': base = 180; beat = 12.0; color = '#8b4513'; window.setCymaticState?.(14, 9); break;
+        case 'freq-14.0': base = 190; beat = 14.0; color = '#ffffff'; window.setCymaticState?.(1, 0); break;
+        case 'freq-16.0': base = 200; beat = 16.0; color = '#ffd700'; window.setCymaticState?.(10, 2); break;
+        case 'freq-18.0': base = 210; beat = 18.0; color = '#ffff00'; window.setCymaticState?.(15, 4); break;
+        case 'freq-20.0': base = 220; beat = 20.0; color = '#1e90ff'; window.setCymaticState?.(12, 7); break;
+        case 'freq-30.0': base = 250; beat = 30.0; color = '#172554'; window.setCymaticState?.(4, 5); break;
+        case 'freq-40.0': base = 300; beat = 40.0; color = '#ff00ff'; window.setCymaticState?.(17, 0); break;
+        case 'freq-50.0': base = 400; beat = 50.0; color = '#60a9ff'; window.setCymaticState?.(25, 0); break;
+        case 'freq-200.0': base = 800; beat = 200.0; color = '#adff2f'; window.setCymaticState?.(18, 9); break;
+
+        case 'delta': base = 100; beat = 2.5; color = '#6366f1'; window.setCymaticState?.(3, 1); break;
+        case 'theta': base = 144; beat = 5.5; color = '#a855f7'; window.setCymaticState?.(5, 4); break;
+        case 'alpha': base = 120; beat = 10; color = '#60a5fa'; window.setCymaticState?.(19, 4); break;
+        case 'beta': base = 200; beat = 20; color = '#facc15'; window.setCymaticState?.(1, 0); break;
+        case 'gamma': base = 200; beat = 40; color = '#f472b6'; window.setCymaticState?.(17, 0); break;
         // case 'hyper-gamma': base = 300; beat = 100; color = '#ffffff'; break; // REMOVED: Duplicate causing glitch
 
         // Solfeggio Healing Frequencies
         // We combine Solfeggio Base with Theta Beat for deep healing state
         // using Theta (5.5Hz) beat for relaxation, except 963Hz (Gamma/40Hz)
-        case 'heal-174': base = 174; beat = 5.5; color = '#2dd4bf'; break; // Teal
-        case 'heal-285': base = 285; beat = 5.5; color = '#38bdf8'; break; // Sky Blue [NEW]
-        case 'heal-396': base = 396; beat = 5.5; color = '#f43f5e'; break; // Rose
-        case 'heal-417': base = 417; beat = 5.5; color = '#fb923c'; break; // Orange [NEW]
-        case 'heal-432': base = 432; beat = 5.5; color = '#10b981'; break; // Emerald
-        case 'heal-528': base = 528; beat = 5.5; color = '#06b6d4'; break; // Cyan
-        case 'heal-639': base = 639; beat = 5.5; color = '#3b82f6'; break; // Blue
-        case 'heal-741': base = 741; beat = 5.5; color = '#6366f1'; break; // Indigo
-        case 'heal-852': base = 852; beat = 5.5; color = '#8b5cf6'; break; // Violet
-        case 'heal-963': base = 963; beat = 40; color = '#d946ef'; break; // Fuchsia (Hyper-Gamma)
+        case 'heal-174': base = 174; beat = 5.5; color = '#2dd4bf'; break; window.setCymaticState?.(22, 14); // Teal
+        case 'heal-285': base = 285; beat = 5.5; color = '#38bdf8'; break; window.setCymaticState?.(21, 2); // Sky Blue [NEW]
+        case 'heal-396': base = 396; beat = 5.5; color = '#f43f5e'; break; window.setCymaticState?.(22, 20); // Rose
+        case 'heal-417': base = 417; beat = 5.5; color = '#fb923c'; break; window.setCymaticState?.(22, 12); // Orange [NEW]
+        case 'heal-432': base = 432; beat = 5.5; color = '#10b981'; break; window.setCymaticState?.(22, 22); // Emerald
+        case 'heal-528': base = 528; beat = 5.5; color = '#06b6d4'; break; window.setCymaticState?.(22, 16); // Cyan
+        case 'heal-639': base = 639; beat = 5.5; color = '#3b82f6'; break; window.setCymaticState?.(21, 0); // Blue
+        case 'heal-741': base = 741; beat = 5.5; color = '#6366f1'; break; window.setCymaticState?.(22, 13); // Indigo
+        case 'heal-852': base = 852; beat = 5.5; color = '#8b5cf6'; break; window.setCymaticState?.(21, 5); // Violet
+        case 'heal-963': base = 963; beat = 40; color = '#d946ef'; break; window.setCymaticState?.(22, 29); // Fuchsia (Hyper-Gamma)
 
         // Mu Waves (Motor Cortex / Body Awareness) - 8-13Hz range
         // Using significantly different base frequency (150Hz vs Alpha's 200Hz) for audible distinction
@@ -4130,6 +4447,7 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
 // Expose to global scope for HTML onclick handlers & AI Generator
 window.applyPreset = applyPreset;
 window.applyComboPreset = applyComboPreset;
+window.handlePlayClick = handlePlayClick;
 window.setVisualMode = setVisualMode;
 window.updateHarmonicsLevel = updateHarmonicsLevel;
 
@@ -4313,13 +4631,19 @@ export async function applyComboPreset(comboId, btnElement) {
     // 6. Update UI buttons (highlight selected combo)
     if (els.presetButtons) {
         els.presetButtons.forEach(b => {
-            b.classList.remove('bg-white/10', 'border-white/20');
+            b.classList.remove('preset-active', 'bg-white/10', 'border-white/20');
+            b.style.boxShadow = '';
+            b.style.background = '';
+            b.style.borderColor = '';
             b.classList.add('bg-white/5', 'border-white/10');
         });
     }
     if (btnElement) {
         btnElement.classList.remove('bg-white/5', 'border-white/10');
-        btnElement.classList.add('bg-white/10', 'border-white/20');
+        btnElement.classList.add('preset-active');
+        btnElement.style.borderColor = 'var(--accent)';
+        btnElement.style.background = 'color-mix(in srgb, var(--accent) 15%, transparent)';
+        btnElement.style.boxShadow = '0 0 20px var(--accent-glow), inset 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent)';
     }
 
     // 7. Total Immersion: Apply Visuals
@@ -4330,30 +4654,35 @@ export async function applyComboPreset(comboId, btnElement) {
         }
     }
 
+    // 7.5. Apply Cymatics
+    if (combo.cymaticClass !== undefined && combo.cymaticVariation !== undefined) {
+        console.log('[Controls] Applying cymatics:', combo.cymaticClass, combo.cymaticVariation);
+        if (window.setCymaticState) {
+            window.setCymaticState(combo.cymaticClass, combo.cymaticVariation);
+        }
+    }
+
     // 8. Save state
     saveStateToLocal();
 
     console.log('[Controls] Combo preset configured:', comboId);
 
     // 8. Start both binaural beats AND ambience together
-    // Use a small delay to ensure all state is updated
-    setTimeout(async () => {
-        try {
-            // Always start audio - don't check if already playing
-            // This ensures combos work even if clicked during fade-out
-            await startAudio();
-            fadeIn(1.5);
-            resumeVisuals();
-            syncAllButtons();
+    try {
+        // Always start audio - don't check if already playing
+        // This ensures combos work even if clicked during fade-out
+        await startAudio();
+        fadeIn(1.5);
+        resumeVisuals();
+        syncAllButtons();
 
-            // Show toast
-            showToast(`🎧 ${combo.label}: ${combo.description} `, 'success');
+        // Show toast
+        showToast(`🎧 ${combo.label}: ${combo.description} `, 'success');
 
-            console.log('[Controls] Combo preset fully active - beats + ambience');
-        } catch (err) {
-            console.error('[Controls] Failed to start combo preset:', err);
-        }
-    }, 100);
+        console.log('[Controls] Combo preset fully active - beats + ambience');
+    } catch (err) {
+        console.error('[Controls] Failed to start combo preset:', err);
+    }
 
     return true;
 }
@@ -4363,13 +4692,6 @@ window.renderThemeModal = () => {
     if (typeof showThemeGallery === 'function') showThemeGallery();
 };
 
-window.setCursorShape = (s) => {
-    if (typeof window._setCursorShape === 'function') {
-        window._setCursorShape(s);
-    } else {
-        console.warn('[Failsafe] _setCursorShape not ready:', s);
-    }
-};
 
 export function initThemeModal() {
     console.log('[Theme] initThemeModal CALLED (Optimized)');
@@ -4390,10 +4712,11 @@ export function initThemeModal() {
             const isLocked = theme.threshold && refCount < theme.threshold;
 
             const card = document.createElement('div');
-            const currentTheme = document.body.dataset.theme;
+            const currentTheme = document.body && document.body.dataset ? document.body.dataset.theme : (document.body && document.body.getAttribute ? document.body.getAttribute('data-theme') : 'default');
             card.className = `theme-card group ${currentTheme === key ? 'active' : ''} ${isLocked ? 'locked opacity-60' : ''} `;
             card.style.setProperty('--theme-bg', theme.bg);
-            card.dataset.themeId = key;
+            if (card.dataset) card.dataset.themeId = key;
+            if (card.setAttribute) card.setAttribute('data-theme-id', key);
 
             // Card HTML
             const displayName = key === 'default' ? 'Emerald' : key;
@@ -4478,7 +4801,7 @@ export function initThemeModal() {
         { id: 'sun', name: 'Sun', icon: '☀️' },
         { id: 'moon', name: 'Moon', icon: '🌙' },
         { id: 'heart', name: 'Heart', icon: '❤️' },
-        { id: 'mindwave', name: 'MindWave', icon: '🧠' },
+        { id: 'mindwave', name: 'MindWave', icon: '<img src="./mindwave-cursor.png" width="24" height="24" style="display:inline-block;">' },
         { id: 'sun2', name: 'Sun 2', icon: '🌞' },
         { id: 'default', name: 'Default', icon: '🖱️' }
     ];
@@ -4528,12 +4851,14 @@ export function initThemeModal() {
 
     const cp = section.querySelector('#cursorColorPicker');
     if (cp) {
-        cp.addEventListener('input', (e) => {
-            if (typeof window.setCursorColor === 'function') {
-                window.setCursorColor(e.target.value);
-                const prev = section.querySelector('#cursorColorPreview');
-                if (prev) prev.style.backgroundColor = e.target.value;
-            }
+        ['input', 'change'].forEach(evt => {
+            cp.addEventListener(evt, (e) => {
+                if (typeof window.setCursorColor === 'function') {
+                    window.setCursorColor(e.target.value);
+                    const prev = section.querySelector('#cursorColorPreview');
+                    if (prev) prev.style.backgroundColor = e.target.value;
+                }
+            });
         });
     }
 
@@ -4596,7 +4921,7 @@ export function showThemeGallery() {
     if (!modal || !card) return;
 
     // Simplified: Just update active state and show
-    const currentTheme = document.body.dataset.theme;
+    const currentTheme = document.body && document.body.dataset ? document.body.dataset.theme : (document.body && document.body.getAttribute ? document.body.getAttribute('data-theme') : 'default');
     document.querySelectorAll('.theme-card').forEach(card => {
         if (card.dataset.themeId === currentTheme) {
             card.classList.add('active');
@@ -4643,14 +4968,25 @@ export function updatePresetButtons(activeType) {
     if (!els.presetButtons) return;
 
     els.presetButtons.forEach(b => {
-        b.classList.remove('bg-white/10', 'border-white/20');
+        // Remove active styling classes
+        b.classList.remove('preset-active', 'border-[var(--accent)]', 'text-[var(--accent)]', 'bg-white/10', 'border-white/20');
+        b.style.boxShadow = '';
+        b.style.background = '';
+        b.style.borderColor = '';
+
+        // Add inactive styling
         b.classList.add('bg-white/5', 'border-white/10');
 
         // Check if this button matches the active type
-        // Note: onclick string matching is fragile, but consistent with existing app structure
         if (activeType && b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${activeType}'`)) {
+            // Remove inactive styling
             b.classList.remove('bg-white/5', 'border-white/10');
-            b.classList.add('bg-white/10', 'border-white/20');
+            
+            // Add prominent active styling
+            b.classList.add('preset-active');
+            b.style.borderColor = 'var(--accent)';
+            b.style.background = 'color-mix(in srgb, var(--accent) 15%, transparent)';
+            b.style.boxShadow = '0 0 20px var(--accent-glow), inset 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent)';
         }
     });
 }
@@ -6062,7 +6398,7 @@ function setupCyberControls() {
             if (viz) {
                 window._cyberPrevColor = cyberColorPicker.value;
                 if (viz.setCyberColor) viz.setCyberColor(e.target.value);
-                const rainbow = document.getElementById('cyberRainbowToggle');
+                const rainbow = document.getElementById('cyberRainbowToggle') || document.getElementById('cyberRainbowToggleRight');
                 if (rainbow) rainbow.checked = false;
             }
         });
@@ -6114,7 +6450,7 @@ function setupCyberControls() {
     }
 
     // Rainbow Toggle
-    const rainbowToggle = document.getElementById('cyberRainbowToggle');
+    const rainbowToggle = document.getElementById('cyberRainbowToggle') || document.getElementById('cyberRainbowToggleRight');
     if (rainbowToggle) {
         rainbowToggle.addEventListener('change', (e) => {
             const viz = getVisualizer();
@@ -6303,59 +6639,254 @@ export function setupMasterVisualControls() {
     }
 }
 
-window.toggleAudioSync = function(isSync) {
-    console.log(`[Cymatics] Toggle Audio Sync: ${isSync}`);
-    window.cymaticsAudioSync = isSync;
+
+
+// ==========================================
+// CUSTOM MIXES FEATURE
+// ==========================================
+function saveCustomMixPrompt() {
+    const mixName = prompt("Enter a name for this custom mix:", "My Mix " + (getCustomMixes().length + 1));
+    if (!mixName) return;
+    
+    const mixes = getCustomMixes();
+    if (mixes.length >= 20) {
+        alert("You have reached the limit of 20 custom mixes. Please delete one first.");
+        return;
+    }
+    
+    // gather state
+    const newMix = {
+        id: 'custom-' + Date.now(),
+        name: mixName,
+        baseFreq: parseFloat(els.baseSlider ? els.baseSlider.value : 0),
+        beatFreq: parseFloat(els.beatSlider ? els.beatSlider.value : 0),
+        vol: parseFloat(els.volSlider ? els.volSlider.value : 0),
+        activeVisuals: Array.from(window.getVisualizer && window.getVisualizer().activeModes || []),
+        cymaticClass: window.getVisualizer && window.getVisualizer().currentCymaticClass || 0,
+        cymaticVariation: window.getVisualizer && window.getVisualizer().currentCymaticVariation || 0,
+        activeSoundscapes: { ...(window.state?.soundscapeSettings || {}) },
+        audioMode: window.state?.audioMode || 'binaural'
+    };
+    
+    mixes.push(newMix);
+    localStorage.setItem('mindwave_custom_mixes', JSON.stringify(mixes));
+    renderCustomMixes();
+    if (window.showToast) window.showToast('Custom Mix Saved!', 'success');
 }
 
+function getCustomMixes() {
+    try {
+        return JSON.parse(localStorage.getItem('mindwave_custom_mixes') || '[]');
+    } catch(e) {
+        return [];
+    }
+}
 
-// ── Cymatics Engine v4 Native Routing ─────────────────────────────────────────
-
-window.setCymaticPattern = function(classId, variationId) {
-    console.log(`[Cymatics] Set Pattern - Class: ${classId}, Variation: ${variationId}`);
+function renderCustomMixes() {
+    const container = document.getElementById('customMixesContainer');
+    const countEl = document.getElementById('customMixCount');
+    if (!container) return;
     
-    // UI Highlighting Sync
-    const btns = document.querySelectorAll('.cymatics-pattern-btn');
-    btns.forEach(btn => btn.classList.remove('ring-2', 'ring-blue-400', 'scale-95'));
+    const mixes = getCustomMixes();
+    if(countEl) countEl.innerText = `${mixes.length}/20`;
     
-    // Find the correct button using classId and variationId
-    const clickStr = `window.setCymaticPattern(${classId}, ${variationId})`;
-    const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick') === clickStr);
-    if (activeBtn) {
-        activeBtn.classList.add('ring-2', 'ring-blue-400', 'scale-95');
-    }
+    container.innerHTML = '';
+    mixes.forEach(mix => {
+        const btn = document.createElement('div');
+        btn.className = "flex items-center justify-between w-full p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all";
+        
+        btn.innerHTML = `
+            <div class="flex-1 cursor-pointer flex flex-col" onclick="window.loadCustomMix('${mix.id}')">
+                <span class="text-xs font-bold text-white mb-0.5">${mix.name}</span>
+                <span class="text-[9px] text-[var(--text-muted)]">${mix.baseFreq}Hz | Beat: ${mix.beatFreq}Hz</span>
+            </div>
+            <button onclick="window.deleteCustomMix('${mix.id}')" class="p-2 ml-2 hover:bg-red-500/20 rounded-md text-white/50 hover:text-red-400 transition-colors" title="Delete Mix">
+                <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+                    <line x1="18" x2="6" y1="6" y2="18"></line>
+                    <line x1="6" x2="18" y1="6" y2="18"></line>
+                </svg>
+            </button>
+        `;
+        container.appendChild(btn);
+    });
+}
 
-    const viz = getVisualizer();
-    if (viz && viz.applyCymaticClassAndVariation) {
-        viz.applyCymaticClassAndVariation(classId, variationId);
+function loadCustomMix(id) {
+    const mixes = getCustomMixes();
+    const mix = mixes.find(m => m.id === id);
+    if (!mix) return;
+    
+    // Set audio values
+    if (window.loadSettings) {
+        window.loadSettings({
+            settings: {
+                base: mix.baseFreq,
+                beat: mix.beatFreq,
+                beatsVol: mix.vol,
+                audioMode: mix.audioMode,
+                soundscapes: mix.activeSoundscapes,
+            }
+        });
     }
-};
+    
+    // Set Visuals
+    const viz = window.getVisualizer && window.getVisualizer();
+    if (viz) {
+        // clear current visuals
+        Array.from(viz.activeModes).forEach(mode => {
+            if (viz.toggleMode) viz.toggleMode(mode);
+        });
+        
+        // enable saved visuals
+        if (mix.activeVisuals && mix.activeVisuals.length > 0) {
+            mix.activeVisuals.forEach(mode => {
+                if (window.setVisualMode) window.setVisualMode(mode, null, true);
+            });
+        }
+        
+        // Handle Cymatics specifically if it's active
+        if (mix.activeVisuals.includes('cymatics')) {
+            viz.currentCymaticClass = mix.cymaticClass;
+            viz.currentCymaticVariation = mix.cymaticVariation;
+            if (viz.updateCymaticsUniforms) {
+                viz.updateCymaticsUniforms();
+            }
+        }
+    }
+    
+    if (window.showToast) window.showToast('Custom Mix Loaded', 'info');
+}
 
-window.setCymaticColor = function(classId, colorIndex, hex) {
-    console.log(`[Cymatics] Set Color - Class: ${classId}, Index: ${colorIndex}, Hex: ${hex}`);
-    const viz = getVisualizer();
-    if (viz && viz.setCymaticColor) {
-        viz.setCymaticColor(classId, colorIndex, hex);
-    }
-};
+function deleteCustomMix(id) {
+    if(!confirm("Are you sure you want to delete this custom mix?")) return;
+    let mixes = getCustomMixes();
+    mixes = mixes.filter(m => m.id !== id);
+    localStorage.setItem('mindwave_custom_mixes', JSON.stringify(mixes));
+    renderCustomMixes();
+}
 
-window.setCymaticParam = function(classId, paramName, value) {
-    const viz = getVisualizer();
-    if (viz && viz.setCymaticParam) {
-        viz.setCymaticParam(classId, paramName, parseFloat(value));
-    }
-};
+window.saveCustomMixPrompt = saveCustomMixPrompt;
+window.loadCustomMix = loadCustomMix;
+window.deleteCustomMix = deleteCustomMix;
+window.renderCustomMixes = renderCustomMixes;
 
-window.addEventListener('cymaticColorSync', function(e) {
-    const { classId, color1, color2 } = e.detail;
-    // Find the primary color picker for this class
-    const picker1 = document.querySelector(`input[oninput*="window.setCymaticColor(${classId}, 1"]`);
-    if (picker1 && picker1.value !== color1) {
-        picker1.value = color1;
-    }
-    // Find the secondary color picker for this class
-    const picker2 = document.querySelector(`input[oninput*="window.setCymaticColor(${classId}, 2"]`);
-    if (picker2 && picker2.value !== color2) {
-        picker2.value = color2;
-    }
+// call renderCustomMixes on load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(renderCustomMixes, 1000);
 });
+
+// ==========================================
+// DAILY USAGE TRACKER
+// ==========================================
+const USAGE_LIMITS = {
+    'free': 15 * 60, // 15 mins in seconds
+    'meditation': 60 * 60, // 1 hour in seconds
+    'zen': 2 * 60 * 60, // 2 hours
+    'nirvana': Infinity,
+    'lifetime': Infinity
+};
+
+function initUsageTracker() {
+    let trackerInterval;
+    
+    function getToday() {
+        return new Date().toISOString().split('T')[0];
+    }
+    
+    function getUsage() {
+        const today = getToday();
+        const data = JSON.parse(localStorage.getItem('mindwave_daily_usage') || '{}');
+        if (data.date !== today) {
+            return { date: today, seconds: 0 };
+        }
+        return data;
+    }
+    
+    function saveUsage(data) {
+        localStorage.setItem('mindwave_daily_usage', JSON.stringify(data));
+    }
+    
+    function checkLimit() {
+        if (!window.state || !window.state.isPlaying) return;
+        
+        // If they unlocked premium locally (e.g. promo code), bypass limit
+        if (window.__MOCK_PREMIUM || localStorage.getItem('mindwave_premium_unlocked') === 'true') return;
+        
+        const usage = getUsage();
+        usage.seconds += 1;
+        
+        const tier = window.state.userTier || 'free';
+        let limit = USAGE_LIMITS[tier] || USAGE_LIMITS['free'];
+        
+        // Once limit is hit, stop playback and show paywall
+        if (usage.seconds >= limit) {
+            if (window.togglePlay && window.state.isPlaying) {
+                window.togglePlay(); // Stop audio
+            }
+            if (window.showPricingModal) {
+                window.showPricingModal();
+                if (window.showToast) window.showToast("You've reached your daily limit. Upgrade to continue listening.", "warning");
+            }
+        }
+        
+        saveUsage(usage);
+    }
+    
+    trackerInterval = setInterval(checkLimit, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initUsageTracker();
+});
+
+    // --- 3D Camera Controls ---
+    const cameraPitchSlider = document.getElementById('cameraPitchSlider');
+    const cameraYawSlider = document.getElementById('cameraYawSlider');
+    const cameraRollSlider = document.getElementById('cameraRollSlider');
+    const cameraPitchValue = document.getElementById('cameraPitchValue');
+    const cameraYawValue = document.getElementById('cameraYawValue');
+    const cameraRollValue = document.getElementById('cameraRollValue');
+
+    function updateCameraFromSliders() {
+        if (!window.viz3D) return;
+        const p = parseFloat(cameraPitchSlider.value) || 0;
+        const y = parseFloat(cameraYawSlider.value) || 0;
+        const r = parseFloat(cameraRollSlider.value) || 0;
+        window.viz3D.setCameraRotation(p, y, r);
+        if (cameraPitchValue) cameraPitchValue.innerHTML = `${p}&deg;`;
+        if (cameraYawValue) cameraYawValue.innerHTML = `${y}&deg;`;
+        if (cameraRollValue) cameraRollValue.innerHTML = `${r}&deg;`;
+    }
+
+    if (cameraPitchSlider) cameraPitchSlider.addEventListener('input', updateCameraFromSliders);
+    if (cameraYawSlider) cameraYawSlider.addEventListener('input', updateCameraFromSliders);
+    if (cameraRollSlider) cameraRollSlider.addEventListener('input', updateCameraFromSliders);
+
+    window.resetCameraControls = function() {
+        if (cameraPitchSlider) { cameraPitchSlider.value = 0; cameraPitchValue.innerHTML = '0&deg;'; }
+        if (cameraYawSlider) { cameraYawSlider.value = 0; cameraYawValue.innerHTML = '0&deg;'; }
+        if (cameraRollSlider) { cameraRollSlider.value = 0; cameraRollValue.innerHTML = '0&deg;'; }
+        if (window.viz3D) window.viz3D.setCameraRotation(0, 0, 0);
+    };
+
+    // --- Deep Parameter Overrides ---
+    const audioSensitivitySlider = document.getElementById('audioSensitivitySlider');
+    const audioSensitivityValue = document.getElementById('audioSensitivityValue');
+    const geoComplexitySlider = document.getElementById('geoComplexitySlider');
+    const geoComplexityValue = document.getElementById('geoComplexityValue');
+
+    if (audioSensitivitySlider) {
+        audioSensitivitySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (audioSensitivityValue) audioSensitivityValue.innerHTML = `${val.toFixed(1)}x`;
+            if (window.viz3D) window.viz3D.setAudioSensitivity(val);
+        });
+    }
+
+    if (geoComplexitySlider) {
+        geoComplexitySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (geoComplexityValue) geoComplexityValue.innerHTML = `${val.toFixed(1)}x`;
+            if (window.viz3D) window.viz3D.setGeoComplexity(val);
+        });
+    }

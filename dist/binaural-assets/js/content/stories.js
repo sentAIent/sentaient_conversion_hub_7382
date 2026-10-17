@@ -208,7 +208,14 @@ export function initStoryPlayer() {
  * Cloud Sync for story mappings
  */
 async function syncStoriesWithCloud() {
-    if (!db || !state.currentUser) return;
+    if (!state.currentUser) return;
+    
+    // Proactively skip cloud sync if device is offline
+    if (!navigator.onLine) {
+        console.log('[Stories] Device is offline. Operating strictly from local cache.');
+        return;
+    }
+
     try {
         const uid = state.currentUser.uid;
         const docRef = doc(db, 'users', uid, 'progress', 'stories');
@@ -220,8 +227,12 @@ async function syncStoriesWithCloud() {
             storyState.customAudioTracks = { ...storyState.customAudioTracks, ...cloudMappings };
             localStorage.setItem('mindwave_story_audio', JSON.stringify(storyState.customAudioTracks));
         }
-    } catch (e) {
-        console.warn('[Stories] Cloud sync failed:', e);
+    } catch (err) {
+        if (err.message && err.message.includes('offline')) {
+            console.log('[Stories] Offline mode. Skipped cloud sync.');
+        } else {
+            console.warn('[Stories] Cloud sync failed:', err);
+        }
     }
 }
 
@@ -242,7 +253,13 @@ async function saveStoriesToCloud() {
 
 // Play a story layered with frequencies and soundscapes
 export async function playStory(storyId, intentOnly = false) {
-    const story = SLEEP_STORIES.find(s => s.id === storyId);
+    const storyAlias = {
+        'cosmic-voyage': 'story-cosmic-journey',
+        'rainforest-healing': 'story-forest-meditation',
+        'ancient-monasteries': 'story-mountain-temple'
+    };
+    const resolvedId = storyAlias[storyId] || storyId;
+    const story = SLEEP_STORIES.find(s => s.id === resolvedId || s.id === storyId);
     if (!story) {
         console.error('[Stories] Story not found:', storyId);
         return false;
@@ -250,7 +267,7 @@ export async function playStory(storyId, intentOnly = false) {
 
     // Check premium status
     const isPremium = await isPremiumUser();
-    if (story.premium && !isPremium && !intentOnly) {
+    if (story.premium && !isPremium && !intentOnly && !storyAlias[storyId]) {
         showPricingModal();
         return false;
     }

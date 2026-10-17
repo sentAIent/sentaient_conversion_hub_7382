@@ -8,7 +8,6 @@ const INTENT_KEY = 'mindwave_user_intent';
 export function initIntentSurvey(onComplete) {
     // Don't show if already completed
     if (localStorage.getItem(INTENT_KEY)) {
-        if (onComplete) onComplete(localStorage.getItem(INTENT_KEY));
         return;
     }
 

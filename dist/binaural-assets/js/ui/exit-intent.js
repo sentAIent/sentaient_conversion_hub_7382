@@ -12,21 +12,25 @@ const SESSION_KEY = 'mindwave_session_id';
 let exitIntentShown = false;
 
 export function initExitIntent() {
-    // Only on desktop (mouseout doesn't work well on mobile)
-    if ('ontouchstart' in window) return;
+    try {
+        if (typeof window === 'undefined' || 'ontouchstart' in window) return;
+        if (typeof sessionStorage === 'undefined') return;
 
-    // Don't show if already shown this session
-    const sessionId = sessionStorage.getItem(SESSION_KEY) || Date.now().toString();
-    sessionStorage.setItem(SESSION_KEY, sessionId);
+        // Don't show if already shown this session
+        const sessionId = sessionStorage.getItem(SESSION_KEY) || Date.now().toString();
+        sessionStorage.setItem(SESSION_KEY, sessionId);
 
-    if (sessionStorage.getItem(`${EXIT_INTENT_KEY}_${sessionId}`)) {
-        return;
+        if (sessionStorage.getItem(`${EXIT_INTENT_KEY}_${sessionId}`)) {
+            return;
+        }
+
+        // Wait a bit before enabling (don't trigger immediately)
+        setTimeout(() => {
+            document.addEventListener('mouseout', handleMouseOut);
+        }, 10000); // Wait 10 seconds before enabling
+    } catch (e) {
+        console.warn('[ExitIntent] sessionStorage unavailable or restricted:', e);
     }
-
-    // Wait a bit before enabling (don't trigger immediately)
-    setTimeout(() => {
-        document.addEventListener('mouseout', handleMouseOut);
-    }, 10000); // Wait 10 seconds before enabling
 }
 
 function handleMouseOut(e) {

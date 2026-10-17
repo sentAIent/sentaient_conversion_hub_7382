@@ -75,7 +75,9 @@ const CURSOR_SHAPES = {
     default: {
         name: 'Default',
         icon: '↖',
-        create: () => null
+        create: (color) => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <path d="M3 3l7 18 3-7 7-3L3 3z" fill="${color}" stroke="rgba(0,0,0,0.85)" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>`
     }
 };
 
@@ -110,6 +112,65 @@ function getSecondaryCursorColor() {
     return getComputedStyle(document.documentElement).getPropertyValue('--accent-secondary').trim() || '#fb7185';
 }
 
+function getComplementaryColor(colorStr) {
+    if (!colorStr) return '#ffb660';
+    let r = 96, g = 169, b = 255;
+    const trimmed = colorStr.trim();
+    if (trimmed.startsWith('#')) {
+        let hex = trimmed.slice(1);
+        if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+        if (hex.length === 6) {
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        }
+    } else if (trimmed.startsWith('rgb')) {
+        const parts = trimmed.match(/\d+/g);
+        if (parts && parts.length >= 3) {
+            r = parseInt(parts[0], 10);
+            g = parseInt(parts[1], 10);
+            b = parseInt(parts[2], 10);
+        }
+    }
+
+    let rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
+    let max = Math.max(rNorm, gNorm, bNorm), min = Math.min(rNorm, gNorm, bNorm);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
+            case gNorm: h = (bNorm - rNorm) / d + 2; break;
+            case bNorm: h = (rNorm - gNorm) / d + 4; break;
+        }
+        h /= 6;
+    } else {
+        return l > 0.5 ? '#1e293b' : '#fbbf24';
+    }
+
+    h = (h + 0.5) % 1;
+
+    function hue2rgb(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+    }
+
+    let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    let p = 2 * l - q;
+    let compR = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+    let compG = Math.round(hue2rgb(p, q, h) * 255);
+    let compB = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+
+    const toHex = (n) => Math.min(255, Math.max(0, n)).toString(16).padStart(2, '0');
+    return '#' + toHex(compR) + toHex(compG) + toHex(compB);
+}
+
 function updateCursorStyle() {
     let styleTag = document.getElementById('dynamic-cursor-styles');
     if (!styleTag) {
@@ -117,26 +178,25 @@ function updateCursorStyle() {
         styleTag.id = 'dynamic-cursor-styles';
         document.head.appendChild(styleTag);
     }
-    if (currentShape === 'default') {
-        styleTag.textContent = '';
-        return;
-    }
     const color = getEffectiveCursorColor();
     const secondary = getSecondaryCursorColor();
 
-    if (currentShape === 'sun2') {
-        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./tribal-sun-cursor.png') 16 16, auto !important; }`;
-        return;
-    }
-
-    if (currentShape === 'mindwave') {
-        styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: url('./mindwave-cursor.png') 31 31, auto !important; }`;
-        return;
-    }
-
     const svg = CURSOR_SHAPES[currentShape].create(color, secondary);
     if (!svg) {
-        styleTag.textContent = '';
+        if (currentShape === 'sun2') {
+            styleTag.textContent = `
+                body { cursor: url('./tribal-sun-cursor.png') 16 16, auto !important; }
+                a, a *, button, button *, [role="button"], [role="button"] *, input, select, textarea, .cursor-pointer, .cursor-pointer * { 
+                    cursor: url('./tribal-sun-cursor.png') 16 16, auto !important; 
+                }
+            `;
+            return;
+        }
+        styleTag.textContent = `
+            a, a *, button, button *, [role="button"], [role="button"] *, input, select, textarea, .cursor-pointer, .cursor-pointer * { 
+                cursor: default !important; 
+            }
+        `;
         return;
     }
 
@@ -146,8 +206,28 @@ function updateCursorStyle() {
         finalSvg = finalSvg.replace('<svg ', `<svg opacity="${customOpacity}" `);
     }
 
-    const dataUri = `url("data:image/svg+xml,${encodeURIComponent(finalSvg)}") 16 16, auto`;
-    styleTag.textContent = `body, a, button, [role="button"], input, select, textarea, .cursor-pointer { cursor: ${dataUri} !important; }`;
+    const isArrow = currentShape === 'default';
+    const normalHotspot = isArrow ? '3 3' : '16 16';
+    const hoverHotspot = isArrow ? '2 2' : '11 11';
+    const dataUri = `url("data:image/svg+xml;utf8,${encodeURIComponent(finalSvg)}") ${normalHotspot}, auto`;
+    
+    // Create 30% smaller SVG with exact complementary color for hover states
+    const compColor = getComplementaryColor(color);
+    const compSecondary = getComplementaryColor(secondary);
+    let hoverSvg = CURSOR_SHAPES[currentShape].create(compColor, compSecondary);
+    if (customOpacity !== 1.0) {
+        hoverSvg = hoverSvg.replace('<svg ', `<svg opacity="${customOpacity}" `);
+    }
+    hoverSvg = hoverSvg.replace(/width="(\d+)"/g, (m, w) => `width="${Math.round(parseInt(w)*0.7)}"`)
+                       .replace(/height="(\d+)"/g, (m, h) => `height="${Math.round(parseInt(h)*0.7)}"`);
+    const hoverDataUri = `url("data:image/svg+xml;utf8,${encodeURIComponent(hoverSvg)}") ${hoverHotspot}, auto`;
+
+    styleTag.textContent = `
+        body { cursor: ${dataUri} !important; }
+        a, a *, button, button *, [role="button"], [role="button"] *, [role="tab"], [role="tab"] *, [role="switch"], [role="switch"] *, input, select, textarea, label, label *, summary, summary *, [onclick], [onclick] *, .cursor-pointer, .cursor-pointer *, .tab-btn, .tab-btn *, .hub-tab-btn, .hub-tab-btn *, .cursor-option, .cursor-option *, .theme-option, .theme-option *, .interactive, .interactive *, .section-header, .section-header * { 
+            cursor: ${hoverDataUri} !important; 
+        }
+    `;
 }
 
 export function setCursorShape(shape) {
