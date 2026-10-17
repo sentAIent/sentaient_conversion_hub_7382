@@ -385,7 +385,7 @@ export const state = {
     }
 };
 
-export const VISUALIZER_VERSION = 'V133_RESET';
+export const VISUALIZER_VERSION = 'V140_CLEAN_BOOT';
 
 // Global Elements Container
 export const els = {
