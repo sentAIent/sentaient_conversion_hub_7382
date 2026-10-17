@@ -96,7 +96,6 @@ export function getVisualizer() {
     // Fallback to global attachment if module-level lookup fails
     if (window.viz3D) return window.viz3D;
     
-    console.warn('[LazyViz] getVisualizer: No instance found in module or global scope.');
     return null;
 }
 

@@ -239,7 +239,7 @@ export const BRAINWAVE_VISUALS = {
     delta: ['ocean', 'zengarden'],
     theta: ['particles', 'ocean'],
     alpha: ['zengarden', 'sphere'],
-    beta: ['matrix', 'dragon'],
+    beta: ['snowflake', 'matrix', 'waves', 'tsunami'],
     gamma: ['galaxy', 'dragon', 'matrix'],
     mu: ['sphere', 'particles'],
     'hyper-gamma': ['dragon', 'matrix', 'interstellar']

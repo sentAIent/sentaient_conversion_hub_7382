@@ -4141,6 +4141,7 @@ static CYMATIC_PATTERNS = [
                     const heroPulse = 1.0 + (vNormBass || 0) * 0.15;
                     s.spinMeshes.forEach((mesh, idx) => {
                         mesh.rotation.z += s.spinSpeeds[idx] * spdMult;
+                        mesh.rotation.y += s.spinSpeeds[idx] * 0.8 * spdMult;
                         mesh.position.y -= (s.spinSpeeds[idx] * 0.1) * spdMult;
                         mesh.scale.setScalar(heroPulse);
                         if (mesh.position.y < -25) mesh.position.y = 25;

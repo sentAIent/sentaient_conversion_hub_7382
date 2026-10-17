@@ -1864,9 +1864,15 @@ export function setupUI() {
         }
 
         try {
-            // Default only Cymatics active on load - SUPERSEDES ALL
-            console.log('[Controls] Force-engaging Cymatics Default');
-            setVisualMode('cymatics', true, false); 
+            // Default loadout on startup: Snow, Matrix, Ocean (waves), Tsunami
+            const defaultLoadout = ['snowflake', 'matrix', 'waves', 'tsunami'];
+            console.log('[Controls] Ensuring default visual loadout:', defaultLoadout);
+            if (viz.activeModes) {
+                defaultLoadout.forEach(mode => {
+                    if (!viz.activeModes.has(mode)) viz.toggleMode(mode);
+                });
+                if (viz.activeModes.has('cymatics')) viz.toggleMode('cymatics');
+            } 
             
             // Sync Color Picker explicitly to the loaded geometry engine
             const colorPicker = document.getElementById('visualColorPicker');
@@ -1911,7 +1917,8 @@ export function setupUI() {
                 { el: els.cyberBtn, mode: 'cyber' },
                 { el: els.matrixBtn, mode: 'matrix' },
                 { el: els.snowflakeBtn, mode: 'snowflake' },
-                { el: els.tsunamiBtn, mode: 'tsunami' }
+                { el: els.tsunamiBtn, mode: 'tsunami' },
+                { el: els.cymaticsBtn, mode: 'cymatics' }
             ];
             buttons.forEach(({ el, mode }) => {
                 if (!el) return;
