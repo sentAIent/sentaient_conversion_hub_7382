@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-});
+export const dynamic = 'force-dynamic';
+
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(secretKey, {
+    apiVersion: '2023-10-16',
+  });
+}
 
 export async function POST(req: Request) {
   try {
@@ -14,6 +22,7 @@ export async function POST(req: Request) {
     }
 
     // Create Checkout Sessions from body params.
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       billing_address_collection: 'auto',

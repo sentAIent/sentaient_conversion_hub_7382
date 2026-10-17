@@ -2,15 +2,23 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-});
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+export const dynamic = 'force-dynamic';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(secretKey, {
+    apiVersion: '2023-10-16',
+  });
+}
+
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder';
+  return createClient(url, key);
+}
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -19,6 +27,8 @@ export async function POST(req: Request) {
   let event: Stripe.Event;
 
   try {
+    const stripe = getStripe();
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err: any) {
     console.error(`Webhook Error: ${err.message}`);
@@ -32,6 +42,7 @@ export async function POST(req: Request) {
       const customerId = session.customer as string;
       
       if (userId) {
+        const supabaseAdmin = getSupabaseAdmin();
         await supabaseAdmin.from('profiles').update({
           stripe_customer_id: customerId,
           subscription_tier: 'pro' // determine based on line items in a real app

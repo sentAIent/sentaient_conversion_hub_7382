@@ -3,8 +3,30 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/types/task';
-import { Calendar, MoreVertical, Twitter, Instagram, Linkedin, Play, GripVertical } from 'lucide-react';
+import { Calendar, MoreVertical, Play, GripVertical } from 'lucide-react';
 import { format } from 'date-fns';
+
+const TwitterIcon = ({ size = 14, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+const InstagramIcon = ({ size = 14, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
+
+const LinkedinIcon = ({ size = 14, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+    <rect width="4" height="12" x="2" y="9" />
+    <circle cx="4" cy="4" r="2" />
+  </svg>
+);
 
 interface KanbanCardProps {
   task: Task;
@@ -12,9 +34,9 @@ interface KanbanCardProps {
 
 const getPlatformIcon = (platform: string) => {
   switch (platform.toLowerCase()) {
-    case 'twitter': return <Twitter size={14} className="text-blue-400" />;
-    case 'instagram': return <Instagram size={14} className="text-pink-500" />;
-    case 'linkedin': return <Linkedin size={14} className="text-blue-600" />;
+    case 'twitter': return <TwitterIcon size={14} className="text-blue-400" />;
+    case 'instagram': return <InstagramIcon size={14} className="text-pink-500" />;
+    case 'linkedin': return <LinkedinIcon size={14} className="text-blue-600" />;
     case 'youtube': return <Play size={14} className="text-red-500" />;
     default: return null;
   }
