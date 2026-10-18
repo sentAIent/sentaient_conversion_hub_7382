@@ -6,6 +6,8 @@
 /iceadmin/* https://sentaient-iceadmin-hub.netlify.app/:splat 200!
 /legaleagle /legaleagle/ 301
 /legaleagle/* /legaleagle/index.html 200
+/sphinx /sphinx/ 301
+/sphinx/* /sphinx/index.html 200
 /icelogin /index.html 200
 /icewaitlist /index.html 200
 /* /index.html 200

@@ -67,15 +67,13 @@
 
 [[redirects]]
   from = "/sphinx"
-  to = "https://sphinx.sentaient.com"
-  status = 301
-  force = true
+  to = "/sphinx/index.html"
+  status = 200
 
 [[redirects]]
   from = "/sphinx/*"
-  to = "https://sphinx.sentaient.com/:splat"
-  status = 301
-  force = true
+  to = "/sphinx/index.html"
+  status = 200
 
 [[redirects]]
   from = "/*"

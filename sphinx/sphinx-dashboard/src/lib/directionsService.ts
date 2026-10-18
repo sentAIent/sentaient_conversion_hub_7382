@@ -7,18 +7,21 @@ export interface DirectionsResult {
   trafficCongestion?: string; // 'low', 'moderate', 'heavy', 'severe'
 }
 
+export type TravelMode = 'driving-traffic' | 'driving' | 'walking' | 'cycling';
+
 export async function fetchDirections(
   originLng: number,
   originLat: number,
   destLng: number,
   destLat: number,
-  departAt?: Date
+  departAt?: Date,
+  mode: TravelMode = 'driving-traffic'
 ): Promise<DirectionsResult> {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   if (mapboxToken && mapboxToken !== '') {
-    // Real Mapbox API Call
-    let url = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${originLng},${originLat};${destLng},${destLat}?geometries=geojson&access_token=${mapboxToken}`;
+    const mapboxProfile = mode === 'cycling' ? 'cycling' : mode === 'walking' ? 'walking' : mode === 'driving' ? 'driving' : 'driving-traffic';
+    let url = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${originLng},${originLat};${destLng},${destLat}?geometries=geojson&access_token=${mapboxToken}`;
     
     // Add depart_at for predictive traffic if a future time is provided
     if (departAt) {
@@ -44,14 +47,50 @@ export async function fetchDirections(
           duration: route.duration,
         };
       }
-      throw new Error("No route found");
     } catch (error) {
-      console.error("Mapbox routing failed:", error);
-      throw error;
+      console.warn("Mapbox routing failed, attempting OSRM / backup router:", error);
     }
-  } else {
-    // Mock Fallback Service (Simulated Routing)
-    return new Promise((resolve) => {
+  }
+
+  // Attempt real turn-by-turn routing via OpenStreetMap OSRM
+  try {
+    const osrmProfile = mode === 'cycling' ? 'bicycle' : mode === 'walking' ? 'foot' : 'driving';
+    const osrmRes = await fetch(`https://router.project-osrm.org/route/v1/${osrmProfile}/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson`);
+    if (osrmRes.ok) {
+      const osrmData = await osrmRes.json();
+      if (osrmData.routes && osrmData.routes.length > 0) {
+        const route = osrmData.routes[0];
+        let duration = route.duration;
+        let trafficCongestion = 'low';
+        if (mode === 'driving-traffic' && departAt) {
+          const hour = departAt.getHours();
+          const day = departAt.getDay();
+          if (day >= 1 && day <= 5 && ((hour >= 7 && hour <= 9) || (hour >= 16 && hour <= 18))) {
+            duration *= 1.7;
+            trafficCongestion = 'severe';
+          } else if (day >= 1 && day <= 5 && hour >= 10 && hour <= 15) {
+            duration *= 1.25;
+            trafficCongestion = 'moderate';
+          }
+        }
+        return {
+          routeGeoJSON: {
+            type: 'Feature',
+            properties: { trafficCongestion },
+            geometry: route.geometry,
+          },
+          distance: route.distance,
+          duration,
+          trafficCongestion,
+        };
+      }
+    }
+  } catch (osrmErr) {
+    console.warn("OSRM routing unavailable, using simulated model:", osrmErr);
+  }
+
+  // Simulated fallback router
+  return new Promise((resolve) => {
       setTimeout(() => {
         // Calculate a very naive straight-line "route" with simulated waypoints
         const steps = 20;
@@ -75,10 +114,10 @@ export async function fetchDirections(
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const distance = R * c;
 
-        // Base duration (assume ~50km/h average speed in city)
-        let duration = (distance / 50000) * 3600; 
-        
-        let trafficCongestion = 'low';
+        // Base duration based on mode
+        const speedKmh = mode === 'walking' ? 5 : mode === 'cycling' ? 18 : 50;
+        let duration = (distance / (speedKmh * 1000)) * 3600; 
+        let trafficCongestion = mode === 'walking' || mode === 'cycling' ? 'low' : 'low';
 
         // Apply predictive traffic simulation based on day/time
         if (departAt) {
@@ -118,5 +157,4 @@ export async function fetchDirections(
         });
       }, 800); // 800ms mock network latency
     });
-  }
 }

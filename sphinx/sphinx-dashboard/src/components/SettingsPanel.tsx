@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { UserSettings, LocationState, SavedLocation } from '../lib/useSettings';
+import { UserSettings, LocationState, SavedLocation, CursorShape } from '../lib/useSettings';
+import { CURSOR_SHAPES } from './CustomCursor';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -77,6 +78,119 @@ export default function SettingsPanel({ isOpen, onClose, settings, updateSetting
         </label>
       </div>
 
+      {/* Custom Cursor Settings */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Custom Cursor</h3>
+          <button
+            type="button"
+            onClick={() => updateSettings({
+              cursor: { shape: 'sun', color: '#00e5ff', secondaryColor: '#fb7185', opacity: 1.0 }
+            })}
+            className="text-[11px] text-cyan-400 hover:text-cyan-300 font-mono transition-colors"
+          >
+            RESET
+          </button>
+        </div>
+
+        {/* Cursor Shape Grid */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          {Object.entries(CURSOR_SHAPES).map(([key, item]) => {
+            const isSelected = (settings.cursor?.shape || 'sun') === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => updateSettings({
+                  cursor: {
+                    ...(settings.cursor || { color: '#00e5ff', opacity: 1.0 }),
+                    shape: key as CursorShape
+                  }
+                })}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                  isSelected
+                    ? 'bg-cyan-950/60 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.4)] text-cyan-300'
+                    : 'bg-black/40 border-gray-800 hover:border-gray-600 text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <span className="text-xl mb-1">{item.icon}</span>
+                <span className="text-[10px] font-semibold tracking-wide truncate w-full text-center">
+                  {item.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Color & Presets */}
+        <div className="bg-black/50 border border-gray-800 p-3 rounded mb-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-300 uppercase tracking-wider">Cursor Color</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={settings.cursor?.color || '#00e5ff'}
+                onChange={(e) => updateSettings({
+                  cursor: {
+                    ...(settings.cursor || { shape: 'sun', opacity: 1.0 }),
+                    color: e.target.value
+                  }
+                })}
+                className="w-7 h-7 rounded border border-gray-700 bg-transparent cursor-pointer p-0"
+              />
+              <span className="text-xs text-cyan-400 font-mono">
+                {settings.cursor?.color || '#00e5ff'}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Swatches */}
+          <div className="flex items-center gap-2 pt-1 border-t border-gray-900">
+            {['#00e5ff', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#a855f7', '#ffffff'].map((hex) => (
+              <button
+                key={hex}
+                type="button"
+                onClick={() => updateSettings({
+                  cursor: {
+                    ...(settings.cursor || { shape: 'sun', opacity: 1.0 }),
+                    color: hex
+                  }
+                })}
+                style={{ backgroundColor: hex }}
+                className={`w-5 h-5 rounded-full border transition-transform hover:scale-125 ${
+                  settings.cursor?.color === hex ? 'ring-2 ring-white scale-110' : 'border-gray-700'
+                }`}
+                title={hex}
+              />
+            ))}
+          </div>
+
+          {/* Opacity Slider */}
+          <div className="pt-2 border-t border-gray-900">
+            <div className="flex justify-between items-center text-xs text-gray-300 mb-1">
+              <span>Opacity</span>
+              <span className="font-mono text-cyan-400">
+                {Math.round((settings.cursor?.opacity ?? 1.0) * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0.2"
+              max="1.0"
+              step="0.05"
+              value={settings.cursor?.opacity ?? 1.0}
+              onChange={(e) => updateSettings({
+                cursor: {
+                  ...(settings.cursor || { shape: 'sun', color: '#00e5ff' }),
+                  opacity: parseFloat(e.target.value)
+                }
+              })}
+              className="w-full accent-cyan-500 bg-gray-800 h-1.5 rounded cursor-pointer"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Layer Toggles */}
       <div className="mb-8">
         <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">OSINT Layers</h3>
@@ -136,6 +250,50 @@ export default function SettingsPanel({ isOpen, onClose, settings, updateSetting
           ))}
           {settings.saved_locations.length === 0 && (
             <div className="text-xs text-gray-600 italic">No alternative targets saved.</div>
+          )}
+        </div>
+      </div>
+
+      {/* Custom Pins Manager */}
+      <div className="mb-8">
+        <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider flex items-center justify-between">
+          <span>Custom Map Pins</span>
+          <span className="text-xs text-purple-400 font-mono">{(settings.custom_pins || []).length} PINS</span>
+        </h3>
+        
+        <div className="space-y-2">
+          {(settings.custom_pins || []).map(pin => (
+            <div key={pin.id} className="bg-black/50 border border-gray-800 p-2.5 rounded group hover:border-purple-800 transition-colors">
+              <div className="flex justify-between items-center mb-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: pin.color || '#a855f7' }} />
+                  <span className="text-sm text-gray-200 font-bold truncate">{pin.label}</span>
+                </div>
+                <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
+                  <button 
+                    onClick={() => onJumpTo({ lat: pin.lat, lon: pin.lon, zoom: 14 })} 
+                    className="text-xs text-cyan-400 hover:text-cyan-300 font-mono"
+                  >
+                    JUMP
+                  </button>
+                  <button 
+                    onClick={() => updateSettings({ custom_pins: (settings.custom_pins || []).filter(p => p.id !== pin.id) })} 
+                    className="text-xs text-red-400 hover:text-red-300 font-mono"
+                  >
+                    DEL
+                  </button>
+                </div>
+              </div>
+              {pin.description && (
+                <div className="text-xs text-gray-400 line-clamp-2 mb-1">{pin.description}</div>
+              )}
+              <div className="text-[10px] text-gray-500 font-mono">
+                {pin.category || 'Tactical'} • Lat: {pin.lat.toFixed(4)}, Lon: {pin.lon.toFixed(4)}
+              </div>
+            </div>
+          ))}
+          {(!settings.custom_pins || settings.custom_pins.length === 0) && (
+            <div className="text-xs text-gray-600 italic">No custom pins saved. Use &quot;Drop Pin&quot; on map or right-click to place.</div>
           )}
         </div>
       </div>

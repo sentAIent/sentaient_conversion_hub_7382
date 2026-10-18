@@ -1,0 +1,36 @@
+{
+  "custom_pins": [
+    {
+      "id": "1792214295472",
+      "lat": 33.44637269611211,
+      "lon": -117.62534243241248,
+      "label": "Kasa",
+      "description": "",
+      "color": "#ef4444",
+      "category": "Tactical",
+      "createdAt": "2026-10-17T05:18:15.472Z"
+    },
+    {
+      "id": "1792215816719",
+      "lat": 33.475000000001,
+      "lon": -117.65000000000069,
+      "label": "SJC Forward Command",
+      "description": "Primary forward observation and communications outpost. Satellite link active.",
+      "color": "#06b6d4",
+      "category": "Tactical",
+      "createdAt": "2026-10-17T05:43:36.719Z"
+    },
+    {
+      "id": "1792253012996",
+      "lat": 38.90719999999931,
+      "lon": -77.03655667724648,
+      "label": "Echo Outpost Alpha",
+      "description": "Forward perimeter outpost with real-time telemetry sensor grid.",
+      "color": "#a855f7",
+      "category": "Tactical",
+      "createdAt": "2026-10-17T16:03:32.996Z"
+    }
+  ],
+  "saved_locations": [],
+  "updated_at": "2026-10-18T02:38:58.657Z"
+}

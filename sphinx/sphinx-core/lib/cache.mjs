@@ -1,8 +1,10 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Initialize the SQLite database for offline OSINT caching
-const dbPath = path.resolve(process.cwd(), 'sphinx_cache.db');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const dbPath = path.resolve(__dirname, '../sphinx_cache.db');
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 

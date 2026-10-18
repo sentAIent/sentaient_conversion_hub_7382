@@ -26,8 +26,11 @@ Always respond in a concise, clinical, and authoritative tone. If a threat is PR
     
     console.log(`[Sphinx Threat Evaluator] Analyzing data from ${source}...`);
     try {
+      if (!this.llm) {
+        return `[ROUTINE] Logged anomaly from ${source} for situational monitoring.`;
+      }
       const response = await this.llm.complete(this.systemPrompt, userPrompt);
-      const assessment = response.text;
+      const assessment = response?.text || '[ROUTINE] Intelligence assessed.';
       
       // Store this event and its assessment into long-term memory
       await this.memory.storeEvent(source, data, assessment);

@@ -36,15 +36,9 @@ export class WatchtowerService {
     }
 
     const now = Date.now();
-    if (this.lastOverpassFetch && (now - this.lastOverpassFetch < 15000) && this.cachedOverpassData) {
+    if (this.lastOverpassFetch && (now - this.lastOverpassFetch < 15000) && this.cachedOverpassData && this.lastOverpassBbox === searchBbox) {
       console.log('[Sphinx Watchtower] Serving combined Overpass data from 15s cache');
-      
-      // Prevent wiping global infrastructure if the BBOX is massive and we fell back to an empty cache
-      if (elements.length === 0 && area > 10) {
-         return { error: true, message: 'BBOX too large, preserved map state.' };
-      }
       return this.cachedOverpassData;
-  
     }
 
     let queryInner = '';
@@ -84,7 +78,6 @@ export class WatchtowerService {
         way["tourism"~"^(camp_site|wilderness_hut|caravan_site)$"](${searchBbox});
 
         node["leisure"~"^(park|nature_reserve)$"](${searchBbox});
-        node["operator"~"^(Bureau of Land Management|Forest Service|Park Service|Department of Natural Resources)$"](${searchBbox});
 
         node["aeroway"="helipad"](${searchBbox});
         way["aeroway"="helipad"](${searchBbox});
@@ -104,20 +97,13 @@ export class WatchtowerService {
     if (!isGlobalQuery && area <= 25) {
       queryInner += `
         way["leisure"~"^(park|nature_reserve)$"](${searchBbox});
-        relation["leisure"~"^(park|nature_reserve)$"](${searchBbox});
-        relation["boundary"~"^(protected_area|forest)$"](${searchBbox});
-        way["operator"~"^(Bureau of Land Management|Forest Service|Park Service|Department of Natural Resources)$"](${searchBbox});
-        relation["operator"~"^(Bureau of Land Management|Forest Service|Park Service|Department of Natural Resources)$"](${searchBbox});
+        way["boundary"~"^(protected_area|forest)$"](${searchBbox});
 
-        way["highway"~"^(path|footway|track)$"](${searchBbox});
-        way["motorcycle"="yes"](${searchBbox});
-        way["atv"="yes"](${searchBbox});
-        way["4wd_only"="yes"](${searchBbox});
+        way["highway"="track"](${searchBbox});
         way["designation"="forest_service_road"](${searchBbox});
 
         node["natural"="spring"](${searchBbox});
         way["natural"="spring"](${searchBbox});
-        relation["natural"="spring"](${searchBbox});
         node["amenity"="drinking_water"](${searchBbox});
         
         node["power"="substation"](${searchBbox});
@@ -127,7 +113,6 @@ export class WatchtowerService {
         
         node["man_made"="surveillance"](${searchBbox});
         way["man_made"="surveillance"](${searchBbox});
-        relation["man_made"="surveillance"](${searchBbox});
         node["highway"="speed_camera"](${searchBbox});
         node["camera:type"="ALPR"](${searchBbox});
         node["camera:mount"](${searchBbox});
@@ -135,40 +120,51 @@ export class WatchtowerService {
     }
 
     const query = `
-      [out:json][timeout:60];
+      [out:json][timeout:25];
       (
         ${queryInner}
       );
-      out geom;
+      out center tags qt;
     `;
 
     let osmElements = [];
     try {
       const fetch = (await import('node-fetch')).default || (await import('node-fetch'));
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const endpoints = ['https://lz4.overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', this.overpassUrl];
+      let lastErr = null;
 
-      const response = await fetch(this.overpassUrl, {
-        method: 'POST',
-        body: 'data=' + encodeURIComponent(query),
-        headers: { 
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'SphinxOSINT/2.0 (sentaient_dev@sentaient.com)'
-        },
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
+      for (const endpoint of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      if (!response.ok) throw new Error(`Overpass API Error: ${response.status}`);
-      const data = await response.json();
-      
-      if (data.remark) {
-        console.warn('[Sphinx Watchtower] Overpass API Remark:', data.remark);
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            body: 'data=' + encodeURIComponent(query),
+            headers: { 
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'User-Agent': 'SphinxOSINT/2.0 (sentaient_dev@sentaient.com)'
+            },
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) throw new Error(`Overpass API Error: ${response.status}`);
+          const data = await response.json();
+          if (data && Array.isArray(data.elements)) {
+            osmElements = data.elements;
+            if (osmElements.length > 0) {
+              this.cache.saveFeatures(osmElements);
+            }
+            lastErr = null;
+            break;
+          }
+        } catch (err) {
+          console.warn('[Sphinx Overpass Endpoint Error]', endpoint, err.message);
+          lastErr = err;
+        }
       }
-      if (data.elements && data.osmElements.length > 0) {
-        osmElements = data.elements;
-        this.cache.saveFeatures(osmElements);
-      }
+      if (lastErr && osmElements.length === 0) throw lastErr;
     } catch (error) {
       console.error("[Sphinx Watchtower] Network fetch failed, falling back to SQLite cache:", error.message, "\nBbox is:", bboxString);
       if (bboxString) {
@@ -258,6 +254,7 @@ export class WatchtowerService {
       console.log(`[Sphinx Watchtower] Fetched combined Overpass data. (Springs: ${springs.length}, Power: ${power.length}, Aviation: ${aviation.length}, Emergency: ${emergency.length}, Cameras: ${cameras.length}, Weather: ${weatherStations.length}, DataCenters: ${dataCenters.length}, Radars: ${radars.length}, PublicLands: ${publicLands.length}, Campsites: ${campsites.length}, Trails: ${trails.length})`);
 
       this.lastOverpassFetch = Date.now();
+      this.lastOverpassBbox = searchBbox;
       this.cachedOverpassData = { 
         data_centers: { type: 'FeatureCollection', features: dataCenters },
         radars: { type: 'FeatureCollection', features: radars },
@@ -268,7 +265,7 @@ export class WatchtowerService {
       };
       
       // Only overwrite local dense infrastructure if we actually queried it (area <= 25)
-      if (!(!isGlobalQuery && area > 25)) {
+      if (!isGlobalQuery) {
         this.cachedOverpassData.springs = { type: 'FeatureCollection', features: springs };
         this.cachedOverpassData.power = { type: 'FeatureCollection', features: power };
         this.cachedOverpassData.emergency = { type: 'FeatureCollection', features: emergency };
@@ -276,10 +273,9 @@ export class WatchtowerService {
         this.cachedOverpassData.trails = { type: 'FeatureCollection', features: trails };
       }
       
-      // Prevent wiping global infrastructure if the BBOX is massive and we fell back to an empty cache
+      // If BBOX is massive and 0 elements found, log warning without returning error
       if (osmElements.length === 0 && area > 250) {
-         console.warn('[Sphinx Watchtower] BBOX too large and empty result, preserving map state.');
-         return { error: true, message: 'BBOX too large, preserved map state.' };
+        console.warn('[Sphinx Watchtower] BBOX is large with 0 global elements found.');
       }
       
       return this.cachedOverpassData;

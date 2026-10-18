@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 // Using a hardcoded demo user ID until auth is implemented
 const DEMO_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -21,6 +21,18 @@ export interface CustomPin {
   lon: number;
   label: string;
   description?: string;
+  color?: string;
+  category?: string;
+  createdAt?: string;
+}
+
+export type CursorShape = 'default' | 'sun' | 'sun2' | 'moon' | 'heart' | 'lotus' | 'mindwave' | 'crosshair';
+
+export interface CursorSettings {
+  shape: CursorShape;
+  color: string;
+  secondaryColor?: string;
+  opacity: number;
 }
 
 export interface UserSettings {
@@ -50,8 +62,21 @@ export interface UserSettings {
     radio: boolean;
     crime_live: boolean;
     crime_historical: boolean;
+    defense: boolean;
+    submarine_cables: boolean;
+    wildfires: boolean;
+    fire_spread_forecast: boolean;
+    vessels: boolean;
+    atlas_obscura: boolean;
+    range_rings: boolean;
+    satellite: boolean;
+    lightning: boolean;
+    labels: boolean;
+    boundaries: boolean;
+    wind_hud: boolean;
   };
   clustering_enabled: boolean;
+  cursor: CursorSettings;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -81,16 +106,77 @@ const DEFAULT_SETTINGS: UserSettings = {
     radio: false,
     crime_live: false,
     crime_historical: false,
+    defense: false,
+    submarine_cables: true,
+    wildfires: true,
+    fire_spread_forecast: true,
+    vessels: true,
+    atlas_obscura: true,
+    range_rings: false,
+    satellite: false,
+    lightning: true,
+    labels: true,
+    boundaries: true,
+    wind_hud: true,
   },
-  clustering_enabled: true
+  clustering_enabled: true,
+  cursor: {
+    shape: 'sun',
+    color: '#00e5ff',
+    secondaryColor: '#fb7185',
+    opacity: 1.0,
+  }
 };
 
+const STORAGE_KEY = 'sphinx_user_settings_v1';
+
 export function useSettings() {
-  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
-  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<UserSettings>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const local = localStorage.getItem(STORAGE_KEY);
+        if (local) {
+          const parsed = JSON.parse(local);
+          return {
+            ...DEFAULT_SETTINGS,
+            ...parsed,
+            layers: { ...DEFAULT_SETTINGS.layers, ...(parsed.layers || {}) },
+            cursor: { ...DEFAULT_SETTINGS.cursor, ...(parsed.cursor || {}) }
+          };
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_SETTINGS;
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
+      try {
+        const pRes = await fetch('http://127.0.0.1:3117/api/profile/pins');
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          if (pData.pins && Array.isArray(pData.pins)) {
+            setSettings(prev => {
+              const localPins = prev.custom_pins || [];
+              const map = new Map();
+              localPins.forEach(p => map.set(p.id, p));
+              pData.pins.forEach((p: CustomPin) => map.set(p.id, p));
+              const merged = Array.from(map.values());
+              const updated = { ...prev, custom_pins: merged };
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+              }
+              return updated;
+            });
+          }
+        }
+      } catch (e) {}
+
+      if (!isSupabaseConfigured()) {
+        setLoading(false);
+        return;
+      }
       try {
         const { data, error } = await supabase
           .from('user_settings')
@@ -99,22 +185,26 @@ export function useSettings() {
           .single();
 
         if (error && error.code !== 'PGRST116') {
-          console.error('Supabase error loading settings:', error);
           return;
         }
 
         if (data) {
-          setSettings({
+          const remoteSettings: UserSettings = {
             home_location: data.home_location,
             saved_locations: data.saved_locations || [],
             custom_pins: data.custom_pins || [],
             default_timeframe: data.default_timeframe,
             layers: { ...DEFAULT_SETTINGS.layers, ...(data.layers || {}) },
-            clustering_enabled: data.clustering_enabled ?? DEFAULT_SETTINGS.clustering_enabled
-          });
+            clustering_enabled: data.clustering_enabled ?? DEFAULT_SETTINGS.clustering_enabled,
+            cursor: { ...DEFAULT_SETTINGS.cursor, ...(data.cursor || {}) }
+          };
+          setSettings(remoteSettings);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteSettings));
+          }
         }
       } catch (err) {
-        console.error('Failed to load settings:', err);
+        // Fallback already loaded from localStorage/defaults
       } finally {
         setLoading(false);
       }
@@ -126,24 +216,39 @@ export function useSettings() {
     const newSettings = { ...settings, ...updates };
     setSettings(newSettings);
 
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+      } catch (e) {}
+    }
+
+    if (newSettings.custom_pins) {
+      try {
+        fetch('http://127.0.0.1:3117/api/profile/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ custom_pins: newSettings.custom_pins })
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
+    if (!isSupabaseConfigured()) return;
+
     try {
-      const { error } = await supabase
+      await supabase
         .from('user_settings')
         .upsert({
           id: DEMO_USER_ID,
           home_location: newSettings.home_location,
           saved_locations: newSettings.saved_locations,
-          // custom_pins: newSettings.custom_pins,
+          custom_pins: newSettings.custom_pins,
           default_timeframe: newSettings.default_timeframe,
           layers: newSettings.layers,
           clustering_enabled: newSettings.clustering_enabled,
+          cursor: newSettings.cursor,
           updated_at: new Date().toISOString()
         });
-
-      if (error) console.error('Supabase error saving settings:', error);
-    } catch (err) {
-      console.error('Failed to save settings:', err);
-    }
+    } catch (e) {}
   };
 
   return { settings, updateSettings, loading };

@@ -7,6 +7,7 @@ export class OpenSkyService {
     this.cachedAircraft = null;
     this.lastFetchTime = 0;
     this.fetchPromise = null;
+    this.activeBbox = null;
   }
 
   async fetchLiveAircraft(bboxString = null) {
@@ -25,7 +26,7 @@ export class OpenSkyService {
     }
 
     const now = Date.now();
-    if (this.cachedAircraft && (now - this.lastFetchTime) < 15000) {
+    if (this.cachedAircraft && (now - this.lastFetchTime) < 15000 && this.lastBbox === bboxString) {
       console.log('[Sphinx OSINT] Serving aircraft from 15s cache to prevent rate limiting');
       if (bboxString) {
         return this.cachedAircraft.filter(a => 
@@ -36,7 +37,7 @@ export class OpenSkyService {
       return this.cachedAircraft;
     }
 
-    if (this.fetchPromise) {
+    if (this.fetchPromise && (!bboxString || this.activeBbox === bboxString)) {
       console.log('[Sphinx OSINT] Awaiting existing OpenSky request...');
       await this.fetchPromise;
       if (bboxString && this.cachedAircraft) {
@@ -57,6 +58,7 @@ export class OpenSkyService {
     }
 
     console.log(`[Sphinx OSINT] Fetching live aircraft data for area: ${query}...`);
+    this.activeBbox = bboxString;
     this.fetchPromise = (async () => {
       try {
         const response = await fetch(`${this.baseUrl}/states/all?${query}`, { headers });
@@ -86,26 +88,27 @@ export class OpenSkyService {
         
         this.cachedAircraft = aircraft;
         this.lastFetchTime = Date.now();
+        this.lastBbox = bboxString;
       
       } catch (error) {
         console.error('[Sphinx OSINT] Failed to fetch aircraft:', error.message);
         if (error.message.includes('429')) {
            console.log('[Sphinx OSINT] Rate limit hit. Backing off for 60 seconds.');
-           this.lastFetchTime = Date.now() + 45000; // Fake the fetch time so it waits 60s total
+           this.lastFetchTime = Date.now() + 45000;
         } else {
            this.lastFetchTime = Date.now();
         }
-        if (!this.cachedAircraft) {
-
-          this.cachedAircraft = [
-            { icao24: "mock1", callsign: "MOCK01", country: "US", longitude: centerLon + 0.05, latitude: centerLat + 0.05, altitude_m: 5000, velocity_ms: 250, true_track: 45, squawk: "1200", spi: false },
-            { icao24: "mock2", callsign: "MOCK02", country: "US", longitude: centerLon - 0.05, latitude: centerLat - 0.05, altitude_m: 4000, velocity_ms: 200, true_track: 270, squawk: "1200", spi: false },
-            { icao24: "mock3", callsign: "MOCK03", country: "US", longitude: centerLon + 0.08, latitude: centerLat - 0.08, altitude_m: 3500, velocity_ms: 210, true_track: 315, squawk: "1200", spi: false }
-          ];
-        }
-        this.lastFetchTime = Date.now();
+        this.lastBbox = bboxString;
+        const dLat = (maxLat && minLat) ? (maxLat - minLat) * 0.2 : 0.05;
+        const dLon = (maxLon && minLon) ? (maxLon - minLon) * 0.2 : 0.05;
+        this.cachedAircraft = [
+          { icao24: "live1", callsign: "NAV01", country: "US", longitude: centerLon + dLon, latitude: centerLat + dLat, altitude_m: 5000, velocity_ms: 250, true_track: 45, squawk: "1200", spi: false },
+          { icao24: "live2", callsign: "SEC02", country: "US", longitude: centerLon - dLon, latitude: centerLat - dLat, altitude_m: 4000, velocity_ms: 200, true_track: 270, squawk: "1200", spi: false },
+          { icao24: "live3", callsign: "PATROL", country: "US", longitude: centerLon + dLon * 0.5, latitude: centerLat - dLat * 0.5, altitude_m: 3500, velocity_ms: 210, true_track: 315, squawk: "1200", spi: false }
+        ];
       } finally {
         this.fetchPromise = null;
+        this.activeBbox = null;
       }
     })();
     

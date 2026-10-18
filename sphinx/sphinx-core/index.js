@@ -1,4 +1,6 @@
 import express from 'express';
+import http from 'http';
+import { WebSocketServer } from 'ws';
 import cors from 'cors';
 import { spawn } from 'child_process';
 import dotenv from 'dotenv';
@@ -10,8 +12,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3117;
 
+import { tileserver } from './lib/tileserver.mjs';
+
 app.use(cors());
 app.use(express.json());
+app.use('/api/tiles', tileserver);
 
 
 // ============================================
@@ -124,10 +129,63 @@ import { startRTMPServer } from "./lib/drone/rtmp_server.mjs";
 import { startTelemetryBridge } from "./lib/drone/telemetry_bridge.mjs";
 import { SDRController } from "./lib/radio/sdr_controller.mjs";
 import { fetchLiveIncidents } from "./lib/crime/live_incidents.mjs";
+import { WildfiresService } from './lib/wildfires.mjs';
+import { AisVesselsService } from './lib/vessels.mjs';
+import { LightningService } from './lib/lightning.mjs';
+import { WeatherRadarService } from './lib/weather_radar.mjs';
+import { WeatherForecastService } from './lib/weather_forecast.mjs';
+import { ProfileService } from './lib/profile.mjs';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const opensky = new OpenSkyService();
 const watchtower = new WatchtowerService();
 const disasters = new DisastersService();
+const wildfires = new WildfiresService();
+const vessels = new AisVesselsService();
+const lightning = new LightningService();
+const weatherRadar = new WeatherRadarService();
+const weatherForecast = new WeatherForecastService();
+const profileService = new ProfileService();
+
+// User Profile & Custom Pins (Perpetual Persistence)
+app.get('/api/profile/pins', async (req, res) => {
+  try {
+    const pins = await profileService.getPins();
+    res.json({ pins });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/profile/pins', async (req, res) => {
+  try {
+    const pin = await profileService.savePin(req.body);
+    res.json({ success: true, pin });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/profile/pins/:id', async (req, res) => {
+  try {
+    await profileService.deletePin(req.params.id);
+    res.json({ success: true, id: req.params.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/profile/sync', async (req, res) => {
+  try {
+    const { custom_pins } = req.body;
+    const synced = await profileService.syncPins(custom_pins);
+    res.json({ success: true, pins: synced });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 // Download Queue Endpoints
@@ -205,18 +263,101 @@ app.get('/api/osint/earthquakes', async (req, res) => {
 app.get('/api/osint/overpass', async (req, res) => {
   try {
     const data = await watchtower.fetchAllOverpass(req.query.bbox);
-    console.log("OSINT OVERPASS returned:", data); res.json(data);
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: true, message: error.message });
   }
 });
 
+app.get('/api/osint/cables', (req, res) => {
+  try {
+    const cablesPath = path.resolve(__dirname, 'data/submarine_cables.json');
+    if (fs.existsSync(cablesPath)) {
+      res.setHeader('Content-Type', 'application/json');
+      fs.createReadStream(cablesPath).pipe(res);
+    } else {
+      res.json({ type: 'FeatureCollection', features: [] });
+    }
+  } catch (err) {
+    res.status(500).json({ error: true, message: err.message });
+  }
+});
 
+app.get('/api/osint/landing-points', (req, res) => {
+  try {
+    const lpPath = path.resolve(__dirname, 'data/landing_points.json');
+    if (fs.existsSync(lpPath)) {
+      res.setHeader('Content-Type', 'application/json');
+      fs.createReadStream(lpPath).pipe(res);
+    } else {
+      res.json({ type: 'FeatureCollection', features: [] });
+    }
+  } catch (err) {
+    res.status(500).json({ error: true, message: err.message });
+  }
+});
 
+app.get('/api/osint/wildfires', async (req, res) => {
+  try {
+    const force = req.query.force === 'true' || req.query.refresh === '1';
+    const ageMax = req.query.age_max ? parseFloat(req.query.age_max) : null;
+    const data = await wildfires.fetchWildfires(force, ageMax);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: true, message: err.message });
+  }
+});
 
+app.get('/api/osint/weather-forecast', async (req, res) => {
+  try {
+    const data = await weatherForecast.getForecast(req.query.lat, req.query.lon);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: true, message: err.message });
+  }
+});
 
+app.get('/api/osint/vessels', async (req, res) => {
+  try {
+    const data = await vessels.fetchVessels(req.query.bbox);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: true, message: err.message });
+  }
+});
 
-// 2. Global Sweeps (Ported from Crucix)
+app.get('/api/osint/obscura', (req, res) => {
+  try {
+    const obsPath = path.resolve(__dirname, 'data/atlas_obscura.json');
+    if (fs.existsSync(obsPath)) {
+      res.setHeader('Content-Type', 'application/json');
+      fs.createReadStream(obsPath).pipe(res);
+    } else {
+      res.json({ type: 'FeatureCollection', features: [] });
+    }
+  } catch (err) {
+    res.status(500).json({ error: true, message: err.message });
+  }
+});
+
+app.get('/api/osint/lightning', async (req, res) => {
+  try {
+    const data = await lightning.fetchLightning(req.query.bbox);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: true, message: err.message });
+  }
+});
+
+app.get('/api/osint/weather-radar', async (req, res) => {
+  try {
+    const data = await weatherRadar.getLatestRadarTileUrl();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: true, message: err.message });
+  }
+});
+
 app.post('/api/sweep/ingest', async (req, res) => {
   const { source, payload } = req.body;
   if (!source || !payload) return res.status(400).send('Missing source or payload');
@@ -333,6 +474,15 @@ app.post('/api/vision/detect', async (req, res) => {
   const { objects, confidence } = req.body;
   
   console.log(`[Sphinx Vision] Visual threat detected: ${objects.join(', ')} (Confidence: ${confidence})`);
+  
+  // Broadcast to frontend to trigger red flash
+  if (global.wss) {
+    const message = JSON.stringify({ type: 'vision_alert', data: { objects, confidence, timestamp: Date.now() } });
+    global.wss.clients.forEach(client => {
+      if (client.readyState === 1) client.send(message);
+    });
+  }
+
   const assessment = await evaluator.evaluateData('YOLO Vision', { objects, confidence });
   
   if (assessment.includes('[FLASH]')) {
@@ -341,6 +491,22 @@ app.post('/api/vision/detect', async (req, res) => {
   }
   res.status(200).send('OK');
 });
+
+// Physical Defense Manual Hooks
+app.post('/api/defense/home-assistant', async (req, res) => {
+  const { action } = req.body;
+  console.log(`[Sphinx Base Defense] Manual override triggered: ${action}`);
+  try {
+    if (action === 'lock_doors') await haController.lockAllDoors();
+    else if (action === 'pulse_lights') await haController.pulseRedLights();
+    else if (action === 'arm_sensors') console.log('[Sphinx Base Defense] Perimeter sensors armed.');
+    else return res.status(400).send('Unknown action');
+    res.status(200).send('OK');
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
 // 3. Voice Interface Hooks (openWakeWord + Whisper + Piper)
 app.post('/api/voice/command', async (req, res) => {
   const { command } = req.body;
@@ -391,7 +557,16 @@ startTelemetryBridge((payload) => {
     });
   }
 });
-app.listen(PORT, "0.0.0.0", () => {
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+global.wss = wss;
+
+wss.on('connection', (ws) => {
+  console.log('[Sphinx WS] Client connected to telemetry stream');
+});
+
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`[Sphinx] Server running on http://localhost:${PORT}`);
+  console.log(`[Sphinx] Telemetry WebSocket listening on ws://localhost:${PORT}`);
   console.log(`[Sphinx] Ready to receive sensory inputs and voice commands.`);
 });

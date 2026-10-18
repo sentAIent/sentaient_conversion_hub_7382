@@ -9,4 +9,13 @@ if (!supabaseUrl.startsWith('http://') && !supabaseUrl.startsWith('https://')) {
   supabaseUrl = 'https://placeholder.supabase.co';
 }
 
+export const isSupabaseConfigured = () => {
+  return (
+    !!supabaseUrl &&
+    supabaseUrl.startsWith('https://') &&
+    !supabaseUrl.includes('placeholder') &&
+    !supabaseUrl.includes('jcltqxtthaiupycpwtvw')
+  );
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
