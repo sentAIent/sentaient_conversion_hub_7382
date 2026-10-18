@@ -1158,25 +1158,40 @@ export function setupUI() {
     };
 
     if (els.leftToggle) els.leftToggle.addEventListener('click', () => {
-        els.leftPanel.classList.remove('-translate-x-full');
+        const isOpen = els.leftPanel && !els.leftPanel.classList.contains('-translate-x-full');
+        if (isOpen) {
+            els.leftPanel.classList.add('-translate-x-full');
+            els.leftToggle.classList.remove('toggle-active');
+        } else if (els.leftPanel) {
+            els.leftPanel.classList.remove('-translate-x-full');
+            els.leftToggle.classList.add('toggle-active');
+        }
         updateVisualizerScale();
         window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });
     if (els.closeLeftBtn) els.closeLeftBtn.addEventListener('click', () => {
-        els.leftPanel.classList.add('-translate-x-full');
+        if (els.leftPanel) els.leftPanel.classList.add('-translate-x-full');
+        if (els.leftToggle) els.leftToggle.classList.remove('toggle-active');
         updateVisualizerScale();
         window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });
 
     if (els.rightToggle) els.rightToggle.addEventListener('click', () => {
-        els.rightPanel.classList.remove('translate-x-full');
+        const isOpen = els.rightPanel && !els.rightPanel.classList.contains('translate-x-full');
+        if (isOpen) {
+            els.rightPanel.classList.add('translate-x-full');
+            els.rightToggle.classList.remove('toggle-active');
+        } else if (els.rightPanel) {
+            els.rightPanel.classList.remove('translate-x-full');
+            els.rightToggle.classList.add('toggle-active');
+            enforceLightThemeStyles();
+        }
         updateVisualizerScale();
         window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
-        // Enforce light theme styles when panel opens
-        enforceLightThemeStyles();
     });
     if (els.closeRightBtn) els.closeRightBtn.addEventListener('click', () => {
-        els.rightPanel.classList.add('translate-x-full');
+        if (els.rightPanel) els.rightPanel.classList.add('translate-x-full');
+        if (els.rightToggle) els.rightToggle.classList.remove('toggle-active');
         updateVisualizerScale();
         window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });

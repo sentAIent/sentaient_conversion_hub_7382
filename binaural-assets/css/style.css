@@ -864,21 +864,42 @@ body[data-theme="sentaient"] .glass-pill:not(.active) {
     transition: background-color 0.5s, border-color 0.5s;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar,
+#rightPanel ::-webkit-scrollbar,
+#leftPanel ::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+.custom-scrollbar::-webkit-scrollbar-track,
+#rightPanel ::-webkit-scrollbar-track,
+#leftPanel ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
+.custom-scrollbar::-webkit-scrollbar-thumb,
+#rightPanel ::-webkit-scrollbar-thumb,
+#leftPanel ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+#rightPanel ::-webkit-scrollbar-thumb:hover,
+#leftPanel ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.custom-scrollbar,
+#rightPanel,
+#rightPanel *,
+#leftPanel,
+#leftPanel * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.35);
 }
 
 /* HEADER ICONS - Force Accent Color (Global) */
@@ -892,6 +913,24 @@ body[data-theme="sentaient"] .glass-pill:not(.active) {
 
 #lockUIBtn:not(.toggle-active) {
     color: var(--accent) !important;
+}
+
+/* SIDEBAR TOGGLE BUTTONS - Theme Accent */
+#leftToggle,
+#rightToggle {
+    color: var(--accent) !important;
+    border-color: rgba(var(--accent-rgb, 45, 212, 191), 0.35) !important;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#leftToggle:hover,
+#rightToggle:hover,
+#leftToggle.toggle-active,
+#rightToggle.toggle-active {
+    color: white !important;
+    background: var(--accent-glow) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 15px var(--accent-glow);
 }
 
 /* VISIBILITY FIXES (User Feedback) */
@@ -1995,8 +2034,7 @@ button,
 
 /* Reorder mixer sections - DJ Pads to bottom */
 #rightPanel .flex-1.overflow-y-auto {
-    display: flex;
-    flex-direction: column;
+    display: block;
 }
 
 #rightPanel .mixer-section[data-section="djpads"] {
@@ -3713,24 +3751,26 @@ body #feedbackSurveyModal.survey-contrast-fix select option {
 
 .tab-pill:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: white;
+    border-color: var(--accent);
+    color: var(--accent);
     transform: translateY(-1px);
 }
 
 .tab-pill.active {
-    background: var(--accent-glow);
-    border-color: var(--accent);
-    color: white;
-    box-shadow: 0 0 20px rgba(45, 212, 191, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
+    background: var(--accent-glow) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+    box-shadow: 0 0 15px var(--accent-glow), inset 0 0 10px rgba(255, 255, 255, 0.1) !important;
     transform: scale(1.02);
 }
 
 /* Content Container */
 .tab-panel {
     display: none;
-    flex: 1;
-    overflow-y: auto;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 100%;
+    overflow: visible;
     animation: luxuriousFade 0.6s cubic-bezier(0.23, 1, 0.32, 1);
     padding: 0 24px; /* THE 24PX GUTTER - GLOBAL SOURCE OF TRUTH */
 }
