@@ -441,9 +441,17 @@ const [legendScale, setLegendScale] = useState(1);
     try {
       loadAircraft();
       fetch(`http://127.0.0.1:3117/api/osint/wildfires${forceWildfires ? '?refresh=1' : ''}`)
-        .then(r => r.json())
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
         .then(d => setWildfireFeatures(d.features || []))
-        .catch(e => console.warn('[Sphinx GL] Failed to fetch wildfires', e));
+        .catch(() => {
+          fetch('/sphinx/data/wildfires.geojson')
+            .then(r => r.json())
+            .then(d => setWildfireFeatures(d.features || []))
+            .catch(e => console.warn('[Sphinx GL] Failed to fetch wildfires', e));
+        });
 
       fetch(`http://127.0.0.1:3117/api/osint/lightning?bbox=${bboxRef.current || ''}`)
         .then(r => r.json())
