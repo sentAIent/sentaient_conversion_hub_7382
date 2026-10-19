@@ -15,6 +15,13 @@ const PORT = process.env.PORT || 3117;
 import { tileserver } from './lib/tileserver.mjs';
 
 app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  if (req.method === 'OPTIONS' && req.headers['access-control-request-private-network']) {
+    return res.sendStatus(204);
+  }
+  next();
+});
 app.use(express.json());
 app.use('/api/tiles', tileserver);
 

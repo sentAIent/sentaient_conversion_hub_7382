@@ -153,6 +153,9 @@ export function useSettings() {
   useEffect(() => {
     async function loadSettings() {
       try {
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        if (!isLocal) return;
+
         const pRes = await fetch('http://127.0.0.1:3117/api/profile/pins');
         if (pRes.ok) {
           const pData = await pRes.json();
@@ -224,11 +227,14 @@ export function useSettings() {
 
     if (newSettings.custom_pins) {
       try {
-        fetch('http://127.0.0.1:3117/api/profile/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ custom_pins: newSettings.custom_pins })
-        }).catch(() => {});
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        if (isLocal) {
+          fetch('http://127.0.0.1:3117/api/profile/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ custom_pins: newSettings.custom_pins })
+          }).catch(() => {});
+        }
       } catch (e) {}
     }
 

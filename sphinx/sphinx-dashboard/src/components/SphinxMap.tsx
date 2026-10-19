@@ -98,6 +98,8 @@ export default function SphinxMap() {
   useEffect(() => {
     let ws: WebSocket | null = null;
     let isCancelled = false;
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    if (!isLocal) return;
     try {
       ws = new WebSocket('ws://localhost:3117');
       ws.onmessage = (event) => {
@@ -328,6 +330,8 @@ const [legendScale, setLegendScale] = useState(1);
         }
       })
       .catch(() => {
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        if (!isLocal) return;
         fetch('http://127.0.0.1:3117/api/osint/weather-radar')
           .then(res => res.json())
           .then(d => {
@@ -351,6 +355,8 @@ const [legendScale, setLegendScale] = useState(1);
   const loadAircraft = useCallback(async () => {
     if (!bboxRef.current) return;
     try {
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (!isLocal) return;
       const res = await fetch(`http://127.0.0.1:3117/api/osint/aircraft?bbox=${bboxRef.current}`);
       if (!res.ok) throw new Error('Network response was not ok');
       const data = await res.json();
@@ -383,6 +389,8 @@ const [legendScale, setLegendScale] = useState(1);
 
   const loadWatchtowerData = useCallback(async () => {
     if (!bboxRef.current) return;
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    if (!isLocal) return;
     const map = mapRef.current?.getMap();
     
     if (map && map.getZoom() >= 5) {
@@ -440,7 +448,8 @@ const [legendScale, setLegendScale] = useState(1);
   const loadHighPriorityData = useCallback(async (forceWildfires = false) => {
     try {
       loadAircraft();
-      fetch(`http://127.0.0.1:3117/api/osint/wildfires${forceWildfires ? '?refresh=1' : ''}`)
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      (isLocal ? fetch(`http://127.0.0.1:3117/api/osint/wildfires${forceWildfires ? '?refresh=1' : ''}`) : fetch('/sphinx/data/wildfires.geojson'))
         .then(r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return r.json();
@@ -453,10 +462,12 @@ const [legendScale, setLegendScale] = useState(1);
             .catch(e => console.warn('[Sphinx GL] Failed to fetch wildfires', e));
         });
 
-      fetch(`http://127.0.0.1:3117/api/osint/lightning?bbox=${bboxRef.current || ''}`)
-        .then(r => r.json())
-        .then(d => setLightningFeatures(d.features || []))
-        .catch(e => console.warn('[Sphinx GL] Failed to fetch lightning', e));
+      if (isLocal) {
+        fetch(`http://127.0.0.1:3117/api/osint/lightning?bbox=${bboxRef.current || ''}`)
+          .then(r => r.json())
+          .then(d => setLightningFeatures(d.features || []))
+          .catch(e => console.warn('[Sphinx GL] Failed to fetch lightning', e));
+      }
     } catch (e) {
       console.warn('[Sphinx GL] Failed to load high-priority data', e);
     }
@@ -464,7 +475,9 @@ const [legendScale, setLegendScale] = useState(1);
 
   const loadMediumPriorityData = useCallback(async () => {
     try {
-      fetch(`http://127.0.0.1:3117/api/osint/vessels?bbox=${bboxRef.current || ''}`)
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (isLocal) {
+        fetch(`http://127.0.0.1:3117/api/osint/vessels?bbox=${bboxRef.current || ''}`)
         .then(r => r.json())
         .then(d => setVesselFeatures(d.features || []))
         .catch(e => console.warn('[Sphinx GL] Failed to fetch vessels', e));
@@ -483,6 +496,12 @@ const [legendScale, setLegendScale] = useState(1);
         .then(r => r.json())
         .then(d => setObscuraFeatures(d.features || []))
         .catch(e => console.warn('[Sphinx GL] Failed to fetch obscura', e));
+      } else {
+        fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson')
+          .then(r => r.json())
+          .then(d => setEarthquakeFeatures(d.features || []))
+          .catch(() => {});
+      }
     } catch (e) {
       console.warn('[Sphinx GL] Failed to load medium-priority data', e);
     }
@@ -490,6 +509,9 @@ const [legendScale, setLegendScale] = useState(1);
 
   const loadLowPriorityData = useCallback(async () => {
     try {
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (!isLocal) return;
+
       fetch(`http://127.0.0.1:3117/api/osint/cables`)
         .then(r => r.json())
         .then(d => setCableFeatures(d.features || []))
@@ -510,8 +532,11 @@ const [legendScale, setLegendScale] = useState(1);
     try {
       let data: any = null;
       try {
-        const coreRes = await fetch(`http://127.0.0.1:3117/api/osint/weather-forecast?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}`);
-        if (coreRes.ok) data = await coreRes.json();
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        if (isLocal) {
+          const coreRes = await fetch(`http://127.0.0.1:3117/api/osint/weather-forecast?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}`);
+          if (coreRes.ok) data = await coreRes.json();
+        }
       } catch (e) {}
 
       if (!data) {
@@ -965,7 +990,7 @@ const [legendScale, setLegendScale] = useState(1);
 
         {settings.layers.boundaries && (
           <>
-            <Source id="country-boundaries" type="geojson" data="/data/boundaries_countries.geojson">
+            <Source id="country-boundaries" type="geojson" data="/sphinx/data/boundaries_countries.geojson">
               <Layer
                 id="country-boundary-lines"
                 type="line"
@@ -977,7 +1002,7 @@ const [legendScale, setLegendScale] = useState(1);
                 }}
               />
             </Source>
-            <Source id="state-boundaries" type="geojson" data="/data/boundaries_states.geojson">
+            <Source id="state-boundaries" type="geojson" data="/sphinx/data/boundaries_states.geojson">
               <Layer
                 id="state-boundary-lines"
                 type="line"

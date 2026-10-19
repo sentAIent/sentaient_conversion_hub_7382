@@ -66,8 +66,11 @@ export const WeatherWindPanel: React.FC<WeatherWindPanelProps> = ({
         const lon = currentCenter.lon.toFixed(3);
         let data: any = null;
         try {
-          const coreRes = await fetch(`http://127.0.0.1:3117/api/osint/weather-forecast?lat=${lat}&lon=${lon}`);
-          if (coreRes.ok) data = await coreRes.json();
+          const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+          if (isLocal) {
+            const coreRes = await fetch(`http://127.0.0.1:3117/api/osint/weather-forecast?lat=${lat}&lon=${lon}`);
+            if (coreRes.ok) data = await coreRes.json();
+          }
         } catch (e) {}
 
         if (!data) {
