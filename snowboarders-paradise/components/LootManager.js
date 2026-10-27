@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTerrainHeight } from '../utils/terrainUtils';
+import { getTerrainHeight } from './Terrain';
 
 export function LootManager() {
   const [loot, setLoot] = useState([]);

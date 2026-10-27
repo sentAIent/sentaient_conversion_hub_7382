@@ -16,9 +16,28 @@ import {
   ChevronUp, 
   Check, 
   AlertCircle,
-  Compass
+  Compass,
+  Train,
+  Bus,
+  Plane,
+  Shuffle,
+  ShieldAlert,
+  ShieldCheck,
+  DollarSign,
+  AlertTriangle,
+  Flame,
+  CloudRain
 } from 'lucide-react';
-import { fetchDirections, DirectionsResult, TravelMode } from '../lib/directionsService';
+import { 
+  fetchDirections, 
+  DirectionsResult, 
+  TravelMode, 
+  RoutingStrategy,
+  AvoidanceOptions,
+  RouteOption,
+  RouteSubLeg
+} from '../lib/directionsService';
+import { UserTier } from '../lib/useSettings';
 
 export interface RoutePoint {
   label: string;
@@ -35,6 +54,8 @@ interface DirectionsPanelProps {
   pickingTarget?: 'origin' | 'destination' | null;
   pickedPoint?: { target: 'origin' | 'destination'; lat: number; lng: number; address?: string } | null;
   onClose?: () => void;
+  currentTier?: UserTier;
+  onRequireUpgrade?: (feature: string) => void;
 }
 
 interface GeocodeSuggestion {
@@ -64,7 +85,9 @@ export function DirectionsPanel({
   onStartPickMode,
   pickingTarget = null,
   pickedPoint = null,
-  onClose
+  onClose,
+  currentTier = 'free',
+  onRequireUpgrade
 }: DirectionsPanelProps) {
   // Origin & Destination state
   const [origin, setOrigin] = useState<RoutePoint>({
@@ -86,11 +109,30 @@ export function DirectionsPanel({
   const [activeDropdown, setActiveDropdown] = useState<'origin' | 'dest' | null>(null);
   const [isSearchingGeocode, setIsSearchingGeocode] = useState(false);
 
-  // Routing options
+  // Routing options & Modality
   const [travelMode, setTravelMode] = useState<TravelMode>('driving-traffic');
   const [timeMode, setTimeMode] = useState<'now' | 'custom'>('now');
   const [customTime, setCustomTime] = useState('');
+  const [routingStrategy, setRoutingStrategy] = useState<RoutingStrategy>('fastest');
+  const [waypoints, setWaypoints] = useState<RoutePoint[]>([]);
+  const [isGuidanceMode, setIsGuidanceMode] = useState(false);
   
+  // Tactical Avoidance Options
+  const [showAvoidanceDrawer, setShowAvoidanceDrawer] = useState(true);
+  const [avoidanceOptions, setAvoidanceOptions] = useState<AvoidanceOptions>({
+    avoidHighways: false,
+    avoidTolls: false,
+    avoidCameras: false,
+    avoidConstruction: false,
+    avoidClosedRoads: true,
+    avoidFloodedAreas: true,
+    avoidCrimeAreas: false,
+    avoidToxicPlumes: true
+  });
+
+  // Selected Alternative Route
+  const [selectedAltId, setSelectedAltId] = useState<string>('opt-fastest');
+
   // Advanced coordinates view toggle
   const [showCoordsToggle, setShowCoordsToggle] = useState(false);
   const [showPresetsMenu, setShowPresetsMenu] = useState<'origin' | 'dest' | null>(null);
@@ -150,7 +192,6 @@ export function DirectionsPanel({
     if (coordMatch) {
       const num1 = parseFloat(coordMatch[1]);
       const num2 = parseFloat(coordMatch[3]);
-      // Standard GeoJSON is [lng, lat]
       const lng = Math.abs(num1) > 90 ? num1 : (Math.abs(num2) > 90 ? num2 : num1);
       const lat = Math.abs(num1) <= 90 ? num1 : num2;
       const directItem: GeocodeSuggestion = {
@@ -221,7 +262,6 @@ export function DirectionsPanel({
     setShowPresetsMenu(null);
   };
 
-  // 1-Click "Use My Location" (GPS)
   const handleUseMyLocation = (target: 'origin' | 'dest') => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser.');
@@ -243,7 +283,6 @@ export function DirectionsPanel({
     );
   };
 
-  // 1-Click "Current Map Center"
   const handleUseMapCenter = (target: 'origin' | 'dest') => {
     if (!currentCenter) {
       alert('Map center unavailable.');
@@ -257,7 +296,6 @@ export function DirectionsPanel({
     setPointDirectly(point, target);
   };
 
-  // Swap Origin and Destination
   const handleSwap = () => {
     const prevOrigin = { ...origin };
     const prevDest = { ...destination };
@@ -267,7 +305,14 @@ export function DirectionsPanel({
     setDestInput(prevOrigin.label);
   };
 
-  // Calculate Route
+  const toggleAvoidance = (key: keyof AvoidanceOptions) => {
+    setAvoidanceOptions(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  // Calculate Route with Avoidance Options & Strategy
   const handleSearch = async () => {
     setErrorMessage(null);
     if (!origin || !destination) {
@@ -290,9 +335,15 @@ export function DirectionsPanel({
         destination.lng,
         destination.lat,
         departAt,
-        travelMode
+        travelMode,
+        routingStrategy,
+        waypoints.map(w => ({ lng: w.lng, lat: w.lat })),
+        avoidanceOptions
       );
       setResult(res);
+      setSelectedAltId(routingStrategy === 'stealth' ? 'opt-stealth' :
+                        routingStrategy === 'shortest' ? 'opt-shortest' :
+                        routingStrategy === 'eco_no_tolls' ? 'opt-eco' : 'opt-fastest');
       onRouteCalculated(res);
     } catch (e: any) {
       console.error('Directions error:', e);
@@ -300,6 +351,28 @@ export function DirectionsPanel({
     } finally {
       setLoading(false);
     }
+  };
+
+  // Switch Active Alternative Route
+  const handleSelectAlternative = (alt: RouteOption) => {
+    setSelectedAltId(alt.id);
+    if (!result) return;
+    const updated: DirectionsResult = {
+      ...result,
+      routeGeoJSON: alt.routeGeoJSON,
+      distance: alt.distance,
+      duration: alt.duration,
+      trafficCongestion: alt.trafficCongestion,
+      routingStrategy: alt.strategy,
+      cameraExposureCount: alt.cameraExposureCount,
+      avoidanceScore: alt.avoidanceScore,
+      tollCostEstimate: alt.tollCostEstimate,
+      threatScorecard: alt.threatScorecard,
+      maneuvers: alt.maneuvers,
+      intermodalLegs: alt.intermodalLegs
+    };
+    setResult(updated);
+    onRouteCalculated(updated);
   };
 
   const clearRoute = () => {
@@ -328,55 +401,110 @@ export function DirectionsPanel({
   };
 
   return (
-    <div className="w-[380px] bg-black/90 backdrop-blur-md border border-cyan-800/80 rounded-xl shadow-[0_0_25px_rgba(8,145,178,0.35)] text-white font-mono text-xs overflow-hidden flex flex-col">
+    <div className="w-full max-w-[420px] max-h-[calc(100vh-6rem)] overflow-y-auto bg-black/95 backdrop-blur-xl border border-cyan-800/80 rounded-xl shadow-[0_0_30px_rgba(8,145,178,0.4)] text-white font-mono text-xs flex flex-col z-40">
       {/* Header */}
-      <div className="bg-cyan-950/40 px-3 py-2.5 border-b border-cyan-800/50 flex justify-between items-center">
-        <div className="flex items-center gap-2 text-cyan-400 font-bold tracking-wider text-sm">
+      <div className="bg-gradient-to-r from-cyan-950/80 to-blue-950/80 px-3 py-2.5 border-b border-cyan-800/50 flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-2 text-cyan-400 font-bold tracking-wider text-xs sm:text-sm">
           <Navigation size={16} className="text-cyan-400 animate-pulse" />
-          <span>TACTICAL ROUTING & TRAFFIC</span>
+          <span>MULTI-MODAL TACTICAL ROUTING</span>
         </div>
         {onClose && (
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-1">
             <X size={15} />
           </button>
         )}
       </div>
 
       <div className="p-3 space-y-3">
-        {/* Travel Mode Selector */}
-        <div className="grid grid-cols-4 gap-1 p-1 bg-black/60 border border-cyan-900/50 rounded-lg">
-          <button
-            onClick={() => setTravelMode('driving-traffic')}
-            className={`py-1.5 px-1 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'driving-traffic' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-bold' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
-            title="Driving with live traffic congestion"
-          >
-            <Car size={14} />
-            <span className="text-[10px]">Traffic</span>
-          </button>
-          <button
-            onClick={() => setTravelMode('driving')}
-            className={`py-1.5 px-1 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'driving' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-bold' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
-            title="Fastest highway driving route"
-          >
-            <Zap size={14} />
-            <span className="text-[10px]">Fastest</span>
-          </button>
-          <button
-            onClick={() => setTravelMode('walking')}
-            className={`py-1.5 px-1 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'walking' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-bold' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
-            title="Walking & pedestrian pathways"
-          >
-            <Footprints size={14} />
-            <span className="text-[10px]">Walk</span>
-          </button>
-          <button
-            onClick={() => setTravelMode('cycling')}
-            className={`py-1.5 px-1 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'cycling' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-bold' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
-            title="Cycling & bike trails"
-          >
-            <Bike size={14} />
-            <span className="text-[10px]">Cycling</span>
-          </button>
+        {/* Multi-Modal Travel Mode Selector Tabs */}
+        <div>
+          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1.5 flex justify-between items-center">
+            <span>TRAVEL MODALITY</span>
+            <span className="text-cyan-400">{travelMode.toUpperCase().replace('-', ' ')}</span>
+          </div>
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 p-1 bg-black/70 border border-cyan-900/60 rounded-lg text-center">
+            <button
+              type="button"
+              onClick={() => setTravelMode('driving-traffic')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'driving-traffic' ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/60 font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Car / Highway driving with live traffic"
+            >
+              <Car size={13} />
+              <span className="text-[9px]">Car</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode('walking')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'walking' ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/60 font-bold shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Foot / Pedestrian pathways & trails"
+            >
+              <Footprints size={13} />
+              <span className="text-[9px]">Foot</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode('cycling')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'cycling' ? 'bg-teal-500/25 text-teal-300 border border-teal-500/60 font-bold shadow-[0_0_8px_rgba(20,184,166,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Biking / Road cycling on bike lanes"
+            >
+              <Bike size={13} />
+              <span className="text-[9px]">Biking</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode('mountain_biking')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'mountain_biking' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/60 font-bold shadow-[0_0_8px_rgba(245,158,11,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Mountain Biking (MTB) / Off-road singletrack"
+            >
+              <span className="text-xs">🚵</span>
+              <span className="text-[9px]">MTB</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode('skateboarding')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'skateboarding' ? 'bg-lime-500/25 text-lime-300 border border-lime-500/60 font-bold shadow-[0_0_8px_rgba(132,204,22,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Skateboarding / Paved paths & greenways"
+            >
+              <span className="text-xs">🛹</span>
+              <span className="text-[9px]">Skate</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode('rail_train')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'rail_train' ? 'bg-purple-500/25 text-purple-300 border border-purple-500/60 font-bold shadow-[0_0_8px_rgba(168,85,247,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Passenger Rail (Amtrak, Regional Express, Metro)"
+            >
+              <Train size={13} />
+              <span className="text-[9px]">Train</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode('transit_bus')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'transit_bus' ? 'bg-sky-500/25 text-sky-300 border border-sky-500/60 font-bold shadow-[0_0_8px_rgba(56,189,248,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Bus Transit & Intercity Motorcoach"
+            >
+              <Bus size={13} />
+              <span className="text-[9px]">Bus</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode('airplane')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'airplane' ? 'bg-rose-500/25 text-rose-300 border border-rose-500/60 font-bold shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Commercial Airline & Tactical Flight Arc"
+            >
+              <Plane size={13} />
+              <span className="text-[9px]">Flight</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode('intermodal')}
+              className={`py-1.5 px-0.5 rounded flex flex-col items-center gap-1 transition-all ${travelMode === 'intermodal' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/60 font-bold shadow-[0_0_8px_rgba(245,158,11,0.4)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+              title="Intermodal Combination (Drive + Train, Air + Ground Transit)"
+            >
+              <Shuffle size={13} />
+              <span className="text-[9px]">Combo</span>
+            </button>
+          </div>
         </div>
 
         {/* Origin / Destination Container */}
@@ -394,7 +522,7 @@ export function DirectionsPanel({
                   className="px-1.5 py-0.5 rounded bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/40 text-cyan-300 text-[10px] flex items-center gap-1 transition-colors"
                   title="Use current GPS location"
                 >
-                  <Crosshair size={10} /> My GPS
+                  <Crosshair size={10} /> GPS
                 </button>
                 <button
                   type="button"
@@ -418,7 +546,6 @@ export function DirectionsPanel({
                   type="button"
                   onClick={() => setShowPresetsMenu(showPresetsMenu === 'origin' ? null : 'origin')}
                   className="px-1.5 py-0.5 rounded bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/40 text-cyan-300 text-[10px] flex items-center gap-0.5 transition-colors"
-                  title="Choose from preset locations"
                 >
                   Presets <ChevronDown size={10} />
                 </button>
@@ -481,20 +608,6 @@ export function DirectionsPanel({
                     {hub.label}
                   </button>
                 ))}
-                {(customPins.length > 0 || savedLocations.length > 0) && (
-                  <>
-                    <div className="px-2 py-1 mt-1 text-[10px] font-bold text-amber-400 border-b border-amber-900/50">CUSTOM PINS</div>
-                    {customPins.map((pin) => (
-                      <button
-                        key={pin.id}
-                        onClick={() => setPointDirectly({ label: pin.label, lng: pin.lon, lat: pin.lat }, 'origin')}
-                        className="w-full text-left px-2 py-1.5 hover:bg-cyan-950/60 rounded text-xs text-gray-300 hover:text-white transition-colors"
-                      >
-                        📌 {pin.label}
-                      </button>
-                    ))}
-                  </>
-                )}
               </div>
             )}
           </div>
@@ -522,15 +635,13 @@ export function DirectionsPanel({
                   type="button"
                   onClick={() => handleUseMyLocation('dest')}
                   className="px-1.5 py-0.5 rounded bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/40 text-cyan-300 text-[10px] flex items-center gap-1 transition-colors"
-                  title="Use current GPS location"
                 >
-                  <Crosshair size={10} /> My GPS
+                  <Crosshair size={10} /> GPS
                 </button>
                 <button
                   type="button"
                   onClick={() => handleUseMapCenter('dest')}
                   className="px-1.5 py-0.5 rounded bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/40 text-cyan-300 text-[10px] flex items-center gap-1 transition-colors"
-                  title="Use map viewport center"
                 >
                   <Compass size={10} /> Center
                 </button>
@@ -539,7 +650,6 @@ export function DirectionsPanel({
                     type="button"
                     onClick={() => onStartPickMode('destination')}
                     className={`px-1.5 py-0.5 rounded text-[10px] flex items-center gap-1 transition-colors ${pickingTarget === 'destination' ? 'bg-red-500 text-black font-bold animate-pulse' : 'bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/40 text-cyan-300'}`}
-                    title="Click on the map to place destination"
                   >
                     <MapPin size={10} /> {pickingTarget === 'destination' ? 'Click Map!' : 'Pick'}
                   </button>
@@ -548,7 +658,6 @@ export function DirectionsPanel({
                   type="button"
                   onClick={() => setShowPresetsMenu(showPresetsMenu === 'dest' ? null : 'dest')}
                   className="px-1.5 py-0.5 rounded bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/40 text-cyan-300 text-[10px] flex items-center gap-0.5 transition-colors"
-                  title="Choose from preset locations"
                 >
                   Presets <ChevronDown size={10} />
                 </button>
@@ -611,23 +720,134 @@ export function DirectionsPanel({
                     {hub.label}
                   </button>
                 ))}
-                {(customPins.length > 0 || savedLocations.length > 0) && (
-                  <>
-                    <div className="px-2 py-1 mt-1 text-[10px] font-bold text-amber-400 border-b border-amber-900/50">CUSTOM PINS</div>
-                    {customPins.map((pin) => (
-                      <button
-                        key={pin.id}
-                        onClick={() => setPointDirectly({ label: pin.label, lng: pin.lon, lat: pin.lat }, 'dest')}
-                        className="w-full text-left px-2 py-1.5 hover:bg-cyan-950/60 rounded text-xs text-gray-300 hover:text-white transition-colors"
-                      >
-                        📌 {pin.label}
-                      </button>
-                    ))}
-                  </>
-                )}
               </div>
             )}
           </div>
+        </div>
+
+        {/* TACTICAL AVOIDANCE FILTERS SECTION */}
+        <div className="p-2.5 bg-slate-900/70 border border-cyan-900/60 rounded-xl space-y-2">
+          <div 
+            onClick={() => setShowAvoidanceDrawer(!showAvoidanceDrawer)}
+            className="flex justify-between items-center cursor-pointer select-none"
+          >
+            <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+              <ShieldAlert size={13} className="text-amber-400" />
+              <span>TACTICAL AVOIDANCE CONSTRAINTS</span>
+            </span>
+            <span className="text-[10px] text-cyan-400 flex items-center gap-0.5">
+              {Object.values(avoidanceOptions).filter(Boolean).length} ACTIVE
+              {showAvoidanceDrawer ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </span>
+          </div>
+
+          {showAvoidanceDrawer && (
+            <div className="grid grid-cols-2 gap-1.5 pt-1 text-[10px]">
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidHighways')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidHighways 
+                    ? 'bg-amber-950/80 border-amber-400 text-amber-200 font-bold' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🚫 No Highways</span>
+                {avoidanceOptions.avoidHighways && <Check size={11} className="text-amber-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidTolls')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidTolls 
+                    ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200 font-bold' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>💰 No Tolls</span>
+                {avoidanceOptions.avoidTolls && <Check size={11} className="text-emerald-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidCameras')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidCameras 
+                    ? 'bg-purple-950/80 border-purple-400 text-purple-200 font-bold shadow-[0_0_8px_rgba(168,85,247,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>📸 Avoid ALPR/Cones</span>
+                {avoidanceOptions.avoidCameras && <Check size={11} className="text-purple-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidConstruction')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidConstruction 
+                    ? 'bg-amber-950/80 border-amber-400 text-amber-200 font-bold' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🚧 Construction Zones</span>
+                {avoidanceOptions.avoidConstruction && <Check size={11} className="text-amber-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidClosedRoads')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidClosedRoads 
+                    ? 'bg-red-950/80 border-red-400 text-red-200 font-bold shadow-[0_0_8px_rgba(239,68,68,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>❄️ Closed/Winter Roads</span>
+                {avoidanceOptions.avoidClosedRoads && <Check size={11} className="text-red-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidFloodedAreas')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidFloodedAreas 
+                    ? 'bg-sky-950/80 border-sky-400 text-sky-200 font-bold shadow-[0_0_8px_rgba(14,165,233,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🌊 Flooded / Storms</span>
+                {avoidanceOptions.avoidFloodedAreas && <Check size={11} className="text-sky-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidCrimeAreas')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidCrimeAreas 
+                    ? 'bg-red-950/80 border-red-400 text-red-200 font-bold shadow-[0_0_8px_rgba(239,68,68,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🚨 High-Crime Sectors</span>
+                {avoidanceOptions.avoidCrimeAreas && <Check size={11} className="text-red-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidToxicPlumes')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidToxicPlumes 
+                    ? 'bg-purple-950/80 border-purple-400 text-purple-200 font-bold shadow-[0_0_8px_rgba(168,85,247,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>☣️ Toxic Plume Cones</span>
+                {avoidanceOptions.avoidToxicPlumes && <Check size={11} className="text-purple-400" />}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Departure Time */}
@@ -668,24 +888,6 @@ export function DirectionsPanel({
           )}
         </div>
 
-        {/* Raw Coordinates Expander */}
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowCoordsToggle(!showCoordsToggle)}
-            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-cyan-400 transition-colors"
-          >
-            {showCoordsToggle ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-            <span>{showCoordsToggle ? 'Hide Raw Coordinates' : 'Show Raw Decimal Coordinates'}</span>
-          </button>
-          {showCoordsToggle && (
-            <div className="mt-1 p-2 bg-black/70 border border-gray-800 rounded text-[10px] text-gray-400 space-y-1">
-              <div>Origin: <span className="text-cyan-300">{origin.lng.toFixed(6)}, {origin.lat.toFixed(6)}</span></div>
-              <div>Destination: <span className="text-cyan-300">{destination.lng.toFixed(6)}, {destination.lat.toFixed(6)}</span></div>
-            </div>
-          )}
-        </div>
-
         {/* Error message */}
         {errorMessage && (
           <div className="p-2 bg-red-950/60 border border-red-800/80 rounded text-red-300 text-[11px] flex items-center gap-2">
@@ -694,19 +896,19 @@ export function DirectionsPanel({
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Action Button */}
         <div className="flex gap-2 pt-1">
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-50 text-white font-bold py-2 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all flex items-center justify-center gap-1.5"
           >
             {loading ? (
               <span className="animate-spin inline-block mr-1">⚙️</span>
             ) : (
-              <Navigation size={13} />
+              <Navigation size={14} />
             )}
-            <span>{loading ? 'CALCULATING ROUTE...' : 'CALCULATE ROUTE'}</span>
+            <span>{loading ? 'CALCULATING ALTERNATIVES...' : 'CALCULATE MULTI-MODAL ROUTES'}</span>
           </button>
 
           {result && (
@@ -720,32 +922,180 @@ export function DirectionsPanel({
           )}
         </div>
 
-        {/* Route Summary */}
-        {result && (
-          <div className="mt-2 p-2.5 bg-cyan-950/20 border border-cyan-800/60 rounded-lg space-y-2">
-            <div className="flex justify-between items-baseline border-b border-cyan-900/40 pb-1.5">
-              <span className="text-gray-400">ESTIMATED DURATION:</span>
-              <span className="text-base font-bold text-cyan-300">
-                {formatDuration(result.duration)}
-              </span>
+        {/* SIMULTANEOUS ALTERNATIVE ROUTES COMPARISON MATRIX */}
+        {result && result.alternativeRoutes && result.alternativeRoutes.length > 0 && (
+          <div className="space-y-2 pt-1">
+            <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex justify-between items-center">
+              <span>ROUTE OPTIONS & THREAT AUDIT</span>
+              <span className="text-gray-400">{result.alternativeRoutes.length} ROUTES COMPUTED</span>
             </div>
 
-            <div className="flex justify-between items-baseline border-b border-cyan-900/40 pb-1.5">
-              <span className="text-gray-400">TOTAL DISTANCE:</span>
-              <span className="font-semibold text-white">
-                {(result.distance / 1609.34).toFixed(1)} mi ({(result.distance / 1000).toFixed(1)} km)
-              </span>
+            <div className="grid grid-cols-1 gap-2">
+              {result.alternativeRoutes.map((alt) => {
+                const isSelected = selectedAltId === alt.id;
+                return (
+                  <div
+                    key={alt.id}
+                    onClick={() => handleSelectAlternative(alt)}
+                    className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                      isSelected
+                        ? 'bg-cyan-950/70 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400'
+                        : 'bg-black/60 border-gray-800 hover:border-gray-600 text-gray-300'
+                    }`}
+                  >
+                    <div className="flex justify-between items-baseline mb-1">
+                      <div className="flex items-center gap-1.5 font-bold text-xs">
+                        <span className={isSelected ? 'text-cyan-300' : 'text-white'}>{alt.label}</span>
+                        {isSelected && <span className="text-[9px] bg-cyan-500 text-black px-1.5 py-0.2 rounded font-black">ACTIVE</span>}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-extrabold text-white">{formatDuration(alt.duration)}</span>
+                        <span className="text-[10px] text-gray-400 ml-1.5">
+                          ({(alt.distance / 1609.34).toFixed(1)} mi)
+                        </span>
+                      </div>
+                    </div>
+
+                    {alt.summaryNote && (
+                      <div className="text-[10px] text-gray-400 mb-2 truncate">
+                        {alt.summaryNote}
+                      </div>
+                    )}
+
+                    {/* Threat & Cost Audit Badges */}
+                    <div className="grid grid-cols-3 gap-1 pt-1.5 border-t border-gray-800/80 text-center text-[10px]">
+                      <div className="bg-black/40 p-1 rounded border border-gray-800">
+                        <span className="text-[9px] text-gray-500 block">CAMERAS</span>
+                        <span className={alt.cameraExposureCount === 0 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                          {alt.cameraExposureCount === 0 ? '🛡️ 0 ALPR' : `📸 ${alt.cameraExposureCount}`}
+                        </span>
+                      </div>
+                      <div className="bg-black/40 p-1 rounded border border-gray-800">
+                        <span className="text-[9px] text-gray-500 block">TOLLS</span>
+                        <span className={alt.tollCostEstimate === 0 ? 'text-emerald-400 font-bold' : 'text-cyan-300 font-bold'}>
+                          ${alt.tollCostEstimate.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="bg-black/40 p-1 rounded border border-gray-800">
+                        <span className="text-[9px] text-gray-500 block">SAFETY</span>
+                        <span className="text-emerald-400 font-bold">
+                          {alt.threatScorecard.crimeSafetyIndex}/100
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="flex justify-between items-center pt-0.5">
-              <span className="text-gray-400">TRAFFIC CONDITIONS:</span>
-              <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${getTrafficColor(result.trafficCongestion)}`}>
-                {result.trafficCongestion || 'Clear / Low'}
-              </span>
-            </div>
+            {/* INTERMODAL LEGS BREAKDOWN (WHEN APPLICABLE) */}
+            {result.intermodalLegs && result.intermodalLegs.length > 0 && (
+              <div className="mt-3 p-2.5 bg-slate-900/60 border border-purple-900/50 rounded-xl space-y-2">
+                <div className="text-[10px] font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Shuffle size={12} className="text-purple-400" />
+                  <span>INTERMODAL TRANSIT LEGS</span>
+                </div>
+                <div className="space-y-1.5 text-[11px]">
+                  {result.intermodalLegs.map((leg, idx) => (
+                    <div key={leg.id} className="p-2 bg-black/50 border border-purple-950 rounded-lg flex items-center gap-2">
+                      <div className="w-6 h-6 rounded bg-purple-950 flex items-center justify-center shrink-0 text-sm">
+                        {leg.mode === 'flight' ? '✈️' : leg.mode === 'rail' ? '🚆' : leg.mode === 'walking' ? '🚶' : '🚗'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-white font-bold truncate">{leg.instruction}</div>
+                        <div className="text-[10px] text-gray-400 flex gap-2">
+                          <span>{(leg.distanceMeters / 1609.34).toFixed(1)} mi</span>
+                          <span>•</span>
+                          <span>{formatDuration(leg.durationSeconds)}</span>
+                          {leg.transitDetails && (
+                            <>
+                              <span>•</span>
+                              <span className="text-purple-300">{leg.transitDetails.lineOrFlightNumber}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Launch Guidance HUD Button */}
+            <button
+              type="button"
+              data-testid="btn-launch-guidance"
+              onClick={() => setIsGuidanceMode(true)}
+              className="w-full mt-2 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all font-mono"
+            >
+              <Navigation size={14} />
+              <span>LAUNCH NIGHT TACTICAL HUD</span>
+            </button>
           </div>
         )}
       </div>
+
+      {/* FULL-SCREEN NIGHT TACTICAL GUIDANCE HUD */}
+      {isGuidanceMode && result && (
+        <div 
+          data-testid="tactical-guidance-hud"
+          className="fixed inset-x-0 top-0 sm:top-4 z-[999] flex flex-col items-center pointer-events-auto p-3 max-w-xl mx-auto"
+        >
+          <div className="w-full bg-black/95 border-2 border-emerald-500 rounded-2xl p-4 shadow-[0_0_40px_rgba(16,185,129,0.6)] backdrop-blur-2xl text-emerald-400 font-mono space-y-3">
+            <div className="flex justify-between items-center border-b border-emerald-900/80 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="animate-ping w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+                <span className="font-black text-sm tracking-widest text-white">TACTICAL GUIDANCE HUD</span>
+              </div>
+              <button
+                type="button"
+                data-testid="btn-exit-guidance"
+                onClick={() => setIsGuidanceMode(false)}
+                className="px-2.5 py-1 bg-red-950/80 hover:bg-red-900 border border-red-700/80 text-red-300 rounded text-xs font-bold transition-colors"
+              >
+                EXIT HUD
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 py-2">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-950/80 border border-emerald-400 flex items-center justify-center text-3xl font-black text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                ↱
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-2xl font-black text-white tracking-tight">
+                  {(result.distance / 1609.34).toFixed(1)} MILES REMAINING
+                </div>
+                <div className="text-sm font-bold text-emerald-300 truncate">
+                  {result.maneuvers?.[1]?.instruction || result.maneuvers?.[0]?.instruction || 'Proceed on tactical corridor'}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2 bg-emerald-950/30 p-2 rounded-xl border border-emerald-900/60 text-center text-xs">
+              <div>
+                <span className="text-[9px] text-emerald-600 block">MODALITY</span>
+                <span className="text-white font-bold text-xs uppercase">{travelMode}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-emerald-600 block">EST. TIME</span>
+                <span className="text-white font-bold text-xs">{formatDuration(result.duration)}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-emerald-600 block">SURVEILLANCE</span>
+                <span className="text-emerald-300 font-bold text-xs">
+                  {result.cameraExposureCount === 0 ? 'SHIELDED' : `${result.cameraExposureCount} ALPR`}
+                </span>
+              </div>
+              <div>
+                <span className="text-[9px] text-emerald-600 block">HAZARDS</span>
+                <span className="text-emerald-400 font-bold text-xs">
+                  0 CLOSURES
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

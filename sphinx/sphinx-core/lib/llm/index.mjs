@@ -26,10 +26,11 @@ export { GrokProvider } from "./grok.mjs";
  * @param {{ provider: string|null, apiKey: string|null, model: string|null }} llmConfig
  * @returns {LLMProvider|null}
  */
-export function createLLMProvider(llmConfig) {
-  if (!llmConfig?.provider) return null;
-
-  const { provider, apiKey, model } = llmConfig;
+export function createLLMProvider(llmConfig = {}) {
+  const provider = llmConfig.provider || llmConfig.LLM_PROVIDER || process.env.LLM_PROVIDER || 'ollama';
+  const apiKey = llmConfig.apiKey || llmConfig.OPENAI_API_KEY || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY;
+  const model = llmConfig.model || llmConfig.LLM_MODEL || process.env.LLM_MODEL;
+  const baseUrl = llmConfig.baseUrl || llmConfig.OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 
   switch (provider.toLowerCase()) {
     case "anthropic":

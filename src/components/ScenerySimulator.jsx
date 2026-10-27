@@ -7,6 +7,7 @@ import StreetViewSimulation from './StreetViewSimulation';
 
 import AtmosphereMixer from './AtmosphereMixer';
 import { SoftPaywall } from './payments/SoftPaywall';
+import ViralExporter from './ViralExporter';
 
 export default function ScenerySimulator() {
   const [activeScene, setActiveScene] = useState(curatedScenes[0]);
@@ -18,6 +19,9 @@ export default function ScenerySimulator() {
   // Paywall State
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState('');
+
+  // Viral Exporter State
+  const [showExporter, setShowExporter] = useState(false);
   
   // Audio state lifted up so the mixer can control it
   const [activeAudioParams, setActiveAudioParams] = useState(curatedScenes[0].audioParams);
@@ -121,13 +125,21 @@ export default function ScenerySimulator() {
               {activeScene.description}
             </p>
           </div>
-          <button 
-            onClick={handleGenerateMusic}
-            disabled={isGeneratingMusic}
-            className={`px-6 py-3 rounded-full font-medium transition-all shadow-lg backdrop-blur-md flex items-center gap-2 ${isGeneratingMusic ? 'bg-purple-900/50 text-white/50 cursor-wait' : 'bg-purple-600/80 hover:bg-purple-500 text-white hover:scale-105'}`}
-          >
-            <span>🎵</span> {isGeneratingMusic ? 'Composing...' : 'AI Soundtrack'}
-          </button>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowExporter(true)}
+              className="px-6 py-3 rounded-full font-medium transition-all shadow-lg backdrop-blur-md flex items-center gap-2 bg-[#00f2fe]/20 hover:bg-[#00f2fe]/40 text-[#00f2fe] border border-[#00f2fe]/50 hover:scale-105"
+            >
+              <span>📱</span> Export
+            </button>
+            <button 
+              onClick={handleGenerateMusic}
+              disabled={isGeneratingMusic}
+              className={`px-6 py-3 rounded-full font-medium transition-all shadow-lg backdrop-blur-md flex items-center gap-2 ${isGeneratingMusic ? 'bg-purple-900/50 text-white/50 cursor-wait' : 'bg-purple-600/80 hover:bg-purple-500 text-white hover:scale-105'}`}
+            >
+              <span>🎵</span> {isGeneratingMusic ? 'Composing...' : 'AI Soundtrack'}
+            </button>
+          </div>
         </div>
 
         {/* Custom Prompt Input */}
@@ -179,6 +191,13 @@ export default function ScenerySimulator() {
         featureName={paywallFeature}
         requiredCredits={10}
         userCredits={0}
+      />
+
+      {/* Viral TikTok Exporter */}
+      <ViralExporter
+        isVisible={showExporter}
+        onClose={() => setShowExporter(false)}
+        activeScene={activeScene}
       />
     </div>
   );

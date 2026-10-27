@@ -9,23 +9,26 @@ import {
   DailyForecastItem,
   MonthlyClimateNormal
 } from './WeatherForecastViews';
+import { HistoricalWeatherView } from './HistoricalWeatherView';
 
 interface WeatherWindPanelProps {
   currentCenter: { lat: number; lon: number };
   settings: UserSettings;
   updateSettings: (newSettings: Partial<UserSettings>) => void;
   onClose: () => void;
+  onOpenAIWithQuery?: (query: string) => void;
 }
 
 export const WeatherWindPanel: React.FC<WeatherWindPanelProps> = ({
   currentCenter,
   settings,
   updateSettings,
-  onClose
+  onClose,
+  onOpenAIWithQuery
 }) => {
   const [unit, setUnit] = useState<'knots' | 'mph' | 'kmh'>('knots');
   const [tempUnit, setTempUnit] = useState<'C' | 'F'>('F');
-  const [tab, setTab] = useState<'live' | 'hourly' | 'daily' | 'weekly' | 'monthly'>('live');
+  const [tab, setTab] = useState<'live' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'historical'>('live');
   const [forecastData, setForecastData] = useState<{
     hourly: HourlyForecastItem[];
     daily: DailyForecastItem[];
@@ -154,7 +157,7 @@ export const WeatherWindPanel: React.FC<WeatherWindPanelProps> = ({
   const inHg = (windData.pressureHpa * 0.02953).toFixed(2);
 
   return (
-    <div className="fixed top-24 sm:top-16 right-3 sm:right-6 z-40 max-w-[calc(100vw-24px)] w-96 sm:w-[500px] bg-black/90 border border-sky-500/40 rounded-xl shadow-[0_0_30px_rgba(14,165,233,0.3)] backdrop-blur-xl font-mono text-white flex flex-col overflow-hidden animate-in fade-in duration-200">
+    <div data-testid="weather-wind-panel" className="fixed top-24 sm:top-16 right-3 sm:right-6 z-40 max-w-[calc(100vw-24px)] w-96 sm:w-[500px] max-h-[calc(100vh-5rem)] bg-black/90 border border-sky-500/40 rounded-xl shadow-[0_0_30px_rgba(14,165,233,0.3)] backdrop-blur-xl font-mono text-white flex flex-col overflow-hidden animate-in fade-in duration-200">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-neutral-950/80 border-b border-sky-500/30">
         <div className="flex items-center gap-2 text-sky-400">
@@ -182,7 +185,8 @@ export const WeatherWindPanel: React.FC<WeatherWindPanelProps> = ({
           { id: 'hourly', label: 'HOURLY (48H)' },
           { id: 'daily', label: 'DAILY (7D)' },
           { id: 'weekly', label: 'WEEKLY (14D)' },
-          { id: 'monthly', label: 'MONTHLY CLIMATE' }
+          { id: 'monthly', label: 'MONTHLY CLIMATE' },
+          { id: 'historical', label: '📜 HISTORICAL ARCHIVE' }
         ].map(t => (
           <button
             key={t.id}
@@ -200,7 +204,7 @@ export const WeatherWindPanel: React.FC<WeatherWindPanelProps> = ({
         ))}
       </div>
 
-      <div className="p-4 space-y-3 text-xs">
+      <div className="p-4 space-y-3 text-xs flex-1 overflow-y-auto">
         {/* Global Units Selector */}
         <div className="flex justify-between items-center text-[10px] pb-1 border-b border-white/10">
           <div className="flex items-center gap-1">
@@ -254,6 +258,15 @@ export const WeatherWindPanel: React.FC<WeatherWindPanelProps> = ({
 
         {tab === 'monthly' && (
           <MonthlyClimateView normals={forecastData.monthly} tempUnit={tempUnit} />
+        )}
+
+        {tab === 'historical' && (
+          <HistoricalWeatherView 
+            currentCenter={currentCenter}
+            tempUnit={tempUnit}
+            speedUnit={unit}
+            onOpenAIWithQuery={onOpenAIWithQuery}
+          />
         )}
 
         {tab === 'live' && (

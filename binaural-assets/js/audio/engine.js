@@ -85,7 +85,7 @@ class BinauralProcessor extends AudioWorkletProcessor {
                 const isoPhaseInc = (this.beatFreq * TWO_PI) / sampleRate;
                 this.isoPhase += isoPhaseInc;
                 if (this.isoPhase > TWO_PI) this.isoPhase -= TWO_PI;
-                const pulse = Math.sin(this.isoPhase) > 0 ? 1 : 0;
+                const pulse = 0.5 * (1 + Math.sin(this.isoPhase));
                 channelLeft[i] = sampleLeft * pulse;
                 channelRight[i] = sampleRight * pulse;
             }
@@ -97,8 +97,18 @@ registerProcessor('binaural-processor', BinauralProcessor);
 `;
 
 export function initAudio() {
-    if (!state.audioCtx) {
-        window.__debugAudioCtx = state.audioCtx = new AudioContext();
+    if (!state.audioCtx || state.audioCtx.state === 'closed') {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        window.__debugAudioCtx = state.audioCtx = new AudioContextClass();
+        state.workletInitialized = false;
+        state.audioCtx.onstatechange = () => {
+            console.log('[Audio] Context state changed:', state.audioCtx.state);
+            if (state.audioCtx.state === 'suspended' && state.isPlaying) {
+                if (uiCallback) uiCallback(false);
+            } else if (state.audioCtx.state === 'running' && state.isPlaying) {
+                if (uiCallback) uiCallback(true);
+            }
+        };
     }
     if (state.audioCtx.state === 'suspended') {
         state.audioCtx.resume().catch(e => console.warn("Resume aborted", e));
@@ -131,6 +141,68 @@ async function setupWorklet() {
     }
 }
 
+export function getSafeMasterVolume() {
+    if (!els.masterVolSlider) return 1.0;
+    const v = parseFloat(els.masterVolSlider.value);
+    return isNaN(v) ? 1.0 : Math.max(0, Math.min(1, v));
+}
+
+export function getSafeBeatsVolume() {
+    if (!els.volSlider) return 0.5;
+    const v = parseFloat(els.volSlider.value);
+    return isNaN(v) ? 0.5 : Math.max(0, Math.min(1, v));
+}
+
+export function getSafeAtmosVolume() {
+    if (!els.atmosMasterSlider) return 0.8;
+    const v = parseFloat(els.atmosMasterSlider.value);
+    return isNaN(v) ? 0.8 : Math.max(0, Math.min(1, v));
+}
+
+export function ensureMasterAudioChain() {
+    if (!state.audioCtx || state.audioCtx.state === 'closed') initAudio();
+    if (!state.masterGain) {
+        state.masterGain = state.audioCtx.createGain();
+        state.masterGain.gain.value = 0;
+        state.masterPanner = state.audioCtx.createStereoPanner ? state.audioCtx.createStereoPanner() : state.audioCtx.createGain();
+        state.masterCompressor = state.audioCtx.createDynamicsCompressor();
+        state.masterCompressor.threshold.value = -3;
+        state.masterCompressor.knee.value = 12;
+        state.masterCompressor.ratio.value = 2;
+        state.masterCompressor.attack.value = 0.05;
+        state.masterCompressor.release.value = 0.1;
+        state.analyserLeft = state.audioCtx.createAnalyser();
+        state.analyserRight = state.audioCtx.createAnalyser();
+        state.analyserLeft.fftSize = 2048;
+        state.analyserRight.fftSize = 2048;
+        state.limiter = state.audioCtx.createDynamicsCompressor();
+        state.limiter.threshold.value = -1.0;
+        state.limiter.knee.value = 0;
+        state.limiter.ratio.value = 20.0;
+        state.limiter.attack.value = 0.001;
+        state.limiter.release.value = 0.1;
+        state.masterGain.connect(state.analyserLeft);
+        state.masterGain.connect(state.analyserRight);
+        state.masterGain.connect(state.masterPanner);
+        state.masterPanner.connect(state.masterCompressor);
+        state.masterCompressor.connect(state.limiter);
+        state.limiter.connect(state.audioCtx.destination);
+        state.videoCaptureGain = state.audioCtx.createGain();
+        state.videoCaptureGain.gain.value = 1;
+        state.limiter.connect(state.videoCaptureGain);
+    }
+    if (!state.masterAtmosGain) {
+        state.masterAtmosGain = state.audioCtx.createGain();
+        state.masterAtmosGain.gain.value = 0;
+        state.masterAtmosGain.connect(state.masterGain);
+    }
+    if (!state.beatsGain) {
+        state.beatsGain = state.audioCtx.createGain();
+        state.beatsGain.gain.value = 0;
+        state.beatsGain.connect(state.masterGain);
+    }
+}
+
 export async function startAudio() {
     // Cancel any pending stop/fade sequences to prevent "intermittent" cutoffs
     cancelStopAudio();
@@ -156,10 +228,8 @@ export async function startAudio() {
         await setupWorklet();
         // Removed MediaStreamDestination here to prevent Safari Muting Bug
 
-        // Create Nodes
-        state.beatsGain = state.audioCtx.createGain();
-        state.masterAtmosGain = state.audioCtx.createGain();
-        state.masterGain = state.audioCtx.createGain();
+        // Ensure master audio bus is initialized and ready
+        ensureMasterAudioChain();
 
         if (state.workletInitialized) {
             try {
@@ -188,60 +258,15 @@ export async function startAudio() {
             }
         }
 
-        // Master Balance Panner
-        if (state.audioCtx.createStereoPanner) {
-            state.masterPanner = state.audioCtx.createStereoPanner();
-        } else {
-            console.warn("StereoPanner not supported for Master Balance");
-            state.masterPanner = state.audioCtx.createGain(); // Dummy fallback
-        }
 
-        state.masterCompressor = state.audioCtx.createDynamicsCompressor();
-        state.analyserLeft = state.audioCtx.createAnalyser();
-        state.analyserRight = state.audioCtx.createAnalyser();
-        state.analyserLeft.fftSize = 2048;
-        state.analyserRight.fftSize = 2048;
+
+
 
 
         // Connections
         if (state.binauralNode) {
             state.binauralNode.connect(state.beatsGain);
         }
-        state.beatsGain.connect(state.masterGain);
-        state.masterAtmosGain.connect(state.masterGain);
-
-        // SYNC FIX: Connect analysers to MASTER gain instead of just oscillators
-        // This ensures visuals react to ALL sounds (Nature, Music, Binaural)
-        state.masterGain.connect(state.analyserLeft);
-        state.masterGain.connect(state.analyserRight);
-
-        // Output Chain: Gain -> Panner -> Compressor -> Limiter -> Dest
-        state.masterGain.connect(state.masterPanner);
-        state.masterPanner.connect(state.masterCompressor);
-
-        // Safety Limiter (Promoted to state to avoid GC)
-        state.limiter = state.audioCtx.createDynamicsCompressor();
-        state.limiter.threshold.value = -1.0;
-        state.limiter.knee.value = 0;
-        state.limiter.ratio.value = 20.0;
-        state.limiter.attack.value = 0.001;
-        state.limiter.release.value = 0.1;
-
-        state.masterCompressor.connect(state.limiter);
-        state.limiter.connect(state.audioCtx.destination);
-
-        // Recording Route
-        state.videoCaptureGain = state.audioCtx.createGain();
-        state.videoCaptureGain.gain.value = 1;
-        state.limiter.connect(state.videoCaptureGain);
-        // We do NOT create or connect `destStreamNode` here. It is lazily hooked in recorder.js!
-
-        // Compressor Settings
-        state.masterCompressor.threshold.value = -3;
-        state.masterCompressor.knee.value = 12;
-        state.masterCompressor.ratio.value = 2;
-        state.masterCompressor.attack.value = 0.05;
-        state.masterCompressor.release.value = 0.1;
 
         // Worklet Node
         console.log('[Worklet] Creating worklet node - workletInitialized:', state.workletInitialized);
@@ -264,14 +289,9 @@ export async function startAudio() {
         const beatFreq = parseFloat(els.beatSlider ? els.beatSlider.value : 10) || 10;
         console.log(`[Audio] startAudio reading sliders: Base=${baseFreq}Hz, Beat=${beatFreq}Hz`);
 
-        const volVal = parseFloat(els.volSlider ? els.volSlider.value : 0.5);
-        const safeVol = isNaN(volVal) ? 0.5 : volVal;
-
-        const masterVal = parseFloat(els.masterVolSlider ? els.masterVolSlider.value : 1.0);
-        const safeMaster = isNaN(masterVal) ? 1.0 : masterVal;
-
-        const atmosVal = parseFloat(els.atmosMasterSlider ? els.atmosMasterSlider.value : 0.8);
-        const safeAtmos = isNaN(atmosVal) ? 0.8 : atmosVal;
+        const safeVol = getSafeBeatsVolume();
+        const safeMaster = getSafeMasterVolume();
+        const safeAtmos = getSafeAtmosVolume();
 
         state.isPlaying = true;
         updateFrequencies();
@@ -289,10 +309,12 @@ export async function startAudio() {
         state.beatsGain.gain.linearRampToValueAtTime(safeVol, now + 0.5);
 
         state.masterAtmosGain.gain.cancelScheduledValues(now);
-        state.masterAtmosGain.gain.setValueAtTime(safeAtmos, now);
+        state.masterAtmosGain.gain.setValueAtTime(0, now);
+        state.masterAtmosGain.gain.linearRampToValueAtTime(safeAtmos, now + 0.3);
 
         state.masterGain.gain.cancelScheduledValues(now);
-        state.masterGain.gain.setValueAtTime(safeMaster, now);
+        state.masterGain.gain.setValueAtTime(0, now);
+        state.masterGain.gain.linearRampToValueAtTime(safeMaster, now + 0.3);
 
         // Setup Media Session for lock screen controls
         setupMediaSession();
@@ -430,7 +452,8 @@ function clearMediaSession() {
 }
 
 export function stopAudio(immediate = false) {
-    if (!state.binauralNode && !state.oscLeft) return; // Keep oscLeft for backwards compat during transition
+    const hasAudio = state.isPlaying || state.binauralNode || state.oscLeft || (state.activeSoundscapes && Object.keys(state.activeSoundscapes).length > 0) || state.brownNoiseNode || state.pinkNoiseNode;
+    if (!hasAudio) return;
     if (state.isRecording) stopRecording();
 
     // Stop daily limit check
@@ -466,6 +489,7 @@ export function stopAudio(immediate = false) {
     if (state.brownNoiseNode) { try { state.brownNoiseNode.stop(); } catch (e) { } state.brownNoiseNode.disconnect(); state.brownNoiseNode = null; }
     if (state.brownNoiseGain) { state.brownNoiseGain.disconnect(); state.brownNoiseGain = null; }
     if (state.customAudioSource) { try { state.customAudioSource.disconnect(); } catch (e) { } state.customAudioSource = null; }
+    try { ambientSynth.stop(); } catch (e) { }
 
     const now = state.audioCtx.currentTime;
 
@@ -551,23 +575,24 @@ export function setAudioMode(mode) {
 
     console.log(`[Audio] Mode changed: ${prevMode} → ${mode}`);
 
-    // If audio is playing, we need to reconfigure the routing
-    if (wasPlaying && state.oscLeft && state.oscRight) {
+    // If audio is playing, reconfigure the routing
+    if (wasPlaying) {
         applyAudioMode();
     }
 }
 
 function applyAudioMode() {
-    if (!state.audioCtx || !state.binauralNode) return;
+    if (!state.audioCtx) return;
 
-    if (state.binauralNode.port) {
+    if (state.binauralNode && state.binauralNode.port) {
         state.binauralNode.port.postMessage({
             type: 'setMode',
             mode: state.audioMode || 'binaural'
         });
+        console.log(`[Audio] Applied mode (Worklet): ${state.audioMode}`);
+    } else if (state.oscLeft && state.oscRight) {
+        updateFrequencies();
     }
-
-    console.log(`[Audio] Applied mode (Worklet): ${state.audioMode}`);
 }
 
 export function getAudioMode() {
@@ -792,7 +817,7 @@ export function isSweepActive() {
 
 // Check if audio is currently playing
 export function isAudioPlaying() {
-    return state.isPlaying;
+    return state.isPlaying || (state.activeSoundscapes && Object.keys(state.activeSoundscapes).length > 0);
 }
 
 const noiseBufferCache = {};
@@ -874,11 +899,13 @@ function createBrownNoiseBuffer() {
 export function fadeIn(duration = 2) {
     if (!state.masterGain || !state.audioCtx) return;
     const now = state.audioCtx.currentTime;
-    const targetVol = parseFloat(els.masterVolSlider?.value || 1);
+    const targetVol = getSafeMasterVolume();
+    const currentVol = state.masterGain.gain.value;
+    const startVol = Math.min(currentVol, targetVol);
     state.masterGain.gain.cancelScheduledValues(now);
-    state.masterGain.gain.setValueAtTime(0, now);
+    state.masterGain.gain.setValueAtTime(startVol, now);
     state.masterGain.gain.linearRampToValueAtTime(targetVol, now + duration);
-    console.log(`[Audio] Fade in: ${duration}s`);
+    console.log(`[Audio] Fade in: ${duration}s from ${startVol.toFixed(2)} to ${targetVol.toFixed(2)}`);
 }
 
 /**
@@ -918,6 +945,12 @@ export function cancelFadeOut() {
         clearTimeout(state.fadeTimeout);
         state.fadeTimeout = null;
     }
+    if (state.masterGain && state.audioCtx) {
+        const now = state.audioCtx.currentTime;
+        const cur = state.masterGain.gain.value;
+        state.masterGain.gain.cancelScheduledValues(now);
+        state.masterGain.gain.setValueAtTime(cur, now);
+    }
 }
 
 
@@ -949,6 +982,7 @@ export function playCompletionChime() {
         const modulator = ctx.createOscillator();
         const modGain = ctx.createGain();
         const oscGain = ctx.createGain();
+        oscGain.gain.value = 0;
 
         // Modulator for FM synthesis
         modulator.frequency.value = freq * 2;
@@ -1070,6 +1104,7 @@ export function updateFrequencies() {
             state.brownNoiseNode.buffer = createBrownNoiseBuffer();
             state.brownNoiseNode.loop = true;
             state.brownNoiseGain = state.audioCtx.createGain();
+            state.brownNoiseGain.gain.value = 0;
             state.brownNoiseGain.gain.setValueAtTime(0, now);
             state.brownNoiseNode.connect(state.brownNoiseGain);
             state.brownNoiseGain.connect(state.masterAtmosGain);
@@ -1080,6 +1115,7 @@ export function updateFrequencies() {
             state.pinkNoiseNode.buffer = createPinkNoiseBuffer();
             state.pinkNoiseNode.loop = true;
             state.pinkNoiseGain = state.audioCtx.createGain();
+            state.pinkNoiseGain.gain.value = 0;
             state.pinkNoiseGain.gain.setValueAtTime(0, now);
             state.pinkNoiseNode.connect(state.pinkNoiseGain);
             state.pinkNoiseGain.connect(state.masterAtmosGain);
@@ -1111,16 +1147,22 @@ export function updateFrequencies() {
 
 export function updateBeatsVolume() {
     if (!els.volSlider) return;
-    const vol = parseFloat(els.volSlider.value);
+    const vol = getSafeBeatsVolume();
     if (els.volValue) els.volValue.textContent = `${Math.round(vol * 100)}%`;
-    if (state.beatsGain && state.isPlaying) state.beatsGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
+    if (state.beatsGain) {
+        if (state.isPlaying && state.audioCtx) state.beatsGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.05);
+        else state.beatsGain.gain.value = vol;
+    }
 }
 
 export function updateMasterVolume() {
     if (!els.masterVolSlider) return;
-    const vol = parseFloat(els.masterVolSlider.value);
+    const vol = getSafeMasterVolume();
     if (els.masterVolValue) els.masterVolValue.textContent = `${Math.round(vol * 100)}%`;
-    if (state.masterGain && state.isPlaying) state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1);
+    if (state.masterGain) {
+        if (state.isPlaying && state.audioCtx) state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.05);
+        else state.masterGain.gain.value = vol;
+    }
 }
 
 // ---- New Programmatic Volume Control Setters ----
@@ -1156,9 +1198,12 @@ export function updateMasterBalance() {
 
 export function updateAtmosMaster() {
     if (!els.atmosMasterSlider) return;
-    const vol = parseFloat(els.atmosMasterSlider.value);
+    const vol = getSafeAtmosVolume();
     if (els.atmosMasterValue) els.atmosMasterValue.textContent = `${Math.round(vol * 100)}%`;
-    if (state.masterAtmosGain && state.isPlaying) { state.masterAtmosGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.1); }
+    if (state.masterAtmosGain) {
+        if (state.isPlaying && state.audioCtx) state.masterAtmosGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.05);
+        else state.masterAtmosGain.gain.value = vol;
+    }
 }
 
 export function toggleSpatialOrbit(active) {
@@ -1169,7 +1214,9 @@ export function toggleSpatialOrbit(active) {
 }
 
 export function updateSoundscape(id, type, val) {
-    // Always save settings to state
+    if (!state.soundscapeSettings[id]) {
+        state.soundscapeSettings[id] = { vol: 0, tone: 0.5, speed: 0.5 };
+    }
     state.soundscapeSettings[id][type] = val;
 
     if (type === 'vol') {
@@ -1271,15 +1318,14 @@ function startSingleSoundscape(id, vol, tone, speed) {
         // Check if master gain exists, create if not
         if (!state.masterGain) {
             state.masterGain = state.audioCtx.createGain();
+            state.masterGain.gain.value = getSafeMasterVolume();
             state.masterGain.connect(state.audioCtx.destination);
         }
 
         // Connect atmos chain
         state.masterAtmosGain.connect(state.masterGain);
 
-        // Set initial volume from slider (or default)
-        const atmosVal = parseFloat(els.atmosMasterSlider?.value || 0.8);
-        state.masterAtmosGain.gain.value = atmosVal;
+        state.masterAtmosGain.gain.value = getSafeAtmosVolume();
 
         // Initialize Spatial Engine on the Atmos bus
         state.spatialEngine = new SpatialEngine(state.audioCtx, state.masterAtmosGain);
@@ -1287,7 +1333,10 @@ function startSingleSoundscape(id, vol, tone, speed) {
     }
 
     const channelGain = state.audioCtx.createGain();
-    channelGain.gain.setValueAtTime(vol, state.audioCtx.currentTime);
+    channelGain.gain.value = 0;
+    const scNow = state.audioCtx.currentTime;
+    channelGain.gain.setValueAtTime(0, scNow);
+    channelGain.gain.linearRampToValueAtTime(vol, scNow + 0.08);
     
     let spatialNode = null;
     if (state.spatialEngine) {
@@ -1429,6 +1478,7 @@ function startSingleSoundscape(id, vol, tone, speed) {
             crackle.type = 'square';
             crackle.frequency.value = 200 + (Math.random() * 800);
             const crackleEnv = state.audioCtx.createGain();
+            crackleEnv.gain.value = 0;
             const now = state.audioCtx.currentTime;
             crackleEnv.gain.setValueAtTime(0, now);
             crackleEnv.gain.linearRampToValueAtTime(0.15, now + 0.01);
@@ -1557,12 +1607,13 @@ function playOneShot(type, dest, tone) {
         mod.stop(t + 4); osc.stop(t + 4);
     }
     else if (type === 'wood') { const osc = state.audioCtx.createOscillator(), env = state.audioCtx.createGain(); osc.frequency.setValueAtTime((800 + Math.random() * 200) * pitchMult, t); osc.frequency.exponentialRampToValueAtTime(100, t + 0.1); env.gain.setValueAtTime(0.3, t); env.gain.exponentialRampToValueAtTime(0.001, t + 0.15); osc.connect(env); env.connect(dest); osc.start(t); osc.stop(t + 0.2); }
-    else if (type === 'timpani') { const osc = state.audioCtx.createOscillator(), gain = state.audioCtx.createGain(); const freq = (60 + Math.random() * 30) * pitchMult; osc.frequency.setValueAtTime(freq + (50 * pitchMult), t); osc.frequency.exponentialRampToValueAtTime(freq, t + 0.1); gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.6, t + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, t + 2.0); osc.connect(gain); gain.connect(dest); osc.start(t); osc.stop(t + 2.5); }
+    else if (type === 'timpani') { const osc = state.audioCtx.createOscillator(), gain = state.audioCtx.createGain(); gain.gain.value = 0; const freq = (60 + Math.random() * 30) * pitchMult; osc.frequency.setValueAtTime(freq + (50 * pitchMult), t); osc.frequency.exponentialRampToValueAtTime(freq, t + 0.1); gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.6, t + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, t + 2.0); osc.connect(gain); gain.connect(dest); osc.start(t); osc.stop(t + 2.5); }
     else if (type === 'forest_birds') {
         // Birds: high pitched sine chirps
         const fund = (2000 + Math.random() * 3000) * pitchMult;
         const osc = state.audioCtx.createOscillator();
         const gain = state.audioCtx.createGain();
+        gain.gain.value = 0;
         osc.frequency.setValueAtTime(fund, t);
         // Quick frequency slide for "chirp"
         osc.frequency.exponentialRampToValueAtTime(fund * 1.5, t + 0.05);
@@ -1680,21 +1731,23 @@ export function resetAllSoundscapes() {
         if (state.masterGain) {
             state.masterAtmosGain.connect(state.masterGain);
         } else {
-            try {
-                state.masterGain = state.audioCtx.createGain();
-                state.masterGain.connect(state.audioCtx.destination);
-                state.masterAtmosGain.connect(state.masterGain);
-            } catch (e) { }
+            ensureMasterAudioChain();
         }
-        // Restore volume
-        const atmosVal = parseFloat(els.atmosMasterSlider?.value || 0.8);
-        state.masterAtmosGain.gain.value = atmosVal;
+        state.masterAtmosGain.gain.value = getSafeAtmosVolume();
+        if (state.spatialEngine) {
+            if (typeof state.spatialEngine.setDestination === 'function') {
+                state.spatialEngine.setDestination(state.masterAtmosGain);
+            } else {
+                state.spatialEngine.destination = state.masterAtmosGain;
+            }
+        }
     }
 }
 
 // --- CUSTOM LOCAL AUDIO MIXING ---
 export function connectCustomAudio(audioElement) {
     if (!state.audioCtx) initAudio();
+    ensureMasterAudioChain();
 
     // Disconnect previous if exists
     if (state.customAudioSource) {

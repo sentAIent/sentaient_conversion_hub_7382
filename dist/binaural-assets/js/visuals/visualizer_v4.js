@@ -3671,6 +3671,11 @@ static CYMATIC_PATTERNS = [
             if (this.cymaticMaterial && this.cymaticMaterial.uniforms?.uColor) {
                 this.cymaticMaterial.uniforms.uColor.value.set(hex);
             }
+            if (this.cymaticsCore) {
+                const classId = this.cymaticsCore.activeClassId || 22;
+                this.cymaticsCore.setColor(classId, 1, hex);
+                this.cymaticsCore.setColor(classId, 2, secondaryColor);
+            }
             if (mode === 'snowflake' || !mode || mode === 'all') {
                 if (typeof this.setSnowColor === 'function') {
                     this.setSnowColor(hex);
@@ -4943,6 +4948,20 @@ window.setCymaticPattern = function(classId, variationId) {
             }
         }, 500);
     }
+    // Highlight active pattern button in UI
+    try {
+        document.querySelectorAll('.cymatics-pattern-btn').forEach(btn => {
+            const onclick = btn.getAttribute('onclick') || '';
+            if (onclick.includes(`setCymaticPattern(${classId}, ${variationId})`)) {
+                btn.classList.add('border-[var(--accent)]', 'ring-2', 'ring-[var(--accent)]/40', 'shadow-[0_0_15px_rgba(var(--accent-rgb,45,212,191),0.4)]');
+                btn.classList.remove('border-white/10');
+            } else {
+                btn.classList.remove('border-[var(--accent)]', 'ring-2', 'ring-[var(--accent)]/40', 'shadow-[0_0_15px_rgba(var(--accent-rgb,45,212,191),0.4)]');
+                btn.classList.add('border-white/10');
+            }
+        });
+        window.dispatchEvent(new CustomEvent('cymaticsPatternChanged', { detail: { classId, variationId } }));
+    } catch(e) {}
 };
 
 window.setCymaticColor = function(classId, colorIndex, hex) {

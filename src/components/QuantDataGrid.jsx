@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { rxdbService } from '../services/RxDBService';
 import Icon from './AppIcon';
 
-export default function QuantDataGrid() {
+export function QuantDataGrid() {
     const gridRef = useRef();
     const [rowData, setRowData] = useState([]);
     const [isDbReady, setIsDbReady] = useState(false);
@@ -81,20 +78,41 @@ export default function QuantDataGrid() {
                 </button>
             </div>
 
-            {/* The AG-Grid Container */}
-            <div className="flex-1 w-full ag-theme-alpine-dark" style={{ '--ag-background-color': '#0f172a', '--ag-header-background-color': '#1e293b', '--ag-border-color': '#334155' }}>
-                <AgGridReact
-                    ref={gridRef}
-                    rowData={rowData}
-                    columnDefs={columnDefs}
-                    defaultColDef={defaultColDef}
-                    animateRows={true}
-                    rowSelection="multiple"
-                    pagination={true}
-                    paginationPageSize={10}
-                    overlayNoRowsTemplate="<span class='text-slate-400'>Initializing local database...</span>"
-                />
+            {/* Native Clean Table */}
+            <div className="flex-1 w-full overflow-auto p-4 bg-slate-900/40">
+                {rowData.length === 0 ? (
+                    <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+                        Initializing local database...
+                    </div>
+                ) : (
+                    <table className="w-full text-left text-xs text-slate-300">
+                        <thead className="text-[11px] uppercase bg-slate-800/80 text-slate-400">
+                            <tr>
+                                <th className="p-2.5">Trace ID</th>
+                                <th className="p-2.5">Tier</th>
+                                <th className="p-2.5">Win Prob (%)</th>
+                                <th className="p-2.5">Source</th>
+                                <th className="p-2.5">Latency (ms)</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                            {rowData.map((row, idx) => (
+                                <tr key={row.id || idx} className="hover:bg-slate-800/30">
+                                    <td className="p-2.5 font-mono text-[11px]">{row.id || `trace_${idx}`}</td>
+                                    <td className={`p-2.5 font-bold ${row.userType === 'Enterprise' ? 'text-cyan-400' : 'text-purple-400'}`}>
+                                        {row.userType}
+                                    </td>
+                                    <td className="p-2.5">{typeof row.conversionScore === 'number' ? row.conversionScore.toFixed(2) + '%' : row.conversionScore}</td>
+                                    <td className="p-2.5 text-slate-400">{row.source}</td>
+                                    <td className="p-2.5 font-mono">{row.latencyMs} ms</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );
 }
+
+export default QuantDataGrid;

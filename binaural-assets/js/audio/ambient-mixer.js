@@ -1,6 +1,9 @@
 import { state } from '../state.js';
 import { SpatialEngine } from './spatial-engine.js';
 
+// Simple pink noise approx state
+let lastOut = 0;
+
 export class AmbientMixer {
     constructor(audioCtx, masterDest) {
         this.ctx = audioCtx;
@@ -27,7 +30,10 @@ export class AmbientMixer {
         this.tracks[id].active = true;
         
         const gainNode = this.ctx.createGain();
-        gainNode.gain.value = this.tracks[id].volume;
+        gainNode.gain.value = 0;
+        const now = this.ctx.currentTime;
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(this.tracks[id].volume, now + 0.08);
         
         const spatialNode = this.spatialEngine.createSpatialNode();
         gainNode.connect(spatialNode);
@@ -98,6 +104,12 @@ export class AmbientMixer {
             this.tracks[id].gainNode.gain.cancelScheduledValues(now);
             this.tracks[id].gainNode.gain.linearRampToValueAtTime(volume, now + 0.1);
         }
+    }
+
+    stopAll() {
+        Object.keys(this.tracks).forEach(id => {
+            if (this.tracks[id].active) this.stopTrack(id);
+        });
     }
 
     _createSolfeggio(freq, dest, nodes) {
@@ -249,7 +261,7 @@ export class AmbientMixer {
         
         // Low rumble
         const rumbleOsc = this.ctx.createOscillator();
-        rumbleOsc.type = 'brown'; // Fake it with low sine for now
+        rumbleOsc.type = 'sine'; // Low sine approximation
         rumbleOsc.frequency.value = 40;
         const rumbleGain = this.ctx.createGain();
         rumbleGain.gain.value = 0.3;
@@ -264,6 +276,3 @@ export class AmbientMixer {
         nodes.push(crackle, filter, rumbleOsc, rumbleGain);
     }
 }
-
-// Simple pink noise approx state
-let lastOut = 0;

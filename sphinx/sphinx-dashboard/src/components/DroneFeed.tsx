@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 
-export const DroneFeed: React.FC = () => {
+export const DroneFeed: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState('');
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     // Load flv.js from CDN to bypass npm restrictions and SSR issues
@@ -45,11 +47,26 @@ export const DroneFeed: React.FC = () => {
     };
   }, []);
 
+  if (!isVisible) return null;
+
   return (
     <div className="absolute top-[8vw] right-[1vw] z-40 w-[20vw] bg-black/90 border border-cyan-900 rounded-lg overflow-hidden shadow-[0_0_15px_rgba(8,145,178,0.3)]">
       <div className="bg-cyan-900/40 px-[0.5vw] py-[0.2vw] text-cyan-400 font-mono text-[0.8vw] flex justify-between items-center border-b border-cyan-900">
         <span>DJI MAVIC 2 PRO - LIVE STREAM</span>
-        <span className="animate-pulse text-red-500 text-[0.6vw]">● REC</span>
+        <div className="flex items-center space-x-2">
+          <span className="animate-pulse text-red-500 text-[0.6vw]">● REC</span>
+          <button
+            data-testid="btn-close-drone-feed"
+            onClick={() => {
+              setIsVisible(false);
+              if (onClose) onClose();
+            }}
+            className="text-cyan-400 hover:text-white transition-colors p-0.5 rounded cursor-pointer"
+            title="Close Live Stream"
+          >
+            <X size={14} />
+          </button>
+        </div>
       </div>
       <div className="relative w-full aspect-video bg-gray-900 flex items-center justify-center">
         {error ? (

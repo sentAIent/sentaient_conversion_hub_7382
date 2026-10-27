@@ -19,6 +19,7 @@ import { calculateFrequencyFromGoal, parseComplexGoal, findBestStoryForGoal } fr
 import { startPresenceHeartbeat, stopPresenceHeartbeat, subscribeToPresenceCounts, syncPresence } from '../services/presence-service.js';
 import { ambientSynth } from '../audio/ambient-synth.js';
 import { biometrics } from '../services/biometrics.js';
+import { saveFavoriteColor, getLocalFavoriteColors, getSupabase } from '../services/supabase.js';
 
 // ... (existing code)
 import { updateTopBarWidth, updateBottomBarWidth } from './resize-panels.js';
@@ -232,6 +233,10 @@ window.controls = {
         try {
             localStorage.setItem('mindwave_tab_left', targetId);
         } catch (e) {}
+
+        if (cleanId === 'favorites') {
+            try { if (typeof renderFavorites === 'function') renderFavorites(); } catch (e) {}
+        }
 
         // Re-bind or trigger resize for dynamic components if needed
         window.dispatchEvent(new CustomEvent('mw-tab-switched', { detail: { side: 'left', tabId: targetId } }));
@@ -1456,28 +1461,120 @@ export function setupUI() {
         });
     }
 
-    const cymaticsColorPicker = document.getElementById('cymaticsColorPicker');
-    if (cymaticsColorPicker) {
-        cymaticsColorPicker.addEventListener('input', () => {
-            const viz = getVisualizer();
-            if (viz?.setCymaticColor) viz.setCymaticColor(cymaticsColorPicker.value);
-        });
-    }
+    // Curated names for all 30 variations in Class 22
+    const CYMATIC_22_NAMES = [
+        "Fractal Heart", "Fluid Resonance", "Particle Swarm", "Quantum Topology",
+        "Prime Harmonic", "Metatron's Cube", "Obsidian Gold", "Abyssal Web",
+        "Nebula Plasma", "Emerald Matrix", "Mercury Crimson", "Quantum Crystal",
+        "Solar Flare", "Amethyst Fractal", "Astral Lotus", "Celestial Mandala",
+        "Quantum Flower", "Ethereal Nexus", "Neon Labyrinth", "Prismatic Core",
+        "Obsidian Bloom", "Void Resonance", "Golden Spiral", "Solar Resonance",
+        "Lunar Tides", "Cyber Lotus", "Bioluminescent Flora", "Chrono Vortex",
+        "Diamond Lattice", "Seraphim Harmonics"
+    ];
 
-    const cymaticsIntensitySlider = document.getElementById('cymaticsIntensitySlider');
-    const cymaticsIntensityVal   = document.getElementById('cymaticsIntensityVal');
-    if (cymaticsIntensitySlider) {
-        cymaticsIntensitySlider.addEventListener('input', () => {
-            const v = parseFloat(cymaticsIntensitySlider.value);
-            if (cymaticsIntensityVal) cymaticsIntensityVal.textContent = v === 0 ? 'Auto' : Math.round(v * 100) + '%';
-            const viz = getVisualizer();
-            if (viz?.cymaticMaterial) {
-                // Manual override: clamp auto-update in render loop
-                viz._cymaticIntensityOverride = v > 0 ? v : null;
-                viz.cymaticMaterial.uniforms.uIntensity.value = v > 0 ? v : 0.5;
+    // Modern Cymatics Class 22 UI & Floating Sync
+    function initCymaticsModernControls() {
+        // 1. Color Pickers across sidebar
+        document.querySelectorAll('.cymatic-color-picker').forEach(picker => {
+            picker.addEventListener('input', (e) => {
+                const classId = parseInt(e.target.dataset.class) || 22;
+                const colorIdx = parseInt(e.target.dataset.color) || 1;
+                const hex = e.target.value;
+                if (window.setCymaticColor) window.setCymaticColor(classId, colorIdx, hex);
+                const floatingPicker = document.getElementById(`cymaticsFloatingColor${colorIdx}`);
+                if (floatingPicker) floatingPicker.value = hex;
+            });
+        });
+
+        // 2. Intensity / Effect Sliders in sidebar
+        document.querySelectorAll('.cymatic-intensity-slider').forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const classId = parseInt(e.target.dataset.class) || 22;
+                const val = parseFloat(e.target.value);
+                const percent = Math.round(val * 100) + '%';
+                const readout = document.getElementById(`cymatic${classId}IntensityVal`) || e.target.parentElement.querySelector('.intensity-val');
+                if (readout) readout.textContent = percent;
+                if (window.setCymaticParam) window.setCymaticParam(classId, 'intensity', val);
+                const floatingSlider = document.getElementById('cymaticsFloatingIntensitySlider');
+                const floatingVal = document.getElementById('cymaticsFloatingIntensityVal');
+                if (floatingSlider) floatingSlider.value = val;
+                if (floatingVal) floatingVal.textContent = percent;
+            });
+        });
+
+        // 3. Floating Panel Controls
+        const floatingSlider = document.getElementById('cymaticsFloatingIntensitySlider');
+        const floatingVal = document.getElementById('cymaticsFloatingIntensityVal');
+        if (floatingSlider) {
+            floatingSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                const percent = Math.round(val * 100) + '%';
+                if (floatingVal) floatingVal.textContent = percent;
+                if (window.setCymaticParam) window.setCymaticParam(22, 'intensity', val);
+                const sideSlider = document.querySelector('.cymatic-intensity-slider[data-class="22"]');
+                const sideReadout = document.getElementById('cymatic22IntensityVal');
+                if (sideSlider) sideSlider.value = val;
+                if (sideReadout) sideReadout.textContent = percent;
+            });
+        }
+
+        const floatingColor1 = document.getElementById('cymaticsFloatingColor1');
+        if (floatingColor1) {
+            floatingColor1.addEventListener('input', (e) => {
+                if (window.setCymaticColor) window.setCymaticColor(22, 1, e.target.value);
+                const sidePicker = document.querySelector('.cymatic-color-picker[data-class="22"][data-color="1"]');
+                if (sidePicker) sidePicker.value = e.target.value;
+            });
+        }
+
+        const floatingColor2 = document.getElementById('cymaticsFloatingColor2');
+        if (floatingColor2) {
+            floatingColor2.addEventListener('input', (e) => {
+                if (window.setCymaticColor) window.setCymaticColor(22, 2, e.target.value);
+                const sidePicker = document.querySelector('.cymatic-color-picker[data-class="22"][data-color="2"]');
+                if (sidePicker) sidePicker.value = e.target.value;
+            });
+        }
+
+        const floatingRainbow = document.getElementById('cymaticsFloatingRainbowToggle');
+        if (floatingRainbow) {
+            floatingRainbow.addEventListener('change', (e) => {
+                const viz = getVisualizer();
+                if (viz?.cymaticsCore) viz.cymaticsCore.setRainbow(e.target.checked);
+                const sideRainbow = document.getElementById('cymaticsRainbowToggle');
+                if (sideRainbow) sideRainbow.checked = e.target.checked;
+            });
+        }
+
+        // 4. Color Sync from CymaticsCore palette loader
+        window.addEventListener('cymaticColorSync', (e) => {
+            const { classId, color1, color2 } = e.detail || {};
+            if (!color1) return;
+            document.querySelectorAll(`.cymatic-color-picker[data-class="${classId}"][data-color="1"]`).forEach(p => p.value = color1);
+            if (color2) {
+                document.querySelectorAll(`.cymatic-color-picker[data-class="${classId}"][data-color="2"]`).forEach(p => p.value = color2);
+            }
+            if (floatingColor1) floatingColor1.value = color1;
+            if (floatingColor2 && color2) floatingColor2.value = color2;
+        });
+
+        // 5. Pattern Changed Event (sync floating title & open floating panel if active)
+        window.addEventListener('cymaticsPatternChanged', (e) => {
+            const { classId, variationId } = e.detail || {};
+            const titleEl = document.getElementById('cymaticsFloatingTitle');
+            const floatingPanel = document.getElementById('cymaticsFloatingPanel');
+            if (titleEl) {
+                const name = (classId === 22 && CYMATIC_22_NAMES[variationId]) ? CYMATIC_22_NAMES[variationId] : `Variation ${variationId}`;
+                titleEl.textContent = `🔊 ${name}`;
+            }
+            if (floatingPanel) {
+                floatingPanel.classList.remove('hidden');
+                floatingPanel.classList.add('flex');
             }
         });
     }
+    initCymaticsModernControls();
 
     const cymaticsHarmonicsSlider = document.getElementById('cymaticsHarmonicsSlider');
     const cymaticsHarmonicsVal    = document.getElementById('cymaticsHarmonicsVal');
@@ -1619,6 +1716,9 @@ export function setupUI() {
 
         const viz = getVisualizer();
         if (viz) viz.setColor(newColor);
+        document.querySelectorAll('.cymatic-color-picker[data-class="22"][data-color="1"]').forEach(p => p.value = newColor);
+        const fc1 = document.getElementById('cymaticsFloatingColor1');
+        if (fc1) fc1.value = newColor;
 
         // Update button labels to match color
         if (els.audioLabel) els.audioLabel.style.color = newColor;
@@ -1663,30 +1763,11 @@ export function setupUI() {
     }
 
     if (els.saveColorBtn) {
-        els.saveColorBtn.addEventListener('click', async () => {
-            if (!state.currentUser) {
-                alert('Please log in to save your favorite colors.');
-                return;
-            }
-            try {
-                // We'll dynamically import getDoc, setDoc, doc from firebase.js
-                const fb = await import('../services/firebase.js');
-                const docRef = fb.doc(fb.db, 'users', state.currentUser.uid, 'profile', 'data');
-                const docSnap = await fb.getDoc(docRef);
-                let favorites = [];
-                if (docSnap.exists() && docSnap.data().favoriteColors) {
-                    favorites = docSnap.data().favoriteColors;
-                }
-                if (!favorites.includes(currentColor)) {
-                    favorites.push(currentColor);
-                    await fb.setDoc(docRef, { favoriteColors: favorites, updatedAt: fb.serverTimestamp() }, { merge: true });
-                    alert(`Color ${currentColor} saved to favorites!`);
-                } else {
-                    alert(`Color ${currentColor} is already in your favorites!`);
-                }
-            } catch (err) {
-                console.error('Error saving favorite color:', err);
-                alert('Failed to save color to profile.');
+        els.saveColorBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof window.saveActiveColorFavorite === 'function') {
+                await window.saveActiveColorFavorite(currentColor);
             }
         });
     }
@@ -1759,6 +1840,7 @@ export function setupUI() {
     // Safe Initialization Pattern
     try { initMixer(); } catch (e) { console.error("Mixer Init Failed:", e); }
     try { restoreStateFromLocal(); } catch (e) { console.error("State Restore Failed:", e); }
+    try { if (typeof renderFavorites === 'function') renderFavorites(); } catch (e) { console.error("Favorites Init Failed:", e); }
 
     // Initialization happened after applyVisualDefaults moved up
 
@@ -3802,7 +3884,10 @@ export function initMixer() {
         const settings = state.soundscapeSettings[s.id];
         const item = document.createElement('div');
         item.className = "soundscape-item p-2 rounded border border-[var(--border)] flex flex-col gap-1";
-        item.innerHTML = `<label class="text-[10px] font-semibold truncate mb-1 block atmos-label" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] fader-label font-normal">${s.bpm} BPM</span>` : ''}</label>
+        item.innerHTML = `<div class="flex items-center justify-between mb-1">
+<label class="text-[10px] font-semibold truncate block atmos-label" title="${s.label}">${s.label}${s.bpm ? ` <span class="text-[8px] fader-label font-normal">${s.bpm} BPM</span>` : ''}</label>
+<button onclick="window.toggleQuickFavorite('audio', '${s.id}', { soundscapeId: '${s.id}', title: '${s.label}', subtitle: 'Environmental Layer', vol: parseFloat(this.closest('.soundscape-item').querySelector('input[data-type=vol]')?.value || 0.35) })" class="text-white/30 hover:text-amber-400 p-0.5 text-[10px] transition-colors" title="Favorite this Soundscape">⭐</button>
+</div>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">VOL</span><input type="range" min="0" max="0.5" step="0.01" value="${settings.vol}" class="flex-1 h-1" data-id="${s.id}" data-type="vol"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="vol">${Math.round(settings.vol * 200)}%</span></div>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">TONE</span><input type="range" min="0" max="1" step="0.01" value="${settings.tone}" class="flex-1 tone-slider h-1" data-id="${s.id}" data-type="tone"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="tone">${Math.round(settings.tone * 100)}%</span></div>
 <div class="flex items-center gap-2"><span class="text-[8px] w-6 fader-label">SPD</span><input type="range" min="0" max="1" step="0.01" value="${settings.speed}" class="flex-1 speed-slider h-1" data-id="${s.id}" data-type="speed"><span class="text-[9px] font-mono w-8 text-right tabular-nums fader-value" data-val="speed">${Math.round(settings.speed * 100)}%</span></div>`;
@@ -6657,137 +6742,573 @@ export function setupMasterVisualControls() {
 
 
 // ==========================================
-// CUSTOM MIXES FEATURE
+// UNIFIED FAVORITES SYSTEM
+// Supports: Cymatics, Visuals, Beats, Audio, and Scenes (Combos)
 // ==========================================
-function saveCustomMixPrompt() {
-    const mixName = prompt("Enter a name for this custom mix:", "My Mix " + (getCustomMixes().length + 1));
-    if (!mixName) return;
+const DEFAULT_FAVORITES = [
+    {
+        id: 'starter-1',
+        type: 'combo',
+        title: 'Sacred Sri Yantra Flow',
+        subtitle: 'Class 22 Var 8 • 10.0 Hz Alpha • Mountain River',
+        badge: 'SCENE',
+        icon: '🌟',
+        payload: {
+            baseFreq: 200,
+            beatFreq: 10.0,
+            vol: 0.5,
+            audioMode: 'binaural',
+            activeVisuals: ['cymatics'],
+            cymaticClass: 22,
+            cymaticVariation: 8,
+            activeSoundscapes: { river: { vol: 0.25, tone: 0.5, speed: 0.5 } }
+        },
+        createdAt: 1710000000000
+    },
+    {
+        id: 'starter-2',
+        type: 'cymatics',
+        title: 'Quantum Double Slit',
+        subtitle: 'Class 25 Var 0 • Probabilistic Wave Pattern',
+        badge: 'CYMATICS',
+        icon: '🌊',
+        payload: {
+            classId: 25,
+            variationId: 0,
+            color1: '#60a9ff',
+            color2: '#d946ef'
+        },
+        createdAt: 1710000001000
+    },
+    {
+        id: 'starter-3',
+        type: 'beat',
+        title: '528 Hz DNA Miracle & Repair',
+        subtitle: 'Solfeggio Resonance • Transformation & Healing',
+        badge: 'BEAT',
+        icon: '🧠',
+        payload: {
+            presetKey: 'heal-528',
+            baseFreq: 528,
+            beatFreq: 8.0,
+            audioMode: 'binaural'
+        },
+        createdAt: 1710000002000
+    },
+    {
+        id: 'starter-4',
+        type: 'visual',
+        title: 'Cyber Net 3D Matrix',
+        subtitle: 'Reactive Neon Grid • Cyber Wireframe Space',
+        badge: 'VISUAL',
+        icon: '🎨',
+        payload: {
+            mode: 'cyber',
+            color: '#00FF41'
+        },
+        createdAt: 1710000003000
+    },
+    {
+        id: 'starter-5',
+        type: 'combo',
+        title: 'Cosmic Meditation & Deep Rain',
+        subtitle: 'Galaxy Stars • 7.83 Hz Schumann • Heavy Rain',
+        badge: 'SCENE',
+        icon: '🌌',
+        payload: {
+            baseFreq: 136.1,
+            beatFreq: 7.83,
+            vol: 0.5,
+            audioMode: 'binaural',
+            activeVisuals: ['galaxy'],
+            cymaticClass: 3,
+            cymaticVariation: 1,
+            activeSoundscapes: { rain: { vol: 0.35, tone: 0.5, speed: 0.5 }, bells: { vol: 0.15, tone: 0.5, speed: 0.5 } }
+        },
+        createdAt: 1710000004000
+    }
+];
+
+let currentFavoritesFilter = 'all';
+
+function getFavorites() {
+    try {
+        let favs = JSON.parse(localStorage.getItem('mindwave_favorites_v2') || 'null');
+        if (!favs || !Array.isArray(favs) || favs.length === 0) {
+            // Check legacy custom mixes
+            const legacyMixes = JSON.parse(localStorage.getItem('mindwave_custom_mixes') || '[]');
+            if (legacyMixes.length > 0) {
+                favs = legacyMixes.map(m => ({
+                    id: m.id || ('fav-' + Date.now()),
+                    type: 'combo',
+                    title: m.name || 'Custom Scene',
+                    subtitle: `${m.baseFreq || 200}Hz Base • Beat: ${m.beatFreq || 10}Hz`,
+                    badge: 'SCENE',
+                    icon: '🌟',
+                    payload: {
+                        baseFreq: m.baseFreq,
+                        beatFreq: m.beatFreq,
+                        vol: m.vol,
+                        audioMode: m.audioMode || 'binaural',
+                        activeVisuals: m.activeVisuals || [],
+                        cymaticClass: m.cymaticClass || 0,
+                        cymaticVariation: m.cymaticVariation || 0,
+                        activeSoundscapes: m.activeSoundscapes || {}
+                    },
+                    createdAt: Date.now()
+                }));
+            } else {
+                favs = [...DEFAULT_FAVORITES];
+            }
+            localStorage.setItem('mindwave_favorites_v2', JSON.stringify(favs));
+        }
+        return favs;
+    } catch (e) {
+        return [...DEFAULT_FAVORITES];
+    }
+}
+
+function saveCurrentScenePrompt() {
+    const favs = getFavorites();
+    const viz = window.getVisualizer && window.getVisualizer();
+    const activeModes = Array.from(viz && viz.activeModes || []);
+    const primaryVisual = activeModes[0] || 'Visual';
+    const beatSlider = (typeof els !== 'undefined' && els.beatSlider) || document.getElementById('beatSlider');
+    const baseSlider = (typeof els !== 'undefined' && els.baseSlider) || document.getElementById('baseSlider');
+    const volSlider = (typeof els !== 'undefined' && els.volSlider) || document.getElementById('volSlider');
+
+    const beatVal = beatSlider ? parseFloat(beatSlider.value) : (window.state?.beatFrequency || 10);
     
-    const mixes = getCustomMixes();
-    if (mixes.length >= 20) {
-        alert("You have reached the limit of 20 custom mixes. Please delete one first.");
+    const defaultName = prompt("Enter a name for this Favorite Scene / Combination:", `${primaryVisual.toUpperCase()} + ${beatVal}Hz Scene`);
+    if (!defaultName) return;
+
+    const baseVal = baseSlider ? parseFloat(baseSlider.value) : (window.state?.baseFrequency || 200);
+    const volVal = volSlider ? parseFloat(volSlider.value) : (window.state?.volume || 0.5);
+    const cClass = viz && viz.currentCymaticClass !== undefined ? viz.currentCymaticClass : 22;
+    const cVar = viz && viz.currentCymaticVariation !== undefined ? viz.currentCymaticVariation : 0;
+    
+    const newFav = {
+        id: 'fav-' + Date.now(),
+        type: 'scene',
+        title: defaultName,
+        subtitle: `${baseVal}Hz Base • ${beatVal}Hz Beat • ${activeModes.join(', ') || 'Cymatics'}`,
+        badge: 'SCENE',
+        icon: '⭐',
+        payload: {
+            baseFreq: baseVal,
+            beatFreq: beatVal,
+            vol: volVal,
+            audioMode: window.state?.audioMode || 'binaural',
+            activeVisuals: activeModes,
+            cymaticClass: cClass,
+            cymaticVariation: cVar,
+            activeSoundscapes: { ...(window.state?.soundscapeSettings || {}) }
+        },
+        createdAt: Date.now()
+    };
+
+    favs.unshift(newFav);
+    localStorage.setItem('mindwave_favorites_v2', JSON.stringify(favs));
+    renderFavorites(currentFavoritesFilter);
+    if (window.showToast) window.showToast('Scene Saved to Favorites!', 'success');
+}
+
+function toggleQuickFavorite(type, id, metadata = {}) {
+    let favs = getFavorites();
+    const existingIndex = favs.findIndex(f => {
+        if (f.type !== type || !f.payload) return false;
+        if (type === 'cymatics') {
+            return f.payload.classId === metadata.classId && f.payload.variationId === metadata.variationId;
+        }
+        if (type === 'visual') return f.payload.mode === (metadata.mode || id);
+        if (type === 'beat') return f.payload.presetKey === (metadata.presetKey || id);
+        if (type === 'audio') return f.payload.soundscapeId === (metadata.soundscapeId || id);
+        return f.payload.id === id;
+    });
+
+    if (existingIndex >= 0) {
+        favs.splice(existingIndex, 1);
+        localStorage.setItem('mindwave_favorites_v2', JSON.stringify(favs));
+        renderFavorites(currentFavoritesFilter);
+        if (window.showToast) window.showToast(`Removed from Favorites: ${metadata.title || id}`, 'info');
+        return false;
+    } else {
+        const newFav = {
+            id: 'fav-' + Date.now(),
+            type: type,
+            title: metadata.title || id,
+            subtitle: metadata.subtitle || '',
+            badge: type.toUpperCase(),
+            icon: metadata.icon || '⭐',
+            payload: { ...metadata },
+            createdAt: Date.now()
+        };
+        favs.unshift(newFav);
+        localStorage.setItem('mindwave_favorites_v2', JSON.stringify(favs));
+        renderFavorites(currentFavoritesFilter);
+        if (window.showToast) window.showToast(`Added to Favorites: ${metadata.title || id}`, 'success');
+        return true;
+    }
+}
+
+function deleteFavorite(id) {
+    if (!confirm("Are you sure you want to remove this favorite?")) return;
+    let favs = getFavorites();
+    favs = favs.filter(f => f.id !== id);
+    localStorage.setItem('mindwave_favorites_v2', JSON.stringify(favs));
+    renderFavorites(currentFavoritesFilter);
+    if (window.showToast) window.showToast('Favorite removed', 'info');
+}
+
+function ensureAudioIsPlaying() {
+    if (!state.isPlaying && typeof handlePlayClick === 'function') {
+        handlePlayClick();
+    }
+}
+
+function playFavorite(id) {
+    const favs = getFavorites();
+    const fav = favs.find(f => f.id === id);
+    if (!fav) return;
+
+    window._activeFavoriteId = id;
+
+    if (fav.type === 'combo' || fav.type === 'scene') {
+        const p = fav.payload;
+        // 1. Audio values
+        if (window.loadSettings) {
+            window.loadSettings({
+                settings: {
+                    base: p.baseFreq,
+                    beat: p.beatFreq,
+                    beatsVol: p.vol !== undefined ? p.vol : 0.5,
+                    audioMode: p.audioMode || 'binaural',
+                    soundscapes: p.activeSoundscapes || {}
+                }
+            });
+        }
+        // 2. Visuals
+        const viz = window.getVisualizer && window.getVisualizer();
+        if (viz) {
+            // clear current visuals
+            Array.from(viz.activeModes || []).forEach(m => {
+                if (viz.toggleMode) viz.toggleMode(m);
+            });
+            // enable saved visuals
+            if (p.activeVisuals && p.activeVisuals.length > 0) {
+                p.activeVisuals.forEach(mode => {
+                    if (window.setVisualMode) window.setVisualMode(mode, null, true);
+                });
+            }
+            if (p.activeVisuals && p.activeVisuals.includes('cymatics')) {
+                viz.currentCymaticClass = p.cymaticClass !== undefined ? p.cymaticClass : 22;
+                viz.currentCymaticVariation = p.cymaticVariation !== undefined ? p.cymaticVariation : 0;
+                if (viz.updateCymaticsUniforms) viz.updateCymaticsUniforms();
+            }
+        }
+        // 3. Ensure audio is playing
+        ensureAudioIsPlaying();
+        if (window.showToast) window.showToast(`Scene Activated: ${fav.title}`, 'success');
+
+    } else if (fav.type === 'cymatics') {
+        const p = fav.payload;
+        if (window.setCymaticPattern) {
+            window.setCymaticPattern(p.classId, p.variationId);
+        }
+        const viz = window.getVisualizer && window.getVisualizer();
+        if (viz) {
+            if (window.setVisualMode) window.setVisualMode('cymatics', null, true);
+            viz.currentCymaticClass = p.classId;
+            viz.currentCymaticVariation = p.variationId;
+            if (viz.updateCymaticsUniforms) viz.updateCymaticsUniforms();
+        }
+        if (window.showToast) window.showToast(`Cymatics Plate: ${fav.title}`, 'info');
+
+    } else if (fav.type === 'visual') {
+        const p = fav.payload;
+        if (p.color) {
+            const viz = window.getVisualizer && window.getVisualizer();
+            if (viz && viz.setColor) viz.setColor(p.color);
+            if (els.colorPreview) els.colorPreview.style.backgroundColor = p.color;
+            if (els.visualColorPicker) els.visualColorPicker.value = p.color;
+        }
+        if (p.mode && window.setVisualMode) {
+            window.setVisualMode(p.mode, null, true);
+        }
+        if (window.showToast) window.showToast(`Visual: ${fav.title}`, 'info');
+
+    } else if (fav.type === 'beat') {
+        const p = fav.payload;
+        if (p.presetKey && window.applyPreset) {
+            window.applyPreset(p.presetKey, null, true, true);
+        } else {
+            if (els.baseSlider && p.baseFreq) {
+                els.baseSlider.value = p.baseFreq;
+                els.baseSlider.dispatchEvent(new Event('input'));
+            }
+            if (els.beatSlider && p.beatFreq) {
+                els.beatSlider.value = p.beatFreq;
+                els.beatSlider.dispatchEvent(new Event('input'));
+            }
+            if (els.volSlider && p.vol !== undefined) {
+                els.volSlider.value = p.vol;
+                els.volSlider.dispatchEvent(new Event('input'));
+            }
+            ensureAudioIsPlaying();
+        }
+        if (window.showToast) window.showToast(`Beat Entrainment: ${fav.title}`, 'info');
+
+    } else if (fav.type === 'audio') {
+        const p = fav.payload;
+        if (p.soundscapeId) {
+            const vol = p.vol !== undefined ? p.vol : 0.4;
+            if (state.soundscapeSettings[p.soundscapeId]) {
+                state.soundscapeSettings[p.soundscapeId].vol = vol;
+            }
+            if (typeof updateSoundscape === 'function') {
+                updateSoundscape(p.soundscapeId, 'vol', vol);
+            }
+            const soundscapeContainer = document.getElementById('soundscapeContainer');
+            if (soundscapeContainer) {
+                const input = soundscapeContainer.querySelector(`input[data-id="${p.soundscapeId}"][data-type="vol"]`);
+                if (input) {
+                    input.value = vol;
+                    const valSpan = input.closest('div')?.querySelector('[data-val="vol"]');
+                    if (valSpan) valSpan.textContent = Math.round(vol * 200) + '%';
+                }
+            }
+            ensureAudioIsPlaying();
+        } else if (p.soundscapes) {
+            Object.entries(p.soundscapes).forEach(([sid, sset]) => {
+                const vol = typeof sset === 'number' ? sset : (sset.vol || 0);
+                if (state.soundscapeSettings[sid]) state.soundscapeSettings[sid].vol = vol;
+                if (typeof updateSoundscape === 'function') updateSoundscape(sid, 'vol', vol);
+            });
+            ensureAudioIsPlaying();
+        }
+        if (window.showToast) window.showToast(`Atmosphere: ${fav.title}`, 'info');
+    }
+
+    renderFavorites(currentFavoritesFilter);
+}
+
+function filterFavorites(cat) {
+    currentFavoritesFilter = cat;
+    renderFavorites(cat);
+}
+
+function renderFavorites(filter = 'all') {
+    currentFavoritesFilter = filter;
+    const container = document.getElementById('favoritesListContainer');
+    const legacyContainer = document.getElementById('customMixesContainer');
+    const countEl = document.getElementById('favoritesCountBadge') || document.getElementById('customMixCount');
+
+    // Update filter pill UI active state
+    const filterPills = document.querySelectorAll('.fav-filter-pill');
+    filterPills.forEach(pill => {
+        if (pill.dataset.filter === filter) {
+            pill.classList.remove('bg-white/5', 'text-[var(--text-muted)]', 'border-white/10');
+            pill.classList.add('bg-[var(--accent)]/20', 'text-[var(--accent)]', 'border-[var(--accent)]/50', 'active');
+        } else {
+            pill.classList.remove('bg-[var(--accent)]/20', 'text-[var(--accent)]', 'border-[var(--accent)]/50', 'active');
+            pill.classList.add('bg-white/5', 'text-[var(--text-muted)]', 'border-white/10');
+        }
+    });
+
+    const favs = getFavorites();
+    if (countEl) countEl.innerText = `${favs.length}`;
+
+    // Populate legacy container if present in Settings
+    if (legacyContainer) {
+        legacyContainer.innerHTML = '';
+        favs.filter(f => f.type === 'combo').forEach(mix => {
+            const btn = document.createElement('div');
+            btn.className = "flex items-center justify-between w-full p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all";
+            btn.innerHTML = `
+                <div class="flex-1 cursor-pointer flex flex-col" onclick="window.playFavorite('${mix.id}')">
+                    <span class="text-xs font-bold text-white mb-0.5">${mix.title}</span>
+                    <span class="text-[9px] text-[var(--text-muted)]">${mix.subtitle}</span>
+                </div>
+                <button onclick="window.deleteFavorite('${mix.id}')" class="p-2 ml-2 hover:bg-red-500/20 rounded-md text-white/50 hover:text-red-400 transition-colors" title="Delete Mix">
+                    <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+                        <line x1="18" x2="6" y1="6" y2="18"></line>
+                        <line x1="6" x2="18" y1="6" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+            legacyContainer.appendChild(btn);
+        });
+    }
+
+    if (!container) return;
+
+    const filtered = favs.filter(f => {
+        if (filter === 'all') return true;
+        if (filter === 'scenes' || filter === 'combos') return f.type === 'combo';
+        if (filter === 'cymatics') return f.type === 'cymatics';
+        if (filter === 'visuals') return f.type === 'visual';
+        if (filter === 'beats') return f.type === 'beat';
+        if (filter === 'audio') return f.type === 'audio';
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="p-6 text-center border border-dashed border-white/10 rounded-2xl bg-white/5 flex flex-col items-center justify-center gap-2">
+                <span class="text-2xl opacity-60">⭐</span>
+                <span class="text-xs font-bold text-white/80">No Favorites in this Category</span>
+                <span class="text-[10px] text-[var(--text-muted)] max-w-[200px]">Save your favorite cymatics, beats, visuals, or click the button above to snapshot your active scene.</span>
+            </div>
+        `;
         return;
     }
-    
-    // gather state
-    const newMix = {
-        id: 'custom-' + Date.now(),
-        name: mixName,
-        baseFreq: parseFloat(els.baseSlider ? els.baseSlider.value : 0),
-        beatFreq: parseFloat(els.beatSlider ? els.beatSlider.value : 0),
-        vol: parseFloat(els.volSlider ? els.volSlider.value : 0),
-        activeVisuals: Array.from(window.getVisualizer && window.getVisualizer().activeModes || []),
-        cymaticClass: window.getVisualizer && window.getVisualizer().currentCymaticClass || 0,
-        cymaticVariation: window.getVisualizer && window.getVisualizer().currentCymaticVariation || 0,
-        activeSoundscapes: { ...(window.state?.soundscapeSettings || {}) },
-        audioMode: window.state?.audioMode || 'binaural'
-    };
-    
-    mixes.push(newMix);
-    localStorage.setItem('mindwave_custom_mixes', JSON.stringify(mixes));
-    renderCustomMixes();
-    if (window.showToast) window.showToast('Custom Mix Saved!', 'success');
-}
 
-function getCustomMixes() {
-    try {
-        return JSON.parse(localStorage.getItem('mindwave_custom_mixes') || '[]');
-    } catch(e) {
-        return [];
-    }
-}
-
-function renderCustomMixes() {
-    const container = document.getElementById('customMixesContainer');
-    const countEl = document.getElementById('customMixCount');
-    if (!container) return;
-    
-    const mixes = getCustomMixes();
-    if(countEl) countEl.innerText = `${mixes.length}/20`;
-    
     container.innerHTML = '';
-    mixes.forEach(mix => {
-        const btn = document.createElement('div');
-        btn.className = "flex items-center justify-between w-full p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all";
-        
-        btn.innerHTML = `
-            <div class="flex-1 cursor-pointer flex flex-col" onclick="window.loadCustomMix('${mix.id}')">
-                <span class="text-xs font-bold text-white mb-0.5">${mix.name}</span>
-                <span class="text-[9px] text-[var(--text-muted)]">${mix.baseFreq}Hz | Beat: ${mix.beatFreq}Hz</span>
+    filtered.forEach(fav => {
+        const isActive = window._activeFavoriteId === fav.id;
+        const card = document.createElement('div');
+        card.className = `favorite-card p-3 rounded-xl border transition-all duration-300 flex items-center justify-between gap-3 group ${
+            isActive 
+                ? 'bg-[var(--accent)]/15 border-[var(--accent)] shadow-[0_0_15px_rgba(45,212,191,0.2)]' 
+                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+        }`;
+
+        let badgeColor = 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+        if (fav.type === 'cymatics') badgeColor = 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30';
+        else if (fav.type === 'visual') badgeColor = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+        else if (fav.type === 'beat') badgeColor = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+        else if (fav.type === 'audio') badgeColor = 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+
+        card.innerHTML = `
+            <div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onclick="window.playFavorite('${fav.id}')">
+                <div class="w-9 h-9 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-lg shrink-0 group-hover:scale-105 transition-transform">
+                    ${fav.icon || '⭐'}
+                </div>
+                <div class="flex flex-col min-w-0 flex-1">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-xs font-bold text-white truncate group-hover:text-[var(--accent)] transition-colors">${fav.title}</span>
+                        <span class="text-[8px] font-mono px-1.5 py-0.2 rounded border ${badgeColor} uppercase tracking-wider shrink-0">${fav.badge || fav.type}</span>
+                    </div>
+                    <span class="text-[9px] text-[var(--text-muted)] truncate">${fav.subtitle || ''}</span>
+                </div>
             </div>
-            <button onclick="window.deleteCustomMix('${mix.id}')" class="p-2 ml-2 hover:bg-red-500/20 rounded-md text-white/50 hover:text-red-400 transition-colors" title="Delete Mix">
-                <svg fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
-                    <line x1="18" x2="6" y1="6" y2="18"></line>
-                    <line x1="6" x2="18" y1="6" y2="18"></line>
-                </svg>
-            </button>
+            <div class="flex items-center gap-1 shrink-0">
+                <button onclick="window.playFavorite('${fav.id}')" class="p-2 rounded-lg bg-white/5 hover:bg-[var(--accent)] hover:text-black text-[var(--accent)] border border-white/10 transition-all" title="Play Favorite">
+                    <svg fill="currentColor" height="12" viewBox="0 0 24 24" width="12">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </button>
+                <button onclick="window.deleteFavorite('${fav.id}')" class="p-2 rounded-lg hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors" title="Delete Favorite">
+                    <svg fill="none" height="12" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12">
+                        <line x1="18" x2="6" y1="6" y2="18"></line>
+                        <line x1="6" x2="18" y1="6" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
         `;
-        container.appendChild(btn);
+        container.appendChild(card);
     });
 }
 
-function loadCustomMix(id) {
-    const mixes = getCustomMixes();
-    const mix = mixes.find(m => m.id === id);
-    if (!mix) return;
-    
-    // Set audio values
-    if (window.loadSettings) {
-        window.loadSettings({
-            settings: {
-                base: mix.baseFreq,
-                beat: mix.beatFreq,
-                beatsVol: mix.vol,
-                audioMode: mix.audioMode,
-                soundscapes: mix.activeSoundscapes,
-            }
-        });
-    }
-    
-    // Set Visuals
+// Window exports & backwards compatibility
+window.saveCurrentScenePrompt = saveCurrentScenePrompt;
+window.saveCustomMixPrompt = saveCurrentScenePrompt;
+window.toggleQuickFavorite = toggleQuickFavorite;
+window.playFavorite = playFavorite;
+window.loadCustomMix = playFavorite;
+window.deleteFavorite = deleteFavorite;
+window.deleteCustomMix = deleteFavorite;
+window.renderFavorites = renderFavorites;
+window.renderCustomMixes = renderFavorites;
+window.filterFavorites = filterFavorites;
+window.getFavorites = getFavorites;
+window.favoriteCurrentCymatics = function(classId) {
     const viz = window.getVisualizer && window.getVisualizer();
-    if (viz) {
-        // clear current visuals
-        Array.from(viz.activeModes).forEach(mode => {
-            if (viz.toggleMode) viz.toggleMode(mode);
-        });
-        
-        // enable saved visuals
-        if (mix.activeVisuals && mix.activeVisuals.length > 0) {
-            mix.activeVisuals.forEach(mode => {
-                if (window.setVisualMode) window.setVisualMode(mode, null, true);
-            });
-        }
-        
-        // Handle Cymatics specifically if it's active
-        if (mix.activeVisuals.includes('cymatics')) {
-            viz.currentCymaticClass = mix.cymaticClass;
-            viz.currentCymaticVariation = mix.cymaticVariation;
-            if (viz.updateCymaticsUniforms) {
-                viz.updateCymaticsUniforms();
-            }
-        }
+    const cId = classId !== undefined ? classId : (viz?.currentCymaticClass ?? 22);
+    const varId = viz?.currentCymaticVariation ?? 0;
+    const names = {
+        0: 'Fractal Heart', 1: 'Fluid Resonance', 2: 'Particle Swarm',
+        3: 'Quantum Topology', 4: 'Harmonic Petals', 5: 'Vortex Lattice'
+    };
+    const title = names[varId] ? `Plate ${varId}: ${names[varId]}` : `Cymatics Class ${cId} Var ${varId}`;
+    toggleQuickFavorite('cymatics', `cymatic_${cId}_${varId}`, {
+        classId: cId,
+        variationId: varId,
+        title: title,
+        subtitle: `Class ${cId} Harmonic Plate`,
+        icon: '🌊'
+    });
+};
+
+window.favoriteActiveBeat = function() {
+    const bSlider = (typeof els !== 'undefined' && els.beatSlider) || document.getElementById('beatSlider');
+    const carrierSlider = (typeof els !== 'undefined' && els.baseSlider) || document.getElementById('baseSlider');
+    const vSlider = (typeof els !== 'undefined' && els.volSlider) || document.getElementById('volSlider');
+    const base = carrierSlider ? parseFloat(carrierSlider.value) : 200;
+    const beat = bSlider ? parseFloat(bSlider.value) : 10;
+    const vol = vSlider ? parseFloat(vSlider.value) : 0.5;
+    const audioMode = (typeof state !== 'undefined' && state.audioMode) || 'binaural';
+    const beatTxt = document.getElementById('beatValue')?.textContent || `${beat.toFixed(1)}Hz`;
+    const baseTxt = document.getElementById('baseValue')?.textContent || `${base.toFixed(1)}Hz`;
+    toggleQuickFavorite('beat', `beat_${beat}_${base}`, {
+        baseFreq: base,
+        beatFreq: beat,
+        vol: vol,
+        audioMode: audioMode,
+        title: `${beatTxt} Entrainment (${audioMode.toUpperCase()})`,
+        subtitle: `${baseTxt} Carrier Pitch`,
+        icon: '🧠'
+    });
+};
+
+window.favoriteVisualMode = function(mode) {
+    if (!mode) return;
+    const title = (mode.charAt(0).toUpperCase() + mode.slice(1)) + ' Visual';
+    toggleQuickFavorite('visual', `visual_${mode}`, {
+        mode: mode,
+        title: title,
+        subtitle: `${mode.toUpperCase()} Canvas Effect`,
+        icon: '🎨'
+    });
+};
+
+window.saveActiveColorFavorite = async function(color) {
+    const viz = window.getVisualizer && window.getVisualizer();
+    const activeColor = color || (document.getElementById('visualColorPicker')?.value) || '#60a9ff';
+    const activeModes = Array.from((viz && viz.activeModes) || ['cyber']);
+    const primaryMode = activeModes[0] || 'cyber';
+    const uid = (typeof state !== 'undefined' && (state.currentUser?.id || state.currentUser?.uid)) || localStorage.getItem('guest_user_id');
+
+    // 1. Persist to Supabase and localStorage (No Firebase)
+    try {
+        await saveFavoriteColor(activeColor, uid);
+    } catch (e) {
+        console.warn('[Supabase] Non-fatal save error:', e);
     }
-    
-    if (window.showToast) window.showToast('Custom Mix Loaded', 'info');
-}
 
-function deleteCustomMix(id) {
-    if(!confirm("Are you sure you want to delete this custom mix?")) return;
-    let mixes = getCustomMixes();
-    mixes = mixes.filter(m => m.id !== id);
-    localStorage.setItem('mindwave_custom_mixes', JSON.stringify(mixes));
-    renderCustomMixes();
-}
+    // 2. Add to Favorites System so it appears in the ⭐ Favs tab under Visuals & All
+    const colorKey = activeColor.replace('#', '').toLowerCase();
+    toggleQuickFavorite('visual', `color_${colorKey}`, {
+        color: activeColor,
+        mode: primaryMode,
+        title: `Resonance: ${activeColor.toUpperCase()}`,
+        subtitle: `${primaryMode.toUpperCase()} • Chromatic Hue`,
+        icon: '🎨',
+        badge: 'COLOR'
+    });
 
-window.saveCustomMixPrompt = saveCustomMixPrompt;
-window.loadCustomMix = loadCustomMix;
-window.deleteCustomMix = deleteCustomMix;
-window.renderCustomMixes = renderCustomMixes;
+    // 3. Clean user feedback toast
+    if (window.showToast) {
+        window.showToast(`Color ${activeColor.toUpperCase()} saved to favorites (Supabase synced)`, 'success');
+    }
+};
 
-// call renderCustomMixes on load
+window.saveFavoriteColor = typeof saveFavoriteColor !== 'undefined' ? saveFavoriteColor : (async () => {});
+window.getFavoriteColors = typeof getLocalFavoriteColors !== 'undefined' ? getLocalFavoriteColors : (() => []);
+
+// call renderFavorites on load
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(renderCustomMixes, 1000);
+    setTimeout(renderFavorites, 1000);
 });
 
 // ==========================================

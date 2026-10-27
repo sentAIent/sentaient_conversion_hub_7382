@@ -6,6 +6,7 @@ interface RangeRingsPanelProps {
   onClose: () => void;
   centerCoordinates: { lat: number; lon: number };
   onRingsUpdate: (ringsGeoJSON: any | null) => void;
+  leftOffset?: string | number;
 }
 
 // Generate mathematically true geodesic circle on a sphere
@@ -31,7 +32,7 @@ function createGeodesicCircle(centerLat: number, centerLon: number, radiusKm: nu
   return coords;
 }
 
-export const RangeRingsPanel: React.FC<RangeRingsPanelProps> = ({ onClose, centerCoordinates, onRingsUpdate }) => {
+export const RangeRingsPanel: React.FC<RangeRingsPanelProps> = ({ onClose, centerCoordinates, onRingsUpdate, leftOffset }) => {
   const [rings, setRings] = useState<number[]>([5, 15, 30, 60]); // in NM
   const [unit, setUnit] = useState<'nm' | 'km' | 'mi'>('nm');
   const [customInput, setCustomInput] = useState('');
@@ -91,7 +92,14 @@ export const RangeRingsPanel: React.FC<RangeRingsPanelProps> = ({ onClose, cente
   };
 
   return (
-    <div className="fixed top-16 left-6 z-50 w-80 bg-neutral-950/95 border border-emerald-500/80 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.25)] backdrop-blur-md flex flex-col font-mono text-white overflow-hidden text-xs">
+    <div 
+      style={{
+        left: leftOffset !== undefined ? leftOffset : (typeof window !== 'undefined' && window.innerWidth < 640 ? '12px' : '400px'),
+        maxHeight: 'calc(100vh - 5rem)'
+      }}
+      data-testid="range-rings-panel"
+      className="fixed top-16 z-50 w-80 max-w-[calc(100vw-1.5rem)] bg-neutral-950/95 border border-emerald-500/80 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.25)] backdrop-blur-md flex flex-col font-mono text-white overflow-hidden text-xs transition-all duration-300"
+    >
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-950/90 to-teal-950/90 px-4 py-3 border-b border-emerald-500/50 flex items-center justify-between">
         <div className="flex items-center gap-2 text-emerald-400 font-bold tracking-wider">
@@ -103,7 +111,7 @@ export const RangeRingsPanel: React.FC<RangeRingsPanelProps> = ({ onClose, cente
         </button>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 overflow-y-auto">
         {/* Center Coordinate Info */}
         <div className="bg-black/60 border border-white/10 rounded-lg p-2.5 space-y-1">
           <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Origin Position:</div>

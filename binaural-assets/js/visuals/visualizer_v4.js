@@ -51,7 +51,7 @@ static CYMATIC_PATTERNS = [
         this.cymaticClass = initialState.cymaticClass !== undefined ? initialState.cymaticClass : 22;
         this.cymaticVariation = initialState.cymaticVariation !== undefined ? initialState.cymaticVariation : 0;
         this.cymaticColors = initialState.cymaticColors || ['#EEA0EB', '#FFB1A3'];
-        this.snowSizeOverride = initialState.snowSizeOverride !== undefined ? initialState.snowSizeOverride : 0.5;
+        this.snowSizeOverride = initialState.snowSizeOverride !== undefined ? initialState.snowSizeOverride : 1.0;
         this.currentCymaticData = { name: "Fractal Heart", n: 1, m: 1, energy: 0.2 };
         this.cymaticsHistory = [];
         this.cymaticsHistoryIndex = -1;
@@ -1426,7 +1426,7 @@ static CYMATIC_PATTERNS = [
             ctx.rotate(angle);
 
             // Main arm
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = 3.2;
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.lineTo(0, -52);
@@ -1438,7 +1438,7 @@ static CYMATIC_PATTERNS = [
                 { d: 32, len: 20, angle: Math.PI / 4 },
                 { d: 46, len: 10, angle: Math.PI / 5 },
             ];
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 2.0;
             branchDefs.forEach(({ d, len, angle: ba }) => {
                 [1, -1].forEach(side => {
                     ctx.beginPath();
@@ -1455,15 +1455,19 @@ static CYMATIC_PATTERNS = [
         ctx.beginPath();
         for (let h = 0; h < 6; h++) {
             const ha = (h / 6) * Math.PI * 2 - Math.PI / 6;
-            const hx = cx + Math.cos(ha) * 4;
-            const hy = cy + Math.sin(ha) * 4;
+            const hx = cx + Math.cos(ha) * 5.5;
+            const hy = cy + Math.sin(ha) * 5.5;
             h === 0 ? ctx.moveTo(hx, hy) : ctx.lineTo(hx, hy);
         }
         ctx.closePath();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
         ctx.fill();
 
-        this.textures.snowflake = new THREE.CanvasTexture(canvas);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.generateMipmaps = false;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        this.textures.snowflake = tex;
         return this.textures.snowflake;
     }
 
@@ -1976,6 +1980,7 @@ static CYMATIC_PATTERNS = [
             fragmentShader,
             uniforms,
             transparent: true,
+            depthWrite: false,
             side: THREE.DoubleSide,
             wireframe: false
         });
@@ -2148,8 +2153,8 @@ static CYMATIC_PATTERNS = [
 
             // Snowflakes further back are smaller and dimmer
             const depth = (positions[i3 + 2] + 40) / 35; // 0=far, 1=near
-            sizes[i]    = 1.5 + depth * 8;                  // 1.5..9.5
-            opacities[i] = 0.2 + depth * 0.6;           // 0.2..0.8
+            sizes[i]    = 3.5 + depth * 9.5;                // 3.5..13.0
+            opacities[i] = 0.5 + depth * 0.5;           // 0.5..1.0
 
             phases[i]     = Math.random() * Math.PI * 2;
             speeds[i]     = 0.015 + Math.random() * 0.04 + depth * 0.03; // near=faster
@@ -2191,7 +2196,7 @@ static CYMATIC_PATTERNS = [
                     vSpinAngle = uTime * aSpinSpeed + aSpinPhase;
                     vec4 mv = modelViewMatrix * vec4(position, 1.0);
                     gl_Position = projectionMatrix * mv;
-                    gl_PointSize = aSize * uSizeMultiplier * (300.0 / -mv.z);
+                    gl_PointSize = max(8.0, aSize * uSizeMultiplier * (300.0 / -mv.z));
                 }
             `,
             fragmentShader: `
@@ -2209,19 +2214,21 @@ static CYMATIC_PATTERNS = [
                     if (abs(uv.x) > 0.5) discard;
                     vec4 tex = texture2D(uTexture, uv + vec2(0.5));
                     if (tex.a < 0.02) discard;
-                    // Dynamically tinted base color
-                    vec3 baseCol = mix(uColor, vec3(1.0), clamp(uIntensity, 0.0, 1.0));
-                    float glowAlpha = tex.a * vOpacity * (0.5 + uGlowAmount * 1.2);
-                    vec3 finalCol = baseCol * (1.0 + uGlowAmount * uIntensity * 1.5);
+                    // Luminous ice crystal base color with cyan rim resonance
+                    vec3 baseCol = mix(vec3(1.0), uColor, 0.25);
+                    float glowAlpha = tex.a * vOpacity * (0.85 + uGlowAmount * 0.4);
+                    vec3 finalCol = baseCol * (1.0 + uGlowAmount * uIntensity * 0.8);
                     gl_FragColor = vec4(finalCol, clamp(glowAlpha, 0.0, 1.0));
                 }
             `,
             transparent: true,
             depthWrite:  false,
-            blending:    THREE.AdditiveBlending,
+            blending:    THREE.NormalBlending,
         });
 
         const points = new THREE.Points(geo, mat);
+        points.renderOrder = 10;
+        this.snowflakeGroup.renderOrder = 10;
         this.snowflakeGroup.add(points);
 
         // Store animation data for the render loop
@@ -2235,8 +2242,9 @@ static CYMATIC_PATTERNS = [
     }
 
     setSnowSize(mult) {
+        this.snowSizeOverride = Math.max(0.2, Math.min(4.0, mult));
         if (this._snowData?.material) {
-            this._snowData.material.uniforms.uSizeMultiplier.value = Math.max(0.2, Math.min(4.0, mult));
+            this._snowData.material.uniforms.uSizeMultiplier.value = this.snowSizeOverride;
             console.log('[Viz] Snow Size Override:', mult);
         }
     }
@@ -2258,6 +2266,13 @@ static CYMATIC_PATTERNS = [
         if (this._snowData?.material) {
             this._snowData.material.uniforms.uGlowAmount.value = Math.max(0.0, Math.min(1.0, amount));
             console.log('[Viz] Snow Glow Override:', amount);
+        }
+    }
+
+    setSnowColor(hex) {
+        if (this._snowData?.material?.uniforms?.uColor) {
+            this._snowData.material.uniforms.uColor.value.set(hex);
+            console.log('[Viz] Snow Color Override:', hex);
         }
     }
 
@@ -3365,8 +3380,8 @@ static CYMATIC_PATTERNS = [
         
         // Snowflake Layering Logic: Show snow particles explicitly or when layered with ICE medium
         if (this.snowflakeGroup) {
-            const isIceMedium = this.cymaticMaterial && Math.abs(this.cymaticMaterial.uniforms.uMedium.value - 3.0) < 0.1;
-            this.snowflakeGroup.visible = this.activeModes.has('snowflake') || (this.activeModes.has('cymatics') && isIceMedium);
+            const isIceMedium = this.cymaticMaterial?.uniforms?.uMedium?.value !== undefined && Math.abs(this.cymaticMaterial.uniforms.uMedium.value - 3.0) < 0.1;
+            this.snowflakeGroup.visible = Boolean(this.activeModes.has('snowflake') || (this.activeModes.has('cymatics') && isIceMedium));
         }
 
         // Independently show 3D Cyber (Portal)
@@ -3378,17 +3393,9 @@ static CYMATIC_PATTERNS = [
         if (this.overlayCanvas) {
             if (this.activeModes.has('matrix')) {
                 this.overlayCanvas.classList.remove('hidden');
-                // Dim 3D scene significantly to let Matrix shine, UNLESS Cyber is active
-                if (this.activeModes.has('cyber')) {
-                    window.dispatchEvent(new CustomEvent('mindwave:set-dimmer', { detail: { value: 0.0 } }));
-                    this.wasAutoDimmed = false;
-                } else if (this.activeModes.size > 1) {
-                    window.dispatchEvent(new CustomEvent('mindwave:set-dimmer', { detail: { value: 0.7 } })); // 70% dim = 30% visibility
-                    this.wasAutoDimmed = true;
-                } else {
-                    window.dispatchEvent(new CustomEvent('mindwave:set-dimmer', { detail: { value: 0.0 } }));
-                    this.wasAutoDimmed = false;
-                }
+                // Keep 3D scene fully illuminated for layered multi-visual synthesis
+                window.dispatchEvent(new CustomEvent('mindwave:set-dimmer', { detail: { value: 0.0 } }));
+                this.wasAutoDimmed = false;
                 if (!this.matrixStreams || this.matrixStreams.length === 0) {
                     this.generateMatrixStyle();
                 }
@@ -3542,6 +3549,7 @@ static CYMATIC_PATTERNS = [
                 }
             `,
             transparent: true,
+            depthWrite: false,
             wireframe: false,
             side: THREE.DoubleSide,
             extensions: { derivatives: true }
@@ -3670,6 +3678,11 @@ static CYMATIC_PATTERNS = [
             }
             if (this.cymaticMaterial && this.cymaticMaterial.uniforms?.uColor) {
                 this.cymaticMaterial.uniforms.uColor.value.set(hex);
+            }
+            if (this.cymaticsCore) {
+                const classId = this.cymaticsCore.activeClassId || 22;
+                this.cymaticsCore.setColor(classId, 1, hex);
+                this.cymaticsCore.setColor(classId, 2, secondaryColor);
             }
             if (mode === 'snowflake' || !mode || mode === 'all') {
                 if (typeof this.setSnowColor === 'function') {
@@ -4130,9 +4143,9 @@ static CYMATIC_PATTERNS = [
                     pos[i3] += dx;
 
                     // Wrap positions
-                    if (pos[i3 + 1] < -22) pos[i3 + 1] = 22;
-                    if (pos[i3] > 35) pos[i3] = -35;
-                    if (pos[i3] < -35) pos[i3] = 35;
+                    if (pos[i3 + 1] < -32) pos[i3 + 1] = 32;
+                    if (pos[i3] > 45) pos[i3] = -45;
+                    if (pos[i3] < -45) pos[i3] = 45;
                 }
                 s.points.geometry.attributes.position.needsUpdate = true;
 
@@ -4151,9 +4164,9 @@ static CYMATIC_PATTERNS = [
                 // Sync Intensity with Audio & Drive 3D Y-Axis Spin
                 if (s.material && s.material.uniforms) {
                     if (s.material.uniforms.uIntensity) s.material.uniforms.uIntensity.value = 0.2 + vNormBass * 0.8;
-                    if (s.material.uniforms.uTime) s.material.uniforms.uTime.value = now * 0.001;
+                    if (s.material.uniforms.uTime) s.material.uniforms.uTime.value = now;
                 }
-                this.snowflakeGroup.rotation.y += 0.0015 * spdMult;
+                // Keep group stationary in forward frustum; individual crystals tumble in shader
             }
 
             // ── RAINFOREST / ZEN GARDEN ───────────────────────────────────
@@ -4811,6 +4824,12 @@ static CYMATIC_PATTERNS = [
         // Free cached buffers
         this._freqDataArray = null;
 
+        // Dispose cymaticsCore to free shaders and textures
+        if (this.cymaticsCore) {
+            try { this.cymaticsCore.dispose(); } catch (e) {}
+            this.cymaticsCore = null;
+        }
+
         if (this.renderer) { 
             try { this.renderer.forceContextLoss(); } catch(e) {} 
             this.renderer.dispose(); 
@@ -4943,6 +4962,20 @@ window.setCymaticPattern = function(classId, variationId) {
             }
         }, 500);
     }
+    // Highlight active pattern button in UI
+    try {
+        document.querySelectorAll('.cymatics-pattern-btn').forEach(btn => {
+            const onclick = btn.getAttribute('onclick') || '';
+            if (onclick.includes(`setCymaticPattern(${classId}, ${variationId})`)) {
+                btn.classList.add('border-[var(--accent)]', 'ring-2', 'ring-[var(--accent)]/40', 'shadow-[0_0_15px_rgba(var(--accent-rgb,45,212,191),0.4)]');
+                btn.classList.remove('border-white/10');
+            } else {
+                btn.classList.remove('border-[var(--accent)]', 'ring-2', 'ring-[var(--accent)]/40', 'shadow-[0_0_15px_rgba(var(--accent-rgb,45,212,191),0.4)]');
+                btn.classList.add('border-white/10');
+            }
+        });
+        window.dispatchEvent(new CustomEvent('cymaticsPatternChanged', { detail: { classId, variationId } }));
+    } catch(e) {}
 };
 
 window.setCymaticColor = function(classId, colorIndex, hex) {

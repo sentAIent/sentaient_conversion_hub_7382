@@ -84,7 +84,8 @@ export class VoiceSynth {
         
         const now = state.audioCtx.currentTime;
         const currentVol = state.masterGain.gain.value;
-        const masterSliderVol = parseFloat(document.getElementById('masterVolSlider')?.value || 1.0);
+        const parsedVol = parseFloat(document.getElementById('masterVolSlider')?.value);
+        const masterSliderVol = isNaN(parsedVol) ? 1.0 : Math.max(0, Math.min(1, parsedVol));
         
         // Cancel any pending fades
         state.masterGain.gain.cancelScheduledValues(now);
@@ -95,7 +96,8 @@ export class VoiceSynth {
             const duckVol = masterSliderVol * 0.4;
             state.masterGain.gain.linearRampToValueAtTime(duckVol, now + 0.5);
         } else {
-            // Restore to slider volume
+            // Restore to slider volume only if audio is still actively playing
+            if (!state.isPlaying) return;
             state.masterGain.gain.linearRampToValueAtTime(masterSliderVol, now + 1.0);
         }
     }

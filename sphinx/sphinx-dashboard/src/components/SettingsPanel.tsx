@@ -36,7 +36,7 @@ export default function SettingsPanel({ isOpen, onClose, settings, updateSetting
   };
 
   return (
-    <div className="absolute top-0 right-0 h-screen w-96 bg-black/90 border-l border-cyan-900/50 p-6 z-50 text-white font-mono shadow-[-10px_0_30px_rgba(8,145,178,0.2)] backdrop-blur-md overflow-y-auto">
+    <div className="absolute top-0 right-0 h-screen w-full sm:w-96 max-w-[100vw] bg-black/90 border-l border-cyan-900/50 p-6 z-50 text-white font-mono shadow-[-10px_0_30px_rgba(8,145,178,0.2)] backdrop-blur-md overflow-y-auto">
       <div className="flex justify-between items-center mb-6 border-b border-cyan-900/50 pb-2">
         <h2 className="text-xl font-bold text-cyan-400 tracking-widest">SYSTEM SETTINGS</h2>
         <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>

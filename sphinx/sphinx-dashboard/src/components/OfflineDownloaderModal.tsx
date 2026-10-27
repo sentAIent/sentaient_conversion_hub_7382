@@ -155,6 +155,9 @@ const modalContentStyle: React.CSSProperties = {
   padding: '30px',
   borderRadius: '8px',
   width: '500px',
+  maxWidth: 'calc(100vw - 32px)',
+  maxHeight: 'calc(100vh - 32px)',
+  overflowY: 'auto',
   color: 'white',
   fontFamily: 'monospace'
 };

@@ -70,7 +70,7 @@ export const PRESET_COMBOS = [
         description: 'Peaceful night sounds',
         icon: '🌙',
         preset: 'delta',
-        soundscapes: ['wind'],
+        soundscapes: ['mountain_wind'],
         visuals: ['galaxy', 'ocean', 'zengarden'],
         atmosVolume: 0.5,
         color: '#1e3a5f'
@@ -103,7 +103,7 @@ export const PRESET_COMBOS = [
         description: 'Intense productivity',
         icon: '⛈️',
         preset: 'gamma',
-        soundscapes: ['rain', 'wind'],
+        soundscapes: ['rain', 'mountain_wind'],
         visuals: ['rainforest', 'matrix', 'interstellar'],
         atmosVolume: 0.5,
         color: '#4b5563'

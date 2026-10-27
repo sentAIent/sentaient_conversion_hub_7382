@@ -10,7 +10,10 @@ const nextConfig = {
     images: { unoptimized: true }
   } : {
     async rewrites() {
-      return [{ source: '/api/:path*', destination: 'http://127.0.0.1:3117/api/:path*' }];
+      return [
+        { source: '/sphinx/:path*', destination: '/:path*' },
+        { source: '/api/:path*', destination: 'http://127.0.0.1:3117/api/:path*' }
+      ];
     }
   })
 };

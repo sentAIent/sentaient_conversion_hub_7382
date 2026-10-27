@@ -369,6 +369,9 @@ export async function playStory(storyId, intentOnly = false) {
         storyState.audioElement = new Audio(audioUrl);
         storyState.audioElement.volume = storyState.volume;
         storyState.audioElement.loop = false;
+        if (window.connectCustomAudio) {
+            window.connectCustomAudio(storyState.audioElement);
+        }
 
         // NEW: Graceful error handling for missing/broken audio assets
         storyState.audioElement.addEventListener('error', (e) => {
@@ -433,6 +436,9 @@ export function stopStory() {
     if (storyState.audioElement) {
         storyState.audioElement.pause();
         storyState.audioElement.currentTime = 0;
+        if (storyState.audioElement.src && storyState.audioElement.src.startsWith('blob:')) {
+            try { URL.revokeObjectURL(storyState.audioElement.src); } catch (e) {}
+        }
         storyState.audioElement = null;
     }
 

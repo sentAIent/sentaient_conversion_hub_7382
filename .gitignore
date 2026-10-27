@@ -44,5 +44,12 @@ sphinx/Crucix/
 sphinx/osiris/
 sphinx/ruview/
 tmp_home/solvent-agent/
+scratch/
+*.corrupt
+*.lock
+sphinx/test_screenshots/
+scratch_tile.png
+snowboarders-paradise/test_parse.js
+sphinx_cache.db*
 
 

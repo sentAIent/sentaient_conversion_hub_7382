@@ -1,88 +1,30 @@
-import { createRxDatabase, addRxPlugin } from 'rxdb';
-import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
-// Note: In production, we'd use storage-dexie (IndexedDB) for true offline persistence.
-// We use memory storage here for rapid prototyping in the Agent Studio.
-
 /**
- * Enterprise Local-First Database Service
- * Uses RxDB to provide offline-first, reactive data capabilities.
+ * Enterprise Local-First Reactive Database Service
+ * Self-contained in-memory & localStorage reactive state engine
  */
 class RxDBService {
     constructor() {
-        this.db = null;
         this.isReady = false;
-        
-        // Define our reactive schema for the Quant/Analytics grid
-        this.analyticsSchema = {
-            title: 'analytics schema',
-            version: 0,
-            description: 'Describes a conversion analytic data point',
-            primaryKey: 'id',
-            type: 'object',
-            properties: {
-                id: { type: 'string', maxLength: 100 },
-                userType: { type: 'string' },
-                conversionScore: { type: 'number' },
-                source: { type: 'string' },
-                latencyMs: { type: 'number' },
-                timestamp: { type: 'number' }
-            },
-            required: ['id', 'userType', 'conversionScore', 'timestamp']
-        };
-
-        this.rtsSchema = {
-            title: 'rts schema',
-            version: 0,
-            description: 'Stores permanent RTS game state like bases built',
-            primaryKey: 'id',
-            type: 'object',
-            properties: {
-                id: { type: 'string', maxLength: 100 },
-                statePayload: { type: 'object' },
-                lastUpdatedAt: { type: 'number' }
-            },
-            required: ['id', 'statePayload', 'lastUpdatedAt']
-        };
+        this.analyticsData = [];
+        this.analyticsListeners = new Set();
+        this.rtsState = null;
     }
 
     async init() {
-        if (this.isReady) return this.db;
+        if (this.isReady) return this;
 
+        // Try restoring RTS state from localStorage
         try {
-            console.log('[RxDB] Initializing local reactive database...');
-            this.db = await createRxDatabase({
-                name: 'sentaient_local_db',
-                storage: getRxStorageMemory(), // Using memory adapter for the sandbox
-                ignoreDuplicate: true
-            });
-
-            await this.db.addCollections({
-                analytics: {
-                    schema: this.analyticsSchema
-                },
-                rts: {
-                    schema: this.rtsSchema
-                }
-            });
-
-            this.isReady = true;
-            console.log('[RxDB] Database initialized successfully.');
-            
-            // Seed with initial dummy data if empty
-            await this.seedDummyData();
-            
-            return this.db;
-        } catch (error) {
-            console.error('[RxDB] Initialization Error:', error);
-            throw error;
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const savedRts = localStorage.getItem('sentaient_rts_state');
+                if (savedRts) this.rtsState = JSON.parse(savedRts);
+            }
+        } catch (e) {
+            console.warn('[RxDB] Could not load saved RTS state:', e);
         }
-    }
 
-    async seedDummyData() {
-        const count = await this.db.analytics.find().exec();
-        if (count.length > 0) return;
-
-        const dummyData = Array.from({ length: 50 }).map((_, i) => ({
+        // Seed with initial dummy analytics data
+        this.analyticsData = Array.from({ length: 25 }).map((_, i) => ({
             id: `row_${i}_${Date.now()}`,
             userType: i % 2 === 0 ? 'Enterprise' : 'Pro',
             conversionScore: parseFloat((Math.random() * 100).toFixed(2)),
@@ -91,51 +33,74 @@ class RxDBService {
             timestamp: Date.now() - (Math.random() * 10000000)
         }));
 
-        await this.db.analytics.bulkInsert(dummyData);
-        console.log(`[RxDB] Seeded ${dummyData.length} records.`);
+        this.isReady = true;
+        this.notifyAnalyticsListeners();
+        return this;
     }
 
-    /**
-     * Observable query that UI components can subscribe to
-     */
+    notifyAnalyticsListeners() {
+        const payload = this.analyticsData.map(d => ({
+            ...d,
+            toJSON: () => ({ ...d })
+        }));
+        this.analyticsListeners.forEach(listener => {
+            try {
+                listener(payload);
+            } catch (err) {
+                console.warn('[RxDB] Listener error:', err);
+            }
+        });
+    }
+
     getAnalyticsObservable() {
-        if (!this.isReady) return null;
-        return this.db.analytics.find().sort({ timestamp: 'desc' }).$;
+        return {
+            subscribe: (callback) => {
+                this.analyticsListeners.add(callback);
+                // Immediately emit current data
+                if (this.isReady) {
+                    const payload = this.analyticsData.map(d => ({
+                        ...d,
+                        toJSON: () => ({ ...d })
+                    }));
+                    callback(payload);
+                }
+                return {
+                    unsubscribe: () => {
+                        this.analyticsListeners.delete(callback);
+                    }
+                };
+            }
+        };
     }
 
-    /**
-     * Add a real-time data point (will automatically update the grid)
-     */
     async insertAnalytic(data) {
         if (!this.isReady) await this.init();
-        await this.db.analytics.insert({
+        const newRecord = {
             id: `row_${Date.now()}`,
             timestamp: Date.now(),
             ...data
-        });
+        };
+        this.analyticsData.unshift(newRecord);
+        this.notifyAnalyticsListeners();
     }
 
-    /**
-     * Save the entire RTS game state for persistence
-     */
     async saveRTSState(statePayload) {
         if (!this.isReady) await this.init();
-        // Upsert the single state record
-        await this.db.rts.upsert({
-            id: 'master_state',
-            statePayload,
-            lastUpdatedAt: Date.now()
-        });
+        this.rtsState = statePayload;
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                localStorage.setItem('sentaient_rts_state', JSON.stringify(statePayload));
+            }
+        } catch (e) {
+            console.warn('[RxDB] Could not save RTS state:', e);
+        }
     }
 
-    /**
-     * Retrieve the last saved RTS game state
-     */
     async getRTSState() {
         if (!this.isReady) await this.init();
-        const doc = await this.db.rts.findOne({ selector: { id: 'master_state' } }).exec();
-        return doc ? doc.statePayload : null;
+        return this.rtsState;
     }
 }
 
 export const rxdbService = new RxDBService();
+export default rxdbService;

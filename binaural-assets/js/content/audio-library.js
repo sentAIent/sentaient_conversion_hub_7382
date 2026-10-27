@@ -260,8 +260,10 @@ export async function playCustomAudio(trackId) {
     audioLibraryState.audioElement = new Audio(src);
     audioLibraryState.audioElement.volume = audioLibraryState.volume;
     audioLibraryState.audioElement.loop = true;
-    // Essential for Cloud CORS if needed (usually fine with public download URLs, but good practice)
     audioLibraryState.audioElement.crossOrigin = "anonymous";
+    if (window.connectCustomAudio) {
+        window.connectCustomAudio(audioLibraryState.audioElement);
+    }
 
     audioLibraryState.audioElement.addEventListener('ended', () => {
         // Loop is true, so this rarely fires unless loop=false
@@ -304,6 +306,9 @@ export function stopCustomAudio() {
     if (audioLibraryState.audioElement) {
         audioLibraryState.audioElement.pause();
         audioLibraryState.audioElement.currentTime = 0;
+        if (audioLibraryState.audioElement.src && audioLibraryState.audioElement.src.startsWith('blob:')) {
+            try { URL.revokeObjectURL(audioLibraryState.audioElement.src); } catch (e) {}
+        }
         audioLibraryState.audioElement = null;
     }
     audioLibraryState.isPlaying = false;

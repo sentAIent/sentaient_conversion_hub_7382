@@ -1,10 +1,11 @@
 "use client";
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import Map, { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import { Eye, EyeOff, RefreshCw, ChevronDown } from 'lucide-react';
 
-import { useSettings, LocationState, CustomPin } from '../lib/useSettings';
+import { useSettings, LocationState, CustomPin, UserTier, TIER_CONFIG, isFeatureAllowed } from '../lib/useSettings';
+import { TierUpgradeModal } from './TierUpgradeModal';
 import SettingsPanel from './SettingsPanel';
 import { GeocodingSearch } from './GeocodingSearch';
 import { OfflineDownloaderModal } from './OfflineDownloaderModal';
@@ -18,10 +19,34 @@ import { FieldManualsPanel } from './FieldManualsPanel';
 import { RangeRingsPanel } from './RangeRingsPanel';
 import { CelestialDomeModal } from './CelestialDomeModal';
 import { WeatherWindPanel } from './WeatherWindPanel';
+import { AviationSafetyPanel } from './AviationSafetyPanel';
 import { WindHudWidget } from './WindHudWidget';
+import { SphinxAIAssistant } from './SphinxAIAssistant';
+import { getCityCrimeData, CityCrimeData, CrimeIncident, NeighborhoodProfile, PRESET_METRO_NEIGHBORHOODS } from '../lib/intelligence/crimeEngine';
+import { MapAction, MapContext } from '../lib/intelligence/aiClient';
 import { DirectionsResult } from '../lib/directionsService';
 import { isPointInPolygon } from '../lib/geofence';
 import { computeFireSpreadForecast, WeatherVector } from '../lib/fireSpreadEngine';
+import { buildSurveillanceGeoJson, enrichOsmCameras, VENDOR_PALETTE, VERIFIED_SURVEILLANCE_REGISTRY } from '../lib/intelligence/cameraData';
+import { SurveillancePopupCard } from './SurveillancePopupCard';
+import { SentinelAlertBanner } from './SentinelAlertBanner';
+import { tacticalSentinel } from '../lib/sentinel/TacticalSentinelService';
+import { analyzeAircraftLoiter } from '../lib/intelligence/LoiterDetectionEngine';
+import { CitizenReconModal, CitizenReport } from './CitizenReconModal';
+import { offlineMesh } from '../lib/mesh/OfflineMeshService';
+import { CityCrimePanel } from './CityCrimePanel';
+import { RoadClosure3DLayer } from './RoadClosure3DLayer';
+import { Weather3DARLayer } from './Weather3DARLayer';
+import { SolarTerminator3DLayer } from './SolarTerminator3DLayer';
+import { DroneDock3DLayer } from './DroneDock3DLayer';
+import { ZeroBlindSpotAnalyticsHUD } from './ZeroBlindSpotAnalyticsHUD';
+import { ToxicPlume3DLayer } from './ToxicPlume3DLayer';
+import { ToxicSitePopupCard } from './ToxicSitePopupCard';
+import { HomebuyerSafetyModal } from './HomebuyerSafetyModal';
+import { ToxicSite, GLOBAL_TOXIC_SITES } from '../lib/intelligence/toxicSitesData';
+import { GlobalDataEngine, ViewportAuditResult } from '../lib/intelligence/globalDataEngine';
+import { getSnowboardResortsGeoJSON } from '../lib/routing/snowboardResorts';
+import { SnowboardResortPopup } from './SnowboardResortPopup';
 
 interface SelectedFeature {
   properties: any;
@@ -49,7 +74,7 @@ const BASE_MAP_STYLE = MAPBOX_TOKEN
       ]
     };
 
-const INTERACTIVE_LAYER_IDS = ['custom-pin-layer', 'custom-pin-label-layer', 'fire-spread-fill', 'cell-tower-cluster', 'spring-cluster', 'aircraft-layer', 'cell-tower-layer', 'spring-layer', 'disaster-layer', 'earthquake-layer', 'power-layer', 'aviation-layer', 'emergency-layer', 'camera-layer', 'weather-station-layer', 'data-center-layer', 'radar-layer', 'public-land-layer', 'campsite-layer', 'trail-layer', 'submarine-cable-layer', 'landing-point-layer', 'wildfire-layer', 'vessel-layer', 'vessel-circle-layer', 'atlas-obscura-layer', 'lightning-layer'];
+const INTERACTIVE_LAYER_IDS = ['custom-pin-layer', 'custom-pin-label-layer', 'fire-spread-fill', 'cell-tower-cluster', 'spring-cluster', 'snowboard-resorts-cluster', 'aircraft-layer', 'cell-tower-layer', 'spring-layer', 'disaster-layer', 'earthquake-layer', 'power-layer', 'aviation-layer', 'emergency-layer', 'camera-layer', 'camera-fov-layer', 'weather-station-layer', 'data-center-layer', 'radar-layer', 'public-land-layer', 'campsite-layer', 'trail-layer', 'submarine-cable-layer', 'landing-point-layer', 'wildfire-layer', 'vessel-layer', 'vessel-circle-layer', 'atlas-obscura-layer', 'lightning-layer', 'road-barricade-3d-extrusion', 'road-hazard-core-line', 'snowboard-resorts-point', 'snowboard-resorts-label'];
 
 const getSavedViewState = () => {
   if (typeof window === 'undefined') return null;
@@ -58,6 +83,13 @@ const getSavedViewState = () => {
     return s ? JSON.parse(s) : null;
   } catch { return null; }
 };
+
+const CAMERA_CIRCLE_COLOR_EXPR: any = [
+  'match', ['get', 'vendor'],
+  'flock', '#f59e0b', 'axon', '#3b82f6', 'ring', '#a855f7',
+  'motorola', '#10b981', 'genetec', '#06b6d4', 'verkada', '#ec4899',
+  'enforcement', '#ef4444', '#e2e8f0'
+];
 
 export default function SphinxMap() {
   const { settings, updateSettings, loading } = useSettings();
@@ -94,6 +126,11 @@ export default function SphinxMap() {
 
   const [droneData, setDroneData] = useState<any>(null);
   const [crimeData, setCrimeData] = useState<any[]>([]);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [aiInitialQuery, setAiInitialQuery] = useState<string | undefined>(undefined);
+  const [activeCityCrime, setActiveCityCrime] = useState<CityCrimeData | null>(null);
+  const [selectedCrimeIncident, setSelectedCrimeIncident] = useState<CrimeIncident | null>(null);
+  const [selectedCrimeNeighborhood, setSelectedCrimeNeighborhood] = useState<NeighborhoodProfile | null>(null);
 
   useEffect(() => {
     let ws: WebSocket | null = null;
@@ -131,10 +168,10 @@ export default function SphinxMap() {
   const [viewState, setViewState] = useState<any>(() => {
     const saved = getSavedViewState();
     return saved?.longitude != null ? saved : {
-      longitude: -77.0369,
-      latitude: 38.9072,
-      zoom: 13,
-      pitch: 45,
+      longitude: -98.5795,
+      latitude: 39.8283,
+      zoom: 4.2,
+      pitch: 0,
       bearing: 0
     };
   });
@@ -192,35 +229,59 @@ export default function SphinxMap() {
     };
   }, []);
 
-  const [aircraftFeatures, setAircraftFeatures] = useState([]);
-  const [cellTowerFeatures, setCellTowerFeatures] = useState([]);
-  const [springFeatures, setSpringFeatures] = useState([]);
+  const [aircraftFeatures, setAircraftFeatures] = useState<any[]>([]);
+  const [cellTowerFeatures, setCellTowerFeatures] = useState<any[]>([]);
+  const [springFeatures, setSpringFeatures] = useState<any[]>([]);
   const [isFetchingOverpass, setIsFetchingOverpass] = useState(false);
   const [overpassError, setOverpassError] = useState<string | null>(null);
-  const [disasterFeatures, setDisasterFeatures] = useState([]);
-  const [earthquakeFeatures, setEarthquakeFeatures] = useState([]);
-  const [powerFeatures, setPowerFeatures] = useState([]);
-  const [aviationFeatures, setAviationFeatures] = useState([]);
-  const [emergencyFeatures, setEmergencyFeatures] = useState([]);
-  const [cameraFeatures, setCameraFeatures] = useState([]);
-  const [weatherStationFeatures, setWeatherStationFeatures] = useState([]);
-  const [dataCenterFeatures, setDataCenterFeatures] = useState([]);
-  const [radarFeatures, setRadarFeatures] = useState([]);
-  const [publicLandFeatures, setPublicLandFeatures] = useState([]);
-  const [campsiteFeatures, setCampsiteFeatures] = useState([]);
-  const [trailFeatures, setTrailFeatures] = useState([]);
+  const [disasterFeatures, setDisasterFeatures] = useState<any[]>([]);
+  const [earthquakeFeatures, setEarthquakeFeatures] = useState<any[]>([]);
+  const [powerFeatures, setPowerFeatures] = useState<any[]>([]);
+  const [aviationFeatures, setAviationFeatures] = useState<any[]>([]);
+  const [emergencyFeatures, setEmergencyFeatures] = useState<any[]>([]);
+  const [cameraFeatures, setCameraFeatures] = useState<any[]>([]);
+  const [weatherStationFeatures, setWeatherStationFeatures] = useState<any[]>([]);
+  const [dataCenterFeatures, setDataCenterFeatures] = useState<any[]>([]);
+  const [radarFeatures, setRadarFeatures] = useState<any[]>([]);
+  const [publicLandFeatures, setPublicLandFeatures] = useState<any[]>([]);
+  const [campsiteFeatures, setCampsiteFeatures] = useState<any[]>([]);
+  const [trailFeatures, setTrailFeatures] = useState<any[]>([]);
   const [cableFeatures, setCableFeatures] = useState<any[]>([]);
   const [landingPointFeatures, setLandingPointFeatures] = useState<any[]>([]);
   const [wildfireFeatures, setWildfireFeatures] = useState<any[]>([]);
   const [vesselFeatures, setVesselFeatures] = useState<any[]>([]);
   const [obscuraFeatures, setObscuraFeatures] = useState<any[]>([]);
   const [rangeRingsGeoJSON, setRangeRingsGeoJSON] = useState<any | null>(null);
+  const [selectedDroneDockId, setSelectedDroneDockId] = useState<string | null>(null);
+  const [selectedToxicSite, setSelectedToxicSite] = useState<ToxicSite | null>(null);
+  const [selectedSnowboardResort, setSelectedSnowboardResort] = useState<any | null>(null);
+  const [globalSnowboardResorts, setGlobalSnowboardResorts] = useState<any | null>(null);
+  const [resortPistesLiftsData, setResortPistesLiftsData] = useState<any | null>(null);
+  const [isHomebuyerModalOpen, setIsHomebuyerModalOpen] = useState(false);
+  const [toxicSiteFeatures, setToxicSiteFeatures] = useState<any[]>([]);
+  const [auditResult, setAuditResult] = useState<ViewportAuditResult>(() => ({
+    sensor_density_score: 95,
+    live_data_percentage: 94,
+    active_feed_sources: ['ADS-B Global', 'AIS OpenWaters', 'DFR Autonomous Mesh', 'NASA FIRMS', 'USGS'],
+    blind_spots_detected: 0,
+    unincorporated_ratio: 0.15,
+    primary_jurisdiction: 'City of Newport Beach Municipal Corporation (NB-CITY)'
+  }));
 
   const [showFieldManuals, setShowFieldManuals] = useState(false);
   const [showRangeRings, setShowRangeRings] = useState(false);
   const [showCelestialDome, setShowCelestialDome] = useState(false);
   const [lightningFeatures, setLightningFeatures] = useState<any[]>([]);
   const [showWeatherWind, setShowWeatherWind] = useState(false);
+  const [showAviationSafety, setShowAviationSafety] = useState(false);
+  const [showTierUpgrade, setShowTierUpgrade] = useState(false);
+  const [tierUpgradeTrigger, setTierUpgradeTrigger] = useState<string | null>(null);
+  const [showCityCrimePanel, setShowCityCrimePanel] = useState(false);
+  const [showCitizenRecon, setShowCitizenRecon] = useState(false);
+  const [citizenReports, setCitizenReports] = useState<CitizenReport[]>([]);
+  const [meshPeersCount, setMeshPeersCount] = useState(1);
+  const [roadClosuresData, setRoadClosuresData] = useState<any | null>(null);
+  const [is3DView, setIs3DView] = useState(false);
   const satelliteDate = React.useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
@@ -232,7 +293,7 @@ export default function SphinxMap() {
   const [directionsResult, setDirectionsResult] = useState<DirectionsResult | null>(null);
   const [showDirections, setShowDirections] = useState(false);
   const [pickingRoutingPoint, setPickingRoutingPoint] = useState<'origin' | 'destination' | null>(null);
-  const [pickedRoutingPoint, setPickedRoutingPoint] = useState<{ target: 'origin' | 'destination'; lat: number; lng: number } | null>(null);
+  const [pickedRoutingPoint, setPickedRoutingPoint] = useState<{ target: 'origin' | 'destination'; lat: number; lng: number; address?: string } | null>(null);
   const [showSolarPanel, setShowSolarPanel] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
@@ -290,13 +351,43 @@ export default function SphinxMap() {
 
   
   const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
-const [legendScale, setLegendScale] = useState(1);
+  const [legendScale, setLegendScale] = useState(1);
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1920,
+    height: typeof window !== 'undefined' ? window.innerHeight : 1080
+  });
   useEffect(() => {
-    const handleResize = () => setLegendScale(window.innerWidth / 1920);
+    const handleResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      setWindowDimensions({ width: w, height: h });
+      setLegendScale(Math.min(1.05, Math.max(0.65, w / 1920)));
+      try {
+        mapRef.current?.resize();
+      } catch (e) {}
+    };
     handleResize();
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsLegendCollapsed(true);
+    }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const dynamicC2Left = useMemo(() => {
+    if (windowDimensions.width < 640) return '8px';
+    if (isLegendCollapsed) return '16px';
+    return windowDimensions.width < 768 ? '336px' : '400px';
+  }, [windowDimensions.width, isLegendCollapsed]);
+
+  const headerTier = useMemo<'full' | 'standard' | 'compact' | 'minimal' | 'mobile'>(() => {
+    const w = windowDimensions.width;
+    if (w >= 1480) return 'full';
+    if (w >= 1180) return 'standard';
+    if (w >= 900) return 'compact';
+    if (w >= 640) return 'minimal';
+    return 'mobile';
+  }, [windowDimensions.width]);
 
   
   // Hardcoded for now. Wait, how do we know if premium?
@@ -355,16 +446,7 @@ const [legendScale, setLegendScale] = useState(1);
   const loadAircraft = useCallback(async () => {
     if (!bboxRef.current) return;
     try {
-      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      if (!isLocal) return;
-      const res = await fetch(`http://127.0.0.1:3117/api/osint/aircraft?bbox=${bboxRef.current}`);
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data = await res.json();
-      const geojsonFeatures = (data.aircraft || []).map((a: any) => ({
-        type: 'Feature',
-        properties: { ...a, type: 'aircraft' },
-        geometry: { type: 'Point', coordinates: [a.longitude, a.latitude] }
-      }));
+      const geojsonFeatures = await GlobalDataEngine.fetchGlobalAircraft(bboxRef.current);
       setAircraftFeatures(geojsonFeatures);
 
       // Check for Geofence Alerts
@@ -467,6 +549,11 @@ const [legendScale, setLegendScale] = useState(1);
           .then(r => r.json())
           .then(d => setLightningFeatures(d.features || []))
           .catch(e => console.warn('[Sphinx GL] Failed to fetch lightning', e));
+
+        fetch(`http://127.0.0.1:3117/api/osint/road-closures?bbox=${bboxRef.current || ''}`)
+          .then(r => r.ok ? r.json() : fetch('/sphinx/data/road_closures.geojson').then(res => res.json()))
+          .then(d => setRoadClosuresData(d))
+          .catch(() => fetch('/sphinx/data/road_closures.geojson').then(r => r.json()).then(setRoadClosuresData).catch(() => {}));
       }
     } catch (e) {
       console.warn('[Sphinx GL] Failed to load high-priority data', e);
@@ -475,33 +562,22 @@ const [legendScale, setLegendScale] = useState(1);
 
   const loadMediumPriorityData = useCallback(async () => {
     try {
-      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      if (isLocal) {
-        fetch(`http://127.0.0.1:3117/api/osint/vessels?bbox=${bboxRef.current || ''}`)
-        .then(r => r.json())
-        .then(d => setVesselFeatures(d.features || []))
-        .catch(e => console.warn('[Sphinx GL] Failed to fetch vessels', e));
+      GlobalDataEngine.fetchGlobalVessels(bboxRef.current)
+        .then(f => setVesselFeatures(f))
+        .catch(() => {});
 
-      fetch(`http://127.0.0.1:3117/api/osint/disasters?timeframe=${timeframe}`)
-        .then(r => r.json())
-        .then(d => setDisasterFeatures(d.features || []))
-        .catch(e => console.warn('[Sphinx GL] Failed to fetch disaster data', e));
+      GlobalDataEngine.fetchGlobalDisasters(timeframe)
+        .then(f => setDisasterFeatures(f))
+        .catch(() => {});
 
-      fetch(`http://127.0.0.1:3117/api/osint/earthquakes?timeframe=${timeframe}`)
-        .then(r => r.json())
-        .then(d => setEarthquakeFeatures(d.features || []))
-        .catch(e => console.warn('[Sphinx GL] Failed to fetch earthquakes data', e));
+      GlobalDataEngine.fetchGlobalEarthquakes(timeframe)
+        .then(f => setEarthquakeFeatures(f))
+        .catch(() => {});
 
       fetch(`http://127.0.0.1:3117/api/osint/obscura`)
-        .then(r => r.json())
+        .then(r => r.ok ? r.json() : { features: [] })
         .then(d => setObscuraFeatures(d.features || []))
-        .catch(e => console.warn('[Sphinx GL] Failed to fetch obscura', e));
-      } else {
-        fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson')
-          .then(r => r.json())
-          .then(d => setEarthquakeFeatures(d.features || []))
-          .catch(() => {});
-      }
+        .catch(() => {});
     } catch (e) {
       console.warn('[Sphinx GL] Failed to load medium-priority data', e);
     }
@@ -509,18 +585,33 @@ const [legendScale, setLegendScale] = useState(1);
 
   const loadLowPriorityData = useCallback(async () => {
     try {
-      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      if (!isLocal) return;
-
-      fetch(`http://127.0.0.1:3117/api/osint/cables`)
+      fetch('/sphinx/data/submarine_cables.geojson')
         .then(r => r.json())
         .then(d => setCableFeatures(d.features || []))
-        .catch(e => console.warn('[Sphinx GL] Failed to fetch cables', e));
+        .catch(() => {});
 
-      fetch(`http://127.0.0.1:3117/api/osint/landing-points`)
+      fetch('/sphinx/data/landing_points.geojson')
         .then(r => r.json())
         .then(d => setLandingPointFeatures(d.features || []))
-        .catch(e => console.warn('[Sphinx GL] Failed to fetch landing points', e));
+        .catch(() => {});
+
+      fetch('/sphinx/data/snowboard_resorts_global.geojson')
+        .then(r => r.ok ? r.json() : fetch('/data/snowboard_resorts_global.geojson').then(r2 => r2.ok ? r2.json() : null))
+        .then(d => { if (d && d.features) setGlobalSnowboardResorts(d); })
+        .catch(() => {});
+
+      fetch('/sphinx/data/resorts/mt_baldy_pistes_lifts.geojson')
+        .then(r => r.ok ? r.json() : fetch('/data/resorts/mt_baldy_pistes_lifts.geojson').then(r2 => r2.ok ? r2.json() : null))
+        .then(d => { if (d && d.features) setResortPistesLiftsData(d); })
+        .catch(() => {});
+
+      GlobalDataEngine.fetchGlobalPublicLands(bboxRef.current)
+        .then(d => setPublicLandFeatures(d.features || []))
+        .catch(() => {});
+
+      GlobalDataEngine.fetchGlobalToxicSites(bboxRef.current)
+        .then(feats => setToxicSiteFeatures(feats))
+        .catch(() => {});
 
       loadWatchtowerData();
     } catch (e) {
@@ -583,15 +674,37 @@ const [legendScale, setLegendScale] = useState(1);
     }
   }, [loadHighPriorityData, loadMediumPriorityData, loadLowPriorityData, updateWeatherVector, updateBbox, viewState.latitude, viewState.longitude]);
 
+  const handleExecuteMapAction = useCallback((action: MapAction) => {
+    if (action.type === 'FLY_TO' && action.payload) {
+      if (mapRef.current) {
+        mapRef.current.flyTo({
+          center: [action.payload.lon, action.payload.lat],
+          zoom: action.payload.zoom || 14,
+          duration: 2200
+        });
+      }
+    } else if (action.type === 'LOAD_CRIME' && action.payload?.crimeData) {
+      setActiveCityCrime(action.payload.crimeData);
+      setCrimeData(action.payload.crimeData.incidents || []);
+      if (!settings.layers.crime_live) {
+        updateSettings({
+          layers: { ...settings.layers, crime_live: true }
+        });
+      }
+    }
+  }, [settings, updateSettings]);
+
   useEffect(() => {
     let highInterval: NodeJS.Timeout;
     let medInterval: NodeJS.Timeout;
     let lowInterval: NodeJS.Timeout;
 
     updateBbox();
-    loadHighPriorityData();
-    loadMediumPriorityData();
-    loadLowPriorityData();
+    if (bboxRef.current) {
+      loadHighPriorityData();
+      loadMediumPriorityData();
+      loadLowPriorityData();
+    }
     updateWeatherVector(viewState.latitude, viewState.longitude);
 
     if (timeframe === 'live') {
@@ -616,7 +729,82 @@ const [legendScale, setLegendScale] = useState(1);
       clearInterval(medInterval);
       clearInterval(lowInterval);
     };
-  }, [timeframe, loadHighPriorityData, loadMediumPriorityData, loadLowPriorityData, updateWeatherVector, updateBbox, viewState.latitude, viewState.longitude]);
+  }, [timeframe, loadHighPriorityData, loadMediumPriorityData, loadLowPriorityData, updateWeatherVector, updateBbox]);
+
+  useEffect(() => {
+    getCityCrimeData('Chicago', 41.8781, -87.6298).then(data => {
+      setActiveCityCrime(data);
+      setCrimeData(data.incidents || []);
+    });
+  }, []);
+
+  useEffect(() => {
+    const unsub = offlineMesh.subscribe((event) => {
+      if (event.type === 'THREAT_REPORT' && event.payload) {
+        setCitizenReports(prev => [event.payload, ...prev]);
+      }
+    });
+    const unsubPeers = offlineMesh.subscribePeersCount((count) => {
+      setMeshPeersCount(count);
+    });
+    return () => {
+      unsub();
+      unsubPeers();
+    };
+  }, []);
+
+  const handleSelectCityCrime = useCallback(async (cityName: string, lat?: number, lon?: number) => {
+    console.log('[SphinxMap] handleSelectCityCrime called with:', cityName, lat, lon);
+    let targetLat = lat;
+    let targetLon = lon;
+    if (!targetLat || !targetLon) {
+      const match = PRESET_METRO_NEIGHBORHOODS[cityName.toLowerCase()];
+      if (match && match.length > 0) {
+        targetLat = match[0].lat;
+        targetLon = match[0].lon;
+      } else {
+        try {
+          const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cityName)}&limit=1`);
+          const geo = await res.json();
+          if (geo?.features?.[0]?.geometry?.coordinates) {
+            targetLon = geo.features[0].geometry.coordinates[0];
+            targetLat = geo.features[0].geometry.coordinates[1];
+          }
+        } catch (e) {}
+        if (!targetLat || !targetLon) {
+          targetLat = viewState.latitude;
+          targetLon = viewState.longitude;
+        }
+      }
+    }
+    handleJumpTo({ lat: targetLat!, lon: targetLon!, zoom: 12 });
+    const data = await getCityCrimeData(cityName, targetLat!, targetLon!);
+    console.log('[SphinxMap] handleSelectCityCrime got data city:', data.city);
+    setActiveCityCrime(data);
+    setCrimeData(data.incidents || []);
+  }, [handleJumpTo, viewState.latitude, viewState.longitude]);
+
+  const handleSelectNeighborhood = useCallback((n: NeighborhoodProfile) => {
+    handleJumpTo({ lat: n.lat, lon: n.lon, zoom: 14 });
+  }, [handleJumpTo]);
+
+  const handleSubmitCitizenReport = useCallback((report: CitizenReport) => {
+    setCitizenReports(prev => [report, ...prev]);
+    offlineMesh.broadcastThreat(report);
+    const newPin: CustomPin = {
+      id: report.id,
+      label: `[RECON] ${report.title}`,
+      description: `${report.description} (${report.confidenceScore}% confidence)`,
+      lat: report.lat,
+      lon: report.lon,
+      color: report.type === 'camera' ? '#06b6d4' : report.type === 'hazard' ? '#ef4444' : '#f59e0b',
+      category: 'Recon',
+      createdAt: report.timestamp
+    };
+    updateSettings({
+      custom_pins: [...settings.custom_pins, newPin]
+    });
+  }, [settings.custom_pins, updateSettings]);
 
   const onMapClick = (e: any) => {
 
@@ -652,7 +840,7 @@ const [legendScale, setLegendScale] = useState(1);
       const feature = features[0];
       
       // Handle cluster clicks for seamless zooming
-      if (feature.layer.id === 'cell-tower-cluster' || feature.layer.id === 'spring-cluster') {
+      if (feature.layer.id === 'cell-tower-cluster' || feature.layer.id === 'spring-cluster' || feature.layer.id === 'snowboard-resorts-cluster') {
         const clusterId = feature.properties.cluster_id;
         const sourceId = feature.layer.source;
         const map = mapRef.current.getMap();
@@ -668,6 +856,18 @@ const [legendScale, setLegendScale] = useState(1);
         return; // Don't show popup for clusters
       }
 
+      if (feature.layer?.id?.startsWith('snowboard-resorts')) {
+        const coords = (feature.geometry as any)?.coordinates;
+        setSelectedSnowboardResort({
+          ...feature.properties,
+          lng: Number(feature.properties.lng ?? coords?.[0] ?? e.lngLat.lng),
+          lat: Number(feature.properties.lat ?? coords?.[1] ?? e.lngLat.lat)
+        });
+        setSelectedFeature(null);
+        return;
+      }
+      setSelectedSnowboardResort(null);
+
       setSelectedFeature({
         properties: feature.properties,
         layerId: feature.layer.id,
@@ -676,6 +876,7 @@ const [legendScale, setLegendScale] = useState(1);
       });
     } else {
       setSelectedFeature(null);
+      setSelectedSnowboardResort(null);
     }
   };
 
@@ -702,13 +903,14 @@ const [legendScale, setLegendScale] = useState(1);
     power: powerFeatures.length,
     aviation: aviationFeatures.length,
     emergency: emergencyFeatures.length,
-    cameras: cameraFeatures.length,
+    cameras: cameraFeatures.length + VERIFIED_SURVEILLANCE_REGISTRY.length,
     weather_stations: weatherStationFeatures.length,
     data_centers: dataCenterFeatures.length,
     radars: radarFeatures.length,
     public_lands: publicLandFeatures.length,
     campsites: campsiteFeatures.length,
     trails: trailFeatures.length,
+    snowboard_resorts: globalSnowboardResorts?.features?.length || 6296,
     submarine_cables: cableFeatures.length,
     landing_points: landingPointFeatures.length,
     wildfires: (() => {
@@ -721,6 +923,9 @@ const [legendScale, setLegendScale] = useState(1);
     vessels: vesselFeatures.length,
     atlas_obscura: obscuraFeatures.length,
     lightning: lightningFeatures.length,
+    crime_live: activeCityCrime?.totalIncidents || crimeData.length,
+    road_closures: roadClosuresData?.features?.filter((f: any) => f.geometry.type === 'Point').length || 8,
+    toxic_sites: GLOBAL_TOXIC_SITES.length,
   }), [
     settings.custom_pins, settings.layers.fire_spread_forecast, springFeatures, cellTowerFeatures, earthquakeFeatures,
     disasterFeatures, aircraftFeatures, powerFeatures, aviationFeatures,
@@ -738,7 +943,10 @@ const [legendScale, setLegendScale] = useState(1);
   const powerData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: powerFeatures }), [powerFeatures]);
   const aviationData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: aviationFeatures }), [aviationFeatures]);
   const emergencyData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: emergencyFeatures }), [emergencyFeatures]);
-  const cameraData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: cameraFeatures }), [cameraFeatures]);
+  const { cameraCollection: cameraData, fovCollection: cameraFovData } = React.useMemo(() => {
+    const enriched = cameraFeatures.length > 0 ? enrichOsmCameras(cameraFeatures) : [];
+    return buildSurveillanceGeoJson(enriched);
+  }, [cameraFeatures]);
   const weatherStationData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: weatherStationFeatures }), [weatherStationFeatures]);
   const dataCenterData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: dataCenterFeatures }), [dataCenterFeatures]);
   const radarData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: radarFeatures }), [radarFeatures]);
@@ -796,6 +1004,14 @@ const [legendScale, setLegendScale] = useState(1);
   const vesselData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: vesselFeatures }), [vesselFeatures]);
   const obscuraData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: obscuraFeatures }), [obscuraFeatures]);
   const lightningData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: lightningFeatures }), [lightningFeatures]);
+  const crimeGeoJson = React.useMemo(() => ({
+    type: 'FeatureCollection' as const,
+    features: (crimeData || []).map((incident: any) => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: [incident.lon, incident.lat] },
+      properties: { weight: incident.severity === 'high' ? 1.0 : incident.severity === 'medium' ? 0.6 : 0.3 }
+    }))
+  }), [crimeData]);
 
   const customPinsData = React.useMemo(() => ({
     type: 'FeatureCollection' as const,
@@ -813,6 +1029,16 @@ const [legendScale, setLegendScale] = useState(1);
   }), [settings.custom_pins]);
 
   const directionsData = React.useMemo(() => directionsResult?.routeGeoJSON || { type: 'FeatureCollection' as const, features: [] }, [directionsResult]);
+  const altRoutesData = React.useMemo(() => ({
+    type: 'FeatureCollection' as const,
+    features: (directionsResult?.alternativeRoutes || []).map((a: any) => ({
+      type: 'Feature' as const,
+      properties: { id: a.id, strategy: a.strategy },
+      geometry: a.routeGeoJSON?.geometry || a.routeGeoJSON
+    }))
+  }), [directionsResult]);
+
+  const snowboardResortsData = React.useMemo(() => globalSnowboardResorts || getSnowboardResortsGeoJSON(), [globalSnowboardResorts]);
   
   const geofencesData = React.useMemo(() => ({
     type: 'FeatureCollection' as const,
@@ -887,6 +1113,9 @@ const [legendScale, setLegendScale] = useState(1);
         mapStyle={isOfflineMode ? "http://localhost:3117/api/tiles/style.json" as any : BASE_MAP_STYLE as any}
         onLoad={(e) => {
           const map = e.target;
+          if (typeof window !== 'undefined') {
+            (window as any)._sphinxMap = map;
+          }
           map.on('styleimagemissing', (evt: any) => {
             const id = evt.id;
             if (id === 'plane-icon' && !map.hasImage(id)) {
@@ -935,6 +1164,14 @@ const [legendScale, setLegendScale] = useState(1);
             loadLowPriorityData();
             if (evt?.viewState) {
               updateWeatherVector(evt.viewState.latitude, evt.viewState.longitude);
+              setAuditResult(GlobalDataEngine.auditViewport(evt.viewState.latitude, evt.viewState.longitude, {
+                aircraft: aircraftFeatures.length,
+                vessels: vesselFeatures.length,
+                droneDocks: 20,
+                cameras: cameraFeatures.length,
+                wildfires: wildfireFeatures.length,
+                disasters: disasterFeatures.length
+              }));
             }
           }, 1500);
         }}
@@ -976,10 +1213,17 @@ const [legendScale, setLegendScale] = useState(1);
 
         {settings.layers.satellite && (
           <Source
+            key={settings.satellite_provider || 'hd_arcgis'}
             id="satellite-imagery"
             type="raster"
             tiles={[
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              settings.satellite_provider === 'nasa_viirs'
+                ? `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${satelliteDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`
+                : settings.satellite_provider === 'nasa_modis'
+                ? `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${satelliteDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`
+                : settings.satellite_provider === 'goes_live'
+                ? 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km/{z}/{x}/{y}.png'
+                : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
             ]}
             tileSize={256}
             maxzoom={19}
@@ -1049,6 +1293,69 @@ const [legendScale, setLegendScale] = useState(1);
           <Source id="weather-radar" type="raster" tiles={[weatherRadarUrl]} tileSize={256} maxzoom={7}>
             <Layer id="weather-radar-layer" type="raster" paint={{ 'raster-opacity': 0.65 }}  />
           </Source>
+        )}
+        {settings.layers.snowboard_trails && (
+          <>
+            <Source id="opensnowmap-pistes" type="raster" tiles={['https://tiles.opensnowmap.org/pistes/{z}/{x}/{y}.png']} tileSize={256} minzoom={8} maxzoom={18}>
+              <Layer id="snowboard-pistes-layer" type="raster" paint={{ 'raster-opacity': 0.88 }} />
+            </Source>
+            {resortPistesLiftsData && (
+              <Source id="resort-pistes-lifts" type="geojson" data={resortPistesLiftsData}>
+                <Layer 
+                  id="resort-lifts-line" 
+                  type="line" 
+                  filter={['==', ['get', 'type'], 'lift']}
+                  paint={{
+                    'line-color': '#f59e0b',
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 3.5, 16, 5],
+                    'line-dasharray': [2, 1.5]
+                  }}
+                />
+                <Layer 
+                  id="resort-pistes-line" 
+                  type="line" 
+                  filter={['==', ['get', 'type'], 'piste']}
+                  paint={{
+                    'line-color': ['coalesce', ['get', 'color'], '#3b82f6'],
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 4, 16, 6],
+                    'line-opacity': 0.9
+                  }}
+                />
+                <Layer 
+                  id="resort-lifts-label" 
+                  type="symbol" 
+                  minzoom={12}
+                  filter={['==', ['get', 'type'], 'lift']}
+                  layout={{
+                    'text-field': ['concat', '🚡 ', ['get', 'name']],
+                    'text-size': 11,
+                    'symbol-placement': 'line-center'
+                  }}
+                  paint={{
+                    'text-color': '#fde047',
+                    'text-halo-color': '#000000',
+                    'text-halo-width': 2.5
+                  }}
+                />
+                <Layer 
+                  id="resort-pistes-label" 
+                  type="symbol" 
+                  minzoom={13}
+                  filter={['==', ['get', 'type'], 'piste']}
+                  layout={{
+                    'text-field': ['get', 'name'],
+                    'text-size': 10,
+                    'symbol-placement': 'line'
+                  }}
+                  paint={{
+                    'text-color': '#ffffff',
+                    'text-halo-color': '#000000',
+                    'text-halo-width': 2
+                  }}
+                />
+              </Source>
+            )}
+          </>
         )}
         {settings.layers.aircraft && (
           <Source id="aircraft" type="geojson" data={aircraftData}>
@@ -1177,8 +1484,43 @@ const [legendScale, setLegendScale] = useState(1);
           </Source>
         )}
         {settings.layers.cameras && (
+          <Source id="camera-fovs" type="geojson" data={cameraFovData}>
+            <Layer id="camera-fov-layer" source="camera-fovs" type="fill" minzoom={11} paint={{ 'fill-color': ['get', 'color'], 'fill-opacity': 0.35 }} />
+            <Layer id="camera-fov-line-layer" source="camera-fovs" type="line" minzoom={11} paint={{ 'line-color': ['get', 'color'], 'line-width': 2, 'line-opacity': 0.95 }} />
+          </Source>
+        )}
+        {settings.layers.cameras && (
           <Source id="cameras" type="geojson" data={cameraData}>
-            <Layer id="camera-layer" source="cameras" type="circle" minzoom={8} paint={{ 'circle-radius': 5, 'circle-color': '#ffffff', 'circle-opacity': getOpacity('cameras')  }} />
+            <Layer
+              id="camera-layer"
+              source="cameras"
+              type="circle"
+              minzoom={8}
+              paint={{
+                'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4.5, 12, 6.5, 15, 8.5],
+                'circle-color': CAMERA_CIRCLE_COLOR_EXPR,
+                'circle-stroke-width': 1.5,
+                'circle-stroke-color': '#020617',
+                'circle-opacity': getOpacity('cameras')
+              }}
+            />
+            <Layer
+              id="camera-label-layer"
+              source="cameras"
+              type="symbol"
+              minzoom={14}
+              layout={{
+                'text-field': ['get', 'vendor_display'],
+                'text-size': 9,
+                'text-offset': [0, 1.4],
+                'text-anchor': 'top'
+              }}
+              paint={{
+                'text-color': '#f8fafc',
+                'text-halo-color': '#020617',
+                'text-halo-width': 1.5
+              }}
+            />
           </Source>
         )}
         {settings.layers.weather_stations && (
@@ -1196,9 +1538,11 @@ const [legendScale, setLegendScale] = useState(1);
             <Layer id="radar-layer" source="radars" type="circle" paint={{ 'circle-radius': 7, 'circle-color': '#f43f5e', 'circle-opacity': getOpacity('radars')  }} />
           </Source>
         )}
-        {settings.layers.public_lands && (
+        {(settings.layers.public_lands || settings.layers.land_ownership) && (
           <Source id="public-lands" type="geojson" data={publicLandData}>
-            <Layer id="public-land-layer" source="public-lands" type="circle" paint={{ 'circle-radius': 6, 'circle-color': '#22c55e', 'circle-opacity': getOpacity('public-lands'), 'circle-stroke-width': 1, 'circle-stroke-color': '#166534'  }} />
+            <Layer id="public-land-fill" source="public-lands" type="fill" filter={['==', '$type', 'Polygon']} paint={{ 'fill-color': ['coalesce', ['get', 'color'], '#22c55e'], 'fill-opacity': 0.15 }} />
+            <Layer id="public-land-line" source="public-lands" type="line" filter={['==', '$type', 'Polygon']} paint={{ 'line-color': ['coalesce', ['get', 'color'], '#16a34a'], 'line-width': 1.5, 'line-dasharray': [2, 2] }} />
+            <Layer id="public-land-layer" source="public-lands" type="circle" filter={['==', '$type', 'Point']} paint={{ 'circle-radius': 6, 'circle-color': '#22c55e', 'circle-opacity': getOpacity('public-lands'), 'circle-stroke-width': 1, 'circle-stroke-color': '#166534'  }} />
           </Source>
         )}
         {settings.layers.campsites && (
@@ -1209,6 +1553,78 @@ const [legendScale, setLegendScale] = useState(1);
         {settings.layers.trails && (
           <Source id="trails" type="geojson" data={trailData}>
             <Layer id="trail-layer" source="trails" type="circle" minzoom={9} paint={{ 'circle-radius': 3, 'circle-color': '#d97706', 'circle-opacity': getOpacity('trails')  }} />
+          </Source>
+        )}
+        {settings.layers.snowboard_trails && (
+          <Source 
+            id="snowboard-resorts" 
+            type="geojson" 
+            data={snowboardResortsData}
+            cluster={settings.clustering_enabled}
+            clusterMaxZoom={10}
+            clusterRadius={45}
+          >
+            <Layer 
+              id="snowboard-resorts-cluster" 
+              type="circle" 
+              filter={['has', 'point_count']}
+              paint={{
+                'circle-color': ['step', ['get', 'point_count'], '#0284c7', 20, '#0369a1', 100, '#075985'],
+                'circle-radius': ['step', ['get', 'point_count'], 14, 20, 18, 100, 24],
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-width': 2
+              }}
+            />
+            <Layer 
+              id="snowboard-resorts-cluster-count" 
+              type="symbol" 
+              filter={['has', 'point_count']}
+              layout={{
+                'text-field': '{point_count_abbreviated}',
+                'text-size': 11
+              }}
+              paint={{ 'text-color': '#ffffff' }}
+            />
+            <Layer 
+              id="snowboard-resorts-halo" 
+              type="circle" 
+              filter={['!', ['has', 'point_count']]} 
+              paint={{ 
+                'circle-radius': 14, 
+                'circle-color': '#06b6d4', 
+                'circle-opacity': 0.35, 
+                'circle-stroke-width': 1.5, 
+                'circle-stroke-color': '#ffffff' 
+              }} 
+            />
+            <Layer 
+              id="snowboard-resorts-point" 
+              type="circle" 
+              filter={['!', ['has', 'point_count']]} 
+              paint={{ 
+                'circle-radius': 7, 
+                'circle-color': '#0284c7', 
+                'circle-stroke-width': 2, 
+                'circle-stroke-color': '#ffffff' 
+              }} 
+            />
+            <Layer 
+              id="snowboard-resorts-label" 
+              type="symbol" 
+              filter={['!', ['has', 'point_count']]} 
+              minzoom={6}
+              layout={{ 
+                'text-field': ['concat', '🏂 ', ['get', 'name']],
+                'text-size': 11,
+                'text-offset': [0, 1.4],
+                'text-anchor': 'top'
+              }}
+              paint={{ 
+                'text-color': '#38bdf8',
+                'text-halo-color': '#000000',
+                'text-halo-width': 2
+              }} 
+            />
           </Source>
         )}
         {settings.layers.disasters && (
@@ -1475,6 +1891,11 @@ const [legendScale, setLegendScale] = useState(1);
             <Layer id="range-rings-line" type="line" paint={{ 'line-color': '#10b981', 'line-width': 1.5, 'line-dasharray': [3, 2] }} />
           </Source>
         )}
+        {directionsResult && (
+          <Source id="alt-directions" type="geojson" data={altRoutesData}>
+            <Layer id="alt-directions-layer" type="line" paint={{ 'line-color': '#06b6d4', 'line-width': 3, 'line-dasharray': [2, 2], 'line-opacity': 0.4 }} />
+          </Source>
+        )}
         {directionsResult && directionsResult.routeGeoJSON && (
           <Source id="directions" type="geojson" data={directionsData}>
             <Layer 
@@ -1486,11 +1907,45 @@ const [legendScale, setLegendScale] = useState(1);
               id="directions-layer" 
               type="line" 
               paint={{ 
-                'line-color': directionsResult.trafficCongestion === 'severe' ? '#ef4444' : 
-                              directionsResult.trafficCongestion === 'heavy' ? '#f97316' : 
-                              directionsResult.trafficCongestion === 'moderate' ? '#eab308' : '#22c55e', 
+                'line-color': [
+                  'case',
+                  ['==', ['get', 'mode'], 'flight'], '#f43f5e',
+                  ['==', ['get', 'mode'], 'rail'], '#a855f7',
+                  ['==', ['get', 'mode'], 'walking'], '#10b981',
+                  ['==', ['get', 'mode'], 'bus'], '#38bdf8',
+                  ['==', ['get', 'mode'], 'cycling'], '#10b981',
+                  ['==', ['get', 'mode'], 'mountain_biking'], '#f59e0b',
+                  ['==', ['get', 'mode'], 'skateboarding'], '#84cc16',
+                  directionsResult.routingStrategy === 'stealth' ? '#a855f7' :
+                  directionsResult.trafficCongestion === 'severe' ? '#ef4444' : 
+                  directionsResult.trafficCongestion === 'heavy' ? '#f97316' : 
+                  directionsResult.trafficCongestion === 'moderate' ? '#eab308' : '#06b6d4'
+                ],
                 'line-width': 5 
               }} 
+            />
+          </Source>
+        )}
+
+        {settings.layers.crime_heatmap && (settings.tier === 'pro' || settings.tier === 'sovereign') && (
+          <Source id="crime-heatmap-source" type="geojson" data={crimeGeoJson}>
+            <Layer
+              id="crime-heatmap-layer"
+              type="heatmap"
+              paint={{
+                'heatmap-weight': ['get', 'weight'],
+                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 8, 0.8, 15, 2.5],
+                'heatmap-color': [
+                  'interpolate', ['linear'], ['heatmap-density'],
+                  0, 'rgba(0,0,0,0)',
+                  0.2, 'rgba(6,182,212,0.4)',
+                  0.5, 'rgba(234,179,8,0.7)',
+                  0.8, 'rgba(239,68,68,0.85)',
+                  1.0, 'rgba(236,72,153,0.95)'
+                ],
+                'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 15, 15, 35],
+                'heatmap-opacity': 0.75
+              }}
             />
           </Source>
         )}
@@ -1505,7 +1960,7 @@ const [legendScale, setLegendScale] = useState(1);
             closeButton={true}
             closeOnClick={false}
           >
-            <div className="text-black p-1 text-sm font-sans max-w-[250px]">
+            <div className="text-black p-1 text-sm font-sans max-w-[320px]">
               <h3 className="font-bold text-base border-b border-gray-300 mb-1 pb-1 uppercase">
                 {selectedFeature.properties.type === 'custom_pin' ? 'Custom Pin' :
                  selectedFeature.properties.type === 'cell_tower' ? (selectedFeature.properties.is_physical ? 'Physical Mast' : 'Coverage Centroid') : 
@@ -1523,8 +1978,9 @@ const [legendScale, setLegendScale] = useState(1);
                  selectedFeature.properties.type === 'vessel' ? 'Maritime Vessel' :
                  selectedFeature.properties.type === 'atlas_obscura' ? 'Atlas Obscura Anomaly' :
                  (selectedFeature.layerId === 'lightning-layer' || selectedFeature.properties.peak_current_ka) ? '⚡ Lightning Strike' :
-                 selectedFeature.properties.color ? 'Subsea Fiber Cable' :
-                 ['cctv', 'flock', 'speed_camera', 'camera'].includes(selectedFeature.properties.type) ? 'Surveillance Camera' :
+                 (selectedFeature.layerId === 'camera-layer' || selectedFeature.layerId === 'camera-fov-layer' || selectedFeature.properties.vendor || ['cctv', 'flock', 'speed_camera', 'camera'].includes(selectedFeature.properties.type)) ? 'Surveillance / ALPR Node' :
+                 selectedFeature.layerId === 'submarine-cable-layer' ? 'Subsea Fiber Cable' :
+                 (selectedFeature.layerId === 'road-barricade-3d-extrusion' || selectedFeature.layerId === 'road-hazard-core-line') ? '🚧 Road Closure / Work Zone (3D AR)' :
                  'Data Point'}
               </h3>
               
@@ -1544,14 +2000,121 @@ const [legendScale, setLegendScale] = useState(1);
                 </div>
               )}
               
-              {selectedFeature.properties.type === 'aircraft' && (
-                <div className="space-y-1 mt-2">
-                  <p><strong>Callsign:</strong> {selectedFeature.properties.callsign}</p>
-                  <p><strong>Altitude:</strong> {selectedFeature.properties.altitude}m</p>
-                  <p><strong>Velocity:</strong> {selectedFeature.properties.velocity}m/s</p>
-                  <p><strong>Origin:</strong> {selectedFeature.properties.origin_country}</p>
-                </div>
-              )}
+              {selectedFeature.properties.type === 'aircraft' && (() => {
+                const altM = selectedFeature.properties.altitude || 0;
+                const altFt = Math.round(altM * 3.28084);
+                const velMs = selectedFeature.properties.velocity || 0;
+                const spdKts = Math.round(velMs * 1.94384);
+                const isClimbing = selectedFeature.properties.vertical_rate ? selectedFeature.properties.vertical_rate > 0.5 : false;
+                const isDescending = selectedFeature.properties.vertical_rate ? selectedFeature.properties.vertical_rate < -0.5 : altFt < 5000;
+
+                let phaseName = 'EN ROUTE CRUISE';
+                let phaseRiskPct = '14.8%';
+                let phaseRiskColor = 'bg-sky-950 text-sky-300 border-sky-600';
+                let primaryHazard = 'Clear Air Turbulence (CAT), En-Route Airspace Deviation';
+
+                if (altFt < 1200 && spdKts < 120) {
+                  phaseName = 'SURFACE / TAXI & TAKEOFF ROLL';
+                  phaseRiskPct = '11.7%';
+                  phaseRiskColor = 'bg-amber-950 text-amber-300 border-amber-600';
+                  primaryHazard = 'Runway incursion, foreign object debris (FOD), taxiway collision';
+                } else if (altFt < 5000 && isDescending) {
+                  phaseName = 'FINAL APPROACH & LANDING';
+                  phaseRiskPct = '53.4% [CRITICAL PEAK RISK]';
+                  phaseRiskColor = 'bg-red-950 text-red-300 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]';
+                  primaryHazard = 'Unstabilized approach, runway excursion (44%), low-level wind shear, CFIT';
+                } else if (altFt < 7000 && (isClimbing || spdKts > 150)) {
+                  phaseName = 'TAKEOFF & INITIAL CLIMBOUT';
+                  phaseRiskPct = '20.1% [HIGH RISK]';
+                  phaseRiskColor = 'bg-orange-950 text-orange-300 border-orange-500';
+                  primaryHazard = 'Engine loss at rotation, bird strike, spatial disorientation, CFIT';
+                }
+
+                return (
+                  <div className="space-y-2 mt-2 font-mono">
+                    <div className="p-2 bg-black/60 border border-gray-800 rounded-lg space-y-1">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-400">Callsign:</span>
+                        <span className="font-bold text-cyan-300 text-sm tracking-wider">{selectedFeature.properties.callsign || 'TACTICAL-AIR'}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-400">Altitude / Speed:</span>
+                        <span className="text-white font-semibold">{altFt.toLocaleString()} ft ({altM}m) • {spdKts} kts</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-400">Origin / Registration:</span>
+                        <span className="text-gray-300">{selectedFeature.properties.origin_country || 'United States'}</span>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const loiterIntel = analyzeAircraftLoiter(
+                        selectedFeature.properties.icao24 || selectedFeature.properties.callsign || 'UNK',
+                        selectedFeature.properties.callsign,
+                        selectedFeature.latitude,
+                        selectedFeature.longitude,
+                        selectedFeature.properties.heading || 0,
+                        altFt,
+                        spdKts,
+                        selectedFeature.properties.squawk
+                      );
+
+                      if (!loiterIntel.isLoitering && !loiterIntel.agency.includes('Law Enforcement') && !loiterIntel.agency.includes('Tactical')) return null;
+
+                      return (
+                        <div className={`p-2 rounded-xl border text-xs font-mono space-y-1 ${
+                          loiterIntel.isLoitering
+                            ? 'bg-red-950/90 border-red-500 text-red-200 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                            : 'bg-amber-950/80 border-amber-500/80 text-amber-200'
+                        }`} data-testid="aircraft-loiter-alert">
+                          <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+                            <span className="flex items-center gap-1">
+                              <span>🛸</span> {loiterIntel.isLoitering ? 'SURVEILLANCE ORBIT DETECTED' : 'AGENCY AIRCRAFT PATROL'}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-black/60 border border-current">
+                              {Math.min(99, Math.max(70, Math.round((loiterIntel.headingDeltaTotal / 360) * 100)))}% CONF
+                            </span>
+                          </div>
+                          <div className="text-[11px] font-bold">
+                            Pattern: {(loiterIntel.loiterType || 'ORBIT').toUpperCase()} • {loiterIntel.agency}
+                          </div>
+                          <p className="text-[10px] opacity-80 leading-tight">
+                            {loiterIntel.tacticalAdvisory || 'Aerial observation over flight sector'}
+                          </p>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="p-2.5 bg-slate-950/80 border border-sky-900/60 rounded-xl space-y-1.5" data-testid="aircraft-hazard-card">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1">
+                          <span>🛫</span> FLIGHT PHASE HAZARD
+                        </span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border ${phaseRiskColor}`}>
+                          {phaseRiskPct}
+                        </span>
+                      </div>
+                      <div className="text-xs font-bold text-white tracking-wide">
+                        {phaseName}
+                      </div>
+                      <p className="text-[10px] text-gray-400 leading-snug">
+                        <strong>Primary Threats:</strong> {primaryHazard}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAviationSafety(true);
+                          setSelectedFeature(null);
+                        }}
+                        className="w-full mt-1 py-1 px-2 bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-700/60 rounded text-[10px] font-bold transition-all flex items-center justify-center gap-1"
+                      >
+                        <span>Open Aviation Risk Intel Panel</span>
+                        <span>➔</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {selectedFeature.properties.type === 'spring' && (
                 <div className="space-y-1 mt-2">
@@ -1678,22 +2241,15 @@ const [legendScale, setLegendScale] = useState(1);
                 </div>
               )}
 
-              {selectedFeature.properties.color && (
+              {selectedFeature.layerId === 'submarine-cable-layer' && (
                 <div className="space-y-1 mt-2">
                   <p><strong>Cable Name:</strong> {selectedFeature.properties.name}</p>
                   <p><strong>ID:</strong> {selectedFeature.properties.id}</p>
                 </div>
               )}
               
-              {['cctv', 'flock', 'speed_camera', 'camera'].includes(selectedFeature.properties.type) && (
-                <div className="space-y-1 mt-2">
-                  <p><strong>Type:</strong> {selectedFeature.properties.sub_type || selectedFeature.properties.type.toUpperCase()}</p>
-                  <p><strong>Name:</strong> {selectedFeature.properties.name}</p>
-                  <p><strong>Operator:</strong> {selectedFeature.properties.operator}</p>
-                  <p><strong>Description:</strong> {selectedFeature.properties.description}</p>
-                  {selectedFeature.properties.mount && selectedFeature.properties.mount !== 'unknown' && <p><strong>Mount:</strong> {selectedFeature.properties.mount}</p>}
-                  {selectedFeature.properties.direction && <p><strong>Direction:</strong> {selectedFeature.properties.direction}</p>}
-                </div>
+              {(selectedFeature.layerId === 'camera-layer' || selectedFeature.layerId === 'camera-fov-layer' || selectedFeature.properties.vendor || ['cctv', 'flock', 'speed_camera', 'camera'].includes(selectedFeature.properties.type)) && (
+                <SurveillancePopupCard properties={selectedFeature.properties} />
               )}
 
               {['weather_station', 'data_center', 'radar'].includes(selectedFeature.properties.type) && (
@@ -1803,11 +2359,197 @@ const [legendScale, setLegendScale] = useState(1);
             </div>
           </Marker>
         )}
-        {settings.layers.crime_live && crimeData.map((incident: any) => (
-          <Marker key={incident.id} longitude={incident.lon} latitude={incident.lat} anchor="bottom">
-            <div className={`w-4 h-4 rounded-full border-2 cursor-pointer animate-pulse ${incident.severity === 'high' ? 'bg-red-500/50 border-red-500' : 'bg-orange-500/50 border-orange-500'}`} title={incident.type} />
-          </Marker>
-        ))}
+        {settings.layers.crime_live && (
+          <>
+            {/* Crime Incident Markers */}
+            {crimeData.map((incident: any) => (
+              <Marker
+                key={incident.id}
+                longitude={incident.lon}
+                latitude={incident.lat}
+                anchor="center"
+                onClick={(e) => {
+                  e.originalEvent.stopPropagation();
+                  setSelectedCrimeIncident(incident);
+                  setSelectedCrimeNeighborhood(null);
+                }}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full border cursor-pointer animate-pulse flex items-center justify-center transition-transform hover:scale-150 ${
+                    incident.severity === 'high'
+                      ? 'bg-red-500/80 border-red-300 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
+                      : incident.severity === 'medium'
+                      ? 'bg-orange-500/80 border-orange-300 shadow-[0_0_8px_rgba(249,115,22,0.8)]'
+                      : 'bg-yellow-500/80 border-yellow-300 shadow-[0_0_8px_rgba(234,179,8,0.8)]'
+                  }`}
+                  title={`${incident.type} - ${incident.neighborhood}`}
+                >
+                  <span className="text-[7px]">🚨</span>
+                </div>
+              </Marker>
+            ))}
+
+            {/* Neighborhood Risk Zone Centers */}
+            {activeCityCrime?.neighborhoods?.map((zone) => (
+              <Marker
+                key={`zone-${zone.name}`}
+                longitude={zone.lon}
+                latitude={zone.lat}
+                anchor="bottom"
+                onClick={(e) => {
+                  e.originalEvent.stopPropagation();
+                  setSelectedCrimeNeighborhood(zone);
+                  setSelectedCrimeIncident(null);
+                }}
+              >
+                <div
+                  className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold cursor-pointer transition-transform hover:scale-110 shadow-lg backdrop-blur-md flex items-center gap-1 ${
+                    zone.safetyScore < 40
+                      ? 'bg-red-950/90 border-red-500 text-red-200 shadow-red-900/50'
+                      : zone.safetyScore < 70
+                      ? 'bg-amber-950/90 border-amber-500 text-amber-200 shadow-amber-900/50'
+                      : 'bg-emerald-950/90 border-emerald-500 text-emerald-200 shadow-emerald-900/50'
+                  }`}
+                >
+                  <span>🛡️</span>
+                  <span>{zone.name}: {zone.safetyScore}/100</span>
+                </div>
+              </Marker>
+            ))}
+
+            {/* Crime Incident Popup */}
+            {selectedCrimeIncident && (
+              <Popup
+                longitude={selectedCrimeIncident.lon}
+                latitude={selectedCrimeIncident.lat}
+                anchor="top"
+                onClose={() => setSelectedCrimeIncident(null)}
+                closeOnClick={false}
+              >
+                <div className="bg-black/95 text-white p-3 rounded-lg border border-red-500/80 max-w-[280px] font-mono text-xs shadow-2xl">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-red-900/50 mb-2">
+                    <span className="font-bold text-red-400 flex items-center gap-1">
+                      <span>🚨</span> {selectedCrimeIncident.type}
+                    </span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${
+                      selectedCrimeIncident.severity === 'high' ? 'bg-red-900 text-red-200' : 'bg-orange-900 text-orange-200'
+                    }`}>
+                      {selectedCrimeIncident.severity}
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-[11px] text-gray-300">
+                    <p><strong className="text-gray-400">Sector:</strong> {selectedCrimeIncident.neighborhood}</p>
+                    <p><strong className="text-gray-400">Category:</strong> <span className="capitalize">{selectedCrimeIncident.category}</span></p>
+                    <p><strong className="text-gray-400">Description:</strong> {selectedCrimeIncident.description}</p>
+                    <p><strong className="text-gray-400">Time:</strong> {new Date(selectedCrimeIncident.timestamp).toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-400 pt-1">Source: {selectedCrimeIncident.source}</p>
+                  </div>
+                </div>
+              </Popup>
+            )}
+
+            {/* Neighborhood Zone Risk Profile Popup */}
+            {selectedCrimeNeighborhood && (
+              <Popup
+                longitude={selectedCrimeNeighborhood.lon}
+                latitude={selectedCrimeNeighborhood.lat}
+                anchor="top"
+                onClose={() => setSelectedCrimeNeighborhood(null)}
+                closeOnClick={false}
+              >
+                <div className="bg-black/95 text-white p-3.5 rounded-lg border border-cyan-500/80 max-w-[320px] font-mono text-xs shadow-2xl">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-cyan-900/50 mb-2">
+                    <span className="font-bold text-cyan-300 text-sm">
+                      {selectedCrimeNeighborhood.name}
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
+                      selectedCrimeNeighborhood.riskLevel === 'CRITICAL' || selectedCrimeNeighborhood.riskLevel === 'HIGH'
+                        ? 'bg-red-950 border border-red-500 text-red-300'
+                        : selectedCrimeNeighborhood.riskLevel === 'ELEVATED' || selectedCrimeNeighborhood.riskLevel === 'MODERATE'
+                        ? 'bg-amber-950 border border-amber-500 text-amber-300'
+                        : 'bg-emerald-950 border border-emerald-500 text-emerald-300'
+                    }`}>
+                      {selectedCrimeNeighborhood.riskLevel}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 text-[11px] text-gray-300">
+                    <div className="flex justify-between items-center bg-white/5 p-1.5 rounded">
+                      <span>Safety Score:</span>
+                      <strong className="text-cyan-400 text-sm">{selectedCrimeNeighborhood.safetyScore} / 100</strong>
+                    </div>
+                    <div className="flex justify-between text-[10px]">
+                      <span>Violent Crime Index: <strong className="text-red-400">{selectedCrimeNeighborhood.violentCrimeIndex}</strong> (100=Avg)</span>
+                      <span>Property Crime: <strong className="text-amber-400">{selectedCrimeNeighborhood.propertyCrimeIndex}</strong></span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 text-[10px]">Primary Threat Categories:</span>
+                      <p className="text-amber-300 font-semibold">{selectedCrimeNeighborhood.topIncidents.join(', ')}</p>
+                    </div>
+                    <div className="pt-1 border-t border-gray-800 text-[10px] text-gray-300">
+                      <span className="text-cyan-400 font-bold">Tactical Advisory: </span>
+                      {selectedCrimeNeighborhood.tacticalNotes}
+                    </div>
+                  </div>
+                </div>
+              </Popup>
+            )}
+          </>
+        )}
+
+        {selectedSnowboardResort && (
+          <SnowboardResortPopup
+            resort={selectedSnowboardResort}
+            onClose={() => setSelectedSnowboardResort(null)}
+            onGetDirections={(resort) => {
+              setPickedRoutingPoint({
+                target: 'destination',
+                lat: Number(resort.lat),
+                lng: Number(resort.lng),
+                address: `${resort.name} Resort`
+              });
+              setShowDirections(true);
+              setSelectedSnowboardResort(null);
+            }}
+          />
+        )}
+
+        {/* 3D AR Solar Terminator & Nocturnal Shadow */}
+        <SolarTerminator3DLayer visible={settings.layers.solar_terminator} />
+
+        {/* 3D AR Real-Time Road Closures & Work Zones */}
+        <RoadClosure3DLayer data={roadClosuresData} visible={settings.layers.road_closures} />
+
+        {/* 3D AR Live Weather (Rain, Snow, Lightning) */}
+        <Weather3DARLayer visible={settings.layers.weather_ar} lightningData={lightningData} currentWeatherVector={currentWeatherVector} />
+
+        {/* 3D AR Drone Docks & DFR Networks */}
+        <DroneDock3DLayer 
+          visible={settings.layers.drone_docks} 
+          showBlindSpots={settings.layers.blind_spots} 
+          bboxStr={bboxRef.current} 
+          selectedDockId={selectedDroneDockId} 
+          onSelectDock={(d) => setSelectedDroneDockId(d?.id || null)}
+          onInspect3D={(coords) => {
+            if (mapRef.current) {
+              mapRef.current.flyTo({
+                center: coords,
+                zoom: 17.5,
+                pitch: 60,
+                bearing: 30,
+                duration: 1500
+              });
+            }
+          }}
+          onOpenVideoFeed={() => updateSettings({ layers: { ...settings.layers, drone: true } })}
+        />
+
+        {/* 3D AR Toxic Sites & Plume Drift */}
+        <ToxicPlume3DLayer
+          visible={settings.layers.toxic_sites}
+          bboxStr={bboxRef.current}
+          onSelectSite={(site) => setSelectedToxicSite(site)}
+          selectedSiteId={selectedToxicSite?.site_id}
+        />
       </Map>
 
       {alerts.length > 0 && (
@@ -1821,36 +2563,42 @@ const [legendScale, setLegendScale] = useState(1);
         </div>
       )}
 
-      {/* SPHINX OS HUD */}
-      <div 
-        style={{ transform: `scale(${legendScale})`, transformOrigin: 'top left', width: isLegendCollapsed ? '130px' : '380px', transition: 'width 0.3s ease-in-out' }}
-        className="absolute top-4 left-4 z-10 bg-black/80 border border-cyan-900/50 p-4 rounded-lg text-white font-mono shadow-[0_0_15px_rgba(8,145,178,0.2)] backdrop-blur-sm overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]"
-      >
-        <div className="flex justify-between items-center mb-3 border-b border-cyan-900/50 pb-2 shrink-0">
-          {!isLegendCollapsed && <h1 className="text-xl font-bold text-cyan-400 tracking-widest whitespace-nowrap">SPHINX OS</h1>}
+      {/* SPHINX OS Data Points / Legend Panel */}
+      {!isLegendCollapsed && (
+        <div 
+          data-testid="sphinx-legend-panel"
+          className="absolute top-14 sm:top-16 left-2 sm:left-4 bottom-2 sm:bottom-4 z-20 w-80 sm:w-96 max-w-[calc(100vw-16px)] bg-black/90 border border-cyan-900/70 p-3 sm:p-4 rounded-xl text-white font-mono shadow-[0_0_25px_rgba(8,145,178,0.25)] backdrop-blur-md overflow-hidden flex flex-col pointer-events-auto"
+        >
+        <div className="flex justify-between items-center mb-2.5 pb-2 border-b border-cyan-900/60 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-cyan-400 font-bold text-xs tracking-wider">DATA POINTS & LAYERS</span>
+            <span className="text-[10px] bg-cyan-950/80 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-800">
+              {Object.values(settings.layers).filter(Boolean).length} Active
+            </span>
+          </div>
+
           
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => setIsLegendCollapsed(!isLegendCollapsed)}
-              className="text-cyan-400 hover:text-white transition-colors p-1"
-              title={isLegendCollapsed ? "Expand" : "Collapse"}
+              onClick={() => {
+                const anyVisible = Object.values(settings.layers).some(v => v);
+                toggleAllLayers(!anyVisible);
+              }}
+              className="text-[10px] text-cyan-400 hover:text-cyan-200 transition-colors bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800 whitespace-nowrap"
             >
-              {isLegendCollapsed ? '»' : '«'}
+              {Object.values(settings.layers).some(v => v) ? 'HIDE ALL' : 'SHOW ALL'}
             </button>
-            {!isLegendCollapsed && (
-              <button 
-                onClick={() => {
-                  const anyVisible = Object.values(settings.layers).some(v => v);
-                  toggleAllLayers(!anyVisible);
-                }}
-                className="text-xs text-cyan-500 hover:text-cyan-300 transition-colors bg-cyan-950/30 px-2 py-1 rounded border border-cyan-900 whitespace-nowrap"
-              >
-                {Object.values(settings.layers).some(v => v) ? 'HIDE ALL' : 'SHOW ALL'}
-              </button>
-            )}
+            <button 
+              onClick={() => setIsLegendCollapsed(true)}
+              className="text-gray-400 hover:text-white transition-colors text-xs p-1"
+              title="Close Data Points Panel"
+            >
+              ✕
+            </button>
+
           </div>
         </div>
-        <div className="space-y-2 mt-2 text-sm overflow-y-auto pr-1.5 custom-scrollbar">
+        <div className="space-y-2 mt-2 text-sm overflow-y-auto pr-1.5 custom-scrollbar flex-1">
 
             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.custom_pins ? 'opacity-50' : ''}`} onMouseEnter={() => setHoveredLegendLayer('custom_pins')} onMouseLeave={() => setHoveredLegendLayer(null)}>
               <span className="flex items-center gap-3">
@@ -2007,8 +2755,13 @@ const [legendScale, setLegendScale] = useState(1);
                 <button className={settings.layers.cameras ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
                   {settings.layers.cameras ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
-                <span className="text-white text-lg leading-none shrink-0 w-4 text-center">●</span>
-                {!isLegendCollapsed && <span className="whitespace-nowrap">Cameras / ALPR</span>}
+                <span className="text-amber-400 text-lg leading-none shrink-0 w-4 text-center">📷</span>
+                {!isLegendCollapsed && (
+                  <span className="whitespace-nowrap flex items-center gap-1.5">
+                    <span>Cameras / ALPR</span>
+                    <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded border border-amber-500/40 font-mono">FLOCK</span>
+                  </span>
+                )}
               </span>
               <span className="text-gray-300 font-bold ml-2">{visibleCounts.cameras}</span>
             </div>
@@ -2079,6 +2832,17 @@ const [legendScale, setLegendScale] = useState(1);
               <span className="text-amber-500 font-bold ml-2">{visibleCounts.trails}</span>
             </div>
 
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.snowboard_trails ? 'opacity-50' : ''}`} onClick={() => toggleLayer('snowboard_trails')} onMouseEnter={() => setHoveredLegendLayer('snowboard_trails')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button className={settings.layers.snowboard_trails ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.snowboard_trails ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-cyan-400 text-sm leading-none shrink-0 w-4 text-center">🏂</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">Snowboard Trails</span>}
+              </span>
+              <span className="text-cyan-400 font-bold ml-2">{visibleCounts.snowboard_resorts ? `${visibleCounts.snowboard_resorts.toLocaleString()}` : '6,296'}</span>
+            </div>
+
             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.disasters ? 'opacity-50' : ''}`} onClick={() => toggleLayer('disasters')} onMouseEnter={() => setHoveredLegendLayer('disasters')} onMouseLeave={() => setHoveredLegendLayer(null)}>
               <span className="flex items-center gap-3">
                 <button className={settings.layers.disasters ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
@@ -2088,6 +2852,75 @@ const [legendScale, setLegendScale] = useState(1);
                 {!isLegendCollapsed && <span className="whitespace-nowrap">Disasters / Events</span>}
               </span>
               <span className="text-red-500 font-bold ml-2">{visibleCounts.disasters}</span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.crime_live ? 'opacity-50' : ''}`} onClick={() => toggleLayer('crime_live')} onMouseEnter={() => setHoveredLegendLayer('crime_live')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button 
+                  type="button" 
+                  data-testid="toggle-crime-layer"
+                  className={settings.layers.crime_live ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}
+                >
+                  {settings.layers.crime_live ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-red-500 font-bold text-sm leading-none shrink-0 w-4 text-center">🚨</span>
+                {!isLegendCollapsed && (
+                  <span className="flex items-center gap-1.5 whitespace-nowrap">
+                    <span>Crime & Threats</span>
+                    {activeCityCrime && (
+                      <button
+                        type="button"
+                        data-testid="sidebar-crime-city-pill"
+                        onClick={(e) => { e.stopPropagation(); setShowCityCrimePanel(true); }}
+                        className="text-[9px] px-1 bg-red-950/80 text-red-300 hover:text-white rounded border border-red-800 transition-colors"
+                        title="Open City & Neighborhood Crime Intelligence"
+                      >
+                        {activeCityCrime.city.toUpperCase()} ➔
+                      </button>
+                    )}
+                  </span>
+                )}
+              </span>
+              <span data-testid="sidebar-count-crime" className="text-red-400 font-bold ml-2">
+                {activeCityCrime?.totalIncidents || crimeData.length}
+              </span>
+            </div>
+
+            <div 
+              data-testid="toggle-crime-heatmap-item"
+              className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.crime_heatmap ? 'opacity-50' : ''}`} 
+              onClick={() => {
+                if (settings.tier === 'free') {
+                  setTierUpgradeTrigger('crime_heatmap');
+                  setShowTierUpgrade(true);
+                } else {
+                  toggleLayer('crime_heatmap');
+                }
+              }} 
+              onMouseEnter={() => setHoveredLegendLayer('crime_heatmap')} 
+              onMouseLeave={() => setHoveredLegendLayer(null)}
+            >
+              <span className="flex items-center gap-3">
+                <button 
+                  type="button" 
+                  data-testid="toggle-crime-heatmap-btn"
+                  className={settings.layers.crime_heatmap && (settings.tier === 'pro' || settings.tier === 'sovereign') ? "text-pink-400 shrink-0" : "text-gray-400 hover:text-white shrink-0"}
+                >
+                  {settings.layers.crime_heatmap && (settings.tier === 'pro' || settings.tier === 'sovereign') ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-pink-500 font-bold text-sm leading-none shrink-0 w-4 text-center">🔥</span>
+                {!isLegendCollapsed && (
+                  <span className="flex items-center gap-1.5 whitespace-nowrap">
+                    <span>Crime Density Heatmap</span>
+                    <span className="text-[9px] px-1 bg-gradient-to-r from-amber-500/20 to-pink-500/20 text-pink-300 font-mono font-bold rounded border border-pink-500/40">
+                      PRO
+                    </span>
+                  </span>
+                )}
+              </span>
+              <span className="text-xs font-mono text-pink-400/80 ml-2">
+                {settings.tier === 'free' ? '🔒 PRO' : 'GPU'}
+              </span>
             </div>
 
             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.earthquakes ? 'opacity-50' : ''}`} onClick={() => toggleLayer('earthquakes')} onMouseEnter={() => setHoveredLegendLayer('earthquakes')} onMouseLeave={() => setHoveredLegendLayer(null)}>
@@ -2248,9 +3081,50 @@ const [legendScale, setLegendScale] = useState(1);
                 {!isLegendCollapsed && <span className="whitespace-nowrap">Base: {settings.layers.satellite ? 'Satellite' : 'Street (Default)'}</span>}
               </span>
               <span className="text-cyan-400 font-bold ml-2 text-[10px] bg-cyan-950 px-1.5 py-0.5 rounded border border-cyan-800">
-                {settings.layers.satellite ? 'SATELLITE' : 'STREET'}
+                {settings.layers.satellite ? (settings.satellite_provider === 'nasa_viirs' ? 'VIIRS' : settings.satellite_provider === 'nasa_modis' ? 'MODIS' : settings.satellite_provider === 'goes_live' ? 'GOES LIVE' : 'HD SATELLITE') : 'STREET'}
               </span>
             </div>
+
+            {settings.layers.satellite && !isLegendCollapsed && (
+              <div className="flex flex-wrap gap-1 pl-7 pt-1 pb-1">
+                <button
+                  type="button"
+                  data-testid="sat-provider-arcgis"
+                  onClick={(e) => { e.stopPropagation(); updateSettings({ satellite_provider: 'hd_arcgis' }); }}
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono border ${(!settings.satellite_provider || settings.satellite_provider === 'hd_arcgis') ? 'bg-cyan-900 text-cyan-200 border-cyan-400 font-bold' : 'bg-black/40 text-gray-400 border-gray-700 hover:text-white'}`}
+                  title="High-Resolution Ortho (ArcGIS Composite)"
+                >
+                  HD ORTHO
+                </button>
+                <button
+                  type="button"
+                  data-testid="sat-provider-viirs"
+                  onClick={(e) => { e.stopPropagation(); updateSettings({ satellite_provider: 'nasa_viirs' }); }}
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono border ${settings.satellite_provider === 'nasa_viirs' ? 'bg-cyan-900 text-cyan-200 border-cyan-400 font-bold' : 'bg-black/40 text-gray-400 border-gray-700 hover:text-white'}`}
+                  title="NASA GIBS VIIRS NOAA-20 Daily Optical (Fresh Snow & Clouds)"
+                >
+                  DAILY VIIRS
+                </button>
+                <button
+                  type="button"
+                  data-testid="sat-provider-modis"
+                  onClick={(e) => { e.stopPropagation(); updateSettings({ satellite_provider: 'nasa_modis' }); }}
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono border ${settings.satellite_provider === 'nasa_modis' ? 'bg-cyan-900 text-cyan-200 border-cyan-400 font-bold' : 'bg-black/40 text-gray-400 border-gray-700 hover:text-white'}`}
+                  title="NASA GIBS MODIS Terra Daily Optical (Ground Truth)"
+                >
+                  DAILY MODIS
+                </button>
+                <button
+                  type="button"
+                  data-testid="sat-provider-goes"
+                  onClick={(e) => { e.stopPropagation(); updateSettings({ satellite_provider: 'goes_live' }); }}
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono border ${settings.satellite_provider === 'goes_live' ? 'bg-cyan-900 text-cyan-200 border-cyan-400 font-bold' : 'bg-black/40 text-gray-400 border-gray-700 hover:text-white'}`}
+                  title="NOAA GOES GeoColor (10-Minute Live Weather Satellite)"
+                >
+                  10M GOES
+                </button>
+              </div>
+            )}
 
             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.labels ? 'opacity-70' : ''}`} onClick={() => toggleLayer('labels')} onMouseEnter={() => setHoveredLegendLayer('labels')} onMouseLeave={() => setHoveredLegendLayer(null)}>
               <span className="flex items-center gap-3">
@@ -2278,59 +3152,224 @@ const [legendScale, setLegendScale] = useState(1);
               </span>
             </div>
 
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.road_closures ? 'opacity-70' : ''}`} onClick={() => toggleLayer('road_closures')} onMouseEnter={() => setHoveredLegendLayer('road_closures')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button type="button" data-testid="toggle-road-closures-layer" className={settings.layers.road_closures ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.road_closures ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-orange-400 font-bold text-sm leading-none shrink-0 w-4 text-center">🚧</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">Road Closures (3D AR)</span>}
+              </span>
+              <span data-testid="sidebar-count-road-closures" className="text-orange-400 font-bold ml-2 text-xs">{visibleCounts.road_closures}</span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.weather_ar ? 'opacity-70' : ''}`} onClick={() => toggleLayer('weather_ar')} onMouseEnter={() => setHoveredLegendLayer('weather_ar')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button type="button" data-testid="toggle-weather-ar-layer" className={settings.layers.weather_ar ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.weather_ar ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-cyan-300 font-bold text-sm leading-none shrink-0 w-4 text-center">⛈️</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">3D AR Weather (Rain/Snow)</span>}
+              </span>
+              <span className={`font-bold ml-2 text-[10px] px-1.5 py-0.5 rounded border ${settings.layers.weather_ar ? 'text-cyan-300 bg-cyan-950 border-cyan-800' : 'text-gray-500 bg-black/40 border-gray-800'}`}>
+                {settings.layers.weather_ar ? 'ACTIVE' : 'OFF'}
+              </span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.solar_terminator ? 'opacity-70' : ''}`} onClick={() => toggleLayer('solar_terminator')} onMouseEnter={() => setHoveredLegendLayer('solar_terminator')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button type="button" data-testid="toggle-solar-terminator-layer" className={settings.layers.solar_terminator ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.solar_terminator ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-amber-300 font-bold text-sm leading-none shrink-0 w-4 text-center">🌓</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">3D AR Day/Night Cycle</span>}
+              </span>
+              <span className={`font-bold ml-2 text-[10px] px-1.5 py-0.5 rounded border ${settings.layers.solar_terminator ? 'text-amber-300 bg-amber-950 border-amber-800' : 'text-gray-500 bg-black/40 border-gray-800'}`}>
+                {settings.layers.solar_terminator ? 'LIVE' : 'OFF'}
+              </span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.drone_docks ? 'opacity-70' : ''}`} onClick={() => toggleLayer('drone_docks')} onMouseEnter={() => setHoveredLegendLayer('drone_docks')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button type="button" data-testid="toggle-drone-docks-layer" className={settings.layers.drone_docks ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.drone_docks ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-cyan-400 font-bold text-sm leading-none shrink-0 w-4 text-center">🛸</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">Drone Docks (10 NB + Global)</span>}
+              </span>
+              <span className="text-cyan-400 font-bold ml-2 text-xs">20</span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.blind_spots ? 'opacity-70' : ''}`} onClick={() => toggleLayer('blind_spots')} onMouseEnter={() => setHoveredLegendLayer('blind_spots')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button type="button" data-testid="toggle-blind-spots-layer" className={settings.layers.blind_spots ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.blind_spots ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-amber-400 font-bold text-sm leading-none shrink-0 w-4 text-center">⚠️</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">Coverage Blind Spots</span>}
+              </span>
+              <span className={`font-bold ml-2 text-[10px] px-1.5 py-0.5 rounded border ${settings.layers.blind_spots ? 'text-amber-400 bg-amber-950 border-amber-800' : 'text-gray-500 bg-black/40 border-gray-800'}`}>
+                {settings.layers.blind_spots ? 'AUDIT' : 'OFF'}
+              </span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.land_ownership ? 'opacity-70' : ''}`} onClick={() => toggleLayer('land_ownership')} onMouseEnter={() => setHoveredLegendLayer('land_ownership')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button type="button" data-testid="toggle-land-ownership-layer" className={settings.layers.land_ownership ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.land_ownership ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-emerald-400 font-bold text-sm leading-none shrink-0 w-4 text-center">🏛️</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">Land Jurisdiction & BLM</span>}
+              </span>
+              <span className={`font-bold ml-2 text-[10px] px-1.5 py-0.5 rounded border ${settings.layers.land_ownership ? 'text-emerald-400 bg-emerald-950 border-emerald-800' : 'text-gray-500 bg-black/40 border-gray-800'}`}>
+                {settings.layers.land_ownership ? 'ACTIVE' : 'OFF'}
+              </span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.zero_blind_spot_hud ? 'opacity-70' : ''}`} onClick={() => toggleLayer('zero_blind_spot_hud')} onMouseEnter={() => setHoveredLegendLayer('zero_blind_spot_hud')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button type="button" data-testid="toggle-zero-blind-spot-hud" className={settings.layers.zero_blind_spot_hud ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.zero_blind_spot_hud ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-purple-400 font-bold text-sm leading-none shrink-0 w-4 text-center">🛡️</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">Zero-Blind-Spot HUD</span>}
+              </span>
+              <span className={`font-bold ml-2 text-[10px] px-1.5 py-0.5 rounded border ${settings.layers.zero_blind_spot_hud ? 'text-purple-400 bg-purple-950 border-purple-800' : 'text-gray-500 bg-black/40 border-gray-800'}`}>
+                {settings.layers.zero_blind_spot_hud ? 'AUDIT' : 'OFF'}
+              </span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.toxic_sites ? 'opacity-70' : ''}`} onClick={() => toggleLayer('toxic_sites')} onMouseEnter={() => setHoveredLegendLayer('toxic_sites')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button type="button" data-testid="toggle-toxic-sites-layer" className={settings.layers.toxic_sites ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.toxic_sites ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-red-400 font-bold text-sm leading-none shrink-0 w-4 text-center">☣️</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">Toxic Sites & Plumes (EPA)</span>}
+              </span>
+              <span data-testid="sidebar-count-toxic-sites" className="text-red-400 font-bold ml-2 text-xs">{visibleCounts.toxic_sites}</span>
+            </div>
+
         </div>
       </div>
+      )}
       
       
       {/* C2 Command Bar: Unified, Responsive Header */}
-      <div className="absolute top-3 left-14 sm:left-[290px] right-3 sm:right-6 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-        <div className="pointer-events-auto w-44 sm:w-56 shrink-0">
+      <div 
+        style={{
+          left: windowDimensions.width < 640 ? '8px' : '16px',
+          right: windowDimensions.width < 640 ? '8px' : '16px',
+          top: windowDimensions.width < 640 ? '8px' : '12px'
+        }}
+        className="absolute z-30 flex flex-nowrap items-center justify-between gap-2 sm:gap-4 pointer-events-none transition-all duration-300 ease-in-out"
+      >
+        {/* Left C2 Group: Brand & Geocoding Search */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink min-w-0">
+          <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 shrink-0 bg-black/85 border border-cyan-800/80 px-2 sm:px-2.5 py-1.5 rounded-lg backdrop-blur-md shadow-[0_0_15px_rgba(8,145,178,0.3)]">
+            <h1 className="text-xs sm:text-sm font-bold text-cyan-400 tracking-widest whitespace-nowrap">{headerTier === 'mobile' ? 'SPHINX' : 'SPHINX OS'}</h1>
+          <button
+            type="button"
+            data-testid="hud-btn-tier-pill"
+            onClick={() => {
+              setTierUpgradeTrigger(null);
+              setShowTierUpgrade(true);
+            }}
+            className={`text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full font-bold border transition-all hover:scale-105 ${settings.tier === 'sovereign' ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]' : settings.tier === 'pro' ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'bg-slate-800 text-gray-300 border-gray-600 hover:text-white'}`}
+            title="View Tier Entitlements & Live Simulator"
+          >
+            {(settings.tier || 'free').toUpperCase()}
+          </button>
+          <button 
+            type="button"
+            data-testid="hud-btn-toggle-legend"
+            onClick={() => setIsLegendCollapsed(!isLegendCollapsed)}
+            className="text-cyan-400 hover:text-white transition-colors p-0.5 sm:p-1 text-xs sm:text-sm font-bold flex items-center gap-1"
+            title={isLegendCollapsed ? "Maximize Data Points / Legend" : "Minimize Data Points / Legend"}
+          >
+            <span>{isLegendCollapsed ? '▶' : '▼'}</span>
+            {(headerTier === 'full' || headerTier === 'standard') && (
+              <span className="text-[11px] font-semibold text-cyan-300">
+                {isLegendCollapsed ? 'LAYERS' : 'DATA'}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div 
+          style={{
+            width: headerTier === 'full' ? '240px' : headerTier === 'standard' ? '180px' : headerTier === 'compact' ? '140px' : headerTier === 'minimal' ? '115px' : '95px'
+          }}
+          className="pointer-events-auto shrink min-w-[80px] transition-all duration-200"
+        >
           <GeocodingSearch 
-            onLocationSelected={(lat, lon) => {
+            placeholder={headerTier === 'full' || headerTier === 'standard' ? "Search locations..." : "Search..."} 
+            onLocationSelected={(loc) => {
+              console.log('[SphinxMap] onLocationSelected:', loc);
               if (mapRef.current) {
-                mapRef.current.flyTo({ center: [lon, lat], zoom: 14, duration: 2500 });
+                mapRef.current.flyTo({ center: [loc.lon, loc.lat], zoom: 14, duration: 2500 });
+              }
+              const locationName = (loc.name && loc.name !== 'Unknown') ? loc.name : (loc.city || (loc.postcode ? `Area ${loc.postcode}` : 'Selected Area'));
+              handleSelectCityCrime(locationName, loc.lat, loc.lon);
+              setShowCityCrimePanel(true);
+              if (!settings.layers.crime_live) {
+                updateSettings({ layers: { ...settings.layers, crime_live: true } });
               }
             }} 
           />
         </div>
+      </div>
 
-        <div id="sphinx-hud-launcher" className="pointer-events-auto flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+      <div id="sphinx-hud-launcher" className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 shrink-0 flex-nowrap py-0.5 justify-end z-20">
+          {/* 0. Sphinx Tactical AI Launcher */}
+          <button 
+            type="button"
+            data-testid="hud-btn-sphinx-ai"
+            onClick={() => setShowAIAssistant(!showAIAssistant)}
+            className={`relative group px-2 sm:px-3 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 shrink-0 ${
+              showAIAssistant
+                ? 'bg-cyan-900 border-cyan-400 text-cyan-100 shadow-[0_0_18px_rgba(6,182,212,0.7)] animate-pulse'
+                : 'bg-black/85 border-cyan-700/80 text-cyan-300 hover:bg-cyan-950/80 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
+            }`}
+            title="Launch Sphinx Tactical AI Intelligence Analyst (Crime in any city, Aviation crash analytics, Map telemetry)"
+          >
+            <span className="text-sm">🧠</span>
+            {headerTier === 'full' && <span className="font-bold">SPHINX AI</span>}
+            {(headerTier === 'standard' || headerTier === 'compact') && <span className="font-bold">AI</span>}
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+            <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(6,182,212,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">SPHINX AI</span>
+          </button>
+
+          {/* Threats Overview */}
+          <button type="button" data-testid="hud-btn-threat-overview" onClick={() => handleJumpTo({ lat: 39.8283, lon: -98.5795, zoom: 4.2 })} className="relative group bg-black/85 px-2.5 py-1.5 rounded-lg border border-amber-600/80 shadow-[0_0_12px_rgba(245,158,11,0.35)] backdrop-blur-md hover:bg-amber-950/60 transition-colors font-mono text-amber-300 text-xs sm:text-sm flex items-center gap-1.5 shrink-0" title="Swoop to continental threats overview">
+            <span>🛰️</span>
+            {headerTier === 'full' && <span className="font-semibold">Threats ({visibleCounts.wildfires || 0})</span>}
+            {(headerTier === 'standard' || headerTier === 'compact') && <span className="font-semibold">({visibleCounts.wildfires || 0})</span>}
+            <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-amber-300 border border-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">THREATS OVERVIEW</span>
+          </button>
+
           {/* 1. Live Refresh */}
           <button 
             type="button"
             data-testid="hud-btn-live-refresh"
             onClick={handleSeamlessRefresh}
             disabled={isRefreshing}
-            className="bg-black/85 px-2.5 py-1.5 rounded-lg border border-cyan-700 shadow-[0_0_12px_rgba(6,182,212,0.35)] backdrop-blur-md hover:bg-cyan-950/60 transition-colors font-mono text-cyan-300 text-xs sm:text-sm flex items-center gap-1.5 shrink-0"
+            className="relative group bg-black/85 px-2.5 py-1.5 rounded-lg border border-cyan-700 shadow-[0_0_12px_rgba(6,182,212,0.35)] backdrop-blur-md hover:bg-cyan-950/60 transition-colors font-mono text-cyan-300 text-xs sm:text-sm flex items-center gap-1.5 shrink-0"
             title="Seamlessly refresh all live OSINT data without page reload"
           >
             <RefreshCw size={13} className={isRefreshing ? "animate-spin text-cyan-400" : "text-cyan-400"} />
-            <span className="font-semibold">{isRefreshing ? 'Refreshing...' : 'Live Refresh'}</span>
-            {lastRefreshedAt && <span className="text-[10px] text-cyan-400/80 font-mono hidden md:inline">[{lastRefreshedAt}]</span>}
+            {headerTier === 'full' && <span className="font-semibold">{isRefreshing ? 'Refreshing...' : 'Live Refresh'}</span>}
+            {headerTier === 'standard' && <span className="font-semibold">{isRefreshing ? '...' : 'Refresh'}</span>}
+            {lastRefreshedAt && <span className="text-[10px] text-cyan-400/80 font-mono hidden 2xl:inline">[{lastRefreshedAt}]</span>}
+            <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(6,182,212,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">LIVE REFRESH</span>
           </button>
 
-          {/* 2. Fire Spread Forecast Toggle */}
-          <button 
-            type="button"
-            data-testid="hud-btn-fire-spread"
-            onClick={() => toggleLayer('fire_spread_forecast')}
-            className={`px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
-              settings.layers.fire_spread_forecast
-                ? 'bg-red-950/90 border-red-500 text-red-200 shadow-[0_0_15px_rgba(239,68,68,0.5)]'
-                : 'bg-black/80 border-gray-800 text-gray-400 hover:text-white hover:bg-gray-900/60'
-            }`}
-            title="Toggle Rothermel/Huygens Elliptical Fire Spread Forecast Layer"
-          >
-            <span>🔥</span>
-            <span className="font-semibold">Spread Forecast</span>
-          </button>
-
-          {/* 3. Weather & Wind */}
+          {/* 4. Weather & Wind */}
           <button 
             type="button"
             data-testid="hud-btn-wind-storms"
-            onClick={() => toggleLayer('wind_hud')}
-            className={`px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
+            onClick={() => { setShowWeatherWind(!showWeatherWind); if (!settings.layers.wind_hud) toggleLayer('wind_hud'); }}
+            className={`relative group px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
               settings.layers.wind_hud
                 ? 'bg-sky-950/90 border-sky-400 text-sky-200 shadow-[0_0_15px_rgba(14,165,233,0.5)]'
                 : 'bg-black/80 border-gray-800 text-gray-400 hover:text-white hover:bg-gray-900/60'
@@ -2338,8 +3377,9 @@ const [legendScale, setLegendScale] = useState(1);
             title={`Toggle On-Map Wind HUD (${settings.layers.wind_hud ? 'ON' : 'OFF'}): ${currentWeatherVector.windSpeedKnots}kt @ ${currentWeatherVector.windDirectionDeg}°`}
           >
             <span>💨</span>
-            <span className="font-semibold">Wind</span>
-            <span className="text-[11px] text-cyan-300 font-mono hidden xs:inline">{currentWeatherVector.windSpeedKnots}kt</span>
+            {(headerTier === 'full' || headerTier === 'standard') && <span className="font-semibold">Wind</span>}
+            {headerTier === 'full' && <span className="text-[11px] text-cyan-300 font-mono">{currentWeatherVector.windSpeedKnots}kt</span>}
+            <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-sky-300 border border-sky-500/70 shadow-[0_0_12px_rgba(14,165,233,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">WIND & WEATHER</span>
           </button>
 
           {/* 4. Traffic Routing */}
@@ -2347,7 +3387,7 @@ const [legendScale, setLegendScale] = useState(1);
             type="button"
             data-testid="hud-btn-routing"
             onClick={() => setShowDirections(!showDirections)}
-            className={`px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
+            className={`relative group px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
               showDirections
                 ? 'bg-cyan-950/90 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(8,145,178,0.5)]'
                 : 'bg-black/80 border-cyan-950/80 text-cyan-400 hover:bg-cyan-950/40'
@@ -2355,7 +3395,8 @@ const [legendScale, setLegendScale] = useState(1);
             title="Tactical Route Planning & Traffic"
           >
             <span>🧭</span>
-            <span className="hidden sm:inline">Routing</span>
+            {(headerTier === 'full' || headerTier === 'standard') && <span>Routing</span>}
+            <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(8,145,178,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">TACTICAL ROUTING</span>
           </button>
 
           {/* 5. Drop Pin */}
@@ -2363,7 +3404,7 @@ const [legendScale, setLegendScale] = useState(1);
             type="button"
             data-testid="hud-btn-drop-pin"
             onClick={() => setIsDroppingPin(!isDroppingPin)}
-            className={`px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
+            className={`relative group px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
               isDroppingPin 
                 ? 'bg-purple-900/90 border-purple-400 text-white shadow-[0_0_20px_rgba(168,85,247,0.8)] animate-pulse' 
                 : 'bg-black/80 border-purple-950/80 text-purple-400 hover:bg-purple-950/40'
@@ -2371,7 +3412,8 @@ const [legendScale, setLegendScale] = useState(1);
             title="Drop a custom tactical pin on the map"
           >
             <span>📍</span>
-            <span className="hidden sm:inline">{isDroppingPin ? 'Cancel' : 'Pin'}</span>
+            {(headerTier === 'full' || headerTier === 'standard') && <span>{isDroppingPin ? 'Cancel' : 'Pin'}</span>}
+            <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-purple-300 border border-purple-500/70 shadow-[0_0_12px_rgba(168,85,247,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">{isDroppingPin ? 'CANCEL PIN' : 'DROP PIN'}</span>
           </button>
 
           {/* 6. Tactical Tools Popover Dropdown */}
@@ -2380,21 +3422,26 @@ const [legendScale, setLegendScale] = useState(1);
               type="button"
               data-testid="hud-btn-tools-menu"
               onClick={() => setShowToolsMenu(!showToolsMenu)}
-              className={`px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
-                showToolsMenu || showSolarPanel || showFieldManuals || showRangeRings || showCelestialDome
+              className={`relative group px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
+                showToolsMenu || showSolarPanel || showFieldManuals || showRangeRings || showCelestialDome || showCityCrimePanel || settings.layers.fire_spread_forecast || settings.layers.crime_live
                   ? 'bg-cyan-950/90 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
                   : 'bg-black/80 border-gray-800 text-gray-300 hover:text-white hover:bg-gray-900/60'
               }`}
               title="Tactical OSINT Tools & Ephemeris"
             >
               <span>🛠️</span>
-              <span>Tools</span>
+              {headerTier !== 'mobile' && <span>Tools</span>}
               <ChevronDown size={14} className={`transition-transform duration-200 ${showToolsMenu ? 'rotate-180 text-cyan-400' : 'text-gray-400'}`} />
+              <span className="pointer-events-none absolute top-full mt-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(6,182,212,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">TACTICAL TOOLS</span>
             </button>
 
             {showToolsMenu && (
               <div 
-                className="absolute right-0 mt-2 w-56 bg-black/95 border border-cyan-800/80 rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.85)] backdrop-blur-xl p-2 z-50 flex flex-col gap-1 font-mono text-xs animate-in fade-in slide-in-from-top-2 duration-150"
+                style={{
+                  maxHeight: `${Math.min(480, Math.max(240, windowDimensions.height - 90))}px`
+                }}
+                data-testid="hud-tools-dropdown"
+                className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-24px)] bg-black/95 border border-cyan-800/80 rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.85)] backdrop-blur-xl p-2 z-50 flex flex-col gap-1 font-mono text-xs overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-400 border-b border-cyan-900/50 flex justify-between items-center mb-1">
@@ -2446,9 +3493,113 @@ const [legendScale, setLegendScale] = useState(1);
                   <span className="flex items-center gap-2"><span>📊</span> Multi-Horizon Weather</span>
                   {showWeatherWind && <span className="text-[10px] text-sky-400 font-bold">ACTIVE</span>}
                 </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-aviation-safety"
+                  onClick={() => { setShowAviationSafety(!showAviationSafety); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${showAviationSafety ? 'bg-sky-950/80 text-sky-300 border border-sky-700/60' : 'hover:bg-cyan-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>✈️</span> Flight Safety & Risk</span>
+                  {showAviationSafety && <span className="text-[10px] text-sky-400 font-bold">ACTIVE</span>}
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-crime"
+                  onClick={() => { setShowCityCrimePanel(!showCityCrimePanel); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${showCityCrimePanel ? 'bg-red-950/80 text-red-300 border border-red-700/60' : 'hover:bg-cyan-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>🚨</span> City Crime Intel</span>
+                  {showCityCrimePanel && <span className="text-[10px] text-red-400 font-bold">ACTIVE</span>}
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-recon"
+                  onClick={() => { setShowCitizenRecon(true); setShowToolsMenu(false); }}
+                  className="px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors hover:bg-amber-950/40 text-amber-300"
+                >
+                  <span className="flex items-center gap-2"><span>📡</span> Field Recon Report</span>
+                  <span className="text-[10px] text-amber-500 font-bold">INTEL</span>
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-zero-blind-spot"
+                  onClick={() => { toggleLayer('zero_blind_spot_hud'); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${settings.layers.zero_blind_spot_hud ? 'bg-purple-950/80 text-purple-300 border border-purple-700/60' : 'hover:bg-cyan-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>🛡️</span> Zero-Blind-Spot HUD</span>
+                  {settings.layers.zero_blind_spot_hud && <span className="text-[10px] text-purple-400 font-bold">ACTIVE</span>}
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-homebuyer-safety"
+                  onClick={() => { setIsHomebuyerModalOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isHomebuyerModalOpen ? 'bg-red-950/80 text-red-300 border border-red-700/60' : 'hover:bg-red-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>☣️</span> Homebuyer Toxic Plume Audit</span>
+                  <span className="text-[10px] text-red-400 font-bold">DUE DILIGENCE</span>
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-snowboard-trails"
+                  onClick={() => { toggleLayer('snowboard_trails'); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${settings.layers.snowboard_trails ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-700/60' : 'hover:bg-cyan-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>🏂</span> Snowboard & Ski Trails (6,000+)</span>
+                  {settings.layers.snowboard_trails && <span className="text-[10px] text-cyan-400 font-bold">ACTIVE</span>}
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-fire-spread"
+                  onClick={() => { toggleLayer('fire_spread_forecast'); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${settings.layers.fire_spread_forecast ? 'bg-red-950/80 text-red-300 border border-red-700/60' : 'hover:bg-red-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>🔥</span> Fire Spread Forecast</span>
+                  {settings.layers.fire_spread_forecast && <span className="text-[10px] text-red-400 font-bold">ACTIVE</span>}
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-crime-intel"
+                  onClick={() => {
+                    setShowCityCrimePanel(!showCityCrimePanel);
+                    if (!settings.layers.crime_live) {
+                      updateSettings({ layers: { ...settings.layers, crime_live: true } });
+                    }
+                    setShowToolsMenu(false);
+                  }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${showCityCrimePanel || settings.layers.crime_live ? 'bg-red-950/80 text-red-300 border border-red-700/60' : 'hover:bg-red-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>🚨</span> City & Neighborhood Crime</span>
+                  {(showCityCrimePanel || settings.layers.crime_live) && <span className="text-[10px] text-red-400 font-bold">ACTIVE</span>}
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-settings"
+                  onClick={() => { setIsSettingsOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isSettingsOpen ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-700/60' : 'hover:bg-cyan-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>⚙️</span> System Settings & Cursor</span>
+                  <span className="text-[10px] text-cyan-400 font-bold">CONFIG</span>
+                </button>
               </div>
             )}
           </div>
+
+          {/* 7. Settings & Cursor */}
+          <button 
+            type="button"
+            data-testid="hud-btn-settings-header"
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            className={`relative group px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1.5 shrink-0 ${
+              isSettingsOpen 
+                ? 'bg-cyan-950/90 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.4)]' 
+                : 'bg-black/80 border-gray-800 text-gray-400 hover:text-white hover:bg-gray-900/60'
+            }`}
+            title="System Settings & Cursor Customization"
+          >
+            <span>⚙️</span>
+            {headerTier === 'full' && <span>Settings</span>}
+            <span className="pointer-events-none absolute top-full mt-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(6,182,212,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">SETTINGS & CURSOR</span>
+          </button>
         </div>
       </div>
       
@@ -2480,7 +3631,12 @@ const [legendScale, setLegendScale] = useState(1);
       )}
 
       {showDirections && (
-        <div className="absolute top-28 sm:top-16 left-4 sm:left-[640px] z-20 max-w-[calc(100vw-32px)]">
+        <div 
+          style={{
+            left: windowDimensions.width < 640 ? '16px' : dynamicC2Left
+          }}
+          className="absolute top-28 sm:top-16 z-20 max-w-[calc(100vw-32px)] transition-all duration-300"
+        >
           <DirectionsPanel 
             onRouteCalculated={setDirectionsResult} 
             currentCenter={{ lat: viewState.latitude, lng: viewState.longitude }}
@@ -2490,6 +3646,11 @@ const [legendScale, setLegendScale] = useState(1);
             pickingTarget={pickingRoutingPoint}
             pickedPoint={pickedRoutingPoint}
             onClose={() => setShowDirections(false)}
+            currentTier={settings.tier || 'free'}
+            onRequireUpgrade={(feature) => {
+              setTierUpgradeTrigger(feature);
+              setShowTierUpgrade(true);
+            }}
           />
         </div>
       )}
@@ -2510,6 +3671,7 @@ const [legendScale, setLegendScale] = useState(1);
           centerCoordinates={{ lat: viewState.latitude, lon: viewState.longitude }}
           onRingsUpdate={setRangeRingsGeoJSON}
           onClose={() => setShowRangeRings(false)} 
+          leftOffset={dynamicC2Left}
         />
       )}
 
@@ -2527,6 +3689,25 @@ const [legendScale, setLegendScale] = useState(1);
           settings={settings}
           updateSettings={updateSettings}
           onClose={() => setShowWeatherWind(false)}
+          onOpenAIWithQuery={(q) => {
+            setShowWeatherWind(false);
+            setAiInitialQuery(q);
+            setShowAIAssistant(true);
+          }}
+        />
+      )}
+
+      {showAviationSafety && (
+        <AviationSafetyPanel
+          aircraftCount={aircraftFeatures.length}
+          onClose={() => setShowAviationSafety(false)}
+          onOpenAI={(q) => {
+            setShowAviationSafety(false);
+            setAiInitialQuery(q);
+            setShowAIAssistant(true);
+          }}
+          onToggleAircraftLayer={() => toggleLayer('aircraft')}
+          isAircraftLayerActive={settings.layers.aircraft}
         />
       )}
 
@@ -2546,62 +3727,207 @@ const [legendScale, setLegendScale] = useState(1);
         onJumpTo={handleJumpTo}
       />
 
-      <div className="absolute bottom-20 right-3 sm:right-6 z-10 flex flex-wrap gap-1 bg-black/85 p-1 rounded-lg border border-cyan-900/60 shadow-[0_0_15px_rgba(8,145,178,0.3)] backdrop-blur-md items-center">
+      <SentinelAlertBanner onJumpTo={(lat, lon, zoom) => handleJumpTo({ lat, lon, zoom: zoom || 14 })} />
+
+      {settings.layers.zero_blind_spot_hud && (
+        <ZeroBlindSpotAnalyticsHUD
+          auditResult={auditResult}
+          leftOffset={dynamicC2Left}
+          onJumpTo={(lon, lat, zoom, pitch) => {
+            if (mapRef.current) {
+              mapRef.current.flyTo({
+                center: [lon, lat],
+                zoom: zoom ?? 14,
+                pitch: pitch ?? 45,
+                duration: 2000
+              });
+            }
+          }}
+          showBlindSpots={settings.layers.blind_spots}
+          onToggleBlindSpots={() => toggleLayer('blind_spots')}
+          showDroneDocks={settings.layers.drone_docks}
+          onToggleDroneDocks={() => toggleLayer('drone_docks')}
+          showPublicLands={settings.layers.land_ownership}
+          onTogglePublicLands={() => toggleLayer('land_ownership')}
+          onClose={() => toggleLayer('zero_blind_spot_hud')}
+        />
+      )}
+
+      {selectedToxicSite && (
+        <ToxicSitePopupCard
+          site={selectedToxicSite}
+          onClose={() => setSelectedToxicSite(null)}
+          onInspect3D={(coords) => {
+            if (mapRef.current) {
+              mapRef.current.flyTo({
+                center: coords,
+                zoom: 16.5,
+                pitch: 55,
+                bearing: 45,
+                duration: 1600
+              });
+            }
+          }}
+          onAuditSite={() => setIsHomebuyerModalOpen(true)}
+        />
+      )}
+
+      <HomebuyerSafetyModal
+        isOpen={isHomebuyerModalOpen}
+        onClose={() => setIsHomebuyerModalOpen(false)}
+        currentLat={viewState.latitude}
+        currentLon={viewState.longitude}
+        onJumpToSite={(coords, z) => {
+          if (mapRef.current) {
+            mapRef.current.flyTo({
+              center: coords,
+              zoom: z || 14.5,
+              pitch: 50,
+              duration: 1600
+            });
+          }
+        }}
+      />
+
+      {showCityCrimePanel && (
+        <CityCrimePanel
+          activeCityCrime={activeCityCrime}
+          onSelectCity={handleSelectCityCrime}
+          onSelectNeighborhood={handleSelectNeighborhood}
+          onToggleCrimeLayer={() => toggleLayer('crime_live')}
+          isCrimeLayerActive={settings.layers.crime_live}
+          onToggleHeatmapLayer={() => {
+            if (settings.tier === 'free') {
+              setTierUpgradeTrigger('crime_heatmap');
+              setShowTierUpgrade(true);
+            } else {
+              toggleLayer('crime_heatmap');
+            }
+          }}
+          isHeatmapLayerActive={settings.layers.crime_heatmap}
+          onOpenAI={(q) => {
+            setShowCityCrimePanel(false);
+            setAiInitialQuery(q);
+            setShowAIAssistant(true);
+          }}
+          onClose={() => setShowCityCrimePanel(false)}
+        />
+      )}
+
+      <CitizenReconModal
+        isOpen={showCitizenRecon}
+        currentCoords={{ lat: viewState.latitude, lon: viewState.longitude }}
+        onClose={() => setShowCitizenRecon(false)}
+        onSubmitReport={handleSubmitCitizenReport}
+      />
+
+      <TierUpgradeModal
+        isOpen={showTierUpgrade}
+        onClose={() => setShowTierUpgrade(false)}
+        currentTier={settings.tier || 'free'}
+        onSelectTier={(newTier) => updateSettings({ ...settings, tier: newTier })}
+        featureTrigger={tierUpgradeTrigger}
+      />
+
+      <SphinxAIAssistant
+        isOpen={showAIAssistant}
+        onClose={() => setShowAIAssistant(false)}
+        mapContext={{
+          center: { lat: viewState.latitude, lon: viewState.longitude },
+          zoom: viewState.zoom,
+          city: activeCityCrime?.city || 'Chicago',
+          layerCounts: {
+            wildfires: visibleCounts.wildfires || 0,
+            earthquakes: visibleCounts.earthquakes || 0,
+            aircraft: visibleCounts.aircraft || 0,
+            vessels: visibleCounts.vessels || 0,
+            cables: visibleCounts.submarine_cables || 0
+          },
+          weather: currentWeatherVector
+        }}
+        initialQuery={aiInitialQuery}
+        onClearInitialQuery={() => setAiInitialQuery(undefined)}
+        onExecuteAction={handleExecuteMapAction}
+      />
+
+      <div data-testid="bottom-tactical-dock" className="absolute bottom-3 sm:bottom-5 right-2 sm:right-6 z-10 flex flex-nowrap gap-1 sm:gap-1.5 bg-black/90 p-1 sm:p-1.5 rounded-xl border border-cyan-900/70 shadow-[0_4px_25px_rgba(0,0,0,0.85)] backdrop-blur-md items-center max-w-[calc(100vw-16px)] overflow-x-auto font-mono text-[10px] sm:text-xs">
         <button 
           type="button"
           data-testid="btn-street-map"
           onClick={() => updateSettings({ layers: { ...settings.layers, satellite: false } })}
-          className={`px-3 py-1.5 font-mono text-xs tracking-wider rounded transition-all flex items-center gap-1.5 ${!settings.layers.satellite ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'text-gray-400 hover:text-white'}`}
+          className={`relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 ${!settings.layers.satellite ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'text-gray-400 hover:text-white'}`}
           title="Switch to original Cartographic street & topography map"
         >
-          <span>🗺️</span> STREET MAP
+          <span>🗺️</span> <span className="hidden sm:inline">STREET MAP</span><span className="sm:hidden">STREET</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 left-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">STREET MAP</span>
         </button>
         <button 
           type="button"
           data-testid="btn-satellite-map"
           onClick={() => updateSettings({ layers: { ...settings.layers, satellite: true } })}
-          className={`px-3 py-1.5 font-mono text-xs tracking-wider rounded transition-all flex items-center gap-1.5 ${settings.layers.satellite ? 'bg-sky-950 border border-sky-400 text-sky-300 font-bold shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-gray-400 hover:text-white'}`}
+          className={`relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 ${settings.layers.satellite ? 'bg-sky-950 border border-sky-400 text-sky-300 font-bold shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-gray-400 hover:text-white'}`}
           title="Switch to high-resolution true-color Satellite imagery"
         >
-          <span>🛰️</span> SATELLITE
+          <span>🛰️</span> <span className="hidden sm:inline">SATELLITE</span><span className="sm:hidden">SAT</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-sky-300 border border-sky-500/70 shadow-[0_0_12px_rgba(56,189,248,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">SATELLITE</span>
         </button>
         <div className="h-5 w-px bg-cyan-900/60 mx-0.5 hidden xs:block sm:block" />
         <button 
           type="button"
           data-testid="btn-toggle-labels"
           onClick={() => updateSettings({ layers: { ...settings.layers, labels: !settings.layers.labels } })}
-          className={`px-2.5 py-1.5 font-mono text-xs tracking-wider rounded transition-all flex items-center gap-1 ${settings.layers.labels ? 'bg-emerald-950/80 border border-emerald-400 text-emerald-300 font-bold shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 ${settings.layers.labels ? 'bg-emerald-950/80 border border-emerald-400 text-emerald-300 font-bold shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-gray-500 hover:text-gray-300'}`}
           title="Toggle city, lake, ocean, and place labels"
         >
-          <span>🏷️</span> LABELS
+          <span>🏷️</span> <span className="hidden xs:inline">LABELS</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-emerald-300 border border-emerald-500/70 shadow-[0_0_12px_rgba(52,211,153,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">LABELS</span>
         </button>
         <button 
           type="button"
           data-testid="btn-toggle-boundaries"
           onClick={() => updateSettings({ layers: { ...settings.layers, boundaries: !settings.layers.boundaries } })}
-          className={`px-2.5 py-1.5 font-mono text-xs tracking-wider rounded transition-all flex items-center gap-1 ${settings.layers.boundaries ? 'bg-amber-950/80 border border-amber-400 text-amber-300 font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 ${settings.layers.boundaries ? 'bg-amber-950/80 border border-amber-400 text-amber-300 font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'text-gray-500 hover:text-gray-300'}`}
           title="Toggle state/provincial lines and country international boundaries"
         >
-          <span>🌐</span> BORDERS
+          <span>🌐</span> <span className="hidden xs:inline">BORDERS</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-amber-300 border border-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">BORDERS</span>
         </button>
-      </div>
-
-      <div className="absolute bottom-6 right-3 sm:right-6 z-10 flex gap-2">
+        <div className="h-5 w-px bg-cyan-900/60 mx-0.5 hidden xs:block sm:block" />
+        <button 
+          type="button"
+          data-testid="btn-toggle-3d-pitch"
+          onClick={() => {
+            if (mapRef.current) {
+              const currentPitch = mapRef.current.getPitch();
+              const target = currentPitch > 25 ? 0 : 50;
+              mapRef.current.easeTo({ pitch: target, duration: 1200 });
+              setIs3DView(target > 25);
+            }
+          }}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 ${is3DView ? 'bg-purple-950/90 border border-purple-400 text-purple-300 font-bold shadow-[0_0_12px_rgba(168,85,247,0.5)]' : 'text-gray-400 hover:text-white'}`}
+          title="Toggle 3D AR Perspective View (50° Tactical Pitch)"
+        >
+          <span>🕶️</span> <span className="hidden xs:inline">3D AR</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-purple-300 border border-purple-500/70 shadow-[0_0_12px_rgba(168,85,247,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">3D AR VIEW (50° TILT)</span>
+        </button>
+        <div className="h-4 sm:h-5 w-px bg-cyan-900/60 mx-0.5 shrink-0" />
         <button 
           type="button"
           data-testid="btn-live-feed"
           onClick={() => setTimeframe('live')}
-          className={`px-4 py-2 font-mono text-xs tracking-wider border rounded transition-colors ${timeframe === 'live' ? 'bg-cyan-900/50 border-cyan-400 text-cyan-400' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500'}`}
+          className={`relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider border rounded-lg transition-colors shrink-0 ${timeframe === 'live' ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-white'}`}
         >
-          LIVE FEED
+          <span className="hidden sm:inline">LIVE FEED</span><span className="sm:hidden">LIVE</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">LIVE FEED</span>
         </button>
         <button 
           type="button"
           data-testid="btn-historical"
           onClick={() => setTimeframe('historical')}
-          className={`px-4 py-2 font-mono text-xs tracking-wider border rounded transition-colors ${timeframe === 'historical' ? 'bg-orange-900/50 border-orange-400 text-orange-400' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500'}`}
+          className={`relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider border rounded-lg transition-colors shrink-0 ${timeframe === 'historical' ? 'bg-orange-950 border-orange-400 text-orange-300 font-bold shadow-[0_0_10px_rgba(249,115,22,0.4)]' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-white'}`}
         >
-          HISTORICAL
+          <span className="hidden sm:inline">HISTORICAL</span><span className="sm:hidden">HIST</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-orange-300 border border-orange-500/70 shadow-[0_0_12px_rgba(249,115,22,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">HISTORICAL ARCHIVE</span>
         </button>
       </div>
 
@@ -2721,7 +4047,7 @@ const [legendScale, setLegendScale] = useState(1);
         </div>
       )}
 
-      {settings.layers.drone && <DroneFeed />}
+      {settings.layers.drone && <DroneFeed onClose={() => updateSettings({ layers: { ...settings.layers, drone: false } })} />}
       {settings.layers.radio && <RadioPanel onClose={() => updateSettings({ layers: { ...settings.layers, radio: false } })} />}
       {settings.layers.defense && <BaseDefensePanel onClose={() => updateSettings({ layers: { ...settings.layers, defense: false } })} />}
       {settings.layers.wind_hud && (

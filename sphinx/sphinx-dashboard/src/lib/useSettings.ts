@@ -74,13 +74,25 @@ export interface UserSettings {
     labels: boolean;
     boundaries: boolean;
     wind_hud: boolean;
+    crime_heatmap: boolean;
+    road_closures: boolean;
+    weather_ar: boolean;
+    solar_terminator: boolean;
+    drone_docks: boolean;
+    blind_spots: boolean;
+    land_ownership: boolean;
+    zero_blind_spot_hud: boolean;
+    toxic_sites: boolean;
+    snowboard_trails: boolean;
   };
+  satellite_provider?: 'hd_arcgis' | 'nasa_viirs' | 'nasa_modis' | 'goes_live';
+  tier?: 'free' | 'pro' | 'sovereign';
   clustering_enabled: boolean;
   cursor: CursorSettings;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
-  home_location: { lat: 38.9072, lon: -77.0369, zoom: 13 },
+  home_location: { lat: 39.8283, lon: -98.5795, zoom: 4.2 },
   saved_locations: [],
   custom_pins: [],
   default_timeframe: 'live',
@@ -104,7 +116,7 @@ const DEFAULT_SETTINGS: UserSettings = {
     custom_pins: true,
     drone: false,
     radio: false,
-    crime_live: false,
+    crime_live: true,
     crime_historical: false,
     defense: false,
     submarine_cables: true,
@@ -118,7 +130,19 @@ const DEFAULT_SETTINGS: UserSettings = {
     labels: true,
     boundaries: true,
     wind_hud: true,
+    crime_heatmap: false,
+    road_closures: true,
+    weather_ar: true,
+    solar_terminator: true,
+    drone_docks: true,
+    blind_spots: true,
+    land_ownership: true,
+    zero_blind_spot_hud: true,
+    toxic_sites: true,
+    snowboard_trails: true,
   },
+  satellite_provider: 'hd_arcgis',
+  tier: 'free',
   clustering_enabled: true,
   cursor: {
     shape: 'sun',
@@ -251,6 +275,7 @@ export function useSettings() {
           default_timeframe: newSettings.default_timeframe,
           layers: newSettings.layers,
           clustering_enabled: newSettings.clustering_enabled,
+          tier: newSettings.tier,
           cursor: newSettings.cursor,
           updated_at: new Date().toISOString()
         });
@@ -258,4 +283,52 @@ export function useSettings() {
   };
 
   return { settings, updateSettings, loading };
+}
+
+export type UserTier = 'free' | 'pro' | 'sovereign';
+
+export const TIER_CONFIG = {
+  free: {
+    label: 'FREE CITIZEN',
+    color: '#94a3b8',
+    bg: 'bg-slate-800 text-slate-200 border-slate-700'
+  },
+  pro: {
+    label: 'PRO TACTICAL',
+    color: '#00e5ff',
+    bg: 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+  },
+  sovereign: {
+    label: 'SOVEREIGN SENTINEL',
+    color: '#a855f7',
+    bg: 'bg-purple-950 text-purple-300 border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.5)]'
+  }
+};
+
+export function isFeatureAllowed(feature: string, tier: UserTier = 'free'): boolean {
+  if (tier === 'sovereign') return true;
+  if (tier === 'pro') {
+    const sovereignOnly = ['offline_downloader', 'range_rings', 'celestial_dome', 'drone', 'radio', 'defense'];
+    return !sovereignOnly.includes(feature);
+  }
+  // Free tier has UNLIMITED pins per user requirement!
+  const freeAllowed = [
+    'custom_pins',
+    'carto_map',
+    'wildfires',
+    'earthquakes',
+    'disasters',
+    'power',
+    'cell_towers',
+    'springs',
+    'campsites',
+    'trails',
+    'radars',
+    'data_centers',
+    'cameras_basic',
+    'crime_live',
+    'standard_ai',
+    'standard_aviation'
+  ];
+  return freeAllowed.includes(feature);
 }
